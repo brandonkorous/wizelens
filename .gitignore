@@ -1,27 +1,60 @@
-# .NET
+# ─── .NET ──────────────────────────────────────────────
 bin/
 obj/
 *.user
+*.suo
+*.rsuser
 .vs/
 TestResults/
+coverage*.json
+coverage*.xml
+*.coverage
+*.nupkg
+*.snupkg
+artifacts/
 
-# Node
+# ─── Node / JS ─────────────────────────────────────────
 node_modules/
 dist/
+coverage/
 *.tsbuildinfo
 .vite/
+.pnpm-store/
+.eslintcache
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Data
+# ─── WizeLens local trace stores ───────────────────────
+.wizelens/
+
+# ─── Local databases (samples) ─────────────────────────
 *.db
 *.db-shm
 *.db-wal
+*.sqlite
+*.sqlite3
 
-# OS / editors
+# ─── Secrets and local config ──────────────────────────
+.env
+.env.*
+!.env.example
+appsettings.*.local.json
+*.pfx
+*.pem
+*.key
+
+# ─── Logs ──────────────────────────────────────────────
+logs/
+*.log
+
+# ─── OS and editors ────────────────────────────────────
 .DS_Store
 Thumbs.db
+desktop.ini
 .idea/
+*.swp
 .vscode/*
 !.vscode/extensions.json
-
-# WizeLens local trace store
-.wizelens/
+!.vscode/settings.json
