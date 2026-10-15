@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>WizeLens</RootNamespace>
+        <Description>Glimpse-style request profiling for ASP.NET Core. Captures HTTP, database, logs and exceptions per request, serves a dashboard at /_wizelens, and exposes insights to AI agents over MCP.</Description>
+        <UiDistDir>$(RepoRoot)\js\packages\ui\dist\</UiDistDir>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.13" />
+        <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />
+    </ItemGroup>
+
+    <!-- The dashboard UI is built by js/packages/ui (Vite). Embed it when it exists. -->
+    <ItemGroup>
+        <EmbeddedResource Include="$(UiDistDir)**\*" Condition="Exists('$(UiDistDir)index.html')">
+            <LogicalName>ui/%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+            <Link>ui\%(RecursiveDir)%(Filename)%(Extension)</Link>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="WizeLens.Tests" />
+        <InternalsVisibleTo Include="WizeLens.EntityFrameworkCore" />
+    </ItemGroup>
+
+</Project>

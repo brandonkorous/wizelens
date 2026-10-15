@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Description>Entity Framework Core adapter for WizeLens. Records every EF Core command with its SQL, parameters and timing.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.13" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\WizeLens.AspNetCore\WizeLens.AspNetCore.csproj" />
+    </ItemGroup>
+
+</Project>

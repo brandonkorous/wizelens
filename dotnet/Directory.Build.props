@@ -1,0 +1,18 @@
+<Project>
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <LangVersion>latest</LangVersion>
+        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+        <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))</RepoRoot>
+
+        <Authors>WizeWorks</Authors>
+        <Company>WizeWorks</Company>
+        <Copyright>Copyright (c) 2026 WizeWorks</Copyright>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/wizeworks/wizelens</PackageProjectUrl>
+        <PackageTags>wizelens;glimpse;opentelemetry;tracing;diagnostics;aspnetcore;mcp</PackageTags>
+        <Version>0.1.0-alpha.1</Version>
+    </PropertyGroup>
+</Project>

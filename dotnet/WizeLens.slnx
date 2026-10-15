@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/WizeLens.AspNetCore/WizeLens.AspNetCore.csproj" />
+    <Project Path="src/WizeLens.EntityFrameworkCore/WizeLens.EntityFrameworkCore.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/WizeLens.Tests/WizeLens.Tests.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="../samples/gateway-api/GatewayApi.csproj" />
+  </Folder>
+</Solution>

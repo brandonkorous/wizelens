@@ -1,0 +1,89 @@
+using System.Text.RegularExpressions;
+using WizeLens.Model;
+
+namespace WizeLens.Analysis;
+
+public sealed record DuplicateQuery(string TraceId, string Query, string Parameters, int Count, double TotalMs, string Service);
+
+public sealed record NPlusOne(string TraceId, string Kind, string Shape, int Count, double TotalMs);
+
+public sealed record SlowQuery(string TraceId, string SpanId, double DurationMs, string Query, string Service);
+
+public sealed record ErrorInfo(string TraceId, string SpanId, string Service, string Name, string? Message, string? Type, string? Stack);
+
+/// <summary>Analysis rules from docs/CONTRACT.md. The JS side implements the same rules.</summary>
+public static partial class TraceAnalysis
+{
+    /// <summary>≥ 2 db spans with identical query text AND identical parameters.</summary>
+    public static IReadOnlyList<DuplicateQuery> DuplicateQueries(Trace trace) =>
+    [
+        .. trace.Spans
+            .Where(s => s.Category == SpanCategories.Db && s.Attr("db.query.text") is not null)
+            .GroupBy(s => (Query: s.Attr("db.query.text")!, Params: s.Attr("wizelens.db.parameters") ?? ""))
+            .Where(g => g.Count() >= 2)
+            .Select(g => new DuplicateQuery(trace.TraceId, g.Key.Query, g.Key.Params, g.Count(), g.Sum(s => s.DurationMs), g.First().Service))
+            .OrderByDescending(d => d.Count),
+    ];
+
+    /// <summary>N+1 db (same query text) and N+1 HTTP (same method + host + path shape), ≥ threshold repeats.</summary>
+    public static IReadOnlyList<NPlusOne> NPlusOnes(Trace trace, int threshold = 5)
+    {
+        var db = trace.Spans
+            .Where(s => s.Category == SpanCategories.Db && s.Attr("db.query.text") is not null)
+            .GroupBy(s => s.Attr("db.query.text")!)
+            .Where(g => g.Count() >= threshold)
+            .Select(g => new NPlusOne(trace.TraceId, "db", g.Key, g.Count(), g.Sum(s => s.DurationMs)));
+
+        var http = trace.Spans
+            .Where(s => s.Category == SpanCategories.HttpClient)
+            .Select(s => (Span: s, Shape: HttpShape(s)))
+            .Where(x => x.Shape is not null)
+            .GroupBy(x => x.Shape!)
+            .Where(g => g.Count() >= threshold)
+            .Select(g => new NPlusOne(trace.TraceId, "http", g.Key, g.Count(), g.Sum(x => x.Span.DurationMs)));
+
+        return [.. db.Concat(http).OrderByDescending(n => n.Count)];
+    }
+
+    /// <summary>db spans at or above <paramref name="thresholdMs"/>.</summary>
+    public static IEnumerable<SlowQuery> SlowQueries(Trace trace, double thresholdMs = 100) =>
+        trace.Spans
+            .Where(s => s.Category == SpanCategories.Db && s.DurationMs >= thresholdMs)
+            .Select(s => new SlowQuery(trace.TraceId, s.SpanId, s.DurationMs, s.Attr("db.query.text") ?? s.Name, s.Service));
+
+    /// <summary>Spans with an error status or an exception event.</summary>
+    public static IEnumerable<ErrorInfo> Errors(Trace trace) =>
+        trace.Spans
+            .Where(s => s.Status == SpanStatuses.Error)
+            .Select(s =>
+            {
+                var ex = s.Events.FirstOrDefault(e => e.Name == "exception");
+                string? A(string key) => ex is null ? null : AttributeValue.AsString(ex.Attributes.GetValueOrDefault(key));
+                return new ErrorInfo(trace.TraceId, s.SpanId, s.Service, s.Name,
+                    A("exception.message") ?? s.StatusMessage, A("exception.type") ?? s.Attr("error.type"), A("exception.stacktrace"));
+            });
+
+    /// <summary>"GET localhost:5200/orders?customerId={}" — numeric/guid segments and query values become <c>{}</c>.</summary>
+    public static string? HttpShape(Span span)
+    {
+        if (!Uri.TryCreate(span.Attr("url.full"), UriKind.Absolute, out var uri)) return null;
+        var method = span.Attr("http.request.method") ?? "GET";
+        return $"{method} {uri.Authority}{PathShape(uri.AbsolutePath, uri.Query)}";
+    }
+
+    public static string PathShape(string path, string query = "")
+    {
+        var segments = path.Split('/').Select(seg => IdSegmentRegex().IsMatch(seg) ? "{}" : seg);
+        var shaped = string.Join('/', segments);
+        if (!string.IsNullOrEmpty(query) && query != "?")
+        {
+            var keys = query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)
+                .Select(pair => pair.Split('=')[0] + "={}");
+            shaped += "?" + string.Join('&', keys);
+        }
+        return shaped;
+    }
+
+    [GeneratedRegex(@"^(\d+|[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12})$")]
+    private static partial Regex IdSegmentRegex();
+}

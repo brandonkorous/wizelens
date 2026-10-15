@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <ItemGroup>
+        <PackageReference Include="Dapper" Version="2.1.89" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.13" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\dotnet\src\WizeLens.AspNetCore\WizeLens.AspNetCore.csproj" />
+        <ProjectReference Include="..\..\dotnet\src\WizeLens.EntityFrameworkCore\WizeLens.EntityFrameworkCore.csproj" />
+    </ItemGroup>
+
+</Project>
