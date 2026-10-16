@@ -4,7 +4,9 @@
   "description": "WizeLens dashboard UI. Static build served by the WizeLens add-ons.",
   "license": "MIT",
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     "./package.json": "./package.json"
   },
@@ -14,10 +16,12 @@
     "test": "echo \"(ui) no tests yet\""
   },
   "devDependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "@wizeworks/lens-core": "workspace:*",
+    "lucide-react": "^1.57.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "typescript": "^7.0.2",

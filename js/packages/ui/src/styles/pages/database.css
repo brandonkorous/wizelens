@@ -1,0 +1,25 @@
+/* Database page: query table, table hotspots, and the insight cards. */
+.wl-db-page .wl-db-query { max-width: 300px; }
+.wl-db-page .wl-db-query span { display: block; }
+.wl-db-note { margin: 12px 0 0; font-size: 12px; color: var(--wl-muted); }
+
+.wl-insight-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+.wl-insight-card { display: grid; grid-template-columns: 52px minmax(0, 1fr) 20px; gap: 14px; align-items: start; padding: 4px 18px; color: var(--wl-fg); border-left: 1px solid var(--wl-line); }
+.wl-insight-card:first-child { border-left: 0; padding-left: 0; }
+.wl-insight-card:hover { text-decoration: none; }
+.wl-insight-card:hover .wl-insight-title strong { color: var(--wl-accent); }
+.wl-insight-icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 12px; }
+.wl-insight-icon svg { width: 26px; height: 26px; }
+.wl-impact-high { background: var(--wl-error-soft); color: var(--wl-error); }
+.wl-impact-medium { background: var(--wl-amber-soft); color: var(--wl-amber-text); }
+.wl-impact-low { background: var(--wl-accent-soft); color: var(--wl-accent-text); }
+.wl-insight-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.wl-insight-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.wl-insight-title strong { font-size: 15px; }
+.wl-insight-text { font-size: 13.5px; color: var(--wl-muted); line-height: 1.5; overflow-wrap: anywhere; }
+.wl-insight-go { width: 20px; height: 20px; margin-top: 2px; color: var(--wl-fg-2); }
+
+@media (max-width: 1100px) {
+  .wl-insight-cards { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .wl-insight-card, .wl-insight-card:first-child { border-left: 0; padding: 0; }
+}

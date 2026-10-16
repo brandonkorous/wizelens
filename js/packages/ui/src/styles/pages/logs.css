@@ -1,0 +1,9 @@
+/* Logs page: filters, volume chart, and the log table. */
+.wl-logs-page > .wl-panel { margin-bottom: 18px; }
+.wl-logs-page .wl-panel-flush .wl-table th:first-child, .wl-logs-page .wl-panel-flush .wl-table td:first-child { padding-left: 20px; }
+.wl-logs-page .wl-panel-flush .wl-table th:last-child, .wl-logs-page .wl-panel-flush .wl-table td:last-child { padding-right: 20px; }
+.wl-logs-page .wl-log-cat { max-width: 160px; color: var(--wl-muted); font-size: 13px; }
+.wl-logs-page .wl-log-cat span { display: block; }
+.wl-logs-page .wl-log-msg { min-width: 260px; word-break: break-word; }
+.wl-logs-page .wl-log-trace { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.wl-logs-page .wl-badge { text-transform: capitalize; }

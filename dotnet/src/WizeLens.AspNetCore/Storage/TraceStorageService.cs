@@ -4,11 +4,7 @@ using WizeLens.Capture;
 
 namespace WizeLens.Storage;
 
-/// <summary>
-/// Keeps the trace store within its age limit and, with SQLite storage, saves it to disk:
-/// load on startup, write changes every 500 ms, and write once more on shutdown.
-/// Any disk error turns storage off (one warning) and WizeLens keeps working in memory.
-/// </summary>
+/// <summary>Applies the age limit and saves to SQLite (load at start, write every 500 ms and at stop); disk errors fall back to memory.</summary>
 internal sealed class TraceStorageService : IHostedService, IDisposable
 {
     private static readonly TimeSpan FlushInterval = TimeSpan.FromMilliseconds(500);
@@ -21,8 +17,7 @@ internal sealed class TraceStorageService : IHostedService, IDisposable
     private CancellationTokenSource? _stopping;
     private Task? _loop;
 
-    // Loading happens here, not in StartAsync: the host builds every hosted service before it starts any,
-    // and the web server may start (and take requests) before this service's StartAsync runs.
+    // Loads here, not in StartAsync: the web server may take requests before this service's StartAsync runs.
     public TraceStorageService(TraceStore store, WizeLensOptions options, IHostEnvironment environment, ILogger<TraceStorageService> logger)
     {
         _store = store;

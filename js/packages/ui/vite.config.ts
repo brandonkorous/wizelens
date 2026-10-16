@@ -1,8 +1,7 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-// The dashboard is served by each add-on under its base path (default /_wizelens/),
-// so every URL must be relative. In `pnpm dev`, /api is proxied to a running service.
+// Served under each add-on's base path, so URLs stay relative; `pnpm dev` proxies /api to a running service.
 const target = process.env.WIZELENS_TARGET ?? "http://localhost:5200";
 
 export default defineConfig({

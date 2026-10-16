@@ -11,10 +11,14 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./install": {
+      "types": "./dist/install.d.ts",
+      "import": "./dist/install.js"
+    },
     "./package.json": "./package.json"
   },
   "files": ["dist"],
-  "sideEffects": false,
+  "sideEffects": ["./dist/install.js"],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run"

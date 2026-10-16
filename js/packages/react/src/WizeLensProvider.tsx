@@ -13,10 +13,19 @@ export interface WizeLensProviderProps {
   hud?: boolean;
   /** Which requests get a `traceparent` header. Default: same origin only. */
   propagateTo?: (url: URL) => boolean;
+  /** The HUD shows requests at or over this many ms as "warning". Default 500. */
+  slowMs?: number;
   children?: ReactNode;
 }
 
-export function WizeLensProvider({ endpoint = "/_wizelens", enabled = true, hud = true, propagateTo, children }: WizeLensProviderProps) {
+export function WizeLensProvider({
+  endpoint = "/_wizelens",
+  enabled = true,
+  hud = true,
+  propagateTo,
+  slowMs,
+  children,
+}: WizeLensProviderProps) {
   const recorder = useMemo(
     () => (enabled ? createRecorder({ endpoint, propagateTo }) : null),
     // propagateTo is read once on purpose; pass a stable function.
@@ -28,7 +37,7 @@ export function WizeLensProvider({ endpoint = "/_wizelens", enabled = true, hud 
   return (
     <WizeLensContext.Provider value={recorder}>
       {children}
-      {recorder && hud && <Hud recorder={recorder} />}
+      {recorder && hud && <Hud recorder={recorder} slowMs={slowMs} />}
     </WizeLensContext.Provider>
   );
 }

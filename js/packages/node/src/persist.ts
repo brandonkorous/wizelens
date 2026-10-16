@@ -1,37 +1,13 @@
 import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname } from "node:path";
-import type { DatabaseSync, StatementSync } from "node:sqlite";
+import type { DatabaseSync } from "node:sqlite";
 import { ATTR_BROWSER_SESSION, type LogRecord, type Span } from "@wizeworks/lens-core";
+import { prepareStatements, SCHEMA, SCHEMA_VERSION, type Statements } from "./persist-schema.js";
+import { hookProcessExit, parseArray } from "./persist-util.js";
 import type { StoredTrace, TraceStore } from "./store.js";
 
 const require = createRequire(import.meta.url);
-
-// Shared schema (docs/CONTRACT.md, "Storage"). The phase 2 hub reads these files too.
-const SCHEMA_VERSION = "1";
-const SCHEMA = `
-CREATE TABLE IF NOT EXISTS meta   (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS traces (
-  trace_id TEXT PRIMARY KEY, start_ms REAL NOT NULL, updated_ms REAL NOT NULL,
-  remotes TEXT NOT NULL DEFAULT '[]'
-);
-CREATE TABLE IF NOT EXISTS spans  (
-  trace_id TEXT NOT NULL, span_id TEXT NOT NULL, parent_span_id TEXT,
-  name TEXT NOT NULL, kind TEXT NOT NULL, category TEXT NOT NULL, service TEXT NOT NULL,
-  start_ms REAL NOT NULL, duration_ms REAL NOT NULL, status TEXT NOT NULL,
-  session TEXT,
-  json TEXT NOT NULL,
-  PRIMARY KEY (trace_id, span_id)
-);
-CREATE TABLE IF NOT EXISTS logs   (
-  trace_id TEXT NOT NULL, seq INTEGER NOT NULL, time_ms REAL NOT NULL, level TEXT NOT NULL,
-  json TEXT NOT NULL,
-  PRIMARY KEY (trace_id, seq)
-);
-CREATE INDEX IF NOT EXISTS ix_traces_start  ON traces(start_ms);
-CREATE INDEX IF NOT EXISTS ix_spans_session ON spans(session) WHERE session IS NOT NULL;
-CREATE INDEX IF NOT EXISTS ix_spans_cat_dur ON spans(category, duration_ms);
-`;
 
 export interface PersisterOptions {
   path: string;
@@ -44,20 +20,7 @@ export interface PersisterOptions {
   now?: () => number;
 }
 
-interface Statements {
-  upsertTrace: StatementSync;
-  upsertSpan: StatementSync;
-  insertLog: StatementSync;
-  pruneAge: StatementSync;
-  pruneCount: StatementSync;
-  pruneSpans: StatementSync;
-  pruneLogs: StatementSync;
-}
-
-/**
- * Writes the in-memory store to a SQLite file and loads it back on startup.
- * The store stays the read path. Any error turns persistence off with one warning.
- */
+/** Writes the store to a SQLite file and loads it back on startup; any error turns it off with one warning. */
 export class SqlitePersister {
   readonly path: string;
   readonly #store: TraceStore;
@@ -93,21 +56,7 @@ export class SqlitePersister {
       const setMeta = db.prepare("INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
       setMeta.run("schema", SCHEMA_VERSION);
       setMeta.run("service", this.#options.serviceName);
-      this.#stmts = {
-        upsertTrace: db.prepare(`INSERT INTO traces (trace_id, start_ms, updated_ms, remotes) VALUES (?, ?, ?, ?)
-          ON CONFLICT(trace_id) DO UPDATE SET start_ms = min(start_ms, excluded.start_ms),
-            updated_ms = excluded.updated_ms, remotes = excluded.remotes`),
-        upsertSpan: db.prepare(`INSERT OR REPLACE INTO spans
-          (trace_id, span_id, parent_span_id, name, kind, category, service, start_ms, duration_ms, status, session, json)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
-        insertLog: db.prepare("INSERT OR IGNORE INTO logs (trace_id, seq, time_ms, level, json) VALUES (?, ?, ?, ?, ?)"),
-        pruneAge: db.prepare("DELETE FROM traces WHERE start_ms < ?"),
-        pruneCount: db.prepare(
-          "DELETE FROM traces WHERE trace_id NOT IN (SELECT trace_id FROM traces ORDER BY start_ms DESC LIMIT ?)",
-        ),
-        pruneSpans: db.prepare("DELETE FROM spans WHERE trace_id NOT IN (SELECT trace_id FROM traces)"),
-        pruneLogs: db.prepare("DELETE FROM logs WHERE trace_id NOT IN (SELECT trace_id FROM traces)"),
-      };
+      this.#stmts = prepareStatements(db);
       this.#prune();
       this.#store.load(this.#loadRecent());
       return true;
@@ -226,36 +175,4 @@ export class SqlitePersister {
       `[wizelens] Could not use the trace file ${this.path} (${message}). Traces are kept in memory only.`,
     );
   }
-}
-
-function parseArray<T>(json: string): T[] {
-  try {
-    const v = JSON.parse(json) as unknown;
-    return Array.isArray(v) ? (v as T[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Run `flush` when the process ends. `exit` covers normal exit and process.exit().
- * For SIGINT/SIGTERM we flush, and if no one else listens we re-raise the signal so the
- * default behavior (exit) still happens. Other listeners keep full control otherwise.
- */
-function hookProcessExit(flush: () => void): () => void {
-  const onExit = () => flush();
-  const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"];
-  const onSignal = (signal: NodeJS.Signals) => {
-    flush();
-    if (process.listenerCount(signal) === 1) {
-      process.removeListener(signal, onSignal);
-      process.kill(process.pid, signal);
-    }
-  };
-  process.on("exit", onExit);
-  for (const s of signals) process.on(s, onSignal);
-  return () => {
-    process.removeListener("exit", onExit);
-    for (const s of signals) process.removeListener(s, onSignal);
-  };
 }

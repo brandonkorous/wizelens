@@ -27,9 +27,10 @@ All `api/*` endpoints return JSON (camelCase) and send `Access-Control-Allow-Ori
 
 | Method + path | Returns |
 |---|---|
-| `GET /` and static files | Dashboard UI (from `@wizeworks/lens-ui` build). Hash routing: `#/`, `#/traces/{traceId}` |
-| `GET api/info` | `{ service, version, runtime, mcp: boolean }` |
+| `GET /` and static files | Dashboard UI (from `@wizeworks/lens-ui` build). Hash routing: `#/`, `#/requests`, `#/traces`, `#/traces/{traceId}[/{view}]`, `#/database`, `#/rendering`, `#/errors`, `#/logs`, `#/services`, `#/insights`, `#/settings`. `{view}` is one of `timeline`, `sql`, `http`, `logs`, `errors`, `insights`. |
+| `GET api/info` | `ServiceInfo` (see Types) |
 | `GET api/traces?limit=50&session={id}` | `TraceSummary[]`, newest first. With `session`, only traces that have a span whose `wizelens.browser.session` equals `{id}`. |
+| `GET api/traces?full=true&limit=1000&since={ms}` | `Trace[]` from this service only (no federation), newest first. `limit` max 5000. With `since`, only traces whose last activity (`startMs + durationMs`) is at or after `{ms}`. The dashboard uses this for its charts and merges the results of every service it knows. |
 | `GET api/traces/{traceId}?federate=true` | `Trace` (404 if unknown and no remote has it) |
 | `POST api/client-spans` | Body `{ spans: Span[] }`. Browser spans. Stored into their traces. 204. |
 | `POST mcp` (+ GET for SSE if SDK needs) | MCP streamable HTTP. Only when MCP is enabled. 404 otherwise. |
@@ -104,17 +105,66 @@ interface Trace extends TraceSummary {
   logs: LogRecord[];        // sorted by timeMs
   remotes: string[];
 }
+
+type HostMode = "in-app" | "hub" | "cloud";
+type Capability = "federation" | "environments" | "accounts" | "alerts" | "sharing" | "serverStats";
+
+interface ServiceInfo {
+  mode?: HostMode;          // absent = "in-app"
+  capabilities?: Capability[]; // absent = ["federation"]
+  service: string;
+  version: string;
+  runtime: string;
+  mcp: boolean;
+  environment?: string;     // ASPNETCORE_ENVIRONMENT / NODE_ENV, e.g. "Development"
+  host?: string;            // machine name
+  startedMs?: number;
+  storage?: { kind: "sqlite" | "memory"; maxTraces: number; maxAgeMs: number };
+  analysis?: { slowQueryMs: number; nPlusOneThreshold: number };
+  redactKeys?: string[];
+  captureResponseBody?: boolean;
+}
 ```
 
 ## Attribute names (OTel semantic conventions)
 
 | Category | Attributes |
 |---|---|
-| http.server | `http.request.method`, `http.route`, `url.path`, `url.query`, `http.response.status_code`, `server.address` |
+| http.server | `http.request.method`, `http.route`, `url.path`, `url.query`, `http.response.status_code`, `server.address`, `client.address` (first `X-Forwarded-For` value, else the socket), `user_agent.original`, `http.request.header.{name}` / `http.response.header.{name}` (lower-case names, values joined with `, `, max 50 headers, 1 KB each, redacted), `http.request.body.size`, `http.response.body.size`, `wizelens.request.id`, `enduser.id` (when known), `wizelens.tag.{key}` (app tags), `wizelens.server.routed_ms` (when the runtime can tell), `wizelens.response.body` + `wizelens.response.body.truncated` (only with body capture on: text and JSON, first 16 KB) |
+| internal | `wizelens.layer` = `handler` for a controller action or endpoint handler span |
 | http.client | `http.request.method`, `url.full`, `server.address`, `server.port`, `http.response.status_code` |
 | db | `db.system.name` (e.g. `sqlite`, `postgresql`, `microsoft.sql_server`), `db.query.text`, `db.operation.name`, `db.collection.name`, `db.namespace`, `db.response.returned_rows`, `wizelens.db.parameters` (JSON string, redacted), `wizelens.db.adapter` (`ado.net`, `efcore`, `node-sqlite`, ...) |
 | exception event | `exception.type`, `exception.message`, `exception.stacktrace` |
-| browser | `url.full`, `http.request.method`, `http.response.status_code`, `wizelens.browser.page`, `wizelens.browser.session` (per-tab id, kept in sessionStorage key `wizelens.session`) |
+| browser (all) | `wizelens.browser.type` (`fetch` when absent, `pageview`, `react`, `error`), `wizelens.browser.session` (per-tab id, kept in sessionStorage key `wizelens.session`), `wizelens.browser.route` (path shape of the page), `url.full` |
+| browser fetch | `http.request.method`, `http.response.status_code`, `wizelens.browser.page`, `wizelens.browser.render_ms` (ms from the response to the next paint; absent when not measured) |
+| browser pageview | Own trace per page view. Span start = navigation start (or route change), duration = render time. `wizelens.browser.navigation` (`load` / `spa`), `wizelens.page.ttfb_ms`, `.ssr_ms` (responseStart − requestStart), `.client_render_ms` (FCP − responseEnd), `.fcp_ms`, `.lcp_ms`, `.cls`, `.inp_ms`, `.load_ms`, `.hydration_ms` (first React commit), `.render_ms`, `.image_ms` (slowest image), `.images`, `.large_images` (images bigger than shown and not lazy) |
+| browser react | In the page view's trace. `wizelens.react.commits`, `wizelens.react.components` = JSON `{ name, renders, actualMs, selfMs, wasted, context }[]` since the last report |
+| browser error | In the page view's trace. Status `error`, one `exception` event (`exception.type`, `.message`, `.stacktrace`) |
+
+## Host modes and capabilities (v0.4)
+
+The same dashboard and HUD run in every mode. They read `mode` and `capabilities` from `api/info` and show or hide
+features by capability, never by the mode name. The badge in the top bar shows the mode, the service, and how long data is kept.
+Time ranges longer than `storage.maxAgeMs` are hidden.
+
+| Capability | Means | In-app | Hub | Cloud |
+|---|---|---|---|---|
+| `federation` | The dashboard finds other services through trace `remotes` and reads them directly | ✅ | | |
+| `environments` | The host holds more than one environment; the environment picker switches between them | | maybe | ✅ |
+| `accounts` | Users sign in; the top bar shows the user | | | ✅ |
+| `alerts` | The host sends alerts; the bell lists them | | | ✅ |
+| `sharing` | Traces and views can be shared by link | | | ✅ |
+| `serverStats` | The host computes page numbers itself; the dashboard asks for them instead of downloading full traces | | maybe | ✅ |
+
+Today both add-ons answer `mode: "in-app"` and `capabilities: ["federation"]`.
+
+## Add-on options (v0.3)
+
+| Option | .NET | Node | Default |
+|---|---|---|---|
+| Capture response bodies | `CaptureResponseBody` | `captureResponseBody` | false |
+| Tag the current request | `WizeLensRequest.Tag(key, value?)` | `wizelens.tag(key, value?)` | — |
+| Set the current user | automatic from `HttpContext.User` | `wizelens.setUser(id)` | — |
 
 ## Redaction
 

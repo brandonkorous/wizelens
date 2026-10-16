@@ -52,7 +52,12 @@ public sealed class WizeLensOptions
     /// <summary>Queries at or above this duration (ms) count as slow.</summary>
     public double SlowQueryMs { get; set; } = 100;
 
+    /// <summary>Keeps the first 16 KB of text and JSON response bodies on the request span. Off by default.</summary>
+    public bool CaptureResponseBody { get; set; }
+
     internal bool IsEnabled { get; set; }
+
+    internal double StartedMs { get; } = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
     internal string NormalizedBasePath => "/" + BasePath.Trim('/');
 }

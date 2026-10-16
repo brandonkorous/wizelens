@@ -1,0 +1,99 @@
+import type { IncomingMessage, ServerResponse } from "node:http";
+import type { Tracer } from "@opentelemetry/api";
+import type { Trace } from "@wizeworks/lens-core";
+import type { TraceStore } from "./store.js";
+
+export interface WizeLensOptions {
+  /** Service name shown in the dashboard, e.g. "orders-api". */
+  serviceName: string;
+  /** Base path for the dashboard and API. Default "/_wizelens". */
+  basePath?: string;
+  /** Turn WizeLens on. Default: on unless NODE_ENV is "production". */
+  enabled?: boolean;
+  /** Where traces live. "sqlite" keeps them across restarts. Default "sqlite". */
+  storage?: "sqlite" | "memory";
+  /** SQLite file for `storage: "sqlite"`. Default `{cwd}/.wizelens/traces.db`. */
+  storagePath?: string;
+  /** Max traces kept (memory and file). Default 2000. */
+  maxTraces?: number;
+  /** Max trace age in ms (memory and file). Default 24 h. */
+  maxAgeMs?: number;
+  /** Expose the read-only MCP endpoint at `{basePath}/mcp`. Default false. */
+  enableMcp?: boolean;
+  /** Key fragments to redact. Default: the contract list. */
+  redactKeys?: string[];
+  /** Override the `X-WizeLens-Endpoint` value (useful behind proxies). */
+  publicEndpoint?: string;
+  /** Override where the dashboard build lives. */
+  uiDir?: string;
+  /** Capture outgoing fetch / undici calls. Default true. */
+  instrumentFetch?: boolean;
+  /** Also write wizelens logs to the console. Default false. */
+  logToConsole?: boolean;
+  /** Where MCP audit lines go. Default console.info. */
+  audit?: (line: string) => void;
+  /** Keep the first 16 KB of text and JSON response bodies. Default false. */
+  captureResponseBody?: boolean;
+  /** Queries at or over this many ms are slow. Default 100. */
+  slowQueryMs?: number;
+  /** Repeats that make an N+1 pattern. Default 5. */
+  nPlusOneThreshold?: number;
+}
+
+export interface DbCallInfo {
+  /** OTel `db.system.name`, e.g. "sqlite", "postgresql", "mysql". */
+  system: string;
+  /** Adapter name for `wizelens.db.adapter`, e.g. "node-sqlite", "pg", "prisma". */
+  adapter?: string;
+  /** Database name for `db.namespace`. */
+  namespace?: string;
+  /** Override the parsed operation (SELECT, INSERT, ...). */
+  operation?: string;
+  /** Override the parsed table / collection. */
+  collection?: string;
+}
+
+export type LogFn = (message: string, attributes?: Record<string, unknown>) => void;
+
+export interface WizeLensLogger {
+  trace: LogFn;
+  debug: LogFn;
+  info: LogFn;
+  warn: LogFn;
+  error: LogFn;
+  critical: LogFn;
+  /** Logger with a custom category. */
+  child(category: string): WizeLensLogger;
+}
+
+export type Next = (err?: unknown) => void;
+
+export type Req = IncomingMessage & { originalUrl?: string; body?: unknown; route?: { path?: unknown }; baseUrl?: string };
+
+export interface WizeLens {
+  readonly enabled: boolean;
+  readonly serviceName: string;
+  readonly basePath: string;
+  readonly store: TraceStore;
+  /** The SQLite file in use, or null when traces are kept in memory only. */
+  readonly storagePath: string | null;
+  readonly tracer: Tracer;
+  /** Express / Connect middleware. Traces requests and serves `{basePath}`. Mount it first. */
+  middleware: (req: IncomingMessage, res: ServerResponse, next: Next) => void;
+  /** Express error middleware. Mount it after your routes to record exceptions. */
+  errorMiddleware: (err: unknown, req: IncomingMessage, res: ServerResponse, next: Next) => void;
+  /** Plain Node handler for `{basePath}` only. Resolves false when the request is not for WizeLens. */
+  handler: (req: IncomingMessage, res: ServerResponse) => Promise<boolean>;
+  /** Wrap one database call (sync or async). Driver-level floor for any database. */
+  traceDb<T>(info: DbCallInfo, sql: string, params: unknown, fn: () => T): T;
+  logger: WizeLensLogger;
+  /** Record an exception on the active span. */
+  recordException(err: unknown): void;
+  /** Tag the current request, e.g. tag("cache", "hit") shows as "cache:hit". No-op outside a request. */
+  tag(key: string, value?: string): void;
+  /** Set the user of the current request (`enduser.id`). No-op outside a request. */
+  setUser(id: string): void;
+  /** Get one trace, optionally federated across downstream services. */
+  getTrace(traceId: string, federate?: boolean, hop?: number): Promise<Trace | undefined>;
+  shutdown(): Promise<void>;
+}

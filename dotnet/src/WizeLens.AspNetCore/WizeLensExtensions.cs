@@ -27,12 +27,12 @@ public static class WizeLensExtensions
             return options;
         });
         services.AddSingleton(sp => new TraceStore(sp.GetRequiredService<WizeLensOptions>().MaxTraces));
-        // Registered before the listener: hosted services stop in reverse order, so capture stops first
-        // and the final flush then writes everything.
+        // Registered before the listener: hosted services stop in reverse order, so the last flush sees everything.
         services.AddSingleton<TraceStorageService>();
         services.AddHostedService(sp => sp.GetRequiredService<TraceStorageService>());
         services.AddSingleton<WizeLensActivityListener>();
         services.AddHostedService(sp => sp.GetRequiredService<WizeLensActivityListener>());
+        services.AddHostedService<EndpointObserver>();
         services.AddSingleton<ILoggerProvider, WizeLensLoggerProvider>();
 
         services.AddSingleton<TraceFederation>();
@@ -50,10 +50,7 @@ public static class WizeLensExtensions
         return services;
     }
 
-    /// <summary>
-    /// Adds WizeLens middleware and maps <c>/_wizelens</c> (UI, API and, when enabled, MCP).
-    /// Does nothing when WizeLens is disabled. Call it early in the pipeline.
-    /// </summary>
+    /// <summary>Adds the middleware and maps <c>/_wizelens</c> (UI, API, MCP); call it early; does nothing when disabled.</summary>
     public static IApplicationBuilder UseWizeLens(this IApplicationBuilder app)
     {
         var options = app.ApplicationServices.GetRequiredService<WizeLensOptions>();
@@ -64,10 +61,7 @@ public static class WizeLensExtensions
         return app;
     }
 
-    /// <summary>
-    /// Maps WizeLens endpoints yourself. Only needed when the app builder is not a <c>WebApplication</c>
-    /// (then call <c>app.UseWizeLens()</c> plus <c>endpoints.MapWizeLens()</c> inside <c>UseEndpoints</c>).
-    /// </summary>
+    /// <summary>Maps the endpoints yourself when the app is not a <c>WebApplication</c> (call it inside <c>UseEndpoints</c>).</summary>
     public static IEndpointRouteBuilder MapWizeLens(this IEndpointRouteBuilder endpoints)
     {
         var options = endpoints.ServiceProvider.GetRequiredService<WizeLensOptions>();

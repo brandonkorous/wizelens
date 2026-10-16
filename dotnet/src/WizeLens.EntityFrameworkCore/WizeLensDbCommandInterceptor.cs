@@ -6,11 +6,7 @@ using WizeLens.Data;
 
 namespace WizeLens.EntityFrameworkCore;
 
-/// <summary>
-/// Records every EF Core command as a db span with <c>wizelens.db.adapter = efcore</c>.
-/// If the connection is already a <see cref="ProfiledDbConnection"/>, the command records itself, so the
-/// interceptor only relabels it (no double counting).
-/// </summary>
+/// <summary>Records EF Core commands as db spans (adapter "efcore"); on a <see cref="ProfiledDbConnection"/> it only relabels.</summary>
 public sealed class WizeLensDbCommandInterceptor : DbCommandInterceptor
 {
     public const string AdapterName = "efcore";

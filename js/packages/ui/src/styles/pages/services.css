@@ -1,0 +1,18 @@
+/* Services page: service table, detail panel, and dependency map. */
+.wl-svc-detail .wl-side-head { width: 100%; margin: 0; }
+.wl-svc-detail .wl-side-head h2 { margin-right: auto; }
+.wl-svc-endpoints td, .wl-svc-endpoints th { padding: 8px 6px; font-size: 13px; }
+.wl-svc-edges { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+.wl-svc-edges li { display: flex; justify-content: space-between; gap: 10px; }
+
+.wl-dep-map { overflow-x: auto; padding: 4px 2px; }
+.wl-dep-node { cursor: pointer; }
+.wl-dep-node rect { fill: var(--wl-surface); stroke: var(--wl-line-strong); }
+.wl-dep-node:hover rect { stroke: var(--wl-accent); }
+.wl-dep-node.wl-selected rect { fill: var(--wl-accent-soft); stroke: var(--wl-accent); }
+.wl-dep-label { display: flex; align-items: center; gap: 8px; height: 100%; font-size: 13.5px; color: var(--wl-fg); }
+.wl-dep-label svg { flex: none; color: var(--wl-fg-2); }
+.wl-dep-label .wl-dot { margin-left: auto; }
+.wl-dep-edge path { stroke: var(--wl-line-strong); stroke-width: 1.5; }
+.wl-dep-edge.wl-failing path { stroke: var(--wl-red); }
+.wl-dep-edge text { font-size: 11px; fill: var(--wl-muted); font-variant-numeric: tabular-nums; }

@@ -1,0 +1,4 @@
+/* Settings page: preference controls and notes. */
+.wl-settings-prefs { display: flex; flex-wrap: wrap; gap: 16px; }
+.wl-settings-prefs label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--wl-fg-2); }
+.wl-settings-note { margin: 8px 0 12px; }

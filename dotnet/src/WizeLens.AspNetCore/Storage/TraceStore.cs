@@ -3,16 +3,12 @@ using WizeLens.Model;
 
 namespace WizeLens.Storage;
 
-/// <summary>
-/// Thread-safe in-memory store of traces. It is the read path for the API and MCP.
-/// The oldest trace is dropped first when the count limit is hit; <see cref="PruneOlderThan"/> drops old ones.
-/// Changes are tracked so <see cref="SqliteTraceStorage"/> can write only what is new.
-/// </summary>
+/// <summary>Thread-safe in-memory trace store (the read path); drops the oldest first and tracks changes for SQLite.</summary>
 public sealed class TraceStore
 {
     public const string SessionAttribute = "wizelens.browser.session";
 
-    private readonly ConcurrentDictionary<string, Entry> _traces = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, TraceEntry> _traces = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentQueue<string> _order = new();
     private readonly ConcurrentDictionary<string, byte> _selfEndpoints = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, byte> _dirty = new(StringComparer.OrdinalIgnoreCase);
@@ -76,11 +72,17 @@ public sealed class TraceStore
     /// <summary>All traces that have at least one span, newest first.</summary>
     public IReadOnlyList<Trace> All() => Newest(int.MaxValue, session: null);
 
-    /// <summary>
-    /// Newest traces first. With <paramref name="session"/>, only traces that have a browser span from that tab.
-    /// </summary>
+    /// <summary>Newest traces first. With <paramref name="session"/>, only traces with a browser span from that tab.</summary>
     public IReadOnlyList<TraceSummary> Summaries(int limit, string? session = null) =>
         [.. Newest(Math.Max(0, limit), session).Select(t => t.ToSummary())];
+
+    /// <summary>Newest full traces first. With <paramref name="sinceMs"/>, only traces active at or after that time.</summary>
+    public IReadOnlyList<Trace> Recent(int limit, double? sinceMs = null)
+    {
+        var traces = Newest(int.MaxValue, session: null);
+        var picked = sinceMs is { } since ? traces.Where(t => t.StartMs + t.DurationMs >= since) : traces;
+        return [.. picked.Take(Math.Max(0, limit))];
+    }
 
     /// <summary>Drops traces that started before <paramref name="cutoffMs"/> (Unix ms).</summary>
     public int PruneOlderThan(double cutoffMs)
@@ -176,7 +178,7 @@ public sealed class TraceStore
 
     private List<Trace> Newest(int limit, string? session)
     {
-        var picked = new List<Entry>();
+        var picked = new List<TraceEntry>();
         foreach (var entry in _traces.Values)
         {
             lock (entry)
@@ -195,13 +197,13 @@ public sealed class TraceStore
         return result;
     }
 
-    private Entry GetOrCreate(string traceId)
+    private TraceEntry GetOrCreate(string traceId)
     {
         if (_traces.TryGetValue(traceId, out var existing)) return existing;
         lock (_evictLock)
         {
             if (_traces.TryGetValue(traceId, out existing)) return existing;
-            var entry = new Entry(traceId.ToLowerInvariant());
+            var entry = new TraceEntry(traceId.ToLowerInvariant());
             _traces[traceId] = entry;
             _order.Enqueue(traceId);
             while (_traces.Count > _maxTraces && _order.TryDequeue(out var oldest))
@@ -212,38 +214,5 @@ public sealed class TraceStore
         }
     }
 
-    private sealed class Entry(string traceId)
-    {
-        public string TraceId { get; } = traceId;
-        public List<Span> Spans { get; } = [];
-        public List<LogRecord> Logs { get; } = [];
-        public List<string> Remotes { get; } = [];
-        public HashSet<string> Sessions { get; } = new(StringComparer.Ordinal);
-        public double CreatedMs { get; } = NowMs();
-        public double StartMs { get; set; } = double.MaxValue;
-        public double UpdatedMs { get; set; } = NowMs();
-        public int FlushedSpans { get; set; }
-        public int FlushedLogs { get; set; }
-
-        /// <summary>The time used for age limits: first span start, or when the entry was made.</summary>
-        public double AgeMs => StartMs == double.MaxValue ? CreatedMs : StartMs;
-
-        public void Touch() => UpdatedMs = NowMs();
-
-        public Trace Build() => TraceBuilder.Build(TraceId, Spans, Logs, Remotes);
-    }
-
     internal static double NowMs() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 }
-
-/// <summary>A trace as read from disk.</summary>
-internal sealed record StoredTrace(
-    string TraceId, double StartMs, double UpdatedMs, List<string> Remotes, List<Span> Spans, List<LogRecord> Logs);
-
-/// <summary>
-/// What changed in one trace since the last flush. <see cref="Remotes"/> is always the full list.
-/// <see cref="FirstLogSeq"/> is the sequence number of the first log in <see cref="NewLogs"/>.
-/// </summary>
-internal sealed record TraceChanges(
-    string TraceId, double StartMs, double UpdatedMs, List<string> Remotes,
-    List<Span> NewSpans, int FirstLogSeq, List<LogRecord> NewLogs);

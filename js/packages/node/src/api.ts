@@ -1,0 +1,95 @@
+import type { IncomingMessage, ServerResponse } from "node:http";
+import { HEADER_HOP, type ServiceInfo, type Trace, type TraceSummary } from "@wizeworks/lens-core";
+import { sanitizeClientSpan } from "./client-spans.js";
+import { firstHeader, readJson, sendJson, setCors } from "./http-util.js";
+import { handleMcp, type McpDataSource } from "./mcp.js";
+import type { TraceStore } from "./store.js";
+import type { Req } from "./types.js";
+import { serveUi } from "./ui.js";
+
+const MAX_CLIENT_SPANS = 500;
+
+export interface ApiDeps {
+  basePath: string;
+  store: TraceStore;
+  redactKeys: readonly string[];
+  uiDir: string | null;
+  enableMcp: boolean;
+  mcp: McpDataSource;
+  info: () => ServiceInfo;
+  getTrace: (traceId: string, federate: boolean, hop: number) => Promise<Trace | undefined>;
+}
+
+const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+
+/** `api/traces`: summaries by default, full local traces with `full=true` (and `since`). */
+export function listTraces(store: TraceStore, params: URLSearchParams): TraceSummary[] | Trace[] {
+  const full = params.get("full") === "true";
+  const session = params.get("session") || undefined;
+  const limit = clamp(Number(params.get("limit")) || (full ? 1000 : 50), 1, full ? 5000 : 1000);
+  if (!full) return store.list(limit, session);
+  const since = Number(params.get("since"));
+  const all = store.all(session);
+  const recent = params.has("since") && Number.isFinite(since) ? all.filter((t) => t.startMs + t.durationMs >= since) : all;
+  return recent.slice(0, limit);
+}
+
+async function sendTrace(d: ApiDeps, traceId: string, req: IncomingMessage, res: ServerResponse, url: URL): Promise<void> {
+  const hop = Number(firstHeader(req.headers[HEADER_HOP.toLowerCase()])) || 0;
+  const result = await d.getTrace(traceId, url.searchParams.get("federate") === "true", hop);
+  if (result) sendJson(res, 200, result);
+  else sendJson(res, 404, { error: "trace not found" });
+}
+
+async function receiveClientSpans(d: ApiDeps, req: Req, res: ServerResponse): Promise<void> {
+  try {
+    const body = (await readJson(req)) as { spans?: unknown } | undefined;
+    const spans = Array.isArray(body?.spans) ? body.spans.slice(0, MAX_CLIENT_SPANS) : [];
+    for (const raw of spans) {
+      const span = sanitizeClientSpan(raw, d.redactKeys);
+      if (span) d.store.addSpan(span);
+    }
+    res.writeHead(204).end();
+  } catch {
+    sendJson(res, 400, { error: "invalid body" });
+  }
+}
+
+async function handleApi(d: ApiDeps, sub: string, method: string, req: Req, res: ServerResponse, url: URL): Promise<void> {
+  if (sub === "api/info" && method === "GET") return sendJson(res, 200, d.info());
+  if (sub === "api/traces" && method === "GET") return sendJson(res, 200, listTraces(d.store, url.searchParams));
+  const traceMatch = /^api\/traces\/([0-9a-f]{32})$/.exec(sub);
+  if (traceMatch && method === "GET") return sendTrace(d, traceMatch[1]!, req, res, url);
+  if (sub === "api/client-spans" && method === "POST") return receiveClientSpans(d, req, res);
+  sendJson(res, 404, { error: "not found" });
+}
+
+async function handleMcpRoute(d: ApiDeps, req: Req, res: ServerResponse, method: string): Promise<void> {
+  if (!d.enableMcp) return sendJson(res, 404, { error: "MCP is disabled. Set enableMcp: true." });
+  const body = method === "POST" ? await readJson(req) : undefined;
+  await handleMcp(d.mcp, req, res, body);
+}
+
+/** Plain Node handler for `{basePath}`: API, MCP, and the dashboard. Resolves false for other paths. */
+export function createHandler(d: ApiDeps) {
+  return async function handler(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
+    const r = req as Req;
+    const url = new URL(r.originalUrl ?? r.url ?? "/", "http://localhost");
+    const path = url.pathname;
+    if (path !== d.basePath && !path.startsWith(d.basePath + "/")) return false;
+    if (path === d.basePath) {
+      res.writeHead(302, { Location: `${d.basePath}/${url.search}` });
+      res.end();
+      return true;
+    }
+    const sub = path.slice(d.basePath.length + 1);
+    const method = req.method ?? "GET";
+    setCors(res);
+    if (method === "OPTIONS") res.writeHead(204).end();
+    else if (sub === "mcp") await handleMcpRoute(d, r, res, method);
+    else if (sub.startsWith("api/")) await handleApi(d, sub, method, r, res, url);
+    else if (method !== "GET" && method !== "HEAD") res.writeHead(405).end();
+    else await serveUi(d.uiDir, sub, res);
+    return true;
+  };
+}

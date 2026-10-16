@@ -1,0 +1,90 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+
+namespace WizeLens.Tests;
+
+[Collection(TestApp.Collection)]
+public class CaptureTests
+{
+    [Fact]
+    public async Task Server_span_has_client_headers_request_id_and_routing()
+    {
+        await using var app = await TestApp.StartAsync(a => a.MapGet("/items/{id}", (int id) => Results.Ok(new { id })));
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/items/7");
+        request.Headers.Add("X-Forwarded-For", "203.0.113.42, 10.0.0.1");
+        request.Headers.Add("User-Agent", "WizeLensTest/1.0");
+        request.Headers.Add("Authorization", "Bearer secret-value");
+        var root = TestApp.Root(await app.TraceAsync(await app.Client.SendAsync(request)));
+
+        Assert.Equal("203.0.113.42", root.Attr("client.address"));
+        Assert.Equal("WizeLensTest/1.0", root.Attr("user_agent.original"));
+        Assert.Equal("[redacted]", root.Attr("http.request.header.authorization"));
+        Assert.Equal("application/json; charset=utf-8", root.Attr("http.response.header.content-type"));
+        Assert.False(string.IsNullOrEmpty(root.Attr("wizelens.request.id")));
+        Assert.NotNull(root.Attr("wizelens.server.routed_ms"));
+        Assert.True(double.Parse(root.Attr("http.response.body.size")!) > 0);
+        Assert.Null(root.Attr("wizelens.response.body"));
+    }
+
+    [Fact]
+    public async Task Tags_and_user_are_recorded()
+    {
+        await using var app = await TestApp.StartAsync(a =>
+        {
+            a.Use((context, next) =>
+            {
+                context.User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Name, "ada")], "test"));
+                return next(context);
+            });
+            a.MapGet("/tagged", () =>
+            {
+                WizeLensRequest.Tag("catalog");
+                WizeLensRequest.Tag("cache", "hit");
+                return "ok";
+            });
+        });
+        var root = TestApp.Root(await app.TraceAsync(await app.Client.GetAsync("/tagged")));
+        Assert.Equal("", root.Attr("wizelens.tag.catalog"));
+        Assert.Equal("hit", root.Attr("wizelens.tag.cache"));
+        Assert.Equal("ada", root.Attr("enduser.id"));
+    }
+
+    [Fact]
+    public void Tag_outside_a_request_does_nothing() => WizeLensRequest.Tag("lonely", "value");
+
+    [Fact]
+    public async Task Response_body_is_kept_when_enabled()
+    {
+        await using var app = await TestApp.StartAsync(
+            a => a.MapGet("/json", () => Results.Ok(new { name = "ada" })),
+            o => o.CaptureResponseBody = true);
+        var response = await app.Client.GetAsync("/json");
+        Assert.Equal("""{"name":"ada"}""", await response.Content.ReadAsStringAsync());
+        var root = TestApp.Root(await app.TraceAsync(response));
+        Assert.Equal("""{"name":"ada"}""", root.Attr("wizelens.response.body"));
+        Assert.Equal("false", root.Attr("wizelens.response.body.truncated")?.ToLowerInvariant());
+    }
+
+    [Fact]
+    public async Task Large_body_is_cut_and_binary_is_skipped()
+    {
+        var big = new string('x', 40_000);
+        await using var app = await TestApp.StartAsync(a =>
+        {
+            a.MapGet("/big", () => Results.Text(big, "text/plain"));
+            a.MapGet("/bin", () => Results.Bytes(new byte[2048], "application/octet-stream"));
+        }, o => o.CaptureResponseBody = true);
+
+        var bigResponse = await app.Client.GetAsync("/big");
+        Assert.Equal(big, await bigResponse.Content.ReadAsStringAsync());
+        var bigRoot = TestApp.Root(await app.TraceAsync(bigResponse));
+        Assert.Equal(16 * 1024, bigRoot.Attr("wizelens.response.body")!.Length);
+        Assert.Equal("true", bigRoot.Attr("wizelens.response.body.truncated")?.ToLowerInvariant());
+        Assert.Equal("40000", bigRoot.Attr("http.response.body.size"));
+
+        var binRoot = TestApp.Root(await app.TraceAsync(await app.Client.GetAsync("/bin")));
+        Assert.Null(binRoot.Attr("wizelens.response.body"));
+        Assert.Equal("2048", binRoot.Attr("http.response.body.size"));
+    }
+}

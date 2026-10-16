@@ -4,16 +4,16 @@
   --fg: #17181c;
   --muted: #61666f;
   --line: #e2e4e9;
-  --accent: #5b4ee6;
+  --accent: #2563eb;
   --ok: #1d8348;
   --bad: #c42b2b;
   color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #0f1115; --surface: #171a20; --fg: #e7e9ee; --muted: #98a1ad; --line: #2a2f38; --accent: #8f85ff; --ok: #4cc38a; --bad: #ff6b66; }
+  :root { --bg: #0f1115; --surface: #171a20; --fg: #e7e9ee; --muted: #98a1ad; --line: #2a2f38; --accent: #5b8def; --ok: #4cc38a; --bad: #ff6b66; }
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
 a { color: var(--accent); }
 .page { max-width: 880px; margin: 0 auto; padding: 40px 16px 120px; }
 h1 { margin: 0 0 4px; font-size: 26px; }
@@ -33,3 +33,17 @@ header p { margin: 0 0 24px; color: var(--muted); }
 .bad { color: var(--bad); font-weight: 700; }
 pre { margin: 0; padding: 14px; max-height: 420px; overflow: auto; font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; }
 footer { margin-top: 32px; color: var(--muted); font-size: 13px; }
+.nav { display: flex; gap: 6px; margin: 8px 0 12px; }
+.nav a { padding: 4px 10px; border-radius: 6px; color: var(--muted); text-decoration: none; }
+.nav a.active, .nav a:hover { background: var(--surface); color: var(--fg); }
+h2 { margin: 8px 0 12px; font-size: 20px; }
+.muted { color: var(--muted); font-size: 13px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.card { display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--fg); text-decoration: none; }
+.card:hover { border-color: var(--accent); }
+.swatch { display: block; height: 72px; border-radius: 8px; }
+.price { font-weight: 700; }
+.live { color: var(--ok); font-size: 12px; }
+.detail { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.gallery img { display: block; max-width: 100%; height: auto; border-radius: 8px; }
+.thumbs { display: flex; gap: 8px; margin-top: 8px; }

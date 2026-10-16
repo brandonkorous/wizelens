@@ -5,6 +5,7 @@
   "scripts": {
     "build": "pnpm -r --filter \"./js/packages/*\" build",
     "test": "pnpm -r --filter \"./js/packages/*\" test",
+    "check:size": "node scripts/check-size.mjs",
     "dev:web": "pnpm --filter sample-web dev",
     "dev:orders": "pnpm --filter sample-orders-api dev"
   }

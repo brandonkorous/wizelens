@@ -65,11 +65,35 @@ export interface Trace extends TraceSummary {
   remotes: string[];
 }
 
+/** Where WizeLens runs: inside the app, as a local hub, or in the cloud. */
+export type HostMode = "in-app" | "hub" | "cloud";
+
+/** Optional features a host offers. The dashboard shows or hides parts by these, never by the mode name. */
+export type Capability = "federation" | "environments" | "accounts" | "alerts" | "sharing" | "serverStats";
+
+/** What an in-app add-on offers today. Also the default when a host does not say. */
+export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];
+
 export interface ServiceInfo {
+  /** Absent on older add-ons; read it as "in-app". */
+  mode?: HostMode;
+  /** Absent on older add-ons; read it as IN_APP_CAPABILITIES. */
+  capabilities?: Capability[];
   service: string;
   version: string;
   runtime: string;
   mcp: boolean;
+  /** For example "Development". From ASPNETCORE_ENVIRONMENT or NODE_ENV. */
+  environment?: string;
+  /** Machine name of the service. */
+  host?: string;
+  /** When the service started (epoch ms). */
+  startedMs?: number;
+  storage?: { kind: "sqlite" | "memory"; maxTraces: number; maxAgeMs: number };
+  analysis?: { slowQueryMs: number; nPlusOneThreshold: number };
+  redactKeys?: string[];
+  /** True when response bodies are captured. */
+  captureResponseBody?: boolean;
 }
 
 export const HEADER_TRACE = "X-WizeLens-Trace";
@@ -78,7 +102,10 @@ export const HEADER_HOP = "X-WizeLens-Hop";
 export const HEADER_TRACEPARENT = "traceparent";
 export const MAX_FEDERATION_HOPS = 5;
 export const DEFAULT_BASE_PATH = "/_wizelens";
-/** Browser span attribute that ties a span to one browser tab. */
-export const ATTR_BROWSER_SESSION = "wizelens.browser.session";
 /** sessionStorage key that holds the per-tab session id. */
 export const SESSION_STORAGE_KEY = "wizelens.session";
+
+/** Parts of the dashboard trace page a link can open: `#/traces/<id>/<view>`. */
+export const TRACE_VIEWS = ["timeline", "sql", "http", "logs", "errors", "insights"] as const;
+export type TraceView = (typeof TRACE_VIEWS)[number];
+export const isTraceView = (v: string | undefined): v is TraceView => (TRACE_VIEWS as readonly string[]).includes(v ?? "");

@@ -1,0 +1,70 @@
+/* Design tokens. Light is the default; dark follows data-theme="dark", or the OS with data-theme="system". */
+:root {
+  --wl-bg: #f6f8fb;
+  --wl-surface: #ffffff;
+  --wl-surface-2: #f2f4f8;
+  --wl-surface-3: #e9edf3;
+  --wl-fg: #111827;
+  --wl-fg-2: #374151;
+  --wl-muted: #6b7280;
+  --wl-line: #e6e9ef;
+  --wl-line-strong: #d5dae2;
+  --wl-accent: #2563eb;
+  --wl-accent-soft: #eaf1ff;
+  --wl-accent-text: #1d4ed8;
+  --wl-ok: #16a34a;
+  --wl-ok-soft: #e8f7ee;
+  --wl-warn: #c2410c;
+  --wl-warn-soft: #fff1e6;
+  --wl-amber-text: #9a6700;
+  --wl-amber-soft: #fff6dc;
+  --wl-error: #e63946;
+  --wl-error-soft: #fdecee;
+  --wl-highlight: #fff6d6;
+  --wl-selected: #eaf1ff;
+  --wl-code-bg: #f6f8fb;
+  --wl-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --wl-shadow-pop: 0 12px 32px rgba(16, 24, 40, 0.14);
+  --wl-chart-bar: #dbe6fd;
+  --wl-chart-grid: #eef1f5;
+  --wl-blades: #1f1f1f;
+  --wl-lens: #2563eb;
+
+  --wl-blue: #2563eb; --wl-green: #22c55e; --wl-amber: #f4b400; --wl-orange: #f97316; --wl-red: #e63946; --wl-slate: #64748b; --wl-charcoal: #1f1f1f; --wl-violet: #8b5cf6;
+  --wl-h-info: var(--wl-blue); --wl-h-success: var(--wl-green); --wl-h-opportunity: var(--wl-amber); --wl-h-warning: var(--wl-orange); --wl-h-critical: var(--wl-red); --wl-h-neutral: var(--wl-slate);
+  --wl-k-server: var(--wl-blue); --wl-k-internal: #7aa2f7; --wl-k-db: var(--wl-amber); --wl-k-client: var(--wl-slate); --wl-k-browser: #94a3b8; --wl-k-render: var(--wl-green);
+  --wl-s0: #2563eb; --wl-s1: #0d8f7a; --wl-s2: #d4590a; --wl-s3: #c2347a; --wl-s4: #7c3aed; --wl-s5: #8a6d00; --wl-s6: #0e7490; --wl-s7: #3c7d24;
+
+  --wl-mono: ui-monospace, SFMono-Regular, "Cascadia Code", Menlo, Consolas, monospace;
+  --wl-sans: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --wl-sidebar-w: 224px;
+  --wl-topbar-h: 68px;
+  --wl-radius: 12px;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --wl-bg: #0f1115; --wl-surface: #171a1f; --wl-surface-2: #1e2228; --wl-surface-3: #272c33;
+  --wl-fg: #eceef1; --wl-fg-2: #c9ced6; --wl-muted: #98a1ad; --wl-line: #272b32; --wl-line-strong: #353a42;
+  --wl-accent: #5b8def; --wl-accent-soft: #1c2a47; --wl-accent-text: #8fb1f5;
+  --wl-ok: #4ade80; --wl-ok-soft: #12291b; --wl-warn: #fb923c; --wl-warn-soft: #3a2414; --wl-amber-text: #f4c542; --wl-amber-soft: #2f2710;
+  --wl-error: #ff6b74; --wl-error-soft: #3a1b1f; --wl-highlight: #3a3415; --wl-selected: #1c2a47; --wl-code-bg: #12151a;
+  --wl-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); --wl-shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --wl-chart-bar: #23324f; --wl-chart-grid: #22262d; --wl-blades: #f5f5f5; --wl-lens: #5b8def;
+  --wl-s0: #5b8def; --wl-s1: #3fcfb4; --wl-s2: #ff9a52; --wl-s3: #ff6fb5; --wl-s4: #a78bfa; --wl-s5: #e0c040; --wl-s6: #38bdf8; --wl-s7: #7fd45f;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    --wl-bg: #0f1115; --wl-surface: #171a1f; --wl-surface-2: #1e2228; --wl-surface-3: #272c33;
+    --wl-fg: #eceef1; --wl-fg-2: #c9ced6; --wl-muted: #98a1ad; --wl-line: #272b32; --wl-line-strong: #353a42;
+    --wl-accent: #5b8def; --wl-accent-soft: #1c2a47; --wl-accent-text: #8fb1f5;
+    --wl-ok: #4ade80; --wl-ok-soft: #12291b; --wl-warn: #fb923c; --wl-warn-soft: #3a2414; --wl-amber-text: #f4c542; --wl-amber-soft: #2f2710;
+    --wl-error: #ff6b74; --wl-error-soft: #3a1b1f; --wl-highlight: #3a3415; --wl-selected: #1c2a47; --wl-code-bg: #12151a;
+    --wl-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); --wl-shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --wl-chart-bar: #23324f; --wl-chart-grid: #22262d; --wl-blades: #f5f5f5; --wl-lens: #5b8def;
+    --wl-s0: #5b8def; --wl-s1: #3fcfb4; --wl-s2: #ff9a52; --wl-s3: #ff6fb5; --wl-s4: #a78bfa; --wl-s5: #e0c040; --wl-s6: #38bdf8; --wl-s7: #7fd45f;
+    color-scheme: dark;
+  }
+}

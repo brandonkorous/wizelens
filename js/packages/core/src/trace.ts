@@ -1,3 +1,4 @@
+import { adjustClockSkew, shiftLogs } from "./skew.js";
 import type { LogRecord, Span, SpanStatus, Trace, TraceSummary } from "./types.js";
 
 /** Pick the root span: no parent, else parent not in the set (earliest), else earliest. */
@@ -22,8 +23,40 @@ function attrNumber(span: Span | undefined, key: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** The request's entry server span: one that no other server call started. Safe with clock skew between services. */
+export function entryServerSpan(spans: readonly Span[]): Span | undefined {
+  const byId = new Map(spans.map((s) => [s.spanId, s]));
+  const servers = spans.filter((s) => s.category === "http.server").sort((a, b) => a.startMs - b.startMs);
+  const isEntry = (s: Span) => {
+    const parent = s.parentSpanId ? byId.get(s.parentSpanId) : undefined;
+    return !parent || parent.category === "browser";
+  };
+  return servers.find(isEntry) ?? servers[0];
+}
+
 export function isErrorSpan(span: Span): boolean {
   return span.status === "error" || span.events.some((e) => e.name === "exception");
+}
+
+function timeBounds(spans: readonly Span[], logs: readonly LogRecord[]): { start: number; end: number } {
+  let start = Infinity;
+  let end = -Infinity;
+  for (const s of spans) {
+    start = Math.min(start, s.startMs);
+    end = Math.max(end, s.startMs + s.durationMs);
+  }
+  if (spans.length === 0) {
+    for (const l of logs) {
+      start = Math.min(start, l.timeMs);
+      end = Math.max(end, l.timeMs);
+    }
+  }
+  return Number.isFinite(start) ? { start, end } : { start: 0, end: 0 };
+}
+
+function statusOf(spans: readonly Span[]): SpanStatus {
+  if (spans.some((s) => s.status === "error")) return "error";
+  return spans.some((s) => s.status === "ok") ? "ok" : "unset";
 }
 
 /** Build a full Trace from parts. Sorts spans and logs, computes summary fields. */
@@ -33,30 +66,12 @@ export function buildTrace(
   logs: readonly LogRecord[],
   remotes: Iterable<string>,
 ): Trace {
-  const sortedSpans = [...spans].sort((a, b) => a.startMs - b.startMs);
-  const sortedLogs = [...logs].sort((a, b) => a.timeMs - b.timeMs);
+  const fixed = adjustClockSkew(spans);
+  const sortedSpans = fixed.spans.sort((a, b) => a.startMs - b.startMs);
+  const sortedLogs = shiftLogs(logs, fixed.offsets).sort((a, b) => a.timeMs - b.timeMs);
   const root = findRootSpan(sortedSpans);
-  let start = Infinity;
-  let end = -Infinity;
-  for (const s of sortedSpans) {
-    start = Math.min(start, s.startMs);
-    end = Math.max(end, s.startMs + s.durationMs);
-  }
-  if (sortedSpans.length === 0) {
-    for (const l of sortedLogs) {
-      start = Math.min(start, l.timeMs);
-      end = Math.max(end, l.timeMs);
-    }
-  }
-  if (!Number.isFinite(start)) {
-    start = 0;
-    end = 0;
-  }
-  const status: SpanStatus = sortedSpans.some((s) => s.status === "error")
-    ? "error"
-    : sortedSpans.some((s) => s.status === "ok")
-      ? "ok"
-      : "unset";
+  const { start, end } = timeBounds(sortedSpans, sortedLogs);
+  const status = statusOf(sortedSpans);
   const services = new Set<string>();
   for (const s of sortedSpans) services.add(s.service);
   for (const l of sortedLogs) services.add(l.service);

@@ -1,0 +1,29 @@
+/* Overview page: card row, chart rows, and the insight cards. */
+.wl-ov-cards { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.wl-ov-top { grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); }
+.wl-ov-mid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
+.wl-ov-note { margin: 14px 0 0; color: var(--wl-muted); font-size: 12px; }
+.wl-ov-path { display: inline-block; max-width: 260px; vertical-align: middle; }
+
+.wl-ov-insights { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.wl-ov-insight { display: grid; grid-template-columns: 48px minmax(0, 1fr) 20px; align-items: start; gap: 14px; padding: 6px 18px; color: var(--wl-fg); border-left: 1px solid var(--wl-line); }
+.wl-ov-insight:first-child { border-left: 0; padding-left: 0; }
+.wl-ov-insight:hover { text-decoration: none; }
+.wl-ov-insight:hover strong { color: var(--wl-accent-text); }
+.wl-ov-insight-icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 10px; }
+.wl-ov-insight-icon svg { width: 24px; height: 24px; }
+.wl-ov-area-database { background: var(--wl-error-soft); color: var(--wl-red); }
+.wl-ov-area-http { background: var(--wl-amber-soft); color: var(--wl-amber-text); }
+.wl-ov-area-render { background: var(--wl-accent-soft); color: var(--wl-accent); }
+.wl-ov-insight-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.wl-ov-insight-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+.wl-ov-insight-text { color: var(--wl-muted); font-size: 13.5px; line-height: 1.45; overflow-wrap: anywhere; }
+.wl-ov-insight-go { width: 18px; height: 18px; margin-top: 2px; color: var(--wl-muted); }
+
+@media (max-width: 1400px) { .wl-ov-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1200px) {
+  .wl-ov-top, .wl-ov-mid { grid-template-columns: minmax(0, 1fr); }
+  .wl-ov-insights { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .wl-ov-insight { border-left: 0; padding: 0; }
+}
+@media (max-width: 720px) { .wl-ov-cards { grid-template-columns: minmax(0, 1fr); } }

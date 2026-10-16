@@ -1,0 +1,57 @@
+import { useState } from "react";
+import { BarChart3 } from "lucide-react";
+import { series } from "@wizeworks/lens-core";
+import { fmtCount } from "../../format";
+import { BarList } from "../../ui/BarList";
+import { Empty, Panel } from "../../ui/Panel";
+import { TimeChart } from "../../ui/TimeChart";
+import { CHART_BUCKETS, type ErrorStats } from "./useErrorStats";
+
+export function ErrorsOverTimePanel({ stats }: { stats: ErrorStats }) {
+  const { events, w, starts } = stats;
+  const plain = series(events.filter((e) => !e.critical), (e) => e.timeMs, w.window, CHART_BUCKETS);
+  const critical = series(events.filter((e) => e.critical), (e) => e.timeMs, w.window, CHART_BUCKETS);
+  return (
+    <Panel title="Errors Over Time">
+      {events.length === 0 ? (
+        <Empty title="No errors in this time range">
+          <BarChart3 aria-hidden="true" />
+        </Empty>
+      ) : (
+        <TimeChart
+          starts={starts}
+          stackBars
+          bars={[
+            { label: "Critical errors", values: critical, color: "var(--wl-red)" },
+            { label: "Errors", values: plain, color: "color-mix(in srgb, var(--wl-red) 35%, transparent)" },
+          ]}
+        />
+      )}
+    </Panel>
+  );
+}
+
+const TOP_TYPES = 5;
+
+export function TopErrorTypesPanel({ stats }: { stats: ErrorStats }) {
+  const [all, setAll] = useState(false);
+  const types = all ? stats.types : stats.types.slice(0, TOP_TYPES);
+  const top = types[0]?.count ?? 0;
+  const items = types.map((t) => ({
+    key: t.type,
+    label: t.type,
+    value: t.count,
+    display: fmtCount(t.count),
+    color: t.count === top ? "var(--wl-red)" : "color-mix(in srgb, var(--wl-red) 50%, transparent)",
+  }));
+  const toggle = stats.types.length > TOP_TYPES && (
+    <button type="button" className="wl-view-all wl-link-btn" onClick={() => setAll(!all)}>
+      {all ? `Show top ${TOP_TYPES}` : `View all ${stats.types.length}`}
+    </button>
+  );
+  return (
+    <Panel title="Top Error Types" action={toggle}>
+      {items.length === 0 ? <Empty>No exception types yet.</Empty> : <BarList items={items} />}
+    </Panel>
+  );
+}

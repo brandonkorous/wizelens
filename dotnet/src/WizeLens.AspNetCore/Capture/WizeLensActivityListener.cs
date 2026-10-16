@@ -18,8 +18,7 @@ internal sealed class WizeLensActivityListener(TraceStore store, WizeLensOptions
     {
         if (!options.IsEnabled) return Task.CompletedTask;
 
-        // .NET 9+ replaces the query string in url.full with "*". WizeLens needs the query keys to find
-        // N+1 HTTP calls, so it turns that off and redacts sensitive query values itself (see ActivityMapper).
+        // .NET 9+ hides url.full query strings; WizeLens needs the keys for N+1 HTTP and redacts values itself.
         AppContext.SetSwitch("System.Net.Http.DisableUriRedaction", true);
 
         _listener = new ActivityListener

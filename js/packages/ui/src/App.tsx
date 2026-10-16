@@ -1,69 +1,77 @@
-import { useEffect, useState } from "react";
-import type { ServiceInfo } from "@wizeworks/lens-core";
-import { api } from "./api";
-import { TraceDetail } from "./components/TraceDetail";
-import { TraceList } from "./components/TraceList";
+import { type ComponentType, useEffect, useMemo } from "react";
+import { type Health, isFailed, requestRows } from "@wizeworks/lens-core";
+import { TraceDetail } from "./pages/trace/TraceDetailPage";
+import { useData, useWindowed } from "./data/hooks";
+import { applyTheme, useTheme } from "./data/prefs";
+import { DatabasePage } from "./pages/database/DatabasePage";
+import { ErrorsPage } from "./pages/errors/ErrorsPage";
+import { InsightsPage } from "./pages/insights/InsightsPage";
+import { LogsPage } from "./pages/logs/LogsPage";
+import { OverviewPage } from "./pages/overview/OverviewPage";
+import { RenderingPage } from "./pages/rendering/RenderingPage";
+import { RequestsPage } from "./pages/requests/RequestsPage";
+import { ServicesPage } from "./pages/services/ServicesPage";
+import { SettingsPage } from "./pages/settings/SettingsPage";
+import { TracesPage } from "./pages/traces/TracesPage";
+import { type PageId, type Route, useRoute } from "./routes";
+import { Sidebar } from "./shell/Sidebar";
+import { TopBar } from "./shell/TopBar";
 
-function useHashRoute(): string {
-  const [hash, setHash] = useState(() => window.location.hash);
-  useEffect(() => {
-    const onChange = () => setHash(window.location.hash);
-    window.addEventListener("hashchange", onChange);
-    return () => window.removeEventListener("hashchange", onChange);
-  }, []);
-  return hash.replace(/^#/, "") || "/";
+const PAGES: Record<Exclude<PageId, "trace">, ComponentType> = {
+  overview: OverviewPage,
+  requests: RequestsPage,
+  traces: TracesPage,
+  database: DatabasePage,
+  rendering: RenderingPage,
+  errors: ErrorsPage,
+  logs: LogsPage,
+  services: ServicesPage,
+  insights: InsightsPage,
+  settings: SettingsPage,
+};
+
+const RECENT_MS = 5 * 60_000;
+const DOT: Partial<Record<Health, string>> = { critical: "var(--wl-red)", warning: "var(--wl-orange)" };
+
+/** Logo dot: red after a recent failure, orange after a recent slow request, else brand blue. */
+function useHealthDot(): string | undefined {
+  const data = useData();
+  return useMemo(() => {
+    const recent = requestRows(data.traces.filter((t) => t.startMs >= data.updatedMs - RECENT_MS));
+    if (recent.some(isFailed)) return DOT.critical;
+    return recent.some((r) => r.health === "warning") ? DOT.warning : undefined;
+  }, [data.traces, data.updatedMs]);
+}
+
+function PageView({ route }: { route: Route }) {
+  if (route.page === "trace") {
+    const [traceId, view] = route.params;
+    return <TraceDetail key={traceId} traceId={traceId!} view={view as never} />;
+  }
+  const Page = PAGES[route.page];
+  return <Page />;
 }
 
 export function App() {
-  const route = useHashRoute();
-  const [info, setInfo] = useState<ServiceInfo | null>(null);
-  const [offline, setOffline] = useState(false);
-
+  const route = useRoute();
+  const data = useData();
+  const win = useWindowed();
+  const [theme] = useTheme();
+  const dot = useHealthDot();
+  useEffect(() => applyTheme(theme), [theme]);
   useEffect(() => {
-    api
-      .info()
-      .then((i) => {
-        setInfo(i);
-        setOffline(false);
-      })
-      .catch(() => setOffline(true));
-  }, []);
-
-  useEffect(() => {
-    document.title = info ? `WizeLens · ${info.service}` : "WizeLens";
-  }, [info]);
-
-  const traceMatch = /^\/traces\/([0-9a-f]{32})/.exec(route);
-
+    document.title = data.info ? `WizeLens · ${data.info.service}` : "WizeLens";
+  }, [data.info]);
+  const errors = win.requests.filter(isFailed).length;
   return (
-    <div className="app">
-      <header className="topbar">
-        <a className="brand" href="#/">
-          <svg viewBox="0 0 32 32" aria-hidden="true">
-            <rect width="32" height="32" rx="8" fill="var(--accent)" />
-            <rect x="7" y="9" width="12" height="3" rx="1.5" fill="#fff" />
-            <rect x="11" y="14.5" width="14" height="3" rx="1.5" fill="#fff" opacity=".85" />
-            <rect x="9" y="20" width="8" height="3" rx="1.5" fill="#fff" opacity=".7" />
-          </svg>
-          <span>WizeLens</span>
-        </a>
-        <div className="topbar-meta">
-          {info && (
-            <>
-              <span className="chip chip-strong">{info.service}</span>
-              <span className="muted">{info.runtime}</span>
-              {info.mcp && (
-                <span className="chip chip-ai" title="AI agents can read these traces through MCP (read-only)">
-                  MCP on
-                </span>
-              )}
-              <span className="muted">v{info.version}</span>
-            </>
-          )}
-          {offline && <span className="chip chip-error">API unreachable</span>}
-        </div>
-      </header>
-      <main className="content">{traceMatch ? <TraceDetail traceId={traceMatch[1]!} /> : <TraceList />}</main>
+    <div className="wl-shell">
+      <Sidebar page={route.page} counts={{ errors }} dot={dot} />
+      <div className="wl-main">
+        <TopBar data={data} />
+        <main className="wl-page">
+          <PageView route={route} />
+        </main>
+      </div>
     </div>
   );
 }

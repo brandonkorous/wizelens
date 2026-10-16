@@ -1,0 +1,24 @@
+/* Base elements and small shared helpers. */
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--wl-bg); color: var(--wl-fg); font: 14px/1.45 var(--wl-sans); -webkit-font-smoothing: antialiased; }
+a { color: var(--wl-accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font: inherit; color: inherit; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; font-weight: 750; letter-spacing: -0.02em; }
+h2 { font-size: 17px; margin: 0; font-weight: 680; letter-spacing: -0.01em; }
+h3 { font-size: 12px; margin: 16px 0 6px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--wl-muted); font-weight: 650; }
+:focus-visible { outline: 2px solid var(--wl-accent); outline-offset: 2px; }
+.wl-mono { font-family: var(--wl-mono); }
+.wl-muted { color: var(--wl-muted); }
+.wl-small { font-size: 12px; }
+.wl-num { font-variant-numeric: tabular-nums; }
+.wl-text-error { color: var(--wl-error); }
+.wl-text-ok { color: var(--wl-ok); }
+.wl-text-warn { color: var(--wl-warn); }
+.wl-spacer { flex: 1; }
+.wl-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.wl-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.wl-brand-blades { fill: var(--wl-blades); }
+.wl-brand-lens { color: var(--wl-lens); }
+.wl-code { margin: 0; padding: 8px 10px; background: var(--wl-code-bg); border: 1px solid var(--wl-line); border-radius: 8px; font: 12px/1.55 var(--wl-mono); white-space: pre-wrap; word-break: break-word; }

@@ -9,8 +9,8 @@ const PORT = Number(process.env.PORT ?? 5200);
 const wizelens = createWizeLens({
   serviceName: "orders-api",
   enableMcp: true, // AI agents can read traces at /_wizelens/mcp (read-only)
-  // Traces survive restarts. The file lives next to this sample (gitignored).
-  storagePath: join(import.meta.dirname, "..", ".wizelens", "traces.db"),
+  // Traces survive restarts. The file lives next to this sample (gitignored). WIZELENS_STORAGE_PATH moves it.
+  storagePath: process.env.WIZELENS_STORAGE_PATH ?? join(import.meta.dirname, "..", ".wizelens", "traces.db"),
   logToConsole: true,
 });
 const log = wizelens.logger;
@@ -52,7 +52,10 @@ app.get("/orders", (req, res) => {
     return;
   }
   const sql = "SELECT id, customer_id AS customerId, product, amount, created_at AS createdAt FROM orders WHERE customer_id = ? ORDER BY id";
+  // Tags and the user show in the dashboard's request panel.
+  wizelens.setUser(`customer-${customerId}`);
   const rows = wizelens.traceDb(sqlite, sql, [customerId], () => db.prepare(sql).all(customerId));
+  wizelens.tag("orders", rows.length === 0 ? "none" : "found");
   log.info(`found ${rows.length} orders`, { customerId });
   res.json(rows);
 });

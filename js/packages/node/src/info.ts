@@ -1,0 +1,39 @@
+import { createRequire } from "node:module";
+import { hostname } from "node:os";
+import { IN_APP_CAPABILITIES, type ServiceInfo } from "@wizeworks/lens-core";
+import type { TraceStore } from "./store.js";
+import type { WizeLensOptions } from "./types.js";
+
+const require = createRequire(import.meta.url);
+
+export const VERSION: string = (require("../package.json") as { version: string }).version;
+export const DEFAULT_SLOW_QUERY_MS = 100;
+export const DEFAULT_N_PLUS_ONE = 5;
+
+export interface InfoInputs {
+  options: WizeLensOptions;
+  store: TraceStore;
+  redactKeys: readonly string[];
+  startedMs: number;
+  sqlite: () => boolean;
+}
+
+/** `api/info`: who this service is and how WizeLens is set up. */
+export function buildInfo(i: InfoInputs): ServiceInfo {
+  const o = i.options;
+  return {
+    mode: "in-app",
+    capabilities: [...IN_APP_CAPABILITIES],
+    service: o.serviceName,
+    version: VERSION,
+    runtime: `node ${process.version}`,
+    mcp: !!o.enableMcp,
+    environment: process.env.NODE_ENV || "development",
+    host: hostname(),
+    startedMs: i.startedMs,
+    storage: { kind: i.sqlite() ? "sqlite" : "memory", maxTraces: i.store.maxTraces, maxAgeMs: i.store.maxAgeMs },
+    analysis: { slowQueryMs: o.slowQueryMs ?? DEFAULT_SLOW_QUERY_MS, nPlusOneThreshold: o.nPlusOneThreshold ?? DEFAULT_N_PLUS_ONE },
+    redactKeys: [...i.redactKeys],
+    captureResponseBody: !!o.captureResponseBody,
+  };
+}

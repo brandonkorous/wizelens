@@ -49,6 +49,7 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok", service = "gatew
 // Deliberate N+1: one query for the list, then one EF query AND one HTTP call per customer.
 app.MapGet("/api/customers-with-orders", async (GatewayDb db, IHttpClientFactory httpClientFactory, ILogger<Program> logger, CancellationToken ct) =>
 {
+    WizeLensRequest.Tag("catalog");
     var ids = await db.Customers.Select(c => c.Id).ToListAsync(ct);
     logger.LogInformation("Loading orders for {Count} customers", ids.Count);
 
@@ -80,7 +81,8 @@ app.MapGet("/api/customers-with-orders", async (GatewayDb db, IHttpClientFactory
     return Results.Ok(result);
 });
 
-// Driver-level capture: raw ADO.NET + Dapper through ProfiledDbConnection.
+// Driver-level capture: raw ADO.NET + Dapper through ProfiledDbConnection. The gold count is cached for 30 s.
+var goldCache = new GoldCountCache();
 app.MapGet("/api/raw-sql", async (CancellationToken ct) =>
 {
     await using var connection = new ProfiledDbConnection(new SqliteConnection(connectionString));
@@ -88,7 +90,9 @@ app.MapGet("/api/raw-sql", async (CancellationToken ct) =>
     var tiers = await connection.QueryAsync<TierCount>(
         "SELECT Tier, COUNT(*) AS Count FROM Customers WHERE Tier <> @excluded GROUP BY Tier ORDER BY Count DESC",
         new { excluded = "platinum" });
-    var gold = await connection.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM Customers WHERE Tier = @tier", new { tier = "gold" });
+    var gold = await goldCache.GetAsync(() =>
+        connection.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM Customers WHERE Tier = @tier", new { tier = "gold" }));
+    WizeLensRequest.Tag("report");
     return Results.Ok(new { tiers, gold });
 });
 
@@ -114,3 +118,19 @@ public sealed class Customer
 }
 
 public sealed record TierCount(string Tier, long Count);
+
+public sealed class GoldCountCache
+{
+    private long _value;
+    private DateTime _expires = DateTime.MinValue;
+
+    public async Task<long> GetAsync(Func<Task<long>> load)
+    {
+        var hit = DateTime.UtcNow < _expires;
+        WizeLensRequest.Tag("cache", hit ? "hit" : "miss");
+        if (hit) return _value;
+        _value = await load();
+        _expires = DateTime.UtcNow.AddSeconds(30);
+        return _value;
+    }
+}

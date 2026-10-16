@@ -1,0 +1,63 @@
+import { errorInfo, isErrorSpan, type Trace } from "@wizeworks/lens-core";
+import { fmtMs } from "../../format";
+import { Empty } from "../../ui/Panel";
+import { ServiceChip } from "./tabParts";
+
+interface Props {
+  trace: Trace;
+  onSelect: (spanId: string) => void;
+}
+
+export function LogsTab({ trace, onSelect }: Props) {
+  if (trace.logs.length === 0) return <Empty>No logs were written during this request.</Empty>;
+  return (
+    <div className="wl-table-wrap">
+      <table className="wl-table">
+        <thead>
+          <tr>
+            <th className="wl-num">At</th>
+            <th>Level</th>
+            <th>Service</th>
+            <th>Category</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {trace.logs.map((l, i) => (
+            <tr key={i} onClick={() => l.spanId && onSelect(l.spanId)} className={l.spanId ? "wl-clickable" : undefined}>
+              <td className="wl-num wl-muted">+{fmtMs(l.timeMs - trace.startMs)}</td>
+              <td>
+                <span className={`wl-lvl wl-lvl-${l.level}`}>{l.level}</span>
+              </td>
+              <td>
+                <ServiceChip service={l.service} services={trace.services} />
+              </td>
+              <td className="wl-muted wl-small">{l.category}</td>
+              <td className="wl-wrap">{l.message}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function ErrorsTab({ trace, onSelect }: Props) {
+  const errors = trace.spans.filter(isErrorSpan).map(errorInfo);
+  if (errors.length === 0) return <Empty>No errors in this request.</Empty>;
+  return (
+    <ul className="wl-error-list">
+      {errors.map((e) => (
+        <li key={e.spanId} className="wl-error-item" onClick={() => onSelect(e.spanId)}>
+          <div className="wl-error-head">
+            <ServiceChip service={e.service} services={trace.services} />
+            <strong>{e.type ?? "Error"}</strong>
+            <span className="wl-muted">in {e.name}</span>
+          </div>
+          <div className="wl-error-msg">{e.message}</div>
+          {e.stack && <pre className="wl-code wl-stack">{e.stack}</pre>}
+        </li>
+      ))}
+    </ul>
+  );
+}

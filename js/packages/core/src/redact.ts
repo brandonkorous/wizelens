@@ -41,10 +41,7 @@ export function toAttributeValue(value: unknown): AttributeValue {
 
 const bigintSafe = (_k: string, v: unknown) => (typeof v === "bigint" ? v.toString() : v);
 
-/**
- * Serialize DB parameters to the `wizelens.db.parameters` JSON string.
- * Named parameters whose name looks sensitive are redacted. Positional parameters have no names, so they are kept.
- */
+/** DB parameters as the `wizelens.db.parameters` JSON string; sensitive names redacted, positional kept. */
 export function redactParams(params: unknown, keys: readonly string[] = DEFAULT_REDACT_KEYS): string | null {
   if (params === undefined || params === null) return null;
   if (Array.isArray(params)) return JSON.stringify(params, bigintSafe);

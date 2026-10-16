@@ -5,11 +5,13 @@
   <img src="docs/images/wizelens-light.svg" alt="WizeLens" width="440">
 </picture>
 
-### See inside every request — from the React click down to the SQL query, across every service.
+### Inspect. Understand. Build better.
+
+See inside every request — from the React click down to the SQL query, across every service.
 
 The spirit of **Glimpse**, rebuilt for 2026: OpenTelemetry-native, microservice-aware, and readable by AI agents (only when you allow it).
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-5b4ee6.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-2563eb.svg)](LICENSE)
 [![.NET 10](https://img.shields.io/badge/.NET-10-512bd4.svg)](https://dotnet.microsoft.com/)
 [![Node 22.13+](https://img.shields.io/badge/node-%E2%89%A522.13-3c873a.svg)](https://nodejs.org/)
 [![React 18+](https://img.shields.io/badge/react-%E2%89%A518-149eca.svg)](https://react.dev/)
@@ -24,10 +26,10 @@ The spirit of **Glimpse**, rebuilt for 2026: OpenTelemetry-native, microservice-
 ---
 
 <p align="center">
-  <img src="docs/images/trace-detail.png" alt="One trace across browser, .NET gateway and Node orders API, with N+1 query and N+1 HTTP insights" width="900">
+  <img src="docs/images/overview.jpg" alt="WizeLens dashboard overview: request counts, timing breakdown, services, recent requests, and insights" width="900">
 </p>
 
-<p align="center"><sub>One click in React → a .NET gateway → a Node API → two databases. One trace. Three N+1 problems found for you.</sub></p>
+<p align="center"><sub>One click in React → a .NET gateway → a Node API → two databases. One trace. Every N+1 problem found for you.</sub></p>
 
 ## ✨ Why WizeLens?
 
@@ -99,6 +101,8 @@ Outgoing `fetch` calls are traced automatically.
 ### React
 
 ```tsx
+// main.tsx: this import must come first, before React loads.
+import "@wizeworks/lens-react/install";
 import { WizeLensProvider } from "@wizeworks/lens-react";
 
 <WizeLensProvider endpoint="/_wizelens" enabled={import.meta.env.DEV}>
@@ -107,6 +111,7 @@ import { WizeLensProvider } from "@wizeworks/lens-react";
 ```
 
 Every `fetch` gets a `traceparent` header, so each server trace links back to the click that caused it.
+The `install` import lets WizeLens time React renders per component and measure hydration. Without it, everything else still works.
 
 ### Open the dashboard
 
@@ -118,23 +123,47 @@ Browse to **`/_wizelens`** on any service. That's it.
 
 ### The in-page HUD
 
-A Glimpse-style bar on every page: page load, server time, database calls, HTTP calls, and Web Vitals at a glance — plus a list of recent requests, each one click away from its full trace. It survives page refreshes.
+A small card in the corner of every page shows the latest request as you work: **Total**, **Server**, **Database**, and **Render** time, one bar that splits them, and the SQL, fetch, and insight counts.
 
-<p align="center"><img src="docs/images/hud.png" alt="WizeLens HUD with recent requests and page, server, DB, calls and vitals tiles" width="560"></p>
+- **One color tells you the state.** 🔵 info · 🟢 fast, no issues · 🟡 completed, but with optimizations · 🟠 slow or a 4xx · 🔴 failed · ⚪ no data.
+- **Hover for a quick peek.** Database shows each query's time, the slowest, and the average. Server splits its own code, its own queries, and calls to other services.
+- **Click for a closer look.** A small panel shows the split, the first rows of the timeline, the top insights, and this page's Web Vitals.
+- **Everything else is one click away.** Every "view all" link and every footer count opens the full dashboard in a new tab, right on that request's timeline, SQL, HTTP calls, or insights.
+- **Render time is real.** WizeLens measures from the response to the next paint: read the body, run your code, render, paint.
+- **Stays out of the way.** Minimize it to the aperture mark; its center dot keeps the health color. Pin a request, or follow the newest one live. It survives page refreshes.
+
+<p align="center"><img src="docs/images/hud.png" alt="WizeLens HUD card with Total, Server, Database and Render, and the details panel open" width="640"></p>
 
 ### The dashboard
 
-<p align="center"><img src="docs/images/requests.png" alt="WizeLens request list" width="900"></p>
+Ten pages, one look. Pick a time range in the top bar; every number compares itself with the range before it.
 
-| View | What you get |
+| Page | What you get |
 |---|---|
-| **Requests** | Live list with services, duration, DB / HTTP counts, status, and filters |
-| **Timeline** | A waterfall across every service, nested by parent, colored by service |
-| **SQL** | Every query with parameters, timing, adapter, and duplicate / N+1 badges |
-| **HTTP** | Every outgoing call, with status and timing |
-| **Logs** | Log lines for the request, from every service, in order |
-| **Errors** | Exceptions with type, message, and stack trace |
-| **Insights** | N+1 queries, N+1 HTTP, duplicate queries, slow queries — at the top of every trace |
+| **Overview** | Requests, duration, SQL, error rate, and insights at a glance; request activity, timing breakdown, services, recent requests, latest insights |
+| **Requests** | Filter by method, status, duration, service, or text; export to CSV; a side panel with summary, headers, response, tags, and timing |
+| **Traces** | One request as layers — browser, network, routing, handler, each service, each database, render — plus bottlenecks and the slowest spans |
+| **Database** | Slow queries over time, time per operation, top slow queries, table hotspots |
+| **Rendering** | Render time per route, SSR, hydration, image loading, layout shift, and the React components that render too often |
+| **Errors** | Exceptions over time, top types, errors by service, and the stack trace and request context of each one — browser errors too |
+| **Logs** | Every log line from every service, filtered by level, service, or text |
+| **Services** | Health of each service, database, and outside host, and a map of who calls whom |
+| **Insights** | Every N+1, duplicate query, slow query, and render problem, ranked, with how to fix it |
+| **Settings** | How each connected service is set up, and your dashboard preferences |
+
+Open any trace for the full detail: timeline, SQL, HTTP, logs, and errors. Search everything with **Ctrl K** (**⌘ K**). Light and dark themes are built in.
+
+<p align="center"><img src="docs/images/traces.jpg" alt="Traces page: one request as layers across browser, gateway, orders API, and two databases" width="900"></p>
+
+<details>
+<summary><b>More screens</b></summary>
+
+<p align="center"><img src="docs/images/requests.jpg" alt="Requests page with filters and the request side panel" width="900"></p>
+<p align="center"><img src="docs/images/database.jpg" alt="Database page with slow queries, operations, and table hotspots" width="900"></p>
+<p align="center"><img src="docs/images/rendering.jpg" alt="Rendering page with routes, render phases, and component hotspots" width="900"></p>
+<p align="center"><img src="docs/images/errors.jpg" alt="Errors page with exception details and stack trace" width="900"></p>
+
+</details>
 
 ### What gets captured
 
@@ -146,7 +175,10 @@ A Glimpse-style bar on every page: page load, server time, database calls, HTTP 
 | Database (ORM) | ✅ EF Core | 🔜 Prisma, Drizzle, TypeORM |
 | Logs | ✅ `ILogger` | ✅ `wizelens.logger` |
 | Exceptions | ✅ | ✅ |
-| Browser | ✅ via `@wizeworks/lens-react`: fetch spans, page timing, LCP, INP, CLS | |
+| Request details | ✅ headers, client IP, user, request id, body sizes, tags | ✅ same; user and tags through `setUser()` / `tag()` |
+| Response bodies (opt-in) | ✅ `CaptureResponseBody` | ✅ `captureResponseBody` |
+| Routing and handler time | ✅ | 🔜 |
+| Browser | ✅ via `@wizeworks/lens-react`: fetch spans, render time, page views (TTFB, SSR, FCP, LCP, INP, CLS), hydration, slow images, React component renders, browser errors | |
 
 ### Persistence
 
@@ -252,6 +284,9 @@ Guardrails:
 | `RedactKeys` | see above | Key fragments whose values are redacted. |
 | `NPlusOneThreshold` | `5` | Repeats in one trace that count as N+1. |
 | `SlowQueryMs` | `100` | Queries at or above this are slow. |
+| `CaptureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
+
+Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The user comes from `HttpContext.User`.
 
 ### Node — `createWizeLens({ ... })`
 
@@ -268,6 +303,10 @@ Guardrails:
 | `instrumentFetch` | `true` | Trace outgoing `fetch` / undici calls. |
 | `publicEndpoint` | auto | Override `X-WizeLens-Endpoint` (useful behind proxies). |
 | `audit` | `console.info` | Where MCP audit lines go. |
+| `slowQueryMs` / `nPlusOneThreshold` | `100` / `5` | Analysis thresholds. |
+| `captureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
+
+Tag a request and name its user from your handlers: `wizelens.tag("cache", "hit")`, `wizelens.setUser(id)`.
 
 ### React — `<WizeLensProvider>`
 
@@ -277,6 +316,8 @@ Guardrails:
 | `enabled` | `true` | Pass `import.meta.env.DEV` (or similar). |
 | `hud` | `true` | Show the in-page HUD. |
 | `propagateTo` | same origin | Which requests get a `traceparent` header. |
+| `slowMs` | `500` | The HUD shows requests at or over this many ms as "warning" (orange). |
+| `capturePages` | `true` | Send page views, React render stats, and browser errors. |
 
 Hooks: `useWizeLens()` and `useWizeLensRequests()`.
 
@@ -319,7 +360,7 @@ Open http://localhost:5173, click the buttons, then open http://localhost:5173/_
 | **2. Local hub** | One small service on your machine or network; every app sends to it | 🔜 Next |
 | **3. Cloud** | Hosted, team-wide history, alerts, and sharing | 🔭 Planned |
 
-Coming up in phase 1.x: more ORM adapters (Prisma, Drizzle, TypeORM, `pg`), React render profiling, gRPC and message queues (RabbitMQ, Kafka, Azure Service Bus), and more languages.
+Coming up in phase 1.x: more ORM adapters (Prisma, Drizzle, TypeORM, `pg`), routing time for Node, gRPC and message queues (RabbitMQ, Kafka, Azure Service Bus), and more languages.
 
 See **[docs/PLAN.md](docs/PLAN.md)** for the full plan.
 
@@ -334,9 +375,12 @@ samples/              web (React) · gateway-api (.NET) · orders-api (Node)
 
 ```bash
 pnpm build && pnpm test                      # JS: build + tests
+pnpm check:size                              # size rules, JS and .NET
 dotnet build dotnet/WizeLens.slnx            # .NET: build
 dotnet test  dotnet/WizeLens.slnx            # .NET: tests
 ```
+
+Code rules, checked by `pnpm check:size`: at most 250 lines per file, 50 lines per function, and one line per comment. Every CSS class and variable starts with `wl-`.
 
 Changing the wire format? Update **[docs/CONTRACT.md](docs/CONTRACT.md)** first — both add-ons and the dashboard follow it.
 

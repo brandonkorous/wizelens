@@ -1,15 +1,11 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using WizeLens.Capture;
 using WizeLens.Storage;
 
 namespace WizeLens.Web;
 
-/// <summary>
-/// Enriches the request span, records exceptions, and adds WizeLens response headers.
-/// Requests to WizeLens's own base path are not profiled.
-/// </summary>
+/// <summary>Enriches the request span, records exceptions, and adds WizeLens response headers; skips WizeLens's own path.</summary>
 internal sealed class WizeLensMiddleware(RequestDelegate next, WizeLensOptions options, TraceStore store)
 {
     public const string TraceHeader = "X-WizeLens-Trace";
@@ -19,45 +15,40 @@ internal sealed class WizeLensMiddleware(RequestDelegate next, WizeLensOptions o
     public async Task InvokeAsync(HttpContext context)
     {
         var basePath = options.NormalizedBasePath;
-        var activity = Activity.Current;
-
         if (context.Request.Path.StartsWithSegments(basePath))
         {
-            activity?.SetCustomProperty(WizeLensContext.IgnoreProperty, true);
-            WizeLensContext.Suppressed = true;
-
-            if (context.Request.Path.StartsWithSegments(basePath + "/api"))
-            {
-                context.Response.Headers.AccessControlAllowOrigin = "*";
-                if (HttpMethods.IsOptions(context.Request.Method))
-                {
-                    context.Response.Headers.AccessControlAllowMethods = "GET, POST, OPTIONS";
-                    context.Response.Headers.AccessControlAllowHeaders = "content-type, traceparent, " + HopHeader;
-                    context.Response.StatusCode = StatusCodes.Status204NoContent;
-                    return;
-                }
-            }
-
-            await next(context);
+            await HandleOwnPathAsync(context, basePath);
             return;
         }
 
         var selfEndpoint = SelfEndpoint(context, basePath);
         store.AddSelfEndpoint(selfEndpoint);
+        var activity = Activity.Current;
+        if (activity is not null) AddResponseHeaders(context, activity.TraceId.ToHexString(), selfEndpoint);
+        await ProfileAsync(context, activity);
+    }
 
-        if (activity is not null)
+    private async Task HandleOwnPathAsync(HttpContext context, string basePath)
+    {
+        Activity.Current?.SetCustomProperty(WizeLensContext.IgnoreProperty, true);
+        WizeLensContext.Suppressed = true;
+        if (context.Request.Path.StartsWithSegments(basePath + "/api"))
         {
-            var traceId = activity.TraceId.ToHexString();
-            context.Response.OnStarting(() =>
+            context.Response.Headers.AccessControlAllowOrigin = "*";
+            if (HttpMethods.IsOptions(context.Request.Method))
             {
-                var headers = context.Response.Headers;
-                headers[TraceHeader] = traceId;
-                headers[EndpointHeader] = selfEndpoint;
-                headers.Append("Access-Control-Expose-Headers", $"{TraceHeader}, {EndpointHeader}");
-                return Task.CompletedTask;
-            });
+                context.Response.Headers.AccessControlAllowMethods = "GET, POST, OPTIONS";
+                context.Response.Headers.AccessControlAllowHeaders = "content-type, traceparent, " + HopHeader;
+                context.Response.StatusCode = StatusCodes.Status204NoContent;
+                return;
+            }
         }
+        await next(context);
+    }
 
+    private async Task ProfileAsync(HttpContext context, Activity? activity)
+    {
+        var bodies = activity is null ? null : BodyCapture.Start(context, options.CaptureResponseBody);
         Exception? failure = null;
         try
         {
@@ -72,30 +63,21 @@ internal sealed class WizeLensMiddleware(RequestDelegate next, WizeLensOptions o
         }
         finally
         {
-            if (activity is not null) Enrich(activity, context, failure);
+            if (bodies is not null) await bodies.FinishAsync(activity!, failure is null);
+            if (activity is not null) RequestEnricher.Enrich(activity, context, failure);
         }
     }
 
-    private static void Enrich(Activity activity, HttpContext context, Exception? failure)
+    private static void AddResponseHeaders(HttpContext context, string traceId, string selfEndpoint)
     {
-        var request = context.Request;
-        var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
-        if (route is not null && !route.StartsWith('/')) route = "/" + route;
-        var statusCode = failure is null ? context.Response.StatusCode : StatusCodes.Status500InternalServerError;
-
-        activity.SetTag("http.request.method", request.Method);
-        activity.SetTag("url.scheme", request.Scheme);
-        activity.SetTag("url.path", request.PathBase.Add(request.Path).Value);
-        if (request.QueryString.HasValue) activity.SetTag("url.query", request.QueryString.Value!.TrimStart('?'));
-        if (route is not null) activity.SetTag("http.route", route);
-        activity.SetTag("server.address", request.Host.Host);
-        if (request.Host.Port is { } port) activity.SetTag("server.port", port);
-        activity.SetTag("http.response.status_code", statusCode);
-        activity.DisplayName = $"{request.Method} {route ?? request.Path.Value}";
-        if (statusCode >= 500 && activity.Status != ActivityStatusCode.Error)
+        context.Response.OnStarting(() =>
         {
-            activity.SetStatus(ActivityStatusCode.Error);
-        }
+            var headers = context.Response.Headers;
+            headers[TraceHeader] = traceId;
+            headers[EndpointHeader] = selfEndpoint;
+            headers.Append("Access-Control-Expose-Headers", $"{TraceHeader}, {EndpointHeader}");
+            return Task.CompletedTask;
+        });
     }
 
     private static string SelfEndpoint(HttpContext context, string basePath) =>

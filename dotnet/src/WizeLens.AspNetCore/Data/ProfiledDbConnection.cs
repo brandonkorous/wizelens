@@ -4,10 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace WizeLens.Data;
 
-/// <summary>
-/// Wraps any ADO.NET connection so every command is recorded as a db span.
-/// Works with raw ADO.NET and Dapper: <c>using var conn = new ProfiledDbConnection(new SqliteConnection(cs));</c>
-/// </summary>
+/// <summary>Wraps any ADO.NET connection (raw or Dapper) so every command is a db span: <c>new ProfiledDbConnection(conn)</c>.</summary>
 public sealed class ProfiledDbConnection(DbConnection inner) : DbConnection
 {
     public DbConnection InnerConnection { get; } = inner ?? throw new ArgumentNullException(nameof(inner));
@@ -56,10 +53,7 @@ public sealed class ProfiledDbCommand : DbCommand
 
     public DbCommand InnerCommand { get; }
 
-    /// <summary>
-    /// The adapter name recorded in <c>wizelens.db.adapter</c>. An ORM adapter (for example EF Core) can set this
-    /// so a command is recorded once, with the richer adapter name.
-    /// </summary>
+    /// <summary>The <c>wizelens.db.adapter</c> value; an ORM (EF Core) sets it so a command is recorded once.</summary>
     public string Adapter { get; set; } = "ado.net";
 
     [AllowNull]

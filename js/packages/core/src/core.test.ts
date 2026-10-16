@@ -7,6 +7,8 @@ import {
   findNPlusOneHttp,
   findSlowQueries,
   formatTraceparent,
+  healthOf,
+  insightsOf,
   mergeTraces,
   newSpanId,
   newTraceId,
@@ -14,7 +16,9 @@ import {
   pathShape,
   redactAttributes,
   redactParams,
+  timingSegments,
   toSummary,
+  traceTiming,
   type Span,
 } from "./index.js";
 
@@ -168,5 +172,46 @@ describe("trace building and merging", () => {
     expect(merged.services).toEqual(["a", "b"]);
     expect(merged.remotes).toEqual(["http://b/_wizelens"]);
     expect(merged.service).toBe("a");
+  });
+});
+
+describe("health and timing", () => {
+  const ok = { status: 200, error: false, totalMs: 120, insights: 0 };
+
+  it("grades a request with the brand states", () => {
+    expect(healthOf(null)).toBe("neutral");
+    expect(healthOf({ ...ok, totalMs: null })).toBe("info");
+    expect(healthOf({ ...ok, insights: null })).toBe("info");
+    expect(healthOf(ok)).toBe("success");
+    expect(healthOf({ ...ok, insights: 2 })).toBe("opportunity");
+    expect(healthOf({ ...ok, totalMs: 700, insights: 2 })).toBe("warning");
+    expect(healthOf({ ...ok, status: 404 })).toBe("warning");
+    expect(healthOf({ ...ok, status: 500 })).toBe("critical");
+    expect(healthOf({ ...ok, status: null, error: true })).toBe("critical");
+    expect(healthOf({ ...ok, totalMs: 300 }, 250)).toBe("warning");
+  });
+
+  it("splits a federated request in server, database, and render time", () => {
+    const root = span({ category: "http.server", service: "gateway", startMs: 10, durationMs: 200 });
+    const spans = [
+      span({ category: "browser", service: "browser", startMs: 0, durationMs: 230, attributes: { "wizelens.browser.render_ms": 40 } }),
+      root,
+      span({ category: "db", service: "gateway", startMs: 20, durationMs: 30 }),
+      span({ category: "http.client", service: "gateway", startMs: 60, durationMs: 100 }),
+      span({ category: "http.server", service: "orders", startMs: 65, durationMs: 90 }),
+      span({ category: "db", service: "orders", startMs: 70, durationMs: 50 }),
+    ];
+    const t = traceTiming(trace(spans));
+    expect(t).toMatchObject({ totalMs: 270, serverMs: 200, dbMs: 80, dbCount: 2, dbSlowestMs: 50, renderMs: 40, service: "gateway" });
+    expect(t.server).toEqual({ codeMs: 70, dbMs: 30, httpOutMs: 100, httpOutCount: 1 });
+    expect(timingSegments(t)).toEqual({ server: 120, db: 80, render: 40, other: 30 });
+    // Both queries have the same text, so this is one duplicate-query insight.
+    expect(insightsOf(analyzeTrace(trace(spans))).map((f) => f.kind)).toEqual(["duplicate-query"]);
+  });
+
+  it("uses the trace duration without browser data", () => {
+    const t = traceTiming(trace([span({ category: "http.server", startMs: 0, durationMs: 80 })]));
+    expect(t).toMatchObject({ totalMs: 80, serverMs: 80, renderMs: null, dbSlowestMs: 0 });
+    expect(timingSegments(t)).toEqual({ server: 80, db: 0, render: 0, other: 0 });
   });
 });

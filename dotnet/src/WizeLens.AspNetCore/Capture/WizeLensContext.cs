@@ -19,9 +19,7 @@ internal static class WizeLensContext
     public const string IgnoreProperty = "WizeLens.Ignore";
 }
 
-/// <summary>
-/// Process-wide settings for code that is not created by DI, such as <see cref="Data.ProfiledDbConnection"/>.
-/// </summary>
+/// <summary>Process-wide settings for code not created by DI, such as <see cref="Data.ProfiledDbConnection"/>.</summary>
 internal static class WizeLensRuntime
 {
     public const string DbSourceName = "WizeLens.Db";

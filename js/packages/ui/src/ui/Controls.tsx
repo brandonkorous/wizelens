@@ -1,0 +1,79 @@
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { fmtCount } from "../format";
+
+export function Select<T extends string>({ value, options, onChange, label, small = false }: {
+  value: T;
+  options: [T, string][];
+  onChange: (v: T) => void;
+  label: string;
+  small?: boolean;
+}) {
+  return (
+    <select className={`wl-select${small ? " wl-small" : ""}`} value={value} aria-label={label} onChange={(e) => onChange(e.target.value as T)}>
+      {options.map(([v, text]) => (
+        <option key={v} value={v}>
+          {text}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+export function SearchInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  return (
+    <label className="wl-input">
+      <Search aria-hidden="true" />
+      <input type="search" value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+    </label>
+  );
+}
+
+/** Page numbers around the current page, with gaps as null: 1 2 3 … 40. */
+function pageList(page: number, pages: number): (number | null)[] {
+  const want = new Set([1, 2, 3, page - 1, page, page + 1, pages].filter((p) => p >= 1 && p <= pages));
+  const sorted = [...want].sort((a, b) => a - b);
+  const out: (number | null)[] = [];
+  sorted.forEach((p, i) => {
+    if (i > 0 && p - sorted[i - 1]! > 1) out.push(null);
+    out.push(p);
+  });
+  return out;
+}
+
+export interface PagerProps {
+  page: number;
+  pageSize: number;
+  total: number;
+  noun: string;
+  onPage: (page: number) => void;
+  onPageSize: (size: number) => void;
+}
+
+export function Pager({ page, pageSize, total, noun, onPage, onPageSize }: PagerProps) {
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = Math.min(total, page * pageSize);
+  return (
+    <div className="wl-pager">
+      <span>
+        {fmtCount(from)}–{fmtCount(to)} of {fmtCount(total)} {noun}
+      </span>
+      <div className="wl-pages">
+        <button type="button" aria-label="Previous page" disabled={page <= 1} onClick={() => onPage(page - 1)}>
+          <ChevronLeft size={16} />
+        </button>
+        {pageList(page, pages).map((p, i) =>
+          p === null ? <span key={`gap-${i}`}>…</span> : (
+            <button key={p} type="button" className={p === page ? "wl-active" : undefined} onClick={() => onPage(p)}>
+              {fmtCount(p)}
+            </button>
+          ),
+        )}
+        <button type="button" aria-label="Next page" disabled={page >= pages} onClick={() => onPage(page + 1)}>
+          <ChevronRight size={16} />
+        </button>
+        <Select small label="Rows per page" value={String(pageSize)} options={[["15", "15 / page"], ["30", "30 / page"], ["50", "50 / page"], ["100", "100 / page"]]} onChange={(v) => onPageSize(Number(v))} />
+      </div>
+    </div>
+  );
+}

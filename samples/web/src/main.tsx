@@ -1,3 +1,5 @@
+// First import: lets WizeLens see every React render, including the first one.
+import "@wizeworks/lens-react/install";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { WizeLensProvider } from "@wizeworks/lens-react";

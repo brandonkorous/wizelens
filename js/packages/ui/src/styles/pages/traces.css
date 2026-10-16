@@ -1,0 +1,31 @@
+/* Traces page: recent list, per-layer timeline, bottlenecks, critical spans. */
+.wl-traces-top { grid-template-columns: minmax(300px, 0.85fr) minmax(0, 2fr); align-items: start; }
+@media (max-width: 1200px) { .wl-traces-top { grid-template-columns: minmax(0, 1fr); } }
+.wl-traces-top .wl-input { margin-bottom: 8px; }
+.wl-recent-traces .wl-table td, .wl-recent-traces .wl-table th { padding: 9px 8px; }
+
+.wl-timeline-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-right: auto; }
+.wl-timeline-title .wl-mono { font-weight: 450; }
+.wl-timeline-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; font-size: 14px; }
+.wl-timeline-meta .wl-view-all { margin-left: auto; }
+
+.wl-layers { display: flex; flex-direction: column; }
+.wl-layer-row { display: grid; grid-template-columns: minmax(130px, 22%) minmax(0, 1fr); align-items: center; min-height: 34px; }
+.wl-layer-name { display: flex; align-items: center; gap: 10px; min-width: 0; padding-right: 10px; color: var(--wl-fg-2); }
+.wl-layer-name svg { flex: none; color: var(--wl-muted); }
+.wl-layer-track { position: relative; height: 34px; border-left: 1px solid var(--wl-chart-grid); background-image: repeating-linear-gradient(to right, transparent 0, transparent calc(100% / 6 - 1px), var(--wl-chart-grid) calc(100% / 6 - 1px), var(--wl-chart-grid) calc(100% / 6)); }
+.wl-layer-axis { min-height: 26px; }
+.wl-layer-axis .wl-layer-track { height: 26px; background: none; border-left: 0; }
+.wl-layer-axis span { position: absolute; top: 4px; transform: translateX(-50%); font-size: 12px; color: var(--wl-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.wl-layer-axis span:first-child { transform: none; }
+.wl-layer-bar { position: absolute; top: 9px; height: 16px; border-radius: 4px; }
+.wl-layer-ms { position: absolute; top: 8px; font-size: 12.5px; color: var(--wl-fg-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.wl-layer-browser { background: var(--wl-blue); opacity: 0.75; }
+.wl-layer-network { background: #93c5fd; }
+.wl-layer-routing { background: var(--wl-violet); }
+.wl-layer-handler { background: var(--wl-green); }
+.wl-layer-service { background: var(--wl-blue); }
+.wl-layer-database { background: var(--wl-red); }
+.wl-layer-external { background: var(--wl-orange); }
+.wl-layer-render { background: #38bdf8; }
+
