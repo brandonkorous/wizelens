@@ -1,0 +1,95 @@
+import type { AddressInfo } from "node:net";
+import type { Server } from "node:http";
+import { serve } from "@hono/node-server";
+import Router from "@koa/router";
+import Fastify from "fastify";
+import { Hono } from "hono";
+import Koa from "koa";
+import { afterAll, describe, expect, it } from "vitest";
+import { ATTR_ROUTED_MS, type Trace } from "@wizeworks/lens-core";
+import { createWizeLens } from "../wizelens.js";
+import type { WizeLens } from "../types.js";
+import { wizelensFastify } from "./fastify.js";
+import { wizelensHono } from "./hono.js";
+import { wizelensKoa } from "./koa.js";
+
+const make = (name: string) => createWizeLens({ serviceName: name, storage: "memory", instrumentFetch: false, captureResponseBody: true });
+const lookup = (wl: WizeLens) => wl.traceDb({ system: "sqlite" }, "SELECT * FROM items WHERE id = ?", [7], () => [{ id: 7 }]);
+const closers: (() => Promise<unknown>)[] = [];
+afterAll(async () => void (await Promise.all(closers.map((c) => c()))));
+
+const baseOf = (server: Server) => `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+
+async function traceOf(wl: WizeLens, res: Response): Promise<Trace> {
+  await new Promise((r) => setTimeout(r, 30));
+  return wl.store.get(res.headers.get("x-wizelens-trace")!)!;
+}
+
+/** The same checks for every framework: span, route, nested query, errors, and the dashboard routes. */
+async function check(wl: WizeLens, base: string, routed: boolean): Promise<void> {
+  const ok = await fetch(`${base}/items/7`);
+  expect(await ok.json()).toEqual([{ id: 7 }]);
+  const t = await traceOf(wl, ok);
+  const server = t.spans.find((s) => s.category === "http.server")!;
+  const db = t.spans.find((s) => s.category === "db")!;
+  expect(server).toMatchObject({ name: "GET /items/:id", status: "unset" });
+  expect(server.attributes).toMatchObject({ "http.route": "/items/:id", "http.response.status_code": 200, "url.path": "/items/7" });
+  expect(server.attributes["wizelens.response.body"]).toBe('[{"id":7}]');
+  expect(db.parentSpanId).toBe(server.spanId);
+  if (routed) expect(server.attributes[ATTR_ROUTED_MS]).toBeTypeOf("number");
+  const bad = await traceOf(wl, await fetch(`${base}/boom`));
+  expect(bad.spans.find((s) => s.category === "http.server")!.status).toBe("error");
+  expect((await fetch(`${base}/_wizelens/api/info`)).status).toBe(200);
+  const spans = await fetch(`${base}/_wizelens/api/client-spans`, { method: "POST", headers: { "content-type": "application/json" }, body: '{"spans":[]}' });
+  expect(spans.status).toBe(204);
+}
+
+describe("fastify", () => {
+  it("captures requests and serves the dashboard", async () => {
+    const wl = make("fastify-api");
+    const app = Fastify();
+    await app.register(wizelensFastify(wl));
+    app.get("/items/:id", async () => lookup(wl));
+    app.get("/boom", async () => {
+      throw new Error("boom");
+    });
+    await app.listen({ port: 0, host: "127.0.0.1" });
+    closers.push(() => app.close());
+    await check(wl, baseOf(app.server), true);
+  });
+});
+
+describe("koa", () => {
+  it("captures requests and serves the dashboard", async () => {
+    const wl = make("koa-api");
+    const app = new Koa();
+    const router = new Router();
+    router.get("/items/:id", (ctx) => void (ctx.body = lookup(wl)));
+    router.get("/boom", () => {
+      throw new Error("boom");
+    });
+    app.silent = true;
+    app.use(wizelensKoa(wl));
+    app.use(router.routes());
+    const server = app.listen(0, "127.0.0.1");
+    await new Promise((r) => server.once("listening", r));
+    closers.push(() => new Promise((r) => server.close(r)));
+    await check(wl, baseOf(server), true);
+  });
+});
+
+describe("hono", () => {
+  it("captures requests and serves the dashboard", async () => {
+    const wl = make("hono-api");
+    const app = new Hono();
+    app.use(wizelensHono(wl));
+    app.get("/items/:id", (c) => c.json(lookup(wl)));
+    app.get("/boom", () => {
+      throw new Error("boom");
+    });
+    const server = serve({ fetch: app.fetch, port: 0, hostname: "127.0.0.1" }) as Server;
+    await new Promise((r) => server.once("listening", r));
+    closers.push(() => new Promise((r) => server.close(r)));
+    await check(wl, baseOf(server), false);
+  });
+});

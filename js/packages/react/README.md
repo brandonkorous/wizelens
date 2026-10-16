@@ -1,0 +1,24 @@
+# @wizeworks/lens-react
+
+Browser side of [WizeLens](https://github.com/brandonkorous/wizelens): links every `fetch` to its server trace, measures render time, page views, Web Vitals, hydration, and React component renders, and shows an in-page HUD.
+
+```tsx
+// main.tsx: this import must come first, before React loads.
+import "@wizeworks/lens-react/install";
+import { WizeLensProvider } from "@wizeworks/lens-react";
+
+<WizeLensProvider endpoint="/_wizelens" enabled={import.meta.env.DEV}>
+  <App />
+</WizeLensProvider>
+```
+
+| Prop | Default | Description |
+|---|---|---|
+| `endpoint` | `/_wizelens` | WizeLens base path or URL on your API. |
+| `enabled` | `true` | Pass `import.meta.env.DEV` (or similar). |
+| `hud` | `true` | Show the in-page HUD. |
+| `propagateTo` | same origin | Which requests get a `traceparent` header. |
+| `slowMs` | `500` | Requests at or over this many ms show as "warning". |
+| `capturePages` | `true` | Send page views, React render stats, and browser errors. |
+
+MIT licensed.

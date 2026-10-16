@@ -1,8 +1,26 @@
 {
   "name": "@wizeworks/lens-react",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.1",
   "description": "WizeLens for React apps: links browser fetch calls to server traces and shows an in-page HUD.",
   "license": "MIT",
+  "author": "WizeWorks",
+  "homepage": "https://github.com/brandonkorous/wizelens#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brandonkorous/wizelens.git",
+    "directory": "js/packages/react"
+  },
+  "bugs": {
+    "url": "https://github.com/brandonkorous/wizelens/issues"
+  },
+  "keywords": [
+    "wizelens",
+    "react",
+    "tracing",
+    "web-vitals",
+    "profiler",
+    "hud"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,14 +35,18 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist"],
-  "sideEffects": ["./dist/install.js"],
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "./dist/install.js"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run"
   },
   "dependencies": {
-    "@wizeworks/lens-core": "workspace:*"
+    "@wizeworks/lens-core": "workspace:^"
   },
   "peerDependencies": {
     "react": ">=18"
@@ -34,5 +56,8 @@
     "react": "^19.3.1",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

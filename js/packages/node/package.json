@@ -1,8 +1,32 @@
 {
   "name": "@wizeworks/lens-node",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.1",
   "description": "WizeLens add-on for Node.js: request timeline, outgoing HTTP, database calls, logs, errors, and an in-app dashboard.",
   "license": "MIT",
+  "author": "WizeWorks",
+  "homepage": "https://github.com/brandonkorous/wizelens#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brandonkorous/wizelens.git",
+    "directory": "js/packages/node"
+  },
+  "bugs": {
+    "url": "https://github.com/brandonkorous/wizelens/issues"
+  },
+  "keywords": [
+    "wizelens",
+    "node",
+    "express",
+    "fastify",
+    "koa",
+    "hono",
+    "tracing",
+    "opentelemetry",
+    "profiler",
+    "prisma",
+    "typeorm",
+    "drizzle"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -31,18 +55,31 @@
     "@opentelemetry/instrumentation-undici": "^0.33.0",
     "@opentelemetry/resources": "^2.12.0",
     "@opentelemetry/sdk-trace-base": "^2.12.0",
-    "@wizeworks/lens-core": "workspace:*",
-    "@wizeworks/lens-ui": "workspace:*",
+    "@wizeworks/lens-core": "workspace:^",
+    "@wizeworks/lens-ui": "workspace:^",
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@azure/service-bus": "^7.10.0",
+    "@grpc/grpc-js": "^1.14.6",
+    "@grpc/proto-loader": "^0.8.1",
+    "@hono/node-server": "^2.1.5",
+    "@koa/router": "^15.7.0",
+    "@types/amqplib": "^0.10.8",
     "@types/better-sqlite3": "^9.6.0",
     "@types/express": "^5.0.6",
+    "@types/koa": "^3.0.3",
+    "@types/koa__router": "^15.0.0",
     "@types/node": "^24.19.2",
     "@types/pg": "^8.23.1",
+    "amqplib": "^2.2.0",
     "better-sqlite3": "^13.0.3",
     "drizzle-orm": "^0.45.4",
     "express": "^5.3.0",
+    "fastify": "^5.12.7",
+    "hono": "^4.13.13",
+    "kafkajs": "^2.2.4",
+    "koa": "^3.2.1",
     "mysql2": "^3.24.6",
     "pg": "^8.23.1",
     "reflect-metadata": "^0.2.2",
@@ -50,5 +87,8 @@
     "typeorm": "^1.1.2",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -1,0 +1,60 @@
+name: Release
+
+# Push a tag like v0.1.0 to publish every package. Needs the NPM_TOKEN and NUGET_API_KEY repository secrets.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install, check, build, test
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm check:size
+          pnpm build
+          pnpm test
+          dotnet build dotnet/WizeLens.slnx -c Release
+          dotnet test dotnet/WizeLens.slnx -c Release --no-build
+
+      - name: Check the tag matches the package versions
+        run: node scripts/check-version.mjs "${GITHUB_REF_NAME#v}"
+
+      - name: Pack
+        run: |
+          dotnet pack dotnet/WizeLens.slnx -c Release --no-build -o artifacts/nuget
+          pnpm -r --filter "./js/packages/*" exec pnpm pack --pack-destination "$GITHUB_WORKSPACE/artifacts/npm"
+
+      - name: Publish to npm
+        run: pnpm -r --filter "./js/packages/*" publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to NuGet
+        run: dotnet nuget push "artifacts/nuget/*.nupkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/nuget/*.nupkg
+            artifacts/npm/*.tgz
+          generate_release_notes: true

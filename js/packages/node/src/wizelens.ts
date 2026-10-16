@@ -3,7 +3,7 @@ import { W3CTraceContextPropagator } from "@opentelemetry/core";
 import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS } from "@wizeworks/lens-core";
 import { createHandler } from "./api.js";
 import { createMiddleware } from "./capture.js";
-import { registerDbSpans } from "./adapters/registry.js";
+import { registerParts } from "./adapters/registry.js";
 import { createDbSpans, createTraceDb } from "./db.js";
 import { disabledWizeLens } from "./disabled.js";
 import { createGetTrace } from "./federation.js";
@@ -64,7 +64,7 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const mcp = mcpSource(options, store, getTrace);
   const uiDir = resolveUiDir(options.uiDir);
   const handler = createHandler({ basePath, store, redactKeys, uiDir, enableMcp: !!options.enableMcp, mcp, info, getTrace });
-  const middleware = createMiddleware({
+  const capture = {
     tracer: tracing.tracer,
     basePath,
     publicEndpoint: options.publicEndpoint,
@@ -72,8 +72,8 @@ function buildParts(options: WizeLensOptions, basePath: string) {
     w3c: new W3CTraceContextPropagator(),
     captureResponseBody: !!options.captureResponseBody,
     handler,
-  });
-  return { service, redactKeys, store, persister, tracing, write, getTrace, handler, middleware };
+  };
+  return { service, redactKeys, store, persister, tracing, write, getTrace, handler, capture, middleware: createMiddleware(capture) };
 }
 
 /** Create the WizeLens add-on for one Node service. */
@@ -106,6 +106,6 @@ export function createWizeLens(options: WizeLensOptions): WizeLens {
       p.persister?.close();
     },
   };
-  registerDbSpans(wizelens, startDbSpan);
+  registerParts(wizelens, { dbSpans: startDbSpan, capture: p.capture });
   return wizelens;
 }

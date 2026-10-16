@@ -1,15 +1,25 @@
 import type { StartDbSpan } from "../db.js";
+import type { CaptureDeps } from "../request-capture.js";
 import type { WizeLens } from "../types.js";
 
-const factories = new WeakMap<WizeLens, StartDbSpan>();
-
-/** Called once by createWizeLens. A disabled instance is never registered, so adapters do nothing. */
-export function registerDbSpans(wizelens: WizeLens, start: StartDbSpan): void {
-  factories.set(wizelens, start);
+/** What adapters need from an enabled instance. */
+export interface AdapterParts {
+  dbSpans: StartDbSpan;
+  capture: CaptureDeps;
 }
 
-/** The span factory of an enabled instance, or null. */
-export const dbSpansOf = (wizelens: WizeLens): StartDbSpan | null => factories.get(wizelens) ?? null;
+const parts = new WeakMap<WizeLens, AdapterParts>();
+
+/** Called once by createWizeLens. A disabled instance is never registered, so adapters do nothing. */
+export function registerParts(wizelens: WizeLens, p: AdapterParts): void {
+  parts.set(wizelens, p);
+}
+
+/** The database span factory of an enabled instance, or null. */
+export const dbSpansOf = (wizelens: WizeLens): StartDbSpan | null => parts.get(wizelens)?.dbSpans ?? null;
+
+/** Request capture of an enabled instance, or null. */
+export const captureOf = (wizelens: WizeLens): CaptureDeps | null => parts.get(wizelens)?.capture ?? null;
 
 type Method = (...args: unknown[]) => unknown;
 

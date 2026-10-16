@@ -32,6 +32,9 @@ function categoryOf(span: ReadableSpan, attrs: Attributes): SpanCategory {
   const forced = attrs[CATEGORY_ATTR];
   if (typeof forced === "string") return forced as SpanCategory;
   if (attrs["db.system.name"] != null || attrs["db.system"] != null) return "db";
+  if (attrs["messaging.system"] != null) return "messaging";
+  if (span.kind === SpanKind.SERVER && attrs["rpc.system"] != null) return "http.server";
+  if (span.kind === SpanKind.CLIENT && attrs["rpc.system"] != null) return "http.client";
   if (span.kind === SpanKind.SERVER && attrs["http.request.method"] != null) return "http.server";
   if (span.kind === SpanKind.CLIENT && attrs["http.request.method"] != null) return "http.client";
   return "internal";

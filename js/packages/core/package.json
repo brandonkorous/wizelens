@@ -1,8 +1,25 @@
 {
   "name": "@wizeworks/lens-core",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.1",
   "description": "Shared types, trace context helpers, and analysis for WizeLens.",
   "license": "MIT",
+  "author": "WizeWorks",
+  "homepage": "https://github.com/brandonkorous/wizelens#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brandonkorous/wizelens.git",
+    "directory": "js/packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/brandonkorous/wizelens/issues"
+  },
+  "keywords": [
+    "wizelens",
+    "tracing",
+    "opentelemetry",
+    "diagnostics",
+    "profiler"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -13,7 +30,9 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -22,5 +41,8 @@
   "devDependencies": {
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

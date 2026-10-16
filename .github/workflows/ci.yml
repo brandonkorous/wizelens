@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build and test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Size rules (250 lines per file, 50 per function, one-line comments)
+        run: pnpm check:size
+
+      - name: Build JS packages and the dashboard
+        run: pnpm build
+
+      - name: Test JS packages
+        run: pnpm test
+
+      - name: Build .NET (embeds the dashboard)
+        run: dotnet build dotnet/WizeLens.slnx -c Release
+
+      - name: Test .NET
+        run: dotnet test dotnet/WizeLens.slnx -c Release --no-build
+
+      - name: Pack (trial run)
+        shell: bash
+        run: |
+          dotnet pack dotnet/WizeLens.slnx -c Release --no-build -o artifacts/nuget
+          pnpm -r --filter "./js/packages/*" exec pnpm pack --pack-destination "$GITHUB_WORKSPACE/artifacts/npm"
+
+      - name: Upload packages
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: artifacts/
