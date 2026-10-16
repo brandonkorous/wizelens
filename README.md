@@ -19,7 +19,7 @@ The spirit of **Glimpse**, rebuilt for 2026: OpenTelemetry-native, microservice-
 [![MCP](https://img.shields.io/badge/MCP-read--only-14141f.svg)](https://modelcontextprotocol.io/)
 ![Status: alpha](https://img.shields.io/badge/status-alpha-orange.svg)
 
-[Quick start](#quick-start) · [Features](#features) · [How it works](#how-it-works) · [AI access](#ai-access) · [Configuration](#configuration) · [Roadmap](#roadmap)
+[Quick start](#quick-start) · [Getting started](docs/GETTING-STARTED.md) · [Features](#features) · [How it works](#how-it-works) · [AI access](#ai-access) · [Configuration](#configuration) · [Roadmap](#roadmap)
 
 </div>
 
@@ -97,7 +97,7 @@ import { instrumentPg } from "@wizeworks/lens-node";
 instrumentPg(wizelens, pg);
 ```
 
-Outgoing `fetch` calls and Express routing time are traced automatically.
+Outgoing `fetch` calls and routing time are traced automatically. Not on Express? Use `wizelensFastify(wizelens)`, `wizelensKoa(wizelens)`, or `wizelensHono(wizelens)` instead of the middleware.
 
 | Library | One line |
 |---|---|
@@ -183,12 +183,15 @@ Open any trace for the full detail: timeline, SQL, HTTP, logs, and errors. Searc
 
 | | ASP.NET Core | Node |
 |---|---|---|
-| Incoming requests | ✅ hosting activity | ✅ middleware |
+| Incoming requests | ✅ hosting activity | ✅ Express, Fastify, Koa, Hono, `node:http` |
 | Outgoing HTTP | ✅ `HttpClient` | ✅ `fetch` / undici |
 | Database (driver level) | ✅ `ProfiledDbConnection` — ADO.NET, Dapper, any provider | ✅ `pg`, `mysql2`, `better-sqlite3`, `node:sqlite`, and `traceDb()` for any other driver |
 | Database (ORM) | ✅ EF Core | ✅ Prisma, TypeORM, Drizzle |
 | Logs | ✅ `ILogger` | ✅ `wizelens.logger` |
 | Exceptions | ✅ | ✅ |
+| Databases with no code change | ✅ Npgsql, MySqlConnector, Microsoft.Data.SqlClient | |
+| gRPC | ✅ Grpc.AspNetCore, Grpc.Net.Client | ✅ `instrumentGrpc` (`@grpc/grpc-js`) |
+| Message queues | ✅ RabbitMQ.Client, Azure Service Bus, MassTransit, Kafka (`WizeLens.Kafka`) | ✅ `instrumentAmqplib`, `instrumentKafkaJs`, `instrumentServiceBus` |
 | Request details | ✅ headers, client IP, user, request id, body sizes, tags | ✅ same; user and tags through `setUser()` / `tag()` |
 | Response bodies (opt-in) | ✅ `CaptureResponseBody` | ✅ `captureResponseBody` |
 | Routing and handler time | ✅ routing and handler | ✅ routing (Express) |
@@ -371,11 +374,12 @@ Open http://localhost:5173, click the buttons, then open http://localhost:5173/_
 
 | Phase | Shape | Status |
 |---|---|---|
-| **1. In-app add-on** | A package inside each app, with local SQLite and federation across services | ✅ Alpha |
+| **1. In-app add-on** | A package inside each app, with local SQLite and federation across services | ✅ Complete (alpha) |
 | **2. Local hub** | One small service on your machine or network; every app sends to it | 🔜 Next |
 | **3. Cloud** | Hosted, team-wide history, alerts, and sharing | 🔭 Planned |
 
-Coming up in phase 1.x: gRPC and message queues (RabbitMQ, Kafka, Azure Service Bus), and more languages.
+Phase 1 is complete: every item in the plan, plus gRPC, message queues, and the ORM adapters, ships in 0.1.0-alpha.1. See the [changelog](CHANGELOG.md).
+New to WizeLens? Start with the **[getting-started guide](docs/GETTING-STARTED.md)**.
 
 See **[docs/PLAN.md](docs/PLAN.md)** for the full plan.
 

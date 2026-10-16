@@ -20,7 +20,7 @@ MCP, but only with permissions you grant.
 
 | Phase | Shape | Storage | Cross-service view |
 |---|---|---|---|
-| **1. In-app add-on** (now) | NuGet / npm package inside each app | In-memory ring buffer | Federation: the UI's host service pulls trace parts from downstream services |
+| **1. In-app add-on** (complete, 0.1.0-alpha.1) | NuGet / npm package inside each app | Memory plus a SQLite file per app | Federation: the dashboard reads every connected service and merges traces |
 | 2. Local service | One small hub on the dev machine / network | Local DB (SQLite / DuckDB) | Hub has everything |
 | 3. Cloud | Hosted service | Durable, multi-tenant | Same as 2, plus teams, history, alerts |
 
@@ -46,7 +46,9 @@ Monetization (open core): the add-on is MIT. Cloud and team features are paid. D
 - Database calls: driver level (`ProfiledDbConnection` for ADO.NET + Dapper; `pg`, `mysql2`, `better-sqlite3`, `node:sqlite`, and `traceDb()` for Node) and ORM adapters (EF Core; Prisma, TypeORM, Drizzle)
 - Logs per request (ILogger / console-free logger API)
 - Exceptions (ELMAH-style)
-- Browser: fetch spans linked to server traces
+- Browser: fetch spans linked to server traces, page views and Web Vitals, hydration, React component renders, browser errors
+- gRPC (server and client) and message queues (RabbitMQ, Kafka, Azure Service Bus, MassTransit), with trace context in message headers
+- Frameworks: ASP.NET Core; Express, Fastify, Koa, Hono, and plain `node:http`
 
 ### Analysis in phase 1
 
@@ -56,8 +58,8 @@ Monetization (open core): the add-on is MIT. Cloud and team features are paid. D
 
 ### Not in phase 1
 
-Local hub, cloud, auth beyond "dev only", gRPC, message queues. (Persistence, Web Vitals, React render
-profiling, and the Prisma / TypeORM / Drizzle adapters were added during phase 1.)
+Local hub, cloud, auth beyond "dev only". (Persistence, Web Vitals, React render profiling, the Prisma / TypeORM /
+Drizzle adapters, gRPC, and message queues were added during phase 1.)
 
 ## Repo layout
 
