@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { HUD_CSS } from "./hud-style.js";
 import { createPageMonitor, EMPTY_PAGE_STATS, type PageStats } from "./page.js";
 
@@ -12,45 +12,6 @@ export function useInjectedStyle(): void {
     el.textContent = HUD_CSS;
     document.head.appendChild(el);
   }, []);
-}
-
-function readStored(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function writeStored(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // Storage blocked: the setting lasts for this page only.
-  }
-}
-
-/** A HUD setting kept in localStorage, so it survives a page refresh. */
-export function useStored<T extends string>(key: string, fallback: T, valid: (v: string) => v is T): [T, (v: T) => void] {
-  const [value, setValue] = useState<T>(() => {
-    const v = readStored(key);
-    return v !== null && valid(v) ? v : fallback;
-  });
-  const set = useCallback(
-    (v: T) => {
-      writeStored(key, v);
-      setValue(v);
-    },
-    [key],
-  );
-  return [value, set];
-}
-
-const isFlag = (v: string): v is "1" | "0" => v === "1" || v === "0";
-
-export function useFlag(key: string, fallback: boolean): [boolean, (on: boolean) => void] {
-  const [v, set] = useStored(key, fallback ? "1" : "0", isFlag);
-  return [v === "1", useCallback((on: boolean) => set(on ? "1" : "0"), [set])];
 }
 
 /** Start the monitor in an effect, so a StrictMode remount gets a fresh one. Buffered entries replay. */
