@@ -60,6 +60,8 @@ export interface RecorderOptions {
   serverStatsDelayMs?: number;
   /** Capture page views, React renders, and browser errors. Default true. */
   capturePages?: boolean;
+  /** Copy `console.log`, `warn`, `error`, `info`, `debug`, and `trace` calls into the page view's trace. Default true. */
+  captureConsole?: boolean;
 }
 
 export interface Recorder {

@@ -10,6 +10,8 @@ app.UseWizeLens();
 
 - **Databases:** EF Core (`WizeLens.EntityFrameworkCore`), Npgsql, MySqlConnector, and Microsoft.Data.SqlClient with no code, and any ADO.NET provider or Dapper through `ProfiledDbConnection`.
 - **gRPC and messaging:** Grpc.AspNetCore, Grpc.Net.Client, RabbitMQ.Client, Azure Service Bus, MassTransit, and Kafka (`WizeLens.Kafka`).
+- **Logs:** every `ILogger` line, plus Serilog (`WizeLens.Serilog`: `.WriteTo.WizeLens()`) and NLog (`WizeLens.NLog`: the `WizeLens` target), each in the trace of the request that wrote it. Browser console lines from `@wizeworks/lens-react` too.
+- **Metrics:** every meter in the app with no code: the .NET runtime (CPU, memory, GC, thread pool), ASP.NET Core (request duration, Kestrel), HttpClient, and your own `Meter`s. Taken every 10 seconds and kept for 1 hour in memory; sent to the hub too. Options: `CaptureMetrics`, `MetricsInterval`, `MetricsMaxAge`.
 - **Insights:** N+1 queries and HTTP calls, duplicate and slow queries, errors.
 - **AI access:** an opt-in, read-only, redacted MCP endpoint.
 

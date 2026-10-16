@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using WizeLens.Capture;
 using WizeLens.Hub;
 using WizeLens.Mcp;
+using WizeLens.Metrics;
 using WizeLens.Storage;
 using WizeLens.Web;
 
@@ -31,13 +32,16 @@ public static class WizeLensExtensions
             WizeLensRuntime.Redactor = new Redactor(options.RedactKeys);
             return options;
         });
-        services.AddSingleton(sp => new TraceStore(sp.GetRequiredService<WizeLensOptions>().MaxTraces));
+        AddStores(services);
         // Registered before the listener: hosted services stop in reverse order, so the last flush sees everything.
         services.AddSingleton<TraceStorageService>();
         services.AddHostedService(sp => sp.GetRequiredService<TraceStorageService>());
         // Also before the listener, so the hub gets the last spans before the app stops.
         services.AddSingleton<HubExporter>();
         services.AddHostedService(sp => sp.GetRequiredService<HubExporter>());
+        // After the hub sender, so it stops first and its last points still reach the hub.
+        services.AddSingleton<MetricsService>();
+        services.AddHostedService(sp => sp.GetRequiredService<MetricsService>());
         services.AddSingleton<WizeLensActivityListener>();
         services.AddHostedService(sp => sp.GetRequiredService<WizeLensActivityListener>());
         services.AddHostedService<EndpointObserver>();
@@ -53,10 +57,24 @@ public static class WizeLensExtensions
         {
             services.AddMcpServer(o => o.ServerInfo = new() { Name = "wizelens", Version = typeof(WizeLensExtensions).Assembly.GetName().Version?.ToString(3) ?? "0.0.0" })
                 .WithHttpTransport(o => o.Stateless = true)
-                .WithTools<WizeLensMcpTools>();
+                .WithTools<WizeLensMcpTools>()
+                .WithTools<WizeLensMetricTools>();
         }
 
         return services;
+    }
+
+    private static void AddStores(IServiceCollection services)
+    {
+        services.AddSingleton(sp =>
+        {
+            var wizelens = sp.GetRequiredService<WizeLensOptions>();
+            var store = new TraceStore(wizelens.MaxTraces);
+            // Serilog and NLog sinks are built before the host, so they find the store here.
+            if (wizelens.IsEnabled) WizeLensLogBridge.Attach(store, wizelens);
+            return store;
+        });
+        services.AddSingleton(sp => new MetricStore(sp.GetRequiredService<WizeLensOptions>().MetricsMaxAge, MetricStore.DefaultMaxPoints));
     }
 
     /// <summary>Adds the middleware and maps <c>/_wizelens</c> (UI, API, MCP); call it early; does nothing when disabled.</summary>

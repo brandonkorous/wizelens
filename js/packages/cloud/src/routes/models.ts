@@ -4,6 +4,7 @@ import { fail, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { countTraces, loadTraces, findTraceIds } from "../repo/trace-read.js";
 import { projectOf } from "./data.js";
+import { metricParamsOf, metricRange, projectMetrics } from "./metrics.js";
 
 const CACHE_MS = 15_000;
 const CACHE_MAX = 500;
@@ -29,9 +30,25 @@ async function retentionDays(ctx: Ctx, orgId: string): Promise<number> {
   return row?.d ?? ctx.app.config.retentionDays;
 }
 
+/** `GET api/models/metrics?project=&range=&env=&metric=&service=&group=&stat=&q=`: the metrics page, from the newest points. */
+async function metrics(ctx: Ctx): Promise<void> {
+  const { project } = await projectOf(ctx);
+  const range = metricRange(ctx, await retentionDays(ctx, project.orgId));
+  const now = Math.floor(ctx.app.config.now() / 5000) * 5000;
+  const env = ctx.url.searchParams.get("env") || undefined;
+  const params = metricParamsOf(ctx.url.searchParams);
+  const key = JSON.stringify([project.id, "metrics", range, env, params, now]);
+  const hit = cached(key, ctx.app.config.now());
+  if (hit) return sendJson(ctx.res, 200, hit);
+  const value = await projectMetrics(ctx.app.db, project.id, range, params, { now, env, limit: ctx.app.config.maxMetricPoints });
+  remember(key, value, ctx.app.config.now());
+  sendJson(ctx.res, 200, value);
+}
+
 /** `GET api/models/<page>?project=&range=&env=&...`: one page's numbers, computed here from the newest traces in range. */
 async function model(ctx: Ctx): Promise<void> {
   const page = ctx.params.page!;
+  if (page === "metrics") return metrics(ctx);
   if (!isPageName(page)) return fail(404, `No model named "${page}".`);
   const { project } = await projectOf(ctx);
   const range = ctx.url.searchParams.get("range") ?? "24h";

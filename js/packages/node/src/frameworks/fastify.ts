@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { context } from "@opentelemetry/api";
 import { captureOf } from "../adapters/registry.js";
 import { captureRequest, type CaptureDeps, type CapturedRequest, isOwnPath, isPreflight, pathOf, serveOwnPath } from "../request-capture.js";
+import { instrumentPino } from "../logs/pino.js";
 import { markRouted } from "../route-timing.js";
 import { recordOn } from "../spans.js";
 import type { WizeLens } from "../types.js";
@@ -74,6 +75,8 @@ export function wizelensFastify(wizelens: WizeLens) {
     if (d) {
       addHooks(app as FastifyLike, d);
       addOwnRoutes(app as FastifyLike, d);
+      // Fastify logs with pino: `request.log` and `app.log` lines go into the trace.
+      instrumentPino(wizelens, (app as { log?: unknown }).log);
     }
     done();
   };

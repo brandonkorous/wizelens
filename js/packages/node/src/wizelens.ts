@@ -3,14 +3,17 @@ import { W3CTraceContextPropagator } from "@opentelemetry/core";
 import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS } from "@wizeworks/lens-core";
 import { createHandler } from "./api.js";
 import { createMiddleware } from "./capture.js";
-import { registerParts } from "./adapters/registry.js";
+import { addCleanup, registerParts, runCleanups } from "./adapters/registry.js";
 import { createDbSpans, createTraceDb } from "./db.js";
 import { disabledWizeLens } from "./disabled.js";
 import { createGetTrace } from "./federation.js";
 import { connectHub } from "./hub-connect.js";
 import { buildInfo, DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, VERSION } from "./info.js";
-import { createLogWriter, makeLogger } from "./logger.js";
+import { createLogSink, createLogWriter, makeLogger } from "./logger.js";
+import { captureConsole } from "./logs/console.js";
 import type { McpDataSource } from "./mcp.js";
+import { createMetricParts, mcpMetrics } from "./metrics/setup.js";
+import type { MetricStore } from "./metrics/store.js";
 import { SqlitePersister } from "./persist.js";
 import { createErrorMiddleware, recordException, setUser, tag } from "./request-api.js";
 import { TraceStore } from "./store.js";
@@ -35,7 +38,7 @@ function openPersister(store: TraceStore, options: WizeLensOptions): SqlitePersi
   return persister;
 }
 
-function mcpSource(options: WizeLensOptions, store: TraceStore, getTrace: McpDataSource["get"]): McpDataSource {
+function mcpSource(options: WizeLensOptions, store: TraceStore, getTrace: McpDataSource["get"], metrics: MetricStore | null): McpDataSource {
   return {
     service: options.serviceName,
     version: VERSION,
@@ -45,6 +48,7 @@ function mcpSource(options: WizeLensOptions, store: TraceStore, getTrace: McpDat
     all: () => store.all(),
     get: getTrace,
     audit: options.audit ?? ((line: string) => console.info(line)),
+    ...mcpMetrics(metrics),
   };
 }
 
@@ -57,15 +61,17 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const selfEndpoints = new Set<string>(options.publicEndpoint ? [options.publicEndpoint] : []);
   const fetch = options.instrumentFetch ?? true;
   const tracing = createTracing(store, { service, version: VERSION, redactKeys, fetch }, selfEndpoints);
-  const write = createLogWriter(store, service, redactKeys, !!options.logToConsole);
+  const logs = createLogSink(store, service, redactKeys);
+  const write = createLogWriter(logs, !!options.logToConsole);
   const getTrace = createGetTrace(store, selfEndpoints);
   const startedMs = Date.now();
   const sqlite = () => !!persister?.active;
-  const info = () => buildInfo({ options, store, redactKeys, startedMs, sqlite });
-  const mcp = mcpSource(options, store, getTrace);
+  const metrics = createMetricParts(options, redactKeys);
+  const info = () => buildInfo({ options, store, redactKeys, startedMs, sqlite, metrics: !!metrics });
+  const mcp = mcpSource(options, store, getTrace, metrics?.store ?? null);
   const uiDir = resolveUiDir(options.uiDir);
-  const hub = connectHub(options, store, info, selfEndpoints);
-  const handler = createHandler({ basePath, store, redactKeys, uiDir, enableMcp: !!options.enableMcp, mcp, info, getTrace });
+  const hub = connectHub(options, store, info, selfEndpoints, metrics?.store ?? null);
+  const handler = createHandler({ basePath, store, redactKeys, uiDir, enableMcp: !!options.enableMcp, mcp, info, getTrace, metrics: metrics?.store ?? null });
   const capture = {
     tracer: tracing.tracer,
     basePath,
@@ -75,7 +81,7 @@ function buildParts(options: WizeLensOptions, basePath: string) {
     captureResponseBody: !!options.captureResponseBody,
     handler,
   };
-  return { hub, service, redactKeys, store, persister, tracing, write, getTrace, handler, capture, middleware: createMiddleware(capture) };
+  return { hub, service, redactKeys, store, persister, tracing, logs, write, getTrace, handler, capture, metrics, middleware: createMiddleware(capture) };
 }
 
 /** Create the WizeLens add-on for one Node service. */
@@ -103,12 +109,18 @@ export function createWizeLens(options: WizeLensOptions): WizeLens {
     setUser,
     getTrace: p.getTrace,
     shutdown: async () => {
+      runCleanups(wizelens);
       await p.hub?.stop();
       p.tracing.undici?.disable();
       await p.tracing.provider.shutdown();
       p.persister?.close();
     },
   };
-  registerParts(wizelens, { dbSpans: startDbSpan, capture: p.capture });
+  registerParts(wizelens, { dbSpans: startDbSpan, capture: p.capture, logs: p.logs, metrics: p.metrics?.store ?? null });
+  if (p.metrics) {
+    p.metrics.collector.start();
+    addCleanup(wizelens, () => p.metrics!.collector.stop());
+  }
+  if (options.captureConsole ?? true) addCleanup(wizelens, captureConsole(p.logs));
   return wizelens;
 }

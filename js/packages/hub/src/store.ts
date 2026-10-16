@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { ATTR_BROWSER_SESSION, type HubLog, type HubRemote, type HubSender, logKey, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_SESSION, type HubLog, type HubRemote, type HubSender, logKey, type MetricPoint, seriesKeyOf, type Span } from "@wizeworks/lens-core";
 import { HUB_SCHEMA, HUB_SCHEMA_VERSION, type HubStatements, prepareHubStatements } from "./schema.js";
 
 export interface HubStoreOptions {
@@ -10,8 +10,10 @@ export interface HubStoreOptions {
   path: string;
   /** Most traces kept. Default 50000. */
   maxTraces?: number;
-  /** Oldest trace kept, in ms. Default 7 days. */
+  /** Oldest trace (and metric point) kept, in ms. Default 7 days. */
   maxAgeMs?: number;
+  /** Most metric points kept. Default 2,000,000. */
+  maxMetricPoints?: number;
   now?: () => number;
 }
 
@@ -22,6 +24,8 @@ export interface HubWrite {
   spans: readonly Span[];
   logs: readonly HubLog[];
   remotes: readonly HubRemote[];
+  /** Metric points, already checked and redacted, with the sender's service. */
+  metrics?: readonly MetricPoint[];
 }
 
 const DAY_MS = 24 * 60 * 60_000;
@@ -36,6 +40,7 @@ export class HubStore {
   readonly db: DatabaseSync;
   readonly maxTraces: number;
   readonly maxAgeMs: number;
+  readonly maxMetricPoints: number;
   readonly path: string;
   readonly now: () => number;
   readonly #stmts: HubStatements;
@@ -44,6 +49,7 @@ export class HubStore {
     this.path = o.path;
     this.maxTraces = Math.max(1, o.maxTraces ?? 50_000);
     this.maxAgeMs = Math.max(60_000, o.maxAgeMs ?? 7 * DAY_MS);
+    this.maxMetricPoints = Math.max(1, o.maxMetricPoints ?? 2_000_000);
     this.now = o.now ?? Date.now;
     if (o.path !== ":memory:") mkdirSync(dirname(o.path), { recursive: true });
     this.db = new DatabaseSync(o.path);
@@ -80,6 +86,7 @@ export class HubStore {
       st.insertLog.run(traceId, hashKey(logKey(log)), log.timeMs, JSON.stringify(log));
     }
     for (const r of w.remotes) st.insertRemote.run(r.traceId, r.endpoint);
+    for (const p of w.metrics ?? []) st.insertMetric.run(p.timeMs, project, env, p.service, p.name, hashKey(seriesKeyOf(p)), JSON.stringify(p));
   }
 
   #touchService(sender: HubSender, via: string, now: number): void {
@@ -102,8 +109,16 @@ export class HubStore {
       for (const r of doomed) del.run(r.trace_id);
     }
     this.db.prepare("DELETE FROM services WHERE last_seen < ?").run(cutoff);
+    this.#pruneMetrics(cutoff);
     this.db.exec("COMMIT");
     return doomed.length;
+  }
+
+  /** Drop metric points past the age limit, then the oldest past the count limit. */
+  #pruneMetrics(cutoff: number): void {
+    this.db.prepare("DELETE FROM metrics WHERE time_ms < ?").run(cutoff);
+    const edge = this.db.prepare("SELECT time_ms FROM metrics ORDER BY time_ms DESC LIMIT 1 OFFSET ?").get(this.maxMetricPoints) as { time_ms: number } | undefined;
+    if (edge) this.db.prepare("DELETE FROM metrics WHERE time_ms <= ?").run(edge.time_ms);
   }
 
   close(): void {

@@ -37,7 +37,7 @@ All `api/*` endpoints return JSON (camelCase) and send `Access-Control-Allow-Ori
 | `GET api/traces?limit=50&session={id}` | `TraceSummary[]`, newest first. With `session`, only traces that have a span whose `wizelens.browser.session` equals `{id}`. |
 | `GET api/traces?full=true&limit=1000&since={ms}` | `Trace[]` from this service only (no federation), newest first. `limit` max 5000. With `since`, only traces whose last activity (`startMs + durationMs`) is at or after `{ms}`. The dashboard uses this for its charts and merges the results of every service it knows. |
 | `GET api/traces/{traceId}?federate=true` | `Trace` (404 if unknown and no remote has it) |
-| `POST api/client-spans` | Body `{ spans: Span[] }`. Browser spans. Stored into their traces. 204. |
+| `POST api/client-spans` | Body `{ spans: Span[], logs?: (LogRecord & { traceId })[] }`. Browser spans and browser log lines. Stored into their traces. At most 500 spans and 100 logs per call; log messages are cut at 4000 characters. 204. |
 | `POST mcp` (+ GET for SSE if SDK needs) | MCP streamable HTTP. Only when MCP is enabled. 404 otherwise. |
 
 ### Federation (`federate=true`)
@@ -179,6 +179,8 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `alerts` | The host runs alert rules; the Alerts page and the bell show them | | | ✅ |
 | `sharing` | Traces can be shared by a read-only link | | | ✅ |
 | `serverStats` | The host computes page numbers itself (`api/models/<page>`); ranges reach 7 and 30 days | | | ✅ |
+| `metrics` | The host keeps metrics; the Metrics page appears | ✅ | ✅ | ✅ |
+| `serverMetrics` | The host computes the Metrics page itself (`api/models/metrics`). Without it, the browser reads `api/metrics/points` | | ✅ | ✅ |
 
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation"]`. The hub answers `mode: "hub"` and
 `capabilities: ["federation", "environments", "registry"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
@@ -190,6 +192,57 @@ Add-ons answer `mode: "in-app"` and `capabilities: ["federation"]`. The hub answ
 | Capture response bodies | `CaptureResponseBody` | `captureResponseBody` | false |
 | Tag the current request | `WizeLensRequest.Tag(key, value?)` | `wizelens.tag(key, value?)` | — |
 | Set the current user | automatic from `HttpContext.User` | `wizelens.setUser(id)` | — |
+
+## Metrics (v0.8)
+
+WizeLens keeps OpenTelemetry metrics next to traces. A point (`MetricPoint`, `@wizeworks/lens-core`):
+
+```ts
+{ name, kind: "gauge" | "sum" | "histogram", unit, description?, service,
+  monotonic?,                          // sums: true for counters
+  temporality?: "delta" | "cumulative", // sums and histograms
+  attributes, timeMs, startMs?,
+  value?,                              // gauges and sums
+  histogram?: { count, sum, min?, max?, bounds: number[], counts: number[] } } // counts has bounds.length + 1 entries
+```
+
+A series is one name, one service, and one attribute set. Exponential histograms become explicit buckets (the upper bound of
+positive bucket `i` is `base^(offset+i+1)`, `base = 2^(2^-scale)`; zero and negative counts go to the first bucket). A summary
+becomes a histogram with count and sum and no buckets.
+
+**How the page draws them** (`metricsModel`, the same code everywhere): gauges and up-down sums as their value; counters as a rate
+per second (a drop means the counter restarted); histograms as p50, p95, and p99 from the bucket counts (cumulative points are
+turned into the change since the previous point). Lines can be split by service or by an attribute.
+The runtime strip shows, per service, the first of these that it sends:
+
+| Tile | Metric names |
+|---|---|
+| CPU | `process.cpu.utilization`, `dotnet.process.cpu.time`, `process.cpu.time` |
+| Memory | `process.memory.usage`, `dotnet.process.memory.working_set` |
+| Heap | `v8js.memory.heap.used`, `dotnet.gc.last_collection.heap.size`, `jvm.memory.used` |
+| Event loop delay | `nodejs.eventloop.delay.p99` |
+| GC | `dotnet.gc.pause.time`, `v8js.gc.duration`, `jvm.gc.duration` |
+| Thread pool queue | `dotnet.thread_pool.queue.length` |
+| Request time | `http.server.request.duration` (p95) |
+
+**Add-ons** collect every 10 seconds and keep one hour in memory (at most 50,000 points and 1,000 series).
+`GET {base}/api/metrics/points?since=<epoch ms>` answers `{ points: MetricPoint[] }`, oldest first. Batches to a hub carry the
+same points in `IngestBatch.metrics`.
+
+- **Node** collects `process.cpu.utilization`, `process.cpu.time`, `process.memory.usage`, `v8js.memory.heap.used` and `.limit`,
+  `nodejs.eventloop.utilization`, `nodejs.eventloop.delay.p50` / `.p99` / `.max`, and `v8js.gc.duration`. App metrics come in
+  through `wizelensMetricExporter(wizelens)` in an OpenTelemetry `PeriodicExportingMetricReader`.
+- **.NET** listens to every `Meter` with a `MeterListener`: the .NET runtime (`dotnet.*`), ASP.NET Core
+  (`http.server.request.duration`, `kestrel.*`), `HttpClient`, and the app's own meters. Counters are sent as cumulative totals,
+  histograms as delta per interval, with the instrument's advised bucket bounds.
+
+| Option | .NET | Node | Default |
+|---|---|---|---|
+| Turn metrics on | `CaptureMetrics` | `captureMetrics` | true |
+| How often | `MetricsInterval` | `metricsIntervalMs` | 10 s |
+| How long they are kept | `MetricsMaxAge` | `metricsMaxAgeMs` | 1 h |
+
+MCP: `list_metrics` (`range?`, `service?`, `q?`) and `get_metric` (`name`, `range?`, `service?`, `group?`, `stat?`), read-only.
 
 ## Redaction
 
@@ -319,8 +372,9 @@ interface IngestBatch {
 | GET | `/_wizelens/api/traces/{id}` | With `federate=true`, also reads services that do not send to the hub |
 | GET | `/_wizelens/api/services` | `{ services: HubService[], environments, projects, traces, spans }` |
 | POST | `/_wizelens/api/ingest` | `IngestBatch` |
-| POST | `/v1/traces`, `/v1/logs` | OTLP/HTTP, JSON or protobuf, optional gzip. Also under `/_wizelens/v1/...` |
-| POST | `/_wizelens/mcp` | With `--mcp`. The same five tools, over the newest 2000 traces of every service |
+| POST | `/v1/traces`, `/v1/logs`, `/v1/metrics` | OTLP/HTTP, JSON or protobuf, optional gzip. Also under `/_wizelens/v1/...` |
+| GET | `/_wizelens/api/models/metrics` | The Metrics page: `range`, `project`, `env`, `service`, `metric`, `group`, `stat`, `q`. At most 200,000 points are read, newest first; `meta.sampled` says when |
+| POST | `/_wizelens/mcp` | With `--mcp`. The same five tools, over the newest 2000 traces of every service, plus `list_metrics` and `get_metric` |
 | GET | `/healthz` | `ok` |
 
 `HubService` is the sender plus `via` (`"addon"` or `"otlp"`), `firstSeenMs`, `lastSeenMs`, and `online` (heard from in the
@@ -337,6 +391,7 @@ Trace `remotes` that point at a service which sends to the hub are hidden, so th
   `http.url`, `http.target`, `http.scheme`, `db.statement`, `db.system`, `db.name`, `db.operation`, `net.peer.name`, `net.peer.port`.
 - Log records keep their trace id. Records without one are skipped (WizeLens shows logs per trace).
   Severity 1–4 trace, 5–8 debug, 9–12 info, 13–16 warn, 17–20 error, 21–24 critical.
+- Metrics: gauge, sum, histogram, exponential histogram, and summary, as described in "Metrics". Metric attributes are redacted.
 
 ### Access
 
@@ -357,7 +412,11 @@ CREATE TABLE logs     (trace_id TEXT, key TEXT, time_ms REAL, json TEXT, PRIMARY
 CREATE TABLE remotes  (trace_id TEXT, endpoint TEXT, PRIMARY KEY (trace_id, endpoint));
 CREATE TABLE services (project TEXT, service TEXT, environment TEXT, host TEXT, via TEXT, info TEXT, first_seen REAL, last_seen REAL,
                        PRIMARY KEY (project, service, environment, host));                               -- '' for unknown
+CREATE TABLE metrics  (time_ms REAL, project TEXT, env TEXT, service TEXT, name TEXT, series_key TEXT, json TEXT); -- series_key = sha1
 ```
+
+Metric points older than the trace age limit are dropped, then the oldest past `--max-metric-points`
+(`WIZELENS_HUB_MAX_METRIC_POINTS`, default 2,000,000). Files from older hubs upgrade by themselves (schema version 2).
 
 ## Cloud (v0.7, phase 3)
 
@@ -394,7 +453,7 @@ for tests and trials.
 | POST / DELETE | `api/orgs/{org}/keys[/{id}]` | Admin. The secret is in the answer once |
 | GET | `api/orgs/{org}/audit?before=` | Admin |
 | GET | `api/info`, `api/traces`, `api/traces/{id}`, `api/services` — all with `?project=` | Member or read key |
-| GET | `api/models/{page}?project=&range=&env=&…` | Member or read key. See "Page models" |
+| GET | `api/models/{page}?project=&range=&env=&…` | Member or read key. See "Page models". `metrics` is a page too |
 | GET / POST / PATCH / DELETE | `api/projects/{p}/alerts[/{id}]`, `…/{id}/test` | Read: viewer; change: member |
 | POST / GET / DELETE | `api/projects/{p}/shares[/{id}]` | Read: viewer; change: member |
 | GET | `api/shared/{token}` | Anyone with the link: `{ trace, expiresMs }` |
@@ -419,6 +478,11 @@ only when the state changes (fired, resolved), to a webhook (the JSON notice) or
 Webhook URLs must be https and may not resolve to private, loopback, or link-local addresses, unless the cloud runs with
 `--allow-private-webhooks` (self-hosting on a private network).
 
+A rule can also watch one OpenTelemetry metric: `metric: "metric"`, `metricName` (required), `metricStat`
+(`last`, `avg`, `max`, `p95`, `p99`, or `rate`; default `avg`), and `metricService` (optional). The threshold is in the metric's
+base unit (seconds, bytes, or 0 to 1 for ratios). Counters read as a rate per second; histograms read from their merged buckets.
+No data never fires.
+
 ### Sharing
 
 A share link (`#/shared/<token>`, 1 to 30 days) opens one trace, read-only, for anyone with the link. It can be revoked.
@@ -432,5 +496,6 @@ Each organization keeps traces for `retention_days` (default 30, 1 to 400). Olde
 ### Cloud storage
 
 Postgres, one schema, migrations in `wizelens_migrations`. Tables: `orgs`, `users`, `members`, `sessions`, `invites`, `projects`,
-`api_keys`, `traces`, `spans`, `logs`, `services`, `alert_rules`, `alert_events`, `shares`, `audit`. Data tables are keyed by
+`api_keys`, `traces`, `spans`, `logs`, `services`, `metric_points`, `alert_rules`, `alert_events`, `shares`, `audit`.
+Migration 2 added `metric_points` and the metric columns of `alert_rules`. Data tables are keyed by
 `project_id`. Times are `double precision` epoch ms. Secrets (sessions, invites, keys, shares) are stored as SHA-256 hashes only.

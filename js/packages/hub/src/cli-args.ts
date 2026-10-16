@@ -15,6 +15,9 @@ Usage: wizelens-hub [options]
   --retention <time>  Keep traces this long: 30m, 24h, 7d.
                       Default 7d.                              (WIZELENS_HUB_RETENTION)
   --max-traces <n>    Keep at most this many. Default 50000.   (WIZELENS_HUB_MAX_TRACES)
+  --max-metric-points <n>
+                      Keep at most this many metric points.
+                      Default 2000000.                         (WIZELENS_HUB_MAX_METRIC_POINTS)
   --mcp               Turn on the read-only MCP endpoint.      (WIZELENS_HUB_MCP=1)
   --import <file>     Copy an add-on's .wizelens/traces.db into
                       the hub at start. Can repeat.
@@ -45,6 +48,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
       token: { type: "string" },
       retention: { type: "string" },
       "max-traces": { type: "string" },
+      "max-metric-points": { type: "string" },
       mcp: { type: "boolean" },
       import: { type: "string", multiple: true },
       help: { type: "boolean", short: "h" },
@@ -58,6 +62,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
     token: a.token ?? env[HUB_TOKEN_ENV],
     maxAgeMs: parseDuration(a.retention ?? env.WIZELENS_HUB_RETENTION),
     maxTraces: int(a["max-traces"] ?? env.WIZELENS_HUB_MAX_TRACES),
+    maxMetricPoints: int(a["max-metric-points"] ?? env.WIZELENS_HUB_MAX_METRIC_POINTS),
     enableMcp: a.mcp ?? env.WIZELENS_HUB_MCP === "1",
     imports: a.import ?? [],
   };

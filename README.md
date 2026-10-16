@@ -161,6 +161,7 @@ Ten pages, one look. Pick a time range in the top bar; every number compares its
 | **Rendering** | Render time per route, SSR, hydration, image loading, layout shift, and the React components that render too often |
 | **Errors** | Exceptions over time, top types, errors by service, and the stack trace and request context of each one — browser errors too |
 | **Logs** | Every log line from every service, filtered by level, service, or text |
+| **Metrics** | CPU, memory, GC, request times, and your own counters per service, as charts; split by any attribute |
 | **Services** | Health of each service, database, and outside host, and a map of who calls whom |
 | **Insights** | Every N+1, duplicate query, slow query, and render problem, ranked, with how to fix it |
 | **Settings** | How each connected service is set up, and your dashboard preferences |
@@ -187,15 +188,16 @@ Open any trace for the full detail: timeline, SQL, HTTP, logs, and errors. Searc
 | Outgoing HTTP | ✅ `HttpClient` | ✅ `fetch` / undici |
 | Database (driver level) | ✅ `ProfiledDbConnection` — ADO.NET, Dapper, any provider | ✅ `pg`, `mysql2`, `better-sqlite3`, `node:sqlite`, and `traceDb()` for any other driver |
 | Database (ORM) | ✅ EF Core | ✅ Prisma, TypeORM, Drizzle |
-| Logs | ✅ `ILogger` | ✅ `wizelens.logger` |
+| Logs | ✅ `ILogger`, Serilog (`WizeLens.Serilog`), NLog (`WizeLens.NLog`) | ✅ `console`, Fastify / pino, winston, bunyan, log4js, consola, NestJS, OpenTelemetry logs, `wizelens.logger` |
 | Exceptions | ✅ | ✅ |
+| Metrics | ✅ every `Meter`: .NET runtime, ASP.NET Core, `HttpClient`, your own | ✅ CPU, memory, heap, event loop, GC, and OpenTelemetry metrics (`wizelensMetricExporter`) |
 | Databases with no code change | ✅ Npgsql, MySqlConnector, Microsoft.Data.SqlClient | |
 | gRPC | ✅ Grpc.AspNetCore, Grpc.Net.Client | ✅ `instrumentGrpc` (`@grpc/grpc-js`) |
 | Message queues | ✅ RabbitMQ.Client, Azure Service Bus, MassTransit, Kafka (`WizeLens.Kafka`) | ✅ `instrumentAmqplib`, `instrumentKafkaJs`, `instrumentServiceBus` |
 | Request details | ✅ headers, client IP, user, request id, body sizes, tags | ✅ same; user and tags through `setUser()` / `tag()` |
 | Response bodies (opt-in) | ✅ `CaptureResponseBody` | ✅ `captureResponseBody` |
 | Routing and handler time | ✅ routing and handler | ✅ routing (Express) |
-| Browser | ✅ via `@wizeworks/lens-react`: fetch spans, render time, page views (TTFB, SSR, FCP, LCP, INP, CLS), hydration, slow images, React component renders, browser errors | |
+| Browser | ✅ via `@wizeworks/lens-react`: fetch spans, render time, page views (TTFB, SSR, FCP, LCP, INP, CLS), hydration, slow images, React component renders, browser errors, browser `console` lines | |
 
 ### Persistence
 

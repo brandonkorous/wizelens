@@ -17,6 +17,8 @@ export interface InfoInputs {
   redactKeys: readonly string[];
   startedMs: number;
   sqlite: () => boolean;
+  /** True when the add-on keeps metrics. */
+  metrics?: boolean;
 }
 
 /** `api/info`: who this service is and how WizeLens is set up. */
@@ -24,7 +26,7 @@ export function buildInfo(i: InfoInputs): ServiceInfo {
   const o = i.options;
   return {
     mode: "in-app",
-    capabilities: [...IN_APP_CAPABILITIES],
+    capabilities: [...IN_APP_CAPABILITIES, ...(i.metrics ? (["metrics"] as const) : [])],
     service: o.serviceName,
     version: VERSION,
     runtime: `node ${process.version}`,

@@ -1,5 +1,7 @@
 import {
   type Attributes,
+  type LogLevel,
+  type LogRecord,
   redactAttributes,
   type Span,
   type SpanCategory,
@@ -13,6 +15,8 @@ const CATEGORIES: readonly SpanCategory[] = ["http.server", "http.client", "db",
 const HEX32 = /^[0-9a-f]{32}$/;
 const HEX16 = /^[0-9a-f]{16}$/;
 const MAX_EVENTS = 50;
+const LEVELS: readonly LogLevel[] = ["trace", "debug", "info", "warn", "error", "critical"];
+const text = (v: unknown, fallback: string, max: number) => (typeof v === "string" && v ? v.slice(0, max) : fallback);
 
 function toAttributes(raw: unknown, redactKeys: readonly string[]): Attributes {
   const out: Attributes = {};
@@ -53,4 +57,21 @@ export function sanitizeClientSpan(raw: unknown, redactKeys: readonly string[]):
     attributes: toAttributes(s.attributes, redactKeys),
     events: toEvents(s.events, redactKeys),
   };
+}
+
+/** Validate and redact one browser log line. Returns null when it has no valid trace. */
+export function sanitizeClientLog(raw: unknown, redactKeys: readonly string[]): { traceId: string; log: LogRecord } | null {
+  if (!raw || typeof raw !== "object") return null;
+  const l = raw as Record<string, unknown>;
+  if (typeof l.traceId !== "string" || !HEX32.test(l.traceId)) return null;
+  const log: LogRecord = {
+    timeMs: Number(l.timeMs) || Date.now(),
+    level: LEVELS.includes(l.level as LogLevel) ? (l.level as LogLevel) : "info",
+    category: text(l.category, "console", 100),
+    message: typeof l.message === "string" ? l.message.slice(0, 4000) : "",
+    service: text(l.service, "browser", 100),
+    spanId: typeof l.spanId === "string" && HEX16.test(l.spanId) ? l.spanId : null,
+    attributes: toAttributes(l.attributes, redactKeys),
+  };
+  return { traceId: l.traceId, log };
 }

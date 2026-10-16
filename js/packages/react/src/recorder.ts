@@ -22,6 +22,7 @@ function resolveOptions(options: RecorderOptions) {
     statsDelayMs: options.serverStatsDelayMs ?? 400,
     propagateTo: options.propagateTo ?? ((u: URL) => u.origin === new URL(base).origin),
     capturePages: options.capturePages ?? true,
+    captureConsole: options.captureConsole ?? true,
     sessionId: getSessionId(),
   };
 }
@@ -34,7 +35,7 @@ export function createRecorder(options: RecorderOptions = {}): Recorder {
   const sender = createSender(cfg.endpointUrl, () => original);
   const data = new ServerData({ ...cfg, store, getFetch: () => original ?? globalThis.fetch });
   const ctx: FetchContext = { ...cfg, store, sender, loadServerStats: (id) => data.loadServerStats(id) };
-  const capture = createCaptureHandle(() => (cfg.capturePages ? startBrowserCapture({ sender, sessionId: cfg.sessionId }) : () => {}));
+  const capture = createCaptureHandle(() => (cfg.capturePages ? startBrowserCapture({ sender, sessionId: cfg.sessionId, captureConsole: cfg.captureConsole }) : () => {}));
   // Send queued spans before the page goes away, so a refresh does not lose them.
   const onPageHide = () => void sender.flush();
   const install = createInstaller({

@@ -27,6 +27,17 @@ Databases:
 gRPC, RabbitMQ (RabbitMQ.Client 7+), Azure Service Bus, and MassTransit are captured with no extra code.
 For Kafka, add `WizeLens.Kafka` and use its produce and consume helpers.
 
+Logs: `ILogger` lines are copied into the trace by themselves. Serilog and NLog need one package:
+
+- **Serilog** (`UseSerilog()` replaces the `ILogger` providers): `dotnet add package WizeLens.Serilog --prerelease`, then
+  `.WriteTo.WizeLens()` in your logger setup. In appsettings: `"Using": ["WizeLens.Serilog"]`, `"WriteTo": [{ "Name": "WizeLens" }]`.
+- **NLog:** `dotnet add package WizeLens.NLog --prerelease`, then `LogManager.Setup().SetupExtensions(e => e.RegisterWizeLens())`
+  and a `<target xsi:type="WizeLens" name="wizelens"/>` in `nlog.config` (or `new WizeLensTarget()` in code).
+
+A line is never stored twice, even when `ILogger` also writes to Serilog or NLog.
+
+Metrics: every `Meter` is read with no code: the .NET runtime, ASP.NET Core, `HttpClient`, and your own meters (the **Metrics** page).
+
 Open `https://localhost:<port>/_wizelens`.
 
 ## 2. Node
@@ -73,6 +84,21 @@ And, if you use them:
 | `kafkajs` | `instrumentKafkaJs(wizelens, kafka)` |
 | `@azure/service-bus` | `instrumentServiceBus(wizelens, client)` |
 
+Logs: `console.*` and Fastify's `request.log` are copied into the trace by themselves. For other loggers, add one line:
+
+| Logger | Code |
+|---|---|
+| pino | `instrumentPino(wizelens, logger)` |
+| winston | `instrumentWinston(wizelens, logger)` |
+| bunyan | `instrumentBunyan(wizelens, logger)` |
+| consola | `instrumentConsola(wizelens, consola)` |
+| log4js | `appenders: { wizelens: { type: log4jsAppender(wizelens) } }` |
+| NestJS | `NestFactory.create(AppModule, { logger: nestLogger(wizelens, new ConsoleLogger()) })` |
+| OpenTelemetry logs | `new LoggerProvider({ processors: [wizelensLogProcessor(wizelens)] })` |
+
+Metrics: CPU, memory, heap, event loop, and GC are collected by themselves (the **Metrics** page). For your own OpenTelemetry
+metrics, add `new PeriodicExportingMetricReader({ exporter: wizelensMetricExporter(wizelens) })` to your `MeterProvider`.
+
 Outgoing `fetch` calls are traced automatically. Open `http://localhost:<port>/_wizelens`.
 
 ## 3. React
@@ -115,6 +141,7 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960   # any other OpenTelemetry ap
 ```
 
 Open http://localhost:5960/_wizelens/. The top-bar menu filters by project and environment and shows which services are online.
+The hub takes traces, logs, and metrics, so the **Metrics** page keeps 7 days of CPU, memory, and request times for every service.
 Each service keeps its own dashboard too. To share one hub with your team, run it with `--host 0.0.0.0 --token <text>`,
 set `WIZELENS_HUB_TOKEN` on each service, and open `/_wizelens/?token=<text>` once in the browser. `wizelens-hub --help` lists every option.
 
@@ -152,6 +179,7 @@ page for the projects the agent may see, and send it as `Authorization: Bearer w
 |---|---|
 | No requests at all | WizeLens is mounted first (Express, Koa, Hono) and the app runs in development. |
 | Requests but no queries | The database line from step 1 or 2 runs before the first query. |
+| Requests but no logs | Only lines written during a request are kept. Serilog and NLog apps need `WizeLens.Serilog` / `WizeLens.NLog`; Node loggers other than `console` and Fastify need the line from step 2. |
 | No browser timing | `import "@wizeworks/lens-react/install"` is the first import, and `/_wizelens` reaches your API. |
 | A downstream service is missing | It runs WizeLens too, and the call goes through `HttpClient` / `fetch` / gRPC. |
 | A service is missing in the hub | `WIZELENS_HUB` is set where the service runs, and the service was restarted. The service log says when it cannot reach the hub. |

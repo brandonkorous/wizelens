@@ -78,6 +78,17 @@ CREATE INDEX ix_alert_events_project ON alert_events (project_id, time_ms);
 CREATE INDEX ix_audit_org ON audit (org_id, time_ms);
 CREATE INDEX ix_members_user ON members (user_id);
 `,
+  `
+CREATE TABLE metric_points (
+  project_id TEXT NOT NULL, time_ms DOUBLE PRECISION NOT NULL, env TEXT NOT NULL DEFAULT '', service TEXT NOT NULL,
+  name TEXT NOT NULL, series_key TEXT NOT NULL, json TEXT NOT NULL
+);
+CREATE INDEX ix_metric_points_name ON metric_points (project_id, name, time_ms);
+CREATE INDEX ix_metric_points_time ON metric_points (project_id, time_ms);
+ALTER TABLE alert_rules ADD COLUMN metric_name TEXT NOT NULL DEFAULT '';
+ALTER TABLE alert_rules ADD COLUMN metric_stat TEXT NOT NULL DEFAULT '';
+ALTER TABLE alert_rules ADD COLUMN metric_service TEXT NOT NULL DEFAULT '';
+`,
 ];
 
 export const MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS wizelens_migrations (version INTEGER PRIMARY KEY, applied_ms DOUBLE PRECISION NOT NULL)`;

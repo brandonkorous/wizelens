@@ -5,3 +5,6 @@ export { parseIngest } from "./ingest.js";
 export { isProtobuf, MAX_BODY, parseJson, readBody } from "./body.js";
 export { parseDuration } from "./cli-args.js";
 export type { HubWrite } from "./store.js";
+export { fromExponential, pointsOf, writesFromMetrics } from "./otlp/metrics.js";
+export type { OtlpMetric, OtlpResourceMetrics } from "./otlp/metrics.js";
+export { encodeMetrics } from "./otlp/proto.js";

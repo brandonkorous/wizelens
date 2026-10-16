@@ -1,8 +1,11 @@
 import type { Span } from "@wizeworks/lens-core";
+import type { ClientLog } from "./console-capture.js";
 
 /** Queues browser spans and posts them to `{endpoint}/api/client-spans`. */
 export interface Sender {
   push(span: Span): void;
+  /** Queue a browser log line. */
+  log(entry: ClientLog): void;
   /** Keep a span back, for example until its render time is known. */
   hold(id: string, span: Span): void;
   /** Queue a held span. False when it was already sent. */
@@ -15,6 +18,7 @@ const BATCH = 20;
 
 export function createSender(endpointUrl: string, getFetch: () => typeof fetch | null): Sender {
   const queue: Span[] = [];
+  const logs: ClientLog[] = [];
   const held = new Map<string, Span>();
 
   async function flush(all = true): Promise<void> {
@@ -23,13 +27,14 @@ export function createSender(endpointUrl: string, getFetch: () => typeof fetch |
       held.clear();
     }
     const send = getFetch();
-    if (queue.length === 0 || !send) return;
+    if ((queue.length === 0 && logs.length === 0) || !send) return;
     const spans = queue.splice(0, queue.length);
+    const lines = logs.splice(0, logs.length);
     try {
       await send(`${endpointUrl}/api/client-spans`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spans }),
+        body: JSON.stringify(lines.length > 0 ? { spans, logs: lines } : { spans }),
         keepalive: true,
       });
     } catch {
@@ -44,6 +49,10 @@ export function createSender(endpointUrl: string, getFetch: () => typeof fetch |
 
   return {
     push,
+    log(entry) {
+      logs.push(entry);
+      if (logs.length >= 100) void flush(false);
+    },
     hold: (id, span) => void held.set(id, span),
     release(id) {
       const span = held.get(id);

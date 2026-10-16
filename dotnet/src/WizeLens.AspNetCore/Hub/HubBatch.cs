@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using WizeLens.Metrics;
 using WizeLens.Model;
 
 namespace WizeLens.Hub;
@@ -10,6 +11,7 @@ internal sealed class HubBatch
     public List<Span> Spans { get; init; } = [];
     public List<HubLogItem> Logs { get; init; } = [];
     public List<HubRemoteItem> Remotes { get; init; } = [];
+    public List<MetricPoint> Metrics { get; init; } = [];
 
     public static HubBatch From(HubSenderInfo sender, List<HubItem> items) => new()
     {
@@ -17,6 +19,7 @@ internal sealed class HubBatch
         Spans = [.. items.Where(i => i.Span is not null).Select(i => i.Span!)],
         Logs = [.. items.Where(i => i.Log is not null).Select(i => new HubLogItem(i.TraceId, i.Log!))],
         Remotes = [.. items.Where(i => i.Remote is not null).Select(i => new HubRemoteItem(i.TraceId, i.Remote!))],
+        Metrics = [.. items.Where(i => i.Metric is not null).Select(i => i.Metric!)],
     };
 }
 

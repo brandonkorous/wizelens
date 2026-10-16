@@ -69,7 +69,17 @@ export interface Trace extends TraceSummary {
 export type HostMode = "in-app" | "hub" | "cloud";
 
 /** Optional features a host offers. The dashboard shows or hides parts by these, never by the mode name. */
-export type Capability = "federation" | "environments" | "registry" | "accounts" | "alerts" | "sharing" | "serverStats";
+export type Capability =
+  | "federation"
+  | "environments"
+  | "registry"
+  | "accounts"
+  | "alerts"
+  | "sharing"
+  | "serverStats"
+  /** The host keeps metrics: raw points at `api/metrics/points` (in-app), or with `serverMetrics`, the page at `api/models/metrics`. */
+  | "metrics"
+  | "serverMetrics";
 
 /** What an in-app add-on offers today. Also the default when a host does not say. */
 export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];

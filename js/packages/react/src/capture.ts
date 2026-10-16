@@ -1,5 +1,6 @@
 import { ATTR_REACT_COMMITS, ATTR_REACT_COMPONENTS, newSpanId, type Span } from "@wizeworks/lens-core";
 import { browserSpan, type ViewRef } from "./browser-span.js";
+import { watchConsole } from "./console-capture.js";
 import { errorSpan, watchErrors } from "./errors.js";
 import { topComponents } from "./fiber-stats.js";
 import { createPageViewTracker } from "./pageview-tracker.js";
@@ -9,8 +10,10 @@ import type { Sender } from "./sender.js";
 import { now } from "./session.js";
 
 export interface CaptureOptions {
-  sender: Pick<Sender, "push" | "flush">;
+  sender: Pick<Sender, "push" | "flush" | "log">;
   sessionId: string;
+  /** Copy `console.*` calls into the page view's trace. Default true. */
+  captureConsole?: boolean;
   /** How often React render stats are sent. Default 5000 ms. */
   reactIntervalMs?: number;
 }
@@ -47,6 +50,7 @@ export function startBrowserCapture(o: CaptureOptions): () => void {
   };
   const timer = setInterval(report, o.reactIntervalMs ?? 5000);
   const stopErrors = watchErrors((err) => o.sender.push(errorSpan(views.current(), err, o.sessionId)));
+  const stopConsole = o.captureConsole === false ? () => {} : watchConsole(views.current, (l) => o.sender.log(l));
   const stopRoutes = watchRoutes(() => {
     report();
     views.navigate();
@@ -64,6 +68,7 @@ export function startBrowserCapture(o: CaptureOptions): () => void {
     report();
     views.stop();
     stopErrors();
+    stopConsole();
     stopRoutes();
     removeEventListener("pagehide", onHide);
     removeEventListener("pageshow", onShow);

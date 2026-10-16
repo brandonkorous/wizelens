@@ -1,13 +1,15 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { HEADER_HOP, type ServiceInfo, type Trace, type TraceSummary } from "@wizeworks/lens-core";
-import { sanitizeClientSpan } from "./client-spans.js";
+import { sanitizeClientLog, sanitizeClientSpan } from "./client-spans.js";
 import { firstHeader, readJson, sendJson, setCors } from "./http-util.js";
 import { handleMcp, type McpDataSource } from "./mcp.js";
+import type { MetricStore } from "./metrics/store.js";
 import type { TraceStore } from "./store.js";
 import type { Req } from "./types.js";
 import { serveUi } from "./ui.js";
 
 const MAX_CLIENT_SPANS = 500;
+const MAX_CLIENT_LOGS = 100;
 
 export interface ApiDeps {
   basePath: string;
@@ -18,6 +20,8 @@ export interface ApiDeps {
   mcp: McpDataSource;
   info: () => ServiceInfo;
   getTrace: (traceId: string, federate: boolean, hop: number) => Promise<Trace | undefined>;
+  /** Null when metrics are off. */
+  metrics?: MetricStore | null;
 }
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -43,11 +47,16 @@ async function sendTrace(d: ApiDeps, traceId: string, req: IncomingMessage, res:
 
 async function receiveClientSpans(d: ApiDeps, req: Req, res: ServerResponse): Promise<void> {
   try {
-    const body = (await readJson(req)) as { spans?: unknown } | undefined;
+    const body = (await readJson(req)) as { spans?: unknown; logs?: unknown } | undefined;
     const spans = Array.isArray(body?.spans) ? body.spans.slice(0, MAX_CLIENT_SPANS) : [];
     for (const raw of spans) {
       const span = sanitizeClientSpan(raw, d.redactKeys);
       if (span) d.store.addSpan(span);
+    }
+    const logs = Array.isArray(body?.logs) ? body.logs.slice(0, MAX_CLIENT_LOGS) : [];
+    for (const raw of logs) {
+      const entry = sanitizeClientLog(raw, d.redactKeys);
+      if (entry) d.store.addLog(entry.traceId, entry.log);
     }
     res.writeHead(204).end();
   } catch {
@@ -61,6 +70,10 @@ async function handleApi(d: ApiDeps, sub: string, method: string, req: Req, res:
   const traceMatch = /^api\/traces\/([0-9a-f]{32})$/.exec(sub);
   if (traceMatch && method === "GET") return sendTrace(d, traceMatch[1]!, req, res, url);
   if (sub === "api/client-spans" && method === "POST") return receiveClientSpans(d, req, res);
+  if (sub === "api/metrics/points" && method === "GET" && d.metrics) {
+    const since = Number(url.searchParams.get("since"));
+    return sendJson(res, 200, { points: d.metrics.since(Number.isFinite(since) ? since : 0) });
+  }
   sendJson(res, 404, { error: "not found" });
 }
 

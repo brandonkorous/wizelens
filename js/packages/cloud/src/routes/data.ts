@@ -29,7 +29,7 @@ async function retentionMs(ctx: Ctx): Promise<number> {
 async function info(ctx: Ctx): Promise<void> {
   const value: ServiceInfo = {
     mode: "cloud",
-    capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats"],
+    capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats", "metrics", "serverMetrics"],
     service: "WizeLens Cloud",
     version: ctx.app.version,
     runtime: `node ${process.version}`,

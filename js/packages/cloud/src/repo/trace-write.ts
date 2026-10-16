@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { ATTR_BROWSER_SESSION, logKey, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_SESSION, logKey, seriesKeyOf, type Span } from "@wizeworks/lens-core";
 import type { HubWrite } from "@wizeworks/lens-hub/kit";
 import type { Queryable } from "../db/db.js";
 
@@ -14,6 +14,8 @@ async function insertMany(q: Queryable, head: string, rows: unknown[][], tail: s
     await q.query(`${head} VALUES ${values.join(", ")} ${tail}`, part.flat());
   }
 }
+
+const sha1 = (text: string) => createHash("sha1").update(text).digest("hex");
 
 const sessionOf = (s: Span) => {
   const v = s.attributes[ATTR_BROWSER_SESSION];
@@ -53,6 +55,10 @@ export async function writeBatch(q: Queryable, projectId: string, w: HubWrite, n
     (l) => l.traceId + l.key,
   ).map((l) => [projectId, l.traceId, l.key, l.log.timeMs, JSON.stringify(l.log)]);
   await insertMany(q, "INSERT INTO logs (project_id, trace_id, key, time_ms, json)", logs, "ON CONFLICT DO NOTHING");
+  const env = s.environment ?? "";
+  // The series key holds NUL separators, which Postgres text cannot store, so keep its hash.
+  const metrics = (w.metrics ?? []).map((p) => [projectId, p.timeMs, env, p.service, p.name, sha1(seriesKeyOf(p)), JSON.stringify(p)]);
+  await insertMany(q, "INSERT INTO metric_points (project_id, time_ms, env, service, name, series_key, json)", metrics, "");
 }
 
 /** Postgres rejects one statement that updates the same row twice, so keep the last of each key. */
@@ -60,6 +66,15 @@ function dedupe<T>(items: readonly T[], key: (t: T) => string): T[] {
   const map = new Map<string, T>();
   for (const t of items) map.set(key(t), t);
   return [...map.values()];
+}
+
+/** Drop metric points older than each organization's retention. */
+export async function pruneMetricsByRetention(q: Queryable, now: number): Promise<void> {
+  await q.query(
+    `DELETE FROM metric_points m USING projects p, orgs o WHERE p.id = m.project_id AND o.id = p.org_id
+     AND m.time_ms < $1 - o.retention_days * 86400000.0`,
+    [now],
+  );
 }
 
 /** Drop traces older than each organization's retention. Returns how many traces were dropped. */

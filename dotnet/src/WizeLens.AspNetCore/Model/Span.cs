@@ -105,4 +105,18 @@ public sealed class Trace : TraceSummary
 public sealed class ClientSpansRequest
 {
     public List<Span> Spans { get; set; } = [];
+    public List<ClientLog> Logs { get; set; } = [];
+}
+
+/// <summary>A browser log line posted with <see cref="ClientSpansRequest"/>.</summary>
+public sealed class ClientLog
+{
+    public string? TraceId { get; set; }
+    public string? SpanId { get; set; }
+    public double TimeMs { get; set; }
+    public string? Level { get; set; }
+    public string? Category { get; set; }
+    public string? Message { get; set; }
+    public string? Service { get; set; }
+    public Dictionary<string, object?>? Attributes { get; set; }
 }

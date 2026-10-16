@@ -1,4 +1,4 @@
-import type { AlertMetric, AlertOp } from "@wizeworks/lens-core";
+import type { AlertMetric, AlertOp, MetricAlertStat } from "@wizeworks/lens-core";
 
 export interface Channel {
   kind: "webhook" | "slack";
@@ -8,7 +8,12 @@ export interface Channel {
 export interface AlertRule {
   id: string;
   name: string;
-  metric: AlertMetric;
+  /** A trace metric, or "metric" for one OpenTelemetry metric. */
+  metric: AlertMetric | "metric";
+  /** For "metric" rules: the metric, what to read, and optionally one service. Empty on trace rules. */
+  metricName: string;
+  metricStat: MetricAlertStat | "";
+  metricService: string;
   op: AlertOp;
   threshold: number;
   windowMs: number;

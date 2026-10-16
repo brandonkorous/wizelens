@@ -1,4 +1,14 @@
-import { type Attributes, type HubLog, type HubRemote, type HubSender, type LogLevel, type LogRecord, redactAttributes, toAttributeValue } from "@wizeworks/lens-core";
+import {
+  type Attributes,
+  type HubLog,
+  type HubRemote,
+  type HubSender,
+  type LogLevel,
+  type LogRecord,
+  redactAttributes,
+  sanitizeMetricPoint,
+  toAttributeValue,
+} from "@wizeworks/lens-core";
 import { sanitizeClientSpan } from "@wizeworks/lens-node/kit";
 import type { HubWrite } from "./store.js";
 
@@ -76,5 +86,8 @@ export function parseIngest(raw: unknown, redactKeys: readonly string[]): HubWri
       .map((l) => parseLog(l, sender.service, redactKeys))
       .filter(notNull),
     remotes: list(body.remotes).map(parseRemote).filter(notNull),
+    metrics: list(body.metrics)
+      .map((p) => sanitizeMetricPoint(p, redactKeys, sender.service))
+      .filter(notNull),
   };
 }

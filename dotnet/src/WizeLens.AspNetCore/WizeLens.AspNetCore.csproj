@@ -26,6 +26,8 @@
     <ItemGroup>
         <InternalsVisibleTo Include="WizeLens.Tests" />
         <InternalsVisibleTo Include="WizeLens.EntityFrameworkCore" />
+        <InternalsVisibleTo Include="WizeLens.Serilog" />
+        <InternalsVisibleTo Include="WizeLens.NLog" />
     </ItemGroup>
 
 </Project>

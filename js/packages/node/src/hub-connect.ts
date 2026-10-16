@@ -1,5 +1,6 @@
 import { HUB_ENV, HUB_TOKEN_ENV, type HubSender, normalizeHubUrl, type ServiceInfo } from "@wizeworks/lens-core";
 import { HubExporter } from "./hub-export.js";
+import type { MetricStore } from "./metrics/store.js";
 import type { TraceStore } from "./store.js";
 import type { WizeLensOptions } from "./types.js";
 
@@ -7,7 +8,13 @@ import type { WizeLensOptions } from "./types.js";
 export const hubUrlOf = (o: WizeLensOptions): string | null => normalizeHubUrl(o.hub ?? process.env[HUB_ENV]);
 
 /** Start sending to the hub, when one is set. */
-export function connectHub(o: WizeLensOptions, store: TraceStore, info: () => ServiceInfo, selfEndpoints: ReadonlySet<string>): HubExporter | undefined {
+export function connectHub(
+  o: WizeLensOptions,
+  store: TraceStore,
+  info: () => ServiceInfo,
+  selfEndpoints: ReadonlySet<string>,
+  metrics: MetricStore | null = null,
+): HubExporter | undefined {
   const url = hubUrlOf(o);
   if (!url) return undefined;
   const sender = (): HubSender => {
@@ -17,6 +24,7 @@ export function connectHub(o: WizeLensOptions, store: TraceStore, info: () => Se
   };
   const exporter = new HubExporter({ url, token: o.hubToken ?? process.env[HUB_TOKEN_ENV], sender, warn: (m) => console.warn(m) });
   exporter.attach(store);
+  if (metrics) exporter.attachMetrics(metrics);
   exporter.start();
   return exporter;
 }

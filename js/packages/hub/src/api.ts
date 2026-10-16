@@ -6,6 +6,7 @@ import { parseJson, readBody } from "./body.js";
 import type { HubData } from "./data.js";
 import { parseIngest } from "./ingest.js";
 import type { ResolvedHubOptions } from "./options.js";
+import { metricParams, metricsPage, rangeOf } from "./metrics-read.js";
 import { countRows, distinctOf, listServices, type TraceQuery } from "./store-read.js";
 
 export interface ApiContext {
@@ -21,7 +22,7 @@ const num = (p: URLSearchParams, k: string) => (p.has(k) && Number.isFinite(Numb
 export function hubInfo(c: ApiContext): ServiceInfo {
   return {
     mode: "hub",
-    capabilities: ["federation", "environments", "registry"],
+    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics"],
     service: c.o.name,
     version: c.version,
     runtime: `node ${process.version} · lens-node ${NODE_VERSION}`,
@@ -64,6 +65,11 @@ async function ingest(c: ApiContext, req: IncomingMessage, res: ServerResponse):
   }
 }
 
+function metrics(c: ApiContext, p: URLSearchParams) {
+  const scope = { project: p.get("project") || undefined, env: p.get("env") || undefined };
+  return metricsPage(c.data.store.db, rangeOf(p.get("range")), scope, metricParams(p), c.o.now());
+}
+
 async function sendTrace(c: ApiContext, traceId: string, req: IncomingMessage, res: ServerResponse, url: URL): Promise<void> {
   const hop = Number(firstHeader(req.headers[HEADER_HOP.toLowerCase()])) || 0;
   const t = await c.data.getTrace(traceId, url.searchParams.get("federate") === "true", hop);
@@ -81,6 +87,7 @@ export async function handleApi(c: ApiContext, sub: string, req: IncomingMessage
     const { q, full } = queryOf(url.searchParams);
     return sendJson(res, 200, full ? c.data.traces(q) : c.data.summaries(q));
   }
+  if (sub === "api/models/metrics" && method === "GET") return sendJson(res, 200, metrics(c, url.searchParams));
   const m = /^api\/traces\/([0-9a-f]{32})$/.exec(sub);
   if (m && method === "GET") return sendTrace(c, m[1]!, req, res, url);
   sendJson(res, 404, { error: "not found" });

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Description>NLog target for WizeLens. Puts every NLog event into the trace of the request that wrote it, also behind an async wrapper.</Description>
+        <PackageTags>$(PackageTags);nlog;logging</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="NLog" Version="5.3.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\WizeLens.AspNetCore\WizeLens.AspNetCore.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="WizeLens.Tests" />
+    </ItemGroup>
+
+</Project>

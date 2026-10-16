@@ -3,6 +3,8 @@
     <Project Path="src/WizeLens.AspNetCore/WizeLens.AspNetCore.csproj" />
     <Project Path="src/WizeLens.EntityFrameworkCore/WizeLens.EntityFrameworkCore.csproj" />
     <Project Path="src/WizeLens.Kafka/WizeLens.Kafka.csproj" />
+    <Project Path="src/WizeLens.NLog/WizeLens.NLog.csproj" />
+    <Project Path="src/WizeLens.Serilog/WizeLens.Serilog.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/WizeLens.Tests/WizeLens.Tests.csproj" />

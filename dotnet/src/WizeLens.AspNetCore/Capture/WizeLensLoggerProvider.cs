@@ -1,82 +1,53 @@
-using System.Diagnostics;
 using Microsoft.Extensions.Logging;
-using WizeLens.Model;
 using WizeLens.Storage;
 
 namespace WizeLens.Capture;
 
 /// <summary>Attaches <see cref="ILogger"/> records to the trace of the current request.</summary>
 [ProviderAlias("WizeLens")]
-internal sealed class WizeLensLoggerProvider(TraceStore store, WizeLensOptions options) : ILoggerProvider
+internal sealed class WizeLensLoggerProvider(TraceStore store, WizeLensOptions options, IServiceProvider services) : ILoggerProvider
 {
-    public ILogger CreateLogger(string categoryName) => new WizeLensLogger(categoryName, store, options);
+    private LogLibraries? _routing;
+
+    public ILogger CreateLogger(string categoryName) => new WizeLensLogger(categoryName, store, options, this);
 
     public void Dispose()
     {
     }
 
-    /// <summary>WizeLens's own log categories. They go to the app's other log providers, not into traces.</summary>
-    private static readonly string[] OwnCategories =
-    [
-        "WizeLens.Analysis", "WizeLens.Capture", "WizeLens.Data",
-        "WizeLens.Mcp", "WizeLens.Storage", "WizeLens.Web", "ModelContextProtocol",
-    ];
-
-    /// <summary>Categories that are too noisy below Warning, or that WizeLens already shows as spans.</summary>
-    internal static bool IsNoisy(string category, LogLevel level)
+    /// <summary>True when a Serilog or NLog sink already stores the records this provider sees.</summary>
+    private bool HandledByLibrarySink()
     {
-        foreach (var own in OwnCategories)
+        var sinks = WizeLensLogBridge.Sinks;
+        if (sinks == LogLibraries.None) return false;
+        if (_routing is null)
         {
-            if (category.StartsWith(own, StringComparison.Ordinal)) return true;
+            try
+            {
+                _routing = LogRouting.Detect(services);
+            }
+            catch
+            {
+                // The host is still being built; ask again on the next record.
+                return false;
+            }
         }
-        if (level >= LogLevel.Warning) return false;
-        return category.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal)
-            || category.StartsWith("System.Net.Http", StringComparison.Ordinal)
-            || category.StartsWith("Microsoft.EntityFrameworkCore.Database.Command", StringComparison.Ordinal)
-            || category.StartsWith("Microsoft.Extensions.Http", StringComparison.Ordinal);
+        return (_routing.Value & sinks) != LogLibraries.None;
     }
 
-    private sealed class WizeLensLogger(string category, TraceStore store, WizeLensOptions options) : ILogger
+    private sealed class WizeLensLogger(string category, TraceStore store, WizeLensOptions options, WizeLensLoggerProvider provider) : ILogger
     {
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
 
-        public bool IsEnabled(LogLevel logLevel) =>
-            options.IsEnabled && logLevel != LogLevel.None && !IsNoisy(category, logLevel);
+        public bool IsEnabled(LogLevel logLevel) => LogCapture.Accepts(options, category, logLevel);
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
-            if (!IsEnabled(logLevel) || WizeLensContext.Suppressed) return;
-            var activity = Activity.Current;
-            if (activity is null || !activity.Recorded) return;
-
+            if (!IsEnabled(logLevel) || LogTarget.Current() is not { } target || provider.HandledByLibrarySink()) return;
             try
             {
-                var record = new LogRecord
-                {
-                    TimeMs = ActivityMapper.ToUnixMs(DateTime.UtcNow),
-                    Level = MapLevel(logLevel),
-                    Category = category,
-                    Message = formatter(state, exception),
-                    Service = options.ServiceName ?? "app",
-                    SpanId = activity.SpanId.ToHexString(),
-                };
-
-                if (state is IEnumerable<KeyValuePair<string, object?>> pairs)
-                {
-                    foreach (var (key, value) in pairs)
-                    {
-                        if (key != "{OriginalFormat}") record.Attributes[key] = value;
-                    }
-                }
-                if (eventId.Id != 0) record.Attributes["event.id"] = eventId.Id;
-                if (exception is not null)
-                {
-                    record.Attributes["exception.type"] = exception.GetType().FullName;
-                    record.Attributes["exception.message"] = exception.Message;
-                    record.Attributes["exception.stacktrace"] = exception.ToString();
-                }
-
-                store.AddLog(activity.TraceId.ToHexString(), WizeLensRuntime.Redactor.Redact(record));
+                var entry = new LogEntry(logLevel, category, formatter(state, exception), exception, eventId.Id);
+                LogCapture.Write(store, options, target, entry, Attributes(state));
             }
             catch
             {
@@ -84,14 +55,7 @@ internal sealed class WizeLensLoggerProvider(TraceStore store, WizeLensOptions o
             }
         }
 
-        private static string MapLevel(LogLevel level) => level switch
-        {
-            LogLevel.Trace => "trace",
-            LogLevel.Debug => "debug",
-            LogLevel.Information => "info",
-            LogLevel.Warning => "warn",
-            LogLevel.Error => "error",
-            _ => "critical",
-        };
+        private static IEnumerable<KeyValuePair<string, object?>>? Attributes<TState>(TState state) =>
+            state is IEnumerable<KeyValuePair<string, object?>> pairs ? pairs.Where(p => p.Key != "{OriginalFormat}") : null;
     }
 }

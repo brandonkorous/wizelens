@@ -1,8 +1,9 @@
 import protobuf from "protobufjs";
 import type { OtlpResourceLogs } from "./logs.js";
+import type { OtlpResourceMetrics } from "./metrics.js";
 import type { OtlpResourceSpans } from "./spans.js";
 
-// The parts of opentelemetry-proto (common, resource, trace, logs) the hub reads. Enums are read as int32.
+// The parts of opentelemetry-proto (common, resource, trace, logs, metrics) the hub reads. Enums are read as int32.
 type Fields = Record<string, [type: string, id: number, rule?: "repeated"]>;
 const msg = (fields: Fields, oneof?: string[]) => ({
   fields: Object.fromEntries(Object.entries(fields).map(([k, [type, id, rule]]) => [k, rule ? { type, id, rule } : { type, id }])),
@@ -10,6 +11,56 @@ const msg = (fields: Fields, oneof?: string[]) => ({
 });
 
 const VALUE_FIELDS = ["stringValue", "boolValue", "intValue", "doubleValue", "arrayValue", "kvlistValue", "bytesValue"];
+
+const POINT_TIMES: Fields = { startTimeUnixNano: ["fixed64", 2], timeUnixNano: ["fixed64", 3] };
+
+// metrics.proto: Gauge, Sum, Histogram, ExponentialHistogram, and Summary. Exemplars are not read.
+const METRICS = {
+  NumberDataPoint: msg({ ...POINT_TIMES, attributes: ["KeyValue", 7, "repeated"], asDouble: ["double", 4], asInt: ["sfixed64", 6] }),
+  HistogramDataPoint: msg({
+    ...POINT_TIMES,
+    attributes: ["KeyValue", 9, "repeated"],
+    count: ["fixed64", 4],
+    sum: ["double", 5],
+    bucketCounts: ["fixed64", 6, "repeated"],
+    explicitBounds: ["double", 7, "repeated"],
+    min: ["double", 11],
+    max: ["double", 12],
+  }),
+  Buckets: msg({ offset: ["sint32", 1], bucketCounts: ["uint64", 2, "repeated"] }),
+  ExponentialHistogramDataPoint: msg({
+    ...POINT_TIMES,
+    attributes: ["KeyValue", 1, "repeated"],
+    count: ["fixed64", 4],
+    sum: ["double", 5],
+    scale: ["sint32", 6],
+    zeroCount: ["fixed64", 7],
+    positive: ["Buckets", 8],
+    negative: ["Buckets", 9],
+    min: ["double", 12],
+    max: ["double", 13],
+  }),
+  ValueAtQuantile: msg({ quantile: ["double", 1], value: ["double", 2] }),
+  SummaryDataPoint: msg({ ...POINT_TIMES, attributes: ["KeyValue", 7, "repeated"], count: ["fixed64", 4], sum: ["double", 5], quantileValues: ["ValueAtQuantile", 6, "repeated"] }),
+  Gauge: msg({ dataPoints: ["NumberDataPoint", 1, "repeated"] }),
+  Sum: msg({ dataPoints: ["NumberDataPoint", 1, "repeated"], aggregationTemporality: ["int32", 2], isMonotonic: ["bool", 3] }),
+  Histogram: msg({ dataPoints: ["HistogramDataPoint", 1, "repeated"], aggregationTemporality: ["int32", 2] }),
+  ExponentialHistogram: msg({ dataPoints: ["ExponentialHistogramDataPoint", 1, "repeated"], aggregationTemporality: ["int32", 2] }),
+  Summary: msg({ dataPoints: ["SummaryDataPoint", 1, "repeated"] }),
+  Metric: msg({
+    name: ["string", 1],
+    description: ["string", 2],
+    unit: ["string", 3],
+    gauge: ["Gauge", 5],
+    sum: ["Sum", 7],
+    histogram: ["Histogram", 9],
+    exponentialHistogram: ["ExponentialHistogram", 10],
+    summary: ["Summary", 11],
+  }),
+  ScopeMetrics: msg({ scope: ["Scope", 1], metrics: ["Metric", 2, "repeated"] }),
+  ResourceMetrics: msg({ resource: ["Resource", 1], scopeMetrics: ["ScopeMetrics", 2, "repeated"] }),
+  ExportMetricsServiceRequest: msg({ resourceMetrics: ["ResourceMetrics", 1, "repeated"] }),
+};
 
 const DESCRIPTOR = {
   nested: {
@@ -60,6 +111,7 @@ const DESCRIPTOR = {
     ScopeLogs: msg({ scope: ["Scope", 1], logRecords: ["LogRecord", 2, "repeated"] }),
     ResourceLogs: msg({ resource: ["Resource", 1], scopeLogs: ["ScopeLogs", 2, "repeated"] }),
     ExportLogsServiceRequest: msg({ resourceLogs: ["ResourceLogs", 1, "repeated"] }),
+    ...METRICS,
   },
 };
 
@@ -87,8 +139,15 @@ export const decodeTraces = (body: Uint8Array): OtlpResourceSpans[] =>
 export const decodeLogs = (body: Uint8Array): OtlpResourceLogs[] =>
   (decode("ExportLogsServiceRequest", body).resourceLogs as OtlpResourceLogs[] | undefined) ?? [];
 
-/** Encode a request, for tests and for tools that send protobuf. */
-export function encodeTraces(request: { resourceSpans: unknown[] }): Uint8Array {
-  const t = root.lookupType("ExportTraceServiceRequest");
+export const decodeMetrics = (body: Uint8Array): OtlpResourceMetrics[] =>
+  (decode("ExportMetricsServiceRequest", body).resourceMetrics as OtlpResourceMetrics[] | undefined) ?? [];
+
+function encode(type: string, request: object): Uint8Array {
+  const t = root.lookupType(type);
   return t.encode(t.fromObject(request)).finish();
 }
+
+/** Encode a request, for tests and for tools that send protobuf. */
+export const encodeTraces = (request: { resourceSpans: unknown[] }): Uint8Array => encode("ExportTraceServiceRequest", request);
+
+export const encodeMetrics = (request: { resourceMetrics: unknown[] }): Uint8Array => encode("ExportMetricsServiceRequest", request);

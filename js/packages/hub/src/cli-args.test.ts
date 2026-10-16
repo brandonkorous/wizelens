@@ -10,13 +10,14 @@ describe("hub command line", () => {
   });
 
   it("prefers flags, then environment variables", () => {
-    const env = { WIZELENS_HUB_PORT: "7000", WIZELENS_HUB_TOKEN: "t", WIZELENS_HUB_MCP: "1", WIZELENS_HUB_RETENTION: "2d" };
+    const env = { WIZELENS_HUB_PORT: "7000", WIZELENS_HUB_TOKEN: "t", WIZELENS_HUB_MCP: "1", WIZELENS_HUB_RETENTION: "2d", WIZELENS_HUB_MAX_METRIC_POINTS: "900" };
     expect(optionsFromArgs(["--port", "6000", "--data", "memory"], env)).toMatchObject({
       port: 6000,
       storagePath: "memory",
       token: "t",
       enableMcp: true,
       maxAgeMs: 172_800_000,
+      maxMetricPoints: 900,
     });
     expect(optionsFromArgs(["--help"], {})).toBe("help");
   });

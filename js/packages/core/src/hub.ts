@@ -1,3 +1,4 @@
+import type { MetricPoint } from "./metrics/types.js";
 import type { LogRecord, Span } from "./types.js";
 
 /** Default port of the local hub. */
@@ -44,6 +45,8 @@ export interface IngestBatch {
   spans?: Span[];
   logs?: HubLog[];
   remotes?: HubRemote[];
+  /** Metric points. Their `service` is replaced by the sender's. */
+  metrics?: MetricPoint[];
 }
 
 /** One service the hub knows, from `GET {hub}/_wizelens/api/services`. */

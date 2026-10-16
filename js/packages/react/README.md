@@ -20,5 +20,6 @@ import { WizeLensProvider } from "@wizeworks/lens-react";
 | `propagateTo` | same origin | Which requests get a `traceparent` header. |
 | `slowMs` | `500` | Requests at or over this many ms show as "warning". |
 | `capturePages` | `true` | Send page views, React render stats, and browser errors. |
+| `captureConsole` | `true` | Copy `console.log`, `info`, `warn`, `error`, `debug`, and `trace` calls into the page view's trace (at most 500 per page). |
 
 MIT licensed.

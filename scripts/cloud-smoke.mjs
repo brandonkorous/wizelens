@@ -46,7 +46,18 @@ async function ingest(orgId, projectId) {
   const { traceId, list } = spans(Date.now());
   const res = await fetch(`${base}/_wizelens/api/ingest`, { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: JSON.stringify({ sender: { service: "smoke-api", environment: "ci" }, spans: list }) });
   check(res.status === 204, "an add-on batch is accepted");
+  await metrics(projectId, key);
   return traceId;
+}
+
+async function metrics(projectId, key) {
+  const nanos = String(BigInt(Date.now() - 30_000) * 1_000_000n);
+  const point = { name: "process.cpu.utilization", unit: "1", gauge: { dataPoints: [{ timeUnixNano: nanos, asDouble: 0.42 }] } };
+  const body = { resourceMetrics: [{ resource: { attributes: [{ key: "service.name", value: { stringValue: "smoke-api" } }] }, scopeMetrics: [{ metrics: [point] }] }] };
+  const res = await fetch(`${base}/v1/metrics`, { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  check(res.status === 200, "an OTLP metric is accepted");
+  const page = await call("GET", `api/models/metrics?project=${projectId}&range=1h&metric=process.cpu.utilization`);
+  check(page.body.selected?.summary.last === 0.42, "the metric reads back from the metrics page");
 }
 
 async function read(orgId, projectId, traceId) {

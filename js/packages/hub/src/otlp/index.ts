@@ -2,14 +2,15 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { isProtobuf, parseJson, readBody } from "../body.js";
 import type { HubWrite } from "../store.js";
 import { type OtlpResourceLogs, writesFromLogs } from "./logs.js";
-import { decodeLogs, decodeTraces } from "./proto.js";
+import { type OtlpResourceMetrics, writesFromMetrics } from "./metrics.js";
+import { decodeLogs, decodeMetrics, decodeTraces } from "./proto.js";
 import { type OtlpResourceSpans, writesFromSpans } from "./spans.js";
 
-export type OtlpSignal = "traces" | "logs";
+export type OtlpSignal = "traces" | "logs" | "metrics";
 
 /** The OTLP/HTTP paths the hub answers: the standard ones, so OTEL_EXPORTER_OTLP_ENDPOINT can point at the hub. */
 export function otlpSignalOf(path: string): OtlpSignal | null {
-  const m = /^(?:\/_wizelens)?\/v1\/(traces|logs)$/.exec(path);
+  const m = /^(?:\/_wizelens)?\/v1\/(traces|logs|metrics)$/.exec(path);
   return m ? (m[1] as OtlpSignal) : null;
 }
 
@@ -18,6 +19,10 @@ async function writesOf(signal: OtlpSignal, req: IncomingMessage, redactKeys: re
   if (signal === "traces") {
     const list = isProtobuf(req) ? decodeTraces(body) : ((parseJson(body) as { resourceSpans?: OtlpResourceSpans[] })?.resourceSpans ?? []);
     return writesFromSpans(list, redactKeys);
+  }
+  if (signal === "metrics") {
+    const list = isProtobuf(req) ? decodeMetrics(body) : ((parseJson(body) as { resourceMetrics?: OtlpResourceMetrics[] })?.resourceMetrics ?? []);
+    return writesFromMetrics(list, redactKeys);
   }
   const list = isProtobuf(req) ? decodeLogs(body) : ((parseJson(body) as { resourceLogs?: OtlpResourceLogs[] })?.resourceLogs ?? []);
   return writesFromLogs(list, redactKeys);

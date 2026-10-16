@@ -1,6 +1,6 @@
 import { evaluateAll } from "./alerts/evaluate.js";
 import type { CloudApp } from "./app.js";
-import { pruneByRetention } from "./repo/trace-write.js";
+import { pruneByRetention, pruneMetricsByRetention } from "./repo/trace-write.js";
 import { pruneSessions } from "./repo/users.js";
 
 const HOUSEKEEPING_MS = 10 * 60_000;
@@ -28,6 +28,7 @@ export function startJobs(app: CloudApp): () => void {
   const stops = [
     every("retention", HOUSEKEEPING_MS, async () => {
       while ((await pruneByRetention(app.db, now())) > 0);
+      await pruneMetricsByRetention(app.db, now());
     }),
     every("sessions", HOUSEKEEPING_MS, () => pruneSessions(app.db, now())),
     every("alerts", app.config.alertIntervalMs, () => evaluateAll(app)),

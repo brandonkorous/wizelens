@@ -1,7 +1,7 @@
 import type { DatabaseSync, StatementSync } from "node:sqlite";
 
 // The hub file (docs/CONTRACT.md, "Hub storage"). Empty strings stand for "unknown" so keys stay unique.
-export const HUB_SCHEMA_VERSION = "1";
+export const HUB_SCHEMA_VERSION = "2";
 export const HUB_SCHEMA = `
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS traces (
@@ -20,6 +20,13 @@ CREATE TABLE IF NOT EXISTS services (
   project TEXT NOT NULL, service TEXT NOT NULL, environment TEXT NOT NULL, host TEXT NOT NULL, via TEXT NOT NULL, info TEXT NOT NULL,
   first_seen REAL NOT NULL, last_seen REAL NOT NULL, PRIMARY KEY (project, service, environment, host)
 );
+CREATE TABLE IF NOT EXISTS metrics (
+  time_ms REAL NOT NULL, project TEXT NOT NULL DEFAULT '', env TEXT NOT NULL DEFAULT '', service TEXT NOT NULL,
+  name TEXT NOT NULL, series_key TEXT NOT NULL, json TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_metrics_time ON metrics(time_ms);
+CREATE INDEX IF NOT EXISTS ix_metrics_name ON metrics(name, time_ms);
+CREATE INDEX IF NOT EXISTS ix_metrics_project ON metrics(project, time_ms);
 CREATE INDEX IF NOT EXISTS ix_traces_updated ON traces(updated_ms);
 CREATE INDEX IF NOT EXISTS ix_traces_start ON traces(start_ms);
 CREATE INDEX IF NOT EXISTS ix_traces_env ON traces(env, start_ms);
@@ -33,6 +40,7 @@ export interface HubStatements {
   insertLog: StatementSync;
   insertRemote: StatementSync;
   upsertService: StatementSync;
+  insertMetric: StatementSync;
 }
 
 export function prepareHubStatements(db: DatabaseSync): HubStatements {
@@ -45,6 +53,7 @@ export function prepareHubStatements(db: DatabaseSync): HubStatements {
       VALUES (?, ?, ?, ?, ?, ?, ?)`),
     insertLog: db.prepare("INSERT OR IGNORE INTO logs (trace_id, key, time_ms, json) VALUES (?, ?, ?, ?)"),
     insertRemote: db.prepare("INSERT OR IGNORE INTO remotes (trace_id, endpoint) VALUES (?, ?)"),
+    insertMetric: db.prepare("INSERT INTO metrics (time_ms, project, env, service, name, series_key, json) VALUES (?, ?, ?, ?, ?, ?, ?)"),
     upsertService: db.prepare(`INSERT INTO services (project, service, environment, host, via, info, first_seen, last_seen)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(project, service, environment, host) DO UPDATE SET via = excluded.via, info = excluded.info, last_seen = excluded.last_seen`),
   };

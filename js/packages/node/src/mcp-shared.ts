@@ -1,4 +1,4 @@
-import type { Trace, TraceSummary } from "@wizeworks/lens-core";
+import type { MetricsModel, TimeRange, Trace, TraceSummary } from "@wizeworks/lens-core";
 
 /** What the MCP tools can read. Read-only by design. */
 export interface McpDataSource {
@@ -12,6 +12,10 @@ export interface McpDataSource {
   all(): Trace[];
   get(traceId: string, federate: boolean): Promise<Trace | undefined>;
   audit(line: string): void;
+  /** The metrics page for a range and page parameters. Without it, the metric tools are left out. */
+  metrics?(range: TimeRange, params: Record<string, string>): MetricsModel | Promise<MetricsModel>;
+  /** Ranges the metric tools offer, shortest first. Default all. */
+  metricRanges?: readonly TimeRange[];
 }
 
 export type Audit = (tool: string, args: unknown) => void;

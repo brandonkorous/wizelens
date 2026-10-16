@@ -30,6 +30,14 @@ export interface WizeLensOptions {
   instrumentFetch?: boolean;
   /** Database adapters also trace queries that run outside a request (startup, jobs). Default false. */
   traceQueriesOutsideRequests?: boolean;
+  /** Copy `console.log`, `warn`, `error`, `info`, `debug`, and `trace` calls made during a request into its trace. Default true. */
+  captureConsole?: boolean;
+  /** Keep runtime metrics (CPU, memory, heap, event loop, GC) and app metrics from `wizelensMetricExporter`. Default true. */
+  captureMetrics?: boolean;
+  /** How often runtime metrics are sampled, in ms. Default 10000. */
+  metricsIntervalMs?: number;
+  /** Oldest metric point kept, in ms. Default 1 h. Metrics are kept in memory only. */
+  metricsMaxAgeMs?: number;
   /** Also write wizelens logs to the console. Default false. */
   logToConsole?: boolean;
   /** Where MCP audit lines go. Default console.info. */

@@ -64,7 +64,22 @@ public sealed class WizeLensOptions
     /// <summary>The project this service belongs to, so a shared hub can group it. Default: the WIZELENS_PROJECT variable.</summary>
     public string? Project { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_PROJECT");
 
+    /// <summary>Collects metrics from every meter in the app (.NET runtime, ASP.NET Core, HttpClient, your own). On by default.</summary>
+    public bool CaptureMetrics { get; set; } = true;
+
+    /// <summary>How often metric points are taken. Default 10 seconds.</summary>
+    public TimeSpan MetricsInterval { get; set; } = TimeSpan.FromSeconds(10);
+
+    /// <summary>Metric points older than this are dropped from memory. Default 1 hour.</summary>
+    public TimeSpan MetricsMaxAge { get; set; } = TimeSpan.FromHours(1);
+
     internal bool IsEnabled { get; set; }
+
+    /// <summary>True when WizeLens is on and collects metrics.</summary>
+    internal bool MetricsOn => IsEnabled && CaptureMetrics;
+
+    /// <summary>Most time series kept; new ones past this are dropped.</summary>
+    internal int MaxMetricSeries { get; set; } = Metrics.MetricCollector.DefaultMaxSeries;
 
     /// <summary>For tests: the HTTP handler the hub sender uses.</summary>
     internal HttpMessageHandler? HubHandler { get; set; }

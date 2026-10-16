@@ -1,4 +1,4 @@
-import { isAlertMetric } from "@wizeworks/lens-core";
+import { isAlertMetric, isMetricAlertStat, MAX_METRIC_NAME } from "@wizeworks/lens-core";
 import { notify } from "../alerts/evaluate.js";
 import { checkTarget } from "../alerts/notify.js";
 import type { Ctx } from "../app.js";
@@ -22,10 +22,24 @@ async function channelsOf(ctx: Ctx, raw: unknown): Promise<Channel[]> {
   return out;
 }
 
+/** The metric part of a rule: for "metric" rules, the OpenTelemetry metric to read. */
+function metricPart(b: Record<string, unknown>): Pick<RuleInput, "metric" | "metricName" | "metricStat" | "metricService"> {
+  if (b.metric !== "metric") {
+    if (!isAlertMetric(b.metric)) fail(400, "Pick a metric: error_rate, p95_ms, avg_ms, requests, new_errors, slow_queries, or metric.");
+    return { metric: b.metric as RuleInput["metric"], metricName: "", metricStat: "", metricService: "" };
+  }
+  const name = typeof b.metricName === "string" ? b.metricName.trim() : "";
+  if (!name || name.length > MAX_METRIC_NAME) fail(400, "Set metricName to the metric to watch, for example process.cpu.utilization.");
+  const stat = b.metricStat ?? "avg";
+  if (!isMetricAlertStat(stat)) fail(400, "Pick a metricStat: last, avg, max, p95, p99, or rate.");
+  const service = typeof b.metricService === "string" ? b.metricService.trim().slice(0, 100) : "";
+  return { metric: "metric", metricName: name, metricStat: stat as RuleInput["metricStat"], metricService: service };
+}
+
 /** Check a rule from the request body. */
 async function ruleInput(ctx: Ctx): Promise<RuleInput> {
   const b = await readJsonBody(ctx.req);
-  if (!isAlertMetric(b.metric)) fail(400, "Pick a metric: error_rate, p95_ms, avg_ms, requests, new_errors, or slow_queries.");
+  const metric = metricPart(b);
   if (b.op !== ">" && b.op !== "<") fail(400, 'Set op to ">" or "<".');
   const threshold = Number(b.threshold);
   if (!Number.isFinite(threshold)) fail(400, "Set a number for threshold.");
@@ -33,7 +47,7 @@ async function ruleInput(ctx: Ctx): Promise<RuleInput> {
   if (!WINDOWS.includes(windowMs)) fail(400, "Pick a window of 5, 15, 60, 360, or 1440 minutes.");
   return {
     name: str(b, "name").slice(0, 100),
-    metric: b.metric as RuleInput["metric"],
+    ...metric,
     op: b.op as RuleInput["op"],
     threshold,
     windowMs,

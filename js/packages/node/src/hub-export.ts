@@ -1,5 +1,6 @@
 import { context, ROOT_CONTEXT } from "@opentelemetry/api";
-import type { HubLog, HubRemote, HubSender, IngestBatch, Span } from "@wizeworks/lens-core";
+import type { HubLog, HubRemote, HubSender, IngestBatch, MetricPoint, Span } from "@wizeworks/lens-core";
+import type { MetricStore } from "./metrics/store.js";
 import type { StoreEvent, TraceStore } from "./store.js";
 
 export interface HubExporterOptions {
@@ -20,7 +21,7 @@ const BATCH = 1000;
 const MAX_BACKOFF_MS = 30_000;
 const TIMEOUT_MS = 5000;
 
-/** Sends every new span, log, and remote to the hub in batches; a hub that is down never slows the app. */
+/** Sends every new span, log, remote, and metric point to the hub in batches; a hub that is down never slows the app. */
 export class HubExporter {
   readonly url: string;
   readonly #o: HubExporterOptions;
@@ -28,6 +29,7 @@ export class HubExporter {
   #spans: Span[] = [];
   #logs: HubLog[] = [];
   #remotes: HubRemote[] = [];
+  #metrics: MetricPoint[] = [];
   #timer: ReturnType<typeof setInterval> | undefined;
   #sending: Promise<void> | null = null;
   #lastSentMs = 0;
@@ -43,11 +45,21 @@ export class HubExporter {
   }
 
   get queued(): number {
-    return this.#spans.length + this.#logs.length + this.#remotes.length;
+    return this.#spans.length + this.#logs.length + this.#remotes.length + this.#metrics.length;
   }
 
   attach(store: TraceStore): () => void {
     return store.subscribe((e) => this.add(e));
+  }
+
+  /** Forward the add-on's metric points too. */
+  attachMetrics(metrics: MetricStore): () => void {
+    return metrics.subscribe((points) => this.addMetrics(points));
+  }
+
+  addMetrics(points: readonly MetricPoint[]): void {
+    this.#metrics.push(...points);
+    this.#trim();
   }
 
   add(e: StoreEvent): void {
@@ -59,7 +71,8 @@ export class HubExporter {
 
   #trim(): void {
     const max = this.#o.maxQueue ?? 20_000;
-    for (const list of [this.#spans, this.#logs, this.#remotes] as unknown[][]) {
+    // Metric points go first: a trace is worth more than one sample.
+    for (const list of [this.#metrics, this.#spans, this.#logs, this.#remotes] as unknown[][]) {
       const over = this.queued - max;
       if (over <= 0) return;
       const n = Math.min(over, list.length);
@@ -89,11 +102,13 @@ export class HubExporter {
       spans: this.#spans.splice(0, BATCH),
       logs: this.#logs.splice(0, BATCH),
       remotes: this.#remotes.splice(0, BATCH),
+      metrics: this.#metrics.splice(0, BATCH),
     };
     if (await this.#post(batch)) return this.#ok();
     this.#spans.unshift(...batch.spans!);
     this.#logs.unshift(...batch.logs!);
     this.#remotes.unshift(...batch.remotes!);
+    this.#metrics.unshift(...batch.metrics!);
     this.#trim();
     this.#fail();
   }

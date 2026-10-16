@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BellRing, Plus } from "lucide-react";
-import { ALERT_METRICS } from "@wizeworks/lens-core";
+import { ALERT_METRICS, METRIC_ALERT_STATS } from "@wizeworks/lens-core";
 import { currentProject, useAccount } from "../../data/account";
 import { apiSend } from "../../data/api";
 import { getScope } from "../../data/prefs";
@@ -12,12 +12,16 @@ import { type Column, Table } from "../../ui/Table";
 import { AlertForm, EMPTY_RULE, type RuleDraft } from "./AlertForm";
 import { type AlertEvent, type AlertRule, type AlertsData, windowLabel } from "./alertTypes";
 
-const fmtValue = (r: AlertRule, v: number | null) => (v === null ? "–" : `${Number.isInteger(v) ? v : v.toFixed(1)}${ALERT_METRICS[r.metric].unit === "%" ? "%" : ALERT_METRICS[r.metric].unit ? ` ${ALERT_METRICS[r.metric].unit}` : ""}`);
+const unitOf = (r: AlertRule) => (r.metric === "metric" ? "" : ALERT_METRICS[r.metric].unit);
+const plain = (v: number) => (Number.isInteger(v) ? String(v) : Math.abs(v) < 1 ? v.toPrecision(3) : v.toFixed(1));
+const fmtValue = (r: AlertRule, v: number | null) => (v === null ? "–" : `${plain(v)}${unitOf(r) === "%" ? "%" : unitOf(r) ? ` ${unitOf(r)}` : ""}`);
+const ruleLabel = (r: AlertRule) =>
+  r.metric === "metric" ? `${r.metricName} ${METRIC_ALERT_STATS[r.metricStat || "avg"].toLowerCase()}${r.metricService ? ` (${r.metricService})` : ""}` : ALERT_METRICS[r.metric].label;
 
 function ruleColumns(canWrite: boolean, onEdit: (r: AlertRule) => void, onTest: (r: AlertRule) => void, onDelete: (r: AlertRule) => void): Column<AlertRule>[] {
   return [
     { key: "name", header: "Alert", cell: (r) => <strong>{r.name}</strong> },
-    { key: "rule", header: "Rule", cell: (r) => `${ALERT_METRICS[r.metric].label} ${r.op === ">" ? ">" : "<"} ${fmtValue(r, r.threshold)} over ${windowLabel(r.windowMs)}${r.env ? ` · ${r.env}` : ""}` },
+    { key: "rule", header: "Rule", cell: (r) => `${ruleLabel(r)} ${r.op === ">" ? ">" : "<"} ${fmtValue(r, r.threshold)} over ${windowLabel(r.windowMs)}${r.env ? ` · ${r.env}` : ""}` },
     { key: "state", header: "State", cell: (r) => (!r.enabled ? <Badge tone="neutral">Off</Badge> : <DotText tone={r.state === "firing" ? "danger" : "success"} colorText={r.state === "firing"}>{r.state === "firing" ? "Firing" : "OK"}</DotText>) },
     { key: "value", header: "Last value", num: true, cell: (r) => fmtValue(r, r.lastValue) },
     { key: "to", header: "Sends to", cell: (r) => r.channels.map((c) => c.kind).join(", ") || "Dashboard only" },
@@ -61,7 +65,7 @@ export function AlertsPage() {
   const add = canWrite && !editing && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setEditing("new")}><Plus aria-hidden="true" /> New alert</button>;
   return (
     <>
-      <PageHeader title="Alerts" subtitle="Get told when error rates, latency, or traffic cross a line. Checked every minute.">{add}</PageHeader>
+      <PageHeader title="Alerts" subtitle="Get told when error rates, latency, traffic, or any metric cross a line. Checked every minute.">{add}</PageHeader>
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
       {note && <div className="wl-banner wl-banner-info">{note}</div>}
       {editing && <AlertForm initial={editing === "new" ? EMPTY_RULE : editing} onSave={save} onCancel={() => setEditing(null)} />}

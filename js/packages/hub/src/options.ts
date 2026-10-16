@@ -13,8 +13,10 @@ export interface HubOptions {
   token?: string;
   /** Most traces kept. Default 50000. */
   maxTraces?: number;
-  /** Oldest trace kept, in ms. Default 7 days. */
+  /** Oldest trace (and metric point) kept, in ms. Default 7 days. */
   maxAgeMs?: number;
+  /** Most metric points kept. Default 2,000,000. */
+  maxMetricPoints?: number;
   /** Expose the read-only MCP endpoint at `/_wizelens/mcp`. Default false. */
   enableMcp?: boolean;
   /** Key fragments to redact. Default: the contract list. */
@@ -45,6 +47,7 @@ export function resolveHubOptions(o: HubOptions = {}): ResolvedHubOptions {
     token: o.token || undefined,
     maxTraces: o.maxTraces ?? 50_000,
     maxAgeMs: o.maxAgeMs ?? 7 * 24 * 60 * 60_000,
+    maxMetricPoints: o.maxMetricPoints ?? 2_000_000,
     enableMcp: o.enableMcp ?? false,
     redactKeys: o.redactKeys ?? [...DEFAULT_REDACT_KEYS],
     uiDir: o.uiDir,

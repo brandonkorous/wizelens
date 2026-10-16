@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WizeLens.Capture;
+using WizeLens.Metrics;
 using WizeLens.Storage;
 using WizeLens.Web;
 
@@ -18,6 +19,7 @@ internal sealed class HubExporter : IHostedService, IDisposable
     private static readonly TimeSpan MaxBackoff = TimeSpan.FromSeconds(30);
 
     private readonly TraceStore _store;
+    private readonly MetricStore _metrics;
     private readonly WizeLensOptions _options;
     private readonly string _environment;
     private readonly ILogger<HubExporter> _logger;
@@ -30,15 +32,20 @@ internal sealed class HubExporter : IHostedService, IDisposable
     private DateTimeOffset _retryAt = DateTimeOffset.MinValue;
     private int _failures;
 
-    public HubExporter(TraceStore store, WizeLensOptions options, IHostEnvironment environment, ILogger<HubExporter> logger)
+    public HubExporter(TraceStore store, MetricStore metrics, WizeLensOptions options, IHostEnvironment environment, ILogger<HubExporter> logger)
     {
         _store = store;
+        _metrics = metrics;
         _options = options;
         _environment = environment.EnvironmentName;
         _logger = logger;
         _url = options.IsEnabled ? options.NormalizedHubUrl : null;
-        if (_url is not null) _store.Changed += _queue.Add;
+        if (_url is null) return;
+        _store.Changed += _queue.Add;
+        _metrics.Changed += AddMetric;
     }
+
+    private void AddMetric(MetricPoint point) => _queue.Add(new HubItem("", null, null, null, point));
 
     public int Queued => _queue.Count;
 
@@ -126,6 +133,7 @@ internal sealed class HubExporter : IHostedService, IDisposable
     public void Dispose()
     {
         _store.Changed -= _queue.Add;
+        _metrics.Changed -= AddMetric;
         _stopping?.Dispose();
         _client?.Dispose();
     }

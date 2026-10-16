@@ -4,7 +4,30 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Metrics
+
+- A new **Metrics** page: CPU, memory, heap, event loop, garbage collection, request times, and your own counters, per service.
+  Counters show as a rate per second, histograms as p50, p95, and p99. Lines can be split by service or by any attribute.
+- **Node:** runtime metrics every 10 seconds with no code, and `wizelensMetricExporter(wizelens)` for OpenTelemetry metrics.
+- **.NET:** every `Meter` with no code: the .NET runtime, ASP.NET Core, `HttpClient`, and your own meters.
+- **Hub and cloud:** OTLP metrics at `/v1/metrics` (JSON or protobuf) from any language. The cloud adds metric alert rules.
+- Add-ons keep one hour (`api/metrics/points`) and send metrics to the hub or cloud with the traces.
+- MCP tools `list_metrics` and `get_metric`.
+
+### Logs from the loggers apps already use
+
+- **Node:** `console.*` calls during a request now go into its trace, with no code change (`captureConsole: false` turns it off).
+  Fastify apps get `request.log` and `app.log` lines through `wizelensFastify`. New: `instrumentPino`, `instrumentWinston`,
+  `instrumentBunyan`, `instrumentConsola`, `log4jsAppender`, `nestLogger` (NestJS), and `wizelensLogProcessor` (OpenTelemetry logs).
+  Before, only `wizelens.logger` lines were kept, so a Fastify app showed no logs.
+- **.NET:** `WizeLens.Serilog` (`.WriteTo.WizeLens()`) and `WizeLens.NLog` (the `WizeLens` target). `UseSerilog()` replaces the
+  `ILogger` providers, so Serilog apps showed no logs before.
+- **Browser:** `@wizeworks/lens-react` copies `console.*` calls into the page view's trace (`captureConsole`). `api/client-spans`
+  takes a `logs` list next to `spans`.
+
 ### Fixed
+
+- `<WizeLensProvider capturePages={false}>` was in the docs but did nothing. The prop now works.
 
 - **The HUD broke hydration in server-rendered apps** (Next.js) when its panel was open, it was minimized, or requests were kept
   from the last page. It read those during the first render, which the server cannot do. The first render now matches the server; saved settings apply right after.

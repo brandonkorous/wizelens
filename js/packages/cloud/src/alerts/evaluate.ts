@@ -1,6 +1,7 @@
-import { alertBreached, alertMessage, alertValue } from "@wizeworks/lens-core";
+import { alertBreached, alertMessage, alertValue, metricAlertMessage, metricAlertUnit, metricAlertValue } from "@wizeworks/lens-core";
 import type { CloudApp } from "../app.js";
 import { addEvent, type AlertRule, enabledRules, saveEvaluation } from "../repo/alerts.js";
+import { loadMetricPoints } from "../repo/metric-read.js";
 import { findTraceIds, loadTraces } from "../repo/trace-read.js";
 import { deliver, type Notice } from "./notify.js";
 
@@ -12,7 +13,7 @@ async function noticeOf(app: CloudApp, rule: AlertRule, state: Notice["state"], 
     rule: rule.name,
     project: p?.name ?? rule.projectId,
     state,
-    message: alertMessage(rule.metric, rule.op, value, rule.threshold),
+    message: await messageOf(app, rule, value, now),
     value,
     threshold: rule.threshold,
     timeMs: now,
@@ -20,8 +21,24 @@ async function noticeOf(app: CloudApp, rule: AlertRule, state: Notice["state"], 
   };
 }
 
-/** The metric over the rule's window, from the traces that started in it. */
+/** One OpenTelemetry metric over the rule's window, and a sample point for its unit. */
+async function measureMetric(app: CloudApp, rule: AlertRule, now: number) {
+  const q = { projectId: rule.projectId, from: now - rule.windowMs, to: now, env: rule.env || undefined, name: rule.metricName, service: rule.metricService || undefined };
+  const { points } = await loadMetricPoints(app.db, { ...q, limit: app.config.maxMetricPoints });
+  const stat = rule.metricStat || "avg";
+  return { value: metricAlertValue(points, { from: q.from, to: q.to }, stat), sample: points[0], stat };
+}
+
+async function messageOf(app: CloudApp, rule: AlertRule, value: number | null, now: number): Promise<string> {
+  if (rule.metric !== "metric") return alertMessage(rule.metric, rule.op, value, rule.threshold);
+  const { sample, stat } = await measureMetric(app, rule, now);
+  const unit = sample ? metricAlertUnit(sample, stat) : "";
+  return metricAlertMessage(rule.metricName, stat, rule.op, value, rule.threshold, unit);
+}
+
+/** The metric over the rule's window: from the traces that started in it, or from the metric's points. */
 async function measure(app: CloudApp, rule: AlertRule, now: number): Promise<number | null> {
+  if (rule.metric === "metric") return (await measureMetric(app, rule, now)).value;
   const limit = app.config.maxStatsTraces;
   const env = rule.env || undefined;
   const load = async (from: number, to: number) =>
@@ -42,7 +59,7 @@ export async function notify(app: CloudApp, rule: AlertRule, state: Notice["stat
 /** Check one rule. It notifies only when the state changes: ok to firing, or firing to ok. */
 export async function evaluateRule(app: CloudApp, rule: AlertRule, now: number): Promise<void> {
   const value = await measure(app, rule, now);
-  const firing = alertBreached(rule.metric, rule.op, value, rule.threshold);
+  const firing = rule.metric === "metric" ? value !== null && (rule.op === ">" ? value > rule.threshold : value < rule.threshold) : alertBreached(rule.metric, rule.op, value, rule.threshold);
   const next = firing ? "firing" : "ok";
   await saveEvaluation(app.db, rule.id, next, value, now);
   if (next !== rule.state) await notify(app, rule, firing ? "fired" : "resolved", value, now);

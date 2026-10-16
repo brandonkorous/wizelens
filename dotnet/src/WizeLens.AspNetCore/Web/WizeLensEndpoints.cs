@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using WizeLens.Capture;
+using WizeLens.Metrics;
 using WizeLens.Model;
 using WizeLens.Storage;
 
@@ -22,6 +23,7 @@ internal static partial class WizeLensEndpoints
         group.MapGet("api/traces", ListTraces);
         group.MapGet("api/traces/{traceId}", GetTraceAsync);
         group.MapPost("api/client-spans", AddClientSpansAsync);
+        if (options.MetricsOn) group.MapGet("api/metrics/points", (MetricStore metrics, double? since) => Results.Json(new { points = metrics.Since(since) }, WizeLensJson.Options));
         MapUi(group);
         if (options.EnableMcp) endpoints.MapMcp(options.NormalizedBasePath + "/mcp");
     }
@@ -56,6 +58,7 @@ internal static partial class WizeLensEndpoints
         {
             if (Normalize(span)) store.AddSpan(WizeLensRuntime.Redactor.Redact(span));
         }
+        ClientLogs.Add(store, body?.Logs);
         return Results.NoContent();
     }
 

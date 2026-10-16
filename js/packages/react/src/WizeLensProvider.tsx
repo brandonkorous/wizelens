@@ -15,6 +15,10 @@ export interface WizeLensProviderProps {
   propagateTo?: (url: URL) => boolean;
   /** The HUD shows requests at or over this many ms as "warning". Default 500. */
   slowMs?: number;
+  /** Send page views, React render stats, and browser errors. Default true. */
+  capturePages?: boolean;
+  /** Copy `console.*` calls into the page view's trace. Default true. */
+  captureConsole?: boolean;
   children?: ReactNode;
 }
 
@@ -24,12 +28,14 @@ export function WizeLensProvider({
   hud = true,
   propagateTo,
   slowMs,
+  capturePages = true,
+  captureConsole = true,
   children,
 }: WizeLensProviderProps) {
   const recorder = useMemo(
-    () => (enabled ? createRecorder({ endpoint, propagateTo }) : null),
+    () => (enabled ? createRecorder({ endpoint, propagateTo, capturePages, captureConsole }) : null),
     // propagateTo is read once on purpose; pass a stable function.
-    [endpoint, enabled],
+    [endpoint, enabled, capturePages, captureConsole],
   );
 
   useEffect(() => recorder?.install(), [recorder]);

@@ -7,6 +7,7 @@ import { fail } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
 import { getTrace, queryTraces } from "../repo/trace-read.js";
+import { projectMetrics } from "./metrics.js";
 
 /** Traces the MCP tools search through, newest first. */
 const MCP_RECENT = 500;
@@ -36,6 +37,7 @@ async function mcp(ctx: Ctx): Promise<void> {
     list: (limit) => recent.slice(0, limit).map(toSummary),
     all: () => recent,
     get: (traceId) => getTrace(db, project.id, traceId),
+    metrics: (range, params) => projectMetrics(db, project.id, range, params, { now: ctx.app.config.now(), limit: ctx.app.config.maxMetricPoints }),
     // Every tool call is kept in the organization's audit log.
     audit: (line) => void writes.push(audit(db, project.orgId, actor, "mcp.call", { projectId: project.id, line }, ctx.app.config.now())),
   };

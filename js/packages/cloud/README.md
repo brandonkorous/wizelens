@@ -33,6 +33,16 @@ WIZELENS_HUB_TOKEN=wl_ik_...
 Put it behind https. With an https public URL, the sign-in cookie is marked secure. PGlite is for trials and tests; use Postgres
 for real teams. Check a running cloud end to end with `node scripts/cloud-smoke.mjs <url>` from the repo (it needs a fresh database).
 
+## Metrics
+
+Apps send OpenTelemetry metrics to `POST /v1/metrics` with the ingest key (JSON or protobuf; gauges, sums, histograms,
+exponential histograms, and summaries). WizeLens add-ons send theirs in their batches. The Metrics page reads
+`GET /_wizelens/api/models/metrics?project=&range=&env=&service=&metric=&group=&stat=&q=` (member or read key), from at most the
+newest 200,000 points of the range (`maxMetricPoints` in code). Points follow the organization's retention. Alert rules can watch
+one metric: `{ "metric": "metric", "metricName": "process.cpu.utilization", "metricStat": "avg", "metricService": "", ... }`, with
+`metricStat` one of `last`, `avg`, `max`, `p95`, `p99`, `rate`, and the threshold in the metric's own unit (seconds, bytes, or
+0 to 1 for ratios). Read keys get `list_metrics` and `get_metric` over MCP.
+
 ## In code
 
 ```ts

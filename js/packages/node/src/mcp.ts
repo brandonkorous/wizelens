@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { registerFindTools } from "./mcp-find.js";
+import { registerMetricTools } from "./mcp-metrics.js";
 import { type Audit, type McpDataSource } from "./mcp-shared.js";
 import { registerTraceTools } from "./mcp-traces.js";
 
@@ -13,6 +14,7 @@ function createServer(data: McpDataSource): McpServer {
     data.audit(`[wizelens] mcp tool=${tool} service=${data.service} args=${JSON.stringify(args ?? {})}`);
   registerTraceTools(server, data, audit);
   registerFindTools(server, data, audit);
+  registerMetricTools(server, data, audit);
   return server;
 }
 

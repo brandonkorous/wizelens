@@ -1,4 +1,4 @@
-import type { AlertMetric, AlertOp } from "@wizeworks/lens-core";
+import type { AlertMetric, AlertOp, MetricAlertStat } from "@wizeworks/lens-core";
 import { newId } from "../auth/crypto.js";
 import type { Queryable } from "../db/db.js";
 
@@ -11,7 +11,12 @@ export interface AlertRule {
   id: string;
   projectId: string;
   name: string;
-  metric: AlertMetric;
+  /** A trace metric, or "metric" for one OpenTelemetry metric named by `metricName`. */
+  metric: AlertMetric | "metric";
+  /** For "metric" rules: the metric, what to read from it, and optionally one service. Empty otherwise. */
+  metricName: string;
+  metricStat: MetricAlertStat | "";
+  metricService: string;
   op: AlertOp;
   threshold: number;
   windowMs: number;
@@ -37,7 +42,8 @@ export interface AlertEvent {
 
 export type RuleInput = Omit<AlertRule, "id" | "projectId" | "state" | "lastValue" | "lastEvalMs">;
 
-const RULE_COLUMNS = `id, project_id AS "projectId", name, metric, op, threshold, window_ms AS "windowMs", env, channels, enabled, state,
+const RULE_COLUMNS = `id, project_id AS "projectId", name, metric, metric_name AS "metricName", metric_stat AS "metricStat",
+  metric_service AS "metricService", op, threshold, window_ms AS "windowMs", env, channels, enabled, state,
   last_value AS "lastValue", last_eval_ms AS "lastEvalMs"`;
 
 type RuleRow = Omit<AlertRule, "channels"> & { channels: string };
@@ -59,9 +65,10 @@ export async function ruleById(q: Queryable, projectId: string, id: string): Pro
 export async function createRule(q: Queryable, projectId: string, r: RuleInput, by: string, now: number): Promise<string> {
   const id = newId();
   await q.query(
-    `INSERT INTO alert_rules (id, project_id, name, metric, op, threshold, window_ms, env, channels, enabled, created_by, created_ms)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-    [id, projectId, r.name, r.metric, r.op, r.threshold, r.windowMs, r.env, JSON.stringify(r.channels), r.enabled, by, now],
+    `INSERT INTO alert_rules (id, project_id, name, metric, op, threshold, window_ms, env, channels, enabled, created_by, created_ms,
+       metric_name, metric_stat, metric_service)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+    [id, projectId, r.name, r.metric, r.op, r.threshold, r.windowMs, r.env, JSON.stringify(r.channels), r.enabled, by, now, r.metricName, r.metricStat, r.metricService],
   );
   return id;
 }
@@ -69,8 +76,8 @@ export async function createRule(q: Queryable, projectId: string, r: RuleInput, 
 export async function updateRule(q: Queryable, projectId: string, id: string, r: RuleInput): Promise<void> {
   await q.query(
     `UPDATE alert_rules SET name = $3, metric = $4, op = $5, threshold = $6, window_ms = $7, env = $8, channels = $9, enabled = $10,
-       state = CASE WHEN $10 THEN state ELSE 'ok' END WHERE project_id = $1 AND id = $2`,
-    [projectId, id, r.name, r.metric, r.op, r.threshold, r.windowMs, r.env, JSON.stringify(r.channels), r.enabled],
+       metric_name = $11, metric_stat = $12, metric_service = $13, state = CASE WHEN $10 THEN state ELSE 'ok' END WHERE project_id = $1 AND id = $2`,
+    [projectId, id, r.name, r.metric, r.op, r.threshold, r.windowMs, r.env, JSON.stringify(r.channels), r.enabled, r.metricName, r.metricStat, r.metricService],
   );
 }
 

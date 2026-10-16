@@ -4,10 +4,14 @@ import { Select } from "../../ui/Controls";
 import { Field, FormRow } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
 import { type AlertRule, type Channel, WINDOWS } from "./alertTypes";
+import { MetricRuleFields } from "./MetricRuleFields";
 
 export type RuleDraft = Omit<AlertRule, "id" | "state" | "lastValue" | "lastEvalMs">;
 
-const METRICS = Object.entries(ALERT_METRICS).map(([k, m]): [AlertMetric, string] => [k as AlertMetric, `${m.label}${m.unit ? ` (${m.unit})` : ""}`]);
+const METRICS: [AlertMetric | "metric", string][] = [
+  ...Object.entries(ALERT_METRICS).map(([k, m]): [AlertMetric, string] => [k as AlertMetric, `${m.label}${m.unit ? ` (${m.unit})` : ""}`]),
+  ["metric", "A metric (CPU, memory, your own)"],
+];
 const OPS: [AlertOp, string][] = [
   [">", "is above"],
   ["<", "is below"],
@@ -17,7 +21,19 @@ const KINDS: [Channel["kind"], string][] = [
   ["slack", "Slack incoming webhook"],
 ];
 
-export const EMPTY_RULE: RuleDraft = { name: "", metric: "error_rate", op: ">", threshold: 5, windowMs: 300_000, env: "", channels: [], enabled: true };
+export const EMPTY_RULE: RuleDraft = {
+  name: "",
+  metric: "error_rate",
+  metricName: "",
+  metricStat: "",
+  metricService: "",
+  op: ">",
+  threshold: 5,
+  windowMs: 300_000,
+  env: "",
+  channels: [],
+  enabled: true,
+};
 
 /** New or changed rule: what to watch, when it fires, and where the notice goes. */
 export function AlertForm({ initial, onSave, onCancel }: { initial: RuleDraft; onSave: (r: RuleDraft) => Promise<string | null>; onCancel: () => void }) {
@@ -27,7 +43,8 @@ export function AlertForm({ initial, onSave, onCancel }: { initial: RuleDraft; o
   const set = <K extends keyof RuleDraft>(k: K) => (v: RuleDraft[K]) => setR((x) => ({ ...x, [k]: v }));
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    void onSave({ ...r, channels: channel.url ? [channel] : [] }).then(setError);
+    const metric = r.metric === "metric" ? { metricStat: r.metricStat || "avg" } : { metricName: "", metricStat: "", metricService: "" };
+    void onSave({ ...r, ...metric, channels: channel.url ? [channel] : [] } as RuleDraft).then(setError);
   };
   return (
     <Panel title={initial.name ? `Edit "${initial.name}"` : "New alert"}>
@@ -42,6 +59,7 @@ export function AlertForm({ initial, onSave, onCancel }: { initial: RuleDraft; o
           <Field label="Threshold" type="number" step="any" required value={r.threshold} onChange={(e) => set("threshold")(Number(e.target.value))} />
           <Select label="Over the last" value={String(r.windowMs)} options={WINDOWS} onChange={(v) => set("windowMs")(Number(v))} />
         </FormRow>
+        {r.metric === "metric" && <MetricRuleFields r={r} set={set} />}
         <FormRow>
           <Select label="Send to" value={channel.kind} options={KINDS} onChange={(kind) => setChannel((c) => ({ ...c, kind }))} />
           <Field label="URL" type="url" value={channel.url} onChange={(e) => setChannel((c) => ({ ...c, url: e.target.value }))} placeholder="https://hooks.slack.com/services/…" />

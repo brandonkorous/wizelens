@@ -1,4 +1,6 @@
 import type { StartDbSpan } from "../db.js";
+import type { LogSink } from "../logger.js";
+import type { MetricStore } from "../metrics/store.js";
 import type { CaptureDeps } from "../request-capture.js";
 import type { WizeLens } from "../types.js";
 
@@ -6,9 +8,26 @@ import type { WizeLens } from "../types.js";
 export interface AdapterParts {
   dbSpans: StartDbSpan;
   capture: CaptureDeps;
+  logs: LogSink;
+  /** Null when metrics are off. */
+  metrics: MetricStore | null;
 }
 
 const parts = new WeakMap<WizeLens, AdapterParts>();
+const cleanups = new WeakMap<WizeLens, (() => void)[]>();
+
+/** Run `fn` when the instance shuts down, for example to unhook a logger. */
+export function addCleanup(wizelens: WizeLens, fn: () => void): void {
+  const list = cleanups.get(wizelens) ?? [];
+  list.push(fn);
+  cleanups.set(wizelens, list);
+}
+
+/** Run and forget the cleanups of one instance. */
+export function runCleanups(wizelens: WizeLens): void {
+  for (const fn of cleanups.get(wizelens) ?? []) fn();
+  cleanups.delete(wizelens);
+}
 
 /** Called once by createWizeLens. A disabled instance is never registered, so adapters do nothing. */
 export function registerParts(wizelens: WizeLens, p: AdapterParts): void {
@@ -20,6 +39,12 @@ export const dbSpansOf = (wizelens: WizeLens): StartDbSpan | null => parts.get(w
 
 /** Request capture of an enabled instance, or null. */
 export const captureOf = (wizelens: WizeLens): CaptureDeps | null => parts.get(wizelens)?.capture ?? null;
+
+/** The metric store of an enabled instance with metrics on, or null. */
+export const metricsOf = (wizelens: WizeLens): MetricStore | null => parts.get(wizelens)?.metrics ?? null;
+
+/** The log sink of an enabled instance, or null. */
+export const logSinkOf = (wizelens: WizeLens): LogSink | null => parts.get(wizelens)?.logs ?? null;
 
 type Method = (...args: unknown[]) => unknown;
 
