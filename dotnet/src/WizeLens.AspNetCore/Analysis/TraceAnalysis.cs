@@ -18,7 +18,7 @@ public static partial class TraceAnalysis
     public static IReadOnlyList<DuplicateQuery> DuplicateQueries(Trace trace) =>
     [
         .. trace.Spans
-            .Where(s => s.Category == SpanCategories.Db && s.Attr("db.query.text") is not null)
+            .Where(IsRepeatable)
             .GroupBy(s => (Query: s.Attr("db.query.text")!, Params: s.Attr("wizelens.db.parameters") ?? ""))
             .Where(g => g.Count() >= 2)
             .Select(g => new DuplicateQuery(trace.TraceId, g.Key.Query, g.Key.Params, g.Count(), g.Sum(s => s.DurationMs), g.First().Service))
@@ -29,7 +29,7 @@ public static partial class TraceAnalysis
     public static IReadOnlyList<NPlusOne> NPlusOnes(Trace trace, int threshold = 5)
     {
         var db = trace.Spans
-            .Where(s => s.Category == SpanCategories.Db && s.Attr("db.query.text") is not null)
+            .Where(IsRepeatable)
             .GroupBy(s => s.Attr("db.query.text")!)
             .Where(g => g.Count() >= threshold)
             .Select(g => new NPlusOne(trace.TraceId, "db", g.Key, g.Count(), g.Sum(s => s.DurationMs)));
@@ -44,6 +44,13 @@ public static partial class TraceAnalysis
 
         return [.. db.Concat(http).OrderByDescending(n => n.Count)];
     }
+
+    /// <summary>A db span with query text that is not a session statement.</summary>
+    private static bool IsRepeatable(Span s) =>
+        s.Category == SpanCategories.Db && s.Attr("db.query.text") is { } q && !IsSessionStatement(q);
+
+    /// <summary>SET, BEGIN, COMMIT and the like: their repeats are by design, not N+1.</summary>
+    public static bool IsSessionStatement(string query) => SessionRegex().IsMatch(query);
 
     /// <summary>db spans at or above <paramref name="thresholdMs"/>.</summary>
     public static IEnumerable<SlowQuery> SlowQueries(Trace trace, double thresholdMs = 100) =>
@@ -86,4 +93,7 @@ public static partial class TraceAnalysis
 
     [GeneratedRegex(@"^(\d+|[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12})$")]
     private static partial Regex IdSegmentRegex();
+
+    [GeneratedRegex(@"^\s*(SET|RESET|BEGIN|START\s+TRANSACTION|COMMIT|END|ROLLBACK|SAVEPOINT|RELEASE|DISCARD|USE)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex SessionRegex();
 }

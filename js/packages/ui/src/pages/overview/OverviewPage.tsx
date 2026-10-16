@@ -13,11 +13,12 @@ import "../../styles/pages/overview.css";
 export function OverviewPage() {
   const w = useWindowed();
   const insights = useMemo(() => insightGroups(w.traces), [w.traces]);
+  const prevInsights = useMemo(() => insightGroups(w.prevTraces), [w.prevTraces]);
   return (
     <>
       <PageHeader title="Overview" subtitle="Recent request-level diagnostics across your stack." />
       {w.loading && <div className="wl-banner wl-banner-info">Loading traces…</div>}
-      <OverviewCards w={w} />
+      <OverviewCards w={w} insights={insights} prevInsights={prevInsights} />
       <div className="wl-grid wl-ov-top">
         <ActivityPanel rows={w.requests} window={w.window} />
         <TimingPanel rows={w.requests} />

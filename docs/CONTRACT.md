@@ -16,7 +16,9 @@ Every add-on (.NET, Node, browser) MUST follow this. The UI depends only on this
 | `X-WizeLens-Hop` | request (federation) | Integer hop count. Stop federating when > 5. |
 
 Every app response that the add-on sees also gets
-`Access-Control-Expose-Headers: X-WizeLens-Trace, X-WizeLens-Endpoint` (append, do not replace).
+`Access-Control-Expose-Headers: X-WizeLens-Trace, X-WizeLens-Endpoint` (append, do not replace). The names must
+survive a CORS layer that sets the same header later (for example `@fastify/cors` or Express `cors`), so the Node add-on
+merges them in again when the response headers are written.
 
 When an outgoing HTTP call gets a response with `X-WizeLens-Endpoint`, the add-on adds that URL to
 the current trace's `remotes` list (de-duplicated, and never its own endpoint).
@@ -199,9 +201,25 @@ Applies to attributes, DB parameter names, and header names. List is configurabl
 
 - **Duplicate query**: ≥ 2 `db` spans in one trace with identical `db.query.text` AND identical `wizelens.db.parameters`.
 - **N+1 query**: ≥ 5 (configurable) `db` spans in one trace with identical `db.query.text` (params may differ).
+- **Session statements** (`SET`, `RESET`, `BEGIN`, `START TRANSACTION`, `COMMIT`, `END`, `ROLLBACK`, `SAVEPOINT`, `RELEASE`,
+  `DISCARD`, `USE`) are never duplicates or N+1. Apps that set `SET LOCAL app.tenant_id` per query repeat them by design.
 - **N+1 HTTP**: ≥ 5 `http.client` spans in one trace with the same method + host + path shape
   (path shape = path with numeric / guid segments and query values replaced by `{}`).
 - **Slow query**: `db` span with `durationMs` ≥ 100 (configurable).
+- **Database wait** (dashboard and HUD): 3 or more slow queries in one trace that overlap in time are one `db-wait` finding,
+  not 3 slow queries. So is a slow session statement on its own (a `SET` does almost no work, so it waited).
+  Its time is wall time: queries that waited together waited once. The MCP `find_slow_queries` tool still lists each query.
+
+## Timing
+
+- Database and outbound times are **wall time**: spans that overlap count once. "All queries added up" is shown next to it
+  when queries ran at the same time. A request can never show more database time than server time.
+- Span start and end times keep sub-millisecond precision, so queries that start in the same millisecond keep their order.
+
+## Not traced
+
+- CORS preflights (`OPTIONS` with `Access-Control-Request-Method`). The browser sends them with no `traceparent`, so they
+  could never join a trace, and in a cross-origin app they are half of all requests.
 
 ## MCP tools (read-only, phase 1)
 

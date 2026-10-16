@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { queryText } from "@wizeworks/lens-core";
+import { busyMs, queryText } from "@wizeworks/lens-core";
 import { fmtMs } from "../../format";
 import { Empty } from "../../ui/Panel";
 import { badgesFor, FindingBadges, rowClass, ServiceChip, type TabProps } from "./tabParts";
@@ -10,6 +10,7 @@ export function SqlTab(props: TabProps) {
   const badges = useMemo(() => badgesFor(findings), [findings]);
   const unique = new Set(spans.map(queryText)).size;
   const total = spans.reduce((t, s) => t + s.durationMs, 0);
+  const wall = busyMs(spans);
   if (spans.length === 0) return <Empty>No database calls in this request.</Empty>;
   return (
     <>
@@ -23,6 +24,11 @@ export function SqlTab(props: TabProps) {
         <span>
           <strong>{fmtMs(total)}</strong> total
         </span>
+        {total - wall >= 1 && (
+          <span title="Queries that ran at the same time count once">
+            <strong>{fmtMs(wall)}</strong> wall time
+          </span>
+        )}
       </div>
       <ol className="wl-sql-list">
         {spans.map((s, i) => (

@@ -1,5 +1,5 @@
 import { type ComponentType, useEffect, useMemo } from "react";
-import { type Health, isFailed, requestRows } from "@wizeworks/lens-core";
+import { errorEvents, type Health, isFailed, requestRows } from "@wizeworks/lens-core";
 import { TraceDetail } from "./pages/trace/TraceDetailPage";
 import { useData, useWindowed } from "./data/hooks";
 import { applyTheme, useTheme } from "./data/prefs";
@@ -62,7 +62,8 @@ export function App() {
   useEffect(() => {
     document.title = data.info ? `WizeLens · ${data.info.service}` : "WizeLens";
   }, [data.info]);
-  const errors = win.requests.filter(isFailed).length;
+  // The same number as "Total Exceptions" on the Errors page.
+  const errors = useMemo(() => errorEvents(win.traces).length, [win.traces]);
   return (
     <div className="wl-shell">
       <Sidebar page={route.page} counts={{ errors }} dot={dot} />

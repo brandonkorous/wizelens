@@ -22,6 +22,8 @@ export interface ComponentRow {
 }
 
 const SLOW_RENDER_MS = 16;
+// Below this much own time in total, a component is not worth an insight, however often it renders.
+const MIN_INSIGHT_MS = 1;
 const FREQUENT_PER_VIEW = 20;
 const FREQUENT_NO_VIEWS = 50;
 
@@ -64,29 +66,30 @@ function add(acc: Map<string, Acc>, stat: ReactComponentStat, span: Span): void 
 }
 
 /** Issue texts for one component. `views` is the number of page views in the same traces. */
-export function componentIssues(c: Pick<ReactComponentStat, "renders" | "actualMs" | "wasted" | "context">, views: number): string[] {
+export function componentIssues(c: Pick<ReactComponentStat, "renders" | "selfMs" | "wasted" | "context">, views: number): string[] {
   const issues: string[] = [];
+  if (c.selfMs < MIN_INSIGHT_MS) return issues;
   const frequent = views > 0 ? c.renders / views > FREQUENT_PER_VIEW : c.renders > FREQUENT_NO_VIEWS;
   if (frequent) issues.push("Re-renders frequently");
   if (c.wasted >= 5 && c.wasted / Math.max(1, c.renders) >= 0.3) issues.push("Re-renders with the same props");
   if (c.context >= 5 && c.context / Math.max(1, c.renders) >= 0.5) issues.push("Context value changes often");
-  if (c.renders > 0 && c.actualMs / c.renders >= SLOW_RENDER_MS) issues.push("Slow render");
+  if (c.renders > 0 && c.selfMs / c.renders >= SLOW_RENDER_MS) issues.push("Slow render");
   return issues;
 }
 
-/** Impact from the component's share of all render time. */
+/** Impact from the component's share of all own render time. */
 export function componentImpact(totalMs: number, allMs: number): Impact {
   const share = allMs > 0 ? totalMs / allMs : 0;
   return share >= 0.2 ? "high" : share >= 0.05 ? "medium" : "low";
 }
 
-/** React components seen in the traces, most render time first. */
+/** React components seen in the traces, most own render time first. Children are not counted, so wrappers do not rank high. */
 export function componentRows(traces: readonly Trace[], views: number): ComponentRow[] {
   const acc = new Map<string, Acc>();
   for (const t of traces) {
     for (const s of t.spans) if (browserTypeOf(s) === "react") for (const stat of componentStatsOf(s)) add(acc, stat, s);
   }
-  const allMs = [...acc.values()].reduce((sum, a) => sum + a.actualMs, 0);
+  const allMs = [...acc.values()].reduce((sum, a) => sum + a.selfMs, 0);
   return [...acc.values()]
     .map((a) => ({
       name: a.name,
@@ -96,11 +99,11 @@ export function componentRows(traces: readonly Trace[], views: number): Componen
       totalMs: a.actualMs,
       wasted: a.wasted,
       context: a.context,
-      impact: componentImpact(a.actualMs, allMs),
+      impact: componentImpact(a.selfMs, allMs),
       issues: componentIssues(a, views),
       routes: [...a.routes].sort(),
       lastSeenMs: a.lastSeenMs,
       exampleTraceId: a.exampleTraceId,
     }))
-    .sort((a, b) => b.totalMs - a.totalMs);
+    .sort((a, b) => b.selfMs - a.selfMs || b.renders - a.renders);
 }

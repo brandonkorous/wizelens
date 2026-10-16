@@ -26,7 +26,7 @@ function Summary({ r }: { r: RequestRow }) {
         ["Service", r.service],
         ["Method", r.method],
         ["Path", <span className="wl-mono">{r.path}</span>],
-        ["Status", <DotText tone={toneOfStatus(r.status)}>{statusText(r.status)}</DotText>],
+        ["Status", <DotText tone={toneOfStatus(r.status)}>{statusText(r.status, r.aborted)}</DotText>],
         ["Duration", fmtMs(r.durationMs)],
         ["SQL Queries", countMs(r.dbCount, r.dbMs)],
         ["Fetch Calls", countMs(r.fetchCount, r.fetchMs)],

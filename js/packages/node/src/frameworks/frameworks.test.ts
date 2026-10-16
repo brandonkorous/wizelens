@@ -39,6 +39,8 @@ async function check(wl: WizeLens, base: string, routed: boolean): Promise<void>
   if (routed) expect(server.attributes[ATTR_ROUTED_MS]).toBeTypeOf("number");
   const bad = await traceOf(wl, await fetch(`${base}/boom`));
   expect(bad.spans.find((s) => s.category === "http.server")!.status).toBe("error");
+  const preflight = await fetch(`${base}/items/7`, { method: "OPTIONS", headers: { "access-control-request-method": "GET" } });
+  expect(preflight.headers.get("x-wizelens-trace")).toBeNull();
   expect((await fetch(`${base}/_wizelens/api/info`)).status).toBe(200);
   const spans = await fetch(`${base}/_wizelens/api/client-spans`, { method: "POST", headers: { "content-type": "application/json" }, body: '{"spans":[]}' });
   expect(spans.status).toBe(204);

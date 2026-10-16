@@ -29,8 +29,10 @@ export interface ServerStats {
   /** Time the first server span took. Null when unknown. */
   durationMs: number | null;
   dbCount: number;
-  /** Total time of all DB spans. Null when unknown. */
+  /** Wall time with a query running. Queries that run together count once. Null when unknown. */
   dbMs: number | null;
+  /** All query times added up. Null when unknown. */
+  dbTotalMs: number | null;
   /** Slowest single query. Null when unknown. */
   dbSlowestMs: number | null;
   /** Each query's time, in order. Empty when unknown. */

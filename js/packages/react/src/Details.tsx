@@ -12,6 +12,7 @@ const FINDING_LABEL: Record<FindingKind, string> = {
   "n+1-http": "N+1 HTTP",
   "duplicate-query": "Duplicate",
   "slow-query": "Slow query",
+  "db-wait": "Database wait",
 };
 
 // Rows of the short timeline and insights shown. The dashboard shows them all.

@@ -13,10 +13,10 @@ afterEach(() => {
 const SPANS: Span[] = [
   span("1", "browser", "browser", 90),
   span("2", "http.server", "gateway", 70, { name: "GET /api/orders" }),
-  span("3", "db", "gateway", 10),
-  span("4", "http.client", "gateway", 30),
-  span("5", "http.server", "orders", 25),
-  span("6", "db", "orders", 5, { status: "error" }),
+  span("3", "db", "gateway", 10, { startMs: 5 }),
+  span("4", "http.client", "gateway", 30, { startMs: 20 }),
+  span("5", "http.server", "orders", 25, { startMs: 22 }),
+  span("6", "db", "orders", 5, { startMs: 30, status: "error" }),
 ];
 
 it("loads server stats for a profiled request", async () => {
@@ -41,7 +41,7 @@ it("loads server stats for a profiled request", async () => {
   await recorder.loadServerStats(traceId);
   expect(reads).toBe(1);
   expect(recorder.getSnapshot()[0]!.server).toEqual({
-    name: "GET /api/orders", durationMs: 70, dbCount: 2, dbMs: 15, dbSlowestMs: 10, dbDurations: [10, 5],
+    name: "GET /api/orders", durationMs: 70, dbCount: 2, dbMs: 15, dbTotalMs: 15, dbSlowestMs: 10, dbDurations: [10, 5],
     httpClientCount: 1, errorCount: 1, insights: 0, parts: { codeMs: 30, dbMs: 10, httpOutMs: 30, httpOutCount: 1 },
     services: ["gateway", "orders"],
   });

@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { context } from "@opentelemetry/api";
 import { captureOf } from "../adapters/registry.js";
-import { captureRequest, isOwnPath, pathOf, serveOwnPath } from "../request-capture.js";
+import { captureRequest, isOwnPath, isPreflight, pathOf, serveOwnPath } from "../request-capture.js";
 import { recordOn } from "../spans.js";
 import type { WizeLens } from "../types.js";
 
@@ -36,6 +36,7 @@ export function wizelensHono(wizelens: WizeLens) {
       await serveOwnPath(d, incoming, outgoing);
       return alreadySent();
     }
+    if (isPreflight(incoming)) return next();
     const { span, ctx } = captureRequest(d, incoming, outgoing, rawUrl, () => honoRoute(c));
     await context.with(ctx, next);
     if (c.error) recordOn(span, c.error);

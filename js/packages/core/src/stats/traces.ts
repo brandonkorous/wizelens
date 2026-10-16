@@ -1,4 +1,5 @@
 import { ATTR_BROWSER_RENDER_MS, ATTR_LAYER, ATTR_PAGE, ATTR_ROUTED_MS, browserTypeOf } from "../attributes.js";
+import { busyMs } from "../busy.js";
 import { DEFAULT_SLOW_MS } from "../health.js";
 import { entryServerSpan, findRootSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
@@ -72,7 +73,7 @@ function pageviewParts(s: Span): Part[] {
 }
 
 function spanParts(s: Span, kids: Span[]): Part[] {
-  const own = Math.max(0, s.durationMs - kids.filter((k) => !isConsumer(k)).reduce((t, k) => t + k.durationMs, 0));
+  const own = Math.max(0, s.durationMs - busyMs(kids.filter((k) => !isConsumer(k))));
   const server = kids.find((k) => k.category === "http.server");
   const type = browserTypeOf(s);
   if (type === "fetch") return fetchParts(s, server, own);

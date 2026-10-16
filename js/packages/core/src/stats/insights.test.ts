@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { makeRequest } from "../testing/fixtures.js";
-import { insightGroups } from "./insights.js";
+import { insightGroups, insightHeadline } from "./insights.js";
+import { requestHeadlines } from "./overview.js";
+import { requestRows } from "./requests.js";
 import { serviceEdges, serviceRows, statusOf } from "./services.js";
 
 const nPlusOne = (startMs: number) =>
@@ -12,6 +14,14 @@ describe("insight groups", () => {
     const n1 = groups.find((g) => g.kind === "n+1-db")!;
     expect(n1).toMatchObject({ title: "N+1 query pattern", area: "database", occurrences: 2, count: 12, endpoints: ["GET /api/customers"], lastSeenMs: 2002 });
     expect(n1.shape).toBe("SELECT * FROM orders WHERE customer_id = @id");
+  });
+
+  it("counts the same in every headline: distinct insights, not requests", () => {
+    const traces = [nPlusOne(1000), nPlusOne(2000), nPlusOne(3000)];
+    const groups = insightGroups(traces);
+    const w = { from: 0, to: 10_000 };
+    expect(insightHeadline(groups, null, w).value).toBe(groups.length);
+    expect(requestHeadlines(requestRows(traces), [], w).withInsights.value).toBe(3);
   });
 
   it("rates slow queries by their average time", () => {

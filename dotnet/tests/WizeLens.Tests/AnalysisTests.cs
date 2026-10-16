@@ -33,6 +33,17 @@ public class AnalysisTests
     }
 
     [Fact]
+    public void Session_statements_are_never_n_plus_one_or_duplicates()
+    {
+        var spans = Enumerable.Range(1, 6).Select(_ => Db("SET LOCAL app.tenant_id = 'a'", "{}"))
+            .Concat(Enumerable.Range(1, 6).Select(i => Db(i % 2 == 0 ? "COMMIT" : "BEGIN", "{}")))
+            .ToArray();
+
+        Assert.Empty(TraceAnalysis.NPlusOnes(Build(spans)));
+        Assert.Empty(TraceAnalysis.DuplicateQueries(Build(spans)));
+    }
+
+    [Fact]
     public void N_plus_one_http_groups_by_path_shape()
     {
         var spans = Enumerable.Range(1, 6)

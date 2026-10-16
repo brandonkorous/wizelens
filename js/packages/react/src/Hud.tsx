@@ -3,10 +3,11 @@ import { DEFAULT_SLOW_MS } from "@wizeworks/lens-core";
 import { Card } from "./Card.js";
 import { Details } from "./Details.js";
 import { useEscape, useFlag, useInjectedStyle, usePageStats, useStored } from "./hud-hooks.js";
-import { currentRequest, fmtMs, type RequestView, requestView } from "./hud-model.js";
+import { currentRequest, endOf, ERROR_HOLD_MS, fmtMs, heldError, type RequestView, requestView } from "./hud-model.js";
 import { ApertureMark } from "./icons.js";
 import { dashboardLink, isPanel, type Panel } from "./panel-parts.js";
 import type { RecordedRequest, Recorder } from "./recorder-types.js";
+import { now } from "./session.js";
 import { Settings } from "./Settings.js";
 
 const KEYS = { panel: "wizelens.hud.panel", live: "wizelens.hud.live", min: "wizelens.hud.min" };
@@ -18,6 +19,16 @@ export interface HudProps {
   slowMs?: number;
 }
 
+/** Re-render when a held failure stops being held, so the HUD moves on to the newest request. */
+function useErrorHoldExpiry(held: RecordedRequest | null): void {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!held) return;
+    const t = setTimeout(() => setTick((n) => n + 1), Math.max(0, endOf(held) + ERROR_HOLD_MS - now()) + 20);
+    return () => clearTimeout(t);
+  }, [held]);
+}
+
 function useHudState(recorder: Recorder, slowMs: number) {
   const requests = useSyncExternalStore(recorder.subscribe, recorder.getSnapshot, recorder.getSnapshot);
   const [panel, setPanel] = useStored<Panel | "">(KEYS.panel, "", isPanelOrNone);
@@ -25,6 +36,7 @@ function useHudState(recorder: Recorder, slowMs: number) {
   const [minimized, setMinimized] = useFlag(KEYS.min, false);
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const req = currentRequest(requests, live, pinnedId);
+  useErrorHoldExpiry(live ? heldError(requests, now()) : null);
   // Rows restored after a refresh have summary counts only. Load the full stats for the one on screen.
   const restoredId = req?.restored && req.server?.insights == null ? req.traceId : null;
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { currentRequest, fmtMs, pct, requestView } from "./hud-model.js";
+import { currentRequest, ERROR_HOLD_MS, fmtMs, pct, requestView } from "./hud-model.js";
 import type { RecordedRequest, ServerStats } from "./recorder.js";
 
 const server = (over: Partial<ServerStats> = {}): ServerStats => ({
@@ -7,6 +7,7 @@ const server = (over: Partial<ServerStats> = {}): ServerStats => ({
   durationMs: 186,
   dbCount: 4,
   dbMs: 92,
+  dbTotalMs: 92,
   dbSlowestMs: 48,
   dbDurations: [48, 20, 14, 10],
   httpClientCount: 2,
@@ -69,6 +70,14 @@ describe("currentRequest", () => {
     expect(currentRequest([running, done, older], true, "older")?.id).toBe("old");
     expect(currentRequest([running], true, null)?.id).toBe("new");
     expect(currentRequest([], true, null)).toBeNull();
+  });
+
+  it("holds a fresh failure so newer background requests do not hide it", () => {
+    const failedAt = req({ id: "401", status: 401, startMs: 1000, durationMs: 20 });
+    const poll = req({ id: "poll", startMs: 1100, durationMs: 10 });
+    expect(currentRequest([poll, failedAt], true, null, 1200)?.id).toBe("401");
+    expect(currentRequest([poll, failedAt], true, null, 1020 + ERROR_HOLD_MS)?.id).toBe("poll");
+    expect(currentRequest([poll, { ...failedAt, restored: true }], true, null, 1200)?.id).toBe("poll");
   });
 
   it("shows the pinned request while paused", () => {

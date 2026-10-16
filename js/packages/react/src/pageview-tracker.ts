@@ -1,5 +1,5 @@
 import type { Span } from "@wizeworks/lens-core";
-import { imageStats } from "./images.js";
+import { imageStats, watchImages } from "./images.js";
 import { afterNextPaint } from "./paint.js";
 import { newPageView, type PageView, pageViewSpan } from "./pageview.js";
 import { firstCommitMs, waitForCommit } from "./react-hook.js";
@@ -29,6 +29,7 @@ async function measureRouteRender(view: PageView): Promise<void> {
 /** Tracks page views and their timings, and sends one pageview span per view. */
 export function createPageViewTracker(o: { push(span: Span): void; sessionId: string }): PageViewTracker {
   let view = newPageView("load", 0);
+  const images = watchImages();
   const stopVitals = watchVitals({
     lcp: (t) => view.navigation === "load" && (view.lcpMs = t),
     fcp: (t) => view.navigation === "load" && (view.fcpMs = t),
@@ -40,7 +41,7 @@ export function createPageViewTracker(o: { push(span: Span): void; sessionId: st
     view.sent = true;
     if (view.navigation === "load") view.hydrationMs ??= firstCommitMs();
     const nav = view.navigation === "load" && !view.bfcache ? readNavigation() : null;
-    o.push(pageViewSpan(view, nav, imageStats(view.startRel), o.sessionId));
+    o.push(pageViewSpan(view, nav, imageStats(view.startRel, images.downloads()), o.sessionId));
   };
   const begin = (next: PageView) => {
     finish();
@@ -56,6 +57,7 @@ export function createPageViewTracker(o: { push(span: Span): void; sessionId: st
     stop() {
       finish();
       stopVitals();
+      images.stop();
     },
   };
 }

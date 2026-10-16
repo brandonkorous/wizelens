@@ -1,5 +1,4 @@
 import type { ServerResponse } from "node:http";
-import { HEADER_ENDPOINT, HEADER_TRACE } from "@wizeworks/lens-core";
 import type { Req } from "./types.js";
 
 const MAX_BODY = 5 * 1024 * 1024;
@@ -7,19 +6,6 @@ const MAX_BODY = 5 * 1024 * 1024;
 export function firstHeader(value: string | string[] | undefined): string | undefined {
   const v = Array.isArray(value) ? value[0] : value;
   return v?.split(",")[0]?.trim() || undefined;
-}
-
-export function appendExposeHeaders(res: ServerResponse): void {
-  const existing = res.getHeader("Access-Control-Expose-Headers");
-  const parts = new Set(
-    String(Array.isArray(existing) ? existing.join(",") : (existing ?? ""))
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean),
-  );
-  parts.add(HEADER_TRACE);
-  parts.add(HEADER_ENDPOINT);
-  res.setHeader("Access-Control-Expose-Headers", [...parts].join(", "));
 }
 
 export function setCors(res: ServerResponse): void {

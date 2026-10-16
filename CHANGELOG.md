@@ -2,6 +2,31 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+Fixes found by running WizeLens in a large multi-pane React app with a Fastify API and Prisma.
+
+### Fixed
+
+- **Database time in the HUD and dashboard was too high** when queries ran at the same time. It added them up, so a request could
+  show more database time than server time. Database and outbound time are now wall time; "All queries added up" is shown beside it.
+- **Span times were rounded to the millisecond** (OpenTelemetry anchors each span on `Date.now()`). Node spans now keep sub-ms
+  start and end times, so fast queries keep their order on the timeline.
+- **CORS preflights were traced** and filled half the request list in cross-origin apps. They are skipped now (Node and .NET).
+- **`SET LOCAL`, `BEGIN`, and `COMMIT` were flagged as duplicate and N+1 queries.** Session statements are skipped by those rules (JS and .NET).
+- **One slow first request became many "slow query" insights.** Slow queries that run together are now one "Database wait" insight,
+  timed as wall time. A slow `SET` or `BEGIN` is a database wait too, not a slow query.
+- **"Server render is 158% of render time"**: the share mixed page loads with in-app route changes. It now compares the same page loads.
+- **Component hotspots blamed wrappers** (error boundaries, providers, framework internals) for their children's time.
+  Components rank by their own render time now, and components with under 1 ms of own time raise nothing.
+- **Image timing stopped after about 250 resources**, because it read the browser's resource buffer. It uses an observer now.
+- **A failed request flashed past in the HUD** when background requests kept coming. Failures stay on the card for 8 seconds.
+- **Counts did not match**: the Errors badge now equals Total Exceptions, and Insights Found is the same on the Overview and
+  Insights pages. The Requests page shows "Requests With Insights".
+- **A request the client left was saved as "200, 0 bytes"**, and the queries its handler ran afterwards counted as server time.
+  Node now marks it `wizelens.request.aborted` with no status, the dashboard shows "Aborted", and server time only counts work inside the span.
+- **A CORS layer could remove `X-WizeLens-Trace` from `Access-Control-Expose-Headers`.** The Node add-on merges the names back in.
+
 ## [0.2.0-alpha.1] — Phase 2: the local hub
 
 One place for the traces of every service. Each add-on still keeps its own store and dashboard.

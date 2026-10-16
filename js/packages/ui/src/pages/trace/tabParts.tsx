@@ -28,6 +28,7 @@ const BADGE: Partial<Record<Finding["kind"], string>> = {
   "n+1-db": "N+1",
   "n+1-http": "N+1",
   "slow-query": "SLOW",
+  "db-wait": "WAIT",
 };
 
 export function FindingBadges({ kinds }: { kinds: Set<Finding["kind"]> | undefined }) {

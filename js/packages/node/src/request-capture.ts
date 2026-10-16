@@ -3,6 +3,7 @@ import type { TLSSocket } from "node:tls";
 import { type Context, context, ROOT_CONTEXT, type Span as OtelSpan, SpanKind, SpanStatusCode, trace, type Tracer } from "@opentelemetry/api";
 import type { W3CTraceContextPropagator } from "@opentelemetry/core";
 import {
+  ATTR_REQUEST_ABORTED,
   ATTR_REQUEST_ID,
   ATTR_RESPONSE_BODY,
   ATTR_RESPONSE_BODY_TRUNCATED,
@@ -11,7 +12,8 @@ import {
   RESPONSE_HEADER_PREFIX,
 } from "@wizeworks/lens-core";
 import { type ResponseTap, tapResponse } from "./body-capture.js";
-import { appendExposeHeaders, firstHeader, sendJson } from "./http-util.js";
+import { keepExposeHeaders } from "./expose-headers.js";
+import { firstHeader, sendJson } from "./http-util.js";
 import { headerAttributes, requestAttributes } from "./request-attributes.js";
 import { SERVER_SPAN } from "./spans.js";
 
@@ -49,6 +51,9 @@ export const pathOf = (rawUrl: string): string => rawUrl.split("?")[0] ?? "/";
 
 export const isOwnPath = (d: CaptureDeps, path: string): boolean => path === d.basePath || path.startsWith(d.basePath + "/");
 
+/** A CORS preflight. The browser sends it before a cross-origin call, with no traceparent, so it is not traced. */
+export const isPreflight = (req: IncomingMessage): boolean => req.method === "OPTIONS" && req.headers["access-control-request-method"] !== undefined;
+
 /** Serve the dashboard and API. Resolves when the response is written. */
 export function serveOwnPath(d: CaptureDeps, req: IncomingMessage, res: ServerResponse): Promise<void> {
   return d.handler(req, res).then(
@@ -61,7 +66,9 @@ export function serveOwnPath(d: CaptureDeps, req: IncomingMessage, res: ServerRe
 }
 
 function finishSpan(span: OtelSpan, res: ServerResponse, tap: ResponseTap, method: string, routeOf: RouteOf): void {
-  span.setAttribute("http.response.status_code", res.statusCode);
+  // A close before the response finished: the client left, and no status was ever sent.
+  if (!res.writableFinished) span.setAttribute(ATTR_REQUEST_ABORTED, true);
+  if (res.headersSent) span.setAttribute("http.response.status_code", res.statusCode);
   const route = routeOf();
   if (route) {
     span.setAttribute("http.route", route);
@@ -98,7 +105,7 @@ export function captureRequest(d: CaptureDeps, req: IncomingMessage, res: Server
   d.selfEndpoints.add(endpoint);
   res.setHeader(HEADER_TRACE, span.spanContext().traceId);
   res.setHeader(HEADER_ENDPOINT, endpoint);
-  appendExposeHeaders(res);
+  keepExposeHeaders(res);
   (req as unknown as Record<symbol, OtelSpan>)[REQ_SPAN] = span;
   const tap = tapResponse(res, d.captureResponseBody);
   let ended = false;

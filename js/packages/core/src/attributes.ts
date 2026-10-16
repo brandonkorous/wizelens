@@ -60,6 +60,8 @@ export interface ReactComponentStat {
 
 /** Server span: request id from the framework or the x-request-id header. */
 export const ATTR_REQUEST_ID = "wizelens.request.id";
+/** Server span: true when the client left before the response was sent. Work after that is not in the span. */
+export const ATTR_REQUEST_ABORTED = "wizelens.request.aborted";
 /** Server span: ms from the request start to the matched endpoint (routing and middleware). */
 export const ATTR_ROUTED_MS = "wizelens.server.routed_ms";
 /** Server span: first part of the response body. Only when body capture is on. */

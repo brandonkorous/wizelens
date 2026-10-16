@@ -6,6 +6,7 @@ import { resourceFromAttributes } from "@opentelemetry/resources";
 import { AlwaysOnSampler, BasicTracerProvider } from "@opentelemetry/sdk-trace-base";
 import { HEADER_ENDPOINT, HEADER_HOP } from "@wizeworks/lens-core";
 import { hasRequestHeader, responseHeader } from "./http-util.js";
+import { preciseProvider, preciseTracer } from "./precise.js";
 import { StoreSpanProcessor } from "./processor.js";
 import type { TraceStore } from "./store.js";
 
@@ -35,7 +36,7 @@ function instrumentFetch(provider: BasicTracerProvider, store: TraceStore, selfE
       if (endpoint && !selfEndpoints.has(endpoint)) store.addRemote(span.spanContext().traceId, endpoint);
     },
   });
-  undici.setTracerProvider(provider);
+  undici.setTracerProvider(preciseProvider(provider));
   return undici;
 }
 
@@ -53,7 +54,7 @@ export function createTracing(store: TraceStore, o: TracingOptions, selfEndpoint
     sampler: new AlwaysOnSampler(),
     spanProcessors: [new StoreSpanProcessor(store, o.service, o.redactKeys)],
   });
-  const tracer = provider.getTracer("@wizeworks/lens-node", o.version);
+  const tracer = preciseTracer(provider.getTracer("@wizeworks/lens-node", o.version));
   const undici = o.fetch ? instrumentFetch(provider, store, selfEndpoints) : undefined;
   return { provider, tracer, undici };
 }
