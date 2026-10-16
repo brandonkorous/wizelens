@@ -8,6 +8,7 @@ import "./styles/base.css";
 import "./styles/shell.css";
 import "./styles/ui.css";
 import "./styles/trace.css";
+import "./styles/pages/cloud.css";
 
 provider.start();
 

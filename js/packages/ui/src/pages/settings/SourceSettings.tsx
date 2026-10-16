@@ -41,7 +41,7 @@ function infoRows(s: Source, info: ServiceInfo): [ReactNode, ReactNode][] {
     ["Environment", info.environment ?? "–"],
     ["Host", info.host ?? "–"],
     ["Started", info.startedMs ? fmtDateTime(info.startedMs) : "–"],
-    ["Storage", storage ? (storage.kind === "sqlite" ? "SQLite file (kept across restarts)" : "Memory only") : "–"],
+    ["Storage", storage ? (storage.kind === "postgres" ? "Postgres" : storage.kind === "sqlite" ? "SQLite file (kept across restarts)" : "Memory only") : "–"],
     ["Max traces", storage ? fmtCount(storage.maxTraces) : "–"],
     ["Max age", storage ? fmtAge(storage.maxAgeMs) : "–"],
     ["Slow query", info.analysis ? `${fmtMs(info.analysis.slowQueryMs)} or more` : "–"],

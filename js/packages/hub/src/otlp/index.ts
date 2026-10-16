@@ -24,10 +24,10 @@ async function writesOf(signal: OtlpSignal, req: IncomingMessage, redactKeys: re
 }
 
 /** Take one OTLP export. Answers in the format it was sent in, with an empty (full success) response. */
-export async function handleOtlp(signal: OtlpSignal, req: IncomingMessage, res: ServerResponse, save: (w: HubWrite) => void, redactKeys: readonly string[]): Promise<void> {
+export async function handleOtlp(signal: OtlpSignal, req: IncomingMessage, res: ServerResponse, save: (w: HubWrite) => void | Promise<void>, redactKeys: readonly string[]): Promise<void> {
   const proto = isProtobuf(req);
   try {
-    for (const w of await writesOf(signal, req, redactKeys)) save(w);
+    for (const w of await writesOf(signal, req, redactKeys)) await save(w);
   } catch (err) {
     res.writeHead(400, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ code: 3, message: err instanceof Error ? err.message : "invalid body" }));

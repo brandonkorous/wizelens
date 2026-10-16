@@ -22,9 +22,27 @@ MCP, but only with permissions you grant.
 |---|---|---|---|
 | **1. In-app add-on** (complete, 0.1.0-alpha.1) | NuGet / npm package inside each app | Memory plus a SQLite file per app | Federation: the dashboard reads every connected service and merges traces |
 | **2. Local hub** (complete, 0.2.0-alpha.1) | One small hub on the dev machine / network (`wizelens-hub`, npm or Docker) | One SQLite file | Hub has everything; projects and environments group it |
-| 3. Cloud | Hosted service | Durable, multi-tenant | Same as 2, plus teams, history, alerts, server-side stats |
+| **3. Cloud** (complete, 0.3.0-alpha.1) | Hosted service (`wizelens-cloud`, npm or Docker, with Postgres) | Postgres, many organizations | Same as 2, plus teams, history, alerts, sharing, server-side stats |
 
 Monetization (open core): the add-on is MIT. Cloud and team features are paid. Details later.
+
+## Phase 3 scope (complete)
+
+| Part | What it does |
+|---|---|
+| `@wizeworks/lens-cloud` | The hosted service: the same dashboard, API, OTLP, and MCP, for many organizations at once |
+| Storage | Postgres (any managed Postgres). PGlite (Postgres in-process) for tests and a one-command trial |
+| Accounts and teams | Email and password sign-in, organizations, roles (owner, admin, member, viewer), invite links |
+| Projects and keys | Projects inside an organization; ingest keys per project (add-ons use them as `WIZELENS_HUB_TOKEN`) |
+| Server-side stats | The server computes every page's numbers (`serverStats`), so ranges reach 7 and 30 days |
+| Alerts | Rules on error rate, latency, request count, and new errors; webhook and Slack; the bell lists them |
+| Sharing | Read-only trace links that expire and can be revoked |
+| AI access | Read keys scoped to projects; every MCP call is kept in an audit log the organization can read |
+| History | Retention per organization (default 30 days); delete a project's data |
+| Release | Docker image and a compose file with Postgres; built and checked in CI |
+
+Not in phase 3: billing and plans (later, by decision), single sign-on, email delivery (invite links are copied by hand), and
+running the hosted service itself (that needs a provider account; `deploy/docker-compose.cloud.yml` is ready for one).
 
 ## Phase 2 scope (complete)
 

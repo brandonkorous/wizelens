@@ -5,14 +5,25 @@ import { type HubRegistry, inScope, presenceOf } from "../data/sources";
 import { fmtAgo } from "../format";
 import { Menu } from "./Menu";
 
-function Choices({ title, values, value, onPick }: { title: string; values: string[]; value: string; onPick: (v: string) => void }) {
+interface ChoicesProps {
+  title: string;
+  /** Value and label. */
+  values: [string, string][];
+  value: string;
+  onPick: (v: string) => void;
+  /** Offer "All" first. The cloud always shows one project, so it has no "All". */
+  all?: boolean;
+}
+
+function Choices({ title, values, value, onPick, all = true }: ChoicesProps) {
   if (values.length === 0) return null;
+  const list: [string, string][] = all ? [["", `All ${title.toLowerCase()}s`], ...values] : values;
   return (
     <>
       <div className="wl-menu-head">{title}</div>
-      {["", ...values].map((v) => (
+      {list.map(([v, text]) => (
         <button key={v || "all"} type="button" className={`wl-menu-item${v === value ? " wl-active" : ""}`} onClick={() => onPick(v)}>
-          <span className="wl-truncate">{v || `All ${title.toLowerCase()}s`}</span>
+          <span className="wl-truncate">{text}</span>
           {v === value && <Check size={14} aria-hidden="true" className="wl-menu-check" />}
         </button>
       ))}
@@ -35,12 +46,14 @@ function ServiceLine({ s }: { s: HubService }) {
 }
 
 /** Hub filters (environment and project) and the services the hub hears from. */
-export function HubMenu({ registry }: { registry: HubRegistry | null }) {
+export function HubMenu({ registry, projects }: { registry: HubRegistry | null; projects?: [string, string][] }) {
   const [env, setEnv] = useEnvScope();
   const [project, setProject] = useProjectScope();
-  const services = (registry?.services ?? []).filter((s) => inScope(s, { env, project }));
+  const services = (registry?.services ?? []).filter((s) => inScope(s, { env, project }, !projects));
   const online = services.filter((s) => s.online).length;
-  const text = [project, env].filter(Boolean).join(" · ") || "All services";
+  const projectName = projects ? projects.find(([id]) => id === project)?.[1] : project;
+  const text = [projectName, env].filter(Boolean).join(" · ") || "All services";
+  const pairs = (list: string[]) => list.map((v): [string, string] => [v, v]);
   const label = (
     <>
       <Layers aria-hidden="true" />
@@ -55,8 +68,8 @@ export function HubMenu({ registry }: { registry: HubRegistry | null }) {
     <Menu label={label} title="Project, environment, and connected services">
       {(close) => (
         <>
-          <Choices title="Project" values={registry?.projects ?? []} value={project} onPick={(v) => (setProject(v), close())} />
-          <Choices title="Environment" values={registry?.environments ?? []} value={env} onPick={(v) => (setEnv(v), close())} />
+          <Choices title="Project" values={projects ?? pairs(registry?.projects ?? [])} value={project} all={!projects} onPick={(v) => (setProject(v), close())} />
+          <Choices title="Environment" values={pairs(registry?.environments ?? [])} value={env} onPick={(v) => (setEnv(v), close())} />
           <div className="wl-menu-head">Services</div>
           {services.map((s) => (
             <ServiceLine key={`${s.project}|${s.service}|${s.environment}|${s.host}`} s={s} />

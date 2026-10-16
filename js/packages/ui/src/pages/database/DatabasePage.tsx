@@ -5,12 +5,14 @@ import { StatCard } from "../../ui/StatCard";
 import { OperationsPanel, SlowQueriesPanel } from "./DbCharts";
 import { TableHotspotsPanel, TopQueriesPanel } from "./DbTables";
 import { InsightCards } from "./InsightCards";
-import { type DatabaseStats, useDatabaseStats } from "./useDatabaseStats";
+import type { DatabaseModel } from "@wizeworks/lens-core";
+import { usePageModel } from "../../data/models";
+import { ModelState } from "../../ui/ModelState";
 import "../../styles/pages/database.css";
 
-function DbStatCards({ stats }: { stats: DatabaseStats }) {
-  const { summary, change, sparks, insights, w } = stats;
-  const compareLabel = w.compareLabel;
+function DbStatCards({ stats }: { stats: DatabaseModel }) {
+  const { summary, change, sparks, insights, meta } = stats;
+  const compareLabel = meta.compareLabel;
   return (
     <div className="wl-grid wl-grid-stats">
       <StatCard icon={Database} label="SQL Queries" value={fmtCount(summary.queries)} change={change.queries} upIsGood={false} compareLabel={compareLabel} series={sparks.queries} />
@@ -22,10 +24,19 @@ function DbStatCards({ stats }: { stats: DatabaseStats }) {
 }
 
 export function DatabasePage() {
-  const stats = useDatabaseStats();
+  const { model: stats, loading, error } = usePageModel("database");
   return (
     <div className="wl-db-page">
       <PageHeader title="Database" subtitle="SQL visibility, query performance, and optimization opportunities across your stack." />
+      <ModelState model={stats} loading={loading} error={error} what="queries" />
+      {stats && <DatabaseBody stats={stats} />}
+    </div>
+  );
+}
+
+function DatabaseBody({ stats }: { stats: DatabaseModel }) {
+  return (
+    <>
       <DbStatCards stats={stats} />
       <div className="wl-grid wl-grid-2">
         <SlowQueriesPanel stats={stats} />
@@ -36,6 +47,6 @@ export function DatabasePage() {
         <TableHotspotsPanel stats={stats} />
       </div>
       <InsightCards insights={stats.insights} area="database" />
-    </div>
+    </>
   );
 }

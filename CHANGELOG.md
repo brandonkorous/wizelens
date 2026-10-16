@@ -2,9 +2,31 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.0-alpha.1] — Phase 3: the cloud
 
-Fixes found by running WizeLens in a large multi-pane React app with a Fastify API and Prisma.
+The hosted service for many teams, and fixes found by running WizeLens in a large multi-pane React app with a Fastify API and Prisma.
+
+### Cloud (`@wizeworks/lens-cloud`)
+
+- `wizelens-cloud` on Postgres (`DATABASE_URL`), or PGlite in-process for trials. Docker image `ghcr.io/brandonkorous/wizelens-cloud`
+  and `deploy/docker-compose.cloud.yml` with Postgres.
+- **Accounts and teams:** first-run setup, email and password sign-in, organizations with owner, admin, member, and viewer roles,
+  invite links, and a Team page (members, projects, keys, shared links, organization settings, audit log).
+- **Projects and keys:** ingest keys (`wl_ik_`) tie each sender to one project; add-ons use them as `WIZELENS_HUB_TOKEN`, OTLP apps
+  as a bearer header. Read keys (`wl_rk_`) give AI agents and scripts read-only access to the projects you pick.
+- **Server-side stats:** the server computes every page, so the time range goes to 7 and 30 days. Very busy ranges say when the numbers
+  come from the newest part of the data.
+- **Alerts:** rules on error rate, p95 and average latency, requests, new error types, and slow queries; checked every minute; notices
+  to webhooks and Slack when a rule fires and when it resolves. The Alerts page and the bell show them.
+- **Sharing:** read-only links to one trace, 1 to 30 days, with view counts, revocable.
+- **AI access:** the MCP endpoint takes read keys only, and every tool call goes into the organization's audit log.
+- **History:** retention per organization (default 30 days, up to 400); clear or delete a project's data.
+
+### Dashboard
+
+- Every page is now one model function in `@wizeworks/lens-core` (`PAGE_MODELS`). The browser runs it for in-app and hub; the cloud
+  runs it on the server. Filters, sort, and paging live in the URL, so a view can be shared.
+- Charts show dates on ranges of more than two days.
 
 ### Fixed
 

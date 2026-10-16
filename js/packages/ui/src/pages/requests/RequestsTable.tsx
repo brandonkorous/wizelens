@@ -1,42 +1,62 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Upload } from "lucide-react";
-import type { RequestRow } from "@wizeworks/lens-core";
+import { isSortKey, type RequestsModel, type Sort, type SortKey } from "@wizeworks/lens-core";
+import { useHost, useRange } from "../../data/host";
+import { loadPageModel } from "../../data/models";
 import { fmtCount } from "../../format";
-import { setQuery } from "../../routes";
+import { setQuery, useRoute } from "../../routes";
 import { Pager } from "../../ui/Controls";
 import { Empty, Panel } from "../../ui/Panel";
 import { Table } from "../../ui/Table";
-import { requestColumns, type Sort, type SortKey, sortRows } from "./columns";
+import { requestColumns } from "./columns";
 import { downloadCsv } from "./exportCsv";
 
-export interface RequestsTableProps {
-  rows: readonly RequestRow[];
-  selectedId: string | null;
-  page: number;
-  pageSize: number;
-  onPage: (page: number) => void;
-  onPageSize: (size: number) => void;
-  filtered: boolean;
+const EXPORT_MAX = 5000;
+
+function useSort(): [Sort, (k: SortKey) => void] {
+  const q = useRoute().query;
+  const key = q.get("sort") ?? undefined;
+  const sort: Sort = { key: isSortKey(key) ? key : "time", desc: q.get("desc") !== "0" };
+  const onSort = (k: SortKey) => setQuery({ sort: k, desc: sort.key === k && sort.desc ? "0" : null, page: null });
+  return [sort, onSort];
 }
 
-/** Sorted, paged request list with CSV export. A row click opens the side panel. */
-export function RequestsTable({ rows, selectedId, page, pageSize, onPage, onPageSize, filtered }: RequestsTableProps) {
-  const [sort, setSort] = useState<Sort>({ key: "time", desc: true });
-  const onSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, desc: !s.desc } : { key, desc: true }));
-  const sorted = useMemo(() => sortRows(rows, sort), [rows, sort]);
-  const columns = useMemo(() => requestColumns(sort, onSort), [sort]);
-  const pageRows = sorted.slice((page - 1) * pageSize, page * pageSize);
-  const title = <h2>Requests ({fmtCount(rows.length)})</h2>;
+function useExport(): [boolean, () => void] {
+  const [range] = useRange();
+  const server = useHost().has("serverStats");
+  const query = useRoute().query;
+  const [busy, setBusy] = useState(false);
+  const run = () => {
+    setBusy(true);
+    const params = { ...Object.fromEntries(query), page: "1", size: String(EXPORT_MAX) };
+    void loadPageModel("requests", params, range, server)
+      .then((m) => downloadCsv(m.rows))
+      .finally(() => setBusy(false));
+  };
+  return [busy, run];
+}
+
+/** Sorted, paged request list with CSV export. A row click opens the side panel. Sort and page live in the URL. */
+export function RequestsTable({ model, selectedId }: { model: RequestsModel; selectedId: string | null }) {
+  const [sort, onSort] = useSort();
+  const [exporting, exportAll] = useExport();
+  const title = <h2>Requests ({fmtCount(model.total)})</h2>;
   const action = (
-    <button type="button" className="wl-btn" onClick={() => downloadCsv(sorted)} disabled={rows.length === 0} title="Download the filtered requests as CSV">
+    <button type="button" className="wl-btn" onClick={exportAll} disabled={model.total === 0 || exporting} title={`Download the filtered requests as CSV (up to ${fmtCount(EXPORT_MAX)})`}>
       <Upload aria-hidden="true" /> Export
     </button>
   );
-  const empty = <Empty title={filtered ? "No requests match these filters" : "No requests in this range"}>{filtered ? "Change or reset the filters." : "Use your app and requests show up here."}</Empty>;
+  const empty = (
+    <Empty title={model.filtered ? "No requests match these filters" : "No requests in this range"}>
+      {model.filtered ? "Change or reset the filters." : "Use your app and requests show up here."}
+    </Empty>
+  );
   return (
     <Panel flush title={title} action={action}>
-      <Table columns={columns} rows={pageRows} rowKey={(r) => r.traceId} selectedKey={selectedId} onRowClick={(r) => setQuery({ trace: r.traceId })} empty={empty} />
-      {rows.length > 0 && <Pager page={page} pageSize={pageSize} total={rows.length} noun="requests" onPage={onPage} onPageSize={onPageSize} />}
+      <Table columns={requestColumns(sort, onSort)} rows={model.rows} rowKey={(r) => r.traceId} selectedKey={selectedId} onRowClick={(r) => setQuery({ trace: r.traceId })} empty={empty} />
+      {model.total > 0 && (
+        <Pager page={model.page} pageSize={model.pageSize} total={model.total} noun="requests" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />
+      )}
     </Panel>
   );
 }

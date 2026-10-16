@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import {
+  COMPARE_LABEL,
   inWindow,
   previousWindow,
   type RequestRow,
@@ -31,13 +32,6 @@ export interface Windowed {
   loading: boolean;
 }
 
-const COMPARE: Record<TimeRange, string> = {
-  "15m": "vs. previous 15 min",
-  "1h": "vs. previous hour",
-  "6h": "vs. previous 6 hours",
-  "24h": "vs. previous day",
-};
-
 function slice(traces: readonly Trace[], range: TimeRange, now: number): Omit<Windowed, "loading" | "all"> {
   const window = windowOf(range, now);
   const prev = previousWindow(window);
@@ -45,7 +39,7 @@ function slice(traces: readonly Trace[], range: TimeRange, now: number): Omit<Wi
   const before = traces.filter((t) => inWindow(t.startMs, prev));
   return {
     range,
-    compareLabel: COMPARE[range],
+    compareLabel: COMPARE_LABEL[range],
     window,
     prev,
     traces: cur,

@@ -1,5 +1,7 @@
 import type { ComponentType } from "react";
-import { Box, Database, FileText, House, Lightbulb, List, Monitor, Settings, Share2, TriangleAlert } from "lucide-react";
+import { BellRing, Box, Database, FileText, House, Lightbulb, List, Monitor, Settings, Share2, TriangleAlert, Users } from "lucide-react";
+import type { Capability } from "@wizeworks/lens-core";
+import { useHost } from "../data/host";
 import { hrefTo, type PageId } from "../routes";
 import { Logo } from "./Logo";
 
@@ -7,6 +9,8 @@ interface NavItem {
   page: PageId;
   label: string;
   icon: ComponentType<{ "aria-hidden"?: boolean }>;
+  /** Shown only when the host has this capability. */
+  needs?: Capability;
 }
 
 export const NAV: NavItem[] = [
@@ -19,6 +23,8 @@ export const NAV: NavItem[] = [
   { page: "logs", label: "Logs", icon: FileText },
   { page: "services", label: "Services", icon: Box },
   { page: "insights", label: "Insights", icon: Lightbulb },
+  { page: "alerts", label: "Alerts", icon: BellRing, needs: "alerts" },
+  { page: "team", label: "Team", icon: Users, needs: "accounts" },
   { page: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -32,13 +38,15 @@ export interface SidebarProps {
 
 export function Sidebar({ page, counts = {}, dot }: SidebarProps) {
   const current = page === "trace" ? "traces" : page;
+  const host = useHost();
+  const items = NAV.filter((n) => !n.needs || host.has(n.needs));
   return (
     <aside className="wl-sidebar">
       <a className="wl-sidebar-brand" href={hrefTo("overview")} aria-label="WizeLens overview">
         <Logo dot={dot} />
       </a>
       <nav className="wl-nav" aria-label="Main">
-        {NAV.map(({ page: p, label, icon: Icon }) => (
+        {items.map(({ page: p, label, icon: Icon }) => (
           <a key={p} href={hrefTo(p)} className={current === p ? "wl-active" : undefined} aria-current={current === p ? "page" : undefined} title={label}>
             <Icon aria-hidden={true} />
             <span>{label}</span>

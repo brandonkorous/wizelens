@@ -1,14 +1,10 @@
-import { useMemo } from "react";
 import { X } from "lucide-react";
-import { bucketStarts, series, type ServiceEdge, type ServiceRow, type TimeWindow, type Trace } from "@wizeworks/lens-core";
+import type { EndpointStat, ServiceDetailModel, ServiceEdge, ServiceRow } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
 import { setQuery } from "../../routes";
 import { Empty, KeyValues, Panel } from "../../ui/Panel";
 import { TimeChart } from "../../ui/TimeChart";
-import { edgesOf, endpointsOf, type EndpointStat, spansOfRow } from "./serviceData";
 import { KIND_LABEL, KindName, StatusText } from "./serviceParts";
-
-const BUCKETS = 24;
 
 function EndpointList({ items, kind }: { items: EndpointStat[]; kind: ServiceRow["kind"] }) {
   if (items.length === 0) return <Empty>Nothing recorded in this range.</Empty>;
@@ -59,19 +55,9 @@ function EdgeList({ title, edges, side }: { title: string; edges: ServiceEdge[];
   );
 }
 
-export interface ServiceDetailProps {
-  row: ServiceRow;
-  traces: readonly Trace[];
-  window: TimeWindow;
-  edges: ServiceEdge[];
-}
-
 /** One service: numbers, traffic over time, busiest endpoints, and who it talks to. */
-export function ServiceDetail({ row, traces, window, edges }: ServiceDetailProps) {
-  const spans = useMemo(() => spansOfRow(traces, row), [traces, row]);
-  const items = useMemo(() => endpointsOf(spans, row), [spans, row]);
-  const counts = series(spans, (s) => s.startMs, window, BUCKETS);
-  const { incoming, outgoing } = edgesOf(edges, row.name);
+export function ServiceDetail({ detail }: { detail: ServiceDetailModel }) {
+  const { row, endpoints: items, incoming, outgoing } = detail;
   const title = (
     <div className="wl-side-head">
       <h2><KindName row={row} /></h2>
@@ -82,7 +68,7 @@ export function ServiceDetail({ row, traces, window, edges }: ServiceDetailProps
     <Panel title={title} className="wl-svc-detail">
       <KeyValues rows={[["Kind", KIND_LABEL[row.kind]], ["Status", <StatusText status={row.status} />], ["Requests", fmtCount(row.requests)], ["Errors", `${fmtCount(row.errors)} (${fmtPct(row.errorRate)})`], ["Avg latency", fmtMs(row.avgMs)], ["p95 latency", fmtMs(row.p95Ms)], ...(row.detail ? [["Detail", row.detail] as [string, string]] : [])]} />
       <div className="wl-section-title">Traffic</div>
-      <TimeChart starts={bucketStarts(window, BUCKETS)} bars={[{ label: "Requests", values: counts, color: "var(--wl-blue)" }]} height={140} />
+      <TimeChart starts={detail.starts} bars={[{ label: "Requests", values: detail.traffic, color: "var(--wl-blue)" }]} height={140} />
       <div className="wl-section-title">{row.kind === "database" ? "Busiest queries" : "Busiest endpoints"}</div>
       <EndpointList items={items} kind={row.kind} />
       <EdgeList title="Called by" edges={incoming} side="from" />

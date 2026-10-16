@@ -48,8 +48,17 @@ export const fmtDate = (epochMs: number): string => new Date(epochMs).toLocaleDa
 export const fmtDateTime = (epochMs: number): string =>
   new Date(epochMs).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 
-/** Axis label for a chart tick: time of day for short ranges. */
-export const fmtTick = (epochMs: number): string => new Date(epochMs).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+const TWO_DAYS_MS = 2 * 24 * 60 * 60_000;
+
+/** Axis label for a chart tick: time of day for short ranges, the date when the chart spans days. */
+export const fmtTick = (epochMs: number, spanMs = 0): string =>
+  spanMs > TWO_DAYS_MS
+    ? new Date(epochMs).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : new Date(epochMs).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+
+/** Tooltip label for one chart bucket: with the date when the chart spans days. */
+export const fmtBucket = (epochMs: number, spanMs = 0): string =>
+  spanMs > TWO_DAYS_MS ? new Date(epochMs).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric" }) : fmtTick(epochMs);
 
 /** "20:42:17.123", for trace timelines. */
 export function fmtClock(epochMs: number): string {

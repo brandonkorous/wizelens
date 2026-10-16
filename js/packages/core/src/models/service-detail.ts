@@ -1,18 +1,9 @@
-import {
-  avgOf,
-  browserTypeOf,
-  databaseOf,
-  groupBy,
-  hostOf,
-  httpShape,
-  isErrorSpan,
-  normalizeQuery,
-  queryText,
-  type ServiceEdge,
-  type ServiceRow,
-  type Span,
-  type Trace,
-} from "@wizeworks/lens-core";
+import { httpShape, queryText } from "../analysis.js";
+import { browserTypeOf } from "../attributes.js";
+import { avgOf, groupBy, normalizeQuery } from "../stats/common.js";
+import { databaseOf, hostOf, type ServiceEdge, type ServiceRow } from "../stats/services.js";
+import { isErrorSpan } from "../trace.js";
+import type { Span, Trace } from "../types.js";
 
 /** One endpoint, query, or call target of a service, with its numbers. */
 export interface EndpointStat {

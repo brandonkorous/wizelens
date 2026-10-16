@@ -1,0 +1,84 @@
+import { isAlertMetric } from "@wizeworks/lens-core";
+import { notify } from "../alerts/evaluate.js";
+import { checkTarget } from "../alerts/notify.js";
+import type { Ctx } from "../app.js";
+import { requireProject } from "../auth/principal.js";
+import { fail, readJsonBody, sendJson, str } from "../http/http.js";
+import type { Router } from "../http/router.js";
+import { type Channel, createRule, deleteRule, listEvents, listRules, ruleById, type RuleInput, updateRule } from "../repo/alerts.js";
+
+const WINDOWS = [5, 15, 60, 360, 1440].map((m) => m * 60_000);
+const MAX_CHANNELS = 5;
+
+async function channelsOf(ctx: Ctx, raw: unknown): Promise<Channel[]> {
+  const list = Array.isArray(raw) ? raw.slice(0, MAX_CHANNELS) : [];
+  const out: Channel[] = [];
+  for (const c of list as { kind?: unknown; url?: unknown }[]) {
+    if ((c.kind !== "webhook" && c.kind !== "slack") || typeof c.url !== "string") return fail(400, "Each channel needs kind (webhook or slack) and url.");
+    const problem = await checkTarget(c.url, ctx.app.config.allowPrivateWebhooks);
+    if (problem) fail(400, `${c.url}: ${problem}`);
+    out.push({ kind: c.kind, url: c.url });
+  }
+  return out;
+}
+
+/** Check a rule from the request body. */
+async function ruleInput(ctx: Ctx): Promise<RuleInput> {
+  const b = await readJsonBody(ctx.req);
+  if (!isAlertMetric(b.metric)) fail(400, "Pick a metric: error_rate, p95_ms, avg_ms, requests, new_errors, or slow_queries.");
+  if (b.op !== ">" && b.op !== "<") fail(400, 'Set op to ">" or "<".');
+  const threshold = Number(b.threshold);
+  if (!Number.isFinite(threshold)) fail(400, "Set a number for threshold.");
+  const windowMs = Number(b.windowMs ?? 5 * 60_000);
+  if (!WINDOWS.includes(windowMs)) fail(400, "Pick a window of 5, 15, 60, 360, or 1440 minutes.");
+  return {
+    name: str(b, "name").slice(0, 100),
+    metric: b.metric as RuleInput["metric"],
+    op: b.op as RuleInput["op"],
+    threshold,
+    windowMs,
+    env: typeof b.env === "string" ? b.env.slice(0, 50) : "",
+    channels: await channelsOf(ctx, b.channels),
+    enabled: b.enabled !== false,
+  };
+}
+
+async function list(ctx: Ctx): Promise<void> {
+  const { project } = await requireProject(ctx, ctx.params.project!);
+  sendJson(ctx.res, 200, { rules: await listRules(ctx.app.db, project.id), events: await listEvents(ctx.app.db, project.id, 100) });
+}
+
+async function create(ctx: Ctx): Promise<void> {
+  const { project, actor } = await requireProject(ctx, ctx.params.project!, "write");
+  const id = await createRule(ctx.app.db, project.id, await ruleInput(ctx), actor, ctx.app.config.now());
+  sendJson(ctx.res, 201, await ruleById(ctx.app.db, project.id, id));
+}
+
+async function change(ctx: Ctx): Promise<void> {
+  const { project } = await requireProject(ctx, ctx.params.project!, "write");
+  if (!(await ruleById(ctx.app.db, project.id, ctx.params.id!))) fail(404, "Alert rule not found.");
+  await updateRule(ctx.app.db, project.id, ctx.params.id!, await ruleInput(ctx));
+  sendJson(ctx.res, 200, await ruleById(ctx.app.db, project.id, ctx.params.id!));
+}
+
+async function remove(ctx: Ctx): Promise<void> {
+  const { project } = await requireProject(ctx, ctx.params.project!, "write");
+  if (!(await deleteRule(ctx.app.db, project.id, ctx.params.id!))) fail(404, "Alert rule not found.");
+  sendJson(ctx.res, 200, { ok: true });
+}
+
+/** Send a test notice through the rule's channels now. */
+async function test(ctx: Ctx): Promise<void> {
+  const { project } = await requireProject(ctx, ctx.params.project!, "write");
+  const rule = await ruleById(ctx.app.db, project.id, ctx.params.id!);
+  if (!rule) return fail(404, "Alert rule not found.");
+  sendJson(ctx.res, 200, { delivery: await notify(ctx.app, rule, "test", rule.lastValue, ctx.app.config.now()) });
+}
+
+export function alertRoutes(r: Router<Ctx>): void {
+  r.on("GET", "api/projects/:project/alerts", list)
+    .on("POST", "api/projects/:project/alerts", create)
+    .on("PATCH", "api/projects/:project/alerts/:id", change)
+    .on("DELETE", "api/projects/:project/alerts/:id", remove)
+    .on("POST", "api/projects/:project/alerts/:id/test", test);
+}

@@ -1,0 +1,66 @@
+{
+  "name": "@wizeworks/lens-cloud",
+  "version": "0.3.0-alpha.1",
+  "description": "The WizeLens cloud service: many organizations, accounts and teams, server-side stats, alerts, sharing, and scoped AI access, on Postgres.",
+  "license": "MIT",
+  "author": "WizeWorks",
+  "homepage": "https://github.com/brandonkorous/wizelens#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brandonkorous/wizelens.git",
+    "directory": "js/packages/cloud"
+  },
+  "bugs": {
+    "url": "https://github.com/brandonkorous/wizelens/issues"
+  },
+  "keywords": [
+    "wizelens",
+    "cloud",
+    "tracing",
+    "opentelemetry",
+    "otlp",
+    "profiler",
+    "postgres"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "wizelens-cloud": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "start": "node dist/cli.js"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.10",
+    "@wizeworks/lens-core": "workspace:^",
+    "@wizeworks/lens-hub": "workspace:^",
+    "@wizeworks/lens-node": "workspace:^",
+    "@wizeworks/lens-ui": "workspace:^",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

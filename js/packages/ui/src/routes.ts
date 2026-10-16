@@ -11,7 +11,11 @@ export type PageId =
   | "logs"
   | "services"
   | "insights"
-  | "settings";
+  | "settings"
+  | "alerts"
+  | "team"
+  | "shared"
+  | "join";
 
 export interface Route {
   page: PageId;
@@ -20,7 +24,7 @@ export interface Route {
   query: URLSearchParams;
 }
 
-const PAGES: readonly PageId[] = ["overview", "requests", "traces", "database", "rendering", "errors", "logs", "services", "insights", "settings"];
+const PAGES: readonly PageId[] = ["overview", "requests", "traces", "database", "rendering", "errors", "logs", "services", "insights", "settings", "alerts", "team", "shared", "join"];
 const TRACE_ID = /^[0-9a-f]{32}$/;
 
 /** Read a hash like "#/requests?status=5xx" or "#/traces/<id>/sql". */

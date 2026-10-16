@@ -118,11 +118,33 @@ Open http://localhost:5960/_wizelens/. The top-bar menu filters by project and e
 Each service keeps its own dashboard too. To share one hub with your team, run it with `--host 0.0.0.0 --token <text>`,
 set `WIZELENS_HUB_TOKEN` on each service, and open `/_wizelens/?token=<text>` once in the browser. `wizelens-hub --help` lists every option.
 
-## 6. AI access (optional)
+## 6. For a team: WizeLens Cloud (optional)
+
+Run the cloud service with Postgres, on a server your team can reach:
+
+```bash
+POSTGRES_PASSWORD=<a long secret> WIZELENS_CLOUD_PUBLIC_URL=https://wizelens.example.com \
+  docker compose -f deploy/docker-compose.cloud.yml up -d
+```
+
+Open the public URL and create the first account: you own the first organization. On the **Team** page, invite people
+(send them the link), add projects, and make an **ingest key** per app. Then set on each app, and restart it:
+
+```bash
+WIZELENS_HUB=https://wizelens.example.com
+WIZELENS_HUB_TOKEN=wl_ik_...                   # the ingest key
+```
+
+OpenTelemetry apps use `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer wl_ik_...`.
+Put the cloud behind https (any reverse proxy); sign-in cookies are marked secure when the public URL is https.
+To try it on your machine first: `npx @wizeworks/lens-cloud` (Postgres in-process, data in `./.wizelens-cloud`).
+
+## 7. AI access (optional)
 
 Turn on the read-only MCP endpoint per service (`EnableMcp = true` / `enableMcp: true`), then point your MCP client at
 `http://localhost:<port>/_wizelens/mcp`. Secrets are redacted before anything is stored. On the hub, start it with `--mcp`:
-one endpoint (`http://localhost:5960/_wizelens/mcp`) then covers every service.
+one endpoint (`http://localhost:5960/_wizelens/mcp`) then covers every service. On the cloud, make a **read key** on the Team
+page for the projects the agent may see, and send it as `Authorization: Bearer wl_rk_...`. Every call is in the audit log.
 
 ## Checks when something is missing
 

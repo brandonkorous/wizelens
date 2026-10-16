@@ -1,5 +1,5 @@
 import { RotateCcw } from "lucide-react";
-import { type LogLevel, LOG_LEVELS, type LogRow, series } from "@wizeworks/lens-core";
+import { type LogLevel, LOG_LEVELS, type LogRow, type LogsModel, VOLUME_GROUPS } from "@wizeworks/lens-core";
 import { fmtTime } from "../../format";
 import { setQuery, traceHref } from "../../routes";
 import { Badge, type Tone } from "../../ui/Badges";
@@ -7,7 +7,6 @@ import { SearchInput, Select } from "../../ui/Controls";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column } from "../../ui/Table";
 import { TimeChart } from "../../ui/TimeChart";
-import { CHART_BUCKETS, type LogStats } from "./useLogStats";
 
 const LEVEL_TONE: Record<LogLevel, Tone> = { trace: "neutral", debug: "neutral", info: "info", warn: "warning", error: "danger", critical: "danger" };
 
@@ -15,7 +14,7 @@ export const LevelBadge = ({ level }: { level: LogLevel }) => <Badge tone={LEVEL
 
 const LEVEL_OPTIONS: [string, string][] = [["trace", "All levels"], ["debug", "Debug and up"], ["info", "Info and up"], ["warn", "Warnings and up"], ["error", "Errors and up"], ["critical", "Critical only"]];
 
-export function LogFilters({ stats }: { stats: LogStats }) {
+export function LogFilters({ stats }: { stats: LogsModel }) {
   const { filter, services } = stats;
   const serviceOptions: [string, string][] = [["", "All services"], ...services.map((s): [string, string] => [s, s])];
   return (
@@ -30,21 +29,13 @@ export function LogFilters({ stats }: { stats: LogStats }) {
   );
 }
 
-const LEVEL_COLORS: [LogLevel[], string, string][] = [
-  [["trace", "debug", "info"], "Info and below", "var(--wl-chart-bar)"],
-  [["warn"], "Warnings", "var(--wl-amber)"],
-  [["error", "critical"], "Errors", "var(--wl-red)"],
-];
+const GROUP_COLOR: Record<string, string> = { info: "var(--wl-chart-bar)", warn: "var(--wl-amber)", error: "var(--wl-red)" };
 
-export function LogVolumePanel({ stats }: { stats: LogStats }) {
-  const bars = LEVEL_COLORS.map(([levels, label, color]) => ({
-    label,
-    color,
-    values: series(stats.all.filter((r) => levels.includes(r.level)), (r) => r.timeMs, stats.w.window, CHART_BUCKETS),
-  }));
+export function LogVolumePanel({ stats }: { stats: LogsModel }) {
+  const bars = VOLUME_GROUPS.map((g) => ({ label: g.label, color: GROUP_COLOR[g.key]!, values: stats.volume[g.key] ?? [] }));
   return (
     <Panel title="Log Volume">
-      {stats.all.length === 0 ? <Empty title="No log lines in this time range">Lines written through WizeLens loggers show up here.</Empty> : <TimeChart starts={stats.starts} bars={bars} height={180} />}
+      {stats.totalLines === 0 ? <Empty title="No log lines in this time range">Lines written through WizeLens loggers show up here.</Empty> : <TimeChart starts={stats.starts} bars={bars} height={180} />}
     </Panel>
   );
 }

@@ -1,6 +1,5 @@
-import { useMemo } from "react";
 import { Box, Cog, Database, Globe, Inbox, Monitor } from "lucide-react";
-import { serviceRows, type ServiceKind, type ServiceRow, type ServiceStatus, type TimeRange, type Trace } from "@wizeworks/lens-core";
+import type { ServiceKind, ServiceRow, ServiceStatus, TimeRange } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs } from "../../format";
 import { hrefTo, navigate } from "../../routes";
 import { DotText, type Tone } from "../../ui/Badges";
@@ -38,14 +37,13 @@ function columns(range: TimeRange): Column<ServiceRow>[] {
 }
 
 /** The busiest services and databases with their health. */
-export function ServicesPanel({ traces, range }: { traces: readonly Trace[]; range: TimeRange }) {
-  const rows = useMemo(() => serviceRows(traces).slice(0, MAX_ROWS), [traces]);
-  const cols = useMemo(() => columns(range), [range]);
+export function ServicesPanel({ rows, range }: { rows: readonly ServiceRow[]; range: TimeRange }) {
+  const cols = columns(range);
   return (
     <Panel title="Services" action={<ViewAll href={hrefTo("services")} />}>
       <Table
         columns={cols}
-        rows={rows}
+        rows={rows.slice(0, MAX_ROWS)}
         rowKey={(s) => s.key}
         onRowClick={(s) => navigate(hrefTo("services", [], { service: s.name }))}
         empty={<Empty>No services seen in this range.</Empty>}

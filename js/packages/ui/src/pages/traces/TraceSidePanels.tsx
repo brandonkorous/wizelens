@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { bottlenecks, criticalSpans, type LayerKind, type Trace } from "@wizeworks/lens-core";
+import { useState } from "react";
+import type { Bottleneck, CriticalSpan, LayerKind } from "@wizeworks/lens-core";
 import { fmtMs, fmtPct, serviceSlot } from "../../format";
 import { navigate, traceHref } from "../../routes";
 import { BarList } from "../../ui/BarList";
@@ -25,9 +25,9 @@ type By = "layer" | "service";
 const SLOW_SPAN_MS = 100;
 
 /** Share of time per layer (or per service) over every trace in the range. */
-export function BottleneckPanel({ traces }: { traces: readonly Trace[] }) {
+export function BottleneckPanel({ data }: { data: Record<By, Bottleneck[]> }) {
   const [by, setBy] = useState<By>("layer");
-  const rows = useMemo(() => bottlenecks(traces, by).slice(0, 8), [traces, by]);
+  const rows = data[by];
   const names = rows.map((r) => r.key);
   const items = rows.map((r) => ({
     key: r.key,
@@ -50,9 +50,9 @@ function color(kind: LayerKind | "owner", key: string, names: string[]): string 
 }
 
 /** The slowest spans below the request roots. */
-export function CriticalSpansPanel({ traces }: { traces: readonly Trace[] }) {
+export function CriticalSpansPanel({ critical }: { critical: readonly CriticalSpan[] }) {
   const [all, setAll] = useState(false);
-  const spans = useMemo(() => criticalSpans(traces, all ? 25 : 6), [traces, all]);
+  const spans = critical.slice(0, all ? 25 : 6);
   const services = [...new Set(spans.map((s) => s.service))];
   const action = (
     <button type="button" className="wl-view-all wl-link-btn" onClick={() => setAll(!all)}>

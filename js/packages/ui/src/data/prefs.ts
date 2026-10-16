@@ -70,6 +70,12 @@ export const getScope = (): Scope => ({
   project: memory.get(SCOPE.project) ?? read(SCOPE.project) ?? "",
 });
 
+/** Pick the project outside React, for example after sign-in. */
+export function setProjectScope(id: string): void {
+  memory.set(SCOPE.project, id);
+  write(SCOPE.project, id);
+}
+
 /** Hear any preference change. */
 export const onPrefChange = subscribe;
 

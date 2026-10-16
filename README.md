@@ -214,6 +214,16 @@ language send OpenTelemetry (OTLP/HTTP) to the same address.
 - **Safe on a team network.** Local only by default; add `--host 0.0.0.0 --token <text>` to share it.
 - **One MCP endpoint** for every service with `--mcp`.
 
+### WizeLens Cloud
+
+The same dashboard for a whole team, with history. Run `wizelens-cloud` with Postgres (Docker image and compose file included).
+
+- **Teams:** organizations, projects, owner, admin, member, and viewer roles, invite links, and an audit log.
+- **History:** 7- and 30-day ranges, computed on the server; retention per organization.
+- **Alerts:** error rate, latency, traffic, new errors, and slow queries, to webhooks and Slack.
+- **Sharing:** read-only links to a single trace that expire.
+- **Safe AI access:** read keys limited to chosen projects; every MCP call is logged.
+
 <a id="how-it-works"></a>
 
 ## 🧭 How it works
@@ -388,6 +398,7 @@ To try the hub, start it first with `pnpm dev:hub` (http://localhost:5960/_wizel
 | `@wizeworks/lens-core` | npm | Shared types, trace context, analysis |
 | `@wizeworks/lens-ui` | npm | The dashboard (served by both add-ons and the hub) |
 | `@wizeworks/lens-hub` | npm, Docker | The local hub (`wizelens-hub`) |
+| `@wizeworks/lens-cloud` | npm, Docker | The cloud service (`wizelens-cloud`) |
 
 <a id="roadmap"></a>
 
@@ -397,9 +408,9 @@ To try the hub, start it first with `pnpm dev:hub` (http://localhost:5960/_wizel
 |---|---|---|
 | **1. In-app add-on** | A package inside each app, with local SQLite and federation across services | ✅ Complete (alpha) |
 | **2. Local hub** | One small service on your machine or network; every app sends to it | ✅ Complete (alpha) |
-| **3. Cloud** | Hosted, team-wide history, alerts, and sharing | 🔭 Planned |
+| **3. Cloud** | Hosted, team-wide history, alerts, and sharing | ✅ Complete (alpha) |
 
-Phases 1 and 2 are complete. The hub, OTLP intake, projects, and the add-on senders ship in 0.2.0-alpha.1. See the [changelog](CHANGELOG.md).
+All three phases are complete. The cloud (accounts, teams, server-side stats, alerts, sharing, scoped AI access) ships in 0.3.0-alpha.1. See the [changelog](CHANGELOG.md).
 New to WizeLens? Start with the **[getting-started guide](docs/GETTING-STARTED.md)**.
 
 See **[docs/PLAN.md](docs/PLAN.md)** for the full plan.

@@ -1,12 +1,27 @@
 // Shared helpers for dashboard statistics: time windows, buckets, averages, and change.
 
-export type TimeRange = "15m" | "1h" | "6h" | "24h";
+export type TimeRange = "15m" | "1h" | "6h" | "24h" | "7d" | "30d";
 
 export const TIME_RANGES: Record<TimeRange, { ms: number; label: string }> = {
   "15m": { ms: 15 * 60_000, label: "Last 15 minutes" },
   "1h": { ms: 60 * 60_000, label: "Last hour" },
   "6h": { ms: 6 * 60 * 60_000, label: "Last 6 hours" },
   "24h": { ms: 24 * 60 * 60_000, label: "Last 24 hours" },
+  "7d": { ms: 7 * 24 * 60 * 60_000, label: "Last 7 days" },
+  "30d": { ms: 30 * 24 * 60 * 60_000, label: "Last 30 days" },
+};
+
+/** Ranges a host can serve from traces in the browser. Longer ones need server-side stats. */
+export const BROWSER_MAX_RANGE_MS = 24 * 60 * 60_000;
+
+/** "vs. previous hour" and so on, for the stat cards. */
+export const COMPARE_LABEL: Record<TimeRange, string> = {
+  "15m": "vs. previous 15 min",
+  "1h": "vs. previous hour",
+  "6h": "vs. previous 6 hours",
+  "24h": "vs. previous day",
+  "7d": "vs. previous 7 days",
+  "30d": "vs. previous 30 days",
 };
 
 export const isTimeRange = (v: string): v is TimeRange => v in TIME_RANGES;

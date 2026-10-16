@@ -1,4 +1,5 @@
-import type { RequestRow } from "@wizeworks/lens-core";
+import type { RequestRow } from "../stats/requests.js";
+import type { ModelParams } from "./input.js";
 
 /** Request filters, kept in the URL query so links and refreshes keep them. */
 export interface RequestFilter {
@@ -29,8 +30,8 @@ const DURATIONS: Record<string, [string, number, number]> = {
 
 export const DURATION_OPTIONS: [string, string][] = [["", "Any Duration"], ...Object.entries(DURATIONS).map(([k, [label]]): [string, string] => [k, label])];
 
-export function filterFromQuery(query: URLSearchParams): RequestFilter {
-  const get = (k: string) => query.get(k) ?? "";
+export function filterFromQuery(query: URLSearchParams | ModelParams): RequestFilter {
+  const get = (k: string) => (query instanceof URLSearchParams ? query.get(k) : query[k]) ?? "";
   return { method: get("method"), status: get("status"), duration: get("duration"), service: get("service"), q: get("q") };
 }
 
@@ -73,4 +74,36 @@ export function optionsOf(rows: readonly RequestRow[]): { methods: string[]; ser
     methods: [...new Set(rows.map((r) => r.method))].sort(),
     services: [...new Set(rows.map((r) => r.service))].sort(),
   };
+}
+
+export type SortKey = "time" | "path" | "method" | "status" | "duration" | "sql" | "fetch" | "service" | "insights";
+
+export interface Sort {
+  key: SortKey;
+  desc: boolean;
+}
+
+const SORT_VALUE: Record<SortKey, (r: RequestRow) => number | string> = {
+  time: (r) => r.startMs,
+  path: (r) => r.path,
+  method: (r) => r.method,
+  status: (r) => r.status ?? 0,
+  duration: (r) => r.durationMs,
+  sql: (r) => r.dbCount,
+  fetch: (r) => r.fetchMs,
+  service: (r) => r.service,
+  insights: (r) => r.insights,
+};
+
+export const isSortKey = (v: string | undefined): v is SortKey => !!v && v in SORT_VALUE;
+
+/** Sort all rows before paging, so a sorted page shows the true top rows. */
+export function sortRows(rows: readonly RequestRow[], sort: Sort): RequestRow[] {
+  const get = SORT_VALUE[sort.key];
+  const dir = sort.desc ? -1 : 1;
+  return [...rows].sort((a, b) => {
+    const x = get(a);
+    const y = get(b);
+    return (x < y ? -1 : x > y ? 1 : 0) * dir;
+  });
 }

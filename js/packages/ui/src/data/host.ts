@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { type Capability, type HostMode, IN_APP_CAPABILITIES, type ServiceInfo, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { BROWSER_MAX_RANGE_MS, type Capability, type HostMode, IN_APP_CAPABILITIES, type ServiceInfo, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import { useData } from "./provider";
 import { useRangePref } from "./prefs";
 
@@ -22,7 +22,9 @@ export const MODE_LABEL: Record<HostMode, string> = { "in-app": "In-app", hub: "
 export function hostOf(info: ServiceInfo | null): Host {
   const features = new Set<Capability>(info?.capabilities ?? IN_APP_CAPABILITIES);
   const keptMs = info?.storage?.maxAgeMs ?? DAY_MS;
-  const ranges = ALL_RANGES.filter((r) => TIME_RANGES[r].ms <= keptMs);
+  // Without server-side stats, the browser computes from traces it holds, so ranges stop at 24 hours.
+  const maxMs = features.has("serverStats") ? keptMs : Math.min(keptMs, BROWSER_MAX_RANGE_MS);
+  const ranges = ALL_RANGES.filter((r) => TIME_RANGES[r].ms <= maxMs);
   return {
     mode: info?.mode ?? "in-app",
     has: (c) => features.has(c),

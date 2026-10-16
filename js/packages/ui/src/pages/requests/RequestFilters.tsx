@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { setQuery } from "../../routes";
 import { SearchInput, Select } from "../../ui/Controls";
-import { DURATION_OPTIONS, FILTER_KEYS, type RequestFilter, STATUS_OPTIONS } from "./filters";
+import { DURATION_OPTIONS, FILTER_KEYS, type RequestFilter, STATUS_OPTIONS } from "@wizeworks/lens-core";
 
 export interface RequestFiltersProps {
   filter: RequestFilter;
@@ -17,7 +17,7 @@ function useSearchText(q: string): [string, (v: string) => void] {
   useEffect(() => setText(q), [q]);
   useEffect(() => {
     if (text === q) return;
-    const id = setTimeout(() => setQuery({ q: text, trace: null }), SEARCH_DELAY_MS);
+    const id = setTimeout(() => setQuery({ q: text, trace: null, page: null }), SEARCH_DELAY_MS);
     return () => clearTimeout(id);
   }, [text, q]);
   return [text, setText];
@@ -26,8 +26,8 @@ function useSearchText(q: string): [string, (v: string) => void] {
 /** Method, status, duration, and service selects, a search box, and Reset. */
 export function RequestFilters({ filter, methods, services }: RequestFiltersProps) {
   const [text, setText] = useSearchText(filter.q);
-  const set = (key: keyof RequestFilter) => (value: string) => setQuery({ [key]: value });
-  const reset = () => setQuery(Object.fromEntries(FILTER_KEYS.map((k) => [k, null])));
+  const set = (key: keyof RequestFilter) => (value: string) => setQuery({ [key]: value, page: null });
+  const reset = () => setQuery({ ...Object.fromEntries(FILTER_KEYS.map((k) => [k, null])), page: null });
   const withCurrent = (list: string[], current: string) => (current && !list.includes(current) ? [...list, current] : list);
   return (
     <section className="wl-panel wl-filters">

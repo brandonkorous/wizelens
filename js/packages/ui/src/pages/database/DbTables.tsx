@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { Database } from "lucide-react";
-import type { QueryRow, TableRow } from "@wizeworks/lens-core";
+import type { DatabaseModel, QueryRow, TableRow } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, fmtShort } from "../../format";
 import { navigate, traceHref } from "../../routes";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
-import type { DatabaseStats } from "./useDatabaseStats";
 
 const TOP = 5;
 
@@ -30,7 +29,7 @@ function ToggleAll({ open, total, onToggle }: { open: boolean; total: number; on
   );
 }
 
-export function TopQueriesPanel({ stats }: { stats: DatabaseStats }) {
+export function TopQueriesPanel({ stats }: { stats: DatabaseModel }) {
   const [all, setAll] = useState(false);
   const rows = all ? stats.queries : stats.queries.slice(0, TOP);
   return (
@@ -53,7 +52,7 @@ const TABLE_COLUMNS: Column<TableRow>[] = [
   { key: "rows", header: "Rows Returned", num: true, sort: (t) => t.rows ?? -1, cell: (t) => (t.rows === null ? "–" : fmtShort(t.rows)) },
 ];
 
-export function TableHotspotsPanel({ stats }: { stats: DatabaseStats }) {
+export function TableHotspotsPanel({ stats }: { stats: DatabaseModel }) {
   const [all, setAll] = useState(false);
   const rows = all ? stats.tables : stats.tables.slice(0, TOP);
   return (

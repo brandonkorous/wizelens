@@ -5,7 +5,9 @@ import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
 import { PhasePanel, RouteChartPanel } from "./RenderCharts";
 import { ComponentTable, RouteTable } from "./RenderTables";
-import { type RenderingData, useRendering } from "./useRendering";
+import type { RenderingModel } from "@wizeworks/lens-core";
+import { usePageModel } from "../../data/models";
+import { ModelState } from "../../ui/ModelState";
 import "../../styles/pages/rendering.css";
 
 const SETUP = `// main.tsx: first line, before React loads
@@ -32,8 +34,9 @@ function Setup({ loading }: { loading: boolean }) {
   );
 }
 
-function Cards({ data }: { data: RenderingData }) {
-  const { cards, compareLabel } = data;
+function Cards({ data }: { data: RenderingModel }) {
+  const { cards } = data;
+  const { compareLabel } = data.meta;
   return (
     <div className="wl-grid wl-grid-stats">
       <StatCard icon={Gauge} label="Avg. Render Time" value={fmtMs(cards.render.value)} change={cards.render.change} upIsGood={false} compareLabel={compareLabel} series={cards.render.series} />
@@ -45,20 +48,21 @@ function Cards({ data }: { data: RenderingData }) {
 }
 
 export function RenderingPage() {
-  const data = useRendering();
+  const { model: data, loading, error } = usePageModel("rendering");
   const all = useRoute().query.get("all");
-  const empty = data.views.length === 0 && !data.hasReact;
+  const empty = !data || (data.views === 0 && !data.hasReact);
   return (
     <>
       <PageHeader title="Rendering" subtitle="Frontend rendering diagnostics across server-side rendering, hydration, and component cost." />
+      <ModelState model={data} loading={false} error={error} what="page views" />
       {empty ? (
-        <Setup loading={data.loading} />
+        <Setup loading={loading} />
       ) : (
         <>
           <Cards data={data} />
           <div className="wl-grid wl-grid-2">
-            <RouteChartPanel views={data.views} starts={data.starts} window={data.window} />
-            <PhasePanel views={data.views} />
+            <RouteChartPanel m={data} />
+            <PhasePanel m={data} />
           </div>
           <div className="wl-grid">
             <RouteTable routes={data.routes} all={all === "routes"} />

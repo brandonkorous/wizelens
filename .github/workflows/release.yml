@@ -1,6 +1,6 @@
 name: Release
 
-# Push a tag like v0.2.0 to publish every package and the hub image. Needs the NPM_TOKEN and NUGET_API_KEY repository secrets.
+# Push a tag like v0.2.0 to publish every package and the hub and cloud images. Needs the NPM_TOKEN and NUGET_API_KEY repository secrets.
 on:
   push:
     tags: ["v*"]
@@ -61,7 +61,7 @@ jobs:
           generate_release_notes: true
 
   hub-image:
-    name: Publish the hub image
+    name: Publish the hub and cloud images
     needs: release
     runs-on: ubuntu-latest
     steps:
@@ -73,10 +73,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push ghcr.io/brandonkorous/wizelens-hub
+      - name: Build and push the hub and cloud images to ghcr.io/brandonkorous
         run: |
-          IMAGE=ghcr.io/brandonkorous/wizelens-hub
           VERSION="${GITHUB_REF_NAME#v}"
-          docker build -f js/packages/hub/Dockerfile -t "$IMAGE:$VERSION" .
-          docker push "$IMAGE:$VERSION"
-          if [[ "$VERSION" != *-* ]]; then docker tag "$IMAGE:$VERSION" "$IMAGE:latest" && docker push "$IMAGE:latest"; fi
+          for NAME in hub cloud; do
+            IMAGE="ghcr.io/brandonkorous/wizelens-$NAME"
+            docker build -f "js/packages/$NAME/Dockerfile" -t "$IMAGE:$VERSION" .
+            docker push "$IMAGE:$VERSION"
+            if [[ "$VERSION" != *-* ]]; then docker tag "$IMAGE:$VERSION" "$IMAGE:latest" && docker push "$IMAGE:latest"; fi
+          done

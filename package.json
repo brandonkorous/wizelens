@@ -8,6 +8,8 @@
     "check:size": "node scripts/check-size.mjs",
     "dev:web": "pnpm --filter sample-web dev",
     "dev:orders": "pnpm --filter sample-orders-api dev",
-    "dev:hub": "pnpm --filter @wizeworks/lens-hub start"
+    "dev:hub": "pnpm --filter @wizeworks/lens-hub start",
+    "dev:cloud": "pnpm --filter @wizeworks/lens-cloud start",
+    "smoke:cloud": "node scripts/cloud-smoke.mjs"
   }
 }

@@ -1,5 +1,6 @@
 import type { HubService } from "@wizeworks/lens-core";
 import { useData } from "../../data/hooks";
+import { useHost } from "../../data/host";
 import { useEnvScope, useProjectScope } from "../../data/prefs";
 import { inScope, presenceOf } from "../../data/sources";
 import { fmtAgo, fmtCount } from "../../format";
@@ -27,8 +28,9 @@ export function RegistryPanel() {
   const { registry, updatedMs } = useData();
   const [env] = useEnvScope();
   const [project] = useProjectScope();
+  const cloud = useHost().has("accounts");
   if (!registry) return null;
-  const rows = registry.services.filter((s) => inScope(s, { env, project }));
+  const rows = registry.services.filter((s) => inScope(s, { env, project }, !cloud));
   const online = rows.filter((s) => s.online).length;
   const title = `Connected to this hub (${online} of ${rows.length} online)`;
   return (

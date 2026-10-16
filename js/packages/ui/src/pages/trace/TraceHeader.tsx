@@ -1,7 +1,7 @@
+import type { ReactNode } from "react";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { type Health, type Timing, timingSegments, type Trace } from "@wizeworks/lens-core";
 import { fmtClock, fmtMs } from "../../format";
-import { hrefTo } from "../../routes";
 import { CopyButton } from "../../ui/Badges";
 import { ServiceChip } from "./tabParts";
 
@@ -70,25 +70,36 @@ export interface TraceHeaderProps {
   timing: Timing;
   health: Health;
   loading: boolean;
-  onRefresh: () => void;
+  onRefresh?: () => void;
+  /** "All traces" link, or null to hide it. */
+  backHref: string | null;
+  /** Extra buttons next to Refresh, for example Share. */
+  actions?: ReactNode;
 }
 
-export function TraceHeader({ trace, timing, health, loading, onRefresh }: TraceHeaderProps) {
+export function TraceHeader({ trace, timing, health, loading, onRefresh, backHref, actions }: TraceHeaderProps) {
   const code = trace.rootStatusCode;
   return (
     <section className="wl-panel wl-trace-head">
-      <a className="wl-back" href={hrefTo("traces", [], { trace: trace.traceId })}>
-        <ArrowLeft size={14} aria-hidden="true" /> All traces
-      </a>
+      {backHref && (
+        <a className="wl-back" href={backHref}>
+          <ArrowLeft size={14} aria-hidden="true" /> All traces
+        </a>
+      )}
       <div className="wl-trace-title">
         <h1>
           <span className={`wl-h-dot wl-h-${health}`} title={`Health: ${health}`} />
           {trace.rootName}
           {code != null && <span className={`wl-pill wl-small-chip ${pillClass(code)}`}>{code}</span>}
         </h1>
-        <button type="button" className="wl-btn" onClick={onRefresh} disabled={loading}>
-          <RefreshCw aria-hidden="true" /> {loading ? "Refreshing…" : "Refresh"}
-        </button>
+        <span className="wl-trace-actions">
+          {actions}
+          {onRefresh && (
+            <button type="button" className="wl-btn" onClick={onRefresh} disabled={loading}>
+              <RefreshCw aria-hidden="true" /> {loading ? "Refreshing…" : "Refresh"}
+            </button>
+          )}
+        </span>
       </div>
       <Stats trace={trace} timing={timing} />
       <SplitBar timing={timing} failed={health === "critical"} />

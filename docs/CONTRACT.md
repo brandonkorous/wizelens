@@ -175,10 +175,10 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `federation` | The dashboard finds other services through trace `remotes` and reads them directly | ✅ | ✅ (services that do not send to the hub) | |
 | `environments` | The host holds more than one environment and project; the top-bar picker filters by them | | ✅ | ✅ |
 | `registry` | The host knows its services (`api/services`): online state, project, environment, runtime | | ✅ | ✅ |
-| `accounts` | Users sign in; the top bar shows the user | | | ✅ |
-| `alerts` | The host sends alerts; the bell lists them | | | ✅ |
-| `sharing` | Traces and views can be shared by link | | | ✅ |
-| `serverStats` | The host computes page numbers itself; the dashboard asks for them instead of downloading full traces | | | ✅ |
+| `accounts` | People sign in; the top bar shows the user and the Team page appears | | | ✅ |
+| `alerts` | The host runs alert rules; the Alerts page and the bell show them | | | ✅ |
+| `sharing` | Traces can be shared by a read-only link | | | ✅ |
+| `serverStats` | The host computes page numbers itself (`api/models/<page>`); ranges reach 7 and 30 days | | | ✅ |
 
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation"]`. The hub answers `mode: "hub"` and
 `capabilities: ["federation", "environments", "registry"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
@@ -358,3 +358,79 @@ CREATE TABLE remotes  (trace_id TEXT, endpoint TEXT, PRIMARY KEY (trace_id, endp
 CREATE TABLE services (project TEXT, service TEXT, environment TEXT, host TEXT, via TEXT, info TEXT, first_seen REAL, last_seen REAL,
                        PRIMARY KEY (project, service, environment, host));                               -- '' for unknown
 ```
+
+## Cloud (v0.7, phase 3)
+
+`@wizeworks/lens-cloud` (command `wizelens-cloud`, default port **5970**) is the hosted service. It serves the same dashboard,
+answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats"]`,
+and keeps data in Postgres (`DATABASE_URL=postgres://...`). PGlite (`pglite:<folder>` or `memory`) runs the same SQL in-process,
+for tests and trials.
+
+### Tenancy and access
+
+- **Organizations** hold **projects**. People join organizations with a role: `owner`, `admin`, `member`, `viewer`.
+  Viewers read. Members also make alerts and share links. Admins also manage projects, keys, and members. Owners also manage owners.
+  An organization always keeps one owner.
+- **Sessions**: email and password (scrypt), an HttpOnly `wizelens_session` cookie (30 days, `SameSite=Lax`, `Secure` on https).
+  Every change from a browser also needs the header `X-WizeLens-Client: dashboard`, so another site cannot send it.
+- **Sign-up**: the first account sets up the cloud (`api/auth/setup`). After that, people join with an invite link (7 days, one use),
+  or anyone can sign up when the cloud runs with `--signup open` (they get their own organization).
+- **Keys** (only their SHA-256 hash is stored; the prefix tells what they are):
+  - `wl_ik_…` **ingest key**: one project. Add-ons send it as `WIZELENS_HUB_TOKEN`; OTLP apps as `Authorization: Bearer …`.
+    The project comes from the key, never from the sender. At most 1200 calls per key per minute (429 above).
+  - `wl_rk_…` **read key**: one or more projects, read-only. For AI agents (MCP) and scripts.
+- **Audit log**: org changes, member changes, keys, projects, shares, and every MCP tool call, with who did it.
+
+### Endpoints (below `/_wizelens/`)
+
+| Method | Path | Who |
+|---|---|---|
+| GET | `api/auth/state` | Anyone: `{ signedIn, needsSetup, signup, user?, orgs?[] with projects }` |
+| POST | `api/auth/setup`, `signup`, `login`, `logout` | Anyone (setup only while no account exists) |
+| GET / POST | `api/auth/invites/{token}`, `…/accept` | Anyone / signed in |
+| POST / GET / PATCH | `api/orgs`, `api/orgs/{org}` | Signed in; read: any member; change: admin |
+| POST / PATCH / DELETE | `api/orgs/{org}/invites`, `…/members/{user}` | Admin |
+| POST / DELETE | `api/orgs/{org}/projects[/{id}]`, `…/{id}/clear` (deletes data only) | Admin |
+| POST / DELETE | `api/orgs/{org}/keys[/{id}]` | Admin. The secret is in the answer once |
+| GET | `api/orgs/{org}/audit?before=` | Admin |
+| GET | `api/info`, `api/traces`, `api/traces/{id}`, `api/services` — all with `?project=` | Member or read key |
+| GET | `api/models/{page}?project=&range=&env=&…` | Member or read key. See "Page models" |
+| GET / POST / PATCH / DELETE | `api/projects/{p}/alerts[/{id}]`, `…/{id}/test` | Read: viewer; change: member |
+| POST / GET / DELETE | `api/projects/{p}/shares[/{id}]` | Read: viewer; change: member |
+| GET | `api/shared/{token}` | Anyone with the link: `{ trace, expiresMs }` |
+| POST | `api/ingest`, `/v1/traces`, `/v1/logs` | Ingest key |
+| POST | `mcp?project=` | Read key (the project can be left out when the key has one) |
+
+### Page models (`serverStats`)
+
+Every dashboard page is one pure function in `@wizeworks/lens-core` (`PAGE_MODELS`: overview, requests, traces, database,
+rendering, errors, logs, services, insights). It takes the traces of the chosen window and the window before it, plus the
+page's URL parameters (filters, sort, page, selected item), and returns a JSON object. The browser runs it for in-app and hub
+hosts; the cloud runs it on the server, so ranges reach `7d` and `30d`. Lists in a model are capped at 200 rows (Requests and
+Logs page through all rows). The server reads at most `maxStatsTraces` (default 20000) traces per answer, newest first; above that
+the model's `meta.sampled` says `{ used, total }` and the dashboard says so. Answers are cached for 15 seconds.
+
+### Alerts
+
+A rule watches one metric over a window (5 min to 24 h), optionally in one environment: `error_rate` (%), `p95_ms`, `avg_ms`,
+`requests`, `new_errors` (error groups not seen in the window before), `slow_queries`. It fires when the value is above (`>`) or
+below (`<`) the threshold. No data never fires, except `requests <` (traffic stopped). Rules run every minute. A notice is sent
+only when the state changes (fired, resolved), to a webhook (the JSON notice) or a Slack incoming webhook, and kept as an event.
+Webhook URLs must be https and may not resolve to private, loopback, or link-local addresses, unless the cloud runs with
+`--allow-private-webhooks` (self-hosting on a private network).
+
+### Sharing
+
+A share link (`#/shared/<token>`, 1 to 30 days) opens one trace, read-only, for anyone with the link. It can be revoked.
+Views are counted. Nothing else is reachable with the token.
+
+### Retention
+
+Each organization keeps traces for `retention_days` (default 30, 1 to 400). Older traces are deleted every 10 minutes.
+`POST …/projects/{id}/clear` deletes a project's data now.
+
+### Cloud storage
+
+Postgres, one schema, migrations in `wizelens_migrations`. Tables: `orgs`, `users`, `members`, `sessions`, `invites`, `projects`,
+`api_keys`, `traces`, `spans`, `logs`, `services`, `alert_rules`, `alert_events`, `shares`, `audit`. Data tables are keyed by
+`project_id`. Times are `double precision` epoch ms. Secrets (sessions, invites, keys, shares) are stored as SHA-256 hashes only.

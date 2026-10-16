@@ -1,14 +1,18 @@
 import { useMemo } from "react";
-import { Bell, Lightbulb, TriangleAlert } from "lucide-react";
+import { Bell, BellRing, Lightbulb, TriangleAlert } from "lucide-react";
 import { errorInfo, isErrorSpan, requestRows, type Trace } from "@wizeworks/lens-core";
-import { useSeenPref } from "../data/prefs";
+import { useHost } from "../data/host";
+import { getScope, useSeenPref } from "../data/prefs";
+import { useApi } from "../data/useApi";
+import type { AlertsData } from "../pages/alerts/alertTypes";
+import { hrefTo } from "../routes";
 import { fmtAgo } from "../format";
 import { traceHref } from "../routes";
 import { Menu } from "./Menu";
 
 interface Note {
   key: string;
-  kind: "error" | "insight";
+  kind: "error" | "insight" | "alert";
   title: string;
   detail: string;
   timeMs: number;
@@ -48,11 +52,27 @@ function notesOf(traces: readonly Trace[], now: number): Note[] {
   return [...map.values()].sort((a, b) => b.timeMs - a.timeMs).slice(0, MAX_NOTES);
 }
 
+/** Alerts that fired in the last day, on hosts that run alert rules. */
+function useAlertNotes(now: number): Note[] {
+  const on = useHost().has("alerts");
+  const project = getScope().project;
+  const { data } = useApi<AlertsData>(on && project ? `./api/projects/${project}/alerts` : null);
+  return useMemo(
+    () =>
+      (data?.events ?? [])
+        .filter((e) => e.kind === "fired" && e.timeMs >= now - DAY_MS)
+        .map((e): Note => ({ key: `a|${e.id}`, kind: "alert", title: `Alert: ${e.ruleName}`, detail: e.message, timeMs: e.timeMs, count: 1, href: hrefTo("alerts") })),
+    [data, now],
+  );
+}
+
+const ICON = { error: TriangleAlert, insight: Lightbulb, alert: BellRing };
+
 function NoteItem({ note, unread, now }: { note: Note; unread: boolean; now: number }) {
-  const Icon = note.kind === "error" ? TriangleAlert : Lightbulb;
+  const Icon = ICON[note.kind];
   return (
     <a className="wl-menu-item wl-note" href={note.href}>
-      <Icon size={18} color={note.kind === "error" ? "var(--wl-red)" : "var(--wl-amber)"} aria-hidden="true" />
+      <Icon size={18} color={note.kind === "insight" ? "var(--wl-amber)" : "var(--wl-red)"} aria-hidden="true" />
       <span className="wl-truncate">
         <strong className={unread ? undefined : "wl-muted"}>{note.title}</strong>
         <span className="wl-muted wl-small wl-truncate" style={{ display: "block" }}>
@@ -67,7 +87,8 @@ function NoteItem({ note, unread, now }: { note: Note; unread: boolean; now: num
 
 export function Notifications({ traces, now }: { traces: readonly Trace[]; now: number }) {
   const [seen, setSeen] = useSeenPref();
-  const notes = useMemo(() => notesOf(traces, now), [traces, now]);
+  const alerts = useAlertNotes(now);
+  const notes = useMemo(() => [...alerts, ...notesOf(traces, now)].sort((a, b) => b.timeMs - a.timeMs).slice(0, MAX_NOTES), [alerts, traces, now]);
   const unread = notes.filter((n) => n.timeMs > Number(seen)).length;
   const label = (
     <>

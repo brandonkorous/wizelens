@@ -1,16 +1,14 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Box, Monitor } from "lucide-react";
-import { type ErrorGroup, percentChange, type ServiceErrors, series } from "@wizeworks/lens-core";
+import { type ErrorGroup, type ErrorsModel, percentChange, type ServiceErrorRow } from "@wizeworks/lens-core";
 import { fmtCount, fmtPct, fmtTime } from "../../format";
 import { setQuery } from "../../routes";
 import { DotText } from "../../ui/Badges";
 import { Empty, Panel } from "../../ui/Panel";
 import { Sparkline } from "../../ui/Sparkline";
 import { type Column, Table } from "../../ui/Table";
-import type { ErrorStats } from "./useErrorStats";
 
 const TOP = 5;
-const TREND_BUCKETS = 16;
 
 const pathOf = (endpoint: string) => endpoint.replace(/^[A-Z]+ /, "");
 
@@ -23,7 +21,7 @@ const GROUP_COLUMNS: Column<ErrorGroup>[] = [
   { key: "count", header: "Count", num: true, sort: (g) => g.count, cell: (g) => fmtCount(g.count) },
 ];
 
-export function RecentExceptionsPanel({ stats, selected }: { stats: ErrorStats; selected: string | null }) {
+export function RecentExceptionsPanel({ stats, selected }: { stats: ErrorsModel; selected: string | null }) {
   const [all, setAll] = useState(false);
   const rows = all ? stats.groups : stats.groups.slice(0, TOP);
   const toggle = stats.groups.length > TOP && (
@@ -57,22 +55,20 @@ function Change({ now, before }: { now: number; before: number }) {
   );
 }
 
-function serviceColumns(stats: ErrorStats): Column<ServiceErrors>[] {
-  const prev = (s: string) => stats.prevEvents.filter((e) => e.service === s).length;
-  const trend = (s: string) => series(stats.events.filter((e) => e.service === s), (e) => e.timeMs, stats.w.window, TREND_BUCKETS);
+function serviceColumns(): Column<ServiceErrorRow>[] {
   return [
     { key: "service", header: "Service", cell: (s) => <span className="wl-cell-icon">{s.service === "Web App" ? <Monitor aria-hidden="true" /> : <Box aria-hidden="true" />}{s.service}</span> },
     { key: "exceptions", header: "Exceptions", num: true, sort: (s) => s.exceptions, cell: (s) => fmtCount(s.exceptions) },
     { key: "rate", header: "Error Rate", num: true, sort: (s) => s.errorRate, cell: (s) => (s.requests ? fmtPct(s.errorRate) : "–") },
-    { key: "trend", header: "Trend", cell: (s) => <Sparkline values={trend(s.service)} width={110} height={24} color="var(--wl-red)" /> },
-    { key: "change", header: "", num: true, cell: (s) => <Change now={s.exceptions} before={prev(s.service)} /> },
+    { key: "trend", header: "Trend", cell: (s) => <Sparkline values={s.trend} width={110} height={24} color="var(--wl-red)" /> },
+    { key: "change", header: "", num: true, cell: (s) => <Change now={s.exceptions} before={s.prevExceptions} /> },
   ];
 }
 
-export function ErrorsByServicePanel({ stats }: { stats: ErrorStats }) {
+export function ErrorsByServicePanel({ stats }: { stats: ErrorsModel }) {
   return (
     <Panel title="Errors by Service">
-      <Table columns={serviceColumns(stats)} rows={stats.services} rowKey={(s) => s.service} empty={<Empty>No services seen yet.</Empty>} />
+      <Table columns={serviceColumns()} rows={stats.services} rowKey={(s) => s.service} empty={<Empty>No services seen yet.</Empty>} />
     </Panel>
   );
 }

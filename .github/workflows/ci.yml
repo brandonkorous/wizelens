@@ -81,3 +81,26 @@ jobs:
           curl -sf http://localhost:5960/_wizelens/ | grep -q "<title>WizeLens"
           curl -sf -X POST -H "Content-Type: application/json" -d '{"resourceSpans":[]}' http://localhost:5960/v1/traces
           curl -sf http://localhost:5960/_wizelens/api/info | grep -q '"mode":"hub"'
+
+  cloud-postgres:
+    name: Cloud on Postgres
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build the cloud image
+        run: docker build -f js/packages/cloud/Dockerfile -t wizelens-cloud:ci .
+
+      - name: Start it with Postgres and run the end-to-end checks
+        env:
+          WIZELENS_CLOUD_IMAGE: wizelens-cloud:ci
+        run: |
+          export POSTGRES_PASSWORD="ci-$(openssl rand -hex 12)"
+          docker compose -p wlci -f deploy/docker-compose.cloud.yml up -d
+          for i in $(seq 1 60); do curl -sf http://localhost:5970/healthz && break; sleep 2; done
+          node scripts/cloud-smoke.mjs http://localhost:5970
+          docker compose -p wlci -f deploy/docker-compose.cloud.yml down -v

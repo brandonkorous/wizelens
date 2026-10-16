@@ -1,6 +1,8 @@
 import { type MouseEvent, type RefObject, useEffect, useRef, useState } from "react";
-import { fmtTick } from "../format";
+import { fmtBucket, fmtTick } from "../format";
 import { areaPath, linePath, maxOf, niceMax, ticksOf } from "./chartMath";
+
+const spanOf = (starts: readonly number[]) => (starts.length > 1 ? starts[starts.length - 1]! - starts[0]! : 0);
 
 export interface ChartSeries {
   label: string;
@@ -71,7 +73,7 @@ function Axes({ p, f, width }: { p: TimeChartProps; f: Frame; width: number }) {
         </g>
       ))}
       {p.starts.map((s, i) => i % every === 0 && (
-        <text key={s} className="wl-chart-axis" x={f.x(i)} y={f.base + 18} textAnchor="middle">{fmtTick(s)}</text>
+        <text key={s} className="wl-chart-axis" x={f.x(i)} y={f.base + 18} textAnchor="middle">{fmtTick(s, spanOf(p.starts))}</text>
       ))}
     </g>
   );
@@ -125,7 +127,7 @@ function Tip({ p, i, left }: { p: TimeChartProps; i: number; left: number }) {
   const all = [...(p.lines ?? []), ...(p.bars ?? [])];
   return (
     <div className="wl-chart-tip" style={{ left, top: 0 }}>
-      <strong>{fmtTick(p.starts[i]!)}</strong>
+      <strong>{fmtBucket(p.starts[i]!, spanOf(p.starts))}</strong>
       {all.map((s) => (
         <div key={s.label}>
           <span>{s.label}</span>

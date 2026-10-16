@@ -1,7 +1,6 @@
-import { useMemo } from "react";
-import { insightGroups } from "@wizeworks/lens-core";
-import { useWindowed } from "../../data/hooks";
+import { usePageModel } from "../../data/models";
 import { PageHeader } from "../../ui/Panel";
+import { ModelState } from "../../ui/ModelState";
 import { ActivityPanel } from "./ActivityPanel";
 import { LatestInsights } from "./LatestInsights";
 import { OverviewCards } from "./OverviewCards";
@@ -11,23 +10,25 @@ import { TimingPanel } from "./TimingPanel";
 import "../../styles/pages/overview.css";
 
 export function OverviewPage() {
-  const w = useWindowed();
-  const insights = useMemo(() => insightGroups(w.traces), [w.traces]);
-  const prevInsights = useMemo(() => insightGroups(w.prevTraces), [w.prevTraces]);
+  const { model, loading, error } = usePageModel("overview");
   return (
     <>
       <PageHeader title="Overview" subtitle="Recent request-level diagnostics across your stack." />
-      {w.loading && <div className="wl-banner wl-banner-info">Loading traces…</div>}
-      <OverviewCards w={w} insights={insights} prevInsights={prevInsights} />
-      <div className="wl-grid wl-ov-top">
-        <ActivityPanel rows={w.requests} window={w.window} />
-        <TimingPanel rows={w.requests} />
-      </div>
-      <div className="wl-grid wl-ov-mid">
-        <ServicesPanel traces={w.traces} range={w.range} />
-        <RecentRequestsPanel rows={w.requests} />
-      </div>
-      <LatestInsights groups={insights} />
+      <ModelState model={model} loading={loading} error={error} what="traces" />
+      {model && (
+        <>
+          <OverviewCards m={model} />
+          <div className="wl-grid wl-ov-top">
+            <ActivityPanel m={model} />
+            <TimingPanel m={model} />
+          </div>
+          <div className="wl-grid wl-ov-mid">
+            <ServicesPanel rows={model.services} range={model.meta.range} />
+            <RecentRequestsPanel rows={model.recent} />
+          </div>
+          <LatestInsights groups={model.insights} />
+        </>
+      )}
     </>
   );
 }

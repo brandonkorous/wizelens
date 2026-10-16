@@ -1,5 +1,6 @@
 import { type HubService, mergeTraces, type ServiceInfo, type Trace } from "@wizeworks/lens-core";
-import type { Scope } from "./prefs";
+import { ApiError } from "./api";
+import { getScope, type Scope } from "./prefs";
 
 /** One WizeLens service the dashboard reads from: this one, or a downstream one found in trace remotes. */
 export interface Source {
@@ -26,11 +27,12 @@ export const normalizeEndpoint = (url: string): string => url.replace(/[?#].*$/,
 
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) });
-  if (!res.ok) throw new Error(res.status === 404 ? "not-found" : `HTTP ${res.status}`);
+  if (!res.ok) throw new ApiError(res.status, res.status === 404 ? "not-found" : res.status === 401 ? "sign-in needed" : `HTTP ${res.status}`);
   return (await res.json()) as T;
 }
 
-export const loadInfo = (endpoint: string): Promise<ServiceInfo> => getJson<ServiceInfo>(`${endpoint}/api/info`);
+export const loadInfo = (endpoint: string, scope: Scope | null = null): Promise<ServiceInfo> =>
+  getJson<ServiceInfo>(`${endpoint}/api/info?${scopeQuery(scope).slice(1)}`);
 
 /** What a hub knows about its services, from `api/services`. */
 export interface HubRegistry {
@@ -42,19 +44,21 @@ export interface HubRegistry {
 }
 
 /** True when a hub service fits the chosen project and environment. */
-export const inScope = (s: HubService, scope: Scope) => (!scope.env || s.environment === scope.env) && (!scope.project || s.project === scope.project);
+export const inScope = (s: HubService, scope: Scope, byProject = true) =>
+  (!scope.env || s.environment === scope.env) && (!byProject || !scope.project || s.project === scope.project);
 
 /** "Online", or for a quiet service: "Offline" (add-ons send a heartbeat) or "Idle" (OTLP apps send only when they have data). */
 export const presenceOf = (s: HubService) => (s.online ? "Online" : s.via === "otlp" ? "Idle" : "Offline");
 
-export const loadRegistry = (endpoint: string): Promise<HubRegistry> => getJson<HubRegistry>(`${endpoint}/api/services`);
+export const loadRegistry = (endpoint: string, scope: Scope | null = null): Promise<HubRegistry> =>
+  getJson<HubRegistry>(`${endpoint}/api/services?${scopeQuery(scope).slice(1)}`);
 
 const scopeQuery = (s: Scope | null) =>
   s ? `${s.env ? `&env=${encodeURIComponent(s.env)}` : ""}${s.project ? `&project=${encodeURIComponent(s.project)}` : ""}` : "";
 
 /** Full traces of one service. With `since`, only traces active since then. With `scope`, only that environment and project (hubs). */
-export async function loadTraces(endpoint: string, since: number | null, scope: Scope | null = null): Promise<Trace[]> {
-  const q = `full=true&limit=${INITIAL_LIMIT}${since === null ? "" : `&since=${Math.floor(since)}`}${scopeQuery(scope)}`;
+export async function loadTraces(endpoint: string, since: number | null, scope: Scope | null = null, limit = INITIAL_LIMIT): Promise<Trace[]> {
+  const q = `full=true&limit=${limit}${since === null ? "" : `&since=${Math.floor(since)}`}${scopeQuery(scope)}`;
   const list = await getJson<Trace[]>(`${endpoint}/api/traces?${q}`);
   // An older add-on answers with summaries only. They carry no spans, so they are skipped.
   return list.filter((t) => Array.isArray(t.spans));
@@ -62,7 +66,8 @@ export async function loadTraces(endpoint: string, since: number | null, scope: 
 
 /** One trace, merged across services by the add-on, then rebuilt here so clock skew is removed the same way everywhere. */
 export const loadTrace = async (traceId: string): Promise<Trace> => {
-  const t = await getJson<Trace>(`./api/traces/${traceId}?federate=true`);
+  const project = getScope().project;
+  const t = await getJson<Trace>(`./api/traces/${traceId}?federate=true${project ? `&project=${encodeURIComponent(project)}` : ""}`);
   return mergeTraces(traceId, [t]);
 };
 

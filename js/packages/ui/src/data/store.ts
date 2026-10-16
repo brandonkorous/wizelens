@@ -21,6 +21,9 @@ const OVERLAP_MS = 30_000;
 const KEEP_MS = 48 * 60 * 60_000;
 
 const isHub = (info: ServiceInfo | null) => !!info?.capabilities?.includes("registry");
+/** Hosts that compute page numbers keep only recent traces here, for the bell and search. */
+const RECENT_LIMIT = 300;
+const limitFor = (info: ServiceInfo | null) => (info?.capabilities?.includes("serverStats") ? RECENT_LIMIT : undefined);
 const scopeKey = (s: Scope) => `${s.env}
 ${s.project}`;
 
@@ -65,6 +68,7 @@ export class DataStore {
     this.#parts.clear();
     this.#merged.clear();
     this.#lastPoll.clear();
+    for (const s of this.#sources.values()) if (s.self) s.info = null;
     this.#emit();
     this.refresh();
   }
@@ -93,7 +97,7 @@ export class DataStore {
     const self = [...this.#sources.values()].find((s) => s.self);
     if (!self || !isHub(self.info)) return;
     try {
-      this.#registry = await loadRegistry(self.endpoint);
+      this.#registry = await loadRegistry(self.endpoint, this.#scope);
     } catch {
       // Keep the last list. The source status already shows when the hub is down.
     }
@@ -103,12 +107,12 @@ export class DataStore {
     const started = Date.now();
     const last = this.#lastPoll.get(source.endpoint);
     try {
-      if (!source.info) source.info = await loadInfo(source.endpoint);
+      if (!source.info) source.info = await loadInfo(source.endpoint, source.self ? this.#scope : null);
       const hub = source.self && isHub(source.info);
       const selfInfo = [...this.#sources.values()].find((s) => s.self)?.info ?? null;
       const skip = !source.self && isHub(selfInfo) && !fitsScope(source.info, this.#scope);
       const since = last === undefined ? null : last - OVERLAP_MS;
-      const traces = skip ? [] : await loadTraces(source.endpoint, since, hub ? this.#scope : null);
+      const traces = skip ? [] : await loadTraces(source.endpoint, since, hub ? this.#scope : null, limitFor(source.info));
       this.#lastPoll.set(source.endpoint, started);
       this.#ingest(source.endpoint, traces);
       Object.assign(source, { status: "ok", error: null, lastOkMs: started });

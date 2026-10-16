@@ -1,6 +1,9 @@
 import { type ComponentType, useEffect, useMemo } from "react";
 import { errorEvents, type Health, isFailed, requestRows } from "@wizeworks/lens-core";
 import { TraceDetail } from "./pages/trace/TraceDetailPage";
+import { AlertsPage } from "./pages/alerts/AlertsPage";
+import { TeamPage } from "./pages/team/TeamPage";
+import { AuthGate } from "./shell/auth/AuthGate";
 import { useData, useWindowed } from "./data/hooks";
 import { applyTheme, useTheme } from "./data/prefs";
 import { DatabasePage } from "./pages/database/DatabasePage";
@@ -17,7 +20,7 @@ import { type PageId, type Route, useRoute } from "./routes";
 import { Sidebar } from "./shell/Sidebar";
 import { TopBar } from "./shell/TopBar";
 
-const PAGES: Record<Exclude<PageId, "trace">, ComponentType> = {
+const PAGES: Record<Exclude<PageId, "trace" | "shared" | "join">, ComponentType> = {
   overview: OverviewPage,
   requests: RequestsPage,
   traces: TracesPage,
@@ -28,6 +31,8 @@ const PAGES: Record<Exclude<PageId, "trace">, ComponentType> = {
   services: ServicesPage,
   insights: InsightsPage,
   settings: SettingsPage,
+  alerts: AlertsPage,
+  team: TeamPage,
 };
 
 const RECENT_MS = 5 * 60_000;
@@ -48,11 +53,19 @@ function PageView({ route }: { route: Route }) {
     const [traceId, view] = route.params;
     return <TraceDetail key={traceId} traceId={traceId!} view={view as never} />;
   }
-  const Page = PAGES[route.page];
+  const Page = route.page === "shared" || route.page === "join" ? OverviewPage : PAGES[route.page];
   return <Page />;
 }
 
 export function App() {
+  return (
+    <AuthGate>
+      <Shell />
+    </AuthGate>
+  );
+}
+
+function Shell() {
   const route = useRoute();
   const data = useData();
   const win = useWindowed();

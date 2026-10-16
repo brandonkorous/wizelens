@@ -1,0 +1,30 @@
+# WizeLens Cloud with Postgres. Start: docker compose -f deploy/docker-compose.cloud.yml up -d
+# Set POSTGRES_PASSWORD and WIZELENS_CLOUD_PUBLIC_URL in a .env file next to this one, or in your shell.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: wizelens
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: wizelens
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wizelens -d wizelens"]
+      interval: 5s
+      retries: 20
+
+  cloud:
+    image: ${WIZELENS_CLOUD_IMAGE:-ghcr.io/brandonkorous/wizelens-cloud:latest}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://wizelens:${POSTGRES_PASSWORD}@postgres:5432/wizelens
+      WIZELENS_CLOUD_PUBLIC_URL: ${WIZELENS_CLOUD_PUBLIC_URL:-http://localhost:5970}
+      WIZELENS_CLOUD_SIGNUP: ${WIZELENS_CLOUD_SIGNUP:-invite}
+    ports:
+      - "5970:5970"
+
+volumes:
+  postgres:

@@ -1,19 +1,17 @@
 import { useState } from "react";
 import { BarChart3 } from "lucide-react";
-import { series } from "@wizeworks/lens-core";
+import type { ErrorsModel } from "@wizeworks/lens-core";
 import { fmtCount } from "../../format";
 import { BarList } from "../../ui/BarList";
 import { Empty, Panel } from "../../ui/Panel";
 import { TimeChart } from "../../ui/TimeChart";
-import { CHART_BUCKETS, type ErrorStats } from "./useErrorStats";
 
-export function ErrorsOverTimePanel({ stats }: { stats: ErrorStats }) {
-  const { events, w, starts } = stats;
-  const plain = series(events.filter((e) => !e.critical), (e) => e.timeMs, w.window, CHART_BUCKETS);
-  const critical = series(events.filter((e) => e.critical), (e) => e.timeMs, w.window, CHART_BUCKETS);
+export function ErrorsOverTimePanel({ stats }: { stats: ErrorsModel }) {
+  const { starts } = stats;
+  const { plain, critical } = stats.chart;
   return (
     <Panel title="Errors Over Time">
-      {events.length === 0 ? (
+      {stats.exceptions === 0 ? (
         <Empty title="No errors in this time range">
           <BarChart3 aria-hidden="true" />
         </Empty>
@@ -33,7 +31,7 @@ export function ErrorsOverTimePanel({ stats }: { stats: ErrorStats }) {
 
 const TOP_TYPES = 5;
 
-export function TopErrorTypesPanel({ stats }: { stats: ErrorStats }) {
+export function TopErrorTypesPanel({ stats }: { stats: ErrorsModel }) {
   const [all, setAll] = useState(false);
   const types = all ? stats.types : stats.types.slice(0, TOP_TYPES);
   const top = types[0]?.count ?? 0;

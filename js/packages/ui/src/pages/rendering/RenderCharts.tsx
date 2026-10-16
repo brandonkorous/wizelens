@@ -1,11 +1,10 @@
-import { useMemo, useState } from "react";
-import { type PageView, type PhaseStat, renderPhases, series, type TimeWindow } from "@wizeworks/lens-core";
+import { useState } from "react";
+import type { PhaseStat, RenderingModel } from "@wizeworks/lens-core";
 import { fmtMs } from "../../format";
 import { BarList, type BarItem } from "../../ui/BarList";
 import { Select } from "../../ui/Controls";
 import { Empty, Panel } from "../../ui/Panel";
 import { TimeChart } from "../../ui/TimeChart";
-import { BUCKETS, renderSeries } from "./useRendering";
 
 const STATS: [PhaseStat, string][] = [
   ["avg", "Avg. duration"],
@@ -15,10 +14,11 @@ const STATS: [PhaseStat, string][] = [
 /** Layout shift above this score is "poor", so the bar fills at it. */
 const CLS_POOR = 0.25;
 
-export function RouteChartPanel({ views, starts, window }: { views: PageView[]; starts: number[]; window: TimeWindow }) {
+export function RouteChartPanel({ m }: { m: RenderingModel }) {
   const [stat, setStat] = useState<PhaseStat>("avg");
-  const render = useMemo(() => renderSeries(views, window, stat), [views, window, stat]);
-  const counts = useMemo(() => series(views, (v) => v.startMs, window, BUCKETS), [views, window]);
+  const { starts } = m;
+  const render = m.chart[stat];
+  const counts = m.chart.views;
   const action = <Select small label="Render time statistic" value={stat} options={[["avg", "Avg. render time"], ["p75", "p75 render time"]]} onChange={setStat} />;
   return (
     <Panel title="Route Render Duration" action={action}>
@@ -34,9 +34,9 @@ export function RouteChartPanel({ views, starts, window }: { views: PageView[]; 
   );
 }
 
-export function PhasePanel({ views }: { views: PageView[] }) {
+export function PhasePanel({ m }: { m: RenderingModel }) {
   const [stat, setStat] = useState<PhaseStat>("avg");
-  const phases = useMemo(() => renderPhases(views, stat), [views, stat]);
+  const phases = m.phases[stat];
   const ms = phases.filter((p) => p.kind === "ms");
   const cls = phases.find((p) => p.kind === "score");
   const measuredAny = phases.some((p) => p.value !== null);
