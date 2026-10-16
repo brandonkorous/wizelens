@@ -131,3 +131,4 @@
 .wl-banner-info { background: var(--wl-accent-soft); color: var(--wl-accent-text); }
 .wl-link-btn { border: 0; background: none; padding: 0; color: var(--wl-accent); cursor: pointer; font: inherit; }
 .wl-link-btn:hover { text-decoration: underline; }
+@media (max-width: 640px) { .wl-hide-sm { display: none; } }

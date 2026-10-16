@@ -7,6 +7,7 @@ import { registerParts } from "./adapters/registry.js";
 import { createDbSpans, createTraceDb } from "./db.js";
 import { disabledWizeLens } from "./disabled.js";
 import { createGetTrace } from "./federation.js";
+import { connectHub } from "./hub-connect.js";
 import { buildInfo, DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, VERSION } from "./info.js";
 import { createLogWriter, makeLogger } from "./logger.js";
 import type { McpDataSource } from "./mcp.js";
@@ -63,6 +64,7 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const info = () => buildInfo({ options, store, redactKeys, startedMs, sqlite });
   const mcp = mcpSource(options, store, getTrace);
   const uiDir = resolveUiDir(options.uiDir);
+  const hub = connectHub(options, store, info, selfEndpoints);
   const handler = createHandler({ basePath, store, redactKeys, uiDir, enableMcp: !!options.enableMcp, mcp, info, getTrace });
   const capture = {
     tracer: tracing.tracer,
@@ -73,7 +75,7 @@ function buildParts(options: WizeLensOptions, basePath: string) {
     captureResponseBody: !!options.captureResponseBody,
     handler,
   };
-  return { service, redactKeys, store, persister, tracing, write, getTrace, handler, capture, middleware: createMiddleware(capture) };
+  return { hub, service, redactKeys, store, persister, tracing, write, getTrace, handler, capture, middleware: createMiddleware(capture) };
 }
 
 /** Create the WizeLens add-on for one Node service. */
@@ -101,6 +103,7 @@ export function createWizeLens(options: WizeLensOptions): WizeLens {
     setUser,
     getTrace: p.getTrace,
     shutdown: async () => {
+      await p.hub?.stop();
       p.tracing.undici?.disable();
       await p.tracing.provider.shutdown();
       p.persister?.close();

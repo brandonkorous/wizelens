@@ -69,7 +69,7 @@ export interface Trace extends TraceSummary {
 export type HostMode = "in-app" | "hub" | "cloud";
 
 /** Optional features a host offers. The dashboard shows or hides parts by these, never by the mode name. */
-export type Capability = "federation" | "environments" | "accounts" | "alerts" | "sharing" | "serverStats";
+export type Capability = "federation" | "environments" | "registry" | "accounts" | "alerts" | "sharing" | "serverStats";
 
 /** What an in-app add-on offers today. Also the default when a host does not say. */
 export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];
@@ -94,6 +94,10 @@ export interface ServiceInfo {
   redactKeys?: string[];
   /** True when response bodies are captured. */
   captureResponseBody?: boolean;
+  /** The project this service belongs to, when one is set. */
+  project?: string;
+  /** The hub this add-on sends to (its base URL), when one is set. */
+  hub?: string;
 }
 
 export const HEADER_TRACE = "X-WizeLens-Trace";

@@ -2,6 +2,38 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.2.0-alpha.1] — Phase 2: the local hub
+
+One place for the traces of every service. Each add-on still keeps its own store and dashboard.
+
+### Hub (`@wizeworks/lens-hub`)
+
+- `npx @wizeworks/lens-hub` or `docker run -p 5960:5960 -v wizelens:/data ghcr.io/brandonkorous/wizelens-hub`.
+- The full dashboard (`mode: "hub"`), the read API, a health check, and the read-only MCP endpoint (`--mcp`) over every service.
+- One SQLite file (`~/.wizelens/hub/hub.db`): the newest 50,000 traces or 7 days (`--max-traces`, `--retention`).
+- OTLP/HTTP intake at `/v1/traces` and `/v1/logs`: JSON or protobuf, gzip, older attribute names mapped. Any OpenTelemetry app can send.
+- A service registry: online, idle, or offline; project, environment, host, runtime, and how it sends.
+- Projects and environments: `WIZELENS_PROJECT` (OTLP: `service.namespace`) groups services. The top bar filters by both.
+- Still federates to services that do not send to it. Hides remotes it already has, so nothing is read twice.
+- Local only by default. `--host 0.0.0.0 --token <text>` for a team network (bearer header, or a one-time browser link that sets a cookie).
+- `--import <file>` copies an add-on's `.wizelens/traces.db` into the hub.
+
+### Add-ons
+
+- .NET (`HubUrl`, `HubToken`, `Project`) and Node (`hub`, `hubToken`, `project`), or `WIZELENS_HUB`, `WIZELENS_HUB_TOKEN`, `WIZELENS_PROJECT`:
+  send every span, log, and remote to the hub each second, with a heartbeat, a bounded queue, back-off, and one warning when the hub is down.
+  Calls to the hub are never traced.
+- `api/info` reports `project` and `hub`. The in-app Settings page links to the hub.
+- Node: browser spans with the `messaging` category are kept (they were turned into `browser`).
+
+### HUD
+
+- Minimize to the WizeLens icon. The choice survives a refresh.
+
+### Project
+
+- The hub image is built and checked in CI. A version tag pushes it to GHCR.
+
 ## [0.1.0-alpha.1] — Phase 1: the in-app add-on
 
 The first release. WizeLens runs inside each app, keeps its own traces, and serves the dashboard at `/_wizelens`.

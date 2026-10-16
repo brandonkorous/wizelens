@@ -7,6 +7,7 @@ import { useRoute } from "../../routes";
 import { PageHeader, Panel } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
 import { DependencyMap } from "./DependencyMap";
+import { RegistryPanel } from "./RegistryPanel";
 import { findRow } from "./serviceData";
 import { ServiceDetail } from "./ServiceDetail";
 import { ServiceTable } from "./serviceParts";
@@ -64,6 +65,7 @@ export function ServicesPage() {
         </Panel>
         {selected && <ServiceDetail row={selected} traces={win.traces} window={win.window} edges={edges} />}
       </div>
+      <RegistryPanel />
       <Panel title="Dependencies">
         <DependencyMap rows={rows} edges={edges} selectedKey={selected?.key ?? null} />
       </Panel>

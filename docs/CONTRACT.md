@@ -170,14 +170,16 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 
 | Capability | Means | In-app | Hub | Cloud |
 |---|---|---|---|---|
-| `federation` | The dashboard finds other services through trace `remotes` and reads them directly | ✅ | | |
-| `environments` | The host holds more than one environment; the environment picker switches between them | | maybe | ✅ |
+| `federation` | The dashboard finds other services through trace `remotes` and reads them directly | ✅ | ✅ (services that do not send to the hub) | |
+| `environments` | The host holds more than one environment and project; the top-bar picker filters by them | | ✅ | ✅ |
+| `registry` | The host knows its services (`api/services`): online state, project, environment, runtime | | ✅ | ✅ |
 | `accounts` | Users sign in; the top bar shows the user | | | ✅ |
 | `alerts` | The host sends alerts; the bell lists them | | | ✅ |
 | `sharing` | Traces and views can be shared by link | | | ✅ |
-| `serverStats` | The host computes page numbers itself; the dashboard asks for them instead of downloading full traces | | maybe | ✅ |
+| `serverStats` | The host computes page numbers itself; the dashboard asks for them instead of downloading full traces | | | ✅ |
 
-Today both add-ons answer `mode: "in-app"` and `capabilities: ["federation"]`.
+Add-ons answer `mode: "in-app"` and `capabilities: ["federation"]`. The hub answers `mode: "hub"` and
+`capabilities: ["federation", "environments", "registry"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -233,7 +235,7 @@ Behavior:
 3. After each flush: prune by age and count (same rules as the memory ring buffer).
 4. If the file cannot be opened or written, log one warning and fall back to memory only. Never break the app.
 
-Schema (shared, so the phase 2 hub can read any service's file):
+Schema (shared: `wizelens-hub --import <file>` copies any add-on's file into the hub):
 
 ```sql
 CREATE TABLE IF NOT EXISTS meta   (key TEXT PRIMARY KEY, value TEXT NOT NULL);  -- ('schema','1'), ('service', name)
@@ -260,3 +262,81 @@ CREATE INDEX IF NOT EXISTS ix_spans_cat_dur ON spans(category, duration_ms);
 ```
 
 Summaries are always computed from spans, never stored. Deleting a trace deletes its spans and logs.
+
+## Local hub (v0.6, phase 2)
+
+One process (`@wizeworks/lens-hub`, command `wizelens-hub`, default port **5960**) that every service sends to.
+It serves the same dashboard at `/_wizelens/`, the same read API, OTLP/HTTP, and MCP.
+
+### Sending to the hub
+
+| Option | .NET | Node | Environment variable |
+|---|---|---|---|
+| Hub URL | `HubUrl` | `hub` | `WIZELENS_HUB` (for example `http://localhost:5960`) |
+| Hub token | `HubToken` | `hubToken` | `WIZELENS_HUB_TOKEN` |
+| Project | `Project` | `project` | `WIZELENS_PROJECT` |
+
+The add-on keeps working as before (its own store and dashboard). In addition, it queues every new span, log, and remote
+and sends them every second in one `IngestBatch` (at most 1000 of each). With nothing to send, it sends an empty batch every
+10 seconds as a heartbeat. When the hub is down, it keeps the queue (at most 20000 items, oldest dropped first), backs off
+up to 30 seconds, and logs one warning. The calls to the hub are never traced.
+
+```ts
+// POST {hub}/_wizelens/api/ingest   →  204, or 400 without sender.service
+interface IngestBatch {
+  sender: { service: string; project?: string; version?: string; runtime?: string; environment?: string;
+            host?: string; endpoint?: string; startedMs?: number };   // endpoint = the add-on's own /_wizelens URL
+  spans?: Span[];                                  // checked and redacted again by the hub
+  logs?: { traceId: string; log: LogRecord }[];
+  remotes?: { traceId: string; endpoint: string }[];
+}
+```
+
+### Hub endpoints
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/_wizelens/api/info` | `mode: "hub"` |
+| GET | `/_wizelens/api/traces` | Like the add-on, plus filters `env`, `project`, `before`. `since` means *changed since* (hub clock), so late spans are found |
+| GET | `/_wizelens/api/traces/{id}` | With `federate=true`, also reads services that do not send to the hub |
+| GET | `/_wizelens/api/services` | `{ services: HubService[], environments, projects, traces, spans }` |
+| POST | `/_wizelens/api/ingest` | `IngestBatch` |
+| POST | `/v1/traces`, `/v1/logs` | OTLP/HTTP, JSON or protobuf, optional gzip. Also under `/_wizelens/v1/...` |
+| POST | `/_wizelens/mcp` | With `--mcp`. The same five tools, over the newest 2000 traces of every service |
+| GET | `/healthz` | `ok` |
+
+`HubService` is the sender plus `via` (`"addon"` or `"otlp"`), `firstSeenMs`, `lastSeenMs`, and `online` (heard from in the
+last 30 seconds). OTLP apps send only when they have data, so the dashboard shows a quiet OTLP app as "Idle", not "Offline".
+
+Trace `remotes` that point at a service which sends to the hub are hidden, so the dashboard does not read that service twice.
+
+### OTLP mapping
+
+- Resource `service.name` → service; `service.namespace` (or `wizelens.project`) → project;
+  `deployment.environment.name` (or `deployment.environment`) → environment; `host.name` → host.
+- Span kind, status, events, and attributes map one to one. Category uses the same rules as the add-ons.
+- Older attribute names are copied to the current ones when the current one is missing: `http.method`, `http.status_code`,
+  `http.url`, `http.target`, `http.scheme`, `db.statement`, `db.system`, `db.name`, `db.operation`, `net.peer.name`, `net.peer.port`.
+- Log records keep their trace id. Records without one are skipped (WizeLens shows logs per trace).
+  Severity 1–4 trace, 5–8 debug, 9–12 info, 13–16 warn, 17–20 error, 21–24 critical.
+
+### Access
+
+The hub listens on `127.0.0.1` by default. For a team network, start it with `--host 0.0.0.0 --token <text>`.
+With a token, every call needs `Authorization: Bearer <token>` (add-ons: `WIZELENS_HUB_TOKEN`; OTLP:
+`OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <token>`). In a browser, open `/_wizelens/?token=<token>` once:
+the hub keeps it in an HttpOnly cookie and removes it from the address.
+
+### Hub storage
+
+One SQLite file (default `~/.wizelens/hub/hub.db`), newest 50000 traces or 7 days. Traces are built from rows when read.
+
+```sql
+CREATE TABLE traces   (trace_id TEXT PRIMARY KEY, start_ms REAL, end_ms REAL, updated_ms REAL, env TEXT, project TEXT);
+CREATE TABLE spans    (trace_id TEXT, span_id TEXT, service TEXT, start_ms REAL, duration_ms REAL, session TEXT, json TEXT,
+                       PRIMARY KEY (trace_id, span_id));
+CREATE TABLE logs     (trace_id TEXT, key TEXT, time_ms REAL, json TEXT, PRIMARY KEY (trace_id, key));  -- key = hash of the log identity
+CREATE TABLE remotes  (trace_id TEXT, endpoint TEXT, PRIMARY KEY (trace_id, endpoint));
+CREATE TABLE services (project TEXT, service TEXT, environment TEXT, host TEXT, via TEXT, info TEXT, first_seen REAL, last_seen REAL,
+                       PRIMARY KEY (project, service, environment, host));                               -- '' for unknown
+```

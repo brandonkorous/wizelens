@@ -52,6 +52,27 @@ export const useRangePref = () => usePref<TimeRange>(KEYS.range, "24h", isTimeRa
 /** When the user last opened the notifications (epoch ms as a string). */
 export const useSeenPref = () => usePref<string>(KEYS.seen, "0", isEpoch);
 
+const SCOPE = { env: "wizelens.ui.env", project: "wizelens.ui.project" } as const;
+const isShortText = (v: string): v is string => v.length <= 100;
+
+/** Hub filters: one environment and one project. "" means all. */
+export const useEnvScope = () => usePref<string>(SCOPE.env, "", isShortText);
+export const useProjectScope = () => usePref<string>(SCOPE.project, "", isShortText);
+
+export interface Scope {
+  env: string;
+  project: string;
+}
+
+/** The hub filters, for code outside React. */
+export const getScope = (): Scope => ({
+  env: memory.get(SCOPE.env) ?? read(SCOPE.env) ?? "",
+  project: memory.get(SCOPE.project) ?? read(SCOPE.project) ?? "",
+});
+
+/** Hear any preference change. */
+export const onPrefChange = subscribe;
+
 /** Put the theme on <html> so the CSS tokens switch. */
 export function applyTheme(theme: Theme): void {
   document.documentElement.dataset.theme = theme;

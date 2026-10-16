@@ -64,3 +64,20 @@ jobs:
         with:
           name: packages
           path: artifacts/
+
+  hub-image:
+    name: Hub Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the image
+        run: docker build -f js/packages/hub/Dockerfile -t wizelens-hub:ci .
+
+      - name: Start it and check the health, dashboard, and OTLP endpoints
+        run: |
+          docker run -d --name hub -p 5960:5960 wizelens-hub:ci
+          for i in $(seq 1 30); do curl -sf http://localhost:5960/healthz && break; sleep 1; done
+          curl -sf http://localhost:5960/_wizelens/ | grep -q "<title>WizeLens"
+          curl -sf -X POST -H "Content-Type: application/json" -d '{"resourceSpans":[]}' http://localhost:5960/v1/traces
+          curl -sf http://localhost:5960/_wizelens/api/info | grep -q '"mode":"hub"'

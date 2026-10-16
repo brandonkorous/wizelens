@@ -42,6 +42,12 @@ export interface TraceStoreOptions {
   now?: () => number;
 }
 
+/** One change, as the hub exporter sees it. */
+export type StoreEvent =
+  | { type: "span"; span: Span }
+  | { type: "log"; traceId: string; log: LogRecord }
+  | { type: "remote"; traceId: string; endpoint: string };
+
 interface Dirty {
   spans: Set<string>;
   logsFrom: number;
@@ -57,6 +63,7 @@ export class TraceStore {
   readonly #maxSpans: number;
   readonly #maxLogs: number;
   readonly #now: () => number;
+  readonly #listeners = new Set<(e: StoreEvent) => void>();
 
   constructor(options: TraceStoreOptions = {}) {
     this.#maxTraces = Math.max(1, options.maxTraces ?? 2000);
@@ -94,6 +101,16 @@ export class TraceStore {
     return entry;
   }
 
+  /** Hear every new span, log, and remote. Returns the unsubscribe function. */
+  subscribe(listener: (e: StoreEvent) => void): () => void {
+    this.#listeners.add(listener);
+    return () => this.#listeners.delete(listener);
+  }
+
+  #emit(e: StoreEvent): void {
+    for (const l of this.#listeners) l(e);
+  }
+
   #markDirty(traceId: string): Dirty {
     let d = this.#dirty.get(traceId);
     if (!d) {
@@ -111,6 +128,7 @@ export class TraceStore {
     const session = span.attributes[ATTR_BROWSER_SESSION];
     if (typeof session === "string" && session) entry.sessions.add(session);
     this.#markDirty(span.traceId).spans.add(span.spanId);
+    this.#emit({ type: "span", span });
   }
 
   addLog(traceId: string, log: LogRecord): void {
@@ -118,6 +136,7 @@ export class TraceStore {
     if (entry.logs.length >= this.#maxLogs) return;
     this.#markDirty(traceId);
     entry.logs.push(log);
+    this.#emit({ type: "log", traceId, log });
   }
 
   addRemote(traceId: string, endpoint: string): void {
@@ -125,6 +144,7 @@ export class TraceStore {
     if (entry.remotes.has(endpoint)) return;
     entry.remotes.add(endpoint);
     this.#markDirty(traceId).remotes = true;
+    this.#emit({ type: "remote", traceId, endpoint });
   }
 
   /** Load traces from disk, oldest first. Does not mark them dirty. */

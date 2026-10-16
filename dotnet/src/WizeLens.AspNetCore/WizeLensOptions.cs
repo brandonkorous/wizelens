@@ -55,7 +55,31 @@ public sealed class WizeLensOptions
     /// <summary>Keeps the first 16 KB of text and JSON response bodies on the request span. Off by default.</summary>
     public bool CaptureResponseBody { get; set; }
 
+    /// <summary>Also sends everything to this local hub, for example <c>http://localhost:5960</c>. Default: the WIZELENS_HUB variable.</summary>
+    public string? HubUrl { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_HUB");
+
+    /// <summary>Access token for the hub. Default: the WIZELENS_HUB_TOKEN variable.</summary>
+    public string? HubToken { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_HUB_TOKEN");
+
+    /// <summary>The project this service belongs to, so a shared hub can group it. Default: the WIZELENS_PROJECT variable.</summary>
+    public string? Project { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_PROJECT");
+
     internal bool IsEnabled { get; set; }
+
+    /// <summary>For tests: the HTTP handler the hub sender uses.</summary>
+    internal HttpMessageHandler? HubHandler { get; set; }
+
+    /// <summary>The hub base URL without a trailing slash or "/_wizelens", or null when none is set.</summary>
+    internal string? NormalizedHubUrl
+    {
+        get
+        {
+            var v = HubUrl?.Trim().TrimEnd('/');
+            if (string.IsNullOrEmpty(v)) return null;
+            if (v.EndsWith("/_wizelens", StringComparison.OrdinalIgnoreCase)) v = v[..^"/_wizelens".Length];
+            return v.Contains("://", StringComparison.Ordinal) ? v : "http://" + v;
+        }
+    }
 
     internal double StartedMs { get; } = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 

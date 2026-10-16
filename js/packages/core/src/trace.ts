@@ -101,7 +101,8 @@ export function toSummary(trace: Trace): TraceSummary {
   return summary;
 }
 
-function logKey(l: LogRecord): string {
+/** Identity of one log line, used to merge parts without duplicates. */
+export function logKey(l: LogRecord): string {
   return `${l.timeMs}|${l.service}|${l.spanId ?? ""}|${l.level}|${l.message}`;
 }
 

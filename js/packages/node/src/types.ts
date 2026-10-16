@@ -40,6 +40,12 @@ export interface WizeLensOptions {
   slowQueryMs?: number;
   /** Repeats that make an N+1 pattern. Default 5. */
   nPlusOneThreshold?: number;
+  /** The project this service belongs to, so a shared hub can group it. Default: the WIZELENS_PROJECT variable. */
+  project?: string;
+  /** Also send everything to this local hub, for example "http://localhost:5960". Default: the WIZELENS_HUB variable. */
+  hub?: string;
+  /** Access token for the hub. Default: the WIZELENS_HUB_TOKEN variable. */
+  hubToken?: string;
 }
 
 export interface DbCallInfo {

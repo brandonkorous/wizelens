@@ -17,7 +17,7 @@
         <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
         <PackageReleaseNotes>https://github.com/brandonkorous/wizelens/blob/main/CHANGELOG.md</PackageReleaseNotes>
         <PackageTags>wizelens;glimpse;opentelemetry;tracing;diagnostics;aspnetcore;mcp</PackageTags>
-        <Version>0.1.0-alpha.1</Version>
+        <Version>0.2.0-alpha.1</Version>
     </PropertyGroup>
     <ItemGroup Condition="'$(IsPackable)' != 'false'">
         <None Include="$(MSBuildThisFileDirectory)PACKAGE.md" Pack="true" PackagePath="\" Visible="false" />
