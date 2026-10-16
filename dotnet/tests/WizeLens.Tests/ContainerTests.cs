@@ -24,9 +24,9 @@ public sealed class Containers : IAsyncLifetime
     public async Task InitializeAsync()
     {
         if (!DockerCheck.Available) return;
-        Postgres = new PostgreSqlBuilder().WithImage("postgres:17-alpine").Build();
-        MySql = new MySqlBuilder().WithImage("mysql:8.4").Build();
-        Rabbit = new RabbitMqBuilder().WithImage("rabbitmq:4-alpine").Build();
+        Postgres = new PostgreSqlBuilder("postgres:17-alpine").Build();
+        MySql = new MySqlBuilder("mysql:8.4").Build();
+        Rabbit = new RabbitMqBuilder("rabbitmq:4-alpine").Build();
         await Task.WhenAll(Postgres.StartAsync(), MySql.StartAsync(), Rabbit.StartAsync());
     }
 
