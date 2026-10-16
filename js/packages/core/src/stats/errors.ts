@@ -138,13 +138,15 @@ export interface ServiceErrors {
   errorRate: number;
 }
 
-/** Errors per service, with the error rate of its requests. Most errors first. */
+// A request counts for every service it touched, so a browser fetch that never reached the server does not skew the rate.
+const touched = (r: RequestRow, service: string) => displayService(r.service) === service || r.services.some((s) => displayService(s) === service);
+
+/** Errors per service, with the error rate of the requests it took part in. Most errors first. */
 export function errorsByService(events: readonly ErrorEvent[], requests: readonly RequestRow[]): ServiceErrors[] {
-  const byService = groupBy(requests, (r) => displayService(r.service));
-  const names = new Set([...events.map((e) => e.service), ...byService.keys()]);
+  const names = new Set([...events.map((e) => e.service), ...requests.flatMap((r) => [r.service, ...r.services].map(displayService))]);
   return [...names]
     .map((service) => {
-      const reqs = byService.get(service) ?? [];
+      const reqs = requests.filter((r) => touched(r, service));
       return { service, exceptions: events.filter((e) => e.service === service).length, requests: reqs.length, errorRate: percentOf(reqs.filter(isFailed).length, reqs.length) };
     })
     .filter((s) => s.exceptions > 0 || s.requests > 0)

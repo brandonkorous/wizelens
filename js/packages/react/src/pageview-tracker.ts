@@ -17,6 +17,24 @@ export interface PageViewTracker {
   stop(): void;
 }
 
+interface LoadClaim {
+  origin: number;
+  traceId: string;
+  spanId: string;
+}
+const CLAIM_KEY = "__wizelensLoadView";
+
+/** The full-load view of this page. A tracker started later on the same page (a remounted provider) joins it and does not send it again. */
+export function loadView(): PageView {
+  const view = newPageView("load", 0);
+  const g = globalThis as { [CLAIM_KEY]?: LoadClaim };
+  const origin = typeof performance !== "undefined" ? performance.timeOrigin : 0;
+  const claim = g[CLAIM_KEY];
+  if (claim?.origin === origin) return { ...view, traceId: claim.traceId, spanId: claim.spanId, sent: true };
+  g[CLAIM_KEY] = { origin, traceId: view.traceId, spanId: view.spanId };
+  return view;
+}
+
 // A route change waits at most this long for React to render the new page.
 const COMMIT_WAIT_MS = 1000;
 
@@ -28,7 +46,7 @@ async function measureRouteRender(view: PageView): Promise<void> {
 
 /** Tracks page views and their timings, and sends one pageview span per view. */
 export function createPageViewTracker(o: { push(span: Span): void; sessionId: string }): PageViewTracker {
-  let view = newPageView("load", 0);
+  let view = loadView();
   const images = watchImages();
   const stopVitals = watchVitals({
     lcp: (t) => view.navigation === "load" && (view.lcpMs = t),

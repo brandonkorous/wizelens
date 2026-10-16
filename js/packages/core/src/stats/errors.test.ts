@@ -25,6 +25,13 @@ describe("error stats", () => {
     expect(errorRateOf(rows)).toBeCloseTo(66.67, 1);
     expect(errorsByService(events, rows)).toEqual([{ service: "api", exceptions: 2, requests: 3, errorRate: expect.closeTo(66.67, 1) }]);
   });
+
+  it("counts every browser fetch for the web app, not only the ones that failed", () => {
+    const fetched = [1, 2, 3].map((i) => makeRequest({ startMs: 5000 + i, fetchMs: 20 }));
+    const rows = requestRows([...fetched, boom(9000, 1)]);
+    const web = errorsByService(errorEvents(fetched), rows).find((s) => s.service === "Web App");
+    expect(web).toMatchObject({ requests: 3, errorRate: 0 });
+  });
 });
 
 describe("log stats", () => {

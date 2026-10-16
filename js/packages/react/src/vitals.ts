@@ -15,6 +15,7 @@ export interface NavPoints {
 export interface VitalHandlers {
   /** Largest Contentful Paint candidate, ms from navigation start. Paints in a hidden tab are skipped. */
   lcp?(startTime: number): void;
+  /** First Contentful Paint, ms from navigation start. Skipped when the tab was hidden first. */
   fcp?(startTime: number): void;
   shift?(shift: Shift): void;
   /** An interaction (click, key press) and how long it took to paint the next frame. */
@@ -54,6 +55,17 @@ export function observe(type: string, onEntries: (entries: PerformanceEntryList)
   }
 }
 
+/** When the page was first hidden, in ms from navigation start, or Infinity. Reads the browser record when it has one. */
+export function firstHiddenAt(): number {
+  if (typeof document !== "undefined" && document.visibilityState === "hidden") return 0;
+  try {
+    const hidden = performance.getEntriesByType("visibility-state").find((e) => e.name === "hidden");
+    return hidden ? hidden.startTime : Infinity;
+  } catch {
+    return Infinity;
+  }
+}
+
 type ShiftEntry = PerformanceEntry & { value: number; hadRecentInput: boolean };
 type EventEntry = PerformanceEntry & { interactionId?: number };
 
@@ -61,7 +73,7 @@ type EventEntry = PerformanceEntry & { interactionId?: number };
 export function watchVitals(h: VitalHandlers): () => void {
   if (typeof document === "undefined" || typeof addEventListener !== "function") return () => {};
   // Paints in a hidden tab come late and say nothing about the page.
-  let firstHidden = document.visibilityState === "hidden" ? 0 : Infinity;
+  let firstHidden = firstHiddenAt();
   const onHide = () => {
     if (document.visibilityState === "hidden") firstHidden = Math.min(firstHidden, performance.now());
   };
@@ -73,7 +85,7 @@ export function watchVitals(h: VitalHandlers): () => void {
     }),
     observe("paint", (entries) => {
       const fcp = entries.find((e) => e.name === "first-contentful-paint");
-      if (fcp) h.fcp?.(fcp.startTime);
+      if (fcp && fcp.startTime < firstHidden) h.fcp?.(fcp.startTime);
     }),
     observe("layout-shift", (entries) => {
       for (const e of entries as ShiftEntry[]) if (!e.hadRecentInput) h.shift?.({ startTime: e.startTime, value: e.value });
