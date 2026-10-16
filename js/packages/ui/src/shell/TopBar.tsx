@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Search } from "lucide-react";
 import type { DataSnapshot } from "../data/store";
+import { HubMenu } from "./HubMenu";
 import { Notifications } from "./Notifications";
 import { SearchPalette, useSearchShortcut } from "./SearchPalette";
 import { EnvMenu, ModeBadge, RangeMenu, ThemeToggle } from "./TopMenus";
@@ -20,7 +21,7 @@ export function TopBar({ data }: { data: DataSnapshot }) {
       </button>
       <span className="wl-spacer" />
       <ModeBadge />
-      <EnvMenu sources={data.sources} />
+      {data.registry ? <HubMenu registry={data.registry} /> : <EnvMenu sources={data.sources} />}
       <RangeMenu />
       <Notifications traces={data.traces} now={data.updatedMs} />
       <ThemeToggle />

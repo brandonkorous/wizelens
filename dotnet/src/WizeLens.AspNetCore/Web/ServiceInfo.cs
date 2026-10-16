@@ -29,5 +29,7 @@ internal static class ServiceInfo
             analysis = new { slowQueryMs = options.SlowQueryMs, nPlusOneThreshold = options.NPlusOneThreshold },
             redactKeys = options.RedactKeys,
             captureResponseBody = options.CaptureResponseBody,
+            project = string.IsNullOrWhiteSpace(options.Project) ? null : options.Project,
+            hub = options.NormalizedHubUrl,
         }, WizeLensJson.Options);
 }

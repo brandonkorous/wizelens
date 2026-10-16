@@ -17,6 +17,9 @@ public sealed class TraceStore
 
     public TraceStore(int maxTraces) => _maxTraces = Math.Max(1, maxTraces);
 
+    /// <summary>Hears every new span, log, and remote. The hub sender uses it.</summary>
+    internal event Action<HubItem>? Changed;
+
     public int Count => _traces.Count;
 
     public void AddSpan(Span span)
@@ -30,6 +33,7 @@ public sealed class TraceStore
             entry.Touch();
         }
         _dirty.TryAdd(entry.TraceId, 0);
+        Changed?.Invoke(new HubItem(span.TraceId, span, null, null));
     }
 
     public void AddLog(string traceId, LogRecord log)
@@ -41,6 +45,7 @@ public sealed class TraceStore
             entry.Touch();
         }
         _dirty.TryAdd(entry.TraceId, 0);
+        Changed?.Invoke(new HubItem(entry.TraceId, null, log, null));
     }
 
     /// <summary>Records that another service has data for this trace at <paramref name="endpoint"/>.</summary>
@@ -56,12 +61,16 @@ public sealed class TraceStore
             entry.Touch();
         }
         _dirty.TryAdd(entry.TraceId, 0);
+        Changed?.Invoke(new HubItem(entry.TraceId, null, null, endpoint));
     }
 
     /// <summary>Remembers this app's own endpoint URLs so they are never listed as remotes.</summary>
     public void AddSelfEndpoint(string endpoint) => _selfEndpoints.TryAdd(endpoint.TrimEnd('/'), 0);
 
     public bool IsSelfEndpoint(string endpoint) => _selfEndpoints.ContainsKey(endpoint.TrimEnd('/'));
+
+    /// <summary>One of this app's own endpoint URLs, once a request has shown it.</summary>
+    internal string? SelfEndpoint => _selfEndpoints.Keys.FirstOrDefault();
 
     public Trace? Get(string traceId)
     {

@@ -1,0 +1,9 @@
+.git
+**/node_modules
+**/dist
+**/.wizelens
+dotnet
+images
+docs
+artifacts
+samples/**/*.db

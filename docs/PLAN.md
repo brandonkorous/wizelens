@@ -21,10 +21,28 @@ MCP, but only with permissions you grant.
 | Phase | Shape | Storage | Cross-service view |
 |---|---|---|---|
 | **1. In-app add-on** (complete, 0.1.0-alpha.1) | NuGet / npm package inside each app | Memory plus a SQLite file per app | Federation: the dashboard reads every connected service and merges traces |
-| 2. Local service | One small hub on the dev machine / network | Local DB (SQLite / DuckDB) | Hub has everything |
-| 3. Cloud | Hosted service | Durable, multi-tenant | Same as 2, plus teams, history, alerts |
+| **2. Local hub** (complete, 0.2.0-alpha.1) | One small hub on the dev machine / network (`wizelens-hub`, npm or Docker) | One SQLite file | Hub has everything; projects and environments group it |
+| 3. Cloud | Hosted service | Durable, multi-tenant | Same as 2, plus teams, history, alerts, server-side stats |
 
 Monetization (open core): the add-on is MIT. Cloud and team features are paid. Details later.
+
+## Phase 2 scope (complete)
+
+| Part | What it does |
+|---|---|
+| HUD | Minimize to the WizeLens icon; the choice survives a refresh |
+| `@wizeworks/lens-hub` | The hub: `npx @wizeworks/lens-hub` or `ghcr.io/brandonkorous/wizelens-hub`. Dashboard, API, MCP, health check |
+| Ingest | Add-ons send batches (`WIZELENS_HUB`); any OpenTelemetry app sends OTLP/HTTP (JSON or protobuf) |
+| Add-on senders | .NET and Node: batched, bounded queue, heartbeat, back-off, never traced, never blocks the app |
+| Registry | The hub knows every service: online, idle, or offline; project, environment, host, runtime |
+| Projects and environments | `WIZELENS_PROJECT` (OTLP: `service.namespace`) groups services; the dashboard filters by project and environment |
+| Federation | The hub still reads services that do not send to it, through trace `remotes` |
+| Access | Local only by default; a token for team networks (bearer header, or a one-time browser link that sets a cookie) |
+| Import | `--import <file>` copies an add-on's trace file into the hub |
+| Release | npm package, Docker image built and checked in CI, pushed to GHCR from a version tag |
+
+Not in phase 2: server-side stats (the dashboard still computes numbers in the browser, over at most 24 hours),
+user accounts, alerts, sharing. These come with the cloud.
 
 ## Phase 1 scope
 

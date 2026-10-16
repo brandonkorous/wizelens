@@ -5,6 +5,7 @@ import { type Theme, useTheme } from "../../data/prefs";
 import { Select } from "../../ui/Controls";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
+import { HubConnect } from "./HubConnect";
 import { SourceSettings } from "./SourceSettings";
 import "../../styles/pages/settings.css";
 
@@ -23,6 +24,8 @@ const OPTIONS: Option[] = [
   { setting: "N+1 threshold", dotnet: "NPlusOneThreshold", node: "nPlusOneThreshold" },
   { setting: "AI access (MCP)", dotnet: "EnableMcp", node: "enableMcp" },
   { setting: "Response bodies", dotnet: "CaptureResponseBody", node: "captureResponseBody" },
+  { setting: "Hub", dotnet: "HubUrl, HubToken (or WIZELENS_HUB)", node: "hub, hubToken (or WIZELENS_HUB)" },
+  { setting: "Project", dotnet: "Project (or WIZELENS_PROJECT)", node: "project (or WIZELENS_PROJECT)" },
   { setting: "Redacted keys", dotnet: "RedactKeys", node: "redactKeys" },
 ];
 
@@ -67,9 +70,14 @@ export function SettingsPage() {
       <div className="wl-grid wl-grid-2-even">
         <Preferences />
         <Panel title="How to change these">
-          <p className="wl-muted wl-settings-note">Service settings live in your app code. Change the option, then restart the service.</p>
+          <p className="wl-muted wl-settings-note">
+            {data.info?.mode === "hub"
+              ? "Service settings live in each app's code. Hub settings are start options: run wizelens-hub --help."
+              : "Service settings live in your app code. Change the option, then restart the service."}
+          </p>
         </Panel>
       </div>
+      <HubConnect info={data.info} />
       <div className="wl-grid wl-grid-2-even">
         {data.sources.length === 0 ? <Panel><Empty title="No services connected yet" /></Panel> : data.sources.map((s) => <SourceSettings key={s.endpoint} source={s} />)}
       </div>

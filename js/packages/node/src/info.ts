@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { hostname } from "node:os";
-import { IN_APP_CAPABILITIES, type ServiceInfo } from "@wizeworks/lens-core";
+import { IN_APP_CAPABILITIES, PROJECT_ENV, type ServiceInfo } from "@wizeworks/lens-core";
+import { hubUrlOf } from "./hub-connect.js";
 import type { TraceStore } from "./store.js";
 import type { WizeLensOptions } from "./types.js";
 
@@ -35,5 +36,7 @@ export function buildInfo(i: InfoInputs): ServiceInfo {
     analysis: { slowQueryMs: o.slowQueryMs ?? DEFAULT_SLOW_QUERY_MS, nPlusOneThreshold: o.nPlusOneThreshold ?? DEFAULT_N_PLUS_ONE },
     redactKeys: [...i.redactKeys],
     captureResponseBody: !!o.captureResponseBody,
+    project: o.project ?? process.env[PROJECT_ENV] ?? undefined,
+    hub: hubUrlOf(o) ?? undefined,
   };
 }

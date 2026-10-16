@@ -9,7 +9,7 @@ import {
 } from "@wizeworks/lens-core";
 
 const SPAN_KINDS: readonly ContractKind[] = ["server", "client", "internal", "producer", "consumer"];
-const CATEGORIES: readonly SpanCategory[] = ["http.server", "http.client", "db", "browser", "internal"];
+const CATEGORIES: readonly SpanCategory[] = ["http.server", "http.client", "db", "messaging", "browser", "internal"];
 const HEX32 = /^[0-9a-f]{32}$/;
 const HEX16 = /^[0-9a-f]{16}$/;
 const MAX_EVENTS = 50;

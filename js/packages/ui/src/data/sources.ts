@@ -1,4 +1,5 @@
-import { mergeTraces, type ServiceInfo, type Trace } from "@wizeworks/lens-core";
+import { type HubService, mergeTraces, type ServiceInfo, type Trace } from "@wizeworks/lens-core";
+import type { Scope } from "./prefs";
 
 /** One WizeLens service the dashboard reads from: this one, or a downstream one found in trace remotes. */
 export interface Source {
@@ -31,9 +32,29 @@ async function getJson<T>(url: string): Promise<T> {
 
 export const loadInfo = (endpoint: string): Promise<ServiceInfo> => getJson<ServiceInfo>(`${endpoint}/api/info`);
 
-/** Full traces of one service. With `since`, only traces active since then. */
-export async function loadTraces(endpoint: string, since: number | null): Promise<Trace[]> {
-  const q = `full=true&limit=${INITIAL_LIMIT}${since === null ? "" : `&since=${Math.floor(since)}`}`;
+/** What a hub knows about its services, from `api/services`. */
+export interface HubRegistry {
+  services: HubService[];
+  environments: string[];
+  projects: string[];
+  traces: number;
+  spans: number;
+}
+
+/** True when a hub service fits the chosen project and environment. */
+export const inScope = (s: HubService, scope: Scope) => (!scope.env || s.environment === scope.env) && (!scope.project || s.project === scope.project);
+
+/** "Online", or for a quiet service: "Offline" (add-ons send a heartbeat) or "Idle" (OTLP apps send only when they have data). */
+export const presenceOf = (s: HubService) => (s.online ? "Online" : s.via === "otlp" ? "Idle" : "Offline");
+
+export const loadRegistry = (endpoint: string): Promise<HubRegistry> => getJson<HubRegistry>(`${endpoint}/api/services`);
+
+const scopeQuery = (s: Scope | null) =>
+  s ? `${s.env ? `&env=${encodeURIComponent(s.env)}` : ""}${s.project ? `&project=${encodeURIComponent(s.project)}` : ""}` : "";
+
+/** Full traces of one service. With `since`, only traces active since then. With `scope`, only that environment and project (hubs). */
+export async function loadTraces(endpoint: string, since: number | null, scope: Scope | null = null): Promise<Trace[]> {
+  const q = `full=true&limit=${INITIAL_LIMIT}${since === null ? "" : `&since=${Math.floor(since)}`}${scopeQuery(scope)}`;
   const list = await getJson<Trace[]>(`${endpoint}/api/traces?${q}`);
   // An older add-on answers with summaries only. They carry no spans, so they are skipped.
   return list.filter((t) => Array.isArray(t.spans));

@@ -201,6 +201,19 @@ Open any trace for the full detail: timeline, SQL, HTTP, logs, and errors. Searc
 
 Traces survive restarts (hello, `dotnet watch`). Each app keeps a small SQLite file at `.wizelens/traces.db` — the newest 2,000 traces or 24 hours, whichever comes first. If the file can't be written, WizeLens logs one warning and keeps working in memory. It never breaks your app.
 
+### The local hub
+
+One place for every service, also when they are stopped. Start it with `npx @wizeworks/lens-hub` (or the Docker image
+`ghcr.io/brandonkorous/wizelens-hub`), then set `WIZELENS_HUB=http://localhost:5960` on each service. Apps in any other
+language send OpenTelemetry (OTLP/HTTP) to the same address.
+
+- **Everything in one dashboard**, kept for 7 days in one SQLite file, with the same pages as the in-app dashboard.
+- **Projects and environments.** Set `WIZELENS_PROJECT` per service; the top bar filters by project and environment.
+- **Knows your services.** See which are online, idle, or offline, what they run on, and when they last sent data.
+- **Any language.** OTLP JSON or protobuf, with older attribute names mapped to current ones.
+- **Safe on a team network.** Local only by default; add `--host 0.0.0.0 --token <text>` to share it.
+- **One MCP endpoint** for every service with `--mcp`.
+
 <a id="how-it-works"></a>
 
 ## 🧭 How it works
@@ -302,6 +315,8 @@ Guardrails:
 | `NPlusOneThreshold` | `5` | Repeats in one trace that count as N+1. |
 | `SlowQueryMs` | `100` | Queries at or above this are slow. |
 | `CaptureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
+| `HubUrl` / `HubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a local hub. |
+| `Project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
 
 Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The user comes from `HttpContext.User`.
 
@@ -323,6 +338,8 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 | `audit` | `console.info` | Where MCP audit lines go. |
 | `slowQueryMs` / `nPlusOneThreshold` | `100` / `5` | Analysis thresholds. |
 | `captureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
+| `hub` / `hubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a local hub. |
+| `project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
 
 Tag a request and name its user from your handlers: `wizelens.tag("cache", "hit")`, `wizelens.setUser(id)`.
 
@@ -355,6 +372,9 @@ pnpm dev:web                                 # http://localhost:5173
 
 Open http://localhost:5173, click the buttons, then open http://localhost:5173/_wizelens/.
 
+To try the hub, start it first with `pnpm dev:hub` (http://localhost:5960/_wizelens/), then start the other three with
+`WIZELENS_HUB=http://localhost:5960` set.
+
 > The .NET add-on embeds the dashboard at build time. After `pnpm build`, rebuild the .NET app to pick up UI changes.
 
 ## 📦 Packages
@@ -366,7 +386,8 @@ Open http://localhost:5173, click the buttons, then open http://localhost:5173/_
 | `@wizeworks/lens-node` | npm | The Node add-on |
 | `@wizeworks/lens-react` | npm | Browser tracing + HUD |
 | `@wizeworks/lens-core` | npm | Shared types, trace context, analysis |
-| `@wizeworks/lens-ui` | npm | The dashboard (served by both add-ons) |
+| `@wizeworks/lens-ui` | npm | The dashboard (served by both add-ons and the hub) |
+| `@wizeworks/lens-hub` | npm, Docker | The local hub (`wizelens-hub`) |
 
 <a id="roadmap"></a>
 
@@ -375,10 +396,10 @@ Open http://localhost:5173, click the buttons, then open http://localhost:5173/_
 | Phase | Shape | Status |
 |---|---|---|
 | **1. In-app add-on** | A package inside each app, with local SQLite and federation across services | ✅ Complete (alpha) |
-| **2. Local hub** | One small service on your machine or network; every app sends to it | 🔜 Next |
+| **2. Local hub** | One small service on your machine or network; every app sends to it | ✅ Complete (alpha) |
 | **3. Cloud** | Hosted, team-wide history, alerts, and sharing | 🔭 Planned |
 
-Phase 1 is complete: every item in the plan, plus gRPC, message queues, and the ORM adapters, ships in 0.1.0-alpha.1. See the [changelog](CHANGELOG.md).
+Phases 1 and 2 are complete. The hub, OTLP intake, projects, and the add-on senders ship in 0.2.0-alpha.1. See the [changelog](CHANGELOG.md).
 New to WizeLens? Start with the **[getting-started guide](docs/GETTING-STARTED.md)**.
 
 See **[docs/PLAN.md](docs/PLAN.md)** for the full plan.

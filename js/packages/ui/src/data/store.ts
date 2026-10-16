@@ -1,5 +1,6 @@
 import { mergeTraces, type ServiceInfo, type Trace } from "@wizeworks/lens-core";
-import { loadInfo, loadTraces, newSource, normalizeEndpoint, selfEndpoint, type Source } from "./sources";
+import { getScope, onPrefChange, type Scope } from "./prefs";
+import { type HubRegistry, loadInfo, loadRegistry, loadTraces, newSource, normalizeEndpoint, selfEndpoint, type Source } from "./sources";
 
 export interface DataSnapshot {
   sources: Source[];
@@ -11,11 +12,21 @@ export interface DataSnapshot {
   loading: boolean;
   /** When the data last changed (epoch ms). Pages use it as "now". */
   updatedMs: number;
+  /** The services a hub knows. Null when this dashboard is not served by a hub. */
+  registry: HubRegistry | null;
 }
 
 const POLL_MS = 5000;
 const OVERLAP_MS = 30_000;
 const KEEP_MS = 48 * 60 * 60_000;
+
+const isHub = (info: ServiceInfo | null) => !!info?.capabilities?.includes("registry");
+const scopeKey = (s: Scope) => `${s.env}
+${s.project}`;
+
+/** A service outside the hub is read only when it fits the chosen environment and project. */
+const fitsScope = (info: ServiceInfo | null, s: Scope) =>
+  (!s.env || info?.environment === s.env) && (!s.project || info?.project === s.project);
 
 const samePart = (a: Trace, b: Trace) =>
   a.spanCount === b.spanCount && a.logs.length === b.logs.length && a.durationMs === b.durationMs && a.remotes.length === b.remotes.length;
@@ -28,7 +39,9 @@ export class DataStore {
   readonly #listeners = new Set<() => void>();
   readonly #lastPoll = new Map<string, number>();
   #timer: ReturnType<typeof setTimeout> | null = null;
-  #snapshot: DataSnapshot = { sources: [], traces: [], info: null, loading: true, updatedMs: Date.now() };
+  #registry: HubRegistry | null = null;
+  #scope: Scope = getScope();
+  #snapshot: DataSnapshot = { sources: [], traces: [], info: null, loading: true, updatedMs: Date.now(), registry: null };
 
   subscribe = (listener: () => void): (() => void) => {
     this.#listeners.add(listener);
@@ -41,6 +54,18 @@ export class DataStore {
     const self = selfEndpoint();
     this.#sources.set(self, newSource(self, true));
     document.addEventListener("visibilitychange", () => !document.hidden && this.refresh());
+    onPrefChange(() => this.#onScope(getScope()));
+    this.refresh();
+  }
+
+  /** A new environment or project: drop what was loaded and load again. */
+  #onScope(scope: Scope): void {
+    if (scopeKey(scope) === scopeKey(this.#scope)) return;
+    this.#scope = scope;
+    this.#parts.clear();
+    this.#merged.clear();
+    this.#lastPoll.clear();
+    this.#emit();
     this.refresh();
   }
 
@@ -60,7 +85,18 @@ export class DataStore {
       for (const s of todo) done.add(s.endpoint);
       await Promise.all(todo.map((s) => this.#pollSource(s)));
     }
+    await this.#pollRegistry();
     this.#emit();
+  }
+
+  async #pollRegistry(): Promise<void> {
+    const self = [...this.#sources.values()].find((s) => s.self);
+    if (!self || !isHub(self.info)) return;
+    try {
+      this.#registry = await loadRegistry(self.endpoint);
+    } catch {
+      // Keep the last list. The source status already shows when the hub is down.
+    }
   }
 
   async #pollSource(source: Source): Promise<void> {
@@ -68,7 +104,11 @@ export class DataStore {
     const last = this.#lastPoll.get(source.endpoint);
     try {
       if (!source.info) source.info = await loadInfo(source.endpoint);
-      const traces = await loadTraces(source.endpoint, last === undefined ? null : last - OVERLAP_MS);
+      const hub = source.self && isHub(source.info);
+      const selfInfo = [...this.#sources.values()].find((s) => s.self)?.info ?? null;
+      const skip = !source.self && isHub(selfInfo) && !fitsScope(source.info, this.#scope);
+      const since = last === undefined ? null : last - OVERLAP_MS;
+      const traces = skip ? [] : await loadTraces(source.endpoint, since, hub ? this.#scope : null);
       this.#lastPoll.set(source.endpoint, started);
       this.#ingest(source.endpoint, traces);
       Object.assign(source, { status: "ok", error: null, lastOkMs: started });
@@ -109,7 +149,9 @@ export class DataStore {
     const sources = [...this.#sources.values()].map((s) => ({ ...s }));
     const self = sources.find((s) => s.self);
     const traces = [...this.#merged.values()].sort((a, b) => b.startMs - a.startMs);
-    this.#snapshot = { sources, traces, info: self?.info ?? null, loading: self?.status === "pending", updatedMs: now };
+    const info = self?.info ?? null;
+    const registry = isHub(info) ? this.#registry : null;
+    this.#snapshot = { sources, traces, info, loading: self?.status === "pending", updatedMs: now, registry };
     for (const l of this.#listeners) l();
   }
 }

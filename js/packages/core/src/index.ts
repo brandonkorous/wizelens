@@ -1,4 +1,5 @@
 export * from "./types.js";
+export * from "./hub.js";
 export * from "./attributes.js";
 export * from "./ids.js";
 export * from "./redact.js";

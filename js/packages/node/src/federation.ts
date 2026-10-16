@@ -4,7 +4,8 @@ import type { TraceStore } from "./store.js";
 
 const TIMEOUT_MS = 2000;
 
-async function fetchRemote(remote: string, traceId: string, hop: number): Promise<Trace | undefined> {
+/** Fetch one trace part from another WizeLens endpoint. Undefined when it fails. */
+export async function fetchRemote(remote: string, traceId: string, hop: number): Promise<Trace | undefined> {
   try {
     const res = await context.with(ROOT_CONTEXT, () =>
       fetch(`${remote}/api/traces/${traceId}?federate=true`, {

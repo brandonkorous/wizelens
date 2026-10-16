@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WizeLens.Capture;
+using WizeLens.Hub;
 using WizeLens.Mcp;
 using WizeLens.Storage;
 using WizeLens.Web;
@@ -34,6 +35,9 @@ public static class WizeLensExtensions
         // Registered before the listener: hosted services stop in reverse order, so the last flush sees everything.
         services.AddSingleton<TraceStorageService>();
         services.AddHostedService(sp => sp.GetRequiredService<TraceStorageService>());
+        // Also before the listener, so the hub gets the last spans before the app stops.
+        services.AddSingleton<HubExporter>();
+        services.AddHostedService(sp => sp.GetRequiredService<HubExporter>());
         services.AddSingleton<WizeLensActivityListener>();
         services.AddHostedService(sp => sp.GetRequiredService<WizeLensActivityListener>());
         services.AddHostedService<EndpointObserver>();
@@ -47,7 +51,7 @@ public static class WizeLensExtensions
 
         if (options.EnableMcp)
         {
-            services.AddMcpServer(o => o.ServerInfo = new() { Name = "wizelens", Version = "0.1.0" })
+            services.AddMcpServer(o => o.ServerInfo = new() { Name = "wizelens", Version = typeof(WizeLensExtensions).Assembly.GetName().Version?.ToString(3) ?? "0.0.0" })
                 .WithHttpTransport(o => o.Stateless = true)
                 .WithTools<WizeLensMcpTools>();
         }
