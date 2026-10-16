@@ -2,8 +2,9 @@ import { browserTypeOf } from "../attributes.js";
 import { isErrorSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { avgOf, groupBy, percentileOf, percentOf } from "./common.js";
+import { isConsumer, isProducer, queueOf } from "./messaging.js";
 
-export type ServiceKind = "api" | "web" | "database" | "external";
+export type ServiceKind = "api" | "web" | "worker" | "queue" | "database" | "external";
 export type ServiceStatus = "healthy" | "degraded" | "unhealthy" | "idle";
 
 /** One service, database, or outside host, with its traffic in the given traces. */
@@ -89,7 +90,24 @@ export function serviceRows(traces: readonly Trace[]): ServiceRow[] {
   if (web.length) rows.push(rowOf("web:browser", "Web App", "web", web, "browser"));
   for (const [db, list] of groupBy(spans.filter((s) => s.category === "db"), databaseOf)) rows.push(rowOf(`db:${db}`, db, "database", list, str(list[0]!, "db.system.name")));
   for (const [host, list] of groupBy(externalCalls(traces), hostOf)) rows.push(rowOf(`ext:${host}`, host, "external", list, host));
+  rows.push(...messagingRows(spans, new Set(rows.filter((r) => r.kind === "api").map((r) => r.name))));
   return rows.sort((a, b) => b.requests - a.requests);
+}
+
+/** Queues (messages sent to each) and workers (services that only handle messages). */
+function messagingRows(spans: readonly Span[], apis: ReadonlySet<string>): ServiceRow[] {
+  const rows: ServiceRow[] = [];
+  for (const [queue, list] of groupBy(spans.filter(isProducer), queueOf)) rows.push(rowOf(`queue:${queue}`, queue, "queue", list, queue));
+  const handled = spans.filter((s) => isConsumer(s) && !apis.has(s.service));
+  for (const [name, list] of groupBy(handled, (s) => s.service)) rows.push(rowOf(`worker:${name}`, name, "worker", list, null));
+  return rows;
+}
+
+/** A messaging span as an edge: service → queue for a send, queue → service for a handled message. */
+function messagingEdge(s: Span): { from: string; to: string } | null {
+  if (isProducer(s)) return { from: s.service, to: queueOf(s) };
+  if (isConsumer(s)) return { from: queueOf(s), to: s.service };
+  return null;
 }
 
 function edgeTarget(s: Span, byParent: Map<string, Span>): string | null {
@@ -99,13 +117,15 @@ function edgeTarget(s: Span, byParent: Map<string, Span>): string | null {
   return server ? server.service : s.category === "http.client" ? hostOf(s) : null;
 }
 
-/** Who calls whom: service → service, service → database, service → outside host, browser → service. */
+/** Who calls whom: service → service, database, outside host, or queue; queue → worker; browser → service. */
 export function serviceEdges(traces: readonly Trace[]): ServiceEdge[] {
   const calls: { from: string; to: string; span: Span }[] = [];
   for (const t of traces) {
     const byParent = new Map(t.spans.filter((s) => s.category === "http.server" && s.parentSpanId).map((s) => [s.parentSpanId!, s]));
     for (const s of t.spans) {
-      const to = edgeTarget(s, byParent);
+      const message = messagingEdge(s);
+      if (message) calls.push({ ...message, span: s });
+      const to = message ? null : edgeTarget(s, byParent);
       if (to) calls.push({ from: s.category === "browser" ? "Web App" : s.service, to, span: s });
     }
   }

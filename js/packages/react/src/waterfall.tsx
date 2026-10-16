@@ -4,7 +4,7 @@ import { fmtMs } from "./hud-model.js";
 import { Empty } from "./panel-parts.js";
 import type { RecordedRequest } from "./recorder-types.js";
 
-type RowKind = "server" | "internal" | "db" | "client" | "browser" | "render" | "error";
+type RowKind = "server" | "internal" | "db" | "client" | "messaging" | "browser" | "render" | "error";
 
 export interface WfRow {
   key: string;
@@ -21,6 +21,7 @@ const KIND: Record<Span["category"], RowKind> = {
   "http.server": "server",
   "http.client": "client",
   db: "db",
+  messaging: "messaging",
   browser: "browser",
   internal: "internal",
 };

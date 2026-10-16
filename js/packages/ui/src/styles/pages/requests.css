@@ -30,6 +30,7 @@
 .wl-rq-k-db { background: var(--wl-k-db); }
 .wl-rq-k-internal { background: var(--wl-k-internal); }
 .wl-rq-k-browser { background: var(--wl-k-browser); }
+.wl-rq-k-messaging { background: var(--wl-k-messaging); }
 .wl-rq-k-render { background: var(--wl-k-render); }
 .wl-rq-k-error { background: var(--wl-red); }
 

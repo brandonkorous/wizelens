@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { Box, Cog, Database, ExternalLink, Globe, Monitor, Paintbrush, Share2 } from "lucide-react";
+import { Box, Cog, Database, ExternalLink, Globe, Inbox, Monitor, Paintbrush, Share2 } from "lucide-react";
 import { type LayerKind, type Trace, type TraceLayer, traceDurationOf, traceLayers } from "@wizeworks/lens-core";
 import { fmtDateTime, fmtMs } from "../../format";
 import { traceHref } from "../../routes";
@@ -14,6 +14,7 @@ const ICONS: Record<LayerKind, ComponentType<{ size?: number; "aria-hidden"?: bo
   routing: Share2,
   handler: Cog,
   service: Box,
+  queue: Inbox,
   database: Database,
   external: ExternalLink,
   render: Paintbrush,

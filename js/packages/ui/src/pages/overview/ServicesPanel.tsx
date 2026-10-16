@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Box, Database, Globe, Monitor } from "lucide-react";
+import { Box, Cog, Database, Globe, Inbox, Monitor } from "lucide-react";
 import { serviceRows, type ServiceKind, type ServiceRow, type ServiceStatus, type TimeRange, type Trace } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs } from "../../format";
 import { hrefTo, navigate } from "../../routes";
@@ -7,7 +7,7 @@ import { DotText, type Tone } from "../../ui/Badges";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 
-const KIND_ICON: Record<ServiceKind, typeof Box> = { api: Box, web: Monitor, database: Database, external: Globe };
+const KIND_ICON: Record<ServiceKind, typeof Box> = { api: Box, web: Monitor, worker: Cog, queue: Inbox, database: Database, external: Globe };
 const STATUS: Record<ServiceStatus, [Tone, string]> = {
   healthy: ["success", "Healthy"],
   degraded: ["warning", "Degraded"],

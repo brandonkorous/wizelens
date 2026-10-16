@@ -106,6 +106,6 @@ export const DEFAULT_BASE_PATH = "/_wizelens";
 export const SESSION_STORAGE_KEY = "wizelens.session";
 
 /** Parts of the dashboard trace page a link can open: `#/traces/<id>/<view>`. */
-export const TRACE_VIEWS = ["timeline", "sql", "http", "logs", "errors", "insights"] as const;
+export const TRACE_VIEWS = ["timeline", "sql", "http", "messages", "logs", "errors", "insights"] as const;
 export type TraceView = (typeof TRACE_VIEWS)[number];
 export const isTraceView = (v: string | undefined): v is TraceView => (TRACE_VIEWS as readonly string[]).includes(v ?? "");

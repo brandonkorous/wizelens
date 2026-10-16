@@ -1,5 +1,5 @@
 import { pathShape, analyzeTrace, type Finding } from "../analysis.js";
-import { ATTR_REQUEST_ID, browserTypeOf, TAG_PREFIX } from "../attributes.js";
+import { ATTR_REQUEST_ID, ATTR_RPC, browserTypeOf, TAG_PREFIX } from "../attributes.js";
 import { type Health, healthOf, insightsOf, traceTiming } from "../health.js";
 import { entryServerSpan, isErrorSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
@@ -75,6 +75,17 @@ function endpointOf(method: string, server: Span | undefined, path: string): str
   return `${method} ${route ?? pathShape(path)}`;
 }
 
+/** Method, path, and endpoint of a request. gRPC calls read "gRPC" and "/{service}/{method}". */
+function identityOf(server: Span | undefined, fetch: Span | undefined): { method: string; path: string; endpoint: string } {
+  if (str(server, ATTR_RPC.system)) {
+    const rpc = `${str(server, ATTR_RPC.service) ?? "service"}/${str(server, ATTR_RPC.method) ?? "method"}`;
+    return { method: "gRPC", path: `/${rpc}`, endpoint: `gRPC ${rpc}` };
+  }
+  const method = (str(server, "http.request.method") ?? str(fetch, "http.request.method") ?? "GET").toUpperCase();
+  const path = pathOf(server, fetch);
+  return { method, path, endpoint: endpointOf(method, server, path) };
+}
+
 function buildRow(trace: Trace): RequestRow | null {
   const server = entryServerSpan(trace.spans);
   const fetch = trace.spans.filter((s) => browserTypeOf(s) === "fetch").sort(byStart)[0];
@@ -84,16 +95,15 @@ function buildRow(trace: Trace): RequestRow | null {
   const findings = analyzeTrace(trace);
   const errors = trace.spans.filter(isErrorSpan).length;
   const insights = insightsOf(findings).length;
-  const method = (str(server, "http.request.method") ?? str(fetch, "http.request.method") ?? "GET").toUpperCase();
+  const { method, path, endpoint } = identityOf(server, fetch);
   const statusRaw = server?.attributes["http.response.status_code"] ?? fetch?.attributes["http.response.status_code"];
   const status = typeof statusRaw === "number" ? statusRaw : statusRaw == null ? null : Number(statusRaw) || null;
-  const path = pathOf(server, fetch);
   return {
     traceId: trace.traceId,
     startMs: fetch?.startMs ?? server?.startMs ?? trace.startMs,
     method,
     path,
-    endpoint: endpointOf(method, server, path),
+    endpoint,
     status,
     durationMs: timing.totalMs,
     serverMs: timing.serverMs,

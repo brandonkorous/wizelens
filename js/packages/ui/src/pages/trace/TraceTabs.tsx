@@ -1,5 +1,6 @@
 import type { Finding, Trace, TraceView } from "@wizeworks/lens-core";
 import { HttpTab } from "./HttpTab";
+import { MessagesTab } from "./MessagesTab";
 import { ErrorsTab, LogsTab } from "./LogsErrorsTabs";
 import { SpanPanel } from "./SpanPanel";
 import { SqlTab } from "./SqlTab";
@@ -22,6 +23,7 @@ function counts(trace: Trace): [Tab, string, number][] {
     ["timeline", "Timeline", trace.spanCount],
     ["sql", "SQL", trace.spans.filter((s) => s.category === "db").length],
     ["http", "HTTP", trace.spans.filter((s) => s.category === "http.client" || s.category === "http.server" || s.category === "browser").length],
+    ["messages", "Messages", trace.spans.filter((s) => s.category === "messaging").length],
     ["logs", "Logs", trace.logs.length],
     ["errors", "Errors", trace.errorCount],
   ];
@@ -31,6 +33,7 @@ function TabBody(p: TraceTabsProps) {
   const props = { trace: p.trace, findings: p.findings, selected: p.selected, highlight: p.highlight, onSelect: p.onSelect };
   if (p.tab === "sql") return <SqlTab {...props} />;
   if (p.tab === "http") return <HttpTab {...props} />;
+  if (p.tab === "messages") return <MessagesTab trace={p.trace} onSelect={p.onSelect} />;
   if (p.tab === "logs") return <LogsTab trace={p.trace} onSelect={p.onSelect} />;
   if (p.tab === "errors") return <ErrorsTab trace={p.trace} onSelect={p.onSelect} />;
   return <Waterfall trace={p.trace} selected={p.selected} highlight={p.highlight} onSelect={p.onSelect} />;

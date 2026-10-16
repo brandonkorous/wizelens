@@ -119,7 +119,7 @@ span.wl-count{cursor:default}span.wl-count:hover{background:none;color:var(--wl-
 .wl-wf-axis span:first-child{transform:none}
 .wl-wf-grid{position:absolute;top:0;bottom:0;width:1px;background:var(--wl-main-line)}
 .wl-k-server{background:var(--wl-blue)}.wl-k-internal{background:#7AA2F7}.wl-k-db{background:var(--wl-amber)}
-.wl-k-client{background:var(--wl-slate)}.wl-k-browser{background:#94A3B8}.wl-k-render{background:var(--wl-green)}.wl-k-error{background:var(--wl-red)}
+.wl-k-client{background:var(--wl-slate)}.wl-k-messaging{background:#8B5CF6}.wl-k-browser{background:#94A3B8}.wl-k-render{background:var(--wl-green)}.wl-k-error{background:var(--wl-red)}
 
 .wl-table{width:100%;border-collapse:collapse;font-size:12px}
 .wl-table th{padding:6px 8px;border-bottom:1px solid var(--wl-main-line);color:var(--wl-main-muted);font-weight:600;text-align:left;white-space:nowrap}

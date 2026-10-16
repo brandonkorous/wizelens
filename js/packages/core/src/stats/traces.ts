@@ -4,9 +4,10 @@ import { entryServerSpan, findRootSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { avgOf, groupBy, series, type TimeWindow } from "./common.js";
 import { requestOf } from "./requests.js";
+import { isConsumer, isProducer, queueOf } from "./messaging.js";
 import { databaseOf, hostOf } from "./services.js";
 
-export type LayerKind = "browser" | "network" | "routing" | "handler" | "service" | "database" | "external" | "render";
+export type LayerKind = "browser" | "network" | "routing" | "handler" | "service" | "queue" | "database" | "external" | "render";
 
 /** Time of one layer of a trace. Segments and times are ms from the trace start. */
 export interface TraceLayer {
@@ -29,7 +30,7 @@ interface Part {
   segs: [number, number][];
 }
 
-const RANK: Record<LayerKind, number> = { browser: 0, network: 1, routing: 2, handler: 3, service: 4, external: 5, database: 6, render: 7 };
+const RANK: Record<LayerKind, number> = { browser: 0, network: 1, routing: 2, handler: 3, service: 4, queue: 5, external: 6, database: 7, render: 8 };
 const num = (s: Span, k: string) => (typeof s.attributes[k] === "number" ? (s.attributes[k] as number) : null);
 const end = (s: Span) => s.startMs + s.durationMs;
 
@@ -71,13 +72,15 @@ function pageviewParts(s: Span): Part[] {
 }
 
 function spanParts(s: Span, kids: Span[]): Part[] {
-  const own = Math.max(0, s.durationMs - kids.reduce((t, k) => t + k.durationMs, 0));
+  const own = Math.max(0, s.durationMs - kids.filter((k) => !isConsumer(k)).reduce((t, k) => t + k.durationMs, 0));
   const server = kids.find((k) => k.category === "http.server");
   const type = browserTypeOf(s);
   if (type === "fetch") return fetchParts(s, server, own);
   if (type === "pageview") return pageviewParts(s);
   if (type !== null) return [];
   if (s.category === "http.server") return serverPart(s, own);
+  if (isProducer(s)) return [{ key: `queue:${queueOf(s)}`, label: queueOf(s), kind: "queue", owner: s.service, ms: own, segs: [[s.startMs, end(s)]] }];
+  if (isConsumer(s)) return [{ key: `service:${s.service}`, label: s.service, kind: "service", owner: s.service, ms: own, segs: [[s.startMs, end(s)]] }];
   if (s.category === "db") return [{ key: `db:${databaseOf(s)}`, label: databaseOf(s), kind: "database", owner: s.service, ms: own, segs: [[s.startMs, end(s)]] }];
   if (s.category === "http.client" && server) return [{ key: "network", label: "Network", kind: "network", owner: "Network", ms: own, segs: gaps(s, server) }];
   if (s.category === "http.client") return [{ key: `ext:${hostOf(s)}`, label: hostOf(s), kind: "external", owner: s.service, ms: own, segs: [[s.startMs, end(s)]] }];
@@ -85,9 +88,20 @@ function spanParts(s: Span, kids: Span[]): Part[] {
   return [{ key: `service:${s.service}`, label: s.service, kind: "service", owner: s.service, ms: own, segs: [] }];
 }
 
+/** Time a message sat in its queue: from the end of the send to the start of the handler. */
+function queueWaits(trace: Trace): Part[] {
+  const byId = new Map(trace.spans.map((s) => [s.spanId, s]));
+  return trace.spans.filter(isConsumer).flatMap((s) => {
+    const send = s.parentSpanId ? byId.get(s.parentSpanId) : undefined;
+    if (!send || !isProducer(send) || s.startMs <= end(send)) return [];
+    const label = `Queue wait (${queueOf(s)})`;
+    return [{ key: `wait:${queueOf(s)}`, label, kind: "queue" as const, owner: queueOf(s), ms: s.startMs - end(send), segs: [[end(send), s.startMs]] as [number, number][] }];
+  });
+}
+
 function partsOf(trace: Trace): Part[] {
   const kids = groupBy(trace.spans.filter((s) => s.parentSpanId), (s) => s.parentSpanId!);
-  return trace.spans.flatMap((s) => spanParts(s, kids.get(s.spanId) ?? []));
+  return [...trace.spans.flatMap((s) => spanParts(s, kids.get(s.spanId) ?? [])), ...queueWaits(trace)];
 }
 
 /** Where the time of one trace went, one row per layer, in time order. */

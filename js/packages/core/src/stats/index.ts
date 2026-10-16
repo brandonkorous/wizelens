@@ -7,4 +7,5 @@ export * from "./errors.js";
 export * from "./rendering.js";
 export * from "./traces.js";
 export * from "./services.js";
+export * from "./messaging.js";
 export * from "./logs.js";
