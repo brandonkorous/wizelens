@@ -8,6 +8,13 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 - **The HUD broke hydration in server-rendered apps** (Next.js) when its panel was open, it was minimized, or requests were kept
   from the last page. It read those during the first render, which the server cannot do. The first render now matches the server; saved settings apply right after.
+- **First paint was counted after the tab came back.** A page that loaded in a background tab showed a first paint of minutes, so
+  "Client render" read 20 s. First paint now follows the largest-paint rule: paints after the tab was first hidden are skipped.
+- **A page load was saved twice** when the provider mounted again on the same page (a hot reload in development). Only the first
+  tracker on a page sends its full-load view.
+- **The Web App error rate on the Errors page was far too high** (18% against 2.5% on Services). It counted browser fetches that
+  failed but not the ones that reached the server. A request now counts for every service it touched.
+- The Pages & Routes table says which columns come from full page loads only, so SSR time can be above render time without looking wrong.
 
 ## [0.3.0-alpha.1] — Phase 3: the cloud
 

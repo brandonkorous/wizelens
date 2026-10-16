@@ -13,12 +13,16 @@ const ISSUE: Record<RouteIssue, { tone: Tone; label: string }> = {
   high: { tone: "danger", label: "High" },
 };
 
+// Render time counts route changes too; the load parts come from full page loads only, so they can be larger.
+const LOADS_ONLY = "Full page loads only";
+const hint = (text: string, title: string) => <span title={title}>{text}</span>;
+
 const ROUTE_COLUMNS: Column<RouteRow>[] = [
   { key: "route", header: "Route", cell: (r) => <span className="wl-mono">{r.route}</span>, sort: (r) => r.route },
   { key: "views", header: "Page Views", num: true, cell: (r) => fmtCount(r.views), sort: (r) => r.views },
-  { key: "render", header: "Avg. Render Time", num: true, cell: (r) => fmtMs(r.avgRenderMs), sort: (r) => r.avgRenderMs ?? -1 },
-  { key: "ssr", header: "SSR Time", num: true, cell: (r) => fmtMs(r.avgSsrMs), sort: (r) => r.avgSsrMs ?? -1 },
-  { key: "hydration", header: "Hydration Time", num: true, cell: (r) => fmtMs(r.avgHydrationMs), sort: (r) => r.avgHydrationMs ?? -1 },
+  { key: "render", header: hint("Avg. Render Time", "Full page loads and in-app route changes"), num: true, cell: (r) => fmtMs(r.avgRenderMs), sort: (r) => r.avgRenderMs ?? -1 },
+  { key: "ssr", header: hint("SSR Time", LOADS_ONLY), num: true, cell: (r) => fmtMs(r.avgSsrMs), sort: (r) => r.avgSsrMs ?? -1 },
+  { key: "hydration", header: hint("Hydration Time", LOADS_ONLY), num: true, cell: (r) => fmtMs(r.avgHydrationMs), sort: (r) => r.avgHydrationMs ?? -1 },
   { key: "cls", header: "Layout Shift", num: true, cell: (r) => (r.avgCls === null ? "–" : r.avgCls.toFixed(2)), sort: (r) => r.avgCls ?? -1 },
   {
     key: "issue",
