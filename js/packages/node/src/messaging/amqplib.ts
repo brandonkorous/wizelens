@@ -1,7 +1,7 @@
 import type { Tracer } from "@opentelemetry/api";
 import { captureOf, patchMethod } from "../adapters/registry.js";
 import type { WizeLens } from "../types.js";
-import { injectInto, runInSpan, sizeOf, startConsumer, startProducer } from "./shared.js";
+import { injectInto, nowMs, recordReceive, runInSpan, sizeOf, startConsumer, startProducer } from "./shared.js";
 
 interface AmqpMessage {
   content?: unknown;
@@ -41,10 +41,29 @@ function patchConsume(proto: object, tracer: Tracer): void {
   );
 }
 
+/** `channel.get(queue)` pulls one message (or false): a receive span joined to its producer. */
+function patchGet(proto: object, tracer: Tracer): void {
+  patchMethod(proto, "get", (original) =>
+    function (this: unknown, ...args: unknown[]) {
+      const started = nowMs();
+      const out = original.apply(this, args);
+      const record = (msg: unknown) => {
+        if (!msg || typeof msg !== "object") return;
+        const m = msg as AmqpMessage;
+        const facts = { system: "rabbitmq" as const, destination: String(args[0]), messageId: m.properties?.messageId, bodySize: sizeOf(m.content) };
+        recordReceive(tracer, facts, m.properties?.headers, started);
+      };
+      void Promise.resolve(out).then(record, () => undefined);
+      return out;
+    },
+  );
+}
+
 const patchChannel = (channel: object, tracer: Tracer) => {
   const proto = Object.getPrototypeOf(channel) as object;
   patchPublish(proto, tracer);
   patchConsume(proto, tracer);
+  patchGet(proto, tracer);
 };
 
 /** Patch channels as they are created from a connection. */

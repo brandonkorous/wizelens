@@ -13,7 +13,11 @@ export interface MetadataLike {
 export interface GrpcModuleLike {
   Channel?: { prototype: object };
   Server?: { prototype: object };
+  Metadata?: new () => MetadataLike;
 }
+
+/** Trailer key that tells a caller where this service's WizeLens lives, like X-WizeLens-Endpoint on HTTP. */
+export const ENDPOINT_KEY = "x-wizelens-endpoint";
 
 export const w3c = new W3CTraceContextPropagator();
 

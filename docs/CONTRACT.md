@@ -21,6 +21,9 @@ Every app response that the add-on sees also gets
 When an outgoing HTTP call gets a response with `X-WizeLens-Endpoint`, the add-on adds that URL to
 the current trace's `remotes` list (de-duplicated, and never its own endpoint).
 
+gRPC uses the same key as metadata: a gRPC server sends `x-wizelens-endpoint` in its response headers (merged into any
+headers the handler sends) and in its trailers, and a gRPC client reads either one into `remotes`.
+
 ## Endpoints
 
 All `api/*` endpoints return JSON (camelCase) and send `Access-Control-Allow-Origin: *`.

@@ -16,6 +16,7 @@ The first release. WizeLens runs inside each app, keeps its own traces, and serv
 - **Node** (`@wizeworks/lens-node`): Express, Fastify, Koa, and Hono; outgoing `fetch`; routing time; logs; exceptions; the same request details and tags as .NET.
 - **Databases (Node):** `pg`, `mysql2`, `better-sqlite3`, `node:sqlite`, Prisma, TypeORM, and Drizzle, one line each, plus `traceDb()` for any other driver.
 - **gRPC and messaging (Node):** `@grpc/grpc-js`, `amqplib` (RabbitMQ), `kafkajs`, and `@azure/service-bus`. Trace context travels in message headers, so one trace follows a message across services.
+  Pull-style receives (`channel.get`, `receiveMessages`) are recorded as receive spans. gRPC servers tell callers where their dashboard lives, so gRPC calls federate like HTTP.
 - **Browser** (`@wizeworks/lens-react`): fetch spans linked to server traces, render time, page views with TTFB / SSR / FCP / LCP / INP / CLS,
   hydration, slow and oversized images, React component render stats, and browser errors.
 
@@ -43,6 +44,14 @@ The first release. WizeLens runs inside each app, keeps its own traces, and serv
 ### Storage
 
 - Traces survive restarts in a small SQLite file per app (newest 2,000 traces or 24 hours). Falls back to memory, and never breaks the app.
+
+### Known limits
+
+- Hono has no separate routing moment, so Hono requests have no routing time.
+- Azure Service Bus on .NET links a processed message to its sender instead of making it a child, so the consumer starts its own trace.
+- Npgsql and MySqlConnector do not report returned rows.
+- Message sends and database calls are recorded inside a request (or a message handler) only. Startup and background work is skipped
+  unless you turn on `traceQueriesOutsideRequests` (Node).
 
 ### Project
 

@@ -1,7 +1,7 @@
 import { context, type Tracer, trace } from "@opentelemetry/api";
 import { captureOf, patchMethod } from "../adapters/registry.js";
 import type { WizeLens } from "../types.js";
-import { injectInto, runInSpan, sizeOf, startConsumer, startProducer } from "./shared.js";
+import { injectInto, nowMs, recordReceive, runInSpan, sizeOf, startConsumer, startProducer } from "./shared.js";
 
 interface SbMessage {
   body?: unknown;
@@ -50,7 +50,26 @@ function patchSender(sender: object & { entityPath?: string }, tracer: Tracer): 
   );
 }
 
+/** `receiveMessages` pulls a batch: one receive span, joined to the producer when exactly one message came back. */
+function patchReceive(receiver: object & { entityPath?: string }, tracer: Tracer): void {
+  patchMethod(receiver, "receiveMessages", (original) =>
+    function (this: unknown, ...args: unknown[]) {
+      const started = nowMs();
+      const out = original.apply(this, args);
+      const record = (list: unknown) => {
+        if (!Array.isArray(list) || list.length === 0) return;
+        const one = list.length === 1 ? (list[0] as SbMessage) : undefined;
+        const facts = { system: "servicebus" as const, destination: receiver.entityPath ?? "unknown", batchSize: list.length, messageId: one?.messageId === undefined ? undefined : String(one.messageId) };
+        recordReceive(tracer, facts, one?.applicationProperties, started);
+      };
+      void Promise.resolve(out).then(record, () => undefined);
+      return out;
+    },
+  );
+}
+
 function patchReceiver(receiver: object & { entityPath?: string }, tracer: Tracer): void {
+  patchReceive(receiver, tracer);
   patchMethod(receiver, "subscribe", (original) =>
     function (this: unknown, handlers: unknown, ...rest: unknown[]) {
       const h = handlers as Handlers;

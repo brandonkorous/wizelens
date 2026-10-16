@@ -48,12 +48,22 @@ export function injectInto(ctx: Context, headers: Record<string, unknown>): void
 /** Header values may be strings or Buffers (Kafka). */
 const headerText = (v: unknown): string | undefined => (typeof v === "string" ? v : v instanceof Uint8Array ? Buffer.from(v).toString("utf8") : undefined);
 
+const getter = { get: (c: Record<string, unknown>, k: string) => headerText(c[k]), keys: (c: Record<string, unknown>) => Object.keys(c) };
+
 /** Start a process span for one message, joined to the producer's trace when the headers carry it. */
 export function startConsumer(tracer: Tracer, m: MessageFacts, headers: Record<string, unknown> | undefined): { span: OtelSpan; ctx: Context } {
-  const getter = { get: (c: Record<string, unknown>, k: string) => headerText(c[k]), keys: (c: Record<string, unknown>) => Object.keys(c) };
   const parent = headers ? w3c.extract(ROOT_CONTEXT, headers, getter) : ROOT_CONTEXT;
   const span = tracer.startSpan(`process ${m.destination}`, { kind: SpanKind.CONSUMER, attributes: attributesOf("process", m) }, parent);
   return { span, ctx: trace.setSpan(parent, span).setValue(SERVER_SPAN, span) };
+}
+
+/** Now, on the same clock OTel uses, for a span start recorded before the span exists. */
+export const nowMs = (): number => performance.timeOrigin + performance.now();
+
+/** Record a finished pull (`get`, `receiveMessages`): one receive span from `startedMs`, joined to the producer when one message came back. */
+export function recordReceive(tracer: Tracer, m: MessageFacts, headers: Record<string, unknown> | undefined, startedMs: number): void {
+  const parent = headers ? w3c.extract(ROOT_CONTEXT, headers, getter) : ROOT_CONTEXT;
+  tracer.startSpan(`receive ${m.destination}`, { kind: SpanKind.CONSUMER, attributes: attributesOf("receive", m), startTime: startedMs }, parent).end();
 }
 
 /** Run `fn` in the span's context and end the span when it settles (sync or promise). Returns what `fn` returns. */

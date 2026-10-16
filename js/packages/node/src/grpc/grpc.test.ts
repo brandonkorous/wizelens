@@ -5,7 +5,8 @@ import type { Span } from "@wizeworks/lens-core";
 import { createWizeLens } from "../wizelens.js";
 import { instrumentGrpc } from "./index.js";
 
-const wl = createWizeLens({ serviceName: "grpc-api", storage: "memory", instrumentFetch: false });
+const ENDPOINT = "http://grpc-api.test/_wizelens";
+const wl = createWizeLens({ serviceName: "grpc-api", storage: "memory", instrumentFetch: false, publicEndpoint: ENDPOINT });
 const json = { serialize: (v: unknown) => Buffer.from(JSON.stringify(v)), deserialize: (b: Buffer) => JSON.parse(b.toString()) as unknown };
 const method = (name: string, responseStream = false) => ({
   path: `/shop.v1.Items/${name}`,
@@ -16,7 +17,7 @@ const method = (name: string, responseStream = false) => ({
   responseSerialize: json.serialize,
   responseDeserialize: json.deserialize,
 });
-const service = { GetItem: method("GetItem"), ListItems: method("ListItems", true), Missing: method("Missing") };
+const service = { GetItem: method("GetItem"), ListItems: method("ListItems", true), Missing: method("Missing"), Custom: method("Custom") };
 
 let server: grpc.Server;
 let client: grpc.Client & Record<string, (...a: unknown[]) => unknown>;
@@ -28,6 +29,12 @@ beforeAll(async () => {
     GetItem: (_call: unknown, cb: grpc.sendUnaryData<unknown>) => cb(null, wl.traceDb({ system: "sqlite" }, "SELECT 1", undefined, () => ({ id: 7 }))),
     ListItems: (call: grpc.ServerWritableStream<unknown, unknown>) => (call.write({ id: 1 }), call.write({ id: 2 }), call.end()),
     Missing: (_call: unknown, cb: grpc.sendUnaryData<unknown>) => cb({ code: grpc.status.NOT_FOUND, details: "no such item" }),
+    Custom: (call: grpc.ServerUnaryCall<unknown, unknown>, cb: grpc.sendUnaryData<unknown>) => {
+      const md = new grpc.Metadata();
+      md.set("x-app", "kept");
+      call.sendMetadata(md);
+      cb(null, { ok: true });
+    },
   });
   const port = await new Promise<number>((r, j) => server.bindAsync("127.0.0.1:0", grpc.ServerCredentials.createInsecure(), (e, p) => (e ? j(e) : r(p))));
   const Client = grpc.makeGenericClientConstructor(service, "Items");
@@ -46,7 +53,7 @@ async function traced(run: () => Promise<unknown>): Promise<Span[]> {
 
 const unary = (name: string) => () => new Promise((r, j) => client[name]!({ id: 7 }, (e: unknown, v: unknown) => (e ? j(e) : r(v))));
 
-describe("grpc", () => {
+describe("grpc calls", () => {
   it("joins client and server in one trace with rpc attributes", async () => {
     const spans = await traced(unary("GetItem"));
     const out = spans.find((s) => s.category === "http.client")!;
@@ -70,5 +77,38 @@ describe("grpc", () => {
     expect(failed.map((s) => [s.category, s.status, s.attributes["rpc.grpc.status_code"]])).toEqual(
       expect.arrayContaining([["http.client", "error", 5], ["http.server", "error", 5]]),
     );
+  });
+
+});
+
+describe("grpc discovery", () => {
+  it("tells callers where its WizeLens lives, in the headers and trailers", async () => {
+    let trailer: unknown;
+    let header: unknown;
+    const spans = await traced(
+      () =>
+        new Promise((r) => {
+          const call = client.GetItem!({ id: 7 }, () => undefined) as grpc.ClientUnaryCall;
+          call.on("metadata", (m: grpc.Metadata) => (header = m.get("x-wizelens-endpoint")[0]));
+          call.on("status", (s: grpc.StatusObject) => ((trailer = s.metadata.get("x-wizelens-endpoint")[0]), r(null)));
+        }),
+    );
+    expect(trailer).toBe(ENDPOINT);
+    expect(header).toBe(ENDPOINT);
+    expect(wl.store.get(spans[0]!.traceId)!.remotes).toEqual([]);
+  });
+
+  it("keeps headers the handler sends itself", async () => {
+    let headers: grpc.Metadata | undefined;
+    await traced(
+      () =>
+        new Promise((r) => {
+          const call = client.Custom!({}, () => undefined) as grpc.ClientUnaryCall;
+          call.on("metadata", (m: grpc.Metadata) => (headers = m));
+          call.on("status", () => r(null));
+        }),
+    );
+    expect(headers?.get("x-app")[0]).toBe("kept");
+    expect(headers?.get("x-wizelens-endpoint")[0]).toBe(ENDPOINT);
   });
 });
