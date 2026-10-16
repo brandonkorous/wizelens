@@ -1,5 +1,6 @@
 import { DEFAULT_SLOW_MS, type Health, healthOf, timingSegments } from "@wizeworks/lens-core";
 import type { RecordedRequest } from "./recorder-types.js";
+import { now } from "./session.js";
 
 /** What the HUD shows for one request. Null fields are not known (yet). */
 export interface RequestView {
@@ -53,17 +54,29 @@ export function requestView(r: RecordedRequest | null, slowMs = DEFAULT_SLOW_MS)
   };
 }
 
-/** The request the HUD shows. Live: the newest finished (else newest) request. Paused: the pinned one, if still listed. */
+/** A failed request stays on screen this long, so newer background requests do not hide it. */
+export const ERROR_HOLD_MS = 8000;
+
+const failed = (r: RecordedRequest) => !!r.error || (r.status ?? 0) >= 400;
+export const endOf = (r: RecordedRequest): number => r.startMs + (r.durationMs ?? 0);
+
+/** The newest live request that failed less than ERROR_HOLD_MS ago, if any. */
+export function heldError(requests: readonly RecordedRequest[], nowMs: number): RecordedRequest | null {
+  return requests.find((r) => failed(r) && !r.restored && nowMs - endOf(r) < ERROR_HOLD_MS) ?? null;
+}
+
+/** The request the HUD shows. Live: a fresh failure, else the newest finished (else newest) request. Paused: the pinned one. */
 export function currentRequest(
   requests: readonly RecordedRequest[],
   live: boolean,
   pinnedId: string | null,
+  nowMs = now(),
 ): RecordedRequest | null {
   if (!live && pinnedId) {
     const pinned = requests.find((r) => r.id === pinnedId);
     if (pinned) return pinned;
   }
-  return requests.find((r) => r.durationMs !== null) ?? requests[0] ?? null;
+  return heldError(requests, nowMs) ?? requests.find((r) => r.durationMs !== null) ?? requests[0] ?? null;
 }
 
 /** "284 ms", "1,842 ms", "12.4 s", "4.2 ms". A dash when unknown. */

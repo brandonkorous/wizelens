@@ -1,5 +1,6 @@
 import { pathShape, analyzeTrace, type Finding } from "../analysis.js";
-import { ATTR_REQUEST_ID, ATTR_RPC, browserTypeOf, TAG_PREFIX } from "../attributes.js";
+import { ATTR_REQUEST_ABORTED, ATTR_REQUEST_ID, ATTR_RPC, browserTypeOf, TAG_PREFIX } from "../attributes.js";
+import { busyMs } from "../busy.js";
 import { type Health, healthOf, insightsOf, traceTiming } from "../health.js";
 import { entryServerSpan, isErrorSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
@@ -15,6 +16,8 @@ export interface RequestRow {
   /** Method and route shape, for grouping: "GET /api/orders/{}". */
   endpoint: string;
   status: number | null;
+  /** True when the client left before the server answered. */
+  aborted: boolean;
   /** Request start to the next paint when the browser measured it, else the trace duration. */
   durationMs: number;
   serverMs: number | null;
@@ -105,12 +108,13 @@ function buildRow(trace: Trace): RequestRow | null {
     path,
     endpoint,
     status,
+    aborted: server?.attributes[ATTR_REQUEST_ABORTED] === true,
     durationMs: timing.totalMs,
     serverMs: timing.serverMs,
     dbMs: timing.dbMs,
     dbCount: timing.dbCount,
     fetchCount: clients.length,
-    fetchMs: clients.reduce((t, s) => t + s.durationMs, 0),
+    fetchMs: busyMs(clients),
     renderMs: timing.renderMs,
     networkMs: fetch && server ? Math.max(0, fetch.durationMs - server.durationMs) : null,
     service: server?.service ?? "browser",

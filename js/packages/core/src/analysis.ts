@@ -1,7 +1,10 @@
 import type { Span, Trace } from "./types.js";
+import { findSlowQueries, queryText, repeatableQueries } from "./db-findings.js";
 import { isErrorSpan } from "./trace.js";
 
-export type FindingKind = "duplicate-query" | "n+1-db" | "n+1-http" | "slow-query" | "error";
+export { dbSpans, findSlowQueries, isSessionStatement, queryText, WAIT_MIN_QUERIES, WAIT_SHAPE } from "./db-findings.js";
+
+export type FindingKind = "duplicate-query" | "n+1-db" | "n+1-http" | "slow-query" | "db-wait" | "error";
 
 export interface Finding {
   kind: FindingKind;
@@ -75,11 +78,9 @@ function groupBy<T>(items: readonly T[], key: (t: T) => string): Map<string, T[]
 }
 
 const sum = (spans: readonly Span[]) => spans.reduce((t, s) => t + s.durationMs, 0);
-export const queryText = (s: Span): string => String(s.attributes["db.query.text"] ?? s.name);
-const dbSpans = (t: Trace) => t.spans.filter((s) => s.category === "db");
 
 export function findDuplicateQueries(trace: Trace): Finding[] {
-  const groups = groupBy(dbSpans(trace), (s) => `${queryText(s)}\u0000${s.attributes["wizelens.db.parameters"] ?? ""}`);
+  const groups = groupBy(repeatableQueries(trace),(s) => `${queryText(s)}\u0000${s.attributes["wizelens.db.parameters"] ?? ""}`);
   const out: Finding[] = [];
   for (const spans of groups.values()) {
     if (spans.length < 2) continue;
@@ -98,7 +99,7 @@ export function findDuplicateQueries(trace: Trace): Finding[] {
 
 export function findNPlusOneDb(trace: Trace, minRepeats = 5): Finding[] {
   const out: Finding[] = [];
-  for (const [text, spans] of groupBy(dbSpans(trace), queryText)) {
+  for (const [text, spans] of groupBy(repeatableQueries(trace), queryText)) {
     if (spans.length < minRepeats) continue;
     out.push({
       kind: "n+1-db",
@@ -129,20 +130,6 @@ export function findNPlusOneHttp(trace: Trace, minRepeats = 5): Finding[] {
     });
   }
   return out;
-}
-
-export function findSlowQueries(trace: Trace, thresholdMs = 100): Finding[] {
-  return dbSpans(trace)
-    .filter((s) => s.durationMs >= thresholdMs)
-    .map((s) => ({
-      kind: "slow-query" as const,
-      severity: "warning" as const,
-      title: `Slow query: ${s.durationMs.toFixed(1)} ms`,
-      shape: queryText(s),
-      count: 1,
-      totalMs: s.durationMs,
-      spanIds: [s.spanId],
-    }));
 }
 
 export interface ErrorInfo {

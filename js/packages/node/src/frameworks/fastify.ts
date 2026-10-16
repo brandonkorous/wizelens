@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { context } from "@opentelemetry/api";
 import { captureOf } from "../adapters/registry.js";
-import { captureRequest, type CaptureDeps, type CapturedRequest, isOwnPath, pathOf, serveOwnPath } from "../request-capture.js";
+import { captureRequest, type CaptureDeps, type CapturedRequest, isOwnPath, isPreflight, pathOf, serveOwnPath } from "../request-capture.js";
 import { markRouted } from "../route-timing.js";
 import { recordOn } from "../spans.js";
 import type { WizeLens } from "../types.js";
@@ -35,7 +35,7 @@ const requests = new WeakMap<IncomingMessage, CapturedRequest>();
 function addHooks(app: FastifyLike, d: CaptureDeps): void {
   app.addHook("onRequest", (request, reply, done) => {
     const rawUrl = request.raw.url ?? "/";
-    if (isOwnPath(d, pathOf(rawUrl))) return done();
+    if (isOwnPath(d, pathOf(rawUrl)) || isPreflight(request.raw)) return done();
     const captured = captureRequest(d, request.raw, reply.raw, rawUrl, () => request.routeOptions?.url);
     requests.set(request.raw, captured);
     context.with(captured.ctx, () => done());

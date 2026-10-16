@@ -58,7 +58,7 @@ export function startConsumer(tracer: Tracer, m: MessageFacts, headers: Record<s
 }
 
 /** Now, on the same clock OTel uses, for a span start recorded before the span exists. */
-export const nowMs = (): number => performance.timeOrigin + performance.now();
+export { preciseNow as nowMs } from "../precise.js";
 
 /** Record a finished pull (`get`, `receiveMessages`): one receive span from `startedMs`, joined to the producer when one message came back. */
 export function recordReceive(tracer: Tracer, m: MessageFacts, headers: Record<string, unknown> | undefined, startedMs: number): void {

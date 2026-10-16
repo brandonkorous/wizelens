@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Clock, Lightbulb, TriangleAlert } from "lucide-react";
-import { type InsightGroup, insightGroups, percentChange, series } from "@wizeworks/lens-core";
+import { type InsightGroup, insightGroups, insightHeadline, percentChange } from "@wizeworks/lens-core";
 import { useWindowed } from "../../data/hooks";
 import { fmtCount, fmtMs } from "../../format";
 import { useRoute } from "../../routes";
@@ -24,13 +24,13 @@ function matches(g: InsightGroup, area: AreaFilter, impact: ImpactFilter, q: str
   return text.includes(q.toLowerCase());
 }
 
-function Cards({ groups, prev, compareLabel, starts }: { groups: InsightGroup[]; prev: InsightGroup[]; compareLabel: string; starts: (number | null)[] }) {
+function Cards({ groups, prev, compareLabel, found }: { groups: InsightGroup[]; prev: InsightGroup[]; compareLabel: string; found: ReturnType<typeof insightHeadline> }) {
   const high = groups.filter((g) => g.impact === "high").length;
   const totalMs = groups.reduce((t, g) => t + g.totalMs, 0);
   const prevMs = prev.reduce((t, g) => t + g.totalMs, 0);
   return (
     <div className="wl-grid wl-grid-stats">
-      <StatCard icon={Lightbulb} label="Insights Found" value={fmtCount(groups.length)} change={percentChange(groups.length, prev.length)} upIsGood={false} compareLabel={compareLabel} series={starts} />
+      <StatCard icon={Lightbulb} label="Insights Found" value={fmtCount(found.value)} change={found.change} upIsGood={false} compareLabel={compareLabel} series={found.series} />
       <StatCard icon={TriangleAlert} danger label="High Impact" value={fmtCount(high)} change={percentChange(high, prev.filter((g) => g.impact === "high").length)} upIsGood={false} compareLabel={compareLabel} />
       <StatCard icon={Clock} label="Time Involved" value={fmtMs(totalMs)} change={percentChange(totalMs, prevMs)} upIsGood={false} compareLabel={compareLabel} />
     </div>
@@ -45,13 +45,13 @@ export function InsightsPage() {
   const [q, setQ] = useState("");
   const groups = useMemo(() => insightGroups(win.traces), [win.traces]);
   const prev = useMemo(() => insightGroups(win.prevTraces), [win.prevTraces]);
-  const trend = useMemo(() => series(groups, (g) => g.lastSeenMs, win.window, BUCKETS), [groups, win.window]);
+  const found = useMemo(() => insightHeadline(groups, prev, win.window, BUCKETS), [groups, prev, win.window]);
   const visible = groups.filter((g) => matches(g, area, impact, q));
   const selected = key ? (groups.find((g) => g.key === key) ?? null) : null;
   return (
     <>
       <PageHeader title="Insights" subtitle="Problems WizeLens found in your requests and pages, ranked by impact." />
-      <Cards groups={groups} prev={prev} compareLabel={win.compareLabel} starts={trend} />
+      <Cards groups={groups} prev={prev} compareLabel={win.compareLabel} found={found} />
       <Panel className="wl-filters">
         <Select label="Area" value={area} onChange={setArea} options={[["all", "All Areas"], ["database", "Database"], ["http", "HTTP"], ["render", "Rendering"]]} />
         <Select label="Impact" value={impact} onChange={setImpact} options={[["all", "All Impacts"], ["high", "High"], ["medium", "Medium"], ["low", "Low"]]} />

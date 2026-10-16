@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { context } from "@opentelemetry/api";
-import { captureRequest, type CaptureDeps, isOwnPath, pathOf, serveOwnPath } from "./request-capture.js";
+import { captureRequest, type CaptureDeps, isOwnPath, isPreflight, pathOf, serveOwnPath } from "./request-capture.js";
 import { watchRoute } from "./route-timing.js";
 import { recordOn } from "./spans.js";
 import type { Next, Req } from "./types.js";
@@ -20,6 +20,7 @@ export function createMiddleware(d: CaptureDeps) {
     const r = req as Req;
     const rawUrl = r.originalUrl ?? r.url ?? "/";
     if (isOwnPath(d, pathOf(rawUrl))) return void serveOwnPath(d, req, res);
+    if (isPreflight(req)) return next();
     const { span, ctx, startedAt } = captureRequest(d, req, res, rawUrl, () => expressRoute(r));
     watchRoute(req, "route", span, startedAt);
     context.with(ctx, () => {

@@ -20,6 +20,11 @@ internal sealed class WizeLensMiddleware(RequestDelegate next, WizeLensOptions o
             await HandleOwnPathAsync(context, basePath);
             return;
         }
+        if (IsPreflight(context.Request))
+        {
+            await SkipAsync(context);
+            return;
+        }
 
         var selfEndpoint = SelfEndpoint(context, basePath);
         store.AddSelfEndpoint(selfEndpoint);
@@ -43,6 +48,17 @@ internal sealed class WizeLensMiddleware(RequestDelegate next, WizeLensOptions o
                 return;
             }
         }
+        await next(context);
+    }
+
+    /// <summary>A CORS preflight: sent before a cross-origin call, with no traceparent, so it is not traced.</summary>
+    internal static bool IsPreflight(HttpRequest request) =>
+        HttpMethods.IsOptions(request.Method) && request.Headers.ContainsKey("Access-Control-Request-Method");
+
+    private async Task SkipAsync(HttpContext context)
+    {
+        Activity.Current?.SetCustomProperty(WizeLensContext.IgnoreProperty, true);
+        WizeLensContext.Suppressed = true;
         await next(context);
     }
 

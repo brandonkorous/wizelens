@@ -88,7 +88,10 @@ export interface RouteRow {
   exampleTraceId: string;
 }
 
-type RouteNumbers = Pick<RouteRow, "avgRenderMs" | "avgSsrMs" | "avgLcpMs" | "avgCls" | "largeImages">;
+type RouteNumbers = Pick<RouteRow, "avgRenderMs" | "avgSsrMs" | "avgLcpMs" | "avgCls" | "largeImages"> & {
+  /** Render time of the same page loads that measured SSR, so the share compares like with like. */
+  avgSsrRenderMs?: number | null;
+};
 
 const sec = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 
@@ -103,7 +106,8 @@ export function routeIssues(r: RouteNumbers): { issue: RouteIssue; issues: strin
   if ((r.avgRenderMs ?? 0) > 1000) high.push(`Slow render (${sec(r.avgRenderMs!)})`);
   if (r.largeImages > 0) minor.push("Large images without lazy loading");
   const ssr = r.avgSsrMs ?? 0;
-  if (ssr > 200 && r.avgRenderMs && ssr / r.avgRenderMs > 0.3) minor.push(`Server render is ${Math.round((ssr / r.avgRenderMs) * 100)}% of render time`);
+  const render = r.avgSsrRenderMs ?? r.avgRenderMs;
+  if (ssr > 200 && render && ssr / render > 0.3) minor.push(`Server render is ${Math.min(100, Math.round((ssr / render) * 100))}% of render time`);
   return { issue: high.length ? "high" : minor.length ? "minor" : "none", issues: [...high, ...minor] };
 }
 
@@ -114,6 +118,7 @@ function routeRowOf(route: string, list: PageView[]): RouteRow {
     avgLcpMs: avgOf(measured(list, "lcpMs")),
     avgCls: avgOf(measured(list, "cls")),
     largeImages: Math.max(0, ...measured(list, "largeImages")),
+    avgSsrRenderMs: avgOf(measured(list.filter((v) => v.ssrMs !== null), "renderMs")),
   };
   const latest = list.reduce((a, b) => (b.startMs > a.startMs ? b : a));
   return {
@@ -190,11 +195,11 @@ export function renderInsightGroups(traces: readonly Trace[]): InsightGroup[] {
       area: "render",
       impact: c.impact,
       title: `Component hotspot: ${c.name}`,
-      description: `${c.issues.join("; ")}. ${c.renders} renders, ${Math.round(c.totalMs)} ms in total.`,
+      description: `${c.issues.join("; ")}. ${c.renders} renders, ${Math.round(c.selfMs)} ms in its own code.`,
       shape: c.name,
       occurrences: c.renders,
       count: c.renders,
-      totalMs: c.totalMs,
+      totalMs: c.selfMs,
       endpoints: c.routes,
       lastSeenMs: c.lastSeenMs,
       exampleTraceId: c.exampleTraceId,

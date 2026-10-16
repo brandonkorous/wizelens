@@ -113,7 +113,8 @@ export function DbTip({ req, view, href }: { req: RecordedRequest; view: Request
       {srv && srv.dbCount > 0 && (
         <dl>
           <Row label="Slowest query" ms={srv.dbSlowestMs} />
-          <Row label="Avg. query" ms={srv.dbMs === null ? null : srv.dbMs / srv.dbCount} />
+          <Row label="Avg. query" ms={srv.dbTotalMs === null ? null : srv.dbTotalMs / srv.dbCount} />
+          {srv.dbTotalMs !== null && srv.dbMs !== null && srv.dbTotalMs - srv.dbMs >= 1 && <Row label="All queries added up" ms={srv.dbTotalMs} />}
         </dl>
       )}
       <TipLink href={href}>View all queries</TipLink>

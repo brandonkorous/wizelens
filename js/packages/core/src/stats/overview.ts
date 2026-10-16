@@ -15,7 +15,8 @@ export interface RequestHeadlines {
   avgDuration: Headline;
   sqlQueries: Headline;
   errorRate: Headline;
-  insights: Headline;
+  /** Requests with at least one insight. Not the same as the distinct insights the Insights page lists. */
+  withInsights: Headline;
 }
 
 export const SPARK_BUCKETS = 24;
@@ -27,7 +28,7 @@ function headline(value: number | null, previous: number | null, trend: (number 
 
 const avgDuration = (rows: readonly RequestRow[]) => avgOf(rows.map((r) => r.durationMs));
 const sqlCount = (rows: readonly RequestRow[]) => sumOf(rows.map((r) => r.dbCount));
-const insightCount = (rows: readonly RequestRow[]) => sumOf(rows.map((r) => r.insights));
+const withInsights = (rows: readonly RequestRow[]) => rows.filter((r) => r.insights > 0);
 const errorRate = (rows: readonly RequestRow[]) => (rows.length ? percentOf(rows.filter(isFailed).length, rows.length) : null);
 const time = (r: RequestRow) => r.startMs;
 
@@ -47,7 +48,7 @@ export function requestHeadlines(rows: readonly RequestRow[], prevRows: readonly
     avgDuration: headline(avgDuration(rows), prev(avgDuration(prevRows)), series(rows, time, w, buckets, "avg", (r) => r.durationMs)),
     sqlQueries: headline(sqlCount(rows), prev(sqlCount(prevRows)), series(rows, time, w, buckets, "sum", (r) => r.dbCount)),
     errorRate: headline(errorRate(rows), prev(errorRate(prevRows)), errorRateSeries(rows, w, buckets)),
-    insights: headline(insightCount(rows), prev(insightCount(prevRows)), series(rows, time, w, buckets, "sum", (r) => r.insights)),
+    withInsights: headline(withInsights(rows).length, prev(withInsights(prevRows).length), series(withInsights(rows), time, w, buckets)),
   };
 }
 

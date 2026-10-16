@@ -51,6 +51,16 @@ public class CaptureTests
     }
 
     [Fact]
+    public async Task Cors_preflight_is_not_traced()
+    {
+        await using var app = await TestApp.StartAsync(a => a.MapGet("/items", () => "ok"));
+        using var preflight = new HttpRequestMessage(HttpMethod.Options, "/items");
+        preflight.Headers.Add("Access-Control-Request-Method", "GET");
+        var response = await app.Client.SendAsync(preflight);
+        Assert.False(response.Headers.Contains("X-WizeLens-Trace"));
+    }
+
+    [Fact]
     public void Tag_outside_a_request_does_nothing() => WizeLensRequest.Tag("lonely", "value");
 
     [Fact]

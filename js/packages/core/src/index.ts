@@ -5,4 +5,5 @@ export * from "./redact.js";
 export * from "./trace.js";
 export * from "./analysis.js";
 export * from "./health.js";
+export * from "./busy.js";
 export * from "./stats/index.js";

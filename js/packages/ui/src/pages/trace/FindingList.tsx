@@ -7,6 +7,7 @@ const LABELS: Record<FindingKind, string> = {
   "n+1-http": "N+1 HTTP",
   "duplicate-query": "Duplicate",
   "slow-query": "Slow query",
+  "db-wait": "Database wait",
 };
 
 /** Findings of one trace. A click selects the spans the finding is about. */

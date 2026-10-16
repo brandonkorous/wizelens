@@ -19,7 +19,7 @@ export function RequestsCards({ rows, prevRows, window, compareLabel }: Requests
       <StatCard icon={Layers} label="Total Requests" value={fmtCount(h.total.value)} change={h.total.change} upIsGood compareLabel={compareLabel} series={h.total.series} />
       <StatCard icon={Clock} label="Avg Duration" value={fmtMs(h.avgDuration.value)} change={h.avgDuration.change} upIsGood={false} compareLabel={compareLabel} series={h.avgDuration.series} />
       <StatCard icon={TriangleAlert} label="Error Rate" value={rows.length ? fmtPct(h.errorRate.value) : "–"} change={h.errorRate.change} upIsGood={false} compareLabel={compareLabel} series={h.errorRate.series} danger />
-      <StatCard icon={Lightbulb} label="Insights Found" value={fmtCount(h.insights.value)} change={h.insights.change} upIsGood={false} compareLabel={compareLabel} series={h.insights.series} />
+      <StatCard icon={Lightbulb} label="Requests With Insights" value={fmtCount(h.withInsights.value)} change={h.withInsights.change} upIsGood={false} compareLabel={compareLabel} series={h.withInsights.series} />
     </div>
   );
 }

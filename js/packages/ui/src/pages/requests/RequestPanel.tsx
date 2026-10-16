@@ -34,7 +34,7 @@ function Head({ r }: { r: RequestRow }) {
         <span>
           {fmtTime(r.startMs)} • {fmtDate(r.startMs)}
         </span>
-        <Badge tone={toneOfStatus(r.status)}>{statusText(r.status)}</Badge>
+        <Badge tone={toneOfStatus(r.status)}>{statusText(r.status, r.aborted)}</Badge>
         <strong className="wl-rq-duration">{fmtMs(r.durationMs)}</strong>
       </div>
     </>

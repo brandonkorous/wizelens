@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { context } from "@opentelemetry/api";
 import { HEADER_ENDPOINT, HEADER_TRACE } from "@wizeworks/lens-core";
 import { captureOf } from "../adapters/registry.js";
-import { captureRequest, isOwnPath, pathOf, serveOwnPath } from "../request-capture.js";
+import { captureRequest, isOwnPath, isPreflight, pathOf, serveOwnPath } from "../request-capture.js";
 import { watchRoute } from "../route-timing.js";
 import { recordOn } from "../spans.js";
 import type { WizeLens } from "../types.js";
@@ -37,6 +37,7 @@ export function wizelensKoa(wizelens: WizeLens) {
       ctx.respond = false;
       return serveOwnPath(d, ctx.req, ctx.res);
     }
+    if (isPreflight(ctx.req)) return void (await next());
     const route = () => (typeof ctx._matchedRoute === "string" ? ctx._matchedRoute : undefined);
     const { span, ctx: otelCtx, startedAt } = captureRequest(d, ctx.req, ctx.res, rawUrl, route);
     watchRoute(ctx, "_matchedRoute", span, startedAt);

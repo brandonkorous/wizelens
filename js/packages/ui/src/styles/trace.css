@@ -28,7 +28,7 @@
   text-transform: uppercase; line-height: 17px; white-space: nowrap; margin-left: 4px;
 }
 .wl-fbadge-error { background: var(--wl-error-soft); color: var(--wl-error); }
-.wl-fbadge-np1-db, .wl-fbadge-np1-http, .wl-fbadge-duplicate-query, .wl-fbadge-slow-query { background: var(--wl-amber-soft); color: var(--wl-amber-text); }
+.wl-fbadge-np1-db, .wl-fbadge-np1-http, .wl-fbadge-duplicate-query, .wl-fbadge-slow-query, .wl-fbadge-db-wait { background: var(--wl-amber-soft); color: var(--wl-amber-text); }
 .wl-cat {
   display: inline-block; width: 32px; text-align: center; font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
   border-radius: 4px; padding: 0 2px; line-height: 16px; flex: none; background: var(--wl-surface-2); color: var(--wl-muted);

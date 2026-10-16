@@ -18,6 +18,7 @@ function routes(wizelens: WizeLens) {
       res.json({ id: req.params.id, name: "Keyboard" });
     });
     a.get("/big", (_req, res) => res.type("text/plain").send("x".repeat(20_000)));
+    a.get("/slow", (_req, res) => void setTimeout(() => res.json({ ok: true }), 300));
     a.get("/bin", (_req, res) => res.type("application/octet-stream").send(Buffer.alloc(10)));
   };
 }
@@ -79,6 +80,22 @@ describe("request capture", () => {
   it("records client, headers, request id, and sizes", requestFacts);
   it("records tags and the user", tagsAndUser);
   it("keeps text and JSON bodies only when asked", keepsBodies);
+  it("skips CORS preflights", async () => {
+    const res = await fetch(`${off.base}/items/1`, { method: "OPTIONS", headers: { "access-control-request-method": "GET" } });
+    expect(res.headers.get("x-wizelens-trace")).toBeNull();
+    const plain = await fetch(`${off.base}/items/1`, { method: "OPTIONS" });
+    expect(plain.headers.get("x-wizelens-trace")).not.toBeNull();
+  });
+  it("marks a request the client left before the response", async () => {
+    await fetch(`${off.base}/slow`, { signal: AbortSignal.timeout(50) }).catch(() => undefined);
+    await new Promise((r) => setTimeout(r, 400));
+    const list = await getJson<{ traceId: string; rootUrl: string }[]>(`${off.base}/_wizelens/api/traces?limit=20`);
+    const t = await getJson<Trace>(`${off.base}/_wizelens/api/traces/${list.find((x) => x.rootUrl === "/slow")!.traceId}`);
+    const server = t.spans.find((s) => s.category === "http.server")!;
+    expect(server.attributes["wizelens.request.aborted"]).toBe(true);
+    expect(server.attributes["http.response.status_code"]).toBeUndefined();
+  });
+
   it("does nothing outside a request", () => {
     bodyOff.tag("x");
     bodyOff.setUser("y");

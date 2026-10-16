@@ -71,7 +71,7 @@ export function PanelResponse({ r, server }: { r: RequestRow; server: Span | und
       <h3 className="wl-section-title">Response</h3>
       <KeyValues
         rows={[
-          ["Status", <DotText tone={toneOfStatus(r.status)}>{statusText(r.status)}</DotText>],
+          ["Status", <DotText tone={toneOfStatus(r.status)}>{statusText(r.status, r.aborted)}</DotText>],
           ["Content type", type ? String(type) : "–"],
           ["Body size", fmtBytes(numberAttr(server, "http.response.body.size"))],
         ]}

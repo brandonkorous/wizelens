@@ -108,11 +108,11 @@ export function collectCommit(root: FiberLike, out: ComponentStats): void {
   }
 }
 
-/** The most expensive components first, at most `limit`. */
+/** Most own render time first, at most `limit`. Children are not counted, so wrappers do not crowd out real hotspots. */
 export function topComponents(stats: ComponentStats, limit = 50): ReactComponentStat[] {
   const round = (v: number) => Math.round(v * 100) / 100;
   return [...stats.values()]
-    .sort((a, b) => b.actualMs - a.actualMs || b.renders - a.renders)
+    .sort((a, b) => b.selfMs - a.selfMs || b.renders - a.renders)
     .slice(0, limit)
     .map((s) => ({ ...s, actualMs: round(s.actualMs), selfMs: round(s.selfMs) }));
 }

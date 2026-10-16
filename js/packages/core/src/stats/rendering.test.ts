@@ -26,6 +26,7 @@ describe("page views and routes", () => {
 
   it("flags server render that takes a large share", () => {
     expect(routeIssues({ avgRenderMs: 600, avgSsrMs: 300, avgLcpMs: null, avgCls: null, largeImages: 0 }).issues).toEqual(["Server render is 50% of render time"]);
+    expect(routeIssues({ avgRenderMs: 100, avgSsrMs: 300, avgSsrRenderMs: 600, avgLcpMs: null, avgCls: null, largeImages: 0 }).issues).toEqual(["Server render is 50% of render time"]);
   });
 
   it("computes phase averages and p75", () => {
@@ -54,7 +55,16 @@ describe("components", () => {
   });
 
   it("detects context and slow renders", () => {
-    expect(componentIssues({ renders: 10, actualMs: 200, wasted: 0, context: 6 }, 10)).toEqual(["Context value changes often", "Slow render"]);
+    expect(componentIssues({ renders: 10, selfMs: 200, wasted: 0, context: 6 }, 10)).toEqual(["Context value changes often", "Slow render"]);
+  });
+
+  it("ranks by own time, so wrappers and free components raise nothing", () => {
+    const wrapper = component("ErrorBoundary", { renders: 3, actualMs: 900, selfMs: 0.1 });
+    const real = component("PriceTable", { renders: 3, actualMs: 90, selfMs: 80 });
+    const free = component("c4", { renders: 400, actualMs: 0, selfMs: 0, context: 300 });
+    const rows = componentRows([makePageView({ components: [wrapper, real, free] })], 1);
+    expect(rows.map((r) => r.name)).toEqual(["PriceTable", "ErrorBoundary", "c4"]);
+    expect(rows.filter((r) => r.issues.length > 0).map((r) => r.name)).toEqual(["PriceTable"]);
   });
 });
 
@@ -62,7 +72,7 @@ describe("render insights", () => {
   it("turns route and component problems into insights", () => {
     const traces = [
       makePageView({ route: "/checkout", page: { renderMs: 1500, lcpMs: 5000 } }),
-      makePageView({ components: [component("Gallery", { renders: 4, actualMs: 100 })] }),
+      makePageView({ components: [component("Gallery", { renders: 4, actualMs: 100, selfMs: 100 })] }),
     ];
     const groups = renderInsightGroups(traces);
     expect(groups.map((g) => g.key)).toEqual(["render|route|/checkout", "render|component|Gallery"]);

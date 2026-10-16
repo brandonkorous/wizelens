@@ -1,4 +1,5 @@
 import type { Finding } from "./analysis.js";
+import { busyMs, busyWithin, totalMs } from "./busy.js";
 import { ATTR_BROWSER_RENDER_MS, browserTypeOf } from "./attributes.js";
 import { entryServerSpan } from "./trace.js";
 import { type Span, type Trace } from "./types.js";
@@ -38,8 +39,10 @@ export interface Timing {
   totalMs: number;
   /** Duration of the first server span. Null when the trace has no server span. */
   serverMs: number | null;
-  /** Database time in all services. */
+  /** Wall time with a query running, in all services. Queries that run together count once. */
   dbMs: number;
+  /** All query durations added up. More than dbMs when queries run together. */
+  dbTotalMs: number;
   dbCount: number;
   /** Slowest single query. */
   dbSlowestMs: number;
@@ -51,15 +54,14 @@ export interface Timing {
   server: {
     /** Time in the service's own code: not in its own queries or outbound calls. */
     codeMs: number;
-    /** The service's own queries. */
+    /** Wall time in the service's own queries. */
     dbMs: number;
-    /** The service's outbound HTTP calls (other services' time is in here). */
+    /** Wall time in the service's outbound HTTP calls (other services' time is in here). */
     httpOutMs: number;
     httpOutCount: number;
   } | null;
 }
 
-const sum = (spans: readonly Span[]) => spans.reduce((t, s) => t + s.durationMs, 0);
 const byStart = (a: Span, b: Span) => a.startMs - b.startMs;
 
 /** Where the time of one request went. */
@@ -73,16 +75,18 @@ export function traceTiming(trace: Pick<Trace, "spans" | "durationMs">): Timing 
   let server: Timing["server"] = null;
   if (root) {
     const own = trace.spans.filter((s) => s.service === root.service);
-    const ownDb = sum(own.filter((s) => s.category === "db"));
+    const ownDb = own.filter((s) => s.category === "db");
     const out = own.filter((s) => s.category === "http.client");
-    const httpOutMs = sum(out);
-    server = { codeMs: Math.max(0, root.durationMs - ownDb - httpOutMs), dbMs: ownDb, httpOutMs, httpOutCount: out.length };
+    // Only time inside the server span counts: an aborted request ends early while its handler keeps running.
+    const within = (spans: Span[]) => busyWithin(spans, root.startMs, root.startMs + root.durationMs);
+    server = { codeMs: Math.max(0, root.durationMs - within([...ownDb, ...out])), dbMs: within(ownDb), httpOutMs: within(out), httpOutCount: out.length };
   }
 
   return {
     totalMs: browser ? browser.durationMs + (renderMs ?? 0) : trace.durationMs,
     serverMs: root?.durationMs ?? null,
-    dbMs: sum(db),
+    dbMs: busyMs(db),
+    dbTotalMs: totalMs(db),
     dbCount: db.length,
     dbSlowestMs: Math.max(0, ...db.map((s) => s.durationMs)),
     renderMs,

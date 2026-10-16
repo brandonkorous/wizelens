@@ -48,4 +48,4 @@ const REASONS: Record<number, string> = {
 };
 
 /** "200 OK", "404 Not Found", or just the number. */
-export const statusText = (status: number | null): string => (status === null ? "No status" : REASONS[status] ? `${status} ${REASONS[status]}` : String(status));
+export const statusText = (status: number | null, aborted = false): string => (aborted ? "Aborted by the client" : status === null ? "No status" : REASONS[status] ? `${status} ${REASONS[status]}` : String(status));

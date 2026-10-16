@@ -22,6 +22,10 @@ const ADVICE: Record<string, Advice> = {
     why: "One query takes a large part of the request. Users wait for it, and it holds a connection while it runs.",
     fix: ["Look at the query plan (EXPLAIN) for full scans.", "Add an index on the columns in WHERE, JOIN, and ORDER BY.", "Read fewer rows or columns, and page large results."],
   },
+  "db-wait": {
+    why: "Several queries ran at the same time and all were slow. Each one alone is usually fast: they waited for a free connection, a lock, or a cold database.",
+    fix: ["Make the connection pool bigger, or run fewer queries at once (for example, not one Promise.all over many queries).", "If it happens only on the first request after start, open the pool at startup.", "Look for a long transaction that holds a lock the others need."],
+  },
   "render-route": {
     why: "Users see this page late or watch it move. Slow paints and layout shift both hurt how fast the page feels.",
     fix: ["Send less JavaScript on this route: split code and defer what is not needed for the first paint.", "Give images and embeds a fixed size so the layout does not jump.", "Use loading=\"lazy\" and right-sized images below the fold."],
