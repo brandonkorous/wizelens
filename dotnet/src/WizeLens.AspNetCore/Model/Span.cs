@@ -24,6 +24,7 @@ public static class SpanCategories
     public const string HttpServer = "http.server";
     public const string HttpClient = "http.client";
     public const string Db = "db";
+    public const string Messaging = "messaging";
     public const string Browser = "browser";
     public const string Internal = "internal";
 }

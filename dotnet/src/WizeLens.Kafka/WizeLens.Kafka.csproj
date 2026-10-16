@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Description>Kafka (Confluent.Kafka) adapter for WizeLens. Traces produce and process calls and carries the trace in message headers, so one trace follows a message across services.</Description>
+        <PackageTags>$(PackageTags);kafka;messaging</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Confluent.Kafka" Version="2.16.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="WizeLens.Tests" />
+    </ItemGroup>
+
+</Project>

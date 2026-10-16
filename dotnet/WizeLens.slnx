@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/WizeLens.AspNetCore/WizeLens.AspNetCore.csproj" />
     <Project Path="src/WizeLens.EntityFrameworkCore/WizeLens.EntityFrameworkCore.csproj" />
+    <Project Path="src/WizeLens.Kafka/WizeLens.Kafka.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/WizeLens.Tests/WizeLens.Tests.csproj" />

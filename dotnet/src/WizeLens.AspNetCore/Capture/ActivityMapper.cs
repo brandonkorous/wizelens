@@ -46,6 +46,9 @@ internal static class ActivityMapper
         span.Category = MapCategory(activity);
         span.Name = MapName(activity, span);
         span.Status = MapStatus(activity, span);
+        GrpcAttributes.Apply(span);
+        DriverActivities.Apply(span, activity.Source.Name);
+        MessagingActivities.Apply(span, activity);
         if (span.Status == SpanStatuses.Error && span.StatusMessage is null)
         {
             span.StatusMessage = span.Events.FirstOrDefault(e => e.Name == "exception")?.Attributes.GetValueOrDefault("exception.message") as string
@@ -89,7 +92,8 @@ internal static class ActivityMapper
     {
         var source = activity.Source.Name;
         if (source == AspNetCoreSource) return SpanCategories.HttpServer;
-        if (source == HttpClientSource) return SpanCategories.HttpClient;
+        if (source == HttpClientSource || source == ExternalSources.GrpcClient) return SpanCategories.HttpClient;
+        if (activity.GetTagItem("messaging.system") is not null || ExternalSources.IsMessaging(source)) return SpanCategories.Messaging;
         if (source == WizeLensRuntime.DbSourceName) return SpanCategories.Db;
         if (activity.GetTagItem("db.system.name") is not null || activity.GetTagItem("db.system") is not null) return SpanCategories.Db;
         if (activity.GetTagItem("http.request.method") is not null)

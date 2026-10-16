@@ -11,8 +11,15 @@
         <Company>WizeWorks</Company>
         <Copyright>Copyright (c) 2026 WizeWorks</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageProjectUrl>https://github.com/wizeworks/wizelens</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/brandonkorous/wizelens</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/brandonkorous/wizelens.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
+        <PackageReleaseNotes>https://github.com/brandonkorous/wizelens/blob/main/CHANGELOG.md</PackageReleaseNotes>
         <PackageTags>wizelens;glimpse;opentelemetry;tracing;diagnostics;aspnetcore;mcp</PackageTags>
         <Version>0.1.0-alpha.1</Version>
     </PropertyGroup>
+    <ItemGroup Condition="'$(IsPackable)' != 'false'">
+        <None Include="$(MSBuildThisFileDirectory)PACKAGE.md" Pack="true" PackagePath="\" Visible="false" />
+    </ItemGroup>
 </Project>

@@ -12,11 +12,15 @@ namespace WizeLens;
 
 public static class WizeLensExtensions
 {
+    private const string AzureActivitySwitch = "Azure.Experimental.EnableActivitySource";
+
     /// <summary>Registers WizeLens. Pair with <see cref="UseWizeLens"/>.</summary>
     public static IServiceCollection AddWizeLens(this IServiceCollection services, Action<WizeLensOptions>? configure = null)
     {
         var options = new WizeLensOptions();
         configure?.Invoke(options);
+        // Azure SDKs (Service Bus) only emit activities with this switch; leave it alone when the app set it.
+        if (options.Enabled != false && !AppContext.TryGetSwitch(AzureActivitySwitch, out _)) AppContext.SetSwitch(AzureActivitySwitch, true);
 
         services.AddSingleton(sp =>
         {
@@ -33,6 +37,7 @@ public static class WizeLensExtensions
         services.AddSingleton<WizeLensActivityListener>();
         services.AddHostedService(sp => sp.GetRequiredService<WizeLensActivityListener>());
         services.AddHostedService<EndpointObserver>();
+        services.AddHostedService<SqlClientObserver>();
         services.AddSingleton<ILoggerProvider, WizeLensLoggerProvider>();
 
         services.AddSingleton<TraceFederation>();

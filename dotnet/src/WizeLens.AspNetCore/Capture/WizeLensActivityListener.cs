@@ -12,7 +12,8 @@ internal sealed class WizeLensActivityListener(TraceStore store, WizeLensOptions
     public static bool IsProfiledSource(string name) =>
         name == ActivityMapper.AspNetCoreSource
         || name == ActivityMapper.HttpClientSource
-        || name.StartsWith("WizeLens", StringComparison.Ordinal);
+        || name.StartsWith("WizeLens", StringComparison.Ordinal)
+        || ExternalSources.IsListened(name);
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -24,8 +25,7 @@ internal sealed class WizeLensActivityListener(TraceStore store, WizeLensOptions
         _listener = new ActivityListener
         {
             ShouldListenTo = source => IsProfiledSource(source.Name),
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) =>
-                WizeLensContext.Suppressed ? ActivitySamplingResult.None : ActivitySamplingResult.AllDataAndRecorded,
+            Sample = Sample,
             ActivityStopped = OnStopped,
         };
         ActivitySource.AddActivityListener(_listener);
@@ -44,15 +44,27 @@ internal sealed class WizeLensActivityListener(TraceStore store, WizeLensOptions
         _listener = null;
     }
 
+    private static ActivitySamplingResult Sample(ref ActivityCreationOptions<ActivityContext> creation)
+    {
+        var source = creation.Source.Name;
+        if (WizeLensContext.Suppressed || ExternalSources.IsDuplicateDriverCall(source) || ExternalSources.IsOutsideRequest(source, creation))
+        {
+            return ActivitySamplingResult.None;
+        }
+        return ActivitySamplingResult.AllDataAndRecorded;
+    }
+
     private void OnStopped(Activity activity)
     {
         if (activity.GetCustomProperty(WizeLensContext.IgnoreProperty) is not null) return;
         if (activity.Parent?.GetCustomProperty(WizeLensContext.IgnoreProperty) is not null) return;
+        if (ExternalSources.IsNoise(activity)) return;
 
         try
         {
-            var span = ActivityMapper.ToSpan(activity, options.ServiceName ?? "app");
-            store.AddSpan(WizeLensRuntime.Redactor.Redact(span));
+            var service = options.ServiceName ?? "app";
+            var span = GrpcClientCalls.Complete(activity, service);
+            if (span is not null) store.AddSpan(WizeLensRuntime.Redactor.Redact(span));
         }
         catch
         {

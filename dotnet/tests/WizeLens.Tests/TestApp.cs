@@ -2,7 +2,9 @@ using System.Net.Http.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using WizeLens.Model;
+using WizeLens.Storage;
 using WizeLens.Web;
 
 namespace WizeLens.Tests;
@@ -23,10 +25,14 @@ internal sealed class TestApp : IAsyncDisposable
 
     public HttpClient Client { get; }
 
-    public static async Task<TestApp> StartAsync(Action<WebApplication> map, Action<WizeLensOptions>? configure = null)
+    public TraceStore Store => App.Services.GetRequiredService<TraceStore>();
+
+    public static async Task<TestApp> StartAsync(
+        Action<WebApplication> map, Action<WizeLensOptions>? configure = null, Action<IServiceCollection>? services = null)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Development" });
         builder.WebHost.UseTestServer();
+        services?.Invoke(builder.Services);
         builder.Services.AddWizeLens(o =>
         {
             o.ServiceName = "test-api";
