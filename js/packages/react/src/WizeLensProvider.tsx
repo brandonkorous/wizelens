@@ -51,7 +51,7 @@ export function useWizeLensRequests(): readonly RecordedRequest[] {
   return useSyncExternalStore(
     recorder?.subscribe ?? noopSubscribe,
     recorder?.getSnapshot ?? (() => EMPTY),
-    recorder?.getSnapshot ?? (() => EMPTY),
+    () => EMPTY,
   );
 }
 

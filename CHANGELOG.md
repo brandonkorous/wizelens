@@ -2,6 +2,13 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- **The HUD broke hydration in server-rendered apps** (Next.js) when its panel was open, it was minimized, or requests were kept
+  from the last page. It read those during the first render, which the server cannot do. The first render now matches the server; saved settings apply right after.
+
 ## [0.3.0-alpha.1] — Phase 3: the cloud
 
 The hosted service for many teams, and fixes found by running WizeLens in a large multi-pane React app with a Fastify API and Prisma.

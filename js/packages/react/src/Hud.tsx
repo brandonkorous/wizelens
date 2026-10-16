@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { DEFAULT_SLOW_MS } from "@wizeworks/lens-core";
 import { Card } from "./Card.js";
 import { Details } from "./Details.js";
-import { useEscape, useFlag, useInjectedStyle, usePageStats, useStored } from "./hud-hooks.js";
+import { useEscape, useInjectedStyle, usePageStats } from "./hud-hooks.js";
+import { useFlag, useStored } from "./hud-storage.js";
 import { currentRequest, endOf, ERROR_HOLD_MS, fmtMs, heldError, type RequestView, requestView } from "./hud-model.js";
 import { ApertureMark } from "./icons.js";
 import { dashboardLink, isPanel, type Panel } from "./panel-parts.js";
@@ -12,6 +13,9 @@ import { Settings } from "./Settings.js";
 
 const KEYS = { panel: "wizelens.hud.panel", live: "wizelens.hud.live", min: "wizelens.hud.min" };
 const isPanelOrNone = (v: string): v is Panel | "" => v === "" || isPanel(v);
+// The server has no requests, so hydration starts empty too.
+const NO_REQUESTS: readonly RecordedRequest[] = [];
+const noRequests = () => NO_REQUESTS;
 
 export interface HudProps {
   recorder: Recorder;
@@ -30,7 +34,7 @@ function useErrorHoldExpiry(held: RecordedRequest | null): void {
 }
 
 function useHudState(recorder: Recorder, slowMs: number) {
-  const requests = useSyncExternalStore(recorder.subscribe, recorder.getSnapshot, recorder.getSnapshot);
+  const requests = useSyncExternalStore(recorder.subscribe, recorder.getSnapshot, noRequests);
   const [panel, setPanel] = useStored<Panel | "">(KEYS.panel, "", isPanelOrNone);
   const [live, setLive] = useFlag(KEYS.live, true);
   const [minimized, setMinimized] = useFlag(KEYS.min, false);
