@@ -2,7 +2,7 @@
 
 export type SpanKind = "server" | "client" | "internal" | "producer" | "consumer";
 export type SpanStatus = "unset" | "ok" | "error";
-export type SpanCategory = "http.server" | "http.client" | "db" | "browser" | "internal";
+export type SpanCategory = "http.server" | "http.client" | "db" | "messaging" | "browser" | "internal";
 export type AttributeValue = string | number | boolean | null;
 export type Attributes = Record<string, AttributeValue>;
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "critical";

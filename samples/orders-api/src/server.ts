@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import express from "express";
-import { createWizeLens } from "@wizeworks/lens-node";
+import { createWizeLens, instrumentNodeSqlite } from "@wizeworks/lens-node";
 
 const PORT = Number(process.env.PORT ?? 5200);
 
@@ -15,9 +15,9 @@ const wizelens = createWizeLens({
 });
 const log = wizelens.logger;
 
-// 2. A small SQLite database. Every query goes through wizelens.traceDb (the driver-level floor).
+// 2. A small SQLite database. One call traces every query it runs.
 const db = new DatabaseSync(join(import.meta.dirname, "..", "orders.db"));
-const sqlite = { system: "sqlite", adapter: "node-sqlite", namespace: "orders" };
+instrumentNodeSqlite(wizelens, db);
 
 db.exec(`CREATE TABLE IF NOT EXISTS orders (
   id INTEGER PRIMARY KEY,
@@ -54,7 +54,7 @@ app.get("/orders", (req, res) => {
   const sql = "SELECT id, customer_id AS customerId, product, amount, created_at AS createdAt FROM orders WHERE customer_id = ? ORDER BY id";
   // Tags and the user show in the dashboard's request panel.
   wizelens.setUser(`customer-${customerId}`);
-  const rows = wizelens.traceDb(sqlite, sql, [customerId], () => db.prepare(sql).all(customerId));
+  const rows = db.prepare(sql).all(customerId);
   wizelens.tag("orders", rows.length === 0 ? "none" : "found");
   log.info(`found ${rows.length} orders`, { customerId });
   res.json(rows);
@@ -63,7 +63,7 @@ app.get("/orders", (req, res) => {
 app.get("/orders/:id", (req, res) => {
   const id = Number(req.params.id);
   const sql = "SELECT id, customer_id AS customerId, product, amount, created_at AS createdAt FROM orders WHERE id = ?";
-  const row = wizelens.traceDb(sqlite, sql, [id], () => db.prepare(sql).get(id));
+  const row = db.prepare(sql).get(id);
   if (!row) {
     res.status(404).json({ error: "order not found" });
     return;

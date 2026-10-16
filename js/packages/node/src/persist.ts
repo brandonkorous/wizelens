@@ -1,3 +1,4 @@
+import { untraced } from "./db.js";
 import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname } from "node:path";
@@ -45,6 +46,10 @@ export class SqlitePersister {
 
   /** Open the file, prune it, and load recent traces into the store. Returns false on failure. */
   open(): boolean {
+    return untraced(() => this.#openFile());
+  }
+
+  #openFile(): boolean {
     try {
       // Loaded lazily so `storage: "memory"` never touches node:sqlite.
       const { DatabaseSync } = require("node:sqlite") as typeof import("node:sqlite");
@@ -76,6 +81,10 @@ export class SqlitePersister {
 
   /** Write all changed traces in one transaction, then prune. Synchronous on purpose (safe in `exit`). */
   flush(): void {
+    untraced(() => this.#flushNow());
+  }
+
+  #flushNow(): void {
     const db = this.#db;
     const stmts = this.#stmts;
     if (!db || !stmts || this.#failed) return;

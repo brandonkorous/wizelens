@@ -28,6 +28,8 @@ export interface WizeLensOptions {
   uiDir?: string;
   /** Capture outgoing fetch / undici calls. Default true. */
   instrumentFetch?: boolean;
+  /** Database adapters also trace queries that run outside a request (startup, jobs). Default false. */
+  traceQueriesOutsideRequests?: boolean;
   /** Also write wizelens logs to the console. Default false. */
   logToConsole?: boolean;
   /** Where MCP audit lines go. Default console.info. */
@@ -51,6 +53,12 @@ export interface DbCallInfo {
   operation?: string;
   /** Override the parsed table / collection. */
   collection?: string;
+  /** Rows in a result that is not a plain array, for `db.response.returned_rows`. */
+  rowsOf?: (result: unknown) => number | undefined;
+  /** An ORM-level call: driver calls inside it are part of this span, not new ones. */
+  outermost?: boolean;
+  /** Skip the span when no request (or other span) is active. Set by the database adapters. */
+  requireParent?: boolean;
 }
 
 export type LogFn = (message: string, attributes?: Record<string, unknown>) => void;

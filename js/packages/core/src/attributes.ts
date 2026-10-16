@@ -74,3 +74,24 @@ export const REQUEST_HEADER_PREFIX = "http.request.header.";
 export const RESPONSE_HEADER_PREFIX = "http.response.header.";
 /** Internal span layer: "handler" for the controller action or endpoint handler. */
 export const ATTR_LAYER = "wizelens.layer";
+
+/** gRPC (OTel rpc conventions). gRPC spans keep the http.server / http.client categories and add these. */
+export const ATTR_RPC = {
+  system: "rpc.system",
+  service: "rpc.service",
+  method: "rpc.method",
+  grpcStatus: "rpc.grpc.status_code",
+} as const;
+
+/** Message queues (OTel messaging conventions). Producer spans send, consumer spans receive or process. */
+export const ATTR_MESSAGING = {
+  system: "messaging.system",
+  operation: "messaging.operation.type",
+  destination: "messaging.destination.name",
+  messageId: "messaging.message.id",
+  batchSize: "messaging.batch.message_count",
+  bodySize: "messaging.message.body.size",
+} as const;
+
+/** `messaging.operation.type` values used by the add-ons. */
+export type MessagingOperation = "send" | "receive" | "process";

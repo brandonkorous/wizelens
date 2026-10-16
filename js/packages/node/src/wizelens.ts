@@ -3,7 +3,8 @@ import { W3CTraceContextPropagator } from "@opentelemetry/core";
 import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS } from "@wizeworks/lens-core";
 import { createHandler } from "./api.js";
 import { createMiddleware } from "./capture.js";
-import { createTraceDb } from "./db.js";
+import { registerDbSpans } from "./adapters/registry.js";
+import { createDbSpans, createTraceDb } from "./db.js";
 import { disabledWizeLens } from "./disabled.js";
 import { createGetTrace } from "./federation.js";
 import { buildInfo, DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, VERSION } from "./info.js";
@@ -80,7 +81,8 @@ export function createWizeLens(options: WizeLensOptions): WizeLens {
   const basePath = normalizeBasePath(options.basePath);
   if (!(options.enabled ?? process.env.NODE_ENV !== "production")) return disabledWizeLens(options, basePath);
   const p = buildParts(options, basePath);
-  return {
+  const startDbSpan = createDbSpans(p.tracing.tracer, p.redactKeys, !!options.traceQueriesOutsideRequests);
+  const wizelens: WizeLens = {
     enabled: true,
     serviceName: p.service,
     basePath,
@@ -92,7 +94,7 @@ export function createWizeLens(options: WizeLensOptions): WizeLens {
     middleware: p.middleware,
     errorMiddleware: createErrorMiddleware(p.write, p.service),
     handler: p.handler,
-    traceDb: createTraceDb(p.tracing.tracer, p.redactKeys),
+    traceDb: createTraceDb(startDbSpan),
     logger: makeLogger(p.write, p.service),
     recordException,
     tag,
@@ -104,4 +106,6 @@ export function createWizeLens(options: WizeLensOptions): WizeLens {
       p.persister?.close();
     },
   };
+  registerDbSpans(wizelens, startDbSpan);
+  return wizelens;
 }

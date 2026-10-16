@@ -43,7 +43,7 @@ Monetization (open core): the add-on is MIT. Cloud and team features are paid. D
 
 - Request timeline (ASP.NET Core hosting / Express)
 - Outgoing HTTP (HttpClient / fetch via undici)
-- Database calls: driver level (`ProfiledDbConnection` for ADO.NET + Dapper, `traceDb()` for Node) and EF Core adapter
+- Database calls: driver level (`ProfiledDbConnection` for ADO.NET + Dapper; `pg`, `mysql2`, `better-sqlite3`, `node:sqlite`, and `traceDb()` for Node) and ORM adapters (EF Core; Prisma, TypeORM, Drizzle)
 - Logs per request (ILogger / console-free logger API)
 - Exceptions (ELMAH-style)
 - Browser: fetch spans linked to server traces
@@ -56,8 +56,8 @@ Monetization (open core): the add-on is MIT. Cloud and team features are paid. D
 
 ### Not in phase 1
 
-Local hub, cloud, auth beyond "dev only", persistence, gRPC, message queues, React render profiling,
-Web Vitals (planned for 1.x), more ORM adapters (Prisma, Drizzle, TypeORM, Dapper-specific extras).
+Local hub, cloud, auth beyond "dev only", gRPC, message queues. (Persistence, Web Vitals, React render
+profiling, and the Prisma / TypeORM / Drizzle adapters were added during phase 1.)
 
 ## Repo layout
 

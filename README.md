@@ -91,12 +91,26 @@ app.use(wizelens.middleware);            // traces requests + serves /_wizelens
 // ...your routes...
 app.use(wizelens.errorMiddleware);       // ELMAH-style error capture
 
-// Any database, any driver: wrap the call.
-const rows = wizelens.traceDb({ system: "postgresql", adapter: "pg" }, sql, params,
-  () => pool.query(sql, params));
+// Your database: one line, and every query is traced.
+import pg from "pg";
+import { instrumentPg } from "@wizeworks/lens-node";
+instrumentPg(wizelens, pg);
 ```
 
-Outgoing `fetch` calls are traced automatically.
+Outgoing `fetch` calls and Express routing time are traced automatically.
+
+| Library | One line |
+|---|---|
+| `pg` | `instrumentPg(wizelens, pg)` |
+| `mysql2` | `instrumentMysql2(wizelens, mysql)` |
+| `better-sqlite3` | `instrumentBetterSqlite3(wizelens, db)` |
+| `node:sqlite` | `instrumentNodeSqlite(wizelens, db)` |
+| Prisma | `prisma.$extends(prismaExtension(wizelens, { system: "postgresql" }))` |
+| TypeORM | `instrumentTypeOrm(wizelens, dataSource)` |
+| Drizzle | `instrumentDrizzle(wizelens, db)` (on `pg`, `mysql2`, `better-sqlite3`, or `node:sqlite`) |
+| Anything else | `wizelens.traceDb({ system: "postgresql" }, sql, params, () => run(sql, params))` |
+
+An ORM and the driver under it never count the same query twice. Queries outside a request (startup, jobs) are skipped unless you set `traceQueriesOutsideRequests: true`.
 
 ### React
 
@@ -171,13 +185,13 @@ Open any trace for the full detail: timeline, SQL, HTTP, logs, and errors. Searc
 |---|---|---|
 | Incoming requests | ✅ hosting activity | ✅ middleware |
 | Outgoing HTTP | ✅ `HttpClient` | ✅ `fetch` / undici |
-| Database (driver level) | ✅ `ProfiledDbConnection` — ADO.NET, Dapper, any provider | ✅ `traceDb()` — any driver |
-| Database (ORM) | ✅ EF Core | 🔜 Prisma, Drizzle, TypeORM |
+| Database (driver level) | ✅ `ProfiledDbConnection` — ADO.NET, Dapper, any provider | ✅ `pg`, `mysql2`, `better-sqlite3`, `node:sqlite`, and `traceDb()` for any other driver |
+| Database (ORM) | ✅ EF Core | ✅ Prisma, TypeORM, Drizzle |
 | Logs | ✅ `ILogger` | ✅ `wizelens.logger` |
 | Exceptions | ✅ | ✅ |
 | Request details | ✅ headers, client IP, user, request id, body sizes, tags | ✅ same; user and tags through `setUser()` / `tag()` |
 | Response bodies (opt-in) | ✅ `CaptureResponseBody` | ✅ `captureResponseBody` |
-| Routing and handler time | ✅ | 🔜 |
+| Routing and handler time | ✅ routing and handler | ✅ routing (Express) |
 | Browser | ✅ via `@wizeworks/lens-react`: fetch spans, render time, page views (TTFB, SSR, FCP, LCP, INP, CLS), hydration, slow images, React component renders, browser errors | |
 
 ### Persistence
@@ -301,6 +315,7 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 | `enableMcp` | `false` | Expose the read-only MCP endpoint. |
 | `redactKeys` | see above | Key fragments whose values are redacted. |
 | `instrumentFetch` | `true` | Trace outgoing `fetch` / undici calls. |
+| `traceQueriesOutsideRequests` | `false` | Database adapters also trace queries outside a request. |
 | `publicEndpoint` | auto | Override `X-WizeLens-Endpoint` (useful behind proxies). |
 | `audit` | `console.info` | Where MCP audit lines go. |
 | `slowQueryMs` / `nPlusOneThreshold` | `100` / `5` | Analysis thresholds. |
@@ -360,7 +375,7 @@ Open http://localhost:5173, click the buttons, then open http://localhost:5173/_
 | **2. Local hub** | One small service on your machine or network; every app sends to it | 🔜 Next |
 | **3. Cloud** | Hosted, team-wide history, alerts, and sharing | 🔭 Planned |
 
-Coming up in phase 1.x: more ORM adapters (Prisma, Drizzle, TypeORM, `pg`), routing time for Node, gRPC and message queues (RabbitMQ, Kafka, Azure Service Bus), and more languages.
+Coming up in phase 1.x: gRPC and message queues (RabbitMQ, Kafka, Azure Service Bus), and more languages.
 
 See **[docs/PLAN.md](docs/PLAN.md)** for the full plan.
 

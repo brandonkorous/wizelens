@@ -1,5 +1,13 @@
 export { createWizeLens } from "./wizelens.js";
 export type { DbCallInfo, LogFn, WizeLens, WizeLensLogger, WizeLensOptions } from "./wizelens.js";
+export { instrumentPg } from "./adapters/pg.js";
+export { instrumentMysql2 } from "./adapters/mysql2.js";
+export { instrumentBetterSqlite3, instrumentNodeSqlite } from "./adapters/sqlite.js";
+export { prismaExtension } from "./adapters/prisma.js";
+export type { PrismaOptions } from "./adapters/prisma.js";
+export { instrumentTypeOrm } from "./adapters/typeorm.js";
+export { instrumentDrizzle } from "./adapters/drizzle.js";
+export type { DrizzleDriver } from "./adapters/drizzle.js";
 export { TraceStore } from "./store.js";
 export type { StoredTrace, TraceChanges, TraceStoreOptions } from "./store.js";
 export { SqlitePersister } from "./persist.js";

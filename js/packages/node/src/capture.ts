@@ -13,6 +13,7 @@ import {
 import { type ResponseTap, tapResponse } from "./body-capture.js";
 import { appendExposeHeaders, firstHeader, sendJson } from "./http-util.js";
 import { headerAttributes, requestAttributes } from "./request-attributes.js";
+import { watchRoute } from "./route-timing.js";
 import { recordOn, SERVER_SPAN } from "./spans.js";
 import type { Next, Req } from "./types.js";
 
@@ -80,7 +81,9 @@ export function createMiddleware(d: CaptureDeps) {
     const rawUrl = r.originalUrl ?? r.url ?? "/";
     const path = rawUrl.split("?")[0] ?? "/";
     if (path === d.basePath || path.startsWith(d.basePath + "/")) return serveOwnPath(d, req, res);
+    const startedAt = performance.now();
     const { span, method, ctx } = startSpan(d, req, rawUrl, path);
+    watchRoute(req, span, startedAt);
     const endpoint = endpointFor(req, d);
     d.selfEndpoints.add(endpoint);
     res.setHeader(HEADER_TRACE, span.spanContext().traceId);
