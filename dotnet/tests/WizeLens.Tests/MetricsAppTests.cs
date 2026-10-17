@@ -71,10 +71,16 @@ public class MetricsAppTests
             o.HubHandler = hub;
         });
         var name = RecordAndCollect(app);
-        await app.App.Services.GetRequiredService<HubExporter>().TickAsync(CancellationToken.None);
+        var exporter = app.App.Services.GetRequiredService<HubExporter>();
 
-        List<JsonElement> metrics;
-        lock (hub.Bodies) metrics = [.. hub.Bodies.SelectMany(b => b.GetProperty("metrics").EnumerateArray())];
+        // The background loop may have taken the points and still be sending them, so wait for the hub to have them.
+        List<JsonElement> metrics = [];
+        for (var deadline = DateTime.UtcNow.AddSeconds(5); DateTime.UtcNow < deadline; await Task.Delay(50))
+        {
+            await exporter.TickAsync(CancellationToken.None);
+            lock (hub.Bodies) metrics = [.. hub.Bodies.SelectMany(b => b.GetProperty("metrics").EnumerateArray())];
+            if (metrics.Any(m => m.GetProperty("name").GetString() == name)) break;
+        }
         Assert.Contains(metrics, m => m.GetProperty("name").GetString() == name && m.GetProperty("monotonic").GetBoolean());
     }
 
