@@ -6,6 +6,7 @@ import {
   type Span,
   type SpanCategory,
   type SpanKind as ContractKind,
+  isDbCall,
   redactAttributes,
   toAttributeValue,
 } from "@wizeworks/lens-core";
@@ -31,8 +32,8 @@ function toAttributes(attrs: Record<string, unknown>): Attributes {
 function categoryOf(span: ReadableSpan, attrs: Attributes): SpanCategory {
   const forced = attrs[CATEGORY_ATTR];
   if (typeof forced === "string") return forced as SpanCategory;
-  if (attrs["db.system.name"] != null || attrs["db.system"] != null) return "db";
   if (attrs["messaging.system"] != null) return "messaging";
+  if (isDbCall(attrs)) return "db";
   if (span.kind === SpanKind.SERVER && attrs["rpc.system"] != null) return "http.server";
   if (span.kind === SpanKind.CLIENT && attrs["rpc.system"] != null) return "http.client";
   if (span.kind === SpanKind.SERVER && attrs["http.request.method"] != null) return "http.server";

@@ -116,6 +116,13 @@ export const HEADER_ENDPOINT = "X-WizeLens-Endpoint";
 export const HEADER_HOP = "X-WizeLens-Hop";
 export const HEADER_TRACEPARENT = "traceparent";
 export const MAX_FEDERATION_HOPS = 5;
+/** `Server-Timing` metrics that carry the trace id and endpoint to the page, which cannot read a document's headers. */
+export const TIMING_TRACE = "wl-trace";
+export const TIMING_ENDPOINT = "wl-endpoint";
+
+/** The `Server-Timing` value for one response. */
+export const serverTimingValue = (traceId: string, endpoint: string): string =>
+  `${TIMING_TRACE};desc=${traceId}, ${TIMING_ENDPOINT};desc=${JSON.stringify(endpoint)}`;
 export const DEFAULT_BASE_PATH = "/_wizelens";
 /** sessionStorage key that holds the per-tab session id. */
 export const SESSION_STORAGE_KEY = "wizelens.session";

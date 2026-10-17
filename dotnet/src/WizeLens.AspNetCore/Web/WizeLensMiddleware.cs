@@ -92,6 +92,8 @@ internal sealed class WizeLensMiddleware(RequestDelegate next, WizeLensOptions o
             headers[TraceHeader] = traceId;
             headers[EndpointHeader] = selfEndpoint;
             headers.Append("Access-Control-Expose-Headers", $"{TraceHeader}, {EndpointHeader}");
+            // A page cannot read its own document headers, but it can read Server-Timing. The page load joins this trace with it.
+            headers.Append("Server-Timing", $"wl-trace;desc={traceId}, wl-endpoint;desc=\"{selfEndpoint}\"");
             return Task.CompletedTask;
         });
     }
