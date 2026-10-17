@@ -36,9 +36,9 @@ function metricPart(b: Record<string, unknown>): Pick<RuleInput, "metric" | "met
   return { metric: "metric", metricName: name, metricStat: stat as RuleInput["metricStat"], metricService: service };
 }
 
-/** Check a rule from the request body. */
-async function ruleInput(ctx: Ctx): Promise<RuleInput> {
-  const b = await readJsonBody(ctx.req);
+/** Check a rule from the request body. A change sends only what it changes: the rest comes from `current`. */
+async function ruleInput(ctx: Ctx, current?: object): Promise<RuleInput> {
+  const b = { ...current, ...(await readJsonBody(ctx.req)) } as Record<string, unknown>;
   const metric = metricPart(b);
   if (b.op !== ">" && b.op !== "<") fail(400, 'Set op to ">" or "<".');
   const threshold = Number(b.threshold);
@@ -70,8 +70,9 @@ async function create(ctx: Ctx): Promise<void> {
 
 async function change(ctx: Ctx): Promise<void> {
   const { project } = await requireProject(ctx, ctx.params.project!, "write");
-  if (!(await ruleById(ctx.app.db, project.id, ctx.params.id!))) fail(404, "Alert rule not found.");
-  await updateRule(ctx.app.db, project.id, ctx.params.id!, await ruleInput(ctx));
+  const current = await ruleById(ctx.app.db, project.id, ctx.params.id!);
+  if (!current) fail(404, "Alert rule not found.");
+  await updateRule(ctx.app.db, project.id, ctx.params.id!, await ruleInput(ctx, current));
   sendJson(ctx.res, 200, await ruleById(ctx.app.db, project.id, ctx.params.id!));
 }
 

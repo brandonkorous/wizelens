@@ -59,3 +59,14 @@ it("refuses webhooks into private networks unless allowed", async () => {
   expect(await checkTarget("https://169.254.169.254/latest", false)).toMatch(/private/);
   expect(await checkTarget("http://127.0.0.1/hook", true)).toBeNull();
 });
+
+it("changes only the fields a PATCH sends", async () => {
+  let url: string;
+  ({ cloud, url } = await startCloud({ allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
+  const { owner, projectId } = await setupOwner(url);
+  const rule = { name: "Traffic", metric: "requests", op: ">", threshold: 5, windowMs: 900_000, channels: [{ kind: "webhook", url: "http://127.0.0.1:1/hook" }] };
+  const made = await owner.call<{ id: string }>("POST", `api/projects/${projectId}/alerts`, rule);
+  const changed = await owner.call("PATCH", `api/projects/${projectId}/alerts/${made.body.id}`, { threshold: 1000 });
+  expect(changed.status).toBe(200);
+  expect(changed.body).toMatchObject({ ...rule, threshold: 1000 });
+});

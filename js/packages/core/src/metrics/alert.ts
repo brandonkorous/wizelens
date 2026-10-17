@@ -4,6 +4,7 @@ import { metricBucketsOf, METRIC_ALERT_PARTS, type MetricAlertData, type MetricA
 import { metricAlertDataOf } from "./memory.js";
 import { displayOf, displayUnitOf, histStat, type MergedHistogram, mergeBuckets, mergeHistogram } from "./series.js";
 import type { MetricPoint } from "./types.js";
+import { type AlertNoticeState, conditionText } from "../models/alerts.js";
 
 /** What a metric alert rule reads over its window. */
 export const METRIC_ALERT_STATS = {
@@ -79,7 +80,7 @@ export function metricAlertUnit(sample: Pick<MetricPoint, "kind" | "monotonic" |
 }
 
 /** "http.server.request.duration p95 is 420 ms (above 300 ms)". */
-export function metricAlertMessage(name: string, stat: MetricAlertStat, op: ">" | "<", value: number | null, threshold: number, unit: string): string {
+export function metricAlertMessage(name: string, stat: MetricAlertStat, op: ">" | "<", value: number | null, threshold: number, unit: string, state: AlertNoticeState = "fired"): string {
   const shown = value === null ? "not measured" : fmtMetric(value, unit);
-  return `${name} ${METRIC_ALERT_STATS[stat].toLowerCase()} is ${shown} (${op === ">" ? "above" : "below"} ${fmtMetric(threshold, unit)})`;
+  return `${name} ${METRIC_ALERT_STATS[stat].toLowerCase()} is ${shown} (${conditionText(op, fmtMetric(threshold, unit), state)})`;
 }

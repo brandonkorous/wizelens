@@ -63,6 +63,9 @@ describe("TraceSampler in the store", () => {
     expect(store.get(other)!.spans).toHaveLength(1);
   });
 
+});
+
+describe("TraceSampler edge cases", () => {
   it("does not count a long browser span as slow", () => {
     const store = sampledStore();
     store.addSpan({ ...fakeSpan(OUT, 0), category: "browser", durationMs: 9000 });
