@@ -43,6 +43,9 @@ jobs:
       - name: Build JS packages and the dashboard
         run: pnpm build
 
+      - name: Build the marketing site (static export)
+        run: pnpm build:site
+
       - name: Test JS packages
         run: pnpm test
 

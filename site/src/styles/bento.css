@@ -1,0 +1,36 @@
+/* The bento grid and the tile frame. Each tile's art lives in tiles.css. */
+.wl-bento {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: minmax(300px, auto);
+  gap: 16px;
+  grid-template-areas:
+    "db db db db db db db rd rd rd rd rd"
+    "db db db db db db db er er er er er"
+    "lg lg lg lg lg mt mt mt mt mt mt mt"
+    "lg lg lg lg lg sv sv sv sv ck ck ck"
+    "sm sm sm sm sm sm rx rx rx rx rx rx";
+}
+.wl-tile { position: relative; display: flex; flex-direction: column; gap: 22px; padding: 28px; border-radius: var(--wl-radius); background: var(--wl-paper); border: 1px solid var(--wl-line); overflow: hidden; min-width: 0; }
+.wl-tile-text { display: grid; gap: 8px; max-width: 34em; }
+.wl-tile-text p { font-size: 15.5px; line-height: 1.5; color: var(--wl-fg-2); }
+.wl-tile-art { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; }
+.wl-tile-night { background: var(--wl-night); border-color: var(--wl-night); color: var(--wl-night-fg); }
+.wl-tile-night .wl-tile-text p { color: var(--wl-night-muted); }
+
+@media (max-width: 1080px) {
+  .wl-bento {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "db db"
+      "rd er"
+      "lg mt"
+      "lg sv"
+      "ck sm"
+      "rx rx";
+  }
+}
+@media (max-width: 680px) {
+  .wl-bento { grid-template-columns: minmax(0, 1fr); grid-template-areas: "db" "rd" "er" "lg" "mt" "sv" "ck" "sm" "rx"; grid-auto-rows: auto; }
+  .wl-tile { padding: 22px; }
+}

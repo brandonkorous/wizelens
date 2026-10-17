@@ -1,0 +1,51 @@
+/* Hero: headline, actions, and the demo stage with the fake app, HUD, and cursor. */
+.wl-hero { padding: clamp(120px, 15vw, 176px) 0 clamp(72px, 9vw, 120px); }
+.wl-hero-head { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 48px; align-items: end; }
+.wl-line-mask { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+.wl-line { display: block; }
+.wl-hero-side { display: grid; gap: 28px; padding-bottom: 10px; }
+.wl-hero-cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.wl-hero-note { font-size: 14px; color: var(--wl-muted); }
+
+.wl-stage { position: relative; margin-top: clamp(48px, 7vw, 88px); height: clamp(560px, 50vw, 640px); border-radius: 28px; background: var(--wl-paper); border: 1px solid var(--wl-line); overflow: hidden; transform-origin: 50% 0; }
+.wl-stage-hud { position: absolute; right: 24px; bottom: 24px; width: min(400px, calc(100% - 48px)); display: grid; gap: 10px; z-index: 2; }
+
+.wl-app { position: absolute; left: 28px; top: 28px; bottom: 28px; right: 28px; background: var(--wl-white); border: 1px solid var(--wl-line); border-radius: 16px; box-shadow: var(--wl-shadow); overflow: hidden; }
+.wl-app-bar { display: flex; align-items: center; height: 46px; padding: 0 16px; border-bottom: 1px solid var(--wl-line); background: var(--wl-paper); }
+.wl-app-url { padding: 5px 14px; border-radius: 999px; background: var(--wl-white); border: 1px solid var(--wl-line); font-size: 13px; color: var(--wl-muted); }
+.wl-app-body { padding: 26px 28px; max-width: 640px; }
+.wl-app-title { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; }
+.wl-app-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 12px; }
+.wl-app-btn { height: 36px; padding: 0 14px; border-radius: 9px; border: 1px solid var(--wl-line-strong); background: var(--wl-white); font-size: 14px; font-weight: 550; cursor: default; transition: transform 0.15s, background 0.15s; }
+.wl-app-btn-down { transform: scale(0.95); background: var(--wl-surface-2); }
+.wl-app-btn-danger { color: var(--wl-red); }
+.wl-app-status { height: 22px; font-size: 13.5px; color: var(--wl-muted); }
+.wl-app-status-err { color: var(--wl-red); }
+.wl-app-table { margin-top: 8px; border-top: 1px solid var(--wl-line); transition: opacity 0.2s; }
+.wl-app-loading { opacity: 0.35; }
+.wl-app-row { display: grid; grid-template-columns: 1.2fr 1.6fr 0.5fr 0.6fr; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--wl-line); font-size: 14px; color: var(--wl-fg-2); }
+.wl-app-row span:nth-child(2) { color: var(--wl-muted); }
+
+.wl-cursor { position: absolute; left: 0; top: 0; z-index: 3; width: 26px; height: 26px; margin: -4px 0 0 -6px; pointer-events: none; }
+.wl-cursor svg { width: 26px; height: 26px; fill: var(--wl-charcoal); stroke: var(--wl-white); stroke-width: 1.4; stroke-linejoin: round; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25)); }
+.wl-cursor-ring { position: absolute; left: -6px; top: -6px; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--wl-blue); }
+
+.wl-intro { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; }
+.wl-intro-mark { width: clamp(140px, 18vw, 220px); height: auto; }
+
+@media (max-width: 1080px) {
+  .wl-app-body { max-width: 52%; }
+  .wl-app-row { grid-template-columns: 1fr 0.4fr; }
+  .wl-app-row span:nth-child(2), .wl-app-row span:nth-child(4) { display: none; }
+}
+@media (max-width: 900px) {
+  .wl-hero-head { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+}
+@media (max-width: 760px) {
+  .wl-stage { height: 560px; border-radius: 20px; }
+  .wl-app { left: 12px; right: 12px; top: 12px; bottom: 12px; }
+  .wl-app-body { max-width: none; padding: 18px; }
+  .wl-stage-hud { left: 12px; right: 12px; bottom: 12px; width: auto; }
+  .wl-stage-hud .wl-hud-panel { display: none; }
+  .wl-hero-cta .wl-btn { flex: 1 1 auto; }
+}

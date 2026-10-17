@@ -1,0 +1,25 @@
+{
+  "name": "wizelens-site",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The WizeLens marketing site. A static Next.js export.",
+  "scripts": {
+    "dev": "next dev --port 5190",
+    "build": "tsc --noEmit -p tsconfig.json && next build",
+    "preview": "npx serve out -l 5191"
+  },
+  "dependencies": {
+    "motion": "^14.3.0",
+    "next": "^16.4.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^7.0.2"
+  }
+}

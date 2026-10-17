@@ -1,0 +1,54 @@
+import { Logo } from "@/components/brand/Logo";
+import { LINKS } from "@/lib/links";
+
+const COLUMNS = [
+  {
+    title: "Product",
+    links: [
+      { label: "How it works", href: "#journey" },
+      { label: "Insights", href: "#insights" },
+      { label: "AI access", href: "#ai" },
+      { label: "Install", href: "#install" },
+    ],
+  },
+  {
+    title: "Docs",
+    links: [
+      { label: "Getting started", href: LINKS.docs },
+      { label: "Wire contract", href: LINKS.contract },
+      { label: "Changelog", href: LINKS.changelog },
+    ],
+  },
+  {
+    title: "Project",
+    links: [
+      { label: "GitHub", href: LINKS.repo },
+      { label: "MIT license", href: LINKS.license },
+    ],
+  },
+];
+
+export function Footer() {
+  return (
+    <footer className="wl-footer wl-night">
+      <div className="wl-wrap wl-footer-grid">
+        <div className="wl-footer-brand">
+          <Logo />
+          <p>Deep insights for modern applications.</p>
+        </div>
+        {COLUMNS.map((c) => (
+          <nav key={c.title} aria-label={c.title}>
+            <h3>{c.title}</h3>
+            <ul>
+              {c.links.map((l) => <li key={l.label}><a href={l.href}>{l.label}</a></li>)}
+            </ul>
+          </nav>
+        ))}
+      </div>
+      <div className="wl-wrap wl-footer-base">
+        <span>© 2026 WizeWorks</span>
+        <span>Made by <b>WizeWorks</b>.</span>
+      </div>
+    </footer>
+  );
+}

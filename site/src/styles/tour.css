@@ -1,0 +1,17 @@
+/* Dashboard tour: tabs with a progress line, and the screenshot frame. */
+.wl-tour-tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-bottom: 20px; }
+.wl-tour-tab { position: relative; display: grid; gap: 4px; align-content: start; padding: 14px 14px 16px; border: 0; border-top: 2px solid var(--wl-line); background: none; text-align: left; cursor: pointer; overflow: hidden; }
+.wl-tour-tab b { font-size: 15px; font-weight: 650; color: var(--wl-muted); transition: color 0.3s; }
+.wl-tour-tab span { font-size: 13px; line-height: 1.4; color: var(--wl-muted); opacity: 0.8; }
+.wl-tour-tab:hover b, .wl-tour-on b { color: var(--wl-fg); }
+.wl-tour-progress { position: absolute; left: 0; right: 0; top: -2px; height: 2px; background: var(--wl-blue); transform-origin: 0 50%; }
+.wl-tour-frame { border-radius: var(--wl-radius); border: 1px solid var(--wl-line); background: var(--wl-paper); overflow: hidden; box-shadow: var(--wl-shadow-pop); }
+.wl-tour-bar { display: flex; align-items: center; height: 46px; padding: 0 16px; border-bottom: 1px solid var(--wl-line); }
+.wl-tour-shot { position: relative; aspect-ratio: 1538 / 784; background: var(--wl-white); }
+.wl-tour-shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+
+@media (max-width: 960px) {
+  .wl-tour-tabs { display: flex; overflow-x: auto; scrollbar-width: none; margin: 0 calc(var(--wl-gutter) * -1) 16px; padding: 0 var(--wl-gutter); }
+  .wl-tour-tab { flex: 0 0 auto; padding: 12px 14px; }
+  .wl-tour-tab span { display: none; }
+}

@@ -10,6 +10,8 @@
     "dev:orders": "pnpm --filter sample-orders-api dev",
     "dev:hub": "pnpm --filter @wizeworks/lens-hub start",
     "dev:cloud": "pnpm --filter @wizeworks/lens-cloud start",
-    "smoke:cloud": "node scripts/cloud-smoke.mjs"
+    "smoke:cloud": "node scripts/cloud-smoke.mjs",
+    "dev:site": "pnpm --filter wizelens-site dev",
+    "build:site": "pnpm --filter wizelens-site build"
   }
 }
