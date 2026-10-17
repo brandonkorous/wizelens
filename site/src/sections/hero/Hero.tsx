@@ -32,7 +32,7 @@ export function Hero() {
               SQL query, and the render, on one timeline. The problems are found for you.
             </p>
             <div className="wl-hero-cta">
-              <a href={LINKS.docs} className="wl-btn wl-btn-primary">Get started <ArrowRight /></a>
+              <a href={LINKS.start} className="wl-btn wl-btn-primary">Get started <ArrowRight /></a>
               <a href={LINKS.repo} className="wl-btn wl-btn-ghost"><GitHubIcon /> View on GitHub</a>
             </div>
             <p className="wl-hero-note">Open source under MIT. For .NET 10, Node, React, and Next.js.</p>

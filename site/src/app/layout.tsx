@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { Nav } from "@/components/nav/Nav";
+import { Footer } from "@/components/footer/Footer";
+import { Providers } from "@/lib/Providers";
 import "@/styles/tokens.css";
 import "@/styles/base.css";
 import "@/styles/nav.css";
@@ -16,6 +19,9 @@ import "@/styles/install.css";
 import "@/styles/grow.css";
 import "@/styles/stack.css";
 import "@/styles/closing.css";
+import "@/styles/docs.css";
+import "@/styles/prose.css";
+import "@/styles/search.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--wl-font-inter", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--wl-font-mono", display: "swap" });
@@ -25,7 +31,7 @@ const description =
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://wizelens.dev"),
-  title: "WizeLens: see what matters",
+  title: { default: "WizeLens: see what matters", template: "%s · WizeLens" },
   description,
   applicationName: "WizeLens",
   openGraph: { title: "WizeLens: see what matters", description, type: "website", siteName: "WizeLens" },
@@ -37,7 +43,13 @@ export const viewport: Viewport = { themeColor: "#ffffff", width: "device-width"
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${mono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <Providers>
+          <Nav />
+          {children}
+          <Footer />
+        </Providers>
+      </body>
     </html>
   );
 }

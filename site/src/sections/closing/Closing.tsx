@@ -33,7 +33,7 @@ export function Closing() {
         </h2>
         <p className="wl-lede">Better software starts with better visibility.</p>
         <div className="wl-hero-cta wl-closing-cta">
-          <a href={LINKS.docs} className="wl-btn wl-btn-primary">Get started <ArrowRight /></a>
+          <a href={LINKS.start} className="wl-btn wl-btn-primary">Get started <ArrowRight /></a>
           <a href={LINKS.repo} className="wl-btn wl-btn-ghost"><GitHubIcon /> Star on GitHub</a>
         </div>
       </div>

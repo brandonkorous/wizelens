@@ -1,0 +1,38 @@
+/* Rendered Markdown in the docs: type, lists, tables, callouts, and code. */
+.wl-prose { font-size: 16.5px; line-height: 1.7; color: var(--wl-fg-2); }
+.wl-prose > * + * { margin-top: 18px; }
+.wl-prose h2 { margin-top: 56px; font-size: 28px; line-height: 1.2; font-weight: 700; letter-spacing: -0.03em; color: var(--wl-fg); scroll-margin-top: 96px; }
+.wl-prose h3 { margin-top: 36px; font-size: 20px; line-height: 1.3; font-weight: 650; letter-spacing: -0.015em; color: var(--wl-fg); scroll-margin-top: 96px; }
+.wl-prose h4 { margin-top: 28px; font-size: 17px; font-weight: 650; color: var(--wl-fg); }
+.wl-prose h2 + *, .wl-prose h3 + * { margin-top: 12px; }
+.wl-anchor { margin-left: 10px; color: var(--wl-line-strong); font-weight: 500; opacity: 0; transition: opacity 0.2s; text-decoration: none !important; }
+.wl-prose h2:hover .wl-anchor, .wl-prose h3:hover .wl-anchor { opacity: 1; }
+.wl-prose a { color: var(--wl-accent-hover); text-decoration: underline; text-decoration-color: rgba(37, 99, 235, 0.3); text-underline-offset: 3px; }
+.wl-prose a:hover { text-decoration-color: currentColor; }
+.wl-prose strong { color: var(--wl-fg); font-weight: 650; }
+.wl-prose ul, .wl-prose ol { padding-left: 22px; }
+.wl-prose li + li { margin-top: 6px; }
+.wl-prose li::marker { color: var(--wl-muted); }
+.wl-prose hr { border: 0; border-top: 1px solid var(--wl-line); margin: 40px 0; }
+.wl-prose blockquote { margin: 24px 0; padding: 14px 18px; border-left: 3px solid var(--wl-blue); border-radius: 0 10px 10px 0; background: var(--wl-accent-soft); color: var(--wl-fg); }
+.wl-prose blockquote p { margin: 0; }
+
+.wl-prose :not(pre) > code { padding: 2px 6px; border-radius: 6px; background: var(--wl-surface-2); border: 1px solid var(--wl-line); font-size: 0.86em; color: var(--wl-fg); white-space: break-spaces; }
+.wl-pre { position: relative; }
+.wl-prose pre { margin: 0; padding: 18px 92px 18px 20px; border-radius: 14px; background: var(--wl-night) !important; font-size: 13.5px; line-height: 1.7; overflow-x: auto; scrollbar-width: thin; }
+.wl-prose pre code { font-size: inherit; }
+.wl-pre-copy { position: absolute; top: 10px; right: 10px; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: 1px solid var(--wl-night-line); border-radius: 8px; background: var(--wl-night-2); color: var(--wl-night-muted); font: 500 12.5px var(--wl-sans); cursor: pointer; opacity: 0; transition: opacity 0.2s, color 0.2s; }
+.wl-pre:hover .wl-pre-copy, .wl-pre-copy:focus-visible { opacity: 1; }
+.wl-pre-copy:hover { color: var(--wl-night-fg); }
+.wl-pre-copy svg { width: 14px; height: 14px; }
+
+.wl-prose table { display: block; width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 14.5px; line-height: 1.5; }
+.wl-prose th, .wl-prose td { padding: 10px 14px; border-bottom: 1px solid var(--wl-line); text-align: left; vertical-align: top; }
+.wl-prose th { font-size: 13.5px; font-weight: 650; color: var(--wl-fg); border-bottom-color: var(--wl-line-strong); white-space: nowrap; }
+.wl-prose td code { white-space: nowrap; }
+.wl-prose tr:hover td { background: var(--wl-paper); }
+
+@media (hover: none) {
+  .wl-pre-copy { opacity: 1; }
+}
+.wl-prose img { width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--wl-line); box-shadow: var(--wl-shadow); }

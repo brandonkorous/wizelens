@@ -5,16 +5,17 @@ const COLUMNS = [
   {
     title: "Product",
     links: [
-      { label: "How it works", href: "#journey" },
-      { label: "Insights", href: "#insights" },
-      { label: "AI access", href: "#ai" },
-      { label: "Install", href: "#install" },
+      { label: "How it works", href: "/#journey" },
+      { label: "Insights", href: "/#insights" },
+      { label: "AI access", href: "/#ai" },
+      { label: "Install", href: "/#install" },
     ],
   },
   {
     title: "Docs",
     links: [
-      { label: "Getting started", href: LINKS.docs },
+      { label: "Quick start", href: LINKS.start },
+      { label: "Configuration", href: "/docs/configuration/" },
       { label: "Wire contract", href: LINKS.contract },
       { label: "Changelog", href: LINKS.changelog },
     ],

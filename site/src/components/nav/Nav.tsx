@@ -7,10 +7,10 @@ import { GitHubIcon, MenuIcon } from "@/components/ui/icons";
 import { LINKS } from "@/lib/links";
 
 const ITEMS = [
-  { href: "#journey", label: "How it works" },
-  { href: "#inside", label: "Product" },
-  { href: "#ai", label: "AI access" },
-  { href: "#install", label: "Install" },
+  { href: "/#journey", label: "How it works" },
+  { href: "/#inside", label: "Product" },
+  { href: "/#ai", label: "AI access" },
+  { href: "/#install", label: "Install" },
   { href: LINKS.docs, label: "Docs" },
 ];
 
@@ -34,7 +34,7 @@ export function Nav() {
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="wl-wrap wl-nav-row">
-        <a href="#top" className="wl-nav-brand" aria-label="WizeLens home">
+        <a href="/" className="wl-nav-brand" aria-label="WizeLens home">
           <Logo live />
           <span className="wl-pill">Alpha</span>
         </a>
@@ -45,7 +45,7 @@ export function Nav() {
         </nav>
         <div className="wl-nav-actions">
           <a href={LINKS.repo} className="wl-nav-gh" aria-label="WizeLens on GitHub"><GitHubIcon /></a>
-          <a href={LINKS.docs} className="wl-btn wl-btn-primary wl-btn-sm">Get started</a>
+          <a href={LINKS.start} className="wl-btn wl-btn-primary wl-btn-sm">Get started</a>
           <button type="button" className="wl-nav-toggle" aria-expanded={open} aria-label="Menu" onClick={() => setOpen(!open)}>
             <MenuIcon open={open} />
           </button>
