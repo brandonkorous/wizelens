@@ -4,6 +4,23 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Next.js, page loads that join the server, and sampling
+
+- **Next.js:** `registerWizeLens()` from `@wizeworks/lens-node/next` in `instrumentation.ts`. Each request is one trace named by
+  its route, with Next.js's own render, route handler, and fetch steps inside it; the dashboard is served on the Next.js port with
+  no route file; `onRequestError` records server errors once, with a log line.
+- **The page load joins the server's trace.** Responses carry `Server-Timing: wl-trace;desc=…, wl-endpoint;desc="…"`; the page
+  load uses that trace id, and browser spans go to the server that holds their trace (same origin only). The HUD reads each
+  request from the server that answered it.
+- **Sampling** for the Node and .NET add-ons: `sampling: { rate }` / `Sampling.Rate` / `WIZELENS_SAMPLE_RATE`. The choice comes
+  from the trace id, so every service keeps the same traces; traces with an error or a slow server-side span are kept at any
+  rate. The Settings page shows it.
+- Fixed: database spans that name only the operation and table (Better Auth) now count as database calls.
+- Fixed: federation and hub sends are no longer recorded as app traffic under Next.js.
+- Fixed: the browser no longer records its own calls to another service's `/_wizelens` API.
+- Fixed: alert notices say what happened (`above 5`, `no longer above 5`, `alerts when above 5`), and `PATCH` on an alert rule
+  changes only the fields it sends.
+
 ### Stats from the database, with no read limits
 
 - **Hub and cloud pages are computed in the database.** A background job sums each finished trace into totals per 10 seconds,
