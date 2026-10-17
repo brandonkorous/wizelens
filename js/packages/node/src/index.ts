@@ -1,5 +1,6 @@
 export { createWizeLens } from "./wizelens.js";
 export type { DbCallInfo, LogFn, WizeLens, WizeLensLogger, WizeLensOptions } from "./wizelens.js";
+export type { SamplingOptions } from "./sampling.js";
 export { instrumentPg } from "./adapters/pg.js";
 export { instrumentMysql2 } from "./adapters/mysql2.js";
 export { instrumentBetterSqlite3, instrumentNodeSqlite } from "./adapters/sqlite.js";

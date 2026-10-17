@@ -1,4 +1,5 @@
 // Wire contract v0. See docs/CONTRACT.md.
+import type { SamplingInfo } from "./sampling.js";
 
 export type SpanKind = "server" | "client" | "internal" | "producer" | "consumer";
 export type SpanStatus = "unset" | "ok" | "error";
@@ -109,6 +110,8 @@ export interface ServiceInfo {
   project?: string;
   /** The hub this add-on sends to (its base URL), when one is set. */
   hub?: string;
+  /** Absent when the add-on keeps every trace. */
+  sampling?: SamplingInfo;
 }
 
 export const HEADER_TRACE = "X-WizeLens-Trace";

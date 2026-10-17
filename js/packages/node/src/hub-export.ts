@@ -1,4 +1,5 @@
 import { context, ROOT_CONTEXT } from "@opentelemetry/api";
+import { suppressTracing } from "@opentelemetry/core";
 import type { HubLog, HubRemote, HubSender, IngestBatch, MetricPoint, Span } from "@wizeworks/lens-core";
 import type { MetricStore } from "./metrics/store.js";
 import type { StoreEvent, TraceStore } from "./store.js";
@@ -117,8 +118,8 @@ export class HubExporter {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (this.#o.token) headers.Authorization = `Bearer ${this.#o.token}`;
     try {
-      // The root context keeps this call out of the app's own traces.
-      const res = await context.with(ROOT_CONTEXT, () =>
+      // Tracing off: no span at all, even from a framework fetch wrapper (Next.js).
+      const res = await context.with(suppressTracing(ROOT_CONTEXT), () =>
         fetch(`${this.url}/_wizelens/api/ingest`, { method: "POST", headers, body: JSON.stringify(batch), signal: AbortSignal.timeout(TIMEOUT_MS) }),
       );
       return res.ok;

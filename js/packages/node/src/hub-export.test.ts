@@ -65,3 +65,22 @@ describe("HubExporter", () => {
     expect(e.dropped).toBe(1);
   });
 });
+
+describe("HubExporter tracing", () => {
+  it("sends with tracing off, so no fetch wrapper (Next.js) traces the send", async () => {
+    const { context } = await import("@opentelemetry/api");
+    const { AsyncLocalStorageContextManager } = await import("@opentelemetry/context-async-hooks");
+    const { isTracingSuppressed } = await import("@opentelemetry/core");
+    context.setGlobalContextManager(new AsyncLocalStorageContextManager().enable());
+    const suppressed: boolean[] = [];
+    globalThis.fetch = vi.fn(async () => {
+      suppressed.push(isTracingSuppressed(context.active()));
+      return new Response(null, { status: 204 });
+    }) as typeof fetch;
+    const e = exporter({ now: 0 });
+    e.add({ type: "span", span: span("1".repeat(16)) });
+    await e.tick();
+    context.disable();
+    expect(suppressed).toEqual([true]);
+  });
+});

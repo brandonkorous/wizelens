@@ -8,6 +8,7 @@ import { createDbSpans, createTraceDb } from "./db.js";
 import { disabledWizeLens } from "./disabled.js";
 import { createGetTrace } from "./federation.js";
 import { connectHub } from "./hub-connect.js";
+import { samplingInfo, TraceSampler } from "./sampling.js";
 import { buildInfo, DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, VERSION } from "./info.js";
 import { createLogSink, createLogWriter, makeLogger } from "./logger.js";
 import { captureConsole } from "./logs/console.js";
@@ -56,7 +57,9 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   installGlobals();
   const service = options.serviceName;
   const redactKeys = options.redactKeys ?? DEFAULT_REDACT_KEYS;
-  const store = new TraceStore({ maxTraces: options.maxTraces ?? 2000, maxAgeMs: options.maxAgeMs });
+  const sampling = samplingInfo(options.sampling);
+  const sampler = sampling ? new TraceSampler(sampling) : undefined;
+  const store = new TraceStore({ maxTraces: options.maxTraces ?? 2000, maxAgeMs: options.maxAgeMs, sampler });
   const persister = openPersister(store, options);
   const selfEndpoints = new Set<string>(options.publicEndpoint ? [options.publicEndpoint] : []);
   const fetch = options.instrumentFetch ?? true;

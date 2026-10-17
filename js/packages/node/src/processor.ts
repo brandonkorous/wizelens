@@ -95,7 +95,9 @@ export class StoreSpanProcessor implements SpanProcessor {
   onStart(_span: SdkSpan, _parentContext: Context): void {}
 
   onEnd(span: ReadableSpan): void {
-    this.store.addSpan(toContractSpan(span, this.service, this.redactKeys));
+    // A local root has no parent, or a parent in another process.
+    const parent = span.parentSpanContext;
+    this.store.addSpan(toContractSpan(span, this.service, this.redactKeys), !parent || !!parent.isRemote);
   }
 
   forceFlush(): Promise<void> {

@@ -69,7 +69,7 @@ public static class WizeLensExtensions
         services.AddSingleton(sp =>
         {
             var wizelens = sp.GetRequiredService<WizeLensOptions>();
-            var store = new TraceStore(wizelens.MaxTraces);
+            var store = new TraceStore(wizelens.MaxTraces, wizelens.Sampling);
             // Serilog and NLog sinks are built before the host, so they find the store here.
             if (wizelens.IsEnabled) WizeLensLogBridge.Attach(store, wizelens);
             return store;

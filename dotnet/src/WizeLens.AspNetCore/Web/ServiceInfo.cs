@@ -31,5 +31,8 @@ internal static class ServiceInfo
             captureResponseBody = options.CaptureResponseBody,
             project = string.IsNullOrWhiteSpace(options.Project) ? null : options.Project,
             hub = options.NormalizedHubUrl,
+            sampling = options.Sampling.IsOn
+                ? new { rate = options.Sampling.ClampedRate, keepErrors = options.Sampling.KeepErrors, keepSlowMs = options.Sampling.KeepSlowMs }
+                : null,
         }, WizeLensJson.Options);
 }
