@@ -41,12 +41,13 @@ export function statusOf(requests: number, errorRate: number, p95Ms: number | nu
   return errorRate >= 1 || (p95Ms ?? 0) >= DEGRADED_P95_MS ? "degraded" : "healthy";
 }
 
-const failed = (s: Span) => isErrorSpan(s) || Number(s.attributes["http.response.status_code"] ?? 0) >= 500;
+/** A failed span: an error, or a 5xx response. */
+export const isFailedSpan = (s: Span): boolean => isErrorSpan(s) || Number(s.attributes["http.response.status_code"] ?? 0) >= 500;
 const str = (s: Span, k: string) => (s.attributes[k] == null ? null : String(s.attributes[k]));
 
 function rowOf(key: string, name: string, kind: ServiceKind, spans: Span[], detail: string | null): ServiceRow {
   const durations = spans.map((s) => s.durationMs);
-  const errors = spans.filter(failed).length;
+  const errors = spans.filter(isFailedSpan).length;
   const errorRate = percentOf(errors, spans.length);
   const p95Ms = percentileOf(durations, 95);
   return { key, name, kind, status: statusOf(spans.length, errorRate, p95Ms), requests: spans.length, errors, errorRate, avgMs: avgOf(durations), p95Ms, detail };
@@ -59,15 +60,14 @@ export function databaseOf(s: Span): string {
   return ns ? `${system} · ${ns}` : system;
 }
 
-/** Outbound calls that no WizeLens service answered. Keyed by host. */
-function externalCalls(traces: readonly Trace[]): Span[] {
-  const out: Span[] = [];
-  for (const t of traces) {
-    const answered = new Set(t.spans.filter((s) => s.category === "http.server" && s.parentSpanId).map((s) => s.parentSpanId));
-    for (const s of t.spans) if (s.category === "http.client" && !answered.has(s.spanId)) out.push(s);
-  }
-  return out;
+/** Outbound calls of one trace that no WizeLens service answered. */
+export function externalCallsOf(t: Trace): Span[] {
+  const answered = new Set(t.spans.filter((s) => s.category === "http.server" && s.parentSpanId).map((s) => s.parentSpanId));
+  return t.spans.filter((s) => s.category === "http.client" && !answered.has(s.spanId));
 }
+
+/** Outbound calls that no WizeLens service answered. Keyed by host. */
+const externalCalls = (traces: readonly Trace[]): Span[] => traces.flatMap(externalCallsOf);
 
 export function hostOf(s: Span): string {
   const full = str(s, "url.full");
@@ -117,23 +117,34 @@ function edgeTarget(s: Span, byParent: Map<string, Span>): string | null {
   return server ? server.service : s.category === "http.client" ? hostOf(s) : null;
 }
 
+/** One call from a service to a target, with the span that made it. */
+export interface EdgeCall {
+  from: string;
+  to: string;
+  span: Span;
+}
+
+/** The calls of one trace as edges: service → service, database, outside host, or queue; queue → worker. */
+export function edgeCallsOf(t: Trace): EdgeCall[] {
+  const calls: EdgeCall[] = [];
+  const byParent = new Map(t.spans.filter((s) => s.category === "http.server" && s.parentSpanId).map((s) => [s.parentSpanId!, s]));
+  for (const s of t.spans) {
+    const message = messagingEdge(s);
+    if (message) calls.push({ ...message, span: s });
+    const to = message ? null : edgeTarget(s, byParent);
+    if (to) calls.push({ from: s.category === "browser" ? "Web App" : s.service, to, span: s });
+  }
+  return calls;
+}
+
 /** Who calls whom: service → service, database, outside host, or queue; queue → worker; browser → service. */
 export function serviceEdges(traces: readonly Trace[]): ServiceEdge[] {
-  const calls: { from: string; to: string; span: Span }[] = [];
-  for (const t of traces) {
-    const byParent = new Map(t.spans.filter((s) => s.category === "http.server" && s.parentSpanId).map((s) => [s.parentSpanId!, s]));
-    for (const s of t.spans) {
-      const message = messagingEdge(s);
-      if (message) calls.push({ ...message, span: s });
-      const to = message ? null : edgeTarget(s, byParent);
-      if (to) calls.push({ from: s.category === "browser" ? "Web App" : s.service, to, span: s });
-    }
-  }
+  const calls = traces.flatMap(edgeCallsOf);
   return [...groupBy(calls, (c) => `${c.from}→${c.to}`).values()].map((list) => ({
     from: list[0]!.from,
     to: list[0]!.to,
     calls: list.length,
     avgMs: avgOf(list.map((c) => c.span.durationMs)),
-    errors: list.filter((c) => failed(c.span)).length,
+    errors: list.filter((c) => isFailedSpan(c.span)).length,
   }));
 }

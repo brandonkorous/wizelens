@@ -3,7 +3,10 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { ATTR_BROWSER_SESSION, type HubLog, type HubRemote, type HubSender, logKey, type MetricPoint, seriesKeyOf, type Span } from "@wizeworks/lens-core";
-import { HUB_SCHEMA, HUB_SCHEMA_VERSION, type HubStatements, prepareHubStatements } from "./schema.js";
+import { type HubStatements, prepareHubStatements } from "./schema.js";
+import { upgradeHubSchema } from "./schema-scale.js";
+import { pruneStats, type TraceStateRow } from "./settle.js";
+import { pruneMetricRollups, writeMetricRollups } from "./metrics-write.js";
 
 export interface HubStoreOptions {
   /** SQLite file, or ":memory:". */
@@ -44,6 +47,8 @@ export class HubStore {
   readonly path: string;
   readonly now: () => number;
   readonly #stmts: HubStatements;
+  /** Goes up whenever stats change (settle or prune), for cache keys. */
+  settleGen = 0;
 
   constructor(o: HubStoreOptions) {
     this.path = o.path;
@@ -54,8 +59,7 @@ export class HubStore {
     if (o.path !== ":memory:") mkdirSync(dirname(o.path), { recursive: true });
     this.db = new DatabaseSync(o.path);
     this.db.exec("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL; PRAGMA busy_timeout = 5000;");
-    this.db.exec(HUB_SCHEMA);
-    this.db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('schema', ?)").run(HUB_SCHEMA_VERSION);
+    upgradeHubSchema(this.db);
     this.#stmts = prepareHubStatements(this.db);
   }
 
@@ -87,6 +91,7 @@ export class HubStore {
     }
     for (const r of w.remotes) st.insertRemote.run(r.traceId, r.endpoint);
     for (const p of w.metrics ?? []) st.insertMetric.run(p.timeMs, project, env, p.service, p.name, hashKey(seriesKeyOf(p)), JSON.stringify(p));
+    writeMetricRollups(this.db, project, env, w.metrics ?? [], now);
   }
 
   #touchService(sender: HubSender, via: string, now: number): void {
@@ -99,24 +104,31 @@ export class HubStore {
     const cutoff = this.now() - this.maxAgeMs;
     const doomed = this.db
       .prepare(
-        `SELECT trace_id FROM traces WHERE start_ms < ?
-         UNION SELECT trace_id FROM (SELECT trace_id FROM traces ORDER BY start_ms DESC LIMIT -1 OFFSET ?)`,
+        `SELECT trace_id, project, env, contrib FROM traces WHERE trace_id IN (SELECT trace_id FROM traces WHERE start_ms < ?
+         UNION SELECT trace_id FROM (SELECT trace_id FROM traces ORDER BY start_ms DESC LIMIT -1 OFFSET ?))`,
       )
-      .all(cutoff, this.maxTraces) as { trace_id: string }[];
+      .all(cutoff, this.maxTraces) as unknown as TraceStateRow[];
     this.db.exec("BEGIN");
-    for (const table of ["traces", "spans", "logs", "remotes"]) {
-      const del = this.db.prepare(`DELETE FROM ${table} WHERE trace_id = ?`);
-      for (const r of doomed) del.run(r.trace_id);
+    try {
+      pruneStats(this, doomed);
+      for (const table of ["traces", "spans", "logs", "remotes"]) {
+        const del = this.db.prepare(`DELETE FROM ${table} WHERE trace_id = ?`);
+        for (const r of doomed) del.run(r.trace_id);
+      }
+      this.db.prepare("DELETE FROM services WHERE last_seen < ?").run(cutoff);
+      this.#pruneMetrics(cutoff);
+      this.db.exec("COMMIT");
+    } catch (err) {
+      this.db.exec("ROLLBACK");
+      throw err;
     }
-    this.db.prepare("DELETE FROM services WHERE last_seen < ?").run(cutoff);
-    this.#pruneMetrics(cutoff);
-    this.db.exec("COMMIT");
     return doomed.length;
   }
 
   /** Drop metric points past the age limit, then the oldest past the count limit. */
   #pruneMetrics(cutoff: number): void {
     this.db.prepare("DELETE FROM metrics WHERE time_ms < ?").run(cutoff);
+    pruneMetricRollups(this.db, this.now(), this.maxAgeMs);
     const edge = this.db.prepare("SELECT time_ms FROM metrics ORDER BY time_ms DESC LIMIT 1 OFFSET ?").get(this.maxMetricPoints) as { time_ms: number } | undefined;
     if (edge) this.db.prepare("DELETE FROM metrics WHERE time_ms <= ?").run(edge.time_ms);
   }

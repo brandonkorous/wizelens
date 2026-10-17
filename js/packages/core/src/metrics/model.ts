@@ -1,24 +1,22 @@
 import type { Sampled } from "../models/input.js";
-import { bucketStarts, type TimeRange, type TimeWindow, windowOf } from "../stats/common.js";
-import type { Attributes } from "../types.js";
+import { bucketStarts, type TimeRange, type TimeWindow } from "../stats/common.js";
 import { fmtMetric, METRIC_AREAS, type MetricArea, metricAreaOf } from "./format.js";
+import { metricBucketsOf, METRIC_BUCKETS, METRIC_SPARK_BUCKETS, type MetricData, type MetricSeriesData } from "./from-rollups.js";
+import { metricDataOf } from "./memory.js";
 import { RUNTIME_METRICS } from "./runtime.js";
-import { type Buckets, bucketSeries, displayOf, displayUnitOf, type HistogramStat, histStat, lineOf, type MetricDisplay, mergeBuckets } from "./series.js";
-import { type MetricKind, type MetricPoint, seriesKeyOf } from "./types.js";
+import { type Buckets, displayOf, displayUnitOf, type HistogramStat, histStat, lineOf, type MetricDisplay, mergeBuckets } from "./series.js";
+import type { MetricKind, MetricPoint } from "./types.js";
 
-export const METRIC_BUCKETS = 60;
-export const METRIC_SPARK_BUCKETS = 24;
 const MAX_LINES = 10;
 const STATS: readonly HistogramStat[] = ["p50", "p95", "p99", "avg"];
 
-/** What the metrics page is computed from. Hosts read the points of the window, newest first, at most a cap. */
+/** In-app hosts compute the metrics page from raw points in the browser, through the same model as hubs and the cloud. */
 export interface MetricsInput {
   points: readonly MetricPoint[];
   range: TimeRange;
   now: number;
   /** `metric`, `service`, `group` (an attribute key or "service"), `stat` (p50, p95, p99, avg), `q` (name search). */
   params: Readonly<Record<string, string>>;
-  sampled?: Sampled | null;
 }
 
 export interface MetricInfo {
@@ -68,6 +66,7 @@ export interface RuntimeStat {
 }
 
 export interface MetricsModel {
+  /** `sampled` is always null: hosts read rollups, never a capped set of points. It stays for older clients. */
   meta: { range: TimeRange; window: TimeWindow; sampled: Sampled | null; points: number };
   services: string[];
   catalog: MetricInfo[];
@@ -75,76 +74,71 @@ export interface MetricsModel {
   runtime: { service: string; stats: RuntimeStat[] }[];
 }
 
-type SeriesMap = Map<string, MetricPoint[]>;
+type Series = readonly MetricSeriesData[];
 
-/** Points of the window by metric name, then by series, each sorted by time. */
-function groupPoints(points: readonly MetricPoint[], w: TimeWindow): Map<string, SeriesMap> {
-  const out = new Map<string, SeriesMap>();
-  for (const p of points) {
-    if (p.timeMs < w.from || p.timeMs >= w.to) continue;
-    const byName = out.get(p.name) ?? new Map<string, MetricPoint[]>();
-    out.set(p.name, byName);
-    const key = seriesKeyOf(p);
-    const list = byName.get(key);
-    if (list) list.push(p);
-    else byName.set(key, [p]);
+function byName(series: Series): Map<string, MetricSeriesData[]> {
+  const out = new Map<string, MetricSeriesData[]>();
+  for (const s of series) {
+    const list = out.get(s.name);
+    if (list) list.push(s);
+    else out.set(s.name, [s]);
   }
-  for (const byName of out.values()) for (const list of byName.values()) list.sort((a, b) => a.timeMs - b.timeMs);
   return out;
 }
 
 const lastOf = (values: readonly (number | null)[]): number | null => [...values].reverse().find((v) => v != null) ?? null;
 const statOf = (p: Readonly<Record<string, string>>): HistogramStat => (STATS.includes(p.stat as HistogramStat) ? (p.stat as HistogramStat) : "p95");
+const ofService = (series: Series, service?: string) => series.filter((s) => !service || s.service === service);
 
-function merged(series: SeriesMap, w: TimeWindow, n: number, service?: string): Buckets {
-  const list = [...series.values()].filter((s) => !service || s[0]!.service === service);
-  return mergeBuckets(list.map((s) => bucketSeries(s, w, n)), n);
+/** Several series as one, over the spark or the line buckets. */
+function merged(series: Series, which: "spark" | "line", service?: string): Buckets {
+  const n = which === "spark" ? METRIC_SPARK_BUCKETS : METRIC_BUCKETS;
+  return mergeBuckets(ofService(series, service).map((s) => metricBucketsOf(displayOf(s), s[which], n)), n);
 }
 
 /** The newest value: gauges use their latest points as they are; rates and histograms the newest bucket. */
-function lastValue(series: SeriesMap, w: TimeWindow, stat: HistogramStat, service?: string): number | null {
-  const list = [...series.values()].filter((s) => !service || s[0]!.service === service);
+function lastValue(series: Series, stat: HistogramStat, service?: string): number | null {
+  const list = ofService(series, service);
   if (list.length === 0) return null;
-  if (displayOf(list[0]![0]!) === "value") return list.reduce((t, s) => t + (s.at(-1)!.value ?? 0), 0) / list.length;
-  return lastOf(lineOf(merged(series, w, METRIC_BUCKETS, service), stat));
+  if (displayOf(list[0]!) === "value") return list.reduce((t, s) => t + (s.total.lastV ?? 0), 0) / list.length;
+  return lastOf(lineOf(merged(list, "line"), stat));
 }
 
-function infoOf(name: string, series: SeriesMap, w: TimeWindow, stat: HistogramStat): MetricInfo {
-  const all = [...series.values()];
-  const latest = all.map((s) => s.at(-1)!).reduce((a, b) => (b.timeMs > a.timeMs ? b : a));
+function infoOf(name: string, series: Series, stat: HistogramStat): MetricInfo {
+  const latest = series.reduce((a, b) => (b.total.lastMs > a.total.lastMs ? b : a));
   const display = displayOf(latest);
   const displayUnit = displayUnitOf(latest.unit, display);
-  const spark = lineOf(merged(series, w, METRIC_SPARK_BUCKETS), stat);
-  const last = lastValue(series, w, stat);
-  const services = [...new Set(all.map((s) => s[0]!.service))].sort();
-  const base = { name, kind: latest.kind, unit: latest.unit, displayUnit, display, description: latest.description ?? "", area: metricAreaOf(name) };
-  return { ...base, services, series: all.length, last, lastText: fmtMetric(last, displayUnit), spark };
+  const spark = lineOf(merged(series, "spark"), stat);
+  const last = lastValue(series, stat);
+  const services = [...new Set(series.map((s) => s.service))].sort();
+  const base = { name, kind: latest.kind, unit: latest.unit, displayUnit, display, description: latest.description, area: metricAreaOf(name) };
+  return { ...base, services, series: series.length, last, lastText: fmtMetric(last, displayUnit), spark };
 }
 
-function groupValue(p: MetricPoint, groupBy: string): string {
-  if (groupBy === "service") return p.service;
-  const v = p.attributes[groupBy];
+function groupValue(s: MetricSeriesData, groupBy: string): string {
+  if (groupBy === "service") return s.service;
+  const v = s.attributes[groupBy];
   return v === null || v === undefined ? "(none)" : String(v);
 }
 
-function seriesLabel(attrs: Attributes, service: string, showService: boolean): string {
-  const parts = Object.entries(attrs).map(([k, v]) => `${k}=${v}`);
-  if (showService) parts.unshift(service);
-  return parts.join(" · ") || service;
+function seriesLabel(s: MetricSeriesData, showService: boolean): string {
+  const parts = Object.entries(s.attributes).map(([k, v]) => `${k}=${v}`);
+  if (showService) parts.unshift(s.service);
+  return parts.join(" · ") || s.service;
 }
 
 /** The lines of one metric: one per series, or one per value of `groupBy`. The biggest come first. */
-function linesOf(series: SeriesMap, w: TimeWindow, groupBy: string, stat: HistogramStat): { lines: MetricLine[]; hidden: number } {
-  const groups = new Map<string, MetricPoint[][]>();
-  const showService = new Set([...series.values()].map((s) => s[0]!.service)).size > 1;
-  for (const s of series.values()) {
-    const label = groupBy ? groupValue(s[0]!, groupBy) : seriesLabel(s[0]!.attributes, s[0]!.service, showService);
+function linesOf(series: Series, groupBy: string, stat: HistogramStat): { lines: MetricLine[]; hidden: number } {
+  const groups = new Map<string, MetricSeriesData[]>();
+  const showService = new Set(series.map((s) => s.service)).size > 1;
+  for (const s of series) {
+    const label = groupBy ? groupValue(s, groupBy) : seriesLabel(s, showService);
     const list = groups.get(label);
     if (list) list.push(s);
     else groups.set(label, [s]);
   }
   const lines = [...groups].map(([label, list]) => {
-    const values = lineOf(mergeBuckets(list.map((s) => bucketSeries(s, w, METRIC_BUCKETS)), METRIC_BUCKETS), stat);
+    const values = lineOf(merged(list, "line"), stat);
     return { label, values, size: values.reduce<number>((t, v) => t + Math.abs(v ?? 0), 0) };
   });
   lines.sort((a, b) => b.size - a.size || a.label.localeCompare(b.label));
@@ -157,63 +151,64 @@ function summaryOf(values: readonly (number | null)[]): MetricDetail["summary"] 
   return { last: lastOf(values), min: Math.min(...vs), max: Math.max(...vs), avg: vs.reduce((t, v) => t + v, 0) / vs.length };
 }
 
-function detailOf(name: string, series: SeriesMap, w: TimeWindow, p: Readonly<Record<string, string>>): MetricDetail {
+function detailOf(name: string, series: Series, w: TimeWindow, p: Readonly<Record<string, string>>): MetricDetail {
   const stat = statOf(p);
-  const services = new Set([...series.values()].map((s) => s[0]!.service));
-  const attrKeys = new Set([...series.values()].flatMap((s) => Object.keys(s[0]!.attributes)));
+  const services = new Set(series.map((s) => s.service));
+  const attrKeys = new Set(series.flatMap((s) => Object.keys(s.attributes)));
   const groupKeys = [...(services.size > 1 ? ["service"] : []), ...[...attrKeys].sort()];
   const groupBy = groupKeys.includes(p.group ?? "") ? p.group! : "";
-  const all = merged(series, w, METRIC_BUCKETS);
+  const all = merged(series, "line");
   const hist = all.display === "percentiles";
   const seconds = (w.to - w.from) / METRIC_BUCKETS / 1000;
   return {
-    ...infoOf(name, series, w, stat),
+    ...infoOf(name, series, stat),
     stat,
     groupBy,
     groupKeys,
     buckets: bucketStarts(w, METRIC_BUCKETS),
-    ...linesOf(series, w, groupBy, stat),
+    ...linesOf(series, groupBy, stat),
     percentiles: hist ? (Object.fromEntries(STATS.map((s) => [s, all.hists.map((h) => histStat(h, s))])) as Record<HistogramStat, (number | null)[]>) : null,
     countRate: hist ? all.hists.map((h) => (h ? h.count / seconds : null)) : null,
-    summary: { ...summaryOf(lineOf(all, stat)), last: lastValue(series, w, stat) },
+    summary: { ...summaryOf(lineOf(all, stat)), last: lastValue(series, stat) },
   };
 }
 
-function runtimeOf(byName: Map<string, SeriesMap>, services: readonly string[], w: TimeWindow): MetricsModel["runtime"] {
+function runtimeOf(names: Map<string, MetricSeriesData[]>, services: readonly string[]): MetricsModel["runtime"] {
   return services.flatMap((service) => {
     const stats = RUNTIME_METRICS.flatMap((def) => {
-      const name = def.names.find((n) => [...(byName.get(n)?.values() ?? [])].some((s) => s[0]!.service === service));
+      const name = def.names.find((n) => names.get(n)?.some((s) => s.service === service));
       if (!name) return [];
-      const series = byName.get(name)!;
-      const b = merged(series, w, METRIC_SPARK_BUCKETS, service);
-      const unit = displayUnitOf([...series.values()][0]![0]!.unit, b.display);
+      const series = names.get(name)!;
+      const b = merged(series, "spark", service);
+      const unit = displayUnitOf(series[0]!.unit, b.display);
       const spark = lineOf(b, def.stat ?? "p95");
-      const last = lastValue(series, w, def.stat ?? "p95", service);
+      const last = lastValue(series, def.stat ?? "p95", service);
       return [{ key: def.key, label: def.label, metric: name, unit, last, lastText: fmtMetric(last, unit), spark }];
     });
     return stats.length > 0 ? [{ service, stats }] : [];
   });
 }
 
-/** The metrics page: the list of metrics, the runtime strip per service, and the chosen metric's chart. */
-export function metricsModel(i: MetricsInput): MetricsModel {
-  const w = windowOf(i.range, i.now);
-  const service = i.params.service || "";
-  const points = service ? i.points.filter((p) => p.service === service) : i.points;
-  const byName = groupPoints(points, w);
-  const stat = statOf(i.params);
-  const q = (i.params.q ?? "").toLowerCase();
-  const catalog = [...byName]
+/** The metrics page from rollup data: the list of metrics, the runtime strip per service, and the chosen metric's chart. */
+export function metricsModelOf(d: MetricData): MetricsModel {
+  const service = d.params.service || "";
+  const names = byName(d.series);
+  const stat = statOf(d.params);
+  const q = (d.params.q ?? "").toLowerCase();
+  const catalog = [...names]
     .filter(([name]) => !q || name.toLowerCase().includes(q))
-    .map(([name, series]) => infoOf(name, series, w, stat))
+    .map(([name, series]) => infoOf(name, series, stat))
     .sort((a, b) => METRIC_AREAS.indexOf(a.area) - METRIC_AREAS.indexOf(b.area) || a.name.localeCompare(b.name));
-  const services = [...new Set(i.points.map((p) => p.service))].sort();
-  const chosen = i.params.metric && byName.get(i.params.metric);
+  const chosen = d.params.metric && names.get(d.params.metric);
+  const points = Math.round(d.series.reduce((t, s) => t + s.total.cnt, 0));
   return {
-    meta: { range: i.range, window: w, sampled: i.sampled ?? null, points: points.length },
-    services,
+    meta: { range: d.range, window: d.window, sampled: null, points },
+    services: d.services,
     catalog,
-    selected: chosen ? detailOf(i.params.metric!, chosen, w, i.params) : null,
-    runtime: runtimeOf(byName, service ? [service] : services, w),
+    selected: chosen ? detailOf(d.params.metric!, chosen, d.window, d.params) : null,
+    runtime: runtimeOf(names, service ? [service] : d.services),
   };
 }
+
+/** The metrics page from raw points (in-app hosts): rollups are built in memory first. */
+export const metricsModel = (i: MetricsInput): MetricsModel => metricsModelOf(metricDataOf(i.points, i.range, i.now, i.params));

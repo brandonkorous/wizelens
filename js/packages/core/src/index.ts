@@ -10,3 +10,4 @@ export * from "./busy.js";
 export * from "./stats/index.js";
 export * from "./models/index.js";
 export * from "./metrics/index.js";
+export * from "./scale/index.js";

@@ -144,4 +144,4 @@ export function requestRows(traces: readonly Trace[]): RequestRow[] {
   return rows.sort((a, b) => b.startMs - a.startMs);
 }
 
-export const isFailed = (r: RequestRow): boolean => r.errors > 0 || (r.status ?? 0) >= 500;
+export const isFailed = (r: Pick<RequestRow, "errors" | "status">): boolean => r.errors > 0 || (r.status ?? 0) >= 500;

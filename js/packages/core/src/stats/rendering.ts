@@ -2,7 +2,7 @@ import { ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_ROUTE, ATTR_PAGE, browserTypeOf }
 import type { Span, Trace } from "../types.js";
 import { avgOf, groupBy, type Impact, percentileOf } from "./common.js";
 import type { InsightGroup } from "./insights.js";
-import { componentRows } from "./rendering-components.js";
+import { type ComponentRow, componentRows } from "./rendering-components.js";
 
 export * from "./rendering-components.js";
 
@@ -165,7 +165,8 @@ export function renderPhases(views: readonly PageView[], stat: PhaseStat): Rende
 
 const ROUTE_IMPACT: Record<RouteIssue, Impact> = { high: "high", minor: "medium", none: "low" };
 
-function routeInsight(r: RouteRow): InsightGroup {
+/** The insight of a route with issues. */
+export function routeInsight(r: RouteRow): InsightGroup {
   return {
     key: `render|route|${r.route}`,
     kind: "render",
@@ -183,26 +184,29 @@ function routeInsight(r: RouteRow): InsightGroup {
   };
 }
 
+/** The insight of a component with issues. */
+export function componentInsight(c: ComponentRow): InsightGroup {
+  return {
+    key: `render|component|${c.name}`,
+    kind: "render",
+    area: "render",
+    impact: c.impact,
+    title: `Component hotspot: ${c.name}`,
+    description: `${c.issues.join("; ")}. ${c.renders} renders, ${Math.round(c.selfMs)} ms in its own code.`,
+    shape: c.name,
+    occurrences: c.renders,
+    count: c.renders,
+    totalMs: c.selfMs,
+    endpoints: c.routes,
+    lastSeenMs: c.lastSeenMs,
+    exampleTraceId: c.exampleTraceId,
+  };
+}
+
 /** Insights from page views and React renders (slow routes, layout shift, re-rendering components). */
 export function renderInsightGroups(traces: readonly Trace[]): InsightGroup[] {
   const views = pageViews(traces);
   const routes = routeRows(views).filter((r) => r.issue !== "none").map(routeInsight);
-  const components = componentRows(traces, views.length)
-    .filter((c) => c.issues.length > 0)
-    .map<InsightGroup>((c) => ({
-      key: `render|component|${c.name}`,
-      kind: "render",
-      area: "render",
-      impact: c.impact,
-      title: `Component hotspot: ${c.name}`,
-      description: `${c.issues.join("; ")}. ${c.renders} renders, ${Math.round(c.selfMs)} ms in its own code.`,
-      shape: c.name,
-      occurrences: c.renders,
-      count: c.renders,
-      totalMs: c.selfMs,
-      endpoints: c.routes,
-      lastSeenMs: c.lastSeenMs,
-      exampleTraceId: c.exampleTraceId,
-    }));
+  const components = componentRows(traces, views.length).filter((c) => c.issues.length > 0).map(componentInsight);
   return [...routes, ...components];
 }

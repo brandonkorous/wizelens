@@ -1,7 +1,11 @@
-import { requestHeadlines, type RequestHeadlines } from "../stats/overview.js";
-import type { RequestRow } from "../stats/requests.js";
-import { type ModelInput, type ModelMeta, metaOf, pageOf } from "./input.js";
-import { applyFilter, filterFromQuery, isFiltered, isSortKey, optionsOf, sortRows } from "./request-filter.js";
+import type { RequestItem } from "../scale/facts-lists.js";
+import { splitKey } from "../scale/kinds.js";
+import type { KeyFilter, ListFilter, Need, PageData, PageDef } from "../scale/needs.js";
+import { SPARK_BUCKETS, type RequestHeadlines } from "../stats/overview.js";
+import { headlineNeeds, headlinesFrom, headlinesOf } from "./headlines.js";
+import { META_NEEDS, type ModelMeta, type ModelParams, metaOf, pageParams } from "./input.js";
+import { groupNeed, listNeed, listOf, rowsOf, uniqueNeeds } from "./read.js";
+import { DURATION_OPTIONS, filterFromQuery, isFiltered, isSortKey, type RequestFilter } from "./request-filter.js";
 
 export interface RequestsModel {
   meta: ModelMeta;
@@ -9,30 +13,75 @@ export interface RequestsModel {
   options: { methods: string[]; services: string[] };
   filtered: boolean;
   /** The rows of this page, after filter and sort. */
-  rows: RequestRow[];
+  rows: RequestItem[];
   total: number;
   page: number;
   pageSize: number;
   /** The `trace` parameter's request, when it is in the range. */
-  selected: RequestRow | null;
+  selected: RequestItem | null;
 }
 
-/** The Requests page. Params: method, status, duration, service, q, sort, desc, page, size, trace. */
-export function requestsModel(i: ModelInput): RequestsModel {
-  const filter = filterFromQuery(i.params);
-  const rows = applyFilter(i.requests, filter);
-  const sort = { key: isSortKey(i.params.sort) ? i.params.sort : "time", desc: i.params.desc !== "0" } as const;
-  const paged = pageOf(sortRows(rows, sort), i.params, 15);
-  const id = i.params.trace;
-  return {
-    meta: metaOf(i),
-    headlines: requestHeadlines(rows, applyFilter(i.prevRequests, filter), i.window),
-    options: optionsOf(i.requests),
-    filtered: isFiltered(filter),
-    rows: paged.items,
-    total: paged.total,
-    page: paged.page,
-    pageSize: paged.pageSize,
-    selected: id ? (i.requests.find((r) => r.traceId === id) ?? null) : null,
-  };
+const DURATION_KEYS = new Set(DURATION_OPTIONS.map(([k]) => k).filter(Boolean));
+
+/** The filter as list filters, leaving out empty values and unknown durations (which filter nothing). */
+export function requestListFilter(f: RequestFilter): ListFilter {
+  const out: ListFilter = {};
+  for (const k of ["method", "status", "service", "q"] as const) if (f[k]) out[k] = f[k];
+  if (DURATION_KEYS.has(f.duration)) out.duration = f.duration;
+  return out;
 }
+
+/** The filter as key parts of `req.dim` (method, status class, failed, duration), or of `req.svc` with the service first. */
+export function requestKeyFilter(f: RequestFilter): KeyFilter | undefined {
+  const status = f.status === "failed" ? null : f.status || null;
+  const parts = [f.method || null, status, f.status === "failed" ? "1" : null, DURATION_KEYS.has(f.duration) ? f.duration : null];
+  const all = f.service ? [f.service, ...parts] : parts;
+  return all.some((p) => p !== null) ? { parts: all } : undefined;
+}
+
+const sortOf = (p: ModelParams) => ({ key: isSortKey(p.sort) ? p.sort : "time", desc: p.desc !== "0" });
+
+function needs(p: ModelParams): Need[] {
+  const f = filterFromQuery(p);
+  const filter = requestListFilter(f);
+  const q = f.q.trim() !== "";
+  const out: Need[] = [
+    ...META_NEEDS,
+    listNeed("rows", "requests", "cur", { filter, sort: sortOf(p), page: pageParams(p, 15), ...(q ? { aggregate: { buckets: SPARK_BUCKETS } } : {}) }),
+    groupNeed("opt.dim", "req.dim", "cur"),
+    groupNeed("opt.svc", "req.svc", "cur"),
+  ];
+  if (q) out.push(listNeed("prev", "requests", "prev", { filter, limit: 0, aggregate: { buckets: SPARK_BUCKETS } }));
+  else out.push(...headlineNeeds("h", f.service ? "req.svc" : "req.dim", requestKeyFilter(f)));
+  if (p.trace) out.push(listNeed("selected", "requests", "cur", { filter: { traceId: p.trace }, limit: 1 }));
+  return uniqueNeeds(out);
+}
+
+function headlinesOfPage(d: PageData): RequestHeadlines {
+  const cur = listOf(d, "rows").aggregate;
+  const prev = listOf(d, "prev").aggregate;
+  if (!cur || !prev) return headlinesFrom(d, "h");
+  return headlinesOf(cur.total, prev.total, cur.series);
+}
+
+const distinct = (values: readonly string[]): string[] => [...new Set(values)].sort();
+
+/** The Requests page. Params: method, status, duration, service, q, sort, desc, page, size, trace. */
+export const requestsPage: PageDef<RequestsModel> = {
+  needs: (ctx) => needs(ctx.params),
+  model(d) {
+    const list = listOf<RequestItem>(d, "rows");
+    const services = rowsOf(d, "opt.svc").filter((r) => (r.agg.c[2] ?? 0) > 0);
+    return {
+      meta: metaOf(d),
+      headlines: headlinesOfPage(d),
+      options: { methods: distinct(rowsOf(d, "opt.dim").map((r) => splitKey(r.key)[0]!)), services: distinct(services.map((r) => splitKey(r.key)[0]!)) },
+      filtered: isFiltered(filterFromQuery(d.params)),
+      rows: list.items,
+      total: list.total ?? list.items.length,
+      page: list.page,
+      pageSize: list.pageSize,
+      selected: d.params.trace ? (listOf<RequestItem>(d, "selected").items[0] ?? null) : null,
+    };
+  },
+};

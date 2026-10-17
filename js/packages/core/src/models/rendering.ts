@@ -1,14 +1,14 @@
-import { browserTypeOf } from "../attributes.js";
-import { avgOf, bucketIndex, bucketStarts, percentChange, percentileOf, series, type TimeWindow } from "../stats/common.js";
-import { type ComponentRow, componentRows, componentStatsOf } from "../stats/rendering-components.js";
-import { measured, type PageView, pageViews, type PhaseStat, type RenderPhase, renderPhases, type RouteRow, routeRows } from "../stats/rendering.js";
-import type { Trace } from "../types.js";
+import { type Agg, avgOfAgg } from "../scale/agg.js";
+import { histPercentile } from "../scale/hist.js";
+import type { Need, NeedResults, PageData, PageDef } from "../scale/needs.js";
+import { bucketStarts, percentChange } from "../stats/common.js";
+import type { ComponentRow, PhaseStat, RenderPhase, RouteRow } from "../stats/rendering.js";
 import { MODEL_LIST_MAX } from "./database.js";
-import { type ModelInput, type ModelMeta, metaOf } from "./input.js";
+import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
+import { aggByKey, avgs, counts, groupNeed, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
+import { componentNeeds, componentRowsOf, routeNeeds, routeRowsOf, viewsOf } from "./render-rows.js";
 
 export const RENDER_BUCKETS = 24;
-
-type Series = (number | null)[];
 
 export interface RenderCard {
   value: number | null;
@@ -29,63 +29,73 @@ export interface RenderingModel {
   cards: { render: RenderCard; ssr: RenderCard; hydration: RenderCard; issues: RenderCard };
 }
 
-function avgSeries(views: readonly PageView[], w: TimeWindow, key: keyof PageView): Series {
-  const list = views.filter((v) => typeof v[key] === "number");
-  return series(list, (v) => v.startMs, w, RENDER_BUCKETS, "avg", (v) => v[key] as number);
+const PHASES: { key: string; phase: string; label: string; kind: RenderPhase["kind"] }[] = [
+  { key: "ssr", phase: "ssr", label: "Server-side rendering (SSR)", kind: "ms" },
+  { key: "client", phase: "client", label: "Client render", kind: "ms" },
+  { key: "hydration", phase: "hydration", label: "Hydration", kind: "ms" },
+  { key: "images", phase: "image", label: "Image loading", kind: "ms" },
+  { key: "cls", phase: "cls", label: "Layout shift", kind: "score" },
+];
+
+const p75 = (a: Agg | undefined): number | null => (a?.hist ? histPercentile(a.hist, a.n, 75) : null);
+const avg = (a: Agg | undefined): number | null => (a ? avgOfAgg(a) : null);
+
+function phasesOf(d: NeedResults, stat: PhaseStat): RenderPhase[] {
+  const by = aggByKey(d, "pv.g.cur");
+  return PHASES.map((p) => ({ key: p.key, label: p.label, value: (stat === "avg" ? avg : p75)(by.get(p.phase)), kind: p.kind }));
 }
 
-function p75Series(views: readonly PageView[], w: TimeWindow): Series {
-  const buckets: number[][] = Array.from({ length: RENDER_BUCKETS }, () => []);
-  for (const v of views) {
-    const i = bucketIndex(v.startMs, w, RENDER_BUCKETS);
-    if (i >= 0 && v.renderMs !== null) buckets[i]!.push(v.renderMs);
-  }
-  return buckets.map((b) => percentileOf(b, 75));
+function metricCard(d: NeedResults, phase: string): RenderCard {
+  const value = avg(aggByKey(d, "pv.g.cur").get(phase));
+  const before = avg(aggByKey(d, "pv.g.prev").get(phase));
+  return { value, change: percentChange(value, before), series: avgs(seriesOf(d, "cards", RENDER_BUCKETS, phase)) };
 }
 
-function metricCard(cur: PageView[], prev: PageView[], w: TimeWindow, key: keyof PageView): RenderCard {
-  const value = avgOf(measured(cur, key));
-  return { value, change: percentChange(value, avgOf(measured(prev, key))), series: avgSeries(cur, w, key) };
+/** Names of the components with issues in the window. */
+const issueNames = (d: NeedResults): string[] => componentRowsOf(d, "cur").filter((c) => c.issues.length > 0).map((c) => c.name);
+
+function issuesCard(d: PageData, withIssues: number): RenderCard {
+  const prevIssues = componentRowsOf(d, "prev").filter((c) => c.issues.length > 0).length;
+  const split = d.series.issues?.byKey ?? {};
+  const series = Array.from({ length: RENDER_BUCKETS }, (_, i) => Object.values(split).reduce((t, list) => t + (list[i]?.c[0] ?? 0), 0));
+  return { value: withIssues, change: totalOf(d, "react.prev").n > 0 ? percentChange(withIssues, prevIssues) : null, series };
 }
 
-/** Renders per bucket of the components that have issues. */
-function issueSeries(traces: readonly Trace[], names: Set<string>, w: TimeWindow): number[] {
-  const out = new Array<number>(RENDER_BUCKETS).fill(0);
-  for (const t of traces) {
-    for (const s of t.spans) {
-      const i = browserTypeOf(s) === "react" ? bucketIndex(s.startMs, w, RENDER_BUCKETS) : -1;
-      if (i < 0) continue;
-      for (const c of componentStatsOf(s)) if (names.has(c.name)) out[i]! += c.renders;
-    }
-  }
-  return out;
-}
-
-const hasReactSpans = (traces: readonly Trace[]) => traces.some((t) => t.spans.some((s) => browserTypeOf(s) === "react"));
+const firstNeeds = (): Need[] => [
+  ...META_NEEDS,
+  ...routeNeeds("cur"),
+  ...componentNeeds("cur"),
+  ...componentNeeds("prev"),
+  groupNeed("react.cur", "react", "cur"),
+  groupNeed("react.prev", "react", "prev"),
+  groupNeed("pv.g.cur", "pv.g", "cur", { hist: true }),
+  groupNeed("pv.g.prev", "pv.g", "prev"),
+  seriesNeed("cards", "pv.g", "cur", RENDER_BUCKETS, { split: true, filter: { keys: ["render", "ssr", "hydration"] } }),
+  seriesNeed("p75", "pv.g", "cur", RENDER_BUCKETS, { hist: true, filter: { keys: ["render"] } }),
+  seriesNeed("views", "pv", "cur", RENDER_BUCKETS),
+];
 
 /** The Rendering page. */
-export function renderingModel(i: ModelInput): RenderingModel {
-  const views = pageViews(i.traces);
-  const prevViews = pageViews(i.prevTraces);
-  const components = componentRows(i.traces, views.length);
-  const withIssues = components.filter((c) => c.issues.length > 0);
-  const prevIssues = componentRows(i.prevTraces, prevViews.length).filter((c) => c.issues.length > 0).length;
-  const w = i.window;
-  return {
-    meta: metaOf(i),
-    views: views.length,
-    routes: routeRows(views).slice(0, MODEL_LIST_MAX),
-    components: components.slice(0, MODEL_LIST_MAX),
-    componentCount: components.length,
-    hasReact: hasReactSpans(i.traces),
-    starts: bucketStarts(w, RENDER_BUCKETS),
-    chart: { avg: avgSeries(views, w, "renderMs"), p75: p75Series(views, w), views: series(views, (v) => v.startMs, w, RENDER_BUCKETS) },
-    phases: { avg: renderPhases(views, "avg"), p75: renderPhases(views, "p75") },
-    cards: {
-      render: metricCard(views, prevViews, w, "renderMs"),
-      ssr: metricCard(views, prevViews, w, "ssrMs"),
-      hydration: metricCard(views, prevViews, w, "hydrationMs"),
-      issues: { value: withIssues.length, change: hasReactSpans(i.prevTraces) ? percentChange(withIssues.length, prevIssues) : null, series: issueSeries(i.traces, new Set(withIssues.map((c) => c.name)), w) },
-    },
-  };
-}
+export const renderingPage: PageDef<RenderingModel> = {
+  needs: () => uniqueNeeds(firstNeeds()),
+  followUp(_ctx, first) {
+    const names = issueNames(first);
+    return names.length ? [seriesNeed("issues", "rc", "cur", RENDER_BUCKETS, { split: true, filter: { keys: names } })] : [];
+  },
+  model(d) {
+    const components = componentRowsOf(d, "cur");
+    const withIssues = components.filter((c) => c.issues.length > 0).length;
+    return {
+      meta: metaOf(d),
+      views: viewsOf(d, "cur"),
+      routes: routeRowsOf(d, "cur").slice(0, MODEL_LIST_MAX),
+      components: components.slice(0, MODEL_LIST_MAX),
+      componentCount: components.length,
+      hasReact: totalOf(d, "react.cur").n > 0,
+      starts: bucketStarts(d.window, RENDER_BUCKETS),
+      chart: { avg: avgs(seriesOf(d, "cards", RENDER_BUCKETS, "render")), p75: seriesOf(d, "p75", RENDER_BUCKETS).map((a) => p75(a)), views: counts(seriesOf(d, "views", RENDER_BUCKETS)) },
+      phases: { avg: phasesOf(d, "avg"), p75: phasesOf(d, "p75") },
+      cards: { render: metricCard(d, "render"), ssr: metricCard(d, "ssr"), hydration: metricCard(d, "hydration"), issues: issuesCard(d, withIssues) },
+    };
+  },
+};

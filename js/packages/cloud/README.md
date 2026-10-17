@@ -33,12 +33,21 @@ WIZELENS_HUB_TOKEN=wl_ik_...
 Put it behind https. With an https public URL, the sign-in cookie is marked secure. PGlite is for trials and tests; use Postgres
 for real teams. Check a running cloud end to end with `node scripts/cloud-smoke.mjs <url>` from the repo (it needs a fresh database).
 
+## Stats
+
+Pages are computed from stats tables, never from a sample of traces: per-trace facts (request, trace, log, and slow span rows) and
+rollups in 10 s, 5 min, and 1 h buckets, so 30-day pages on busy projects answer in well under a second. A background job settles
+traces a few seconds after their last span (every 3 s, one instance at a time through a Postgres advisory lock); pages say
+"Preparing stats" while traces wait, for example right after an upgrade, when existing traces are backfilled newest first.
+Alerts on traces read the same tables. See `docs/CONTRACT.md`, "Stats tables".
+
 ## Metrics
 
 Apps send OpenTelemetry metrics to `POST /v1/metrics` with the ingest key (JSON or protobuf; gauges, sums, histograms,
 exponential histograms, and summaries). WizeLens add-ons send theirs in their batches. The Metrics page reads
-`GET /_wizelens/api/models/metrics?project=&range=&env=&service=&metric=&group=&stat=&q=` (member or read key), from at most the
-newest 200,000 points of the range (`maxMetricPoints` in code). Points follow the organization's retention. Alert rules can watch
+`GET /_wizelens/api/models/metrics?project=&range=&env=&service=&metric=&group=&stat=&q=` (member or read key), computed from
+metric rollups (per series, in 10 s, 5 min, and 1 h buckets, written as points arrive), so every range reads all of its points.
+Points and rollups follow the organization's retention. Alert rules can watch
 one metric: `{ "metric": "metric", "metricName": "process.cpu.utilization", "metricStat": "avg", "metricService": "", ... }`, with
 `metricStat` one of `last`, `avg`, `max`, `p95`, `p99`, `rate`, and the threshold in the metric's own unit (seconds, bytes, or
 0 to 1 for ratios). Read keys get `list_metrics` and `get_metric` over MCP.

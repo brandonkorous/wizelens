@@ -99,7 +99,8 @@ export interface ServiceInfo {
   host?: string;
   /** When the service started (epoch ms). */
   startedMs?: number;
-  storage?: { kind: "sqlite" | "memory" | "postgres"; maxTraces: number; maxAgeMs: number };
+  /** Where traces are kept. No `maxTraces` means no count limit (the cloud keeps by retention only). */
+  storage?: { kind: "sqlite" | "memory" | "postgres"; maxTraces?: number; maxAgeMs: number };
   analysis?: { slowQueryMs: number; nPlusOneThreshold: number };
   redactKeys?: string[];
   /** True when response bodies are captured. */

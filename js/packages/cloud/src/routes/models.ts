@@ -1,8 +1,8 @@
-import { isPageName, isTimeRange, modelInput, PAGE_MODELS, previousWindow, type Sampled, TIME_RANGES, windowOf } from "@wizeworks/lens-core";
+import { alignNow, FACT_SLOW_QUERY_MS, isPageName, isTimeRange, pageContext, runPage, TIME_RANGES } from "@wizeworks/lens-core";
 import type { Ctx } from "../app.js";
 import { fail, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
-import { countTraces, loadTraces, findTraceIds } from "../repo/trace-read.js";
+import { cloudExecutor, cloudSettling } from "../scale-exec.js";
 import { projectOf } from "./data.js";
 import { metricParamsOf, metricRange, projectMetrics } from "./metrics.js";
 
@@ -34,18 +34,18 @@ async function retentionDays(ctx: Ctx, orgId: string): Promise<number> {
 async function metrics(ctx: Ctx): Promise<void> {
   const { project } = await projectOf(ctx);
   const range = metricRange(ctx, await retentionDays(ctx, project.orgId));
-  const now = Math.floor(ctx.app.config.now() / 5000) * 5000;
+  const now = alignNow(ctx.app.config.now());
   const env = ctx.url.searchParams.get("env") || undefined;
   const params = metricParamsOf(ctx.url.searchParams);
   const key = JSON.stringify([project.id, "metrics", range, env, params, now]);
   const hit = cached(key, ctx.app.config.now());
   if (hit) return sendJson(ctx.res, 200, hit);
-  const value = await projectMetrics(ctx.app.db, project.id, range, params, { now, env, limit: ctx.app.config.maxMetricPoints });
+  const value = await projectMetrics(ctx.app.db, project.id, range, params, { now, env });
   remember(key, value, ctx.app.config.now());
   sendJson(ctx.res, 200, value);
 }
 
-/** `GET api/models/<page>?project=&range=&env=&...`: one page's numbers, computed here from the newest traces in range. */
+/** `GET api/models/<page>?project=&range=&env=&...`: one page's numbers, from the project's stats tables. */
 async function model(ctx: Ctx): Promise<void> {
   const page = ctx.params.page!;
   if (page === "metrics") return metrics(ctx);
@@ -53,21 +53,17 @@ async function model(ctx: Ctx): Promise<void> {
   const { project } = await projectOf(ctx);
   const range = ctx.url.searchParams.get("range") ?? "24h";
   if (!isTimeRange(range)) return fail(400, `Unknown range "${range}".`);
-  if (TIME_RANGES[range].ms > (await retentionDays(ctx, project.orgId)) * DAY_MS) fail(400, "This range is longer than the organization keeps data.");
-  const now = Math.floor(ctx.app.config.now() / 5000) * 5000;
+  const days = await retentionDays(ctx, project.orgId);
+  if (TIME_RANGES[range].ms > days * DAY_MS) fail(400, "This range is longer than the organization keeps data.");
+  const now = alignNow(ctx.app.config.now());
   const env = ctx.url.searchParams.get("env") || undefined;
   const params = paramsOf(ctx.url);
   const key = JSON.stringify([project.id, page, range, env, params, now]);
   const hit = cached(key, ctx.app.config.now());
   if (hit) return sendJson(ctx.res, 200, hit);
-  const window = windowOf(range, now);
-  const from = previousWindow(window).from;
-  const limit = ctx.app.config.maxStatsTraces;
-  const ids = await findTraceIds(ctx.app.db, { projectId: project.id, from, before: window.to, env, limit });
-  const total = ids.length < limit ? ids.length : await countTraces(ctx.app.db, project.id, from, window.to, env);
-  const sampled: Sampled | null = total > ids.length ? { used: ids.length, total } : null;
-  const traces = await loadTraces(ctx.app.db, project.id, ids);
-  const value = PAGE_MODELS[page](modelInput(traces, range, now, { slowQueryMs: 100 }, params, sampled));
+  const db = ctx.app.db;
+  const pc = pageContext(range, now, params, { slowQueryMs: FACT_SLOW_QUERY_MS }, await cloudSettling(db, project.id, env));
+  const value = await runPage(page, pc, cloudExecutor(db, project.id, days * DAY_MS, env));
   remember(key, value, ctx.app.config.now());
   sendJson(ctx.res, 200, value);
 }

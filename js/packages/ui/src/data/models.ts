@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { modelInput, type ModelOf, PAGE_MODELS, type PageName, type TimeRange } from "@wizeworks/lens-core";
+import { memoryExecutor, type ModelOf, pageContext, type PageName, runPageSync, type SyncExecutor, type TimeRange, type Trace } from "@wizeworks/lens-core";
 import { useRoute } from "../routes";
 import { useHost, useRange } from "./host";
 import { getScope } from "./prefs";
@@ -13,6 +13,7 @@ export interface PageModel<P extends PageName> {
 }
 
 const DEFAULT_SLOW_QUERY_MS = 100;
+const NO_PARAMS: Record<string, string> = {};
 /** How often a server model is asked for again while the page is open. */
 const SERVER_REFRESH_MS = 15_000;
 
@@ -23,15 +24,30 @@ function useParams(): Record<string, string> {
   return useMemo(() => Object.fromEntries(new URLSearchParams(key)), [key]);
 }
 
+const executors = new WeakMap<readonly Trace[], Map<number, SyncExecutor>>();
+
+/** One memory executor per trace list and threshold, shared by every page and export. */
+function executorFor(traces: readonly Trace[], slowQueryMs: number): SyncExecutor {
+  let byMs = executors.get(traces);
+  if (!byMs) executors.set(traces, (byMs = new Map()));
+  let ex = byMs.get(slowQueryMs);
+  if (!ex) byMs.set(slowQueryMs, (ex = memoryExecutor(traces, { slowQueryMs })));
+  return ex;
+}
+
+/** A page computed in the browser from the loaded traces, the same way hosts compute it from their database. */
+function localModel<P extends PageName>(page: P, params: Record<string, string>, range: TimeRange, traces: readonly Trace[], now: number, slowQueryMs: number): ModelOf<P> {
+  return runPageSync(page, pageContext(range, now, params, { slowQueryMs }), executorFor(traces, slowQueryMs));
+}
+
 function useLocalModel<P extends PageName>(page: P, params: Record<string, string>, enabled: boolean): PageModel<P> {
   const data = useData();
   const [range] = useRange();
   const slowQueryMs = data.info?.analysis?.slowQueryMs ?? DEFAULT_SLOW_QUERY_MS;
-  const model = useMemo(() => {
-    if (!enabled) return null;
-    const input = modelInput(data.traces, range, data.updatedMs, { slowQueryMs }, params);
-    return PAGE_MODELS[page](input) as ModelOf<P>;
-  }, [enabled, page, data.traces, data.updatedMs, range, slowQueryMs, params]);
+  const model = useMemo(
+    () => (enabled ? localModel(page, params, range, data.traces, data.updatedMs, slowQueryMs) : null),
+    [enabled, page, data.traces, data.updatedMs, range, slowQueryMs, params],
+  );
   return { model, loading: data.loading, error: null };
 }
 
@@ -65,7 +81,14 @@ export async function loadPageModel<P extends PageName>(page: P, params: Record<
   if (server) return apiFetch<ModelOf<P>>(modelUrl(page, params, range));
   const data = provider.getSnapshot();
   const slowQueryMs = data.info?.analysis?.slowQueryMs ?? DEFAULT_SLOW_QUERY_MS;
-  return PAGE_MODELS[page](modelInput(data.traces, range, data.updatedMs, { slowQueryMs }, params)) as ModelOf<P>;
+  return localModel(page, params, range, data.traces, data.updatedMs, slowQueryMs);
+}
+
+/** The sidebar error count from the host (0 until it loads) on hosts that compute stats; null elsewhere, where the browser counts. */
+export function useServerErrorCount(): number | null {
+  const server = useHost().has("serverStats");
+  const badges = useServerModel("badges", NO_PARAMS, server);
+  return server ? (badges.model?.errors ?? 0) : null;
 }
 
 /** One page's numbers. Hosts with `serverStats` compute them; otherwise the browser does, from the loaded traces. */

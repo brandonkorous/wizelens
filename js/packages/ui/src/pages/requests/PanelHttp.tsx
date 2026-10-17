@@ -1,4 +1,4 @@
-import type { RequestRow, Span } from "@wizeworks/lens-core";
+import type { RequestItem, Span } from "@wizeworks/lens-core";
 import { fmtBytes } from "../../format";
 import { DotText, toneOfStatus } from "../../ui/Badges";
 import { Empty, KeyValues } from "../../ui/Panel";
@@ -20,7 +20,7 @@ function HeaderList({ headers }: { headers: [string, string][] }) {
 const NOT_CAPTURED = "This service did not capture headers. Update its WizeLens add-on to v0.3 or later.";
 
 /** Request line, client details, and the captured request headers. */
-export function PanelHeaders({ r, server }: { r: RequestRow; server: Span | undefined }) {
+export function PanelHeaders({ r, server }: { r: RequestItem; server: Span | undefined }) {
   if (!server) return <Empty title="No server span">This request has no server data, so there are no headers to show.</Empty>;
   const query = server.attributes["url.query"];
   const headers = requestHeaders(server);
@@ -62,7 +62,7 @@ function Body({ server }: { server: Span }) {
 }
 
 /** Status, size, response headers, and the body preview when body capture is on. */
-export function PanelResponse({ r, server }: { r: RequestRow; server: Span | undefined }) {
+export function PanelResponse({ r, server }: { r: RequestItem; server: Span | undefined }) {
   if (!server) return <Empty title="No server span">This request has no server data, so there is no response to show.</Empty>;
   const headers = responseHeaders(server);
   const type = server.attributes["http.response.header.content-type"];

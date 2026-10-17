@@ -1,12 +1,13 @@
-import { bucketStarts, percentOf, series } from "../stats/common.js";
-import { serviceEdges, serviceRows, type ServiceEdge, type ServiceRow } from "../stats/services.js";
-import type { Trace } from "../types.js";
-import { type ModelInput, type ModelMeta, metaOf } from "./input.js";
-import { edgesOf, endpointsOf, type EndpointStat, failedSpan, findRow, spansOfRow } from "./service-detail.js";
+import type { PageData, PageDef } from "../scale/needs.js";
+import { bucketStarts, percentOf } from "../stats/common.js";
+import type { ServiceEdge, ServiceRow } from "../stats/services.js";
+import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
+import { byDesc, counts, rowsOf, type Series, seriesNeed, seriesOf, uniqueNeeds } from "./read.js";
+import { edgesOf, endpointPrefix, type EndpointStat, endpointStatsOf, findRow } from "./service-detail.js";
+import { edgeNeeds, edgesOfRows, serviceNeeds, serviceRowsOf } from "./service-rows.js";
 
 const BUCKETS = 24;
-
-type Series = (number | null)[];
+const TOP_ENDPOINTS = 10;
 
 export interface ServicesSummary {
   apis: number;
@@ -42,31 +43,43 @@ export function summarizeServices(rows: readonly ServiceRow[]): ServicesSummary 
   return { apis: apis.length, databases: rows.filter((r) => r.kind === "database").length, served, errorRate: served ? percentOf(errors, served) : null };
 }
 
-function detail(traces: readonly Trace[], row: ServiceRow, edges: readonly ServiceEdge[], i: ModelInput): ServiceDetailModel {
-  const spans = spansOfRow(traces, row);
+function detail(d: PageData, row: ServiceRow, edges: readonly ServiceEdge[]): ServiceDetailModel {
+  const endpoints = [...rowsOf(d, "svc.ep")].sort(byDesc((r) => r.agg.n));
   return {
     row,
-    endpoints: endpointsOf(spans, row),
-    starts: bucketStarts(i.window, BUCKETS),
-    traffic: series(spans, (s) => s.startMs, i.window, BUCKETS),
+    endpoints: endpointStatsOf(endpoints, row.key),
+    starts: bucketStarts(d.window, BUCKETS),
+    traffic: counts(seriesOf(d, "traffic", BUCKETS)),
     ...edgesOf(edges, row.name),
   };
 }
 
 /** The Services page. Params: service (the selected row's key or name). */
-export function servicesModel(i: ModelInput): ServicesModel {
-  const rows = serviceRows(i.traces);
-  const edges = serviceEdges(i.traces);
-  const servers = i.traces.flatMap((t) => t.spans.filter((s) => s.category === "http.server"));
-  const selected = findRow(rows, i.params.service ?? null);
-  return {
-    meta: metaOf(i),
-    rows,
-    edges,
-    summary: summarizeServices(rows),
-    prevSummary: summarizeServices(serviceRows(i.prevTraces)),
-    served: series(servers, (s) => s.startMs, i.window, BUCKETS),
-    failed: series(servers.filter(failedSpan), (s) => s.startMs, i.window, BUCKETS),
-    selected: selected ? detail(i.traces, selected, edges, i) : null,
-  };
-}
+export const servicesPage: PageDef<ServicesModel> = {
+  needs: () => uniqueNeeds([...META_NEEDS, ...serviceNeeds("cur"), ...serviceNeeds("prev"), ...edgeNeeds(), seriesNeed("served", "svc", "cur", BUCKETS, { filter: { prefix: "api:" } })]),
+  followUp(ctx, first) {
+    const row = findRow(serviceRowsOf(first, "cur"), ctx.params.service ?? null);
+    if (!row) return [];
+    const order = { by: "n", desc: true, limit: TOP_ENDPOINTS } as const;
+    return [
+      { type: "groups", id: "svc.ep", kind: "svc.ep", window: "cur", filter: { prefix: endpointPrefix(row.key) }, order },
+      seriesNeed("traffic", "svc", "cur", BUCKETS, { filter: { keys: [row.key] } }),
+    ];
+  },
+  model(d) {
+    const rows = serviceRowsOf(d, "cur");
+    const edges = edgesOfRows(d);
+    const selected = findRow(rows, d.params.service ?? null);
+    const served = seriesOf(d, "served", BUCKETS);
+    return {
+      meta: metaOf(d),
+      rows,
+      edges,
+      summary: summarizeServices(rows),
+      prevSummary: summarizeServices(serviceRowsOf(d, "prev")),
+      served: counts(served),
+      failed: served.map((a) => a.err),
+      selected: selected ? detail(d, selected, edges) : null,
+    };
+  },
+};

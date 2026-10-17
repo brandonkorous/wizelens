@@ -11,6 +11,7 @@ import { HttpError, sendJson } from "./http/http.js";
 import { RateLimiter } from "./http/limiter.js";
 import { Router } from "./http/router.js";
 import { startJobs } from "./jobs.js";
+import { checkFactsVersion } from "./settle.js";
 import { allRoutes } from "./routes/index.js";
 import { ingestBatch, ingestOtlp } from "./routes/ingest.js";
 
@@ -81,6 +82,7 @@ function makeApp(db: Db, options: CloudOptions): CloudApp {
 export async function createCloud(options: CloudOptions = {}): Promise<Cloud> {
   const db = await openDb(resolveConfig(options).database);
   await migrate(db);
+  await checkFactsVersion(db);
   const app = makeApp(db, options);
   const parts: Parts = { app, router: allRoutes(), ingest: new RateLimiter(app.config.ingestPerMinute, 60_000, app.config.now), uiDir: resolveUiDir(app.config.uiDir) };
   const server = createServer((req, res) => void route(parts, req, res).catch((err: unknown) => onError(err, res)));

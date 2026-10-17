@@ -1,8 +1,8 @@
-import { alertBreached, alertMessage, alertValue, metricAlertMessage, metricAlertUnit, metricAlertValue } from "@wizeworks/lens-core";
+import { alertBreached, alignNow, alertContext, alertMessage, alertPage, computePage, metricAlertMessage, metricAlertUnit, metricAlertValueOf } from "@wizeworks/lens-core";
 import type { CloudApp } from "../app.js";
 import { addEvent, type AlertRule, enabledRules, saveEvaluation } from "../repo/alerts.js";
-import { loadMetricPoints } from "../repo/metric-read.js";
-import { findTraceIds, loadTraces } from "../repo/trace-read.js";
+import { loadMetricAlertData } from "../repo/metric-read.js";
+import { cloudExecutor, projectRetentionMs } from "../scale-exec.js";
 import { deliver, type Notice } from "./notify.js";
 
 /** Names for the notice: project and the dashboard link. */
@@ -21,12 +21,13 @@ async function noticeOf(app: CloudApp, rule: AlertRule, state: Notice["state"], 
   };
 }
 
-/** One OpenTelemetry metric over the rule's window, and a sample point for its unit. */
+/** One OpenTelemetry metric over the rule's window (from its rollups), and a sample series for its unit. */
 async function measureMetric(app: CloudApp, rule: AlertRule, now: number) {
-  const q = { projectId: rule.projectId, from: now - rule.windowMs, to: now, env: rule.env || undefined, name: rule.metricName, service: rule.metricService || undefined };
-  const { points } = await loadMetricPoints(app.db, { ...q, limit: app.config.maxMetricPoints });
+  const at = alignNow(now);
+  const q = { projectId: rule.projectId, env: rule.env || undefined, service: rule.metricService || undefined };
+  const data = await loadMetricAlertData(app.db, q, rule.metricName, { from: at - rule.windowMs, to: at }, at);
   const stat = rule.metricStat || "avg";
-  return { value: metricAlertValue(points, { from: q.from, to: q.to }, stat), sample: points[0], stat };
+  return { value: metricAlertValueOf(data, stat), sample: data.series[0], stat };
 }
 
 async function messageOf(app: CloudApp, rule: AlertRule, value: number | null, now: number): Promise<string> {
@@ -36,16 +37,11 @@ async function messageOf(app: CloudApp, rule: AlertRule, value: number | null, n
   return metricAlertMessage(rule.metricName, stat, rule.op, value, rule.threshold, unit);
 }
 
-/** The metric over the rule's window: from the traces that started in it, or from the metric's points. */
+/** The metric over the rule's window: from the stats tables, or from the metric's points. */
 async function measure(app: CloudApp, rule: AlertRule, now: number): Promise<number | null> {
   if (rule.metric === "metric") return (await measureMetric(app, rule, now)).value;
-  const limit = app.config.maxStatsTraces;
-  const env = rule.env || undefined;
-  const load = async (from: number, to: number) =>
-    loadTraces(app.db, rule.projectId, await findTraceIds(app.db, { projectId: rule.projectId, from, before: to, env, limit }));
-  const traces = await load(now - rule.windowMs, now);
-  const prev = rule.metric === "new_errors" ? await load(now - 2 * rule.windowMs, now - rule.windowMs) : [];
-  return alertValue(rule.metric, traces, prev);
+  const retentionMs = await projectRetentionMs(app.db, rule.projectId, app.config.retentionDays);
+  return computePage(alertPage(rule.metric), alertContext(rule.windowMs, alignNow(now)), cloudExecutor(app.db, rule.projectId, retentionMs, rule.env || undefined));
 }
 
 /** Send a notice and keep it as an event. */

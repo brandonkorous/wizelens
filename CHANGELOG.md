@@ -4,6 +4,23 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Stats from the database, with no read limits
+
+- **Hub and cloud pages are computed in the database.** A background job sums each finished trace into totals per 10 seconds,
+  5 minutes, and 1 hour (`rollup_*`, `hist_*`), plus small row tables for the lists (`fact_*`). Pages read those, so the cloud's
+  20,000-trace read limit (`maxStatsTraces`) and the 200,000-point metric limit (`maxMetricPoints`) are gone, with no sampling banner.
+  A late span sums its trace again; pruned traces come out of the totals.
+- **The hub serves pages too** (`api/models/{page}`, capability `serverStats`), so its range goes to 7 days instead of 24 hours.
+- **One code path:** every page is a `PageDef` in `@wizeworks/lens-core` (`PAGES`) that lists what it needs. The cloud and hub answer
+  in SQL; in-app dashboards answer the same needs in the browser.
+- **Metrics** are summed per series at ingest into the same three tiers; the Metrics page and metric alerts read them.
+- Counts, sums, and averages are exact. p50, p95, and p99 come from a histogram and are within 2%.
+- After an upgrade, pages say "Preparing stats" while older traces are summed (hub: about 100 to 200 traces per second).
+  An upgraded cloud fills metric totals from new points only.
+- Measured: 30,000 traces over 7 days on the hub and 42,000 on Postgres at 200 traces per second; every page answered in under 60 ms.
+- Changes you can see: service-to-service edges list the busiest first; a selected queue or worker on Services shows real traffic
+  (it showed zeros); 24-hour, 7-day, and 30-day ranges start on a 5-minute or 1-hour edge, so they can be up to an hour longer.
+
 ### Metrics
 
 - A new **Metrics** page: CPU, memory, heap, event loop, garbage collection, request times, and your own counters, per service.

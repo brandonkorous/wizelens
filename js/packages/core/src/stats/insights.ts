@@ -3,7 +3,7 @@ import type { Trace } from "../types.js";
 import { groupBy, type Impact, normalizeQuery, percentChange, series, type TimeWindow } from "./common.js";
 import { type Headline, SPARK_BUCKETS } from "./overview.js";
 import { renderInsightGroups } from "./rendering.js";
-import { requestRows } from "./requests.js";
+import { type RequestRow, requestRows } from "./requests.js";
 
 export type InsightKind = Exclude<FindingKind, "error"> | "render";
 export type InsightArea = "database" | "http" | "render";
@@ -29,7 +29,8 @@ export interface InsightGroup {
   exampleTraceId: string;
 }
 
-interface Hit {
+/** One insight finding of one request. */
+export interface InsightHit {
   kind: Exclude<FindingKind, "error">;
   shape: string;
   count: number;
@@ -38,6 +39,8 @@ interface Hit {
   startMs: number;
   traceId: string;
 }
+
+type Hit = InsightHit;
 
 const TITLES: Record<Hit["kind"], string> = {
   "n+1-db": "N+1 query pattern",
@@ -68,44 +71,73 @@ function impactOf(kind: Hit["kind"], occurrences: number, totalMs: number, avgMs
   return totalMs >= 100 || occurrences >= 5 ? "medium" : "low";
 }
 
-function hitsOf(traces: readonly Trace[]): Hit[] {
-  const hits: Hit[] = [];
-  for (const r of requestRows(traces)) {
-    for (const f of r.findings) {
-      if (f.kind === "error") continue;
-      const shape = f.kind === "n+1-http" ? f.shape : normalizeQuery(f.shape);
-      hits.push({ kind: f.kind, shape, count: f.count, totalMs: f.totalMs, endpoint: r.endpoint, startMs: r.startMs, traceId: r.traceId });
-    }
+/** The insight findings of one request, with their group shape. */
+export function insightHits(r: RequestRow): InsightHit[] {
+  const hits: InsightHit[] = [];
+  for (const f of r.findings) {
+    if (f.kind === "error") continue;
+    const shape = f.kind === "n+1-http" ? f.shape : normalizeQuery(f.shape);
+    hits.push({ kind: f.kind, shape, count: f.count, totalMs: f.totalMs, endpoint: r.endpoint, startMs: r.startMs, traceId: r.traceId });
   }
   return hits;
 }
 
-function toGroup(key: string, hits: Hit[]): InsightGroup {
-  const first = hits[0]!;
-  const count = hits.reduce((t, h) => t + h.count, 0);
-  const totalMs = hits.reduce((t, h) => t + h.totalMs, 0);
-  const endpoints = [...new Set(hits.map((h) => h.endpoint))];
+const hitsOf = (traces: readonly Trace[]): Hit[] => requestRows(traces).flatMap(insightHits);
+
+/** What one request insight group adds up to, from hits or from rollups. */
+export interface InsightSummary {
+  kind: Hit["kind"];
+  shape: string;
+  occurrences: number;
+  count: number;
+  totalMs: number;
+  /** Newest first. */
+  endpoints: string[];
+  lastSeenMs: number;
+  exampleTraceId: string;
+}
+
+/** A request insight group from its totals: impact, title, and description. */
+export function insightGroupOf(key: string, g: InsightSummary): InsightGroup {
   // A wait is one stretch of time per request; the others are per query.
-  const avgMs = first.kind === "db-wait" ? totalMs / hits.length : totalMs / Math.max(1, count);
-  const latest = hits.reduce((a, b) => (b.startMs > a.startMs ? b : a));
+  const avgMs = g.kind === "db-wait" ? g.totalMs / g.occurrences : g.totalMs / Math.max(1, g.count);
   return {
     key,
-    kind: first.kind,
-    area: first.kind === "n+1-http" ? "http" : "database",
-    impact: impactOf(first.kind, hits.length, totalMs, avgMs),
-    title: TITLES[first.kind],
-    description: describe(first.kind, first.shape, count / hits.length, avgMs, endpoints[0]!),
-    shape: first.shape,
-    occurrences: hits.length,
-    count,
-    totalMs,
-    endpoints,
-    lastSeenMs: latest.startMs,
-    exampleTraceId: latest.traceId,
+    kind: g.kind,
+    area: g.kind === "n+1-http" ? "http" : "database",
+    impact: impactOf(g.kind, g.occurrences, g.totalMs, avgMs),
+    title: TITLES[g.kind],
+    description: describe(g.kind, g.shape, g.count / g.occurrences, avgMs, g.endpoints[0]!),
+    shape: g.shape,
+    occurrences: g.occurrences,
+    count: g.count,
+    totalMs: g.totalMs,
+    endpoints: g.endpoints,
+    lastSeenMs: g.lastSeenMs,
+    exampleTraceId: g.exampleTraceId,
   };
 }
 
+function toGroup(key: string, hits: Hit[]): InsightGroup {
+  const first = hits[0]!;
+  const latest = hits.reduce((a, b) => (b.startMs > a.startMs ? b : a));
+  return insightGroupOf(key, {
+    kind: first.kind,
+    shape: first.shape,
+    occurrences: hits.length,
+    count: hits.reduce((t, h) => t + h.count, 0),
+    totalMs: hits.reduce((t, h) => t + h.totalMs, 0),
+    endpoints: [...new Set(hits.map((h) => h.endpoint))],
+    lastSeenMs: latest.startMs,
+    exampleTraceId: latest.traceId,
+  });
+}
+
 const IMPACT_RANK: Record<Impact, number> = { high: 0, medium: 1, low: 2 };
+
+/** Most important first: impact, then time spent, then newest. */
+export const compareInsights = (a: InsightGroup, b: InsightGroup): number =>
+  IMPACT_RANK[a.impact] - IMPACT_RANK[b.impact] || b.totalMs - a.totalMs || b.lastSeenMs - a.lastSeenMs;
 
 /** Insights from request analysis (N+1, duplicate, slow queries), grouped across requests. */
 export function requestInsightGroups(traces: readonly Trace[]): InsightGroup[] {
@@ -121,7 +153,5 @@ export function insightHeadline(groups: readonly InsightGroup[], prev: readonly 
 
 /** All insights: requests and rendering, most important first. */
 export function insightGroups(traces: readonly Trace[]): InsightGroup[] {
-  return [...requestInsightGroups(traces), ...renderInsightGroups(traces)].sort(
-    (a, b) => IMPACT_RANK[a.impact] - IMPACT_RANK[b.impact] || b.totalMs - a.totalMs || b.lastSeenMs - a.lastSeenMs,
-  );
+  return [...requestInsightGroups(traces), ...renderInsightGroups(traces)].sort(compareInsights);
 }

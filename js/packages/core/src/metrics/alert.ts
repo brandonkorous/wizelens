@@ -1,7 +1,9 @@
 import { percentileOf, type TimeWindow } from "../stats/common.js";
 import { fmtMetric } from "./format.js";
-import { bucketSeries, displayOf, displayUnitOf, histStat, mergeBuckets, type MergedHistogram } from "./series.js";
-import { type MetricPoint, seriesKeyOf } from "./types.js";
+import { metricBucketsOf, METRIC_ALERT_PARTS, type MetricAlertData, type MetricAlertSeries } from "./from-rollups.js";
+import { metricAlertDataOf } from "./memory.js";
+import { displayOf, displayUnitOf, histStat, type MergedHistogram, mergeBuckets, mergeHistogram } from "./series.js";
+import type { MetricPoint } from "./types.js";
 
 /** What a metric alert rule reads over its window. */
 export const METRIC_ALERT_STATS = {
@@ -17,35 +19,30 @@ export type MetricAlertStat = keyof typeof METRIC_ALERT_STATS;
 
 export const isMetricAlertStat = (v: unknown): v is MetricAlertStat => typeof v === "string" && v in METRIC_ALERT_STATS;
 
-// Rates and histograms are cut into this many parts, for "last", "max", and percentiles of a rate.
-const PARTS = 10;
+type Series = readonly MetricAlertSeries[];
 
-function bySeries(points: readonly MetricPoint[]): MetricPoint[][] {
-  const map = new Map<string, MetricPoint[]>();
-  for (const p of points) {
-    const key = seriesKeyOf(p);
-    const list = map.get(key);
-    if (list) list.push(p);
-    else map.set(key, [p]);
-  }
-  return [...map.values()].map((s) => s.sort((a, b) => a.timeMs - b.timeMs));
-}
-
-/** Gauges and up-down sums: the raw values. "rate" is the change per second. */
-function valueStat(series: MetricPoint[][], stat: MetricAlertStat): number | null {
-  const values = series.flatMap((s) => s.map((p) => p.value ?? 0));
-  if (stat === "last") return series.reduce((t, s) => t + (s.at(-1)!.value ?? 0), 0) / series.length;
-  if (stat === "avg") return values.reduce((t, v) => t + v, 0) / values.length;
-  if (stat === "max") return Math.max(...values);
-  if (stat === "p95" || stat === "p99") return percentileOf(values, stat === "p95" ? 95 : 99);
-  const moves = series.filter((s) => s.length > 1).map((s) => ((s.at(-1)!.value ?? 0) - (s[0]!.value ?? 0)) / ((s.at(-1)!.timeMs - s[0]!.timeMs) / 1000));
+/** Gauges and up-down sums: the values. "rate" is the change per second from each series' first to last point. */
+function valueStat(series: Series, stat: MetricAlertStat): number | null {
+  const count = series.reduce((t, s) => t + s.total.cnt, 0);
+  if (stat === "last") return series.reduce((t, s) => t + (s.total.lastV ?? 0), 0) / series.length;
+  if (stat === "avg") return count > 0 ? series.reduce((t, s) => t + s.total.vsum, 0) / count : null;
+  if (stat === "max") return Math.max(...series.map((s) => s.total.vmax ?? Number.NEGATIVE_INFINITY));
+  if (stat === "p95" || stat === "p99") return percentileOf(series.flatMap((s) => s.values), stat === "p95" ? 95 : 99);
+  const moves = series
+    .filter((s) => s.total.cnt > 1)
+    .map((s) => ((s.total.lastV ?? 0) - (s.total.firstV ?? 0)) / ((s.total.lastMs - s.total.firstMs) / 1000));
   return moves.length ? moves.reduce((t, v) => t + v, 0) : null;
 }
 
+const partsOf = (series: Series) => mergeBuckets(series.map((s) => metricBucketsOf(displayOf(s), s.parts, METRIC_ALERT_PARTS)), METRIC_ALERT_PARTS);
+
 /** Counters: the rate per second over the window, or over its parts. */
-function rateStat(series: MetricPoint[][], w: TimeWindow, stat: MetricAlertStat): number | null {
-  if (stat === "avg" || stat === "rate") return mergeBuckets(series.map((s) => bucketSeries(s, w, 1)), 1).values[0] ?? null;
-  const parts = mergeBuckets(series.map((s) => bucketSeries(s, w, PARTS)), PARTS).values.filter((v): v is number => v != null);
+function rateStat(series: Series, stat: MetricAlertStat): number | null {
+  if (stat === "avg" || stat === "rate") {
+    const rates = series.filter((s) => s.total.rateMs > 0).map((s) => (s.total.rateDelta / s.total.rateMs) * 1000);
+    return rates.length ? rates.reduce((t, v) => t + v, 0) : null;
+  }
+  const parts = partsOf(series).values.filter((v): v is number => v != null);
   if (parts.length === 0) return null;
   if (stat === "last") return parts.at(-1)!;
   if (stat === "max") return Math.max(...parts);
@@ -53,25 +50,26 @@ function rateStat(series: MetricPoint[][], w: TimeWindow, stat: MetricAlertStat)
 }
 
 /** Histograms: percentiles of all values in the window; "rate" is values per second. */
-function histogramStat(series: MetricPoint[][], w: TimeWindow, stat: MetricAlertStat): number | null {
-  const all = mergeBuckets(series.map((s) => bucketSeries(s, w, 1)), 1).hists[0] ?? null;
+function histogramStat(series: Series, w: TimeWindow, stat: MetricAlertStat): number | null {
+  const parts = partsOf(series).hists.filter((h): h is MergedHistogram => !!h);
+  const all = parts.reduce<MergedHistogram | null>((m, h) => mergeHistogram(m, h), null);
   if (stat === "rate") return all ? all.count / ((w.to - w.from) / 1000) : null;
   if (stat === "max") return all?.max ?? histStat(all, "p99");
-  if (stat === "last") {
-    const parts = mergeBuckets(series.map((s) => bucketSeries(s, w, PARTS)), PARTS).hists.filter((h): h is MergedHistogram => !!h);
-    return histStat(parts.at(-1) ?? null, "avg");
-  }
+  if (stat === "last") return histStat(parts.at(-1) ?? null, "avg");
   return histStat(all, stat === "avg" ? "avg" : stat);
 }
 
-/** One metric's value over a window, from the points of that metric. Null when there is no data. */
-export function metricAlertValue(points: readonly MetricPoint[], w: TimeWindow, stat: MetricAlertStat): number | null {
-  const series = bySeries(points.filter((p) => p.timeMs >= w.from && p.timeMs < w.to));
-  if (series.length === 0) return null;
-  const display = displayOf(series[0]![0]!);
-  if (display === "value") return valueStat(series, stat);
-  return display === "rate" ? rateStat(series, w, stat) : histogramStat(series, w, stat);
+/** One metric's value over a window, from its rollup data. Null when there is no data. */
+export function metricAlertValueOf(d: MetricAlertData, stat: MetricAlertStat): number | null {
+  if (d.series.length === 0) return null;
+  const display = displayOf(d.series[0]!);
+  if (display === "value") return valueStat(d.series, stat);
+  return display === "rate" ? rateStat(d.series, stat) : histogramStat(d.series, d.window, stat);
 }
+
+/** One metric's value over a window, from the points of that metric (rollups are built in memory). */
+export const metricAlertValue = (points: readonly MetricPoint[], w: TimeWindow, stat: MetricAlertStat): number | null =>
+  metricAlertValueOf(metricAlertDataOf(points, w), stat);
 
 /** The unit a metric alert value is in. */
 export function metricAlertUnit(sample: Pick<MetricPoint, "kind" | "monotonic" | "unit">, stat: MetricAlertStat): string {

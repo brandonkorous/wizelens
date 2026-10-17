@@ -1,4 +1,4 @@
-import type { RequestRow } from "@wizeworks/lens-core";
+import type { RequestItem } from "@wizeworks/lens-core";
 import { fmtMs } from "../../format";
 import { hrefTo, navigate } from "../../routes";
 import { CountBadge, DotText, toneOfStatus } from "../../ui/Badges";
@@ -7,7 +7,7 @@ import { type Column, Table } from "../../ui/Table";
 
 const MAX_ROWS = 5;
 
-const COLUMNS: Column<RequestRow>[] = [
+const COLUMNS: Column<RequestItem>[] = [
   { key: "path", header: "Path", cell: (r) => <span className="wl-ov-path wl-truncate" title={r.path}>{r.path}</span> },
   { key: "method", header: "Method", cell: (r) => r.method },
   { key: "status", header: "Status", cell: (r) => <DotText tone={toneOfStatus(r.status)}>{r.status ?? "…"}</DotText> },
@@ -17,7 +17,7 @@ const COLUMNS: Column<RequestRow>[] = [
 ];
 
 /** The newest requests. A click opens the request on the Requests page. */
-export function RecentRequestsPanel({ rows }: { rows: readonly RequestRow[] }) {
+export function RecentRequestsPanel({ rows }: { rows: readonly RequestItem[] }) {
   return (
     <Panel title="Recent Requests" action={<ViewAll href={hrefTo("requests")} />}>
       <Table

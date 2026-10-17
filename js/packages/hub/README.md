@@ -27,19 +27,27 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960   # any OpenTelemetry app
 | `--token <text>` | `WIZELENS_HUB_TOKEN` | none |
 | `--retention <time>` | `WIZELENS_HUB_RETENTION` | `7d` |
 | `--max-traces <n>` | `WIZELENS_HUB_MAX_TRACES` | `50000` |
-| `--max-metric-points <n>` | `WIZELENS_HUB_MAX_METRIC_POINTS` | `2000000` (metric points are also kept for `--retention`) |
+| `--max-metric-points <n>` | `WIZELENS_HUB_MAX_METRIC_POINTS` | `2000000` raw points (they are also kept for `--retention`; rollups are not capped) |
 | `--mcp` | `WIZELENS_HUB_MCP=1` | off |
 | `--import <file>` | | Copy an add-on's `.wizelens/traces.db` in at start |
 
 To share the hub with a team, run it with `--host 0.0.0.0 --token <text>`. Services send `WIZELENS_HUB_TOKEN`; OTLP apps send
 `OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <text>`; in a browser, open `/_wizelens/?token=<text>` once.
 
+## Stats
+
+The dashboard asks the hub for whole pages (`GET /_wizelens/api/models/{page}?range=&project=&env=`), computed from stats tables
+in the hub file: per-trace facts and rollups in 10 s, 5 min, and 1 h buckets. Ranges reach the hub's `--retention`. Traces are
+settled a few seconds after their last span (every 2 s, at most 150 ms at a time); pages say "Preparing stats" while traces wait.
+Files from older hubs upgrade when opened and backfill, newest traces first. See `docs/CONTRACT.md`, "Stats tables".
+
 ## Metrics
 
 OpenTelemetry apps send metrics to `POST /v1/metrics` (JSON or protobuf): gauges, sums, histograms, exponential histograms
 (kept as explicit buckets), and summaries (kept as count and sum). WizeLens add-ons send theirs in their batches. The Metrics page
-reads `GET /_wizelens/api/models/metrics?range=1h&project=&env=&service=&metric=&group=&stat=&q=`, computed in the hub from at
-most the newest 200,000 points of the range. With `--mcp`, agents get `list_metrics` and `get_metric`.
+reads `GET /_wizelens/api/models/metrics?range=1h&project=&env=&service=&metric=&group=&stat=&q=`, computed in the hub from
+metric rollups (per series, in 10 s, 5 min, and 1 h buckets, written as points arrive), so every range reads all of its points.
+With `--mcp`, agents get `list_metrics` and `get_metric`.
 
 ## In code
 

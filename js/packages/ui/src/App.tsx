@@ -5,6 +5,7 @@ import { AlertsPage } from "./pages/alerts/AlertsPage";
 import { TeamPage } from "./pages/team/TeamPage";
 import { AuthGate } from "./shell/auth/AuthGate";
 import { useData, useWindowed } from "./data/hooks";
+import { useServerErrorCount } from "./data/models";
 import { applyTheme, useTheme } from "./data/prefs";
 import { DatabasePage } from "./pages/database/DatabasePage";
 import { ErrorsPage } from "./pages/errors/ErrorsPage";
@@ -77,8 +78,10 @@ function Shell() {
   useEffect(() => {
     document.title = data.info ? `WizeLens · ${data.info.service}` : "WizeLens";
   }, [data.info]);
-  // The same number as "Total Exceptions" on the Errors page.
-  const errors = useMemo(() => errorEvents(win.traces).length, [win.traces]);
+  // The same number as "Total Exceptions" on the Errors page: from the host when it computes stats, else from the loaded traces.
+  const serverErrors = useServerErrorCount();
+  const localErrors = useMemo(() => (serverErrors === null ? errorEvents(win.traces).length : 0), [serverErrors, win.traces]);
+  const errors = serverErrors ?? localErrors;
   return (
     <div className="wl-shell">
       <Sidebar page={route.page} counts={{ errors }} dot={dot} />

@@ -1,7 +1,10 @@
-import { insightGroups, type InsightGroup, insightHeadline } from "../stats/insights.js";
+import type { PageDef } from "../scale/needs.js";
+import { type InsightGroup, insightHeadline } from "../stats/insights.js";
 import type { Headline } from "../stats/overview.js";
 import { MODEL_LIST_MAX } from "./database.js";
-import { type ModelInput, type ModelMeta, metaOf } from "./input.js";
+import { META_NEEDS, type ModelMeta, type ModelParams, metaOf } from "./input.js";
+import { insightGroupsOf, insightNeeds } from "./insight-groups.js";
+import { uniqueNeeds } from "./read.js";
 
 export interface InsightTotals {
   count: number;
@@ -29,7 +32,7 @@ const totalsOf = (groups: readonly InsightGroup[]): InsightTotals => ({
 });
 
 /** Area, impact, and text filters. "all" or "" means no filter. */
-function matches(g: InsightGroup, p: ModelInput["params"]): boolean {
+function matches(g: InsightGroup, p: ModelParams): boolean {
   if (p.area && p.area !== "all" && g.area !== p.area) return false;
   if (p.impact && p.impact !== "all" && g.impact !== p.impact) return false;
   const q = (p.q ?? "").toLowerCase();
@@ -37,17 +40,20 @@ function matches(g: InsightGroup, p: ModelInput["params"]): boolean {
 }
 
 /** The Insights page. Params: area, impact, q, key. */
-export function insightsModel(i: ModelInput): InsightsModel {
-  const groups = insightGroups(i.traces);
-  const prev = insightGroups(i.prevTraces);
-  const visible = groups.filter((g) => matches(g, i.params));
-  return {
-    meta: metaOf(i),
-    totals: totalsOf(groups),
-    prevTotals: totalsOf(prev),
-    found: insightHeadline(groups, prev, i.window),
-    groups: visible.slice(0, MODEL_LIST_MAX),
-    matching: visible.length,
-    selected: i.params.key ? (groups.find((g) => g.key === i.params.key) ?? null) : null,
-  };
-}
+export const insightsPage: PageDef<InsightsModel> = {
+  needs: () => uniqueNeeds([...META_NEEDS, ...insightNeeds("cur"), ...insightNeeds("prev")]),
+  model(d) {
+    const groups = insightGroupsOf(d, "cur");
+    const prev = insightGroupsOf(d, "prev");
+    const visible = groups.filter((g) => matches(g, d.params));
+    return {
+      meta: metaOf(d),
+      totals: totalsOf(groups),
+      prevTotals: totalsOf(prev),
+      found: insightHeadline(groups, prev, d.window),
+      groups: visible.slice(0, MODEL_LIST_MAX),
+      matching: visible.length,
+      selected: d.params.key ? (groups.find((g) => g.key === d.params.key) ?? null) : null,
+    };
+  },
+};

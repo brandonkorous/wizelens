@@ -1,29 +1,31 @@
-import type { MetricPoint } from "@wizeworks/lens-core";
+import {
+  alignNow,
+  type MetricAlertData,
+  metricAlertSteps,
+  type MetricData,
+  metricPageSteps,
+  type MetricRows,
+  type MetricSql,
+  runMetricAsync,
+  type TimeRange,
+  type TimeWindow,
+} from "@wizeworks/lens-core";
 import type { Queryable } from "../db/db.js";
 
 export interface MetricQuery {
   projectId: string;
-  from: number;
-  to: number;
   env?: string;
-  /** Only one metric, for alert rules. */
-  name?: string;
   service?: string;
-  limit: number;
 }
 
-/** Points in [from, to), newest first, at most `limit`, and how many there are in all. */
-export async function loadMetricPoints(q: Queryable, m: MetricQuery): Promise<{ points: MetricPoint[]; total: number }> {
-  const where = ["project_id = $1", "time_ms >= $2", "time_ms < $3"];
-  const args: unknown[] = [m.projectId, m.from, m.to];
-  const add = (column: string, v: string | undefined) => v && (args.push(v), where.push(`${column} = $${args.length}`));
-  add("env", m.env);
-  add("name", m.name);
-  add("service", m.service);
-  const sql = `FROM metric_points WHERE ${where.join(" AND ")}`;
-  const rows = await q.query<{ json: string }>(`SELECT json ${sql} ORDER BY time_ms DESC LIMIT $${args.length + 1}`, [...args, m.limit]);
-  const points = rows.map((r) => JSON.parse(r.json) as MetricPoint);
-  if (points.length < m.limit) return { points, total: points.length };
-  const [row] = await q.query<{ n: string | number }>(`SELECT count(*) AS n ${sql}`, args);
-  return { points, total: Number(row?.n ?? points.length) };
+const run = (q: Queryable) => (s: MetricSql) => q.query<Record<string, unknown>>(s.sql, s.args) as Promise<MetricRows>;
+
+/** The metrics page data for one project, from the metric rollup tiers. `now` is rounded down to 10 s. */
+export function loadMetricData(q: Queryable, m: MetricQuery, range: TimeRange, params: Readonly<Record<string, string>>, now: number): Promise<MetricData> {
+  return runMetricAsync(metricPageSteps("pg", { project: m.projectId, env: m.env }, range, alignNow(now), params), run(q));
+}
+
+/** One metric over an alert rule's window, from the metric rollup tiers. */
+export function loadMetricAlertData(q: Queryable, m: MetricQuery, name: string, w: TimeWindow, now: number): Promise<MetricAlertData> {
+  return runMetricAsync(metricAlertSteps("pg", { project: m.projectId, env: m.env, service: m.service }, name, w, now), run(q));
 }

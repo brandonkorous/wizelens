@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import type { RequestRow } from "@wizeworks/lens-core";
+import type { RequestItem } from "@wizeworks/lens-core";
 import { fmtMs } from "../../format";
 import { traceHref } from "../../routes";
 import { BarList, type BarItem } from "../../ui/BarList";
@@ -19,7 +19,7 @@ function Copyable({ text }: { text: string | null }) {
   );
 }
 
-function Summary({ r }: { r: RequestRow }) {
+function Summary({ r }: { r: RequestItem }) {
   return (
     <KeyValues
       rows={[
@@ -53,7 +53,7 @@ function Tags({ tags }: { tags: string[] }) {
   );
 }
 
-function timingItems(r: RequestRow): BarItem[] {
+function timingItems(r: RequestItem): BarItem[] {
   const part = (key: string, label: string, ms: number | null, color: string): BarItem => ({ key, label, value: ms ?? 0, display: fmtMs(ms), color });
   return [
     part("total", "Total", r.durationMs, "var(--wl-blue)"),
@@ -66,7 +66,7 @@ function timingItems(r: RequestRow): BarItem[] {
 }
 
 /** Summary, tags, and timing of one request. */
-export function PanelOverview({ r }: { r: RequestRow }) {
+export function PanelOverview({ r }: { r: RequestItem }) {
   return (
     <>
       <h3 className="wl-section-title">Summary</h3>

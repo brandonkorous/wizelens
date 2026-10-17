@@ -22,7 +22,8 @@ export interface TraceLayer {
   envelope: boolean;
 }
 
-interface Part {
+/** One piece of a trace's time: a layer, its owner, and its own ms. */
+export interface TracePart {
   key: string;
   label: string;
   kind: LayerKind;
@@ -40,26 +41,26 @@ function gaps(outer: Span, inner: Span): [number, number][] {
   return all.filter(([a, b]) => b > a);
 }
 
-function serverPart(s: Span, own: number): Part[] {
+function serverPart(s: Span, own: number): TracePart[] {
   const routed = Math.min(num(s, ATTR_ROUTED_MS) ?? 0, own);
-  const code: Part = { key: `service:${s.service}`, label: s.service, kind: "service", owner: s.service, ms: own - routed, segs: [[s.startMs + routed, end(s)]] };
+  const code: TracePart = { key: `service:${s.service}`, label: s.service, kind: "service", owner: s.service, ms: own - routed, segs: [[s.startMs + routed, end(s)]] };
   if (routed <= 0) return [code];
   return [{ key: "routing", label: "Routing", kind: "routing", owner: s.service, ms: routed, segs: [[s.startMs, s.startMs + routed]] }, code];
 }
 
-function fetchParts(s: Span, child: Span | undefined, own: number): Part[] {
-  const parts: Part[] = [{ key: "browser", label: "Browser", kind: "browser", owner: "Web App", ms: s.durationMs, segs: [[s.startMs, end(s)]] }];
+function fetchParts(s: Span, child: Span | undefined, own: number): TracePart[] {
+  const parts: TracePart[] = [{ key: "browser", label: "Browser", kind: "browser", owner: "Web App", ms: s.durationMs, segs: [[s.startMs, end(s)]] }];
   parts.push({ key: "network", label: "Network", kind: "network", owner: "Network", ms: own, segs: child ? gaps(s, child) : [[s.startMs, end(s)]] });
   const render = num(s, ATTR_BROWSER_RENDER_MS);
   if (render) parts.push({ key: "render", label: "Render", kind: "render", owner: "Web App", ms: render, segs: [[end(s), end(s) + render]] });
   return parts;
 }
 
-const pagePart = (key: string, label: string, kind: LayerKind, s: Span, from: number, to: number): Part =>
+const pagePart = (key: string, label: string, kind: LayerKind, s: Span, from: number, to: number): TracePart =>
   ({ key: `page:${key}`, label, kind, owner: "Web App", ms: to - from, segs: [[s.startMs + from, s.startMs + to]] });
 
 /** A page view as phases from the navigation start: server response, first paint, main content, load. */
-function pageviewParts(s: Span): Part[] {
+function pageviewParts(s: Span): TracePart[] {
   const ttfb = num(s, ATTR_PAGE.ttfbMs);
   const fcp = num(s, ATTR_PAGE.fcpMs);
   const lcp = num(s, ATTR_PAGE.lcpMs);
@@ -72,7 +73,7 @@ function pageviewParts(s: Span): Part[] {
   return parts;
 }
 
-function spanParts(s: Span, kids: Span[]): Part[] {
+function spanParts(s: Span, kids: Span[]): TracePart[] {
   const own = Math.max(0, s.durationMs - busyMs(kids.filter((k) => !isConsumer(k))));
   const server = kids.find((k) => k.category === "http.server");
   const type = browserTypeOf(s);
@@ -90,7 +91,7 @@ function spanParts(s: Span, kids: Span[]): Part[] {
 }
 
 /** Time a message sat in its queue: from the end of the send to the start of the handler. */
-function queueWaits(trace: Trace): Part[] {
+function queueWaits(trace: Trace): TracePart[] {
   const byId = new Map(trace.spans.map((s) => [s.spanId, s]));
   return trace.spans.filter(isConsumer).flatMap((s) => {
     const send = s.parentSpanId ? byId.get(s.parentSpanId) : undefined;
@@ -100,7 +101,8 @@ function queueWaits(trace: Trace): Part[] {
   });
 }
 
-function partsOf(trace: Trace): Part[] {
+/** Every time part of one trace, before grouping into layers. */
+export function traceParts(trace: Trace): TracePart[] {
   const kids = groupBy(trace.spans.filter((s) => s.parentSpanId), (s) => s.parentSpanId!);
   return [...trace.spans.flatMap((s) => spanParts(s, kids.get(s.spanId) ?? [])), ...queueWaits(trace)];
 }
@@ -108,7 +110,7 @@ function partsOf(trace: Trace): Part[] {
 /** Where the time of one trace went, one row per layer, in time order. */
 export function traceLayers(trace: Trace): TraceLayer[] {
   const rows: TraceLayer[] = [];
-  for (const [key, parts] of groupBy(partsOf(trace), (p) => p.key)) {
+  for (const [key, parts] of groupBy(traceParts(trace), (p) => p.key)) {
     const segs = parts.flatMap((p) => p.segs).sort((a, b) => a[0] - b[0]);
     const first = parts[0]!;
     rows.push({
@@ -135,7 +137,7 @@ export interface Bottleneck {
 
 /** Share of time per layer (or per owning service) over many traces. */
 export function bottlenecks(traces: readonly Trace[], by: "layer" | "service" = "layer"): Bottleneck[] {
-  const parts = traces.flatMap(partsOf).filter((p) => p.kind !== "browser" && p.ms > 0 && !p.key.startsWith("page:"));
+  const parts = traces.flatMap(traceParts).filter((p) => p.kind !== "browser" && p.ms > 0 && !p.key.startsWith("page:"));
   const total = parts.reduce((t, p) => t + p.ms, 0);
   const groups = groupBy(parts, (p) => (by === "layer" ? p.key : p.owner));
   return [...groups]

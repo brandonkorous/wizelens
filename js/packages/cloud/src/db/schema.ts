@@ -89,6 +89,112 @@ ALTER TABLE alert_rules ADD COLUMN metric_name TEXT NOT NULL DEFAULT '';
 ALTER TABLE alert_rules ADD COLUMN metric_stat TEXT NOT NULL DEFAULT '';
 ALTER TABLE alert_rules ADD COLUMN metric_service TEXT NOT NULL DEFAULT '';
 `,
+  `
+ALTER TABLE traces ADD COLUMN settled_ms DOUBLE PRECISION NOT NULL DEFAULT 0;
+ALTER TABLE traces ADD COLUMN contrib TEXT;
+CREATE INDEX ix_traces_dirty ON traces (start_ms) WHERE settled_ms < updated_ms;
+CREATE TABLE scale_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE fact_requests (
+  project_id TEXT NOT NULL, trace_id TEXT NOT NULL, env TEXT NOT NULL DEFAULT '', start_ms DOUBLE PRECISION NOT NULL,
+  method TEXT NOT NULL, path TEXT NOT NULL, endpoint TEXT NOT NULL, status INTEGER, status_class TEXT NOT NULL, failed BOOLEAN NOT NULL,
+  dur_class TEXT NOT NULL, aborted BOOLEAN NOT NULL, duration_ms DOUBLE PRECISION NOT NULL, server_ms DOUBLE PRECISION,
+  db_ms DOUBLE PRECISION NOT NULL, db_count INTEGER NOT NULL, fetch_count INTEGER NOT NULL, fetch_ms DOUBLE PRECISION NOT NULL,
+  render_ms DOUBLE PRECISION, network_ms DOUBLE PRECISION, service TEXT NOT NULL, services TEXT NOT NULL, errors INTEGER NOT NULL,
+  insights INTEGER NOT NULL, health TEXT NOT NULL, user_agent TEXT, client_address TEXT, end_user TEXT, request_id TEXT,
+  tags TEXT NOT NULL, search TEXT NOT NULL, PRIMARY KEY (project_id, trace_id)
+);
+CREATE INDEX ix_fact_requests_time ON fact_requests (project_id, start_ms);
+CREATE TABLE fact_traces (
+  project_id TEXT NOT NULL, trace_id TEXT NOT NULL, env TEXT NOT NULL DEFAULT '', start_ms DOUBLE PRECISION NOT NULL, path TEXT NOT NULL,
+  duration_ms DOUBLE PRECISION NOT NULL, health TEXT, status TEXT NOT NULL, services TEXT NOT NULL, span_count INTEGER NOT NULL,
+  slow BOOLEAN NOT NULL, search TEXT NOT NULL, PRIMARY KEY (project_id, trace_id)
+);
+CREATE INDEX ix_fact_traces_time ON fact_traces (project_id, start_ms);
+CREATE TABLE fact_logs (
+  project_id TEXT NOT NULL, trace_id TEXT NOT NULL, idx INTEGER NOT NULL, env TEXT NOT NULL DEFAULT '', time_ms DOUBLE PRECISION NOT NULL,
+  level TEXT NOT NULL, level_rank SMALLINT NOT NULL, service TEXT NOT NULL, category TEXT NOT NULL, message TEXT NOT NULL,
+  trace_name TEXT NOT NULL, span_id TEXT, attributes TEXT NOT NULL, search TEXT NOT NULL, PRIMARY KEY (project_id, trace_id, idx)
+);
+CREATE INDEX ix_fact_logs_time ON fact_logs (project_id, time_ms);
+CREATE TABLE fact_critical (
+  project_id TEXT NOT NULL, trace_id TEXT NOT NULL, span_id TEXT NOT NULL, env TEXT NOT NULL DEFAULT '', start_ms DOUBLE PRECISION NOT NULL,
+  duration_ms DOUBLE PRECISION NOT NULL, name TEXT NOT NULL, service TEXT NOT NULL, layer TEXT NOT NULL, PRIMARY KEY (project_id, trace_id, span_id)
+);
+CREATE INDEX ix_fact_critical_time ON fact_critical (project_id, start_ms);
+CREATE INDEX ix_fact_critical_slow ON fact_critical (project_id, duration_ms);
+CREATE TABLE rollup_10s (
+  project_id TEXT NOT NULL, env TEXT NOT NULL, kind TEXT NOT NULL, key TEXT NOT NULL, bucket_ms DOUBLE PRECISION NOT NULL,
+  n DOUBLE PRECISION NOT NULL, err DOUBLE PRECISION NOT NULL, sum_v DOUBLE PRECISION NOT NULL,
+  c0 DOUBLE PRECISION NOT NULL DEFAULT 0, c1 DOUBLE PRECISION NOT NULL DEFAULT 0, c2 DOUBLE PRECISION NOT NULL DEFAULT 0,
+  c3 DOUBLE PRECISION NOT NULL DEFAULT 0, c4 DOUBLE PRECISION NOT NULL DEFAULT 0, c5 DOUBLE PRECISION NOT NULL DEFAULT 0,
+  first_ms DOUBLE PRECISION NOT NULL, last_ms DOUBLE PRECISION NOT NULL, top_rank DOUBLE PRECISION NOT NULL DEFAULT 0,
+  top TEXT, ids TEXT NOT NULL DEFAULT '', PRIMARY KEY (project_id, kind, bucket_ms, env, key)
+);
+CREATE INDEX ix_rollup_10s_key ON rollup_10s (project_id, kind, key, bucket_ms);
+CREATE TABLE rollup_5m (
+  project_id TEXT NOT NULL, env TEXT NOT NULL, kind TEXT NOT NULL, key TEXT NOT NULL, bucket_ms DOUBLE PRECISION NOT NULL,
+  n DOUBLE PRECISION NOT NULL, err DOUBLE PRECISION NOT NULL, sum_v DOUBLE PRECISION NOT NULL,
+  c0 DOUBLE PRECISION NOT NULL DEFAULT 0, c1 DOUBLE PRECISION NOT NULL DEFAULT 0, c2 DOUBLE PRECISION NOT NULL DEFAULT 0,
+  c3 DOUBLE PRECISION NOT NULL DEFAULT 0, c4 DOUBLE PRECISION NOT NULL DEFAULT 0, c5 DOUBLE PRECISION NOT NULL DEFAULT 0,
+  first_ms DOUBLE PRECISION NOT NULL, last_ms DOUBLE PRECISION NOT NULL, top_rank DOUBLE PRECISION NOT NULL DEFAULT 0,
+  top TEXT, ids TEXT NOT NULL DEFAULT '', PRIMARY KEY (project_id, kind, bucket_ms, env, key)
+);
+CREATE INDEX ix_rollup_5m_key ON rollup_5m (project_id, kind, key, bucket_ms);
+CREATE TABLE rollup_1h (
+  project_id TEXT NOT NULL, env TEXT NOT NULL, kind TEXT NOT NULL, key TEXT NOT NULL, bucket_ms DOUBLE PRECISION NOT NULL,
+  n DOUBLE PRECISION NOT NULL, err DOUBLE PRECISION NOT NULL, sum_v DOUBLE PRECISION NOT NULL,
+  c0 DOUBLE PRECISION NOT NULL DEFAULT 0, c1 DOUBLE PRECISION NOT NULL DEFAULT 0, c2 DOUBLE PRECISION NOT NULL DEFAULT 0,
+  c3 DOUBLE PRECISION NOT NULL DEFAULT 0, c4 DOUBLE PRECISION NOT NULL DEFAULT 0, c5 DOUBLE PRECISION NOT NULL DEFAULT 0,
+  first_ms DOUBLE PRECISION NOT NULL, last_ms DOUBLE PRECISION NOT NULL, top_rank DOUBLE PRECISION NOT NULL DEFAULT 0,
+  top TEXT, ids TEXT NOT NULL DEFAULT '', PRIMARY KEY (project_id, kind, bucket_ms, env, key)
+);
+CREATE INDEX ix_rollup_1h_key ON rollup_1h (project_id, kind, key, bucket_ms);
+CREATE TABLE hist_10s (
+  project_id TEXT NOT NULL, env TEXT NOT NULL, kind TEXT NOT NULL, key TEXT NOT NULL, bucket_ms DOUBLE PRECISION NOT NULL,
+  bin INTEGER NOT NULL, cnt DOUBLE PRECISION NOT NULL, PRIMARY KEY (project_id, kind, bucket_ms, env, key, bin)
+);
+CREATE TABLE hist_5m (
+  project_id TEXT NOT NULL, env TEXT NOT NULL, kind TEXT NOT NULL, key TEXT NOT NULL, bucket_ms DOUBLE PRECISION NOT NULL,
+  bin INTEGER NOT NULL, cnt DOUBLE PRECISION NOT NULL, PRIMARY KEY (project_id, kind, bucket_ms, env, key, bin)
+);
+CREATE TABLE hist_1h (
+  project_id TEXT NOT NULL, env TEXT NOT NULL, kind TEXT NOT NULL, key TEXT NOT NULL, bucket_ms DOUBLE PRECISION NOT NULL,
+  bin INTEGER NOT NULL, cnt DOUBLE PRECISION NOT NULL, PRIMARY KEY (project_id, kind, bucket_ms, env, key, bin)
+);
+CREATE TABLE metric_series (
+  project_id TEXT NOT NULL, env TEXT NOT NULL, series_key TEXT NOT NULL, name TEXT NOT NULL, service TEXT NOT NULL, kind TEXT NOT NULL,
+  unit TEXT NOT NULL, description TEXT NOT NULL, monotonic BOOLEAN NOT NULL, temporality TEXT NOT NULL, attributes TEXT NOT NULL,
+  last_ms DOUBLE PRECISION NOT NULL, last_value DOUBLE PRECISION, last_hist TEXT, PRIMARY KEY (project_id, env, series_key)
+);
+CREATE INDEX ix_metric_series_name ON metric_series (project_id, name);
+CREATE TABLE metric_10s (
+  project_id TEXT NOT NULL, env TEXT NOT NULL, series_key TEXT NOT NULL, name TEXT NOT NULL, bucket_ms DOUBLE PRECISION NOT NULL,
+  cnt DOUBLE PRECISION NOT NULL, vsum DOUBLE PRECISION NOT NULL, vmin DOUBLE PRECISION, vmax DOUBLE PRECISION,
+  first_ms DOUBLE PRECISION NOT NULL, first_v DOUBLE PRECISION, last_ms DOUBLE PRECISION NOT NULL, last_v DOUBLE PRECISION,
+  rate_delta DOUBLE PRECISION NOT NULL DEFAULT 0, rate_ms DOUBLE PRECISION NOT NULL DEFAULT 0,
+  h_count DOUBLE PRECISION NOT NULL DEFAULT 0, h_sum DOUBLE PRECISION NOT NULL DEFAULT 0, h_min DOUBLE PRECISION, h_max DOUBLE PRECISION,
+  h_bounds TEXT, h_counts TEXT, PRIMARY KEY (project_id, name, bucket_ms, env, series_key)
+);
+CREATE TABLE metric_5m (
+  project_id TEXT NOT NULL, env TEXT NOT NULL, series_key TEXT NOT NULL, name TEXT NOT NULL, bucket_ms DOUBLE PRECISION NOT NULL,
+  cnt DOUBLE PRECISION NOT NULL, vsum DOUBLE PRECISION NOT NULL, vmin DOUBLE PRECISION, vmax DOUBLE PRECISION,
+  first_ms DOUBLE PRECISION NOT NULL, first_v DOUBLE PRECISION, last_ms DOUBLE PRECISION NOT NULL, last_v DOUBLE PRECISION,
+  rate_delta DOUBLE PRECISION NOT NULL DEFAULT 0, rate_ms DOUBLE PRECISION NOT NULL DEFAULT 0,
+  h_count DOUBLE PRECISION NOT NULL DEFAULT 0, h_sum DOUBLE PRECISION NOT NULL DEFAULT 0, h_min DOUBLE PRECISION, h_max DOUBLE PRECISION,
+  h_bounds TEXT, h_counts TEXT, PRIMARY KEY (project_id, name, bucket_ms, env, series_key)
+);
+CREATE TABLE metric_1h (
+  project_id TEXT NOT NULL, env TEXT NOT NULL, series_key TEXT NOT NULL, name TEXT NOT NULL, bucket_ms DOUBLE PRECISION NOT NULL,
+  cnt DOUBLE PRECISION NOT NULL, vsum DOUBLE PRECISION NOT NULL, vmin DOUBLE PRECISION, vmax DOUBLE PRECISION,
+  first_ms DOUBLE PRECISION NOT NULL, first_v DOUBLE PRECISION, last_ms DOUBLE PRECISION NOT NULL, last_v DOUBLE PRECISION,
+  rate_delta DOUBLE PRECISION NOT NULL DEFAULT 0, rate_ms DOUBLE PRECISION NOT NULL DEFAULT 0,
+  h_count DOUBLE PRECISION NOT NULL DEFAULT 0, h_sum DOUBLE PRECISION NOT NULL DEFAULT 0, h_min DOUBLE PRECISION, h_max DOUBLE PRECISION,
+  h_bounds TEXT, h_counts TEXT, PRIMARY KEY (project_id, name, bucket_ms, env, series_key)
+);
+CREATE INDEX ix_metric_10s_time ON metric_10s (project_id, bucket_ms);
+CREATE INDEX ix_metric_5m_time ON metric_5m (project_id, bucket_ms);
+CREATE INDEX ix_metric_1h_time ON metric_1h (project_id, bucket_ms);
+`,
 ];
 
 export const MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS wizelens_migrations (version INTEGER PRIMARY KEY, applied_ms DOUBLE PRECISION NOT NULL)`;

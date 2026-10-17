@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import type { RequestRow, Trace } from "@wizeworks/lens-core";
+import type { RequestItem, Trace } from "@wizeworks/lens-core";
 import { fmtDate, fmtMs, fmtTime } from "../../format";
 import { setQuery } from "../../routes";
 import { Badge, toneOfStatus } from "../../ui/Badges";
@@ -19,7 +19,7 @@ const TABS: [Tab, string][] = [
   ["trace", "Trace"],
 ];
 
-function Head({ r }: { r: RequestRow }) {
+function Head({ r }: { r: RequestItem }) {
   return (
     <>
       <div className="wl-side-head">
@@ -42,7 +42,7 @@ function Head({ r }: { r: RequestRow }) {
 }
 
 /** Details of the selected request: overview, headers, response, and trace. */
-export function RequestPanel({ r, trace }: { r: RequestRow; trace: Trace | undefined }) {
+export function RequestPanel({ r, trace }: { r: RequestItem; trace: Trace | undefined }) {
   const [tab, setTab] = useState<Tab>("overview");
   const server = rootServer(trace);
   return (

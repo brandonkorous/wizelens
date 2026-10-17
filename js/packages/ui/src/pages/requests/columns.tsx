@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { isFailed, type RequestRow, type Sort, type SortKey } from "@wizeworks/lens-core";
+import { isFailed, type RequestItem, type Sort, type SortKey } from "@wizeworks/lens-core";
 import { fmtMs, fmtTime } from "../../format";
 import { CountBadge, DotText, toneOfStatus } from "../../ui/Badges";
 import type { Column } from "../../ui/Table";
@@ -15,10 +15,10 @@ function SortHeader({ label, k, sort, onSort }: { label: string; k: SortKey; sor
   );
 }
 
-const durationCell = (r: RequestRow) => <span className={isFailed(r) ? "wl-text-error" : undefined}>{fmtMs(r.durationMs)}</span>;
+const durationCell = (r: RequestItem) => <span className={isFailed(r) ? "wl-text-error" : undefined}>{fmtMs(r.durationMs)}</span>;
 
 /** The request table columns. Headers sort the full list through `onSort`. */
-export function requestColumns(sort: Sort, onSort: (k: SortKey) => void): Column<RequestRow>[] {
+export function requestColumns(sort: Sort, onSort: (k: SortKey) => void): Column<RequestItem>[] {
   const h = (label: string, k: SortKey) => <SortHeader label={label} k={k} sort={sort} onSort={onSort} />;
   return [
     { key: "time", header: h("Time", "time"), cell: (r) => fmtTime(r.startMs), className: "wl-nowrap" },

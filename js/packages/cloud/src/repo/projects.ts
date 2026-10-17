@@ -1,5 +1,7 @@
 import { hashToken, newId, newToken, slugOf } from "../auth/crypto.js";
 import type { Queryable } from "../db/db.js";
+import { METRIC_TABLES } from "./metric-write.js";
+import { STATS_TABLES } from "../settle.js";
 
 export interface Project {
   id: string;
@@ -35,9 +37,9 @@ export async function deleteProject(q: Queryable, projectId: string): Promise<vo
   await q.query("DELETE FROM projects WHERE id = $1", [projectId]);
 }
 
-/** Delete every trace, span, log, and service of a project. The project and its settings stay. */
+/** Delete every trace, span, log, service, metric, and stat of a project. The project and its settings stay. */
 export async function deleteProjectData(q: Queryable, projectId: string): Promise<void> {
-  for (const table of ["spans", "logs", "traces", "services", "metric_points"]) await q.query(`DELETE FROM ${table} WHERE project_id = $1`, [projectId]);
+  for (const table of ["spans", "logs", "traces", "services", "metric_points", ...METRIC_TABLES, ...STATS_TABLES]) await q.query(`DELETE FROM ${table} WHERE project_id = $1`, [projectId]);
 }
 
 export type KeyKind = "ingest" | "read";

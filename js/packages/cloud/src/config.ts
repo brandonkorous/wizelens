@@ -15,10 +15,6 @@ export interface CloudOptions {
   signup?: SignupMode;
   /** Default retention for new organizations, in days. Default 30. */
   retentionDays?: number;
-  /** Most traces one stats answer reads. Above this, the newest are used and the answer says so. Default 20000. */
-  maxStatsTraces?: number;
-  /** Most metric points one metrics answer reads. Above this, the newest are used and the answer says so. Default 200000. */
-  maxMetricPoints?: number;
   /** Ingest calls per key per minute. Default 1200. */
   ingestPerMinute?: number;
   /** How often alert rules run, in ms. Default 60000. */
@@ -42,8 +38,6 @@ export function resolveConfig(o: CloudOptions = {}): CloudConfig {
     publicUrl: o.publicUrl?.replace(/\/+$/, ""),
     signup: o.signup ?? "invite",
     retentionDays: o.retentionDays ?? 30,
-    maxStatsTraces: o.maxStatsTraces ?? 20_000,
-    maxMetricPoints: o.maxMetricPoints ?? 200_000,
     ingestPerMinute: o.ingestPerMinute ?? 1200,
     alertIntervalMs: o.alertIntervalMs ?? 60_000,
     allowPrivateWebhooks: o.allowPrivateWebhooks ?? false,

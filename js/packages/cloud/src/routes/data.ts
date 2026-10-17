@@ -35,7 +35,7 @@ async function info(ctx: Ctx): Promise<void> {
     runtime: `node ${process.version}`,
     mcp: true,
     startedMs: ctx.app.startedMs,
-    storage: { kind: ctx.app.db.kind === "postgres" ? "postgres" : "sqlite", maxTraces: ctx.app.config.maxStatsTraces, maxAgeMs: await retentionMs(ctx) },
+    storage: { kind: ctx.app.db.kind === "postgres" ? "postgres" : "sqlite", maxAgeMs: await retentionMs(ctx) },
     redactKeys: [...ctx.app.config.redactKeys],
   };
   sendJson(ctx.res, 200, value);

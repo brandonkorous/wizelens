@@ -42,7 +42,7 @@ function infoRows(s: Source, info: ServiceInfo): [ReactNode, ReactNode][] {
     ["Host", info.host ?? "–"],
     ["Started", info.startedMs ? fmtDateTime(info.startedMs) : "–"],
     ["Storage", storage ? (storage.kind === "postgres" ? "Postgres" : storage.kind === "sqlite" ? "SQLite file (kept across restarts)" : "Memory only") : "–"],
-    ["Max traces", storage ? fmtCount(storage.maxTraces) : "–"],
+    ["Max traces", storage ? (storage.maxTraces === undefined ? "No limit" : fmtCount(storage.maxTraces)) : "–"],
     ["Max age", storage ? fmtAge(storage.maxAgeMs) : "–"],
     ["Slow query", info.analysis ? `${fmtMs(info.analysis.slowQueryMs)} or more` : "–"],
     ["N+1 threshold", info.analysis ? `${info.analysis.nPlusOneThreshold} repeats` : "–"],

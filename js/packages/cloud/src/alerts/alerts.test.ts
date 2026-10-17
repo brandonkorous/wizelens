@@ -6,6 +6,7 @@ import { setupOwner, startCloud } from "../test/cloud.js";
 import { span } from "../test/db.js";
 import { checkTarget } from "./notify.js";
 import { evaluateAll } from "./evaluate.js";
+import { settleCloud } from "../settle.js";
 
 let cloud: Cloud;
 const closers: (() => void)[] = [];
@@ -39,6 +40,7 @@ it("fires once when the error rate breaks the rule, then resolves", async () => 
   expect((await owner.call("POST", `api/projects/${projectId}/alerts`, rule)).status).toBe(201);
   const failed = span("c".repeat(32), "c".repeat(16), { startMs: clock.now - 60_000, status: "error", attributes: { "http.request.method": "GET", "url.path": "/x", "http.response.status_code": 500 } });
   await fetch(`${url}/_wizelens/api/ingest`, { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: JSON.stringify({ sender: { service: "api" }, spans: [failed] }) });
+  await settleCloud(cloud.app.db, clock.now + 10_000);
   await evaluateAll(cloud.app);
   await evaluateAll(cloud.app);
   expect(hook.bodies).toEqual([expect.objectContaining({ state: "fired", rule: "Errors", message: "Error rate is 100% (above 10%)" })]);

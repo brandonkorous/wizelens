@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto";
-import { ATTR_BROWSER_SESSION, logKey, seriesKeyOf, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_SESSION, logKey, PG_DIALECT, pruneStatements, seriesKeyOf, type Span } from "@wizeworks/lens-core";
 import type { HubWrite } from "@wizeworks/lens-hub/kit";
-import type { Queryable } from "../db/db.js";
+import type { Db, Queryable } from "../db/db.js";
+import { runStatements, stateOf, type TraceStateRow } from "../settle.js";
+import { pruneMetricRollups, writeMetricRollups } from "./metric-write.js";
 
 const CHUNK = 200;
 
@@ -59,6 +61,7 @@ export async function writeBatch(q: Queryable, projectId: string, w: HubWrite, n
   // The series key holds NUL separators, which Postgres text cannot store, so keep its hash.
   const metrics = (w.metrics ?? []).map((p) => [projectId, p.timeMs, env, p.service, p.name, sha1(seriesKeyOf(p)), JSON.stringify(p)]);
   await insertMany(q, "INSERT INTO metric_points (project_id, time_ms, env, service, name, series_key, json)", metrics, "");
+  await writeMetricRollups(q, projectId, env, w.metrics ?? [], now);
 }
 
 /** Postgres rejects one statement that updates the same row twice, so keep the last of each key. */
@@ -75,17 +78,23 @@ export async function pruneMetricsByRetention(q: Queryable, now: number): Promis
      AND m.time_ms < $1 - o.retention_days * 86400000.0`,
     [now],
   );
+  await pruneMetricRollups(q, now);
 }
 
 /** Drop traces older than each organization's retention. Returns how many traces were dropped. */
 export async function pruneByRetention(q: Queryable, now: number): Promise<number> {
-  const doomed = await q.query<{ project_id: string; trace_id: string }>(
-    `SELECT t.project_id, t.trace_id FROM traces t JOIN projects p ON p.id = t.project_id JOIN orgs o ON o.id = p.org_id
-     WHERE t.start_ms < $1 - o.retention_days * 86400000.0 LIMIT 5000`,
-    [now],
-  );
-  for (const table of ["spans", "logs", "traces"]) {
-    for (const d of doomed) await q.query(`DELETE FROM ${table} WHERE project_id = $1 AND trace_id = $2`, [d.project_id, d.trace_id]);
-  }
-  return doomed.length;
+  const prune = async (x: Queryable) => {
+    const doomed = await x.query<TraceStateRow>(
+      `SELECT t.project_id, t.trace_id, t.env, t.contrib, o.retention_days FROM traces t JOIN projects p ON p.id = t.project_id JOIN orgs o ON o.id = p.org_id
+       WHERE t.start_ms < $1 - o.retention_days * 86400000.0 LIMIT 5000`,
+      [now],
+    );
+    // Take their contributions out of the rollups and drop their facts first.
+    await runStatements(x, pruneStatements(PG_DIALECT, doomed.map((d) => stateOf(d, d.retention_days ?? 30)), now, true));
+    for (const table of ["spans", "logs", "traces"]) {
+      for (const d of doomed) await x.query(`DELETE FROM ${table} WHERE project_id = $1 AND trace_id = $2`, [d.project_id, d.trace_id]);
+    }
+    return doomed.length;
+  };
+  return "tx" in q ? (q as Db).tx(prune) : prune(q);
 }

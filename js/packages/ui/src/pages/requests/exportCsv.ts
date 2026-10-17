@@ -1,8 +1,8 @@
-import type { RequestRow } from "@wizeworks/lens-core";
+import type { RequestItem } from "@wizeworks/lens-core";
 
 type Cell = string | number | null;
 
-const COLUMNS: [string, (r: RequestRow) => Cell][] = [
+const COLUMNS: [string, (r: RequestItem) => Cell][] = [
   ["time", (r) => new Date(r.startMs).toISOString()],
   ["method", (r) => r.method],
   ["path", (r) => r.path],
@@ -37,14 +37,14 @@ function field(v: Cell): string {
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-export function toCsv(rows: readonly RequestRow[]): string {
+export function toCsv(rows: readonly RequestItem[]): string {
   const head = COLUMNS.map(([name]) => name).join(",");
   const body = rows.map((r) => COLUMNS.map(([, get]) => field(get(r))).join(","));
   return [head, ...body].join("\r\n");
 }
 
 /** Download the rows as a CSV file. Built in the browser; nothing is sent anywhere. */
-export function downloadCsv(rows: readonly RequestRow[]): void {
+export function downloadCsv(rows: readonly RequestItem[]): void {
   const blob = new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

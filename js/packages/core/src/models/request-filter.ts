@@ -1,6 +1,9 @@
 import type { RequestRow } from "../stats/requests.js";
 import type { ModelParams } from "./input.js";
 
+/** What filters and sorts read: a request row with or without its findings. */
+type Row = Omit<RequestRow, "findings">;
+
 /** Request filters, kept in the URL query so links and refreshes keep them. */
 export interface RequestFilter {
   method: string;
@@ -35,7 +38,7 @@ export function filterFromQuery(query: URLSearchParams | ModelParams): RequestFi
   return { method: get("method"), status: get("status"), duration: get("duration"), service: get("service"), q: get("q") };
 }
 
-function statusMatches(r: RequestRow, status: string): boolean {
+function statusMatches(r: Row, status: string): boolean {
   if (!status) return true;
   if (status === "failed") return r.errors > 0 || (r.status ?? 0) >= 500;
   const code = r.status ?? 0;
@@ -43,19 +46,19 @@ function statusMatches(r: RequestRow, status: string): boolean {
   return code >= hundred && code < hundred + 100;
 }
 
-function durationMatches(r: RequestRow, duration: string): boolean {
+function durationMatches(r: Row, duration: string): boolean {
   const range = DURATIONS[duration];
   return !range || (r.durationMs >= range[1] && r.durationMs < range[2]);
 }
 
-function textMatches(r: RequestRow, q: string): boolean {
+function textMatches(r: Row, q: string): boolean {
   if (!q) return true;
   const s = q.toLowerCase();
   const fields = [r.path, r.endpoint, r.user, r.requestId, r.clientAddress, ...r.tags];
   return r.traceId.startsWith(s) || fields.some((f) => f?.toLowerCase().includes(s));
 }
 
-export function applyFilter(rows: readonly RequestRow[], f: RequestFilter): RequestRow[] {
+export function applyFilter<R extends Row>(rows: readonly R[], f: RequestFilter): R[] {
   return rows.filter(
     (r) =>
       (!f.method || r.method === f.method) &&
@@ -69,7 +72,7 @@ export function applyFilter(rows: readonly RequestRow[], f: RequestFilter): Requ
 export const isFiltered = (f: RequestFilter): boolean => FILTER_KEYS.some((k) => f[k] !== "");
 
 /** Distinct values for the method and service selects, sorted. */
-export function optionsOf(rows: readonly RequestRow[]): { methods: string[]; services: string[] } {
+export function optionsOf(rows: readonly Row[]): { methods: string[]; services: string[] } {
   return {
     methods: [...new Set(rows.map((r) => r.method))].sort(),
     services: [...new Set(rows.map((r) => r.service))].sort(),
@@ -83,7 +86,7 @@ export interface Sort {
   desc: boolean;
 }
 
-const SORT_VALUE: Record<SortKey, (r: RequestRow) => number | string> = {
+const SORT_VALUE: Record<SortKey, (r: Row) => number | string> = {
   time: (r) => r.startMs,
   path: (r) => r.path,
   method: (r) => r.method,
@@ -98,7 +101,7 @@ const SORT_VALUE: Record<SortKey, (r: RequestRow) => number | string> = {
 export const isSortKey = (v: string | undefined): v is SortKey => !!v && v in SORT_VALUE;
 
 /** Sort all rows before paging, so a sorted page shows the true top rows. */
-export function sortRows(rows: readonly RequestRow[], sort: Sort): RequestRow[] {
+export function sortRows<R extends Row>(rows: readonly R[], sort: Sort): R[] {
   const get = SORT_VALUE[sort.key];
   const dir = sort.desc ? -1 : 1;
   return [...rows].sort((a, b) => {

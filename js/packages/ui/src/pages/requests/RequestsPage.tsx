@@ -1,4 +1,4 @@
-import { filterFromQuery, requestOf, type RequestRow } from "@wizeworks/lens-core";
+import { filterFromQuery, requestOf, type RequestItem } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
 import { useRoute } from "../../routes";
 import { ModelState } from "../../ui/ModelState";
@@ -19,7 +19,7 @@ function NoSelection({ id }: { id: string | null }) {
 }
 
 /** The selected request: its row from the model, or built from its trace when it is outside the range. */
-function Selected({ id, row }: { id: string; row: RequestRow | null }) {
+function Selected({ id, row }: { id: string; row: RequestItem | null }) {
   const { trace } = useTrace(id);
   const r = row ?? (trace ? requestOf(trace) : null);
   return r ? <RequestPanel key={r.traceId} r={r} trace={trace ?? undefined} /> : <NoSelection id={id} />;

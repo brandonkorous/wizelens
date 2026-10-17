@@ -1,4 +1,3 @@
-import { bucketIndex, type TimeWindow } from "../stats/common.js";
 import type { MetricHistogram, MetricPoint } from "./types.js";
 
 /** How a metric is drawn: gauges and up-down sums as values, counters as a rate per second, histograms as percentiles. */
@@ -30,37 +29,10 @@ export const displayOf = (p: Pick<MetricPoint, "kind" | "monotonic">): MetricDis
 /** The unit of what is drawn: a counter in "By" is drawn in "By/s". */
 export const displayUnitOf = (unit: string, display: MetricDisplay): string => (display === "rate" ? `${unit === "1" ? "" : unit}/s` : unit);
 
-function valueBuckets(points: readonly MetricPoint[], w: TimeWindow, n: number): (number | null)[] {
-  const sums = new Array<number>(n).fill(0);
-  const counts = new Array<number>(n).fill(0);
-  for (const p of points) {
-    const i = bucketIndex(p.timeMs, w, n);
-    if (i >= 0 && p.value !== undefined) (sums[i]! += p.value), counts[i]!++;
-  }
-  return sums.map((s, i) => (counts[i] ? s / counts[i]! : null));
-}
-
-/** Change per second. Cumulative counters use the gap to the previous point; a drop means the counter restarted. */
-function rateBuckets(points: readonly MetricPoint[], w: TimeWindow, n: number): (number | null)[] {
-  const deltas = new Array<number>(n).fill(0);
-  const spans = new Array<number>(n).fill(0);
-  points.forEach((p, k) => {
-    const prev = points[k - 1];
-    const v = p.value ?? 0;
-    const delta = p.temporality === "delta" ? v : prev ? (v >= (prev.value ?? 0) ? v - (prev.value ?? 0) : v) : null;
-    const dt = p.temporality === "delta" && p.startMs !== undefined ? p.timeMs - p.startMs : prev ? p.timeMs - prev.timeMs : 0;
-    const i = bucketIndex(p.timeMs, w, n);
-    if (i < 0 || delta === null || dt <= 0) return;
-    deltas[i]! += delta;
-    spans[i]! += dt;
-  });
-  return deltas.map((d, i) => (spans[i]! > 0 ? (d / spans[i]!) * 1000 : null));
-}
-
 const sameBounds = (a: readonly number[], b: readonly number[]) => a.length === b.length && a.every((v, i) => v === b[i]);
 
 /** The histogram of one point alone. Cumulative points are turned into the change since the previous one. */
-function histDelta(p: MetricHistogram, prev: MetricHistogram | undefined, delta: boolean): MetricHistogram | null {
+export function histDelta(p: MetricHistogram, prev: MetricHistogram | undefined, delta: boolean): MetricHistogram | null {
   if (delta) return p;
   if (!prev) return null;
   if (p.count < prev.count || !sameBounds(p.bounds, prev.bounds)) return p;
@@ -81,24 +53,6 @@ export function mergeHistogram(into: MergedHistogram | null, h: MetricHistogram 
     min: minOf(into.min, h.min),
     max: maxOf(into.max, h.max),
   };
-}
-
-function histBuckets(points: readonly MetricPoint[], w: TimeWindow, n: number): (MergedHistogram | null)[] {
-  const out = new Array<MergedHistogram | null>(n).fill(null);
-  points.forEach((p, k) => {
-    const h = p.histogram && histDelta(p.histogram, points[k - 1]?.histogram, p.temporality === "delta");
-    const i = bucketIndex(p.timeMs, w, n);
-    if (h && i >= 0 && h.count > 0) out[i] = mergeHistogram(out[i]!, h);
-  });
-  return out;
-}
-
-/** One series, points sorted by time, over `n` buckets. */
-export function bucketSeries(points: readonly MetricPoint[], w: TimeWindow, n: number): Buckets {
-  const display = displayOf(points[0] ?? { kind: "gauge" });
-  if (display === "percentiles") return { display, values: new Array(n).fill(null), hists: histBuckets(points, w, n) };
-  const values = display === "rate" ? rateBuckets(points, w, n) : valueBuckets(points, w, n);
-  return { display, values, hists: [] };
 }
 
 /** Several series as one: rates add up, values average, histograms merge. */

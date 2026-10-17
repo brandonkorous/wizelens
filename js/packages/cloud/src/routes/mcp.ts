@@ -37,7 +37,7 @@ async function mcp(ctx: Ctx): Promise<void> {
     list: (limit) => recent.slice(0, limit).map(toSummary),
     all: () => recent,
     get: (traceId) => getTrace(db, project.id, traceId),
-    metrics: (range, params) => projectMetrics(db, project.id, range, params, { now: ctx.app.config.now(), limit: ctx.app.config.maxMetricPoints }),
+    metrics: (range, params) => projectMetrics(db, project.id, range, params, { now: ctx.app.config.now() }),
     // Every tool call is kept in the organization's audit log.
     audit: (line) => void writes.push(audit(db, project.orgId, actor, "mcp.call", { projectId: project.id, line }, ctx.app.config.now())),
   };

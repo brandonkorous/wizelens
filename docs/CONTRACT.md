@@ -210,9 +210,20 @@ A series is one name, one service, and one attribute set. Exponential histograms
 positive bucket `i` is `base^(offset+i+1)`, `base = 2^(2^-scale)`; zero and negative counts go to the first bucket). A summary
 becomes a histogram with count and sum and no buckets.
 
-**How the page draws them** (`metricsModel`, the same code everywhere): gauges and up-down sums as their value; counters as a rate
+**How the page draws them** (`metricsModelOf`, the same code everywhere): gauges and up-down sums as their value; counters as a rate
 per second (a drop means the counter restarted); histograms as p50, p95, and p99 from the bucket counts (cumulative points are
 turned into the change since the previous point). Lines can be split by service or by an attribute.
+
+**Metric rollups.** The model reads per-series rollups, never a capped set of points. Hubs and the cloud write them at ingest,
+in the same transaction as the raw points, into three tiers: `metric_10s` (kept 6 h 10 min), `metric_5m` (kept 50 h), and
+`metric_1h` (kept for the retention). A tier row holds, per series and bucket, the point count and the sum, min, and max of the
+values, the first and last value with their times, a counter's change and the time it took (`rate_delta`, `rate_ms`), and a
+histogram's change (`h_count`, `h_sum`, `h_min`, `h_max`, and `h_bounds` / `h_counts` as JSON). `metric_series` keeps what each
+series is (name, service, kind, unit, attributes, from its newest point) and its newest point, so a cumulative counter or
+histogram gets the change since its previous point across batches and window edges: the first point of a series inside a window
+counts its change from the point before the window. A point that is not newer than the stored one adds its value but no change.
+Pages read the tiers the way they read the stats rollups (see "Stats tables"); `meta.sampled` is always `null`. In-app hosts send
+raw points and the browser builds the same rollups in memory (`metricsModel({ points, range, now, params })`).
 The runtime strip shows, per service, the first of these that it sends:
 
 | Tile | Metric names |
@@ -373,7 +384,8 @@ interface IngestBatch {
 | GET | `/_wizelens/api/services` | `{ services: HubService[], environments, projects, traces, spans }` |
 | POST | `/_wizelens/api/ingest` | `IngestBatch` |
 | POST | `/v1/traces`, `/v1/logs`, `/v1/metrics` | OTLP/HTTP, JSON or protobuf, optional gzip. Also under `/_wizelens/v1/...` |
-| GET | `/_wizelens/api/models/metrics` | The Metrics page: `range`, `project`, `env`, `service`, `metric`, `group`, `stat`, `q`. At most 200,000 points are read, newest first; `meta.sampled` says when |
+| GET | `/_wizelens/api/models/metrics` | The Metrics page: `range`, `project`, `env`, `service`, `metric`, `group`, `stat`, `q`. Read from the metric rollups (see "Metrics"), with no point cap |
+| GET | `/_wizelens/api/models/{page}` | One page model (see "Page models"): `range`, `project`, `env`, and the page's own parameters. Ranges up to the hub's age limit. `serverStats` |
 | POST | `/_wizelens/mcp` | With `--mcp`. The same five tools, over the newest 2000 traces of every service, plus `list_metrics` and `get_metric` |
 | GET | `/healthz` | `ok` |
 
@@ -416,7 +428,17 @@ CREATE TABLE metrics  (time_ms REAL, project TEXT, env TEXT, service TEXT, name 
 ```
 
 Metric points older than the trace age limit are dropped, then the oldest past `--max-metric-points`
-(`WIZELENS_HUB_MAX_METRIC_POINTS`, default 2,000,000). Files from older hubs upgrade by themselves (schema version 2).
+(`WIZELENS_HUB_MAX_METRIC_POINTS`, default 2,000,000). That cap is for raw points only: the metric rollup tiers drop buckets past
+their keep (10 s and 5 min tiers) or the trace age limit (1 h tier and `metric_series`) once a minute. A file from before metric
+rollups gets its stored raw points rolled up once, oldest first, for half a second each minute (`meta('metric_backfill')` holds
+the progress, then `done`); points that arrive meanwhile are rolled up as usual.
+
+Schema version 3 adds the stats tables (see "Stats tables"): `traces` gains `settled_ms` and `contrib`, and the fact, rollup, hist,
+and metric rollup tables use `project` in place of `project_id` (`''` for unknown), SQLite types, and keys that start with the
+trace id (facts) or `(kind, bucket_ms, project, env, key)` (rollups), since hub reads often have no project. Files from older hubs
+upgrade by themselves when opened: the new columns and tables are added, and the settle job backfills the stats, newest traces
+first. The hub settles every 2 seconds for at most 150 ms at a time. Pruning by age or by count takes the dropped traces out of
+the rollups. Page answers are cached per page, parameters, scope, 10-second "now", and settle generation (200 entries).
 
 ## Cloud (v0.7, phase 3)
 
@@ -462,12 +484,36 @@ for tests and trials.
 
 ### Page models (`serverStats`)
 
-Every dashboard page is one pure function in `@wizeworks/lens-core` (`PAGE_MODELS`: overview, requests, traces, database,
-rendering, errors, logs, services, insights). It takes the traces of the chosen window and the window before it, plus the
-page's URL parameters (filters, sort, page, selected item), and returns a JSON object. The browser runs it for in-app and hub
-hosts; the cloud runs it on the server, so ranges reach `7d` and `30d`. Lists in a model are capped at 200 rows (Requests and
-Logs page through all rows). The server reads at most `maxStatsTraces` (default 20000) traces per answer, newest first; above that
-the model's `meta.sampled` says `{ used, total }` and the dashboard says so. Answers are cached for 15 seconds.
+Every dashboard page is one definition in `@wizeworks/lens-core` (`PAGES`: overview, requests, traces, database, rendering,
+errors, logs, services, insights, and `badges`, the sidebar counts). A page says what it needs from its URL parameters (filters,
+sort, page, selected item): rollup groups and series over the chosen window and the window before it, list rows, or one trace.
+An executor answers those needs and the page builds a JSON object from the answers. In-app hosts answer them in the browser from
+the loaded traces; hosts with `serverStats` answer them on the server, so ranges reach `7d` and `30d`. Lists in a model are capped
+at 200 rows (Requests and Logs page through all rows). Request rows in models carry no `findings`. `meta.sampled` is always
+`null`; `meta.settling` is the number of traces whose stats are still being added up (null or 0 when complete), and the dashboard
+says "Preparing stats" while it is above 0. The cloud caches answers for 15 seconds; the hub until its stats change.
+
+### Stats tables (hub and cloud)
+
+Pages read small tables built from the stored traces, never the traces themselves (only `selected` traces are read whole).
+- **Facts**, one set per trace: `fact_requests` (a request row without findings), `fact_traces` (a Traces list row),
+  `fact_logs` (log lines), `fact_critical` (the 5 slowest spans of each trace). Lists filter, sort, and page these.
+- **Rollups**: what a trace adds to every grouping a page shows (`kind`, `key`), summed per time bucket in three tiers:
+  `rollup_10s` (kept 6 h 10 min), `rollup_5m` (kept 50 h), `rollup_1h` (kept for the retention). Each row has `n`, `err`,
+  `sum_v`, counters `c0`..`c5`, `first_ms`, `last_ms`, and one representative (`top`, `top_rank`) and newest trace ids (`ids`).
+  `hist_<tier>` holds a log-bucket histogram per row (bins 4% wide, so percentiles are within 2%).
+- A query reads the coarsest tier that still gives a window enough buckets, and finer tiers at the window's edges; an edge
+  bucket that no kept tier can split is weighted by its overlap. Series place each tier bucket by its midpoint, or spread it
+  over the page buckets it overlaps when page buckets are not whole tier buckets.
+- **Settling**: a trace is settled when it has been quiet for 5 seconds (or every 30 seconds while it keeps changing): its facts
+  are rebuilt from its spans and logs, and the rollups get its new contribution minus the old one (kept as JSON in
+  `traces.contrib`). `settled_ms` is set to the `updated_ms` that was read, so a late span settles the trace again. Representatives,
+  first and last times, and ids are display fields and are never taken back out.
+- The slow query threshold is fixed when a trace settles (100 ms). `FACTS_VERSION` in `@wizeworks/lens-core` names the fact
+  rules: when it changes, a host clears its stats and rebuilds them (hub: `meta('facts')`; cloud: `scale_meta('facts')`).
+- Times are those of each item (request start, span start, log time), so an item near a window edge counts where it happened.
+- **Metric rollups** (`metric_series`, `metric_10s` / `5m` / `1h`) use the same tiers and reads, but are written when points
+  arrive, not by settling, since points never change (see "Metrics").
 
 ### Alerts
 
@@ -481,7 +527,9 @@ Webhook URLs must be https and may not resolve to private, loopback, or link-loc
 A rule can also watch one OpenTelemetry metric: `metric: "metric"`, `metricName` (required), `metricStat`
 (`last`, `avg`, `max`, `p95`, `p99`, or `rate`; default `avg`), and `metricService` (optional). The threshold is in the metric's
 base unit (seconds, bytes, or 0 to 1 for ratios). Counters read as a rate per second; histograms read from their merged buckets.
-No data never fires.
+Rules read the metric rollups over the window ending at "now" rounded down to 10 seconds. Gauge `p95` and `p99` are taken over the
+bucket means of the finest tier that covers the window (10 s up to 6 hours, 5 min beyond), so they can sit slightly below the
+percentile of the raw values. No data never fires.
 
 ### Sharing
 
@@ -497,5 +545,12 @@ Each organization keeps traces for `retention_days` (default 30, 1 to 400). Olde
 
 Postgres, one schema, migrations in `wizelens_migrations`. Tables: `orgs`, `users`, `members`, `sessions`, `invites`, `projects`,
 `api_keys`, `traces`, `spans`, `logs`, `services`, `metric_points`, `alert_rules`, `alert_events`, `shares`, `audit`.
-Migration 2 added `metric_points` and the metric columns of `alert_rules`. Data tables are keyed by
+Migration 2 added `metric_points` and the metric columns of `alert_rules`. Migration 3 added the stats tables (see "Stats
+tables"): `traces.settled_ms` and `traces.contrib`, `scale_meta`, `fact_requests`, `fact_traces`, `fact_logs`, `fact_critical`,
+`rollup_10s`/`5m`/`1h`, `hist_10s`/`5m`/`1h`, `metric_series`, and `metric_10s`/`5m`/`1h`. The cloud settles every 3 seconds in batches
+of 500, under a Postgres advisory lock so only one instance works at a time. Rollup buckets age out every minute; the 1 h tier
+follows the organization's retention, and deleting traces past retention takes them out of the rollups first. Metric rollups are
+written at ingest under row locks on `metric_series` (`SELECT ... FOR UPDATE`, in key order), so instances add up the same series
+one at a time; their tiers age out with the 10-minute retention job (the 1 h tier and `metric_series` by the organization's
+retention). Data tables are keyed by
 `project_id`. Times are `double precision` epoch ms. Secrets (sessions, invites, keys, shares) are stored as SHA-256 hashes only.

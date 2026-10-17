@@ -1,8 +1,8 @@
-import { isTimeRange, type MetricsModel, metricsModel, type TimeRange, TIME_RANGES, windowOf } from "@wizeworks/lens-core";
+import { isTimeRange, type MetricsModel, metricsModelOf, type TimeRange, TIME_RANGES } from "@wizeworks/lens-core";
 import type { Ctx } from "../app.js";
 import type { Queryable } from "../db/db.js";
 import { fail } from "../http/http.js";
-import { loadMetricPoints } from "../repo/metric-read.js";
+import { loadMetricData } from "../repo/metric-read.js";
 
 const DAY_MS = 86_400_000;
 const PARAMS = ["metric", "service", "group", "stat", "q"];
@@ -17,18 +17,15 @@ export function metricParamsOf(p: URLSearchParams): Record<string, string> {
   return out;
 }
 
-/** The metrics page for one project, from the newest points in range. */
+/** The metrics page for one project, from the metric rollup tiers. */
 export async function projectMetrics(
   db: Queryable,
   projectId: string,
   range: TimeRange,
   params: Record<string, string>,
-  o: { now: number; env?: string; limit: number },
+  o: { now: number; env?: string },
 ): Promise<MetricsModel> {
-  const w = windowOf(range, o.now);
-  const { points, total } = await loadMetricPoints(db, { projectId, from: w.from, to: w.to, env: o.env, limit: o.limit });
-  const sampled = total > points.length ? { used: points.length, total } : null;
-  return metricsModel({ points, range, now: o.now, params, sampled });
+  return metricsModelOf(await loadMetricData(db, { projectId, env: o.env }, range, params, o.now));
 }
 
 /** The range from the query, checked against the organization's retention. */
