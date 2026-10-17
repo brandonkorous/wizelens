@@ -24,6 +24,16 @@ async function call(method, path, body, headers = {}) {
 
 const hex = (n) => randomBytes(n).toString("hex");
 
+/** Ask again every 500 ms until `done`, for at most 30 s. Returns the last answer. */
+async function until(ask, done) {
+  let last = await ask();
+  for (let i = 0; i < 60 && !done(last); i++) {
+    await new Promise((r) => setTimeout(r, 500));
+    last = await ask();
+  }
+  return last;
+}
+
 function spans(now) {
   const traceId = hex(16);
   const server = { traceId, spanId: hex(8), parentSpanId: null, name: "GET /orders", kind: "server", category: "http.server", service: "smoke-api", startMs: now - 5000, durationMs: 40, status: "error", statusMessage: "boom", attributes: { "http.request.method": "GET", "url.path": "/orders", "http.response.status_code": 500 }, events: [{ name: "exception", timeMs: now - 4990, attributes: { "exception.type": "SmokeError", "exception.message": "boom" } }] };
@@ -63,7 +73,8 @@ async function metrics(projectId, key) {
 async function read(orgId, projectId, traceId) {
   const trace = await call("GET", `api/traces/${traceId}?project=${projectId}`);
   check(trace.status === 200 && trace.body.spans.length === 2, "the trace reads back from the database");
-  const week = await call("GET", `api/models/overview?project=${projectId}&range=7d`);
+  // Stats come from a background job that sums a trace once it has been quiet for 5 s, so wait for it.
+  const week = await until(() => call("GET", `api/models/overview?project=${projectId}&range=7d`), (r) => r.body?.headlines?.total?.value === 1);
   check(week.status === 200 && week.body.headlines.total.value === 1, "the server computes a 7-day overview");
   const errors = await call("GET", `api/models/errors?project=${projectId}&range=24h`);
   check(errors.body.groups[0]?.type === "SmokeError", "the server groups the error");

@@ -1,4 +1,4 @@
-import { type Attributes, redactAttributes, type Span, type SpanCategory, type SpanKind } from "@wizeworks/lens-core";
+import { type Attributes, isDbCall, redactAttributes, type Span, type SpanCategory, type SpanKind } from "@wizeworks/lens-core";
 import type { HubWrite } from "../store.js";
 import { attributesOf, hexId, nanosToMs, type OtlpKeyValue, type OtlpResource, senderOf } from "./values.js";
 
@@ -38,8 +38,8 @@ function statusOf(code: number | string | undefined): Span["status"] {
 
 /** The same rules the add-ons use (lens-node processor.ts). */
 function categoryOf(kind: SpanKind, a: Attributes): SpanCategory {
-  if (a["db.system.name"] != null) return "db";
   if (a["messaging.system"] != null) return "messaging";
+  if (isDbCall(a)) return "db";
   const web = a["http.request.method"] != null || a["rpc.system"] != null;
   if (kind === "server" && web) return "http.server";
   if (kind === "client" && web) return "http.client";

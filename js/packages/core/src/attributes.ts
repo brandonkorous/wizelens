@@ -12,6 +12,8 @@ export const ATTR_BROWSER_TYPE = "wizelens.browser.type";
 export const ATTR_BROWSER_ROUTE = "wizelens.browser.route";
 /** Page view: "load" for a full page load, "spa" for a client-side route change. */
 export const ATTR_BROWSER_NAVIGATION = "wizelens.browser.navigation";
+/** Browser span: the WizeLens endpoint of the server that answered, when it is not the one the browser sends to. */
+export const ATTR_BROWSER_REMOTE = "wizelens.browser.remote";
 
 export type BrowserSpanType = "fetch" | "pageview" | "react" | "error";
 
@@ -97,3 +99,9 @@ export const ATTR_MESSAGING = {
 
 /** `messaging.operation.type` values used by the add-ons. */
 export type MessagingOperation = "send" | "receive" | "process";
+
+/** Any of these marks a database call. Some libraries (Better Auth) send only the operation and the table, with no `db.system.name`. */
+export const DB_MARKERS = ["db.system.name", "db.system", "db.query.text", "db.operation.name", "db.collection.name"] as const;
+
+/** True when the attributes describe a database call. */
+export const isDbCall = (attrs: Readonly<Record<string, unknown>>): boolean => DB_MARKERS.some((k) => attrs[k] != null);

@@ -40,5 +40,6 @@ export function buildInfo(i: InfoInputs): ServiceInfo {
     captureResponseBody: !!o.captureResponseBody,
     project: o.project ?? process.env[PROJECT_ENV] ?? undefined,
     hub: hubUrlOf(o) ?? undefined,
+    sampling: i.store.sampling ?? undefined,
   };
 }

@@ -1,4 +1,6 @@
-import { ATTR_BROWSER_SESSION, buildTrace, type LogRecord, type Span, type Trace, type TraceSummary, toSummary } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_SESSION, buildTrace, type LogRecord, type SamplingInfo, type Span, type Trace, type TraceSummary, toSummary } from "@wizeworks/lens-core";
+import type { Held, TraceSampler, Verdict } from "./sampling.js";
+import type { StoredTrace, TraceChanges } from "./store-types.js";
 
 interface Entry {
   traceId: string;
@@ -10,24 +12,7 @@ interface Entry {
   startMs: number;
 }
 
-/** Changes to one trace since the last drain. Used by the persister. */
-export interface TraceChanges {
-  traceId: string;
-  startMs: number;
-  remotes: string[];
-  spans: Span[];
-  /** New logs with their index in the trace (stable across flushes). */
-  logs: { seq: number; log: LogRecord }[];
-}
-
-/** Data loaded from disk at startup. */
-export interface StoredTrace {
-  traceId: string;
-  startMs: number;
-  spans: Span[];
-  logs: LogRecord[];
-  remotes: string[];
-}
+export type { StoredTrace, TraceChanges } from "./store-types.js";
 
 export interface TraceStoreOptions {
   /** Max traces kept. Oldest are dropped first. Default 2000. */
@@ -40,6 +25,8 @@ export interface TraceStoreOptions {
   maxLogsPerTrace?: number;
   /** Clock, for tests. */
   now?: () => number;
+  /** Decides which traces are kept. Absent: all. */
+  sampler?: TraceSampler;
 }
 
 /** One change, as the hub exporter sees it. */
@@ -64,6 +51,7 @@ export class TraceStore {
   readonly #maxLogs: number;
   readonly #now: () => number;
   readonly #listeners = new Set<(e: StoreEvent) => void>();
+  readonly #sampler: TraceSampler | undefined;
 
   constructor(options: TraceStoreOptions = {}) {
     this.#maxTraces = Math.max(1, options.maxTraces ?? 2000);
@@ -71,6 +59,7 @@ export class TraceStore {
     this.#maxSpans = options.maxSpansPerTrace ?? 2000;
     this.#maxLogs = options.maxLogsPerTrace ?? 1000;
     this.#now = options.now ?? Date.now;
+    this.#sampler = options.sampler;
   }
 
   get size(): number {
@@ -79,6 +68,11 @@ export class TraceStore {
 
   get maxTraces(): number {
     return this.#maxTraces;
+  }
+
+  /** Null when every trace is kept. */
+  get sampling(): SamplingInfo | null {
+    return this.#sampler?.info ?? null;
   }
 
   get maxAgeMs(): number {
@@ -121,7 +115,33 @@ export class TraceStore {
     return d;
   }
 
-  addSpan(span: Span): void {
+  /** `root`: the span starts this service's part of the trace. Sampling decides when a root ends. */
+  addSpan(span: Span, root = span.parentSpanId === null): void {
+    this.#gate(span.traceId, this.#sampler?.span(span, root), () => this.#putSpan(span));
+  }
+
+  addLog(traceId: string, log: LogRecord): void {
+    this.#gate(traceId, this.#sampler?.log(traceId, log), () => this.#putLog(traceId, log));
+  }
+
+  addRemote(traceId: string, endpoint: string): void {
+    this.#gate(traceId, this.#sampler?.remote(traceId, endpoint), () => this.#putRemote(traceId, endpoint));
+  }
+
+  // Store now when sampling keeps it (and what the trace held back), else nothing.
+  #gate(traceId: string, verdict: Verdict | undefined, put: () => void): void {
+    if (verdict && verdict.action !== "keep") return;
+    if (verdict?.held) this.#release(traceId, verdict.held);
+    put();
+  }
+
+  #release(traceId: string, held: Held): void {
+    for (const s of held.spans) this.#putSpan(s);
+    for (const l of held.logs) this.#putLog(traceId, l);
+    for (const r of held.remotes) this.#putRemote(traceId, r);
+  }
+
+  #putSpan(span: Span): void {
     const entry = this.#entry(span.traceId, span.startMs);
     if (entry.spans.size >= this.#maxSpans && !entry.spans.has(span.spanId)) return;
     entry.spans.set(span.spanId, span);
@@ -131,7 +151,7 @@ export class TraceStore {
     this.#emit({ type: "span", span });
   }
 
-  addLog(traceId: string, log: LogRecord): void {
+  #putLog(traceId: string, log: LogRecord): void {
     const entry = this.#entry(traceId, log.timeMs);
     if (entry.logs.length >= this.#maxLogs) return;
     this.#markDirty(traceId);
@@ -139,7 +159,7 @@ export class TraceStore {
     this.#emit({ type: "log", traceId, log });
   }
 
-  addRemote(traceId: string, endpoint: string): void {
+  #putRemote(traceId: string, endpoint: string): void {
     const entry = this.#entry(traceId, this.#now());
     if (entry.remotes.has(endpoint)) return;
     entry.remotes.add(endpoint);

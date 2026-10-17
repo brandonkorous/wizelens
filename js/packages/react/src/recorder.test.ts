@@ -49,8 +49,9 @@ it("does not profile calls to WizeLens or add traceparent cross-origin", async (
   await recorder.restore();
   seen.length = 0;
   await fetch("/_wizelens/api/traces");
+  await fetch("http://other.test:3022/_wizelens/api/traces/abc");
   await fetch("https://other.example/x");
-  expect(seen).toEqual([null, null]);
+  expect(seen).toEqual([null, null, null]);
   expect(recorder.getSnapshot()).toHaveLength(1);
   undo();
 });

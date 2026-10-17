@@ -18,10 +18,25 @@ export class ServerData {
   readonly #o: ServerDataOptions;
   readonly #traces = new Map<string, Trace>();
   readonly #statsLoaded = new Set<string>();
+  readonly #endpoints = new Map<string, string>();
   #restoring: Promise<void> | null = null;
 
   constructor(options: ServerDataOptions) {
     this.#o = options;
+  }
+
+  /** A trace answered by another WizeLens server than the configured one. Its data is read there. */
+  noteEndpoint(traceId: string, endpoint: string): void {
+    this.#endpoints.set(traceId, endpoint);
+    for (const id of this.#endpoints.keys()) {
+      if (this.#endpoints.size <= this.#o.maxRecent * 4) break;
+      this.#endpoints.delete(id);
+    }
+  }
+
+  /** The WizeLens base URL that holds this trace. */
+  endpointOf(traceId: string): string {
+    return this.#endpoints.get(traceId) ?? this.#o.endpointUrl;
   }
 
   getTrace(traceId: string): Trace | null {
@@ -32,7 +47,7 @@ export class ServerData {
     const get = this.#o.getFetch();
     if (typeof get !== "function") return this.getTrace(traceId);
     try {
-      const res = await get(`${this.#o.endpointUrl}/api/traces/${traceId}?federate=true`, JSON_ACCEPT);
+      const res = await get(`${this.endpointOf(traceId)}/api/traces/${traceId}?federate=true`, JSON_ACCEPT);
       const trace = res.ok ? ((await res.json()) as Trace) : null;
       if (!trace || !Array.isArray(trace.spans)) return this.getTrace(traceId);
       this.#keep(traceId, trace);

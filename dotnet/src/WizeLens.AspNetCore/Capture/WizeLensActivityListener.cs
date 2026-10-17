@@ -64,7 +64,8 @@ internal sealed class WizeLensActivityListener(TraceStore store, WizeLensOptions
         {
             var service = options.ServiceName ?? "app";
             var span = GrpcClientCalls.Complete(activity, service);
-            if (span is not null) store.AddSpan(WizeLensRuntime.Redactor.Redact(span));
+            // A local root has no parent in this process (none, or one from another service).
+            if (span is not null) store.AddSpan(WizeLensRuntime.Redactor.Redact(span), activity.Parent is null);
         }
         catch
         {

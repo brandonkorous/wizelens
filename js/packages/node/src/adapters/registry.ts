@@ -1,3 +1,4 @@
+import type { TracerProvider } from "@opentelemetry/api";
 import type { StartDbSpan } from "../db.js";
 import type { LogSink } from "../logger.js";
 import type { MetricStore } from "../metrics/store.js";
@@ -11,6 +12,8 @@ export interface AdapterParts {
   logs: LogSink;
   /** Null when metrics are off. */
   metrics: MetricStore | null;
+  /** The instance's tracer provider. The Next.js adapter makes it the global one. */
+  provider: TracerProvider;
 }
 
 const parts = new WeakMap<WizeLens, AdapterParts>();
@@ -36,6 +39,9 @@ export function registerParts(wizelens: WizeLens, p: AdapterParts): void {
 
 /** The database span factory of an enabled instance, or null. */
 export const dbSpansOf = (wizelens: WizeLens): StartDbSpan | null => parts.get(wizelens)?.dbSpans ?? null;
+
+/** Tracer provider of an enabled instance, or null. */
+export const providerOf = (wizelens: WizeLens): TracerProvider | null => parts.get(wizelens)?.provider ?? null;
 
 /** Request capture of an enabled instance, or null. */
 export const captureOf = (wizelens: WizeLens): CaptureDeps | null => parts.get(wizelens)?.capture ?? null;

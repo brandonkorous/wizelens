@@ -1,4 +1,4 @@
-import { ATTR_BROWSER_RENDER_MS, formatTraceparent, HEADER_TRACE, newSpanId, newTraceId, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_REMOTE, ATTR_BROWSER_RENDER_MS, formatTraceparent, HEADER_ENDPOINT, HEADER_TRACE, newSpanId, newTraceId, type Span } from "@wizeworks/lens-core";
 import { browserSpan, currentRoute } from "./browser-span.js";
 import { afterNextPaint, watchBody } from "./paint.js";
 import type { RecordedRequest } from "./recorder-types.js";
@@ -18,6 +18,8 @@ export interface FetchContext {
   store: RequestStore;
   sender: Sender;
   loadServerStats(traceId: string): Promise<void>;
+  /** The server that answered holds this trace: the HUD reads it there. */
+  noteEndpoint(traceId: string, endpoint: string): void;
 }
 
 interface Call {
@@ -35,8 +37,9 @@ function requestUrl(input: RequestInfo | URL, base: string): URL {
   return new URL(input.url, base);
 }
 
+// Any server's WizeLens API, not only this page's endpoint: the HUD and dashboards read other services too.
 function isWizeLensCall(url: URL, endpoint: URL): boolean {
-  return url.origin === endpoint.origin && (url.pathname + "/").startsWith(endpoint.pathname);
+  return (url.pathname + "/").startsWith(endpoint.pathname.replace(/\/*$/, "/"));
 }
 
 function startCall(ctx: FetchContext, url: URL, input: RequestInfo | URL, init?: RequestInit): { call: Call; nextInit?: RequestInit } {
@@ -56,6 +59,12 @@ function startCall(ctx: FetchContext, url: URL, input: RequestInfo | URL, init?:
   };
   ctx.store.upsert(record);
   return { call: { url, method, traceId, spanId, startMs: record.startMs, record }, nextInit };
+}
+
+/** The answering server's WizeLens endpoint, when it is not the one this page sends to. */
+function remoteOf(ctx: FetchContext, response: Response | null): string | null {
+  const endpoint = response?.headers.get(HEADER_ENDPOINT)?.replace(/\/+$/, "");
+  return endpoint && endpoint !== ctx.endpoint.href.replace(/\/+$/, "") ? endpoint : null;
 }
 
 function fetchSpan(ctx: FetchContext, call: Call, traceId: string, durationMs: number, status: number | null, error: string | null): Span {
@@ -105,10 +114,13 @@ function finishCall(ctx: FetchContext, call: Call, response: Response | null, er
   const headersAt = now();
   const durationMs = headersAt - call.startMs;
   const traceId = serverTrace ?? call.traceId;
+  const remote = remoteOf(ctx, response);
+  if (serverTrace && remote) ctx.noteEndpoint(serverTrace, remote);
   ctx.store.upsert({ ...call.record, status, durationMs, renderMs: null, traceId, profiled: !!serverTrace, error });
   // The server ends its span after it sends the response, so wait a moment.
   if (serverTrace) setTimeout(() => void ctx.loadServerStats(serverTrace), ctx.statsDelayMs);
   const span = fetchSpan(ctx, call, traceId, durationMs, status, error);
+  if (remote) span.attributes[ATTR_BROWSER_REMOTE] = remote;
   if (response) holdForRender(ctx, span, response, headersAt);
   else ctx.sender.push(span);
 }

@@ -54,9 +54,13 @@ internal static partial class WizeLensEndpoints
         {
             return Results.BadRequest();
         }
+        var origin = context.Request.Headers.Origin.ToString();
         foreach (var span in (body?.Spans ?? []).Take(MaxClientSpans))
         {
-            if (Normalize(span)) store.AddSpan(WizeLensRuntime.Redactor.Redact(span));
+            if (!Normalize(span)) continue;
+            store.AddSpan(WizeLensRuntime.Redactor.Redact(span));
+            var remote = ClientRemote.Of(span, origin);
+            if (remote is not null) store.AddRemote(span.TraceId, remote);
         }
         ClientLogs.Add(store, body?.Logs);
         return Results.NoContent();

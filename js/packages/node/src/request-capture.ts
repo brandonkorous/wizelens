@@ -10,6 +10,7 @@ import {
   HEADER_ENDPOINT,
   HEADER_TRACE,
   RESPONSE_HEADER_PREFIX,
+  serverTimingValue,
 } from "@wizeworks/lens-core";
 import { type ResponseTap, tapResponse } from "./body-capture.js";
 import { keepExposeHeaders } from "./expose-headers.js";
@@ -105,6 +106,8 @@ export function captureRequest(d: CaptureDeps, req: IncomingMessage, res: Server
   d.selfEndpoints.add(endpoint);
   res.setHeader(HEADER_TRACE, span.spanContext().traceId);
   res.setHeader(HEADER_ENDPOINT, endpoint);
+  // A page cannot read its own document headers, but it can read Server-Timing. The page load joins this trace with it.
+  res.appendHeader("Server-Timing", serverTimingValue(span.spanContext().traceId, endpoint));
   keepExposeHeaders(res);
   (req as unknown as Record<symbol, OtelSpan>)[REQ_SPAN] = span;
   const tap = tapResponse(res, d.captureResponseBody);

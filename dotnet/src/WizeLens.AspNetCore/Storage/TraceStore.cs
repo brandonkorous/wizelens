@@ -4,7 +4,7 @@ using WizeLens.Model;
 namespace WizeLens.Storage;
 
 /// <summary>Thread-safe in-memory trace store (the read path); drops the oldest first and tracks changes for SQLite.</summary>
-public sealed class TraceStore
+public sealed partial class TraceStore
 {
     public const string SessionAttribute = "wizelens.browser.session";
 
@@ -22,7 +22,7 @@ public sealed class TraceStore
 
     public int Count => _traces.Count;
 
-    public void AddSpan(Span span)
+    private void PutSpan(Span span)
     {
         var entry = GetOrCreate(span.TraceId);
         lock (entry)
@@ -36,7 +36,7 @@ public sealed class TraceStore
         Changed?.Invoke(new HubItem(span.TraceId, span, null, null));
     }
 
-    public void AddLog(string traceId, LogRecord log)
+    private void PutLog(string traceId, LogRecord log)
     {
         var entry = GetOrCreate(traceId);
         lock (entry)
@@ -53,6 +53,11 @@ public sealed class TraceStore
     {
         endpoint = endpoint.TrimEnd('/');
         if (_selfEndpoints.ContainsKey(endpoint)) return;
+        if (Gate(traceId, Sampler?.Remote(traceId, endpoint))) PutRemote(traceId, endpoint);
+    }
+
+    private void PutRemote(string traceId, string endpoint)
+    {
         var entry = GetOrCreate(traceId);
         lock (entry)
         {

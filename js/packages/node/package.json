@@ -20,6 +20,7 @@
     "fastify",
     "koa",
     "hono",
+    "nextjs",
     "tracing",
     "opentelemetry",
     "profiler",
@@ -38,6 +39,10 @@
     "./kit": {
       "types": "./dist/kit.d.ts",
       "import": "./dist/kit.js"
+    },
+    "./next": {
+      "types": "./dist/next.d.ts",
+      "import": "./dist/next.js"
     },
     "./package.json": "./package.json"
   },

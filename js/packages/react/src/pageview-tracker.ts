@@ -3,6 +3,7 @@ import { imageStats, watchImages } from "./images.js";
 import { afterNextPaint } from "./paint.js";
 import { newPageView, type PageView, pageViewSpan } from "./pageview.js";
 import { firstCommitMs, waitForCommit } from "./react-hook.js";
+import { documentTrace } from "./server-timing.js";
 import { now } from "./session.js";
 import { readNavigation, watchVitals } from "./vitals.js";
 
@@ -24,9 +25,10 @@ interface LoadClaim {
 }
 const CLAIM_KEY = "__wizelensLoadView";
 
-/** The full-load view of this page. A tracker started later on the same page (a remounted provider) joins it and does not send it again. */
+/** The full-load view of this page. It joins the server's trace of the document. A later tracker on the same page joins it and does not send it again. */
 export function loadView(): PageView {
-  const view = newPageView("load", 0);
+  const doc = documentTrace();
+  const view = { ...newPageView("load", 0), ...(doc && { traceId: doc.traceId, remote: doc.endpoint }) };
   const g = globalThis as { [CLAIM_KEY]?: LoadClaim };
   const origin = typeof performance !== "undefined" ? performance.timeOrigin : 0;
   const claim = g[CLAIM_KEY];

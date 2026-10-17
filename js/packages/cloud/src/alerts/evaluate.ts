@@ -13,7 +13,7 @@ async function noticeOf(app: CloudApp, rule: AlertRule, state: Notice["state"], 
     rule: rule.name,
     project: p?.name ?? rule.projectId,
     state,
-    message: await messageOf(app, rule, value, now),
+    message: await messageOf(app, rule, state, value, now),
     value,
     threshold: rule.threshold,
     timeMs: now,
@@ -30,11 +30,11 @@ async function measureMetric(app: CloudApp, rule: AlertRule, now: number) {
   return { value: metricAlertValueOf(data, stat), sample: data.series[0], stat };
 }
 
-async function messageOf(app: CloudApp, rule: AlertRule, value: number | null, now: number): Promise<string> {
-  if (rule.metric !== "metric") return alertMessage(rule.metric, rule.op, value, rule.threshold);
+async function messageOf(app: CloudApp, rule: AlertRule, state: Notice["state"], value: number | null, now: number): Promise<string> {
+  if (rule.metric !== "metric") return alertMessage(rule.metric, rule.op, value, rule.threshold, state);
   const { sample, stat } = await measureMetric(app, rule, now);
   const unit = sample ? metricAlertUnit(sample, stat) : "";
-  return metricAlertMessage(rule.metricName, stat, rule.op, value, rule.threshold, unit);
+  return metricAlertMessage(rule.metricName, stat, rule.op, value, rule.threshold, unit, state);
 }
 
 /** The metric over the rule's window: from the stats tables, or from the metric's points. */

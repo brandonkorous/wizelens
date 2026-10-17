@@ -88,6 +88,9 @@ internal static class ActivityMapper
         _ => SpanKinds.Internal,
     };
 
+    // Some libraries send only the operation and the table, with no db.system.name.
+    private static readonly string[] DbMarkers = ["db.system.name", "db.system", "db.query.text", "db.operation.name", "db.collection.name"];
+
     private static string MapCategory(Activity activity)
     {
         var source = activity.Source.Name;
@@ -95,7 +98,7 @@ internal static class ActivityMapper
         if (source == HttpClientSource || source == ExternalSources.GrpcClient) return SpanCategories.HttpClient;
         if (activity.GetTagItem("messaging.system") is not null || ExternalSources.IsMessaging(source)) return SpanCategories.Messaging;
         if (source == WizeLensRuntime.DbSourceName) return SpanCategories.Db;
-        if (activity.GetTagItem("db.system.name") is not null || activity.GetTagItem("db.system") is not null) return SpanCategories.Db;
+        if (DbMarkers.Any(k => activity.GetTagItem(k) is not null)) return SpanCategories.Db;
         if (activity.GetTagItem("http.request.method") is not null)
         {
             return activity.Kind == ActivityKind.Client ? SpanCategories.HttpClient : SpanCategories.HttpServer;

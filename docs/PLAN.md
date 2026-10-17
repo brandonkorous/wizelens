@@ -84,7 +84,7 @@ user accounts, alerts, sharing. These come with the cloud.
 - Exceptions (ELMAH-style)
 - Browser: fetch spans linked to server traces, page views and Web Vitals, hydration, React component renders, browser errors
 - gRPC (server and client) and message queues (RabbitMQ, Kafka, Azure Service Bus, MassTransit), with trace context in message headers
-- Frameworks: ASP.NET Core; Express, Fastify, Koa, Hono, and plain `node:http`
+- Frameworks: ASP.NET Core; Express, Fastify, Koa, Hono, Next.js (`instrumentation.ts`), and plain `node:http`
 
 ### Analysis in phase 1
 

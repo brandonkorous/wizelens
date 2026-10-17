@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { HEADER_HOP, type ServiceInfo, type Trace, type TraceSummary } from "@wizeworks/lens-core";
-import { sanitizeClientLog, sanitizeClientSpan } from "./client-spans.js";
+import { remoteOf, sanitizeClientLog, sanitizeClientSpan } from "./client-spans.js";
 import { firstHeader, readJson, sendJson, setCors } from "./http-util.js";
 import { handleMcp, type McpDataSource } from "./mcp.js";
 import type { MetricStore } from "./metrics/store.js";
@@ -22,6 +22,8 @@ export interface ApiDeps {
   getTrace: (traceId: string, federate: boolean, hop: number) => Promise<Trace | undefined>;
   /** Null when metrics are off. */
   metrics?: MetricStore | null;
+  /** This service's own endpoints: never a remote of its own traces. */
+  selfEndpoints: ReadonlySet<string>;
 }
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -49,9 +51,13 @@ async function receiveClientSpans(d: ApiDeps, req: Req, res: ServerResponse): Pr
   try {
     const body = (await readJson(req)) as { spans?: unknown; logs?: unknown } | undefined;
     const spans = Array.isArray(body?.spans) ? body.spans.slice(0, MAX_CLIENT_SPANS) : [];
+    const origin = firstHeader(req.headers.origin);
     for (const raw of spans) {
       const span = sanitizeClientSpan(raw, d.redactKeys);
-      if (span) d.store.addSpan(span);
+      if (!span) continue;
+      d.store.addSpan(span);
+      const remote = remoteOf(span, origin);
+      if (remote && !d.selfEndpoints.has(remote)) d.store.addRemote(span.traceId, remote);
     }
     const logs = Array.isArray(body?.logs) ? body.logs.slice(0, MAX_CLIENT_LOGS) : [];
     for (const raw of logs) {
