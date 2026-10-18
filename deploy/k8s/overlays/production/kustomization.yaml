@@ -23,7 +23,7 @@ configMapGenerator:
       - WIZELENS_CLOUD_TRUST_PROXY=1
       # Invite only until open sign-up is a product decision.
       - WIZELENS_CLOUD_SIGNUP=invite
-      - WIZELENS_CLOUD_MAIL_FROM=WizeLens <hello@updates.wizelens.com>
+      - WIZELENS_CLOUD_MAIL_FROM=WizeLens Hello <hello@updates.wizelens.com>
       # The sending subdomain has no inbox, so replies go to the main address.
       - WIZELENS_CLOUD_MAIL_REPLY_TO=hello@wizelens.com
     options:

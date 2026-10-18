@@ -5,17 +5,17 @@ import { theme } from "./theme.js";
 const textStyle = { margin: "0 0 16px", fontSize: "15px", lineHeight: "24px", color: theme.body };
 const noteStyle = { margin: "0 0 16px", fontSize: "13px", lineHeight: "20px", color: theme.muted };
 
-/** The logo, the word mark, and the status dot in the tone's color. */
+/** The mark, its center dot in the tone's color, and the word mark. */
 export function Header({ tone }: { tone: EmailContent["tone"] }) {
   return (
     <Section style={{ padding: "24px 32px 0" }}>
       <Row>
         <Column style={{ width: "32px" }}>
-          <Img src={theme.logoUrl} width="28" height="28" alt="WizeLens" style={{ display: "block", borderRadius: "6px" }} />
+          <Img src={theme.markUrl[tone]} width="28" height="28" alt="" style={{ display: "block" }} />
         </Column>
         <Column>
           <Text style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: theme.ink, letterSpacing: "-0.01em" }}>
-            WizeLens <span style={{ color: theme.tone[tone] }}>●</span>
+            WizeLens
           </Text>
         </Column>
       </Row>

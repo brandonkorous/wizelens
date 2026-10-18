@@ -16,6 +16,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 - `--mail-reply-to` (`WIZELENS_CLOUD_MAIL_REPLY_TO`) sets where replies go, for a sender address with no inbox (Resend and SMTP).
 - The hosted cloud sends from `hello@updates.wizelens.com`, with replies to `hello@wizelens.com`.
+- The sender name is "WizeLens Hello".
+- Emails show their status: the mark's center dot and a stripe across the top of the card use the email's tone
+  (blue for notices, green when good, amber for warnings, red for problems). The dot after "WizeLens" is gone.
+- The site build makes the four mail marks and a BIMI logo (`/brand/bimi.svg`, SVG Tiny PS) for inbox sender pictures.
 
 ## [0.3.0-alpha.2] — Send-only in production
 
