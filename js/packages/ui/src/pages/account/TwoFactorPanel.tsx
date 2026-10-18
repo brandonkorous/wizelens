@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { type AccountUser, auth, loadAccount } from "../../data/account";
 import { Badge } from "../../ui/Badges";
+import { useAsk } from "../../ui/Dialog";
 import { Field, FormRow } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
 import { BackupCodes, TotpQr } from "./TwoFactorParts";
@@ -11,15 +12,18 @@ interface Setup {
   backupCodes: string[];
 }
 
-/** A password field and one button, for the steps that ask the password again. */
-function PasswordStep({ a, submit, onPassword }: { a: Action; submit: string; onPassword: (password: string, form: HTMLFormElement) => void }) {
+/** A button that asks for the password in a dialog, for the steps that need it again. */
+function PasswordButton({ a, label, title, danger = false, onPassword }: { a: Action; label: string; title: string; danger?: boolean; onPassword: (password: string) => void }) {
+  const { dialog, prompt } = useAsk();
+  const ask = async () => {
+    const password = await prompt({ title, body: "Enter your password to go on.", confirmLabel: label, danger, input: { label: "Your password", password: true } });
+    if (password) onPassword(password);
+  };
   return (
-    <form className="wl-form" onSubmit={onForm((v, form) => onPassword(v.password!, form))}>
-      <FormRow>
-        <Field label="Your password" name="password" type="password" autoComplete="current-password" required />
-        <button type="submit" className="wl-btn" disabled={a.busy}>{submit}</button>
-      </FormRow>
-    </form>
+    <>
+      <button type="button" className={`wl-btn${danger ? " wl-btn-danger" : ""}`} disabled={a.busy} onClick={() => void ask()}>{label}</button>
+      {dialog}
+    </>
   );
 }
 
@@ -42,19 +46,20 @@ function Finish({ setup, onDone }: { setup: Setup; onDone: () => void }) {
   );
 }
 
-/** Turned on: turn it off, or make new backup codes (the old ones stop working). */
+/** Turned on: make new backup codes (the old ones stop working), or turn it off. */
 function WhenOn() {
   const a = useAction();
   const [codes, setCodes] = useState<string[] | null>(null);
   const off = (password: string) => void a.run(async () => (await auth((c) => c.twoFactor.disable({ password })), await loadAccount()));
-  const fresh = (password: string, form: HTMLFormElement) =>
-    void a.run(async () => setCodes((await auth((c) => c.twoFactor.generateBackupCodes({ password }))).backupCodes)).then((ok) => ok && form.reset());
+  const fresh = (password: string) => void a.run(async () => setCodes((await auth((c) => c.twoFactor.generateBackupCodes({ password }))).backupCodes));
   return (
     <>
-      <p className="wl-muted">New backup codes replace the old ones.</p>
-      <PasswordStep a={a} submit="New backup codes" onPassword={fresh} />
+      <p className="wl-panel-text">Sign-in asks for a code from your phone app. Keep your backup codes somewhere safe.</p>
       {codes && <BackupCodes codes={codes} />}
-      <PasswordStep a={a} submit="Turn off" onPassword={off} />
+      <div className="wl-form-actions wl-form-actions-start">
+        <PasswordButton a={a} label="New backup codes" title="Make new backup codes?" onPassword={fresh} />
+        <PasswordButton a={a} label="Turn off" title="Turn off two-step sign-in?" danger onPassword={off} />
+      </div>
       <ActionNotes a={a} />
     </>
   );
@@ -74,8 +79,8 @@ export function TwoFactorPanel({ user }: { user: AccountUser }) {
   if (user.twoFactorEnabled) return <Panel title={title}><WhenOn /></Panel>;
   return (
     <Panel title={title}>
-      <p className="wl-muted">Sign-in also asks for a code from an app on your phone.</p>
-      {setup ? <Finish setup={setup} onDone={() => setSetup(null)} /> : <PasswordStep a={a} submit="Turn on" onPassword={on} />}
+      <p className="wl-panel-text">Sign-in also asks for a code from an app on your phone, so a stolen password is not enough.</p>
+      {setup ? <Finish setup={setup} onDone={() => setSetup(null)} /> : <PasswordButton a={a} label="Turn on" title="Turn on two-step sign-in?" onPassword={on} />}
       <ActionNotes a={a} />
     </Panel>
   );

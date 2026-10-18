@@ -1,39 +1,16 @@
+import { BookOpen, Plug, Server, SlidersHorizontal } from "lucide-react";
 import { TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import { useData } from "../../data/hooks";
 import { useHost, useRange } from "../../data/host";
 import { type Theme, useTheme } from "../../data/prefs";
-import { Select } from "../../ui/Controls";
+import { useRoute } from "../../routes";
+import { FormRow, SelectField } from "../../ui/Field";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
-import { type Column, Table } from "../../ui/Table";
+import { type Section, SectionHead, SectionLayout } from "../../ui/Sections";
 import { HubConnect } from "./HubConnect";
+import { OptionsReference } from "./OptionsReference";
 import { SourceSettings } from "./SourceSettings";
 import "../../styles/pages/settings.css";
-
-interface Option {
-  setting: string;
-  dotnet: string;
-  node: string;
-}
-
-const OPTIONS: Option[] = [
-  { setting: "Storage kind", dotnet: "Storage = WizeLensStorage.Sqlite | Memory", node: 'storage: "sqlite" | "memory"' },
-  { setting: "Storage file", dotnet: "StoragePath", node: "storagePath" },
-  { setting: "Max traces", dotnet: "MaxTraces", node: "maxTraces" },
-  { setting: "Max age", dotnet: "MaxAge", node: "maxAgeMs" },
-  { setting: "Slow query", dotnet: "SlowQueryMs", node: "slowQueryMs" },
-  { setting: "N+1 threshold", dotnet: "NPlusOneThreshold", node: "nPlusOneThreshold" },
-  { setting: "AI access (MCP)", dotnet: "EnableMcp", node: "enableMcp" },
-  { setting: "Response bodies", dotnet: "CaptureResponseBody", node: "captureResponseBody" },
-  { setting: "Hub", dotnet: "HubUrl, HubToken (or WIZELENS_HUB)", node: "hub, hubToken (or WIZELENS_HUB)" },
-  { setting: "Project", dotnet: "Project (or WIZELENS_PROJECT)", node: "project (or WIZELENS_PROJECT)" },
-  { setting: "Redacted keys", dotnet: "RedactKeys", node: "redactKeys" },
-];
-
-const OPTION_COLUMNS: Column<Option>[] = [
-  { key: "setting", header: "Setting", cell: (o) => o.setting },
-  { key: "dotnet", header: ".NET (AddWizeLens options)", cell: (o) => <code className="wl-mono wl-small">{o.dotnet}</code> },
-  { key: "node", header: "Node (createWizeLens options)", cell: (o) => <code className="wl-mono wl-small">{o.node}</code> },
-];
 
 const THEMES: [Theme, string][] = [
   ["light", "Light"],
@@ -46,44 +23,51 @@ function Preferences() {
   const [range, setRange] = useRange();
   const ranges = useHost().ranges.map((r): [TimeRange, string] => [r, TIME_RANGES[r].label]);
   return (
-    <Panel title="Dashboard">
-      <div className="wl-settings-prefs">
-        <label>
-          <span>Theme</span>
-          <Select label="Theme" value={theme} options={THEMES} onChange={setTheme} />
-        </label>
-        <label>
-          <span>Default time range</span>
-          <Select label="Default time range" value={range} options={ranges} onChange={setRange} />
-        </label>
-      </div>
-      <p className="wl-muted wl-small wl-settings-note">These choices are saved in this browser only.</p>
-    </Panel>
+    <>
+      <SectionHead title="Dashboard" description="How this dashboard looks and opens for you. Saved in this browser only." />
+      <Panel>
+        <FormRow>
+          <SelectField label="Theme" value={theme} options={THEMES} onChange={setTheme} />
+          <SelectField label="Default time range" value={range} options={ranges} onChange={setRange} hint="Pages open with this range." />
+        </FormRow>
+      </Panel>
+    </>
   );
 }
 
+/** What each mode calls the services on this page, and where their settings are changed. */
+function servicesText(mode: string | undefined): { label: string; description: string } {
+  if (mode === "cloud") return { label: "This cloud", description: "How this WizeLens Cloud is set up. Start options change it: run wizelens-cloud --help." };
+  if (mode === "hub") return { label: "This hub", description: "How this hub is set up. Start options change it: run wizelens-hub --help." };
+  return { label: "Services", description: "How WizeLens is set up in each service this dashboard reads. Settings live in each app's code: change one, then restart the service." };
+}
+
+/** Preferences, how to connect a service (hub and cloud), how each service is set up, and every add-on option. */
 export function SettingsPage() {
   const data = useData();
+  const { params } = useRoute();
+  const mode = data.info?.mode;
+  const services = servicesText(mode);
+  const sections: Section[] = [
+    { id: "dashboard", label: "Dashboard", icon: SlidersHorizontal, render: () => <Preferences /> },
+    ...(mode === "hub" || mode === "cloud" || data.info?.hub ? [{ id: "connect", label: mode === "in-app" ? "Sends to" : "Connect a service", icon: Plug, render: () => <HubConnect info={data.info} /> }] : []),
+    {
+      id: "services",
+      label: services.label,
+      icon: Server,
+      render: () => (
+        <>
+          <SectionHead title={services.label} description={services.description} />
+          {data.sources.length === 0 ? <Panel><Empty title="No services connected yet" /></Panel> : <div className="wl-settings-sources">{data.sources.map((s) => <SourceSettings key={s.endpoint} source={s} />)}</div>}
+        </>
+      ),
+    },
+    { id: "options", label: "Add-on options", icon: BookOpen, render: () => <><SectionHead title="Add-on options" description="Every option of the .NET and Node add-ons, and the environment variable that sets it without a code change." /><OptionsReference /></> },
+  ];
   return (
     <>
-      <PageHeader title="Settings" subtitle="How WizeLens is set up for each connected service, and your dashboard preferences." />
-      <div className="wl-grid wl-grid-2-even">
-        <Preferences />
-        <Panel title="How to change these">
-          <p className="wl-muted wl-settings-note">
-            {data.info?.mode === "hub"
-              ? "Service settings live in each app's code. Hub settings are start options: run wizelens-hub --help."
-              : "Service settings live in your app code. Change the option, then restart the service."}
-          </p>
-        </Panel>
-      </div>
-      <HubConnect info={data.info} />
-      <div className="wl-grid wl-grid-2-even">
-        {data.sources.length === 0 ? <Panel><Empty title="No services connected yet" /></Panel> : data.sources.map((s) => <SourceSettings key={s.endpoint} source={s} />)}
-      </div>
-      <Panel flush title="Options">
-        <Table columns={OPTION_COLUMNS} rows={OPTIONS} rowKey={(o) => o.setting} />
-      </Panel>
+      <PageHeader title="Settings" subtitle="Your dashboard preferences, and how WizeLens is set up." />
+      <SectionLayout page="settings" sections={sections} active={params[0]} />
     </>
   );
 }

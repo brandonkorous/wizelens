@@ -36,11 +36,16 @@ export interface OrgData {
   keys: ApiKey[];
 }
 
-export const ROLE_OPTIONS: [Role, string][] = [
-  ["viewer", "Viewer: reads data"],
-  ["member", "Member: also alerts and shares"],
-  ["admin", "Admin: also projects, keys, members"],
-  ["owner", "Owner: everything"],
-];
+export const ROLE_LABEL: Record<Role, string> = { viewer: "Viewer", member: "Member", admin: "Admin", owner: "Owner" };
+
+/** What each role may do, for hints next to a role picker. */
+export const ROLE_HELP: Record<Role, string> = {
+  viewer: "Reads all data.",
+  member: "Reads data, and makes alerts and share links.",
+  admin: "Also manages projects, keys, members, and single sign-on.",
+  owner: "Everything, including other owners and deleting the organization.",
+};
+
+export const ROLE_OPTIONS: [Role, string][] = (["viewer", "member", "admin", "owner"] as const).map((r) => [r, ROLE_LABEL[r]]);
 
 export const canManage = (role: Role | undefined) => role === "owner" || role === "admin";

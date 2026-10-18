@@ -39,7 +39,7 @@ export function ProfilePanel({ account, user }: { account: AccountState; user: A
   const a = useAction();
   const save = onForm((v) => void a.run(async () => (await auth((c) => c.updateUser({ name: v.name!.trim() })), await loadAccount()), "Saved."));
   return (
-    <Panel title="Profile">
+    <Panel>
       <form className="wl-form" onSubmit={save}>
         <FormRow>
           <Field label="Name" name="name" autoComplete="name" required defaultValue={user.name} />

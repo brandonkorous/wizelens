@@ -26,7 +26,7 @@
 .wl-backup-codes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 12px; flex: 1 1 100%; margin: 0; padding: 0; list-style: none; }
 .wl-share-link + .wl-form { margin-top: 14px; }
 
-.wl-sso-item { display: grid; gap: 8px; margin-bottom: 14px; padding: 12px; border: 1px solid var(--wl-line); border-radius: 10px; }
+.wl-sso-item { display: grid; gap: 10px; }
 .wl-sso-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .wl-sso-head .wl-link-btn { margin-left: auto; }
 .wl-sso-proof { display: grid; gap: 8px; }

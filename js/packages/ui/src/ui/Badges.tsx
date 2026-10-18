@@ -49,7 +49,8 @@ export function CountBadge({ n }: { n: number }) {
   return n > 0 ? <span className="wl-count">{n}</span> : <span className="wl-muted">–</span>;
 }
 
-export function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
+/** Copies `text`. An icon by default; `asLink` shows the label as a text button, to sit among other text actions. */
+export function CopyButton({ text, label = "Copy", asLink = false }: { text: string; label?: string; asLink?: boolean }) {
   const [done, setDone] = useState(false);
   const copy = () => {
     void navigator.clipboard?.writeText(text).then(() => {
@@ -57,6 +58,7 @@ export function CopyButton({ text, label = "Copy" }: { text: string; label?: str
       setTimeout(() => setDone(false), 1200);
     });
   };
+  if (asLink) return <button type="button" className="wl-link-btn" onClick={copy}>{done ? "Copied" : label}</button>;
   return (
     <button type="button" className="wl-copy-btn" onClick={copy} title={label} aria-label={label}>
       {done ? <Check /> : <Copy />}

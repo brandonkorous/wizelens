@@ -10,6 +10,7 @@ import "./styles/ui.css";
 import "./styles/trace.css";
 import "./styles/pages/cloud.css";
 import "./styles/pages/account.css";
+import "./styles/layout.css";
 
 provider.start();
 

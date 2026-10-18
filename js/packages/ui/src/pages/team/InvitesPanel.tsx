@@ -4,11 +4,11 @@ import { act } from "../../data/useApi";
 import { fmtDate } from "../../format";
 import { inviteLink } from "../../shell/auth/flow";
 import { CopyButton } from "../../ui/Badges";
-import { Select } from "../../ui/Controls";
-import { Field, FormRow } from "../../ui/Field";
+import { useAsk } from "../../ui/Dialog";
+import { Field, FormRow, SelectField } from "../../ui/Field";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
-import { type Invite, type OrgData, ROLE_OPTIONS } from "./teamTypes";
+import { type Invite, type OrgData, ROLE_HELP, ROLE_LABEL, ROLE_OPTIONS } from "./teamTypes";
 
 interface Props {
   orgId: string;
@@ -16,7 +16,8 @@ interface Props {
   reload: () => void;
 }
 
-function InviteForm({ orgId, mail, reload }: Props) {
+/** Invite one person by email. The link shows once it is made, to copy when mail is off. */
+export function InviteForm({ orgId, mail, reload, onClose }: Props & { onClose: () => void }) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("member");
   const [link, setLink] = useState<string | null>(null);
@@ -30,52 +31,58 @@ function InviteForm({ orgId, mail, reload }: Props) {
     }, reload).then(setError);
   };
   return (
-    <form className="wl-form" onSubmit={send}>
-      <FormRow>
-        <Field label="Invite by email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="sam@company.com" />
-        <Select label="Role" value={role} options={ROLE_OPTIONS} onChange={setRole} />
-        <button type="submit" className="wl-btn wl-btn-primary">Invite</button>
-      </FormRow>
-      {link && (
-        <div className="wl-share-link">
-          <code className="wl-mono wl-small">{link}</code> <CopyButton text={link} label="Copy invite link" />
-          <span className="wl-muted wl-small">Send this link to them. It works once, for 7 days.{mail && " We emailed it too."}</span>
-        </div>
-      )}
-      {error && <div className="wl-banner wl-banner-error">{error}</div>}
-    </form>
+    <Panel title="Invite someone" className="wl-panel-form" action={<button type="button" className="wl-link-btn" onClick={onClose}>Close</button>}>
+      <form className="wl-form" onSubmit={send}>
+        <FormRow>
+          <Field label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="sam@company.com" autoFocus />
+          <SelectField label="Role" value={role} options={ROLE_OPTIONS} onChange={setRole} hint={ROLE_HELP[role]} />
+          <button type="submit" className="wl-btn wl-btn-primary">Send invite</button>
+        </FormRow>
+        {link && (
+          <div className="wl-share-link">
+            <code className="wl-mono wl-small">{link}</code> <CopyButton text={link} label="Copy invite link" />
+            <span className="wl-muted wl-small">Send this link to them. It works once, for 7 days.{mail && " We emailed it too."}</span>
+          </div>
+        )}
+        {error && <div className="wl-banner wl-banner-error">{error}</div>}
+      </form>
+    </Panel>
   );
 }
 
-/** Invite people, and the invites that wait for an answer: copy the link, send it again, or cancel. */
+/** Invites that wait for an answer: copy the link, send it again, or cancel. */
 export function InvitesPanel({ orgId, mail, data, reload }: Props & { data: OrgData }) {
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const { dialog, confirm } = useAsk();
   const run = (fn: () => Promise<unknown>, done: string | null = null) => void act(fn, reload).then((err) => (setError(err), setNote(err ? null : done)));
   const resend = (i: Invite) => run(() => auth((c) => c.organization.inviteMember({ email: i.email, role: i.role, organizationId: orgId, resend: true })), mail ? `We sent the invite to ${i.email} again.` : "The invite works for 7 more days.");
-  const cancel = (i: Invite) => window.confirm(`Cancel the invite for ${i.email}?`) && run(() => auth((c) => c.organization.cancelInvitation({ invitationId: i.id })));
+  const cancel = async (i: Invite) =>
+    (await confirm({ title: "Cancel this invite?", body: `The link for ${i.email} stops working.`, confirmLabel: "Cancel invite", danger: true })) &&
+    run(() => auth((c) => c.organization.cancelInvitation({ invitationId: i.id })));
   const columns: Column<Invite>[] = [
     { key: "email", header: "Email", cell: (i) => <strong>{i.email}</strong> },
-    { key: "role", header: "Role", cell: (i) => i.role },
-    { key: "ends", header: "Works until", cell: (i) => fmtDate(i.expiresMs) },
+    { key: "role", header: "Role", cell: (i) => ROLE_LABEL[i.role] },
+    { key: "ends", header: "Link works until", cell: (i) => fmtDate(i.expiresMs), className: "wl-nowrap" },
     {
       key: "x",
       header: "",
+      className: "wl-cell-actions",
       cell: (i) => (
         <span className="wl-row-actions">
-          <CopyButton text={inviteLink(i.id)} label="Copy link" />
-          <button type="button" className="wl-link-btn" onClick={() => resend(i)}>Send again</button>
-          <button type="button" className="wl-link-btn wl-text-error" onClick={() => cancel(i)}>Cancel</button>
+          <CopyButton text={inviteLink(i.id)} label="Copy link" asLink />
+          <button type="button" className="wl-link-btn" onClick={() => resend(i)}>{mail ? "Send again" : "Extend"}</button>
+          <button type="button" className="wl-link-btn wl-text-error" onClick={() => void cancel(i)}>Cancel</button>
         </span>
       ),
     },
   ];
   return (
-    <Panel title={`Invites (${data.invites.length})`}>
-      <InviteForm orgId={orgId} mail={mail} reload={reload} />
-      {error && <div className="wl-banner wl-banner-error">{error}</div>}
-      {note && <p className="wl-muted wl-small" role="status">{note}</p>}
+    <Panel title="Pending invites" flush>
+      {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
+      {note && <p className="wl-panel-note" role="status">{note}</p>}
       <Table columns={columns} rows={data.invites} rowKey={(i) => i.id} empty={<Empty>No open invites.</Empty>} />
+      {dialog}
     </Panel>
   );
 }

@@ -84,6 +84,10 @@ function Shell() {
   const [theme] = useTheme();
   const dot = useHealthDot();
   useEffect(() => applyTheme(theme), [theme]);
+  // A new page (or a new section of one) starts at the top, not where the last page was scrolled to.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [route.page, route.params[0]]);
   useEffect(() => {
     document.title = data.info ? `WizeLens · ${data.info.service}` : "WizeLens";
   }, [data.info]);

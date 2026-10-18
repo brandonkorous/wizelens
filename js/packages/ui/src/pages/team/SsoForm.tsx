@@ -2,14 +2,14 @@ import { type FormEvent, useState } from "react";
 import { auth } from "../../data/account";
 import { authBase } from "../../data/auth-client";
 import { act } from "../../data/useApi";
-import { Select } from "../../ui/Controls";
-import { Field, FormRow, TextArea } from "../../ui/Field";
+import { Field, FormRow, SelectField, TextArea } from "../../ui/Field";
+import { Panel } from "../../ui/Panel";
 
 type Kind = "oidc" | "saml";
 type Values = Record<string, string>;
 
 const KINDS: [Kind, string][] = [
-  ["oidc", "OpenID Connect (Okta, Entra ID, Google, Auth0, Keycloak)"],
+  ["oidc", "OpenID Connect"],
   ["saml", "SAML 2.0"],
 ];
 
@@ -47,7 +47,7 @@ function SamlFields() {
 }
 
 /** Owners and admins: connect the company's identity provider. People sign in with it once the domain is proven. */
-export function SsoForm({ orgId, reload }: { orgId: string; reload: () => void }) {
+export function SsoForm({ orgId, reload, onClose }: { orgId: string; reload: () => void; onClose: () => void }) {
   const [kind, setKind] = useState<Kind>("oidc");
   const [error, setError] = useState<string | null>(null);
   const send = (e: FormEvent<HTMLFormElement>) => {
@@ -57,18 +57,23 @@ export function SsoForm({ orgId, reload }: { orgId: string; reload: () => void }
     void act(async () => {
       await auth((c) => c.sso.register(bodyOf(kind, orgId, v)));
       form.reset();
-    }, reload).then(setError);
+    }, reload).then((err) => (setError(err), err || onClose()));
   };
   return (
-    <form className="wl-form" onSubmit={send}>
-      <FormRow>
-        <Select label="Protocol" value={kind} options={KINDS} onChange={setKind} />
-        <Field label="Provider id" name="providerId" required pattern="[a-z0-9][a-z0-9\-]{1,39}" placeholder="acme" hint="2 to 40 lowercase letters, digits, dashes." />
-        <Field label="Email domain" name="domain" required placeholder="acme.com" hint="People with emails at this domain can use it." />
-      </FormRow>
-      {kind === "oidc" ? <OidcFields /> : <SamlFields />}
-      <button type="submit" className="wl-btn wl-btn-primary">Add provider</button>
-      {error && <div className="wl-banner wl-banner-error">{error}</div>}
-    </form>
+    <Panel title="Add an identity provider" className="wl-panel-form" action={<button type="button" className="wl-link-btn" onClick={onClose}>Close</button>}>
+      <form className="wl-form" onSubmit={send}>
+        <FormRow>
+          <SelectField label="Protocol" value={kind} options={KINDS} onChange={setKind} hint={kind === "oidc" ? "Okta, Entra ID, Google, Auth0, Keycloak." : "Any SAML 2.0 identity provider."} />
+          <Field label="Provider id" name="providerId" required pattern="[a-z0-9][a-z0-9\-]{1,39}" placeholder="acme" hint="2 to 40 lowercase letters, digits, dashes." />
+          <Field label="Email domain" name="domain" required placeholder="acme.com" hint="People with emails at this domain can use it." />
+        </FormRow>
+        {kind === "oidc" ? <OidcFields /> : <SamlFields />}
+        {error && <div className="wl-banner wl-banner-error">{error}</div>}
+        <div className="wl-form-actions">
+          <button type="button" className="wl-btn" onClick={onClose}>Cancel</button>
+          <button type="submit" className="wl-btn wl-btn-primary">Add provider</button>
+        </div>
+      </form>
+    </Panel>
   );
 }
