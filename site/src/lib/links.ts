@@ -6,6 +6,6 @@ export const LINKS = {
   docs: "/docs/",
   start: "/docs/quick-start/",
   contract: "/docs/contract/",
-  changelog: `${REPO}/blob/main/CHANGELOG.md`,
+  changelog: "/changelog/",
   license: `${REPO}/blob/main/LICENSE`,
 };
