@@ -44,12 +44,12 @@ export function SessionsPanel({ sessionId }: { sessionId?: string }) {
     { key: "ip", header: "Address", cell: (s) => <span className="wl-mono wl-small">{s.ipAddress || "–"}</span> },
     { key: "made", header: "Signed in", cell: (s) => fmtDateTime(msOf(s.createdAt)), className: "wl-nowrap" },
     { key: "seen", header: "Last active", cell: (s) => fmtAgo(msOf(s.updatedAt)), className: "wl-nowrap" },
-    { key: "x", header: "", cell: (s) => (s.id === sessionId ? <Badge tone="info">This device</Badge> : <button type="button" className="wl-link-btn wl-text-error" onClick={() => revoke(s)}>Sign out</button>) },
+    { key: "x", header: "", className: "wl-cell-actions", cell: (s) => (s.id === sessionId ? <Badge tone="info">This device</Badge> : <button type="button" className="wl-link-btn wl-text-error" onClick={() => revoke(s)}>Sign out</button>) },
   ];
   const others = (rows ?? []).some((s) => s.id !== sessionId);
   const action = others && <button type="button" className="wl-btn" onClick={revokeOthers} disabled={a.busy}>Sign out all other devices</button>;
   return (
-    <Panel title="Devices" action={action}>
+    <Panel title="Signed in" action={action}>
       <ActionNotes a={list} />
       <ActionNotes a={a} />
       {rows && <Table columns={columns} rows={rows} rowKey={(s) => s.id} />}

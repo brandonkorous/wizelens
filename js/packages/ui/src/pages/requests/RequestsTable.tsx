@@ -40,7 +40,13 @@ function useExport(): [boolean, () => void] {
 export function RequestsTable({ model, selectedId }: { model: RequestsModel; selectedId: string | null }) {
   const [sort, onSort] = useSort();
   const [exporting, exportAll] = useExport();
-  const title = <h2>Requests ({fmtCount(model.total)})</h2>;
+  const title = (
+    <h2>
+      Requests ({fmtCount(model.total)}){!selectedId && model.total > 0 && <span className="wl-muted wl-small wl-rq-pick"> · pick one to see its details</span>}
+    </h2>
+  );
+  // With the details open, Fetch and Insights make room; both are in the details too.
+  const columns = requestColumns(sort, onSort).filter((c) => !selectedId || (c.key !== "fetch" && c.key !== "insights"));
   const action = (
     <button type="button" className="wl-btn" onClick={exportAll} disabled={model.total === 0 || exporting} title={`Download the filtered requests as CSV (up to ${fmtCount(EXPORT_MAX)})`}>
       <Upload aria-hidden="true" /> Export
@@ -53,7 +59,7 @@ export function RequestsTable({ model, selectedId }: { model: RequestsModel; sel
   );
   return (
     <Panel flush title={title} action={action}>
-      <Table columns={requestColumns(sort, onSort)} rows={model.rows} rowKey={(r) => r.traceId} selectedKey={selectedId} onRowClick={(r) => setQuery({ trace: r.traceId })} empty={empty} />
+      <Table columns={columns} rows={model.rows} rowKey={(r) => r.traceId} selectedKey={selectedId} onRowClick={(r) => setQuery({ trace: r.traceId })} empty={empty} />
       {model.total > 0 && (
         <Pager page={model.page} pageSize={model.pageSize} total={model.total} noun="requests" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />
       )}

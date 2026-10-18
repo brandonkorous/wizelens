@@ -4,6 +4,32 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Dashboard: Team, Account, and Settings rebuilt
+
+- **Team, Account, and Settings have sections** (a list on the left, tabs on small screens), one at a time, each with its own
+  link (`#/team/keys`, `#/account/security`, `#/settings/connect`). They were long stacks of up to 10 panels (Team was 3300 px tall).
+- **Forms open from a button** ("Invite someone", "New project", "New key", "Add provider") instead of always showing. Fields,
+  drop-downs, and buttons in a form row line up at the top, so a hint under one field no longer pushes the others down
+  (Organization, single sign-on, keys). Every drop-down in a form has a visible label.
+- **Dialogs in the dashboard's style** replace the browser's confirm and prompt boxes: removing people, cancelling invites,
+  revoking keys and links, removing providers, passkeys. Clearing or deleting a project asks you to type its name. Two-step
+  sign-in shows buttons first and asks for the password in a dialog.
+- **The audit log reads as words**: who (a name or key, not a user id), what ("Made a key"), and the facts, with project and
+  key names in place of ids. Roles show as Viewer, Member, Admin, Owner, with what each may do next to the role picker.
+- **Read keys pick several projects** in the dashboard (the API already allowed it).
+- **Settings fits each mode**: the cloud no longer shows add-on rows it does not have (host, N+1 threshold) or says "SQLite"
+  for PGlite (the cloud reports Postgres). A service's sampling shows again. The options table lists every option, including
+  `Enabled`, `Dashboard`, and sampling, with its environment variable.
+- **Fixed everywhere**: a new page starts at the top (it kept the last page's scroll); number cards no longer squeeze
+  "No data for previous day" into a narrow column (the trend line runs along the bottom); page actions such as "New alert" sit
+  on the right of the title; the search box no longer cuts its text; flush tables line up with their panel titles; the cloud
+  says "Sending to this project", not "Connected to this hub"; Error Rate has the same icon on every page.
+- **Requests**: the table has the full width until you pick a request (no empty "Select a request" panel); with the details
+  open, Fetch and Insights make room, so the table no longer scrolls sideways at 1440 px. Paths get more room.
+- **Metrics**: names wrap at their dots, so the end (`.p50`, `.p99`) always shows; the list is wider, and the runtime tiles
+  fill their row.
+- Tab bars no longer show a scroll arrow when their tabs fit.
+
 ### Traces across projects
 
 - **A trace that crosses projects opens whole in the cloud**: a front end in one project and the shared API it calls in

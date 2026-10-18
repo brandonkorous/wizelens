@@ -1,5 +1,6 @@
 import { type AccountState, auth, loadAccount } from "../../data/account";
 import { hrefTo, navigate } from "../../routes";
+import { useAsk } from "../../ui/Dialog";
 import { Field, FormRow } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
 import { ActionNotes, onForm, useAction } from "./useAction";
@@ -7,9 +8,10 @@ import { ActionNotes, onForm, useAction } from "./useAction";
 /** Delete the account. Refused while it is the last owner of a team; with mail on, an emailed link confirms it. */
 export function DeletePanel({ account }: { account: AccountState }) {
   const a = useAction();
+  const { dialog, confirm } = useAsk();
   const blocking = account.blockingOrgs ?? [];
-  const remove = onForm((v, form) => {
-    if (!window.confirm("Delete your account for good? This cannot be undone.")) return;
+  const remove = onForm(async (v, form) => {
+    if (!(await confirm({ title: "Delete your account?", body: "Your account and every organization where you are the only member are deleted, with all their data. This cannot be undone.", confirmLabel: "Delete my account", danger: true }))) return;
     void a.run(async () => {
       await auth((c) => c.deleteUser({ password: v.password! }));
       form.reset();
@@ -19,7 +21,8 @@ export function DeletePanel({ account }: { account: AccountState }) {
     });
   });
   return (
-    <Panel title="Delete account" className="wl-panel-danger">
+    <Panel className="wl-panel-danger">
+      {dialog}
       <p className="wl-muted">Organizations where you are the only member are deleted with your account, with all their data.</p>
       {blocking.length > 0 ? (
         <ul className="wl-plain-list">

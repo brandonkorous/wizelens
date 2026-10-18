@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { auth, errorText } from "../../data/account";
 import { authBase } from "../../data/auth-client";
 import { act } from "../../data/useApi";
+import { Plus } from "lucide-react";
 import { Badge, CopyButton } from "../../ui/Badges";
+import { useAsk } from "../../ui/Dialog";
 import { Empty, Panel } from "../../ui/Panel";
+import { SectionHead } from "../../ui/Sections";
 import { SsoForm } from "./SsoForm";
 
 /** One provider as Better Auth lists it (secrets never come back). */
@@ -76,31 +79,39 @@ function DomainProof({ p, reload }: { p: Provider; reload: () => void }) {
 
 function ProviderItem({ p, reload }: { p: Provider; reload: () => void }) {
   const [error, setError] = useState<string | null>(null);
-  const remove = () => window.confirm(`Remove ${p.providerId}? People who use it can no longer sign in with it.`) && void act(() => auth((c) => c.sso.deleteProvider({ providerId: p.providerId })), reload).then(setError);
+  const { dialog, confirm } = useAsk();
+  const remove = async () =>
+    (await confirm({ title: `Remove ${p.providerId}?`, body: "People who sign in with it can no longer do so. Their accounts stay.", confirmLabel: "Remove provider", danger: true })) &&
+    void act(() => auth((c) => c.sso.deleteProvider({ providerId: p.providerId })), reload).then(setError);
   return (
-    <div className="wl-sso-item">
-      <div className="wl-sso-head">
-        <strong>{p.providerId}</strong> <span className="wl-muted">{p.type === "oidc" ? "OpenID Connect" : "SAML"} · {p.domain}</span>
-        <Badge tone={p.domainVerified ? "success" : "warning"}>{p.domainVerified ? "Domain proven" : "Domain not proven"}</Badge>
-        <button type="button" className="wl-link-btn wl-text-error" onClick={remove}>Remove</button>
+    <Panel>
+      {dialog}
+      <div className="wl-sso-item">
+        <div className="wl-sso-head">
+          <strong>{p.providerId}</strong> <span className="wl-muted">{p.type === "oidc" ? "OpenID Connect" : "SAML"} · {p.domain}</span>
+          <Badge tone={p.domainVerified ? "success" : "warning"}>{p.domainVerified ? "Domain proven" : "Domain not proven"}</Badge>
+          <button type="button" className="wl-link-btn wl-text-error" onClick={() => void remove()}>Remove</button>
+        </div>
+        <SetupUrls p={p} />
+        <DomainProof p={p} reload={reload} />
+        {error && <div className="wl-banner wl-banner-error">{error}</div>}
       </div>
-      <SetupUrls p={p} />
-      <DomainProof p={p} reload={reload} />
-      {error && <div className="wl-banner wl-banner-error">{error}</div>}
-    </div>
+    </Panel>
   );
 }
 
 /** Owners and admins: single sign-on for this organization. New people from the domain join as members. */
-export function SsoPanel({ orgId }: { orgId: string }) {
+export function SsoSection({ orgId }: { orgId: string }) {
   const { list, error, reload } = useProviders(orgId);
+  const [adding, setAdding] = useState(false);
+  const add = !adding && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setAdding(true)}><Plus aria-hidden="true" /> Add provider</button>;
   return (
-    <Panel title="Single sign-on">
-      <p className="wl-muted">People with emails at a proven domain sign in with your identity provider. New people join as members.</p>
+    <>
+      <SectionHead title="Single sign-on" description="People with an email at a proven domain sign in with your identity provider (OpenID Connect or SAML). New people join as members." action={add} />
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
-      {list && list.length === 0 && <Empty>No identity provider yet.</Empty>}
+      {adding && <SsoForm orgId={orgId} reload={reload} onClose={() => setAdding(false)} />}
+      {list && list.length === 0 && !adding && <Panel><Empty title="No identity provider yet">Add Okta, Entra ID, Google Workspace, Auth0, Keycloak, or any SAML 2.0 provider.</Empty></Panel>}
       {list?.map((p) => <ProviderItem key={p.providerId} p={p} reload={reload} />)}
-      <SsoForm orgId={orgId} reload={reload} />
-    </Panel>
+    </>
   );
 }

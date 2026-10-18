@@ -17,7 +17,7 @@ export interface StatCardProps {
 }
 
 function Change({ change, upIsGood, compareLabel }: Pick<StatCardProps, "change" | "upIsGood" | "compareLabel">) {
-  if (change === null) return <div className="wl-delta"><span>No data {compareLabel.replace(/^vs\. /, "for ")}</span></div>;
+  if (change === null) return <div className="wl-delta"><b className="wl-flat">No data</b><span>{compareLabel.replace(/^vs\. /, "for ")}</span></div>;
   const flat = Math.abs(change) < 0.5;
   const good = change > 0 === upIsGood;
   const Arrow = change >= 0 ? ArrowUp : ArrowDown;
@@ -42,8 +42,8 @@ export function StatCard({ icon: Icon, label, value, change, upIsGood, compareLa
       <div className="wl-stat-value">{value}</div>
       <div className="wl-stat-foot">
         <Change change={change} upIsGood={upIsGood} compareLabel={compareLabel} />
-        {series && <Sparkline values={series} color={danger ? "var(--wl-red)" : "var(--wl-blue)"} />}
       </div>
+      {series && <div className="wl-stat-spark"><Sparkline values={series} width={240} height={28} stretch color={danger ? "var(--wl-red)" : "var(--wl-blue)"} /></div>}
     </section>
   );
 }

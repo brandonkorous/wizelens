@@ -1,71 +1,68 @@
 import { type FormEvent, useState } from "react";
-import { loadAccount, type OrgWithProjects } from "../../data/account";
+import { loadAccount, type Project } from "../../data/account";
 import { apiSend } from "../../data/api";
 import { act } from "../../data/useApi";
+import { CopyButton } from "../../ui/Badges";
+import { useAsk } from "../../ui/Dialog";
 import { Field, FormRow } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 import type { OrgData } from "./teamTypes";
-import type { Project } from "../../data/account";
 
-/** Organization name and how long it keeps data. Owners and admins only. */
-export function OrgSettings({ org }: { org: OrgWithProjects }) {
-  const [name, setName] = useState(org.name);
-  const [days, setDays] = useState(org.retentionDays);
-  const [note, setNote] = useState<string | null>(null);
-  const save = (e: FormEvent) => {
+/** Add a project. Opens from the section's button. */
+export function NewProjectForm({ orgId, reload, onClose }: { orgId: string; reload: () => void; onClose: () => void }) {
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const add = (e: FormEvent) => {
     e.preventDefault();
-    void act(() => apiSend("PATCH", `./api/orgs/${org.id}`, { name, retentionDays: days }), () => void loadAccount()).then((err) => setNote(err ?? "Saved."));
+    void act(() => apiSend("POST", `./api/orgs/${orgId}/projects`, { name }), () => (reload(), void loadAccount())).then((err) => (setError(err), err || onClose()));
   };
   return (
-    <Panel title="Organization">
-      <form className="wl-form" onSubmit={save}>
+    <Panel title="New project" className="wl-panel-form" action={<button type="button" className="wl-link-btn" onClick={onClose}>Close</button>}>
+      <form className="wl-form" onSubmit={add}>
         <FormRow>
-          <Field label="Name" required value={name} onChange={(e) => setName(e.target.value)} />
-          <Field label="Keep data for (days)" type="number" min={1} max={400} required value={days} onChange={(e) => setDays(Number(e.target.value))} hint="Older traces are deleted every few minutes." />
-          <button type="submit" className="wl-btn wl-btn-primary">Save</button>
+          <Field label="Name" required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} placeholder="Checkout" autoFocus hint="Usually one app or team. Make an ingest key for it next." />
+          <button type="submit" className="wl-btn wl-btn-primary">Add project</button>
         </FormRow>
-        {note && <p className="wl-muted wl-small">{note}</p>}
+        {error && <div className="wl-banner wl-banner-error">{error}</div>}
       </form>
     </Panel>
   );
 }
 
-/** Projects of the organization: add one, clear its data, or delete it. */
+/** Projects of the organization, with what keys send to each: clear a project's data, or delete it. */
 export function ProjectsPanel({ orgId, data, reload }: { orgId: string; data: OrgData; reload: () => void }) {
-  const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const after = () => (reload(), void loadAccount());
-  const run = (fn: () => Promise<unknown>) => void act(fn, after).then(setError);
-  const add = (e: FormEvent) => {
-    e.preventDefault();
-    run(() => apiSend("POST", `./api/orgs/${orgId}/projects`, { name }));
-    setName("");
-  };
-  const ask = (text: string) => window.prompt(`${text}\nType DELETE to confirm.`) === "DELETE";
+  const { dialog, confirm } = useAsk();
+  const run = (fn: () => Promise<unknown>) => void act(fn, () => (reload(), void loadAccount())).then(setError);
+  const keysOf = (p: Project) => data.keys.filter((k) => k.projectIds.includes(p.id)).length;
+  const clear = async (p: Project) =>
+    (await confirm({ title: `Clear the data of ${p.name}?`, body: "Every trace, log, and metric of this project is deleted. Its keys and alerts stay.", confirmLabel: "Clear data", danger: true, typeToConfirm: p.name })) &&
+    run(() => apiSend("POST", `./api/orgs/${orgId}/projects/${p.id}/clear`));
+  const remove = async (p: Project) =>
+    (await confirm({ title: `Delete ${p.name}?`, body: "The project, its data, its keys, and its alerts are deleted. Apps that send with its keys stop being recorded.", confirmLabel: "Delete project", danger: true, typeToConfirm: p.name })) &&
+    run(() => apiSend("DELETE", `./api/orgs/${orgId}/projects/${p.id}`));
   const columns: Column<Project>[] = [
-    { key: "name", header: "Project", cell: (p) => <><strong>{p.name}</strong> <code className="wl-mono wl-small wl-muted">{p.id}</code></> },
+    { key: "name", header: "Project", cell: (p) => <strong>{p.name}</strong> },
+    { key: "id", header: "Project id", cell: (p) => <span className="wl-id">{p.id.slice(0, 8)}… <CopyButton text={p.id} label="Copy project id" /></span> },
+    { key: "keys", header: "Keys", num: true, cell: (p) => keysOf(p) },
     {
       key: "x",
       header: "",
+      className: "wl-cell-actions",
       cell: (p) => (
         <span className="wl-row-actions">
-          <button type="button" className="wl-link-btn" onClick={() => ask(`Delete all traces of ${p.name}? Settings and keys stay.`) && run(() => apiSend("POST", `./api/orgs/${orgId}/projects/${p.id}/clear`))}>Clear data</button>
-          <button type="button" className="wl-link-btn wl-text-error" onClick={() => ask(`Delete ${p.name} and all its data and keys?`) && run(() => apiSend("DELETE", `./api/orgs/${orgId}/projects/${p.id}`))}>Delete</button>
+          <button type="button" className="wl-link-btn" onClick={() => void clear(p)}>Clear data</button>
+          <button type="button" className="wl-link-btn wl-text-error" onClick={() => void remove(p)}>Delete</button>
         </span>
       ),
     },
   ];
   return (
-    <Panel title={`Projects (${data.projects.length})`}>
-      <form className="wl-form" onSubmit={add}>
-        <FormRow>
-          <Field label="New project" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Checkout" />
-          <button type="submit" className="wl-btn wl-btn-primary">Add project</button>
-        </FormRow>
-      </form>
-      {error && <div className="wl-banner wl-banner-error">{error}</div>}
+    <Panel flush>
+      {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
       <Table columns={columns} rows={data.projects} rowKey={(p) => p.id} />
+      {dialog}
     </Panel>
   );
 }

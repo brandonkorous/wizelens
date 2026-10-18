@@ -1,9 +1,9 @@
 import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 
 /** A labeled text, number, email, or URL input for small forms. */
-export function Field({ label, hint, ...input }: { label: string; hint?: ReactNode } & InputHTMLAttributes<HTMLInputElement>) {
+export function Field({ label, hint, narrow = false, ...input }: { label: string; hint?: ReactNode; narrow?: boolean } & InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <label className="wl-field">
+    <label className={`wl-field${narrow ? " wl-field-narrow" : ""}`}>
       <span>{label}</span>
       <input {...input} />
       {hint && <small className="wl-muted">{hint}</small>}
@@ -22,7 +22,24 @@ export function TextArea({ label, hint, ...area }: { label: string; hint?: React
   );
 }
 
-/** A form row of fields and a button. */
+/** A labeled drop-down for small forms, so it lines up with the fields beside it. */
+export function SelectField<T extends string>({ label, value, options, onChange, hint }: { label: string; value: T; options: [T, string][]; onChange: (v: T) => void; hint?: ReactNode }) {
+  return (
+    <label className="wl-field">
+      <span>{label}</span>
+      <select className="wl-select" value={value} onChange={(e) => onChange(e.target.value as T)}>
+        {options.map(([v, text]) => (
+          <option key={v} value={v}>
+            {text}
+          </option>
+        ))}
+      </select>
+      {hint && <small className="wl-muted">{hint}</small>}
+    </label>
+  );
+}
+
+/** A form row of fields and a button. Fields line up at the top, so a hint under one never pushes the others down. */
 export const FormRow = ({ children }: { children: ReactNode }) => <div className="wl-form-row">{children}</div>;
 
 /** A labeled check box. */

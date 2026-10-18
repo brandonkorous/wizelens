@@ -1,4 +1,4 @@
-import { Bell, Boxes, Gauge, TriangleAlert } from "lucide-react";
+import { Bell, Boxes, Bug, TriangleAlert } from "lucide-react";
 import { fmtCount, fmtPct } from "../../format";
 import { useRoute } from "../../routes";
 import { PageHeader } from "../../ui/Panel";
@@ -16,8 +16,8 @@ function ErrorStatCards({ stats }: { stats: ErrorsModel }) {
   const common = { upIsGood: false, compareLabel: meta.compareLabel, danger: true };
   return (
     <div className="wl-grid wl-grid-stats">
-      <StatCard icon={TriangleAlert} label="Total Exceptions" value={fmtCount(cards.exceptions)} change={change.exceptions} series={sparks.exceptions} {...common} />
-      <StatCard icon={Gauge} label="Error Rate" value={stats.hasRequests ? fmtPct(cards.errorRate) : "–"} change={change.errorRate} series={sparks.errorRate} {...common} />
+      <StatCard icon={Bug} label="Total Exceptions" value={fmtCount(cards.exceptions)} change={change.exceptions} series={sparks.exceptions} {...common} />
+      <StatCard icon={TriangleAlert} label="Error Rate" value={stats.hasRequests ? fmtPct(cards.errorRate) : "–"} change={change.errorRate} series={sparks.errorRate} {...common} />
       <StatCard icon={Boxes} label="Impacted Endpoints" value={fmtCount(cards.endpoints)} change={change.endpoints} {...common} danger={false} />
       <StatCard icon={Bell} label="Critical Incidents" value={fmtCount(cards.critical)} change={change.critical} series={sparks.critical} {...common} />
     </div>
