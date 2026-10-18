@@ -6,6 +6,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Fixed
 
+- **Pages no longer time out when counting is slow.** Every page asked for the project's trace and span counts and
+  environments; on a busy database those scans filled all 10 Postgres connections. They are now shared for a minute
+  (one scan per project at a time), and every query stops after 2 minutes.
 - **The cloud starts at once after a facts version change.** It cleared every stat in one Postgres transaction before it
   listened; on a big database that took longer than the startup probe, so the pod restarted forever. The reset now runs
   after start, in batches that commit, and settling waits for it.

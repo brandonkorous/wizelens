@@ -25,8 +25,8 @@ const wrap = (client: Pool | PoolClient): Queryable => ({
 /** A managed Postgres, from a `postgres://` URL. */
 export async function openPostgres(url: string): Promise<Db> {
   const { default: pg } = await import("pg");
-  // Times are stored as double precision, so no bigint parsing is needed.
-  const pool = new pg.Pool({ connectionString: url, max: 10 });
+  // Times are double precision (no bigint parsing); the timeouts free connections that a runaway query or a gone client holds.
+  const pool = new pg.Pool({ connectionString: url, max: 10, statement_timeout: 120_000, idle_in_transaction_session_timeout: 60_000 });
   return {
     kind: "postgres",
     authDatabase: pool,
