@@ -3,7 +3,7 @@
   "version": "0.3.0-alpha.1",
   "description": "The WizeLens local hub: one place for the traces of every service on your machine or network, with the full dashboard and MCP.",
   "license": "MIT",
-  "author": "WizeWorks",
+  "author": "WizeWorks LLC",
   "homepage": "https://github.com/brandonkorous/wizelens#readme",
   "repository": {
     "type": "git",

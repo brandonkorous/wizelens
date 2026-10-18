@@ -3,7 +3,7 @@
   "version": "0.3.0-alpha.1",
   "description": "WizeLens add-on for Node.js: request timeline, outgoing HTTP, database calls, logs, errors, and an in-app dashboard.",
   "license": "MIT",
-  "author": "WizeWorks",
+  "author": "WizeWorks LLC",
   "homepage": "https://github.com/brandonkorous/wizelens#readme",
   "repository": {
     "type": "git",
@@ -20,6 +20,7 @@
     "fastify",
     "koa",
     "hono",
+    "nextjs",
     "tracing",
     "opentelemetry",
     "profiler",
@@ -38,6 +39,10 @@
     "./kit": {
       "types": "./dist/kit.d.ts",
       "import": "./dist/kit.js"
+    },
+    "./next": {
+      "types": "./dist/next.d.ts",
+      "import": "./dist/next.js"
     },
     "./package.json": "./package.json"
   },

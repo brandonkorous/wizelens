@@ -4,6 +4,7 @@ import type { Recorder, RecorderOptions } from "./recorder-types.js";
 import { createInstaller, createRequestStore } from "./request-store.js";
 import { createSender } from "./sender.js";
 import { ServerData } from "./server-data.js";
+import { documentTrace } from "./server-timing.js";
 import { getSessionId } from "./session.js";
 
 export type { RecordedRequest, Recorder, RecorderOptions, ServerStats } from "./recorder-types.js";
@@ -27,19 +28,27 @@ function resolveOptions(options: RecorderOptions) {
   };
 }
 
+// The server that rendered this page holds the page-load trace: its spans go there.
+function noteDocument(data: ServerData, endpointUrl: string): void {
+  const doc = documentTrace();
+  if (doc?.endpoint && doc.endpoint !== endpointUrl) data.noteEndpoint(doc.traceId, doc.endpoint);
+}
+
 export function createRecorder(options: RecorderOptions = {}): Recorder {
   const cfg = resolveOptions(options);
   const store = createRequestStore(cfg.maxRecent);
   let original: typeof fetch | null = null;
   let timer: ReturnType<typeof setInterval> | null = null;
-  const sender = createSender(cfg.endpointUrl, () => original);
   const data = new ServerData({ ...cfg, store, getFetch: () => original ?? globalThis.fetch });
-  const ctx: FetchContext = { ...cfg, store, sender, loadServerStats: (id) => data.loadServerStats(id) };
+  const sender = createSender(cfg.endpointUrl, () => original, (id) => data.endpointOf(id));
+  const noteEndpoint = (id: string, endpoint: string) => data.noteEndpoint(id, endpoint);
+  const ctx: FetchContext = { ...cfg, store, sender, noteEndpoint, loadServerStats: (id) => data.loadServerStats(id) };
   const capture = createCaptureHandle(() => (cfg.capturePages ? startBrowserCapture({ sender, sessionId: cfg.sessionId, captureConsole: cfg.captureConsole }) : () => {}));
   // Send queued spans before the page goes away, so a refresh does not lose them.
   const onPageHide = () => void sender.flush();
   const install = createInstaller({
     start() {
+      noteDocument(data, cfg.endpointUrl);
       original = globalThis.fetch;
       globalThis.fetch = patchFetch(original, ctx);
       timer = setInterval(() => void sender.flush(false), cfg.flushIntervalMs);
@@ -67,7 +76,7 @@ export function createRecorder(options: RecorderOptions = {}): Recorder {
     loadServerStats: (traceId) => data.loadServerStats(traceId),
     getTrace: (traceId) => data.getTrace(traceId),
     loadTrace: (traceId) => data.loadTrace(traceId),
-    traceLink: (id, view) => `${cfg.endpointUrl}/#/traces/${id}${view ? `/${view}` : ""}`,
+    traceLink: (id, view) => `${data.endpointOf(id)}/#/traces/${id}${view ? `/${view}` : ""}`,
     clear: store.clear,
   };
 }

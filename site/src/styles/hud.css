@@ -1,0 +1,41 @@
+/* The HUD card and its details panel, drawn the way the add-on draws them. */
+.wl-hud-card, .wl-hud-panel { background: var(--wl-hud-bg); color: var(--wl-hud-fg); border: 1px solid var(--wl-hud-line); border-radius: 14px; box-shadow: var(--wl-shadow-pop); font-size: 13px; }
+.wl-hud-card { padding: 14px 16px 12px; width: 100%; }
+.wl-hud-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.wl-hud-top strong { font-size: 14px; font-weight: 700; }
+.wl-hud-dot { width: 10px; height: 10px; transition: background 0.5s var(--wl-ease); }
+.wl-hud-path { color: var(--wl-hud-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; }
+.wl-hud-code { padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; color: var(--wl-white); transition: background 0.4s; }
+.wl-hud-code-ok { background: #15803d; }
+.wl-hud-code-warn { background: #c2410c; }
+.wl-hud-code-err { background: #b91c1c; }
+.wl-hud-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 12px 0 10px; }
+.wl-hud-stats b { display: block; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
+.wl-hud-stats span { color: var(--wl-hud-muted); font-size: 12px; }
+.wl-hud-amber { color: var(--wl-amber); }
+.wl-hud-split { display: flex; height: 6px; border-radius: 4px; overflow: hidden; background: var(--wl-hud-2); }
+.wl-hud-split span { display: block; height: 100%; }
+.wl-hud-foot { display: flex; gap: 16px; margin-top: 10px; font-size: 12.5px; font-weight: 500; }
+.wl-hud-foot span { display: inline-flex; align-items: center; gap: 4px; }
+.wl-hud-foot .wl-dot { width: 7px; height: 7px; margin-left: 2px; }
+
+.wl-hud-panel { padding: 14px 16px; width: 100%; overflow: hidden; }
+.wl-hud-panel-head b { font-size: 14px; }
+.wl-hud-meta { margin-top: 4px; color: var(--wl-hud-muted); font-size: 12px; }
+.wl-hud-h { margin: 14px 0 8px; font-size: 13px; font-weight: 700; }
+.wl-hud-tl { display: grid; gap: 7px; }
+.wl-hud-tl-row { display: grid; grid-template-columns: minmax(0, 1.25fr) 52px minmax(0, 1fr); align-items: center; gap: 10px; font-size: 12px; }
+.wl-hud-tl-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wl-hud-tl-ms { color: var(--wl-hud-muted); text-align: right; white-space: nowrap; }
+.wl-hud-tl-track { position: relative; height: 10px; border-radius: 3px; background: var(--wl-hud-2); }
+.wl-hud-tl-track i { position: absolute; top: 0; bottom: 0; min-width: 3px; border-radius: 3px; }
+.wl-hud-ins { margin-top: 8px; padding: 9px 11px; border: 1px solid var(--wl-hud-line); border-left: 3px solid; border-radius: 8px; background: var(--wl-hud-2); }
+.wl-hud-ins-head { display: flex; align-items: center; gap: 8px; }
+.wl-hud-ins-head b { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.wl-hud-ins-ms { margin-left: auto; color: var(--wl-hud-muted); font-size: 12px; white-space: nowrap; }
+.wl-hud-ins code { display: block; margin-top: 5px; color: var(--wl-hud-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wl-hud-tag { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; white-space: nowrap; text-transform: uppercase; }
+.wl-hud-tag-warning { background: #3a2414; color: #fb923c; }
+.wl-hud-tag-opportunity { background: #2f2710; color: #f4c542; }
+.wl-hud-tag-critical { background: #3a1b1f; color: #ff6b74; }
+.wl-hud-none { color: var(--wl-hud-muted); font-size: 12.5px; }

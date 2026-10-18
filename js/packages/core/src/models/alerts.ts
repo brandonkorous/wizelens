@@ -72,9 +72,18 @@ export function alertBreached(metric: AlertMetric, op: AlertOp, value: number | 
   return op === ">" ? v > threshold : v < threshold;
 }
 
+/** Why a notice was sent: the rule broke, it is fine again, or someone pressed Test. */
+export type AlertNoticeState = "fired" | "resolved" | "test";
+
+/** "above 5%", "no longer above 5%", or "alerts when above 5%": the rule, worded for the notice. */
+export function conditionText(op: AlertOp, threshold: string, state: AlertNoticeState = "fired"): string {
+  const rule = `${op === ">" ? "above" : "below"} ${threshold}`;
+  return state === "resolved" ? `no longer ${rule}` : state === "test" ? `alerts when ${rule}` : rule;
+}
+
 /** "Error rate is 7.5% (above 5%)". */
-export function alertMessage(metric: AlertMetric, op: AlertOp, value: number | null, threshold: number): string {
+export function alertMessage(metric: AlertMetric, op: AlertOp, value: number | null, threshold: number, state: AlertNoticeState = "fired"): string {
   const m = ALERT_METRICS[metric];
   const fmt = (n: number) => `${Number.isInteger(n) ? n : n.toFixed(1)}${m.unit === "%" ? "%" : m.unit ? ` ${m.unit}` : ""}`;
-  return `${m.label} is ${value === null ? "not measured" : fmt(value)} (${op === ">" ? "above" : "below"} ${fmt(threshold)})`;
+  return `${m.label} is ${value === null ? "not measured" : fmt(value)} (${conditionText(op, fmt(threshold), state)})`;
 }

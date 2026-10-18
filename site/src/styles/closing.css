@@ -1,0 +1,31 @@
+/* Closing scene and footer. */
+.wl-closing { padding: clamp(120px, 16vw, 200px) 0 clamp(96px, 12vw, 160px); }
+.wl-closing-inner { display: grid; justify-items: center; text-align: center; gap: 32px; }
+.wl-closing-mark { width: clamp(140px, 20vw, 240px); margin-bottom: 16px; }
+.wl-closing-mark svg { width: 100%; height: auto; }
+.wl-closing-line { font-size: clamp(44px, 8vw, 112px); }
+.wl-closing-word { display: block; }
+.wl-closing-cta { justify-content: center; }
+
+.wl-footer { padding: 64px 0 40px; border-top: 1px solid var(--wl-night-line); }
+.wl-footer-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr)); gap: 32px; }
+.wl-footer-brand p { margin-top: 14px; color: var(--wl-night-muted); font-size: 15px; }
+.wl-footer h3 { font-size: 14px; font-weight: 650; margin-bottom: 14px; }
+.wl-footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.wl-footer a { color: var(--wl-night-muted); font-size: 15px; transition: color 0.2s; }
+.wl-footer a:hover { color: var(--wl-night-fg); }
+.wl-footer-base { display: flex; justify-content: space-between; gap: 16px; margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--wl-night-line); font-size: 14px; color: var(--wl-night-muted); }
+.wl-footer-base b { color: var(--wl-night-fg); }
+
+@media (max-width: 760px) {
+  .wl-footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wl-footer-brand { grid-column: 1 / -1; }
+  .wl-footer-base { flex-direction: column; }
+}
+.wl-footer-legal { display: flex; flex-wrap: wrap; gap: 20px; }
+.wl-footer-legal a { font-size: 14px; }
+
+/* The 404 page. */
+.wl-404 { padding: clamp(140px, 18vw, 200px) 0 clamp(96px, 12vw, 140px); }
+.wl-404-inner { display: grid; justify-items: start; gap: 28px; }
+.wl-404-mark { width: 120px; height: 120px; }

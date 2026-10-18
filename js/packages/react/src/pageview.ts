@@ -1,4 +1,4 @@
-import { type Attributes, ATTR_BROWSER_NAVIGATION, ATTR_PAGE, newSpanId, newTraceId, type Span } from "@wizeworks/lens-core";
+import { type Attributes, ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_REMOTE, ATTR_PAGE, newSpanId, newTraceId, type Span } from "@wizeworks/lens-core";
 import { browserSpan, currentRoute, round1, type ViewRef } from "./browser-span.js";
 import type { ImageInfo } from "./images.js";
 import { clsFromShifts, type NavPoints, type Shift } from "./vitals.js";
@@ -19,6 +19,8 @@ export interface PageView extends ViewRef {
   hydrationMs: number | null;
   /** Route change to the next paint after React rendered it. Spa views only. */
   renderMs: number | null;
+  /** The WizeLens endpoint of the server that rendered this page. Full loads only. */
+  remote: string | null;
   sent: boolean;
 }
 
@@ -38,6 +40,7 @@ export function newPageView(navigation: PageView["navigation"], startRel: number
     inpMs: null,
     hydrationMs: null,
     renderMs: null,
+    remote: null,
     sent: false,
   };
 }
@@ -63,6 +66,7 @@ export function pageViewAttributes(view: PageView, nav: NavPoints | null, images
   const load = view.navigation === "load";
   const all: Attributes = {
     [ATTR_BROWSER_NAVIGATION]: view.navigation,
+    [ATTR_BROWSER_REMOTE]: view.remote,
     "url.full": view.url,
     ...(load && nav ? loadTimings(nav, view.fcpMs) : {}),
     [ATTR_PAGE.fcpMs]: load ? round1(view.fcpMs) : null,

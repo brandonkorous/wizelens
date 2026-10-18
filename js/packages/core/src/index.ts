@@ -2,6 +2,7 @@ export * from "./types.js";
 export * from "./access.js";
 export * from "./hub.js";
 export * from "./attributes.js";
+export * from "./sampling.js";
 export * from "./ids.js";
 export * from "./redact.js";
 export * from "./trace.js";

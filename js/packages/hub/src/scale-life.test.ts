@@ -49,11 +49,14 @@ function writeV2(path: string, list: readonly Trace[], updatedMs: number): void 
   const trace = db.prepare("INSERT INTO traces (trace_id, start_ms, end_ms, updated_ms, env, project) VALUES (?, ?, ?, ?, 'prod', 'shop')");
   const span = db.prepare("INSERT INTO spans (trace_id, span_id, service, start_ms, duration_ms, session, json) VALUES (?, ?, ?, ?, ?, NULL, ?)");
   const log = db.prepare("INSERT OR IGNORE INTO logs (trace_id, key, time_ms, json) VALUES (?, ?, ?, ?)");
+  // One transaction: a commit per row is slow on a slow disk (the Windows CI runner took 40 s).
+  db.exec("BEGIN");
   for (const t of list) {
     trace.run(t.traceId, t.startMs, t.startMs + t.durationMs, updatedMs);
     for (const s of t.spans) span.run(t.traceId, s.spanId, s.service, s.startMs, s.durationMs, JSON.stringify(s));
     for (const l of t.logs) log.run(t.traceId, createHash("sha1").update(logKey(l)).digest("hex"), l.timeMs, JSON.stringify(l));
   }
+  db.exec("COMMIT");
   db.close();
 }
 

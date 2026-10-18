@@ -1,0 +1,89 @@
+---
+title: Quick start
+description: From nothing to your first trace in about five minutes. Pick the parts that match your stack.
+---
+
+WizeLens is on in development only. In production it does nothing unless you turn it on yourself.
+
+> **Alpha:** the packages are not on NuGet or npm yet. Until they are, use project references, or run the sample in the repo.
+
+## 1. Add it to your API
+
+### ASP.NET Core (.NET 10)
+
+```bash
+dotnet add package WizeLens.AspNetCore --prerelease
+```
+
+```csharp
+using WizeLens;
+
+builder.Services.AddWizeLens();   // capture, store, dashboard, API
+var app = builder.Build();
+app.UseWizeLens();                // early in the pipeline
+```
+
+### Node
+
+```bash
+npm install @wizeworks/lens-node
+```
+
+```ts
+import express from "express";
+import { createWizeLens } from "@wizeworks/lens-node";
+
+const wizelens = createWizeLens({ serviceName: "orders-api" });
+const app = express();
+
+app.use(wizelens.middleware);        // first
+// ...your routes...
+app.use(wizelens.errorMiddleware);   // last
+```
+
+On Fastify, Koa, Hono, or Next.js, see the [Node](/docs/node/) and [Next.js](/docs/nextjs/) pages.
+
+## 2. Add your database
+
+One line, and every query is traced. For example:
+
+```csharp
+builder.Services.AddDbContext<AppDb>(o => o.UseSqlServer(cs).UseWizeLens());   // EF Core
+```
+
+```ts
+import pg from "pg";
+import { instrumentPg } from "@wizeworks/lens-node";
+
+instrumentPg(wizelens, pg);
+```
+
+Every other driver and ORM is on the [ASP.NET Core](/docs/aspnet-core/) and [Node](/docs/node/) pages.
+
+## 3. Add the browser (optional)
+
+```bash
+npm install @wizeworks/lens-react
+```
+
+```tsx
+// main.tsx: this import must come first, before React loads.
+import "@wizeworks/lens-react/install";
+import { WizeLensProvider } from "@wizeworks/lens-react";
+
+<WizeLensProvider endpoint="/_wizelens" enabled={import.meta.env.DEV}>
+  <App />
+</WizeLensProvider>
+```
+
+Now each server trace starts at the click that caused it, and the HUD shows in the corner of your page.
+
+## 4. Open the dashboard
+
+Run your app and browse to **`/_wizelens`** on any service. That is it.
+
+## Next
+
+- Several services? Install WizeLens in each one. They find each other: see [Several services](/docs/several-services/).
+- Want every service in one place? Start [the local hub](/docs/hub/).
+- Something missing? See [Troubleshooting](/docs/troubleshooting/).

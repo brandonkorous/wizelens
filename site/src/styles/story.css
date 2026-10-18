@@ -1,0 +1,49 @@
+/* The story page: hero, the pinned scene with its chapters, principles, and credits. */
+.wl-story-hero { padding: clamp(128px, 15vw, 176px) 0 clamp(48px, 6vw, 80px); }
+.wl-story-lede { margin-top: 32px; max-width: 34em; }
+
+.wl-story-track { position: relative; height: 480vh; }
+.wl-story-pin { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: center; padding-top: 68px; }
+.wl-story-grid { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: clamp(32px, 5vw, 72px); align-items: center; }
+.wl-story-text { position: relative; min-height: 360px; }
+.wl-story-ch { position: absolute; inset: 0; display: grid; gap: 24px; align-content: center; }
+.wl-story-stage { padding: clamp(16px, 2.5vw, 28px); border-radius: var(--wl-radius); }
+
+.wl-sc { width: 100%; height: auto; overflow: visible; }
+.wl-sc-box { stroke: var(--wl-night-line); stroke-width: 1.5; }
+.wl-sc-label { fill: var(--wl-night-fg); font: 600 14px var(--wl-sans); }
+.wl-sc-dim { fill: var(--wl-night-muted); font-weight: 500; }
+.wl-sc-wire { stroke: var(--wl-blue); stroke-width: 2; }
+.wl-sc-far { stroke: var(--wl-night-muted); stroke-width: 1.2; stroke-dasharray: 3 5; }
+.wl-sc-platform { fill: none; stroke: var(--wl-night-muted); stroke-width: 1.5; stroke-dasharray: 6 5; }
+.wl-sc-bar { fill: var(--wl-blue); }
+.wl-sc-bartext { fill: var(--wl-white); font: 600 12px var(--wl-mono); }
+.wl-sc-axis { stroke: var(--wl-night-line); stroke-width: 1.5; }
+
+.wl-principles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+.wl-principles li { display: grid; gap: 10px; align-content: start; padding: 24px; border-radius: var(--wl-radius); background: var(--wl-white); border: 1px solid var(--wl-line); }
+.wl-principles li > span { font-size: 14px; font-weight: 650; color: var(--wl-blue); }
+.wl-principles p { font-size: 15.5px; color: var(--wl-fg-2); }
+
+.wl-credits { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; align-items: start; }
+.wl-credits ul { list-style: none; margin: 0 0 24px; padding: 0; border-top: 1px solid var(--wl-line-strong); }
+.wl-credits li { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--wl-line); }
+.wl-credits li b { font-size: 18px; }
+.wl-credits li span { color: var(--wl-fg-2); }
+.wl-credits-note { margin-bottom: 28px; font-size: 15px; color: var(--wl-muted); }
+
+@media (max-width: 1080px) {
+  .wl-principles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 960px) {
+  .wl-story-pin { align-items: flex-start; padding-top: 88px; }
+  .wl-story-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .wl-story-text { min-height: 260px; }
+  .wl-story-ch .wl-h2 { font-size: 34px; }
+  .wl-story-ch .wl-lede { font-size: 16px; }
+  .wl-credits { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+}
+@media (max-width: 600px) {
+  .wl-principles { grid-template-columns: minmax(0, 1fr); }
+  .wl-credits li { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}

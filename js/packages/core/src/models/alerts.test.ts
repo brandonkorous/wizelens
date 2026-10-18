@@ -25,4 +25,6 @@ it("fires on breaches, and on silence only for low traffic", () => {
   expect(alertBreached("p95_ms", ">", null, 100)).toBe(false);
   expect(alertBreached("requests", "<", null, 1)).toBe(true);
   expect(alertMessage("error_rate", ">", 7.5, 5)).toBe("Error rate is 7.5% (above 5%)");
+  expect(alertMessage("requests", ">", 69, 1000, "resolved")).toBe("Requests is 69 (no longer above 1000)");
+  expect(alertMessage("requests", ">", null, 5, "test")).toBe("Requests is not measured (alerts when above 5)");
 });

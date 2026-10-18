@@ -132,4 +132,13 @@ public sealed class LibraryMappingTests : IDisposable
         Assert.Equal("14", span.Attr("rpc.grpc.status_code"));
         Assert.Equal(SpanStatuses.Error, span.Status);
     }
+
+    [Fact]
+    public void A_span_with_only_the_operation_and_table_is_a_db_span()
+    {
+        var span = Map("better-auth", "db findOne session", ActivityKind.Internal,
+            ("db.operation.name", "findOne"), ("db.collection.name", "session"));
+
+        Assert.Equal(SpanCategories.Db, span.Category);
+    }
 }

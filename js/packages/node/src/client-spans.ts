@@ -1,4 +1,5 @@
 import {
+  ATTR_BROWSER_REMOTE,
   type Attributes,
   type LogLevel,
   type LogRecord,
@@ -74,4 +75,16 @@ export function sanitizeClientLog(raw: unknown, redactKeys: readonly string[]): 
     attributes: toAttributes(l.attributes, redactKeys),
   };
   return { traceId: l.traceId, log };
+}
+
+/** The server a browser span says answered it. Kept only on the page's own origin, so a page cannot point the federation at any URL it likes. */
+export function remoteOf(span: Span, origin: string | undefined): string | null {
+  const remote = span.attributes[ATTR_BROWSER_REMOTE];
+  if (typeof remote !== "string" || !origin) return null;
+  try {
+    const url = new URL(remote);
+    return url.origin === origin && /^https?:$/.test(url.protocol) ? url.href.replace(/\/+$/, "") : null;
+  } catch {
+    return null;
+  }
 }

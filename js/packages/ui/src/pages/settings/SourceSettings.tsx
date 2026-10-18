@@ -32,6 +32,15 @@ function mcpRow(s: Source, info: ServiceInfo): ReactNode {
   );
 }
 
+// How many traces the service keeps, so counts on the other pages are read right.
+function samplingText(info: ServiceInfo): string {
+  const sm = info.sampling;
+  if (!sm) return "Every trace";
+  const extra = [sm.keepErrors ? "every trace with an error" : null, sm.keepSlowMs !== null ? `every trace with a span of ${fmtMs(sm.keepSlowMs)} or more` : null].filter(Boolean);
+  const pct = `${Number((sm.rate * 100).toFixed(2))}% of traces`;
+  return extra.length ? `${pct}, plus ${extra.join(" and ")}` : pct;
+}
+
 function infoRows(s: Source, info: ServiceInfo): [ReactNode, ReactNode][] {
   const storage = info.storage;
   return [

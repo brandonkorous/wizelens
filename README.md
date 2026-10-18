@@ -97,7 +97,7 @@ import { instrumentPg } from "@wizeworks/lens-node";
 instrumentPg(wizelens, pg);
 ```
 
-Outgoing `fetch` calls and routing time are traced automatically. Not on Express? Use `wizelensFastify(wizelens)`, `wizelensKoa(wizelens)`, or `wizelensHono(wizelens)` instead of the middleware.
+Outgoing `fetch` calls and routing time are traced automatically. Not on Express? Use `wizelensFastify(wizelens)`, `wizelensKoa(wizelens)`, or `wizelensHono(wizelens)` instead of the middleware. On Next.js, call `registerWizeLens()` from `@wizeworks/lens-node/next` in `instrumentation.ts` (see [Getting started](docs/GETTING-STARTED.md#2-node)).
 
 | Library | One line |
 |---|---|
@@ -184,7 +184,7 @@ Open any trace for the full detail: timeline, SQL, HTTP, logs, and errors. Searc
 
 | | ASP.NET Core | Node |
 |---|---|---|
-| Incoming requests | ✅ hosting activity | ✅ Express, Fastify, Koa, Hono, `node:http` |
+| Incoming requests | ✅ hosting activity | ✅ Express, Fastify, Koa, Hono, Next.js, `node:http` |
 | Outgoing HTTP | ✅ `HttpClient` | ✅ `fetch` / undici |
 | Database (driver level) | ✅ `ProfiledDbConnection` — ADO.NET, Dapper, any provider | ✅ `pg`, `mysql2`, `better-sqlite3`, `node:sqlite`, and `traceDb()` for any other driver |
 | Database (ORM) | ✅ EF Core | ✅ Prisma, TypeORM, Drizzle |
@@ -329,6 +329,8 @@ Guardrails:
 | `CaptureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
 | `HubUrl` / `HubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a local hub. |
 | `Project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
+| `Sampling.Rate` | `WIZELENS_SAMPLE_RATE`, else `1` | Share of traces kept (0 to 1). Traces with an error or a slow span are kept at any rate. |
+| `Sampling.KeepErrors` / `Sampling.KeepSlowMs` | `true` / `1000` | What a sampled-out trace needs to be kept anyway (`null` turns the slow rule off). |
 
 Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The user comes from `HttpContext.User`.
 
@@ -352,6 +354,9 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 | `captureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
 | `hub` / `hubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a local hub. |
 | `project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
+| `sampling` | `{ rate: WIZELENS_SAMPLE_RATE ?? 1, keepErrors: true, keepSlowMs: 1000 }` | Keep a share of traces, plus every trace with an error or a slow server-side span. |
+
+Next.js: `registerWizeLens(options)` takes the same options plus `ignore(path)`, and `onRequestError` records server errors.
 
 Tag a request and name its user from your handlers: `wizelens.tag("cache", "hit")`, `wizelens.setUser(id)`.
 
@@ -424,6 +429,7 @@ docs/                 PLAN.md, CONTRACT.md, images
 dotnet/               WizeLens.slnx — src/ (add-ons), tests/
 js/packages/          core · node · react · ui
 samples/              web (React) · gateway-api (.NET) · orders-api (Node)
+site/                 the marketing site (Next.js static export: pnpm dev:site, pnpm build:site → site/out)
 ```
 
 ```bash
@@ -447,4 +453,4 @@ WizeLens is an independent project and is not affiliated with any of them.
 
 ## 📄 License
 
-The add-ons are [MIT licensed](LICENSE). © 2026 WizeWorks.
+The add-ons are [MIT licensed](LICENSE). © 2026 WizeWorks LLC.

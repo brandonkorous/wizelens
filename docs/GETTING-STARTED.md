@@ -61,6 +61,34 @@ Add it to your framework:
 | Koa | `app.use(wizelensKoa(wizelens))` first |
 | Hono (Node) | `app.use(wizelensHono(wizelens))` first |
 | Plain `node:http` | `if (await wizelens.handler(req, res)) return;` for the dashboard, and `traceDb()` for queries |
+| Next.js | `instrumentation.ts`, see below |
+
+Next.js (App Router or Pages, `next dev` or `next start`) needs two files and no route file. `instrumentation.ts` at the
+app root:
+
+```ts
+import type { Instrumentation } from "next";
+
+export async function register() {
+  // The runtime check must wrap the import, so the Edge build leaves the package out.
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { registerWizeLens } = await import("@wizeworks/lens-node/next");
+    registerWizeLens({ serviceName: "web" });
+  }
+}
+
+export const onRequestError: Instrumentation.onRequestError = async (...args) => {
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { onRequestError } = await import("@wizeworks/lens-node/next");
+    onRequestError(...args);
+  }
+};
+```
+
+And in `next.config.mjs`: `serverExternalPackages: ["@wizeworks/lens-node"]`. The dashboard is on the Next.js port at
+`/_wizelens`. Each request is one trace named by its route (`GET /items/[id]`), with Next.js's own steps (render, route
+handler, fetch) inside it. Static files, hot reload, and the dev overlay are left out. After you add or update the package,
+delete `.next` once.
 
 Then your database, one line:
 
@@ -119,6 +147,10 @@ import { WizeLensProvider } from "@wizeworks/lens-react";
 
 `endpoint` is where your API serves WizeLens. With a dev proxy (Vite, Next.js rewrites), proxy `/_wizelens` to your API too.
 
+When the page's own server runs WizeLens (Next.js, or any add-on that renders HTML), the page load joins that server's trace:
+the server sends its trace id in `Server-Timing`, and the browser's page-load spans go to that server. Calls that another
+WizeLens server on the page's origin answers work the same way, so the HUD reads each request from the server that holds it.
+
 ## 4. Several services
 
 Install WizeLens in each service. Nothing else is needed: each response says where its WizeLens lives, so the dashboard
@@ -166,7 +198,15 @@ OpenTelemetry apps use `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEA
 Put the cloud behind https (any reverse proxy); sign-in cookies are marked secure when the public URL is https.
 To try it on your machine first: `npx @wizeworks/lens-cloud` (Postgres in-process, data in `./.wizelens-cloud`).
 
-## 7. AI access (optional)
+## 7. Busy services: sampling (optional)
+
+To keep only part of the traces, set a rate between 0 and 1: `sampling: { rate: 0.1 }` (Node),
+`o.Sampling.Rate = 0.1` (.NET), or `WIZELENS_SAMPLE_RATE=0.1` for both. WizeLens still keeps every trace with an error, and
+every trace with a server-side span of 1 second or more (`keepErrors`, `keepSlowMs`). The choice comes from the trace id, so
+every service keeps the same traces and a kept trace is whole across services. The local store, the SQLite file, and the hub
+all get only the kept traces. The **Settings** page shows the rate, so read counts on other pages as part of the traffic.
+
+## 8. AI access (optional)
 
 Turn on the read-only MCP endpoint per service (`EnableMcp = true` / `enableMcp: true`), then point your MCP client at
 `http://localhost:<port>/_wizelens/mcp`. Secrets are redacted before anything is stored. On the hub, start it with `--mcp`:
@@ -184,6 +224,8 @@ page for the projects the agent may see, and send it as `Authorization: Bearer w
 | A downstream service is missing | It runs WizeLens too, and the call goes through `HttpClient` / `fetch` / gRPC. |
 | A service is missing in the hub | `WIZELENS_HUB` is set where the service runs, and the service was restarted. The service log says when it cannot reach the hub. |
 | An OTLP app shows "Idle" | Normal: OTLP apps send only when they have data. |
+| Next.js routes all 404 after an update | Stop `next dev`, delete `.next`, and start it again. |
+| Fewer requests than you sent | Sampling is on: see the **Settings** page and `WIZELENS_SAMPLE_RATE`. |
 | Old data after a restart | Traces are kept for 24 hours or 2,000 traces. Change `MaxAge` / `maxAgeMs` and `MaxTraces` / `maxTraces`. |
 
 Full option lists are in the [README](../README.md#configuration). The wire format is in [CONTRACT.md](CONTRACT.md).

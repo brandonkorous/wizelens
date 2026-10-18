@@ -14,6 +14,7 @@ Every add-on (.NET, Node, browser) MUST follow this. The UI depends only on this
 | `X-WizeLens-Trace` | response | Trace id (32 hex) of the request that produced this response. |
 | `X-WizeLens-Endpoint` | response | Absolute URL of this service's wizelens base, e.g. `http://localhost:5200/_wizelens`. |
 | `X-WizeLens-Hop` | request (federation) | Integer hop count. Stop federating when > 5. |
+| `Server-Timing` | response | Appended: `wl-trace;desc={traceId}, wl-endpoint;desc="{endpoint}"`. The page reads it from the navigation entry, so the page load joins the trace of the request that rendered the HTML. |
 
 Every app response that the add-on sees also gets
 `Access-Control-Expose-Headers: X-WizeLens-Trace, X-WizeLens-Endpoint` (append, do not replace). The names must
@@ -22,6 +23,18 @@ merges them in again when the response headers are written.
 
 When an outgoing HTTP call gets a response with `X-WizeLens-Endpoint`, the add-on adds that URL to
 the current trace's `remotes` list (de-duplicated, and never its own endpoint).
+
+Federation and hub sends run with tracing suppressed (OTel `suppressTracing`), so no layer above the HTTP client (for
+example the Next.js `fetch` wrapper) records them as app traffic.
+
+### Browser spans and the server that owns their trace
+
+A browser span sets `wizelens.browser.remote` to the WizeLens endpoint of the server that holds its trace, when that is not the
+endpoint the page is set up with: from `wl-endpoint` (page load) or `X-WizeLens-Endpoint` (fetch). The page then sends the
+span (and the logs of that trace) to `{remote}/api/client-spans` when the remote is on the page's own origin, and to its own
+endpoint otherwise. A server that gets a browser span whose `wizelens.browser.remote` is on the request's `Origin` (same
+origin, http or https) adds it to the trace's `remotes`, unless it is one of its own endpoints; a remote on any other origin
+is ignored, so a page cannot point federation at a URL of its choice.
 
 gRPC uses the same key as metadata: a gRPC server sends `x-wizelens-endpoint` in its response headers (merged into any
 headers the handler sends) and in its trailers, and a gRPC client reads either one into `remotes`.
@@ -128,6 +141,13 @@ interface ServiceInfo {
   analysis?: { slowQueryMs: number; nPlusOneThreshold: number };
   redactKeys?: string[];
   captureResponseBody?: boolean;
+  sampling?: SamplingInfo;  // absent = every trace is kept
+}
+
+interface SamplingInfo {
+  rate: number;              // 0..1
+  keepErrors: boolean;
+  keepSlowMs: number | null; // server-side spans only
 }
 ```
 
@@ -140,7 +160,7 @@ interface ServiceInfo {
 | gRPC (on http.server / http.client) | `rpc.system` = `grpc`, `rpc.service` (e.g. `orders.v1.Orders`), `rpc.method` (e.g. `GetOrder`), `rpc.grpc.status_code` (number). Name: `{service}/{method}`. A non-zero status code on the server is an error. |
 | messaging | Kind `producer` (send) or `consumer` (receive / process). `messaging.system` (`rabbitmq`, `kafka`, `servicebus`), `messaging.operation.type` (`send`, `receive`, `process`), `messaging.destination.name` (queue, topic, or exchange), `messaging.message.id`, `messaging.batch.message_count`, `messaging.message.body.size`. Name: `{operation} {destination}`. |
 | http.client | `http.request.method`, `url.full`, `server.address`, `server.port`, `http.response.status_code` |
-| db | `db.system.name` (e.g. `sqlite`, `postgresql`, `microsoft.sql_server`), `db.query.text`, `db.operation.name`, `db.collection.name`, `db.namespace`, `db.response.returned_rows`, `wizelens.db.parameters` (JSON string, redacted), `wizelens.db.adapter` (`ado.net`, `efcore`, `pg`, `mysql2`, `better-sqlite3`, `node-sqlite`, `prisma`, `typeorm`, `drizzle`, ...). An ORM span (Prisma, TypeORM) hides the driver spans under it, so a query is counted once. |
+| db | A span is `db` when it has any of `db.system.name`, `db.system`, `db.query.text`, `db.operation.name`, `db.collection.name` (some libraries, such as Better Auth, send only the operation and the table). `db.system.name` (e.g. `sqlite`, `postgresql`, `microsoft.sql_server`), `db.query.text`, `db.operation.name`, `db.collection.name`, `db.namespace`, `db.response.returned_rows`, `wizelens.db.parameters` (JSON string, redacted), `wizelens.db.adapter` (`ado.net`, `efcore`, `pg`, `mysql2`, `better-sqlite3`, `node-sqlite`, `prisma`, `typeorm`, `drizzle`, ...). An ORM span (Prisma, TypeORM) hides the driver spans under it, so a query is counted once. |
 | exception event | `exception.type`, `exception.message`, `exception.stacktrace` |
 | browser (all) | `wizelens.browser.type` (`fetch` when absent, `pageview`, `react`, `error`), `wizelens.browser.session` (per-tab id, kept in sessionStorage key `wizelens.session`), `wizelens.browser.route` (path shape of the page), `url.full` |
 | browser fetch | `http.request.method`, `http.response.status_code`, `wizelens.browser.page`, `wizelens.browser.render_ms` (ms from the response to the next paint; absent when not measured) |
@@ -190,6 +210,9 @@ Add-ons answer `mode: "in-app"` and `capabilities: ["federation"]`. The hub answ
 | Option | .NET | Node | Default |
 |---|---|---|---|
 | Capture response bodies | `CaptureResponseBody` | `captureResponseBody` | false |
+| Sampling rate (0..1) | `Sampling.Rate` | `sampling.rate` | 1, or `WIZELENS_SAMPLE_RATE` |
+| Keep traces with an error | `Sampling.KeepErrors` | `sampling.keepErrors` | true |
+| Keep traces with a slow server-side span (ms) | `Sampling.KeepSlowMs` | `sampling.keepSlowMs` | 1000 (null = off) |
 | Tag the current request | `WizeLensRequest.Tag(key, value?)` | `wizelens.tag(key, value?)` | — |
 | Set the current user | automatic from `HttpContext.User` | `wizelens.setUser(id)` | — |
 
@@ -279,6 +302,15 @@ Applies to attributes, DB parameter names, and header names. List is configurabl
 - Database and outbound times are **wall time**: spans that overlap count once. "All queries added up" is shown next to it
   when queries ran at the same time. A request can never show more database time than server time.
 - Span start and end times keep sub-millisecond precision, so queries that start in the same millisecond keep their order.
+
+## Sampling
+
+A trace is kept by rate when `parseInt(last 8 hex digits of traceId, 16) / 2^32 < rate`, so every add-on keeps the same
+traces. A trace outside the rate is held (spans, logs, remotes) until its local root span ends (no parent, or a parent in
+another process); it is kept when any span has status `error` (with `keepErrors`), an `error` log line, or a non-browser span
+at least `keepSlowMs` long. Otherwise it is dropped. A held trace whose root never ends is dropped after 60 s. Items that come
+after the choice follow it; an error after a drop keeps the rest of the trace. Sampling applies to the store, the SQLite
+file, and the hub sends alike.
 
 ## Not traced
 
@@ -562,6 +594,8 @@ below (`<`) the threshold. No data never fires, except `requests <` (traffic sto
 only when the state changes (fired, resolved), to a webhook (the JSON notice), a Slack incoming webhook, or email
 (`{ "kind": "email", "to": [...] }`: 1 to 20 addresses of members of the organization, confirmed ones when mail is on, checked again
 at each send), and kept as an event.
+The message says what happened: `Requests is 79 (above 5)` when fired, `(no longer above 5)` when resolved, and
+`(alerts when above 5)` for a test notice. `PATCH` changes only the fields it sends.
 Webhook URLs must be https and may not resolve to private, loopback, or link-local addresses, unless the cloud runs with
 `--allow-private-webhooks` (self-hosting on a private network).
 

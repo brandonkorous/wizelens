@@ -64,6 +64,9 @@ public sealed class WizeLensOptions
     /// <summary>The project this service belongs to, so a shared hub can group it. Default: the WIZELENS_PROJECT variable.</summary>
     public string? Project { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_PROJECT");
 
+    /// <summary>Keeps only part of the traces, for busy services. Default: all, or the WIZELENS_SAMPLE_RATE variable.</summary>
+    public WizeLensSampling Sampling { get; set; } = new();
+
     /// <summary>Collects metrics from every meter in the app (.NET runtime, ASP.NET Core, HttpClient, your own). On by default.</summary>
     public bool CaptureMetrics { get; set; } = true;
 

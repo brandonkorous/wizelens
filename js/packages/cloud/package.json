@@ -3,7 +3,7 @@
   "version": "0.3.0-alpha.1",
   "description": "The WizeLens cloud service: many organizations, accounts and teams, server-side stats, alerts, sharing, and scoped AI access, on Postgres.",
   "license": "MIT",
-  "author": "WizeWorks",
+  "author": "WizeWorks LLC",
   "homepage": "https://github.com/brandonkorous/wizelens#readme",
   "repository": {
     "type": "git",
