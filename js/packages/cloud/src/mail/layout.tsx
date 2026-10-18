@@ -29,6 +29,13 @@ export function EmailLayout({ content: c }: { content: EmailContent }) {
         </Container>
         <Container style={{ maxWidth: `${theme.width}px`, padding: "16px 32px 0" }}>
           <Text style={footerText}>{c.footer}</Text>
+          {c.unsubscribe && (
+            <Text style={footerText}>
+              <Link href={c.unsubscribe.url} style={{ color: theme.muted, textDecoration: "underline" }}>
+                {c.unsubscribe.label}
+              </Link>
+            </Text>
+          )}
           <Hr style={{ margin: "12px 0", borderColor: theme.line }} />
           <Text style={footerText}>
             <Link href={theme.homeUrl} style={{ color: theme.muted }}>

@@ -4,6 +4,20 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Cloud notices and digests
+
+- **Security notices**, always on: password changed (also after a reset), email changed (sent to the old address), two-step
+  sign-in on or off, passkey added or removed, new backup codes, and a sign-in on a new browser and system.
+- **Team change emails** for owners and admins, from the audit log, grouped per batch and leaving out the reader's own changes.
+  A member hears when their own role changes; every member hears when the organization is deleted.
+- **Project health emails**: a busy project went quiet for 2 hours, and when its data is back.
+- **Digests**: daily, weekly, and monthly per project, at each person's hour and time zone, with requests, error rate, average
+  and p95 time, SQL queries, alerts fired, top errors, slowest endpoints, and insights. Weekly is on by default.
+- **Emails panel** on the Account page, `GET`/`PATCH api/me/notifications`, and one-click stop links (`List-Unsubscribe`,
+  RFC 8058) on team, health, and digest emails.
+- Email templates gain stat tiles and lists. Migration 7 adds `mail_prefs`, `digest_prefs`, `digest_sends`, `known_devices`,
+  `project_health`, and `audit.noticed` (older audit lines count as noticed, so an upgrade sends nothing for the past).
+
 ### Cloud email: Resend, templates, and a suppression list
 
 - **Resend:** `--resend-api-key` (`WIZELENS_CLOUD_RESEND_API_KEY`) sends every email through the Resend API, in place of SMTP

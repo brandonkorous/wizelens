@@ -16,6 +16,8 @@ import { RateLimiter } from "./http/limiter.js";
 import { Router } from "./http/router.js";
 import { startJobs } from "./jobs.js";
 import { createMailer } from "./mail/mailer.js";
+import { stopRoute } from "./mail/stop-route.js";
+import { UNSUBSCRIBE_PATH } from "./mail/unsubscribe.js";
 import { RESEND_WEBHOOK_PATH, resendWebhook } from "./mail/webhook.js";
 import { checkFactsVersion } from "./settle.js";
 import { allRoutes } from "./routes/index.js";
@@ -51,6 +53,8 @@ async function routeBase(p: Parts, ctx: Ctx, sub: string): Promise<void> {
   if (sub === "api/ingest" && req.method === "POST") return ingestBatch(ctx, p.ingest);
   // Resend signs its webhook, so it needs no dashboard header.
   if (sub === RESEND_WEBHOOK_PATH && req.method === "POST") return resendWebhook(ctx);
+  // Stop links come from mail apps (RFC 8058 one-click POST), with the signed token as the only proof.
+  if (sub === UNSUBSCRIBE_PATH && (req.method === "GET" || req.method === "POST")) return stopRoute(ctx);
   if (needsClientHeader(req, sub) && req.headers["x-wizelens-client"] !== "dashboard") throw new HttpError(403, "Missing the X-WizeLens-Client header.");
   const m = p.router.match(req.method ?? "GET", sub);
   if (m) return m.handler({ ...ctx, params: m.params });
@@ -96,6 +100,7 @@ export async function createCloud(options: CloudOptions = {}): Promise<Cloud> {
     version: CLOUD_VERSION,
     startedMs: config.now(),
     mailer,
+    secrets: wiring.secrets,
     get auth(): WizeAuth {
       if (!auth) throw new Error("The cloud is not listening yet.");
       return auth;
@@ -106,7 +111,7 @@ export async function createCloud(options: CloudOptions = {}): Promise<Cloud> {
   if (config.publicUrl) ready(config.publicUrl);
   const parts: Parts = { app, router: allRoutes(), ingest: new RateLimiter(config.ingestPerMinute, 60_000, config.now), uiDir: resolveUiDir(config.uiDir), auth: () => handler! };
   const server = createServer((req, res) => void route(parts, req, res).catch((err: unknown) => onError(err, res)));
-  const stopJobs = startJobs(app);
+  const stopJobs = config.jobs ? startJobs(app) : () => {};
   return {
     server,
     app,

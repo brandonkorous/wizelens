@@ -10,7 +10,8 @@ import { textOf } from "./text.js";
 /** One email for one address: the layout as HTML, and the same content as plain text. */
 export async function renderMail(to: string, content: EmailContent): Promise<Mail> {
   const html = await render(createElement(EmailLayout, { content }));
-  return { kind: content.kind, to, subject: content.subject, html, text: textOf(content) };
+  const headers = content.unsubscribe && { "List-Unsubscribe": `<${content.unsubscribe.url}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" };
+  return { kind: content.kind, to, subject: content.subject, html, text: textOf(content), ...(headers ? { headers } : {}) };
 }
 
 export const verifyEmailMail = (to: string, url: string) => renderMail(to, emails.verifyEmail(url));

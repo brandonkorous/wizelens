@@ -3,8 +3,11 @@ import type { Queryable } from "../db/db.js";
 import { suppressionOf } from "../repo/suppressions.js";
 import { resendSender } from "./resend.js";
 
-/** "account": mail the person asked for (confirm, reset, change, delete). "invite" and "alert": mail someone else started. */
-export type MailKind = "account" | "invite" | "alert";
+/** "account": mail the person asked for. "security": notices about their own account. The rest: mail someone or something else started. */
+export type MailKind = "account" | "security" | "invite" | "alert" | "team" | "health" | "digest";
+
+/** Kinds a spam complaint does not stop: the person asked for them, or they protect the account. */
+const ALWAYS = new Set<MailKind>(["account", "security"]);
 
 export interface Mail {
   kind: MailKind;
@@ -12,6 +15,8 @@ export interface Mail {
   subject: string;
   text: string;
   html: string;
+  /** Extra headers, for example List-Unsubscribe. */
+  headers?: Record<string, string>;
 }
 
 export type MailVia = "resend" | "smtp" | "test" | "log";
@@ -52,7 +57,7 @@ async function transportOf(config: CloudConfig): Promise<Transport> {
 async function skipReason(db: Queryable, mail: Mail): Promise<string | null> {
   const reason = await suppressionOf(db, mail.to);
   if (reason === "bounce") return "it bounced before";
-  if (reason === "complaint" && mail.kind !== "account") return "it marked our mail as spam";
+  if (reason === "complaint" && !ALWAYS.has(mail.kind)) return "it marked our mail as spam";
   return null;
 }
 
