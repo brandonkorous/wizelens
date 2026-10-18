@@ -17,18 +17,19 @@ export interface QueryBarProps {
 
 const SUGGEST_DELAY_MS = 150;
 
-/** Suggestions for the term under the caret, after a short pause. */
+/** Suggestions for the term under the caret, after a short pause; none while the term's own are loading, so Enter never picks a stale one. */
 function useSuggestions(token: TokenAt | null, range: TimeRange, server: boolean): Suggestion[] {
-  const [items, setItems] = useState<Suggestion[]>([]);
+  const [got, setGot] = useState<{ key: string; items: Suggestion[] } | null>(null);
   const key = token ? `${token.field}\u0000${token.prefix}` : null;
   useEffect(() => {
-    if (!token) return void setItems([]);
+    if (!token || key === null) return void setGot(null);
     let live = true;
-    const timer = setTimeout(() => fetchSuggest(token.field, token.prefix, range, server).then((s) => live && setItems(s), () => live && setItems([])), SUGGEST_DELAY_MS);
+    const done = (items: Suggestion[]) => live && setGot({ key, items });
+    const timer = setTimeout(() => fetchSuggest(token.field, token.prefix, range, server).then(done, () => done([])), SUGGEST_DELAY_MS);
     return () => ((live = false), clearTimeout(timer));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, range, server]);
-  return items;
+  return got && got.key === key ? got.items : [];
 }
 
 /** The error of the draft, with the part it covers. */
