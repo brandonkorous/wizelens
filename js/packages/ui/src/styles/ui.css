@@ -9,6 +9,9 @@
 
 .wl-panel { min-width: 0; background: var(--wl-surface); border: 1px solid var(--wl-line); border-radius: var(--wl-radius); box-shadow: var(--wl-shadow); padding: 18px 20px; }
 .wl-panel-flush { padding: 0; overflow: hidden; }
+/* Panels stacked down a page (Account, Team) get the grid gap; panels in a grid already have it. */
+.wl-panel + .wl-panel { margin-top: 18px; }
+.wl-grid > .wl-panel + .wl-panel { margin-top: 0; }
 .wl-panel-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; min-height: 32px; }
 .wl-panel-head h2 { margin-right: auto; }
 .wl-panel-flush .wl-panel-head { padding: 16px 20px 0; }
