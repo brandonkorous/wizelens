@@ -56,9 +56,11 @@ public class SendOnlyTests
         await using var app = await StartAsync();
         var traceId = (await app.Client.GetAsync("/ping")).Headers.GetValues("X-WizeLens-Trace").Single();
         var browser = new string('c', 32);
-        var body = $$"""{"spans":[{"traceId":"{{browser}}","spanId":"{{new string('d', 16)}}","name":"pageview /","startMs":1,"durationMs":1}]}""";
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var body = $$"""{"spans":[{"traceId":"{{browser}}","spanId":"{{new string('d', 16)}}","name":"pageview /","startMs":{{now}},"durationMs":1}]}""";
         var posted = await app.Client.PostAsync("/_wizelens/api/client-spans", new StringContent(body, Encoding.UTF8, "application/json"));
-        await Task.Delay(200);
+        // The request span ends on a background thread: wait for it rather than a fixed time.
+        for (var deadline = DateTime.UtcNow.AddSeconds(5); DateTime.UtcNow < deadline && app.Store.Get(traceId) is null; await Task.Delay(50)) { }
 
         Assert.Equal(HttpStatusCode.NoContent, posted.StatusCode);
         Assert.NotNull(app.Store.Get(traceId));
