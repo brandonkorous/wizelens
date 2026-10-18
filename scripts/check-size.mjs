@@ -9,7 +9,7 @@ const MAX_FILE = 250;
 const MAX_FUNC = 50;
 const SOURCE = /\.(ts|tsx|mjs|cs)$/;
 const SKIP_DIRS = new Set(["node_modules", "dist", "bin", "obj", ".git", ".wizelens", "images"]);
-const SCAN = ["js/packages", "samples", "dotnet", "scripts"];
+const SCAN = ["js/packages", "samples", "dotnet", "scripts", "site/src"];
 const CONTROL = /^(if|else|for|foreach|while|switch|catch|using|lock|fixed|do|try|finally|checked|unchecked|unsafe)\b/;
 const TYPE_DECL = /(^|\s)(class|interface|enum|namespace|struct|record)\s/;
 const REGEX_BEFORE = new Set(["(", ",", "=", ":", "[", "!", "&", "|", "?", "{", "}", ";", "", "+", "-", "*", "%", "<", ">", "~", "^"]);

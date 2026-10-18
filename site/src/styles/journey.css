@@ -1,0 +1,53 @@
+/* The pinned scroll story: steps on the left, the service map and trace on the right. */
+.wl-journey { position: relative; height: 520vh; }
+.wl-journey-pin { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: center; padding-top: 68px; }
+.wl-journey-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.25fr); gap: clamp(32px, 5vw, 72px); align-items: center; }
+.wl-journey-copy .wl-h2 { margin-bottom: 36px; }
+
+.wl-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.wl-steps li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; padding: 12px 0; color: var(--wl-muted); transition: color 0.4s var(--wl-ease); }
+.wl-steps p { max-height: 0; overflow: hidden; opacity: 0; font-size: 16px; line-height: 1.5; transition: max-height 0.5s var(--wl-ease), opacity 0.4s var(--wl-ease), margin 0.4s; }
+.wl-steps .wl-h3 { font-size: 20px; color: inherit; }
+.wl-step-n { padding-top: 2px; font-size: 14px; font-weight: 600; }
+.wl-steps li.wl-step-past { color: var(--wl-fg-2); }
+.wl-steps li.wl-step-on { color: var(--wl-fg); }
+.wl-steps li.wl-step-on .wl-step-n { color: var(--wl-blue); }
+.wl-steps li.wl-step-on p { max-height: 120px; opacity: 1; margin-top: 6px; color: var(--wl-fg-2); }
+
+.wl-journey-visual { position: relative; padding: clamp(20px, 3vw, 32px); border-radius: var(--wl-radius); background: var(--wl-night); color: var(--wl-night-fg); }
+.wl-map { width: 100%; height: auto; overflow: visible; }
+.wl-map-rail { stroke: var(--wl-night-line); stroke-width: 2; stroke-dasharray: 3 5; }
+.wl-map-wire { stroke: var(--wl-blue); stroke-width: 2.5; fill: none; }
+.wl-map-pulse { fill: var(--wl-white); }
+.wl-map-edge-label { fill: var(--wl-night-muted); font: 500 12px var(--wl-mono); }
+.wl-map-node rect { fill: var(--wl-night-2); stroke: var(--wl-night-line); stroke-width: 1.5; transition: stroke 0.4s, fill 0.4s; }
+.wl-map-label { fill: var(--wl-night-muted); font: 650 15px var(--wl-sans); transition: fill 0.4s; }
+.wl-map-sub { fill: var(--wl-night-muted); font: 500 12px var(--wl-sans); opacity: 0.8; }
+.wl-map-status { fill: var(--wl-night-line); transition: fill 0.4s; }
+.wl-map-lit rect { stroke: var(--wl-blue); fill: var(--wl-night-3); }
+.wl-map-lit .wl-map-label { fill: var(--wl-night-fg); }
+.wl-map-lit .wl-map-status { fill: var(--wl-green); }
+
+.wl-tl { position: relative; margin-top: 28px; padding-top: 26px; border-top: 1px solid var(--wl-night-line); display: grid; gap: 10px; }
+.wl-tl-axis { position: relative; height: 14px; margin-left: 110px; font-size: 11px; color: var(--wl-night-muted); }
+.wl-tl-axis span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+.wl-tl-axis span:first-child { transform: none; }
+.wl-tl-axis span:last-child { transform: translateX(-100%); }
+.wl-tl-row { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 10px; align-items: center; font-size: 13px; }
+.wl-tl-label { color: var(--wl-night-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wl-tl-track { position: relative; height: 14px; border-radius: 4px; background: var(--wl-night-2); }
+.wl-tl-track i { position: absolute; top: 0; bottom: 0; min-width: 3px; border-radius: 3px; }
+.wl-journey-sum { display: flex; align-items: center; gap: 10px; margin-top: 20px; font: 500 13px var(--wl-mono); color: var(--wl-night-fg); }
+.wl-journey-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; overflow: hidden; border-radius: 0 0 var(--wl-radius) var(--wl-radius); }
+.wl-journey-bar span { display: block; height: 100%; background: var(--wl-blue); }
+
+@media (max-width: 960px) {
+  .wl-journey { height: 600vh; }
+  .wl-journey-pin { align-items: flex-start; padding-top: 84px; }
+  .wl-journey-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .wl-journey-copy .wl-h2 { margin-bottom: 8px; font-size: 36px; }
+  .wl-steps li { display: none; }
+  .wl-steps li.wl-step-on { display: grid; }
+  .wl-tl-axis { margin-left: 90px; }
+  .wl-tl-row { grid-template-columns: 80px minmax(0, 1fr); font-size: 12px; }
+}

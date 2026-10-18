@@ -43,6 +43,12 @@ jobs:
       - name: Build JS packages and the dashboard
         run: pnpm build
 
+      - name: Build the marketing site (static export)
+        run: pnpm build:site
+
+      - name: Check the marketing site (titles, descriptions, canonical links, share images, structured data, sitemap)
+        run: pnpm --filter wizelens-site check:seo
+
       - name: Test JS packages
         run: pnpm test
 

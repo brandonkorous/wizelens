@@ -58,3 +58,16 @@ desktop.ini
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# ─── Marketing site (Next.js) ──────────────────────────
+.next/
+out/
+next-env.d.ts
+
+# Made by site/scripts at build time
+site/public/og/
+site/public/brand/
+site/public/apple-touch-icon.png
+site/public/llms.txt
+site/public/llms-full.txt
+site/public/docs/

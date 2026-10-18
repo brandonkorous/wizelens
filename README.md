@@ -429,6 +429,7 @@ docs/                 PLAN.md, CONTRACT.md, images
 dotnet/               WizeLens.slnx — src/ (add-ons), tests/
 js/packages/          core · node · react · ui
 samples/              web (React) · gateway-api (.NET) · orders-api (Node)
+site/                 the marketing site (Next.js static export: pnpm dev:site, pnpm build:site → site/out)
 ```
 
 ```bash
@@ -452,4 +453,4 @@ WizeLens is an independent project and is not affiliated with any of them.
 
 ## 📄 License
 
-The add-ons are [MIT licensed](LICENSE). © 2026 WizeWorks.
+The add-ons are [MIT licensed](LICENSE). © 2026 WizeWorks LLC.

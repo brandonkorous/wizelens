@@ -1,0 +1,30 @@
+/* Install: platform tabs and the code editor card. */
+.wl-install { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(40px, 6vw, 88px); align-items: center; }
+.wl-install-copy { display: grid; gap: 28px; }
+.wl-install-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.wl-install-tabs button { position: relative; height: 42px; padding: 0 16px; border: 1px solid var(--wl-line-strong); border-radius: 999px; background: var(--wl-white); font-size: 15px; font-weight: 550; cursor: pointer; color: var(--wl-fg-2); }
+.wl-install-tabs button.wl-on { border-color: var(--wl-charcoal); color: var(--wl-white); }
+.wl-install-pill { position: absolute; inset: -1px; border-radius: 999px; background: var(--wl-charcoal); }
+.wl-install-label { position: relative; }
+.wl-install-note { font-size: 15.5px; color: var(--wl-muted); min-height: 48px; }
+
+.wl-editor { border-radius: var(--wl-radius); background: var(--wl-night); color: var(--wl-night-fg); overflow: hidden; box-shadow: var(--wl-shadow-pop); }
+.wl-editor-bar { display: flex; align-items: center; justify-content: space-between; height: 48px; padding: 0 10px 0 20px; border-bottom: 1px solid var(--wl-night-line); font: 13px var(--wl-mono); color: var(--wl-night-muted); }
+.wl-code-copy { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: 8px; background: none; color: var(--wl-night-muted); font: 500 13px var(--wl-sans); cursor: pointer; }
+.wl-code-copy:hover { background: var(--wl-night-2); color: var(--wl-night-fg); }
+.wl-code-copy svg { width: 15px; height: 15px; }
+.wl-code { margin: 0; padding: 22px 0; min-height: 280px; font-size: 14px; line-height: 1.75; overflow-x: auto; }
+.wl-code-line { display: block; padding-right: 20px; white-space: pre; }
+.wl-code-n { display: inline-block; width: 44px; padding-right: 16px; text-align: right; font-style: normal; color: #5a5f69; user-select: none; }
+.wl-tk-kw { color: #c792ea; }
+.wl-tk-str { color: #a5d6a7; }
+.wl-tk-com { color: #7c8594; font-style: italic; }
+.wl-tk-fn { color: #82aaff; }
+.wl-tk-type { color: #ffcb6b; }
+.wl-tk-plain { color: var(--wl-night-fg); }
+
+@media (max-width: 960px) {
+  .wl-install { grid-template-columns: minmax(0, 1fr); }
+  .wl-code { font-size: 12.5px; }
+  .wl-code-n { width: 34px; padding-right: 12px; }
+}

@@ -3,7 +3,7 @@
   "version": "0.3.0-alpha.1",
   "description": "WizeLens dashboard UI. Static build served by the WizeLens add-ons.",
   "license": "MIT",
-  "author": "WizeWorks",
+  "author": "WizeWorks LLC",
   "homepage": "https://github.com/brandonkorous/wizelens#readme",
   "repository": {
     "type": "git",

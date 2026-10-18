@@ -7,9 +7,9 @@
         <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
         <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))</RepoRoot>
 
-        <Authors>WizeWorks</Authors>
-        <Company>WizeWorks</Company>
-        <Copyright>Copyright (c) 2026 WizeWorks</Copyright>
+        <Authors>WizeWorks LLC</Authors>
+        <Company>WizeWorks LLC</Company>
+        <Copyright>Copyright (c) 2026 WizeWorks LLC</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/brandonkorous/wizelens</PackageProjectUrl>
         <RepositoryUrl>https://github.com/brandonkorous/wizelens.git</RepositoryUrl>

@@ -1,0 +1,29 @@
+/* Changelog: release list with a rail that fills as you read. */
+.wl-cl-hero { padding: clamp(128px, 15vw, 176px) 0 clamp(48px, 6vw, 72px); }
+.wl-cl-hero .wl-lede { margin-top: 28px; }
+.wl-cl-jump { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px; }
+.wl-cl-jump a { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--wl-line-strong); font: 500 14px var(--wl-mono); transition: border-color 0.2s; }
+.wl-cl-jump a:hover { border-color: var(--wl-fg); }
+
+.wl-cl-list { position: relative; padding-bottom: clamp(80px, 10vw, 140px); }
+.wl-cl-rail { position: absolute; left: 7px; top: 8px; bottom: 0; width: 2px; background: var(--wl-line); }
+.wl-cl-rail span { display: block; height: 100%; background: var(--wl-blue); transform-origin: 50% 0; }
+.wl-cl-entry { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 56px; padding: 0 0 72px 40px; scroll-margin-top: 96px; }
+.wl-cl-side { position: sticky; top: 100px; align-self: start; display: grid; gap: 8px; }
+.wl-cl-dot { position: absolute; left: -40px; top: 10px; width: 16px; height: 16px; border-radius: 50%; border: 3px solid var(--wl-white); box-shadow: 0 0 0 1px var(--wl-line-strong); }
+.wl-cl-dot-now { box-shadow: 0 0 0 1px var(--wl-line-strong), 0 0 0 6px rgba(34, 197, 94, 0.15); }
+.wl-cl-side h2 { font: 700 26px var(--wl-mono); letter-spacing: -0.03em; }
+.wl-cl-side p { font-size: 16px; color: var(--wl-fg-2); }
+.wl-cl-side ul { list-style: none; margin: 10px 0 0; padding: 12px 0 0; border-top: 1px solid var(--wl-line); display: grid; gap: 6px; }
+.wl-cl-side li { font-size: 14px; color: var(--wl-muted); }
+.wl-cl-body { min-width: 0; max-width: 760px; }
+.wl-cl-body .wl-prose > h2:first-child { margin-top: 0; }
+.wl-cl-body .wl-prose h2 { font-size: 22px; margin-top: 40px; }
+.wl-cl-body .wl-prose li { font-size: 15.5px; }
+
+@media (max-width: 960px) {
+  .wl-cl-entry { grid-template-columns: minmax(0, 1fr); gap: 20px; padding-left: 36px; }
+  .wl-cl-side { position: relative; top: 0; }
+  .wl-cl-side ul { display: none; }
+}
+@media (max-width: 960px) { .wl-cl-dot { left: -36px; } }
