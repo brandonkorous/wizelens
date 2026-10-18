@@ -17,6 +17,7 @@ const BEFORE = [{ href: "/#journey", label: "How it works" }];
 
 const AFTER = [
   { href: "/#ai", label: "AI access" },
+  { href: "/cloud/", label: "Cloud" },
   { href: LINKS.docs, label: "Docs" },
 ];
 

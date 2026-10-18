@@ -41,7 +41,7 @@ export function HubArt({ seen }: { seen: boolean }) {
 }
 
 const ROLES = [
-  { initial: "BK", role: "Owner" },
+  { initial: "JM", role: "Owner" },
   { initial: "AM", role: "Admin" },
   { initial: "RK", role: "Member" },
   { initial: "SH", role: "Viewer" },
