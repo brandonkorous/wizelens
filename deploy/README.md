@@ -78,6 +78,10 @@ Spans, logs, metrics, and their stats can live in ClickHouse (`k8s/base/clickhou
    ```
 
    Projects already copied are skipped, so a second run is safe.
+
+   If the cloud was switched on first (step 4 before step 3, for example because Postgres was too busy), ClickHouse already
+   holds the new data, so add `--force` to copy into those projects too. Run a forced copy once only: a second one counts the
+   metrics twice.
 4. **Turn it on:** `az keyvault secret set --vault-name kv-wizelens-prod-cus --name WIZELENS-CLICKHOUSE-ENABLED --value true`, then run Deploy from the Actions tab. The log shows `Telemetry   ClickHouse`, and the copied traces settle within minutes.
 5. **Check:** the Search page and a 30-day Overview answer, and `kubectl -n wizelens logs deploy/cloud` has no ClickHouse errors.
 
