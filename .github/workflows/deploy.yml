@@ -1,0 +1,161 @@
+name: Deploy
+
+# Ships wizelens.com and app.wizelens.com to the shared sparx AKS cluster after CI passes on main.
+# Auth is GitHub OIDC (no stored credential). AZURE_* are repository variables; see deploy/README.md.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never cancel a deploy half way; a newer one waits its turn.
+concurrency:
+  group: deploy-wizelens-prod
+  cancel-in-progress: false
+
+env:
+  SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+  REGISTRY: ghcr.io/brandonkorous
+
+jobs:
+  images:
+    name: Build and push the cloud and site images
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    permissions: { contents: read, packages: write }
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: "${{ env.SHA }}" }
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # The site is a static export, built here so the image only copies files.
+      - name: Build the site
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build:site
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Only the commit tag: `latest` and versions belong to release.yml, which self-hosters pull.
+      - name: Cloud image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: js/packages/cloud/Dockerfile
+          push: true
+          provenance: false
+          tags: ${{ env.REGISTRY }}/wizelens-cloud:sha-${{ env.SHA }}
+          cache-from: type=gha,scope=cloud
+          cache-to: type=gha,mode=max,scope=cloud,ignore-error=true
+
+      - name: Site image
+        uses: docker/build-push-action@v6
+        with:
+          context: site
+          push: true
+          provenance: false
+          tags: ${{ env.REGISTRY }}/wizelens-site:sha-${{ env.SHA }}
+
+  deploy:
+    name: Deploy to aks-sparx-prod-cus
+    needs: images
+    runs-on: ubuntu-latest
+    permissions: { contents: read, id-token: write }
+    env:
+      RESOURCE_GROUP: rg-sparx-prod-cus
+      CLUSTER: aks-sparx-prod-cus
+      NAMESPACE: wizelens
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: "${{ env.SHA }}" }
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get cluster credentials
+        run: az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$CLUSTER" --overwrite-existing
+
+      - name: Read secrets from Key Vault
+        run: |
+          bash deploy/scripts/vault-env.sh "${{ vars.AZURE_KEY_VAULT_NAME }}" "$RUNNER_TEMP/wl"
+          echo "ENV_HASH=$(cat "$RUNNER_TEMP/wl/env-hash")" >> "$GITHUB_ENV"
+
+      # Two Secrets: `cloud-env` for the app, `db-admin` for the role Job only, so the app never holds the admin login.
+      - name: Apply the namespace and secrets
+        run: |
+          set -euo pipefail
+          kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic cloud-env -n "$NAMESPACE" --from-env-file="$RUNNER_TEMP/wl/cloud.env" --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic db-admin -n "$NAMESPACE" \
+            --from-file=DATABASE_ADMIN_URL="$RUNNER_TEMP/wl/admin-url" \
+            --from-file=WIZELENS_APP_PASSWORD="$RUNNER_TEMP/wl/app-password" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          rm -rf "$RUNNER_TEMP/wl"
+
+      # Azure runs no init scripts, so the app role is made here. It runs inside the cluster: the database is VNet-only.
+      - name: Ensure the database role
+        run: |
+          set -euo pipefail
+          kubectl create configmap db-role-sql -n "$NAMESPACE" --from-file=deploy/k8s/jobs/db-role.sql --dry-run=client -o yaml | kubectl apply -f -
+          kubectl delete job db-role -n "$NAMESPACE" --ignore-not-found
+          kubectl apply -n "$NAMESPACE" -f deploy/k8s/jobs/db-role.yaml
+          if ! kubectl wait --for=condition=complete job/db-role -n "$NAMESPACE" --timeout=180s; then
+            echo "::error::The db-role Job did not finish. Logs follow."
+            kubectl logs job/db-role -n "$NAMESPACE" --tail=100 || true
+            exit 1
+          fi
+
+      - name: Pin the images and apply
+        working-directory: deploy/k8s/overlays/production
+        run: |
+          set -euo pipefail
+          sed -i "s|newTag: latest|newTag: sha-${SHA}|g; s|__ENV_HASH__|${ENV_HASH}|g" kustomization.yaml
+          if grep -q -e '__ENV_HASH__' -e 'newTag: latest' kustomization.yaml; then
+            echo "::error::A placeholder was not replaced; refusing to apply."
+            exit 1
+          fi
+          kubectl kustomize . | grep -E 'image:|env-hash:'
+          kubectl apply -k .
+
+      # The cloud migrates its database as it starts, so a failed rollout shows the migration error in its log.
+      - name: Wait for the rollout
+        run: |
+          failed=0
+          for app in site cloud; do
+            if ! kubectl rollout status -n "$NAMESPACE" "deploy/$app" --timeout=600s; then
+              echo "::error::Rollout of $app did not finish."
+              kubectl describe deploy "$app" -n "$NAMESPACE" || true
+              kubectl logs -n "$NAMESPACE" "deploy/$app" --tail=100 || true
+              failed=1
+            fi
+          done
+          exit "$failed"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### WizeLens deployment (${SHA::7})"
+            echo '```'
+            kubectl -n "$NAMESPACE" get deploy,svc,job 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
