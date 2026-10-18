@@ -22,6 +22,7 @@ async function dropProject(ctx: Ctx): Promise<void> {
   if (!found) return fail(404, "Project not found.");
   const clearOnly = ctx.req.method === "POST";
   await ctx.app.db.tx((q) => (clearOnly ? deleteProjectData(q, project) : deleteProject(q, project)));
+  await ctx.app.telemetry.clearProject(project);
   await audit(ctx.app.db, org, `user:${user.id}`, clearOnly ? "project.clear" : "project.delete", { projectId: project, name: found.name }, now(ctx));
   sendJson(ctx.res, 200, { ok: true });
 }

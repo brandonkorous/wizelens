@@ -1,9 +1,10 @@
-// SQL text for metric rollups, for Postgres ($n) and SQLite (?). Hosts run it; sql-read.ts turns the rows into MetricData.
+// SQL text for metric rollups, for Postgres ($n), SQLite (?), and ClickHouse reads ({pN:Type}). Hosts run it; sql-read.ts turns the rows into MetricData.
 import type { Segment, Tier } from "../scale/window.js";
 import type { TimeWindow } from "../stats/common.js";
+import { chType } from "../scale/sql/dialect.js";
 import type { MetricPlacement } from "./from-rollups.js";
 
-export type MetricDialect = "pg" | "sqlite";
+export type MetricDialect = "pg" | "sqlite" | "ch";
 
 export interface MetricSql {
   sql: string;
@@ -24,14 +25,16 @@ class Args {
   constructor(readonly d: MetricDialect) {}
   p(v: unknown): string {
     this.list.push(v);
+    if (this.d === "ch") return `{p${this.list.length}:${chType(v)}}`;
     return this.d === "pg" ? `$${this.list.length}` : "?";
   }
   in(col: string, vals: readonly unknown[]): string {
+    if (this.d === "ch") return `has(${this.p([...vals])}, ${col})`;
     return this.d === "pg" ? `${col} = ANY(${this.p(vals)})` : `${col} IN (SELECT value FROM json_each(${this.p(JSON.stringify(vals))}))`;
   }
 }
 
-export const metricProjectColumn = (d: MetricDialect): string => (d === "pg" ? "project_id" : "project");
+export const metricProjectColumn = (d: MetricDialect): string => (d === "sqlite" ? "project" : "project_id");
 export const metricTable = (t: Tier): string => `metric_${t.name}`;
 
 function scopeWhere(a: Args, s: MetricSqlScope): string[] {
@@ -96,7 +99,7 @@ export function metricBucketsSql(d: MetricDialect, scope: MetricSqlScope, w: Tim
   }
   const half = plan.tier.ms / 2;
   const div = `(bucket_ms + ${a.p(half)} - ${a.p(w.from)}) / ${a.p((w.to - w.from) / n)}`;
-  const b = d === "pg" ? `FLOOR(${div})` : `CAST(${div} AS INTEGER)`;
+  const b = d === "sqlite" ? `CAST(${div} AS INTEGER)` : `FLOOR(${div})`;
   const head = `SELECT ${KEYS(d)}, ${b} AS b, ${AGG} FROM ${table}`;
   const where = [...scopeWhere(a, scope), `bucket_ms + ${a.p(half)} >= ${a.p(w.from)}`, `bucket_ms + ${a.p(half)} < ${a.p(w.to)}`];
   return { sql: `${head} WHERE ${where.join(" AND ")} GROUP BY 1, 2, 3, 4`, args: a.list };

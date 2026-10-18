@@ -59,6 +59,19 @@ CREATE TABLE IF NOT EXISTS fact_critical (
 );
 CREATE INDEX IF NOT EXISTS ix_fact_critical_time ON fact_critical (start_ms);
 CREATE INDEX IF NOT EXISTS ix_fact_critical_project ON fact_critical (project, start_ms);
+CREATE TABLE IF NOT EXISTS fact_search (
+  project TEXT NOT NULL DEFAULT '', kind TEXT NOT NULL, trace_id TEXT NOT NULL, owner TEXT NOT NULL, env TEXT NOT NULL DEFAULT '', time_ms REAL NOT NULL,
+  span_id TEXT, service TEXT NOT NULL, name TEXT, method TEXT, path TEXT, route TEXT, status INTEGER, outcome TEXT, duration_ms REAL,
+  level_rank INTEGER, category TEXT, span_kind TEXT, end_user TEXT, error INTEGER NOT NULL, message TEXT, text TEXT NOT NULL,
+  PRIMARY KEY (kind, trace_id, owner)
+);
+CREATE INDEX IF NOT EXISTS ix_fact_search_time ON fact_search (kind, time_ms);
+CREATE INDEX IF NOT EXISTS ix_fact_search_project ON fact_search (project, kind, time_ms);
+CREATE TABLE IF NOT EXISTS fact_attrs (
+  project TEXT NOT NULL DEFAULT '', trace_id TEXT NOT NULL, src TEXT NOT NULL, owner TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, num REAL
+);
+CREATE INDEX IF NOT EXISTS ix_fact_attrs_trace ON fact_attrs (trace_id, src, owner, key);
+CREATE INDEX IF NOT EXISTS ix_fact_attrs_key ON fact_attrs (key, value);
 CREATE TABLE IF NOT EXISTS metric_series (
   project TEXT NOT NULL DEFAULT '', env TEXT NOT NULL DEFAULT '', series_key TEXT NOT NULL, name TEXT NOT NULL, service TEXT NOT NULL,
   kind TEXT NOT NULL, unit TEXT NOT NULL, description TEXT NOT NULL, monotonic INTEGER NOT NULL, temporality TEXT NOT NULL,
@@ -70,7 +83,7 @@ ${TIERS.map(rollupTable).join("\n")}
 `;
 
 /** Tables the stats rebuild clears. */
-export const STATS_TABLES = ["fact_requests", "fact_traces", "fact_logs", "fact_critical", ...TIERS.flatMap((t) => [`rollup_${t}`, `hist_${t}`])];
+export const STATS_TABLES = ["fact_requests", "fact_traces", "fact_logs", "fact_critical", "fact_search", "fact_attrs", ...TIERS.flatMap((t) => [`rollup_${t}`, `hist_${t}`])];
 
 const setMeta = (db: DatabaseSync, key: string, value: string) => db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)").run(key, value);
 

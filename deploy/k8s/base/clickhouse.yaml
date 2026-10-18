@@ -1,0 +1,100 @@
+# ClickHouse: the cloud's telemetry store (scale mode). One node; the data on its disk is the only copy, so clickhouse-backup.yaml backs it up nightly.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-config
+data:
+  # Sized to share a node: memory follows the container limit, caches stay small, system logs keep 3 days.
+  wizelens.xml: |
+    <clickhouse>
+      <logger><level>warning</level><console>1</console></logger>
+      <max_server_memory_usage_to_ram_ratio>0.8</max_server_memory_usage_to_ram_ratio>
+      <mark_cache_size>268435456</mark_cache_size>
+      <uncompressed_cache_size>0</uncompressed_cache_size>
+      <prometheus>
+        <endpoint>/metrics</endpoint><port>9363</port>
+        <metrics>true</metrics><events>true</events><asynchronous_metrics>true</asynchronous_metrics>
+      </prometheus>
+      <query_log replace="1">
+        <database>system</database><table>query_log</table>
+        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl><flush_interval_milliseconds>7500</flush_interval_milliseconds>
+      </query_log>
+      <part_log replace="1">
+        <database>system</database><table>part_log</table>
+        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl><flush_interval_milliseconds>7500</flush_interval_milliseconds>
+      </part_log>
+      <trace_log remove="1"/>
+      <text_log remove="1"/>
+      <metric_log remove="1"/>
+      <asynchronous_metric_log remove="1"/>
+      <processors_profile_log remove="1"/>
+    </clickhouse>
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse
+spec:
+  serviceName: clickhouse
+  replicas: 1
+  selector: { matchLabels: { app: clickhouse } }
+  template:
+    metadata: { labels: { app: clickhouse } }
+    spec:
+      enableServiceLinks: false
+      # The image's entrypoint makes the `wizelens` user, then drops to its own user (101), which owns the volume.
+      securityContext: { fsGroup: 101 }
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: clickhouse
+          image: clickhouse/clickhouse-server:26.8.30.8
+          ports:
+            - { name: http, containerPort: 8123 }
+            - { name: metrics, containerPort: 9363 }
+          env:
+            - { name: CLICKHOUSE_USER, value: wizelens }
+            - { name: CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT, value: "1" }
+            - name: CLICKHOUSE_PASSWORD
+              valueFrom: { secretKeyRef: { name: clickhouse-env, key: CLICKHOUSE_PASSWORD } }
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/clickhouse }
+            - { name: config, mountPath: /etc/clickhouse-server/config.d/wizelens.xml, subPath: wizelens.xml }
+          readinessProbe: { httpGet: { path: /ping, port: 8123 }, periodSeconds: 10 }
+          livenessProbe: { httpGet: { path: /ping, port: 8123 }, periodSeconds: 20, failureThreshold: 6 }
+          startupProbe: { httpGet: { path: /ping, port: 8123 }, periodSeconds: 5, failureThreshold: 120 }
+          resources:
+            requests: { cpu: 200m, memory: 1Gi }
+            limits: { memory: 3Gi }
+      volumes:
+        - name: config
+          configMap: { name: clickhouse-config }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: [ReadWriteOnce]
+        # Premium SSD: merges and FINAL reads are disk-bound. The class allows growing the disk in place.
+        storageClassName: managed-csi-premium
+        resources: { requests: { storage: 64Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse
+spec:
+  selector: { app: clickhouse }
+  ports:
+    - { name: http, port: 8123, targetPort: 8123 }
+---
+# Only the cloud and the backup job talk to ClickHouse. Enforced where the cluster runs a network policy engine.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: clickhouse
+spec:
+  podSelector: { matchLabels: { app: clickhouse } }
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: { matchLabels: { app: cloud } }
+        - podSelector: { matchLabels: { app: clickhouse-backup } }
+      ports: [{ port: 8123 }]

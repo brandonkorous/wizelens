@@ -7,6 +7,8 @@ Usage: wizelens-cloud [options]
 
   --database <url>          postgres://..., pglite:<folder>, or memory.
                             Default pglite:./.wizelens-cloud.          (DATABASE_URL)
+  --clickhouse <url>        Scale mode: telemetry in ClickHouse,        (WIZELENS_CLOUD_CLICKHOUSE_URL)
+                            http://user:pass@host:8123/database.
   --port <n>                Default 5970.                               (PORT)
   --host <addr>             Default 0.0.0.0.                            (WIZELENS_CLOUD_HOST)
   --public-url <url>        The address people use, for links.          (WIZELENS_CLOUD_PUBLIC_URL)
@@ -45,6 +47,7 @@ const flag = (v: string | undefined) => (v === "1" || v === "true" ? true : v ==
 
 const OPTIONS = {
   database: { type: "string" },
+  clickhouse: { type: "string" },
   port: { type: "string" },
   host: { type: "string" },
   "public-url": { type: "string" },
@@ -74,6 +77,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CloudOp
   if (a.help) return "help";
   return {
     database: a.database ?? env.DATABASE_URL,
+    clickhouseUrl: text(a.clickhouse, env.WIZELENS_CLOUD_CLICKHOUSE_URL),
     port: int(a.port ?? env.PORT),
     host: a.host ?? env.WIZELENS_CLOUD_HOST,
     publicUrl: text(a["public-url"], env.WIZELENS_CLOUD_PUBLIC_URL),

@@ -1,4 +1,4 @@
-import type { MetricsModel, TimeRange, Trace, TraceSummary } from "@wizeworks/lens-core";
+import type { MetricsModel, SearchPage, SearchQuery, Suggestion, SuggestRequest, TimeRange, Trace, TraceSummary } from "@wizeworks/lens-core";
 
 /** What the MCP tools can read. Read-only by design. */
 export interface McpDataSource {
@@ -16,6 +16,14 @@ export interface McpDataSource {
   metrics?(range: TimeRange, params: Record<string, string>): MetricsModel | Promise<MetricsModel>;
   /** Ranges the metric tools offer, shortest first. Default all. */
   metricRanges?: readonly TimeRange[];
+  /** Search on the host's store. Without it, the search tools read `all()` in memory. */
+  search?(q: SearchQuery): SearchPage | Promise<SearchPage>;
+  /** Autocomplete on the host's store. Without it, `all()` in memory. */
+  suggest?(r: SuggestRequest): Suggestion[] | Promise<Suggestion[]>;
+  /** The host's clock, for search ranges. Default Date.now. */
+  now?(): number;
+  /** The environment memory search gives this service's documents (in-app), as the HTTP search does. */
+  env?: string;
 }
 
 export type Audit = (tool: string, args: unknown) => void;

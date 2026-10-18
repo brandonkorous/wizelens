@@ -4,6 +4,32 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Search
+
+- **One search language everywhere** (docs/SEARCH-PLAN.md): words and `"phrases"`, `field:value` (service, env, trace,
+  span, name, method, path, route, status, duration, level, category, kind, user, error, message), `@attribute:value` for
+  any span or log attribute, `>`/`>=`/`<`/`<=`, ranges `a..b`, `*` wildcards, `-`/`NOT`, `OR`, and parentheses. Mistakes
+  come back with the position of the bad part. Shared test cases in `docs/search-vectors.json`.
+- **A Search page** finds requests, traces, spans, and log lines, with autocomplete for fields, attribute keys, and the
+  common values of each, and "Show more" paging. Ctrl+K asks the host too, and offers "Search everything".
+- **`api/search` and `api/search/suggest`** on the add-on (memory), the hub (SQLite), and the cloud (Postgres), with the
+  `search` capability. Results page with a cursor, newest first. The hub and cloud keep `fact_search` and `fact_attrs`
+  rows, built when traces settle (facts version 2, so stats rebuild once; cloud migration 8).
+- **MCP `search` and `search_fields`**: AI agents search with the same language, on the host's whole store.
+- Request searches also match the error messages of the request's spans.
+
+### Cloud scale mode: telemetry in ClickHouse
+
+- **`--clickhouse <url>`** (`WIZELENS_CLOUD_CLICKHOUSE_URL`) keeps spans, logs, metrics, and every stat and search table in
+  ClickHouse 26.8; Postgres keeps accounts and settings, so heavy searches and 30-day pages never slow sign-in or ingest keys.
+  Without it, nothing changes (small mode). Pages, searches, autocomplete, metrics, and alerts give the same answers on both:
+  the parity tests run the same cases on memory, SQLite, Postgres, and ClickHouse (in CI, ClickHouse runs on the Linux job).
+- Everything that touches telemetry goes through one `TelemetryStore`. Retention is a TTL per row; deleting or clearing a project
+  removes its rows there too.
+- **`wizelens-cloud copy-telemetry`** copies an existing database's telemetry into ClickHouse before switching.
+- `deploy/docker-compose.cloud.yml` has a `scale` profile with ClickHouse. The hosted cloud gets a ClickHouse StatefulSet with a
+  nightly `BACKUP` to Azure Blob (`deploy/README.md`, "ClickHouse").
+
 ### Dashboard: Team, Account, and Settings rebuilt
 
 - **Team, Account, and Settings have sections** (a list on the left, tabs on small screens), one at a time, each with its own

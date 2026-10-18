@@ -3,7 +3,7 @@ import { makeRequest } from "../testing/fixtures.js";
 import { SCENARIO_NOW, scenarioTraces } from "../testing/scenario.js";
 import { BASE_BUCKET_MS, compact, type StoredContributions, withoutTop } from "./compact.js";
 import { mergeDeltas, type SettleDelta, settleDelta } from "./delta.js";
-import { traceFacts } from "./facts.js";
+import { FACTS_VERSION, traceFacts } from "./facts.js";
 import { histCount } from "./hist.js";
 import { ROLLUP_KINDS } from "./kinds.js";
 
@@ -44,7 +44,7 @@ describe("compact", () => {
     const stored = compact(traceFacts(traces[0]!), scope);
     expect(stored.rows.some((r) => r.t !== undefined)).toBe(true);
     expect(withoutTop(stored).rows.every((r) => r.t === undefined && r.r === undefined)).toBe(true);
-    expect(stored).toMatchObject({ v: 1, traceId: traces[0]!.traceId, project: "p", env: "prod" });
+    expect(stored).toMatchObject({ v: FACTS_VERSION, traceId: traces[0]!.traceId, project: "p", env: "prod" });
   });
 });
 

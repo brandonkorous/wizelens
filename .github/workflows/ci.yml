@@ -49,8 +49,18 @@ jobs:
       - name: Check the marketing site (titles, descriptions, canonical links, share images, structured data, sitemap)
         run: pnpm --filter wizelens-site check:seo
 
+      - name: Start ClickHouse (cloud scale-mode tests, Linux only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          docker run -d --name clickhouse -p 8123:8123 -e CLICKHOUSE_USER=wizelens -e CLICKHOUSE_PASSWORD=ci \
+            -e CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1 --ulimit nofile=262144:262144 clickhouse/clickhouse-server:26.8.30.8
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8123/ping && break; sleep 1; done
+
       - name: Test JS packages
         run: pnpm test
+        env:
+          # The ClickHouse store's parity tests run where the server above runs; elsewhere they are skipped.
+          WIZELENS_TEST_CLICKHOUSE: ${{ matrix.os == 'ubuntu-latest' && 'http://wizelens:ci@127.0.0.1:8123' || '' }}
 
       - name: Build .NET (embeds the dashboard)
         run: dotnet build dotnet/WizeLens.slnx -c Release

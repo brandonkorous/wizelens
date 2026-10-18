@@ -2,7 +2,6 @@ import { alignNow, FACT_SLOW_QUERY_MS, isPageName, isTimeRange, pageContext, run
 import type { Ctx } from "../app.js";
 import { fail, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
-import { cloudExecutor, cloudSettling } from "../scale-exec.js";
 import { projectOf } from "./data.js";
 import { metricParamsOf, metricRange, projectMetrics } from "./metrics.js";
 
@@ -40,7 +39,7 @@ async function metrics(ctx: Ctx): Promise<void> {
   const key = JSON.stringify([project.id, "metrics", range, env, params, now]);
   const hit = cached(key, ctx.app.config.now());
   if (hit) return sendJson(ctx.res, 200, hit);
-  const value = await projectMetrics(ctx.app.db, project.id, range, params, { now, env });
+  const value = await projectMetrics(ctx.app.telemetry, project.id, range, params, { now, env });
   remember(key, value, ctx.app.config.now());
   sendJson(ctx.res, 200, value);
 }
@@ -61,9 +60,9 @@ async function model(ctx: Ctx): Promise<void> {
   const key = JSON.stringify([project.id, page, range, env, params, now]);
   const hit = cached(key, ctx.app.config.now());
   if (hit) return sendJson(ctx.res, 200, hit);
-  const db = ctx.app.db;
-  const pc = pageContext(range, now, params, { slowQueryMs: FACT_SLOW_QUERY_MS }, await cloudSettling(db, project.id, env));
-  const value = await runPage(page, pc, cloudExecutor(db, project.id, days * DAY_MS, env));
+  const t = ctx.app.telemetry;
+  const pc = pageContext(range, now, params, { slowQueryMs: FACT_SLOW_QUERY_MS }, await t.settling(project.id, env));
+  const value = await runPage(page, pc, t.executor(project.id, days * DAY_MS, env));
   remember(key, value, ctx.app.config.now());
   sendJson(ctx.res, 200, value);
 }

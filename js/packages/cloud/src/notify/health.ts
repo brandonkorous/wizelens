@@ -22,11 +22,7 @@ interface ProjectRow {
 }
 
 async function busy(app: CloudApp, projectId: string, lastMs: number): Promise<boolean> {
-  const [row] = await app.db.query<{ n: number }>(
-    "SELECT count(DISTINCT floor(start_ms / 3600000))::int AS n FROM traces WHERE project_id = $1 AND start_ms > $2 AND start_ms <= $3",
-    [projectId, lastMs - 72 * HOUR, lastMs],
-  );
-  return (row?.n ?? 0) >= BUSY_HOURS;
+  return (await app.telemetry.activeHours(projectId, lastMs - 72 * HOUR, lastMs)) >= BUSY_HOURS;
 }
 
 async function tell(app: CloudApp, p: ProjectRow, make: (stop: string) => EmailContent): Promise<void> {
@@ -52,9 +48,9 @@ async function checkProject(app: CloudApp, p: ProjectRow, now: number): Promise<
 /** Tell owners and admins when a busy project stops sending data, and when it starts again. */
 export async function checkHealth(app: CloudApp): Promise<void> {
   const now = app.config.now();
-  const projects = await app.db.query<ProjectRow>(
-    `SELECT p.id, p.org_id, p.name, o.name AS org, (SELECT max(t.start_ms) FROM traces t WHERE t.project_id = p.id) AS last_ms, h.quiet, h.changed_ms
-     FROM projects p JOIN orgs o ON o.id = p.org_id LEFT JOIN project_health h ON h.project_id = p.id`,
+  const projects = await app.db.query<Omit<ProjectRow, "last_ms">>(
+    "SELECT p.id, p.org_id, p.name, o.name AS org, h.quiet, h.changed_ms FROM projects p JOIN orgs o ON o.id = p.org_id LEFT JOIN project_health h ON h.project_id = p.id",
   );
-  for (const p of projects) await checkProject(app, p, now);
+  const last = await app.telemetry.lastTraceMs();
+  for (const p of projects) await checkProject(app, { ...p, last_ms: last.get(p.id) ?? null }, now);
 }

@@ -9,6 +9,8 @@ import { audit, listAudit } from "../repo/audit.js";
 import { orgDeletionNotice } from "../notify/team.js";
 import { deleteOrgEverything, listMembers, pendingInvites, setRetention } from "../repo/orgs.js";
 import { listKeys, listProjects } from "../repo/projects.js";
+import { orgProjectIds } from "../repo/trace-join.js";
+import { clearProjects } from "../telemetry/index.js";
 
 // Members, roles, and invites change through Better Auth (`api/auth/organization/*`). These routes add what it does not have.
 const now = (ctx: Ctx) => ctx.app.config.now();
@@ -56,7 +58,9 @@ async function deleteOrg(ctx: Ctx): Promise<void> {
     throw err;
   }
   const tell = await orgDeletionNotice(ctx.app, ctx.params.org!, user.id);
+  const projects = await orgProjectIds(ctx.app.db, ctx.params.org!);
   await ctx.app.db.tx((q) => deleteOrgEverything(q, ctx.params.org!));
+  await clearProjects(ctx.app.telemetry, projects);
   tell();
   sendJson(ctx.res, 200, { ok: true });
 }

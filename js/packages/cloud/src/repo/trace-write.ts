@@ -37,14 +37,25 @@ function traceRows(w: HubWrite, projectId: string, now: number): unknown[][] {
   return [...bounds].map(([id, [start, end]]) => [projectId, id, start, end, now, env]);
 }
 
-/** Save one batch for one project, in the caller's transaction. */
-export async function writeBatch(q: Queryable, projectId: string, w: HubWrite, now: number): Promise<void> {
+/** Record the sender in the project's service registry (Postgres, whatever keeps the telemetry). */
+export async function writeService(q: Queryable, projectId: string, w: HubWrite, now: number): Promise<void> {
   const s = w.sender;
   await q.query(
     `INSERT INTO services (project_id, service, environment, host, via, info, first_seen, last_seen) VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
      ON CONFLICT (project_id, service, environment, host) DO UPDATE SET via = EXCLUDED.via, info = EXCLUDED.info, last_seen = EXCLUDED.last_seen`,
     [projectId, s.service, s.environment ?? "", s.host ?? "", w.via, JSON.stringify(s), now],
   );
+}
+
+/** Save one batch for one project: registry and telemetry, in the caller's transaction (Postgres small mode, and tests). */
+export async function writeBatch(q: Queryable, projectId: string, w: HubWrite, now: number): Promise<void> {
+  await writeService(q, projectId, w, now);
+  await writeTelemetry(q, projectId, w, now);
+}
+
+/** Save one batch's spans, logs, trace bounds, and metrics to Postgres, in the caller's transaction. */
+export async function writeTelemetry(q: Queryable, projectId: string, w: HubWrite, now: number): Promise<void> {
+  const s = w.sender;
   await insertMany(q, "INSERT INTO traces (project_id, trace_id, start_ms, end_ms, updated_ms, env)", traceRows(w, projectId, now), `
     ON CONFLICT (project_id, trace_id) DO UPDATE SET start_ms = LEAST(traces.start_ms, EXCLUDED.start_ms),
       end_ms = GREATEST(traces.end_ms, EXCLUDED.end_ms), updated_ms = EXCLUDED.updated_ms,

@@ -1,18 +1,9 @@
 import { buildTrace, HUB_ONLINE_MS, type HubSender, type HubService, type LogRecord, type Span, type Trace } from "@wizeworks/lens-core";
 import type { Queryable } from "../db/db.js";
 
-export interface TraceQuery {
-  projectId: string;
-  /** Changed at or after (server clock). */
-  since?: number;
-  /** Started before. For paging back. */
-  before?: number;
-  /** Started at or after. For time windows. */
-  from?: number;
-  env?: string;
-  session?: string;
-  limit: number;
-}
+import type { TraceQuery } from "../telemetry/store.js";
+
+export type { TraceQuery };
 
 const CHUNK = 500;
 
@@ -90,9 +81,15 @@ export async function listServices(q: Queryable, projectId: string, now: number)
   return rows.map((r) => ({ ...(JSON.parse(r.info) as HubSender), via: r.via, firstSeenMs: r.first_seen, lastSeenMs: r.last_seen, online: now - r.last_seen <= HUB_ONLINE_MS }));
 }
 
-export async function environmentsOf(q: Queryable, projectId: string): Promise<string[]> {
-  const rows = await q.query<{ e: string }>("SELECT environment AS e FROM services WHERE project_id = $1 UNION SELECT DISTINCT env FROM traces WHERE project_id = $1", [projectId]);
-  return rows.map((r) => r.e).filter(Boolean).sort();
+/** Environments of the project's services, plus those seen on traces (from the telemetry store). */
+export async function environmentsOf(q: Queryable, projectId: string, traceEnvs: readonly string[]): Promise<string[]> {
+  const rows = await q.query<{ e: string }>("SELECT DISTINCT environment AS e FROM services WHERE project_id = $1", [projectId]);
+  return [...new Set([...rows.map((r) => r.e), ...traceEnvs])].filter(Boolean).sort();
+}
+
+/** Environments seen on a project's traces (Postgres store). */
+export async function traceEnvsPg(q: Queryable, projectId: string): Promise<string[]> {
+  return (await q.query<{ e: string }>("SELECT DISTINCT env AS e FROM traces WHERE project_id = $1", [projectId])).map((r) => r.e);
 }
 
 export async function countRows(q: Queryable, projectId: string): Promise<{ traces: number; spans: number }> {

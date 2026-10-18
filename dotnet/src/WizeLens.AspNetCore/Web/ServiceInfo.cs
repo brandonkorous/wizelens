@@ -12,7 +12,7 @@ internal static class ServiceInfo
         Results.Json(new
         {
             mode = "in-app",
-            capabilities = options.MetricsOn ? new[] { "federation", "metrics" } : new[] { "federation" },
+            capabilities = options.MetricsOn ? new[] { "federation", "search", "metrics" } : new[] { "federation", "search" },
             service = options.ServiceName,
             version = typeof(ServiceInfo).Assembly.GetName().Version?.ToString(3) ?? "0.0.0",
             runtime = RuntimeInformation.FrameworkDescription,

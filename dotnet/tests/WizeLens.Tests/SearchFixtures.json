@@ -1,0 +1,408 @@
+{
+ "about": "TS results for the traces in SearchFixtures.mjs and SearchFixtures.cs. Regenerate with node SearchFixtures.mjs.",
+ "items": [
+  {
+   "traceId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "startMs": 1000,
+   "method": "POST",
+   "path": "/orders/42?x=1&flag",
+   "endpoint": "POST /orders/{}?x={}&flag",
+   "status": 503,
+   "aborted": false,
+   "durationMs": 800,
+   "serverMs": 800,
+   "dbMs": 400,
+   "dbCount": 8,
+   "fetchCount": 5,
+   "fetchMs": 9,
+   "renderMs": null,
+   "networkMs": null,
+   "service": "api",
+   "services": [
+    "api"
+   ],
+   "errors": 1,
+   "insights": 6,
+   "health": "critical",
+   "userAgent": "curl",
+   "clientAddress": "10.0.0.1",
+   "user": "alice",
+   "requestId": "req-1",
+   "tags": [
+    "beta",
+    "plan:pro"
+   ]
+  },
+  {
+   "traceId": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+   "startMs": 5000,
+   "method": "gRPC",
+   "path": "/Cart/Get",
+   "endpoint": "gRPC Cart/Get",
+   "status": 200,
+   "aborted": false,
+   "durationMs": 230,
+   "serverMs": 100,
+   "dbMs": 0,
+   "dbCount": 0,
+   "fetchCount": 0,
+   "fetchMs": 0,
+   "renderMs": 30,
+   "networkMs": 100,
+   "service": "cart",
+   "services": [
+    "browser",
+    "cart"
+   ],
+   "errors": 0,
+   "insights": 0,
+   "health": "success",
+   "userAgent": null,
+   "clientAddress": null,
+   "user": null,
+   "requestId": null,
+   "tags": []
+  },
+  null
+ ],
+ "queries": {
+  "": [
+   "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ],
+  "kaboom": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ],
+  "status:5xx": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ],
+  "route:\"/orders/{}?x={}&flag\"": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ],
+  "@tenant:7": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ],
+  "user:alice beta": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ],
+  "\"plan:pro\"": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ],
+  "service:cart": [
+   "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  ],
+  "service:browser": [
+   "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  ],
+  "method:grpc": [
+   "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  ],
+  "path:/api/cart": [],
+  "error:false": [
+   "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  ],
+  "duration:>200ms": [
+   "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ],
+  "req-1": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ],
+  "10.0.0": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ]
+ },
+ "suggest": {
+  "none": [
+   {
+    "value": "service",
+    "help": "Service name"
+   },
+   {
+    "value": "env",
+    "help": "Environment"
+   },
+   {
+    "value": "trace",
+    "help": "Trace id, or its start"
+   },
+   {
+    "value": "span",
+    "help": "Span id, or its start"
+   },
+   {
+    "value": "name",
+    "help": "Span name, or the trace's root span name"
+   },
+   {
+    "value": "method",
+    "help": "HTTP method"
+   },
+   {
+    "value": "path",
+    "help": "URL path"
+   },
+   {
+    "value": "route",
+    "help": "Route template, such as /orders/{id}"
+   },
+   {
+    "value": "status",
+    "help": "HTTP status (500, 5xx) or span status (ok, error, unset)"
+   },
+   {
+    "value": "duration",
+    "help": "Duration: 250ms, 1.5s, 2m"
+   },
+   {
+    "value": "level",
+    "help": "Log level: trace, debug, info, warn, error, critical"
+   },
+   {
+    "value": "category",
+    "help": "Log category, or span category (db, http.client, ...)"
+   },
+   {
+    "value": "kind",
+    "help": "Span kind: server, client, internal, producer, consumer"
+   },
+   {
+    "value": "user",
+    "help": "End user id"
+   },
+   {
+    "value": "error",
+    "help": "true when it failed"
+   },
+   {
+    "value": "message",
+    "help": "Log message"
+   },
+   {
+    "value": "@db.query.text",
+    "count": 8
+   },
+   {
+    "value": "@http.request.method",
+    "count": 7
+   },
+   {
+    "value": "@url.full",
+    "count": 6
+   },
+   {
+    "value": "@wizelens.db.parameters",
+    "count": 5
+   },
+   {
+    "value": "@http.response.status_code",
+    "count": 2
+   },
+   {
+    "value": "@client.address",
+    "count": 1
+   },
+   {
+    "value": "@enduser.id",
+    "count": 1
+   },
+   {
+    "value": "@rpc.method",
+    "count": 1
+   },
+   {
+    "value": "@rpc.service",
+    "count": 1
+   },
+   {
+    "value": "@rpc.system",
+    "count": 1
+   },
+   {
+    "value": "@tenant",
+    "count": 1
+   },
+   {
+    "value": "@url.path",
+    "count": 1
+   },
+   {
+    "value": "@url.query",
+    "count": 1
+   },
+   {
+    "value": "@user_agent.original",
+    "count": 1
+   },
+   {
+    "value": "@wizelens.browser.render_ms",
+    "count": 1
+   },
+   {
+    "value": "@wizelens.browser.type",
+    "count": 1
+   },
+   {
+    "value": "@wizelens.request.id",
+    "count": 1
+   },
+   {
+    "value": "@wizelens.tag.beta",
+    "count": 1
+   },
+   {
+    "value": "@wizelens.tag.plan",
+    "count": 1
+   }
+  ],
+  "at": [
+   {
+    "value": "@url.full",
+    "count": 6
+   },
+   {
+    "value": "@url.path",
+    "count": 1
+   },
+   {
+    "value": "@url.query",
+    "count": 1
+   }
+  ],
+  "service": [
+   {
+    "value": "api",
+    "count": 14
+   },
+   {
+    "value": "browser",
+    "count": 2
+   },
+   {
+    "value": "cart",
+    "count": 1
+   }
+  ],
+  "tenant": [
+   {
+    "value": "SELECT * FROM a WHERE id = @id",
+    "count": 5
+   },
+   {
+    "value": "SELECT 2",
+    "count": 1
+   },
+   {
+    "value": "SELECT pg_sleep(1)",
+    "count": 1
+   }
+  ],
+  "status": [
+   {
+    "value": "5xx"
+   }
+  ],
+  "env": [],
+  "envSet": [
+   {
+    "value": "prod",
+    "count": 3
+   }
+  ]
+ },
+ "req": {
+  "kind=nope": {
+   "ok": false,
+   "error": "Unknown kind \"nope\". Use requests, traces, spans, logs."
+  },
+  "range=2h": {
+   "ok": false,
+   "error": "Unknown range \"2h\". Use 15m, 1h, 6h, 24h, 7d, 30d."
+  },
+  "range=30d": {
+   "ok": false,
+   "error": "This range is longer than the data kept here."
+  },
+  "from=5&to=1": {
+   "ok": false,
+   "error": "from must be before to, both in epoch ms."
+  },
+  "from=1&to=5": {
+   "ok": true,
+   "kind": "requests",
+   "window": {
+    "from": 1,
+    "to": 5
+   },
+   "limit": 50,
+   "env": null
+  },
+  "q=status:abc": {
+   "ok": false,
+   "error": "\"abc\" is not a status. Use 404, 5xx, ok, error, or unset.",
+   "start": 0,
+   "end": 10
+  },
+  "cursor=xyz": {
+   "ok": false,
+   "error": "This cursor is not valid. Start again without one."
+  },
+  "limit=abc": {
+   "ok": true,
+   "kind": "requests",
+   "window": {
+    "from": 13600000,
+    "to": 100000000
+   },
+   "limit": 50,
+   "env": null
+  },
+  "limit=999&env=prod": {
+   "ok": true,
+   "kind": "requests",
+   "window": {
+    "from": 13600000,
+    "to": 100000000
+   },
+   "limit": 200,
+   "env": "prod"
+  },
+  "range=constructor": {
+   "ok": false,
+   "error": "Unknown range \"constructor\". Use 15m, 1h, 6h, 24h, 7d, 30d."
+  }
+ },
+ "sug": {
+  "": {
+   "field": null,
+   "prefix": 0,
+   "window": {
+    "from": 13600000,
+    "to": 100000000
+   },
+   "limit": 20
+  },
+  "limit=0": {
+   "field": null,
+   "prefix": 0,
+   "window": {
+    "from": 13600000,
+    "to": 100000000
+   },
+   "limit": 20
+  },
+  "limit=99&prefix=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&field=service": {
+   "field": "service",
+   "prefix": 200,
+   "window": {
+    "from": 13600000,
+    "to": 100000000
+   },
+   "limit": 50
+  },
+  "range=bad": {
+   "ok": false,
+   "error": "Unknown range \"bad\". Use 15m, 1h, 6h, 24h, 7d, 30d."
+  }
+ }
+}

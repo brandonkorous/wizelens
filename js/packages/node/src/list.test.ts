@@ -48,7 +48,7 @@ describe("api/info", () => {
     const info = await getJson<ServiceInfo>(`${app.base}/_wizelens/api/info`);
     expect(info).toMatchObject({
       mode: "in-app",
-      capabilities: ["federation", "metrics"],
+      capabilities: ["federation", "search", "metrics"],
       service: "list-api",
       mcp: false,
       environment: process.env.NODE_ENV || "development",
@@ -59,5 +59,21 @@ describe("api/info", () => {
     });
     expect(info.redactKeys).toContain("authorization");
     expect(info.startedMs).toBeLessThanOrEqual(Date.now());
+  });
+});
+
+describe("api/search", () => {
+  it("searches this service's traces in memory, with paging and autocomplete", async () => {
+    type Page = { kind: string; items: { traceId: string }[]; next: string | null };
+    const first = await getJson<Page>(`${app.base}/_wizelens/api/search?kind=traces&range=1h&limit=2`);
+    expect(first.items.map((t) => t.traceId)).toEqual([ids[2], ids[1]]);
+    const rest = await getJson<Page>(`${app.base}/_wizelens/api/search?kind=traces&range=1h&limit=2&cursor=${encodeURIComponent(first.next!)}`);
+    expect(rest).toMatchObject({ items: [{ traceId: ids[0] }], next: null });
+    const none = await getJson<Page>(`${app.base}/_wizelens/api/search?kind=spans&q=${encodeURIComponent("service:nope")}`);
+    expect(none.items).toEqual([]);
+    const bad = await fetch(`${app.base}/_wizelens/api/search?q=${encodeURIComponent("(a")}`);
+    expect(bad.status).toBe(400);
+    const fields = await getJson<{ items: { value: string }[] }>(`${app.base}/_wizelens/api/search/suggest?prefix=dur`);
+    expect(fields.items.map((s) => s.value)).toEqual(["duration"]);
   });
 });

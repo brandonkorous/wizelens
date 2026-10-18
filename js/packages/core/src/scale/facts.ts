@@ -13,7 +13,7 @@ import { requestContributions } from "./facts-requests.js";
 import { serviceFacts } from "./facts-services.js";
 
 /** Bump when fact semantics change: hosts then rebuild their facts and rollups. */
-export const FACTS_VERSION = 1;
+export const FACTS_VERSION = 2;
 /** Slow query threshold that hosts fix when a trace settles; the same as `analyzeTrace`'s default. */
 export const FACT_SLOW_QUERY_MS = 100;
 /** Critical span candidates kept per trace. */

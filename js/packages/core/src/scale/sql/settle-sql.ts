@@ -59,7 +59,7 @@ export function settleStatements(d: Dialect, batch: readonly { state: TraceState
     const next = facts ? compact(facts, scope) : null;
     deltas.push(settleDelta(storedOf(state.contrib), next, now, state.retentionMs));
     if (facts) {
-      const r = factRows(facts, scope);
+      const r = factRows(facts, scope, trace ?? undefined);
       for (const t of FACT_TABLES) rows[t].push(...r[t]);
     }
     updates.push(traceUpdate(d, state, next ? JSON.stringify(withoutTop(next)) : null, scoped));

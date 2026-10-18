@@ -5,10 +5,13 @@ import type { CloudConfig } from "./config.js";
 import type { Db } from "./db/db.js";
 import type { RouteCtx } from "./http/router.js";
 import type { Mailer } from "./mail/mailer.js";
+import type { TelemetryStore } from "./telemetry/store.js";
 
 /** Everything a request handler needs. */
 export interface CloudApp {
   db: Db;
+  /** Spans, logs, metrics, and stats: Postgres in small mode, ClickHouse in scale mode. */
+  telemetry: TelemetryStore;
   config: CloudConfig;
   version: string;
   startedMs: number;

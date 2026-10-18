@@ -80,7 +80,9 @@ export type Capability =
   | "serverStats"
   /** The host keeps metrics: raw points at `api/metrics/points` (in-app), or with `serverMetrics`, the page at `api/models/metrics`. */
   | "metrics"
-  | "serverMetrics";
+  | "serverMetrics"
+  /** The host answers `api/search` and `api/search/suggest` (docs/SEARCH-PLAN.md). */
+  | "search";
 
 /** What an in-app add-on offers today. Also the default when a host does not say. */
 export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];

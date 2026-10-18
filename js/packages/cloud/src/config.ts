@@ -6,6 +6,8 @@ export type SignupMode = "open" | "invite";
 export interface CloudOptions {
   /** "postgres://...", "pglite:<folder>", or "memory". Default "pglite:./.wizelens-cloud". */
   database?: string;
+  /** Scale mode: telemetry in ClickHouse, `http(s)://user:password@host:8123/database`. Accounts stay in `database`. */
+  clickhouseUrl?: string;
   /** Default 5970. 0 picks a free port. */
   port?: number;
   /** Default "0.0.0.0". */
@@ -52,7 +54,7 @@ export interface CloudOptions {
   jobs?: boolean;
 }
 
-type Optional = "uiDir" | "publicUrl" | "smtpUrl" | "resendApiKey" | "resendWebhookSecret" | "mailReplyTo" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords";
+type Optional = "uiDir" | "clickhouseUrl" | "publicUrl" | "smtpUrl" | "resendApiKey" | "resendWebhookSecret" | "mailReplyTo" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords";
 export type CloudConfig = Required<Omit<CloudOptions, Optional>> & Pick<CloudOptions, Optional> & { secureCookies: boolean };
 
 /** Mail links must use the public address: a link built from the request's Host header could point anywhere. */
@@ -78,6 +80,7 @@ export function resolveConfig(o: CloudOptions = {}): CloudConfig {
   checkMail(o);
   return {
     database: o.database ?? "pglite:./.wizelens-cloud",
+    clickhouseUrl: o.clickhouseUrl,
     port: o.port ?? 5970,
     host: o.host ?? "0.0.0.0",
     publicUrl: o.publicUrl?.replace(/\/+$/, ""),

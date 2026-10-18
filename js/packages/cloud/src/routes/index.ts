@@ -9,6 +9,7 @@ import { modelRoutes } from "./models.js";
 import { notifyRoutes } from "./notify.js";
 import { orgRoutes } from "./orgs.js";
 import { projectRoutes } from "./projects.js";
+import { searchRoutes } from "./search.js";
 
 /** Every route below `/_wizelens/`, except ingest and OTLP (they use ingest keys and are matched first). */
 export function allRoutes(): Router<Ctx> {
@@ -19,6 +20,7 @@ export function allRoutes(): Router<Ctx> {
   projectRoutes(r);
   dataRoutes(r);
   modelRoutes(r);
+  searchRoutes(r);
   alertRoutes(r);
   shareRoutes(r);
   mcpRoutes(r);

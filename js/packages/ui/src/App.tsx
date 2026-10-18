@@ -15,6 +15,7 @@ import { MetricsPage } from "./pages/metrics/MetricsPage";
 import { OverviewPage } from "./pages/overview/OverviewPage";
 import { RenderingPage } from "./pages/rendering/RenderingPage";
 import { RequestsPage } from "./pages/requests/RequestsPage";
+import { SearchPage } from "./pages/search/SearchPage";
 import { ServicesPage } from "./pages/services/ServicesPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
 import { TracesPage } from "./pages/traces/TracesPage";
@@ -29,6 +30,7 @@ const AccountPage = lazy(() => import("./pages/account/AccountPage").then((m) =>
 
 const PAGES: Record<Exclude<PageId, "trace" | "shared" | AuthPageId>, ComponentType> = {
   overview: OverviewPage,
+  search: SearchPage,
   requests: RequestsPage,
   traces: TracesPage,
   database: DatabasePage,

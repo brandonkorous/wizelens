@@ -7,8 +7,6 @@ import { principalOf, requireProject } from "../auth/principal.js";
 import { fail } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
-import { getJoinedTrace } from "../repo/trace-join.js";
-import { queryTraces } from "../repo/trace-read.js";
 import { projectMetrics } from "./metrics.js";
 
 /** Traces the MCP tools search through, newest first. */
@@ -29,7 +27,8 @@ async function mcp(ctx: Ctx): Promise<void> {
   const access = await requireProject(ctx, await projectId(ctx));
   const { project, actor } = access;
   const db = ctx.app.db;
-  const recent = await queryTraces(db, { projectId: project.id, limit: MCP_RECENT });
+  const telemetry = ctx.app.telemetry;
+  const recent = await telemetry.traces({ projectId: project.id, limit: MCP_RECENT });
   const scope = await joinScope(db, access);
   const writes: Promise<void>[] = [];
   const data: McpDataSource = {
@@ -39,8 +38,11 @@ async function mcp(ctx: Ctx): Promise<void> {
     nPlusOneThreshold: DEFAULT_N_PLUS_ONE,
     list: (limit) => recent.slice(0, limit).map(toSummary),
     all: () => recent,
-    get: (traceId, federate) => getJoinedTrace(db, project.id, federate ? scope : [project.id], traceId),
-    metrics: (range, params) => projectMetrics(db, project.id, range, params, { now: ctx.app.config.now() }),
+    get: (traceId, federate) => telemetry.joinedTrace(project.id, federate ? scope : [project.id], traceId),
+    metrics: (range, params) => projectMetrics(telemetry, project.id, range, params, { now: ctx.app.config.now() }),
+    search: (q) => telemetry.search(project.id, q),
+    suggest: (r) => telemetry.suggest(project.id, r),
+    now: () => ctx.app.config.now(),
     // Every tool call is kept in the organization's audit log.
     audit: (line) => void writes.push(audit(db, project.orgId, actor, "mcp.call", { projectId: project.id, line }, ctx.app.config.now())),
   };

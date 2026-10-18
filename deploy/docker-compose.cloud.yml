@@ -2,6 +2,8 @@
 # Set POSTGRES_PASSWORD, WIZELENS_CLOUD_AUTH_SECRET (openssl rand -base64 32), and WIZELENS_CLOUD_PUBLIC_URL in a .env file next to this one.
 # For email (password reset, invites, alerts), also set WIZELENS_CLOUD_RESEND_API_KEY (or WIZELENS_CLOUD_SMTP_URL) and WIZELENS_CLOUD_MAIL_FROM.
 # With Resend, also set WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET so bounces stop later mail. The first account's link is in the log.
+# Scale mode (telemetry in ClickHouse): set CLICKHOUSE_PASSWORD and
+# WIZELENS_CLOUD_CLICKHOUSE_URL=http://wizelens:<password>@clickhouse:8123/wizelens, then: docker compose --profile scale up -d
 services:
   postgres:
     image: postgres:17
@@ -16,6 +18,22 @@ services:
       interval: 5s
       retries: 20
 
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.8.30.8
+    profiles: [scale]
+    environment:
+      CLICKHOUSE_USER: wizelens
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ulimits:
+      nofile: { soft: 262144, hard: 262144 }
+    volumes:
+      - clickhouse:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8123/ping || exit 1"]
+      interval: 5s
+      retries: 30
+
   cloud:
     image: ${WIZELENS_CLOUD_IMAGE:-ghcr.io/brandonkorous/wizelens-cloud:latest}
     depends_on:
@@ -23,6 +41,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://wizelens:${POSTGRES_PASSWORD}@postgres:5432/wizelens
+      WIZELENS_CLOUD_CLICKHOUSE_URL: ${WIZELENS_CLOUD_CLICKHOUSE_URL:-}
       WIZELENS_CLOUD_PUBLIC_URL: ${WIZELENS_CLOUD_PUBLIC_URL:-http://localhost:5970}
       WIZELENS_CLOUD_SIGNUP: ${WIZELENS_CLOUD_SIGNUP:-invite}
       WIZELENS_CLOUD_AUTH_SECRET: ${WIZELENS_CLOUD_AUTH_SECRET:?Set WIZELENS_CLOUD_AUTH_SECRET to 32+ random characters}
@@ -39,3 +58,4 @@ services:
 
 volumes:
   postgres:
+  clickhouse:

@@ -28,7 +28,7 @@ const rpc = async <T>(id: number, method: string, params: unknown): Promise<T> =
 describe("MCP", () => {
   it("lists the read-only tools", async () => {
     const body = await rpc<{ result: { tools: { name: string }[] } }>(1, "tools/list", {});
-    expect(body.result.tools.map((t) => t.name).sort()).toEqual(["find_n_plus_one", "find_slow_queries", "get_errors", "get_metric", "get_trace", "list_metrics", "list_traces"]);
+    expect(body.result.tools.map((t) => t.name).sort()).toEqual(["find_n_plus_one", "find_slow_queries", "get_errors", "get_metric", "get_trace", "list_metrics", "list_traces", "search", "search_fields"]);
   });
 
   it("calls a tool and writes an audit line", async () => {
@@ -37,6 +37,22 @@ describe("MCP", () => {
     const body = await rpc<{ result: { content: { text: string }[] } }>(2, "tools/call", { name: "get_errors", arguments: {} });
     expect(body.result.content[0]!.text).toContain("kaboom");
     expect(audit.some((l) => l.includes("tool=get_errors"))).toBe(true);
+  });
+
+  it("searches with the search language, and says where a bad search is wrong", async () => {
+    await fetch(`${app.base}/boom`);
+    await new Promise((r) => setTimeout(r, 20));
+    type Call = { result: { content: { text: string }[]; isError?: boolean } };
+    const hit = await rpc<Call>(3, "tools/call", { name: "search", arguments: { q: "kaboom error:true", kind: "spans", range: "1h" } });
+    const page = JSON.parse(hit.result.content[0]!.text) as { kind: string; items: { name: string; status: string }[] };
+    expect(page.kind).toBe("spans");
+    expect(page.items.length).toBeGreaterThan(0);
+    expect(page.items.every((s) => s.name === "GET /boom" && s.status === "error")).toBe(true);
+    const bad = await rpc<Call>(4, "tools/call", { name: "search", arguments: { q: "status:nope" } });
+    expect(bad.result.isError).toBe(true);
+    expect(JSON.parse(bad.result.content[0]!.text)).toMatchObject({ start: 0, end: 11 });
+    const fields = await rpc<Call>(5, "tools/call", { name: "search_fields", arguments: { prefix: "stat" } });
+    expect(JSON.parse(fields.result.content[0]!.text)[0]).toMatchObject({ value: "status" });
   });
 
   it("is off unless enabled", async () => {
