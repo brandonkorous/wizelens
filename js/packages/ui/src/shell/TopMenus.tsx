@@ -46,7 +46,9 @@ export function EnvMenu({ sources }: { sources: Source[] }) {
 /** Where this dashboard runs, and how long its host keeps data. */
 export function ModeBadge() {
   const host = useHost();
-  const text = `${MODE_LABEL[host.mode]}${host.service ? ` · ${host.service}` : ""} · kept ${fmtKept(host.keptMs)}`;
+  // The cloud's service name is "WizeLens Cloud": saying "Cloud" twice adds nothing.
+  const name = host.service && !host.service.endsWith(MODE_LABEL[host.mode]) ? ` · ${host.service}` : "";
+  const text = `${MODE_LABEL[host.mode]}${name} · kept ${fmtKept(host.keptMs)}`;
   return (
     <span className="wl-mode-badge" title={`WizeLens runs ${host.mode === "in-app" ? "inside this service" : `as a ${MODE_LABEL[host.mode].toLowerCase()}`}. Data older than ${fmtKept(host.keptMs)} is dropped.`}>
       {text}

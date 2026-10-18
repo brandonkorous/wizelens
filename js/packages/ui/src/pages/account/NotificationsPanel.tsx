@@ -51,7 +51,7 @@ export function NotificationsPanel() {
   const save = useCallback((patch: NotificationsPatch) => void run(async () => setN(await saveNotifications(patch)), "Saved."), [run]);
   const managesAny = n?.projects.some((p) => p.role === "owner" || p.role === "admin");
   return (
-    <Panel title="Emails">
+    <Panel>
       <ActionNotes a={a} />
       {n && !n.mail && <div className="wl-banner wl-banner-info">Mail is not set up on this cloud, so emails go to its log.</div>}
       {n && (

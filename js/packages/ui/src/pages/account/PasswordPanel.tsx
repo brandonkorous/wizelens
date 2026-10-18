@@ -19,10 +19,10 @@ export function PasswordPanel() {
           <Field label="New password (12 characters or more)" name="newPassword" type="password" autoComplete="new-password" minLength={12} required />
           <Field label="New password again" name="again" type="password" autoComplete="new-password" required />
         </FormRow>
-        <FormRow>
+        <div className="wl-form-actions wl-form-actions-split">
           <Check label="Sign out my other devices" name="revoke" defaultChecked />
           <button type="submit" className="wl-btn wl-btn-primary" disabled={a.busy}>Change password</button>
-        </FormRow>
+        </div>
         <ActionNotes a={a} />
       </form>
     </Panel>

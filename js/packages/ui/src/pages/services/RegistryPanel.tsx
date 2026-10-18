@@ -23,7 +23,7 @@ function columns(now: number): Column<HubService>[] {
   ];
 }
 
-/** Every service that sends to this hub, with when the hub last heard from it. Hub only. */
+/** Every service that sends to this hub or cloud, with when it was last heard from. Hub and cloud only. */
 export function RegistryPanel() {
   const { registry, updatedMs } = useData();
   const [env] = useEnvScope();
@@ -32,10 +32,10 @@ export function RegistryPanel() {
   if (!registry) return null;
   const rows = registry.services.filter((s) => inScope(s, { env, project }, !cloud));
   const online = rows.filter((s) => s.online).length;
-  const title = `Connected to this hub (${online} of ${rows.length} online)`;
+  const title = `Sending to this ${cloud ? "project" : "hub"} (${online} of ${rows.length} online)`;
   return (
     <Panel title={title} flush action={<span className="wl-muted wl-small">{fmtCount(registry.traces)} traces kept</span>}>
-      <Table columns={columns(updatedMs)} rows={rows} rowKey={keyOf} defaultSort={{ key: "status", desc: false }} empty={<Empty title="No service has sent data yet">See Settings to connect one.</Empty>} />
+      <Table columns={columns(updatedMs)} rows={rows} rowKey={keyOf} defaultSort={{ key: "status", desc: false }} empty={<Empty title="No service has sent data yet"><a href="#/settings/connect">Connect one</a> in Settings.</Empty>} />
     </Panel>
   );
 }

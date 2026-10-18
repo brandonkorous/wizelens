@@ -14,7 +14,13 @@ export const theme = {
   mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace',
   radius: "12px",
   width: 560,
-  logoUrl: "https://wizelens.com/brand/wizelens-mark-512.png",
+  /** The mark with its center dot in the tone color. The site build makes these (site/scripts/og/build.mjs). */
+  markUrl: {
+    neutral: "https://wizelens.com/brand/mail-neutral.png",
+    good: "https://wizelens.com/brand/mail-good.png",
+    warn: "https://wizelens.com/brand/mail-warn.png",
+    bad: "https://wizelens.com/brand/mail-bad.png",
+  },
   homeUrl: "https://wizelens.com",
   company: "WizeLens by WizeWorks LLC, Visalia, California",
 } as const;

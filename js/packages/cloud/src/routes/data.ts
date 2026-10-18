@@ -36,7 +36,8 @@ async function info(ctx: Ctx): Promise<void> {
     runtime: `node ${process.version}`,
     mcp: true,
     startedMs: ctx.app.startedMs,
-    storage: { kind: ctx.app.db.kind === "postgres" ? "postgres" : "sqlite", maxAgeMs: await retentionMs(ctx) },
+    // PGlite is Postgres in-process: both keep data across restarts.
+    storage: { kind: "postgres", maxAgeMs: await retentionMs(ctx) },
     redactKeys: [...ctx.app.config.redactKeys],
   };
   sendJson(ctx.res, 200, value);

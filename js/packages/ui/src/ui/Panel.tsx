@@ -1,12 +1,15 @@
 import type { ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 
+/** The page title and what the page is for. Children are the page's actions, on the right. */
 export function PageHeader({ title, subtitle, children }: { title: string; subtitle: string; children?: ReactNode }) {
   return (
     <header className="wl-page-head">
-      <h1>{title}</h1>
-      <p>{subtitle}</p>
-      {children}
+      <div>
+        <h1>{title}</h1>
+        <p>{subtitle}</p>
+      </div>
+      {children && <div className="wl-page-actions">{children}</div>}
     </header>
   );
 }

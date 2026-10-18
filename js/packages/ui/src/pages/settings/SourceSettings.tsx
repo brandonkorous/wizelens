@@ -41,23 +41,27 @@ function samplingText(info: ServiceInfo): string {
   return extra.length ? `${pct}, plus ${extra.join(" and ")}` : pct;
 }
 
+// Rows a host does not report (the cloud has no host or N+1 setting of its own) are left out, not shown as dashes.
 function infoRows(s: Source, info: ServiceInfo): [ReactNode, ReactNode][] {
   const storage = info.storage;
-  return [
+  const storageText = storage?.kind === "postgres" ? "Postgres (kept across restarts)" : storage?.kind === "sqlite" ? "SQLite file (kept across restarts)" : storage ? "Memory only" : null;
+  const rows: [ReactNode, ReactNode | null][] = [
     ["Status", statusOf(s)],
     ["Version", info.version],
     ["Runtime", info.runtime],
-    ["Environment", info.environment ?? "–"],
-    ["Host", info.host ?? "–"],
-    ["Started", info.startedMs ? fmtDateTime(info.startedMs) : "–"],
-    ["Storage", storage ? (storage.kind === "postgres" ? "Postgres" : storage.kind === "sqlite" ? "SQLite file (kept across restarts)" : "Memory only") : "–"],
-    ["Max traces", storage ? (storage.maxTraces === undefined ? "No limit" : fmtCount(storage.maxTraces)) : "–"],
-    ["Max age", storage ? fmtAge(storage.maxAgeMs) : "–"],
-    ["Slow query", info.analysis ? `${fmtMs(info.analysis.slowQueryMs)} or more` : "–"],
-    ["N+1 threshold", info.analysis ? `${info.analysis.nPlusOneThreshold} repeats` : "–"],
+    ["Environment", info.environment ?? null],
+    ["Host", info.host ?? null],
+    ["Started", info.startedMs ? fmtDateTime(info.startedMs) : null],
+    ["Storage", storageText],
+    ["Max traces", storage?.maxTraces !== undefined ? fmtCount(storage.maxTraces) : null],
+    ["Keeps data for", storage ? fmtAge(storage.maxAgeMs) : null],
+    ["Sampling", info.mode === "in-app" ? samplingText(info) : null],
+    ["Slow query", info.analysis ? `${fmtMs(info.analysis.slowQueryMs)} or more` : null],
+    ["N+1 threshold", info.analysis ? `${info.analysis.nPlusOneThreshold} repeats` : null],
     ["AI access (MCP)", mcpRow(s, info)],
-    ["Response bodies", onOff(info.captureResponseBody)],
+    ["Response bodies", info.captureResponseBody === undefined ? null : onOff(info.captureResponseBody)],
   ];
+  return rows.filter((r): r is [ReactNode, ReactNode] => r[1] !== null);
 }
 
 export function SourceSettings({ source }: { source: Source }) {

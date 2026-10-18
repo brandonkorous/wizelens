@@ -1,7 +1,10 @@
 /* Settings page: preference controls and notes. */
-.wl-settings-prefs { display: flex; flex-wrap: wrap; gap: 16px; }
-.wl-settings-prefs label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--wl-fg-2); }
 .wl-settings-note { margin: 8px 0 12px; }
 .wl-snippet { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; padding: 10px 0; border-top: 1px solid var(--wl-line); }
 .wl-snippet > .wl-muted { grid-column: 1 / -1; }
 .wl-snippet code { overflow-wrap: anywhere; }
+.wl-settings-sources { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 18px; align-items: start; }
+.wl-settings-sources > .wl-panel + .wl-panel { margin-top: 0; }
+.wl-settings-mcp { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.wl-snippet:first-child { border-top: 0; padding-top: 0; }
+.wl-snippet:last-child { padding-bottom: 0; }

@@ -24,6 +24,10 @@
 .wl-stat-label { font-size: 14px; color: var(--wl-fg-2); }
 .wl-stat-value { font-size: 26px; font-weight: 720; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.2; }
 .wl-stat-foot { grid-column: 2; display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+/* The trend runs along the bottom of the card, so the change text never shares its width. */
+.wl-stat-spark { grid-column: 1 / -1; height: 28px; margin: 2px -4px -6px; }
+.wl-stat-spark svg { display: block; width: 100%; height: 28px; }
+.wl-delta span { white-space: nowrap; }
 .wl-delta { display: flex; flex-direction: column; font-size: 13px; }
 .wl-delta b { display: inline-flex; align-items: center; gap: 3px; font-weight: 650; }
 .wl-delta b svg { width: 14px; height: 14px; }
@@ -112,8 +116,9 @@
 .wl-pager button.wl-active { border-color: var(--wl-accent); background: var(--wl-accent-soft); color: var(--wl-accent-text); font-weight: 650; }
 .wl-pager button:disabled { opacity: 0.5; cursor: default; }
 
-.wl-tabbar { display: flex; gap: 2px; border-bottom: 1px solid var(--wl-line); margin-bottom: 14px; overflow-x: auto; }
-.wl-tabbar button { padding: 8px 10px; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; color: var(--wl-fg-2); cursor: pointer; white-space: nowrap; font-weight: 500; }
+/* The line under the tabs is an inset shadow, so the active tab's border covers it without overflowing (a scroll arrow). */
+.wl-tabbar { display: flex; gap: 2px; box-shadow: inset 0 -1px var(--wl-line); margin-bottom: 14px; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.wl-tabbar button { padding: 8px 10px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--wl-fg-2); cursor: pointer; white-space: nowrap; font-weight: 500; }
 .wl-tabbar button.wl-active { color: var(--wl-accent-text); border-bottom-color: var(--wl-accent); font-weight: 600; }
 .wl-tabbar button:hover { color: var(--wl-fg); }
 

@@ -1,0 +1,67 @@
+/* Page layouts shared by the configuration pages (Team, Account, Settings): page actions, sections, dialogs, and form rows. */
+.wl-page-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 20px; }
+.wl-page-head h1 { margin: 0; }
+.wl-page-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Sections: a sticky list on the left, one section at a time on the right. */
+.wl-sections { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; align-items: start; }
+.wl-sections-nav { position: sticky; top: 84px; display: grid; gap: 2px; }
+.wl-sections-nav a { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px; color: var(--wl-fg-2); font-size: 14px; font-weight: 550; }
+.wl-sections-nav a:hover { background: var(--wl-surface-2); text-decoration: none; }
+.wl-sections-nav a.wl-active { background: var(--wl-accent-soft); color: var(--wl-accent-text); }
+.wl-sections-nav svg { width: 17px; height: 17px; flex: none; }
+.wl-sections-nav .wl-chip-count { margin-left: auto; }
+.wl-sections-body { min-width: 0; }
+.wl-section-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 20px; margin-bottom: 18px; }
+.wl-section-head h2 { margin: 0; font-size: 19px; }
+.wl-section-head p { margin: 6px 0 0; max-width: 72ch; color: var(--wl-muted); font-size: 14px; }
+.wl-section-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.wl-sections-body > .wl-panel + .wl-panel, .wl-sections-body > .wl-banner + .wl-panel { margin-top: 18px; }
+.wl-sections-body > .wl-banner { margin-bottom: 18px; }
+@media (max-width: 900px) {
+  .wl-sections { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .wl-sections-nav { position: static; display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+  .wl-sections-nav a { flex: none; padding: 7px 12px; border: 1px solid var(--wl-line); background: var(--wl-surface); }
+  .wl-sections-nav .wl-chip-count { margin-left: 0; }
+}
+
+/* Form rows: every field, drop-down, and button lines up at the top; hints hang below their own field. */
+.wl-form-row { align-items: flex-start; }
+.wl-form-row > .wl-btn { margin-top: 25px; }
+.wl-form-row > .wl-field-narrow { flex: 0 1 180px; }
+.wl-field select { font-weight: 400; width: 100%; }
+.wl-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+
+/* A form that opens from a section's button, above the list it adds to. */
+.wl-panel-form { border-color: var(--wl-accent); }
+.wl-panel-form .wl-form { margin-bottom: 0; }
+
+/* Facts about one thing, in two columns: label left, value right. */
+.wl-facts { display: grid; grid-template-columns: minmax(140px, 220px) minmax(0, 1fr); gap: 10px 20px; margin: 0; }
+.wl-facts dt { color: var(--wl-muted); font-size: 14px; }
+.wl-facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 640px) { .wl-facts { grid-template-columns: minmax(0, 1fr); gap: 2px 0; } .wl-facts dd { margin-bottom: 8px; } }
+
+/* Dialogs in place of the browser's confirm and prompt. */
+.wl-dialog { width: min(460px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--wl-line); border-radius: 14px; background: var(--wl-surface); color: var(--wl-fg); box-shadow: var(--wl-shadow-pop); }
+.wl-dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
+.wl-dialog form { display: grid; gap: 14px; padding: 22px; }
+.wl-dialog h2 { margin: 0; font-size: 18px; }
+.wl-dialog-body { color: var(--wl-fg-2); font-size: 14px; line-height: 1.55; }
+.wl-dialog-body p { margin: 0 0 8px; }
+.wl-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+
+/* A muted id with a copy button, beside a name. */
+.wl-id { display: inline-flex; align-items: center; gap: 4px; color: var(--wl-muted); font: 12px var(--wl-mono); }
+.wl-who { display: grid; line-height: 1.35; }
+.wl-who small { color: var(--wl-muted); font-size: 12px; }
+
+/* Tables in flush panels line up with the panel title. */
+.wl-panel-flush .wl-table th:first-child, .wl-panel-flush .wl-table td:first-child { padding-left: 20px; }
+.wl-panel-flush .wl-table th:last-child, .wl-panel-flush .wl-table td:last-child { padding-right: 20px; }
+.wl-table .wl-cell-actions { text-align: right; white-space: nowrap; }
+.wl-panel-banner { margin: 12px 20px 0; }
+.wl-panel-note { margin: 0 20px 14px; color: var(--wl-muted); font-size: 13px; }
+.wl-form-actions-split { justify-content: space-between; align-items: center; }
+.wl-panel-text { margin: 0 0 14px; color: var(--wl-muted); }
+.wl-form-actions-start { justify-content: flex-start; }

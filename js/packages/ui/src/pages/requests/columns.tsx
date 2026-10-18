@@ -28,7 +28,7 @@ export function requestColumns(sort: Sort, onSort: (k: SortKey) => void): Column
     { key: "duration", header: h("Duration", "duration"), cell: durationCell, className: "wl-nowrap" },
     { key: "sql", header: h("SQL", "sql"), cell: (r) => r.dbCount },
     { key: "fetch", header: h("Fetch", "fetch"), cell: (r) => (r.fetchCount ? fmtMs(r.fetchMs) : "–"), className: "wl-nowrap" },
-    { key: "service", header: h("Service", "service"), cell: (r) => r.service },
+    { key: "service", header: h("Service", "service"), cell: (r) => r.service, className: "wl-nowrap" },
     { key: "insights", header: h("Insights", "insights"), cell: (r) => <CountBadge n={r.insights} /> },
   ];
 }
