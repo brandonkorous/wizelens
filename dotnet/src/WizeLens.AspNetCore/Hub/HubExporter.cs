@@ -97,7 +97,7 @@ internal sealed class HubExporter : IHostedService, IDisposable
         if (_client is null || now < _retryAt) return;
         if (_queue.Count == 0 && now - _lastSent < Heartbeat) return;
         var items = _queue.Take(BatchSize);
-        var batch = HubBatch.From(HubSenderInfo.Of(_options, _environment, _store.SelfEndpoint), items);
+        var batch = HubBatch.From(HubSenderInfo.Of(_options, _environment, _options.ServesDashboard ? _store.SelfEndpoint : null), items);
         if (await PostAsync(batch, cancellationToken).ConfigureAwait(false)) Succeeded(now);
         else Failed(items, now);
     }

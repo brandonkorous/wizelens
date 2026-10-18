@@ -315,10 +315,11 @@ Guardrails:
 
 | Option | Default | Description |
 |---|---|---|
-| `Enabled` | Development only | Turn WizeLens on or off. |
+| `Enabled` | `WIZELENS_ENABLED`, else Development only | Turn WizeLens on or off. |
+| `Dashboard` | `WIZELENS_DASHBOARD`, else Development only | Serve the dashboard, read API, and MCP. `false` is send-only: capture and send to the hub or cloud, no reads. |
 | `BasePath` | `/_wizelens` | Where the dashboard and API live. |
 | `ServiceName` | app name | Name shown for this service. |
-| `Storage` | `Sqlite` | `Sqlite` (survives restarts) or `Memory`. |
+| `Storage` | `Sqlite`, or `Memory` when send-only | `Sqlite` (survives restarts) or `Memory`. |
 | `StoragePath` | `.wizelens/traces.db` | SQLite file, relative to the content root. |
 | `MaxTraces` | `2000` | Traces kept in memory and on disk. |
 | `MaxAge` | `24h` | Traces older than this are dropped. |
@@ -339,9 +340,10 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 | Option | Default | Description |
 |---|---|---|
 | `serviceName` | *(required)* | Name shown for this service. |
-| `enabled` | on unless `NODE_ENV=production` | Turn WizeLens on or off. |
+| `enabled` | `WIZELENS_ENABLED`, else on unless `NODE_ENV=production` | Turn WizeLens on or off. |
+| `dashboard` | `WIZELENS_DASHBOARD`, else on unless `NODE_ENV=production` | Serve the dashboard, read API, and MCP. `false` is send-only: capture and send to the hub or cloud, no reads. |
 | `basePath` | `/_wizelens` | Where the dashboard and API live. |
-| `storage` | `"sqlite"` | `"sqlite"` or `"memory"`. |
+| `storage` | `"sqlite"`, or `"memory"` when send-only | `"sqlite"` or `"memory"`. |
 | `storagePath` | `{cwd}/.wizelens/traces.db` | SQLite file. |
 | `maxTraces` / `maxAgeMs` | `2000` / 24 h | Retention. |
 | `enableMcp` | `false` | Expose the read-only MCP endpoint. |
@@ -366,7 +368,7 @@ Tag a request and name its user from your handlers: `wizelens.tag("cache", "hit"
 |---|---|---|
 | `endpoint` | `/_wizelens` | WizeLens base path or URL on your API. |
 | `enabled` | `true` | Pass `import.meta.env.DEV` (or similar). |
-| `hud` | `true` | Show the in-page HUD. |
+| `hud` | `true` | Show the in-page HUD. `false` also stops reading traces back, for a send-only server. |
 | `propagateTo` | same origin | Which requests get a `traceparent` header. |
 | `slowMs` | `500` | The HUD shows requests at or over this many ms as "warning" (orange). |
 | `capturePages` | `true` | Send page views, React render stats, and browser errors. |

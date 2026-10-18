@@ -2,7 +2,8 @@
 
 This guide takes you from zero to your first trace in about five minutes. Pick the parts that match your stack.
 
-WizeLens is on in development only. In production it does nothing unless you turn it on yourself.
+WizeLens is on in development only. In production it does nothing unless you turn it on yourself, and then it is send-only
+(see [7. Production](#7-production-send-to-the-cloud-show-nothing)).
 
 ## 1. ASP.NET Core
 
@@ -198,7 +199,33 @@ OpenTelemetry apps use `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEA
 Put the cloud behind https (any reverse proxy); sign-in cookies are marked secure when the public URL is https.
 To try it on your machine first: `npx @wizeworks/lens-cloud` (Postgres in-process, data in `./.wizelens-cloud`).
 
-## 7. Busy services: sampling (optional)
+## 7. Production: send to the cloud, show nothing
+
+In production, turn WizeLens on and point it at your cloud or hub. Nothing else changes in your code:
+
+```bash
+WIZELENS_ENABLED=true
+WIZELENS_HUB=https://app.wizelens.com
+WIZELENS_HUB_TOKEN=wl_ik_...                   # one ingest key per service
+WIZELENS_SAMPLE_RATE=0.25                      # optional, see 8
+```
+
+Outside development the add-on is **send-only**: it captures and sends, but serves no dashboard, read API, or MCP, so nobody
+can read traces from the app itself. Only the browser span intake (`POST /_wizelens/api/client-spans`) answers; everything
+else under `/_wizelens` is a 404. Traces are kept in memory only, until they are sent. To serve the dashboard anyway (for
+example on a staging server behind a VPN), set `WIZELENS_DASHBOARD=true` (`Dashboard = true` / `dashboard: true`).
+
+In the browser, hide the HUD and keep sending page loads, React renders, and errors:
+
+```tsx
+<WizeLensProvider hud={false}>
+  <App />
+</WizeLensProvider>
+```
+
+With `hud={false}` the browser never reads traces back, so it works with a send-only server.
+
+## 8. Busy services: sampling (optional)
 
 To keep only part of the traces, set a rate between 0 and 1: `sampling: { rate: 0.1 }` (Node),
 `o.Sampling.Rate = 0.1` (.NET), or `WIZELENS_SAMPLE_RATE=0.1` for both. WizeLens still keeps every trace with an error, and
@@ -206,7 +233,7 @@ every trace with a server-side span of 1 second or more (`keepErrors`, `keepSlow
 every service keeps the same traces and a kept trace is whole across services. The local store, the SQLite file, and the hub
 all get only the kept traces. The **Settings** page shows the rate, so read counts on other pages as part of the traffic.
 
-## 8. AI access (optional)
+## 9. AI access (optional)
 
 Turn on the read-only MCP endpoint per service (`EnableMcp = true` / `enableMcp: true`), then point your MCP client at
 `http://localhost:<port>/_wizelens/mcp`. Secrets are redacted before anything is stored. On the hub, start it with `--mcp`:

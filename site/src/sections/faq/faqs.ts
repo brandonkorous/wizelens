@@ -24,7 +24,7 @@ export const FAQS: Faq[] = [
   },
   {
     q: "Can I run WizeLens in production?",
-    a: "WizeLens is on in development and off in production unless you turn it on. If you do, sampling keeps a share of the traces plus every trace with an error or a slow span. WizeLens is in alpha today.",
+    a: "WizeLens is on in development and off in production unless you turn it on. If you do, it is send-only: it sends traces to your cloud or hub, and the app serves no dashboard or read API. Sampling keeps a share of the traces plus every trace with an error or a slow span. WizeLens is in alpha today.",
   },
   {
     q: "Does WizeLens use AI?",

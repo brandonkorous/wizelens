@@ -193,6 +193,7 @@ public sealed class PersistenceTests : IDisposable
     private WizeLensOptions Options() => new()
     {
         IsEnabled = true,
+        ServesDashboard = true,
         ServiceName = "test",
         StoragePath = DbPath,
     };

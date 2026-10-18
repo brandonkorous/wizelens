@@ -9,10 +9,11 @@ Pass options to `builder.Services.AddWizeLens(o => { ... })`.
 
 | Option | Default | Description |
 |---|---|---|
-| `Enabled` | Development only | Turn WizeLens on or off. |
+| `Enabled` | `WIZELENS_ENABLED`, else Development only | Turn WizeLens on or off. |
+| `Dashboard` | `WIZELENS_DASHBOARD`, else Development only | Serve the dashboard, read API, and MCP. `false` is send-only. See [Production](/docs/production/). |
 | `BasePath` | `/_wizelens` | Where the dashboard and API live. |
 | `ServiceName` | app name | Name shown for this service. |
-| `Storage` | `Sqlite` | `Sqlite` (survives restarts) or `Memory`. |
+| `Storage` | `Sqlite`, or `Memory` when send-only | `Sqlite` (survives restarts) or `Memory`. |
 | `StoragePath` | `.wizelens/traces.db` | SQLite file, relative to the content root. |
 | `MaxTraces` | `2000` | Traces kept in memory and on disk. |
 | `MaxAge` | `24h` | Traces older than this are dropped. |
@@ -36,9 +37,10 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | Option | Default | Description |
 |---|---|---|
 | `serviceName` | *(required)* | Name shown for this service. |
-| `enabled` | on unless `NODE_ENV=production` | Turn WizeLens on or off. |
+| `enabled` | `WIZELENS_ENABLED`, else on unless `NODE_ENV=production` | Turn WizeLens on or off. |
+| `dashboard` | `WIZELENS_DASHBOARD`, else on unless `NODE_ENV=production` | Serve the dashboard, read API, and MCP. `false` is send-only. See [Production](/docs/production/). |
 | `basePath` | `/_wizelens` | Where the dashboard and API live. |
-| `storage` | `"sqlite"` | `"sqlite"` or `"memory"`. |
+| `storage` | `"sqlite"`, or `"memory"` when send-only | `"sqlite"` or `"memory"`. |
 | `storagePath` | `{cwd}/.wizelens/traces.db` | SQLite file. |
 | `maxTraces` / `maxAgeMs` | `2000` / 24 h | How much is kept. |
 | `enableMcp` | `false` | Expose the read-only MCP endpoint. |
@@ -65,7 +67,7 @@ Props on `WizeLensProvider`.
 |---|---|---|
 | `endpoint` | `/_wizelens` | WizeLens base path or URL on your API. |
 | `enabled` | `true` | Pass `import.meta.env.DEV` (or similar). |
-| `hud` | `true` | Show the in-page HUD. |
+| `hud` | `true` | Show the in-page HUD. `false` also stops reading traces back, for a send-only server. |
 | `propagateTo` | same origin | Which requests get a `traceparent` header. |
 | `slowMs` | `500` | Requests at or over this many ms show as "warning". |
 | `capturePages` | `true` | Send page views, React render stats, and browser errors. |
@@ -75,6 +77,8 @@ Props on `WizeLensProvider`.
 
 | Variable | Used by | Means |
 |---|---|---|
+| `WIZELENS_ENABLED` | .NET, Node | Turn WizeLens on (`true`) or off (`false`). |
+| `WIZELENS_DASHBOARD` | .NET, Node | Serve the dashboard, read API, and MCP (`true`), or send only (`false`). |
 | `WIZELENS_HUB` | .NET, Node | Send to this hub or cloud. |
 | `WIZELENS_HUB_TOKEN` | .NET, Node | The hub token, or a cloud ingest key. |
 | `WIZELENS_PROJECT` | .NET, Node | Project name on a shared hub. |

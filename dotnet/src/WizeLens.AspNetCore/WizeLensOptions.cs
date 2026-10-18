@@ -19,8 +19,11 @@ public sealed class WizeLensOptions
         "authorization", "cookie", "password", "passwd", "secret", "token", "apikey", "api_key", "connectionstring",
     ];
 
-    /// <summary>Turns WizeLens on or off. <c>null</c> (the default) means on in Development only.</summary>
+    /// <summary>Turns WizeLens on or off. <c>null</c> (the default) means the WIZELENS_ENABLED variable, else on in Development only.</summary>
     public bool? Enabled { get; set; }
+
+    /// <summary>Serves the dashboard, read API, and MCP. False is send-only: capture and send, no reads. <c>null</c>: WIZELENS_DASHBOARD, else Development only.</summary>
+    public bool? Dashboard { get; set; }
 
     /// <summary>Where the dashboard and API live. Default <c>/_wizelens</c>.</summary>
     public string BasePath { get; set; } = "/_wizelens";
@@ -34,8 +37,8 @@ public sealed class WizeLensOptions
     /// <summary>Traces older than this are dropped. Default 24 hours.</summary>
     public TimeSpan MaxAge { get; set; } = TimeSpan.FromHours(24);
 
-    /// <summary>Where traces are kept. Default <see cref="WizeLensStorage.Sqlite"/>, so they survive restarts.</summary>
-    public WizeLensStorage Storage { get; set; } = WizeLensStorage.Sqlite;
+    /// <summary>Where traces are kept. Default <see cref="WizeLensStorage.Sqlite"/>, so they survive restarts, or memory when the dashboard is off.</summary>
+    public WizeLensStorage? Storage { get; set; }
 
     /// <summary>The SQLite file. Relative paths start at the content root. Default <c>.wizelens/traces.db</c>.</summary>
     public string? StoragePath { get; set; }
@@ -77,6 +80,20 @@ public sealed class WizeLensOptions
     public TimeSpan MetricsMaxAge { get; set; } = TimeSpan.FromHours(1);
 
     internal bool IsEnabled { get; set; }
+
+    /// <summary>True when the dashboard, read API, and MCP answer; false is send-only.</summary>
+    internal bool ServesDashboard { get; set; }
+
+    /// <summary>The storage in use: the option, or SQLite with the dashboard and memory without it.</summary>
+    internal WizeLensStorage StorageKind => Storage ?? (ServesDashboard ? WizeLensStorage.Sqlite : WizeLensStorage.Memory);
+
+    /// <summary>Reads an on/off variable ("true", "1", "on", "yes" or "false", "0", "off", "no"). Null when unset or unknown.</summary>
+    internal static bool? EnvFlag(string name) => Environment.GetEnvironmentVariable(name)?.Trim().ToLowerInvariant() switch
+    {
+        "true" or "1" or "on" or "yes" => true,
+        "false" or "0" or "off" or "no" => false,
+        _ => null,
+    };
 
     /// <summary>True when WizeLens is on and collects metrics.</summary>
     internal bool MetricsOn => IsEnabled && CaptureMetrics;

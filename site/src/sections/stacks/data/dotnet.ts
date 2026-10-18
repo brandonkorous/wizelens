@@ -48,7 +48,7 @@ export const DOTNET: Stack = {
     { title: "If you used Glimpse, you know this.", body: "Open the hood on one request and see what it really did. WizeLens brings that back for ASP.NET Core, and follows the request into every service after it." },
     { title: "Survives dotnet watch.", body: "Traces live in a small SQLite file next to your app, so a restart does not wipe them. If the file cannot be written, WizeLens keeps working in memory." },
     { title: "Wrap any connection.", body: "Dapper or a provider WizeLens does not know? Wrap the connection and every command is captured.", code: "new ProfiledDbConnection(new SqliteConnection(cs))" },
-    { title: "Never in production by accident.", body: "WizeLens is on in Development only. Turn it on anywhere else yourself, with Enabled = true." },
+    { title: "Never in production by accident.", body: "WizeLens is on in Development only. Turn it on anywhere else with WIZELENS_ENABLED=true: it sends to your cloud and serves nothing anyone can read." },
   ],
   docs: [
     { label: "ASP.NET Core setup", href: "/docs/aspnet-core/" },

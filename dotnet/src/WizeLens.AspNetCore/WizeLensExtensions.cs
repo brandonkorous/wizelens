@@ -27,7 +27,8 @@ public static class WizeLensExtensions
         services.AddSingleton(sp =>
         {
             var env = sp.GetRequiredService<IHostEnvironment>();
-            options.IsEnabled = options.Enabled ?? env.IsDevelopment();
+            options.IsEnabled = options.Enabled ?? WizeLensOptions.EnvFlag("WIZELENS_ENABLED") ?? env.IsDevelopment();
+            options.ServesDashboard = options.Dashboard ?? WizeLensOptions.EnvFlag("WIZELENS_DASHBOARD") ?? env.IsDevelopment();
             options.ServiceName ??= env.ApplicationName;
             WizeLensRuntime.Redactor = new Redactor(options.RedactKeys);
             return options;

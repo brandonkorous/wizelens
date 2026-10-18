@@ -7,19 +7,19 @@ import type { WizeLensOptions } from "./types.js";
 /** The hub URL from options, or from WIZELENS_HUB. Null when no hub is set. */
 export const hubUrlOf = (o: WizeLensOptions): string | null => normalizeHubUrl(o.hub ?? process.env[HUB_ENV]);
 
-/** Start sending to the hub, when one is set. */
+/** Start sending to the hub, when one is set. Null endpoints mean send-only: the hub gets no address to read from. */
 export function connectHub(
   o: WizeLensOptions,
   store: TraceStore,
   info: () => ServiceInfo,
-  selfEndpoints: ReadonlySet<string>,
+  selfEndpoints: ReadonlySet<string> | null,
   metrics: MetricStore | null = null,
 ): HubExporter | undefined {
   const url = hubUrlOf(o);
   if (!url) return undefined;
   const sender = (): HubSender => {
     const i = info();
-    const endpoint = o.publicEndpoint ?? selfEndpoints.values().next().value;
+    const endpoint = selfEndpoints ? (o.publicEndpoint ?? selfEndpoints.values().next().value) : undefined;
     return { service: i.service, project: i.project, version: i.version, runtime: i.runtime, environment: i.environment, host: i.host, endpoint, startedMs: i.startedMs };
   };
   const exporter = new HubExporter({ url, token: o.hubToken ?? process.env[HUB_TOKEN_ENV], sender, warn: (m) => console.warn(m) });
