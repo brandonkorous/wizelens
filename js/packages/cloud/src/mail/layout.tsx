@@ -5,7 +5,7 @@ import { theme } from "./theme.js";
 
 const footerText = { margin: "0 0 4px", fontSize: "12px", lineHeight: "18px", color: theme.muted };
 
-/** The frame every email shares: a light page, one white card, the header, the body, and the footer under the card. */
+/** The frame every email shares: a light page, one white card with a top stripe in the tone's color, the header, the body, and the footer under the card. */
 export function EmailLayout({ content: c }: { content: EmailContent }) {
   return (
     <Html lang="en">
@@ -15,7 +15,7 @@ export function EmailLayout({ content: c }: { content: EmailContent }) {
       </Head>
       <Preview>{c.preview}</Preview>
       <Body style={{ margin: 0, padding: "32px 12px", background: theme.page, fontFamily: theme.sans }}>
-        <Container style={{ maxWidth: `${theme.width}px`, background: theme.card, border: `1px solid ${theme.line}`, borderRadius: theme.radius }}>
+        <Container style={{ maxWidth: `${theme.width}px`, background: theme.card, border: `1px solid ${theme.line}`, borderTop: `4px solid ${theme.tone[c.tone]}`, borderRadius: theme.radius }}>
           <Header tone={c.tone} />
           <Section style={{ padding: "8px 32px 8px" }}>
             <Heading as="h1" style={{ margin: "16px 0", fontSize: "26px", lineHeight: "32px", fontWeight: 800, letterSpacing: "-0.02em", color: theme.ink }}>
