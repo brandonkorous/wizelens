@@ -453,4 +453,4 @@ WizeLens is an independent project and is not affiliated with any of them.
 
 ## 📄 License
 
-The add-ons are [MIT licensed](LICENSE). © 2026 WizeWorks.
+The add-ons are [MIT licensed](LICENSE). © 2026 WizeWorks LLC.

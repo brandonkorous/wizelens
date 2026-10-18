@@ -3,7 +3,7 @@
   "version": "0.3.0-alpha.1",
   "description": "Shared types, trace context helpers, and analysis for WizeLens.",
   "license": "MIT",
-  "author": "WizeWorks",
+  "author": "WizeWorks LLC",
   "homepage": "https://github.com/brandonkorous/wizelens#readme",
   "repository": {
     "type": "git",
