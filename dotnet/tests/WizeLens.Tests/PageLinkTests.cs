@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Builder;
+using WizeLens.Storage;
 
 namespace WizeLens.Tests;
 
@@ -27,7 +28,8 @@ public class PageLinkTests
     {
         await using var app = await TestApp.StartAsync(_ => { });
         var traceId = Guid.NewGuid().ToString("N");
-        var span = new { traceId, spanId = "0123456789abcdef", name = "pageview /", attributes = new Dictionary<string, object> { ["wizelens.browser.remote"] = remote } };
+        // A real start time: a span at 0 is past the age limit, and the store's flush timer may drop it before the read.
+        var span = new { traceId, spanId = "0123456789abcdef", name = "pageview /", startMs = TraceStore.NowMs(), attributes = new Dictionary<string, object> { ["wizelens.browser.remote"] = remote } };
         using var request = new HttpRequestMessage(HttpMethod.Post, "/_wizelens/api/client-spans") { Content = JsonContent.Create(new { spans = new[] { span } }) };
         request.Headers.Add("Origin", origin);
         (await app.Client.SendAsync(request)).EnsureSuccessStatusCode();
