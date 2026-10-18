@@ -23,7 +23,7 @@ configMapGenerator:
       - WIZELENS_CLOUD_TRUST_PROXY=1
       # Invite only until open sign-up is a product decision.
       - WIZELENS_CLOUD_SIGNUP=invite
-      - WIZELENS_CLOUD_MAIL_FROM=WizeLens <hello@wizelens.com>
+      - WIZELENS_CLOUD_MAIL_FROM=WizeLens <hello@updates.wizelens.com>
     options:
       # A plain name is safe because every config change ships in a commit, and the commit pins a new image tag.
       disableNameSuffixHash: true
