@@ -4,6 +4,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Fixed
+
+- **The cloud starts at once after a facts version change.** It cleared every stat in one Postgres transaction before it
+  listened; on a big database that took longer than the startup probe, so the pod restarted forever. The reset now runs
+  after start, in batches that commit, and settling waits for it.
+
 ### Search
 
 - **One search language everywhere** (docs/SEARCH-PLAN.md): words and `"phrases"`, `field:value` (service, env, trace,

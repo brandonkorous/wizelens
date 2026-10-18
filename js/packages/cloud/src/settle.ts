@@ -9,6 +9,7 @@ const QUIET_MS = 5_000;
 const BUSY_MS = 30_000;
 const LOCK = 4711;
 const DAY_MS = 86_400_000;
+const RESET_BATCH = 5_000;
 /** Fact, rollup, and hist tables: everything settling builds. */
 export const STATS_TABLES = [...FACT_TABLES, ...["10s", "5m", "1h"].flatMap((t) => [`rollup_${t}`, `hist_${t}`])];
 
@@ -85,14 +86,33 @@ export async function pruneRollups(q: Queryable, now: number, empties = false): 
   }
 }
 
-/** On startup: when the facts version changed, clear the stats so settling rebuilds them. Returns true when it did. */
-export async function checkFactsVersion(db: Db): Promise<boolean> {
+/** True when the stats were built by another facts version (or never). */
+export async function factsStale(db: Db): Promise<boolean> {
   const [row] = await db.query<{ value: string }>("SELECT value FROM scale_meta WHERE key = 'facts'");
-  if (row?.value === String(FACTS_VERSION)) return false;
-  await db.tx(async (q) => {
-    for (const t of STATS_TABLES) await q.query(`DELETE FROM ${t}`);
-    await q.query("UPDATE traces SET settled_ms = 0, contrib = NULL");
-    await q.query("INSERT INTO scale_meta (key, value) VALUES ('facts', $1) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value", [String(FACTS_VERSION)]);
-  });
+  return row?.value !== String(FACTS_VERSION);
+}
+
+/** Clear the stats and mark every trace unsettled, in batches that commit; a restart starts it again and the version is written last. */
+export async function resetFacts(db: Db): Promise<void> {
+  await db.query(`TRUNCATE ${STATS_TABLES.join(", ")}`);
+  const mark = "UPDATE traces SET settled_ms = 0, contrib = NULL WHERE (project_id, trace_id) > ($1, $2)";
+  let after = ["", ""];
+  for (;;) {
+    const [end] = await db.query<{ project_id: string; trace_id: string }>(
+      `SELECT project_id, trace_id FROM traces WHERE (project_id, trace_id) > ($1, $2) ORDER BY project_id, trace_id OFFSET ${RESET_BATCH - 1} LIMIT 1`,
+      after,
+    );
+    if (!end) break;
+    await db.query(`${mark} AND (project_id, trace_id) <= ($3, $4)`, [...after, end.project_id, end.trace_id]);
+    after = [end.project_id, end.trace_id];
+  }
+  await db.query(mark, after);
+  await db.query("INSERT INTO scale_meta (key, value) VALUES ('facts', $1) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value", [String(FACTS_VERSION)]);
+}
+
+/** When the facts version changed, clear the stats so settling rebuilds them. Returns true when it did. */
+export async function checkFactsVersion(db: Db): Promise<boolean> {
+  if (!(await factsStale(db))) return false;
+  await resetFacts(db);
   return true;
 }
