@@ -1,9 +1,11 @@
 import type { ServiceInfo } from "@wizeworks/lens-core";
 import type { Ctx } from "../app.js";
+import { joinScope } from "../auth/join-scope.js";
 import { principalOf, type ProjectAccess, requireProject } from "../auth/principal.js";
 import { fail, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
-import { countRows, environmentsOf, getTrace, listServices, queryTraces, type TraceQuery } from "../repo/trace-read.js";
+import { getJoinedTrace } from "../repo/trace-join.js";
+import { countRows, environmentsOf, listServices, queryTraces, type TraceQuery } from "../repo/trace-read.js";
 
 const DAY_MS = 86_400_000;
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -54,9 +56,11 @@ async function traces(ctx: Ctx): Promise<void> {
   sendJson(ctx.res, 200, full ? list : list.map(({ spans: _s, logs: _l, remotes: _r, ...summary }) => summary));
 }
 
+// One trace, with its parts from the other projects the caller may read in the same organization (`join=false`: this project only).
 async function trace(ctx: Ctx): Promise<void> {
-  const { project } = await projectOf(ctx);
-  const t = await getTrace(ctx.app.db, project.id, ctx.params.id!);
+  const access = await projectOf(ctx);
+  const scope = ctx.url.searchParams.get("join") === "false" ? [access.project.id] : await joinScope(ctx.app.db, access);
+  const t = await getJoinedTrace(ctx.app.db, access.project.id, scope, ctx.params.id!);
   if (!t) fail(404, "Trace not found.");
   sendJson(ctx.res, 200, t);
 }

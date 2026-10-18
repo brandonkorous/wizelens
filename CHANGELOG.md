@@ -2,6 +2,16 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Traces across projects
+
+- **A trace that crosses projects opens whole in the cloud**: a front end in one project and the shared API it calls in
+  another show as one trace. `api/traces/{id}` adds the parts from the other projects the caller may read, in the same
+  organization only. A read key gets only its own projects. `join=false` turns it off. Lists, stats, and alerts stay per project.
+- MCP `get_trace` and share links join the same way: a read key as far as its projects, a share link as far as its maker
+  may read when it is opened (only the shared project once the maker leaves the organization).
+
 ## [0.3.0-alpha.2] — Send-only in production
 
 Ready for production: the add-ons send to the cloud and serve nothing anyone can read, and cloud sign-in moves to Better Auth.

@@ -58,6 +58,12 @@ person then gets their own organization. Org changes, member changes, keys, shar
 
 Only a hash of each key is stored. The secret is shown once, when you make the key.
 
+## Traces across projects
+
+Many front ends often share one API. Put each app in the project of the team that owns it: a trace that goes from a front
+end in one project to the API in another still opens as one trace. The cloud adds the parts from the other projects you
+may read, in the same organization only. A read key gets only its own projects. Lists, stats, and alerts stay per project.
+
 ## History
 
 Pages are computed on the server from stats tables, never from a sample of traces, so 7- and 30-day pages answer in well
@@ -79,7 +85,8 @@ Webhook URLs must be https and may not point at private addresses, unless the cl
 ## Share links
 
 A share link opens one trace, read-only, for anyone with the link, for 1 to 30 days. You can revoke it. Nothing else is
-reachable with it.
+reachable with it. It shows the parts of the trace its maker may read; after the maker leaves the organization, only the
+shared project's part.
 
 ## Options
 
