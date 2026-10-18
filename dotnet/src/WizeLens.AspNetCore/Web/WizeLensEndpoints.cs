@@ -28,6 +28,7 @@ internal static partial class WizeLensEndpoints
         group.MapGet("api/info", ServiceInfo.Create);
         group.MapGet("api/traces", ListTraces);
         group.MapGet("api/traces/{traceId}", GetTraceAsync);
+        SearchEndpoints.Map(group);
         if (options.MetricsOn) group.MapGet("api/metrics/points", (MetricStore metrics, double? since) => Results.Json(new { points = metrics.Since(since) }, WizeLensJson.Options));
         MapUi(group);
         if (options.EnableMcp) endpoints.MapMcp(options.NormalizedBasePath + "/mcp");

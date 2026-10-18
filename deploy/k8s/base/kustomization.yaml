@@ -7,6 +7,8 @@ namespace: wizelens
 resources:
   - namespace.yaml
   - cloud.yaml
+  - clickhouse.yaml
+  - clickhouse-backup.yaml
   - site.yaml
 labels:
   - pairs: { app.kubernetes.io/part-of: wizelens }

@@ -4,6 +4,7 @@ import { remoteOf, sanitizeClientLog, sanitizeClientSpan } from "./client-spans.
 import { firstHeader, readJson, sendJson, setCors } from "./http-util.js";
 import { handleMcp, type McpDataSource } from "./mcp.js";
 import type { MetricStore } from "./metrics/store.js";
+import { sendSearch, sendSuggest } from "./search-api.js";
 import type { TraceStore } from "./store.js";
 import type { Req } from "./types.js";
 import { serveUi } from "./ui.js";
@@ -80,6 +81,8 @@ async function handleApi(d: ApiDeps, sub: string, method: string, req: Req, res:
   const traceMatch = /^api\/traces\/([0-9a-f]{32})$/.exec(sub);
   if (traceMatch && method === "GET") return sendTrace(d, traceMatch[1]!, req, res, url);
   if (sub === CLIENT_SPANS && method === "POST") return receiveClientSpans(d, req, res);
+  if (sub === "api/search" && method === "GET") return sendSearch(d.store, url.searchParams, res, d.info().environment);
+  if (sub === "api/search/suggest" && method === "GET") return sendSuggest(d.store, url.searchParams, res, d.info().environment);
   if (sub === "api/metrics/points" && method === "GET" && d.metrics) {
     const since = Number(url.searchParams.get("since"));
     return sendJson(res, 200, { points: d.metrics.since(Number.isFinite(since) ? since : 0) });

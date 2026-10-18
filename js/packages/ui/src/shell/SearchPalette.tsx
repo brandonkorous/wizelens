@@ -1,11 +1,13 @@
 import { type KeyboardEvent, useEffect, useMemo, useState } from "react";
-import { Box, FileSearch, List, Search, Share2, TriangleAlert } from "lucide-react";
+import { Box, FileSearch, FileText, List, Search, Share2, TriangleAlert } from "lucide-react";
 import type { Trace } from "@wizeworks/lens-core";
+import { useHost, useRange } from "../data/host";
 import { navigate } from "../routes";
+import { usePaletteSearch } from "./paletteSearch";
 import { type HitKind, search } from "./searchIndex";
 import { NAV } from "./Sidebar";
 
-const ICONS: Record<HitKind, typeof Search> = { page: FileSearch, request: List, trace: Share2, error: TriangleAlert, service: Box };
+const ICONS: Record<HitKind, typeof Search> = { page: FileSearch, request: List, trace: Share2, error: TriangleAlert, service: Box, log: FileText, search: Search };
 
 /** Ctrl+K / Cmd+K opens search. */
 export function useSearchShortcut(open: () => void): void {
@@ -24,7 +26,11 @@ export function useSearchShortcut(open: () => void): void {
 export function SearchPalette({ traces, onClose }: { traces: readonly Trace[]; onClose: () => void }) {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
-  const hits = useMemo(() => search(traces, NAV, query), [traces, query]);
+  const server = useHost().has("search");
+  const [range] = useRange();
+  const remote = usePaletteSearch(query, range, server);
+  const local = useMemo(() => search(traces, NAV, query, server), [traces, query, server]);
+  const hits = useMemo(() => [...remote.slice(0, 1), ...local, ...remote.slice(1)], [remote, local]);
   const go = (i: number) => {
     const hit = hits[i];
     if (!hit) return;

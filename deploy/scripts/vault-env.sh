@@ -31,5 +31,16 @@ printf '%s' "$(read_secret DATABASE_ADMIN_URL)" > "$OUT/admin-url"
 printf '%s' "$(read_secret WIZELENS_APP_PASSWORD)" > "$OUT/app-password"
 [ -s "$OUT/admin-url" ] && [ -s "$OUT/app-password" ] || { echo "::error::DATABASE-ADMIN-URL or WIZELENS-APP-PASSWORD missing in $VAULT."; exit 1; }
 
+# ClickHouse (telemetry, scale mode). Terraform writes its password and the backup connection, so both are required.
+ch_password=$(read_secret WIZELENS_CLICKHOUSE_PASSWORD) || { echo "::error::WIZELENS-CLICKHOUSE-PASSWORD missing in $VAULT. Apply sparx.works terraform/envs/azure/wizelens-clickhouse.tf first."; exit 1; }
+printf 'CLICKHOUSE_PASSWORD=%s\n' "$ch_password" > "$OUT/clickhouse.env"
+printf '%s' "$(read_secret WIZELENS_BACKUP_BLOB_CONNECTION)" > "$OUT/backup-connection"
+[ -s "$OUT/backup-connection" ] || { echo "::error::WIZELENS-BACKUP-BLOB-CONNECTION missing in $VAULT."; exit 1; }
+# The cloud moves its telemetry to ClickHouse only once a person sets WIZELENS-CLICKHOUSE-ENABLED to "true", after copy-telemetry (README).
+if [ "$(read_secret WIZELENS_CLICKHOUSE_ENABLED || true)" = "true" ]; then
+  printf 'WIZELENS_CLOUD_CLICKHOUSE_URL=http://wizelens:%s@clickhouse:8123/wizelens\n' "$ch_password" >> "$OUT/cloud.env"
+  echo "scale mode: telemetry in ClickHouse"
+fi
+
 # The fingerprint that restarts the cloud pod when a secret changes.
 sha256sum "$OUT/cloud.env" | cut -c1-16 > "$OUT/env-hash"

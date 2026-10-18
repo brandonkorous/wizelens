@@ -1,8 +1,7 @@
 import { alertBreached, alignNow, alertContext, alertMessage, alertPage, computePage, metricAlertMessage, metricAlertUnit, metricAlertValueOf } from "@wizeworks/lens-core";
 import type { CloudApp } from "../app.js";
 import { addEvent, type AlertRule, enabledRules, saveEvaluation } from "../repo/alerts.js";
-import { loadMetricAlertData } from "../repo/metric-read.js";
-import { cloudExecutor, projectRetentionMs } from "../scale-exec.js";
+import { projectRetentionMs } from "../scale-exec.js";
 import { alertMail } from "../mail/templates.js";
 import { memberEmails } from "../repo/users.js";
 import { deliver, type Notice, type Outbox } from "./notify.js";
@@ -27,7 +26,7 @@ async function noticeOf(app: CloudApp, rule: AlertRule, state: Notice["state"], 
 async function measureMetric(app: CloudApp, rule: AlertRule, now: number) {
   const at = alignNow(now);
   const q = { projectId: rule.projectId, env: rule.env || undefined, service: rule.metricService || undefined };
-  const data = await loadMetricAlertData(app.db, q, rule.metricName, { from: at - rule.windowMs, to: at }, at);
+  const data = await app.telemetry.metricAlertData(q, rule.metricName, { from: at - rule.windowMs, to: at }, at);
   const stat = rule.metricStat || "avg";
   return { value: metricAlertValueOf(data, stat), sample: data.series[0], stat };
 }
@@ -43,7 +42,7 @@ async function messageOf(app: CloudApp, rule: AlertRule, state: Notice["state"],
 async function measure(app: CloudApp, rule: AlertRule, now: number): Promise<number | null> {
   if (rule.metric === "metric") return (await measureMetric(app, rule, now)).value;
   const retentionMs = await projectRetentionMs(app.db, rule.projectId, app.config.retentionDays);
-  return computePage(alertPage(rule.metric), alertContext(rule.windowMs, alignNow(now)), cloudExecutor(app.db, rule.projectId, retentionMs, rule.env || undefined));
+  return computePage(alertPage(rule.metric), alertContext(rule.windowMs, alignNow(now)), app.telemetry.executor(rule.projectId, retentionMs, rule.env || undefined));
 }
 
 /** Webhooks, Slack, and email. Email goes only to addresses that still belong to confirmed members of the organization. */

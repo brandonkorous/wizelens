@@ -5,8 +5,6 @@ import { requireProject } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson, str } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
-import { getJoinedTrace } from "../repo/trace-join.js";
-import { getTrace } from "../repo/trace-read.js";
 
 const DAY_MS = 86_400_000;
 
@@ -25,7 +23,7 @@ async function create(ctx: Ctx): Promise<void> {
   const traceId = str(body, "traceId");
   const days = Number(body.days ?? 7);
   if (!Number.isInteger(days) || days < 1 || days > 30) fail(400, "A link lasts 1 to 30 days.");
-  if (!(await getTrace(ctx.app.db, project.id, traceId))) fail(404, "Trace not found.");
+  if (!(await ctx.app.telemetry.trace(project.id, traceId))) fail(404, "Trace not found.");
   const now = ctx.app.config.now();
   const token = newToken("share");
   await ctx.app.db.query("INSERT INTO shares (id, project_id, trace_id, token_hash, created_by, created_ms, expires_ms) VALUES ($1, $2, $3, $4, $5, $6, $7)", [
@@ -70,7 +68,7 @@ async function open(ctx: Ctx): Promise<void> {
     [hashToken(ctx.params.token!), now],
   );
   const scope = row ? await makerScope(db, row.created_by, row.org_id, row.project_id) : [];
-  const trace = row ? await getJoinedTrace(db, row.project_id, scope, row.trace_id) : undefined;
+  const trace = row ? await ctx.app.telemetry.joinedTrace(row.project_id, scope, row.trace_id) : undefined;
   if (!row || !trace) return fail(404, "This link is not valid any more.");
   sendJson(ctx.res, 200, { trace, expiresMs: row.expires_ms });
 }

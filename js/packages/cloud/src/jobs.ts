@@ -1,7 +1,5 @@
 import { evaluateAll } from "./alerts/evaluate.js";
 import type { CloudApp } from "./app.js";
-import { pruneByRetention, pruneMetricsByRetention } from "./repo/trace-write.js";
-import { pruneRollups, settleCloud } from "./settle.js";
 import { pruneAuthRows } from "./repo/auth-prune.js";
 import { sendDigests } from "./notify/digest.js";
 import { checkHealth } from "./notify/health.js";
@@ -34,13 +32,9 @@ function every(name: string, everyMs: number, job: () => Promise<unknown>): () =
 export function startJobs(app: CloudApp): () => void {
   const now = app.config.now;
   const stops = [
-    every("retention", HOUSEKEEPING_MS, async () => {
-      while ((await pruneByRetention(app.db, now())) > 0);
-      await pruneMetricsByRetention(app.db, now());
-      await pruneRollups(app.db, now(), true);
-    }),
-    every("settle", SETTLE_MS, () => settleCloud(app.db, now(), { defaultRetentionDays: app.config.retentionDays })),
-    every("rollups", ROLLUP_PRUNE_MS, () => pruneRollups(app.db, now())),
+    every("retention", HOUSEKEEPING_MS, () => app.telemetry.prune(now())),
+    every("settle", SETTLE_MS, () => app.telemetry.settle(now(), { defaultRetentionDays: app.config.retentionDays })),
+    every("rollups", ROLLUP_PRUNE_MS, () => app.telemetry.pruneRollups(now())),
     every("sessions", HOUSEKEEPING_MS, () => pruneAuthRows(app.db)),
     every("alerts", app.config.alertIntervalMs, () => evaluateAll(app)),
     every("team notices", NOTICE_MS, async () => {

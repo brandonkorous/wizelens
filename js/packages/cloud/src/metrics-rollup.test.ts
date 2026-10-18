@@ -18,6 +18,7 @@ import { createProject } from "./repo/projects.js";
 import { writeBatch } from "./repo/trace-write.js";
 import { projectMetrics } from "./routes/metrics.js";
 import { seedOrg, testDb } from "./test/db.js";
+import { pgTelemetry } from "./telemetry/pg-store.js";
 
 const RANGES = Object.keys(TIME_RANGES) as TimeRange[];
 let db: Db;
@@ -55,7 +56,7 @@ describe("cloud metric rollups in Postgres", () => {
       const points = metricScenario(range, METRIC_NOW, 3);
       const id = await projectWith(points);
       for (const params of paramSets(points)) {
-        const sql = await projectMetrics(db, id, range, params, { now: METRIC_NOW + 4_000, env: "prod" });
+        const sql = await projectMetrics(pgTelemetry(db), id, range, params, { now: METRIC_NOW + 4_000, env: "prod" });
         const memory = metricsModelOf(metricDataOf(points, range, METRIC_NOW, params, { tiers: true }));
         expect(diffClose(sql, memory), `${range} ${JSON.stringify(params)}`).toEqual([]);
       }

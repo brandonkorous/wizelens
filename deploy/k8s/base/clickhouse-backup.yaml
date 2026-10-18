@@ -1,0 +1,39 @@
+# Nightly full backup of the ClickHouse database to Azure Blob (account and 14-day expiry in sparx.works terraform/envs/azure/wizelens-clickhouse.tf).
+# ClickHouse writes the backup itself (BACKUP ... TO AzureBlobStorage), so this job only sends the statement. Restore steps: deploy/README.md.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: clickhouse-backup
+spec:
+  schedule: "17 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata: { labels: { app: clickhouse-backup } }
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: backup
+              image: curlimages/curl:8.11.1
+              env:
+                - name: CLICKHOUSE_PASSWORD
+                  valueFrom: { secretKeyRef: { name: clickhouse-env, key: CLICKHOUSE_PASSWORD } }
+                - name: AZURE_CONNECTION
+                  valueFrom: { secretKeyRef: { name: clickhouse-backup, key: AZURE_CONNECTION } }
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  name="wizelens/$(date -u +%Y-%m-%d)"
+                  printf "BACKUP DATABASE wizelens TO AzureBlobStorage('%s', 'clickhouse-backups', '%s')" "$AZURE_CONNECTION" "$name" |
+                    curl -sS --fail-with-body --max-time 7200 -u "wizelens:$CLICKHOUSE_PASSWORD" --data-binary @- http://clickhouse:8123/
+                  echo "backup written: $name"
+              resources:
+                requests: { cpu: 10m, memory: 16Mi }
+                limits: { memory: 64Mi }
+              securityContext: { runAsNonRoot: true, runAsUser: 100, allowPrivilegeEscalation: false }

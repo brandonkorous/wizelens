@@ -8,7 +8,7 @@ import type { WizeAuth } from "./auth/auth.js";
 import { authHandler } from "./auth/bridge.js";
 import { AUTH_BASE_PATH } from "./auth/options.js";
 import { wireAuth } from "./auth/wire.js";
-import { type CloudOptions, resolveConfig } from "./config.js";
+import { type CloudConfig, type CloudOptions, resolveConfig } from "./config.js";
 import { openDb } from "./db/db.js";
 import { migrate } from "./db/migrate.js";
 import { HttpError, sendJson } from "./http/http.js";
@@ -19,7 +19,7 @@ import { createMailer } from "./mail/mailer.js";
 import { stopRoute } from "./mail/stop-route.js";
 import { UNSUBSCRIBE_PATH } from "./mail/unsubscribe.js";
 import { RESEND_WEBHOOK_PATH, resendWebhook } from "./mail/webhook.js";
-import { checkFactsVersion } from "./settle.js";
+import { openTelemetry } from "./telemetry/index.js";
 import { allRoutes } from "./routes/index.js";
 import { ingestBatch, ingestOtlp } from "./routes/ingest.js";
 
@@ -83,12 +83,19 @@ function onError(err: unknown, res: ServerResponse): void {
   sendJson(res, 500, { error: "Something went wrong on the server." });
 }
 
+/** The database (migrated) and the telemetry store (its stats rebuilt when the facts version changed). */
+async function openStores(config: CloudConfig) {
+  const db = await openDb(config.database);
+  await migrate(db);
+  const telemetry = await openTelemetry(config, db);
+  await telemetry.checkFactsVersion();
+  return { db, telemetry };
+}
+
 /** Open the database, bring its schema up to date, and build the server. Call `listen()` to start. */
 export async function createCloud(options: CloudOptions = {}): Promise<Cloud> {
   const config = resolveConfig(options);
-  const db = await openDb(config.database);
-  await migrate(db);
-  await checkFactsVersion(db);
+  const { db, telemetry } = await openStores(config);
   const mailer = await createMailer(config, db);
   const wiring = await wireAuth(db, config, mailer);
   let auth: WizeAuth | undefined;
@@ -96,6 +103,7 @@ export async function createCloud(options: CloudOptions = {}): Promise<Cloud> {
   let listenUrl = config.publicUrl ?? `http://localhost:${config.port}`;
   const app: CloudApp = {
     db,
+    telemetry,
     config,
     version: CLOUD_VERSION,
     startedMs: config.now(),
@@ -130,6 +138,7 @@ export async function createCloud(options: CloudOptions = {}): Promise<Cloud> {
       server.closeAllConnections?.();
       await new Promise<void>((resolve) => server.close(() => resolve()));
       await mailer.close();
+      await telemetry.close();
       await db.close();
     },
   };

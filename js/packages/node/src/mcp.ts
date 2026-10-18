@@ -4,6 +4,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { registerFindTools } from "./mcp-find.js";
 import { registerMetricTools } from "./mcp-metrics.js";
 import { type Audit, type McpDataSource } from "./mcp-shared.js";
+import { registerSearchTools } from "./mcp-search.js";
 import { registerTraceTools } from "./mcp-traces.js";
 
 export type { McpDataSource } from "./mcp-shared.js";
@@ -15,6 +16,7 @@ function createServer(data: McpDataSource): McpServer {
   registerTraceTools(server, data, audit);
   registerFindTools(server, data, audit);
   registerMetricTools(server, data, audit);
+  registerSearchTools(server, data, audit);
   return server;
 }
 

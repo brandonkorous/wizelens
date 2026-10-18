@@ -50,6 +50,7 @@ function mcpSource(options: WizeLensOptions, store: TraceStore, getTrace: McpDat
     all: () => store.all(),
     get: getTrace,
     audit: options.audit ?? ((line: string) => console.info(line)),
+    env: process.env.NODE_ENV || "development",
     ...mcpMetrics(metrics),
   };
 }

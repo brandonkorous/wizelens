@@ -69,7 +69,7 @@ async function sendOne(app: CloudApp, who: Person, p: ProjectRow, period: Digest
   if (!(await claim(app, who.id, p.id, period, key))) return;
   try {
     const id = `${p.id}:${period}`;
-    if (!cache.has(id)) cache.set(id, digestData(app.db, p.id, p.retention_days, period, app.config.now()));
+    if (!cache.has(id)) cache.set(id, digestData(app.db, app.telemetry, p.id, p.retention_days, period, app.config.now()));
     const data = await cache.get(id)!;
     if (!data || data.empty) return;
     const links = { project: `${app.baseUrl()}/_wizelens/#/?project=${encodeURIComponent(p.id)}`, stop: stopUrl(app, who.id, { projectId: p.id, period }) };

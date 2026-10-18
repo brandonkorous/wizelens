@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { optionsFromArgs, USAGE } from "./cli-args.js";
 import { type Cloud, CLOUD_VERSION, createCloud } from "./server.js";
+import { copyMain } from "./copy-cli.js";
 
 function notes(cloud: Cloud): string[] {
   const { app } = cloud;
@@ -15,6 +16,7 @@ function notes(cloud: Cloud): string[] {
 }
 
 async function main(): Promise<void> {
+  if (process.argv[2] === "copy-telemetry") return copyMain(process.argv.slice(3));
   const options = optionsFromArgs(process.argv.slice(2), process.env);
   if (options === "help") return void process.stdout.write(USAGE);
   const cloud = await createCloud(options);
@@ -27,6 +29,7 @@ async function main(): Promise<void> {
       `  Add-ons     WIZELENS_HUB=${url}  WIZELENS_HUB_TOKEN=<ingest key>`,
       `  OTLP/HTTP   OTEL_EXPORTER_OTLP_ENDPOINT=${url}  (header Authorization=Bearer <ingest key>)`,
       `  Database    ${db}`,
+      `  Telemetry   ${cloud.app.telemetry.kind === "clickhouse" ? "ClickHouse" : "the database above"}`,
       `  Mail        ${{ resend: "Resend", smtp: "SMTP", test: "test sender", log: "log only" }[cloud.app.mailer.via]}`,
       ...notes(cloud),
     ].join("\n"),

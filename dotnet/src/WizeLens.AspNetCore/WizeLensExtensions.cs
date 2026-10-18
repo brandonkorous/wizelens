@@ -59,7 +59,8 @@ public static class WizeLensExtensions
             services.AddMcpServer(o => o.ServerInfo = new() { Name = "wizelens", Version = typeof(WizeLensExtensions).Assembly.GetName().Version?.ToString(3) ?? "0.0.0" })
                 .WithHttpTransport(o => o.Stateless = true)
                 .WithTools<WizeLensMcpTools>()
-                .WithTools<WizeLensMetricTools>();
+                .WithTools<WizeLensMetricTools>()
+                .WithTools<WizeLensSearchTools>();
         }
 
         return services;

@@ -95,7 +95,7 @@ const TABLES: Record<ListNeed["table"], TableSql> = {
   },
 };
 
-function requestItemOfRow(r: Row): RequestItem {
+export function requestItemOfRow(r: Row): RequestItem {
   return {
     traceId: String(r.trace_id), startMs: num(r.start_ms), method: String(r.method), path: String(r.path), endpoint: String(r.endpoint),
     status: numOrNull(r.status), aborted: boolOf(r.aborted), durationMs: num(r.duration_ms), serverMs: numOrNull(r.server_ms), dbMs: num(r.db_ms),
@@ -106,12 +106,12 @@ function requestItemOfRow(r: Row): RequestItem {
   };
 }
 
-function traceItemOfRow(r: Row): TraceItem {
+export function traceItemOfRow(r: Row): TraceItem {
   const health = strOrNull(r.health) as Health | null;
   return { traceId: String(r.trace_id), path: String(r.path), durationMs: num(r.duration_ms), health, status: String(r.status) as Trace["status"], services: servicesOf(String(r.services)), startMs: num(r.start_ms), spanCount: num(r.span_count), slow: boolOf(r.slow) };
 }
 
-function logRowOfRow(r: Row): LogRow {
+export function logRowOfRow(r: Row): LogRow {
   const traceId = String(r.trace_id);
   return {
     key: `${traceId}:${num(r.idx)}`, traceId, traceName: String(r.trace_name), spanId: strOrNull(r.span_id), timeMs: num(r.time_ms), level: String(r.level) as LogLevel,

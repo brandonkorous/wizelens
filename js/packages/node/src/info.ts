@@ -26,7 +26,7 @@ export function buildInfo(i: InfoInputs): ServiceInfo {
   const o = i.options;
   return {
     mode: "in-app",
-    capabilities: [...IN_APP_CAPABILITIES, ...(i.metrics ? (["metrics"] as const) : [])],
+    capabilities: [...IN_APP_CAPABILITIES, "search", ...(i.metrics ? (["metrics"] as const) : [])],
     service: o.serviceName,
     version: VERSION,
     runtime: `node ${process.version}`,

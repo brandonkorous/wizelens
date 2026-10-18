@@ -54,6 +54,52 @@ The cloud runs one pod with `Recreate`, because migrations and alert jobs run in
       Store its signing secret: `az keyvault secret set --vault-name kv-wizelens-prod-cus --name WIZELENS-CLOUD-RESEND-WEBHOOK-SECRET --value <whsec_...>`
    4. Run Deploy from the Actions tab. The log line `Mail        Resend` shows it is on.
 
+## ClickHouse (telemetry in scale mode)
+
+Spans, logs, metrics, and their stats can live in ClickHouse (`k8s/base/clickhouse.yaml`), so heavy searches never slow sign-in, keys, or alerts. Postgres keeps accounts and settings. The plan and the reasons are in `docs/SEARCH-PLAN.md`.
+
+| Piece | Where |
+| --- | --- |
+| Password, backup storage account (14-day expiry) | `sparx.works/terraform/envs/azure/wizelens-clickhouse.tf` |
+| StatefulSet (one node, 64 Gi premium disk), config, NetworkPolicy | `k8s/base/clickhouse.yaml` |
+| Nightly `BACKUP DATABASE` to Azure Blob, 03:17 UTC | `k8s/base/clickhouse-backup.yaml` |
+| The switch | the vault secret `WIZELENS-CLICKHOUSE-ENABLED` (`true` = scale mode) |
+
+### Switching on, in this order
+
+1. **Apply the sparx.works change** (its release, or `terraform apply` in `terraform/envs/azure`). It writes `WIZELENS-CLICKHOUSE-PASSWORD` and `WIZELENS-BACKUP-BLOB-CONNECTION`.
+2. **Deploy WizeLens** (merge to `main`). ClickHouse starts, empty. The cloud still keeps telemetry in Postgres.
+3. **Copy the existing telemetry**, once, from the cloud pod (Postgres and ClickHouse are only reachable inside the cluster):
+
+   ```bash
+   PW=$(az keyvault secret show --vault-name kv-wizelens-prod-cus --name WIZELENS-CLICKHOUSE-PASSWORD --query value -o tsv)
+   kubectl -n wizelens exec deploy/cloud -- sh -c \
+     "node /app/dist/cli.js copy-telemetry --database \"\$DATABASE_URL\" --clickhouse 'http://wizelens:$PW@clickhouse:8123/wizelens'"
+   ```
+
+   Projects already copied are skipped, so a second run is safe.
+4. **Turn it on:** `az keyvault secret set --vault-name kv-wizelens-prod-cus --name WIZELENS-CLICKHOUSE-ENABLED --value true`, then run Deploy from the Actions tab. The log shows `Telemetry   ClickHouse`, and the copied traces settle within minutes.
+5. **Check:** the Search page and a 30-day Overview answer, and `kubectl -n wizelens logs deploy/cloud` has no ClickHouse errors.
+
+To go back, set the secret to `false` and deploy: the cloud reads Postgres again (without what arrived while ClickHouse was on).
+
+### Backups and restore
+
+Check last night's backup: `kubectl -n wizelens get jobs -l app=clickhouse-backup`. To restore one (it replaces the database):
+
+```bash
+PW=$(az keyvault secret show --vault-name kv-wizelens-prod-cus --name WIZELENS-CLICKHOUSE-PASSWORD --query value -o tsv)
+CONN=$(az keyvault secret show --vault-name kv-wizelens-prod-cus --name WIZELENS-BACKUP-BLOB-CONNECTION --query value -o tsv)
+kubectl -n wizelens scale deploy/cloud --replicas=0
+kubectl -n wizelens exec statefulset/clickhouse -- clickhouse-client -u wizelens --password "$PW" --query \
+  "DROP DATABASE IF EXISTS wizelens SYNC; RESTORE DATABASE wizelens FROM AzureBlobStorage('$CONN', 'clickhouse-backups', 'wizelens/2026-10-19')"
+kubectl -n wizelens scale deploy/cloud --replicas=1
+```
+
+### Size
+
+ClickHouse asks for 250m CPU and 2 Gi, and may use up to 4 Gi. It runs on the `user` node pool (sparx.works `main.tf`). If it needs more, grow `node_size` there and the limit here together. Grow the disk by raising the claim: `kubectl -n wizelens patch pvc data-clickhouse-0 -p '{"spec":{"resources":{"requests":{"storage":"128Gi"}}}}'`.
+
 ## Secrets in `kv-wizelens-prod-cus`
 
 Vault names cannot hold `_`, so `DATABASE_URL` is stored as `DATABASE-URL`.
@@ -62,6 +108,8 @@ Vault names cannot hold `_`, so `DATABASE_URL` is stored as `DATABASE-URL`.
 | --- | --- | --- |
 | `DATABASE-URL`, `DATABASE-ADMIN-URL`, `WIZELENS-APP-PASSWORD`, `WIZELENS-CLOUD-SETUP-TOKEN` | yes | Terraform |
 | `WIZELENS-CLOUD-AUTH-SECRET` | yes | Terraform, once; never changed after that |
+| `WIZELENS-CLICKHOUSE-PASSWORD`, `WIZELENS-BACKUP-BLOB-CONNECTION` | yes | Terraform (`wizelens-clickhouse.tf`) |
+| `WIZELENS-CLICKHOUSE-ENABLED` | no: without `true`, telemetry stays in Postgres | a person, after copying (see ClickHouse above) |
 | `WIZELENS-CLOUD-RESEND-API-KEY` | no: without it (or SMTP) there is no password reset, invite, or alert email | a person |
 | `WIZELENS-CLOUD-RESEND-WEBHOOK-SECRET` | no: without it, addresses that bounce keep getting mail | a person |
 | `WIZELENS-CLOUD-SMTP-URL` | no: SMTP in place of Resend (never set both) | a person |

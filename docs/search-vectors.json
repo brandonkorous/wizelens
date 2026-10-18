@@ -1,0 +1,1740 @@
+{
+ "about": "Shared search test cases: the TS and C# suites both run them. Regenerate the parse ASTs only on purpose.",
+ "parse": [
+  {
+   "q": "service:api status:>=500 duration:>1s @user.id:42 \"connection reset\" -path:/health",
+   "text": "service:api status:>=500 duration:>1000ms @user.id:42 \"connection reset\" -path:/health",
+   "ast": {
+    "type": "and",
+    "items": [
+     {
+      "type": "field",
+      "field": "service",
+      "cmp": "=",
+      "value": {
+       "type": "string",
+       "value": "api"
+      }
+     },
+     {
+      "type": "field",
+      "field": "status",
+      "cmp": ">=",
+      "value": {
+       "type": "number",
+       "value": 500
+      }
+     },
+     {
+      "type": "field",
+      "field": "duration",
+      "cmp": ">",
+      "value": {
+       "type": "number",
+       "value": 1000
+      }
+     },
+     {
+      "type": "attr",
+      "key": "user.id",
+      "cmp": "=",
+      "value": {
+       "type": "string",
+       "value": "42"
+      }
+     },
+     {
+      "type": "text",
+      "value": "connection reset"
+     },
+     {
+      "type": "not",
+      "item": {
+       "type": "field",
+       "field": "path",
+       "cmp": "=",
+       "value": {
+        "type": "string",
+        "value": "/health"
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "q": "@db.system:postgres @http.route:/orders/* (level:error OR level:fatal)",
+   "text": "@db.system:postgres @http.route:/orders/* (level:error OR level:critical)",
+   "ast": {
+    "type": "and",
+    "items": [
+     {
+      "type": "attr",
+      "key": "db.system",
+      "cmp": "=",
+      "value": {
+       "type": "string",
+       "value": "postgres"
+      }
+     },
+     {
+      "type": "attr",
+      "key": "http.route",
+      "cmp": "=",
+      "value": {
+       "type": "pattern",
+       "pieces": [
+        "/orders/",
+        null
+       ]
+      }
+     },
+     {
+      "type": "or",
+      "items": [
+       {
+        "type": "field",
+        "field": "level",
+        "cmp": "=",
+        "value": {
+         "type": "level",
+         "value": "error"
+        }
+       },
+       {
+        "type": "field",
+        "field": "level",
+        "cmp": "=",
+        "value": {
+         "type": "level",
+         "value": "critical"
+        }
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "q": "timeout",
+   "text": "timeout",
+   "ast": {
+    "type": "text",
+    "value": "timeout"
+   }
+  },
+  {
+   "q": "\"connection reset\"",
+   "text": "\"connection reset\"",
+   "ast": {
+    "type": "text",
+    "value": "connection reset"
+   }
+  },
+  {
+   "q": "a b c",
+   "text": "a b c",
+   "ast": {
+    "type": "and",
+    "items": [
+     {
+      "type": "text",
+      "value": "a"
+     },
+     {
+      "type": "text",
+      "value": "b"
+     },
+     {
+      "type": "text",
+      "value": "c"
+     }
+    ]
+   }
+  },
+  {
+   "q": "a AND b",
+   "text": "a b",
+   "ast": {
+    "type": "and",
+    "items": [
+     {
+      "type": "text",
+      "value": "a"
+     },
+     {
+      "type": "text",
+      "value": "b"
+     }
+    ]
+   }
+  },
+  {
+   "q": "a OR b c",
+   "text": "a OR (b c)",
+   "ast": {
+    "type": "or",
+    "items": [
+     {
+      "type": "text",
+      "value": "a"
+     },
+     {
+      "type": "and",
+      "items": [
+       {
+        "type": "text",
+        "value": "b"
+       },
+       {
+        "type": "text",
+        "value": "c"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "q": "(a OR b) c",
+   "text": "(a OR b) c",
+   "ast": {
+    "type": "and",
+    "items": [
+     {
+      "type": "or",
+      "items": [
+       {
+        "type": "text",
+        "value": "a"
+       },
+       {
+        "type": "text",
+        "value": "b"
+       }
+      ]
+     },
+     {
+      "type": "text",
+      "value": "c"
+     }
+    ]
+   }
+  },
+  {
+   "q": "NOT (a b)",
+   "text": "NOT (a b)",
+   "ast": {
+    "type": "not",
+    "item": {
+     "type": "and",
+     "items": [
+      {
+       "type": "text",
+       "value": "a"
+      },
+      {
+       "type": "text",
+       "value": "b"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "q": "NOT a",
+   "text": "-a",
+   "ast": {
+    "type": "not",
+    "item": {
+     "type": "text",
+     "value": "a"
+    }
+   }
+  },
+  {
+   "q": "-(a OR b)",
+   "text": "NOT (a OR b)",
+   "ast": {
+    "type": "not",
+    "item": {
+     "type": "or",
+     "items": [
+      {
+       "type": "text",
+       "value": "a"
+      },
+      {
+       "type": "text",
+       "value": "b"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "q": "-a -b",
+   "text": "-a -b",
+   "ast": {
+    "type": "and",
+    "items": [
+     {
+      "type": "not",
+      "item": {
+       "type": "text",
+       "value": "a"
+      }
+     },
+     {
+      "type": "not",
+      "item": {
+       "type": "text",
+       "value": "b"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "q": "NOT NOT a",
+   "text": "NOT -a",
+   "ast": {
+    "type": "not",
+    "item": {
+     "type": "not",
+     "item": {
+      "type": "text",
+      "value": "a"
+     }
+    }
+   }
+  },
+  {
+   "q": "status:500",
+   "text": "status:500",
+   "ast": {
+    "type": "field",
+    "field": "status",
+    "cmp": "=",
+    "value": {
+     "type": "number",
+     "value": 500
+    }
+   }
+  },
+  {
+   "q": "status:5xx",
+   "text": "status:5xx",
+   "ast": {
+    "type": "field",
+    "field": "status",
+    "cmp": "=",
+    "value": {
+     "type": "statusClass",
+     "value": 5
+    }
+   }
+  },
+  {
+   "q": "status:error",
+   "text": "status:error",
+   "ast": {
+    "type": "field",
+    "field": "status",
+    "cmp": "=",
+    "value": {
+     "type": "spanStatus",
+     "value": "error"
+    }
+   }
+  },
+  {
+   "q": "status:OK",
+   "text": "status:ok",
+   "ast": {
+    "type": "field",
+    "field": "status",
+    "cmp": "=",
+    "value": {
+     "type": "spanStatus",
+     "value": "ok"
+    }
+   }
+  },
+  {
+   "q": "status:>=400",
+   "text": "status:>=400",
+   "ast": {
+    "type": "field",
+    "field": "status",
+    "cmp": ">=",
+    "value": {
+     "type": "number",
+     "value": 400
+    }
+   }
+  },
+  {
+   "q": "status:200..299",
+   "text": "status:>=200 status:<=299",
+   "ast": {
+    "type": "and",
+    "items": [
+     {
+      "type": "field",
+      "field": "status",
+      "cmp": ">=",
+      "value": {
+       "type": "number",
+       "value": 200
+      }
+     },
+     {
+      "type": "field",
+      "field": "status",
+      "cmp": "<=",
+      "value": {
+       "type": "number",
+       "value": 299
+      }
+     }
+    ]
+   }
+  },
+  {
+   "q": "duration:250ms",
+   "text": "duration:250ms",
+   "ast": {
+    "type": "field",
+    "field": "duration",
+    "cmp": "=",
+    "value": {
+     "type": "number",
+     "value": 250
+    }
+   }
+  },
+  {
+   "q": "duration:1.5s",
+   "text": "duration:1500ms",
+   "ast": {
+    "type": "field",
+    "field": "duration",
+    "cmp": "=",
+    "value": {
+     "type": "number",
+     "value": 1500
+    }
+   }
+  },
+  {
+   "q": "duration:2m",
+   "text": "duration:120000ms",
+   "ast": {
+    "type": "field",
+    "field": "duration",
+    "cmp": "=",
+    "value": {
+     "type": "number",
+     "value": 120000
+    }
+   }
+  },
+  {
+   "q": "duration:>1s",
+   "text": "duration:>1000ms",
+   "ast": {
+    "type": "field",
+    "field": "duration",
+    "cmp": ">",
+    "value": {
+     "type": "number",
+     "value": 1000
+    }
+   }
+  },
+  {
+   "q": "duration:<=100",
+   "text": "duration:<=100ms",
+   "ast": {
+    "type": "field",
+    "field": "duration",
+    "cmp": "<=",
+    "value": {
+     "type": "number",
+     "value": 100
+    }
+   }
+  },
+  {
+   "q": "duration:1s..2s",
+   "text": "duration:>=1000ms duration:<=2000ms",
+   "ast": {
+    "type": "and",
+    "items": [
+     {
+      "type": "field",
+      "field": "duration",
+      "cmp": ">=",
+      "value": {
+       "type": "number",
+       "value": 1000
+      }
+     },
+     {
+      "type": "field",
+      "field": "duration",
+      "cmp": "<=",
+      "value": {
+       "type": "number",
+       "value": 2000
+      }
+     }
+    ]
+   }
+  },
+  {
+   "q": "duration:500us",
+   "text": "duration:0.5ms",
+   "ast": {
+    "type": "field",
+    "field": "duration",
+    "cmp": "=",
+    "value": {
+     "type": "number",
+     "value": 0.5
+    }
+   }
+  },
+  {
+   "q": "level:warn",
+   "text": "level:warn",
+   "ast": {
+    "type": "field",
+    "field": "level",
+    "cmp": "=",
+    "value": {
+     "type": "level",
+     "value": "warn"
+    }
+   }
+  },
+  {
+   "q": "level:>=warn",
+   "text": "level:>=warn",
+   "ast": {
+    "type": "field",
+    "field": "level",
+    "cmp": ">=",
+    "value": {
+     "type": "level",
+     "value": "warn"
+    }
+   }
+  },
+  {
+   "q": "level:warning",
+   "text": "level:warn",
+   "ast": {
+    "type": "field",
+    "field": "level",
+    "cmp": "=",
+    "value": {
+     "type": "level",
+     "value": "warn"
+    }
+   }
+  },
+  {
+   "q": "level:FATAL",
+   "text": "level:critical",
+   "ast": {
+    "type": "field",
+    "field": "level",
+    "cmp": "=",
+    "value": {
+     "type": "level",
+     "value": "critical"
+    }
+   }
+  },
+  {
+   "q": "error:true",
+   "text": "error:true",
+   "ast": {
+    "type": "field",
+    "field": "error",
+    "cmp": "=",
+    "value": {
+     "type": "bool",
+     "value": true
+    }
+   }
+  },
+  {
+   "q": "error:false",
+   "text": "error:false",
+   "ast": {
+    "type": "field",
+    "field": "error",
+    "cmp": "=",
+    "value": {
+     "type": "bool",
+     "value": false
+    }
+   }
+  },
+  {
+   "q": "trace:4bf92f35",
+   "text": "trace:4bf92f35",
+   "ast": {
+    "type": "field",
+    "field": "trace",
+    "cmp": "=",
+    "value": {
+     "type": "string",
+     "value": "4bf92f35"
+    }
+   }
+  },
+  {
+   "q": "span:00f067aa",
+   "text": "span:00f067aa",
+   "ast": {
+    "type": "field",
+    "field": "span",
+    "cmp": "=",
+    "value": {
+     "type": "string",
+     "value": "00f067aa"
+    }
+   }
+  },
+  {
+   "q": "path:/orders/*",
+   "text": "path:/orders/*",
+   "ast": {
+    "type": "field",
+    "field": "path",
+    "cmp": "=",
+    "value": {
+     "type": "pattern",
+     "pieces": [
+      "/orders/",
+      null
+     ]
+    }
+   }
+  },
+  {
+   "q": "path:*orders*",
+   "text": "path:*orders*",
+   "ast": {
+    "type": "field",
+    "field": "path",
+    "cmp": "=",
+    "value": {
+     "type": "pattern",
+     "pieces": [
+      null,
+      "orders",
+      null
+     ]
+    }
+   }
+  },
+  {
+   "q": "path:\"/a b\"*",
+   "text": "path:\"/a b\"*",
+   "ast": {
+    "type": "field",
+    "field": "path",
+    "cmp": "=",
+    "value": {
+     "type": "pattern",
+     "pieces": [
+      "/a b",
+      null
+     ]
+    }
+   }
+  },
+  {
+   "q": "path:*",
+   "text": "path:*",
+   "ast": {
+    "type": "field",
+    "field": "path",
+    "cmp": "=",
+    "value": {
+     "type": "exists"
+    }
+   }
+  },
+  {
+   "q": "@user.id:*",
+   "text": "@user.id:*",
+   "ast": {
+    "type": "attr",
+    "key": "user.id",
+    "cmp": "=",
+    "value": {
+     "type": "exists"
+    }
+   }
+  },
+  {
+   "q": "@http.response.status_code:>=500",
+   "text": "@http.response.status_code:>=500",
+   "ast": {
+    "type": "attr",
+    "key": "http.response.status_code",
+    "cmp": ">=",
+    "value": {
+     "type": "number",
+     "value": 500
+    }
+   }
+  },
+  {
+   "q": "@n:>=1.5",
+   "text": "@n:>=1.5",
+   "ast": {
+    "type": "attr",
+    "key": "n",
+    "cmp": ">=",
+    "value": {
+     "type": "number",
+     "value": 1.5
+    }
+   }
+  },
+  {
+   "q": "@n:<-2",
+   "text": "@n:<-2",
+   "ast": {
+    "type": "attr",
+    "key": "n",
+    "cmp": "<",
+    "value": {
+     "type": "number",
+     "value": -2
+    }
+   }
+  },
+  {
+   "q": "@x:\">5\"",
+   "text": "@x:\">5\"",
+   "ast": {
+    "type": "attr",
+    "key": "x",
+    "cmp": "=",
+    "value": {
+     "type": "string",
+     "value": ">5"
+    }
+   }
+  },
+  {
+   "q": "@k:\"a..b\"",
+   "text": "@k:\"a..b\"",
+   "ast": {
+    "type": "attr",
+    "key": "k",
+    "cmp": "=",
+    "value": {
+     "type": "string",
+     "value": "a..b"
+    }
+   }
+  },
+  {
+   "q": "foo\\:bar",
+   "text": "\"foo:bar\"",
+   "ast": {
+    "type": "text",
+    "value": "foo:bar"
+   }
+  },
+  {
+   "q": "\"a:b\"",
+   "text": "\"a:b\"",
+   "ast": {
+    "type": "text",
+    "value": "a:b"
+   }
+  },
+  {
+   "q": "http://example.com/x",
+   "text": "\"http://example.com/x\"",
+   "ast": {
+    "type": "text",
+    "value": "http://example.com/x"
+   }
+  },
+  {
+   "q": "*",
+   "text": "",
+   "ast": null
+  },
+  {
+   "q": "-*",
+   "text": "NOT *",
+   "ast": {
+    "type": "not",
+    "item": {
+     "type": "and",
+     "items": []
+    }
+   }
+  },
+  {
+   "q": "",
+   "text": "",
+   "ast": null
+  },
+  {
+   "q": "service:a OR service:b OR service:c",
+   "text": "service:a OR service:b OR service:c",
+   "ast": {
+    "type": "or",
+    "items": [
+     {
+      "type": "field",
+      "field": "service",
+      "cmp": "=",
+      "value": {
+       "type": "string",
+       "value": "a"
+      }
+     },
+     {
+      "type": "field",
+      "field": "service",
+      "cmp": "=",
+      "value": {
+       "type": "string",
+       "value": "b"
+      }
+     },
+     {
+      "type": "field",
+      "field": "service",
+      "cmp": "=",
+      "value": {
+       "type": "string",
+       "value": "c"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "q": "(service:a OR service:b) (level:error OR status:5xx)",
+   "text": "(service:a OR service:b) (level:error OR status:5xx)",
+   "ast": {
+    "type": "and",
+    "items": [
+     {
+      "type": "or",
+      "items": [
+       {
+        "type": "field",
+        "field": "service",
+        "cmp": "=",
+        "value": {
+         "type": "string",
+         "value": "a"
+        }
+       },
+       {
+        "type": "field",
+        "field": "service",
+        "cmp": "=",
+        "value": {
+         "type": "string",
+         "value": "b"
+        }
+       }
+      ]
+     },
+     {
+      "type": "or",
+      "items": [
+       {
+        "type": "field",
+        "field": "level",
+        "cmp": "=",
+        "value": {
+         "type": "level",
+         "value": "error"
+        }
+       },
+       {
+        "type": "field",
+        "field": "status",
+        "cmp": "=",
+        "value": {
+         "type": "statusClass",
+         "value": 5
+        }
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "q": "\"say \\\"hi\\\"\"",
+   "text": "\"say \\\"hi\\\"\"",
+   "ast": {
+    "type": "text",
+    "value": "say \"hi\""
+   }
+  },
+  {
+   "q": "x\\ y",
+   "text": "\"x y\"",
+   "ast": {
+    "type": "text",
+    "value": "x y"
+   }
+  },
+  {
+   "q": "kind:server category:db",
+   "text": "kind:server category:db",
+   "ast": {
+    "type": "and",
+    "items": [
+     {
+      "type": "field",
+      "field": "kind",
+      "cmp": "=",
+      "value": {
+       "type": "string",
+       "value": "server"
+      }
+     },
+     {
+      "type": "field",
+      "field": "category",
+      "cmp": "=",
+      "value": {
+       "type": "string",
+       "value": "db"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "q": "user:alice route:/orders/{id} method:POST",
+   "text": "user:alice route:/orders/{id} method:POST",
+   "ast": {
+    "type": "and",
+    "items": [
+     {
+      "type": "field",
+      "field": "user",
+      "cmp": "=",
+      "value": {
+       "type": "string",
+       "value": "alice"
+      }
+     },
+     {
+      "type": "field",
+      "field": "route",
+      "cmp": "=",
+      "value": {
+       "type": "string",
+       "value": "/orders/{id}"
+      }
+     },
+     {
+      "type": "field",
+      "field": "method",
+      "cmp": "=",
+      "value": {
+       "type": "string",
+       "value": "POST"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "q": "env:prod message:*failed*",
+   "text": "env:prod message:*failed*",
+   "ast": {
+    "type": "and",
+    "items": [
+     {
+      "type": "field",
+      "field": "env",
+      "cmp": "=",
+      "value": {
+       "type": "string",
+       "value": "prod"
+      }
+     },
+     {
+      "type": "field",
+      "field": "message",
+      "cmp": "=",
+      "value": {
+       "type": "pattern",
+       "pieces": [
+        null,
+        "failed",
+        null
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "q": "name:\"GET /orders\"",
+   "text": "name:\"GET /orders\"",
+   "ast": {
+    "type": "field",
+    "field": "name",
+    "cmp": "=",
+    "value": {
+     "type": "string",
+     "value": "GET /orders"
+    }
+   }
+  },
+  {
+   "q": "@x:\"a\">5",
+   "text": "@x:a>5",
+   "ast": {
+    "type": "attr",
+    "key": "x",
+    "cmp": "=",
+    "value": {
+     "type": "string",
+     "value": "a>5"
+    }
+   }
+  },
+  {
+   "q": "@x:a\">5\"",
+   "text": "@x:a>5",
+   "ast": {
+    "type": "attr",
+    "key": "x",
+    "cmp": "=",
+    "value": {
+     "type": "string",
+     "value": "a>5"
+    }
+   }
+  },
+  {
+   "q": "@n:<0.0000001",
+   "text": "@n:<1e-7",
+   "ast": {
+    "type": "attr",
+    "key": "n",
+    "cmp": "<",
+    "value": {
+     "type": "number",
+     "value": 1e-7
+    }
+   }
+  },
+  {
+   "q": "@n:>=1e21",
+   "text": "@n:>=1e+21",
+   "ast": {
+    "type": "attr",
+    "key": "n",
+    "cmp": ">=",
+    "value": {
+     "type": "number",
+     "value": 1e+21
+    }
+   }
+  },
+  {
+   "q": "duration:<1e-7ms",
+   "text": "duration:<1e-7ms",
+   "ast": {
+    "type": "field",
+    "field": "duration",
+    "cmp": "<",
+    "value": {
+     "type": "number",
+     "value": 1e-7
+    }
+   }
+  },
+  {
+   "q": "duration:>2.5e3",
+   "text": "duration:>2500ms",
+   "ast": {
+    "type": "field",
+    "field": "duration",
+    "cmp": ">",
+    "value": {
+     "type": "number",
+     "value": 2500
+    }
+   }
+  }
+ ],
+ "errors": [
+  {
+   "q": "foo:bar",
+   "start": 0,
+   "end": 7
+  },
+  {
+   "q": "unknown:1",
+   "start": 0,
+   "end": 9
+  },
+  {
+   "q": "x AND",
+   "start": 2,
+   "end": 5
+  },
+  {
+   "q": "AND x",
+   "start": 0,
+   "end": 3
+  },
+  {
+   "q": "OR a",
+   "start": 0,
+   "end": 2
+  },
+  {
+   "q": "a OR",
+   "start": 2,
+   "end": 4
+  },
+  {
+   "q": "a OR OR b",
+   "start": 2,
+   "end": 4
+  },
+  {
+   "q": "(a",
+   "start": 0,
+   "end": 1
+  },
+  {
+   "q": "a)",
+   "start": 1,
+   "end": 2
+  },
+  {
+   "q": "()",
+   "start": 0,
+   "end": 2
+  },
+  {
+   "q": "\"open",
+   "start": 0,
+   "end": 5
+  },
+  {
+   "q": "status:abc",
+   "start": 0,
+   "end": 10
+  },
+  {
+   "q": "status:>5xx",
+   "start": 0,
+   "end": 11
+  },
+  {
+   "q": "path:>a",
+   "start": 0,
+   "end": 7
+  },
+  {
+   "q": "duration:fast",
+   "start": 0,
+   "end": 13
+  },
+  {
+   "q": "service:",
+   "start": 0,
+   "end": 8
+  },
+  {
+   "q": "level:1..2",
+   "start": 0,
+   "end": 10
+  },
+  {
+   "q": "route:a..b",
+   "start": 0,
+   "end": 10
+  },
+  {
+   "q": "error:maybe",
+   "start": 0,
+   "end": 11
+  },
+  {
+   "q": "error:>true",
+   "start": 0,
+   "end": 11
+  },
+  {
+   "q": "@n:>abc",
+   "start": 0,
+   "end": 7
+  },
+  {
+   "q": "status:200..",
+   "start": 0,
+   "end": 12
+  },
+  {
+   "q": "NOT",
+   "start": 0,
+   "end": 3
+  },
+  {
+   "q": "a NOT",
+   "start": 2,
+   "end": 5
+  }
+ ],
+ "docs": {
+  "span": {
+   "kind": "spans",
+   "text": [
+    "get /orders/42",
+    "/orders/42",
+    "select * from orders where id = $1",
+    "connection reset by peer"
+   ],
+   "fields": {
+    "service": "api",
+    "env": "prod",
+    "trace": "4bf92f3577b34da6a3ce929d0e0e4736",
+    "span": "00f067aa0ba902b7",
+    "name": "GET /orders/42",
+    "method": "GET",
+    "path": "/orders/42",
+    "route": "/orders/{id}",
+    "status": 503,
+    "outcome": "error",
+    "duration": 1250,
+    "category": "http.server",
+    "kind": "server",
+    "user": "alice",
+    "error": true
+   },
+   "attrs": [
+    {
+     "user.id": 42,
+     "db.system": "postgres",
+     "http.response.status_code": 503,
+     "flag": true,
+     "empty": null
+    }
+   ]
+  },
+  "log": {
+   "kind": "logs",
+   "text": [
+    "bank slow to answer",
+    "payments",
+    "post /pay"
+   ],
+   "fields": {
+    "service": "worker",
+    "trace": "4bf92f3577b34da6a3ce929d0e0e4736",
+    "span": null,
+    "name": "POST /pay",
+    "level": "warn",
+    "category": "Payments",
+    "message": "Bank slow to answer",
+    "error": false
+   },
+   "attrs": [
+    {
+     "attempt": "3"
+    }
+   ]
+  },
+  "trace": {
+   "kind": "traces",
+   "text": [
+    "post /checkout",
+    "/checkout",
+    "web",
+    "api"
+   ],
+   "fields": {
+    "service": [
+     "web",
+     "api"
+    ],
+    "trace": "0af7651916cd43dd8448eb211c80319c",
+    "name": "POST /checkout",
+    "method": "POST",
+    "path": "/checkout",
+    "status": 200,
+    "outcome": "ok",
+    "duration": 80,
+    "error": false
+   },
+   "attrs": [
+    {
+     "http.route": "/checkout"
+    },
+    {
+     "db.system": "redis",
+     "cache.hit": false
+    }
+   ]
+  }
+ },
+ "match": [
+  {
+   "q": "service:api",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "service:API",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "service:web",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "-service:web",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "env:prod",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "trace:4bf9",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "trace:4BF9",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "trace:9bf",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "span:00f0",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "name:\"get /orders/42\"",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "path:/orders/*",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "path:*/42",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "path:/orders",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "route:/orders/{id}",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "status:503",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "status:5xx",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "status:4xx",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "status:>=500",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "status:500..599",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "status:error",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "status:ok",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "duration:>1s",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "duration:>2s",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "duration:1s..2s",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "error:true",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "error:false",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "kind:server",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "category:http.server",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "user:Alice",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "level:error",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "-level:error",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "message:*",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "connection",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "\"reset by peer\"",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "\"reset by me\"",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "SELECT",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "@user.id:42",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "@user.id:>=40",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "@user.id:<40",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "@user.id:4*",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "@db.system:postgres",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "@db.system:POSTGRES",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "@db.system:redis",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "@db.system:*",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "@missing:*",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "@empty:*",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "-@missing:*",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "@flag:true",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "@flag:>0",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "@http.response.status_code:>=500",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "service:api AND status:5xx",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "service:web OR status:5xx",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "service:web OR status:2xx",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "NOT (service:web OR status:2xx)",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "(service:web OR service:api) duration:>1s",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "*",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "-*",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "level:warn",
+   "doc": "log",
+   "expect": true
+  },
+  {
+   "q": "level:>=warn",
+   "doc": "log",
+   "expect": true
+  },
+  {
+   "q": "level:>=error",
+   "doc": "log",
+   "expect": false
+  },
+  {
+   "q": "level:<=info",
+   "doc": "log",
+   "expect": false
+  },
+  {
+   "q": "error:false",
+   "doc": "log",
+   "expect": true
+  },
+  {
+   "q": "category:payments",
+   "doc": "log",
+   "expect": true
+  },
+  {
+   "q": "message:*slow*",
+   "doc": "log",
+   "expect": true
+  },
+  {
+   "q": "bank",
+   "doc": "log",
+   "expect": true
+  },
+  {
+   "q": "@attempt:3",
+   "doc": "log",
+   "expect": true
+  },
+  {
+   "q": "@attempt:>2",
+   "doc": "log",
+   "expect": true
+  },
+  {
+   "q": "duration:>0",
+   "doc": "log",
+   "expect": false
+  },
+  {
+   "q": "status:ok",
+   "doc": "log",
+   "expect": false
+  },
+  {
+   "q": "span:*",
+   "doc": "log",
+   "expect": false
+  },
+  {
+   "q": "name:\"post /pay\"",
+   "doc": "log",
+   "expect": true
+  },
+  {
+   "q": "service:web",
+   "doc": "trace",
+   "expect": true
+  },
+  {
+   "q": "service:api",
+   "doc": "trace",
+   "expect": true
+  },
+  {
+   "q": "service:db",
+   "doc": "trace",
+   "expect": false
+  },
+  {
+   "q": "@db.system:redis",
+   "doc": "trace",
+   "expect": true
+  },
+  {
+   "q": "@http.route:/checkout @db.system:redis",
+   "doc": "trace",
+   "expect": true
+  },
+  {
+   "q": "@cache.hit:false",
+   "doc": "trace",
+   "expect": true
+  },
+  {
+   "q": "status:2xx",
+   "doc": "trace",
+   "expect": true
+  },
+  {
+   "q": "status:ok",
+   "doc": "trace",
+   "expect": true
+  },
+  {
+   "q": "level:info",
+   "doc": "trace",
+   "expect": false
+  },
+  {
+   "q": "route:/checkout",
+   "doc": "trace",
+   "expect": false
+  },
+  {
+   "q": "checkout",
+   "doc": "trace",
+   "expect": true
+  },
+  {
+   "q": "@user.id:\"4\">0",
+   "doc": "span",
+   "expect": false
+  },
+  {
+   "q": "@user.id:>4e1",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "duration:>1.2e3",
+   "doc": "span",
+   "expect": true
+  },
+  {
+   "q": "duration:>1.3e3",
+   "doc": "span",
+   "expect": false
+  }
+ ]
+}

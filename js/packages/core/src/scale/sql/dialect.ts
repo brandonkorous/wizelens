@@ -1,6 +1,6 @@
-// SQL dialects for the stats tables: Postgres and PGlite (cloud, `$n` parameters) and SQLite (hub, `?` parameters).
+// SQL dialects for the stats tables: Postgres and PGlite (cloud small mode, `$n`), SQLite (hub, `?`), and ClickHouse (cloud scale mode, `{pN:Type}`).
 
-export type DialectName = "pg" | "sqlite";
+export type DialectName = "pg" | "sqlite" | "ch";
 
 export interface Dialect {
   name: DialectName;
@@ -10,6 +10,8 @@ export interface Dialect {
 
 export const PG_DIALECT: Dialect = { name: "pg", project: "project_id" };
 export const SQLITE_DIALECT: Dialect = { name: "sqlite", project: "project" };
+/** ClickHouse reads views with the Postgres table names, so the same SQL reads merged rows. */
+export const CH_DIALECT: Dialect = { name: "ch", project: "project_id" };
 
 /** Runs one read and returns its rows. Hosts wrap their driver (async pg, or sync node:sqlite). */
 export interface SqlRunner {
@@ -58,30 +60,34 @@ export class SqlText {
   /** A parameter placeholder for `v`. Call it in the order the text reads. */
   p(v: unknown): string {
     this.params.push(paramOf(this.d, v));
+    if (this.d.name === "ch") return `{p${this.params.length}:${chType(v)}}`;
     return this.d.name === "pg" ? `$${this.params.length}` : "?";
   }
 
   /** `col` is one of `values`. */
   in(col: string, values: readonly string[]): string {
     if (this.d.name === "pg") return `${col} = ANY(${this.p(values.map((v) => paramOf(this.d, v)))})`;
+    if (this.d.name === "ch") return `has(${this.p([...values])}, ${col})`;
     return `${col} IN (SELECT value FROM json_each(${this.p(JSON.stringify(values))}))`;
   }
 
   /** `col` starts with `prefix`, case-sensitive. Lengths count code points, as SQL substr does. */
   startsWith(col: string, prefix: string): string {
+    if (this.d.name === "ch") return `startsWith(${col}, ${this.p(prefix)})`;
     return `substr(${col}, 1, ${lit([...prefix].length)}) = ${this.p(prefix)}`;
   }
 
-  /** `col` holds `part`, case-sensitive. */
+  /** `col` holds `part`, case-sensitive. ClickHouse uses LIKE, which its n-gram indexes can answer. */
   contains(col: string, part: string): string {
+    if (this.d.name === "ch") return `${col} LIKE ${this.p(`%${part.replace(/[\\%_]/g, (c) => `\\${c}`)}%`)}`;
     return this.d.name === "pg" ? `strpos(${col}, ${this.p(part)}) > 0` : `instr(${col}, ${this.p(part)}) > 0`;
   }
 
   /** `col` matches literal pieces with "any text" between them (null), case-sensitive. */
   matches(col: string, pieces: readonly (string | null)[]): string {
-    if (this.d.name === "pg") {
+    if (this.d.name !== "sqlite") {
       const pattern = pieces.map((s) => (s === null ? "%" : s.replace(/[\\%_]/g, (c) => `\\${c}`))).join("");
-      return `${col} LIKE ${this.p(pattern)} ESCAPE '\\'`;
+      return `${col} LIKE ${this.p(pattern)}${likeEscape(this.d)}`;
     }
     const pattern = pieces.map((s) => (s === null ? "*" : s.replace(/[*?[]/g, (c) => `[${c}]`))).join("");
     return `${col} GLOB ${this.p(pattern)}`;
@@ -89,19 +95,36 @@ export class SqlText {
 
   /** A boolean column as a condition. */
   isTrue(col: string): string {
-    return this.d.name === "pg" ? col : `${col} = 1`;
+    return this.d.name === "sqlite" ? `${col} = 1` : col;
   }
 }
 
 /** Text order that matches JavaScript string comparison. */
 export const collate = (d: Dialect, col: string): string => (d.name === "pg" ? `${col} COLLATE "C"` : col);
 
+/** ClickHouse parameter types, from the JavaScript value. */
+export function chType(v: unknown): string {
+  if (Array.isArray(v)) return "Array(String)";
+  if (typeof v === "number") return "Float64";
+  if (typeof v === "boolean") return "Bool";
+  return v === null || v === undefined ? "Nullable(String)" : "String";
+}
+
+/** The ESCAPE clause for LIKE; ClickHouse escapes with a backslash already. */
+export const likeEscape = (d: Dialect): string => (d.name === "ch" ? "" : " ESCAPE '\\'");
+
+/** Lowercase text the way JavaScript does for non-ASCII too, where the database can. */
+export const lowerOf = (d: Dialect, expr: string): string => (d.name === "ch" ? `lowerUTF8(${expr})` : `lower(${expr})`);
+
+/** A value as text. */
+export const textOf = (d: Dialect, expr: string): string => (d.name === "ch" ? `toString(${expr})` : `CAST(${expr} AS TEXT)`);
+
 /** The whole part of a non-negative expression. */
-export const floorOf = (d: Dialect, expr: string): string => (d.name === "pg" ? `FLOOR(${expr})` : `CAST(${expr} AS INTEGER)`);
+export const floorOf = (d: Dialect, expr: string): string => (d.name === "sqlite" ? `CAST(${expr} AS INTEGER)` : `FLOOR(${expr})`);
 
-export const leastOf = (d: Dialect, a: string, b: string): string => (d.name === "pg" ? `LEAST(${a}, ${b})` : `min(${a}, ${b})`);
+export const leastOf = (d: Dialect, a: string, b: string): string => (d.name === "sqlite" ? `min(${a}, ${b})` : `least(${a}, ${b})`);
 
-export const greatestOf = (d: Dialect, a: string, b: string): string => (d.name === "pg" ? `GREATEST(${a}, ${b})` : `max(${a}, ${b})`);
+export const greatestOf = (d: Dialect, a: string, b: string): string => (d.name === "sqlite" ? `max(${a}, ${b})` : `greatest(${a}, ${b})`);
 
 /** Scope conditions on a table with the dialect's project column and an env column. */
 export function scopeWhere(q: SqlText, scope: SqlScope, alias = ""): string[] {

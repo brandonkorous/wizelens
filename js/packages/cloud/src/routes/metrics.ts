@@ -1,8 +1,7 @@
 import { isTimeRange, type MetricsModel, metricsModelOf, type TimeRange, TIME_RANGES } from "@wizeworks/lens-core";
 import type { Ctx } from "../app.js";
-import type { Queryable } from "../db/db.js";
 import { fail } from "../http/http.js";
-import { loadMetricData } from "../repo/metric-read.js";
+import type { TelemetryStore } from "../telemetry/store.js";
 
 const DAY_MS = 86_400_000;
 const PARAMS = ["metric", "service", "group", "stat", "q"];
@@ -19,13 +18,13 @@ export function metricParamsOf(p: URLSearchParams): Record<string, string> {
 
 /** The metrics page for one project, from the metric rollup tiers. */
 export async function projectMetrics(
-  db: Queryable,
+  telemetry: TelemetryStore,
   projectId: string,
   range: TimeRange,
   params: Record<string, string>,
   o: { now: number; env?: string },
 ): Promise<MetricsModel> {
-  return metricsModelOf(await loadMetricData(db, { projectId, env: o.env }, range, params, o.now));
+  return metricsModelOf(await telemetry.metricData({ projectId, env: o.env }, range, params, o.now));
 }
 
 /** The range from the query, checked against the organization's retention. */

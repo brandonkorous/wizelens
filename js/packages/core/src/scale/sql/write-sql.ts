@@ -7,7 +7,9 @@ import type { TraceFacts } from "../facts.js";
 import type { RequestItem, TraceItem } from "../facts-lists.js";
 import { durationClassOf, statusClassOf } from "../facts-requests.js";
 import { KEY_SEP, KIND_SPEC, ROLLUP_KINDS } from "../kinds.js";
+import type { Trace } from "../../types.js";
 import { TIERS } from "../window.js";
+import { SEARCH_COLUMNS, searchRows } from "./search-write.js";
 import { type Dialect, greatestOf, leastOf, paramOf, type Statement } from "./dialect.js";
 
 const CHUNK = 200;
@@ -40,6 +42,7 @@ export const FACT_COLUMNS = {
   fact_traces: ["trace_id", "env", "start_ms", "path", "duration_ms", "health", "status", "services", "span_count", "slow", "search"],
   fact_logs: ["trace_id", "idx", "env", "time_ms", "level", "level_rank", "service", "category", "message", "trace_name", "span_id", "attributes", "search"],
   fact_critical: ["trace_id", "span_id", "env", "start_ms", "duration_ms", "name", "service", "layer"],
+  ...SEARCH_COLUMNS,
 } as const;
 
 export type FactTable = keyof typeof FACT_COLUMNS;
@@ -61,10 +64,11 @@ function logValues(l: LogRow, env: string): unknown[] {
 
 const criticalValues = (s: CriticalSpan, env: string): unknown[] => [s.traceId, s.spanId, env, s.startMs, s.durationMs, s.name, s.service, s.layer];
 
-/** The fact rows of one trace per table, project first. */
-export function factRows(f: TraceFacts, scope: Scope): Record<FactTable, unknown[][]> {
+/** The fact rows of one trace per table, project first. Search rows need the trace itself. */
+export function factRows(f: TraceFacts, scope: Scope, trace?: Trace): Record<FactTable, unknown[][]> {
   const p = (values: unknown[]) => [scope.project, ...values];
   return {
+    ...(trace ? searchRows(trace, scope) : { fact_search: [], fact_attrs: [] }),
     fact_requests: f.request ? [p(requestValues(f.request, scope.env))] : [],
     fact_traces: [p(traceValues(f.trace, scope.env))],
     fact_logs: f.logs.map((l) => p(logValues(l, scope.env))),

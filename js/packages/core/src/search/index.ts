@@ -1,0 +1,13 @@
+export * from "./ast.js";
+export { lex, type Ch, type Token } from "./lex.js";
+export { durationMs, levelOf } from "./values.js";
+export { parseSearch } from "./parse.js";
+export { formatSearch, quoteText } from "./format.js";
+export { compileSearch, patternRegex, type DocValue, type SearchDoc, type SearchPredicate } from "./match.js";
+export { logDoc, requestDoc, spanDoc, traceDoc } from "./docs.js";
+export { checkSearch, type SearchCheck } from "./check.js";
+export { numberOf } from "./match.js";
+export { docEntries, logOwner, spanItemOf, type DocEntry, type SearchItem, type SearchItems, type SpanItem } from "./items.js";
+export { clampLimit, compareEntries, decodeCursor, encodeCursor, pageOf, SEARCH_PAGE_MAX, searchMemory, type SearchCursor, type SearchPage, type SearchQuery } from "./run.js";
+export { searchRequestOf, suggestRequestOf, type SearchRequest, type SuggestRequestResult } from "./request.js";
+export { DATA_FIELDS, fieldSuggestions, FIXED_VALUES, suggestMemory, type Suggestion, type SuggestRequest } from "./suggest.js";

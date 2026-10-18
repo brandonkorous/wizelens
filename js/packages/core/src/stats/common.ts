@@ -24,7 +24,8 @@ export const COMPARE_LABEL: Record<TimeRange, string> = {
   "30d": "vs. previous 30 days",
 };
 
-export const isTimeRange = (v: string): v is TimeRange => v in TIME_RANGES;
+/** Own keys only, so "constructor" and other prototype names are not ranges. */
+export const isTimeRange = (v: string): v is TimeRange => Object.hasOwn(TIME_RANGES, v);
 
 /** A time span [from, to) in epoch ms. */
 export interface TimeWindow {

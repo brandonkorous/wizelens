@@ -39,7 +39,7 @@ public class SendOnlyTests
     public async Task Answers_no_reads()
     {
         await using var app = await StartAsync();
-        string[] paths = ["", "/", "/index.html", "/api/info", "/api/traces", "/api/traces/" + new string('a', 32), "/api/metrics/points", "/mcp"];
+        string[] paths = ["", "/", "/index.html", "/api/info", "/api/traces", "/api/traces/" + new string('a', 32), "/api/metrics/points", "/api/search", "/api/search/suggest", "/mcp"];
         foreach (var path in paths)
         {
             var response = await app.Client.GetAsync("/_wizelens" + path);

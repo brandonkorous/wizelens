@@ -71,7 +71,7 @@ export function mergeStoredHists(tiers: MetricTierWrite[], stored: (t: MetricTie
   }
 }
 
-const bool = (d: MetricDialect, v: boolean) => (d === "pg" ? v : v ? 1 : 0);
+const bool = (d: MetricDialect, v: boolean) => (d === "sqlite" ? (v ? 1 : 0) : v);
 
 /** Values in METRIC_TIER_COLUMNS order. */
 export function metricTierValues(d: MetricDialect, project: string, env: string, t: MetricTierWrite): unknown[] {

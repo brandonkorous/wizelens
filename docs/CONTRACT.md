@@ -328,6 +328,28 @@ Server name `wizelens`. Disabled by default. Every call is written to the app lo
 | `find_slow_queries` | `thresholdMs?=100`, `limit?=20` | `{ traceId, spanId, durationMs, query, service }[]` |
 | `find_n_plus_one` | `minRepeats?=5` | `{ traceId, kind: "db"\|"http", shape, count, totalMs }[]` |
 | `get_errors` | `limit?=20` | `{ traceId, spanId, service, name, message, type, stack }[]` |
+| `search` | `q`, `kind?=requests`, `range?=24h`, `limit?=20`, `cursor?` | SearchPage (below); a bad `q` is an error with `start`/`end` |
+| `search_fields` | `field?`, `prefix?`, `range?=24h` | `{ value, help?, count? }[]` |
+
+## Search (v0.9)
+
+One language on every host; the grammar, fields, and plan are in docs/SEARCH-PLAN.md, the shared test cases in
+docs/search-vectors.json (the TS and .NET suites both run them). Hosts with the `search` capability answer:
+
+| Endpoint | Params | Returns |
+|---|---|---|
+| `GET api/search` | `q`, `kind` (requests, traces, spans, logs), `range` or `from`/`to` (epoch ms), `env`, `project` (hub, cloud), `limit` (1–200, default 50), `cursor` | `{ kind, items, next, tookMs, settling }`; 400 `{ ok: false, error, start?, end? }` |
+| `GET api/search/suggest` | `field` (none: fields and attribute keys; `service`; `@user.id`), `prefix`, `range`, `limit` (1–50) | `{ items: { value, help?, count? }[] }` |
+
+- Items: RequestItem, TraceItem, SpanItem (`traceId, spanId, startMs, durationMs, service, name, kind, category, status,
+  method, path, route, httpStatus, user`), or LogRow. Order: newest first, then trace id and part (span id or log index)
+  in code-unit order. `next` is an opaque cursor; pass it back for the next page.
+- Text matches are case-insensitive "contains"; `field:value` is case-insensitive equality; `*` is any text. A field a kind
+  does not have never matches (so `-field:x` does). Request and trace text includes their spans' error messages; their
+  `@attribute` filters match any span of the trace.
+- Hub and cloud: settling writes one `fact_search` row per request, trace, span, and log line, and one `fact_attrs` row
+  per present attribute value (lowercased, cut at 512 characters, plus its number). Both come from the same document
+  builders as the memory search, so all hosts return the same results.
 
 ## Storage (v0.2)
 
@@ -662,4 +684,21 @@ retention). Migration 4 moved accounts to Better Auth: its tables use our snake_
 users, organizations, and members kept their rows and ids. Passwords moved to `accounts`, sessions started over, and open invites got
 new ids (so new links). A test checks that Better Auth finds nothing to change in the schema, and Better Auth checks it again at start.
 Data tables are keyed by `project_id`. Times are `double precision` epoch ms, except in Better Auth's tables (`timestamptz`). Our
-secrets (keys, shares) are stored as SHA-256 hashes only; Better Auth stores reset and confirm tokens hashed.
+secrets (keys, shares) are stored as SHA-256 hashes only; Better Auth stores reset and confirm tokens hashed. Migration 8 added
+`fact_search` and `fact_attrs` (see "Search").
+
+### Telemetry stores (small mode and scale mode)
+
+Everything about spans, logs, metrics, and their stats goes through one interface (`TelemetryStore`, `cloud/src/telemetry`).
+Postgres keeps accounts, organizations, projects, keys, the service registry, alerts, shares, and the audit log either way.
+
+- **Small mode** (default): telemetry in the same Postgres or PGlite, as above. For self-hosting, trials, and tests.
+- **Scale mode** (`--clickhouse <url>`, `WIZELENS_CLOUD_CLICKHOUSE_URL`): telemetry in ClickHouse 26.8. Raw `spans_raw` and
+  `logs_raw` (ReplacingMergeTree by version), `trace_heads` and the rollup, histogram, and metric tiers (AggregatingMergeTree: sums
+  add, extremes keep extremes, `top` is `argMax` by rank, `ids` the newest by time), and fact tables (ReplacingMergeTree with
+  tombstones, so a trace settled again drops the rows it no longer has). Views with the Postgres names read the merged rows (`FINAL`),
+  so the shared SQL (dialect `ch`) answers pages, lists, searches, and metrics with the same results; the parity tests run the same
+  cases on memory, SQLite, Postgres, and ClickHouse. Rows expire by TTL at their organization's retention (written with each row;
+  a retention change moves it with a background mutation). One cloud process writes telemetry: its settle queue lives in memory and
+  is rebuilt on start from the update log of the last 6 hours. `wizelens-cloud copy-telemetry` copies a small-mode database into
+  ClickHouse once (projects already there are skipped). Deployment: `deploy/README.md`, "ClickHouse".

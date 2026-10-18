@@ -2,7 +2,7 @@ import type { Ctx } from "../app.js";
 import { bearerOf, fail } from "../http/http.js";
 import type { RateLimiter } from "../http/limiter.js";
 import { keyByToken } from "../repo/projects.js";
-import { writeBatch } from "../repo/trace-write.js";
+import { writeService } from "../repo/trace-write.js";
 import { handleOtlp, type HubWrite, type OtlpSignal, parseIngest, parseJson, readBody } from "@wizeworks/lens-hub/kit";
 
 /** The project an ingest key writes to. Add-ons send it as WIZELENS_HUB_TOKEN; OTLP apps as a bearer header. */
@@ -15,8 +15,12 @@ async function ingestProject(ctx: Ctx, limiter: RateLimiter): Promise<string> {
   return key.projectIds[0]!;
 }
 
-const save = (ctx: Ctx, projectId: string) => (w: HubWrite) =>
-  ctx.app.db.tx((q) => writeBatch(q, projectId, w, ctx.app.config.now()));
+/** The service registry stays in Postgres; spans, logs, and metrics go to the telemetry store. */
+const save = (ctx: Ctx, projectId: string) => async (w: HubWrite) => {
+  const now = ctx.app.config.now();
+  await writeService(ctx.app.db, projectId, w, now);
+  await ctx.app.telemetry.write(projectId, w, now);
+};
 
 /** `POST api/ingest`: a WizeLens add-on batch. */
 export async function ingestBatch(ctx: Ctx, limiter: RateLimiter): Promise<void> {

@@ -99,7 +99,7 @@ jobs:
           bash deploy/scripts/vault-env.sh "${{ vars.AZURE_KEY_VAULT_NAME }}" "$RUNNER_TEMP/wl"
           echo "ENV_HASH=$(cat "$RUNNER_TEMP/wl/env-hash")" >> "$GITHUB_ENV"
 
-      # Two Secrets: `cloud-env` for the app, `db-admin` for the role Job only, so the app never holds the admin login.
+      # `cloud-env` for the app, `db-admin` for the role Job only (the app never holds the admin login), and ClickHouse's two.
       - name: Apply the namespace and secrets
         run: |
           set -euo pipefail
@@ -109,6 +109,9 @@ jobs:
             --from-file=DATABASE_ADMIN_URL="$RUNNER_TEMP/wl/admin-url" \
             --from-file=WIZELENS_APP_PASSWORD="$RUNNER_TEMP/wl/app-password" \
             --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic clickhouse-env -n "$NAMESPACE" --from-env-file="$RUNNER_TEMP/wl/clickhouse.env" --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic clickhouse-backup -n "$NAMESPACE" \
+            --from-file=AZURE_CONNECTION="$RUNNER_TEMP/wl/backup-connection" --dry-run=client -o yaml | kubectl apply -f -
           rm -rf "$RUNNER_TEMP/wl"
 
       # Azure runs no init scripts, so the app role is made here. It runs inside the cluster: the database is VNet-only.
@@ -140,6 +143,13 @@ jobs:
       - name: Wait for the rollout
         run: |
           failed=0
+          # ClickHouse first: in scale mode the cloud needs it to start.
+          if ! kubectl rollout status -n "$NAMESPACE" statefulset/clickhouse --timeout=600s; then
+            echo "::error::ClickHouse did not become ready."
+            kubectl describe statefulset clickhouse -n "$NAMESPACE" || true
+            kubectl logs -n "$NAMESPACE" statefulset/clickhouse --tail=100 || true
+            failed=1
+          fi
           for app in site cloud; do
             if ! kubectl rollout status -n "$NAMESPACE" "deploy/$app" --timeout=600s; then
               echo "::error::Rollout of $app did not finish."
@@ -156,6 +166,6 @@ jobs:
           {
             echo "### WizeLens deployment (${SHA::7})"
             echo '```'
-            kubectl -n "$NAMESPACE" get deploy,svc,job 2>&1 || true
+            kubectl -n "$NAMESPACE" get deploy,statefulset,svc,job,cronjob 2>&1 || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

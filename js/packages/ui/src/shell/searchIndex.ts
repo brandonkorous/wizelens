@@ -2,7 +2,7 @@ import { errorInfo, isErrorSpan, requestRows, type Trace } from "@wizeworks/lens
 import { fmtMs } from "../format";
 import { hrefTo, type PageId, traceHref } from "../routes";
 
-export type HitKind = "page" | "request" | "trace" | "error" | "service";
+export type HitKind = "page" | "request" | "trace" | "error" | "service" | "log" | "search";
 
 export interface SearchHit {
   key: string;
@@ -49,10 +49,10 @@ function serviceHits(traces: readonly Trace[], q: string): SearchHit[] {
   return [...names].slice(0, LIMIT).map((s) => ({ key: `s${s}`, kind: "service" as const, title: s, detail: "Service", href: hrefTo("services", [], { service: s }) }));
 }
 
-/** Search pages, requests, trace ids, errors, and services. */
-export function search(traces: readonly Trace[], pages: { page: PageId; label: string }[], query: string): SearchHit[] {
+/** Search pages, requests, trace ids, errors, and services in the loaded traces. `server` leaves requests to the host's search. */
+export function search(traces: readonly Trace[], pages: { page: PageId; label: string }[], query: string, server = false): SearchHit[] {
   const q = query.trim().toLowerCase();
   if (!q) return pages.map((p) => ({ key: `p${p.page}`, kind: "page", title: p.label, detail: "Go to page", href: hrefTo(p.page) }));
   const pageHits = pages.filter((p) => has(p.label, q)).map((p) => ({ key: `p${p.page}`, kind: "page" as const, title: p.label, detail: "Go to page", href: hrefTo(p.page) }));
-  return [...pageHits, ...requestHits(traces, q), ...errorHits(traces, q), ...serviceHits(traces, q)];
+  return [...pageHits, ...(server ? [] : requestHits(traces, q)), ...errorHits(traces, q), ...serviceHits(traces, q)];
 }
