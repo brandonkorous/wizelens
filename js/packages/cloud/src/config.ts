@@ -30,6 +30,8 @@ export interface CloudOptions {
   resendWebhookSecret?: string;
   /** The sender of every email, for example "WizeLens <alerts@example.com>". */
   mailFrom?: string;
+  /** Where replies go, for example "hello@example.com", when the sender has no inbox. Default: none (replies go to the sender). */
+  mailReplyTo?: string;
   /** Take the client address from X-Forwarded-For (behind a proxy you run). Default false. */
   trustProxy?: boolean;
   /** Signs sessions and encrypts 2FA secrets: 32+ random characters, or "2:new,1:old" to rotate. Required with Postgres. */
@@ -50,7 +52,7 @@ export interface CloudOptions {
   jobs?: boolean;
 }
 
-type Optional = "uiDir" | "publicUrl" | "smtpUrl" | "resendApiKey" | "resendWebhookSecret" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords";
+type Optional = "uiDir" | "publicUrl" | "smtpUrl" | "resendApiKey" | "resendWebhookSecret" | "mailReplyTo" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords";
 export type CloudConfig = Required<Omit<CloudOptions, Optional>> & Pick<CloudOptions, Optional> & { secureCookies: boolean };
 
 /** Mail links must use the public address: a link built from the request's Host header could point anywhere. */
@@ -88,6 +90,7 @@ export function resolveConfig(o: CloudOptions = {}): CloudConfig {
     resendApiKey: o.resendApiKey,
     resendWebhookSecret: o.resendWebhookSecret,
     mailFrom: o.mailFrom ?? `WizeLens <no-reply@${o.publicUrl ? new URL(o.publicUrl).hostname : "localhost"}>`,
+    mailReplyTo: o.mailReplyTo,
     trustProxy: o.trustProxy ?? false,
     sendMail: o.sendMail,
     jobs: o.jobs ?? true,

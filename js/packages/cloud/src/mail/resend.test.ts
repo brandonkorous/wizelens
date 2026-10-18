@@ -34,6 +34,13 @@ it("posts the email with the key, the sender, and a kind tag", async () => {
   });
 });
 
+it("sends reply_to when a reply address is set", async () => {
+  const bodies: string[] = [];
+  const fetch = (async (_url: string, init: RequestInit) => (bodies.push(String(init.body)), new Response("{}"))) as unknown as typeof globalThis.fetch;
+  await resendSender({ apiKey: "re_test", from: "WizeLens <hello@updates.wizelens.com>", replyTo: "hello@wizelens.com", fetch })(mail);
+  expect(JSON.parse(bodies[0]!)).toMatchObject({ from: "WizeLens <hello@updates.wizelens.com>", reply_to: "hello@wizelens.com" });
+});
+
 it("tries again after 429 and 5xx with the same Idempotency-Key, using Retry-After", async () => {
   const r = fakeResend({ status: 429, retryAfter: "3" }, { status: 503 }, { status: 200 });
   await r.send(mail);

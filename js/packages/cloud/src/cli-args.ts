@@ -24,6 +24,7 @@ Usage: wizelens-cloud [options]
   --smtp-url <url>          Or mail over SMTP: smtp://user:pass@host:587 (WIZELENS_CLOUD_SMTP_URL)
                             or smtps://...:465. Needs --public-url.
   --mail-from <address>     Sender, e.g. "WizeLens <a@b.com>".          (WIZELENS_CLOUD_MAIL_FROM)
+  --mail-reply-to <address> Where replies go, e.g. "hello@b.com".       (WIZELENS_CLOUD_MAIL_REPLY_TO)
   --trust-proxy             Read the client address from the last       (WIZELENS_CLOUD_TRUST_PROXY=1)
                             X-Forwarded-For entry (your own proxy only).
   --setup-token <text>      The first account's token. Default: random, (WIZELENS_CLOUD_SETUP_TOKEN)
@@ -55,6 +56,7 @@ const OPTIONS = {
   "resend-api-key": { type: "string" },
   "resend-webhook-secret": { type: "string" },
   "mail-from": { type: "string" },
+  "mail-reply-to": { type: "string" },
   "trust-proxy": { type: "boolean" },
   "setup-token": { type: "string" },
   "check-pwned-passwords": { type: "boolean" },
@@ -83,6 +85,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CloudOp
     resendApiKey: text(a["resend-api-key"], env.WIZELENS_CLOUD_RESEND_API_KEY),
     resendWebhookSecret: text(a["resend-webhook-secret"], env.WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET),
     mailFrom: text(a["mail-from"], env.WIZELENS_CLOUD_MAIL_FROM),
+    mailReplyTo: text(a["mail-reply-to"], env.WIZELENS_CLOUD_MAIL_REPLY_TO),
     trustProxy: a["trust-proxy"] ?? env.WIZELENS_CLOUD_TRUST_PROXY === "1",
     setupToken: text(a["setup-token"], env.WIZELENS_CLOUD_SETUP_TOKEN),
     checkPwnedPasswords: pwnedOf(a, env),
