@@ -60,11 +60,11 @@ async function copyPoints(db: Db, to: TelemetryStore, projectId: string, now: nu
   }
 }
 
-/** Copy everything; the target settles the traces afterwards, as for new ones. Projects the target already has are skipped, since metric rollups would count twice. */
-export async function copyTelemetry(db: Db, to: TelemetryStore, now: number, log: (line: string) => void = () => {}): Promise<CopyResult> {
+/** Copy everything (the target settles it later); projects the target has are skipped, else rollups count twice; `force` copies them too, after the switch. */
+export async function copyTelemetry(db: Db, to: TelemetryStore, now: number, log: (line: string) => void = () => {}, force = false): Promise<CopyResult> {
   const out: CopyResult = { traces: 0, points: 0 };
   for (const { id } of await db.query<{ id: string }>("SELECT id FROM projects ORDER BY id")) {
-    if ((await to.counts(id)).traces > 0) {
+    if (!force && (await to.counts(id)).traces > 0) {
       log(`  ${id}: already copied, skipped`);
       continue;
     }
