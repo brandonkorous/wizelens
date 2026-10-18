@@ -1,9 +1,11 @@
 import { hashToken, newId, newToken } from "../auth/crypto.js";
 import type { Ctx } from "../app.js";
+import { makerScope } from "../auth/join-scope.js";
 import { requireProject } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson, str } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
+import { getJoinedTrace } from "../repo/trace-join.js";
 import { getTrace } from "../repo/trace-read.js";
 
 const DAY_MS = 86_400_000;
@@ -58,14 +60,17 @@ async function revoke(ctx: Ctx): Promise<void> {
   sendJson(ctx.res, 200, { ok: true });
 }
 
-/** Anyone with the link can read the trace while the link is valid. Nothing else is reachable with it. */
+/** Anyone with the link can read the trace while it is valid, joined only as far as its maker may read now. Nothing else is reachable with it. */
 async function open(ctx: Ctx): Promise<void> {
   const now = ctx.app.config.now();
-  const [row] = await ctx.app.db.query<{ project_id: string; trace_id: string; expires_ms: number }>(
-    "UPDATE shares SET views = views + 1 WHERE token_hash = $1 AND revoked_ms IS NULL AND expires_ms > $2 RETURNING project_id, trace_id, expires_ms",
+  const db = ctx.app.db;
+  const [row] = await db.query<{ project_id: string; trace_id: string; expires_ms: number; created_by: string; org_id: string }>(
+    `UPDATE shares s SET views = views + 1 FROM projects p WHERE s.token_hash = $1 AND s.revoked_ms IS NULL AND s.expires_ms > $2 AND p.id = s.project_id
+     RETURNING s.project_id, s.trace_id, s.expires_ms, s.created_by, p.org_id`,
     [hashToken(ctx.params.token!), now],
   );
-  const trace = row ? await getTrace(ctx.app.db, row.project_id, row.trace_id) : undefined;
+  const scope = row ? await makerScope(db, row.created_by, row.org_id, row.project_id) : [];
+  const trace = row ? await getJoinedTrace(db, row.project_id, scope, row.trace_id) : undefined;
   if (!row || !trace) return fail(404, "This link is not valid any more.");
   sendJson(ctx.res, 200, { trace, expiresMs: row.expires_ms });
 }

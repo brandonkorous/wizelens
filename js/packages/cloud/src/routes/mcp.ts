@@ -2,11 +2,13 @@ import { toSummary } from "@wizeworks/lens-core";
 import { parseJson, readBody } from "@wizeworks/lens-hub/kit";
 import { DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, handleMcp, type McpDataSource } from "@wizeworks/lens-node/kit";
 import type { Ctx } from "../app.js";
+import { joinScope } from "../auth/join-scope.js";
 import { principalOf, requireProject } from "../auth/principal.js";
 import { fail } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
-import { getTrace, queryTraces } from "../repo/trace-read.js";
+import { getJoinedTrace } from "../repo/trace-join.js";
+import { queryTraces } from "../repo/trace-read.js";
 import { projectMetrics } from "./metrics.js";
 
 /** Traces the MCP tools search through, newest first. */
@@ -28,6 +30,7 @@ async function mcp(ctx: Ctx): Promise<void> {
   const { project, actor } = access;
   const db = ctx.app.db;
   const recent = await queryTraces(db, { projectId: project.id, limit: MCP_RECENT });
+  const scope = await joinScope(db, access);
   const writes: Promise<void>[] = [];
   const data: McpDataSource = {
     service: project.name,
@@ -36,7 +39,7 @@ async function mcp(ctx: Ctx): Promise<void> {
     nPlusOneThreshold: DEFAULT_N_PLUS_ONE,
     list: (limit) => recent.slice(0, limit).map(toSummary),
     all: () => recent,
-    get: (traceId) => getTrace(db, project.id, traceId),
+    get: (traceId, federate) => getJoinedTrace(db, project.id, federate ? scope : [project.id], traceId),
     metrics: (range, params) => projectMetrics(db, project.id, range, params, { now: ctx.app.config.now() }),
     // Every tool call is kept in the organization's audit log.
     audit: (line) => void writes.push(audit(db, project.orgId, actor, "mcp.call", { projectId: project.id, line }, ctx.app.config.now())),

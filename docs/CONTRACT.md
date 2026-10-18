@@ -563,7 +563,7 @@ retention, and the audit log.
 | POST / DELETE | `api/orgs/{org}/projects[/{id}]`, `…/{id}/clear` (deletes data only) | Admin |
 | POST / DELETE | `api/orgs/{org}/keys[/{id}]` | Admin. The secret is in the answer once |
 | GET | `api/orgs/{org}/audit?before=` | Admin |
-| GET | `api/info`, `api/traces`, `api/traces/{id}`, `api/services` — all with `?project=` | Member or read key |
+| GET | `api/info`, `api/traces`, `api/traces/{id}`, `api/services` — all with `?project=` | Member or read key. `api/traces/{id}` joins other projects (see "Traces across projects") |
 | GET | `api/models/{page}?project=&range=&env=&…` | Member or read key. See "Page models". `metrics` is a page too |
 | GET / POST / PATCH / DELETE | `api/projects/{p}/alerts[/{id}]`, `…/{id}/test` | Read: viewer; change: member |
 | POST / GET / DELETE | `api/projects/{p}/shares[/{id}]` | Read: viewer; change: member |
@@ -624,10 +624,23 @@ Rules read the metric rollups over the window ending at "now" rounded down to 10
 bucket means of the finest tier that covers the window (10 s up to 6 hours, 5 min beyond), so they can sit slightly below the
 percentile of the raw values. No data never fires.
 
+### Traces across projects
+
+One trace can cross projects, for example a front end in one project calling a shared API in another. `api/traces/{id}`
+answers the asked project's part plus the parts of the same trace id in the other projects the caller may read:
+
+- **Same organization only.** Projects of other organizations are never read, even when the caller belongs to both.
+- **A person** sees every project of the organization. **A read key** sees only its own projects (checked again against the
+  organization on every call, so a key row that names a foreign project still gets nothing from it).
+- **404** when the asked project has no part of the trace, so a project cannot be used to probe others.
+- `join=false` returns the asked project's part only. Lists, page models, stats, and alerts stay per project.
+- MCP `get_trace` joins the same way for its read key (`federate: false`: the key's project only).
+
 ### Sharing
 
 A share link (`#/shared/<token>`, 1 to 30 days) opens one trace, read-only, for anyone with the link. It can be revoked.
-Views are counted. Nothing else is reachable with the token.
+Views are counted. Nothing else is reachable with the token. The trace is joined as far as the link's maker may read at
+the time it is opened: after the maker leaves the organization, the link shows only the shared project's part.
 
 ### Retention
 
