@@ -16,7 +16,7 @@ const REPO_SOURCES: Record<string, { path: string; description: string }> = {
   },
 };
 
-function frontmatter(raw: string): { meta: Record<string, string>; body: string } {
+export function frontmatter(raw: string): { meta: Record<string, string>; body: string } {
   const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/.exec(raw);
   if (!match) return { meta: {}, body: raw };
   const meta: Record<string, string> = {};

@@ -57,8 +57,13 @@ export function Footer() {
         ))}
       </div>
       <div className="wl-wrap wl-footer-base">
-        <span>© 2026 WizeWorks</span>
-        <span>Made by <b>WizeWorks</b>.</span>
+        <span>© 2026 WizeWorks LLC. Made by <b>WizeWorks</b> in Visalia, California.</span>
+        <nav className="wl-footer-legal" aria-label="Legal">
+          <a href="/privacy/">Privacy</a>
+          <a href="/terms/">Terms</a>
+          <a href="/security/">Security</a>
+          <a href="/license/">License</a>
+        </nav>
       </div>
     </footer>
   );

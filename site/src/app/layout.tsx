@@ -34,7 +34,7 @@ const description =
   "WizeLens shows you everything one request did: from the click in React to the SQL in your database, across every service. Open source, OpenTelemetry-native, and readable by AI agents only when you allow it.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://wizelens.dev"),
+  metadataBase: new URL("https://wizelens.com"),
   title: { default: "WizeLens: see what matters", template: "%s · WizeLens" },
   description,
   applicationName: "WizeLens",

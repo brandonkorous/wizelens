@@ -1,0 +1,5 @@
+Contact: mailto:security@wizelens.com
+Expires: 2027-10-17T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://wizelens.com/.well-known/security.txt
+Policy: https://wizelens.com/security/

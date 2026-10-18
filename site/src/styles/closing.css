@@ -22,3 +22,5 @@
   .wl-footer-brand { grid-column: 1 / -1; }
   .wl-footer-base { flex-direction: column; }
 }
+.wl-footer-legal { display: flex; flex-wrap: wrap; gap: 20px; }
+.wl-footer-legal a { font-size: 14px; }

@@ -7,5 +7,5 @@ export const LINKS = {
   start: "/docs/quick-start/",
   contract: "/docs/contract/",
   changelog: "/changelog/",
-  license: `${REPO}/blob/main/LICENSE`,
+  license: "/license/",
 };
