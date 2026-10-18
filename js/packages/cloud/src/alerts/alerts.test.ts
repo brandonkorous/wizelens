@@ -34,7 +34,7 @@ it("fires once when the error rate breaks the rule, then resolves", async () => 
   let url: string;
   ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
   const hook = await receiver();
-  const { owner, orgId, projectId } = await setupOwner(url);
+  const { owner, orgId, projectId } = await setupOwner(cloud, url);
   const key = (await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", projectIds: [projectId] })).body.token;
   const rule = { name: "Errors", metric: "error_rate", op: ">", threshold: 10, windowMs: 300_000, channels: [{ kind: "webhook", url: hook.url }] };
   expect((await owner.call("POST", `api/projects/${projectId}/alerts`, rule)).status).toBe(201);

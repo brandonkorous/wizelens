@@ -1,9 +1,7 @@
 import type { AlertMetric, AlertOp, MetricAlertStat } from "@wizeworks/lens-core";
 
-export interface Channel {
-  kind: "webhook" | "slack";
-  url: string;
-}
+/** Where a notice goes: a webhook or Slack URL, or email to members of the organization. */
+export type Channel = { kind: "webhook" | "slack"; url: string } | { kind: "email"; to: string[] };
 
 export interface AlertRule {
   id: string;

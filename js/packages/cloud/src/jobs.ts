@@ -1,8 +1,8 @@
 import { evaluateAll } from "./alerts/evaluate.js";
 import type { CloudApp } from "./app.js";
 import { pruneByRetention, pruneMetricsByRetention } from "./repo/trace-write.js";
-import { pruneSessions } from "./repo/users.js";
 import { pruneRollups, settleCloud } from "./settle.js";
+import { pruneAuthRows } from "./repo/auth-prune.js";
 
 const HOUSEKEEPING_MS = 10 * 60_000;
 const SETTLE_MS = 3_000;
@@ -25,7 +25,7 @@ function every(name: string, everyMs: number, job: () => Promise<unknown>): () =
   return () => (clearInterval(timer), clearTimeout(first));
 }
 
-/** Background work: retention, settling stats, rollup aging, expired sessions, and alert rules. Returns a function that stops it. */
+/** Background work: retention, settling stats, rollup aging, expired sessions and links, and alert rules. Returns a function that stops it. */
 export function startJobs(app: CloudApp): () => void {
   const now = app.config.now;
   const stops = [
@@ -36,7 +36,7 @@ export function startJobs(app: CloudApp): () => void {
     }),
     every("settle", SETTLE_MS, () => settleCloud(app.db, now(), { defaultRetentionDays: app.config.retentionDays })),
     every("rollups", ROLLUP_PRUNE_MS, () => pruneRollups(app.db, now())),
-    every("sessions", HOUSEKEEPING_MS, () => pruneSessions(app.db, now())),
+    every("sessions", HOUSEKEEPING_MS, () => pruneAuthRows(app.db)),
     every("alerts", app.config.alertIntervalMs, () => evaluateAll(app)),
   ];
   return () => stops.forEach((stop) => stop());

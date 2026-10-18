@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-// End-to-end check of a fresh WizeLens Cloud: node scripts/cloud-smoke.mjs http://localhost:5970
+// End-to-end check of a fresh WizeLens Cloud without SMTP: node scripts/cloud-smoke.mjs http://localhost:5970 <setup token>
 import { randomBytes, randomUUID } from "node:crypto";
 
 const base = (process.argv[2] ?? "http://localhost:5970").replace(/\/+$/, "");
-let cookie = "";
+const setupToken = process.argv[3] ?? process.env.WIZELENS_CLOUD_SETUP_TOKEN ?? "";
+const cookies = new Map();
+const cookie = () => [...cookies].map(([k, v]) => `${k}=${v}`).join("; ");
 
 function check(ok, what) {
   if (!ok) throw new Error(`cloud-smoke: ${what}`);
@@ -13,11 +15,13 @@ function check(ok, what) {
 async function call(method, path, body, headers = {}) {
   const res = await fetch(`${base}/_wizelens/${path}`, {
     method,
-    headers: { "Content-Type": "application/json", "X-WizeLens-Client": "dashboard", Cookie: cookie, ...headers },
+    headers: { "Content-Type": "application/json", "X-WizeLens-Client": "dashboard", Origin: base, Cookie: cookie(), ...headers },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const set = res.headers.get("set-cookie");
-  if (set) cookie = set.split(";")[0];
+  for (const set of res.headers.getSetCookie()) {
+    const [k, v] = set.split(";")[0].split("=");
+    cookies.set(k.trim(), v);
+  }
   const text = await res.text();
   return { status: res.status, body: text ? JSON.parse(text) : undefined };
 }
@@ -32,11 +36,14 @@ function spans(now) {
 }
 
 async function setup() {
-  const state = await call("GET", "api/auth/state");
+  const state = await call("GET", "api/me");
   check(state.body.needsSetup === true, "a fresh cloud asks for setup");
-  const made = await call("POST", "api/auth/setup", { email: `owner-${randomUUID()}@smoke.test`, password: `pw-${randomUUID()}`, name: "Smoke", orgName: "Smoke Org" });
-  check(made.status === 201 && cookie.startsWith("wizelens_session="), "setup signs the owner in");
-  const me = (await call("GET", "api/auth/state")).body;
+  const account = { email: `owner-${randomUUID()}@smoke.test`, password: `pw-${randomUUID()}`, name: "Smoke" };
+  const refused = await call("POST", "api/auth/sign-up/email", account);
+  check(refused.status === 403, "the first account needs the setup token");
+  const made = await call("POST", "api/auth/sign-up/email", account, { "x-wizelens-setup-token": setupToken });
+  check(made.status === 200 && cookie().includes("wizelens.session_token="), "setup signs the owner in");
+  const me = (await call("GET", "api/me")).body;
   return { orgId: me.orgs[0].id, projectId: me.orgs[0].projects[0].id };
 }
 
@@ -60,10 +67,20 @@ async function metrics(projectId, key) {
   check(page.body.selected?.summary.last === 0.42, "the metric reads back from the metrics page");
 }
 
+/** Stats appear once a trace is quiet for 5 s, and answers are cached for 15 s: ask again for up to 40 s. */
+async function settled(ask, done) {
+  let res = await ask();
+  for (let i = 0; i < 40 && !done(res.body); i++) {
+    await new Promise((r) => setTimeout(r, 1000));
+    res = await ask();
+  }
+  return res;
+}
+
 async function read(orgId, projectId, traceId) {
   const trace = await call("GET", `api/traces/${traceId}?project=${projectId}`);
   check(trace.status === 200 && trace.body.spans.length === 2, "the trace reads back from the database");
-  const week = await call("GET", `api/models/overview?project=${projectId}&range=7d`);
+  const week = await settled(() => call("GET", `api/models/overview?project=${projectId}&range=7d`), (b) => b.headlines?.total.value === 1);
   check(week.status === 200 && week.body.headlines.total.value === 1, "the server computes a 7-day overview");
   const errors = await call("GET", `api/models/errors?project=${projectId}&range=24h`);
   check(errors.body.groups[0]?.type === "SmokeError", "the server groups the error");

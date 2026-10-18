@@ -16,7 +16,11 @@ export type PageId =
   | "alerts"
   | "team"
   | "shared"
-  | "join";
+  | "account"
+  | AuthPageId;
+
+/** Account screens that open signed in or not (cloud only): links from emails and the sign-in steps. */
+export type AuthPageId = "setup" | "two-factor" | "forgot-password" | "reset-password" | "verify-email" | "invite" | "delete-account";
 
 export interface Route {
   page: PageId;
@@ -25,7 +29,8 @@ export interface Route {
   query: URLSearchParams;
 }
 
-const PAGES: readonly PageId[] = ["overview", "requests", "traces", "database", "rendering", "errors", "logs", "metrics", "services", "insights", "settings", "alerts", "team", "shared", "join"];
+export const AUTH_PAGES: readonly AuthPageId[] = ["setup", "two-factor", "forgot-password", "reset-password", "verify-email", "invite", "delete-account"];
+const PAGES: readonly PageId[] = ["overview", "requests", "traces", "database", "rendering", "errors", "logs", "metrics", "services", "insights", "settings", "alerts", "team", "shared", "account", ...AUTH_PAGES];
 const TRACE_ID = /^[0-9a-f]{32}$/;
 
 /** Read a hash like "#/requests?status=5xx" or "#/traces/<id>/sql". */

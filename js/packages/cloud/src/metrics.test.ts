@@ -23,7 +23,7 @@ const otlp = (metrics: unknown[]) => ({ resourceMetrics: [{ resource, scopeMetri
 async function withKeys(clock = { now: NOW }) {
   let url: string;
   ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
-  const { owner, orgId, projectId } = await setupOwner(url);
+  const { owner, orgId, projectId } = await setupOwner(cloud, url);
   const key = async (kind: string) => (await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind, name: kind, projectIds: [projectId] })).body.token;
   const ingest = await key("ingest");
   const send = (path: string, body: unknown) => fetch(`${url}/${path}`, { method: "POST", headers: { Authorization: `Bearer ${ingest}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });

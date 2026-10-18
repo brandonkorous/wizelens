@@ -47,15 +47,22 @@
     "start": "node dist/cli.js"
   },
   "dependencies": {
+    "@better-auth/passkey": "1.7.10",
+    "@better-auth/sso": "1.7.10",
     "@electric-sql/pglite": "^0.5.10",
     "@wizeworks/lens-core": "workspace:^",
     "@wizeworks/lens-hub": "workspace:^",
     "@wizeworks/lens-node": "workspace:^",
     "@wizeworks/lens-ui": "workspace:^",
+    "better-auth": "1.7.10",
+    "kysely": "^0.29.6",
+    "kysely-pglite-dialect": "^1.4.0",
+    "nodemailer": "^10.1.2",
     "pg": "^8.23.1"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"

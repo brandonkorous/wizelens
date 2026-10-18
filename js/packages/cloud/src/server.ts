@@ -4,13 +4,18 @@ import type { AddressInfo } from "node:net";
 import { otlpSignalOf } from "@wizeworks/lens-hub/kit";
 import { resolveUiDir, serveUi } from "@wizeworks/lens-node/kit";
 import type { CloudApp, Ctx } from "./app.js";
+import type { WizeAuth } from "./auth/auth.js";
+import { authHandler } from "./auth/bridge.js";
+import { AUTH_BASE_PATH } from "./auth/options.js";
+import { wireAuth } from "./auth/wire.js";
 import { type CloudOptions, resolveConfig } from "./config.js";
-import { type Db, openDb } from "./db/db.js";
+import { openDb } from "./db/db.js";
 import { migrate } from "./db/migrate.js";
 import { HttpError, sendJson } from "./http/http.js";
 import { RateLimiter } from "./http/limiter.js";
 import { Router } from "./http/router.js";
 import { startJobs } from "./jobs.js";
+import { createMailer } from "./mail/mailer.js";
 import { checkFactsVersion } from "./settle.js";
 import { allRoutes } from "./routes/index.js";
 import { ingestBatch, ingestOtlp } from "./routes/ingest.js";
@@ -23,6 +28,8 @@ export interface Cloud {
   readonly server: Server;
   readonly app: CloudApp;
   listen(): Promise<string>;
+  /** The link that makes the first account, while no account exists. */
+  setupLink(): string | null;
   close(): Promise<void>;
 }
 
@@ -31,6 +38,7 @@ interface Parts {
   router: Router<Ctx>;
   ingest: RateLimiter;
   uiDir: string | null;
+  auth: () => (req: IncomingMessage, res: ServerResponse) => Promise<void>;
 }
 
 /** Changes from a browser must carry the dashboard header, so a page on another site cannot send them. */
@@ -54,6 +62,7 @@ async function route(p: Parts, req: IncomingMessage, res: ServerResponse): Promi
   const ctx: Ctx = { req, res, url, params: {}, app: p.app };
   if (path === "/healthz") return void res.writeHead(200, { "Content-Type": "text/plain" }).end("ok");
   if (path === "/" || path === BASE) return void res.writeHead(302, { Location: `${BASE}/${url.search}` }).end();
+  if (path.startsWith(`${AUTH_BASE_PATH}/`)) return p.auth()(req, res);
   const signal = otlpSignalOf(path);
   if (signal && req.method === "POST") return ingestOtlp(ctx, signal, p.ingest);
   if (path.startsWith(`${BASE}/`)) return routeBase(p, ctx, path.slice(BASE.length + 1));
@@ -67,41 +76,52 @@ function onError(err: unknown, res: ServerResponse): void {
   sendJson(res, 500, { error: "Something went wrong on the server." });
 }
 
-function makeApp(db: Db, options: CloudOptions): CloudApp {
+/** Open the database, bring its schema up to date, and build the server. Call `listen()` to start. */
+export async function createCloud(options: CloudOptions = {}): Promise<Cloud> {
   const config = resolveConfig(options);
-  return {
+  const db = await openDb(config.database);
+  await migrate(db);
+  await checkFactsVersion(db);
+  const mailer = await createMailer(config);
+  const wiring = await wireAuth(db, config, mailer);
+  let auth: WizeAuth | undefined;
+  let handler: ReturnType<typeof authHandler> | undefined;
+  let listenUrl = config.publicUrl ?? `http://localhost:${config.port}`;
+  const app: CloudApp = {
     db,
     config,
     version: CLOUD_VERSION,
     startedMs: config.now(),
-    baseUrl: (req) => config.publicUrl ?? `${req.headers["x-forwarded-proto"] === "https" ? "https" : "http"}://${req.headers.host ?? "localhost"}`,
+    mailer,
+    get auth(): WizeAuth {
+      if (!auth) throw new Error("The cloud is not listening yet.");
+      return auth;
+    },
+    baseUrl: () => config.publicUrl ?? listenUrl,
   };
-}
-
-/** Open the database, bring its schema up to date, and build the server. Call `listen()` to start. */
-export async function createCloud(options: CloudOptions = {}): Promise<Cloud> {
-  const db = await openDb(resolveConfig(options).database);
-  await migrate(db);
-  await checkFactsVersion(db);
-  const app = makeApp(db, options);
-  const parts: Parts = { app, router: allRoutes(), ingest: new RateLimiter(app.config.ingestPerMinute, 60_000, app.config.now), uiDir: resolveUiDir(app.config.uiDir) };
+  const ready = (url: string) => ((listenUrl = url), (auth = wiring.start(url)), (handler = authHandler(auth, config.trustProxy)));
+  if (config.publicUrl) ready(config.publicUrl);
+  const parts: Parts = { app, router: allRoutes(), ingest: new RateLimiter(config.ingestPerMinute, 60_000, config.now), uiDir: resolveUiDir(config.uiDir), auth: () => handler! };
   const server = createServer((req, res) => void route(parts, req, res).catch((err: unknown) => onError(err, res)));
   const stopJobs = startJobs(app);
   return {
     server,
     app,
+    setupLink: wiring.setupLink,
     listen: () =>
       new Promise((resolve, reject) => {
         server.once("error", reject);
-        server.listen(app.config.port, app.config.host, () => {
+        server.listen(config.port, config.host, () => {
           const { port } = server.address() as AddressInfo;
-          resolve(app.config.publicUrl ?? `http://localhost:${port}`);
+          if (!config.publicUrl) ready(`http://localhost:${port}`);
+          resolve(config.publicUrl ?? `http://localhost:${port}`);
         });
       }),
     close: async () => {
       stopJobs();
       server.closeAllConnections?.();
       await new Promise<void>((resolve) => server.close(() => resolve()));
+      await mailer.close();
       await db.close();
     },
   };

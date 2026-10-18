@@ -16,7 +16,7 @@ const NOW = 1_800_000_000_000;
 it("computes page models on the server, for long ranges", async () => {
   let url: string;
   ({ cloud, url } = await startCloud({ now: () => NOW }));
-  const { owner, orgId, projectId } = await setupOwner(url);
+  const { owner, orgId, projectId } = await setupOwner(cloud, url);
   const key = (await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", projectIds: [projectId] })).body.token;
   const spans = [1, 2, 3, 4, 5].map((d) => span(String(d).repeat(32), String(d).repeat(16), { startMs: NOW - d * DAY + 1000 }));
   await fetch(`${url}/_wizelens/api/ingest`, { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: JSON.stringify({ sender: { service: "api" }, spans }) });

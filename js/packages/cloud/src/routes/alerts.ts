@@ -5,16 +5,32 @@ import type { Ctx } from "../app.js";
 import { requireProject } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson, str } from "../http/http.js";
 import type { Router } from "../http/router.js";
+import { memberEmails } from "../repo/users.js";
 import { type Channel, createRule, deleteRule, listEvents, listRules, ruleById, type RuleInput, updateRule } from "../repo/alerts.js";
 
 const WINDOWS = [5, 15, 60, 360, 1440].map((m) => m * 60_000);
 const MAX_CHANNELS = 5;
+const MAX_EMAILS = 20;
 
-async function channelsOf(ctx: Ctx, raw: unknown): Promise<Channel[]> {
+/** Email goes only to members of the organization with a confirmed address, so a rule cannot send mail to strangers. */
+async function emailChannel(ctx: Ctx, orgId: string, to: unknown): Promise<Channel> {
+  const allowed = new Set(await memberEmails(ctx.app.db, orgId, ctx.app.mailer.live));
+  const list = Array.isArray(to) ? [...new Set(to.filter((x): x is string => typeof x === "string").map((x) => x.trim().toLowerCase()))] : [];
+  if (list.length === 0 || list.length > MAX_EMAILS) fail(400, `Send to 1 to ${MAX_EMAILS} email addresses.`);
+  const stranger = list.find((e) => !allowed.has(e));
+  if (stranger) fail(400, `${stranger} is not a member of this organization with a confirmed email.`);
+  return { kind: "email", to: list };
+}
+
+async function channelsOf(ctx: Ctx, orgId: string, raw: unknown): Promise<Channel[]> {
   const list = Array.isArray(raw) ? raw.slice(0, MAX_CHANNELS) : [];
   const out: Channel[] = [];
-  for (const c of list as { kind?: unknown; url?: unknown }[]) {
-    if ((c.kind !== "webhook" && c.kind !== "slack") || typeof c.url !== "string") return fail(400, "Each channel needs kind (webhook or slack) and url.");
+  for (const c of list as { kind?: unknown; url?: unknown; to?: unknown }[]) {
+    if (c.kind === "email") {
+      out.push(await emailChannel(ctx, orgId, c.to));
+      continue;
+    }
+    if ((c.kind !== "webhook" && c.kind !== "slack") || typeof c.url !== "string") return fail(400, "Each channel needs kind (webhook, slack, or email) and url (or to).");
     const problem = await checkTarget(c.url, ctx.app.config.allowPrivateWebhooks);
     if (problem) fail(400, `${c.url}: ${problem}`);
     out.push({ kind: c.kind, url: c.url });
@@ -37,7 +53,7 @@ function metricPart(b: Record<string, unknown>): Pick<RuleInput, "metric" | "met
 }
 
 /** Check a rule from the request body. */
-async function ruleInput(ctx: Ctx): Promise<RuleInput> {
+async function ruleInput(ctx: Ctx, orgId: string): Promise<RuleInput> {
   const b = await readJsonBody(ctx.req);
   const metric = metricPart(b);
   if (b.op !== ">" && b.op !== "<") fail(400, 'Set op to ">" or "<".');
@@ -52,7 +68,7 @@ async function ruleInput(ctx: Ctx): Promise<RuleInput> {
     threshold,
     windowMs,
     env: typeof b.env === "string" ? b.env.slice(0, 50) : "",
-    channels: await channelsOf(ctx, b.channels),
+    channels: await channelsOf(ctx, orgId, b.channels),
     enabled: b.enabled !== false,
   };
 }
@@ -64,14 +80,14 @@ async function list(ctx: Ctx): Promise<void> {
 
 async function create(ctx: Ctx): Promise<void> {
   const { project, actor } = await requireProject(ctx, ctx.params.project!, "write");
-  const id = await createRule(ctx.app.db, project.id, await ruleInput(ctx), actor, ctx.app.config.now());
+  const id = await createRule(ctx.app.db, project.id, await ruleInput(ctx, project.orgId), actor, ctx.app.config.now());
   sendJson(ctx.res, 201, await ruleById(ctx.app.db, project.id, id));
 }
 
 async function change(ctx: Ctx): Promise<void> {
   const { project } = await requireProject(ctx, ctx.params.project!, "write");
   if (!(await ruleById(ctx.app.db, project.id, ctx.params.id!))) fail(404, "Alert rule not found.");
-  await updateRule(ctx.app.db, project.id, ctx.params.id!, await ruleInput(ctx));
+  await updateRule(ctx.app.db, project.id, ctx.params.id!, await ruleInput(ctx, project.orgId));
   sendJson(ctx.res, 200, await ruleById(ctx.app.db, project.id, ctx.params.id!));
 }
 

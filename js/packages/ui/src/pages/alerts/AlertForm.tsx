@@ -4,6 +4,7 @@ import { Select } from "../../ui/Controls";
 import { Field, FormRow } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
 import { type AlertRule, type Channel, WINDOWS } from "./alertTypes";
+import { ChannelFields } from "./ChannelFields";
 import { MetricRuleFields } from "./MetricRuleFields";
 
 export type RuleDraft = Omit<AlertRule, "id" | "state" | "lastValue" | "lastEvalMs">;
@@ -15,10 +16,6 @@ const METRICS: [AlertMetric | "metric", string][] = [
 const OPS: [AlertOp, string][] = [
   [">", "is above"],
   ["<", "is below"],
-];
-const KINDS: [Channel["kind"], string][] = [
-  ["webhook", "Webhook (JSON)"],
-  ["slack", "Slack incoming webhook"],
 ];
 
 export const EMPTY_RULE: RuleDraft = {
@@ -44,7 +41,8 @@ export function AlertForm({ initial, onSave, onCancel }: { initial: RuleDraft; o
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const metric = r.metric === "metric" ? { metricStat: r.metricStat || "avg" } : { metricName: "", metricStat: "", metricService: "" };
-    void onSave({ ...r, ...metric, channels: channel.url ? [channel] : [] } as RuleDraft).then(setError);
+    const used = channel.kind === "email" ? channel.to.length > 0 : channel.url !== "";
+    void onSave({ ...r, ...metric, channels: used ? [channel] : [] } as RuleDraft).then(setError);
   };
   return (
     <Panel title={initial.name ? `Edit "${initial.name}"` : "New alert"}>
@@ -60,10 +58,7 @@ export function AlertForm({ initial, onSave, onCancel }: { initial: RuleDraft; o
           <Select label="Over the last" value={String(r.windowMs)} options={WINDOWS} onChange={(v) => set("windowMs")(Number(v))} />
         </FormRow>
         {r.metric === "metric" && <MetricRuleFields r={r} set={set} />}
-        <FormRow>
-          <Select label="Send to" value={channel.kind} options={KINDS} onChange={(kind) => setChannel((c) => ({ ...c, kind }))} />
-          <Field label="URL" type="url" value={channel.url} onChange={(e) => setChannel((c) => ({ ...c, url: e.target.value }))} placeholder="https://hooks.slack.com/services/…" />
-        </FormRow>
+        <ChannelFields channel={channel} onChange={setChannel} />
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
         <FormRow>
           <button type="submit" className="wl-btn wl-btn-primary">Save alert</button>

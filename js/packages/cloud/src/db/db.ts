@@ -1,4 +1,5 @@
-import type { PGlite } from "@electric-sql/pglite";
+import type { BetterAuthOptions } from "better-auth";
+import type { Kysely, Transaction } from "kysely";
 import type { Pool, PoolClient } from "pg";
 
 /** Something that runs SQL: the database, or one transaction. Postgres syntax, `$1` parameters. */
@@ -9,10 +10,12 @@ export interface Queryable {
 export interface Db extends Queryable {
   /** Run `fn` in one transaction. It rolls back when `fn` throws. */
   tx<T>(fn: (q: Queryable) => Promise<T>): Promise<T>;
-  /** Run several statements without parameters (migrations). */
+  /** Run several statements without parameters (migrations, before anything else uses the database). */
   exec(sql: string): Promise<void>;
   close(): Promise<void>;
   readonly kind: "postgres" | "pglite";
+  /** The same database, for Better Auth. */
+  readonly authDatabase: NonNullable<BetterAuthOptions["database"]>;
 }
 
 const wrap = (client: Pool | PoolClient): Queryable => ({
@@ -26,6 +29,7 @@ export async function openPostgres(url: string): Promise<Db> {
   const pool = new pg.Pool({ connectionString: url, max: 10 });
   return {
     kind: "postgres",
+    authDatabase: pool,
     ...wrap(pool),
     async tx<T>(fn: (q: Queryable) => Promise<T>): Promise<T> {
       const client = await pool.connect();
@@ -46,19 +50,25 @@ export async function openPostgres(url: string): Promise<Db> {
   };
 }
 
-/** Postgres in this process (PGlite): a folder on disk, or memory when `dir` is undefined. For tests and trials. */
+/** PGlite (a folder, or memory), for tests and trials. All queries share one Kysely queue with Better Auth: PGlite has one connection. */
 export async function openPglite(dir?: string): Promise<Db> {
-  const { PGlite: Lite } = await import("@electric-sql/pglite");
-  const lite: PGlite = await Lite.create(dir);
-  const q = (runner: Pick<PGlite, "query">): Queryable => ({
-    query: async <T>(sql: string, params: unknown[] = []) => (await runner.query<T>(sql, params)).rows,
+  const [{ PGlite }, { Kysely, CompiledQuery }, { PGliteDialect }] = await Promise.all([
+    import("@electric-sql/pglite"),
+    import("kysely"),
+    import("kysely-pglite-dialect"),
+  ]);
+  const lite = await PGlite.create(dir);
+  const kysely: Kysely<unknown> = new Kysely({ dialect: new PGliteDialect(lite) });
+  const run = (k: Kysely<unknown> | Transaction<unknown>): Queryable => ({
+    query: async <T>(sql: string, params: unknown[] = []) => (await k.executeQuery<T>(CompiledQuery.raw(sql, params))).rows,
   });
   return {
     kind: "pglite",
-    ...q(lite),
-    tx: <T>(fn: (q: Queryable) => Promise<T>) => lite.transaction((t) => fn(q(t))),
+    authDatabase: { db: kysely, type: "postgres", transaction: true },
+    ...run(kysely),
+    tx: <T>(fn: (q: Queryable) => Promise<T>) => kysely.transaction().execute((t) => fn(run(t))),
     exec: async (sql) => void (await lite.exec(sql)),
-    close: () => lite.close(),
+    close: () => kysely.destroy(),
   };
 }
 

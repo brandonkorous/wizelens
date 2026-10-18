@@ -2,10 +2,8 @@ import type { AlertMetric, AlertOp, MetricAlertStat } from "@wizeworks/lens-core
 import { newId } from "../auth/crypto.js";
 import type { Queryable } from "../db/db.js";
 
-export interface Channel {
-  kind: "webhook" | "slack";
-  url: string;
-}
+/** Where a notice goes: a webhook, a Slack incoming webhook, or email to members of the organization. */
+export type Channel = { kind: "webhook" | "slack"; url: string } | { kind: "email"; to: string[] };
 
 export interface AlertRule {
   id: string;

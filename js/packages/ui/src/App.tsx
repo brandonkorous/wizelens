@@ -1,10 +1,10 @@
-import { type ComponentType, useEffect, useMemo } from "react";
+import { type ComponentType, lazy, Suspense, useEffect, useMemo } from "react";
 import { errorEvents, type Health, isFailed, requestRows } from "@wizeworks/lens-core";
 import { TraceDetail } from "./pages/trace/TraceDetailPage";
 import { AlertsPage } from "./pages/alerts/AlertsPage";
-import { TeamPage } from "./pages/team/TeamPage";
 import { AuthGate } from "./shell/auth/AuthGate";
 import { useData, useWindowed } from "./data/hooks";
+import { useHost } from "./data/host";
 import { useServerErrorCount } from "./data/models";
 import { applyTheme, useTheme } from "./data/prefs";
 import { DatabasePage } from "./pages/database/DatabasePage";
@@ -18,11 +18,16 @@ import { RequestsPage } from "./pages/requests/RequestsPage";
 import { ServicesPage } from "./pages/services/ServicesPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
 import { TracesPage } from "./pages/traces/TracesPage";
-import { type PageId, type Route, useRoute } from "./routes";
+import { AUTH_PAGES, type AuthPageId, type PageId, type Route, useRoute } from "./routes";
+import { EmailBanner } from "./shell/EmailBanner";
 import { Sidebar } from "./shell/Sidebar";
 import { TopBar } from "./shell/TopBar";
 
-const PAGES: Record<Exclude<PageId, "trace" | "shared" | "join">, ComponentType> = {
+// Cloud-only pages load on first visit, so in-app and hub dashboards never download them.
+const TeamPage = lazy(() => import("./pages/team/TeamPage").then((m) => ({ default: m.TeamPage })));
+const AccountPage = lazy(() => import("./pages/account/AccountPage").then((m) => ({ default: m.AccountPage })));
+
+const PAGES: Record<Exclude<PageId, "trace" | "shared" | AuthPageId>, ComponentType> = {
   overview: OverviewPage,
   requests: RequestsPage,
   traces: TracesPage,
@@ -36,6 +41,7 @@ const PAGES: Record<Exclude<PageId, "trace" | "shared" | "join">, ComponentType>
   settings: SettingsPage,
   alerts: AlertsPage,
   team: TeamPage,
+  account: AccountPage,
 };
 
 const RECENT_MS = 5 * 60_000;
@@ -52,11 +58,14 @@ function useHealthDot(): string | undefined {
 }
 
 function PageView({ route }: { route: Route }) {
+  const cloud = useHost().has("accounts");
   if (route.page === "trace") {
     const [traceId, view] = route.params;
     return <TraceDetail key={traceId} traceId={traceId!} view={view as never} />;
   }
-  const Page = route.page === "shared" || route.page === "join" ? OverviewPage : PAGES[route.page];
+  const page = route.page;
+  const elsewhere = page === "shared" || (AUTH_PAGES as readonly string[]).includes(page) || (page === "account" && !cloud);
+  const Page = elsewhere ? OverviewPage : PAGES[page as keyof typeof PAGES];
   return <Page />;
 }
 
@@ -87,6 +96,7 @@ function Shell() {
       <Sidebar page={route.page} counts={{ errors }} dot={dot} />
       <div className="wl-main">
         <TopBar data={data} />
+        <EmailBanner />
         <main className="wl-page">
           <PageView route={route} />
         </main>

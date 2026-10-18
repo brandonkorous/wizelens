@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Span } from "@wizeworks/lens-core";
 import { type Db, openPglite } from "../db/db.js";
 import { migrate } from "../db/migrate.js";
@@ -29,4 +30,14 @@ export function span(traceId: string, spanId: string, extra: Partial<Span> = {})
     events: [],
     ...extra,
   };
+}
+
+/** An owner and an organization written straight into the tables, for tests below the HTTP layer. */
+export async function seedOrg(db: Db, name = "Acme", retentionDays = 30): Promise<{ userId: string; orgId: string }> {
+  const userId = randomUUID();
+  const orgId = randomUUID();
+  await db.query("INSERT INTO users (id, name, email, email_verified) VALUES ($1, $2, $3, TRUE)", [userId, "Owner", `${userId}@x.io`]);
+  await db.query("INSERT INTO orgs (id, name, slug, retention_days, created_at) VALUES ($1, $2, $3, $4, now())", [orgId, name, `org-${orgId}`, retentionDays]);
+  await db.query("INSERT INTO members (id, org_id, user_id, role, created_at) VALUES ($1, $2, $3, 'owner', now())", [randomUUID(), orgId, userId]);
+  return { userId, orgId };
 }

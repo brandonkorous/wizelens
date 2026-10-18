@@ -1,6 +1,7 @@
 import type { Project, Role } from "../../data/account";
 
 export interface Member {
+  memberId: string;
   userId: string;
   email: string;
   name: string;
@@ -18,12 +19,20 @@ export interface ApiKey {
   lastUsedMs: number | null;
 }
 
+/** An open invite. Its id is the secret part of the invite link. */
+export interface Invite {
+  id: string;
+  email: string;
+  role: Role;
+  expiresMs: number;
+}
+
 /** `GET api/orgs/<id>`. Invites and keys are empty for members and viewers. */
 export interface OrgData {
   role: Role;
   members: Member[];
   projects: Project[];
-  invites: { email: string; role: Role; expiresMs: number }[];
+  invites: Invite[];
   keys: ApiKey[];
 }
 

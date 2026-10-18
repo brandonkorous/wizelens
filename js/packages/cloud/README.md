@@ -11,7 +11,8 @@ npx @wizeworks/lens-cloud
 POSTGRES_PASSWORD=<a long secret> docker compose -f deploy/docker-compose.cloud.yml up -d
 ```
 
-Open http://localhost:5970/_wizelens/ and create the first account. Make an ingest key on the Team page, then on each app:
+The cloud prints a one-time setup link while it has no account. Open it and create the first account. Make an ingest key on the
+Team page, then on each app:
 
 ```bash
 WIZELENS_HUB=http://localhost:5970
@@ -29,9 +30,28 @@ WIZELENS_HUB_TOKEN=wl_ik_...
 | `--signup <invite\|open>` | `WIZELENS_CLOUD_SIGNUP` | `invite` |
 | `--retention-days <n>` | `WIZELENS_CLOUD_RETENTION_DAYS` | `30` |
 | `--allow-private-webhooks` | `WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1` | off |
+| `--auth-secret <text>` | `WIZELENS_CLOUD_AUTH_SECRET` | required with Postgres (32+ random characters; `2:new,1:old` rotates) |
+| `--smtp-url <url>` | `WIZELENS_CLOUD_SMTP_URL` | none: emails go to the log (`smtp://user:pass@host:587` or `smtps://…:465`) |
+| `--mail-from <address>` | `WIZELENS_CLOUD_MAIL_FROM` | `WizeLens <no-reply@<public host>>` |
+| `--trust-proxy` | `WIZELENS_CLOUD_TRUST_PROXY=1` | off (client address from the last `X-Forwarded-For` entry) |
+| `--setup-token <text>` | `WIZELENS_CLOUD_SETUP_TOKEN` | random, printed at start while no account exists |
+| `--[no-]check-pwned-passwords` | `WIZELENS_CLOUD_CHECK_PWNED=1\|0` | on with Postgres, off with PGlite |
+| `--sso-origins <list>` | `WIZELENS_CLOUD_SSO_ORIGINS` | none: identity provider origins for OIDC single sign-on, comma separated (`https://acme.okta.com`) |
 
-Put it behind https. With an https public URL, the sign-in cookie is marked secure. PGlite is for trials and tests; use Postgres
-for real teams. Check a running cloud end to end with `node scripts/cloud-smoke.mjs <url>` from the repo (it needs a fresh database).
+Put it behind https, and set `--public-url` to the https address: cookies are then Secure, and passkeys and email links use it.
+Sending mail needs `--public-url`. Without `--smtp-url`, nobody gets email: reset and invite links are in the log, and email
+addresses are not confirmed. PGlite is for trials and tests; use Postgres for real teams.
+
+## Accounts
+
+Sign-in is [Better Auth](https://better-auth.com) (pinned to one version): email and password, passkeys, two-step codes from an
+authenticator app with backup codes, password reset and email confirm by link, sessions per device (sign out one or all),
+organizations with owner, admin, member, and viewer roles, email invites, single sign-on per organization (OIDC or SAML, after a
+DNS proof of the email domain; Team page), and account deletion. Sign-in tries are limited per
+client address across all instances. Existing accounts keep working after the upgrade; everyone signs in once more. See
+`docs/CONTRACT.md`, "Tenancy and access".
+
+Check a running cloud end to end with `node scripts/cloud-smoke.mjs <url> <setup token>` from the repo (a fresh database, no SMTP).
 
 ## Stats
 
@@ -57,7 +77,12 @@ one metric: `{ "metric": "metric", "metricName": "process.cpu.utilization", "met
 ```ts
 import { createCloud } from "@wizeworks/lens-cloud";
 
-const cloud = await createCloud({ database: process.env.DATABASE_URL, publicUrl: "https://wizelens.example.com" });
+const cloud = await createCloud({
+  database: process.env.DATABASE_URL,
+  publicUrl: "https://wizelens.example.com",
+  authSecret: process.env.WIZELENS_CLOUD_AUTH_SECRET,
+  smtpUrl: process.env.WIZELENS_CLOUD_SMTP_URL,
+});
 console.log(await cloud.listen());
 ```
 
