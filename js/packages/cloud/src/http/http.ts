@@ -21,8 +21,8 @@ export function sendJson(res: ServerResponse, status: number, value: unknown, he
   res.end(JSON.stringify(value));
 }
 
-/** A small JSON body. Throws 400 for bad JSON or more than 1 MB. */
-export async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
+/** The body exactly as sent, for signature checks. Throws 413 past 1 MB. */
+export async function readRawBody(req: IncomingMessage): Promise<string> {
   const chunks: Buffer[] = [];
   let size = 0;
   for await (const chunk of req) {
@@ -31,7 +31,12 @@ export async function readJsonBody(req: IncomingMessage): Promise<Record<string,
     if (size > MAX_JSON) fail(413, "The body is too large.");
     chunks.push(buf);
   }
-  const text = Buffer.concat(chunks).toString("utf8");
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+/** A small JSON body. Throws 400 for bad JSON or more than 1 MB. */
+export async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
+  const text = await readRawBody(req);
   try {
     const v = text ? (JSON.parse(text) as unknown) : {};
     return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : fail(400, "Send a JSON object.");

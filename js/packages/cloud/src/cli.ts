@@ -6,7 +6,8 @@ function notes(cloud: Cloud): string[] {
   const { app } = cloud;
   const out: string[] = [];
   if (app.db.kind === "pglite") out.push("  Note: PGlite is for trials and tests. Use Postgres for real teams.");
-  if (!app.mailer.live) out.push("  Note: no --smtp-url, so emails are written to this log and email addresses are not confirmed.");
+  if (!app.mailer.live) out.push("  Note: no --resend-api-key or --smtp-url, so emails are written to this log and email addresses are not confirmed.");
+  if (app.mailer.via === "resend" && !app.config.resendWebhookSecret) out.push("  Note: no --resend-webhook-secret, so bounced addresses keep getting mail.");
   if (app.db.kind === "postgres" && !app.config.publicUrl?.startsWith("https://")) out.push("  Note: set --public-url to an https:// address, so sign-in cookies are Secure.");
   const setup = cloud.setupLink();
   if (setup) out.push("", "  No account yet. Open this link to make the first one (it works once):", `  ${setup}`);
@@ -26,7 +27,7 @@ async function main(): Promise<void> {
       `  Add-ons     WIZELENS_HUB=${url}  WIZELENS_HUB_TOKEN=<ingest key>`,
       `  OTLP/HTTP   OTEL_EXPORTER_OTLP_ENDPOINT=${url}  (header Authorization=Bearer <ingest key>)`,
       `  Database    ${db}`,
-      `  Mail        ${cloud.app.mailer.live ? "SMTP" : "log only"}`,
+      `  Mail        ${{ resend: "Resend", smtp: "SMTP", test: "test sender", log: "log only" }[cloud.app.mailer.via]}`,
       ...notes(cloud),
     ].join("\n"),
   );

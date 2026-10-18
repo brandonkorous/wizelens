@@ -1,6 +1,7 @@
 # WizeLens Cloud with Postgres. Start: docker compose -f deploy/docker-compose.cloud.yml up -d
 # Set POSTGRES_PASSWORD, WIZELENS_CLOUD_AUTH_SECRET (openssl rand -base64 32), and WIZELENS_CLOUD_PUBLIC_URL in a .env file next to this one.
-# For email (password reset, invites, alerts), also set WIZELENS_CLOUD_SMTP_URL and WIZELENS_CLOUD_MAIL_FROM. The first account's link is in the log.
+# For email (password reset, invites, alerts), also set WIZELENS_CLOUD_RESEND_API_KEY (or WIZELENS_CLOUD_SMTP_URL) and WIZELENS_CLOUD_MAIL_FROM.
+# With Resend, also set WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET so bounces stop later mail. The first account's link is in the log.
 services:
   postgres:
     image: postgres:17
@@ -25,6 +26,8 @@ services:
       WIZELENS_CLOUD_PUBLIC_URL: ${WIZELENS_CLOUD_PUBLIC_URL:-http://localhost:5970}
       WIZELENS_CLOUD_SIGNUP: ${WIZELENS_CLOUD_SIGNUP:-invite}
       WIZELENS_CLOUD_AUTH_SECRET: ${WIZELENS_CLOUD_AUTH_SECRET:?Set WIZELENS_CLOUD_AUTH_SECRET to 32+ random characters}
+      WIZELENS_CLOUD_RESEND_API_KEY: ${WIZELENS_CLOUD_RESEND_API_KEY:-}
+      WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET: ${WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET:-}
       WIZELENS_CLOUD_SMTP_URL: ${WIZELENS_CLOUD_SMTP_URL:-}
       WIZELENS_CLOUD_MAIL_FROM: ${WIZELENS_CLOUD_MAIL_FROM:-}
       WIZELENS_CLOUD_SETUP_TOKEN: ${WIZELENS_CLOUD_SETUP_TOKEN:-}

@@ -31,7 +31,9 @@ WIZELENS_HUB_TOKEN=wl_ik_...
 | `--retention-days <n>` | `WIZELENS_CLOUD_RETENTION_DAYS` | `30` |
 | `--allow-private-webhooks` | `WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1` | off |
 | `--auth-secret <text>` | `WIZELENS_CLOUD_AUTH_SECRET` | required with Postgres (32+ random characters; `2:new,1:old` rotates) |
-| `--smtp-url <url>` | `WIZELENS_CLOUD_SMTP_URL` | none: emails go to the log (`smtp://user:pass@host:587` or `smtps://…:465`) |
+| `--resend-api-key <key>` | `WIZELENS_CLOUD_RESEND_API_KEY` | none: mail through the [Resend](https://resend.com) API (`re_…`) |
+| `--resend-webhook-secret <s>` | `WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET` | none: the `whsec_…` secret of the Resend webhook (see below) |
+| `--smtp-url <url>` | `WIZELENS_CLOUD_SMTP_URL` | none: or mail over SMTP (`smtp://user:pass@host:587` or `smtps://…:465`) |
 | `--mail-from <address>` | `WIZELENS_CLOUD_MAIL_FROM` | `WizeLens <no-reply@<public host>>` |
 | `--trust-proxy` | `WIZELENS_CLOUD_TRUST_PROXY=1` | off (client address from the last `X-Forwarded-For` entry) |
 | `--setup-token <text>` | `WIZELENS_CLOUD_SETUP_TOKEN` | random, printed at start while no account exists |
@@ -39,8 +41,16 @@ WIZELENS_HUB_TOKEN=wl_ik_...
 | `--sso-origins <list>` | `WIZELENS_CLOUD_SSO_ORIGINS` | none: identity provider origins for OIDC single sign-on, comma separated (`https://acme.okta.com`) |
 
 Put it behind https, and set `--public-url` to the https address: cookies are then Secure, and passkeys and email links use it.
-Sending mail needs `--public-url`. Without `--smtp-url`, nobody gets email: reset and invite links are in the log, and email
-addresses are not confirmed. PGlite is for trials and tests; use Postgres for real teams.
+Sending mail needs `--public-url`. Without `--resend-api-key` or `--smtp-url`, nobody gets email: reset and invite links are in
+the log, and email addresses are not confirmed. PGlite is for trials and tests; use Postgres for real teams.
+
+## Email
+
+Use Resend or SMTP, not both. With Resend, each email is sent with an idempotency key and tried up to 4 times on 429 and 5xx answers.
+Add a Resend webhook to `<public-url>/_wizelens/api/mail/resend` with the events `email.bounced` and `email.complained`, and set
+`--resend-webhook-secret` to its signing secret. The cloud checks the signature, then keeps a suppression list: after a hard bounce
+no mail goes to that address, and after a spam complaint only mail the person asked for (confirm, reset, change, delete) goes
+there. Confirming the address again by link clears it.
 
 ## Accounts
 
@@ -81,7 +91,8 @@ const cloud = await createCloud({
   database: process.env.DATABASE_URL,
   publicUrl: "https://wizelens.example.com",
   authSecret: process.env.WIZELENS_CLOUD_AUTH_SECRET,
-  smtpUrl: process.env.WIZELENS_CLOUD_SMTP_URL,
+  resendApiKey: process.env.WIZELENS_CLOUD_RESEND_API_KEY,
+  resendWebhookSecret: process.env.WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET,
 });
 console.log(await cloud.listen());
 ```

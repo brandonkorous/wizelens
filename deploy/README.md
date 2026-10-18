@@ -46,6 +46,14 @@ The cloud runs one pod with `Recreate`, because migrations and alert jobs run in
    az keyvault secret show --vault-name kv-wizelens-prod-cus --name WIZELENS-CLOUD-SETUP-TOKEN --query value -o tsv
    ```
 
+8. **Email with Resend.** Mail goes out as `WizeLens <hello@wizelens.com>` (`WIZELENS_CLOUD_MAIL_FROM` in the production overlay).
+   1. In Resend, add the domain `wizelens.com` and put its DNS records in Cloudflare. Wait until Resend says it is verified.
+   2. Make an API key with "Sending access" for that domain only, and store it:
+      `az keyvault secret set --vault-name kv-wizelens-prod-cus --name WIZELENS-CLOUD-RESEND-API-KEY --value <re_...>`
+   3. Add a webhook to `https://app.wizelens.com/_wizelens/api/mail/resend` with the events `email.bounced` and `email.complained`.
+      Store its signing secret: `az keyvault secret set --vault-name kv-wizelens-prod-cus --name WIZELENS-CLOUD-RESEND-WEBHOOK-SECRET --value <whsec_...>`
+   4. Run Deploy from the Actions tab. The log line `Mail        Resend` shows it is on.
+
 ## Secrets in `kv-wizelens-prod-cus`
 
 Vault names cannot hold `_`, so `DATABASE_URL` is stored as `DATABASE-URL`.
@@ -54,7 +62,9 @@ Vault names cannot hold `_`, so `DATABASE_URL` is stored as `DATABASE-URL`.
 | --- | --- | --- |
 | `DATABASE-URL`, `DATABASE-ADMIN-URL`, `WIZELENS-APP-PASSWORD`, `WIZELENS-CLOUD-SETUP-TOKEN` | yes | Terraform |
 | `WIZELENS-CLOUD-AUTH-SECRET` | yes | Terraform, once; never changed after that |
-| `WIZELENS-CLOUD-SMTP-URL` | no: without it there is no password reset, invite, or alert email | a person |
+| `WIZELENS-CLOUD-RESEND-API-KEY` | no: without it (or SMTP) there is no password reset, invite, or alert email | a person |
+| `WIZELENS-CLOUD-RESEND-WEBHOOK-SECRET` | no: without it, addresses that bounce keep getting mail | a person |
+| `WIZELENS-CLOUD-SMTP-URL` | no: SMTP in place of Resend (never set both) | a person |
 | `WIZELENS-CLOUD-SSO-ORIGINS` | no: without it there is no OIDC single sign-on | a person |
 
 A deploy fails if a required secret is missing. After you add or change a secret, run Deploy from the Actions tab. The pod restarts only when the secrets change.

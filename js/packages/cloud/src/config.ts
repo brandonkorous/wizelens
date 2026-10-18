@@ -24,6 +24,10 @@ export interface CloudOptions {
   allowPrivateWebhooks?: boolean;
   /** Outgoing mail: "smtp://user:pass@host:587" (STARTTLS) or "smtps://user:pass@host:465". Without it, mail is written to the log. */
   smtpUrl?: string;
+  /** Outgoing mail through the Resend API (a `re_` key). Used in place of `smtpUrl`. */
+  resendApiKey?: string;
+  /** The `whsec_` signing secret of the Resend webhook, so bounces and spam complaints reach the suppression list. */
+  resendWebhookSecret?: string;
   /** The sender of every email, for example "WizeLens <alerts@example.com>". */
   mailFrom?: string;
   /** Take the client address from X-Forwarded-For (behind a proxy you run). Default false. */
@@ -44,13 +48,16 @@ export interface CloudOptions {
   sendMail?: (mail: Mail) => Promise<void>;
 }
 
-type Optional = "uiDir" | "publicUrl" | "smtpUrl" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords";
+type Optional = "uiDir" | "publicUrl" | "smtpUrl" | "resendApiKey" | "resendWebhookSecret" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords";
 export type CloudConfig = Required<Omit<CloudOptions, Optional>> & Pick<CloudOptions, Optional> & { secureCookies: boolean };
 
 /** Mail links must use the public address: a link built from the request's Host header could point anywhere. */
 function checkMail(o: CloudOptions): void {
-  if (o.smtpUrl && !o.publicUrl) throw new Error("Sending mail needs --public-url, so links in emails point at this cloud.");
+  if ((o.smtpUrl || o.resendApiKey) && !o.publicUrl) throw new Error("Sending mail needs --public-url, so links in emails point at this cloud.");
+  if (o.smtpUrl && o.resendApiKey) throw new Error("Pick one mail service: --resend-api-key or --smtp-url, not both.");
   if (o.smtpUrl && !/^smtps?:\/\//.test(o.smtpUrl)) throw new Error("--smtp-url must start with smtp:// or smtps://.");
+  if (o.resendApiKey && !o.resendApiKey.startsWith("re_")) throw new Error("--resend-api-key must be a Resend API key (it starts with re_).");
+  if (o.resendWebhookSecret && !o.resendWebhookSecret.startsWith("whsec_")) throw new Error("--resend-webhook-secret must start with whsec_.");
 }
 
 /** Each SSO origin as a bare origin: https, or http on this machine only. */
@@ -76,6 +83,8 @@ export function resolveConfig(o: CloudOptions = {}): CloudConfig {
     alertIntervalMs: o.alertIntervalMs ?? 60_000,
     allowPrivateWebhooks: o.allowPrivateWebhooks ?? false,
     smtpUrl: o.smtpUrl,
+    resendApiKey: o.resendApiKey,
+    resendWebhookSecret: o.resendWebhookSecret,
     mailFrom: o.mailFrom ?? `WizeLens <no-reply@${o.publicUrl ? new URL(o.publicUrl).hostname : "localhost"}>`,
     trustProxy: o.trustProxy ?? false,
     sendMail: o.sendMail,

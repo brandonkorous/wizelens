@@ -16,6 +16,7 @@ import { RateLimiter } from "./http/limiter.js";
 import { Router } from "./http/router.js";
 import { startJobs } from "./jobs.js";
 import { createMailer } from "./mail/mailer.js";
+import { RESEND_WEBHOOK_PATH, resendWebhook } from "./mail/webhook.js";
 import { checkFactsVersion } from "./settle.js";
 import { allRoutes } from "./routes/index.js";
 import { ingestBatch, ingestOtlp } from "./routes/ingest.js";
@@ -48,6 +49,8 @@ const needsClientHeader = (req: IncomingMessage, sub: string) =>
 async function routeBase(p: Parts, ctx: Ctx, sub: string): Promise<void> {
   const { req, res } = ctx;
   if (sub === "api/ingest" && req.method === "POST") return ingestBatch(ctx, p.ingest);
+  // Resend signs its webhook, so it needs no dashboard header.
+  if (sub === RESEND_WEBHOOK_PATH && req.method === "POST") return resendWebhook(ctx);
   if (needsClientHeader(req, sub) && req.headers["x-wizelens-client"] !== "dashboard") throw new HttpError(403, "Missing the X-WizeLens-Client header.");
   const m = p.router.match(req.method ?? "GET", sub);
   if (m) return m.handler({ ...ctx, params: m.params });
@@ -82,7 +85,7 @@ export async function createCloud(options: CloudOptions = {}): Promise<Cloud> {
   const db = await openDb(config.database);
   await migrate(db);
   await checkFactsVersion(db);
-  const mailer = await createMailer(config);
+  const mailer = await createMailer(config, db);
   const wiring = await wireAuth(db, config, mailer);
   let auth: WizeAuth | undefined;
   let handler: ReturnType<typeof authHandler> | undefined;
