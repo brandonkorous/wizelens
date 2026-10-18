@@ -1,0 +1,25 @@
+/* FAQ: native details elements that open with a smooth height change where the browser supports it. */
+:root { interpolate-size: allow-keywords; }
+.wl-faq { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(40px, 6vw, 96px); align-items: start; }
+.wl-faq-head { position: sticky; top: 100px; display: grid; gap: 24px; }
+.wl-faq-head a { color: var(--wl-accent-hover); text-decoration: underline; text-underline-offset: 3px; }
+.wl-faq-list { border-top: 1px solid var(--wl-line-strong); }
+.wl-faq-item { border-bottom: 1px solid var(--wl-line); }
+.wl-faq-item summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 0; cursor: pointer; list-style: none; }
+.wl-faq-item summary::-webkit-details-marker { display: none; }
+.wl-faq-item h3 { font-size: 20px; font-weight: 650; letter-spacing: -0.015em; }
+.wl-faq-item p { padding: 0 48px 26px 0; font-size: 16.5px; line-height: 1.65; color: var(--wl-fg-2); }
+.wl-faq-icon { position: relative; flex: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--wl-line-strong); transition: background 0.3s, border-color 0.3s; }
+.wl-faq-icon::before, .wl-faq-icon::after { content: ""; position: absolute; left: 50%; top: 50%; width: 11px; height: 1.6px; margin: -0.8px 0 0 -5.5px; background: var(--wl-fg); border-radius: 2px; transition: transform 0.35s var(--wl-ease); }
+.wl-faq-icon::after { transform: rotate(90deg); }
+.wl-faq-item[open] .wl-faq-icon { background: var(--wl-charcoal); border-color: var(--wl-charcoal); }
+.wl-faq-item[open] .wl-faq-icon::before, .wl-faq-item[open] .wl-faq-icon::after { background: var(--wl-white); transform: rotate(180deg); }
+.wl-faq-item summary:hover h3 { color: var(--wl-accent-hover); }
+.wl-faq-item::details-content { block-size: 0; overflow: hidden; transition: block-size 0.4s var(--wl-ease), content-visibility 0.4s allow-discrete; }
+.wl-faq-item[open]::details-content { block-size: auto; }
+
+@media (max-width: 900px) {
+  .wl-faq { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .wl-faq-head { position: static; }
+  .wl-faq-item p { padding-right: 0; }
+}

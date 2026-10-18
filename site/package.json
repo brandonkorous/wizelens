@@ -5,9 +5,11 @@
   "type": "module",
   "description": "The WizeLens marketing site. A static Next.js export.",
   "scripts": {
-    "dev": "next dev --port 5190",
-    "build": "tsc --noEmit -p tsconfig.json && next build",
-    "preview": "npx serve out -l 5191"
+    "dev": "pnpm assets && next dev --port 5190",
+    "build": "pnpm assets && tsc --noEmit -p tsconfig.json && next build",
+    "preview": "npx serve out -l 5191",
+    "assets": "node scripts/og/build.mjs && node scripts/llms.mjs",
+    "check:seo": "node scripts/check-seo.mjs"
   },
   "dependencies": {
     "@shikijs/rehype": "^4.5.0",
@@ -28,11 +30,20 @@
   },
   "devDependencies": {
     "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/hast": "^3.0.5",
     "@types/mdast": "^4.0.4",
     "@types/node": "^24.0.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "satori": "^0.62.0",
     "typescript": "^7.0.2"
-  }
+  },
+  "browserslist": [
+    "chrome >= 111",
+    "edge >= 111",
+    "firefox >= 128",
+    "safari >= 16.4"
+  ]
 }

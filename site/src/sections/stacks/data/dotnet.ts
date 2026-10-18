@@ -4,6 +4,8 @@ export const DOTNET: Stack = {
   slug: "dotnet",
   name: ".NET",
   title: "WizeLens for ASP.NET Core",
+  seoTitle: "WizeLens for ASP.NET Core: a modern Glimpse for .NET 10",
+  seoDescription: "See inside every ASP.NET Core request: EF Core and ADO.NET queries, HttpClient and gRPC calls, logs, and errors on one timeline, with N+1 queries found for you.",
   headline: ["Every ASP.NET Core", "request, opened up."],
   lede: "Two lines in Program.cs. Then every request shows its routing, handler, EF Core and ADO.NET queries, HttpClient and gRPC calls, messages, logs, and exceptions, on one timeline at /_wizelens.",
   facts: [

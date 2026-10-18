@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { motion, useMotionValueEvent, useScroll, useSpring } from "motion/react";
+import { Headline, riseDelay } from "@/components/ui/Headline";
 import { ArrowRight } from "@/components/ui/icons";
 import { LINKS } from "@/lib/links";
 import { CHAPTERS } from "./scene";
@@ -92,17 +93,11 @@ export function Story() {
     <main>
       <section className="wl-story-hero">
         <div className="wl-wrap">
-          <h1 className="wl-display">
-            {["Glimpse,", "rebuilt."].map((line, i) => (
-              <span key={line} className="wl-line-mask">
-                <motion.span className="wl-line" initial={{ y: "105%" }} animate={{ y: "0%" }} transition={{ duration: 0.9, delay: 0.1 + i * 0.1, ease: EASE }}>{line}</motion.span>
-              </span>
-            ))}
-          </h1>
-          <motion.p className="wl-lede wl-story-lede" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4, ease: EASE }}>
+          <Headline lines={["Glimpse,", "rebuilt."]} />
+          <p className="wl-lede wl-story-lede wl-rise" style={riseDelay(0.35)}>
             You used to be able to open the hood on one request and see everything it did. Then the way we build changed,
             and that view went away. This is the story of why we built it back.
-          </motion.p>
+          </p>
         </div>
       </section>
       <Chapters />

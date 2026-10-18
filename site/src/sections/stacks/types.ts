@@ -11,6 +11,8 @@ export type Stack = {
   slug: string;
   name: string;
   title: string;
+  seoTitle: string;
+  seoDescription: string;
   headline: [string, string];
   lede: string;
   facts: { value: string; label: string }[];

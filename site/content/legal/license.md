@@ -1,6 +1,6 @@
 ---
 title: License
-description: The WizeLens packages are open source under the MIT License.
+description: The WizeLens packages for .NET, Node, React, the hub, and the cloud are open source under the MIT License.
 updated: October 17, 2026
 ---
 

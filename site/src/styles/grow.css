@@ -31,7 +31,7 @@
 .wl-grow-team span { display: grid; justify-items: center; gap: 4px; }
 .wl-grow-team b { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--wl-charcoal); color: var(--wl-white); font-size: 12px; }
 .wl-grow-team span:nth-child(2) b { background: var(--wl-blue); }
-.wl-grow-team span:nth-child(3) b { background: #0d8f7a; }
+.wl-grow-team span:nth-child(3) b { background: #0b7a68; }
 .wl-grow-team span:nth-child(4) b { background: var(--wl-slate); }
 .wl-grow-team i { font-style: normal; font-size: 11px; color: var(--wl-muted); }
 .wl-grow-alert { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--wl-line); background: var(--wl-white); box-shadow: var(--wl-shadow); }

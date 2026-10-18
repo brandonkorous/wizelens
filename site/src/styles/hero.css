@@ -18,11 +18,13 @@
 .wl-app-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 12px; }
 .wl-app-btn { height: 36px; padding: 0 14px; border-radius: 9px; border: 1px solid var(--wl-line-strong); background: var(--wl-white); font-size: 14px; font-weight: 550; cursor: default; transition: transform 0.15s, background 0.15s; }
 .wl-app-btn-down { transform: scale(0.95); background: var(--wl-surface-2); }
-.wl-app-btn-danger { color: var(--wl-red); }
+.wl-app-btn-danger { color: #c81e2c; }
 .wl-app-status { height: 22px; font-size: 13.5px; color: var(--wl-muted); }
-.wl-app-status-err { color: var(--wl-red); }
+.wl-app-status-err { color: #c81e2c; }
 .wl-app-table { margin-top: 8px; border-top: 1px solid var(--wl-line); transition: opacity 0.2s; }
-.wl-app-loading { opacity: 0.35; }
+.wl-app-table { position: relative; }
+.wl-app-loading::before { content: ""; position: absolute; left: 0; top: -1px; height: 2px; width: 100%; background: var(--wl-blue); transform-origin: 0 50%; animation: wl-load 0.5s var(--wl-ease) both; }
+@keyframes wl-load { from { transform: scaleX(0); } }
 .wl-app-row { display: grid; grid-template-columns: 1.2fr 1.6fr 0.5fr 0.6fr; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--wl-line); font-size: 14px; color: var(--wl-fg-2); }
 .wl-app-row span:nth-child(2) { color: var(--wl-muted); }
 

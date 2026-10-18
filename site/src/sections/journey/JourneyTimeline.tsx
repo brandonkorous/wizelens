@@ -25,14 +25,14 @@ function Row({ lane, progress }: { lane: Lane; progress: MotionValue<number> }) 
   const t = useTransform(progress, [lane.step / N, (lane.step + 0.8) / N], [0, 1]);
   const fade = useTransform(t, [0, 0.15], [0.35, 1]);
   return (
-    <motion.div className="wl-tl-row" style={{ opacity: fade }}>
+    <div className="wl-tl-row">
       <span className="wl-tl-label">{lane.label}</span>
-      <span className="wl-tl-track">
+      <motion.span className="wl-tl-track" style={{ opacity: fade }}>
         {lane.bars.map((b, i) => (
           <Bar key={i} bar={b} index={i} count={lane.bars.length} lane={t} color={KIND_COLOR[lane.kind]} />
         ))}
-      </span>
-    </motion.div>
+      </motion.span>
+    </div>
   );
 }
 

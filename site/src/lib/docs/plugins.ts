@@ -28,6 +28,7 @@ export function mapHref(href: string): string {
 export function rehypeLinks() {
   return (tree: Root) => {
     visit(tree, "element", (node: Element) => {
+      if (node.tagName === "img") Object.assign(node.properties, { loading: "lazy", decoding: "async" });
       if (node.tagName !== "a" || typeof node.properties.href !== "string") return;
       node.properties.href = mapHref(node.properties.href);
       if (/^https?:/.test(node.properties.href)) node.properties.rel = ["noreferrer"];

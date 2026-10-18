@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { Headline, riseDelay } from "@/components/ui/Headline";
 import { ArrowRight } from "@/components/ui/icons";
 import { LINKS } from "@/lib/links";
 import { CodeToTrace } from "./CodeToTrace";
@@ -20,20 +21,14 @@ function Hero({ stack }: { stack: Stack }) {
   return (
     <section className="wl-st-hero">
       <div className="wl-wrap">
-        <h1 className="wl-display wl-st-title">
-          {stack.headline.map((line, i) => (
-            <span key={line} className="wl-line-mask">
-              <motion.span className="wl-line" initial={{ y: "105%" }} animate={{ y: "0%" }} transition={{ duration: 0.9, delay: 0.1 + i * 0.1, ease: EASE }}>{line}</motion.span>
-            </span>
-          ))}
-        </h1>
-        <motion.div className="wl-st-intro" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4, ease: EASE }}>
+        <Headline lines={[...stack.headline]} className="wl-display wl-st-title" />
+        <div className="wl-st-intro wl-rise" style={riseDelay(0.35)}>
           <p className="wl-lede">{stack.lede}</p>
           <div className="wl-hero-cta">
             <a href={stack.docs[0]!.href} className="wl-btn wl-btn-primary">Set it up <ArrowRight /></a>
             <a href={LINKS.start} className="wl-btn wl-btn-ghost">Quick start</a>
           </div>
-        </motion.div>
+        </div>
         <dl className="wl-st-facts">
           {stack.facts.map((f, i) => (
             <motion.div key={f.label} {...rise(0.5 + i * 0.08)}>

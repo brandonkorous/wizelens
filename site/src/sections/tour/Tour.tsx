@@ -75,6 +75,8 @@ export function Tour() {
                 key={page.id}
                 src={`/shots/${page.id}.jpg`}
                 alt={`WizeLens ${page.label} page: ${page.text}`}
+                loading="lazy"
+                decoding="async"
                 width={1538}
                 height={784}
                 initial={{ opacity: 0, scale: 1.02 }}

@@ -42,6 +42,12 @@ h1, h2, h3, h4, p { margin: 0; }
 .wl-mono { font-family: var(--wl-mono); }
 .wl-num { font-variant-numeric: tabular-nums; }
 
+/* First-paint motion in CSS: it starts before scripts load, so the page shows its words right away. */
+.wl-line-in { animation: wl-line-up 0.9s var(--wl-ease) both; animation-delay: var(--d, 0s); }
+.wl-rise { animation: wl-rise-up 0.8s var(--wl-ease) both; animation-delay: var(--d, 0s); }
+@keyframes wl-line-up { from { transform: translateY(105%); } }
+@keyframes wl-rise-up { from { opacity: 0.01; transform: translateY(16px); } }
+
 @media (max-width: 900px) {
   .wl-head-split { grid-template-columns: minmax(0, 1fr); gap: 24px; }
 }

@@ -1,12 +1,19 @@
-import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/LegalPage";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { loadLegal } from "@/lib/legal";
+import { breadcrumbs, graph } from "@/lib/schema";
+import { pageMeta } from "@/lib/seo";
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata() {
   const doc = await loadLegal("license");
-  return { title: doc.title, description: doc.description };
+  return pageMeta({ path: "/license/", title: doc.title, description: doc.description, image: "license", imageAlt: `${doc.title}: ${doc.description}` });
 }
 
 export default function Page() {
-  return <LegalPage slug="license" />;
+  return (
+    <>
+      <JsonLd data={graph(breadcrumbs([{ name: "WizeLens", path: "/" }, { name: "License", path: "/license/" }]))} />
+      <LegalPage slug="license" />
+    </>
+  );
 }

@@ -19,8 +19,10 @@
 .wl-ct-now { background: rgba(37, 99, 235, 0.18); border-left-color: var(--wl-blue); }
 .wl-ct-trace { min-width: 0; }
 .wl-ct-rows { display: grid; gap: 4px; padding: 18px 20px 24px; }
-.wl-ct-row { display: grid; grid-template-columns: minmax(0, 1.3fr) 58px minmax(0, 1fr); gap: 12px; align-items: center; padding: 6px 8px; border-radius: 8px; font-size: 13px; opacity: 0.25; transition: opacity 0.4s, background 0.3s; }
-.wl-ct-on { opacity: 1; }
+.wl-ct-row { display: grid; grid-template-columns: minmax(0, 1.3fr) 58px minmax(0, 1fr); gap: 12px; align-items: center; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: var(--wl-night-muted); transition: color 0.4s, background 0.3s; }
+.wl-ct-on { color: var(--wl-night-fg); }
+.wl-ct-row .wl-ct-track { opacity: 0.35; transition: opacity 0.4s; }
+.wl-ct-on .wl-ct-track { opacity: 1; }
 .wl-ct-row-now { background: var(--wl-night-2); }
 .wl-ct-label { font-family: var(--wl-mono); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wl-ct-ms { text-align: right; color: var(--wl-night-muted); white-space: nowrap; font-size: 12.5px; }

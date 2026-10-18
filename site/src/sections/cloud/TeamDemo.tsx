@@ -10,7 +10,7 @@ const LOOP_MS = 11500;
 const PEOPLE = [
   { initials: "JM", name: "Jo M.", role: "Owner", color: "#1f1f1f" },
   { initials: "AM", name: "Ada M.", role: "Admin", color: "#2563eb" },
-  { initials: "RK", name: "Ravi K.", role: "Member", color: "#0d8f7a" },
+  { initials: "RK", name: "Ravi K.", role: "Member", color: "#0b7a68" },
 ];
 
 const NEW_PERSON = { initials: "SH", name: "Sara H.", role: "Member", color: "#c2347a" };

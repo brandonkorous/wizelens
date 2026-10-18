@@ -4,6 +4,8 @@ export const NODE: Stack = {
   slug: "node",
   name: "Node",
   title: "WizeLens for Node",
+  seoTitle: "WizeLens for Node: tracing for Express, Fastify, Koa, and Hono",
+  seoDescription: "One middleware, one line per driver: every Node request with its SQL, Prisma, and Drizzle queries, fetch calls, queues, and logs on one timeline.",
   headline: ["Every Node request,", "one line at a time."],
   lede: "One middleware for Express, Fastify, Koa, Hono, or Next.js. One line per database, queue, and logger. Outgoing fetch is traced for free.",
   facts: [

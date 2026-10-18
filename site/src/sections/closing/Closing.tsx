@@ -10,8 +10,8 @@ const WORDS = ["Inspect.", "Understand.", "Build better."];
 
 function Word({ text, i, progress }: { text: string; i: number; progress: ReturnType<typeof useSpring> }) {
   const from = 0.45 + i * 0.12;
-  const opacity = useTransform(progress, [from, from + 0.12], [0.15, 1]);
-  return <motion.span className="wl-closing-word" style={{ opacity }}>{text}</motion.span>;
+  const opacity = useTransform(progress, [from, from + 0.12], [0.5, 1]);
+  return <motion.span className="wl-closing-word" style={{ opacity }}>{text}{" "}</motion.span>;
 }
 
 // The last scene: the lens opens as you arrive, then the brand line.

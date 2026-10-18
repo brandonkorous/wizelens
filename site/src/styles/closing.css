@@ -24,3 +24,8 @@
 }
 .wl-footer-legal { display: flex; flex-wrap: wrap; gap: 20px; }
 .wl-footer-legal a { font-size: 14px; }
+
+/* The 404 page. */
+.wl-404 { padding: clamp(140px, 18vw, 200px) 0 clamp(96px, 12vw, 140px); }
+.wl-404-inner { display: grid; justify-items: start; gap: 28px; }
+.wl-404-mark { width: 120px; height: 120px; }

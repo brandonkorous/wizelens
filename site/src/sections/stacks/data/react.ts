@@ -4,6 +4,8 @@ export const REACT: Stack = {
   slug: "react",
   name: "React and Next.js",
   title: "WizeLens for React and Next.js",
+  seoTitle: "WizeLens for React and Next.js: from the click to the database",
+  seoDescription: "Link every fetch to the server trace it started. Time React renders, hydration, and Web Vitals, and see each Next.js route as one trace, with an in-page HUD.",
   headline: ["From the click", "to the database."],
   lede: "Every fetch links to the server trace it started. Page loads join the server that rendered them. Renders, hydration, and Web Vitals are timed, and the HUD sits in the corner of your page.",
   facts: [

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { Headline, riseDelay } from "@/components/ui/Headline";
 import { CopyCommand } from "@/components/ui/CopyCommand";
 import { ArrowRight } from "@/components/ui/icons";
 import { Tile } from "@/sections/bento/Tile";
@@ -25,20 +26,14 @@ function Hero() {
     <section className="wl-cloud-hero">
       <div className="wl-wrap wl-cloud-hero-grid">
         <div className="wl-cloud-copy">
-          <h1 className="wl-display">
-            {["The same lens,", "for the team."].map((line, i) => (
-              <span key={line} className="wl-line-mask">
-                <motion.span className="wl-line" initial={{ y: "105%" }} animate={{ y: "0%" }} transition={{ duration: 0.9, delay: 0.1 + i * 0.1, ease: EASE }}>{line}</motion.span>
-              </span>
-            ))}
-          </h1>
-          <motion.div className="wl-cloud-intro" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4, ease: EASE }}>
+          <Headline lines={["The same lens,", "for the team."]} />
+          <div className="wl-cloud-intro wl-rise" style={riseDelay(0.35)}>
             <p className="wl-lede">WizeLens Cloud is the dashboard you already know, with accounts, 30 days of history, alerts, share links, and AI access you can scope. Today you run it yourself, on your own Postgres.</p>
             <div className="wl-hero-cta">
               <a href="/docs/cloud/" className="wl-btn wl-btn-primary">Self-host guide <ArrowRight /></a>
             </div>
             <CopyCommand command="npx @wizeworks/lens-cloud" />
-          </motion.div>
+          </div>
         </div>
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.3, ease: EASE }}>
           <TeamDemo />
