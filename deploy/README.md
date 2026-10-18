@@ -36,18 +36,11 @@ The cloud runs one pod with `Recreate`, because migrations and alert jobs run in
 
 1. **Bootstrap (a person, once).** From `sparx.works/terraform/bootstrap-azure`: `terraform apply -var="subscription_id=$(az account show --query id -o tsv)"`. It makes the vault, the identity, and the roles.
 2. **Repository variables.** Run the four commands from `terraform output wizelens_github_setup` in that folder.
-3. **Merge the sparx.works change.** Its release makes the Postgres server and writes `DATABASE-URL`, `DATABASE-ADMIN-URL`, `WIZELENS-APP-PASSWORD`, and `WIZELENS-CLOUD-SETUP-TOKEN` into the vault.
-4. **The auth secret (a person, once).** It signs sessions and encrypts 2FA secrets, so Terraform never owns it:
-
-   ```bash
-   az keyvault secret set --vault-name kv-wizelens-prod-cus --name WIZELENS-CLOUD-AUTH-SECRET --value "$(openssl rand -hex 32)"
-   ```
-
-   Never replace it with a new value. To rotate, set `2:<new>,1:<old>`.
-5. **Merge to `main` here.** The Deploy workflow runs after CI.
-6. **Make the two GHCR packages public**, once, after the first push: GitHub, Packages, `wizelens-cloud` and `wizelens-site`, Package settings, Change visibility. The cluster pulls without a pull secret, so until then the pods show `ImagePullBackOff`. Then run Deploy again from the Actions tab.
-7. **DNS.** Move `wizelens.com` and `wizelens.dev` to Cloudflare, then set `wizelens_dns_enabled = true` in `sparx.works/terraform/envs/azure/ingress.tf`. The steps are in that variable's description.
-8. **The first account.** Read the token, then open the cloud and use it:
+3. **Merge the sparx.works change.** Its release makes the Postgres server and writes every required secret into the vault, including `WIZELENS-CLOUD-AUTH-SECRET`. Terraform writes that one once and never changes it, because it encrypts 2FA secrets. To rotate it, set `2:<new>,1:<old>` in the vault.
+4. **Merge to `main` here.** The Deploy workflow runs after CI.
+5. **Make the two GHCR packages public**, once, after the first push: GitHub, Packages, `wizelens-cloud` and `wizelens-site`, Package settings, Change visibility. The cluster pulls without a pull secret, so until then the pods show `ImagePullBackOff`. Then run Deploy again from the Actions tab.
+6. **DNS.** Move `wizelens.com` and `wizelens.dev` to Cloudflare, then set `wizelens_dns_enabled = true` in `sparx.works/terraform/envs/azure/ingress.tf`. The steps are in that variable's description.
+7. **The first account.** Read the token, then open the cloud and use it:
 
    ```bash
    az keyvault secret show --vault-name kv-wizelens-prod-cus --name WIZELENS-CLOUD-SETUP-TOKEN --query value -o tsv
@@ -60,7 +53,7 @@ Vault names cannot hold `_`, so `DATABASE_URL` is stored as `DATABASE-URL`.
 | Name | Required | Who sets it |
 | --- | --- | --- |
 | `DATABASE-URL`, `DATABASE-ADMIN-URL`, `WIZELENS-APP-PASSWORD`, `WIZELENS-CLOUD-SETUP-TOKEN` | yes | Terraform |
-| `WIZELENS-CLOUD-AUTH-SECRET` | yes | a person, once |
+| `WIZELENS-CLOUD-AUTH-SECRET` | yes | Terraform, once; never changed after that |
 | `WIZELENS-CLOUD-SMTP-URL` | no: without it there is no password reset, invite, or alert email | a person |
 | `WIZELENS-CLOUD-SSO-ORIGINS` | no: without it there is no OIDC single sign-on | a person |
 
