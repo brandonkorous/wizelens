@@ -1,6 +1,6 @@
 name: Release
 
-# Push a tag like v0.2.0 to publish every package and the hub and cloud images. Needs the NPM_TOKEN and NUGET_API_KEY repository secrets.
+# Push a tag like v0.2.0 to publish every package and the hub and cloud images. npm uses trusted publishing (GitHub OIDC); NuGet needs the NUGET_API_KEY secret.
 on:
   push:
     tags: ["v*"]
@@ -8,6 +8,8 @@ on:
 permissions:
   contents: write
   packages: write
+  # npm trusted publishing trades this job's OIDC token for a short-lived publish credential.
+  id-token: write
 
 jobs:
   release:
@@ -44,6 +46,11 @@ jobs:
           dotnet pack dotnet/WizeLens.slnx -c Release --no-build -o artifacts/nuget
           pnpm -r --filter "./js/packages/*" exec pnpm pack --pack-destination "$GITHUB_WORKSPACE/artifacts/npm"
 
+      # Trusted publishing needs npm 11.5.1 or later; pnpm hands the upload to the npm on PATH.
+      - name: Install an npm that can publish with OIDC
+        run: npm install -g npm@^11.5.1
+
+      # No token once each package trusts this repo and release.yml on npmjs.com. NPM_TOKEN is only for the very first publish, before the packages exist.
       - name: Publish to npm
         run: pnpm -r --filter "./js/packages/*" publish --access public --no-git-checks
         env:
