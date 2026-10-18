@@ -63,8 +63,8 @@ spec:
           livenessProbe: { httpGet: { path: /ping, port: 8123 }, periodSeconds: 20, failureThreshold: 6 }
           startupProbe: { httpGet: { path: /ping, port: 8123 }, periodSeconds: 5, failureThreshold: 120 }
           resources:
-            requests: { cpu: 250m, memory: 2Gi }
-            limits: { memory: 4Gi }
+            requests: { cpu: 200m, memory: 1Gi }
+            limits: { memory: 3Gi }
       volumes:
         - name: config
           configMap: { name: clickhouse-config }

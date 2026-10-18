@@ -98,7 +98,7 @@ kubectl -n wizelens scale deploy/cloud --replicas=1
 
 ### Size
 
-ClickHouse asks for 250m CPU and 2 Gi, and may use up to 4 Gi. It runs on the `user` node pool (sparx.works `main.tf`). If it needs more, grow `node_size` there and the limit here together. Grow the disk by raising the claim: `kubectl -n wizelens patch pvc data-clickhouse-0 -p '{"spec":{"resources":{"requests":{"storage":"128Gi"}}}}'`.
+ClickHouse asks for 200m CPU and 1 Gi, and may use up to 3 Gi (the user pool was 84% reserved before it came; 2026-10-18). It runs on the `user` node pool (sparx.works `main.tf`). If it needs more, grow `node_size` there and the limit here together. Grow the disk by raising the claim: `kubectl -n wizelens patch pvc data-clickhouse-0 -p '{"spec":{"resources":{"requests":{"storage":"128Gi"}}}}'`.
 
 ## Secrets in `kv-wizelens-prod-cus`
 
