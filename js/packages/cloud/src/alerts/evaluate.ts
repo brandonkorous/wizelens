@@ -5,7 +5,7 @@ import { loadMetricAlertData } from "../repo/metric-read.js";
 import { cloudExecutor, projectRetentionMs } from "../scale-exec.js";
 import { alertMail } from "../mail/templates.js";
 import { memberEmails } from "../repo/users.js";
-import { deliver, type Notice, noticeLines, type Outbox } from "./notify.js";
+import { deliver, type Notice, type Outbox } from "./notify.js";
 
 /** Names for the notice: project and the dashboard link. */
 async function noticeOf(app: CloudApp, rule: AlertRule, state: Notice["state"], value: number | null, now: number): Promise<Notice> {
@@ -52,8 +52,7 @@ async function outboxOf(app: CloudApp, projectId: string): Promise<Outbox> {
   const members = new Set(p ? await memberEmails(app.db, p.org_id, app.mailer.live) : []);
   const email = (to: readonly string[], n: Notice) => {
     const ok = to.filter((e) => members.has(e));
-    const { subject, lines } = noticeLines(n);
-    for (const addr of ok) app.mailer.send(alertMail(addr, subject, lines, n.url));
+    for (const addr of ok) app.mailer.send(alertMail(addr, n));
     const note = app.mailer.live ? `sent to ${ok.length}` : "mail is not set up (see the cloud log)";
     return `email: ${note}${ok.length < to.length ? `, ${to.length - ok.length} no longer members` : ""}`;
   };

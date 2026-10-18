@@ -16,8 +16,13 @@ Usage: wizelens-cloud [options]
   --auth-secret <text>      Signs sessions, encrypts 2FA secrets. 32+   (WIZELENS_CLOUD_AUTH_SECRET)
                             characters; "2:new,1:old" rotates.
                             Required with Postgres.
-  --smtp-url <url>          Outgoing mail: smtp://user:pass@host:587 or (WIZELENS_CLOUD_SMTP_URL)
-                            smtps://...:465. Needs --public-url.
+  --resend-api-key <key>    Outgoing mail through Resend (re_...).      (WIZELENS_CLOUD_RESEND_API_KEY)
+                            Needs --public-url.
+  --resend-webhook-secret <s>  The Resend webhook's whsec_ secret:     (WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET)
+                            bounces and complaints stop later mail.
+                            Webhook URL: <public-url>/_wizelens/api/mail/resend
+  --smtp-url <url>          Or mail over SMTP: smtp://user:pass@host:587 (WIZELENS_CLOUD_SMTP_URL)
+                            or smtps://...:465. Needs --public-url.
   --mail-from <address>     Sender, e.g. "WizeLens <a@b.com>".          (WIZELENS_CLOUD_MAIL_FROM)
   --trust-proxy             Read the client address from the last       (WIZELENS_CLOUD_TRUST_PROXY=1)
                             X-Forwarded-For entry (your own proxy only).
@@ -47,6 +52,8 @@ const OPTIONS = {
   "allow-private-webhooks": { type: "boolean" },
   "auth-secret": { type: "string" },
   "smtp-url": { type: "string" },
+  "resend-api-key": { type: "string" },
+  "resend-webhook-secret": { type: "string" },
   "mail-from": { type: "string" },
   "trust-proxy": { type: "boolean" },
   "setup-token": { type: "string" },
@@ -73,6 +80,8 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CloudOp
     allowPrivateWebhooks: a["allow-private-webhooks"] ?? env.WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS === "1",
     authSecret: text(a["auth-secret"], env.WIZELENS_CLOUD_AUTH_SECRET),
     smtpUrl: text(a["smtp-url"], env.WIZELENS_CLOUD_SMTP_URL),
+    resendApiKey: text(a["resend-api-key"], env.WIZELENS_CLOUD_RESEND_API_KEY),
+    resendWebhookSecret: text(a["resend-webhook-secret"], env.WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET),
     mailFrom: text(a["mail-from"], env.WIZELENS_CLOUD_MAIL_FROM),
     trustProxy: a["trust-proxy"] ?? env.WIZELENS_CLOUD_TRUST_PROXY === "1",
     setupToken: text(a["setup-token"], env.WIZELENS_CLOUD_SETUP_TOKEN),

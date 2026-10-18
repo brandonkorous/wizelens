@@ -18,7 +18,7 @@ spec:
           image: wizelens/cloud:latest
           ports: [{ containerPort: 5970 }]
           envFrom:
-            # DATABASE_URL, WIZELENS_CLOUD_AUTH_SECRET, WIZELENS_CLOUD_SETUP_TOKEN, optional SMTP.
+            # DATABASE_URL, WIZELENS_CLOUD_AUTH_SECRET, WIZELENS_CLOUD_SETUP_TOKEN, optional Resend or SMTP.
             - secretRef: { name: cloud-env }
             - configMapRef: { name: cloud-config }
           # /healthz never touches the database; startup allows time for migrations at boot.

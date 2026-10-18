@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { BetterAuthOptions } from "better-auth";
+import { unsuppress } from "../repo/suppressions.js";
 import { changeEmailMail, deleteAccountMail, resetPasswordMail, verifyEmailMail } from "../mail/templates.js";
 import { type AuthDeps, appLink } from "./deps.js";
 import { passwordOptions } from "./password.js";
@@ -48,6 +49,7 @@ export function passwordAuth(deps: AuthDeps): Pick<BetterAuthOptions, "emailAndP
       autoSignInAfterVerification: true,
       expiresIn: 60 * MINUTE,
       sendVerificationEmail: async ({ user, token }) => deps.mailer.send(verifyEmailMail(user.email, appLink(deps, "verify-email", token))),
+      afterEmailVerification: async (user) => unsuppress(deps.db, user.email),
     },
   };
 }

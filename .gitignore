@@ -71,3 +71,6 @@ site/public/apple-touch-icon.png
 site/public/llms.txt
 site/public/llms-full.txt
 site/public/docs/
+
+# Rendered email previews (pnpm --filter @wizeworks/lens-cloud email:preview)
+email-preview/

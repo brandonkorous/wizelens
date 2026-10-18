@@ -4,6 +4,20 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Cloud email: Resend, templates, and a suppression list
+
+- **Resend:** `--resend-api-key` (`WIZELENS_CLOUD_RESEND_API_KEY`) sends every email through the Resend API, in place of SMTP
+  (never both). Each email has an idempotency key and is tried up to 4 times on 429 and 5xx answers, using `Retry-After`.
+- **Bounces and complaints:** a Resend webhook to `/_wizelens/api/mail/resend` with `--resend-webhook-secret`
+  (`WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET`). The Svix signature is checked (5-minute window). After a hard bounce no mail goes to the
+  address; after a spam complaint only mail the person asked for goes there. Confirming the address by link clears it.
+  Migration 6 adds `mail_suppressions`.
+- **Email templates:** every email is content only (heading, text, facts, one button, footer) in `mail/emails.ts`, drawn by one
+  React Email layout (`mail/layout.tsx`) and one brand theme (`mail/theme.ts`), with a plain-text version from the same content.
+  Alert emails show the project, value, threshold, and time, with a red dot when they fire and green when they resolve.
+  `pnpm --filter @wizeworks/lens-cloud email:preview <folder>` writes every email to HTML and text.
+- The start log says which mail service is on (`Mail  Resend`), and warns when Resend runs without the webhook secret.
+
 ### Cloud accounts on Better Auth
 
 - **Sign-in is now [Better Auth](https://better-auth.com)** (pinned to 1.7.10), in place of the hand-written accounts. It runs at

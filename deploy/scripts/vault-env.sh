@@ -11,8 +11,8 @@ read_secret() { az keyvault secret show --vault-name "$VAULT" --name "${1//_/-}"
 
 # A missing one of these fails the deploy, because each breaks sign-in or data, not one feature.
 required=(DATABASE_URL WIZELENS_CLOUD_AUTH_SECRET WIZELENS_CLOUD_SETUP_TOKEN)
-# Each missing one turns off one feature: email (reset, invites, alerts) or OIDC single sign-on.
-optional=(WIZELENS_CLOUD_SMTP_URL WIZELENS_CLOUD_SSO_ORIGINS)
+# Each missing one turns off one feature: email (reset, invites, alerts), bounce handling, or OIDC single sign-on.
+optional=(WIZELENS_CLOUD_RESEND_API_KEY WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET WIZELENS_CLOUD_SMTP_URL WIZELENS_CLOUD_SSO_ORIGINS)
 
 missing=()
 for name in "${required[@]}"; do

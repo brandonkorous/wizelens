@@ -500,10 +500,13 @@ retention, and the audit log.
 - **Passwords**: 12 to 128 characters, scrypt. Hashes from before Better Auth (`scrypt$…`) still verify and are replaced at the next
   sign-in. With `--check-pwned-passwords` (default on with Postgres), passwords found in known breaches are refused (only a
   5-character SHA-1 prefix leaves the server).
-- **Email** (with `--smtp-url`): sign-up sends a confirm link, and sign-in waits for it. Password reset links last 30 minutes, once,
+- **Email** (with `--resend-api-key` or `--smtp-url`): sign-up sends a confirm link, and sign-in waits for it. Password reset links last 30 minutes, once,
   and end every session. A new email is confirmed by the old address first, then the new one. Deleting an account is confirmed by
   email. Links open the dashboard (`#/verify-email`, `#/reset-password`, `#/invite`, `#/delete-account`, all with `?token=`).
-  Without SMTP, emails are written to the log, nothing is confirmed, and invite sign-ups must carry the invite id (below).
+  Without mail, emails are written to the log, nothing is confirmed, and invite sign-ups must carry the invite id (below).
+  `POST api/mail/resend` takes Resend's webhook (Svix signature, 5-minute window; 401 when it does not match, 404 without
+  `--resend-webhook-secret`). A hard bounce (`email.bounced` with `bounce.type` `Permanent`) stops all mail to the address; a spam
+  complaint (`email.complained`) stops all but account mail. Confirming the address by link clears it (table `mail_suppressions`).
 - **Sign-up**: the first account needs the one-time setup token the cloud prints at start (`#/setup?token=`, header
   `x-wizelens-setup-token`; set it with `--setup-token` for several instances). After that, people sign up with an open invite for
   their email (7 days), or anyone when the cloud runs with `--signup open` (they get their own organization). Without SMTP, an
