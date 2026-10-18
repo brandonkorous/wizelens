@@ -14,20 +14,17 @@ import { diffClose, METRIC_NOW, metricScenario } from "../../core/src/testing/me
 import type { Db } from "./db/db.js";
 import { loadMetricAlertData } from "./repo/metric-read.js";
 import { pruneMetricRollups } from "./repo/metric-write.js";
-import { createOrg } from "./repo/orgs.js";
 import { createProject } from "./repo/projects.js";
 import { writeBatch } from "./repo/trace-write.js";
-import { createUser } from "./repo/users.js";
 import { projectMetrics } from "./routes/metrics.js";
-import { testDb } from "./test/db.js";
+import { seedOrg, testDb } from "./test/db.js";
 
 const RANGES = Object.keys(TIME_RANGES) as TimeRange[];
 let db: Db;
 let org: string;
 beforeAll(async () => {
   db = await testDb();
-  const owner = await createUser(db, "o@x.io", "long enough pw", "O", 1);
-  org = (await createOrg(db, "Acme", owner.id, 1)).id;
+  org = (await seedOrg(db)).orgId;
 });
 afterAll(() => db.close());
 

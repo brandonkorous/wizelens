@@ -4,6 +4,33 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Cloud accounts on Better Auth
+
+- **Sign-in is now [Better Auth](https://better-auth.com)** (pinned to 1.7.10), in place of the hand-written accounts. It runs at
+  `/_wizelens/api/auth/*` and also handles organizations, members, roles, and invites.
+- **New for people:** password reset and email confirm by link; change email (confirmed by the old address first) and change
+  password (optionally signing out other devices); two-step sign-in with an authenticator app and 10 backup codes; passkeys;
+  a list of signed-in devices with sign-out per device; delete your account (refused while you are the last owner of a team);
+  delete an organization (owners, with the password). A new **Account** page in the dashboard.
+- **Single sign-on per organization** with Better Auth's SSO plugin: owners and admins connect OIDC (Okta, Entra ID, Google,
+  Auth0, Keycloak) or SAML 2.0 on the Team page. Sign-in works once the email domain is proven with a DNS TXT record; new people
+  from that domain join as members, with a confirmed email. The sign-in page shows "Sign in with SSO" once a provider is ready.
+  OIDC needs the provider's origin in `--sso-origins` (`WIZELENS_CLOUD_SSO_ORIGINS`), so the cloud fetches from no other place.
+  Migration 5 adds `sso_providers`.
+- **Email:** `--smtp-url` and `--mail-from` send confirm, reset, invite, delete, and alert emails. Alert rules can email members of
+  the organization. Without SMTP, emails are written to the log.
+- **Safer by default:** the first account needs a one-time setup link the cloud prints at start, so nobody else can claim a fresh
+  cloud. Sign-in tries are limited per client address on every instance (`--trust-proxy` behind your own proxy). Passwords are
+  12 to 128 characters, and breached passwords are refused with Postgres (`--[no-]check-pwned-passwords`). Sessions are checked in
+  the database on every request, so a sign-out or a removed member takes effect at once. Invite ids are never listed to members.
+  A database trigger keeps one owner in every organization.
+- **Upgrade:** set `--auth-secret` (`WIZELENS_CLOUD_AUTH_SECRET`, 32+ random characters; required with Postgres). Migration 4 keeps
+  people, organizations, members, projects, and keys; old passwords still work and are rehashed at the next sign-in. Everyone signs
+  in once more. Open invites get new links: copy them again from the Team page.
+- **API changes:** `api/auth/state` is now `api/me`. `api/auth/setup`, `signup`, `login`, `logout`, `invites/*`, `api/orgs/{org}/invites`,
+  and `api/orgs/{org}/members/*` are gone: use Better Auth's routes. New: `GET api/invites/{id}`, `DELETE api/orgs/{org}`.
+- `scripts/cloud-smoke.mjs` takes the setup token, and waits for stats to settle (it failed on a fresh cloud since the stats change).
+
 ### Next.js, page loads that join the server, and sampling
 
 - **Next.js:** `registerWizeLens()` from `@wizeworks/lens-node/next` in `instrumentation.ts`. Each request is one trace named by

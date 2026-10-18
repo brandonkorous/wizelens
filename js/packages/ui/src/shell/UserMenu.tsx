@@ -1,9 +1,9 @@
-import { ChevronDown, LogOut, UserRound } from "lucide-react";
+import { ChevronDown, LogOut, Settings2, UserRound } from "lucide-react";
 import { currentProject, signOut, useAccount } from "../data/account";
 import { hrefTo } from "../routes";
 import { Menu } from "./Menu";
 
-/** The signed-in person: their organizations, the Team page, and sign out. */
+/** The signed-in person: their account, the Team page, and sign out. */
 export function UserMenu() {
   const account = useAccount();
   const user = account?.user;
@@ -21,6 +21,9 @@ export function UserMenu() {
       {(close) => (
         <>
           <div className="wl-menu-head">{user.email}</div>
+          <a className="wl-menu-item" href={hrefTo("account")} onClick={close}>
+            <Settings2 size={16} aria-hidden="true" /> Account
+          </a>
           {org && (
             <a className="wl-menu-item" href={hrefTo("team")} onClick={close}>
               {org.name} · {org.role}

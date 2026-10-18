@@ -9,6 +9,7 @@ import "./styles/shell.css";
 import "./styles/ui.css";
 import "./styles/trace.css";
 import "./styles/pages/cloud.css";
+import "./styles/pages/account.css";
 
 provider.start();
 

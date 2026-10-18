@@ -18,9 +18,16 @@ export async function migrate(db: Db): Promise<number> {
   return ran;
 }
 
-/** One migration as single statements, so it runs inside a transaction on every driver. */
-export const splitStatements = (sql: string): string[] =>
-  sql
-    .split(/;\s*\n/)
-    .map((s) => s.trim().replace(/;$/, ""))
-    .filter(Boolean);
+/** One migration as single statements, so it runs inside a transaction on every driver. A `$$ … $$` body (a function) stays whole. */
+export function splitStatements(sql: string): string[] {
+  const out: string[] = [];
+  let current = "";
+  let quoted = false;
+  for (const line of sql.split("\n")) {
+    current += `${line}\n`;
+    if ((line.match(/\$\$/g)?.length ?? 0) % 2 === 1) quoted = !quoted;
+    if (!quoted && /;\s*$/.test(line)) (out.push(current), (current = ""));
+  }
+  out.push(current);
+  return out.map((s) => s.trim().replace(/;$/, "")).filter(Boolean);
+}

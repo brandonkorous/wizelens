@@ -1,0 +1,40 @@
+/* Cloud account screens: sign-in steps, the Account page, and the danger panels. */
+.wl-auth-check, .wl-check { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--wl-fg-2); cursor: pointer; }
+.wl-auth-check input, .wl-check input { width: 16px; height: 16px; margin: 0; accent-color: var(--wl-accent); }
+.wl-form-row > .wl-check { min-height: 40px; }
+.wl-auth-links { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; }
+.wl-auth-card > .wl-btn { width: 100%; }
+.wl-auth-card > .wl-link-btn { justify-self: center; font-size: 13px; }
+.wl-banner-thin { margin: 0; padding: 8px 24px; border-radius: 0; font-size: 13px; }
+
+.wl-account-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; margin: 0; }
+.wl-panel-title-row { display: inline-flex; align-items: center; gap: 10px; }
+.wl-check-list { display: grid; gap: 8px; margin: 0; padding: 12px; border: 1px solid var(--wl-line); border-radius: 10px; }
+.wl-check-list legend { padding: 0 6px; font-size: 13px; font-weight: 600; color: var(--wl-fg-2); }
+.wl-plain-list { margin: 0 0 8px; padding-left: 20px; }
+.wl-plain-list li + li { margin-top: 4px; }
+
+.wl-totp { display: flex; flex-wrap: wrap; gap: 16px 20px; align-items: center; margin-bottom: 14px; }
+.wl-totp-qr { width: 168px; height: 168px; padding: 8px; border-radius: 10px; background: #fff; flex: none; }
+.wl-totp-qr svg { display: block; width: 100%; height: 100%; }
+.wl-totp-text { display: grid; gap: 6px; flex: 1 1 240px; min-width: 0; }
+.wl-totp-text p { margin: 0; }
+.wl-totp-text code { overflow-wrap: anywhere; }
+.wl-backup-codes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 12px; flex: 1 1 100%; margin: 0; padding: 0; list-style: none; }
+.wl-share-link + .wl-form { margin-top: 14px; }
+
+.wl-sso-item { display: grid; gap: 8px; margin-bottom: 14px; padding: 12px; border: 1px solid var(--wl-line); border-radius: 10px; }
+.wl-sso-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.wl-sso-head .wl-link-btn { margin-left: auto; }
+.wl-sso-proof { display: grid; gap: 8px; }
+.wl-sso-proof p { margin: 0; }
+
+.wl-panel-danger { border-color: var(--wl-error); }
+.wl-panel-danger .wl-panel-head h2 { color: var(--wl-error); }
+.wl-btn-danger { border-color: var(--wl-error); background: var(--wl-error); color: #fff; }
+.wl-btn-danger:hover { filter: brightness(1.06); background: var(--wl-error); }
+.wl-btn-danger:disabled { filter: none; }
+@media (max-width: 640px) {
+  .wl-banner-thin { padding: 8px 16px; }
+  .wl-totp-qr { width: 144px; height: 144px; }
+}

@@ -106,6 +106,9 @@ jobs:
           WIZELENS_CLOUD_IMAGE: wizelens-cloud:ci
         run: |
           export POSTGRES_PASSWORD="ci-$(openssl rand -hex 12)"
+          export WIZELENS_CLOUD_AUTH_SECRET="$(openssl rand -base64 32)"
+          export WIZELENS_CLOUD_SETUP_TOKEN="ci-$(openssl rand -hex 12)"
+          export WIZELENS_CLOUD_CHECK_PWNED=0
           docker compose -p wlci -f deploy/docker-compose.cloud.yml up -d
           for i in $(seq 1 60); do curl -sf http://localhost:5970/healthz && break; sleep 2; done
           node scripts/cloud-smoke.mjs http://localhost:5970

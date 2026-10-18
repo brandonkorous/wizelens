@@ -1,25 +1,30 @@
+import { fromNodeHeaders } from "better-auth/node";
 import type { Ctx } from "../app.js";
-import { bearerOf, cookieOf, fail, HttpError } from "../http/http.js";
+import { bearerOf, fail, HttpError } from "../http/http.js";
 import { membership } from "../repo/orgs.js";
 import { type ApiKey, keyByToken, type Project, projectInOrg } from "../repo/projects.js";
-import { type User, userBySession } from "../repo/users.js";
+import type { User } from "../repo/users.js";
 import { can, type Permission, type Role } from "./roles.js";
 
-export const SESSION_COOKIE = "wizelens_session";
+/** Who is calling: a signed-in person (a Better Auth session), or a read key (AI agents and scripts). */
+export type Principal = { kind: "user"; user: User; sessionId: string } | { kind: "key"; key: ApiKey & { orgId: string } };
 
-/** Who is calling: a signed-in person, or a read key (AI agents and scripts). */
-export type Principal = { kind: "user"; user: User } | { kind: "key"; key: ApiKey & { orgId: string } };
+/** The session of this request, read from the database each time (no cookie cache), so a revoked session stops at once. */
+export async function sessionOf(ctx: Ctx): Promise<{ user: User; sessionId: string } | undefined> {
+  const s = await ctx.app.auth.api.getSession({ headers: fromNodeHeaders(ctx.req.headers) });
+  if (!s) return undefined;
+  const { id, email, name, emailVerified } = s.user;
+  return { user: { id, email, name, emailVerified, twoFactorEnabled: !!s.user.twoFactorEnabled }, sessionId: s.session.id };
+}
 
 export async function principalOf(ctx: Ctx): Promise<Principal | undefined> {
-  const now = ctx.app.config.now();
   const bearer = bearerOf(ctx.req);
   if (bearer?.startsWith("wl_rk_")) {
-    const key = await keyByToken(ctx.app.db, bearer, now);
+    const key = await keyByToken(ctx.app.db, bearer, ctx.app.config.now());
     return key?.kind === "read" ? { kind: "key", key } : undefined;
   }
-  const token = cookieOf(ctx.req, SESSION_COOKIE);
-  const user = token ? await userBySession(ctx.app.db, token, now) : undefined;
-  return user ? { kind: "user", user } : undefined;
+  const s = await sessionOf(ctx);
+  return s ? { kind: "user", ...s } : undefined;
 }
 
 /** A signed-in person, or 401. Changes also need the dashboard header, so other sites cannot send them. */

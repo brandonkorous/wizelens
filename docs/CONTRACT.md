@@ -481,28 +481,67 @@ for tests and trials.
 
 ### Tenancy and access
 
+Accounts, sessions, organizations, members, and invites are [Better Auth](https://better-auth.com) 1.7 (pinned), mounted at
+`/_wizelens/api/auth/*`. The cloud keeps only what Better Auth has no place for: projects, ingest and read keys, share links,
+retention, and the audit log.
+
 - **Organizations** hold **projects**. People join organizations with a role: `owner`, `admin`, `member`, `viewer`.
-  Viewers read. Members also make alerts and share links. Admins also manage projects, keys, and members. Owners also manage owners.
-  An organization always keeps one owner.
-- **Sessions**: email and password (scrypt), an HttpOnly `wizelens_session` cookie (30 days, `SameSite=Lax`, `Secure` on https).
-  Every change from a browser also needs the header `X-WizeLens-Client: dashboard`, so another site cannot send it.
-- **Sign-up**: the first account sets up the cloud (`api/auth/setup`). After that, people join with an invite link (7 days, one use),
-  or anyone can sign up when the cloud runs with `--signup open` (they get their own organization).
+  Viewers read. Members also make alerts and share links. Admins also manage projects, keys, members, and invites. Owners also
+  manage owners and delete the organization. The roles are plain data in `@wizeworks/lens-core` (`ACCESS_STATEMENTS`,
+  `ROLE_GRANTS`); the cloud and the dashboard both build Better Auth access control from it. An organization always keeps one owner:
+  Better Auth checks it, and a deferred database trigger (`members_keep_owner`) refuses any change that would leave none.
+- **Sessions**: email and password, or a passkey. Sessions live in the database only (no cookie cache), so signing out a device, a
+  password reset, or a removed member takes effect on the next request. Cookie `wizelens.session_token` (`__Secure-` prefix on
+  https): HttpOnly, `SameSite=Lax`, `Path=/_wizelens`, 14 days, renewed daily. Better Auth checks the `Origin` of every change
+  against the public URL; the cloud also needs `X-WizeLens-Client: dashboard` on every change, so another site cannot send one.
+- **Two-step sign-in**: codes from an authenticator app (TOTP, 6 digits, 30 s) with 10 one-time backup codes, both stored encrypted
+  with the auth secret. After 10 wrong codes the account waits 15 minutes. A device can be trusted for 14 days. Passkeys must check
+  the person on the device (`userVerification: "required"`), so they count as two factors and skip the code.
+- **Passwords**: 12 to 128 characters, scrypt. Hashes from before Better Auth (`scrypt$…`) still verify and are replaced at the next
+  sign-in. With `--check-pwned-passwords` (default on with Postgres), passwords found in known breaches are refused (only a
+  5-character SHA-1 prefix leaves the server).
+- **Email** (with `--smtp-url`): sign-up sends a confirm link, and sign-in waits for it. Password reset links last 30 minutes, once,
+  and end every session. A new email is confirmed by the old address first, then the new one. Deleting an account is confirmed by
+  email. Links open the dashboard (`#/verify-email`, `#/reset-password`, `#/invite`, `#/delete-account`, all with `?token=`).
+  Without SMTP, emails are written to the log, nothing is confirmed, and invite sign-ups must carry the invite id (below).
+- **Sign-up**: the first account needs the one-time setup token the cloud prints at start (`#/setup?token=`, header
+  `x-wizelens-setup-token`; set it with `--setup-token` for several instances). After that, people sign up with an open invite for
+  their email (7 days), or anyone when the cloud runs with `--signup open` (they get their own organization). Without SMTP, an
+  invite sign-up must also send the invite id (header `x-wizelens-invite`). One gate (`user.validateUserInfo`) checks every method.
+- **Invites**: the invite id is the secret in its link. It opens only for a signed-in person with the invited email (confirmed, when
+  mail is on). No Better Auth route lists invites (`list-invitations` and `get-full-organization` are off; without SMTP also
+  `list-user-invitations`); owners and admins see them on `GET api/orgs/{org}`.
+- **Limits**: per client address, shared by every instance through the `rate_limits` table: sign-in 10 a minute, sign-up 5,
+  two-step codes 10, reset and confirm links 3 per 5 minutes, SSO provider changes and DNS checks 5, everything else 120 a minute (429 above). The client address is the
+  socket, or with `--trust-proxy` the last `X-Forwarded-For` entry; address headers the client sends are dropped.
+- **Secret**: `--auth-secret` signs sessions and encrypts 2FA data (required with Postgres; a PGlite trial makes one and keeps it
+  in its database). `2:new,1:old` rotates: encrypted data still opens, but everyone signs in again. Better Auth telemetry is off.
+- **Single sign-on** (Better Auth's SSO plugin): owners and admins connect their organization's identity provider with OIDC
+  (PKCE always) or SAML 2.0 (signed assertions always; responses must answer our request, carry timestamps, and use no SHA-1).
+  A provider belongs to one organization and signs nobody in until its email domain is proven: a DNS TXT record
+  `_wizelens-sso-<providerId>.<domain>` with the token from `sso/request-domain-verification`, checked by `sso/verify-domain`.
+  New accounts come only for emails at exactly that domain (the sign-up gate checks it, also with `--signup invite`); they start
+  confirmed and join the organization as members. An existing account links only when its own email is confirmed. The cloud
+  fetches OIDC settings, tokens, and keys only from origins in `--sso-origins` (SAML needs none). Removing a provider removes its
+  sign-ins (trigger `sso_providers_accounts_go`). Changes are in the audit log (`sso.create`, `sso.update`, `sso.delete`,
+  `sso.verify`), without secrets. SSO sign-in skips our two-step codes: the identity provider does that part.
+- **Leaving**: an account cannot be deleted while it is the last owner of an organization with other members. Organizations it is
+  alone in are deleted with their data. An owner deletes an organization with `DELETE api/orgs/{org}` and the password.
 - **Keys** (only their SHA-256 hash is stored; the prefix tells what they are):
   - `wl_ik_…` **ingest key**: one project. Add-ons send it as `WIZELENS_HUB_TOKEN`; OTLP apps as `Authorization: Bearer …`.
     The project comes from the key, never from the sender. At most 1200 calls per key per minute (429 above).
   - `wl_rk_…` **read key**: one or more projects, read-only. For AI agents (MCP) and scripts.
-- **Audit log**: org changes, member changes, keys, projects, shares, and every MCP tool call, with who did it.
+- **Audit log**: org changes, member and invite changes (also those through Better Auth), keys, projects, shares, and every MCP tool
+  call, with who did it.
 
 ### Endpoints (below `/_wizelens/`)
 
 | Method | Path | Who |
 |---|---|---|
-| GET | `api/auth/state` | Anyone: `{ signedIn, needsSetup, signup, user?, orgs?[] with projects }` |
-| POST | `api/auth/setup`, `signup`, `login`, `logout` | Anyone (setup only while no account exists) |
-| GET / POST | `api/auth/invites/{token}`, `…/accept` | Anyone / signed in |
-| POST / GET / PATCH | `api/orgs`, `api/orgs/{org}` | Signed in; read: any member; change: admin |
-| POST / PATCH / DELETE | `api/orgs/{org}/invites`, `…/members/{user}` | Admin |
+| GET | `api/me` | Anyone: `{ signedIn, needsSetup, signup, mail, sso, user?, sessionId?, orgs?[] with projects, blockingOrgs? }`. `sso`: some provider has a proven domain |
+| GET | `api/invites/{id}` | Anyone with the link: `{ orgName, email, role, inviter }` |
+| * | `api/auth/*` | Better Auth: sign-up, sign-in (email, passkey), `two-factor/*`, sessions, password, email, `delete-user`, `organization/*` (invite, accept, roles, remove, leave), `sign-in/sso`, `sso/*` (register with `organizationId`, providers, update, delete, domain proof; owner or admin). Send `organizationId` on every `organization/*` change |
+| POST / GET / PATCH / DELETE | `api/orgs`, `api/orgs/{org}` | Signed in; read: any member; name and retention: admin; delete (with `password`): owner |
 | POST / DELETE | `api/orgs/{org}/projects[/{id}]`, `…/{id}/clear` (deletes data only) | Admin |
 | POST / DELETE | `api/orgs/{org}/keys[/{id}]` | Admin. The secret is in the answer once |
 | GET | `api/orgs/{org}/audit?before=` | Admin |
@@ -511,7 +550,7 @@ for tests and trials.
 | GET / POST / PATCH / DELETE | `api/projects/{p}/alerts[/{id}]`, `…/{id}/test` | Read: viewer; change: member |
 | POST / GET / DELETE | `api/projects/{p}/shares[/{id}]` | Read: viewer; change: member |
 | GET | `api/shared/{token}` | Anyone with the link: `{ trace, expiresMs }` |
-| POST | `api/ingest`, `/v1/traces`, `/v1/logs` | Ingest key |
+| POST | `api/ingest`, `/v1/traces`, `/v1/logs`, `/v1/metrics` | Ingest key |
 | POST | `mcp?project=` | Read key (the project can be left out when the key has one) |
 
 ### Page models (`serverStats`)
@@ -552,7 +591,9 @@ Pages read small tables built from the stored traces, never the traces themselve
 A rule watches one metric over a window (5 min to 24 h), optionally in one environment: `error_rate` (%), `p95_ms`, `avg_ms`,
 `requests`, `new_errors` (error groups not seen in the window before), `slow_queries`. It fires when the value is above (`>`) or
 below (`<`) the threshold. No data never fires, except `requests <` (traffic stopped). Rules run every minute. A notice is sent
-only when the state changes (fired, resolved), to a webhook (the JSON notice) or a Slack incoming webhook, and kept as an event.
+only when the state changes (fired, resolved), to a webhook (the JSON notice), a Slack incoming webhook, or email
+(`{ "kind": "email", "to": [...] }`: 1 to 20 addresses of members of the organization, confirmed ones when mail is on, checked again
+at each send), and kept as an event.
 The message says what happened: `Requests is 79 (above 5)` when fired, `(no longer above 5)` when resolved, and
 `(alerts when above 5)` for a test notice. `PATCH` changes only the fields it sends.
 Webhook URLs must be https and may not resolve to private, loopback, or link-local addresses, unless the cloud runs with
@@ -577,14 +618,17 @@ Each organization keeps traces for `retention_days` (default 30, 1 to 400). Olde
 
 ### Cloud storage
 
-Postgres, one schema, migrations in `wizelens_migrations`. Tables: `orgs`, `users`, `members`, `sessions`, `invites`, `projects`,
-`api_keys`, `traces`, `spans`, `logs`, `services`, `metric_points`, `alert_rules`, `alert_events`, `shares`, `audit`.
-Migration 2 added `metric_points` and the metric columns of `alert_rules`. Migration 3 added the stats tables (see "Stats
+Postgres, one schema, migrations in `wizelens_migrations`. Tables: `orgs`, `users`, `members`, `sessions`, `invites`, `accounts`,
+`verifications`, `two_factors`, `passkeys`, `rate_limits`, `cloud_meta`, `sso_providers`, `projects`, `api_keys`, `traces`, `spans`, `logs`, `services`, `metric_points`, `alert_rules`, `alert_events`, `shares`, `audit`.
+Migration 2 added `metric_points` and the metric columns of `alert_rules`. Migration 5 added `sso_providers`. Migration 3 added the stats tables (see "Stats
 tables"): `traces.settled_ms` and `traces.contrib`, `scale_meta`, `fact_requests`, `fact_traces`, `fact_logs`, `fact_critical`,
 `rollup_10s`/`5m`/`1h`, `hist_10s`/`5m`/`1h`, `metric_series`, and `metric_10s`/`5m`/`1h`. The cloud settles every 3 seconds in batches
 of 500, under a Postgres advisory lock so only one instance works at a time. Rollup buckets age out every minute; the 1 h tier
 follows the organization's retention, and deleting traces past retention takes them out of the rollups first. Metric rollups are
 written at ingest under row locks on `metric_series` (`SELECT ... FOR UPDATE`, in key order), so instances add up the same series
 one at a time; their tiers age out with the 10-minute retention job (the 1 h tier and `metric_series` by the organization's
-retention). Data tables are keyed by
-`project_id`. Times are `double precision` epoch ms. Secrets (sessions, invites, keys, shares) are stored as SHA-256 hashes only.
+retention). Migration 4 moved accounts to Better Auth: its tables use our snake_case names (`auth/schema-names.ts` maps them), and
+users, organizations, and members kept their rows and ids. Passwords moved to `accounts`, sessions started over, and open invites got
+new ids (so new links). A test checks that Better Auth finds nothing to change in the schema, and Better Auth checks it again at start.
+Data tables are keyed by `project_id`. Times are `double precision` epoch ms, except in Better Auth's tables (`timestamptz`). Our
+secrets (keys, shares) are stored as SHA-256 hashes only; Better Auth stores reset and confirm tokens hashed.

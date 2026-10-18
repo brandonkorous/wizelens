@@ -14,6 +14,15 @@ export interface Notice {
   url: string;
 }
 
+type HttpChannel = Extract<Channel, { url: string }>;
+
+/** How notices leave: HTTP for webhooks and Slack, and a mail function that sends to the members still allowed and says what it did. */
+export interface Outbox {
+  http: typeof fetch;
+  allowPrivate: boolean;
+  email: (to: readonly string[], n: Notice) => string;
+}
+
 const PRIVATE_V4 = [/^10\./, /^127\./, /^169\.254\./, /^172\.(1[6-9]|2\d|3[01])\./, /^192\.168\./, /^0\./, /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./];
 const isPrivate = (ip: string) => (isIP(ip) === 6 ? /^(::1|fc|fd|fe80|::ffff:(10|127|169\.254|192\.168)\.)/i.test(ip) || ip === "::" : PRIVATE_V4.some((r) => r.test(ip)));
 
@@ -32,26 +41,32 @@ export async function checkTarget(url: string, allowPrivate: boolean): Promise<s
   return addresses.some(isPrivate) ? "Webhooks cannot point at private or local addresses." : null;
 }
 
-function bodyOf(channel: Channel, n: Notice): unknown {
-  if (channel.kind === "webhook") return n;
-  const icon = n.state === "fired" ? ":rotating_light:" : n.state === "resolved" ? ":white_check_mark:" : ":bell:";
+/** The notice in words, for Slack and email. */
+export function noticeLines(n: Notice): { subject: string; lines: string[] } {
   const verb = n.state === "fired" ? "Alert" : n.state === "resolved" ? "Resolved" : "Test";
-  return { text: `${icon} *${verb}: ${n.rule}* (${n.project})\n${n.message}\n<${n.url}|Open WizeLens>` };
+  return { subject: `${verb}: ${n.rule} (${n.project})`, lines: [`${verb}: ${n.rule} in ${n.project}.`, n.message] };
 }
 
-/** Send to every channel. Returns one line per channel, for the event's delivery note. */
-export async function deliver(channels: readonly Channel[], n: Notice, http: typeof fetch, allowPrivate: boolean): Promise<string> {
-  const results = await Promise.all(
-    channels.map(async (c) => {
-      const problem = await checkTarget(c.url, allowPrivate);
-      if (problem) return `${c.kind}: ${problem}`;
-      try {
-        const res = await http(c.url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(bodyOf(c, n)), signal: AbortSignal.timeout(5000), redirect: "error" });
-        return `${c.kind}: ${res.ok ? "sent" : `HTTP ${res.status}`}`;
-      } catch (err) {
-        return `${c.kind}: ${err instanceof Error ? err.message : "failed"}`;
-      }
-    }),
-  );
+function bodyOf(channel: HttpChannel, n: Notice): unknown {
+  if (channel.kind === "webhook") return n;
+  const icon = n.state === "fired" ? ":rotating_light:" : n.state === "resolved" ? ":white_check_mark:" : ":bell:";
+  const { subject } = noticeLines(n);
+  return { text: `${icon} *${subject}*\n${n.message}\n<${n.url}|Open WizeLens>` };
+}
+
+async function post(c: HttpChannel, n: Notice, out: Outbox): Promise<string> {
+  const problem = await checkTarget(c.url, out.allowPrivate);
+  if (problem) return `${c.kind}: ${problem}`;
+  try {
+    const res = await out.http(c.url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(bodyOf(c, n)), signal: AbortSignal.timeout(5000), redirect: "error" });
+    return `${c.kind}: ${res.ok ? "sent" : `HTTP ${res.status}`}`;
+  } catch (err) {
+    return `${c.kind}: ${err instanceof Error ? err.message : "failed"}`;
+  }
+}
+
+/** Send to every channel. Returns one line per channel, for the delivery note of the event. */
+export async function deliver(channels: readonly Channel[], n: Notice, out: Outbox): Promise<string> {
+  const results = await Promise.all(channels.map(async (c) => (c.kind === "email" ? out.email(c.to, n) : post(c, n, out))));
   return results.join("; ") || "no channels";
 }

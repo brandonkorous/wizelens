@@ -34,7 +34,7 @@ it("fires once when the error rate breaks the rule, then resolves", async () => 
   let url: string;
   ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
   const hook = await receiver();
-  const { owner, orgId, projectId } = await setupOwner(url);
+  const { owner, orgId, projectId } = await setupOwner(cloud, url);
   const key = (await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", projectIds: [projectId] })).body.token;
   const rule = { name: "Errors", metric: "error_rate", op: ">", threshold: 10, windowMs: 300_000, channels: [{ kind: "webhook", url: hook.url }] };
   expect((await owner.call("POST", `api/projects/${projectId}/alerts`, rule)).status).toBe(201);
@@ -63,7 +63,7 @@ it("refuses webhooks into private networks unless allowed", async () => {
 it("changes only the fields a PATCH sends", async () => {
   let url: string;
   ({ cloud, url } = await startCloud({ allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
-  const { owner, projectId } = await setupOwner(url);
+  const { owner, projectId } = await setupOwner(cloud, url);
   const rule = { name: "Traffic", metric: "requests", op: ">", threshold: 5, windowMs: 900_000, channels: [{ kind: "webhook", url: "http://127.0.0.1:1/hook" }] };
   const made = await owner.call<{ id: string }>("POST", `api/projects/${projectId}/alerts`, rule);
   const changed = await owner.call("PATCH", `api/projects/${projectId}/alerts/${made.body.id}`, { threshold: 1000 });

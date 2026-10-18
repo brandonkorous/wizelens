@@ -3,13 +3,11 @@ import { compareResults } from "../../../core/src/testing/scale-compare.js";
 import { parityNeeds } from "../../../core/src/testing/scale-needs.js";
 import { SCENARIO_NOW } from "../../../core/src/testing/scenario.js";
 import type { Db } from "../db/db.js";
-import { createOrg } from "../repo/orgs.js";
 import { createProject } from "../repo/projects.js";
 import { writeBatch } from "../repo/trace-write.js";
-import { createUser } from "../repo/users.js";
 import { cloudExecutor } from "../scale-exec.js";
 import { settleCloud } from "../settle.js";
-import { testDb } from "./db.js";
+import { seedOrg, testDb } from "./db.js";
 
 export const DAY = 86_400_000;
 export const RANGES: TimeRange[] = ["15m", "1h", "6h", "24h", "7d", "30d"];
@@ -24,9 +22,8 @@ export interface ScaleDb {
 /** A database with one organization (retention in days) and one project. */
 export async function scaleDb(retentionDays = 90): Promise<ScaleDb> {
   const db = await testDb();
-  const owner = await createUser(db, `o${Math.random()}@x.io`, "long enough pw", "Owner", 1);
-  const org = await createOrg(db, "Scale", owner.id, 1, retentionDays);
-  const projectId = (await createProject(db, org.id, "Shop", 1)).id;
+  const { orgId } = await seedOrg(db, "Scale", retentionDays);
+  const projectId = (await createProject(db, orgId, "Shop", 1)).id;
   return { db, projectId, retentionMs: retentionDays * DAY, ex: cloudExecutor(db, projectId, retentionDays * DAY) };
 }
 
