@@ -1,3 +1,5 @@
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { afterEach, expect, it } from "vitest";
 import type { Hub } from "./hub.js";
 import { post, span, startHub, T1 } from "./test/helpers.js";
@@ -31,6 +33,18 @@ it("MCP lists and reads metrics", async () => {
   expect(await text(1, "list_metrics", {})).toContain('"last": "2.00 KB"');
   expect(await text(2, "get_metric", { name: "process.memory.usage", range: "15m" })).toContain('"groupKeys"');
   expect(audit.filter((l) => l.includes("tool=list_metrics") || l.includes("tool=get_metric"))).toHaveLength(2);
+});
+
+it("an agent connects: initialize, the GET stream, tools/list, and a call", async () => {
+  let url: string;
+  ({ hub, url } = await startHub({ enableMcp: true }));
+  await post(`${url}/_wizelens/api/ingest`, { sender: { service: "billing" }, spans: [span(T1, "1".repeat(16), { service: "billing" })] });
+  const client = new Client({ name: "test-agent", version: "1.0.0" });
+  await client.connect(new StreamableHTTPClientTransport(new URL(`${url}/_wizelens/mcp`)));
+  expect((await client.listTools()).tools.map((t) => t.name)).toContain("list_traces");
+  const res = (await client.callTool({ name: "list_traces", arguments: {} })) as { content: { text: string }[] };
+  expect(res.content[0]!.text).toContain(T1);
+  await client.close();
 });
 
 it("MCP is off unless enabled", async () => {
