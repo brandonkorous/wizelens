@@ -24,6 +24,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   "No data for previous day" into a narrow column (the trend line runs along the bottom); page actions such as "New alert" sit
   on the right of the title; the search box no longer cuts its text; flush tables line up with their panel titles; the cloud
   says "Sending to this project", not "Connected to this hub"; Error Rate has the same icon on every page.
+- **Requests**: the table has the full width until you pick a request (no empty "Select a request" panel); with the details
+  open, Fetch and Insights make room, so the table no longer scrolls sideways at 1440 px. Paths get more room.
+- **Metrics**: names wrap at their dots, so the end (`.p50`, `.p99`) always shows; the list is wider, and the runtime tiles
+  fill their row.
+- Tab bars no longer show a scroll arrow when their tabs fit.
 
 ### Traces across projects
 

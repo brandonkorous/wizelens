@@ -31,12 +31,27 @@ export function RuntimeStrip({ model, selected }: { model: MetricsModel; selecte
   );
 }
 
+/** A dotted metric name that may break after each dot, so the end ("p99", "count") always shows. */
+export function DottedName({ name }: { name: string }) {
+  const parts = name.split(".");
+  return (
+    <>
+      {parts.map((p, i) => (
+        <span key={i}>
+          {p}
+          {i < parts.length - 1 && <>.<wbr /></>}
+        </span>
+      ))}
+    </>
+  );
+}
+
 function MetricRow({ m, active }: { m: MetricInfo; active: boolean }) {
   return (
     <li>
       <button type="button" className={active ? "wl-active" : undefined} onClick={() => setQuery({ metric: m.name, group: null, stat: null })} title={m.description || m.name}>
         <span className="wl-metric-name">
-          <strong>{m.name}</strong>
+          <strong><DottedName name={m.name} /></strong>
           <em>
             {m.services.join(", ")} · {m.series} series
           </em>
