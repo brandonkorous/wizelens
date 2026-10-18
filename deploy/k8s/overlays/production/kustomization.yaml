@@ -1,0 +1,37 @@
+# Production: images from GHCR (the deploy pins `latest` to the commit), settings, and the secret fingerprint.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: wizelens
+resources:
+  - ../../base
+
+# GHCR packages must be public: the cluster pulls without a pull secret.
+images:
+  - name: wizelens/cloud
+    newName: ghcr.io/brandonkorous/wizelens-cloud
+    newTag: latest
+  - name: wizelens/site
+    newName: ghcr.io/brandonkorous/wizelens-site
+    newTag: latest
+
+# Settings that are not secret. Secrets come from Key Vault as `cloud-env`.
+configMapGenerator:
+  - name: cloud-config
+    literals:
+      - WIZELENS_CLOUD_PUBLIC_URL=https://app.wizelens.com
+      # Caddy writes the real visitor address as the only X-Forwarded-For entry (see the sparx Caddyfile).
+      - WIZELENS_CLOUD_TRUST_PROXY=1
+      # Invite only until open sign-up is a product decision.
+      - WIZELENS_CLOUD_SIGNUP=invite
+      - WIZELENS_CLOUD_MAIL_FROM=WizeLens <hello@wizelens.com>
+    options:
+      # A plain name is safe because every config change ships in a commit, and the commit pins a new image tag.
+      disableNameSuffixHash: true
+
+# Restarts the cloud pod when a Key Vault secret changes; envFrom is read only at pod start.
+patches:
+  - target: { kind: Deployment, name: cloud }
+    patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations
+        value: { wizelens.com/env-hash: "__ENV_HASH__" }

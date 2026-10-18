@@ -1,0 +1,13 @@
+# WizeLens on the shared sparx AKS cluster (aks-sparx-prod-cus), namespace `wizelens`.
+# No Ingress here: the shared Caddy in `sparx-prod` routes to these Services (sparx.works k8s/ingress/Caddyfile).
+# Secrets are made by .github/workflows/deploy.yml from Key Vault, never committed.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: wizelens
+resources:
+  - namespace.yaml
+  - cloud.yaml
+  - site.yaml
+labels:
+  - pairs: { app.kubernetes.io/part-of: wizelens }
+    includeSelectors: false

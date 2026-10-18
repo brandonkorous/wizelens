@@ -1,0 +1,30 @@
+# The marketing site and docs at wizelens.com: static files served by nginx.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: site
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: site } }
+  template:
+    metadata: { labels: { app: site } }
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: site
+          image: wizelens/site:latest
+          ports: [{ containerPort: 8080 }]
+          readinessProbe: { httpGet: { path: /healthz, port: 8080 }, periodSeconds: 10 }
+          livenessProbe: { httpGet: { path: /healthz, port: 8080 }, periodSeconds: 30 }
+          resources:
+            requests: { cpu: 5m, memory: 16Mi }
+            limits: { cpu: 200m, memory: 64Mi }
+          securityContext: { runAsNonRoot: true, runAsUser: 101, runAsGroup: 101, allowPrivilegeEscalation: false }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: site
+spec:
+  selector: { app: site }
+  ports: [{ port: 80, targetPort: 8080 }]
