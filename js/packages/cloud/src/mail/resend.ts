@@ -7,6 +7,8 @@ const TRIES = 4;
 export interface ResendSettings {
   apiKey: string;
   from: string;
+  /** Where replies go. Left out when unset. */
+  replyTo?: string;
   fetch: typeof fetch;
   /** Wait between tries. Tests pass a fast one. */
   sleep?: (ms: number) => Promise<void>;
@@ -21,7 +23,7 @@ const retryable = (status: number, body: string) => (status === 429 && !/quota_e
 const waitMs = (res: Response | null, attempt: number) => Math.min(30_000, Number(res?.headers.get("retry-after")) * 1000 || 1000 * 2 ** attempt);
 
 const payload = (s: ResendSettings, m: Mail) =>
-  JSON.stringify({ from: s.from, to: [m.to], subject: m.subject, html: m.html, text: m.text, tags: [{ name: "kind", value: m.kind }], ...(m.headers ? { headers: m.headers } : {}) });
+  JSON.stringify({ from: s.from, ...(s.replyTo ? { reply_to: s.replyTo } : {}), to: [m.to], subject: m.subject, html: m.html, text: m.text, tags: [{ name: "kind", value: m.kind }], ...(m.headers ? { headers: m.headers } : {}) });
 
 /** Send one email through the Resend API. The same Idempotency-Key on every try, so a retry never sends it twice. */
 export function resendSender(s: ResendSettings): (mail: Mail) => Promise<void> {

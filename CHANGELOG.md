@@ -12,6 +12,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - MCP `get_trace` and share links join the same way: a read key as far as its projects, a share link as far as its maker
   may read when it is opened (only the shared project once the maker leaves the organization).
 
+### Cloud mail
+
+- `--mail-reply-to` (`WIZELENS_CLOUD_MAIL_REPLY_TO`) sets where replies go, for a sender address with no inbox (Resend and SMTP).
+- The hosted cloud sends from `hello@updates.wizelens.com`, with replies to `hello@wizelens.com`.
+
 ## [0.3.0-alpha.2] — Send-only in production
 
 Ready for production: the add-ons send to the cloud and serve nothing anyone can read, and cloud sign-in moves to Better Auth.

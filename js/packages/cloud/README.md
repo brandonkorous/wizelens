@@ -35,6 +35,7 @@ WIZELENS_HUB_TOKEN=wl_ik_...
 | `--resend-webhook-secret <s>` | `WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET` | none: the `whsec_…` secret of the Resend webhook (see below) |
 | `--smtp-url <url>` | `WIZELENS_CLOUD_SMTP_URL` | none: or mail over SMTP (`smtp://user:pass@host:587` or `smtps://…:465`) |
 | `--mail-from <address>` | `WIZELENS_CLOUD_MAIL_FROM` | `WizeLens <no-reply@<public host>>` |
+| `--mail-reply-to <address>` | `WIZELENS_CLOUD_MAIL_REPLY_TO` | none: replies go to the sender |
 | `--trust-proxy` | `WIZELENS_CLOUD_TRUST_PROXY=1` | off (client address from the last `X-Forwarded-For` entry) |
 | `--setup-token <text>` | `WIZELENS_CLOUD_SETUP_TOKEN` | random, printed at start while no account exists |
 | `--[no-]check-pwned-passwords` | `WIZELENS_CLOUD_CHECK_PWNED=1\|0` | on with Postgres, off with PGlite |

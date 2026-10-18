@@ -39,8 +39,9 @@ interface Transport {
 
 async function smtpSender(config: CloudConfig): Promise<Transport> {
   const { createTransport } = await import("nodemailer");
-  const transport = createTransport(config.smtpUrl!, { from: config.mailFrom });
-  return { via: "smtp", send: async (m) => void (await transport.sendMail({ from: config.mailFrom, ...m })), close: async () => transport.close() };
+  const defaults = { from: config.mailFrom, ...(config.mailReplyTo ? { replyTo: config.mailReplyTo } : {}) };
+  const transport = createTransport(config.smtpUrl!, defaults);
+  return { via: "smtp", send: async (m) => void (await transport.sendMail({ ...defaults, ...m })), close: async () => transport.close() };
 }
 
 const logSender: Sender = async (m) => console.info(`[wizelens-cloud] mail (no mail service set, not sent) to ${m.to}: ${m.subject}\n${m.text}\n`);
@@ -48,7 +49,7 @@ const logSender: Sender = async (m) => console.info(`[wizelens-cloud] mail (no m
 /** The test sender, then Resend, then SMTP, then the log. */
 async function transportOf(config: CloudConfig): Promise<Transport> {
   if (config.sendMail) return { via: "test", send: config.sendMail };
-  if (config.resendApiKey) return { via: "resend", send: resendSender({ apiKey: config.resendApiKey, from: config.mailFrom, fetch: config.fetch }) };
+  if (config.resendApiKey) return { via: "resend", send: resendSender({ apiKey: config.resendApiKey, from: config.mailFrom, replyTo: config.mailReplyTo, fetch: config.fetch }) };
   if (config.smtpUrl) return smtpSender(config);
   return { via: "log", send: logSender };
 }

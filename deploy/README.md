@@ -46,7 +46,7 @@ The cloud runs one pod with `Recreate`, because migrations and alert jobs run in
    az keyvault secret show --vault-name kv-wizelens-prod-cus --name WIZELENS-CLOUD-SETUP-TOKEN --query value -o tsv
    ```
 
-8. **Email with Resend.** Mail goes out as `WizeLens <hello@updates.wizelens.com>` (`WIZELENS_CLOUD_MAIL_FROM` in the production overlay).
+8. **Email with Resend.** Mail goes out as `WizeLens <hello@updates.wizelens.com>` (`WIZELENS_CLOUD_MAIL_FROM` in the production overlay), and replies go to `hello@wizelens.com` (`WIZELENS_CLOUD_MAIL_REPLY_TO`).
    1. In Resend, add the domain `updates.wizelens.com` (a sending subdomain, so the main domain keeps its own mail setup) and put its DNS records in Cloudflare. Wait until Resend says it is verified.
    2. Make an API key with "Sending access" for that domain only, and store it:
       `az keyvault secret set --vault-name kv-wizelens-prod-cus --name WIZELENS-CLOUD-RESEND-API-KEY --value <re_...>`
