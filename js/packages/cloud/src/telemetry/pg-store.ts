@@ -7,7 +7,7 @@ import { getJoinedTrace } from "../repo/trace-join.js";
 import { countRows, getTrace, queryTraces, traceEnvsPg } from "../repo/trace-read.js";
 import { pruneByRetention, pruneMetricsByRetention, writeTelemetry } from "../repo/trace-write.js";
 import { cloudExecutor, cloudSettling, pgRunner } from "../scale-exec.js";
-import { checkFactsVersion, pruneRollups, settleCloud, STATS_TABLES } from "../settle.js";
+import { factsStale, pruneRollups, resetFacts, settleCloud, STATS_TABLES } from "../settle.js";
 import type { TelemetryStore } from "./store.js";
 
 const TELEMETRY_TABLES = ["spans", "logs", "traces", "metric_points", ...METRIC_TABLES, ...STATS_TABLES];
@@ -37,6 +37,12 @@ async function activeHours(db: Db, projectId: string, from: number, to: number):
 /** Telemetry in the cloud's own database. Retention reads the organizations from the same database. */
 export function pgTelemetry(db: Db): TelemetryStore {
   const src = (projectId: string) => ({ d: PG_DIALECT, run: pgRunner(db), scope: { project: projectId } });
+  // A facts reset can take minutes on a big database, so it runs after start; settling waits for it, and tries again if it failed.
+  let reset: Promise<void> = Promise.resolve();
+  const startReset = () => {
+    reset = resetFacts(db);
+    reset.catch((err: unknown) => console.error("Facts reset failed; settling tries again.", err));
+  };
   return {
     kind: "postgres",
     write: (projectId, w, now) => db.tx((q) => writeTelemetry(q, projectId, w, now)),
@@ -54,14 +60,21 @@ export function pgTelemetry(db: Db): TelemetryStore {
     slowestEndpoints: (projectId, w, minCount, limit) => slowestEndpoints(db, projectId, w, minCount, limit),
     metricData: (m, range, params, now) => loadMetricData(db, m, range, params, now),
     metricAlertData: (m, name, w, now) => loadMetricAlertData(db, m, name, w, now),
-    settle: (now, o) => settleCloud(db, now, o),
+    async settle(now, o) {
+      await reset.catch(() => (startReset(), reset));
+      return settleCloud(db, now, o);
+    },
     async prune(now) {
       while ((await pruneByRetention(db, now)) > 0);
       await pruneMetricsByRetention(db, now);
       await pruneRollups(db, now, true);
     },
     pruneRollups: (now) => pruneRollups(db, now),
-    checkFactsVersion: () => checkFactsVersion(db),
+    async checkFactsVersion() {
+      if (!(await factsStale(db))) return false;
+      startReset();
+      return true;
+    },
     async clearProject(projectId) {
       for (const table of TELEMETRY_TABLES) await db.query(`DELETE FROM ${table} WHERE project_id = $1`, [projectId]);
     },
