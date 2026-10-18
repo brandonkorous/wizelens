@@ -33,6 +33,8 @@ WIZELENS_HUB=https://wizelens.example.com
 WIZELENS_HUB_TOKEN=wl_ik_...                   # the ingest key
 ```
 
+In production, also set `WIZELENS_ENABLED=true`. The app then sends only and serves nothing: see [Production](/docs/production/).
+
 OpenTelemetry apps use `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer wl_ik_...`.
 
 ## Teams and roles

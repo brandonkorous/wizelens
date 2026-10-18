@@ -2,7 +2,20 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.0-alpha.2] — Send-only in production
+
+Ready for production: the add-ons send to the cloud and serve nothing anyone can read, and cloud sign-in moves to Better Auth.
+
+### Send-only in production
+
+- **The add-ons are send-only outside development** (.NET: outside the Development environment; Node and Next.js: when
+  `NODE_ENV=production`). They still capture and send to the hub or cloud and take browser spans, but serve no dashboard,
+  read API, or MCP: every other path under `/_wizelens` is a 404, so nobody can read traces from a production app.
+  Traces stay in memory, and the hub gets no address to read from. Turn the dashboard on anyway with `Dashboard` /
+  `dashboard` or `WIZELENS_DASHBOARD=true`.
+- **`WIZELENS_ENABLED`** turns an add-on on or off with no code change (the option still wins).
+- **Browser:** `<WizeLensProvider hud={false}>` (recorder option `readServer: false`) sends spans but never reads traces back.
+- .NET: `Storage` is now nullable; unset means SQLite with the dashboard and memory without it.
 
 ### Cloud email: Resend, templates, and a suppression list
 
@@ -44,6 +57,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - **API changes:** `api/auth/state` is now `api/me`. `api/auth/setup`, `signup`, `login`, `logout`, `invites/*`, `api/orgs/{org}/invites`,
   and `api/orgs/{org}/members/*` are gone: use Better Auth's routes. New: `GET api/invites/{id}`, `DELETE api/orgs/{org}`.
 - `scripts/cloud-smoke.mjs` takes the setup token, and waits for stats to settle (it failed on a fresh cloud since the stats change).
+
+## [0.3.0-alpha.1] — Phase 3: the cloud
+
+The hosted service for many teams, and fixes found by running WizeLens in a large multi-pane React app with a Fastify API and Prisma.
 
 ### Next.js, page loads that join the server, and sampling
 
@@ -100,24 +117,6 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - **Browser:** `@wizeworks/lens-react` copies `console.*` calls into the page view's trace (`captureConsole`). `api/client-spans`
   takes a `logs` list next to `spans`.
 
-### Fixed
-
-- `<WizeLensProvider capturePages={false}>` was in the docs but did nothing. The prop now works.
-
-- **The HUD broke hydration in server-rendered apps** (Next.js) when its panel was open, it was minimized, or requests were kept
-  from the last page. It read those during the first render, which the server cannot do. The first render now matches the server; saved settings apply right after.
-- **First paint was counted after the tab came back.** A page that loaded in a background tab showed a first paint of minutes, so
-  "Client render" read 20 s. First paint now follows the largest-paint rule: paints after the tab was first hidden are skipped.
-- **A page load was saved twice** when the provider mounted again on the same page (a hot reload in development). Only the first
-  tracker on a page sends its full-load view.
-- **The Web App error rate on the Errors page was far too high** (18% against 2.5% on Services). It counted browser fetches that
-  failed but not the ones that reached the server. A request now counts for every service it touched.
-- The Pages & Routes table says which columns come from full page loads only, so SSR time can be above render time without looking wrong.
-
-## [0.3.0-alpha.1] — Phase 3: the cloud
-
-The hosted service for many teams, and fixes found by running WizeLens in a large multi-pane React app with a Fastify API and Prisma.
-
 ### Cloud (`@wizeworks/lens-cloud`)
 
 - `wizelens-cloud` on Postgres (`DATABASE_URL`), or PGlite in-process for trials. Docker image `ghcr.io/brandonkorous/wizelens-cloud`
@@ -160,6 +159,16 @@ The hosted service for many teams, and fixes found by running WizeLens in a larg
 - **A request the client left was saved as "200, 0 bytes"**, and the queries its handler ran afterwards counted as server time.
   Node now marks it `wizelens.request.aborted` with no status, the dashboard shows "Aborted", and server time only counts work inside the span.
 - **A CORS layer could remove `X-WizeLens-Trace` from `Access-Control-Expose-Headers`.** The Node add-on merges the names back in.
+- `<WizeLensProvider capturePages={false}>` was in the docs but did nothing. The prop now works.
+- **The HUD broke hydration in server-rendered apps** (Next.js) when its panel was open, it was minimized, or requests were kept
+  from the last page. It read those during the first render, which the server cannot do. The first render now matches the server; saved settings apply right after.
+- **First paint was counted after the tab came back.** A page that loaded in a background tab showed a first paint of minutes, so
+  "Client render" read 20 s. First paint now follows the largest-paint rule: paints after the tab was first hidden are skipped.
+- **A page load was saved twice** when the provider mounted again on the same page (a hot reload in development). Only the first
+  tracker on a page sends its full-load view.
+- **The Web App error rate on the Errors page was far too high** (18% against 2.5% on Services). It counted browser fetches that
+  failed but not the ones that reached the server. A request now counts for every service it touched.
+- The Pages & Routes table says which columns come from full page loads only, so SSR time can be above render time without looking wrong.
 
 ## [0.2.0-alpha.1] — Phase 2: the local hub
 

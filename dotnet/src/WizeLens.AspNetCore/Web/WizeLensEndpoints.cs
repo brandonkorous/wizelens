@@ -16,13 +16,18 @@ internal static partial class WizeLensEndpoints
 {
     private const int MaxClientSpans = 500;
 
+    /// <summary>The browser span intake: the one path that answers when the dashboard is off.</summary>
+    internal const string ClientSpansPath = "api/client-spans";
+
     public static void Map(IEndpointRouteBuilder endpoints, WizeLensOptions options)
     {
         var group = endpoints.MapGroup(options.NormalizedBasePath).ExcludeFromDescription();
+        group.MapPost(ClientSpansPath, AddClientSpansAsync);
+        // Send-only: nothing here can be read, so traces never leave the service except to the hub.
+        if (!options.ServesDashboard) return;
         group.MapGet("api/info", ServiceInfo.Create);
         group.MapGet("api/traces", ListTraces);
         group.MapGet("api/traces/{traceId}", GetTraceAsync);
-        group.MapPost("api/client-spans", AddClientSpansAsync);
         if (options.MetricsOn) group.MapGet("api/metrics/points", (MetricStore metrics, double? since) => Results.Json(new { points = metrics.Since(since) }, WizeLensJson.Options));
         MapUi(group);
         if (options.EnableMcp) endpoints.MapMcp(options.NormalizedBasePath + "/mcp");

@@ -37,6 +37,11 @@ internal sealed class WizeLensMiddleware(RequestDelegate next, WizeLensOptions o
     {
         Activity.Current?.SetCustomProperty(WizeLensContext.IgnoreProperty, true);
         WizeLensContext.Suppressed = true;
+        if (!options.ServesDashboard && !context.Request.Path.Equals(basePath + "/" + WizeLensEndpoints.ClientSpansPath, StringComparison.OrdinalIgnoreCase))
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
         if (context.Request.Path.StartsWithSegments(basePath + "/api"))
         {
             context.Response.Headers.AccessControlAllowOrigin = "*";

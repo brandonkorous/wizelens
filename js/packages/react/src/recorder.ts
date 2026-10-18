@@ -24,6 +24,7 @@ function resolveOptions(options: RecorderOptions) {
     propagateTo: options.propagateTo ?? ((u: URL) => u.origin === new URL(base).origin),
     capturePages: options.capturePages ?? true,
     captureConsole: options.captureConsole ?? true,
+    readServer: options.readServer ?? true,
     sessionId: getSessionId(),
   };
 }

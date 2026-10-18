@@ -18,6 +18,7 @@ import type { MetricStore } from "./metrics/store.js";
 import { SqlitePersister } from "./persist.js";
 import { createErrorMiddleware, recordException, setUser, tag } from "./request-api.js";
 import { TraceStore } from "./store.js";
+import { isEnabled, servesDashboard } from "./mode.js";
 import { createTracing, installGlobals } from "./tracing.js";
 import type { WizeLens, WizeLensOptions } from "./types.js";
 import { resolveUiDir } from "./ui.js";
@@ -28,8 +29,8 @@ function normalizeBasePath(basePath: string | undefined): string {
   return ("/" + (basePath ?? DEFAULT_BASE_PATH).replace(/^\/+|\/+$/g, "")).replace(/^\/$/, DEFAULT_BASE_PATH);
 }
 
-function openPersister(store: TraceStore, options: WizeLensOptions): SqlitePersister | undefined {
-  if ((options.storage ?? "sqlite") !== "sqlite") return undefined;
+function openPersister(store: TraceStore, options: WizeLensOptions, dashboard: boolean): SqlitePersister | undefined {
+  if ((options.storage ?? (dashboard ? "sqlite" : "memory")) !== "sqlite") return undefined;
   const persister = new SqlitePersister(store, {
     path: options.storagePath ?? join(process.cwd(), ".wizelens", "traces.db"),
     serviceName: options.serviceName,
@@ -60,7 +61,8 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const sampling = samplingInfo(options.sampling);
   const sampler = sampling ? new TraceSampler(sampling) : undefined;
   const store = new TraceStore({ maxTraces: options.maxTraces ?? 2000, maxAgeMs: options.maxAgeMs, sampler });
-  const persister = openPersister(store, options);
+  const dashboard = servesDashboard(options);
+  const persister = openPersister(store, options, dashboard);
   const selfEndpoints = new Set<string>(options.publicEndpoint ? [options.publicEndpoint] : []);
   const fetch = options.instrumentFetch ?? true;
   const tracing = createTracing(store, { service, version: VERSION, redactKeys, fetch }, selfEndpoints);
@@ -73,8 +75,9 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const info = () => buildInfo({ options, store, redactKeys, startedMs, sqlite, metrics: !!metrics });
   const mcp = mcpSource(options, store, getTrace, metrics?.store ?? null);
   const uiDir = resolveUiDir(options.uiDir);
-  const hub = connectHub(options, store, info, selfEndpoints, metrics?.store ?? null);
-  const handler = createHandler({ basePath, store, redactKeys, uiDir, enableMcp: !!options.enableMcp, mcp, info, getTrace, metrics: metrics?.store ?? null, selfEndpoints });
+  const hub = connectHub(options, store, info, dashboard ? selfEndpoints : null, metrics?.store ?? null);
+  const enableMcp = dashboard && !!options.enableMcp;
+  const handler = createHandler({ basePath, store, redactKeys, uiDir, enableMcp, mcp, info, getTrace, metrics: metrics?.store ?? null, selfEndpoints, dashboard });
   const capture = {
     tracer: tracing.tracer,
     basePath,
@@ -90,7 +93,7 @@ function buildParts(options: WizeLensOptions, basePath: string) {
 /** Create the WizeLens add-on for one Node service. */
 export function createWizeLens(options: WizeLensOptions): WizeLens {
   const basePath = normalizeBasePath(options.basePath);
-  if (!(options.enabled ?? process.env.NODE_ENV !== "production")) return disabledWizeLens(options, basePath);
+  if (!isEnabled(options)) return disabledWizeLens(options, basePath);
   const p = buildParts(options, basePath);
   const startDbSpan = createDbSpans(p.tracing.tracer, p.redactKeys, !!options.traceQueriesOutsideRequests);
   const wizelens: WizeLens = {

@@ -9,7 +9,7 @@ export interface WizeLensProviderProps {
   endpoint?: string;
   /** Turn profiling on. Default true. Pass e.g. `import.meta.env.DEV`. */
   enabled?: boolean;
-  /** Show the in-page HUD. Default true. */
+  /** Show the in-page HUD. Default true. Off also stops reading traces back, so it works with a send-only server. */
   hud?: boolean;
   /** Which requests get a `traceparent` header. Default: same origin only. */
   propagateTo?: (url: URL) => boolean;
@@ -33,9 +33,9 @@ export function WizeLensProvider({
   children,
 }: WizeLensProviderProps) {
   const recorder = useMemo(
-    () => (enabled ? createRecorder({ endpoint, propagateTo, capturePages, captureConsole }) : null),
+    () => (enabled ? createRecorder({ endpoint, propagateTo, capturePages, captureConsole, readServer: hud }) : null),
     // propagateTo is read once on purpose; pass a stable function.
-    [endpoint, enabled, capturePages, captureConsole],
+    [endpoint, enabled, capturePages, captureConsole, hud],
   );
 
   useEffect(() => recorder?.install(), [recorder]);

@@ -81,3 +81,19 @@ it("marks a 5xx fetch span as an error", async () => {
   expect(postedSpans(calls)[0]).toMatchObject({ status: "error", statusMessage: "HTTP 503" });
   undo();
 });
+
+it("with readServer off, sends spans but never reads traces back", async () => {
+  const calls: Call[] = [];
+  globalThis.fetch = echoServer(calls);
+  const recorder = createRecorder({ flushIntervalMs: 60_000, serverStatsDelayMs: 0, readServer: false });
+  const undo = recorder.install();
+  await fetch("/api/orders");
+  await recorder.restore();
+  await new Promise((r) => setTimeout(r, 20));
+  const traceId = recorder.getSnapshot()[0]!.traceId!;
+  expect(await recorder.loadTrace(traceId)).toBeNull();
+  await recorder.flush();
+  expect(calls.filter((c) => c.url.includes("/_wizelens/api/traces"))).toEqual([]);
+  expect(postedSpans(calls).length).toBeGreaterThan(0);
+  undo();
+});

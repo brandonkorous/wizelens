@@ -389,6 +389,14 @@ It serves the same dashboard at `/_wizelens/`, the same read API, OTLP/HTTP, and
 | Hub URL | `HubUrl` | `hub` | `WIZELENS_HUB` (for example `http://localhost:5960`) |
 | Hub token | `HubToken` | `hubToken` | `WIZELENS_HUB_TOKEN` |
 | Project | `Project` | `project` | `WIZELENS_PROJECT` |
+| On or off | `Enabled` | `enabled` | `WIZELENS_ENABLED` (`true`/`1`/`on`/`yes`, `false`/`0`/`off`/`no`) |
+| Dashboard | `Dashboard` | `dashboard` | `WIZELENS_DASHBOARD` (same words) |
+
+**Send-only.** The dashboard is on in development and off elsewhere (.NET: outside the Development environment; Node: when
+`NODE_ENV=production`), unless the option or variable says otherwise. With it off, only `POST {basePath}/api/client-spans`
+answers (and its CORS preflight); every other path under `{basePath}` (UI, `api/info`, `api/traces`, metrics, MCP) is a 404.
+Storage defaults to memory, MCP is off, and `sender.endpoint` is left out of every `IngestBatch`, so the hub never tries to
+read from the service. The browser package skips its reads (`api/traces`) when `hud` is false (`readServer: false`).
 
 The add-on keeps working as before (its own store and dashboard). In addition, it queues every new span, log, and remote
 and sends them every second in one `IngestBatch` (at most 1000 of each). With nothing to send, it sends an empty batch every

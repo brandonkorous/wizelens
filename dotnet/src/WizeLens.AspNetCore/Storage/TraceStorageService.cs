@@ -24,7 +24,7 @@ internal sealed class TraceStorageService : IHostedService, IDisposable
         _options = options;
         _logger = logger;
 
-        if (!options.IsEnabled || options.Storage != WizeLensStorage.Sqlite) return;
+        if (!options.IsEnabled || options.StorageKind != WizeLensStorage.Sqlite) return;
 
         var path = ResolvePath(options.StoragePath, environment.ContentRootPath);
         WithSuppression(() =>

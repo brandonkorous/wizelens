@@ -9,9 +9,11 @@ export interface WizeLensOptions {
   serviceName: string;
   /** Base path for the dashboard and API. Default "/_wizelens". */
   basePath?: string;
-  /** Turn WizeLens on. Default: on unless NODE_ENV is "production". */
+  /** Turn WizeLens on. Default: the WIZELENS_ENABLED variable, else on unless NODE_ENV is "production". */
   enabled?: boolean;
-  /** Where traces live. "sqlite" keeps them across restarts. Default "sqlite". */
+  /** Serve the dashboard, read API, and MCP. Off is send-only: capture and send, no reads. Default: WIZELENS_DASHBOARD, else off in production. */
+  dashboard?: boolean;
+  /** Where traces live. "sqlite" keeps them across restarts. Default "sqlite", or "memory" when the dashboard is off. */
   storage?: "sqlite" | "memory";
   /** SQLite file for `storage: "sqlite"`. Default `{cwd}/.wizelens/traces.db`. */
   storagePath?: string;

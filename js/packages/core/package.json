@@ -1,6 +1,6 @@
 {
   "name": "@wizeworks/lens-core",
-  "version": "0.3.0-alpha.1",
+  "version": "0.3.0-alpha.2",
   "description": "Shared types, trace context helpers, and analysis for WizeLens.",
   "license": "MIT",
   "author": "WizeWorks LLC",

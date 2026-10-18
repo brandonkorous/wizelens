@@ -62,6 +62,8 @@ export interface RecorderOptions {
   capturePages?: boolean;
   /** Copy `console.log`, `warn`, `error`, `info`, `debug`, and `trace` calls into the page view's trace. Default true. */
   captureConsole?: boolean;
+  /** Read traces back from the server, for the HUD. Default true. Off sends only, for a server with its dashboard off. */
+  readServer?: boolean;
 }
 
 export interface Recorder {

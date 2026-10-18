@@ -24,7 +24,11 @@ export interface ApiDeps {
   metrics?: MetricStore | null;
   /** This service's own endpoints: never a remote of its own traces. */
   selfEndpoints: ReadonlySet<string>;
+  /** False is send-only: only the browser span intake answers. */
+  dashboard: boolean;
 }
+
+const CLIENT_SPANS = "api/client-spans";
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
@@ -75,7 +79,7 @@ async function handleApi(d: ApiDeps, sub: string, method: string, req: Req, res:
   if (sub === "api/traces" && method === "GET") return sendJson(res, 200, listTraces(d.store, url.searchParams));
   const traceMatch = /^api\/traces\/([0-9a-f]{32})$/.exec(sub);
   if (traceMatch && method === "GET") return sendTrace(d, traceMatch[1]!, req, res, url);
-  if (sub === "api/client-spans" && method === "POST") return receiveClientSpans(d, req, res);
+  if (sub === CLIENT_SPANS && method === "POST") return receiveClientSpans(d, req, res);
   if (sub === "api/metrics/points" && method === "GET" && d.metrics) {
     const since = Number(url.searchParams.get("since"));
     return sendJson(res, 200, { points: d.metrics.since(Number.isFinite(since) ? since : 0) });
@@ -89,20 +93,25 @@ async function handleMcpRoute(d: ApiDeps, req: Req, res: ServerResponse, method:
   await handleMcp(d.mcp, req, res, body);
 }
 
-/** Plain Node handler for `{basePath}`: API, MCP, and the dashboard. Resolves false for other paths. */
+/** Plain Node handler for `{basePath}`: API, MCP, and the dashboard, or only the browser span intake when send-only. Resolves false for other paths. */
 export function createHandler(d: ApiDeps) {
   return async function handler(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
     const r = req as Req;
     const url = new URL(r.originalUrl ?? r.url ?? "/", "http://localhost");
     const path = url.pathname;
     if (path !== d.basePath && !path.startsWith(d.basePath + "/")) return false;
+    const sub = path.slice(d.basePath.length + 1);
+    const method = req.method ?? "GET";
+    // Send-only: nothing here can be read, so traces never leave the service except to the hub.
+    if (!d.dashboard && sub !== CLIENT_SPANS) {
+      sendJson(res, 404, { error: "not found" });
+      return true;
+    }
     if (path === d.basePath) {
       res.writeHead(302, { Location: `${d.basePath}/${url.search}` });
       res.end();
       return true;
     }
-    const sub = path.slice(d.basePath.length + 1);
-    const method = req.method ?? "GET";
     setCors(res);
     if (method === "OPTIONS") res.writeHead(204).end();
     else if (sub === "mcp") await handleMcpRoute(d, r, res, method);

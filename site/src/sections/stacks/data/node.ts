@@ -46,7 +46,7 @@ export const NODE: Stack = {
     { title: "One line per library.", body: "No agent and no require hooks to set up. You tell WizeLens about the driver you use, and every query on it is traced.", code: "instrumentPg(wizelens, pg)" },
     { title: "No query is counted twice.", body: "Prisma on pg, or Drizzle on better-sqlite3? The ORM and the driver under it never record the same query twice." },
     { title: "Your logs stay where they were.", body: "WizeLens copies each line into its trace. Your logger still writes to the console, a file, or wherever it wrote before." },
-    { title: "Off in production.", body: "On unless NODE_ENV is production. Turn it on there yourself, and add sampling for busy services." },
+    { title: "Off in production.", body: "On unless NODE_ENV is production. Turn it on there with WIZELENS_ENABLED=true: it sends to your cloud and serves nothing anyone can read." },
   ],
   docs: [
     { label: "Node setup", href: "/docs/node/" },
