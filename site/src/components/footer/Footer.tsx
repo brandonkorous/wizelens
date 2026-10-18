@@ -31,6 +31,7 @@ const COLUMNS = [
   {
     title: "Project",
     links: [
+      { label: "Glimpse, rebuilt", href: "/story/" },
       { label: "GitHub", href: LINKS.repo },
       { label: "MIT license", href: LINKS.license },
     ],
