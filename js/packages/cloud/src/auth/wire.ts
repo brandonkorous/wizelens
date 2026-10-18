@@ -5,13 +5,15 @@ import type { Mailer } from "../mail/mailer.js";
 import { userCount } from "../repo/users.js";
 import { createAuth, type WizeAuth } from "./auth.js";
 import type { AuthDeps } from "./deps.js";
-import { clearAuthEnv, resolveSecrets } from "./secret.js";
+import { type AuthSecret, clearAuthEnv, resolveSecrets } from "./secret.js";
 
 export interface AuthWiring {
   /** Build Better Auth for the address the cloud listens on. */
   start(listenUrl: string): WizeAuth;
   /** The first account's link while no account exists, else null. */
   setupLink(): string | null;
+  /** The auth secrets, newest first. Unsubscribe links are signed with them too. */
+  secrets: AuthSecret[];
 }
 
 /** The one-time setup token: from the config, or new. Gone once the first account exists. */
@@ -34,6 +36,7 @@ export async function wireAuth(db: Db, config: CloudConfig, mailer: Mailer): Pro
   const [secrets, setup] = await Promise.all([resolveSecrets(db, config.authSecret), setupGate(db, config.setupToken)]);
   let base = config.publicUrl;
   return {
+    secrets,
     start: (listenUrl) => {
       base = config.publicUrl ?? listenUrl.replace("//127.0.0.1", "//localhost");
       const deps: AuthDeps = {

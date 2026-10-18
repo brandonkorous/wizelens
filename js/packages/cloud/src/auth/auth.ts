@@ -7,6 +7,7 @@ import type { AuthDeps } from "./deps.js";
 import { authHooks } from "./hooks.js";
 import { advancedOptions, AUTH_BASE_PATH, passwordAuth, rateLimitOptions, sessionOptions, userOptions } from "./options.js";
 import { authPlugins } from "./plugins.js";
+import { securityDbHooks } from "./security-notices.js";
 import { afterSignup, confirmSsoEmail } from "./signup.js";
 
 const ALWAYS_OFF = ["/sign-in/social", "/link-social", "/get-access-token", "/refresh-token", "/account-info", "/delete-user/callback", "/update-session"];
@@ -18,6 +19,12 @@ const disabledPaths = (deps: AuthDeps) => [
   "/organization/get-full-organization",
   ...(deps.mailer.live ? [] : ["/organization/list-user-invitations"]),
 ];
+
+/** Sign-up (first organization, SSO email) and security notices (new device, two-step sign-in, changed email). */
+function databaseHooksOf(deps: AuthDeps, createOrg: (userId: string, name: string) => Promise<{ id: string }>): BetterAuthOptions["databaseHooks"] {
+  const notices = securityDbHooks(deps);
+  return { session: notices.session, user: { create: { before: confirmSsoEmail, after: afterSignup(deps, createOrg) }, update: notices.user?.update } };
+}
 
 function build(deps: AuthDeps, createOrg: (userId: string, name: string) => Promise<{ id: string }>) {
   return betterAuth({
@@ -34,7 +41,7 @@ function build(deps: AuthDeps, createOrg: (userId: string, name: string) => Prom
     ...sessionOptions(),
     rateLimit: rateLimitOptions(),
     advanced: advancedOptions(deps),
-    databaseHooks: { user: { create: { before: confirmSsoEmail, after: afterSignup(deps, createOrg) } } },
+    databaseHooks: databaseHooksOf(deps, createOrg),
     hooks: authHooks(deps),
     plugins: authPlugins(deps),
   });

@@ -18,10 +18,11 @@ async function newProject(ctx: Ctx): Promise<void> {
 async function dropProject(ctx: Ctx): Promise<void> {
   const { org, project } = ctx.params as { org: string; project: string };
   const { user } = await requireOrg(ctx, org, "manage");
-  if (!(await projectInOrg(ctx.app.db, org, project))) fail(404, "Project not found.");
+  const found = await projectInOrg(ctx.app.db, org, project);
+  if (!found) return fail(404, "Project not found.");
   const clearOnly = ctx.req.method === "POST";
   await ctx.app.db.tx((q) => (clearOnly ? deleteProjectData(q, project) : deleteProject(q, project)));
-  await audit(ctx.app.db, org, `user:${user.id}`, clearOnly ? "project.clear" : "project.delete", { projectId: project }, now(ctx));
+  await audit(ctx.app.db, org, `user:${user.id}`, clearOnly ? "project.clear" : "project.delete", { projectId: project, name: found.name }, now(ctx));
   sendJson(ctx.res, 200, { ok: true });
 }
 

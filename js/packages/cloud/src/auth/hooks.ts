@@ -3,7 +3,9 @@ import { APIError, createAuthMiddleware, getSessionFromCtx, isAPIError } from "b
 import { isOrgRole } from "@wizeworks/lens-core";
 import { audit } from "../repo/audit.js";
 import type { AuthDeps } from "./deps.js";
+import { emailChangeOf } from "./email-token.js";
 import { isLegacyHash } from "./password.js";
+import { rememberPasskey, securityAfter } from "./security-notices.js";
 
 type Mw = Parameters<typeof createAuthMiddleware>[0];
 type HookCtx = Parameters<Mw>[0];
@@ -30,18 +32,20 @@ const SSO_AUDITED: Record<string, string> = {
 };
 /** The organization of the provider a request changes, found before the change (a deleted provider is gone after). */
 const ssoOrgOf = new WeakMap<object, string>();
+/** The email of a member being removed, found before the row is gone, so the notice can name them. */
+const removedEmailOf = new WeakMap<object, string>();
+
+async function rememberRemoved(ctx: HookCtx, body: Record<string, unknown>): Promise<void> {
+  const target = str(body.memberIdOrEmail);
+  if (!ctx.request || !target) return;
+  if (target.includes("@")) return void removedEmailOf.set(ctx.request, target);
+  const [row] = await ctx.context.adapter.findMany<{ userId: string }>({ model: "member", where: [{ field: "id", value: target }], limit: 1 });
+  const found = row && (await ctx.context.internalAdapter.findUserById(row.userId));
+  if (found) removedEmailOf.set(ctx.request, found.email);
+}
 
 const str = (v: unknown) => (typeof v === "string" ? v : undefined);
 
-/** The email in a confirm link (a JWT Better Auth checks after us), when the link changes the email. */
-function emailChangeOf(token: unknown): string | undefined {
-  try {
-    const payload = JSON.parse(Buffer.from(String(token).split(".")[1] ?? "", "base64url").toString("utf8")) as { email?: unknown; updateTo?: unknown };
-    return payload.updateTo && typeof payload.email === "string" ? payload.email : undefined;
-  } catch {
-    return undefined;
-  }
-}
 
 /** Better Auth signs in whoever opens an email-change link; with 2FA on, that must happen on a device already signed in. */
 async function guardEmailChange(ctx: HookCtx): Promise<void> {
@@ -75,6 +79,7 @@ async function rememberSsoOrg(ctx: HookCtx, body: Record<string, unknown>): Prom
 /** One known role per member, the organization always named (never "the active one"), and a password to delete an account. */
 const guard: Mw = async (ctx) => {
   if (ctx.path === "/verify-email") return guardEmailChange(ctx);
+  if (ctx.path === "/passkey/delete-passkey") return rememberPasskey(ctx);
   if (SSO_AUDITED[ctx.path]) {
     guardSso(ctx.path, (ctx.body ?? {}) as Record<string, unknown>);
     return rememberSsoOrg(ctx, (ctx.body ?? {}) as Record<string, unknown>);
@@ -83,6 +88,7 @@ const guard: Mw = async (ctx) => {
   if (ROLE_PATHS.has(ctx.path) && body.role !== undefined && !isOrgRole(body.role)) throw new APIError("BAD_REQUEST", { message: "Pick one role: owner, admin, member, or viewer." });
   if (NEEDS_ORG.has(ctx.path) && !str(body.organizationId)) throw new APIError("BAD_REQUEST", { message: "Send organizationId." });
   if (ctx.path === "/delete-user" && !str(body.password) && !str(body.token)) throw new APIError("BAD_REQUEST", { message: "Enter your password." });
+  if (ctx.path === "/organization/remove-member") await rememberRemoved(ctx, body);
 };
 
 /** A successful sign-in with an old hash stores a new one. */
@@ -104,7 +110,8 @@ async function auditOrgChange(deps: AuthDeps, ctx: HookCtx): Promise<void> {
   const orgId = action && orgIdOf(ctx);
   if (!action || !orgId) return;
   const actor = (await getSessionFromCtx(ctx))?.user.id;
-  const detail = Object.fromEntries(Object.entries((ctx.body ?? {}) as Record<string, unknown>).filter(([k]) => !SECRET_KEYS.includes(k)));
+  const removed = ctx.request && removedEmailOf.get(ctx.request);
+  const detail = { ...Object.fromEntries(Object.entries((ctx.body ?? {}) as Record<string, unknown>).filter(([k]) => !SECRET_KEYS.includes(k))), ...(removed ? { memberEmail: removed } : {}) };
   await audit(deps.db, orgId, actor ? `user:${actor}` : "system", action, detail, Date.now());
 }
 
@@ -126,6 +133,7 @@ export function authHooks(deps: AuthDeps): BetterAuthOptions["hooks"] {
       if (ctx.path === "/sign-in/email") await upgradeHash(ctx);
       await auditOrgChange(deps, ctx);
       await auditSsoChange(deps, ctx);
+      await securityAfter(deps, ctx);
     }),
   };
 }

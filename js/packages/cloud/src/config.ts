@@ -46,6 +46,8 @@ export interface CloudOptions {
   now?: () => number;
   fetch?: typeof fetch;
   sendMail?: (mail: Mail) => Promise<void>;
+  /** For tests: false keeps background jobs off, so a test runs them itself. Default true. */
+  jobs?: boolean;
 }
 
 type Optional = "uiDir" | "publicUrl" | "smtpUrl" | "resendApiKey" | "resendWebhookSecret" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords";
@@ -88,6 +90,7 @@ export function resolveConfig(o: CloudOptions = {}): CloudConfig {
     mailFrom: o.mailFrom ?? `WizeLens <no-reply@${o.publicUrl ? new URL(o.publicUrl).hostname : "localhost"}>`,
     trustProxy: o.trustProxy ?? false,
     sendMail: o.sendMail,
+    jobs: o.jobs ?? true,
     authSecret: o.authSecret,
     setupToken: o.setupToken,
     checkPwnedPasswords: o.checkPwnedPasswords,

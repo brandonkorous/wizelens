@@ -52,6 +52,22 @@ Add a Resend webhook to `<public-url>/_wizelens/api/mail/resend` with the events
 no mail goes to that address, and after a spam complaint only mail the person asked for (confirm, reset, change, delete) goes
 there. Confirming the address again by link clears it.
 
+What the cloud sends, beyond sign-in links and invites:
+
+- **Security notices**, always, to the person: password changed, email changed (to the old address), two-step sign-in on or off,
+  passkey added or removed, new backup codes, and a sign-in on a browser and system the account never used.
+- **Team changes**, to owners and admins: members invited, joined, left, removed, or given a new role (that member hears too), keys,
+  single sign-on, projects, share links, and settings. One email per batch, without the reader's own changes. A deleted
+  organization is told to every member.
+- **Project health**, to owners and admins: a project that sends data in most hours went quiet for 2 hours, and when it is back.
+- **Alerts**, from alert rules.
+- **Digests**, per person and project: daily, weekly (Mondays), and monthly (the 1st), at the person's hour and time zone. Weekly
+  is on by default. Each has requests, error rate, average and p95 time, SQL queries, alerts fired, top errors, the slowest
+  endpoints, and insights. Projects with no traffic get none.
+
+Team, health, and digest emails carry a one-click stop link (`List-Unsubscribe`, RFC 8058). People pick all of it on the Account
+page. `pnpm --filter @wizeworks/lens-cloud email:preview <folder>` writes every email to HTML and text.
+
 ## Accounts
 
 Sign-in is [Better Auth](https://better-auth.com) (pinned to one version): email and password, passkeys, two-step codes from an

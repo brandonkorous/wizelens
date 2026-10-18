@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { BetterAuthOptions } from "better-auth";
+import { passwordChanged } from "../mail/emails-security.js";
 import { unsuppress } from "../repo/suppressions.js";
+import { sendSecurity } from "./security-notices.js";
 import { changeEmailMail, deleteAccountMail, resetPasswordMail, verifyEmailMail } from "../mail/templates.js";
 import { type AuthDeps, appLink } from "./deps.js";
 import { passwordOptions } from "./password.js";
@@ -42,6 +44,7 @@ export function passwordAuth(deps: AuthDeps): Pick<BetterAuthOptions, "emailAndP
       revokeSessionsOnPasswordReset: true,
       password: passwordOptions,
       sendResetPassword: async ({ user, token }) => deps.mailer.send(resetPasswordMail(user.email, appLink(deps, "reset-password", token))),
+      onPasswordReset: async ({ user }) => sendSecurity(deps, user.id, (l) => passwordChanged(l, Date.now()), user.email),
       customSyntheticUser: ({ coreFields, additionalFields, id }) => ({ ...coreFields, twoFactorEnabled: false, ...additionalFields, id }),
     },
     emailVerification: {

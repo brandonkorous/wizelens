@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { WizeAuth } from "./auth/auth.js";
+import type { AuthSecret } from "./auth/secret.js";
 import type { CloudConfig } from "./config.js";
 import type { Db } from "./db/db.js";
 import type { RouteCtx } from "./http/router.js";
@@ -12,6 +13,8 @@ export interface CloudApp {
   version: string;
   startedMs: number;
   mailer: Mailer;
+  /** The auth secrets, newest first, for signed mail links. */
+  secrets: readonly AuthSecret[];
   /** Better Auth. Ready once the cloud listens (its address goes into links and cookie checks). */
   readonly auth: WizeAuth;
   /** The address for links: the public URL, or the address the cloud listens on. */

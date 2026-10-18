@@ -6,6 +6,7 @@ import { requireOrg, requireUser } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson, str } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { audit, listAudit } from "../repo/audit.js";
+import { orgDeletionNotice } from "../notify/team.js";
 import { deleteOrgEverything, listMembers, pendingInvites, setRetention } from "../repo/orgs.js";
 import { listKeys, listProjects } from "../repo/projects.js";
 
@@ -46,7 +47,7 @@ async function changeOrg(ctx: Ctx): Promise<void> {
 
 /** Owners only, with their password again: the organization and all of its data go at once. */
 async function deleteOrg(ctx: Ctx): Promise<void> {
-  await requireOrg(ctx, ctx.params.org!, "own");
+  const { user } = await requireOrg(ctx, ctx.params.org!, "own");
   const password = str(await readJsonBody(ctx.req), "password");
   try {
     await ctx.app.auth.api.verifyPassword({ body: { password }, headers: fromNodeHeaders(ctx.req.headers) });
@@ -54,7 +55,9 @@ async function deleteOrg(ctx: Ctx): Promise<void> {
     if (isAPIError(err)) fail(400, "The password is not right.");
     throw err;
   }
+  const tell = await orgDeletionNotice(ctx.app, ctx.params.org!, user.id);
   await ctx.app.db.tx((q) => deleteOrgEverything(q, ctx.params.org!));
+  tell();
   sendJson(ctx.res, 200, { ok: true });
 }
 

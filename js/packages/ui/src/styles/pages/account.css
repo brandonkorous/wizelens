@@ -12,6 +12,9 @@
 .wl-check-list { display: grid; gap: 8px; margin: 0; padding: 12px; border: 1px solid var(--wl-line); border-radius: 10px; }
 .wl-check-list legend { padding: 0 6px; font-size: 13px; font-weight: 600; color: var(--wl-fg-2); }
 .wl-plain-list { margin: 0 0 8px; padding-left: 20px; }
+.wl-notify-box { width: 16px; height: 16px; margin: 0; accent-color: var(--wl-accent); cursor: pointer; }
+.wl-notify-when { align-items: end; }
+.wl-notify-when .wl-field { flex: 0 1 260px; }
 .wl-plain-list li + li { margin-top: 4px; }
 
 .wl-totp { display: flex; flex-wrap: wrap; gap: 16px 20px; align-items: center; margin-bottom: 14px; }

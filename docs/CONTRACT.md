@@ -515,6 +515,13 @@ retention, and the audit log.
   `POST api/mail/resend` takes Resend's webhook (Svix signature, 5-minute window; 401 when it does not match, 404 without
   `--resend-webhook-secret`). A hard bounce (`email.bounced` with `bounce.type` `Permanent`) stops all mail to the address; a spam
   complaint (`email.complained`) stops all but account mail. Confirming the address by link clears it (table `mail_suppressions`).
+- **Notices and digests**: security notices always go out. Team changes come from the audit log: a job takes new lines
+  (`audit.noticed`, `FOR UPDATE SKIP LOCKED`, so instances never send twice) and emails owners and admins once per batch. Project
+  health watches projects with data in 58 of the 72 hours before their last data, and tells managers after 2 quiet hours and when
+  data is back (`project_health`). Digests (daily, weekly on Mondays, monthly on the 1st) go out at the person's local hour; each
+  send is claimed first in `digest_sends`. `GET` and `PATCH api/me/notifications` read and change `{ team, health, digests,
+  timeZone, digestHour, projects: [{ projectId, daily, weekly, monthly }] }`. `GET api/mail/unsubscribe?token=` shows a stop
+  button; `POST` (also the RFC 8058 one-click call) turns that mail off. The token is signed with the auth secret.
 - **Sign-up**: the first account needs the one-time setup token the cloud prints at start (`#/setup?token=`, header
   `x-wizelens-setup-token`; set it with `--setup-token` for several instances). After that, people sign up with an open invite for
   their email (7 days), or anyone when the cloud runs with `--signup open` (they get their own organization). Without SMTP, an
