@@ -8,7 +8,7 @@
 .wl-closing-cta { justify-content: center; }
 
 .wl-footer { padding: 64px 0 40px; border-top: 1px solid var(--wl-night-line); }
-.wl-footer-grid { display: grid; grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); gap: 32px; }
+.wl-footer-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr)); gap: 32px; }
 .wl-footer-brand p { margin-top: 14px; color: var(--wl-night-muted); font-size: 15px; }
 .wl-footer h3 { font-size: 14px; font-weight: 650; margin-bottom: 14px; }
 .wl-footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }

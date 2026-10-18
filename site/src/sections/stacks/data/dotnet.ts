@@ -1,0 +1,56 @@
+import type { Stack } from "../types";
+
+export const DOTNET: Stack = {
+  slug: "dotnet",
+  name: ".NET",
+  title: "WizeLens for ASP.NET Core",
+  headline: ["Every ASP.NET Core", "request, opened up."],
+  lede: "Two lines in Program.cs. Then every request shows its routing, handler, EF Core and ADO.NET queries, HttpClient and gRPC calls, messages, logs, and exceptions, on one timeline at /_wizelens.",
+  facts: [
+    { value: "2 lines", label: "in Program.cs" },
+    { value: "0 code", label: "for Npgsql, SqlClient, and MySqlConnector" },
+    { value: ".NET 10", label: "built for it" },
+  ],
+  file: "Program.cs",
+  code: [
+    "builder.Services.AddWizeLens();",
+    "builder.Services.AddDbContext<ShopDb>(o =>",
+    "    o.UseNpgsql(cs).UseWizeLens());",
+    "builder.Services.AddHttpClient<OrdersClient>();",
+    "builder.Host.UseSerilog((ctx, log) => log.WriteTo.WizeLens());",
+    "",
+    "var app = builder.Build();",
+    "app.UseWizeLens();",
+  ],
+  traceTitle: "GET /api/customers · 263 ms",
+  scale: 270,
+  rows: [
+    { label: "GET /api/customers", ms: "263 ms", start: 0, dur: 263, kind: "server", depth: 0, line: 7 },
+    { label: "Routing", ms: "0.03 ms", start: 2, dur: 1, kind: "server", depth: 1, line: 7 },
+    { label: "Handler CustomersController.Get", ms: "248 ms", start: 6, dur: 248, kind: "server", depth: 1, line: 0 },
+    { label: "SELECT \"c\".\"Id\", \"c\".\"Name\" FROM \"Customers\"", ms: "2.1 ms", start: 12, dur: 6, kind: "db", depth: 2, line: 2 },
+    { label: "GET orders-api/orders?customerId=…", ms: "45 ms", start: 24, dur: 45, kind: "net", depth: 2, line: 3 },
+    { label: "SELECT \"o\".\"Total\" FROM \"Orders\"", ms: "1.4 ms", start: 80, dur: 5, kind: "db", depth: 2, line: 2 },
+    { label: "info  Loaded 8 customers", ms: "", start: 236, dur: 1, kind: "log", depth: 2, line: 4 },
+  ],
+  captures: [
+    { title: "Requests", items: ["ASP.NET Core hosting", "Routing and handler time", "Headers, user, tags", "Response bodies (opt-in)"] },
+    { title: "Databases", items: ["EF Core", "Dapper", "Any ADO.NET provider", "Npgsql, SqlClient, MySqlConnector with no code"] },
+    { title: "Calls out", items: ["HttpClient", "Grpc.Net.Client", "Grpc.AspNetCore"] },
+    { title: "Messages", items: ["RabbitMQ.Client 7+", "Azure Service Bus", "MassTransit", "Kafka (WizeLens.Kafka)"] },
+    { title: "Logs", items: ["ILogger", "Serilog (WizeLens.Serilog)", "NLog (WizeLens.NLog)", "Browser console lines"] },
+    { title: "Metrics", items: ["Every Meter, no code", ".NET runtime: CPU, memory, GC, thread pool", "ASP.NET Core and Kestrel", "Your own meters"] },
+  ],
+  highlightsTitle: "Made for the way .NET apps run.",
+  highlights: [
+    { title: "If you used Glimpse, you know this.", body: "Open the hood on one request and see what it really did. WizeLens brings that back for ASP.NET Core, and follows the request into every service after it." },
+    { title: "Survives dotnet watch.", body: "Traces live in a small SQLite file next to your app, so a restart does not wipe them. If the file cannot be written, WizeLens keeps working in memory." },
+    { title: "Wrap any connection.", body: "Dapper or a provider WizeLens does not know? Wrap the connection and every command is captured.", code: "new ProfiledDbConnection(new SqliteConnection(cs))" },
+    { title: "Never in production by accident.", body: "WizeLens is on in Development only. Turn it on anywhere else yourself, with Enabled = true." },
+  ],
+  docs: [
+    { label: "ASP.NET Core setup", href: "/docs/aspnet-core/" },
+    { label: "All .NET options", href: "/docs/configuration/#aspnet-core" },
+    { label: "Quick start", href: "/docs/quick-start/" },
+  ],
+};

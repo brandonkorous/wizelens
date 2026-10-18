@@ -5,12 +5,18 @@ import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import { Logo } from "@/components/brand/Logo";
 import { GitHubIcon, MenuIcon } from "@/components/ui/icons";
 import { LINKS } from "@/lib/links";
+import { NavMenu, type MenuItem } from "./NavMenu";
 
-const ITEMS = [
-  { href: "/#journey", label: "How it works" },
-  { href: "/#inside", label: "Product" },
+const PLATFORMS: MenuItem[] = [
+  { href: "/dotnet/", label: ".NET", note: "ASP.NET Core, EF Core, and every Meter" },
+  { href: "/node/", label: "Node", note: "Express, Fastify, Koa, Hono, and more" },
+  { href: "/react/", label: "React and Next.js", note: "From the click to the database" },
+];
+
+const BEFORE = [{ href: "/#journey", label: "How it works" }];
+
+const AFTER = [
   { href: "/#ai", label: "AI access" },
-  { href: "/#install", label: "Install" },
   { href: LINKS.docs, label: "Docs" },
 ];
 
@@ -39,9 +45,9 @@ export function Nav() {
           <span className="wl-pill">Alpha</span>
         </a>
         <nav className="wl-nav-links" aria-label="Main">
-          {ITEMS.map((item) => (
-            <a key={item.label} href={item.href} onClick={() => setOpen(false)}>{item.label}</a>
-          ))}
+          {BEFORE.map((item) => <a key={item.label} href={item.href} onClick={() => setOpen(false)}>{item.label}</a>)}
+          <NavMenu label="Platforms" items={PLATFORMS} onPick={() => setOpen(false)} />
+          {AFTER.map((item) => <a key={item.label} href={item.href} onClick={() => setOpen(false)}>{item.label}</a>)}
         </nav>
         <div className="wl-nav-actions">
           <a href={LINKS.repo} className="wl-nav-gh" aria-label="WizeLens on GitHub"><GitHubIcon /></a>

@@ -12,6 +12,14 @@ const COLUMNS = [
     ],
   },
   {
+    title: "Platforms",
+    links: [
+      { label: ".NET", href: "/dotnet/" },
+      { label: "Node", href: "/node/" },
+      { label: "React and Next.js", href: "/react/" },
+    ],
+  },
+  {
     title: "Docs",
     links: [
       { label: "Quick start", href: LINKS.start },
