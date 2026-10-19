@@ -174,3 +174,4 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-dhead .wl-stats { margin-bottom: 0; }
 .wl-dpage .wl-cell-wide { max-width: 420px; }
 .wl-dpage .wl-cell-wide span { display: block; }
+.wl-alert-problem { display: block; width: max-content; max-width: 100%; margin-top: 4px; font-size: 13px; }

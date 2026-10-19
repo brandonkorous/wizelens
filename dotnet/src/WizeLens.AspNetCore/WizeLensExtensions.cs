@@ -30,6 +30,7 @@ public static class WizeLensExtensions
             options.IsEnabled = options.Enabled ?? WizeLensOptions.EnvFlag("WIZELENS_ENABLED") ?? env.IsDevelopment();
             options.ServesDashboard = options.Dashboard ?? WizeLensOptions.EnvFlag("WIZELENS_DASHBOARD") ?? env.IsDevelopment();
             options.ServiceName ??= env.ApplicationName;
+            options.ServiceVersion ??= WizeLensOptions.DefaultServiceVersion();
             WizeLensRuntime.Redactor = new Redactor(options.RedactKeys);
             return options;
         });

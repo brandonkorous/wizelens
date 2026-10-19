@@ -208,6 +208,9 @@ CREATE INDEX ix_metric_1h_time ON metric_1h (project_id, bucket_ms);
   NOTIFY_MIGRATION,
   SEARCH_MIGRATION,
   OAUTH_MIGRATION,
+  `
+ALTER TABLE alert_events ADD COLUMN problem TEXT NOT NULL DEFAULT '';
+`,
 ];
 
 export const MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS wizelens_migrations (version INTEGER PRIMARY KEY, applied_ms DOUBLE PRECISION NOT NULL)`;

@@ -47,6 +47,11 @@ const VERB = { fired: "Alert", resolved: "Resolved", test: "Test" } as const;
 const TONE = { fired: "bad", resolved: "good", test: "neutral" } as const;
 const number = (v: number | null) => (v === null ? "no data" : String(Math.round(v * 100) / 100));
 
+/** The line a rule watches: a fixed threshold, or the normal value and how far above it alerts. */
+const lineRows = (n: Notice): [string, string][] => (n.baseline ? [["Normal", number(n.baseline.normal)], ["Alerts above", number(n.baseline.upper)]] : [["Threshold", number(n.threshold)]]);
+
+const problemBlocks = (n: Notice) => (n.problem ? [note(`Part of a problem: ${n.problem.title}.${n.problem.cause ? ` Suspected cause: ${n.problem.cause}` : ""}`)] : []);
+
 export function alert(n: Notice): EmailContent {
   const when = `${new Date(n.timeMs).toISOString().slice(0, 16).replace("T", " ")} UTC`;
   return {
@@ -55,8 +60,8 @@ export function alert(n: Notice): EmailContent {
     preview: n.message,
     heading: `${VERB[n.state]}: ${n.rule}.`,
     tone: TONE[n.state],
-    blocks: [text(n.message), facts([["Project", n.project], ["Value", number(n.value)], ["Threshold", number(n.threshold)], ["When", when]])],
-    action: { label: "Open the alert", url: n.url },
+    blocks: [text(n.message), ...problemBlocks(n), facts([["Project", n.project], ["Value", number(n.value)], ...lineRows(n), ["When", when]])],
+    action: n.problem ? { label: "Open the problem", url: n.problem.url } : { label: "Open the alert", url: n.url },
     footer: `You get this because an alert rule in ${n.project} emails you. Change it on the Alerts page.`,
   };
 }

@@ -88,6 +88,17 @@ Error rate is 1.1% (no longer above 2%)
 
 Webhook URLs must be https and may not point at private addresses, unless the cloud runs with `--allow-private-webhooks`.
 
+Pick **is above normal** as the condition, on error rate, p95, or requests, to skip the threshold. The rule then checks every
+service and endpoint against the same window at the same time in the 4 weeks before, with high, medium, or low sensitivity,
+and names the one that broke:
+
+```text
+p95 duration is above normal on pay POST /api/charge: 412 ms (normal 31 ms, alerts above 46 ms)
+Part of a problem: Error rate above normal on pay and 2 more. Suspected cause: pay 2.0.0 was released as it started.
+```
+
+Every fired notice links to the [problem](/docs/problems/) it is part of, when there is one.
+
 ## Share links
 
 A share link opens one trace, read-only, for anyone with the link, for 1 to 30 days. You can revoke it. Nothing else is

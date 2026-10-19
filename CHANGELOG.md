@@ -6,6 +6,22 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Problems: what is above normal, and why.** A new **Problems** page compares every service and endpoint with the same
+  hour in the 4 weeks before (or the days before, on hosts that keep less): error rate, p95, and traffic. Anomalies that
+  start together on services that call each other become one problem card, which names a suspected cause: a new release,
+  a new error group, a query that got slower (or fails, or runs far more often), or a service further down the calls.
+  Plain statistics, no AI. It works in-app, on the hub, and in the cloud, from the same rollups on SQLite, Postgres, and
+  ClickHouse.
+- **"Is above normal" alerts** (cloud). Pick it as the condition on error rate, p95, or requests, with high, medium, or low
+  sensitivity. The notice names the service or endpoint and its normal value. Every fired notice (Slack, email, webhook)
+  now links to the problem it is part of, with the suspected cause, and the Alerts page shows that link too.
+- **`list_problems` for AI tools** (hub and cloud): the problems, their suspected causes, and each anomaly against its
+  normal. In the cloud, without a project it covers every project you may read.
+- **Apps report their version.** Spans carry `service.version`: `serviceVersion` in Node (else `OTEL_SERVICE_VERSION`, else
+  the npm package version), `ServiceVersion` in .NET (else `OTEL_SERVICE_VERSION`, else the app's informational version),
+  and the OTLP resource's `service.version` on the hub. Problems uses it to spot a new release.
+- Stats keep the versions each service sends (`FACTS_VERSION` 5): hosts rebuild their stats once after the upgrade, and
+  the production ClickHouse re-settles.
 - **A page for each error, endpoint, query, and page route.** An error shows its count over time, its endpoints, the users
   and browsers of its newest occurrences, the stack, and those occurrences. An endpoint shows requests, errors, and
   p50/p95/p99 over time, the queries it runs, what it calls, its errors, and its slowest requests. A query shows its runs

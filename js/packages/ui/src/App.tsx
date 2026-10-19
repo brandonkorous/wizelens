@@ -17,6 +17,7 @@ import { InsightsPage } from "./pages/insights/InsightsPage";
 import { LogsPage } from "./pages/logs/LogsPage";
 import { MetricsPage } from "./pages/metrics/MetricsPage";
 import { OverviewPage } from "./pages/overview/OverviewPage";
+import { ProblemsPage } from "./pages/problems/ProblemsPage";
 import { RenderingPage } from "./pages/rendering/RenderingPage";
 import { RequestsPage } from "./pages/requests/RequestsPage";
 import { SearchPage } from "./pages/search/SearchPage";
@@ -40,6 +41,7 @@ const AccountPage = lazyPage(() => import("./pages/account/AccountPage").then((m
 
 const PAGES: Record<Exclude<PageId, "trace" | "shared" | AuthPageId>, ComponentType> = {
   overview: OverviewPage,
+  problems: ProblemsPage,
   search: SearchPage,
   requests: RequestsPage,
   traces: TracesPage,

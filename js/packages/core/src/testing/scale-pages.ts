@@ -35,6 +35,7 @@ const STATIC: Partial<Record<PageName, Record<string, string>[]>> = {
   database: [{ service: "api" }, { service: "orders" }, { q: "orders" }, { q: "SELECT" }, { table: "items" }, { operation: "select" }, { operation: "INSERT" }, { database: "postgresql" }, { sort: "count" }, { sort: "total", page: "2", size: "5" }, { page: "99" }],
   overview: [{ from: String(SCENARIO_NOW - 3 * 3_600_000), to: String(SCENARIO_NOW - 3_600_000) }, { compare: "week" }, { service: "orders" }, { service: "api" }, { service: "Web App" }, { service: "nope" }],
   service: [{ service: "orders" }, { service: "Web App" }, { service: "nope" }],
+  problems: [{ sensitivity: "high", problem: "nope", at: String(SCENARIO_NOW - 3_600_000), focus: "api:orders", service: "orders" }],
 };
 
 /** Params per page: the fixed ones, plus selections picked from the memory models (a trace, a service row, an insight). */
@@ -87,22 +88,37 @@ function alignIdLists(page: PageName, sql: unknown, want: unknown, out: string[]
   if (g(sql)?.traceIds && g(want)?.traceIds) g(sql)!.traceIds = g(want)!.traceIds;
 }
 
+/** Differences between a SQL and a memory page for one range and param set. */
+async function oneParity(page: PageName, ex: Executor, mem: SyncExecutor, range: TimeRange, params: Record<string, string>, now: number): Promise<string[]> {
+  const ctx = pageContext(range, now, params);
+  const sql = slim(await runPage(page, ctx, ex));
+  const want = slim(runPageSync(page, ctx, mem));
+  const ids: string[] = [];
+  alignIds(sql, want, ids);
+  alignIdLists(page, sql, want, ids);
+  return [...ids, ...differences(sql, want)].map((d) => `${page} ${range} ${JSON.stringify(params)} ${d}`);
+}
+
 /** Differences between SQL and memory pages for every page, range, and param set. */
 export async function pageParity(ex: Executor, traces: readonly Trace[], ranges: readonly TimeRange[], retentionMs: number): Promise<string[]> {
   const mem = tierMemory(traces, retentionMs);
   const out: string[] = [];
   for (const page of Object.keys(PAGES) as PageName[]) {
     for (const range of ranges) {
-      for (const params of paramsOf(page, range, mem)) {
-        const ctx = pageContext(range, SCENARIO_NOW, params);
-        const sql = slim(await runPage(page, ctx, ex));
-        const want = slim(runPageSync(page, ctx, mem));
-        const ids: string[] = [];
-        alignIds(sql, want, ids);
-        alignIdLists(page, sql, want, ids);
-        out.push(...[...ids, ...differences(sql, want)].map((d) => `${page} ${range} ${JSON.stringify(params)} ${d}`));
-      }
+      for (const params of paramsOf(page, range, mem)) out.push(...(await oneParity(page, ex, mem, range, params, SCENARIO_NOW)));
     }
+  }
+  return out;
+}
+
+/** The Problems page from SQL and memory over other traces and another "now" (the anomaly scenario), with its problems' ids selected. */
+export async function problemsParity(ex: Executor, traces: readonly Trace[], now: number, ranges: readonly TimeRange[], retentionMs: number): Promise<string[]> {
+  const mem = tierMemory(traces, retentionMs);
+  const out: string[] = [];
+  for (const range of ranges) {
+    const ids = runPageSync("problems", pageContext(range, now, {}), mem).problems.map((p) => ({ problem: p.id }));
+    const list: Record<string, string>[] = [{}, { sensitivity: "high" }, ...ids];
+    for (const params of list) out.push(...(await oneParity("problems", ex, mem, range, params, now)));
   }
   return out;
 }

@@ -19,10 +19,15 @@ const fmtValue = (r: AlertRule, v: number | null) => (v === null ? "–" : `${pl
 const ruleLabel = (r: AlertRule) =>
   r.metric === "metric" ? `${r.metricName} ${METRIC_ALERT_STATS[r.metricStat || "avg"].toLowerCase()}${r.metricService ? ` (${r.metricService})` : ""}` : ALERT_METRICS[r.metric].label;
 
+const SENSITIVITY_NAME: Record<number, string> = { 2: "high", 3: "medium", 4: "low" };
+/** "> 5%", "< 10", or "above normal (medium)". */
+const lineOf = (r: AlertRule) =>
+  r.op === "above_normal" ? `above normal (${SENSITIVITY_NAME[r.threshold] ?? `${r.threshold} spreads`})` : `${r.op === ">" ? ">" : "<"} ${fmtValue(r, r.threshold)}`;
+
 function ruleColumns(canWrite: boolean, onEdit: (r: AlertRule) => void, onTest: (r: AlertRule) => void, onDelete: (r: AlertRule) => void): Column<AlertRule>[] {
   return [
     { key: "name", header: "Alert", cell: (r) => <strong>{r.name}</strong> },
-    { key: "rule", header: "Rule", cell: (r) => `${ruleLabel(r)} ${r.op === ">" ? ">" : "<"} ${fmtValue(r, r.threshold)} over ${windowLabel(r.windowMs)}${r.env ? ` · ${r.env}` : ""}` },
+    { key: "rule", header: "Rule", cell: (r) => `${ruleLabel(r)} ${lineOf(r)} over ${windowLabel(r.windowMs)}${r.env ? ` · ${r.env}` : ""}` },
     { key: "state", header: "State", cell: (r) => (!r.enabled ? <Badge tone="neutral">Off</Badge> : <DotText tone={r.state === "firing" ? "danger" : "success"} colorText={r.state === "firing"}>{r.state === "firing" ? "Firing" : "OK"}</DotText>) },
     { key: "value", header: "Last value", num: true, cell: (r) => fmtValue(r, r.lastValue) },
     { key: "to", header: "Sends to", cell: (r) => r.channels.map((c) => c.kind).join(", ") || "Dashboard only" },
@@ -43,7 +48,7 @@ const EVENT_COLUMNS: Column<AlertEvent>[] = [
   { key: "time", header: "When", cell: (e) => fmtAgo(e.timeMs), className: "wl-nowrap" },
   { key: "kind", header: "", cell: (e) => <Badge tone={EVENT_TONE[e.kind]}>{e.kind === "fired" ? "Fired" : e.kind === "resolved" ? "Resolved" : "Test"}</Badge> },
   { key: "rule", header: "Alert", cell: (e) => e.ruleName },
-  { key: "message", header: "Message", cell: (e) => e.message, className: "wl-wrap" },
+  { key: "message", header: "Message", cell: (e) => <>{e.message}{e.problem && <a className="wl-alert-problem" href={e.problem.url.slice(e.problem.url.indexOf("#"))}>Problem: {e.problem.title}</a>}</>, className: "wl-wrap" },
   { key: "delivery", header: "Delivery", cell: (e) => <span className="wl-muted wl-small">{e.delivery}</span>, className: "wl-wrap" },
 ];
 

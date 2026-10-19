@@ -12,7 +12,7 @@ It finds the common problems for you: N+1 queries, N+1 HTTP calls, duplicate que
 ## What you get
 
 - **One timeline per request.** The click, the API, each service after it, each query, and the render.
-- **A dashboard on every service.** Ten pages: overview, requests, traces, database, rendering, errors, logs, metrics, services, and insights.
+- **A dashboard on every service.** Eleven pages: overview, problems, requests, traces, database, rendering, errors, logs, metrics, services, and insights.
 - **Insights.** Problems ranked, with a short note on how to fix them.
 - **AI access, only if you allow it.** A read-only MCP endpoint your own agent can use. There is no AI inside WizeLens.
 - **Safe by default.** On in development only. Passwords, tokens, and keys are redacted before anything is stored.

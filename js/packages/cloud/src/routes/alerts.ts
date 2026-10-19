@@ -1,4 +1,4 @@
-import { isAlertMetric, isMetricAlertStat, MAX_METRIC_NAME } from "@wizeworks/lens-core";
+import { DEFAULT_SPREADS, isAlertMetric, isAlertOp, isAnomalyMetric, isMetricAlertStat, MAX_METRIC_NAME } from "@wizeworks/lens-core";
 import { notify } from "../alerts/evaluate.js";
 import { checkTarget } from "../alerts/notify.js";
 import type { Ctx } from "../app.js";
@@ -52,13 +52,20 @@ function metricPart(b: Record<string, unknown>): Pick<RuleInput, "metric" | "met
   return { metric: "metric", metricName: name, metricStat: stat as RuleInput["metricStat"], metricService: service };
 }
 
+/** "Above normal" works on the metrics with a baseline; its threshold is how many spreads above normal (2 high, 3 medium, 4 low). */
+function checkAboveNormal(metric: RuleInput["metric"], spreads: number): void {
+  if (!isAnomalyMetric(metric)) fail(400, "Above normal works with error_rate, p95_ms, or requests.");
+  if (spreads < 1 || spreads > 10) fail(400, "For above normal, set threshold to the sensitivity: 2 (high), 3 (medium), or 4 (low), or any number from 1 to 10.");
+}
+
 /** Check a rule from the request body. A change sends only what it changes: the rest comes from `current`. */
 async function ruleInput(ctx: Ctx, orgId: string, current?: object): Promise<RuleInput> {
   const b = { ...current, ...(await readJsonBody(ctx.req)) } as Record<string, unknown>;
   const metric = metricPart(b);
-  if (b.op !== ">" && b.op !== "<") fail(400, 'Set op to ">" or "<".');
-  const threshold = Number(b.threshold);
+  if (!isAlertOp(b.op)) fail(400, 'Set op to ">", "<", or "above_normal".');
+  const threshold = Number(b.threshold ?? (b.op === "above_normal" ? DEFAULT_SPREADS : undefined));
   if (!Number.isFinite(threshold)) fail(400, "Set a number for threshold.");
+  if (b.op === "above_normal") checkAboveNormal(metric.metric, threshold);
   const windowMs = Number(b.windowMs ?? 5 * 60_000);
   if (!WINDOWS.includes(windowMs)) fail(400, "Pick a window of 5, 15, 60, 360, or 1440 minutes.");
   return {

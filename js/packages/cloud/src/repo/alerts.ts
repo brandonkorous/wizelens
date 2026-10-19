@@ -36,6 +36,15 @@ export interface AlertEvent {
   message: string;
   timeMs: number;
   delivery: string;
+  /** The problem a fired notice named, or null. */
+  problem: EventProblem | null;
+}
+
+/** A problem card a notice linked to. */
+export interface EventProblem {
+  id: string;
+  title: string;
+  url: string;
 }
 
 export type RuleInput = Omit<AlertRule, "id" | "projectId" | "state" | "lastValue" | "lastEvalMs">;
@@ -89,14 +98,25 @@ export async function saveEvaluation(q: Queryable, id: string, state: AlertRule[
 
 export async function addEvent(q: Queryable, rule: AlertRule, e: Omit<AlertEvent, "id" | "ruleId" | "ruleName" | "threshold">): Promise<void> {
   await q.query(
-    `INSERT INTO alert_events (id, rule_id, project_id, kind, value, threshold, message, time_ms, delivery) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-    [newId(), rule.id, rule.projectId, e.kind, e.value, rule.threshold, e.message, e.timeMs, e.delivery],
+    `INSERT INTO alert_events (id, rule_id, project_id, kind, value, threshold, message, time_ms, delivery, problem) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+    [newId(), rule.id, rule.projectId, e.kind, e.value, rule.threshold, e.message, e.timeMs, e.delivery, e.problem ? JSON.stringify(e.problem) : ""],
   );
 }
 
-export const listEvents = (q: Queryable, projectId: string, limit: number): Promise<AlertEvent[]> =>
-  q.query<AlertEvent>(
-    `SELECT e.id, e.rule_id AS "ruleId", r.name AS "ruleName", e.kind, e.value, e.threshold, e.message, e.time_ms AS "timeMs", e.delivery
+function problemOf(text: string): EventProblem | null {
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as EventProblem;
+  } catch {
+    return null;
+  }
+}
+
+export async function listEvents(q: Queryable, projectId: string, limit: number): Promise<AlertEvent[]> {
+  const rows = await q.query<Omit<AlertEvent, "problem"> & { problem: string }>(
+    `SELECT e.id, e.rule_id AS "ruleId", r.name AS "ruleName", e.kind, e.value, e.threshold, e.message, e.time_ms AS "timeMs", e.delivery, e.problem
      FROM alert_events e JOIN alert_rules r ON r.id = e.rule_id WHERE e.project_id = $1 ORDER BY e.time_ms DESC LIMIT $2`,
     [projectId, limit],
   );
+  return rows.map((r) => ({ ...r, problem: problemOf(r.problem) }));
+}

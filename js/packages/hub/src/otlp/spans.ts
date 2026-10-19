@@ -92,6 +92,8 @@ export function writesFromSpans(list: readonly OtlpResourceSpans[], redactKeys: 
     const sender = senderOf(rs.resource);
     const spans = (rs.scopeSpans ?? []).flatMap((ss) => ss.spans ?? []);
     const mapped = spans.map((s) => toSpan(s, sender.service, redactKeys)).filter((s): s is Span => s !== null);
+    // The resource's service.version goes on each span, so Problems can tell a new release.
+    if (sender.version) for (const s of mapped) s.attributes["service.version"] ??= sender.version;
     return { sender, via: "otlp" as const, spans: mapped, logs: [], remotes: [] };
   });
 }
