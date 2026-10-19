@@ -7,7 +7,7 @@ export const COUNTER_SLOTS = 6;
 
 export type RollupKind =
   | "trace" | "req" | "req.dim" | "req.svc" | "req.part"
-  | "svc" | "svc.ep" | "edge" | "bn.layer" | "bn.owner"
+  | "svc" | "svc.ep" | "ep.call" | "ep.q" | "edge" | "bn.layer" | "bn.owner"
   | "ins" | "ins.ep"
   | "db" | "db.q" | "db.qd" | "db.qe" | "db.t" | "db.op"
   | "err" | "err.g" | "err.ge" | "err.t" | "err.s" | "err.e"
@@ -52,14 +52,17 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   "req.svc": spec(["dbCount", "withInsights", "primary"]),
   "req.part": spec([], { hist: true }),
   svc: spec([], { hist: true, top: "newest" }),
-  "svc.ep": spec(),
-  edge: spec([], { top: "newest" }),
+  "svc.ep": spec([], { hist: true, ids: 20 }),
+  /** Per endpoint (`svc.ep` key head): outgoing calls by target, and queries by shape. */
+  "ep.call": spec(),
+  "ep.q": spec(),
+  edge: spec([], { top: "newest", hist: true }),
   "bn.layer": spec([], { top: "newest" }),
   "bn.owner": spec(),
   ins: spec(["count"], { top: "newest" }),
   "ins.ep": spec(),
   db: spec(["slow"]),
-  "db.q": spec(["slow"], { top: "largest" }),
+  "db.q": spec(["slow"], { top: "largest", ids: 20 }),
   /** `db.q` keyed by operation and database first, for the Database page filters. */
   "db.qd": spec(["slow"], { top: "largest" }),
   "db.qe": spec(),
@@ -74,7 +77,7 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   log: spec(),
   "log.s": spec(),
   pv: spec(),
-  "pv.route": spec([], { top: "newest" }),
+  "pv.route": spec([], { top: "newest", ids: 20 }),
   "pv.m": spec(),
   "pv.large": spec([], { hist: true }),
   "pv.g": spec([], { hist: true }),

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Bell, FileText, OctagonX, TriangleAlert } from "lucide-react";
 import { fmtCount } from "../../format";
-import { setQuery } from "../../routes";
+import { hrefTo, setQuery } from "../../routes";
 import { Pager } from "../../ui/Controls";
 import { LiveToggle } from "../../ui/LiveToggle";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
@@ -19,9 +19,9 @@ function LogStatCards({ stats }: { stats: LogsModel }) {
   return (
     <div className="wl-grid wl-grid-stats">
       <StatCard icon={FileText} label="Log Lines" value={fmtCount(cards.total)} change={change.total} series={sparks.total} {...common} />
-      <StatCard icon={TriangleAlert} label="Warnings" value={fmtCount(cards.warnings)} change={change.warnings} series={sparks.warnings} {...common} />
-      <StatCard icon={OctagonX} label="Errors" value={fmtCount(cards.errors)} change={change.errors} series={sparks.errors} danger {...common} />
-      <StatCard icon={Bell} label="Critical" value={fmtCount(cards.critical)} change={change.critical} series={sparks.critical} danger {...common} />
+      <StatCard icon={TriangleAlert} label="Warnings" href={hrefTo("logs", [], { level: "warn", exact: "1" })} value={fmtCount(cards.warnings)} change={change.warnings} series={sparks.warnings} {...common} />
+      <StatCard icon={OctagonX} label="Errors" href={hrefTo("logs", [], { level: "error" })} value={fmtCount(cards.errors)} change={change.errors} series={sparks.errors} danger {...common} />
+      <StatCard icon={Bell} label="Critical" href={hrefTo("logs", [], { level: "critical" })} value={fmtCount(cards.critical)} change={change.critical} series={sparks.critical} danger {...common} />
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import { X } from "lucide-react";
-import type { Span, SpanEvent, Trace } from "@wizeworks/lens-core";
+import { displayService, endpointNameOf, errorEvents, normalizeQuery, queryText, quoteText, type Span, type SpanEvent, type Trace } from "@wizeworks/lens-core";
 import { fmtMs } from "../../format";
+import { endpointHref, errorHref, hrefTo, queryHref } from "../../routes";
+import { serviceHref } from "../services/serviceParts";
 import { ServiceChip } from "./tabParts";
 
 function prettyParams(raw: unknown): string | null {
@@ -12,7 +14,10 @@ function prettyParams(raw: unknown): string | null {
   }
 }
 
-function AttrTable({ entries }: { entries: [string, unknown][] }) {
+/** A link that searches spans with this attribute value. */
+const searchHref = (key: string, value: unknown) => hrefTo("search", [], { q: `@${key}:${quoteText(String(value))}`, kind: "spans" });
+
+function AttrTable({ entries, search = false }: { entries: [string, unknown][]; search?: boolean }) {
   if (entries.length === 0) return <div className="wl-muted wl-small">None</div>;
   return (
     <table className="wl-attrs">
@@ -22,7 +27,9 @@ function AttrTable({ entries }: { entries: [string, unknown][] }) {
           .map(([k, v]) => (
             <tr key={k}>
               <th>{k}</th>
-              <td className={v === "[redacted]" ? "wl-redacted" : undefined}>{v === null ? <span className="wl-muted">null</span> : String(v)}</td>
+              <td className={v === "[redacted]" ? "wl-redacted" : undefined}>
+                {v === null ? <span className="wl-muted">null</span> : search && v !== "[redacted]" ? <a href={searchHref(k, v)} title="Find spans with this value">{String(v)}</a> : String(v)}
+              </td>
             </tr>
           ))}
       </tbody>
@@ -97,7 +104,25 @@ function Query({ span }: { span: Span }) {
   );
 }
 
-/** Details of the selected span: facts, query, events, logs, and attributes. */
+/** Pages about this span: its service, endpoint, query, error group, and the request's logs. */
+function SpanLinks({ span, trace }: { span: Span; trace: Trace }) {
+  const service = displayService(span.service);
+  const error = errorEvents([trace]).find((e) => e.spanId === span.spanId);
+  const links: [string, string][] = [[serviceHref(service), service]];
+  if (span.category === "http.server") links.push([endpointHref(`api:${span.service}`, endpointNameOf(span, "api")), "Endpoint"]);
+  if (span.category === "db") links.push([queryHref(normalizeQuery(queryText(span))), "Query"]);
+  if (error) links.push([errorHref(error.key), "Error"]);
+  if (trace.logs.length) links.push([hrefTo("logs", [], { trace: trace.traceId }), "Request logs"]);
+  return (
+    <div className="wl-sp-links">
+      {links.map(([href, text]) => (
+        <a key={href} className="wl-path-chip" href={href}>{text}</a>
+      ))}
+    </div>
+  );
+}
+
+/** Details of the selected span: facts, links, query, events, logs, and attributes. */
 export function SpanPanel({ span, trace, onClose }: { span: Span; trace: Trace; onClose: () => void }) {
   const attrs = Object.entries(span.attributes).filter(([k]) => k !== "db.query.text" && k !== "wizelens.db.parameters");
   const logs = trace.logs.filter((l) => l.spanId === span.spanId);
@@ -110,6 +135,7 @@ export function SpanPanel({ span, trace, onClose }: { span: Span; trace: Trace; 
         </button>
       </div>
       <Facts span={span} trace={trace} />
+      <SpanLinks span={span} trace={trace} />
       <Query span={span} />
       {span.events.length > 0 && <h3>Events</h3>}
       {span.events.map((e, i) => (
@@ -128,7 +154,7 @@ export function SpanPanel({ span, trace, onClose }: { span: Span; trace: Trace; 
         </>
       )}
       <h3>Attributes</h3>
-      <AttrTable entries={attrs} />
+      <AttrTable entries={attrs} search />
     </aside>
   );
 }

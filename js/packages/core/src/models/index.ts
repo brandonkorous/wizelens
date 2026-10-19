@@ -8,6 +8,10 @@ import { logsPage } from "./logs.js";
 import { overviewPage } from "./overview.js";
 import { renderingPage } from "./rendering.js";
 import { requestsPage } from "./requests.js";
+import { endpointPage } from "./endpoint-page.js";
+import { errorPage } from "./error-page.js";
+import { queryPage } from "./query-page.js";
+import { routePage } from "./route-page.js";
 import { servicePage } from "./service-page.js";
 import { servicesPage } from "./services.js";
 import { tracesPage } from "./traces.js";
@@ -30,6 +34,10 @@ export * from "./logs.js";
 export * from "./rendering.js";
 export * from "./services.js";
 export * from "./service-page.js";
+export * from "./error-page.js";
+export * from "./endpoint-page.js";
+export * from "./query-page.js";
+export * from "./route-page.js";
 export * from "./insights.js";
 export * from "./traces.js";
 export * from "./badges.js";
@@ -46,6 +54,10 @@ export const PAGES = {
   logs: logsPage,
   services: servicesPage,
   service: servicePage,
+  error: errorPage,
+  endpoint: endpointPage,
+  query: queryPage,
+  route: routePage,
   insights: insightsPage,
   badges: badgesPage,
 } satisfies Record<string, PageDef<unknown>>;

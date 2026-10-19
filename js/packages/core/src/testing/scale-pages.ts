@@ -43,6 +43,10 @@ function paramsOf(page: PageName, range: TimeRange, mem: SyncExecutor): Record<s
   const extra: Record<string, string>[] = [];
   if (page === "traces") extra.push(...runPageSync("traces", ctx, mem).recent.slice(0, 2).map((t) => ({ trace: t.traceId })));
   if (page === "services" || page === "service") extra.push(...runPageSync("services", ctx, mem).rows.map((r) => ({ service: r.key })));
+  if (page === "error") extra.push(...runPageSync("errors", ctx, mem).groups.slice(0, 3).map((g) => ({ group: g.key })), { group: "nope" });
+  if (page === "endpoint") extra.push(...runPageSync("service", pageContext(range, SCENARIO_NOW, { service: "api:orders" }), mem).endpoints.slice(0, 3).map((e) => ({ service: "api:orders", endpoint: e.name })), { service: "api", endpoint: "nope" });
+  if (page === "query") extra.push(...runPageSync("database", pageContext(range, SCENARIO_NOW, { size: "200" }), mem).queries.slice(0, 3).map((q) => ({ q: q.query })), { q: "nope" });
+  if (page === "route") extra.push(...runPageSync("rendering", ctx, mem).routes.slice(0, 2).map((r) => ({ route: r.route })), { route: "nope" });
   if (page === "errors") extra.push(...runPageSync("errors", ctx, mem).groups.slice(0, 2).map((g) => ({ group: g.key })), { group: "nope" });
   if (page === "insights") extra.push(...runPageSync("insights", ctx, mem).groups.slice(0, 2).map((g) => ({ key: g.key })));
   return [{}, ...(STATIC[page] ?? []), ...extra];
@@ -68,6 +72,21 @@ function alignIds(sql: unknown, want: unknown, out: string[]): void {
   });
 }
 
+/** Lists built from a row's trace ids (newest few buckets in SQL): check they are newest memory items, then align them. */
+const ID_LISTS: Partial<Record<PageName, string[]>> = { error: ["requests", "traces"], endpoint: ["recent"], query: ["traces"], route: ["loads"] };
+
+function alignIdLists(page: PageName, sql: unknown, want: unknown, out: string[]): void {
+  type Item = { traceId: string };
+  for (const field of ID_LISTS[page] ?? []) {
+    const a = (sql as Record<string, Item[]>)[field] ?? [];
+    const b = (want as Record<string, Item[]>)[field] ?? [];
+    if (a.some((x) => !b.some((y) => y.traceId === x.traceId)) || a.length === 0 !== (b.length === 0)) out.push(`${field}: ${a.map((x) => x.traceId).join(",")} not within ${b.map((x) => x.traceId).join(",")}`);
+    (sql as Record<string, Item[]>)[field] = b;
+  }
+  const g = (m: unknown) => (m as { group?: { traceIds?: string[] } | null }).group;
+  if (g(sql)?.traceIds && g(want)?.traceIds) g(sql)!.traceIds = g(want)!.traceIds;
+}
+
 /** Differences between SQL and memory pages for every page, range, and param set. */
 export async function pageParity(ex: Executor, traces: readonly Trace[], ranges: readonly TimeRange[], retentionMs: number): Promise<string[]> {
   const mem = tierMemory(traces, retentionMs);
@@ -80,6 +99,7 @@ export async function pageParity(ex: Executor, traces: readonly Trace[], ranges:
         const want = slim(runPageSync(page, ctx, mem));
         const ids: string[] = [];
         alignIds(sql, want, ids);
+        alignIdLists(page, sql, want, ids);
         out.push(...[...ids, ...differences(sql, want)].map((d) => `${page} ${range} ${JSON.stringify(params)} ${d}`));
       }
     }

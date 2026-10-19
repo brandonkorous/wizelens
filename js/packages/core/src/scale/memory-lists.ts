@@ -16,8 +16,11 @@ const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 /** Newest first, then trace id: the tie order of every list. */
 const newest = <T extends { traceId: string }>(time: (t: T) => number) => (a: T, b: T) => time(b) - time(a) || cmp(a.traceId, b.traceId);
 
+/** The trace id conditions every list shares. */
+const traceOk = (id: string, f: ListFilter) => (!f.traceId || id === f.traceId) && (!f.traceIds || f.traceIds.includes(id));
+
 function requestRowsOf(facts: readonly TraceFacts[], f: ListFilter, w: TimeWindow): RequestItem[] {
-  const items = facts.flatMap((x) => (x.request && inWindow(x.request.startMs, w) && (!f.traceId || x.traceId === f.traceId) ? [x.request] : []));
+  const items = facts.flatMap((x) => (x.request && inWindow(x.request.startMs, w) && traceOk(x.traceId, f) ? [x.request] : []));
   const filter = { method: f.method ?? "", status: f.status ?? "", duration: f.duration ?? "", service: f.service ?? "", q: f.q ?? "", endpoint: f.endpoint ?? "", user: f.user ?? "", insights: f.insights ? "1" : "" };
   return applyFilter(items.sort(newest((r) => r.startMs)) as RequestRow[], filter);
 }
@@ -30,7 +33,7 @@ function sortedRequests(rows: RequestItem[], need: ListNeed): RequestItem[] {
 function traceRowsOf(facts: readonly TraceFacts[], f: ListFilter, w: TimeWindow, need: ListNeed): TraceItem[] {
   const q = (f.q ?? "").trim().toLowerCase();
   const hit = (t: TraceItem) => !q || t.traceId.startsWith(q) || t.path.toLowerCase().includes(q) || t.services.some((s) => s.toLowerCase().includes(q));
-  const rows = facts.flatMap((x) => (inWindow(x.trace.startMs, w) && (!f.traceId || x.traceId === f.traceId) && hit(x.trace) && traceMatches(x.trace, f) ? [x.trace] : []));
+  const rows = facts.flatMap((x) => (inWindow(x.trace.startMs, w) && traceOk(x.traceId, f) && hit(x.trace) && traceMatches(x.trace, f) ? [x.trace] : []));
   const sorted = rows.sort(newest((t) => t.startMs));
   if (need.sort.key === "duration") return sorted.sort((a, b) => (need.sort.desc ? b.durationMs - a.durationMs : a.durationMs - b.durationMs) || newest<TraceItem>((t) => t.startMs)(a, b));
   return need.sort.desc ? sorted : sorted.reverse();

@@ -31,6 +31,8 @@ export interface ServiceEdge {
   calls: number;
   avgMs: number | null;
   errors: number;
+  /** From the stats tables only: p95 of the calls. */
+  p95Ms?: number | null;
 }
 
 const DEGRADED_P95_MS = 1000;

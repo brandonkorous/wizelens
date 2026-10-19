@@ -6,6 +6,17 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **A page for each error, endpoint, query, and page route.** An error shows its count over time, its endpoints, the users
+  and browsers of its newest occurrences, the stack, and those occurrences. An endpoint shows requests, errors, and
+  p50/p95/p99 over time, the queries it runs, what it calls, its errors, and its slowest requests. A query shows its runs
+  and time over time, the services and endpoints that run it, and its newest traces. A route shows views and load times
+  over time, its components, and its newest page loads. Lists across the app open these pages.
+- **A better trace page:** find spans by name or service, errors only, the critical path, expand or collapse all, self time
+  on each span, links from a span to its service, endpoint, query, error, and the request's logs, attribute values that
+  search, a JSON download, and **Compare** with another trace (numbers, self time per service, and both waterfalls).
+- **Dependency map:** each link shows p95 and the share that failed, and opens the service it calls.
+- **Number cards link** to the list behind them (for example Error Rate opens the failed requests).
+
 - **Links keep the view.** The time range, a custom window, the compare choice, environment, project, and service are in
   the address bar, so a copied link (or an alert notice) opens exactly what you saw.
 - **Custom time range and zoom.** Pick any from–to in the range menu, or drag across a chart to zoom into that span.
@@ -42,7 +53,7 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Changed
 
-- Stats are rebuilt once after this update (`FACTS_VERSION` 3), so each count can be read per service.
+- Stats are rebuilt once after this update (`FACTS_VERSION` 4), so each count can be read per service and per endpoint.
 
 ### Fixed
 

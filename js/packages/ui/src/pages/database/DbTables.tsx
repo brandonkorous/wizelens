@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Database } from "lucide-react";
 import type { DatabaseModel, QueryRow, TableRow } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, fmtShort, fmtShownOf } from "../../format";
-import { hrefTo, navigate, setQuery, traceHref } from "../../routes";
+import { hrefTo, navigate, queryHref, setQuery } from "../../routes";
 import { Pager } from "../../ui/Controls";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
@@ -51,11 +51,11 @@ function ToggleAll({ open, total, onToggle }: { open: boolean; total: number; on
   );
 }
 
-/** One page of the query shapes that match the filter, in its order. A row opens the slowest example's SQL. */
+/** One page of the query shapes that match the filter, in its order. A row opens the query's page. */
 export function TopQueriesPanel({ stats }: { stats: DatabaseModel }) {
   return (
     <Panel title={`${QUERY_TITLE[stats.filter.sort]} (${fmtCount(stats.queryShapes)})`} flush className="wl-db-queries">
-      <Table columns={queryColumns(stats.slowMs)} rows={stats.queries} rowKey={(q) => q.key} onRowClick={(q) => navigate(traceHref(q.exampleTraceId, "sql"))} empty={<Empty>No queries match in this time range.</Empty>} />
+      <Table columns={queryColumns(stats.slowMs)} rows={stats.queries} rowKey={(q) => q.key} onRowClick={(q) => navigate(queryHref(q.query))} empty={<Empty>No queries match in this time range.</Empty>} />
       {stats.queryShapes > 0 && (
         <Pager page={stats.page} pageSize={stats.size} total={stats.queryShapes} noun="queries" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />
       )}

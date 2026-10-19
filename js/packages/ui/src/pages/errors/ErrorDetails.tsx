@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight, Database, Monitor, Server } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Database, ExternalLink, Monitor, Server } from "lucide-react";
 import type { ErrorGroup } from "@wizeworks/lens-core";
 import { fmtCount, fmtDateTime } from "../../format";
-import { hrefTo, setQuery } from "../../routes";
+import { errorHref, hrefTo, setQuery } from "../../routes";
 import { Badge } from "../../ui/Badges";
 import { Empty, KeyValues, Panel, TabBar } from "../../ui/Panel";
 import { ErrorTags, RequestContext, StackTrace } from "./ErrorDetailTabs";
@@ -54,6 +54,9 @@ function GroupDetails({ group }: { group: ErrorGroup }) {
         </h2>
         <Badge tone="danger">{group.critical ? "Critical" : "Error"}</Badge>
       </div>
+      <a className="wl-btn wl-btn-primary-outline wl-err-full" href={errorHref(group.key)}>
+        <ExternalLink aria-hidden="true" /> View full error
+      </a>
       <Occurrences group={group} />
       <KeyValues
         rows={[

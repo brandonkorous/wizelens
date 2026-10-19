@@ -58,6 +58,23 @@ export function hrefTo(page: PageId, params: string[] = [], query: Record<string
 
 export const traceHref = (traceId: string, view?: string) => hrefTo("trace", view ? [traceId, view] : [traceId]);
 
+const enc = encodeURIComponent;
+
+/** A path part as typed in a link; a broken escape is kept as it is. */
+export function decodeParam(part: string): string {
+  try {
+    return decodeURIComponent(part);
+  } catch {
+    return part;
+  }
+}
+
+/** Detail pages: one error group, one endpoint of a service, one query shape, one page route. */
+export const errorHref = (groupKey: string) => hrefTo("errors", [enc(groupKey)]);
+export const endpointHref = (service: string, endpoint: string) => hrefTo("services", [enc(service), "endpoints", enc(endpoint)]);
+export const queryHref = (query: string) => hrefTo("database", ["queries", enc(query)]);
+export const routeHref = (route: string) => hrefTo("rendering", ["routes", enc(route)]);
+
 export function navigate(href: string): void {
   window.location.hash = href.replace(/^#/, "");
 }

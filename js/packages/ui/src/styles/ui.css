@@ -20,6 +20,8 @@
 
 .wl-stat { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 6px 12px; padding: 18px 20px; }
 .wl-stat-icon { width: 34px; height: 34px; color: var(--wl-accent); }
+a.wl-stat-link { color: inherit; text-decoration: none; }
+a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl-shadow-pop); }
 .wl-stat-icon.wl-danger { color: var(--wl-red); }
 .wl-stat-label { font-size: 14px; color: var(--wl-fg-2); }
 .wl-stat-value { font-size: 26px; font-weight: 720; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.2; }
@@ -156,3 +158,19 @@
 .wl-live.wl-paused .wl-live-dot { background: var(--wl-muted); animation: none; }
 @keyframes wl-live-pulse { to { box-shadow: 0 0 0 7px transparent; } }
 @media (prefers-reduced-motion: reduce) { .wl-live-dot { animation: none; } }
+
+/* Detail pages (an error, an endpoint, a query, a route): a header panel with a back link, then panels down the page. */
+.wl-dpage > .wl-panel { margin: 0 0 18px; }
+.wl-dpage .wl-panel-flush .wl-table th:first-child, .wl-dpage .wl-panel-flush .wl-table td:first-child { padding-left: 20px; }
+.wl-dpage .wl-panel-flush .wl-table th:last-child, .wl-dpage .wl-panel-flush .wl-table td:last-child { padding-right: 20px; }
+.wl-dpage .wl-row-actions { align-items: center; }
+.wl-dhead .wl-back { display: flex; width: max-content; }
+.wl-dhead-title { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 22px; }
+.wl-dhead-title > svg { flex: none; color: var(--wl-fg-2); }
+.wl-dhead-name { min-width: 0; word-break: break-word; }
+.wl-dhead-name.wl-mono { font-size: 17px; }
+.wl-dhead-badge { font-size: 14px; font-weight: 600; letter-spacing: 0; }
+.wl-dhead-actions { margin-left: auto; display: inline-flex; gap: 8px; }
+.wl-dhead .wl-stats { margin-bottom: 0; }
+.wl-dpage .wl-cell-wide { max-width: 420px; }
+.wl-dpage .wl-cell-wide span { display: block; }
