@@ -83,12 +83,16 @@ export class SettleQueue {
     return rows.length;
   }
 
-  /** Every trace (after the facts version changed): its stats are rebuilt from scratch. */
-  async requeueAll(ch: ChClient): Promise<number> {
-    const rows = await ch.query<{ project_id: string; trace_id: string; env: string; u: number }>(
-      "SELECT project_id, trace_id, max(env) AS env, max(updated_ms) AS u FROM trace_heads GROUP BY project_id, trace_id",
-    );
-    for (const r of rows) this.items.set(`${r.project_id} ${r.trace_id}`, { project: r.project_id, traceId: r.trace_id, env: r.env, updatedMs: r.u, settledMs: 0 });
-    return rows.length;
+  /** A trace whose stats are rebuilt from scratch (see `Rebuild`). Returns its key. */
+  requeue(project: string, traceId: string, env: string, updatedMs: number): string {
+    const k = `${project} ${traceId}`;
+    const it = this.items.get(k);
+    this.items.set(k, { project, traceId, env: it?.env || env, updatedMs: Math.max(it?.updatedMs ?? 0, updatedMs), settledMs: 0 });
+    return k;
+  }
+
+  /** The trace with this key still waits. */
+  has(key: string): boolean {
+    return this.items.has(key);
   }
 }
