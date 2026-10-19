@@ -8,6 +8,7 @@ import { type ChClient, chClient } from "./http.js";
 import { MetricWriter } from "./metrics.js";
 import { activeHours, counts, lastTraceMs, slowestEndpoints, traceEnvs } from "./queries.js";
 import { SettleQueue } from "./queue.js";
+import { Rebuild } from "./rebuild.js";
 import { findTraceIds, getTrace, joinedTrace, loadTraces } from "./read.js";
 import { migrateClickHouse } from "./schema.js";
 import { settleClickHouse, type Settler } from "./settle.js";
@@ -26,6 +27,8 @@ export interface ChStoreOptions {
   ttl?: boolean;
   /** Worker threads for settle. Default 0: settle in this thread. */
   settleWorkers?: number;
+  /** For tests: traces per page of a stats rebuild. */
+  rebuildPage?: number;
   /** For tests: the worker file and its Node flags. */
   worker?: Pick<SettlePoolOptions, "entry" | "execArgv">;
 }
@@ -34,13 +37,14 @@ const DEPTH = 3;
 const DEFAULT_WORKER = new URL("./settle-worker.js", import.meta.url);
 
 /** Settle in worker threads when there are any and the worker file is built (it is not when tests run the sources), else here. */
-function settlerOf(ch: ChClient, o: ChStoreOptions, queue: SettleQueue): { settler: Settler; pool: SettlePool | null } {
+function settlerOf(ch: ChClient, o: ChStoreOptions, queue: SettleQueue, rebuild: Rebuild): { settler: Settler; pool: SettlePool | null; rebuild: Rebuild } {
+  const refill = () => rebuild.refill();
   const retention = new RetentionCache(o.retentionOf, o.defaultRetentionDays);
   const entry = o.worker?.entry ?? DEFAULT_WORKER;
   const size = existsSync(fileURLToPath(entry)) ? Math.max(0, o.settleWorkers ?? 0) : 0;
-  if (!size) return { settler: { queue, retention, run: (t) => settleProject(ch, t), depth: DEPTH }, pool: null };
+  if (!size) return { settler: { queue, retention, run: (t) => settleProject(ch, t), depth: DEPTH, refill }, pool: null, rebuild };
   const pool = new SettlePool({ url: o.url, size, ...o.worker });
-  return { settler: { queue, retention, run: pool.run, depth: Math.max(DEPTH, size * 2) }, pool };
+  return { settler: { queue, retention, run: pool.run, depth: Math.max(DEPTH, size * 2), refill }, pool, rebuild };
 }
 
 export const chRunner = (ch: ChClient): SqlRunner => ({ all: (sql, params) => ch.query<Record<string, unknown>>(sql, params) });
@@ -61,10 +65,10 @@ export async function openClickHouse(o: ChStoreOptions): Promise<TelemetryStore>
   await migrateClickHouse(o.url, ch, { ttl: o.ttl });
   const queue = new SettleQueue();
   await queue.recover(ch, o.now());
-  return chTelemetry(ch, settlerOf(ch, o, queue), o.retentionOf);
+  return chTelemetry(ch, settlerOf(ch, o, queue, await Rebuild.open(ch, queue, o.rebuildPage)), o.retentionOf);
 }
 
-function chTelemetry(ch: ChClient, { settler, pool }: ReturnType<typeof settlerOf>, retentionOf: RetentionOf): TelemetryStore {
+function chTelemetry(ch: ChClient, { settler, pool, rebuild }: ReturnType<typeof settlerOf>, retentionOf: RetentionOf): TelemetryStore {
   const { queue, retention } = settler;
   const src = (projectId: string) => ({ d: CH_DIALECT, run: chRunner(ch), scope: { project: projectId } });
   const metrics = new MetricWriter(ch);
@@ -94,7 +98,7 @@ function chTelemetry(ch: ChClient, { settler, pool }: ReturnType<typeof settlerO
     settle: (now, o) => settleClickHouse(settler, now, o),
     prune: (now) => syncProjects(ch, queue, retentionOf, now),
     pruneRollups: async () => undefined,
-    checkFactsVersion: () => checkFactsVersionCh(ch, queue),
+    checkFactsVersion: () => checkFactsVersionCh(ch, rebuild),
     clearProject: (projectId) => clearProjectCh(ch, queue, projectId),
     close: async () => pool?.close(),
   };
