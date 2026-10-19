@@ -46,6 +46,8 @@ export * from "./insights.js";
 export * from "./traces.js";
 export * from "./badges.js";
 export * from "./alerts.js";
+export * from "./alert-rule.js";
+export * from "./alert-parse.js";
 
 /** Every page by name: what it needs and how its model is built. Hosts serve them at `api/models/<name>`; in-app runs them in the browser. */
 export const PAGES = {

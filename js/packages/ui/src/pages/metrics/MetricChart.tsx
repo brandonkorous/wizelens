@@ -1,5 +1,6 @@
 import { fmtMetric, type HistogramStat, type MetricDetail } from "@wizeworks/lens-core";
 import { setQuery } from "../../routes";
+import { AlertOnThis } from "../../ui/AlertOnThis";
 import { Select } from "../../ui/Controls";
 import { Empty, KeyValues, Panel } from "../../ui/Panel";
 import { type ChartSeries, TimeChart } from "../../ui/TimeChart";
@@ -13,6 +14,8 @@ const STATS: [HistogramStat, string][] = [
 ];
 
 const DISPLAY_NOTE = { value: "Value", rate: "Per second", percentiles: "Distribution" } as const;
+/** What a new alert on the chart reads: the average, the rate, or p95. */
+const ALERT_STAT = { value: "avg", rate: "rate", percentiles: "p95" } as const;
 
 /** Lines to draw: one per group, or p50 / p95 / p99 for a histogram that is not split. */
 function seriesOf(d: MetricDetail): ChartSeries[] {
@@ -28,6 +31,7 @@ function Controls({ d }: { d: MetricDetail }) {
     <div className="wl-metric-controls">
       {d.groupKeys.length > 0 && <Select value={d.groupBy} options={groups} onChange={(g) => setQuery({ group: g || null })} label="Split lines" small />}
       {d.percentiles && d.groupBy && <Select value={d.stat} options={STATS} onChange={(s) => setQuery({ stat: s })} label="Statistic" small />}
+      <AlertOnThis fields={{ metric: "metric", metricName: d.name, metricStat: ALERT_STAT[d.display], metricService: d.services.length === 1 ? d.services[0]! : "", name: `${d.name} is high` }} />
     </div>
   );
 }

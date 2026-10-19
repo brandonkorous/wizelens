@@ -9,6 +9,7 @@ import { HubData } from "./data.js";
 import { hubMcpSource } from "./mcp.js";
 import { type HubOptions, resolveHubOptions } from "./options.js";
 import { handleOtlp, otlpSignalOf } from "./otlp/index.js";
+import { hubAlertDeps, startAlertLoop } from "./alerts/loop.js";
 import { settleQuietly } from "./settle.js";
 import { HubStore } from "./store.js";
 
@@ -64,7 +65,9 @@ export function createHub(options: HubOptions = {}): Hub {
   const o = resolveHubOptions(options);
   const store = new HubStore({ path: o.storagePath === "memory" ? ":memory:" : o.storagePath, maxTraces: o.maxTraces, maxAgeMs: o.maxAgeMs, maxMetricPoints: o.maxMetricPoints, now: o.now });
   const data = new HubData(store);
-  const c: Ctx = { data, o, version: HUB_VERSION, startedMs: o.now(), uiDir: resolveUiDir(o.uiDir) };
+  const base = { url: `http://localhost:${o.port}` };
+  const alerts = hubAlertDeps(store, o, base);
+  const c: Ctx = { data, alerts, o, version: HUB_VERSION, startedMs: o.now(), uiDir: resolveUiDir(o.uiDir) };
   const server = createServer((req, res) => {
     route(c, req, res).catch(() => !res.headersSent && sendJson(res, 500, { error: "internal error" }));
   });
@@ -73,6 +76,7 @@ export function createHub(options: HubOptions = {}): Hub {
   timer.unref();
   const settler = setInterval(() => settleQuietly(store), SETTLE_MS);
   settler.unref();
+  const stopAlerts = startAlertLoop(alerts, o);
   return {
     server,
     data,
@@ -82,13 +86,15 @@ export function createHub(options: HubOptions = {}): Hub {
         server.listen(o.port, o.host, () => {
           const { port } = server.address() as AddressInfo;
           const local = ["0.0.0.0", "::", "127.0.0.1", "::1"].includes(o.host);
-          resolve(`http://${local ? "localhost" : o.host}:${port}`);
+          base.url = `http://${local ? "localhost" : o.host}:${port}`;
+          resolve(base.url);
         });
       }),
     close: () =>
       new Promise((resolve) => {
         clearInterval(timer);
         clearInterval(settler);
+        stopAlerts();
         server.closeAllConnections?.();
         server.close(() => (store.close(), resolve()));
       }),

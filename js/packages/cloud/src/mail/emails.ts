@@ -1,4 +1,4 @@
-import type { Notice } from "../alerts/notify.js";
+import type { Notice } from "@wizeworks/lens-hub/kit";
 import { type EmailContent, facts, note, text } from "./content.js";
 
 // Every email the cloud sends, as content only. The words follow the README's voice: plain, short, concrete.
@@ -43,8 +43,8 @@ export function invite(inviter: string, org: string, role: string, url: string):
   };
 }
 
-const VERB = { fired: "Alert", resolved: "Resolved", test: "Test" } as const;
-const TONE = { fired: "bad", resolved: "good", test: "neutral" } as const;
+const VERB = { fired: "Alert", resolved: "Resolved", remind: "Still firing", test: "Test" } as const;
+const TONE = { fired: "bad", resolved: "good", remind: "bad", test: "neutral" } as const;
 const number = (v: number | null) => (v === null ? "no data" : String(Math.round(v * 100) / 100));
 
 export function alert(n: Notice): EmailContent {

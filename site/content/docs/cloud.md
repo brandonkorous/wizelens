@@ -78,13 +78,21 @@ under a second on busy projects. Each organization keeps traces for 30 days by d
 ## Alerts
 
 A rule watches one value over a window of 5 minutes to 24 hours: error rate, p95 or average latency, request count, new
-errors, slow queries, or one OpenTelemetry metric. It fires when the value goes above or below your threshold. A notice is
-sent only when the state changes, to a webhook or a Slack incoming webhook:
+errors, slow queries, or one OpenTelemetry metric. It can watch everything, one service, or one endpoint. It fires when the
+value goes above, at or above, below, or at or below your threshold. A notice is sent when the state changes, and again every
+15 minutes to a day while it keeps firing, if you ask for reminders. **Acknowledge** stops the reminders; **mute** keeps it
+quiet for a while or until you unmute it. Notices go to up to five channels: Slack, Microsoft Teams, Discord, PagerDuty, a
+webhook, or email to members:
 
 ```text
 Error rate is 3.4% (above 2%)
+Error rate is 3.1% (still above 2%)
 Error rate is 1.1% (no longer above 2%)
 ```
+
+Each rule has its own page: its value against the line over time, every notice and change, and a link to the traces behind
+it. **Alert on this** on a service, an endpoint, an error, or a metric chart opens a new rule filled in for it. The hub runs
+the same alerts, without email.
 
 Webhook URLs must be https and may not point at private addresses, unless the cloud runs with `--allow-private-webhooks`.
 

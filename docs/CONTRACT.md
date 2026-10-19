@@ -198,7 +198,7 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `environments` | The host holds more than one environment and project; the top-bar picker filters by them | | ✅ | ✅ |
 | `registry` | The host knows its services (`api/services`): online state, project, environment, runtime | | ✅ | ✅ |
 | `accounts` | People sign in; the top bar shows the user and the Team page appears | | | ✅ |
-| `alerts` | The host runs alert rules; the Alerts page and the bell show them | | | ✅ |
+| `alerts` | The host runs alert rules; the Alerts page and the bell show them. The hub at `api/alerts?project=`, the cloud at `api/projects/:project/alerts` | | ✅ | ✅ |
 | `sharing` | Traces can be shared by a read-only link | | | ✅ |
 | `serverStats` | The host computes page numbers itself (`api/models/<page>`); ranges reach 7 and 30 days | | ✅ | ✅ |
 | `metrics` | The host keeps metrics; the Metrics page appears | ✅ | ✅ | ✅ |
@@ -209,7 +209,7 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search"]`, plus `metrics` when metrics are on. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes", "issues"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "issues", "alerts"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -737,16 +737,24 @@ Pages read small tables built from the stored traces, never the traces themselve
 
 ### Alerts
 
-A rule watches one metric over a window (5 min to 24 h), optionally in one environment: `error_rate` (%), `p95_ms`, `avg_ms`,
-`requests`, `new_errors` (error groups not seen in the window before), `slow_queries`. It fires when the value is above (`>`) or
-below (`<`) the threshold. No data never fires, except `requests <` (traffic stopped). Rules run every minute. A notice is sent
-only when the state changes (fired, resolved), to a webhook (the JSON notice), a Slack incoming webhook, or email
-(`{ "kind": "email", "to": [...] }`: 1 to 20 addresses of members of the organization, confirmed ones when mail is on, checked again
-at each send), and kept as an event.
-The message says what happened: `Requests is 79 (above 5)` when fired, `(no longer above 5)` when resolved, and
-`(alerts when above 5)` for a test notice. `PATCH` changes only the fields it sends.
+The hub and the cloud both run alert rules (the hub sends no email). A rule watches one metric over a window (5 min to 24 h),
+optionally in one environment, and for trace metrics optionally one `service` (display name) or one `endpoint` of it
+(`"GET /api/orders/{id}"`; `slow_queries` is per service only): `error_rate` (%), `p95_ms`, `avg_ms`, `requests`, `new_errors`
+(error groups not seen in the window before), `slow_queries`. It fires when the value is above (`>`), at or above (`>=`), below
+(`<`), or at or below (`<=`) the threshold. No data never fires, except `requests` below (traffic stopped). Rules run every minute.
+A notice is sent when the state changes (fired, resolved), and again every `remindMs` (15 min, 1 h, 4 h, or 1 day; 0 for never)
+while it keeps firing and nobody acknowledged it. `POST …/:id/ack` acknowledges a firing rule (reminders stop until it resolves);
+`POST …/:id/mute` with `{ untilMs }` mutes it (`-1` until unmuted, `null` unmutes): its state still changes, quietly. Turning a rule
+off clears its state. Each check keeps its value (30 days); `GET …/:id?from=&to=` returns the rule, its events, and those values.
+A rule sends to up to 5 channels: a webhook (the JSON notice), a Slack, Microsoft Teams (a MessageCard), or Discord incoming webhook,
+PagerDuty (`{ "kind": "pagerduty", "routingKey": "…" }`, Events API v2: fired and reminders trigger one incident per rule, resolved
+resolves it, a test triggers and resolves its own key), or email (cloud: `{ "kind": "email", "to": [...] }`: 1 to 20 addresses of
+members of the organization, confirmed ones when mail is on, checked again at each send). Every notice, mute, and acknowledgement is
+kept as an event (`fired`, `resolved`, `remind`, `test`, `ack`, `mute`, `unmute`).
+The message says what happened: `Requests is 79 (above 5)` when fired, `(no longer above 5)` when resolved, `(still above 5)` for a
+reminder, and `(alerts when above 5)` for a test notice. `PATCH` changes only the fields it sends.
 Webhook URLs must be https and may not resolve to private, loopback, or link-local addresses, unless the cloud runs with
-`--allow-private-webhooks` (self-hosting on a private network).
+`--allow-private-webhooks` (self-hosting on a private network). The hub allows them by default (it runs on your own network).
 
 A rule can also watch one OpenTelemetry metric: `metric: "metric"`, `metricName` (required), `metricStat`
 (`last`, `avg`, `max`, `p95`, `p99`, or `rate`; default `avg`), and `metricService` (optional). The threshold is in the metric's

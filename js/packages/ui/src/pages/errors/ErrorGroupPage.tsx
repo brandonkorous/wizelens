@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Bell, Boxes, Bug, Users } from "lucide-react";
-import { countBy, type ErrorPageModel, percentChange, type RequestItem } from "@wizeworks/lens-core";
+import { countBy, type ErrorGroup, type ErrorPageModel, percentChange, type RequestItem } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
 import { compareSeriesLabel, fmtCount, fmtDateTime, fmtMs, fmtTime } from "../../format";
 import { hrefTo, navigate, traceHref } from "../../routes";
@@ -8,6 +8,7 @@ import { shortAgent } from "../../ui/agent";
 import { Badge, DotText, toneOfStatus } from "../../ui/Badges";
 import { IssueActions, IssueBadge } from "../../ui/IssueControls";
 import { BarList } from "../../ui/BarList";
+import { AlertOnThis } from "../../ui/AlertOnThis";
 import { DetailHead } from "../../ui/DetailHead";
 import { ModelState } from "../../ui/ModelState";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
@@ -53,6 +54,10 @@ function Breakdown({ m }: { m: ErrorPageModel }) {
   );
 }
 
+/** A new alert for this error: its endpoint's error rate, or new errors in its service when it was not a request. */
+const alertFields = (g: ErrorGroup): Record<string, string> =>
+  g.latest.method ? { metric: "error_rate", service: g.service, endpoint: g.endpoint, name: `${g.endpoint} errors` } : { metric: "new_errors", service: g.service, name: `New errors in ${g.service}` };
+
 function Body({ m }: { m: ErrorPageModel }) {
   const g = m.group!;
   const stats: [string, ReactNode][] = [["Service", <a key="s" href={serviceHref(g.service)}>{g.service}</a>], ["Type", g.type], ["First seen", fmtDateTime(m.issue?.firstSeenMs || g.firstSeenMs)], ["Last seen", fmtDateTime(g.lastSeenMs)]];
@@ -67,7 +72,7 @@ function Body({ m }: { m: ErrorPageModel }) {
   ];
   return (
     <>
-      <DetailHead back={[hrefTo("errors", [], { service: g.service }), "All errors"]} icon={Bug} title={`${g.type}: ${g.message}`} badge={badge} actions={<IssueActions kind="error" issueKey={g.key} info={m.issue ?? undefined} />} stats={stats} />
+      <DetailHead back={[hrefTo("errors", [], { service: g.service }), "All errors"]} icon={Bug} title={`${g.type}: ${g.message}`} badge={badge} actions={<><IssueActions kind="error" issueKey={g.key} info={m.issue ?? undefined} /><AlertOnThis fields={alertFields(g)} /></>} stats={stats} />
       <Cards m={m} />
       <Panel title="Occurrences Over Time">
         <TimeChart starts={m.starts} stackBars bars={bars} lines={[{ label: compareSeriesLabel(m.meta.compare), values: m.chart.prev, color: "var(--wl-slate)", dashed: true }]} />
