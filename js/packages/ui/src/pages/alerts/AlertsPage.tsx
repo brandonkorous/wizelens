@@ -38,10 +38,15 @@ export const eventColumns = (withRule: boolean): Column<AlertEvent>[] => [
   { key: "delivery", header: "Delivery", cell: (e) => <span className="wl-muted wl-small">{e.delivery}</span>, className: "wl-wrap" },
 ];
 
+const TEXT_FIELDS = ["name", "metric", "service", "endpoint", "metricName", "metricStat", "metricService", "sloId", "op"] as const;
+const NUMBER_FIELDS = ["threshold", "windowMs"] as const;
+export const DRAFT_PARAMS = [...TEXT_FIELDS, ...NUMBER_FIELDS];
+
 /** A new rule filled from the link's query (from "Alert on this"), or empty. */
 function draftFromQuery(q: URLSearchParams): RuleDraft {
-  const pick = (k: keyof RuleDraft) => (q.get(k) ? { [k]: q.get(k) } : {});
-  return { ...EMPTY_RULE, ...pick("name"), ...pick("metric"), ...pick("service"), ...pick("endpoint"), ...pick("metricName"), ...pick("metricStat"), ...pick("metricService") } as RuleDraft;
+  const text = Object.fromEntries(TEXT_FIELDS.filter((k) => q.get(k)).map((k) => [k, q.get(k)]));
+  const nums = Object.fromEntries(NUMBER_FIELDS.filter((k) => Number.isFinite(Number(q.get(k))) && q.get(k)).map((k) => [k, Number(q.get(k))]));
+  return { ...EMPTY_RULE, ...text, ...nums } as RuleDraft;
 }
 
 /** Alerts on hosts that run them; elsewhere a note, so a typed or old link never calls an API the host lacks. */
@@ -67,7 +72,7 @@ function AlertRules() {
   const [editing, setEditing] = useState<AlertRule | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const creating = query.get("new") === "1";
-  const close = () => (setEditing(null), creating && setQuery({ new: null, metric: null, service: null, endpoint: null, metricName: null, metricStat: null, metricService: null, name: null }));
+  const close = () => (setEditing(null), creating && setQuery({ new: null, ...Object.fromEntries(DRAFT_PARAMS.map((k) => [k, null])) }));
   const save = async (r: RuleDraft) => {
     const err = await act(() => (editing ? apiSend("PATCH", api.url(`/${encodeURIComponent(editing.id)}`), r) : apiSend("POST", api.url(), r)), reload);
     if (!err) close();

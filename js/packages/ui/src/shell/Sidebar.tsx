@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { Activity, BellRing, Box, Database, FileText, House, Lightbulb, List, Monitor, Search, Settings, Share2, TriangleAlert, Users } from "lucide-react";
+import { Activity, BellRing, Box, Database, FileText, House, Lightbulb, List, Monitor, Search, Settings, Share2, Target, TriangleAlert, Users } from "lucide-react";
 import type { Capability } from "@wizeworks/lens-core";
 import { useHost } from "../data/host";
 import { hrefTo, type PageId } from "../routes";
@@ -26,6 +26,7 @@ export const NAV: NavItem[] = [
   { page: "services", label: "Services", icon: Box },
   { page: "insights", label: "Insights", icon: Lightbulb },
   { page: "alerts", label: "Alerts", icon: BellRing, needs: "alerts" },
+  { page: "slos", label: "SLOs", icon: Target, needs: "slos" },
   { page: "team", label: "Team", icon: Users, needs: "accounts" },
   { page: "settings", label: "Settings", icon: Settings },
 ];

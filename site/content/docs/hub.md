@@ -32,6 +32,7 @@ Each service keeps its own dashboard too.
 - **It knows your services.** Which are online, idle, or offline, what they run on, and when they last sent data.
 - **Any language.** OTLP over HTTP, JSON or protobuf: traces, logs, and metrics.
 - **One MCP endpoint** for every service, with `--mcp`.
+- **SLOs and Apdex,** like the cloud's: error budgets, burn rates, and a target time per service.
 - **Alerts,** like the cloud's: to Slack, Teams, Discord, PagerDuty, or a webhook (no email). Webhooks may be plain http or on
   your own network.
 

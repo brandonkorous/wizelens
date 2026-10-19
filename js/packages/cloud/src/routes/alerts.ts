@@ -7,6 +7,7 @@ import { fail, readJsonBody, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { addEvent, listEvents, ruleEvents, ruleValues } from "../repo/alert-events.js";
 import { ackRule, createRule, deleteRule, listRules, muteRule, ruleById, type RuleInput, updateRule } from "../repo/alerts.js";
+import { sloById } from "../repo/slos.js";
 import { memberEmails } from "../repo/users.js";
 
 const MAX_EMAILS = 20;
@@ -25,10 +26,11 @@ async function emailChannel(ctx: Ctx, orgId: string, to: unknown): Promise<Alert
 }
 
 /** Check a rule from the request body. A change sends only what it changes: the rest comes from `current`. */
-async function ruleInput(ctx: Ctx, orgId: string, current?: object): Promise<RuleInput> {
+async function ruleInput(ctx: Ctx, orgId: string, projectId: string, current?: object): Promise<RuleInput> {
   const b = { ...current, ...(await readJsonBody(ctx.req)) } as Record<string, unknown>;
   const allowPrivate = ctx.app.config.allowPrivateWebhooks;
-  const r = await parseAlertRule(b, { checkUrl: (url) => checkTarget(url, allowPrivate), email: (to) => emailChannel(ctx, orgId, to) });
+  const checkSlo = async (id: string) => ((await sloById(ctx.app.db, projectId, id)) ? null : "That SLO is not in this project.");
+  const r = await parseAlertRule(b, { checkUrl: (url) => checkTarget(url, allowPrivate), checkSlo, email: (to) => emailChannel(ctx, orgId, to) });
   return typeof r === "string" ? fail(400, r) : r;
 }
 
@@ -49,7 +51,7 @@ async function one(ctx: Ctx): Promise<void> {
 
 async function create(ctx: Ctx): Promise<void> {
   const { project, actor } = await requireProject(ctx, ctx.params.project!, "write");
-  const id = await createRule(ctx.app.db, project.id, await ruleInput(ctx, project.orgId), actor, ctx.app.config.now());
+  const id = await createRule(ctx.app.db, project.id, await ruleInput(ctx, project.orgId, project.id), actor, ctx.app.config.now());
   sendJson(ctx.res, 201, await ruleById(ctx.app.db, project.id, id));
 }
 
@@ -57,7 +59,7 @@ async function change(ctx: Ctx): Promise<void> {
   const { project } = await requireProject(ctx, ctx.params.project!, "write");
   const current = await ruleById(ctx.app.db, project.id, ctx.params.id!);
   if (!current) fail(404, "Alert rule not found.");
-  await updateRule(ctx.app.db, project.id, ctx.params.id!, await ruleInput(ctx, project.orgId, current));
+  await updateRule(ctx.app.db, project.id, ctx.params.id!, await ruleInput(ctx, project.orgId, project.id, current));
   sendJson(ctx.res, 200, await ruleById(ctx.app.db, project.id, ctx.params.id!));
 }
 

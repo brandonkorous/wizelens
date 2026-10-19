@@ -127,7 +127,7 @@ interface Trace extends TraceSummary {
 type HostMode = "in-app" | "hub" | "cloud";
 type Capability =
   | "federation" | "environments" | "registry" | "accounts" | "alerts" | "sharing"
-  | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search" | "issues";
+  | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search" | "issues" | "slos";
 
 interface ServiceInfo {
   mode?: HostMode;          // absent = "in-app"
@@ -205,11 +205,12 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `serverMetrics` | The host computes the Metrics page itself (`api/models/metrics`). Without it, the browser reads `api/metrics/points` | | ✅ | ✅ |
 | `search` | The host answers the search language (`api/search`, `api/search/suggest`); the Search page and Ctrl+K use it. Without it, the browser searches the loaded traces | ✅ | ✅ | ✅ |
 | `changes` | The host streams `api/changes?project=` (server-sent events): an `event: data` line each time the project gets new stats, at most every 2 s (the hub: each settle round), and a comment every 25 s. The dashboard reloads the open page then, keeping the old numbers on screen until the new ones arrive | | ✅ | ✅ |
+| `slos` | The host keeps SLOs and Apdex targets. See "SLOs and Apdex" below | | ✅ | ✅ |
 | `issues` | The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. See "Issue states" below | | ✅ | ✅ |
 
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search"]`, plus `metrics` when metrics are on. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes", "issues", "alerts"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "issues", "alerts", "slos"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -367,6 +368,22 @@ audit line `issue.<action>`). A POST body is `{ kind, key, action: "resolve" | "
 The Errors model takes `status` (`unresolved` by default, `resolved`, `ignored`, `all`) and `new=1` (first seen in the
 range), and returns `issues` (status, first seen over all kept data, new, assignee) and `hasIssues`. The Insights model
 takes `status` the same way. The Overview model returns `freshErrors`, the newest new and regressed groups.
+
+## SLOs and Apdex
+
+An SLO covers one service (display name) or one endpoint of it, over the last 7 or 30 days. A request is good when it did not
+fail (`kind: "success"`), or did not fail and took at most `thresholdMs` (`kind: "latency"`, from the duration histograms, so
+within about 4%). `target` is the percent that must be good (above 0, below 100). The error budget is the bad requests the target
+allows; `budgetLeft` is 1 minus the bad requests over that budget (0 is spent, below 0 is over). The burn rate over a window is the
+bad share over the allowed bad share: 1 spends the budget exactly over the SLO's window. Hosts answer `GET api/slos?project=` (hub)
+or `api/projects/:project/slos` (cloud) with every SLO's report (status over its window, with 48 buckets of good share and budget
+left, and the burn rate over the last 1 and 6 hours) and the Apdex targets; `POST` adds one, and `GET`, `PATCH`, and `DELETE` work
+on `…/slos/:id`. An alert rule with `metric: "slo"` and `sloId` watches an SLO's burn rate over its own window.
+
+Apdex scores requests against a target time per service (`GET` and `PUT api/apdex?project=` or `api/projects/:project/apdex`,
+`{ apdex: { service: ms } }`; 500 ms without one): at or under the target is satisfied, under four times it tolerating, and
+slower or failed requests frustrated; the score is (satisfied + tolerating / 2) / all. The Overview model returns `apdex` for the
+services that run your code, each against its own target, and the Service page returns the service's.
 
 ## Search (v0.9)
 
@@ -547,7 +564,7 @@ the rollups. Page answers are cached per page, parameters, scope, 10-second "now
 
 `@wizeworks/lens-cloud` (command `wizelens-cloud`, default port **5970**) is the hosted service. It serves the same dashboard,
 answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats",
-"metrics", "serverMetrics", "search", "changes", "issues"]`,
+"metrics", "serverMetrics", "search", "changes", "issues", "slos"]`,
 and keeps data in Postgres (`DATABASE_URL=postgres://...`). PGlite (`pglite:<folder>` or `memory`) runs the same SQL in-process,
 for tests and trials.
 

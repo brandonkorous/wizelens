@@ -20,8 +20,10 @@ export const MUTED_FOREVER = 8_640_000_000_000_000;
 /** What a person sets on a rule. */
 export interface AlertRuleInput {
   name: string;
-  /** A trace metric, or "metric" for an OpenTelemetry metric (`metricName`, `metricStat`, `metricService`). */
-  metric: AlertMetric | "metric";
+  /** A trace metric, "metric" for an OpenTelemetry metric (`metricName`, `metricStat`, `metricService`), or "slo" for an SLO's burn rate (`sloId`). */
+  metric: AlertMetric | "metric" | "slo";
+  /** For "slo" rules: the SLO whose error budget burn rate it watches. */
+  sloId: string;
   metricName: string;
   metricStat: MetricAlertStat | "";
   metricService: string;

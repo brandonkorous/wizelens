@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { type AlertRule, MUTED_FOREVER, parseAlertRule } from "@wizeworks/lens-core";
 import { sendJson } from "@wizeworks/lens-node/kit";
 import { parseJson, readBody } from "../body.js";
+import { sloById } from "../slos.js";
 import { checkTarget } from "./target.js";
 import { type HubAlertDeps, notifyHub } from "./evaluate.js";
 import { addEvent, createRule, deleteRule, listEvents, listRules, ruleById, ruleEvents, ruleValues, saveRule } from "./store.js";
@@ -22,7 +23,8 @@ const body = async (req: IncomingMessage): Promise<Record<string, unknown>> => (
 
 async function parsed(r: AlertReq, current?: AlertRule) {
   const b = { ...current, ...(await body(r.req)) };
-  return parseAlertRule(b, { checkUrl: (url) => checkTarget(url, r.deps.outbox.allowPrivate) });
+  const checkSlo = async (id: string) => (sloById(r.deps.store.db, r.project, id) ? null : "That SLO is not in this project.");
+  return parseAlertRule(b, { checkUrl: (url) => checkTarget(url, r.deps.outbox.allowPrivate), checkSlo });
 }
 
 async function create(r: AlertReq): Promise<void> {

@@ -61,3 +61,11 @@ export function histMax(h: Readonly<Hist>): number | null {
   const bins = sortedBins(h).filter(([, c]) => c > 1e-9);
   return bins.length ? binValue(bins[bins.length - 1]![0]) : null;
 }
+
+/** How many values are at or below `v` (to the bin of `v`, so within the bin width of about 4%). */
+export function histCountAtMost(h: Readonly<Hist>, v: number): number {
+  const top = binOf(v);
+  let n = 0;
+  for (const [k, c] of Object.entries(h)) if (Number(k) <= top) n += c;
+  return n;
+}

@@ -31,6 +31,7 @@ function bucketed(values: AlertRuleData["values"], from: number, to: number): { 
 /** Where the traces behind a trace rule are: failed requests, slow requests, new errors, or slow queries of its scope and window. */
 function tracesHref(rule: AlertRule, from: number, to: number): string | null {
   if (rule.metric === "metric") return null;
+  if (rule.metric === "slo") return hrefTo("slos", [encodeURIComponent(rule.sloId)]);
   const scope = { ...(rule.service ? { service: rule.service } : {}), ...(rule.endpoint ? { endpoint: rule.endpoint } : {}), from: String(from), to: String(to) };
   if (rule.metric === "new_errors") return hrefTo("errors", [], { ...scope, new: "1" });
   if (rule.metric === "slow_queries") return hrefTo("database", [], { ...scope, sort: "total" });
@@ -54,7 +55,7 @@ function Body({ d, api, reload }: { d: AlertRuleData; api: ReturnType<typeof use
   const w = useShownWindow();
   const r = d.rule;
   const chart = bucketed(d.values, w.from, w.to);
-  const unit = r.metric === "metric" ? undefined : ALERT_METRICS[r.metric].unit;
+  const unit = r.metric === "metric" ? undefined : r.metric === "slo" ? "×" : ALERT_METRICS[r.metric].unit;
   const fmt = (v: number) => fmtValue(r, v);
   const traces = tracesHref(r, w.from, w.to);
   const stats: [string, ReactNode][] = [["Rule", ruleText(r)], ["Last value", fmtValue(r, r.lastValue)], ["Checked", r.lastEvalMs ? fmtDateTime(r.lastEvalMs) : "Not yet"], ["Sends to", r.channels.map(channelLabel).join(", ") || "Dashboard only"]];

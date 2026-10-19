@@ -86,7 +86,9 @@ export type Capability =
   /** The host streams `api/changes` (server-sent events) when a project gets new stats, so pages reload at once. */
   | "changes"
   /** The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. */
-  | "issues";
+  | "issues"
+  /** The host keeps SLOs and Apdex targets (`api/slos`, `api/apdex`). */
+  | "slos";
 
 /** What an in-app add-on offers today. Also the default when a host does not say. */
 export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];

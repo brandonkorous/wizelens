@@ -3,6 +3,7 @@ import { errorEvents, type Health, isFailed, requestRows } from "@wizeworks/lens
 import { TraceDetail } from "./pages/trace/TraceDetailPage";
 import { TraceCompare } from "./pages/trace/TraceCompare";
 import { AlertsPage } from "./pages/alerts/AlertsPage";
+import { SlosPage } from "./pages/slos/SlosPage";
 import { AuthGate } from "./shell/auth/AuthGate";
 import { useData, useWindowed } from "./data/hooks";
 import { useHost } from "./data/host";
@@ -52,6 +53,7 @@ const PAGES: Record<Exclude<PageId, "trace" | "shared" | AuthPageId>, ComponentT
   insights: InsightsPage,
   settings: SettingsPage,
   alerts: AlertsPage,
+  slos: SlosPage,
   team: TeamPage,
   account: AccountPage,
 };

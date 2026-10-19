@@ -90,6 +90,10 @@ Error rate is 3.1% (still above 2%)
 Error rate is 1.1% (no longer above 2%)
 ```
 
+A rule can also watch an **SLO's burn rate**. On the **SLOs** page, an SLO says how much of a service's or an endpoint's
+requests must succeed, or finish within a time, over 7 or 30 days; it shows the error budget left and how fast it burns. Set the
+**Apdex** target of each service there too; the Overview and the service pages show the score.
+
 Each rule has its own page: its value against the line over time, every notice and change, and a link to the traces behind
 it. **Alert on this** on a service, an endpoint, an error, or a metric chart opens a new rule filled in for it. The hub runs
 the same alerts, without email.

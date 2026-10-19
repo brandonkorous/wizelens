@@ -6,6 +6,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **SLOs and error budgets.** An SLO says how much of a service's or an endpoint's traffic must succeed, or be fast enough,
+  over 7 or 30 days. The SLOs page shows how much error budget is left and how fast it burns over the last hour and 6 hours;
+  each SLO has a page with its budget and good share over time. **Alert on burn rate** makes an alert rule that watches it.
+- **Apdex** on the Overview and each service page, against a target time per service (500 ms unless you set one on the SLOs
+  page).
 - **Alerts on the hub,** not only the cloud. Rules can watch one service or one endpoint, and use **at or above** and
   **at or below**. **Remind** while a rule keeps firing, **acknowledge** to stop the reminders, **mute** for an hour, a day, or
   until unmuted, and turn rules **on or off** from the list. Rules send to up to five channels, all editable: Slack,
