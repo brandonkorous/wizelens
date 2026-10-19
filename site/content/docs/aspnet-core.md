@@ -17,7 +17,8 @@ var app = builder.Build();
 app.UseWizeLens();                // early in the pipeline
 ```
 
-Open `https://localhost:<port>/_wizelens`. WizeLens targets .NET 10.
+Open `https://localhost:<port>/_wizelens`. WizeLens targets .NET 10. No access to the code? A startup hook adds the same
+with no code: see [Install with no code change](/docs/auto-install/).
 
 ## Databases
 

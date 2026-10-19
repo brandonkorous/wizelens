@@ -1,0 +1,41 @@
+# The webhook image. The same image holds the files copied into each injected pod.
+image:
+  repository: ghcr.io/brandonkorous/wizelens-inject
+  # Default: the chart's appVersion.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# Where injected pods send their traces (WIZELENS_HUB), for example http://wizelens-hub.wizelens:5960.
+# A pod can override it with the annotation wizelens.dev/hub.
+hub: ""
+
+# The hub token (WIZELENS_HUB_TOKEN), read from a Secret in each injected pod's namespace. Empty: no token.
+hubTokenSecret:
+  name: ""
+  key: token
+
+# The project (WIZELENS_PROJECT). Empty: the pod's namespace. Annotation: wizelens.dev/project.
+project: ""
+
+# Serve /_wizelens inside injected pods. Off: send-only. Annotation: wizelens.dev/dashboard.
+dashboard: false
+
+# Ignore: a webhook that is down never blocks a deploy; pods start without WizeLens.
+failurePolicy: Ignore
+
+# Limit injection to namespaces with these labels, for example { wizelens.dev/inject: enabled }. Empty: every namespace.
+namespaceLabels: {}
+
+replicas: 1
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

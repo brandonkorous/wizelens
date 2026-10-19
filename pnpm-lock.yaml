@@ -358,6 +358,12 @@ importers:
         specifier: ^8.3.4
         version: 8.3.4(@types/node@24.19.2)
 
+  samples/auto-node:
+    dependencies:
+      express:
+        specifier: ^5.3.0
+        version: 5.3.0
+
   samples/next-web:
     dependencies:
       '@wizeworks/lens-node':

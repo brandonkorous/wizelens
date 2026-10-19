@@ -1,0 +1,10 @@
+WizeLens injection is on. Label a pod template to turn WizeLens on with no code change:
+
+  metadata:
+    labels:
+      wizelens.dev/inject: node     # or: dotnet
+
+New pods get the WizeLens files in /wizelens and the variables that load them{{ if .Values.hub }}, sending to {{ .Values.hub }}{{ end }}.
+Restart a Deployment to inject its pods: kubectl rollout restart deployment/<name>
+
+Docs: https://wizelens.com/docs/auto-install

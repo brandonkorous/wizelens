@@ -6,6 +6,13 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Saved views and searches.** The star in the top bar saves the page you are on, with its filters and time range. Saved
+  views show under Saved in the sidebar; saved searches also show under the Search box. On the cloud they are yours until
+  you share them with the team.
+- **Dashboards:** your own pages of metric charts. A chart shows one to six metrics, filtered by any attribute value and
+  split by any attribute, as lines, areas, stacked bars, numbers, or a table. The Metrics page API takes the same filter.
+- **CSV export** on Errors, Logs, Database, Traces, Insights, and Search, next to Requests.
+- **Share a page** (cloud): a read-only link to a page as it is now, its numbers kept for 1 to 30 days. Not only traces.
 - **SLOs and error budgets.** An SLO says how much of a service's or an endpoint's traffic must succeed, or be fast enough,
   over 7 or 30 days. The SLOs page shows how much error budget is left and how fast it burns over the last hour and 6 hours;
   each SLO has a page with its budget and good share over time. **Alert on burn rate** makes an alert rule that watches it.
@@ -81,7 +88,7 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   not set, in Node and .NET. Problems uses `service.version` to spot a new release.
 - **One stats rebuild for all of the above** (`FACTS_VERSION` 6): errors grouped by their first app frame, log patterns,
   and the versions each service sends. Hosts rebuild their stats once after the upgrade, and the production ClickHouse
-  re-settles once. Cloud migrations 13 (uptime), 14 (source maps), 15 (logs), and 16 (problems) run in that order, after 11 and 12 (alerts and SLOs).
+  re-settles once. Cloud migrations 14 (uptime), 15 (source maps), 16 (logs), and 17 (problems) run in that order, after 11 to 13 (alerts, SLOs, and saved items).
 
 - **A page for each error, endpoint, query, and page route.** An error shows its count over time, its endpoints, the users
   and browsers of its newest occurrences, the stack, and those occurrences. An endpoint shows requests, errors, and
@@ -116,6 +123,22 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   production, the new `@wizeworks/lens-cli` package uploads maps per release to the hub or the cloud (with a project's
   ingest key): `npx @wizeworks/lens-cli sourcemaps upload ./dist`, or the Vite, webpack, and Next.js plugins at build time.
   The React provider sends the release as `service.version` (the `release` prop, or what the build plugin sets).
+- **Install with no code change.** Platform teams can turn WizeLens on without touching a service:
+  - **Node:** `NODE_OPTIONS="--import @wizeworks/lens-node/auto"`. It traces every `node:http` server, names Express,
+    Fastify, Koa, Hono, and Next.js routes, records their errors, and hooks `pg`, `mysql2`, `better-sqlite3`,
+    `node:sqlite`, Prisma Client, gRPC, amqplib, kafkajs, Service Bus, pino, winston, and bunyan as the app loads them.
+    Set by variables only: `OTEL_SERVICE_NAME` (else the `package.json` name), `WIZELENS_HUB`, `WIZELENS_ENABLED`, and the
+    rest. `WIZELENS_AUTO_SKIP` leaves hooks off.
+  - **.NET:** the new `WizeLens.AutoInstrumentation` package is a startup hook
+    (`DOTNET_STARTUP_HOOKS=.../WizeLens.AutoInstrumentation.dll`) and hosting startup that does what `AddWizeLens()` and
+    `UseWizeLens()` do, and also records EF Core commands and the exceptions an exception page catches. Each release has
+    the hook folder as `wizelens-dotnet-auto-<version>.zip`.
+  - **Kubernetes:** a mutating webhook (Helm chart `oci://ghcr.io/brandonkorous/charts/wizelens-inject`, image
+    `ghcr.io/brandonkorous/wizelens-inject`) adds the hook and the variables to pods labeled
+    `wizelens.dev/inject: node` or `dotnet`.
+  - The code install stays and wins: when the app calls `createWizeLens()` or `AddWizeLens()` too, the auto install steps
+    aside and nothing is counted twice. `UseWizeLens()` now adds its middleware once, however often it is called.
+  - New samples with no WizeLens code: `samples/auto-node` and `samples/auto-dotnet`.
 
 - **Connect Claude to WizeLens Cloud with a sign-in, not a key.** Add `https://mcp.wizelens.com` to Claude (Settings →
   Connectors), Claude Code, Cursor, or any MCP client. It opens the WizeLens sign-in, and you pick one organization and

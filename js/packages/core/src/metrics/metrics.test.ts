@@ -3,6 +3,7 @@ import { fmtMetric, metricAreaOf } from "./format.js";
 import { metricsModel } from "./model.js";
 import { histogramPercentile } from "./series.js";
 import { type MetricPoint, sanitizeMetricPoint } from "./types.js";
+import { METRIC_NOW, metricScenario } from "../testing/metric-scenario.js";
 
 const NOW = 1_000_000_000_000;
 const MIN = 60_000;
@@ -80,5 +81,19 @@ describe("inputs and format", () => {
     expect(model(pts, { service: "web" }).catalog.map((c) => c.name)).toEqual(["b.two"]);
     expect(model(pts, { q: "ONE" }).catalog.map((c) => c.name)).toEqual(["a.one"]);
     expect(model(pts).services).toEqual(["api", "web"]);
+  });
+});
+
+describe("metric where filter", () => {
+  it("keeps only the series with the attribute value, and lists the values to pick", () => {
+    const points = metricScenario("1h");
+    const name = "http.requests";
+    const all = metricsModel({ points, range: "1h", now: METRIC_NOW, params: { metric: name } }).selected!;
+    const key = Object.keys(all.values).find((k) => k !== "service" && all.values[k]!.length > 1)!;
+    const value = all.values[key]![0]!;
+    const one = metricsModel({ points, range: "1h", now: METRIC_NOW, params: { metric: name, where: `${key}=${value}`, group: key } }).selected!;
+    expect(one.where).toBe(`${key}=${value}`);
+    expect(one.lines.map((l) => l.label)).toEqual([value]);
+    expect(metricsModel({ points, range: "1h", now: METRIC_NOW, params: { metric: name, where: `${key}=nope` } }).selected!.lines).toEqual([]);
   });
 });

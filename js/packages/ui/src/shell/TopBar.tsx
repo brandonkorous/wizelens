@@ -9,6 +9,8 @@ import { UserMenu } from "./UserMenu";
 import { Notifications } from "./Notifications";
 import { SearchPalette, useSearchShortcut } from "./SearchPalette";
 import { RangeMenu } from "./RangeMenu";
+import { SaveView } from "./SaveView";
+import { SharePage } from "./SharePage";
 import { EnvMenu, ModeBadge, ThemeToggle } from "./TopMenus";
 
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
@@ -38,6 +40,8 @@ export function TopBar({ data }: { data: DataSnapshot }) {
       <ServiceChip />
       {data.registry ? <HubMenu registry={data.registry} projects={projects} /> : <EnvMenu sources={data.sources} />}
       <RangeMenu />
+      <SaveView />
+      <SharePage />
       <Notifications traces={data.traces} now={data.updatedMs} />
       <ThemeToggle />
       {projects && <UserMenu />}

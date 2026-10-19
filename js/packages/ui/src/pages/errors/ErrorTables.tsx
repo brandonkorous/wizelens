@@ -9,6 +9,7 @@ import { Sparkline } from "../../ui/Sparkline";
 import { IssueBadge } from "../../ui/IssueControls";
 import { useSetService } from "../../ui/ServiceSelect";
 import { type Column, Table } from "../../ui/Table";
+import { ExportButton } from "../../ui/ExportButton";
 
 const pathOf = (endpoint: string) => endpoint.replace(/^[A-Z]+ /, "");
 
@@ -35,7 +36,7 @@ export function RecentExceptionsPanel({ stats, selected }: { stats: ErrorsModel;
   const filtered = isErrorFiltered(stats.filter);
   const title = stats.filter.sort === "count" ? "Most Frequent Exceptions" : "Recent Exceptions";
   return (
-    <Panel title={`${title} (${fmtCount(stats.groupCount)})`} flush className="wl-err-list">
+    <Panel title={`${title} (${fmtCount(stats.groupCount)})`} flush className="wl-err-list" action={<ExportButton page="errors" disabled={stats.groupCount === 0} />}>
       <Table
         columns={groupColumns(stats.issues)}
         rows={stats.groups}

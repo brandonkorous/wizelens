@@ -14,6 +14,7 @@ import { StatCard } from "../../ui/StatCard";
 import { InsightDetail } from "./InsightDetail";
 import { InsightList } from "./InsightList";
 import "../../styles/pages/insights.css";
+import { ExportButton } from "../../ui/ExportButton";
 
 function Cards({ m }: { m: InsightsModel }) {
   const { totals: cur, prevTotals: prev } = m;
@@ -54,7 +55,7 @@ function InsightsBody({ m, wanted }: { m: InsightsModel; wanted: string | null }
       <Cards m={m} />
       <Filters issues={m.hasIssues} releases={m.releases.map((r) => r.version)} />
       <div className={`wl-grid${wanted ? " wl-grid-side" : ""}`}>
-        <Panel flush title={`Insights (${fmtCount(m.matching)})`}>
+        <Panel flush title={`Insights (${fmtCount(m.matching)})`} action={<ExportButton page="insights" disabled={m.matching === 0} />}>
           <InsightList groups={m.groups} issues={m.issues} selected={m.selected?.key ?? null} now={now} filtered={m.matching !== m.totals.count} />
         </Panel>
         {wanted && (m.selected ? <InsightDetail group={m.selected} info={m.issues[m.selected.key]} now={now} /> : <Panel><Empty title="This insight is not in the selected time range" /></Panel>)}

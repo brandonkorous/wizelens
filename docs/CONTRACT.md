@@ -128,7 +128,7 @@ type HostMode = "in-app" | "hub" | "cloud";
 type Capability =
   | "federation" | "environments" | "registry" | "accounts" | "alerts" | "sharing"
   | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search" | "issues"
-  | "infra" | "uptime" | "statusPages" | "sourcemaps" | "savedSearches" | "slos";
+  | "infra" | "uptime" | "statusPages" | "sourcemaps" | "savedSearches" | "slos" | "saved";
 
 interface ServiceInfo {
   mode?: HostMode;          // absent = "in-app"
@@ -209,6 +209,7 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `infra` | The host answers `api/models/hosts` and `api/models/kubernetes` from OpenTelemetry Collector metrics (see "Hosts and Kubernetes"); the Hosts and Kubernetes pages appear | | ✅ | ✅ |
 | `sourcemaps` | The host resolves browser stacks at `api/sourcemaps/resolve` (see "Source maps"). Without it, the dashboard resolves them in the browser from the maps the site serves | ✅ (Node) | ✅ | ✅ |
 | `changes` | The host streams `api/changes?project=` (server-sent events): an `event: data` line each time the project gets new stats, at most every 2 s (the hub: each settle round), and a comment every 25 s. The dashboard reloads the open page then, keeping the old numbers on screen until the new ones arrive | | ✅ | ✅ |
+| `saved` | The host keeps saved views, saved searches, and dashboards. See "Saved views and dashboards" below | | ✅ | ✅ |
 | `slos` | The host keeps SLOs and Apdex targets. See "SLOs and Apdex" below | | ✅ | ✅ |
 | `issues` | The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. See "Issue states" below | | ✅ | ✅ |
 | `uptime` | The host runs uptime checks (`api/uptime` on the hub, `api/projects/{p}/uptime` in the cloud) and serves the `uptime` page model; the Uptime page appears. See "Uptime checks" | | ✅ (unless `--no-uptime`) | ✅ |
@@ -217,7 +218,7 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search"]`, plus `metrics` when metrics are on and `sourcemaps` (Node) unless `sourceMaps: false`. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "savedSearches", "uptime"]` (`uptime` only while checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "savedSearches", "saved", "uptime"]` (`uptime` only while checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -437,6 +438,16 @@ audit line `issue.<action>`). A POST body is `{ kind, key, action: "resolve" | "
 The Errors model takes `status` (`unresolved` by default, `resolved`, `ignored`, `all`) and `new=1` (first seen in the
 range), and returns `issues` (status, first seen over all kept data, new, assignee) and `hasIssues`. The Insights model
 takes `status` the same way. The Overview model returns `freshErrors`, the newest new and regressed groups.
+
+## Saved views and dashboards
+
+Hosts with `saved` keep items per project at `api/saved?project=` (hub) or `api/projects/:project/saved` (cloud):
+`{ kind: "view" | "search" | "dashboard", name, href, panels, shared }`. Views and searches keep a dashboard address (`href`,
+starting `#/`) with its filters and time range; dashboards keep up to 24 charts. A chart (`panels[]`) has 1 to 6 metrics
+(`{ name, stat }`), a `type` (`line`, `area`, `bar` stacked, `number`, or `table`), a `where` filter (`key=value`, comma-separated,
+`service` included), a `group` to split lines by, and a `width` (1 half, 2 whole). On the cloud an item belongs to the person who
+made it and is shared with the project only when `shared`; on the hub every item is shared. The metrics model takes `where` too
+and returns it with `values`, the values each key has (at most 50 per key).
 
 ## SLOs and Apdex
 
@@ -716,7 +727,7 @@ traces. Incidents that ended more than 90 days ago are dropped.
 
 `@wizeworks/lens-cloud` (command `wizelens-cloud`, default port **5970**) is the hosted service. It serves the same dashboard,
 answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats",
-"metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "savedSearches", "slos"]`,
+"metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "savedSearches", "slos", "saved"]`,
 and keeps data in Postgres (`DATABASE_URL=postgres://...`). PGlite (`pglite:<folder>` or `memory`) runs the same SQL in-process,
 for tests and trials.
 
@@ -828,6 +839,8 @@ retention, and the audit log.
 | POST | `api/projects/{p}/uptime/{id}/run` | Member. Runs the check now and answers it |
 | GET / POST / PATCH / DELETE | `api/projects/{p}/status-page` | Read: viewer (`{ enabled, title?, createdMs?, views? }`); on or new link (`{ title }`, answers `{ url, title }` once), rename, off: member (audited `status.enable`, `status.disable`) |
 | GET | `api/status/{token}` | Anyone with the link: `StatusPageView` |
+| GET | `api/shared/{token}` | Anyone with the link: `{ trace, expiresMs }`, or for a page link `{ page, title, params, model, createdMs, expiresMs }` |
+| GET / POST / GET, PATCH, DELETE | `api/projects/{p}/saved[/{id}]` | Read: viewer (own and shared items); add: member; change: the owner; delete: the owner or an admin |
 | POST | `api/ingest`, `/v1/traces`, `/v1/logs`, `/v1/metrics` | Ingest key |
 | POST / GET | `api/sourcemaps?release=&file=` | Ingest key: upload one map to the key's project, or list them (see "Source maps") |
 | POST | `api/sourcemaps/resolve?project=` | Member or read key: `{ stack, release }` → `{ frames }` |
@@ -998,7 +1011,10 @@ answers the asked project's part plus the parts of the same trace id in the othe
 
 ### Sharing
 
-A share link (`#/shared/<token>`, 1 to 30 days) opens one trace, read-only, for anyone with the link. It can be revoked.
+A share link (`#/shared/<token>`, 1 to 30 days) opens one trace, or one page, read-only, for anyone with the link. It can be
+revoked. A page link (`POST …/shares` with `page`, `range`, `params`, `env`, and `title`) keeps the page's model as it was when the
+link was made (at most 2 MB): Overview, Requests, Errors, an error, Database, a query, Logs, Insights, Rendering, a route,
+Services, a service, an endpoint, and Traces. `api/shared/{token}` answers `{ page, title, params, model, createdMs, expiresMs }`.
 Views are counted. Nothing else is reachable with the token. The trace is joined as far as the link's maker may read at
 the time it is opened: after the maker leaves the organization, the link shows only the shared project's part.
 
@@ -1060,9 +1076,10 @@ Data tables are keyed by `project_id`. Times are `double precision` epoch ms, ex
 secrets (keys, shares, status page links) are stored as SHA-256 hashes only; Better Auth stores reset and confirm tokens hashed. Migration 8 added
 `fact_search` and `fact_attrs` (see "Search"). Migration 10 added `issues` (see "Issue states"). Migration 11 added the alert
 rule scope, reminder, mute, and acknowledgement columns and `alert_values` (see "Alerts"). Migration 12 added `slos` and
-`apdex_targets` (see "SLOs and Apdex"). Migration 13 added `uptime_checks`, `uptime_incidents`, and `status_pages` (see "Uptime
-checks"). Migration 14 added `sourcemaps` (see "Source maps"). Migration 15 added `fact_logs.pattern`,
-`projects.log_retention_days`, `alert_rules.log_search`, and `saved_searches`. Migration 16 added `alert_events.problem` (see
+`apdex_targets` (see "SLOs and Apdex"). Migration 13 added `saved_items` and the page columns of `shares` (saved views,
+searches, dashboards, and page share links). Migration 14 added `uptime_checks`, `uptime_incidents`, and `status_pages` (see
+"Uptime checks"). Migration 15 added `sourcemaps` (see "Source maps"). Migration 16 added `fact_logs.pattern`,
+`projects.log_retention_days`, `alert_rules.log_search`, and `saved_searches`. Migration 17 added `alert_events.problem` (see
 "Problems").
 
 ### Telemetry stores (small mode and scale mode)

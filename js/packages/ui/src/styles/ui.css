@@ -184,3 +184,6 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-btn.wl-btn-sm { height: 32px; padding: 0 12px; font-size: 13px; font-weight: 550; letter-spacing: 0; }
 .wl-btn.wl-btn-sm svg { width: 16px; height: 16px; }
 .wl-svc-title .wl-dhead-actions { font-size: 13px; }
+.wl-save-view { display: grid; gap: 10px; width: 320px; padding: 12px; }
+.wl-share-url { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.wl-share-url code { flex: 1; min-width: 0; font-size: 12px; }

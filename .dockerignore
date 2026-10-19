@@ -2,7 +2,8 @@
 **/node_modules
 **/dist
 **/.wizelens
-dotnet
+**/bin
+**/obj
 images
 docs
 artifacts

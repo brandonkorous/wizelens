@@ -6,6 +6,7 @@ import { hrefTo, navigate, queryHref, setQuery } from "../../routes";
 import { Pager } from "../../ui/Controls";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
+import { ExportButton } from "../../ui/ExportButton";
 
 const TOP = 5;
 
@@ -54,7 +55,7 @@ function ToggleAll({ open, total, onToggle }: { open: boolean; total: number; on
 /** One page of the query shapes that match the filter, in its order. A row opens the query's page. */
 export function TopQueriesPanel({ stats }: { stats: DatabaseModel }) {
   return (
-    <Panel title={`${QUERY_TITLE[stats.filter.sort]} (${fmtCount(stats.queryShapes)})`} flush className="wl-db-queries">
+    <Panel title={`${QUERY_TITLE[stats.filter.sort]} (${fmtCount(stats.queryShapes)})`} flush className="wl-db-queries" action={<ExportButton page="database" disabled={stats.queries.length === 0} />}>
       <Table columns={queryColumns(stats.slowMs)} rows={stats.queries} rowKey={(q) => q.key} onRowClick={(q) => navigate(queryHref(q.query))} empty={<Empty>No queries match in this time range.</Empty>} />
       {stats.queryShapes > 0 && (
         <Pager page={stats.page} pageSize={stats.size} total={stats.queryShapes} noun="queries" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />

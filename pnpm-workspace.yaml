@@ -3,6 +3,7 @@ packages:
   - "samples/web"
   - "samples/orders-api"
   - "samples/next-web"
+  - "samples/auto-node"
   - "site"
 
 # satori pins fflate 0.7.3, which has GHSA advisory "unzipSync can enter an infinite loop on malformed ZIP64". 0.7.5 fixes it.

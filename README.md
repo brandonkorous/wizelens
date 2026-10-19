@@ -117,6 +117,17 @@ Outgoing `fetch` calls and routing time are traced automatically. Not on Express
 
 An ORM and the driver under it never count the same query twice. Queries outside a request (startup, jobs) are skipped unless you set `traceQueriesOutsideRequests: true`.
 
+### No code change
+
+Can't touch the code? Turn WizeLens on from outside the app, set by environment variables only:
+
+```bash
+NODE_OPTIONS="--import @wizeworks/lens-node/auto" node server.js                     # Node
+DOTNET_STARTUP_HOOKS=/opt/wizelens/dotnet/WizeLens.AutoInstrumentation.dll dotnet App.dll   # ASP.NET Core
+```
+
+On Kubernetes, the `wizelens-inject` Helm chart adds both to pods labeled `wizelens.dev/inject: node` or `dotnet`. The code install still wins when both are there. See [Install with no code change](site/content/docs/auto-install.md).
+
 ### React
 
 ```tsx
@@ -410,6 +421,8 @@ To try the hub, start it first with `pnpm dev:hub` (http://localhost:5960/_wizel
 |---|---|---|
 | `WizeLens.AspNetCore` | NuGet | The ASP.NET Core add-on |
 | `WizeLens.EntityFrameworkCore` | NuGet | EF Core adapter |
+| `WizeLens.AutoInstrumentation` | NuGet, zip | Startup hook: WizeLens with no code change |
+| `wizelens-inject` | Docker, Helm | Kubernetes webhook that adds the hooks to labeled pods |
 | `@wizeworks/lens-node` | npm | The Node add-on |
 | `@wizeworks/lens-react` | npm | Browser tracing + HUD |
 | `@wizeworks/lens-core` | npm | Shared types, trace context, analysis |
