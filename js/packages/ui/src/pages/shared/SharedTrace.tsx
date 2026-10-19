@@ -1,31 +1,35 @@
 import { useEffect, useState } from "react";
 import { mergeTraces, type Trace } from "@wizeworks/lens-core";
 import { apiFetch } from "../../data/api";
-import { fmtDate } from "../../format";
+import { fmtDate, fmtDateTime } from "../../format";
 import { Logo } from "../../shell/Logo";
 import { Empty, Panel } from "../../ui/Panel";
 import { TraceBody } from "../trace/TraceDetailPage";
+import { SharedPage } from "./SharedPage";
 
-/** A trace someone shared by link. No sign-in, no navigation: just this one trace. */
+type Link = { trace: Trace; expiresMs: number } | { page: string; title: string; params: Record<string, string>; model: unknown; createdMs: number; expiresMs: number };
+
+/** What a share link shows: one trace, or one page as it was when the link was made. No sign-in, no navigation. */
 export function SharedTrace({ token }: { token: string }) {
-  const [state, setState] = useState<{ trace: Trace; expiresMs: number } | null>(null);
+  const [state, setState] = useState<Link | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
-    apiFetch<{ trace: Trace; expiresMs: number }>(`./api/shared/${token}`).then(
-      (s) => setState({ trace: mergeTraces(s.trace.traceId, [s.trace]), expiresMs: s.expiresMs }),
+    apiFetch<Link>(`./api/shared/${token}`).then(
+      (s) => setState("trace" in s ? { trace: mergeTraces(s.trace.traceId, [s.trace]), expiresMs: s.expiresMs } : s),
       (e: unknown) => setError(e instanceof Error ? e.message : String(e)),
     );
   }, [token]);
+  const what = !state ? "Shared link" : "trace" in state ? "Shared trace" : `${state.title} · as of ${fmtDateTime(state.createdMs)}`;
   return (
     <div className="wl-shared">
       <header className="wl-shared-head">
         <span className="wl-brand-row">
           <Logo />
         </span>
-        <span className="wl-muted wl-small">{state ? `Shared trace · link works until ${fmtDate(state.expiresMs)}` : "Shared trace"}</span>
+        <span className="wl-muted wl-small">{state ? `${what} · link works until ${fmtDate(state.expiresMs)}` : what}</span>
       </header>
       <main className="wl-page">
-        {state ? <TraceBody trace={state.trace} shared /> : <Panel><Empty title={error ? "This link does not work" : "Loading…"}>{error}</Empty></Panel>}
+        {!state ? <Panel><Empty title={error ? "This link does not work" : "Loading…"}>{error}</Empty></Panel> : "trace" in state ? <TraceBody trace={state.trace} shared /> : <SharedPage page={state.page} params={state.params} model={state.model} />}
       </main>
     </div>
   );

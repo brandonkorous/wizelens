@@ -127,7 +127,7 @@ interface Trace extends TraceSummary {
 type HostMode = "in-app" | "hub" | "cloud";
 type Capability =
   | "federation" | "environments" | "registry" | "accounts" | "alerts" | "sharing"
-  | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search" | "issues" | "slos";
+  | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search" | "issues" | "slos" | "saved";
 
 interface ServiceInfo {
   mode?: HostMode;          // absent = "in-app"
@@ -205,12 +205,13 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `serverMetrics` | The host computes the Metrics page itself (`api/models/metrics`). Without it, the browser reads `api/metrics/points` | | ✅ | ✅ |
 | `search` | The host answers the search language (`api/search`, `api/search/suggest`); the Search page and Ctrl+K use it. Without it, the browser searches the loaded traces | ✅ | ✅ | ✅ |
 | `changes` | The host streams `api/changes?project=` (server-sent events): an `event: data` line each time the project gets new stats, at most every 2 s (the hub: each settle round), and a comment every 25 s. The dashboard reloads the open page then, keeping the old numbers on screen until the new ones arrive | | ✅ | ✅ |
+| `saved` | The host keeps saved views, saved searches, and dashboards. See "Saved views and dashboards" below | | ✅ | ✅ |
 | `slos` | The host keeps SLOs and Apdex targets. See "SLOs and Apdex" below | | ✅ | ✅ |
 | `issues` | The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. See "Issue states" below | | ✅ | ✅ |
 
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search"]`, plus `metrics` when metrics are on. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes", "issues", "alerts", "slos"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "issues", "alerts", "slos", "saved"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -368,6 +369,16 @@ audit line `issue.<action>`). A POST body is `{ kind, key, action: "resolve" | "
 The Errors model takes `status` (`unresolved` by default, `resolved`, `ignored`, `all`) and `new=1` (first seen in the
 range), and returns `issues` (status, first seen over all kept data, new, assignee) and `hasIssues`. The Insights model
 takes `status` the same way. The Overview model returns `freshErrors`, the newest new and regressed groups.
+
+## Saved views and dashboards
+
+Hosts with `saved` keep items per project at `api/saved?project=` (hub) or `api/projects/:project/saved` (cloud):
+`{ kind: "view" | "search" | "dashboard", name, href, panels, shared }`. Views and searches keep a dashboard address (`href`,
+starting `#/`) with its filters and time range; dashboards keep up to 24 charts. A chart (`panels[]`) has 1 to 6 metrics
+(`{ name, stat }`), a `type` (`line`, `area`, `bar` stacked, `number`, or `table`), a `where` filter (`key=value`, comma-separated,
+`service` included), a `group` to split lines by, and a `width` (1 half, 2 whole). On the cloud an item belongs to the person who
+made it and is shared with the project only when `shared`; on the hub every item is shared. The metrics model takes `where` too
+and returns it with `values`, the values each key has (at most 50 per key).
 
 ## SLOs and Apdex
 
@@ -564,7 +575,7 @@ the rollups. Page answers are cached per page, parameters, scope, 10-second "now
 
 `@wizeworks/lens-cloud` (command `wizelens-cloud`, default port **5970**) is the hosted service. It serves the same dashboard,
 answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats",
-"metrics", "serverMetrics", "search", "changes", "issues", "slos"]`,
+"metrics", "serverMetrics", "search", "changes", "issues", "slos", "saved"]`,
 and keeps data in Postgres (`DATABASE_URL=postgres://...`). PGlite (`pglite:<folder>` or `memory`) runs the same SQL in-process,
 for tests and trials.
 
@@ -668,7 +679,8 @@ retention, and the audit log.
 | GET | `api/models/{page}?project=&range=&env=&…` | Member or read key. See "Page models". `metrics` is a page too |
 | GET / POST / PATCH / DELETE | `api/projects/{p}/alerts[/{id}]`, `…/{id}/test` | Read: viewer; change: member |
 | POST / GET / DELETE | `api/projects/{p}/shares[/{id}]` | Read: viewer; change: member |
-| GET | `api/shared/{token}` | Anyone with the link: `{ trace, expiresMs }` |
+| GET | `api/shared/{token}` | Anyone with the link: `{ trace, expiresMs }`, or for a page link `{ page, title, params, model, createdMs, expiresMs }` |
+| GET / POST / GET, PATCH, DELETE | `api/projects/{p}/saved[/{id}]` | Read: viewer (own and shared items); add: member; change: the owner; delete: the owner or an admin |
 | POST | `api/ingest`, `/v1/traces`, `/v1/logs`, `/v1/metrics` | Ingest key |
 | POST | `mcp?project=` | Read key or connected app (OAuth access token). Without `?project=`, a reader with one project reads it; one with several adds `list_projects` and a `project` argument (id or name) on every tool, and `get_overview` without it reports on all |
 | GET | `/.well-known/oauth-protected-resource[/_wizelens/mcp]`, `/.well-known/oauth-authorization-server/_wizelens/api/auth` | Anyone (CORS open). OAuth metadata for MCP clients |
@@ -794,7 +806,10 @@ answers the asked project's part plus the parts of the same trace id in the othe
 
 ### Sharing
 
-A share link (`#/shared/<token>`, 1 to 30 days) opens one trace, read-only, for anyone with the link. It can be revoked.
+A share link (`#/shared/<token>`, 1 to 30 days) opens one trace, or one page, read-only, for anyone with the link. It can be
+revoked. A page link (`POST …/shares` with `page`, `range`, `params`, `env`, and `title`) keeps the page's model as it was when the
+link was made (at most 2 MB): Overview, Requests, Errors, an error, Database, a query, Logs, Insights, Rendering, a route,
+Services, a service, an endpoint, and Traces. `api/shared/{token}` answers `{ page, title, params, model, createdMs, expiresMs }`.
 Views are counted. Nothing else is reachable with the token. The trace is joined as far as the link's maker may read at
 the time it is opened: after the maker leaves the organization, the link shows only the shared project's part.
 

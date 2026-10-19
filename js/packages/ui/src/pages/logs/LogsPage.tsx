@@ -12,6 +12,7 @@ import type { LogsModel } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
 import { ModelState } from "../../ui/ModelState";
 import "../../styles/pages/logs.css";
+import { ExportButton } from "../../ui/ExportButton";
 
 function LogStatCards({ stats }: { stats: LogsModel }) {
   const { cards, change, sparks, meta } = stats;
@@ -31,7 +32,7 @@ function LogTable({ stats }: { stats: LogsModel }) {
   const [open, setOpen] = useState<string | null>(null);
   const toggle = (key: string) => setOpen(open === key ? null : key);
   return (
-    <Panel title={`Log Lines (${fmtCount(matching)})`} flush>
+    <Panel title={`Log Lines (${fmtCount(matching)})`} flush action={<ExportButton page="logs" disabled={matching === 0} />}>
       <Table columns={LOG_COLUMNS} rows={rows} rowKey={(r) => r.key} selectedKey={open} onRowClick={(r) => toggle(r.key)} detail={(r) => <LogDetail row={r} />} empty={<Empty title="No matching log lines">Try a lower level, another service, or a wider time range.</Empty>} />
       {matching > 0 && (
         <Pager page={page} pageSize={pageSize} total={matching} noun="lines" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />

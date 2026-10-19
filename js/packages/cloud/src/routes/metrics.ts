@@ -4,7 +4,7 @@ import { fail } from "../http/http.js";
 import type { TelemetryStore } from "../telemetry/store.js";
 
 const DAY_MS = 86_400_000;
-const PARAMS = ["metric", "service", "group", "stat", "q"];
+const PARAMS = ["metric", "service", "group", "stat", "q", "where"];
 
 /** Model parameters from the query: the metric, service, grouping, stat, and search. */
 export function metricParamsOf(p: URLSearchParams): Record<string, string> {

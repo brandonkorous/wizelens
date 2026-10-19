@@ -66,7 +66,7 @@ export function RenderingPage() {
   return part === "routes" && route ? <RoutePage key={route} route={decodeParam(route)} /> : <AllRendering />;
 }
 
-function AllRendering() {
+export function AllRendering() {
   const { model: data, loading, error } = usePageModel("rendering");
   const all = useRoute().query.get("all");
   const empty = !data || (data.views === 0 && !data.hasReact);

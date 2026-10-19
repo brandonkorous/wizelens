@@ -32,7 +32,7 @@ export function DatabasePage() {
   return part === "queries" && query ? <QueryPage key={query} query={decodeParam(query)} /> : <AllQueries />;
 }
 
-function AllQueries() {
+export function AllQueries() {
   const { model: stats, loading, error } = usePageModel("database");
   return (
     <div className="wl-db-page">

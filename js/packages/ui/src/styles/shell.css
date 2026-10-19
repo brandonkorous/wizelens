@@ -94,3 +94,7 @@
   .wl-search-box span { display: none; }
   .wl-top-btn { padding: 0 10px; gap: 4px; }
 }
+.wl-nav-saved { padding-top: 0; border-top: 1px solid var(--wl-line); flex: 0 1 auto; }
+.wl-nav-saved a { padding: 7px 14px; font-size: 14px; }
+.wl-nav-head { margin: 12px 26px 4px; color: var(--wl-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+@media (max-width: 720px) { .wl-nav-saved { display: none; } }

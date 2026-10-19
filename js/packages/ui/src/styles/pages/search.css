@@ -19,3 +19,5 @@
 .wl-search-more { display: flex; justify-content: center; padding: 14px; border-top: 1px solid var(--wl-line); }
 .wl-search-bar { padding-bottom: 0; }
 .wl-search-bar .wl-tabbar { margin-bottom: 0; overflow: visible; border-bottom: 0; }
+.wl-saved-searches { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 10px; }
+.wl-saved-searches .wl-filter-chip { text-decoration: none; }

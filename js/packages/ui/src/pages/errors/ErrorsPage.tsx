@@ -32,7 +32,7 @@ export function ErrorsPage() {
   return id ? <ErrorGroupPage key={id} group={decodeParam(id)} /> : <AllErrors />;
 }
 
-function AllErrors() {
+export function AllErrors() {
   const { model, loading, error } = usePageModel("errors");
   return (
     <div className="wl-errors-page">

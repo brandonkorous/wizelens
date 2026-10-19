@@ -9,7 +9,7 @@ export interface MetricScope {
 /** Parameters the metrics model reads; the range and scope are taken out. */
 export function metricParams(p: URLSearchParams): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const k of ["metric", "service", "group", "stat", "q"]) {
+  for (const k of ["metric", "service", "group", "stat", "q", "where"]) {
     const v = p.get(k);
     if (v) out[k] = v.slice(0, 200);
   }

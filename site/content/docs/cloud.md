@@ -102,8 +102,8 @@ Webhook URLs must be https and may not point at private addresses, unless the cl
 
 ## Share links
 
-A share link opens one trace, read-only, for anyone with the link, for 1 to 30 days. You can revoke it. Nothing else is
-reachable with it. It shows the parts of the trace its maker may read; after the maker leaves the organization, only the
+A share link opens one trace, or one page as it was when you made the link, read-only, for anyone with the link, for 1 to
+30 days. Use the link button in the top bar on a page. You can revoke it. Nothing else is reachable with it. It shows the parts of the trace its maker may read; after the maker leaves the organization, only the
 shared project's part.
 
 ## Plans and billing

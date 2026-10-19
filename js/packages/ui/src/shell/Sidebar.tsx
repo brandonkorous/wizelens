@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
-import { Activity, BellRing, Box, Database, FileText, House, Lightbulb, List, Monitor, Search, Settings, Share2, Target, TriangleAlert, Users } from "lucide-react";
+import { Activity, BellRing, Box, LayoutDashboard, Database, FileText, House, Lightbulb, List, Monitor, Search, Settings, Share2, Target, TriangleAlert, Users } from "lucide-react";
+import { SavedNav } from "./SavedNav";
 import type { Capability } from "@wizeworks/lens-core";
 import { useHost } from "../data/host";
 import { hrefTo, type PageId } from "../routes";
@@ -27,6 +28,7 @@ export const NAV: NavItem[] = [
   { page: "insights", label: "Insights", icon: Lightbulb },
   { page: "alerts", label: "Alerts", icon: BellRing, needs: "alerts" },
   { page: "slos", label: "SLOs", icon: Target, needs: "slos" },
+  { page: "dashboards", label: "Dashboards", icon: LayoutDashboard, needs: "saved" },
   { page: "team", label: "Team", icon: Users, needs: "accounts" },
   { page: "settings", label: "Settings", icon: Settings },
 ];
@@ -57,6 +59,7 @@ export function Sidebar({ page, counts = {}, dot }: SidebarProps) {
           </a>
         ))}
       </nav>
+      {host.has("saved") && <SavedNav />}
       <div className="wl-sidebar-foot">
         <span className="wl-mark" aria-hidden="true">W</span>
         <div>

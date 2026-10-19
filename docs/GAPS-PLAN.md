@@ -18,7 +18,7 @@ APM buyers expect and that phases 0 to 13 do not cover.
 | 5 | Releases: markers, compare versions, new in this release | M | Done |
 | 6 | Alerts: scope, mute, history, hub alerts, more channels | M | Done |
 | 7 | SLOs, Apdex, and error budgets | M | Done |
-| 8 | Saving and sharing: saved views and searches, dashboards, exports | L | Not started |
+| 8 | Saving and sharing: saved views and searches, dashboards, exports | L | Done |
 | 9 | Search everywhere: query bar on list pages, more kinds | M | Not started |
 | 10 | Users: users affected, user filter, user page | M | Not started |
 | 11 | Settings and Team | M | Not started |
