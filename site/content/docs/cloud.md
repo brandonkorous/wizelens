@@ -108,14 +108,15 @@ See [Pricing](/pricing/) for the price check.
 
 - **Extra data** on Team and Business is priced in steps on the GB above the plan's included GB: the first 500 GB at
   $0.30 a GB, the next 1,500 GB at $0.20, and the rest at $0.10. Team at 120 GB a month is $29 + 70 × $0.30 = $50.
-- **Yearly** billing is 12 months for the price of 10: Team $290, Business $990. Extra data is billed each month.
-- **A GB** is the size of the request body the cloud accepts on ingest and OTLP, before compression is undone. Reading,
-  search, alerts, and MCP calls never count. Sampling and compression both lower it.
+- **Yearly** billing is 12 months for the price of 10: Team $290, Business $990. Extra data is billed each month, on a
+  usage invoice for the calendar month (UTC), so the steps start again on the 1st on monthly and yearly plans alike.
+- **A GB** is 1,000,000,000 bytes of request body the cloud accepts on ingest and OTLP, counted as sent: a compressed body counts
+  compressed. Reading, search, alerts, and MCP calls never count. Sampling and compression both lower it.
 - **At the Free limit**, ingest and OTLP answer HTTP 429 ("This organization reached the Free plan's 10 GB for this
   month") until the 1st (UTC) or an upgrade. The add-ons and OpenTelemetry exporters back off on 429, and what you
   already sent stays readable. Owners and admins get an email at 80% and 100%.
 - **Spend cap** (Team and Business, optional): an owner sets a monthly limit for extra data, in dollars. Past it, ingest
-  answers 429 like the Free cap until the 1st.
+  answers 429 ("This organization reached its monthly spend cap of $N") until the 1st.
 - **History** is capped by the plan. A downgrade lowers the organization's retention to the new plan's maximum.
 - **Cancel** under Manage billing. The plan runs to the end of the paid period, then the organization moves to Free.
 

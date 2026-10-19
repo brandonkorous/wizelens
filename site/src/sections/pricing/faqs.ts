@@ -4,7 +4,7 @@ import type { Faq } from "@/sections/faq/faqs";
 export const PRICING_FAQS: Faq[] = [
   {
     q: "What counts as a GB?",
-    a: "The data your apps send to the cloud, as it arrives: the body of each ingest call and each OpenTelemetry (OTLP) call, still compressed. Sampling and compression both make it smaller. Reading, searching, alerts, and MCP calls never count.",
+    a: "The data your apps send to the cloud, as it arrives: the body of each ingest call and each OpenTelemetry (OTLP) call, still compressed. A GB is 1,000,000,000 bytes. Sampling and compression both make it smaller. Reading, searching, alerts, and MCP calls never count.",
   },
   {
     q: "What happens at the Free plan's 10 GB?",
@@ -12,7 +12,7 @@ export const PRICING_FAQS: Faq[] = [
   },
   {
     q: "Can I cap what I spend?",
-    a: "Yes. On Team and Business, an owner can set a monthly limit for extra data, in dollars. Past it, the cloud answers 429 like the Free cap until the 1st, so the bill never goes over your limit.",
+    a: "Yes. On Team and Business, an owner can set a monthly limit for extra data, in dollars. Past it, the cloud answers 429 like the Free cap until the 1st, so extra data never costs more than your limit.",
   },
   {
     q: "Can I cancel any time?",
