@@ -17,7 +17,7 @@ const PAGES = [
   ["WizeLens for ASP.NET Core", "/dotnet/", "Two lines in Program.cs; EF Core, ADO.NET, HttpClient, gRPC, messaging, logs, metrics."],
   ["WizeLens for Node", "/node/", "Express, Fastify, Koa, Hono, Next.js; one line per driver, queue, or logger."],
   ["WizeLens for React and Next.js", "/react/", "Fetch linked to server traces, render timing, Web Vitals, the HUD."],
-  ["WizeLens Cloud", "/cloud/", "Self-hosted team dashboard: roles, 30-day history, alerts, share links, read keys."],
+  ["WizeLens Cloud", "/cloud/", "Self-hosted team dashboard: roles, 30-day history, alerts, share links, and AI access by sign-in or read key."],
   ["Glimpse, rebuilt", "/story/", "Why WizeLens exists: the spirit of Glimpse for apps split into services."],
   ["Changelog", "/changelog/", "Every release, newest first."],
 ];

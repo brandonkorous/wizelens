@@ -54,15 +54,21 @@ person then gets their own organization. Org changes, member changes, keys, shar
 ## Keys
 
 - **Ingest key** (`wl_ik_…`): one project. Apps send data with it. The project comes from the key, never from the sender.
-- **Read key** (`wl_rk_…`): one or more projects, read-only. For AI agents and scripts.
+- **Read key** (`wl_rk_…`): one or more projects, read-only. For scripts, CI, and agents with no person to sign in.
 
 Only a hash of each key is stored. The secret is shown once, when you make the key.
+
+## AI apps
+
+Claude and other MCP clients connect without a key: add `https://mcp.wizelens.com` (or `<your cloud>/_wizelens/mcp`), sign
+in, and pick the projects the app may read. It keeps read-only access until you remove it under **Account → Connected
+apps**; admins see everyone's under **Team → Connected apps**. See [AI access](/docs/ai-access/).
 
 ## Traces across projects
 
 Many front ends often share one API. Put each app in the project of the team that owns it: a trace that goes from a front
 end in one project to the API in another still opens as one trace. The cloud adds the parts from the other projects you
-may read, in the same organization only. A read key gets only its own projects. Lists, stats, and alerts stay per project.
+may read, in the same organization only. A read key or a connected app gets only its own projects. Lists, stats, and alerts stay per project.
 
 ## History
 

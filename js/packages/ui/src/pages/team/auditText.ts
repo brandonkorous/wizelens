@@ -30,6 +30,8 @@ const ACTIONS: Record<string, string> = {
   "sso.delete": "Removed an identity provider",
   "sso.verify": "Proved a single sign-on domain",
   "mcp.call": "AI agent read data",
+  "app.connect": "Connected an app",
+  "app.disconnect": "Disconnected an app",
 };
 
 export const actionText = (action: string): string => ACTIONS[action] ?? action;
@@ -58,6 +60,9 @@ const project = (id: unknown, names: Names) => (typeof id === "string" ? (names.
 export function detailText(d: Record<string, unknown>, names: Names): string {
   const parts: string[] = [];
   if (typeof d.keyId === "string" && names.keys.has(d.keyId)) parts.push(names.keys.get(d.keyId)!);
+  if (typeof d.app === "string") parts.push(`with ${d.app}`);
+  if (d.allProjects === true) parts.push("all projects");
+  if (typeof d.userEmail === "string") parts.push(`for ${d.userEmail}`);
   if (typeof d.name === "string") parts.push(d.name);
   if (typeof d.email === "string") parts.push(d.email);
   if (typeof d.role === "string") parts.push(`as ${d.role}`);

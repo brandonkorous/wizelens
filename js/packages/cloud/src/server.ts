@@ -23,6 +23,7 @@ import { RESEND_WEBHOOK_PATH, resendWebhook } from "./mail/webhook.js";
 import { openTelemetry } from "./telemetry/index.js";
 import { allRoutes } from "./routes/index.js";
 import { ingestBatch, ingestOtlp } from "./routes/ingest.js";
+import { serveOAuthMetadata } from "./routes/oauth-meta.js";
 import { forgetModels } from "./routes/models.js";
 
 const require = createRequire(import.meta.url);
@@ -72,6 +73,7 @@ async function route(p: Parts, req: IncomingMessage, res: ServerResponse): Promi
   if (path === "/healthz") return void res.writeHead(200, { "Content-Type": "text/plain" }).end("ok");
   if (path === "/" || path === BASE) return void res.writeHead(302, { Location: `${BASE}/${url.search}` }).end();
   if (path.startsWith(`${AUTH_BASE_PATH}/`)) return p.auth()(req, res);
+  if (path.startsWith("/.well-known/") && (await serveOAuthMetadata(p.app, req, res, path))) return;
   const signal = otlpSignalOf(path);
   if (signal && req.method === "POST") return ingestOtlp(ctx, signal, p.ingest);
   if (path.startsWith(`${BASE}/`)) return routeBase(p, ctx, path.slice(BASE.length + 1));

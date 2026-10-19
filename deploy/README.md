@@ -7,6 +7,7 @@ WizeLens runs on the shared sparx AKS cluster (`aks-sparx-prod-cus`, group `rg-s
 | `wizelens.com` | Marketing site and docs (static files, nginx) | `site` |
 | `www.wizelens.com`, `wizelens.dev`, `www.wizelens.dev` | 301 to `https://wizelens.com` (in Caddy) | none |
 | `app.wizelens.com` | WizeLens Cloud | `cloud` |
+| `mcp.wizelens.com` | Cloud's MCP endpoint and its OAuth metadata (`/`, `/mcp`, `/.well-known/*`); sign-in stays on `app` | `cloud` |
 
 ## Where each piece lives
 

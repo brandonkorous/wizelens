@@ -26,11 +26,11 @@ export const BEATS: Beat[] = [
   { kind: "audit", text: "audit  mcp  find_n_plus_one  read-only  12 ms" },
 ];
 
-export const TOOLS = ["list_traces", "get_trace", "find_slow_queries", "find_n_plus_one", "get_errors"];
+export const TOOLS = ["get_overview", "list_traces", "get_trace", "find_slow_queries", "find_n_plus_one", "get_errors", "search", "get_metric"];
 
 export const GUARDS = [
   { title: "Off by default.", body: "Nothing is reachable until you turn it on, per service." },
   { title: "Read-only.", body: "No tool can change anything. It can only look." },
   { title: "Redacted.", body: "Secrets are replaced before they are stored, so an agent never sees them." },
-  { title: "Audited.", body: "Every call writes a line to your log. In the cloud, read keys are limited to the projects you pick." },
+  { title: "Audited.", body: "Every call writes a line to your log. In the cloud, Claude signs in and reads only the projects you pick." },
 ];

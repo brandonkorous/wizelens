@@ -8,6 +8,8 @@ export interface AuthDeps {
   db: Db;
   /** The cloud's own origin, for links and passkeys, for example https://lens.example.com. */
   publicUrl: string;
+  /** Another origin agents use for MCP only (`--mcp-url`), for example https://mcp.wizelens.com. */
+  mcpUrl?: string;
   /** Origins allowed to send changes: the public one (and its 127.0.0.1 twin for a local default). */
   trustedOrigins: string[];
   /** Identity provider origins the cloud may fetch OIDC settings from (`--sso-origins`). */

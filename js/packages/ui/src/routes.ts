@@ -21,7 +21,7 @@ export type PageId =
   | AuthPageId;
 
 /** Account screens that open signed in or not (cloud only): links from emails and the sign-in steps. */
-export type AuthPageId = "setup" | "two-factor" | "forgot-password" | "reset-password" | "verify-email" | "invite" | "delete-account";
+export type AuthPageId = "setup" | "two-factor" | "forgot-password" | "reset-password" | "verify-email" | "invite" | "delete-account" | "oauth" | "oauth-consent";
 
 export interface Route {
   page: PageId;
@@ -30,7 +30,7 @@ export interface Route {
   query: URLSearchParams;
 }
 
-export const AUTH_PAGES: readonly AuthPageId[] = ["setup", "two-factor", "forgot-password", "reset-password", "verify-email", "invite", "delete-account"];
+export const AUTH_PAGES: readonly AuthPageId[] = ["setup", "two-factor", "forgot-password", "reset-password", "verify-email", "invite", "delete-account", "oauth", "oauth-consent"];
 const PAGES: readonly PageId[] = ["overview", "search", "requests", "traces", "database", "rendering", "errors", "logs", "metrics", "services", "insights", "settings", "alerts", "team", "shared", "account", ...AUTH_PAGES];
 const TRACE_ID = /^[0-9a-f]{32}$/;
 

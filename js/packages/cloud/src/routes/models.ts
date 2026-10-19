@@ -1,5 +1,5 @@
-import { alignNow, FACT_SLOW_QUERY_MS, isPageName, isTimeRange, pageContext, runPage, SETTLE_BEHIND_MS, TIME_RANGES } from "@wizeworks/lens-core";
-import type { Ctx } from "../app.js";
+import { alignNow, FACT_SLOW_QUERY_MS, isPageName, isTimeRange, type ModelOf, type PageName, pageContext, runPage, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import type { CloudApp, Ctx } from "../app.js";
 import { fail, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { projectOf } from "./data.js";
@@ -29,15 +29,30 @@ export function forgetModels(projectId: string): void {
 /** Model parameters: every query value except the ones that pick the data. */
 const paramsOf = (url: URL): Record<string, string> => Object.fromEntries([...url.searchParams].filter(([k]) => !RESERVED.has(k)).sort());
 
-async function retentionDays(ctx: Ctx, orgId: string): Promise<number> {
-  const [row] = await ctx.app.db.query<{ d: number }>("SELECT retention_days AS d FROM orgs WHERE id = $1", [orgId]);
-  return row?.d ?? ctx.app.config.retentionDays;
+async function retentionDays(app: CloudApp, orgId: string): Promise<number> {
+  const [row] = await app.db.query<{ d: number }>("SELECT retention_days AS d FROM orgs WHERE id = $1", [orgId]);
+  return row?.d ?? app.config.retentionDays;
+}
+
+/** One page's numbers for a project, from its stats tables. Cached for 15 seconds, like the dashboard's. */
+export async function projectPage<P extends PageName>(app: CloudApp, project: { id: string; orgId: string }, page: P, range: TimeRange, params: Record<string, string> = {}, env?: string): Promise<ModelOf<P>> {
+  const days = await retentionDays(app, project.orgId);
+  if (TIME_RANGES[range].ms > days * DAY_MS) fail(400, "This range is longer than the organization keeps data.");
+  const now = alignNow(app.config.now());
+  const key = JSON.stringify([project.id, page, range, env, params, now]);
+  const hit = cached(key, app.config.now());
+  if (hit) return hit as ModelOf<P>;
+  const t = app.telemetry;
+  const pc = pageContext(range, now, params, { slowQueryMs: FACT_SLOW_QUERY_MS }, await t.settling(project.id, { env, before: app.config.now() - SETTLE_BEHIND_MS }));
+  const value = await runPage(page, pc, t.executor(project.id, days * DAY_MS, env));
+  remember(key, value, app.config.now());
+  return value;
 }
 
 /** `GET api/models/metrics?project=&range=&env=&metric=&service=&group=&stat=&q=`: the metrics page, from the newest points. */
 async function metrics(ctx: Ctx): Promise<void> {
   const { project } = await projectOf(ctx);
-  const range = metricRange(ctx, await retentionDays(ctx, project.orgId));
+  const range = metricRange(ctx, await retentionDays(ctx.app, project.orgId));
   const now = alignNow(ctx.app.config.now());
   const env = ctx.url.searchParams.get("env") || undefined;
   const params = metricParamsOf(ctx.url.searchParams);
@@ -57,19 +72,8 @@ async function model(ctx: Ctx): Promise<void> {
   const { project } = await projectOf(ctx);
   const range = ctx.url.searchParams.get("range") ?? "24h";
   if (!isTimeRange(range)) return fail(400, `Unknown range "${range}".`);
-  const days = await retentionDays(ctx, project.orgId);
-  if (TIME_RANGES[range].ms > days * DAY_MS) fail(400, "This range is longer than the organization keeps data.");
-  const now = alignNow(ctx.app.config.now());
   const env = ctx.url.searchParams.get("env") || undefined;
-  const params = paramsOf(ctx.url);
-  const key = JSON.stringify([project.id, page, range, env, params, now]);
-  const hit = cached(key, ctx.app.config.now());
-  if (hit) return sendJson(ctx.res, 200, hit);
-  const t = ctx.app.telemetry;
-  const pc = pageContext(range, now, params, { slowQueryMs: FACT_SLOW_QUERY_MS }, await t.settling(project.id, { env, before: ctx.app.config.now() - SETTLE_BEHIND_MS }));
-  const value = await runPage(page, pc, t.executor(project.id, days * DAY_MS, env));
-  remember(key, value, ctx.app.config.now());
-  sendJson(ctx.res, 200, value);
+  sendJson(ctx.res, 200, await projectPage(ctx.app, project, page, range, paramsOf(ctx.url), env));
 }
 
 export function modelRoutes(r: Router<Ctx>): void {

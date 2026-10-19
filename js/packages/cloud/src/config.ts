@@ -17,6 +17,8 @@ export interface CloudOptions {
   host?: string;
   /** The address people use, for links in invites and shares. Default http://localhost:<port>. */
   publicUrl?: string;
+  /** Another address agents use for MCP only, for example https://mcp.wizelens.com, when a proxy sends it to `/_wizelens/mcp`. */
+  mcpUrl?: string;
   /** "invite": only the first account and invited people can sign up. "open": anyone can. Default "invite". */
   signup?: SignupMode;
   /** Default retention for new organizations, in days. Default 30. */
@@ -57,7 +59,7 @@ export interface CloudOptions {
   jobs?: boolean;
 }
 
-type Optional = "uiDir" | "clickhouseUrl" | "publicUrl" | "smtpUrl" | "resendApiKey" | "resendWebhookSecret" | "mailReplyTo" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords";
+type Optional = "uiDir" | "clickhouseUrl" | "publicUrl" | "mcpUrl" | "smtpUrl" | "resendApiKey" | "resendWebhookSecret" | "mailReplyTo" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords";
 export type CloudConfig = Required<Omit<CloudOptions, Optional>> & Pick<CloudOptions, Optional> & { secureCookies: boolean };
 
 /** Mail links must use the public address: a link built from the request's Host header could point anywhere. */
@@ -79,6 +81,15 @@ function ssoOriginsOf(list: readonly string[]): string[] {
   });
 }
 
+/** The MCP address as a bare origin: https, or http on this machine only. */
+function mcpUrlOf(o: CloudOptions): string | undefined {
+  if (!o.mcpUrl) return undefined;
+  const url = URL.canParse(o.mcpUrl) ? new URL(o.mcpUrl) : null;
+  const local = url?.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
+  if (!url || (url.protocol !== "https:" && !local) || url.pathname !== "/" || url.search) throw new Error(`--mcp-url: "${o.mcpUrl}" must be an https:// origin, like https://mcp.example.com.`);
+  return url.origin;
+}
+
 export function resolveConfig(o: CloudOptions = {}): CloudConfig {
   checkMail(o);
   return {
@@ -88,6 +99,7 @@ export function resolveConfig(o: CloudOptions = {}): CloudConfig {
     port: o.port ?? 5970,
     host: o.host ?? "0.0.0.0",
     publicUrl: o.publicUrl?.replace(/\/+$/, ""),
+    mcpUrl: mcpUrlOf(o),
     signup: o.signup ?? "invite",
     retentionDays: o.retentionDays ?? 30,
     ingestPerMinute: o.ingestPerMinute ?? 1200,

@@ -1,6 +1,7 @@
 import type { Ctx } from "../app.js";
 import { Router } from "../http/router.js";
 import { alertRoutes } from "./alerts.js";
+import { appRoutes } from "./apps.js";
 import { changeRoutes } from "./changes.js";
 import { meRoutes } from "./me.js";
 import { mcpRoutes } from "./mcp.js";
@@ -26,5 +27,6 @@ export function allRoutes(): Router<Ctx> {
   alertRoutes(r);
   shareRoutes(r);
   mcpRoutes(r);
+  appRoutes(r);
   return r;
 }

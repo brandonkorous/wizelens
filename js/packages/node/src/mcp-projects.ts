@@ -7,7 +7,7 @@ const auditLine = (service: string, tool: string, args: unknown) => `[wizelens] 
 /** One data source: every call reads it. */
 export function singleSource(data: McpDataSource): Source {
   return {
-    defaults: { slowQueryMs: data.slowQueryMs, nPlusOneThreshold: data.nPlusOneThreshold, metrics: !!data.metrics, metricRanges: data.metricRanges },
+    defaults: { slowQueryMs: data.slowQueryMs, nPlusOneThreshold: data.nPlusOneThreshold, metrics: !!data.metrics, metricRanges: data.metricRanges, overview: !!data.page },
     arg: {},
     open: async (tool, args) => (data.audit(auditLine(data.service, tool, args)), data),
   };
@@ -32,13 +32,21 @@ export function pickProject(ps: readonly McpProject[], wanted: string | undefine
 export function projectsSource(m: McpProjects): Source {
   const project = z.string().max(200).optional().describe("Project id or name, from list_projects. Needed when the key reads more than one project.");
   return {
-    defaults: { slowQueryMs: m.slowQueryMs, nPlusOneThreshold: m.nPlusOneThreshold, metrics: m.metrics, metricRanges: m.metricRanges },
+    defaults: { slowQueryMs: m.slowQueryMs, nPlusOneThreshold: m.nPlusOneThreshold, metrics: m.metrics, metricRanges: m.metricRanges, overview: !!m.overview },
     arg: { project },
     open: async (tool, args) => {
       const data = await m.open(pickProject(m.projects, (args as { project?: string }).project).id);
       data.audit(auditLine(data.service, tool, args));
       return data;
     },
+    each: (tool, args) =>
+      Promise.all(
+        m.projects.map(async (project) => {
+          const data = await m.open(project.id);
+          data.audit(auditLine(data.service, tool, args));
+          return { project, data };
+        }),
+      ),
   };
 }
 

@@ -2,6 +2,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { afterEach, expect, it } from "vitest";
 import type { Hub } from "./hub.js";
+import { settleHub } from "./settle.js";
 import { post, span, startHub, T1 } from "./test/helpers.js";
 
 let hub: Hub;
@@ -45,6 +46,21 @@ it("an agent connects: initialize, the GET stream, tools/list, and a call", asyn
   const res = (await client.callTool({ name: "list_traces", arguments: {} })) as { content: { text: string }[] };
   expect(res.content[0]!.text).toContain(T1);
   await client.close();
+});
+
+it("get_overview reports every service: health, traffic, and the top errors", async () => {
+  let url: string;
+  ({ hub, url } = await startHub({ enableMcp: true }));
+  const attrs = { "http.request.method": "GET", "url.path": "/pay", "http.response.status_code": 500 };
+  const failed = span(T1, "1".repeat(16), { status: "error", statusMessage: "card declined", service: "billing", startMs: Date.now() - 60_000, attributes: attrs });
+  await post(`${url}/_wizelens/api/ingest`, { sender: { service: "billing" }, spans: [failed] });
+  settleHub(hub.data.store);
+  const res = (await (await rpc(url, 1, "tools/call", { name: "get_overview", arguments: { range: "1h" } })).json()) as { result: { content: { text: string }[] } };
+  const report = JSON.parse(res.result.content[0]!.text) as { range: string; requests: { value: number }; services: { name: string; status: string }[]; needsAttention: string[] };
+  expect(report.range).toBe("1h");
+  expect(report.requests.value).toBe(1);
+  expect(report.services).toEqual([expect.objectContaining({ name: "billing", status: "unhealthy" })]);
+  expect(report.needsAttention).toEqual(["billing: unhealthy"]);
 });
 
 it("MCP is off unless enabled", async () => {

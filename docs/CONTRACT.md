@@ -346,6 +346,8 @@ Server name `wizelens`. Disabled by default. Every call is written to the app lo
 | `get_errors` | `limit?=20`, `range?=24h` (Node hosts) | `{ traceId, spanId, service, name, message, type, stack }[]` |
 | `search` | `q`, `kind?=requests`, `range?=24h`, `limit?=20`, `cursor?` | SearchPage (below); a bad `q` is an error with `start`/`end` |
 | `search_fields` | `field?`, `prefix?`, `range?=24h` | `{ value, help?, count? }[]` |
+| `get_overview` | `range?=24h` (1h, 6h, 24h, 7d) | Hub and cloud. `{ window, stillSettling, requests, errorRatePercent, avgDurationMs` (each `{ value, previous, changePercent }`), `needsAttention, services, exceptions, topErrors` (10, most first), `insights }`, from the overview, services, and errors page models. On a multi-project cloud reader with no `project`: `{ range, totals, projects[] }`, one report per project, those needing attention first |
+| `list_projects` | none | Cloud, when the reader has more than one project: `{ id, name }[]` |
 
 On the hub, the cloud, and the Node add-on, `list_traces`, `get_errors`, and `find_slow_queries` read the whole store
 through search (the newest traces in memory are merged in, since the store indexes a trace once it goes quiet), not the
@@ -468,7 +470,7 @@ interface IngestBatch {
 | POST | `/v1/traces`, `/v1/logs`, `/v1/metrics` | OTLP/HTTP, JSON or protobuf, optional gzip. Also under `/_wizelens/v1/...` |
 | GET | `/_wizelens/api/models/metrics` | The Metrics page: `range`, `project`, `env`, `service`, `metric`, `group`, `stat`, `q`. Read from the metric rollups (see "Metrics"), with no point cap |
 | GET | `/_wizelens/api/models/{page}` | One page model (see "Page models"): `range`, `project`, `env`, and the page's own parameters. Ranges up to the hub's age limit. `serverStats` |
-| POST | `/_wizelens/mcp` | With `--mcp`. The same five tools, over the newest 2000 traces of every service, plus `list_metrics` and `get_metric` |
+| POST | `/_wizelens/mcp` | With `--mcp`. The same tools, over the newest 2000 traces of every service, plus `list_metrics`, `get_metric`, and `get_overview` |
 | GET | `/healthz` | `ok` |
 
 `HubService` is the sender plus `via` (`"addon"` or `"otlp"`), `firstSeenMs`, `lastSeenMs`, and `online` (heard from in the
@@ -595,7 +597,26 @@ retention, and the audit log.
 - **Keys** (only their SHA-256 hash is stored; the prefix tells what they are):
   - `wl_ik_…` **ingest key**: one project. Add-ons send it as `WIZELENS_HUB_TOKEN`; OTLP apps as `Authorization: Bearer …`.
     The project comes from the key, never from the sender. At most 1200 calls per key per minute (429 above).
-  - `wl_rk_…` **read key**: one or more projects, read-only. For AI agents (MCP) and scripts.
+  - `wl_rk_…` **read key**: one or more projects, read-only. For scripts, CI, and agents with no person to sign in.
+- **Connected apps (OAuth 2.1 for MCP clients)**, Better Auth's OAuth provider plugin (`@better-auth/oauth-provider`, pinned
+  with Better Auth). An MCP client (Claude, Claude Code, Cursor) gets a 401 from `mcp` with
+  `WWW-Authenticate: Bearer resource_metadata="…", scope="wizelens:read offline_access"`, reads the protected resource
+  metadata (RFC 9728) and the authorization server metadata (RFC 8414, issuer `<public-url>/_wizelens/api/auth`), registers
+  itself (RFC 7591, open, public clients with `token_endpoint_auth_method: none`), and signs the person in with PKCE (S256).
+  Better Auth sends the browser to `#/oauth` (sign in) and `#/oauth-consent` with a signed query in the hash. On the consent
+  page the person picks one organization and all its projects (also later ones) or some; `POST api/auth/wizelens/oauth-grant`
+  (a sign-in from the last 15 minutes) saves that **grant** (`oauth_grants`), then `POST api/auth/oauth2/consent` ties the
+  consent and every token to it (`reference_id`, claim `wl_grant`). One scope, `wizelens:read`; `offline_access` is always
+  added, so a scheduled agent keeps access. Tokens are opaque and stored hashed: access `wl_at_…` (1 hour), refresh
+  `wl_rt_…` (30 days, rotated on each use). A new grant from the same person to the same app ends the older one. Every MCP
+  call checks the grant, the person's membership (any role reads), and the projects again, so leaving the organization or
+  removing the app stops it at once. Audit: `app.connect`, `app.disconnect`, and `mcp.call` with `app`. Expired tokens,
+  grants never consented to (a day), ended grants (90 days), and apps nobody connected (a day) are pruned. Client CRUD,
+  introspection, userinfo, and consent routes of the plugin are off; limits: token 600 and register 60 per minute per address.
+- **MCP origin** (`--mcp-url https://mcp.example.com`, `WIZELENS_CLOUD_MCP_URL`): another origin a proxy sends to MCP
+  (`/` and `/mcp` to `/_wizelens/mcp`, `/.well-known/*` as is). Requests on that host get its metadata (`resource` is the
+  origin, or `<origin>/mcp`) and its `resource_metadata` pointer; sign-in stays on the public URL. The hosted cloud uses
+  `https://mcp.wizelens.com`.
 - **Audit log**: org changes, member and invite changes (also those through Better Auth), keys, projects, shares, and every MCP tool
   call, with who did it.
 
@@ -617,7 +638,12 @@ retention, and the audit log.
 | POST / GET / DELETE | `api/projects/{p}/shares[/{id}]` | Read: viewer; change: member |
 | GET | `api/shared/{token}` | Anyone with the link: `{ trace, expiresMs }` |
 | POST | `api/ingest`, `/v1/traces`, `/v1/logs`, `/v1/metrics` | Ingest key |
-| POST | `mcp?project=` | Read key. Without `?project=`, a key for one project reads it; a key for several adds `list_projects` and a `project` argument (id or name) on every tool |
+| POST | `mcp?project=` | Read key or connected app (OAuth access token). Without `?project=`, a reader with one project reads it; one with several adds `list_projects` and a `project` argument (id or name) on every tool, and `get_overview` without it reports on all |
+| GET | `/.well-known/oauth-protected-resource[/_wizelens/mcp]`, `/.well-known/oauth-authorization-server/_wizelens/api/auth` | Anyone (CORS open). OAuth metadata for MCP clients |
+| * | `api/auth/oauth2/*` | Better Auth's OAuth provider: `authorize`, `token`, `register`, `revoke` (apps post without the dashboard header), `consent`, `continue`, `public-client` |
+| POST | `api/auth/wizelens/oauth-grant` | Signed in within 15 minutes: `{ organizationId, allProjects, projectIds, oauth_query }` from the consent page. Answers `{ id }` |
+| GET / DELETE | `api/me/apps[/{id}]` | Signed in: the apps this person connected (`{ apps: [{ id, app, clientId, orgId, orgName, userEmail, allProjects, projects, createdMs, usedMs }] }`), or end one |
+| GET / DELETE | `api/orgs/{org}/apps[/{id}]` | Admin: every app connected in the organization, or end one |
 
 ### Page models (`serverStats`)
 
@@ -681,11 +707,11 @@ One trace can cross projects, for example a front end in one project calling a s
 answers the asked project's part plus the parts of the same trace id in the other projects the caller may read:
 
 - **Same organization only.** Projects of other organizations are never read, even when the caller belongs to both.
-- **A person** sees every project of the organization. **A read key** sees only its own projects (checked again against the
+- **A person** sees every project of the organization. **A read key** or **connected app** sees only its own projects (checked again against the
   organization on every call, so a key row that names a foreign project still gets nothing from it).
 - **404** when the asked project has no part of the trace, so a project cannot be used to probe others.
 - `join=false` returns the asked project's part only. Lists, page models, stats, and alerts stay per project.
-- MCP `get_trace` joins the same way for its read key (`federate: false`: the key's project only).
+- MCP `get_trace` joins the same way for its read key or connected app (`federate: false`: the asked project only).
 
 ### Sharing
 

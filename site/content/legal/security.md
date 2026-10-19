@@ -29,7 +29,8 @@ and do not disrupt anyone's service.
 - **Redaction.** Values for keys such as `authorization`, `cookie`, `password`, `token`, `secret`, and `connectionstring` are
   replaced with `[redacted]` before they are stored.
 - **Local by default.** The hub listens on this machine only, unless you start it with `--host` and a `--token`.
-- **Read-only AI access.** The MCP endpoint is off by default, cannot change anything, and logs every call.
+- **Read-only AI access.** The MCP endpoint is off by default, cannot change anything, and logs every call. In the cloud,
+  an AI app signs in with OAuth (PKCE, a one-hour token) and reads only the projects its person picked, until removed.
 - **Keys in the cloud.** Only a hash of each ingest and read key is stored. The secret is shown once.
 - **Sessions in the cloud.** The sign-in cookie is HttpOnly and secure on https. Every change from a browser needs a header
   another site cannot send.

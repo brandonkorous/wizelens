@@ -2,6 +2,8 @@ import { passkey } from "@better-auth/passkey";
 import type { BetterAuthPlugin } from "better-auth";
 import { haveIBeenPwned, organization, twoFactor } from "better-auth/plugins";
 import { inviteMail } from "../mail/templates.js";
+import { oauthPlugin } from "./oauth.js";
+import { grantPlugin } from "./oauth-grant.js";
 import { type AuthDeps, appLink } from "./deps.js";
 import { ac, authRoles } from "./roles.js";
 import { orgSchema, passkeySchema, twoFactorSchema } from "./schema-names.js";
@@ -47,4 +49,12 @@ function passkeyPlugin(deps: AuthDeps): BetterAuthPlugin {
   return passkey({ rpID: url.hostname, rpName: "WizeLens", origin: deps.trustedOrigins, schema: passkeySchema, authenticatorSelection: { residentKey: "preferred", userVerification: "required" } });
 }
 
-export const authPlugins = (deps: AuthDeps): BetterAuthPlugin[] => [orgPlugin(deps), twoFactorPlugin(), passkeyPlugin(deps), ssoPlugin(deps), ...(deps.checkPwned ? [haveIBeenPwned()] : [])];
+export const authPlugins = (deps: AuthDeps): BetterAuthPlugin[] => [
+  orgPlugin(deps),
+  twoFactorPlugin(),
+  passkeyPlugin(deps),
+  ssoPlugin(deps),
+  oauthPlugin(deps),
+  grantPlugin(deps.db),
+  ...(deps.checkPwned ? [haveIBeenPwned()] : []),
+];

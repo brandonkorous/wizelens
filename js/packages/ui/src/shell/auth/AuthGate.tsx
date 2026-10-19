@@ -1,12 +1,14 @@
 import { type ReactNode, useEffect } from "react";
 import { type AccountState, loadAccount, useAccount } from "../../data/account";
 import { useHost } from "../../data/host";
+import { pendingOAuth } from "../../data/oauth";
 import { useData } from "../../data/provider";
 import { SharedTrace } from "../../pages/shared/SharedTrace";
 import { type Route, useRoute } from "../../routes";
 import { AuthScreen, SetupScreen } from "./AuthScreen";
 import { InviteScreen } from "./InviteScreen";
 import { NoOrgScreen } from "./NoOrgScreen";
+import { isOAuthPage, OAuthScreen } from "./OAuthScreens";
 import { DeleteAccount, VerifyEmail } from "./LinkScreens";
 import { ForgotPassword, ResetPassword } from "./PasswordScreens";
 import { TwoFactorScreen } from "./TwoFactorScreen";
@@ -35,6 +37,9 @@ function accountScreen(route: Route, account: AccountState): ReactNode {
       return <InviteScreen id={token} state={account} />;
     case "delete-account":
       return <DeleteAccount token={token} state={account} deleted={route.query.has("done")} />;
+    case "oauth":
+    case "oauth-consent":
+      return <OAuthScreen route={route} state={account} />;
     default:
       return null;
   }
@@ -50,6 +55,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (accounts) void loadAccount().catch(() => undefined);
   }, [accounts]);
+  // Signed in on any other page: an app's sign-in that was left half done stops riding on later sign-ins.
+  const signedIn = !!account?.signedIn;
+  useEffect(() => {
+    if (signedIn && !isOAuthPage(route.page) && route.page !== "two-factor") pendingOAuth.set(null);
+  }, [signedIn, route.page]);
   if (route.page === "shared") return <SharedTrace token={route.params[0] ?? ""} />;
   if (!data.info && data.loading) return <Splash />;
   if (!accounts) return <>{children}</>;

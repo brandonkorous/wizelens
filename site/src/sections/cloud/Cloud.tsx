@@ -18,7 +18,7 @@ const SAFE = [
   "Every change from a browser needs a header another site cannot send.",
   "Webhooks cannot reach private addresses unless you allow it.",
   "Passwords, tokens, and keys are redacted before they are stored.",
-  "Every MCP call goes to the audit log, with the key that made it.",
+  "Every MCP call goes to the audit log, with the key, or the person and app, that made it.",
 ];
 
 function Hero() {
@@ -57,7 +57,7 @@ function Features() {
           <Tile area="al" title="Alerts that say what happened." body="Error rate, latency, traffic, new errors, slow queries, or any metric. To webhooks and Slack, when it fires and when it clears.">{(s) => <AlertsArt seen={s} />}</Tile>
           <Tile area="sh" title="Share one trace." body="A read-only link to one trace, for 1 to 30 days. Revoke it any time.">{(s) => <ShareArt seen={s} />}</Tile>
           <Tile area="sc" title="Fast with a lot of data." body="Measured at 200 traces a second on Postgres." night>{(s) => <ScaleArt seen={s} />}</Tile>
-          <Tile area="ke" title="Keys for apps and agents." body="Apps send with an ingest key. Agents read with a read key.">{() => <KeysArt />}</Tile>
+          <Tile area="ke" title="Keys for apps, sign-in for agents." body="Apps send with an ingest key. Claude signs in and reads only the projects you pick.">{() => <KeysArt />}</Tile>
           <Tile area="au" title="An audit log." body="Who changed what, and every call an agent made." night>{(s) => <AuditArt seen={s} />}</Tile>
           <Tile area="re" title="Keep what you need." body="Retention per organization.">{(s) => <RetentionArt seen={s} />}</Tile>
         </div>

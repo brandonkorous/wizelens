@@ -10,6 +10,16 @@ import { can, type Permission, type Role } from "./roles.js";
 export type Principal = { kind: "user"; user: User; sessionId: string } | { kind: "key"; key: ApiKey & { orgId: string } };
 
 /** The session of this request, read from the database each time (no cookie cache), so a revoked session stops at once. */
+/** A connected app (OAuth) on the MCP route: what its grant lets it read now. Never accepted anywhere else. */
+export interface AppPrincipal {
+  kind: "app";
+  grantId: string;
+  userId: string;
+  /** The app's name, for the audit log. */
+  app: string;
+  projectIds: string[];
+}
+
 export async function sessionOf(ctx: Ctx): Promise<{ user: User; sessionId: string } | undefined> {
   const s = await ctx.app.auth.api.getSession({ headers: fromNodeHeaders(ctx.req.headers) });
   if (!s) return undefined;
@@ -50,7 +60,7 @@ export interface ProjectAccess {
   /** "user:<id>" or "key:<id>", for the audit log. */
   actor: string;
   role: Role;
-  principal: Principal;
+  principal: Principal | AppPrincipal;
 }
 
 /** Access to one project's data, for a person or a read key. */

@@ -75,7 +75,8 @@ export function KeysArt() {
   return (
     <div className="wl-ct-keys">
       <div><code>wl_ik_…</code><b>Ingest key</b><span>One project. Apps send data with it.</span></div>
-      <div><code>wl_rk_…</code><b>Read key</b><span>Projects you pick. Read-only, for agents and scripts.</span></div>
+      <div><code>wl_rk_…</code><b>Read key</b><span>Projects you pick. Read-only, for scripts and CI.</span></div>
+      <div><code>mcp.wizelens.com</code><b>Connected app</b><span>Claude signs in. Read-only, for the projects you pick.</span></div>
     </div>
   );
 }

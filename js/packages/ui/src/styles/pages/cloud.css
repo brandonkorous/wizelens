@@ -35,3 +35,9 @@
 }
 .wl-brand-row { display: inline-flex; align-items: center; gap: 10px; color: var(--wl-fg); font-weight: 750; font-size: 20px; letter-spacing: -0.02em; }
 .wl-brand-row svg { width: 30px; height: 30px; }
+
+.wl-consent-list { display: grid; gap: 6px; margin: 0; padding-left: 18px; font-size: 13px; color: var(--wl-fg-2); }
+.wl-consent-scope { display: grid; gap: 10px; margin: 0; padding: 12px 14px; border: 1px solid var(--wl-line); border-radius: 10px; }
+.wl-consent-scope legend { padding: 0 4px; font-size: 13px; font-weight: 600; color: var(--wl-fg-2); }
+.wl-consent-projects { display: grid; gap: 8px; max-height: 220px; overflow-y: auto; padding-left: 24px; }
+.wl-auth-field .wl-select { width: 100%; }
