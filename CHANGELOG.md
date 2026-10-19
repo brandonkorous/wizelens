@@ -6,6 +6,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Fixed
 
+- **The Ctrl+K backdrop covers the whole page.** It was inside the top bar, whose blur limited it to the top bar's box.
+- **Enter in the search box never picks a stale suggestion.** The list for the previous term stayed up while the new one
+  loaded, so a quick Enter replaced the word with an unrelated value.
 - **Pages no longer time out when counting is slow.** Every page asked for the project's trace and span counts and
   environments; on a busy database those scans filled all 10 Postgres connections. They are now shared for a minute
   (one scan per project at a time), and every query stops after 2 minutes.

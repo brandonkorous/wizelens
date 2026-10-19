@@ -1,4 +1,5 @@
 import { type KeyboardEvent, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Box, FileSearch, FileText, List, Search, Share2, TriangleAlert } from "lucide-react";
 import type { Trace } from "@wizeworks/lens-core";
 import { useHost, useRange } from "../data/host";
@@ -45,7 +46,8 @@ export function SearchPalette({ traces, onClose }: { traces: readonly Trace[]; o
     else return;
     e.preventDefault();
   };
-  return (
+  // On <body>: the top bar's backdrop-filter would make the fixed backdrop cover only the top bar.
+  return createPortal(
     <div className="wl-palette-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="wl-palette" role="dialog" aria-label="Search">
         <input autoFocus value={query} onChange={(e) => (setQuery(e.target.value), setActive(0))} onKeyDown={onKey} placeholder="Search requests, traces, errors, services…" aria-label="Search" />
@@ -63,6 +65,7 @@ export function SearchPalette({ traces, onClose }: { traces: readonly Trace[]; o
           })}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
