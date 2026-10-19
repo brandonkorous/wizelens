@@ -57,6 +57,8 @@ export interface LogFilter {
   pattern?: string;
   /** Only lines written in a request, only lines outside one, or "" for both. */
   origin?: "request" | "outside" | "";
+  /** Only lines of this signed-in user's requests, or "" for all. */
+  user?: string;
 }
 
 export const levelRank = (level: LogLevel): number => LOG_LEVELS.indexOf(level);

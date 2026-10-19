@@ -23,6 +23,10 @@ export const NOTICED = new Set([
   "status.enable",
   "status.disable",
   "org.update",
+  "plan.change",
+  "billing.cap",
+  "scim.token.create",
+  "scim.token.revoke",
 ]);
 
 export interface AuditRow {
@@ -84,6 +88,10 @@ export async function describe(row: AuditRow, names: Names): Promise<string> {
     "status.enable": async () => `${who} ${d.newLink ? "made a new link for" : "turned on"} the public status page of ${await project()}.`,
     "status.disable": async () => `${who} turned off the public status page of ${await project()}.`,
     "org.update": () => `${who} changed the organization settings${typeof d.retentionDays === "number" ? ` (keep data ${d.retentionDays} days)` : ""}.`,
+    "plan.change": () => `The plan changed from ${s(d.from) || "another plan"} to ${s(d.plan)}.`,
+    "billing.cap": () => `${who} ${d.capUsd === null ? "removed the spend cap" : `set the spend cap to $${String(d.capUsd)} a month`}.`,
+    "scim.token.create": () => `${who} made a SCIM token (${s(d.name)}).`,
+    "scim.token.revoke": () => `${who} revoked a SCIM token.`,
   };
   return (await say[row.action]?.()) ?? `${who}: ${row.action}.`;
 }

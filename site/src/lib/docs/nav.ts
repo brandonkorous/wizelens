@@ -20,6 +20,14 @@ export const DOC_GROUPS: DocGroup[] = [
     ],
   },
   {
+    title: "OpenTelemetry",
+    items: [
+      { slug: "java", title: "Java" },
+      { slug: "python", title: "Python" },
+      { slug: "go", title: "Go" },
+    ],
+  },
+  {
     title: "Guides",
     items: [
       { slug: "several-services", title: "Several services" },

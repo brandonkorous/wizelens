@@ -1,6 +1,7 @@
 name: Release
 
-# Push a tag like v0.2.0 to publish every package and the hub and cloud images. npm and NuGet both use trusted publishing (GitHub OIDC), so no publish key is stored.
+# Push a tag like v0.2.0 to publish every npm and NuGet package and the hub and cloud images. npm and NuGet both use trusted publishing (GitHub OIDC), so no publish key is stored.
+# The Java, Python, and Go SDKs have their own tags (java/v*, python/v*, go/v*) and workflows; see docs/RELEASING.md.
 on:
   push:
     tags: ["v*"]

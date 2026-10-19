@@ -1,10 +1,11 @@
 import { availableParallelism } from "node:os";
 import { DEFAULT_REDACT_KEYS } from "@wizeworks/lens-core";
+import { type BillingConfig, type BillingOptions, resolveBilling } from "./billing/options.js";
 import type { Mail } from "./mail/mailer.js";
 
 export type SignupMode = "open" | "invite";
 
-export interface CloudOptions {
+export interface CloudOptions extends BillingOptions {
   /** "postgres://...", "pglite:<folder>", or "memory". Default "pglite:./.wizelens-cloud". */
   database?: string;
   /** Scale mode: telemetry in ClickHouse, `http(s)://user:password@host:8123/database`. Accounts stay in `database`. */
@@ -61,8 +62,8 @@ export interface CloudOptions {
   jobs?: boolean;
 }
 
-type Optional = "uiDir" | "clickhouseUrl" | "publicUrl" | "mcpUrl" | "smtpUrl" | "resendApiKey" | "resendWebhookSecret" | "mailReplyTo" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords" | "pagerDutyUrl";
-export type CloudConfig = Required<Omit<CloudOptions, Optional>> & Pick<CloudOptions, Optional> & { secureCookies: boolean };
+type Optional = "stripeSecretKey" | "stripeWebhookSecret" | "stripePrices" | "stripeClient" | "uiDir" | "clickhouseUrl" | "publicUrl" | "mcpUrl" | "smtpUrl" | "resendApiKey" | "resendWebhookSecret" | "mailReplyTo" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords" | "pagerDutyUrl";
+export type CloudConfig = Required<Omit<CloudOptions, Optional>> & Pick<CloudOptions, Optional> & { secureCookies: boolean; billing: BillingConfig };
 
 /** Mail links must use the public address: a link built from the request's Host header could point anywhere. */
 function checkMail(o: CloudOptions): void {
@@ -125,5 +126,6 @@ export function resolveConfig(o: CloudOptions = {}): CloudConfig {
     now: o.now ?? Date.now,
     fetch: o.fetch ?? fetch,
     secureCookies: !!o.publicUrl?.startsWith("https://"),
+    billing: resolveBilling(o),
   };
 }

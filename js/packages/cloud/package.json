@@ -50,7 +50,9 @@
   "dependencies": {
     "@better-auth/oauth-provider": "1.7.10",
     "@better-auth/passkey": "1.7.10",
+    "@better-auth/scim": "1.7.10",
     "@better-auth/sso": "1.7.10",
+    "@better-auth/stripe": "1.7.10",
     "@electric-sql/pglite": "^0.5.10",
     "@react-email/components": "1.0.12",
     "@wizeworks/lens-core": "workspace:^",
@@ -63,7 +65,8 @@
     "nodemailer": "^10.1.2",
     "pg": "^8.23.1",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "stripe": "22.6.2"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",

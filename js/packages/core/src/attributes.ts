@@ -74,6 +74,10 @@ export const ATTR_ROUTED_MS = "wizelens.server.routed_ms";
 export const ATTR_RESPONSE_BODY = "wizelens.response.body";
 /** Server span: true when the body preview was cut. */
 export const ATTR_RESPONSE_BODY_TRUNCATED = "wizelens.response.body.truncated";
+/** Server span: first part of the request body. Only when body capture is on (Java, Python, and Go SDKs). */
+export const ATTR_REQUEST_BODY = "wizelens.request.body";
+/** Server span: true when the request body preview was cut. */
+export const ATTR_REQUEST_BODY_TRUNCATED = "wizelens.request.body.truncated";
 /** Prefix for app tags: "wizelens.tag.cache" = "hit" shows as "cache:hit". */
 export const TAG_PREFIX = "wizelens.tag.";
 /** Prefix for captured request headers (OTel). */

@@ -3,7 +3,7 @@ import { Bell, Boxes, Bug, Users } from "lucide-react";
 import { countBy, type ErrorGroup, type ErrorPageModel, percentChange, type RequestItem } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
 import { compareSeriesLabel, fmtCount, fmtDateTime, fmtMs, fmtTime } from "../../format";
-import { hrefTo, navigate, traceHref } from "../../routes";
+import { hrefTo, navigate, traceHref, userHref } from "../../routes";
 import { shortAgent } from "../../ui/agent";
 import { Badge, DotText, toneOfStatus } from "../../ui/Badges";
 import { IssueActions, IssueBadge } from "../../ui/IssueControls";
@@ -30,14 +30,13 @@ const OCCURRENCE_COLUMNS: Column<RequestItem>[] = [
 
 function Cards({ m }: { m: ErrorPageModel }) {
   const g = m.group!;
-  const users = countBy(m.requests, (r) => r.user).length;
   const common = { upIsGood: false, compareLabel: m.meta.compareLabel };
   return (
     <div className="wl-grid wl-grid-stats">
       <StatCard icon={Bug} label="Occurrences" value={fmtCount(g.count)} change={m.meta.hasPrev ? percentChange(g.count, m.prevCount) : null} series={m.chart.count} danger {...common} />
       <StatCard icon={Bell} label="Critical" value={fmtCount(m.chart.critical.reduce<number>((t, v) => t + (v ?? 0), 0))} change={null} series={m.chart.critical} danger {...common} />
       <StatCard icon={Boxes} label="Endpoints" value={fmtCount(m.endpoints.length)} change={null} {...common} />
-      <StatCard icon={Users} label="Users (newest 50)" value={fmtCount(users)} change={null} {...common} />
+      <StatCard icon={Users} label="Users Affected" value={fmtCount(m.users.count)} change={null} href={hrefTo("users")} {...common} note="In this range" />
     </div>
   );
 }
@@ -48,7 +47,7 @@ function Breakdown({ m }: { m: ErrorPageModel }) {
   return (
     <div className="wl-grid wl-grid-3">
       <Panel title="Endpoints">{endpoints.length ? <BarList items={endpoints} /> : <Empty>No endpoint recorded.</Empty>}</Panel>
-      <Panel title="Users (newest 50)">{m.requests.some((r) => r.user) ? <BarList items={bars(countBy(m.requests, (r) => r.user))} /> : <Empty>No user was signed in, or the app does not send <code>enduser.id</code>.</Empty>}</Panel>
+      <Panel title={`Users Affected (${fmtCount(m.users.count)})`}>{m.users.count ? <BarList items={m.users.top.map((u) => ({ key: u.user, label: u.user, value: u.count, display: fmtCount(u.count), onClick: () => navigate(userHref(u.user)) }))} /> : <Empty>No user was signed in, or the app does not send <code>enduser.id</code>.</Empty>}</Panel>
       <Panel title="Browsers (newest 50)">{m.requests.some((r) => r.userAgent) ? <BarList items={bars(countBy(m.requests, (r) => (r.userAgent ? shortAgent(r.userAgent) : null)))} /> : <Empty>No user agent recorded.</Empty>}</Panel>
     </div>
   );

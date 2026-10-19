@@ -10,7 +10,8 @@ import { userCount } from "../repo/users.js";
 /** The signed-in person's organizations, each with its projects. */
 async function orgsWithProjects(ctx: Ctx, userId: string) {
   const orgs = await orgsOfUser(ctx.app.db, userId);
-  return Promise.all(orgs.map(async (o) => ({ ...o, projects: await listProjects(ctx.app.db, o.id) })));
+  const plan = (p: string) => (ctx.app.billing.on ? p : "unlimited");
+  return Promise.all(orgs.map(async (o) => ({ ...o, plan: plan(o.plan), projects: await listProjects(ctx.app.db, o.id) })));
 }
 
 /** True once any organization has an SSO provider with a proven domain, so the sign-in page offers single sign-on. */
@@ -19,10 +20,10 @@ async function ssoReady(ctx: Ctx): Promise<boolean> {
   return row?.ready === true;
 }
 
-/** Who is signed in, whether setup is needed, how sign-up works, whether mail goes out, and whether SSO is on. Sign-in itself is Better Auth's (api/auth/). */
+/** Who is signed in, whether setup is needed, how sign-up works, whether mail goes out, whether SSO and billing are on. Sign-in itself is Better Auth's (api/auth/). */
 async function me(ctx: Ctx): Promise<void> {
   const s = await sessionOf(ctx);
-  const base = { signedIn: !!s, needsSetup: (await userCount(ctx.app.db)) === 0, signup: ctx.app.config.signup, mail: ctx.app.mailer.live, sso: await ssoReady(ctx) };
+  const base = { signedIn: !!s, needsSetup: (await userCount(ctx.app.db)) === 0, signup: ctx.app.config.signup, mail: ctx.app.mailer.live, sso: await ssoReady(ctx), billing: ctx.app.billing.on };
   if (!s) return sendJson(ctx.res, 200, base);
   const owned = await ownedOrgs(ctx.app.db, s.user.id);
   sendJson(ctx.res, 200, { ...base, user: s.user, sessionId: s.sessionId, orgs: await orgsWithProjects(ctx, s.user.id), blockingOrgs: blockingOrgs(owned).map((o) => o.name) });

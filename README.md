@@ -143,6 +143,20 @@ import { WizeLensProvider } from "@wizeworks/lens-react";
 Every `fetch` gets a `traceparent` header, so each server trace links back to the click that caused it.
 The `install` import lets WizeLens time React renders per component and measure hydration. Without it, everything else still works.
 
+### Java, Python, and Go
+
+Start from the OpenTelemetry agents; the WizeLens SDKs add SQL parameters, request bodies, logs, and sampling that keeps
+errors and slow traces. They send to a hub or the cloud (`WIZELENS_HUB`).
+
+```bash
+java -javaagent:opentelemetry-javaagent.jar -Dotel.javaagent.extensions=wizelens.jar -jar app.jar   # Java
+pip install wizelens && opentelemetry-instrument uvicorn app:app                                     # Python
+go get github.com/brandonkorous/wizelens/go    # wizelens.Start, Handler, OpenDB, Transport, Logger  # Go
+```
+
+Guides: [Java](https://wizelens.com/docs/java/), [Python](https://wizelens.com/docs/python/), [Go](https://wizelens.com/docs/go/).
+Samples: `samples/java-spring`, `samples/python-fastapi`, `samples/go-net-http`.
+
 ### Open the dashboard
 
 Browse to **`/_wizelens`** on any service. That's it.
@@ -430,6 +444,9 @@ To try the hub, start it first with `pnpm dev:hub` (http://localhost:5960/_wizel
 | `@wizeworks/lens-hub` | npm, Docker | The local hub (`wizelens-hub`) |
 | `@wizeworks/lens-cloud` | npm, Docker | The cloud service (`wizelens-cloud`) |
 | `@wizeworks/lens-cli` | npm | Source map upload (`lens-cli`) and Vite, webpack, and Next.js plugins |
+| `com.wizelens:wizelens` | Maven | Java: the OpenTelemetry agent extension and a servlet body filter (`java/`) |
+| `wizelens` | PyPI | Python: distro for `opentelemetry-instrument`, body middleware, SQL parameters (`python/`) |
+| `github.com/brandonkorous/wizelens/go` | Go module | Go: SDK setup, `net/http`, `database/sql`, `slog` (`go/`) |
 
 <a id="roadmap"></a>
 

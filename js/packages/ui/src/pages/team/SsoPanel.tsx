@@ -7,6 +7,7 @@ import { Badge, CopyButton } from "../../ui/Badges";
 import { useAsk } from "../../ui/Dialog";
 import { Empty, Panel } from "../../ui/Panel";
 import { SectionHead } from "../../ui/Sections";
+import { PlanPrompt, useFeature } from "./PlanPrompt";
 import { SsoForm } from "./SsoForm";
 
 /** One provider as Better Auth lists it (secrets never come back). */
@@ -104,13 +105,15 @@ function ProviderItem({ p, reload }: { p: Provider; reload: () => void }) {
 export function SsoSection({ orgId }: { orgId: string }) {
   const { list, error, reload } = useProviders(orgId);
   const [adding, setAdding] = useState(false);
-  const add = !adding && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setAdding(true)}><Plus aria-hidden="true" /> Add provider</button>;
+  const gate = useFeature(orgId, "sso");
+  const add = gate.allowed && !adding && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setAdding(true)}><Plus aria-hidden="true" /> Add provider</button>;
   return (
     <>
       <SectionHead title="Single sign-on" description="People with an email at a proven domain sign in with your identity provider (OpenID Connect or SAML). New people join as members." action={add} />
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
+      {!gate.allowed && <PlanPrompt feature="sso" plan={gate.plan} />}
       {adding && <SsoForm orgId={orgId} reload={reload} onClose={() => setAdding(false)} />}
-      {list && list.length === 0 && !adding && <Panel><Empty title="No identity provider yet">Add Okta, Entra ID, Google Workspace, Auth0, Keycloak, or any SAML 2.0 provider.</Empty></Panel>}
+      {gate.allowed && list && list.length === 0 && !adding && <Panel><Empty title="No identity provider yet">Add Okta, Entra ID, Google Workspace, Auth0, Keycloak, or any SAML 2.0 provider.</Empty></Panel>}
       {list?.map((p) => <ProviderItem key={p.providerId} p={p} reload={reload} />)}
     </>
   );

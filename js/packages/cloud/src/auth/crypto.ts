@@ -3,7 +3,7 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 // Our own secrets: data-plane keys, share links, and status page links. Passwords, sessions, and invites are Better Auth's.
 
 /** Kinds of secret tokens. The prefix tells a person what a token is for. */
-export const TOKEN_PREFIX = { ingest: "wl_ik_", read: "wl_rk_", share: "wl_sh_", status: "wl_st_" } as const;
+export const TOKEN_PREFIX = { ingest: "wl_ik_", read: "wl_rk_", share: "wl_sh_", status: "wl_st_", scim: "wl_sc_" } as const;
 export type TokenKind = keyof typeof TOKEN_PREFIX;
 
 /** A new random token. Only its hash is stored. */

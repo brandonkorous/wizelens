@@ -29,10 +29,11 @@ export function LogFilters({ stats }: { stats: LogsModel }) {
       <ListQueryBar value={filter.query} placeholder="Messages, categories, or trace IDs; or level:error service:api" />
       <Check label="This level only" disabled={filter.minLevel === "trace"} checked={!!filter.exact} onChange={(e) => setQuery({ exact: e.target.checked ? "1" : null, page: null })} />
       <Select label="Written" value={filter.origin ?? ""} options={ORIGIN_OPTIONS} onChange={(v) => setQuery({ origin: v || null, page: null })} />
-      <button type="button" className="wl-btn" onClick={() => setQuery({ level: null, exact: null, category: null, trace: null, q: null, pattern: null, origin: null, page: null })}>
+      <button type="button" className="wl-btn" onClick={() => setQuery({ level: null, exact: null, category: null, trace: null, q: null, pattern: null, origin: null, user: null, page: null })}>
         <RotateCcw aria-hidden="true" /> Reset
       </button>
-      <FilterChips chips={[["Category", "category", filter.category ?? ""], ["Trace", "trace", filter.traceId ?? ""], ["Pattern", "pattern", filter.pattern ?? ""]]} />
+      <FilterChips chips={[["Category", "category", filter.category ?? ""], ["Trace", "trace", filter.traceId ?? ""], ["Pattern", "pattern", filter.pattern ?? ""], ["User", "user", filter.user ?? ""]]} />
+
     </section>
   );
 }

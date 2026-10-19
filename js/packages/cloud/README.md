@@ -40,6 +40,9 @@ WIZELENS_HUB_TOKEN=wl_ik_...
 | `--setup-token <text>` | `WIZELENS_CLOUD_SETUP_TOKEN` | random, printed at start while no account exists |
 | `--[no-]check-pwned-passwords` | `WIZELENS_CLOUD_CHECK_PWNED=1\|0` | on with Postgres, off with PGlite |
 | `--sso-origins <list>` | `WIZELENS_CLOUD_SSO_ORIGINS` | none: identity provider origins for OIDC single sign-on, comma separated (`https://acme.okta.com`) |
+| `--stripe-secret-key <key>` | `WIZELENS_CLOUD_STRIPE_SECRET_KEY` | none: billing off, every organization unlimited. With it: plans, limits, and the Billing page |
+| `--stripe-webhook-secret <s>` | `WIZELENS_CLOUD_STRIPE_WEBHOOK_SECRET` | none; required with a Stripe key (webhook: `<public-url>/_wizelens/api/auth/stripe/webhook`) |
+| `--stripe-prices <json>` | `WIZELENS_CLOUD_STRIPE_PRICES` | none; required with a Stripe key: what `wizelens-cloud stripe-setup` prints |
 
 Put it behind https, and set `--public-url` to the https address: cookies are then Secure, and passkeys and email links use it.
 Sending mail needs `--public-url`. Without `--resend-api-key` or `--smtp-url`, nobody gets email: reset and invite links are in

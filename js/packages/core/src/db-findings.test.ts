@@ -53,3 +53,21 @@ describe("slow queries that run together", () => {
     expect(groups[0]!.impact).toBe("high");
   });
 });
+
+describe("queries from agents that leave the parameters out", () => {
+  it("are N+1 but never duplicates when the text has placeholders", () => {
+    for (const text of ["SELECT * FROM items WHERE id = ?", "SELECT * FROM t WHERE id = $1", "SELECT * FROM t WHERE id = %(id)s", "SELECT * FROM t WHERE id = :id", "SELECT * FROM t WHERE id = @id"]) {
+      const reads = Array.from({ length: 5 }, (_, i) => query(text, i * 10));
+      expect(kinds(reads)).toEqual(["n+1-db"]);
+    }
+  });
+
+  it("are duplicates when the values are in the text", () => {
+    const reads = Array.from({ length: 2 }, (_, i) => query("SELECT * FROM items WHERE id = 7 AND note = '10:30'", i * 10));
+    expect(kinds(reads)).toEqual(["duplicate-query"]);
+  });
+
+  it("do not read a Postgres cast as a placeholder", () => {
+    expect(kinds([query("SELECT '1'::int", 0), query("SELECT '1'::int", 10)])).toEqual(["duplicate-query"]);
+  });
+});

@@ -7,6 +7,8 @@ import { grantPlugin } from "./oauth-grant.js";
 import { type AuthDeps, appLink } from "./deps.js";
 import { ac, authRoles } from "./roles.js";
 import { orgSchema, passkeySchema, twoFactorSchema } from "./schema-names.js";
+import { stripePlugin } from "../billing/stripe-plugin.js";
+import { scimPlugin } from "./scim.js";
 import { ssoPlugin } from "./sso.js";
 
 const DAY = 24 * 60 * 60;
@@ -56,5 +58,7 @@ export const authPlugins = (deps: AuthDeps): BetterAuthPlugin[] => [
   ssoPlugin(deps),
   oauthPlugin(deps),
   grantPlugin(deps.db),
+  scimPlugin(deps),
+  ...(deps.stripe ? [stripePlugin(deps, deps.stripe)] : []),
   ...(deps.checkPwned ? [haveIBeenPwned()] : []),
 ];

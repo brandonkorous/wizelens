@@ -6,6 +6,27 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Plans and billing for the hosted cloud** (off unless the cloud starts with Stripe keys, so self-hosting stays free and
+  unlimited). Free (10 GB a month, 14 days), Team ($29, 50 GB, 30 days), Business ($99, 150 GB, 90 days, SSO, SCIM, audit
+  export), and Enterprise (set by hand). Every plan has unlimited users, alerts, MCP, and share links, and there is never a
+  seat fee. Usage is the request body as sent, counted per organization per day. Free stops at 10 GB with a 429 until the
+  1st; Team and Business keep going and bill extra GB in steps ($0.30, $0.20, $0.10 a GB) on a monthly usage invoice, with an
+  optional spend cap. Owners and admins get mail at 80% and 100%. Retention is capped by the plan. Checkout, the customer
+  portal, and webhooks go through Better Auth's Stripe plugin, with the organization as the customer; the Stripe meter gets
+  each organization's extra GB once a day, never twice. `wizelens-cloud stripe-setup` makes the products, prices, meter,
+  and webhook in one command; `wizelens-cloud plan set` sets a plan by hand. New options: `--stripe-secret-key`,
+  `--stripe-webhook-secret`, `--stripe-prices`.
+- **Billing page** (Team, Billing; owners and admins): the plan, this month's GB against the included GB, a month-end
+  projection, extra data so far, plan cards (monthly or yearly), Manage billing (Stripe portal), and the spend cap. A banner
+  shows at 80% and 100% on Free and when a cap stops ingest. Single sign-on, SCIM, and audit export show the plan they need
+  and an upgrade button instead of an error.
+- **SCIM provisioning** (cloud, Business and Enterprise; any self-hosted cloud). Make a token under Team, SCIM, and Okta,
+  Entra ID, or another identity provider adds people as members and removes them when they are deactivated. Through Better
+  Auth's SCIM plugin; every change goes to the audit log.
+- **Audit log export** as CSV or JSON (Team, Audit log).
+- **Users.** A Users page lists the signed-in users (`enduser.id`) by requests, with failures and latency; each user has a page
+  with their requests over time, the errors they hit, and their slowest and newest requests. Error groups, endpoints, and
+  insights show how many users they touched. Errors and Logs filter by user, like Requests.
 - **Search everywhere.** Requests, Traces, and Logs have the search box with autocomplete: free words filter as before, and
   `status:5xx duration:>1s @user.id:42` narrows the list to what the search finds. The Search page counts each kind and shows
   when the results happened. Ctrl+K also finds error groups, queries, insights, metrics, alerts, SLOs, saved views, and
@@ -90,9 +111,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   normal. In the cloud, without a project it covers every project you may read.
 - **Problems use the release.** The `release` option (above) also reads `OTEL_SERVICE_VERSION` when `WIZELENS_RELEASE` is
   not set, in Node and .NET. Problems uses `service.version` to spot a new release.
-- **One stats rebuild for all of the above** (`FACTS_VERSION` 6): errors grouped by their first app frame, log patterns,
+- **One stats rebuild for all of the above** (`FACTS_VERSION` 7): errors grouped by their first app frame, log patterns,
   and the versions each service sends. Hosts rebuild their stats once after the upgrade, and the production ClickHouse
-  re-settles once. Cloud migrations 14 (uptime), 15 (source maps), 16 (logs), and 17 (problems) run in that order, after 11 to 13 (alerts, SLOs, and saved items).
+  re-settles once. Cloud migrations 16 (uptime), 17 (source maps), 18 (logs), and 19 (problems) run in that order, after 11 to 15.
 
 - **A page for each error, endpoint, query, and page route.** An error shows its count over time, its endpoints, the users
   and browsers of its newest occurrences, the stack, and those occurrences. An endpoint shows requests, errors, and
@@ -122,7 +143,7 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   trace page's Errors tab show each frame's original file, line, and function, with a few lines of code around the line
   that threw, and the raw stack one click away. Errors
   group by the first frame of your code, so one bug stays one error across builds (the stats rebuild once: facts
-  version 6). On your machine it needs no setup: the browser package, the Node add-on, and the hub read the maps your dev
+  version 7). On your machine it needs no setup: the browser package, the Node add-on, and the hub read the maps your dev
   server serves, and the hub (`--sourcemaps ./dist`) and the Node add-on (`sourceMaps: { dirs }`) read build folders. For
   production, the new `@wizeworks/lens-cli` package uploads maps per release to the hub or the cloud (with a project's
   ingest key): `npx @wizeworks/lens-cli sourcemaps upload ./dist`, or the Vite, webpack, and Next.js plugins at build time.
@@ -143,6 +164,25 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   - The code install stays and wins: when the app calls `createWizeLens()` or `AddWizeLens()` too, the auto install steps
     aside and nothing is counted twice. `UseWizeLens()` now adds its middleware once, however often it is called.
   - New samples with no WizeLens code: `samples/auto-node` and `samples/auto-dotnet`.
+- **Java, Python, and Go are first-class.** Start from the OpenTelemetry agents (the Java agent, `opentelemetry-instrument`,
+  the Go SDK and contrib) and every insight works on what they send: N+1 queries, N+1 HTTP calls, slow queries, and
+  database waits, on old and new semantic-convention names. Thin SDKs add what the agents leave out, with WizeLens
+  defaults: the **Java** extension (`com.wizelens:wizelens`, loaded with `-Dotel.javaagent.extensions`) plus a servlet body
+  filter; the **Python** package (`pip install wizelens`, found by `opentelemetry-instrument` on its own) with ASGI, Flask,
+  and Django body capture; and the **Go** module (`github.com/brandonkorous/wizelens/go`) with `Start`, `Handler`,
+  `Transport`, `OpenDB`, and `Logger`. All three keep every trace with an error or a slow span when sampling, the same
+  way the add-ons do, put SQL parameters on queries (sensitive names redacted), send logs with their trace, and keep
+  request and response bodies with `WIZELENS_CAPTURE_BODY=true`. Runnable samples in `samples/java-spring`,
+  `samples/python-fastapi`, and `samples/go-net-http` call each other, so one request crosses three languages. Guides:
+  `/docs/java/`, `/docs/python/`, `/docs/go/`.
+- **Release workflows for the SDKs.** Tags `python/v*` (PyPI, trusted publishing), `java/v*` (Maven Central, Central
+  Portal token and signing key from repository secrets), and `go/v*` (checks the module and warms the Go proxy) publish
+  them, each checked against its own version. Setup steps are in `docs/RELEASING.md`.
+- **The request body** shows on a request's Headers tab when a service captured it (`wizelens.request.body`).
+- **OTLP mapping:** more older names map to the current ones (`db.sql.table`, `net.host.name`, `http.user_agent`,
+  `http.flavor`, `messaging.operation`, `code.*`, and others); `http.target` splits into path and query; agents' SQL
+  parameters (`db.query.parameter.<key>`, Python's `db.statement.parameters`) become `wizelens.db.parameters`; header
+  lists join with `, ` and header names use dashes; an ORM span over a driver span counts as one query.
 
 - **Connect Claude to WizeLens Cloud with a sign-in, not a key.** Add `https://mcp.wizelens.com` to Claude (Settings →
   Connectors), Claude Code, Cursor, or any MCP client. It opens the WizeLens sign-in, and you pick one organization and
@@ -173,6 +213,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 ### Changed
 
 - Stats are rebuilt once after this update (`FACTS_VERSION` 4), so each count can be read per service and per endpoint.
+- **Duplicate queries need known parameters.** A statement with placeholders but no captured parameters is no longer a
+  duplicate query (the agents sanitize SQL, so two runs may have had different values). Node and .NET always capture
+  parameters, so their results do not change.
 
 ### Fixed
 

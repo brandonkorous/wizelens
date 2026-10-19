@@ -24,6 +24,10 @@ in the path count as the same shape, so `/orders/1` and `/orders/2` match.
 
 The same statement runs **2 or more times** in one trace with the **same parameters**. The second run gives you nothing new.
 
+A statement with placeholders (`?`, `$1`, `%s`, `:name`, `@name`) but no captured parameters is never a duplicate: two
+runs may have had different values. The plain OpenTelemetry agents leave the parameters out; the [Java](/docs/java/),
+[Python](/docs/python/), and [Go](/docs/go/) SDKs put them back.
+
 **Fix:** keep the first result, or cache it for the request.
 
 ## Slow query

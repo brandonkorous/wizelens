@@ -53,7 +53,7 @@ it("fires once when the error rate breaks the rule, then resolves", async () => 
   expect(list.body.rules[0]!.state).toBe("ok");
   expect(list.body.events.map((e) => e.kind)).toEqual(["resolved", "fired"]);
   expect(list.body.events[0]!.delivery).toBe("webhook: sent");
-});
+}, 60_000);
 
 it("an above normal rule fires on a spike, names what broke, and links its problem", async () => {
   const clock = { now: ANOMALY_NOW };

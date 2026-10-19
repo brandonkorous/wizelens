@@ -13,6 +13,12 @@ export const isSessionStatement = (s: Span): boolean => SESSION_RE.test(queryTex
 /** The queries that the N+1 and duplicate checks look at. */
 export const repeatableQueries = (t: Trace): Span[] => dbSpans(t).filter((s) => !isSessionStatement(s));
 
+// Placeholders: ? (JDBC, sanitized text), $1 (Postgres), %s and %(name)s (Python), :name, @name.
+const PLACEHOLDER_RE = /\?|\$\d+|%s|%\(\w+\)s|(?<![:\w]):[A-Za-z_]\w*|@[A-Za-z_]\w*/;
+
+/** A query with placeholders but no captured parameters: two of them may differ, so they are never duplicates. */
+export const hasUnknownParams = (s: Span): boolean => s.attributes["wizelens.db.parameters"] == null && PLACEHOLDER_RE.test(queryText(s));
+
 /** Slow queries that run at the same time, at least this many, are one wait, not many slow queries. */
 export const WAIT_MIN_QUERIES = 3;
 

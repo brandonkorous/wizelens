@@ -17,7 +17,7 @@ function HeaderList({ headers }: { headers: [string, string][] }) {
   );
 }
 
-const NOT_CAPTURED = "This service did not capture headers. Update its WizeLens add-on to v0.3 or later.";
+const NOT_CAPTURED = "This service did not capture headers. Update its WizeLens add-on to v0.3 or later, or turn on header capture in its OpenTelemetry agent.";
 
 /** Request line, client details, and the captured request headers. */
 export function PanelHeaders({ r, server }: { r: RequestItem; server: Span | undefined }) {
@@ -39,17 +39,24 @@ export function PanelHeaders({ r, server }: { r: RequestItem; server: Span | und
       />
       <h3 className="wl-section-title">Headers ({headers.length})</h3>
       {headers.length ? <HeaderList headers={headers} /> : <p className="wl-muted wl-small">{NOT_CAPTURED}</p>}
+      {bodyOf(server, "request") && (
+        <>
+          <h3 className="wl-section-title">Body</h3>
+          <Body server={server} which="request" />
+        </>
+      )}
     </>
   );
 }
 
-function Body({ server }: { server: Span }) {
-  const body = bodyOf(server);
+function Body({ server, which }: { server: Span; which: "request" | "response" }) {
+  const body = bodyOf(server, which);
   if (!body) {
     return (
       <p className="wl-muted wl-small">
-        Response body capture is off. Turn it on with <code className="wl-mono">CaptureResponseBody = true</code> (.NET) or{" "}
-        <code className="wl-mono">captureResponseBody: true</code> (Node). Only text and JSON bodies are kept, up to 16 KB.
+        Response body capture is off. Turn it on with <code className="wl-mono">CaptureResponseBody = true</code> (.NET),{" "}
+        <code className="wl-mono">captureResponseBody: true</code> (Node), or <code className="wl-mono">WIZELENS_CAPTURE_BODY=true</code> (Java,
+        Python, Go). Only text and JSON bodies are kept, up to 16 KB.
       </p>
     );
   }
@@ -79,7 +86,7 @@ export function PanelResponse({ r, server }: { r: RequestItem; server: Span | un
       <h3 className="wl-section-title">Headers ({headers.length})</h3>
       {headers.length ? <HeaderList headers={headers} /> : <p className="wl-muted wl-small">{NOT_CAPTURED}</p>}
       <h3 className="wl-section-title">Body</h3>
-      <Body server={server} />
+      <Body server={server} which="response" />
     </>
   );
 }

@@ -1,5 +1,8 @@
 import { type Attributes, isDbCall, redactAttributes, SPAN_RESOURCE_KEYS, type Span, stampVersion, type SpanCategory, type SpanKind } from "@wizeworks/lens-core";
 import type { HubWrite } from "../store.js";
+import { foldDbParams } from "./db-params.js";
+import { hideNestedDb } from "./nested.js";
+import { splitTarget } from "./semconv.js";
 import { attributesOf, hexId, nanosToMs, type OtlpKeyValue, type OtlpResource, resourcePick, senderOf } from "./values.js";
 
 export interface OtlpSpan {
@@ -61,7 +64,10 @@ export function toSpan(s: OtlpSpan, service: string, redactKeys: readonly string
   const spanId = hexId(s.spanId, 16);
   if (!traceId || !spanId) return null;
   const kind = kindOf(s.kind);
-  const attributes = redactAttributes({ ...resource, ...attributesOf(s.attributes) }, redactKeys);
+  const raw = attributesOf(s.attributes);
+  splitTarget(raw);
+  foldDbParams(raw, redactKeys);
+  const attributes = redactAttributes({ ...resource, ...raw }, redactKeys);
   const category = categoryOf(kind, attributes);
   const startMs = nanosToMs(s.startTimeUnixNano);
   const name = String(s.name ?? "span").slice(0, 500);
@@ -94,6 +100,6 @@ export function writesFromSpans(list: readonly OtlpResourceSpans[], redactKeys: 
     const resource = resourcePick(rs.resource, SPAN_RESOURCE_KEYS);
     const mapped = spans.map((s) => toSpan(s, sender.service, redactKeys, resource)).filter((s): s is Span => s !== null);
     // The resource's service.version goes on the sender's spans, for releases and so Problems can tell a new one.
-    return { sender, via: "otlp" as const, spans: stampVersion(mapped, sender), logs: [], remotes: [] };
+    return { sender, via: "otlp" as const, spans: stampVersion(hideNestedDb(mapped), sender), logs: [], remotes: [] };
   });
 }

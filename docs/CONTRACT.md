@@ -158,7 +158,7 @@ interface SamplingInfo {
 
 | Category | Attributes |
 |---|---|
-| http.server | `http.request.method`, `http.route`, `url.path`, `url.query`, `http.response.status_code`, `server.address`, `client.address` (first `X-Forwarded-For` value, else the socket), `user_agent.original`, `http.request.header.{name}` / `http.response.header.{name}` (lower-case names, values joined with `, `, max 50 headers, 1 KB each, redacted), `http.request.body.size`, `http.response.body.size`, `wizelens.request.id`, `enduser.id` (when known), `wizelens.tag.{key}` (app tags), `wizelens.server.routed_ms` (when the runtime can tell), `wizelens.response.body` + `wizelens.response.body.truncated` (only with body capture on: text and JSON, first 16 KB) |
+| http.server | `http.request.method`, `http.route`, `url.path`, `url.query`, `http.response.status_code`, `server.address`, `client.address` (first `X-Forwarded-For` value, else the socket), `user_agent.original`, `http.request.header.{name}` / `http.response.header.{name}` (lower-case names, values joined with `, `, max 50 headers, 1 KB each, redacted), `http.request.body.size`, `http.response.body.size`, `wizelens.request.id`, `enduser.id` (when known), `wizelens.tag.{key}` (app tags), `wizelens.server.routed_ms` (when the runtime can tell), `wizelens.response.body` + `wizelens.response.body.truncated` (only with body capture on: text and JSON, first 16 KB), `wizelens.request.body` + `wizelens.request.body.truncated` (the Java, Python, and Go SDKs, with `WIZELENS_CAPTURE_BODY=true`; complete JSON has sensitive keys redacted) |
 | any span | `service.version`: the version of the app that ran it, so Problems can name a new release. Node: `release`, else `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else `npm_package_version`. .NET: `Release`, else `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else the entry assembly's informational version. OTLP: the resource's `service.version`, copied onto that service's spans that have none |
 | internal | `wizelens.layer` = `handler` for a controller action or endpoint handler span |
 | gRPC (on http.server / http.client) | `rpc.system` = `grpc`, `rpc.service` (e.g. `orders.v1.Orders`), `rpc.method` (e.g. `GetOrder`), `rpc.grpc.status_code` (number). Name: `{service}/{method}`. A non-zero status code on the server is an error. |
@@ -338,6 +338,8 @@ Applies to attributes, DB parameter names, and header names. List is configurabl
 ## Analysis (shared logic, same results in .NET and JS)
 
 - **Duplicate query**: ≥ 2 `db` spans in one trace with identical `db.query.text` AND identical `wizelens.db.parameters`.
+  A span with placeholders in its text (`?`, `$1`, `%s`, `%(name)s`, `:name`, `@name`) and no `wizelens.db.parameters`
+  (the OpenTelemetry agents sanitize SQL) is never a duplicate: its values are unknown.
 - **N+1 query**: ≥ 5 (configurable) `db` spans in one trace with identical `db.query.text` (params may differ).
 - **Session statements** (`SET`, `RESET`, `BEGIN`, `START TRANSACTION`, `COMMIT`, `END`, `ROLLBACK`, `SAVEPOINT`, `RELEASE`,
   `DISCARD`, `USE`) are never duplicates or N+1. Apps that set `SET LOCAL app.tenant_id` per query repeat them by design.
@@ -439,6 +441,14 @@ The Errors model takes `status` (`unresolved` by default, `resolved`, `ignored`,
 range), and returns `issues` (status, first seen over all kept data, new, assignee) and `hasIssues`. The Insights model
 takes `status` the same way. The Overview model returns `freshErrors`, the newest new and regressed groups.
 
+## Users
+
+Requests carry the signed-in user (`enduser.id`). Facts keep `usr` (per user: requests, failures, durations), and one key per item
+and user for error groups (`err.u`), insights (`ins.u`), and endpoints (`ep.u`, `service|endpoint|user`), so pages count distinct
+users. The Error and Endpoint pages return `users` (`{ count, top }`), Insights `selectedUsers` for its `key`. Errors and Logs
+take `user` (Requests already did). The `users` page lists users by requests (`q`, `page`, `size`); the `user` page (`user`) has
+their totals, requests over time, newest and slowest requests, and the error groups they hit. `FACTS_VERSION` 6.
+
 ## Saved views and dashboards
 
 Hosts with `saved` keep items per project at `api/saved?project=` (hub) or `api/projects/:project/saved` (cloud):
@@ -528,7 +538,7 @@ frame that a map covers and that is app code (not `node_modules` or bundler runt
 line number when there is none), for example `src/cart/Checkout.tsx:applyCoupon`. A host never replaces a frame already
 set. The error group key is `service|type|message shape`, plus `|<frame>` for browser errors that have one, so the same
 message thrown in two places is two groups, and one error stays one group across builds. Errors whose map was not found keep
-the key without a frame. This changed the facts: `FACTS_VERSION` 6.
+the key without a frame. This changed the facts: `FACTS_VERSION` 7.
 
 **Resolve on read.** `POST api/sourcemaps/resolve` (`?project=` on the hub and cloud) with `{ stack, release }` (the stack
 cut at 64 KB) answers `{ frames: ResolvedFrame[] }`:
@@ -677,6 +687,18 @@ Trace `remotes` that point at a service which sends to the hub are hidden, so th
 - Span kind, status, events, and attributes map one to one. Category uses the same rules as the add-ons.
 - Older attribute names are copied to the current ones when the current one is missing: `http.method`, `http.status_code`,
   `http.url`, `http.target`, `http.scheme`, `db.statement`, `db.system`, `db.name`, `db.operation`, `net.peer.name`, `net.peer.port`.
+  Also `http.user_agent`, `http.client_ip`, `http.flavor`, `http.request_content_length`, `http.response_content_length`,
+  `db.sql.table` / `db.mongodb.collection` / `db.cassandra.table` / `db.cosmosdb.container` (→ `db.collection.name`),
+  `net.host.name`, `net.host.port`, `net.sock.peer.addr`, `net.sock.peer.port`, `messaging.operation`,
+  `messaging.destination`, `code.function`, `code.filepath`, `code.lineno`. The first older name wins.
+- `url.path` that holds a query (from `http.target`) is split into `url.path` and `url.query`.
+- Captured headers: a list value is joined with `, `, and `_` in the name becomes `-` (`http.request.header.content-type`).
+- SQL parameters: `db.query.parameter.<key>` (Java agent) become `wizelens.db.parameters`, a JSON array when every key
+  is a position, else an object with sensitive names redacted; the per-key attributes are removed. Python's
+  `db.statement.parameters` (the `str()` of a tuple or dict) is read as JSON the same way, or kept as text (redacted
+  whole when it names a secret). A value an SDK already set wins.
+- A `db` span whose parent in the same export is also a `db` span (an ORM over its driver, such as SQLAlchemy over
+  sqlite3) becomes `internal`, so the query counts once; its parameters move to the parent when the text matches.
 - Log records keep their trace id. Records without one (startup, jobs) go into a loose batch: `looseTraceIdOf(project|service|environment|host, time)`, one per source and 5-minute window, with `spanId` null.
   Severity 1–4 trace, 5–8 debug, 9–12 info, 13–16 warn, 17–20 error, 21–24 critical.
 - Metrics: gauge, sum, histogram, exponential histogram, and summary, as described in "Metrics". Metric attributes are redacted.
@@ -818,6 +840,12 @@ retention, and the audit log.
   (`/` and `/mcp` to `/_wizelens/mcp`, `/.well-known/*` as is). Requests on that host get its metadata (`resource` is the
   origin, or `<origin>/mcp`) and its `resource_metadata` pointer; sign-in stays on the public URL. The hosted cloud uses
   `https://mcp.wizelens.com`.
+- **SCIM provisioning** (Better Auth's SCIM plugin, `@better-auth/scim`): an admin makes a `wl_sc_…` token for the
+  organization (hashed in `scim_tokens`); the identity provider calls `<public-url>/_wizelens/api/auth/scim/v2` with it.
+  Each token is one connection (`org-<id>`) whose provisioning domain is the organization. A user it creates or activates
+  becomes a `member`; a deactivated one leaves the organization (owners stay) and loses its sessions. An existing account
+  is linked only when its email is confirmed and it is already a member or at the organization's proven SSO domain.
+  Changes write `scim.user.*` and `scim.group.*` (actor `scim:<token id>`); tokens write `scim.token.create` and `.revoke`.
 - **Audit log**: org changes, member and invite changes (also those through Better Auth), keys, projects, shares, and every MCP tool
   call, with who did it.
 
@@ -825,7 +853,7 @@ retention, and the audit log.
 
 | Method | Path | Who |
 |---|---|---|
-| GET | `api/me` | Anyone: `{ signedIn, needsSetup, signup, mail, sso, user?, sessionId?, orgs?[] with projects, blockingOrgs? }`. `sso`: some provider has a proven domain |
+| GET | `api/me` | Anyone: `{ signedIn, needsSetup, signup, mail, sso, billing, user?, sessionId?, orgs?[] with projects and plan, blockingOrgs? }`. `sso`: some provider has a proven domain. `billing`: the cloud bills through Stripe; off, every `plan` is `unlimited` |
 | GET | `api/invites/{id}` | Anyone with the link: `{ orgName, email, role, inviter }` |
 | * | `api/auth/*` | Better Auth: sign-up, sign-in (email, passkey), `two-factor/*`, sessions, password, email, `delete-user`, `organization/*` (invite, accept, roles, remove, leave), `sign-in/sso`, `sso/*` (register with `organizationId`, providers, update, delete, domain proof; owner or admin). Send `organizationId` on every `organization/*` change |
 | POST / GET / PATCH / DELETE | `api/orgs`, `api/orgs/{org}` | Signed in; read: any member; name and retention: admin; delete (with `password`): owner |
@@ -856,6 +884,13 @@ retention, and the audit log.
 | POST | `api/auth/wizelens/oauth-grant` | Signed in within 15 minutes: `{ organizationId, allProjects, projectIds, oauth_query }` from the consent page. Answers `{ id }` |
 | GET / DELETE | `api/me/apps[/{id}]` | Signed in: the apps this person connected (`{ apps: [{ id, app, clientId, orgId, orgName, userEmail, allProjects, projects, createdMs, usedMs }] }`), or end one |
 | GET / DELETE | `api/orgs/{org}/apps[/{id}]` | Admin: every app connected in the organization, or end one |
+| GET | `api/orgs/{org}/usage` | Any member: `{ billing, plan, includedGb, maxRetentionDays, month, monthGb, days[{ day, gb, bytes, spans, logs, points }], overageUsd, projectedGb, projectedOverageUsd, spendCapUsd, blocked, reason, subscription, plans[] }` (see "Plans and billing") |
+| PATCH | `api/orgs/{org}/billing` | Owner, billing on, Team or Business: `{ spendCapUsd: whole dollars or null }` |
+| GET | `api/orgs/{org}/audit/export?format=csv\|json` | Admin, plan with audit export (402 otherwise): the whole log as a download; writes `audit.export` |
+| GET / POST / DELETE | `api/orgs/{org}/scim`, `…/scim/tokens[/{id}]` | Admin: `{ allowed, plan?, baseUrl, tokens }`; a new `wl_sc_…` token is in the answer once (402 without SCIM on the plan) |
+| * | `api/auth/scim/v2/*` | SCIM 2.0 (Better Auth's SCIM plugin): `Users`, `Groups`, `ServiceProviderConfig`, `Schemas`, `ResourceTypes`, with `Authorization: Bearer wl_sc_…` (no dashboard header) |
+| * | `api/auth/subscription/*` | Better Auth's Stripe plugin, billing on: `upgrade`, `cancel`, `restore`, `list`, `billing-portal`, each with `customerType: "organization"` and `referenceId` (owner or admin); `success` (Stripe's redirect back) |
+| POST | `api/auth/stripe/webhook` | Stripe, signed (`Stripe-Signature`, `--stripe-webhook-secret`); 404 with billing off |
 
 ### Page models (`serverStats`)
 
@@ -909,7 +944,7 @@ Pages read small tables built from the stored traces, never the traces themselve
   `rollup_10s` (kept 6 h 10 min), `rollup_5m` (kept 50 h), `rollup_1h` (kept for the retention). Each row has `n`, `err`,
   `sum_v`, counters `c0`..`c5`, `first_ms`, `last_ms`, and one representative (`top`, `top_rank`) and newest trace ids (`ids`).
   `hist_<tier>` holds a log-bucket histogram per row (bins 4% wide, so percentiles are within 2%).
-  Since `FACTS_VERSION` 6, `svc.v` counts traces per service name and `service.version` (key `<service>\u001f<version>`),
+  Since `FACTS_VERSION` 7, `svc.v` counts traces per service name and `service.version` (key `<service>\u001f<version>`),
   so a page can tell when a version first sent data.
 - A query reads the coarsest tier that still gives a window enough buckets, and finer tiers at the window's edges; an edge
   bucket that no kept tier can split is weighted by its overlap. Series place each tier bucket by its midpoint, or spread it
@@ -1064,6 +1099,48 @@ batches, raw log rows, log facts, log search rows and attributes, and the log ki
 only the other kinds by the organization's retention.
 `POST …/projects/{id}/clear` deletes a project's data now.
 
+### Plans and billing
+
+Billing is off unless the cloud starts with `--stripe-secret-key` (then `--stripe-webhook-secret` and `--stripe-prices`,
+JSON of `teamMonthly`, `teamAnnual`, `businessMonthly`, `businessAnnual`, `overage`, `meter`, are required, and so is
+`--public-url`). Off, every organization is `unlimited`: no caps, no gates, no billing UI. Plans live in
+`cloud/src/billing/plans.ts`:
+
+| Plan | Included GB a month | Retention max | Overage | SSO, SCIM, audit export |
+|---|---|---|---|---|
+| `free` | 10 (then 429) | 14 | no | no |
+| `team` | 50 | 30 | yes | no |
+| `business` | 150 | 90 | yes | yes |
+| `enterprise` | `orgs.plan_gb` (none: no limit) | `orgs.plan_retention_days`, at most 400 | no | yes |
+| `unlimited` | none | 400 | no | yes |
+
+- **Usage**: the request body of `api/ingest` and OTLP as sent (before gzip is undone), counted only when accepted, plus spans,
+  logs, and metric points, per organization per UTC day in `usage_daily`. Counters flush every minute and at shutdown. A GB
+  is 10^9 bytes. Months are calendar months in UTC.
+- **Free cap**: at the included GB, ingest and OTLP answer 429 `{ error: "This organization reached the Free plan's 10 GB
+  for this month. …" }` with `Retry-After: 3600` until the 1st or an upgrade. **Spend cap** (Team, Business): past
+  `spend_cap_cents` of overage, 429 "This organization reached its monthly spend cap of $N. …". The first block of a month
+  writes `ingest.blocked`. Mail to owners and admins at 80% and 100% of the included GB and at the spend cap, once a month each
+  (`usage_notices`).
+- **Overage**: graduated on the GB above the included GB each month: 500 GB at $0.30, 1,500 GB at $0.20, then $0.10.
+- **Gates**: SSO provider setup (`sso/register`, `sso/update-provider`) answers 402 `PLAN_REQUIRED`; SCIM tokens stop
+  working and their routes answer 402; audit export answers 402 with `{ plan }`. Retention above the plan's maximum answers
+  402; a plan change lowers retention to the new maximum.
+- **Stripe** (Better Auth's Stripe plugin, the organization is the customer and the subscription's `reference_id`):
+  Checkout starts Team or Business, monthly or yearly; the customer portal changes, cancels, and holds cards and invoices.
+  Webhook events (`checkout.session.completed`, `customer.subscription.created|updated|deleted`) update `subscriptions`, then
+  `orgs.plan` follows: `active`, `trialing`, or `past_due` keeps the paid plan (a failed payment keeps it through Stripe's
+  retries); otherwise Free. Plans set by hand (`enterprise`, `unlimited`) stay without a subscription. Changes write
+  `plan.change`. A paid organization also gets a **usage subscription**: only the graduated metered price on the
+  `wizelens_gb` meter, monthly, anchored to the 1st (UTC), metadata `wizelensRole: usage`; the webhook handles its events
+  itself (it is remade if it ends while the plan runs) and passes every other event to the plugin. Five minutes after each UTC
+  day ends, the whole GB above the included GB since the 1st, less what was reported that month, goes to the meter as one event
+  per organization and day (`identifier: wl-<org>-<day>`, `usage_reports`), so a rerun never bills twice. When the plan ends,
+  finished days are reported, then the usage subscription is canceled with a final invoice.
+- **Commands**: `wizelens-cloud stripe-setup` makes the products, prices (lookup keys `wizelens_team_monthly`, …,
+  `wizelens_gb_overage`), the meter, and the webhook, and prints the options. `wizelens-cloud plan set <org> <plan>
+  [--gb N] [--retention-days N]` sets a plan by hand (audit actor `cli`).
+
 ### Cloud storage
 
 Postgres, one schema, migrations in `wizelens_migrations`. Tables: `orgs`, `users`, `members`, `sessions`, `invites`, `accounts`,
@@ -1080,13 +1157,15 @@ users, organizations, and members kept their rows and ids. Passwords moved to `a
 new ids (so new links). A test checks that Better Auth finds nothing to change in the schema, and Better Auth checks it again at start.
 Data tables are keyed by `project_id`. Times are `double precision` epoch ms, except in Better Auth's tables (`timestamptz`). Our
 secrets (keys, shares, status page links) are stored as SHA-256 hashes only; Better Auth stores reset and confirm tokens hashed. Migration 8 added
-`fact_search` and `fact_attrs` (see "Search"). Migration 10 added `issues` (see "Issue states"). Migration 11 added the alert
-rule scope, reminder, mute, and acknowledgement columns and `alert_values` (see "Alerts"). Migration 12 added `slos` and
-`apdex_targets` (see "SLOs and Apdex"). Migration 13 added `saved_items` and the page columns of `shares` (saved views,
-searches, dashboards, and page share links). Migration 14 added `uptime_checks`, `uptime_incidents`, and `status_pages` (see
-"Uptime checks"). Migration 15 added `sourcemaps` (see "Source maps"). Migration 16 added `fact_logs.pattern`,
-`projects.log_retention_days`, `alert_rules.log_search`, and `saved_searches`. Migration 17 added `alert_events.problem` (see
-"Problems").
+`fact_search` and `fact_attrs` (see "Search"). Migration 9 added OAuth for MCP clients. Migration 10 added `issues`. Migration 11 added the alert changes (see "Alerts"). Migration 12 added SLOs. Migration 13 added saved views and page shares. Migration 14 added billing:
+`orgs.plan` (existing organizations `unlimited`), `plan_gb`, `plan_retention_days`, `spend_cap_cents`, `stripe_customer_id`,
+`overage_subscription_id`; `users.stripe_customer_id`; Better Auth's `subscriptions`; `usage_daily`, `usage_notices`,
+`usage_reports`; and `scim_tokens` (hashed `wl_sc_…`). Migration 15 added the SCIM plugin's tables in snake_case
+(`scim_users`, `scim_groups`, `scim_group_members`, `scim_subjects`, `scim_projection_grants`, `scim_identity_tombstones`,
+`scim_connection_bindings`); their provisioning domain is the organization id. Migration 16 added `uptime_checks`,
+`uptime_incidents`, and `status_pages` (see "Uptime checks"). Migration 17 added `sourcemaps` (see "Source maps"). Migration 18
+added `fact_logs.pattern`, `projects.log_retention_days`, `alert_rules.log_search`, and `saved_searches`. Migration 19 added
+`alert_events.problem` (see "Problems").
 
 ### Telemetry stores (small mode and scale mode)
 

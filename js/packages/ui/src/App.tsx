@@ -5,6 +5,7 @@ import { TraceCompare } from "./pages/trace/TraceCompare";
 import { AlertsPage } from "./pages/alerts/AlertsPage";
 import { SlosPage } from "./pages/slos/SlosPage";
 import { DashboardsPage } from "./pages/dashboards/DashboardsPage";
+import { UsersPage } from "./pages/users/UsersPage";
 import { AuthGate } from "./shell/auth/AuthGate";
 import { useData, useWindowed } from "./data/hooks";
 import { useHost } from "./data/host";
@@ -32,6 +33,7 @@ import { UptimePage } from "./pages/uptime/UptimePage";
 import { AUTH_PAGES, type AuthPageId, type PageId, type Route, useRoute } from "./routes";
 import { releaseMissing } from "./data/release";
 import { EmailBanner } from "./shell/EmailBanner";
+import { UsageBanner } from "./shell/UsageBanner";
 import { Sidebar } from "./shell/Sidebar";
 import { TopBar } from "./shell/TopBar";
 import { UpdateBanner, UpdateNeeded } from "./shell/UpdateBanner";
@@ -64,6 +66,7 @@ const PAGES: Record<Exclude<PageId, "trace" | "shared" | "status" | AuthPageId>,
   uptime: UptimePage,
   slos: SlosPage,
   dashboards: DashboardsPage,
+  users: UsersPage,
   team: TeamPage,
   account: AccountPage,
 };
@@ -133,6 +136,7 @@ function Shell() {
         <TopBar data={data} />
         <UpdateBanner />
         <EmailBanner />
+        <UsageBanner />
         <main className="wl-page">
           <PageView route={route} />
         </main>

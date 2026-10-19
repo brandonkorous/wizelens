@@ -1,5 +1,5 @@
 import { splitKey } from "../scale/kinds.js";
-import type { ListFilter, NeedResults, PageDef } from "../scale/needs.js";
+import type { ListFilter, Need, NeedResults, PageContext, PageDef } from "../scale/needs.js";
 import { bucketStarts, percentChange } from "../stats/common.js";
 import { type LogFilter, LOG_LEVELS, type LogRow } from "../stats/logs.js";
 import { SPARK_BUCKETS } from "../stats/overview.js";
@@ -34,7 +34,7 @@ export interface LogsModel {
 
 const isLevel = (v: string | undefined): v is LogLevel => !!v && (LOG_LEVELS as readonly string[]).includes(v);
 
-/** The filter from URL parameters: level (and exact=1 for that level only), service, category, trace, q, pattern, and origin (request or outside). */
+/** The filter from URL parameters: level (and exact=1 for that level only), service, category, trace, q, pattern, origin (request or outside), and user. */
 export const logFilterOf = (p: ModelParams): LogFilter => ({
   minLevel: isLevel(p.level) ? p.level : "trace",
   exact: p.exact === "1" && isLevel(p.level),
@@ -44,6 +44,7 @@ export const logFilterOf = (p: ModelParams): LogFilter => ({
   query: p.q ?? "",
   pattern: p.pattern ?? "",
   origin: p.origin === "request" || p.origin === "outside" ? p.origin : "",
+  user: p.user?.trim() ?? "",
 });
 
 /** The list filter for the logs table (and for log charts and log alerts). */
@@ -73,6 +74,13 @@ function changeOf(cur: Counts, prev: Counts): LogsModel["change"] {
 }
 
 /** The Logs page. Params: the filter (`logFilterOf`), page, size. The cards and charts follow the service. */
+/** Requests of one user the Logs page reads lines from. */
+const USER_TRACES = 1000;
+
+/** The table's lines: by the filter, and only these traces when a search or a user picked them. */
+const rowsNeed = (ctx: PageContext, f: LogFilter, ids: readonly string[] | undefined): Need =>
+  listNeed("rows", "logs", "cur", { filter: ids ? { ...logListFilterOf({ ...f, query: ctx.searchIds ? "" : f.query }), traceIds: ids } : logListFilterOf(f), page: pageParams(ctx.params, 30) });
+
 export const logsPage: PageDef<LogsModel> = {
   needs: (ctx) => {
     const f = logFilterOf(ctx.params);
@@ -82,10 +90,17 @@ export const logsPage: PageDef<LogsModel> = {
       groupNeed("log.cur", "log", "cur", one),
       groupNeed("log.prev", "log", "prev", one),
       groupNeed("log.s", "log.s", "cur"),
-      listNeed("rows", "logs", "cur", { filter: ctx.searchIds ? { ...logListFilterOf({ ...f, query: "" }), traceIds: ctx.searchIds } : logListFilterOf(f), page: pageParams(ctx.params, 30) }),
+      // With a user, the lines wait for the user's requests (the follow-up); else they come now.
+      ...(f.user ? [listNeed("user.traces", "requests", "cur", { filter: { user: f.user }, limit: USER_TRACES })] : [rowsNeed(ctx, f, ctx.searchIds)]),
       seriesNeed("volume", "log", "cur", CHART_BUCKETS, { split: true, ...one }),
       seriesNeed("sparks", "log", "cur", SPARK_BUCKETS, { split: true, ...one }),
     ]);
+  },
+  followUp(ctx, first) {
+    const f = logFilterOf(ctx.params);
+    if (!f.user) return [];
+    const mine = listOf<{ traceId: string }>(first, "user.traces").items.map((r) => r.traceId);
+    return [rowsNeed(ctx, f, ctx.searchIds ? mine.filter((id) => ctx.searchIds!.includes(id)) : mine)];
   },
   model(d) {
     const cards = countsOf(d, "log.cur");

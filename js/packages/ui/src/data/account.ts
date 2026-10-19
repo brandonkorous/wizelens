@@ -21,6 +21,8 @@ export interface OrgWithProjects {
   name: string;
   slug: string;
   retentionDays: number;
+  /** The plan; "unlimited" on a cloud without billing. */
+  plan?: string;
   role: Role;
   projects: Project[];
 }
@@ -41,6 +43,8 @@ export interface AccountState {
   mail: boolean;
   /** Some organization has single sign-on with a proven domain. */
   sso: boolean;
+  /** The cloud bills through Stripe: plans, limits, and the Billing page show. */
+  billing?: boolean;
   user?: AccountUser;
   sessionId?: string;
   orgs?: OrgWithProjects[];

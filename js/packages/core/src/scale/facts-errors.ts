@@ -12,10 +12,12 @@ export const TOP_STACK_MAX = 8192;
 
 const capStack = (e: ErrorEvent): ErrorEvent => (e.stack && e.stack.length > TOP_STACK_MAX ? { ...e, stack: e.stack.slice(0, TOP_STACK_MAX) } : e);
 
-function eventContributions(e: ErrorEvent): Contribution[] {
+function eventContributions(e: ErrorEvent, user: string | null): Contribution[] {
   const at = e.timeMs;
   const critical = { c: [e.critical ? 1 : 0] };
+  const users = user ? [contribution("err.u", joinKey(e.key, user), at)] : [];
   return [
+    ...users,
     contribution("err", "", at, critical),
     contribution("err.g", e.key, at, { ...critical, top: { rank: at, data: capStack(e) } }),
     contribution("err.ge", joinKey(e.key, e.endpoint), at),
@@ -25,8 +27,8 @@ function eventContributions(e: ErrorEvent): Contribution[] {
   ].flatMap((c) => withServices(c, [e.service]));
 }
 
-/** Everything one trace's errors add to the rollups. */
-export const errorFacts = (trace: Trace): Contribution[] => errorEvents([trace]).flatMap(eventContributions);
+/** Everything one trace's errors add to the rollups; `user` is the signed-in user of its request, when there is one. */
+export const errorFacts = (trace: Trace, user: string | null = null): Contribution[] => errorEvents([trace]).flatMap((e) => eventContributions(e, user));
 
 /** Sample messages in pattern tops are cut to this many characters. */
 export const PATTERN_SAMPLE_MAX = 500;
