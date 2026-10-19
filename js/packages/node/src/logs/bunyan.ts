@@ -1,6 +1,5 @@
 import { addCleanup, logSinkOf } from "../adapters/registry.js";
 import type { LogEntry, LogSink } from "../logger.js";
-import { activeSpan } from "../spans.js";
 import type { WizeLens } from "../types.js";
 import { markDirect } from "./captured.js";
 import { levelFromNumber } from "./levels.js";
@@ -24,7 +23,7 @@ function toEntry(rec: Rec): LogEntry {
   return { level: levelFromNumber(Number(rec.level) || 30), category: String(rec.name ?? "bunyan"), message: String(rec.msg ?? ""), attributes, timeMs };
 }
 
-/** Copy bunyan log lines written during a request into its trace. Call it before you make child loggers. */
+/** Copy bunyan log lines into WizeLens: into the trace of the request they belong to, or (outside one) as loose lines. Call it before you make child loggers. */
 export function instrumentBunyan(wizelens: WizeLens, logger: unknown): boolean {
   const sink = logSinkOf(wizelens);
   const target = logger as BunyanLike | null;
@@ -33,7 +32,7 @@ export function instrumentBunyan(wizelens: WizeLens, logger: unknown): boolean {
   const sinks = new Set<LogSink>([sink]);
   addCleanup(wizelens, () => sinks.delete(sink));
   const write = (rec: Rec) => {
-    if (sinks.size === 0 || !activeSpan()) return;
+    if (sinks.size === 0) return;
     try {
       const entry = toEntry(rec);
       for (const s of sinks) s(entry);

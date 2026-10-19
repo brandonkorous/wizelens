@@ -1,9 +1,9 @@
 // The heavy part of a settle batch for one project: read its traces, build facts and deltas, and write them. Runs in a worker thread or in the main thread.
-import { compact, factRows, FACT_TABLES, type FactTable, mergeDeltas, type SettleDelta, settleDelta, storedOf, type Trace, traceFacts, withoutTop } from "@wizeworks/lens-core";
+import { compact, factRows, FACT_TABLES, type FactTable, isLooseTraceId, mergeDeltas, type SettleDelta, settleDelta, storedOf, type Trace, traceFacts, withoutTop } from "@wizeworks/lens-core";
 import type { ChClient } from "./http.js";
 import type { Dirty } from "./queue.js";
 import { loadTraces } from "./read.js";
-import { factObjects, type Label, tombstones, writeDeltas } from "./settle-rows.js";
+import { factKeepOf, factObjects, type Label, tombstones, writeDeltas } from "./settle-rows.js";
 
 type Row = Record<string, unknown>;
 
@@ -13,6 +13,8 @@ export interface ProjectTask {
   items: Dirty[];
   now: number;
   retentionMs: number;
+  /** How long log rows are kept for this project. */
+  logRetentionMs: number;
   /** The row version, from the main thread, so versions only grow. */
   ver: number;
 }
@@ -40,7 +42,8 @@ interface ProjectWork {
 
 /** Facts, deltas, and new settle states for one project's dirty traces. */
 async function projectWork(ch: ChClient, t: ProjectTask): Promise<ProjectWork> {
-  const { project, items, now, retentionMs, ver } = t;
+  const { project, items, now, retentionMs, logRetentionMs, ver } = t;
+  const keep = { ms: retentionMs, logMs: logRetentionMs };
   const ids = items.map((d) => d.traceId);
   const [traces, stored] = await Promise.all([loadTraces(ch, [project], ids), storedContribs(ch, project, ids)]);
   const raw = Object.fromEntries(FACT_TABLES.map((t) => [t, [] as unknown[][]])) as Record<FactTable, unknown[][]>;
@@ -52,13 +55,14 @@ async function projectWork(ch: ChClient, t: ProjectTask): Promise<ProjectWork> {
     const next = facts ? compact(facts, scope) : null;
     const old = stored.get(d.traceId);
     if (old !== undefined) work.resettled.push(d.traceId);
-    work.deltas.push(settleDelta(storedOf(old || null), next, now, retentionMs));
+    work.deltas.push(settleDelta(storedOf(old || null), next, now, retentionMs, logRetentionMs));
     if (facts) for (const [t, rows] of Object.entries(factRows(facts, scope, trace)) as [FactTable, unknown[][]][]) raw[t].push(...rows);
     const start = trace?.startMs ?? now;
-    work.states.push({ project_id: project, trace_id: d.traceId, settled_ms: d.updatedMs, contrib: next ? JSON.stringify(withoutTop(next)) : "", ver, expire_ms: start + retentionMs });
+    const stateKeep = isLooseTraceId(d.traceId) ? logRetentionMs : retentionMs;
+    work.states.push({ project_id: project, trace_id: d.traceId, settled_ms: d.updatedMs, contrib: next ? JSON.stringify(withoutTop(next)) : "", ver, expire_ms: start + stateKeep });
   });
   const timeOf = (r: Row) => Number(r.start_ms ?? r.time_ms ?? now);
-  work.facts = factObjects(raw, ver, (r) => timeOf(r) + retentionMs);
+  work.facts = factObjects(raw, ver, (r, table) => timeOf(r) + factKeepOf(table, r, keep));
   return work;
 }
 
@@ -68,7 +72,7 @@ async function writeWork(ch: ChClient, t: ProjectTask, w: ProjectWork): Promise<
   const label: Label = (table) => ({ insert_deduplication_token: `${t.ver}:${t.project}:${table}` });
   const dead = await tombstones(ch, t.project, w.resettled, w.facts, t.ver);
   const facts = FACT_TABLES.map((f) => ch.insert(`${f}_t`, [...dead[f], ...w.facts[f]], label(f)));
-  await Promise.all([...facts, writeDeltas(ch, mergeDeltas(w.deltas), () => t.retentionMs, label)]);
+  await Promise.all([...facts, writeDeltas(ch, mergeDeltas(w.deltas), () => ({ ms: t.retentionMs, logMs: t.logRetentionMs }), label)]);
   await ch.insert("settle_state", w.states, label("settle_state"));
 }
 

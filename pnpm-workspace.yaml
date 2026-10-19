@@ -2,6 +2,7 @@ packages:
   - "js/packages/*"
   - "samples/web"
   - "samples/orders-api"
+  - "samples/next-web"
   - "samples/auto-node"
   - "site"
 

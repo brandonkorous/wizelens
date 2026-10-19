@@ -4,6 +4,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { registerFindTools } from "./mcp-find.js";
 import { registerMetricTools } from "./mcp-metrics.js";
 import { registerOverviewTool } from "./mcp-overview.js";
+import { registerProblemTools } from "./mcp-problems.js";
 import { projectsSource, registerProjectTools, singleSource } from "./mcp-projects.js";
 import { type McpDataSource, type McpProjects, type Source } from "./mcp-shared.js";
 import { registerSearchTools } from "./mcp-search.js";
@@ -29,6 +30,7 @@ function createServer(data: McpDataSource | McpProjects): McpServer {
   registerTagTools(server, src);
   registerOverviewTool(server, src);
   registerTrafficTools(server, src);
+  registerProblemTools(server, src);
   return server;
 }
 

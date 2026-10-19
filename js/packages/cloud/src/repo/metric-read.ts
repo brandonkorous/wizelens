@@ -1,5 +1,6 @@
 import {
   alignNow,
+  infraSteps,
   type MetricAlertData,
   metricAlertSteps,
   type MetricData,
@@ -23,6 +24,11 @@ const run = (q: Queryable) => (s: MetricSql) => q.query<Record<string, unknown>>
 /** The metrics page data for one project, from the metric rollup tiers. `now` is rounded down to 10 s. */
 export function loadMetricData(q: Queryable, m: MetricQuery, range: TimeRange, params: Readonly<Record<string, string>>, now: number): Promise<MetricData> {
   return runMetricAsync(metricPageSteps("pg", { project: m.projectId, env: m.env }, range, alignNow(now), params), run(q));
+}
+
+/** Host and Kubernetes series for one project, from the metric rollup tiers. */
+export function loadInfraData(q: Queryable, m: MetricQuery, range: TimeRange, params: Readonly<Record<string, string>>, now: number): Promise<MetricData> {
+  return runMetricAsync(infraSteps("pg", { project: m.projectId, env: m.env }, range, alignNow(now), params), run(q));
 }
 
 /** One metric over an alert rule's window, from the metric rollup tiers. */

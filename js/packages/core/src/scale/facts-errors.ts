@@ -1,5 +1,7 @@
 // Error and log facts: the err* kinds (exceptions by group, type, service, endpoint) and log* (lines by level).
 import { type ErrorEvent, errorEvents } from "../stats/errors.js";
+import { isLooseTraceId } from "../loose.js";
+import { logPattern, patternIdOf } from "../stats/log-patterns.js";
 import { type LogRow } from "../stats/logs.js";
 import type { Trace } from "../types.js";
 import { type Contribution, contribution, withServices } from "./agg.js";
@@ -28,6 +30,23 @@ function eventContributions(e: ErrorEvent, user: string | null): Contribution[] 
 /** Everything one trace's errors add to the rollups; `user` is the signed-in user of its request, when there is one. */
 export const errorFacts = (trace: Trace, user: string | null = null): Contribution[] => errorEvents([trace]).flatMap((e) => eventContributions(e, user));
 
-/** Log lines by level, and by display service and level. */
+/** Sample messages in pattern tops are cut to this many characters. */
+export const PATTERN_SAMPLE_MAX = 500;
+
+/** The top of a `log.p` row: the pattern, and the newest line's message, category, and trace. */
+export interface PatternSample {
+  pattern: string;
+  message: string;
+  category: string;
+  traceId: string;
+}
+
+const patternSample = (l: LogRow): PatternSample => ({ pattern: logPattern(l.message), message: l.message.slice(0, PATTERN_SAMPLE_MAX), category: l.category, traceId: l.traceId });
+
+/** Log lines by level, by display service and level, and by service, level, and pattern (with the newest line as its sample). */
 export const logFacts = (rows: readonly LogRow[]): Contribution[] =>
-  rows.flatMap((l) => [contribution("log", l.level, l.timeMs), contribution("log.s", joinKey(l.service, l.level), l.timeMs)]);
+  rows.flatMap((l) => [
+    contribution("log", l.level, l.timeMs),
+    contribution("log.s", joinKey(l.service, l.level), l.timeMs),
+    contribution("log.p", joinKey(l.service, l.level, patternIdOf(l.message), isLooseTraceId(l.traceId) ? "o" : "r"), l.timeMs, { top: { rank: l.timeMs, data: patternSample(l) } }),
+  ]);

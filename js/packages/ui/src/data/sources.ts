@@ -48,7 +48,10 @@ export const inScope = (s: HubService, scope: Pick<Scope, "env" | "project">, by
   (!scope.env || s.environment === scope.env) && (!byProject || !scope.project || s.project === scope.project);
 
 /** "Online", or for a quiet service: "Offline" (add-ons send a heartbeat) or "Idle" (OTLP apps send only when they have data). */
-export const presenceOf = (s: HubService) => (s.online ? "Online" : s.via === "otlp" ? "Idle" : "Offline");
+export const presenceOf = (s: HubService) => (s.online ? "Online" : s.via === "addon" ? "Offline" : "Idle");
+
+/** How a service sends, in words. */
+export const VIA_LABEL: Record<HubService["via"], string> = { addon: "WizeLens", otlp: "OTLP", uptime: "Uptime checks" };
 
 export const loadRegistry = (endpoint: string, scope: Scope | null = null): Promise<HubRegistry> =>
   getJson<HubRegistry>(`${endpoint}/api/services?${scopeQuery(scope).slice(1)}`);

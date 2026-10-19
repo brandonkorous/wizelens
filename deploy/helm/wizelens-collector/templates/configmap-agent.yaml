@@ -1,0 +1,90 @@
+{{- if .Values.agent.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "wlc.fullname" . }}-agent
+  labels:
+    {{- include "wlc.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc: { endpoint: "${env:MY_POD_IP}:4317" }
+          http: { endpoint: "${env:MY_POD_IP}:4318" }
+      kubeletstats:
+        collection_interval: {{ .Values.agent.collectionInterval }}
+        auth_type: serviceAccount
+        endpoint: "https://${env:{{ ternary "K8S_NODE_IP" "K8S_NODE_NAME" .Values.agent.kubeletUseNodeIp }}}:10250"
+        insecure_skip_verify: {{ .Values.agent.kubeletInsecureSkipVerify }}
+        metric_groups: [node, pod, container]
+        metrics:
+          k8s.node.cpu.usage: { enabled: true }
+          k8s.pod.cpu.usage: { enabled: true }
+          container.cpu.usage: { enabled: true }
+      {{- if .Values.agent.hostMetrics }}
+      hostmetrics:
+        root_path: /hostfs
+        collection_interval: {{ .Values.agent.collectionInterval }}
+        scrapers:
+          cpu:
+            metrics:
+              system.cpu.utilization: { enabled: true }
+              system.cpu.logical.count: { enabled: true }
+          load: {}
+          memory:
+            metrics:
+              system.memory.utilization: { enabled: true }
+          disk: {}
+          filesystem:
+            exclude_fs_types:
+              match_type: strict
+              fs_types: [autofs, binfmt_misc, bpf, cgroup2, configfs, debugfs, devpts, devtmpfs, fusectl, hugetlbfs, iso9660, mqueue, nsfs, overlay, proc, procfs, pstore, rpc_pipefs, securityfs, selinuxfs, squashfs, sysfs, tmpfs, tracefs]
+            exclude_mount_points:
+              match_type: regexp
+              mount_points: ["/dev/.*", "/proc/.*", "/sys/.*", "/run/.*", "/var/lib/docker/.*", "/var/lib/kubelet/.*", "/var/lib/containerd/.*", "/snap/.*"]
+          network: {}
+      {{- end }}
+    processors:
+      {{- include "wlc.processors" (dict "root" . "mib" .Values.agent.memoryLimitMib) | nindent 6 }}
+      k8sattributes:
+        filter:
+          node_from_env_var: K8S_NODE_NAME
+        {{- include "wlc.k8sattributes" . | nindent 8 }}
+      resource/host:
+        attributes:
+          - { key: host.name, value: "${env:K8S_NODE_NAME}", action: upsert }
+          - { key: k8s.node.name, value: "${env:K8S_NODE_NAME}", action: upsert }
+          - { key: os.type, value: linux, action: insert }
+    exporters:
+      {{- include "wlc.exporters" . | nindent 6 }}
+    extensions:
+      health_check: { endpoint: "${env:MY_POD_IP}:13133" }
+    service:
+      extensions: [health_check]
+      telemetry:
+        metrics: { level: none }
+      pipelines:
+        {{- if .Values.agent.hostMetrics }}
+        metrics/host:
+          receivers: [hostmetrics]
+          processors: [memory_limiter, resource/host, resource/wizelens, batch]
+          exporters: [otlphttp/wizelens]
+        {{- end }}
+        metrics/kube:
+          receivers: [kubeletstats]
+          processors: [memory_limiter, k8sattributes, resource/wizelens, batch]
+          exporters: [otlphttp/wizelens]
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, k8sattributes, resource/wizelens, batch]
+          exporters: [otlphttp/wizelens]
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, k8sattributes, resource/wizelens, batch]
+          exporters: [otlphttp/wizelens]
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, k8sattributes, resource/wizelens, batch]
+          exporters: [otlphttp/wizelens]
+{{- end }}

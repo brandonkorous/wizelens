@@ -1,4 +1,4 @@
-/* Logs page: filters, volume chart, and the log table. */
+/* Logs page: filters, volume chart, patterns, saved search charts, and the log table. */
 .wl-logs-page > .wl-panel { margin-bottom: 18px; }
 .wl-logs-page .wl-panel-flush .wl-table th:first-child, .wl-logs-page .wl-panel-flush .wl-table td:first-child { padding-left: 20px; }
 .wl-logs-page .wl-panel-flush .wl-table th:last-child, .wl-logs-page .wl-panel-flush .wl-table td:last-child { padding-right: 20px; }
@@ -9,3 +9,19 @@
 .wl-logs-page .wl-badge { text-transform: capitalize; }
 .wl-log-detail { display: flex; flex-direction: column; gap: 10px; max-width: 900px; font-size: 13px; }
 .wl-log-detail .wl-kv { font-family: var(--wl-mono); font-size: 12.5px; }
+/* Log patterns: the masked pattern, its share of lines, and a trend. */
+.wl-logs-page .wl-log-pattern { min-width: 260px; max-width: 560px; }
+.wl-logs-page .wl-log-pattern code { font: 12.5px/1.5 var(--wl-mono); word-break: break-word; }
+.wl-log-share { display: inline-block; width: 72px; height: 6px; border-radius: 3px; background: var(--wl-surface-2); overflow: hidden; vertical-align: middle; }
+.wl-log-share > span { display: block; height: 100%; background: var(--wl-chart-bar); }
+/* Log metrics: one chart per saved search. */
+.wl-log-metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 14px; }
+.wl-log-metric { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 12px 14px; border: 1px solid var(--wl-line); border-radius: 10px; }
+.wl-log-metric header { display: flex; align-items: flex-start; gap: 12px; }
+.wl-log-metric-title { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.wl-log-metric-total { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.wl-log-metric-total strong { font-size: 18px; }
+.wl-log-metric footer, .wl-log-metrics .wl-panel-head .wl-row-actions { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; }
+.wl-log-metric footer svg, .wl-log-metrics .wl-panel-head svg { width: 14px; height: 14px; vertical-align: -2px; }
+.wl-log-save { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-bottom: 14px; }
+.wl-log-save .wl-field { flex: 1; min-width: 220px; }

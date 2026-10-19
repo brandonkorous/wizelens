@@ -1,7 +1,9 @@
 import { SpanKind } from "@opentelemetry/api";
 import type { ReadableSpan } from "@opentelemetry/sdk-trace-base";
 import { describe, expect, it } from "vitest";
-import { toContractSpan } from "./processor.js";
+import type { Span } from "@wizeworks/lens-core";
+import { StoreSpanProcessor, toContractSpan } from "./processor.js";
+import type { TraceStore } from "./store.js";
 
 const readable = (attributes: Record<string, string>): ReadableSpan =>
   ({
@@ -24,4 +26,16 @@ describe("toContractSpan", () => {
   it("leaves a plain span internal", () => {
     expect(toContractSpan(readable({ "http.route": "/get-session" }), "console", []).category).toBe("internal");
   });
+});
+
+describe("StoreSpanProcessor", () => {
+  it("keeps the app's version on spans that do not set one", () => {
+    const added: Span[] = [];
+    const store = { addSpan: (s: Span) => void added.push(s) } as unknown as TraceStore;
+    new StoreSpanProcessor(store, "api", [], "2.0.0").onEnd(readable({}));
+    new StoreSpanProcessor(store, "api", [], "2.0.0").onEnd(readable({ "service.version": "1.0.0" }));
+    new StoreSpanProcessor(store, "api", []).onEnd(readable({}));
+    expect(added.map((s) => s.attributes["service.version"])).toEqual(["2.0.0", "1.0.0", undefined]);
+  });
+
 });

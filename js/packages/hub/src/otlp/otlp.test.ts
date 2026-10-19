@@ -1,5 +1,6 @@
 import { gzipSync } from "node:zlib";
 import { afterEach, describe, expect, it } from "vitest";
+import { isLooseTraceId } from "@wizeworks/lens-core";
 import type { Hub } from "../hub.js";
 import { startHub } from "../test/helpers.js";
 import { encodeTraces } from "./proto.js";
@@ -61,7 +62,7 @@ describe("OTLP/HTTP", () => {
     expect((await stored(url)).spans[0]).toMatchObject({ traceId: TRACE, spanId: SPAN, name: "SELECT orders" });
   });
 
-  it("keeps logs that belong to a trace", async () => {
+  it("keeps logs of a trace in it, and logs without one as loose lines", async () => {
     let url: string;
     ({ hub, url } = await startHub());
     const log = (traceId?: string) => ({ timeUnixNano: "1700000000001000000", severityNumber: 13, body: { stringValue: "slow" }, traceId, spanId: SPAN });
@@ -69,5 +70,10 @@ describe("OTLP/HTTP", () => {
     await fetch(`${url}/v1/logs`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const t = (await (await fetch(`${url}/_wizelens/api/traces/${TRACE}`)).json()) as { logs: unknown[] };
     expect(t.logs).toEqual([expect.objectContaining({ level: "warn", message: "slow", category: "orders", service: "py-worker" })]);
+    const full = (await (await fetch(`${url}/_wizelens/api/traces?full=true`)).json()) as { traceId: string; logs: { spanId: string | null }[] }[];
+    const loose = full.filter((x) => isLooseTraceId(x.traceId));
+    expect(loose.map((x) => x.logs.map((l) => l.spanId))).toEqual([[null]]);
+    const list = (await (await fetch(`${url}/_wizelens/api/traces`)).json()) as { traceId: string }[];
+    expect(list.map((x) => x.traceId)).toEqual([TRACE]);
   });
 });

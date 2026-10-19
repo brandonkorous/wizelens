@@ -17,6 +17,8 @@ export interface MetricSqlScope {
   env?: string;
   service?: string;
   names?: readonly string[];
+  /** Only these series keys (a host's, node's, or pod's series). */
+  keys?: readonly string[];
 }
 
 /** MetricPlaceholders in the order they appear in the text, which SQLite needs. */
@@ -43,6 +45,7 @@ function scopeWhere(a: Args, s: MetricSqlScope): string[] {
   if (s.project !== undefined) out.push(`${pc} = ${a.p(s.project)}`);
   if (s.env !== undefined) out.push(`env = ${a.p(s.env)}`);
   if (s.names) out.push(a.in("name", s.names));
+  if (s.keys) out.push(a.in("series_key", s.keys));
   if (s.service !== undefined) {
     const service = a.p(s.service);
     const own = s.project !== undefined ? ` AND ${pc} = ${a.p(s.project)}` : "";

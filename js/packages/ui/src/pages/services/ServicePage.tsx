@@ -6,6 +6,7 @@ import { hrefTo } from "../../routes";
 import { ModelState } from "../../ui/ModelState";
 import { Empty, Panel } from "../../ui/Panel";
 import { RegistryHosts } from "./RegistryHosts";
+import { ServiceInfra } from "./ServiceInfra";
 import { LatencyPanel, ServiceCards, TrafficPanel } from "./ServiceCharts";
 import { ServiceHeader, useHostGroups } from "./ServiceHeader";
 import { ErrorsPanel, LogsPanel, RuntimePanel, SlowestPanel } from "./ServiceOwned";
@@ -52,6 +53,7 @@ function ServiceBody({ m, row }: { m: ServicePageModel; row: ServiceRow }) {
       {m.owned && <VersionsPanel m={m} name={row.name} />}
       {m.owned && <LogsPanel m={m} name={row.name} />}
       {m.owned && <RuntimePanel name={row.name} />}
+      {m.owned && <ServiceInfra name={row.name} />}
       {groups.map((g) => (
         <RegistryHosts key={g.key} group={g} now={updatedMs} />
       ))}

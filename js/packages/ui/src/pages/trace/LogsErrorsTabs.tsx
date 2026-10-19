@@ -1,6 +1,7 @@
-import { errorInfo, isErrorSpan, type Trace } from "@wizeworks/lens-core";
+import { errorInfo, isErrorSpan, releaseOf, type Span, type Trace } from "@wizeworks/lens-core";
 import { fmtMs } from "../../format";
 import { Empty } from "../../ui/Panel";
+import { ErrorStack } from "../errors/ResolvedStack";
 import { ServiceChip } from "./tabParts";
 
 interface Props {
@@ -42,7 +43,18 @@ export function LogsTab({ trace, onSelect }: Props) {
   );
 }
 
+// A browser error's stack opens on its original source (source maps), with the raw stack one click away.
+function BrowserStack({ span }: { span: Span }) {
+  const e = errorInfo(span);
+  return (
+    <div onClick={(ev) => ev.stopPropagation()}>
+      <ErrorStack event={{ type: e.type ?? "Error", message: e.message, stack: e.stack, browser: true, release: releaseOf(span) }} />
+    </div>
+  );
+}
+
 export function ErrorsTab({ trace, onSelect }: Props) {
+  const spans = new Map(trace.spans.map((s) => [s.spanId, s]));
   const errors = trace.spans.filter(isErrorSpan).map(errorInfo);
   if (errors.length === 0) return <Empty>No errors in this request.</Empty>;
   return (
@@ -55,7 +67,7 @@ export function ErrorsTab({ trace, onSelect }: Props) {
             <span className="wl-muted">in {e.name}</span>
           </div>
           <div className="wl-error-msg">{e.message}</div>
-          {e.stack && <pre className="wl-code wl-stack">{e.stack}</pre>}
+          {e.stack && spans.get(e.spanId)?.category === "browser" ? <BrowserStack span={spans.get(e.spanId)!} /> : e.stack && <pre className="wl-code wl-stack">{e.stack}</pre>}
         </li>
       ))}
     </ul>

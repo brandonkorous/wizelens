@@ -32,6 +32,7 @@ Each service keeps its own dashboard too.
 - **It knows your services.** Which are online, idle, or offline, what they run on, and when they last sent data.
 - **Any language.** OTLP over HTTP, JSON or protobuf: traces, logs, and metrics.
 - **One MCP endpoint** for every service, with `--mcp`.
+- **Uptime checks** that call your sites and APIs on a schedule from this machine. See [Uptime checks](/docs/uptime/).
 - **Saved views and dashboards:** the star saves the page you are on; dashboards put metric charts of your choice on one page.
 - **SLOs and Apdex,** like the cloud's: error budgets, burn rates, and a target time per service.
 - **Alerts,** like the cloud's: to Slack, Teams, Discord, PagerDuty, or a webhook (no email). Webhooks may be plain http or on
@@ -56,10 +57,13 @@ Run it with `--host 0.0.0.0 --token <text>`. Then:
 | `--data <file>` | `WIZELENS_HUB_DATA` | `~/.wizelens/hub/hub.db` (`memory` for none) |
 | `--token <text>` | `WIZELENS_HUB_TOKEN` | none |
 | `--retention <time>` | `WIZELENS_HUB_RETENTION` | `7d` |
+| `--log-retention <time>` | `WIZELENS_HUB_LOG_RETENTION` | same as `--retention` (see [Logs](/docs/logs/)) |
 | `--max-traces <n>` | `WIZELENS_HUB_MAX_TRACES` | `50000` |
 | `--max-metric-points <n>` | `WIZELENS_HUB_MAX_METRIC_POINTS` | `2000000` raw points |
 | `--mcp` | `WIZELENS_HUB_MCP=1` | off |
+| `--no-uptime` | `WIZELENS_HUB_UPTIME=0` | checks on |
 | `--import <file>` | | Copy an add-on's `.wizelens/traces.db` in at start |
+| `--sourcemaps <dir>` | `WIZELENS_HUB_SOURCEMAPS=a,b` | Read browser [source maps](/docs/source-maps/) from a build folder. Can repeat |
 
 `wizelens-hub --help` lists every option.
 

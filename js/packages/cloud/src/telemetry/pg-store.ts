@@ -2,10 +2,11 @@
 import { PG_DIALECT, searchSql, suggestSql, type TimeWindow } from "@wizeworks/lens-core";
 import type { Db } from "../db/db.js";
 import { ensureTrigram } from "../db/trigram.js";
-import { loadMetricAlertData, loadMetricData } from "../repo/metric-read.js";
+import { loadInfraData, loadMetricAlertData, loadMetricData } from "../repo/metric-read.js";
 import { METRIC_TABLES } from "../repo/metric-write.js";
 import { getJoinedTrace } from "../repo/trace-join.js";
 import { countRows, getTrace, queryTraces, traceEnvsPg } from "../repo/trace-read.js";
+import { pruneLogsByRetention } from "../repo/log-retention.js";
 import { pruneByRetention, pruneMetricsByRetention, writeTelemetry } from "../repo/trace-write.js";
 import { cloudExecutor, cloudSettling, pgRunner } from "../scale-exec.js";
 import { factsStale, pruneRollups, resetFacts, settleCloud, STATS_TABLES } from "../settle.js";
@@ -33,6 +34,14 @@ async function activeHours(db: Db, projectId: string, from: number, to: number):
     [projectId, from, to],
   );
   return row?.n ?? 0;
+}
+
+/** Traces, then log lines, then metrics past retention, then the rollup buckets past their keep. */
+async function pruneAll(db: Db, now: number): Promise<void> {
+  while ((await pruneByRetention(db, now)) > 0);
+  await pruneLogsByRetention(db, now);
+  await pruneMetricsByRetention(db, now);
+  await pruneRollups(db, now, true);
 }
 
 /** Telemetry in the cloud's own database. Retention reads the organizations from the same database. */
@@ -63,15 +72,12 @@ export function pgTelemetry(db: Db): TelemetryStore {
     slowestEndpoints: (projectId, w, minCount, limit) => slowestEndpoints(db, projectId, w, minCount, limit),
     metricData: (m, range, params, now) => loadMetricData(db, m, range, params, now),
     metricAlertData: (m, name, w, now) => loadMetricAlertData(db, m, name, w, now),
+    infraData: (m, range, params, now) => loadInfraData(db, m, range, params, now),
     async settle(now, o) {
       await reset.catch(() => (startReset(), reset));
       return settleCloud(db, now, o);
     },
-    async prune(now) {
-      while ((await pruneByRetention(db, now)) > 0);
-      await pruneMetricsByRetention(db, now);
-      await pruneRollups(db, now, true);
-    },
+    prune: (now) => pruneAll(db, now),
     pruneRollups: (now) => pruneRollups(db, now),
     async checkFactsVersion() {
       trigram = ensureTrigram(db).catch((err: unknown) => console.error("Trigram indexes failed; text searches scan until the next start.", err));

@@ -1,4 +1,5 @@
 import { ATTR_REACT_COMMITS, ATTR_REACT_COMPONENTS, newSpanId, type Span } from "@wizeworks/lens-core";
+import { pageMapLoader, sendError } from "./error-frames.js";
 import { browserSpan, type ViewRef } from "./browser-span.js";
 import { watchConsole } from "./console-capture.js";
 import { errorSpan, watchErrors } from "./errors.js";
@@ -10,12 +11,14 @@ import type { Sender } from "./sender.js";
 import { now } from "./session.js";
 
 export interface CaptureOptions {
-  sender: Pick<Sender, "push" | "flush" | "log">;
+  sender: Pick<Sender, "push" | "flush" | "log" | "hold" | "release">;
   sessionId: string;
   /** Copy `console.*` calls into the page view's trace. Default true. */
   captureConsole?: boolean;
   /** How often React render stats are sent. Default 5000 ms. */
   reactIntervalMs?: number;
+  /** Read this page's source maps (dev servers serve them) so browser errors group by source. Default true. */
+  resolveFrames?: boolean;
 }
 
 /** A React render stats span for the components that rendered since the last report. Null when nothing rendered. */
@@ -49,7 +52,8 @@ export function startBrowserCapture(o: CaptureOptions): () => void {
     if (span) o.sender.push(span);
   };
   const timer = setInterval(report, o.reactIntervalMs ?? 5000);
-  const stopErrors = watchErrors((err) => o.sender.push(errorSpan(views.current(), err, o.sessionId)));
+  const maps = o.resolveFrames === false ? null : pageMapLoader();
+  const stopErrors = watchErrors((err) => sendError(o.sender, errorSpan(views.current(), err, o.sessionId), maps));
   const stopConsole = o.captureConsole === false ? () => {} : watchConsole(views.current, (l) => o.sender.log(l));
   const stopRoutes = watchRoutes(() => {
     report();

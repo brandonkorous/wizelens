@@ -29,7 +29,9 @@ export function tierMemory(traces: readonly Trace[], retentionMs: number): SyncE
 const STATIC: Partial<Record<PageName, Record<string, string>[]>> = {
   requests: [{ endpoint: "POST /api/pay" }, { user: "nope" }, { insights: "1" }, { sort: "errors" }, { sort: "db", desc: "0" }, { service: "Web App" }, { method: "POST" }, { status: "5xx" }, { status: "failed", duration: "medium" }, { duration: "slowest" }, { service: "orders" }, { q: "orders" }, { q: "orders", status: "failed" }, { sort: "duration", desc: "0", page: "2", size: "5" }, { status: "bogus" }],
   traces: [{ q: "checkout" }, { q: "nothing-matches" }, { trace: "f".repeat(32) }, { service: "orders" }, { service: "Web App" }, { status: "error" }, { status: "ok" }, { duration: "slowest" }, { sort: "duration" }, { page: "2", size: "5" }, { service: "api", status: "error", sort: "duration" }],
-  logs: [{ level: "warn" }, { level: "error", service: "api" }, { q: "order" }, { page: "2", size: "5" }, { service: "orders" }, { level: "warn", exact: "1" }, { category: "api.app" }, { trace: "f".repeat(32) }, { user: "user-0" }, { user: "user-0", level: "warn" }],
+  logs: [{ level: "warn" }, { level: "error", service: "api" }, { q: "order" }, { page: "2", size: "5" }, { service: "orders" }, { level: "warn", exact: "1" }, { category: "api.app" }, { trace: "f".repeat(32) }, { origin: "outside" }, { origin: "request", level: "info" }, { user: "user-0" }, { user: "user-0", level: "warn" }],
+  "log-patterns": [{ level: "warn" }, { service: "worker-svc" }, { level: "error", exact: "1" }, { pattern: "nope" }, { origin: "outside" }, { origin: "request", service: "orders" }],
+  "log-chart": [{ level: "error" }, { q: "retrying" }, { origin: "outside" }, { service: "orders", level: "info" }],
   insights: [{ area: "database" }, { impact: "high" }, { q: "orders" }, { service: "api" }, { service: "Web App" }, { endpoint: "GET /api/orders/{id}" }, { service: "api", release: "1.0.0" }, { service: "api", release: "1.1.0" }],
   rendering: [{ q: "checkout" }, { q: "nothing" }],
   errors: [{ q: "pay" }, { q: "TIMEOUT" }, { service: "api" }, { service: "Web App" }, { type: "TimeoutError" }, { critical: "1" }, { sort: "count" }, { page: "2", size: "2" }, { endpoint: "POST /api/pay" }, { endpoint: "nope" }, { service: "api", critical: "1", sort: "count" }, { service: "api", release: "1.0.0" }, { service: "api", release: "1.2.0", new: "1" }, { service: "api", release: "9.9" }, { user: "user-9" }, { user: "user-9", endpoint: "POST /api/pay" }],
@@ -37,6 +39,7 @@ const STATIC: Partial<Record<PageName, Record<string, string>[]>> = {
   overview: [{ from: String(SCENARIO_NOW - 3 * 3_600_000), to: String(SCENARIO_NOW - 3_600_000) }, { compare: "week" }, { service: "orders" }, { service: "api" }, { service: "Web App" }, { service: "nope" }],
   service: [{ service: "orders" }, { service: "Web App" }, { service: "nope" }],
   traffic: [{ service: "orders" }, { service: "api:api", buckets: "48" }, { endpoint: "POST /api/pay" }, { service: "api", endpoint: "POST /api/pay", buckets: "16" }, { service: "nope" }, { from: String(SCENARIO_NOW - 3 * 3_600_000), to: String(SCENARIO_NOW - 3_600_000) }],
+  problems: [{ sensitivity: "high", problem: "nope", at: String(SCENARIO_NOW - 3_600_000), focus: "api:orders", service: "orders" }],
   users: [{}, { q: "user-1" }, { page: "2", size: "2" }],
   user: [{ user: "user-9" }, { user: "user-0" }, { user: "nobody" }],
 };
@@ -54,6 +57,7 @@ function paramsOf(page: PageName, range: TimeRange, mem: SyncExecutor): Record<s
   if (page === "errors") extra.push(...runPageSync("errors", ctx, mem).groups.slice(0, 2).map((g) => ({ group: g.key })), { group: "nope" }, { _issues: "1" }, { _issues: "1", status: "resolved" }, { _issues: "1", status: "ignored" }, { new: "1" });
   if (page === "insights" || page === "overview") extra.push({ _issues: "1" });
   if (page === "insights") extra.push(...runPageSync("insights", ctx, mem).groups.slice(0, 2).map((g) => ({ key: g.key })));
+  if (page === "logs" || page === "log-chart" || page === "log-patterns") extra.push(...runPageSync("log-patterns", ctx, mem).rows.slice(0, 2).map((r) => ({ pattern: r.id })));
   return [{}, ...(STATIC[page] ?? []), ...extra];
 }
 
@@ -99,23 +103,38 @@ function demoIssues(ctx: PageContext, mem: SyncExecutor): IssueStates {
   return Object.fromEntries([...(a ? [state(a.key, "resolved", a.lastSeenMs - 1)] : []), ...(b ? [state(b.key, "ignored", null)] : [])].map((s) => [issueId(s.kind, s.key), s]));
 }
 
+/** Differences between a SQL and a memory page for one range and param set. */
+async function oneParity(page: PageName, ex: Executor, mem: SyncExecutor, range: TimeRange, params: Record<string, string>, now: number): Promise<string[]> {
+  const base = pageContext(range, now, params);
+  const ctx = params._issues ? { ...base, issues: demoIssues(base, mem) } : base;
+  const sql = slim(await runPage(page, ctx, ex));
+  const want = slim(runPageSync(page, ctx, mem));
+  const ids: string[] = [];
+  alignIds(sql, want, ids);
+  alignIdLists(page, sql, want, ids);
+  return [...ids, ...differences(sql, want)].map((d) => `${page} ${range} ${JSON.stringify(params)} ${d}`);
+}
+
 /** Differences between SQL and memory pages for every page, range, and param set. */
 export async function pageParity(ex: Executor, traces: readonly Trace[], ranges: readonly TimeRange[], retentionMs: number): Promise<string[]> {
   const mem = tierMemory(traces, retentionMs);
   const out: string[] = [];
   for (const page of Object.keys(PAGES) as PageName[]) {
     for (const range of ranges) {
-      for (const params of paramsOf(page, range, mem)) {
-        const base = pageContext(range, SCENARIO_NOW, params);
-        const ctx = params._issues ? { ...base, issues: demoIssues(base, mem) } : base;
-        const sql = slim(await runPage(page, ctx, ex));
-        const want = slim(runPageSync(page, ctx, mem));
-        const ids: string[] = [];
-        alignIds(sql, want, ids);
-        alignIdLists(page, sql, want, ids);
-        out.push(...[...ids, ...differences(sql, want)].map((d) => `${page} ${range} ${JSON.stringify(params)} ${d}`));
-      }
+      for (const params of paramsOf(page, range, mem)) out.push(...(await oneParity(page, ex, mem, range, params, SCENARIO_NOW)));
     }
+  }
+  return out;
+}
+
+/** The Problems page from SQL and memory over other traces and another "now" (the anomaly scenario), with its problems' ids selected. */
+export async function problemsParity(ex: Executor, traces: readonly Trace[], now: number, ranges: readonly TimeRange[], retentionMs: number): Promise<string[]> {
+  const mem = tierMemory(traces, retentionMs);
+  const out: string[] = [];
+  for (const range of ranges) {
+    const ids = runPageSync("problems", pageContext(range, now, {}), mem).problems.map((p) => ({ problem: p.id }));
+    const list: Record<string, string>[] = [{}, { sensitivity: "high" }, ...ids];
+    for (const params of list) out.push(...(await oneParity("problems", ex, mem, range, params, now)));
   }
   return out;
 }

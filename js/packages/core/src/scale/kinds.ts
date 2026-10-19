@@ -7,11 +7,11 @@ export const COUNTER_SLOTS = 6;
 
 export type RollupKind =
   | "trace" | "req" | "req.dim" | "req.svc" | "req.part"
-  | "svc" | "svc.ep" | "ep.call" | "ep.q" | "edge" | "bn.layer" | "bn.owner"
+  | "svc" | "svc.ep" | "svc.v" | "ep.call" | "ep.q" | "edge" | "bn.layer" | "bn.owner"
   | "ins" | "ins.ep"
   | "db" | "db.q" | "db.qd" | "db.qe" | "db.t" | "db.op"
   | "err" | "err.g" | "err.ge" | "err.t" | "err.s" | "err.e"
-  | "log" | "log.s"
+  | "log" | "log.s" | "log.p"
   | "pv" | "pv.route" | "pv.m" | "pv.large" | "pv.g"
   | "react" | "rc" | "rc.route"
   | "rel"
@@ -55,6 +55,7 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   "req.part": spec([], { hist: true }),
   svc: spec([], { hist: true, top: "newest" }),
   "svc.ep": spec([], { hist: true, ids: 20 }),
+  "svc.v": spec(),
   /** Per endpoint (`svc.ep` key head): outgoing calls by target, and queries by shape. */
   "ep.call": spec(),
   "ep.q": spec(),
@@ -78,6 +79,8 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   "err.e": spec(),
   log: spec(),
   "log.s": spec(),
+  /** Lines by service, level, pattern id, and origin ("r" in a request, "o" outside); the top is the newest line's pattern and message. */
+  "log.p": spec([], { top: "newest" }),
   pv: spec(),
   "pv.route": spec([], { top: "newest", ids: 20 }),
   "pv.m": spec(),
@@ -105,7 +108,10 @@ export const SERVICE_KIND: Partial<Record<RollupKind, RollupKind>> = {
   log: "log.s",
 };
 
-export const ROLLUP_KINDS = Object.keys(KIND_SPEC) as RollupKind[];
+/** Kinds that count log lines: they follow the log retention, not the trace retention. */
+export const LOG_KINDS: ReadonlySet<RollupKind> = new Set<RollupKind>(["log", "log.s", "log.p"]);
+
+export const ROLLUP_KINDS =Object.keys(KIND_SPEC) as RollupKind[];
 
 export const isRollupKind = (v: string): v is RollupKind => v in KIND_SPEC;
 

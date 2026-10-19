@@ -4,6 +4,8 @@ import { badgesPage } from "./badges.js";
 import { databasePage } from "./database.js";
 import { errorsPage } from "./errors.js";
 import { insightsPage } from "./insights.js";
+import { logChartPage } from "./log-chart.js";
+import { logPatternsPage } from "./log-patterns.js";
 import { logsPage } from "./logs.js";
 import { overviewPage } from "./overview.js";
 import { renderingPage } from "./rendering.js";
@@ -14,8 +16,10 @@ import { queryPage } from "./query-page.js";
 import { routePage } from "./route-page.js";
 import { servicePage } from "./service-page.js";
 import { servicesPage } from "./services.js";
+import { problemsPage } from "./problems.js";
 import { tracesPage } from "./traces.js";
 import { trafficPage } from "./traffic.js";
+import { uptimePage } from "./uptime.js";
 import { userPage, usersPage } from "./users.js";
 
 export * from "./input.js";
@@ -37,6 +41,8 @@ export * from "./requests.js";
 export * from "./database.js";
 export * from "./errors.js";
 export * from "./logs.js";
+export * from "./log-patterns.js";
+export * from "./log-chart.js";
 export * from "./rendering.js";
 export * from "./services.js";
 export * from "./service-page.js";
@@ -49,6 +55,10 @@ export * from "./traces.js";
 export * from "./traffic.js";
 export * from "./badges.js";
 export * from "./alerts.js";
+export * from "./uptime.js";
+export * from "./anomaly-alert.js";
+export * from "./problems.js";
+export * from "./problems-read.js";
 export * from "./alert-rule.js";
 export * from "./alert-parse.js";
 export * from "./apdex.js";
@@ -69,6 +79,8 @@ export const PAGES = {
   rendering: renderingPage,
   errors: errorsPage,
   logs: logsPage,
+  "log-patterns": logPatternsPage,
+  "log-chart": logChartPage,
   services: servicesPage,
   service: servicePage,
   error: errorPage,
@@ -77,6 +89,8 @@ export const PAGES = {
   route: routePage,
   insights: insightsPage,
   badges: badgesPage,
+  uptime: uptimePage,
+  problems: problemsPage,
   users: usersPage,
   user: userPage,
   traffic: trafficPage,

@@ -1,8 +1,8 @@
 import type { ZodTypeAny } from "zod";
 import { type MetricsModel, type ModelOf, type SearchPage, type SearchQuery, type Suggestion, type SuggestRequest, type TagRule, tagList, type TimeRange, type Trace } from "@wizeworks/lens-core";
 
-/** The page models get_overview, get_timeseries, and group_requests read. */
-export type OverviewPage = "overview" | "services" | "errors" | "traffic";
+/** The page models get_overview, list_problems, get_timeseries, and group_requests read. */
+export type OverviewPage = "overview" | "services" | "errors" | "problems" | "traffic";
 
 /** What the MCP tools can read. Read-only by design. */
 export interface McpDataSource {

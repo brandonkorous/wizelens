@@ -9,6 +9,10 @@ import {
   type AlertRule,
   alertStep,
   alignNow,
+  type AnomalyAlertValue,
+  anomalyAlertMessage,
+  anomalyAlertPage,
+  type AnomalyMetric,
   computePage,
   metricAlertMessage,
   metricAlertSteps,
@@ -50,29 +54,38 @@ async function measure(store: HubStore, rule: AlertRule, now: number): Promise<n
     const slo = sloById(store.db, rule.projectId, rule.sloId);
     return slo ? computePage(sloBurnPage(slo), sloContext(rule.windowMs, alignNow(now)), hubExecutor(store, { project: rule.projectId || undefined })) : null;
   }
-  const page = alertPage(rule.metric, { service: rule.service, endpoint: rule.endpoint });
+  const page = alertPage(rule.metric, { service: rule.service, endpoint: rule.endpoint }, rule.logSearch ?? {});
   return computePage(page, alertContext(rule.windowMs, alignNow(now)), hubExecutor(store, { project: rule.projectId || undefined, env: rule.env || undefined }));
 }
 
 function messageOf(store: HubStore, rule: AlertRule, state: AlertNoticeState, value: number | null, now: number): string {
   if (rule.metric === "slo") return sloBurnMessage(sloById(store.db, rule.projectId, rule.sloId)?.name ?? rule.sloId, rule.op, value, rule.threshold, state);
-  if (rule.metric !== "metric") return alertMessage(rule.metric, rule.op, value, rule.threshold, state);
+  if (rule.metric !== "metric") return alertMessage(rule.metric, rule.op, value, rule.threshold, state, rule.logSearch ?? {});
   return metricAlertMessage(rule.metricName, rule.metricStat || "avg", rule.op, value, rule.threshold, measureMetric(store, rule, now).unit, state);
 }
 
+/** An "above normal" rule: every service and endpoint over the window against the same window in earlier weeks (or days). */
+function measureAnomaly(store: HubStore, rule: AlertRule, now: number): Promise<AnomalyAlertValue> {
+  const page = anomalyAlertPage(rule.metric as AnomalyMetric, rule.threshold);
+  return computePage(page, alertContext(rule.windowMs, alignNow(now)), hubExecutor(store, { project: rule.projectId || undefined, env: rule.env || undefined }));
+}
+
 /** Send a notice through the rule's channels and keep it as an event. */
-export async function notifyHub(deps: HubAlertDeps, rule: AlertRule, state: AlertNoticeState, value: number | null, now: number): Promise<string> {
+export async function notifyHub(deps: HubAlertDeps, rule: AlertRule, state: AlertNoticeState, value: number | null, now: number, anomaly?: AnomalyAlertValue): Promise<string> {
   const project = rule.projectId ? `?project=${encodeURIComponent(rule.projectId)}` : "";
+  const above = rule.op === "above_normal" ? (anomaly ?? (await measureAnomaly(deps.store, rule, now))) : null;
+  const breach = above?.breach ?? null;
   const notice: Notice = {
     ruleId: rule.id,
     rule: rule.name,
     project: rule.projectId || "hub",
     state,
-    message: messageOf(deps.store, rule, state, value, now),
+    message: above ? anomalyAlertMessage(rule.metric as AnomalyMetric, above, state) : messageOf(deps.store, rule, state, value, now),
     value,
     threshold: rule.threshold,
     timeMs: now,
     url: `${deps.baseUrl()}/_wizelens/#/alerts/${rule.id}${project}`,
+    baseline: breach ? { normal: breach.normal, upper: breach.upper } : null,
   };
   const delivery = await deliver(rule.channels, notice, deps.outbox);
   addEvent(deps.store.db, rule, { kind: state, value, message: notice.message, timeMs: now, delivery });
@@ -84,12 +97,13 @@ const breaches = (rule: AlertRule, value: number | null): boolean =>
 
 /** Check one rule: keep its value, and notify when it starts or stops firing, or remind while it keeps firing. */
 export async function evaluateHubRule(deps: HubAlertDeps, rule: AlertRule, now: number): Promise<void> {
-  const value = await measure(deps.store, rule, now);
-  const step = alertStep(rule, breaches(rule, value), now);
+  const anomaly = rule.op === "above_normal" ? await measureAnomaly(deps.store, rule, now) : undefined;
+  const value = anomaly ? anomaly.value : await measure(deps.store, rule, now);
+  const step = alertStep(rule, anomaly ? anomaly.breach !== null : breaches(rule, value), now);
   const next = { ...rule, state: step.state, ackMs: step.ackMs, lastValue: value, lastEvalMs: now, lastNotifiedMs: step.notice ? now : rule.lastNotifiedMs };
   saveRule(deps.store.db, next, now);
   addValue(deps.store.db, rule.id, now, value);
-  if (step.notice) await notifyHub(deps, next, step.notice, value, now);
+  if (step.notice) await notifyHub(deps, next, step.notice, value, now, anomaly);
 }
 
 /** Check every enabled rule once. One failing rule does not stop the others. */

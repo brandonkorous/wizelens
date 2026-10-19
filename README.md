@@ -227,7 +227,7 @@ Open any trace for the full detail: timeline, SQL, HTTP, logs, and errors. Searc
 | Request details | ✅ headers, client IP, user, request id, body sizes, tags | ✅ same; user and tags through `setUser()` / `tag()` |
 | Response bodies (opt-in) | ✅ `CaptureResponseBody` | ✅ `captureResponseBody` |
 | Routing and handler time | ✅ routing and handler | ✅ routing (Express) |
-| Browser | ✅ via `@wizeworks/lens-react`: fetch spans, render time, page views (TTFB, SSR, FCP, LCP, INP, CLS), hydration, slow images, React component renders, browser errors, browser `console` lines | |
+| Browser | ✅ via `@wizeworks/lens-react`: fetch spans, render time, page views (TTFB, SSR, FCP, LCP, INP, CLS), hydration, slow images, React component renders, browser errors (minified stacks mapped back with source maps), browser `console` lines | |
 
 ### Persistence
 
@@ -362,6 +362,7 @@ Guardrails:
 | `HubUrl` / `HubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a local hub. |
 | `Project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
 | `Sampling.Rate` | `WIZELENS_SAMPLE_RATE`, else `1` | Share of traces kept (0 to 1). Traces with an error or a slow span are kept at any rate. |
+| `Logs.Outside` / `Logs.MinLevel` / `Logs.SampleRate` | `true` / `Information` / `1` (or `WIZELENS_LOGS_OUTSIDE`, `WIZELENS_LOGS_MIN_LEVEL`, `WIZELENS_LOGS_SAMPLE_RATE`) | Log lines written outside a request (startup, jobs, timers): on or off, the lowest level, and the share below `Warning` kept. |
 | `Sampling.KeepErrors` / `Sampling.KeepSlowMs` | `true` / `1000` | What a sampled-out trace needs to be kept anyway (`null` turns the slow rule off). |
 | `Tags.Rules` / `Tags.DisableBuiltIns` | none / none | Tag rules for the dashboard, such as `new("checkout", "route:/checkout*", "green")`, and built-in tags to turn off. A bad rule throws at start. See Tags. |
 
@@ -390,6 +391,7 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 | `hub` / `hubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a local hub. |
 | `project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
 | `sampling` | `{ rate: WIZELENS_SAMPLE_RATE ?? 1, keepErrors: true, keepSlowMs: 1000 }` | Keep a share of traces, plus every trace with an error or a slow server-side span. |
+| `logs` | `{ outside: true, minLevel: "info", sampleRate: 1 }` (or the `WIZELENS_LOGS_*` variables) | Log lines written outside a request: on or off, the lowest level, and the share below `"warn"` kept. |
 
 Next.js: `registerWizeLens(options)` takes the same options plus `ignore(path)`, and `onRequestError` records server errors.
 
@@ -443,6 +445,7 @@ To try the hub, start it first with `pnpm dev:hub` (http://localhost:5960/_wizel
 | `@wizeworks/lens-ui` | npm | The dashboard (served by both add-ons and the hub) |
 | `@wizeworks/lens-hub` | npm, Docker | The local hub (`wizelens-hub`) |
 | `@wizeworks/lens-cloud` | npm, Docker | The cloud service (`wizelens-cloud`) |
+| `@wizeworks/lens-cli` | npm | Source map upload (`lens-cli`) and Vite, webpack, and Next.js plugins |
 | `com.wizelens:wizelens` | Maven | Java: the OpenTelemetry agent extension and a servlet body filter (`java/`) |
 | `wizelens` | PyPI | Python: distro for `opentelemetry-instrument`, body middleware, SQL parameters (`python/`) |
 | `github.com/brandonkorous/wizelens/go` | Go module | Go: SDK setup, `net/http`, `database/sql`, `slog` (`go/`) |
@@ -468,7 +471,7 @@ See **[docs/PLAN.md](docs/PLAN.md)** for the full plan.
 docs/                 PLAN.md, CONTRACT.md, images
 dotnet/               WizeLens.slnx — src/ (add-ons), tests/
 js/packages/          core · node · react · ui
-samples/              web (React) · gateway-api (.NET) · orders-api (Node)
+samples/              web (React) · gateway-api (.NET) · orders-api (Node) · next-web (Next.js)
 site/                 the marketing site (Next.js static export: pnpm dev:site, pnpm build:site → site/out)
 ```
 

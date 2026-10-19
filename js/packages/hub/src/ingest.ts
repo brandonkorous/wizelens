@@ -22,6 +22,15 @@ const text = (v: unknown, max: number): string | undefined => (typeof v === "str
 const list = (v: unknown): unknown[] => (Array.isArray(v) ? v.slice(0, MAX_ITEMS) : []);
 const isUrl = (v: unknown): v is string => typeof v === "string" && v.length <= 500 && /^https?:\/\/[^\s]+$/i.test(v);
 
+/** A sender's Kubernetes block: text fields only, undefined when empty. */
+function k8sOf(raw: unknown): HubSender["k8s"] {
+  if (!raw || typeof raw !== "object") return undefined;
+  const r = raw as Record<string, unknown>;
+  const all = { cluster: text(r.cluster, 100), namespace: text(r.namespace, 100), pod: text(r.pod, 100), node: text(r.node, 100) };
+  const k8s = Object.fromEntries(Object.entries(all).filter(([, v]) => v));
+  return Object.keys(k8s).length > 0 ? k8s : undefined;
+}
+
 /** The sender block of a batch. Null without a service name. */
 export function parseSender(raw: unknown): HubSender | null {
   if (!raw || typeof raw !== "object") return null;
@@ -36,6 +45,7 @@ export function parseSender(raw: unknown): HubSender | null {
     runtime: text(s.runtime, 100),
     environment: text(s.environment, 50),
     host: text(s.host, 100),
+    k8s: k8sOf(s.k8s),
     endpoint: isUrl(s.endpoint) ? s.endpoint.replace(/\/+$/, "") : undefined,
     startedMs: Number.isFinite(s.startedMs) ? Number(s.startedMs) : undefined,
   };

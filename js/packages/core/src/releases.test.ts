@@ -19,7 +19,7 @@ describe("releases", () => {
   it("marks the versions that first sent data in the range on every page's meta", () => {
     const shown = (m: { meta: { releases: { service: string; version: string }[] } }) => [...new Set(m.meta.releases.map((r) => r.version))].sort();
     expect(shown(page("overview", "24h"))).toEqual(["1.1.0", "1.2.0"]);
-    expect(shown(page("errors", "30d"))).toEqual(["1.0.0", "1.1.0", "1.2.0"]);
+    expect(shown(page("errors", "30d"))).toEqual(["1.0.0", "1.1.0", "1.2.0", "1.3.9", "1.4.0"]);
   });
 
   it("compares a service's versions, newest first", () => {

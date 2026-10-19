@@ -4,7 +4,7 @@ import { groupServices, type ServiceGroup, type ServiceRow, serviceDoc, serviceS
 import { useData } from "../../data/hooks";
 import { useHost } from "../../data/host";
 import { useEnvScope, useProjectScope } from "../../data/prefs";
-import { inScope } from "../../data/sources";
+import { inScope, VIA_LABEL } from "../../data/sources";
 import { fmtAgo, fmtCount } from "../../format";
 import { hrefTo } from "../../routes";
 import { KIND_ICON, KIND_LABEL, StatusText } from "./serviceParts";
@@ -36,7 +36,7 @@ function statsOf(row: ServiceRow, groups: readonly ServiceGroup[], now: number):
   if (envs.length) out.push([envs.length === 1 ? "Environment" : "Environments", envs.join(", ")]);
   if (newest.version) out.push(["Version", newest.version]);
   if (newest.runtime) out.push(["Runtime", newest.runtime]);
-  out.push(["Sends with", newest.via === "addon" ? "WizeLens" : "OTLP"], ["Last seen", fmtAgo(newest.lastSeenMs, now)]);
+  out.push(["Sends with", VIA_LABEL[newest.via]], ["Last seen", fmtAgo(newest.lastSeenMs, now)]);
   return out;
 }
 

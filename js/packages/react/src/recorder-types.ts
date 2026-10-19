@@ -64,6 +64,10 @@ export interface RecorderOptions {
   captureConsole?: boolean;
   /** Read traces back from the server, for the HUD. Default true. Off sends only, for a server with its dashboard off. */
   readServer?: boolean;
+  /** Your app's version (release), sent as service.version so stacks find the right source maps. Default: what the build plugin set. */
+  version?: string;
+  /** Read this page's source maps (dev servers serve them) so browser errors group by source. Default true. */
+  resolveFrames?: boolean;
 }
 
 export interface Recorder {

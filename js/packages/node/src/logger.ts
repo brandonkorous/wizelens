@@ -1,4 +1,4 @@
-import { type LogLevel, redactAttributes, toAttributeValue } from "@wizeworks/lens-core";
+import { DEFAULT_LOOSE_LOGS, keepLooseLine, type LogLevel, type LooseLogOptions, redactAttributes, toAttributeValue } from "@wizeworks/lens-core";
 import { activeSpan } from "./spans.js";
 import type { TraceStore } from "./store.js";
 import type { LogFn, WizeLensLogger } from "./types.js";
@@ -15,7 +15,7 @@ export interface LogEntry {
   span?: { traceId: string; spanId: string };
 }
 
-/** Puts a log line into the trace it belongs to. Lines outside a trace are dropped. */
+/** Puts a log line into the trace it belongs to, or (outside a request) into the current loose batch. */
 export type LogSink = (entry: LogEntry) => void;
 
 const MAX_MESSAGE = 8000;
@@ -48,21 +48,23 @@ function toAttributes(attrs: Record<string, unknown> | undefined): Record<string
   return out;
 }
 
-/** The sink every logger adapter writes to. It never throws. */
-export function createLogSink(store: TraceStore, service: string, redactKeys: readonly string[]): LogSink {
+/** The sink every logger adapter writes to: lines in a request go to its trace, lines outside one to a loose batch. It never throws. */
+export function createLogSink(store: TraceStore, service: string, redactKeys: readonly string[], loose: LooseLogOptions = DEFAULT_LOOSE_LOGS): LogSink {
   return (e) => {
     try {
       const sc = e.span ?? activeSpan()?.spanContext();
-      if (!sc) return;
-      store.addLog(sc.traceId, {
+      if (!sc && (!keepLooseLine(loose, e.level) || /^wizelens/i.test(e.category))) return;
+      const log = {
         timeMs: e.timeMs ?? now(),
         level: e.level,
         category: e.category,
         message: cap(e.message, MAX_MESSAGE),
         service,
-        spanId: sc.spanId,
+        spanId: sc?.spanId ?? null,
         attributes: redactAttributes(toAttributes(e.attributes), redactKeys),
-      });
+      };
+      if (sc) store.addLog(sc.traceId, log);
+      else store.addLooseLog(log);
     } catch {
       // A log line must never break the app.
     }

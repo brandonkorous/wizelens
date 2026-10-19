@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, Database, ExternalLink, Monitor, Server } from "lucide-react";
 import { endpointScope, type ErrorGroup, errorGroupDoc, errorScope, type IssueInfo, serviceScope } from "@wizeworks/lens-core";
 import { fmtCount, fmtDateTime } from "../../format";
@@ -6,7 +6,8 @@ import { errorHref, hrefTo, setQuery } from "../../routes";
 import { Badge } from "../../ui/Badges";
 import { IssueActions, IssueBadge } from "../../ui/IssueControls";
 import { Empty, KeyValues, Panel, TabBar } from "../../ui/Panel";
-import { ErrorTags, RequestContext, StackTrace } from "./ErrorDetailTabs";
+import { ErrorTags, RequestContext } from "./ErrorDetailTabs";
+import { ErrorStack } from "./ResolvedStack";
 import { useGroupTags } from "../../data/tagMatch";
 import { TagChips } from "../../ui/TagChips";
 import { TagThis } from "../../ui/TagThis";
@@ -48,6 +49,14 @@ function Occurrences({ group }: { group: ErrorGroup }) {
   );
 }
 
+// Browser errors: where in the original source they come from, and the release that threw them.
+function originRows(group: ErrorGroup): [string, ReactNode][] {
+  const e = group.latest;
+  return [
+    ...(e.frame ? [["Source", <span key="f" className="wl-mono">{e.frame}</span>] as [string, ReactNode]] : []),
+    ...(e.release ? [["Release", e.release] as [string, ReactNode]] : []),
+  ];
+}
 /** "Tag this" on an error: the error itself, its endpoint (for server errors), or its service. */
 export const errorScopes = (g: ErrorGroup) => [errorScope(g), ...(g.latest.method ? [endpointScope(g.service, g.endpoint)] : []), serviceScope(g.service)];
 
@@ -76,13 +85,14 @@ function GroupDetails({ group, info }: { group: ErrorGroup; info: IssueInfo | un
         rows={[
           ["Endpoint", <span key="e" className="wl-mono">{pathOf(group.endpoint)}</span>],
           ["Service", group.service],
+          ...originRows(group),
           ["First seen", fmtDateTime(info?.firstSeenMs || group.firstSeenMs)],
           ["Last seen", fmtDateTime(group.lastSeenMs)],
         ]}
       />
       <div className="wl-err-tabs">
         <TabBar<Tab> tabs={[["stack", "Stack Trace"], ["context", "Request Context"], ["tags", "Tags"]]} value={tab} onChange={setTab} />
-        {tab === "stack" && <StackTrace event={group.latest} />}
+        {tab === "stack" && <ErrorStack event={group.latest} />}
         {tab === "context" && <RequestContext event={group.latest} />}
         {tab === "tags" && <ErrorTags event={group.latest} />}
       </div>

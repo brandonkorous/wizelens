@@ -2,7 +2,7 @@
 import { applyFilter, isSortKey, sortRows } from "../models/request-filter.js";
 import { traceMatches } from "../models/trace-filter.js";
 import { bucketIndex, inWindow, type TimeWindow } from "../stats/common.js";
-import { filterLogs, type LogRow } from "../stats/logs.js";
+import { filterLogs, levelRank, type LogRow } from "../stats/logs.js";
 import { isFailed, type RequestRow } from "../stats/requests.js";
 import type { CriticalSpan } from "../stats/traces.js";
 import { addContribution, type Agg, contribution, emptyAgg, trimAgg } from "./agg.js";
@@ -33,7 +33,7 @@ function sortedRequests(rows: RequestItem[], need: ListNeed): RequestItem[] {
 function traceRowsOf(facts: readonly TraceFacts[], f: ListFilter, w: TimeWindow, need: ListNeed): TraceItem[] {
   const q = (f.q ?? "").trim().toLowerCase();
   const hit = (t: TraceItem) => !q || t.traceId.startsWith(q) || t.path.toLowerCase().includes(q) || t.services.some((s) => s.toLowerCase().includes(q));
-  const rows = facts.flatMap((x) => (inWindow(x.trace.startMs, w) && traceOk(x.traceId, f) && hit(x.trace) && traceMatches(x.trace, f) ? [x.trace] : []));
+  const rows = facts.flatMap((x) => (x.trace && inWindow(x.trace.startMs, w) && traceOk(x.traceId, f) && hit(x.trace) && traceMatches(x.trace, f) ? [x.trace] : []));
   const sorted = rows.sort(newest((t) => t.startMs));
   if (need.sort.key === "duration") return sorted.sort((a, b) => (need.sort.desc ? b.durationMs - a.durationMs : a.durationMs - b.durationMs) || newest<TraceItem>((t) => t.startMs)(a, b));
   return need.sort.desc ? sorted : sorted.reverse();
@@ -43,7 +43,7 @@ const logIndex = (r: LogRow) => Number(r.key.slice(r.key.lastIndexOf(":") + 1));
 
 function logRowsOf(facts: readonly TraceFacts[], f: ListFilter, w: TimeWindow, desc: boolean): LogRow[] {
   const rows = facts.flatMap((x) => (traceOk(x.traceId, f) ? x.logs.filter((l) => inWindow(l.timeMs, w)) : []));
-  const sorted = filterLogs(rows, { minLevel: f.minLevel ?? "trace", exact: f.exactLevel, service: f.logService ?? "", category: f.category ?? "", query: f.q ?? "" });
+  const sorted = filterLogs(rows, { minLevel: f.minLevel ?? "trace", exact: f.exactLevel, service: f.logService ?? "", category: f.category ?? "", query: f.q ?? "", pattern: f.pattern ?? "", origin: f.logOrigin ?? "" });
   sorted.sort((a, b) => b.timeMs - a.timeMs || cmp(a.traceId, b.traceId) || logIndex(a) - logIndex(b));
   return desc ? sorted : sorted.reverse();
 }
@@ -67,6 +67,20 @@ export function aggregateRequests(rows: readonly RequestItem[], w: TimeWindow, b
   return { total: trimAgg(total, { times: false }), series: series.map((a) => trimAgg(a, { times: false })) };
 }
 
+/** Totals and per-bucket counts of log lines: n is lines, err is lines at error and up. */
+export function aggregateLogs(rows: readonly LogRow[], w: TimeWindow, buckets: number): { total: Agg; series: Agg[] } {
+  const spec = { ...KIND_SPEC.log };
+  const total = emptyAgg();
+  const series = Array.from({ length: buckets }, () => emptyAgg());
+  for (const r of rows) {
+    const c = contribution("log", "", r.timeMs, { err: levelRank(r.level) >= levelRank("error") ? 1 : 0 });
+    addContribution(total, c, r.traceId, spec);
+    const i = bucketIndex(r.timeMs, w, buckets);
+    if (i >= 0) addContribution(series[i]!, c, r.traceId, spec);
+  }
+  return { total: trimAgg(total, { times: false }), series: series.map((a) => trimAgg(a, { times: false })) };
+}
+
 /** Page or limit the rows. Pages clamp to the last page, like `pageOf`. */
 function finish<T>(rows: T[], need: ListNeed): ListRows<T> {
   if (need.page) {
@@ -82,7 +96,12 @@ function finish<T>(rows: T[], need: ListNeed): ListRows<T> {
 export function runList(facts: readonly TraceFacts[], need: ListNeed, w: TimeWindow): ListRows {
   const f = need.filter;
   if (need.table === "traces") return finish(traceRowsOf(facts, f, w, need), need);
-  if (need.table === "logs") return finish(logRowsOf(facts, f, w, need.sort.desc), need);
+  if (need.table === "logs") {
+    const rows = logRowsOf(facts, f, w, need.sort.desc);
+    const out: ListRows = finish(rows, need);
+    if (need.aggregate) out.aggregate = aggregateLogs(rows, w, need.aggregate.buckets);
+    return out;
+  }
   if (need.table === "critical") return finish(criticalRowsOf(facts, f, w), need);
   const rows = requestRowsOf(facts, f, w);
   const out: ListRows = finish(sortedRequests(rows, need), need);

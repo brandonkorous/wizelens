@@ -8,6 +8,7 @@ import { Field, FormRow } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 import type { OrgData } from "./teamTypes";
+import { LogRetentionSelect } from "./LogRetentionSelect";
 
 /** Add a project. Opens from the section's button. */
 export function NewProjectForm({ orgId, reload, onClose }: { orgId: string; reload: () => void; onClose: () => void }) {
@@ -30,8 +31,8 @@ export function NewProjectForm({ orgId, reload, onClose }: { orgId: string; relo
   );
 }
 
-/** Projects of the organization, with what keys send to each: clear a project's data, or delete it. */
-export function ProjectsPanel({ orgId, data, reload }: { orgId: string; data: OrgData; reload: () => void }) {
+/** Projects of the organization, with what keys send to each and how long logs are kept: clear a project's data, or delete it. */
+export function ProjectsPanel({ orgId, retentionDays, data, reload }: { orgId: string; retentionDays: number; data: OrgData; reload: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const { dialog, confirm } = useAsk();
   const run = (fn: () => Promise<unknown>) => void act(fn, () => (reload(), void loadAccount())).then(setError);
@@ -46,6 +47,7 @@ export function ProjectsPanel({ orgId, data, reload }: { orgId: string; data: Or
     { key: "name", header: "Project", cell: (p) => <strong>{p.name}</strong> },
     { key: "id", header: "Project id", cell: (p) => <span className="wl-id">{p.id.slice(0, 8)}… <CopyButton text={p.id} label="Copy project id" /></span> },
     { key: "keys", header: "Keys", num: true, cell: (p) => keysOf(p) },
+    { key: "logs", header: "Logs kept", cell: (p) => <LogRetentionSelect value={p.logRetentionDays ?? null} traceDays={retentionDays} onChange={(days) => run(() => apiSend("PATCH", `./api/orgs/${orgId}/projects/${p.id}`, { logRetentionDays: days }))} /> },
     {
       key: "x",
       header: "",

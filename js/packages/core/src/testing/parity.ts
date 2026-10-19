@@ -1,4 +1,5 @@
 // Parity helpers: today's pages (memory executor) against the frozen legacy models. Test-only: excluded from the build.
+import { isLooseTraceId } from "../loose.js";
 import { type ModelOf, type PageName, runPageSync } from "../models/index.js";
 import { memoryExecutor } from "../scale/memory.js";
 import { pageContext } from "../scale/run.js";
@@ -19,7 +20,9 @@ export const newModel = <P extends PageName>(page: P, range: TimeRange, params: 
 
 /** The page from the legacy model over the same traces. */
 export function legacyModel(page: LegacyPage, range: TimeRange, params: Record<string, string> = {}): unknown {
-  return legacy.PAGE_MODELS[page](legacy.modelInput(traces, range, SCENARIO_NOW, { slowQueryMs: 100 }, params));
+  // Lines outside a request (loose traces) are not traces to list or count; the legacy Traces page predates them.
+  const input = page === "traces" ? traces.filter((t) => !isLooseTraceId(t.traceId)) : traces;
+  return legacy.PAGE_MODELS[page](legacy.modelInput(input, range, SCENARIO_NOW, { slowQueryMs: 100 }, params));
 }
 
 // Percentiles come from a histogram, so they may differ by its error.

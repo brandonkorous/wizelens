@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { Activity, BellRing, Box, LayoutDashboard, Database, FileText, House, Lightbulb, List, Monitor, Search, Settings, Share2, Target, TriangleAlert, UserRound, Users } from "lucide-react";
+import { Activity, BellRing, Box, Boxes, Database, FileText, HeartPulse, House, LayoutDashboard, Lightbulb, List, Monitor, Search, Server, Settings, Share2, Siren, Target, TriangleAlert, UserRound, Users } from "lucide-react";
 import { SavedNav } from "./SavedNav";
 import type { Capability } from "@wizeworks/lens-core";
 import { useHost } from "../data/host";
@@ -16,6 +16,7 @@ interface NavItem {
 
 export const NAV: NavItem[] = [
   { page: "overview", label: "Overview", icon: House },
+  { page: "problems", label: "Problems", icon: Siren },
   { page: "search", label: "Search", icon: Search },
   { page: "requests", label: "Requests", icon: List },
   { page: "traces", label: "Traces", icon: Share2 },
@@ -24,8 +25,11 @@ export const NAV: NavItem[] = [
   { page: "errors", label: "Errors", icon: TriangleAlert },
   { page: "logs", label: "Logs", icon: FileText },
   { page: "metrics", label: "Metrics", icon: Activity, needs: "metrics" },
+  { page: "hosts", label: "Hosts", icon: Server, needs: "infra" },
+  { page: "kubernetes", label: "Kubernetes", icon: Boxes, needs: "infra" },
   { page: "services", label: "Services", icon: Box },
   { page: "insights", label: "Insights", icon: Lightbulb },
+  { page: "uptime", label: "Uptime", icon: HeartPulse, needs: "uptime" },
   { page: "users", label: "Users", icon: UserRound },
   { page: "alerts", label: "Alerts", icon: BellRing, needs: "alerts" },
   { page: "slos", label: "SLOs", icon: Target, needs: "slos" },

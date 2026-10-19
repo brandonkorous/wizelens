@@ -19,13 +19,17 @@ import { ErrorsPage } from "./pages/errors/ErrorsPage";
 import { InsightsPage } from "./pages/insights/InsightsPage";
 import { LogsPage } from "./pages/logs/LogsPage";
 import { MetricsPage } from "./pages/metrics/MetricsPage";
+import { HostsPage } from "./pages/infra/HostsPage";
+import { KubernetesPage } from "./pages/infra/KubernetesPage";
 import { OverviewPage } from "./pages/overview/OverviewPage";
+import { ProblemsPage } from "./pages/problems/ProblemsPage";
 import { RenderingPage } from "./pages/rendering/RenderingPage";
 import { RequestsPage } from "./pages/requests/RequestsPage";
 import { SearchPage } from "./pages/search/SearchPage";
 import { ServicesPage } from "./pages/services/ServicesPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
 import { TracesPage } from "./pages/traces/TracesPage";
+import { UptimePage } from "./pages/uptime/UptimePage";
 import { AUTH_PAGES, type AuthPageId, type PageId, type Route, useRoute } from "./routes";
 import { releaseMissing } from "./data/release";
 import { EmailBanner } from "./shell/EmailBanner";
@@ -42,8 +46,9 @@ const lazyPage = (load: () => Promise<ComponentType>) =>
 const TeamPage = lazyPage(() => import("./pages/team/TeamPage").then((m) => m.TeamPage));
 const AccountPage = lazyPage(() => import("./pages/account/AccountPage").then((m) => m.AccountPage));
 
-const PAGES: Record<Exclude<PageId, "trace" | "shared" | AuthPageId>, ComponentType> = {
+const PAGES: Record<Exclude<PageId, "trace" | "shared" | "status" | AuthPageId>, ComponentType> = {
   overview: OverviewPage,
+  problems: ProblemsPage,
   search: SearchPage,
   requests: RequestsPage,
   traces: TracesPage,
@@ -52,10 +57,13 @@ const PAGES: Record<Exclude<PageId, "trace" | "shared" | AuthPageId>, ComponentT
   errors: ErrorsPage,
   logs: LogsPage,
   metrics: MetricsPage,
+  hosts: HostsPage,
+  kubernetes: KubernetesPage,
   services: ServicesPage,
   insights: InsightsPage,
   settings: SettingsPage,
   alerts: AlertsPage,
+  uptime: UptimePage,
   slos: SlosPage,
   dashboards: DashboardsPage,
   users: UsersPage,
@@ -84,7 +92,7 @@ function PageView({ route }: { route: Route }) {
     return <TraceDetail key={traceId} traceId={traceId!} view={view as never} />;
   }
   const page = route.page;
-  const elsewhere = page === "shared" || (AUTH_PAGES as readonly string[]).includes(page) || (page === "account" && !cloud);
+  const elsewhere = page === "shared" || page === "status" || (AUTH_PAGES as readonly string[]).includes(page) || (page === "account" && !cloud);
   const Page = elsewhere ? OverviewPage : PAGES[page as keyof typeof PAGES];
   return <Page />;
 }

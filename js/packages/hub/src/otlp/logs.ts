@@ -1,4 +1,4 @@
-import { type HubLog, type LogLevel, redactAttributes } from "@wizeworks/lens-core";
+import { type HubLog, type LogLevel, looseTraceIdOf, redactAttributes } from "@wizeworks/lens-core";
 import type { HubWrite } from "../store.js";
 import { attributesOf, hexId, nanosToMs, type OtlpAnyValue, type OtlpKeyValue, type OtlpResource, senderOf, valueOf } from "./values.js";
 
@@ -30,25 +30,27 @@ function levelOf(r: OtlpLogRecord): LogLevel {
   return LEVELS.find((l) => t.startsWith(l)) ?? "info";
 }
 
-/** Logs that belong to a trace. WizeLens shows logs per trace, so others are skipped. */
+/** Log records: those of a trace go into it; those without one (startup, jobs) into a loose trace per source and 5-minute window. */
 export function writesFromLogs(list: readonly OtlpResourceLogs[], redactKeys: readonly string[]): HubWrite[] {
   return list.map((rl) => {
     const sender = senderOf(rl.resource);
+    const source = [sender.project, sender.service, sender.environment, sender.host].join("|");
     const logs: HubLog[] = [];
     for (const sl of rl.scopeLogs ?? []) {
       for (const r of sl.logRecords ?? []) {
-        const traceId = hexId(r.traceId, 32);
-        if (!traceId) continue;
+        const timeMs = nanosToMs(r.timeUnixNano) || nanosToMs(r.observedTimeUnixNano);
+        const traced = hexId(r.traceId, 32);
+        const traceId = traced || looseTraceIdOf(source, timeMs);
         const body = valueOf(r.body);
         logs.push({
           traceId,
           log: {
-            timeMs: nanosToMs(r.timeUnixNano) || nanosToMs(r.observedTimeUnixNano),
+            timeMs,
             level: levelOf(r),
             category: sl.scope?.name || "otlp",
             message: body === null ? "" : String(body).slice(0, 10_000),
             service: sender.service,
-            spanId: hexId(r.spanId, 16) ?? null,
+            spanId: traced ? (hexId(r.spanId, 16) ?? null) : null,
             attributes: redactAttributes(attributesOf(r.attributes), redactKeys),
           },
         });

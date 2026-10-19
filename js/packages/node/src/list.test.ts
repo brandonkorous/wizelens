@@ -48,7 +48,7 @@ describe("api/info", () => {
     const info = await getJson<ServiceInfo>(`${app.base}/_wizelens/api/info`);
     expect(info).toMatchObject({
       mode: "in-app",
-      capabilities: ["federation", "search", "tags", "metrics"],
+      capabilities: ["federation", "search", "tags", "metrics", "sourcemaps"],
       service: "list-api",
       mcp: false,
       environment: process.env.NODE_ENV || "development",

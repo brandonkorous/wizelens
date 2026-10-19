@@ -51,6 +51,7 @@ public static class SearchItems
     /// <summary>The documents of <paramref name="kind"/> in one trace.</summary>
     public static List<DocEntry> DocEntries(Trace t, string kind, string? env = null)
     {
+        if (kind != SearchKinds.Logs && Storage.TraceIds.IsLoose(t.TraceId)) return [];
         if (kind == SearchKinds.Requests) return RequestEntries(t, env);
         if (kind == SearchKinds.Traces) return [new DocEntry(kind, t.StartMs, "", SearchDocs.TraceDoc(t, env), t.ToSummary)];
         if (kind == SearchKinds.Logs)

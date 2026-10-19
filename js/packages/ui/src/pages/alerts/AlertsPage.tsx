@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BellRing, Plus } from "lucide-react";
+import { cleanSearchParams, logSearchText } from "@wizeworks/lens-core";
 import { apiSend } from "../../data/api";
 import { useHost } from "../../data/host";
 import { act, useApi } from "../../data/useApi";
@@ -34,7 +35,7 @@ export const eventColumns = (withRule: boolean): Column<AlertEvent>[] => [
   { key: "time", header: "When", cell: (e) => fmtAgo(e.timeMs), className: "wl-nowrap" },
   { key: "kind", header: "", cell: (e) => <Badge tone={EVENT_TONE[e.kind]}>{EVENT_LABEL[e.kind]}</Badge> },
   ...(withRule ? [{ key: "rule", header: "Alert", cell: (e: AlertEvent) => e.ruleName }] : []),
-  { key: "message", header: "Message", cell: (e) => e.message, className: "wl-wrap" },
+  { key: "message", header: "Message", cell: (e) => <>{e.message}{e.problem && <a className="wl-alert-problem" href={e.problem.url.slice(e.problem.url.indexOf("#"))} onClick={(ev) => ev.stopPropagation()}>Problem: {e.problem.title}</a>}</>, className: "wl-wrap" },
   { key: "delivery", header: "Delivery", cell: (e) => <span className="wl-muted wl-small">{e.delivery}</span>, className: "wl-wrap" },
 ];
 
@@ -42,8 +43,21 @@ const TEXT_FIELDS = ["name", "metric", "service", "endpoint", "metricName", "met
 const NUMBER_FIELDS = ["threshold", "windowMs"] as const;
 export const DRAFT_PARAMS = [...TEXT_FIELDS, ...NUMBER_FIELDS];
 
+/** A new log count rule from the Logs page's "Alert on this search" (`log` holds its filters as JSON). */
+function logRule(json: string): RuleDraft {
+  let search: Record<string, string> = {};
+  try {
+    search = cleanSearchParams(JSON.parse(json));
+  } catch {
+    // A broken link starts from an empty search.
+  }
+  return { ...EMPTY_RULE, name: logSearchText(search).slice(0, 100) || "Log lines", metric: "log_count", threshold: 10, logSearch: search };
+}
+
 /** A new rule filled from the link's query (from "Alert on this"), or empty. */
 function draftFromQuery(q: URLSearchParams): RuleDraft {
+  const log = q.get("log");
+  if (log) return logRule(log);
   const text = Object.fromEntries(TEXT_FIELDS.filter((k) => q.get(k)).map((k) => [k, q.get(k)]));
   const nums = Object.fromEntries(NUMBER_FIELDS.filter((k) => Number.isFinite(Number(q.get(k))) && q.get(k)).map((k) => [k, Number(q.get(k))]));
   return { ...EMPTY_RULE, ...text, ...nums } as RuleDraft;
@@ -72,7 +86,7 @@ function AlertRules() {
   const [editing, setEditing] = useState<AlertRule | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const creating = query.get("new") === "1";
-  const close = () => (setEditing(null), creating && setQuery({ new: null, ...Object.fromEntries(DRAFT_PARAMS.map((k) => [k, null])) }));
+  const close = () => (setEditing(null), creating && setQuery({ new: null, log: null, ...Object.fromEntries(DRAFT_PARAMS.map((k) => [k, null])) }));
   const save = async (r: RuleDraft) => {
     const err = await act(() => (editing ? apiSend("PATCH", api.url(`/${encodeURIComponent(editing.id)}`), r) : apiSend("POST", api.url(), r)), reload);
     if (!err) close();

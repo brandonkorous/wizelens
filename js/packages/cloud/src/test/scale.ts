@@ -35,6 +35,15 @@ export async function writeTraces(s: ScaleDb, traces: readonly Trace[], now = SC
   }
 }
 
+/** Write many traces fast: up to `size` traces per batch, as a busy sender does. */
+export async function writeChunked(db: Db, projectId: string, traces: readonly Trace[], now: number, size = 100): Promise<void> {
+  for (let i = 0; i < traces.length; i += size) {
+    const part = traces.slice(i, i + size);
+    const w = { sender: { service: "api", environment: "prod" }, via: "addon" as const, spans: part.flatMap((t) => t.spans), logs: part.flatMap((t) => t.logs.map((log) => ({ traceId: t.traceId, log }))), remotes: [] };
+    await db.tx((q) => writeBatch(q, projectId, w, now));
+  }
+}
+
 /** Settle everything once the quiet period has passed. */
 export const settleAll = (s: ScaleDb, now = SCENARIO_NOW + 10_000) => settleCloud(s.db, now, { budgetMs: Infinity });
 

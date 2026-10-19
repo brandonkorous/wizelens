@@ -1,4 +1,4 @@
-import { buildTrace, HUB_ONLINE_MS, type HubSender, type HubService, type LogRecord, type Span, type Trace } from "@wizeworks/lens-core";
+import { buildTrace, HUB_ONLINE_MS, type HubSender, type HubService, type LogRecord, LOOSE_TRACE_PREFIX, type Span, type Trace } from "@wizeworks/lens-core";
 import type { Queryable } from "../db/db.js";
 
 import type { TraceQuery } from "../telemetry/store.js";
@@ -19,6 +19,7 @@ export async function findTraceIds(q: Queryable, t: TraceQuery): Promise<string[
   if (t.from !== undefined) add("start_ms >= ?", t.from);
   if (t.env) add("env = ?", t.env);
   if (t.session) add("trace_id IN (SELECT trace_id FROM spans WHERE project_id = $1 AND session = ?)", t.session);
+  if (t.noLoose) add("substr(trace_id, 1, 16) <> ?", LOOSE_TRACE_PREFIX);
   args.push(t.limit);
   const rows = await q.query<{ trace_id: string }>(`SELECT trace_id FROM traces WHERE ${where.join(" AND ")} ORDER BY start_ms DESC LIMIT $${args.length}`, args);
   return rows.map((r) => r.trace_id);

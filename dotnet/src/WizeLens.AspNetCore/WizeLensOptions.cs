@@ -67,11 +67,14 @@ public sealed class WizeLensOptions
     /// <summary>The project this service belongs to, so a shared hub can group it. Default: the WIZELENS_PROJECT variable.</summary>
     public string? Project { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_PROJECT");
 
-    /// <summary>The app's version, kept on every span as <c>service.version</c> for release markers and version compares. Default: the WIZELENS_RELEASE variable, or the entry assembly's informational version.</summary>
-    public string? Release { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_RELEASE");
+    /// <summary>The app's version, kept on every span as <c>service.version</c> for release markers, version compares, and Problems. Default: the WIZELENS_RELEASE variable, else OTEL_SERVICE_VERSION, else the entry assembly's informational version.</summary>
+    public string? Release { get; set; } = NonEmptyEnv("WIZELENS_RELEASE") ?? NonEmptyEnv("OTEL_SERVICE_VERSION");
 
     /// <summary>Keeps only part of the traces, for busy services. Default: all, or the WIZELENS_SAMPLE_RATE variable.</summary>
     public WizeLensSampling Sampling { get; set; } = new();
+
+    /// <summary>Keeps log lines written outside a request too, with a level floor and sampling. On by default.</summary>
+    public WizeLensLogs Logs { get; set; } = new();
 
     /// <summary>Collects metrics from every meter in the app (.NET runtime, ASP.NET Core, HttpClient, your own). On by default.</summary>
     public bool CaptureMetrics { get; set; } = true;
@@ -117,6 +120,9 @@ public sealed class WizeLensOptions
         "false" or "0" or "off" or "no" => false,
         _ => null,
     };
+
+    /// <summary>A variable's trimmed value, or null when it is unset or blank.</summary>
+    internal static string? NonEmptyEnv(string name) => Environment.GetEnvironmentVariable(name) is { } v && !string.IsNullOrWhiteSpace(v) ? v.Trim() : null;
 
     /// <summary>True when WizeLens is on and collects metrics.</summary>
     internal bool MetricsOn => IsEnabled && CaptureMetrics;

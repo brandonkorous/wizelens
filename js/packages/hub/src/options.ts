@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { DEFAULT_REDACT_KEYS, HUB_DEFAULT_PORT } from "@wizeworks/lens-core";
+import type { SourceMapOptions } from "@wizeworks/lens-node/kit";
 
 export interface HubOptions {
   /** Port to listen on. Default 5960. 0 picks a free port. */
@@ -15,8 +16,12 @@ export interface HubOptions {
   maxTraces?: number;
   /** Oldest trace (and metric point) kept, in ms. Default 7 days. */
   maxAgeMs?: number;
+  /** Oldest log line kept, in ms. Default: `maxAgeMs`. Lines in a request go with their trace when that is sooner. */
+  logMaxAgeMs?: number;
   /** Most metric points kept. Default 2,000,000. */
   maxMetricPoints?: number;
+  /** Run uptime checks (they can reach any address this machine can). Default true. */
+  uptime?: boolean;
   /** Expose the read-only MCP endpoint at `/_wizelens/mcp`. Default false. */
   enableMcp?: boolean;
   /** Key fragments to redact. Default: the contract list. */
@@ -27,6 +32,8 @@ export interface HubOptions {
   name?: string;
   /** Where MCP audit lines go. Default console.info. */
   audit?: (line: string) => void;
+  /** Source maps with no upload: build folders, and dev servers on this machine (default). False turns them off; uploads still work. */
+  sourceMaps?: SourceMapOptions | false;
   now?: () => number;
   /** How often alert rules run, in ms. Default 60000. */
   alertIntervalMs?: number;
@@ -38,7 +45,8 @@ export interface HubOptions {
   pagerDutyUrl?: string;
 }
 
-export interface ResolvedHubOptions extends Required<Omit<HubOptions, "token" | "uiDir" | "audit" | "now" | "pagerDutyUrl">> {
+export interface ResolvedHubOptions extends Required<Omit<HubOptions, "token" | "uiDir" | "audit" | "now" | "sourceMaps" | "pagerDutyUrl">> {
+  sourceMaps: SourceMapOptions | false | undefined;
   pagerDutyUrl: string | undefined;
   token: string | undefined;
   uiDir: string | undefined;
@@ -56,12 +64,15 @@ export function resolveHubOptions(o: HubOptions = {}): ResolvedHubOptions {
     token: o.token || undefined,
     maxTraces: o.maxTraces ?? 50_000,
     maxAgeMs: o.maxAgeMs ?? 7 * 24 * 60 * 60_000,
+    logMaxAgeMs: o.logMaxAgeMs ?? o.maxAgeMs ?? 7 * 24 * 60 * 60_000,
     maxMetricPoints: o.maxMetricPoints ?? 2_000_000,
     enableMcp: o.enableMcp ?? false,
+    uptime: o.uptime ?? true,
     redactKeys: o.redactKeys ?? [...DEFAULT_REDACT_KEYS],
     uiDir: o.uiDir,
     name: o.name ?? "wizelens-hub",
     audit: o.audit ?? ((line) => console.info(line)),
+    sourceMaps: o.sourceMaps,
     now: o.now ?? Date.now,
     alertIntervalMs: o.alertIntervalMs ?? 60_000,
     allowPrivateWebhooks: o.allowPrivateWebhooks ?? true,

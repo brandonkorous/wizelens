@@ -28,6 +28,15 @@ public class CaptureTests
     }
 
     [Fact]
+    public async Task Spans_carry_the_service_version()
+    {
+        await using var app = await TestApp.StartAsync(a => a.MapGet("/v", () => "ok"), o => o.Release = "2.0.0");
+        var root = TestApp.Root(await app.TraceAsync(await app.Client.GetAsync("/v")));
+
+        Assert.Equal("2.0.0", root.Attr("service.version"));
+    }
+
+    [Fact]
     public async Task Tags_and_user_are_recorded()
     {
         await using var app = await TestApp.StartAsync(a =>

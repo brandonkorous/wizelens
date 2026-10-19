@@ -64,6 +64,62 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   start of the range. On the cloud, a group can be **assigned** to a member, and each change writes an audit line.
   Insights get the same: **Mark fixed** and **Dismiss**. The Overview has a "New and Regressed Errors" panel. The hub
   and the cloud keep these states; in-app add-ons show no actions.
+- **Hosts and Kubernetes, with no WizeLens agent.** Run the standard OpenTelemetry Collector with the new recipe: the Helm
+  chart `deploy/helm/wizelens-collector` (a DaemonSet that reads the kubelet, the node's own host metrics, and your apps'
+  OTLP; a Deployment that reads the cluster; RBAC; values for the endpoint, the ingest key, and the cluster name), or
+  `deploy/collector/host.yaml` for one machine. It sends to a hub or the cloud. The new **Hosts** page shows CPU, memory,
+  the fullest disk, and network per host, with the services on each, and a page per host with charts, file systems,
+  services, and pods. The new **Kubernetes** page shows ready nodes, pods, pending pods, restarts in the range, and
+  out-of-memory kills, with Pods, Workloads, and Nodes lists, filters for cluster and namespace, and a page per pod
+  (containers, restarts, last exits) and per node. A span with `k8s.pod.name` links to its pod and node, and a service's
+  page lists its pods and the hosts it runs on. OTLP metrics and spans now keep their resource's host and Kubernetes names;
+  resources with no service name are filed as "infrastructure" and stay out of the service list. Same numbers on the hub
+  (SQLite) and the cloud (Postgres and ClickHouse). Docs: [Hosts and Kubernetes](https://wizelens.com/docs/kubernetes/).
+- **Uptime checks** (hub and cloud). The new **Uptime** page calls your URLs every 1 to 60 minutes: method, headers,
+  expected status (`200`, `200-299`, or a list), text the body must contain, and a timeout. It shows each check's status,
+  uptime for 24 hours, 7 days, and 30 days, response time over the range, and incidents with their reason. **Run now** tests
+  a check at once. Every run is also a request of the `wizelens-uptime` service, so Requests, Errors, Logs, Search, the
+  service page, and alert rules see them with nothing new to learn. The hub runs checks from your machine (`--no-uptime`
+  turns them off); the cloud runs them as a background job, claimed so replicas never run one twice, and refuses private
+  and local addresses unless started with `--allow-private-webhooks`. In the cloud, members and above change checks, every
+  change is in the audit log, and header values are stored encrypted with the auth secret.
+- **TLS certificate warnings.** https checks show how many days the certificate has left, and the Uptime page warns when
+  one ends within 14 days or has ended (also when the certificate is refused). The run adds a warning log line too.
+- **Public status pages** (cloud). A project can turn on an unguessable, read-only link that shows check names, their
+  state, uptime for 24 hours, 7 days, and 30 days, a bar per day for 30 days, and incident times. Never URLs, headers, or
+  errors. A new link stops the old one; turning it on and off is in the audit log and the team notices.
+- **Logs outside a request.** Both add-ons now keep lines written at startup, in background jobs, and on timers, with
+  their service and level, from every logger they read (.NET `ILogger`, Serilog, NLog; Node `console`, pino, winston,
+  bunyan, log4js, consola, NestJS, OpenTelemetry logs). The Logs page shows them as "Outside a request" and can show only
+  them, or only lines in requests. New options keep the volume in check: `Logs.Outside` / `logs.outside`,
+  `Logs.MinLevel` / `logs.minLevel` (default info), and `Logs.SampleRate` / `logs.sampleRate` (warnings and up are always
+  kept), or `WIZELENS_LOGS_OUTSIDE`, `WIZELENS_LOGS_MIN_LEVEL`, and `WIZELENS_LOGS_SAMPLE_RATE`. OTLP log records with no
+  trace id are kept the same way on the hub and the cloud.
+- **Log patterns.** Lines that differ only in numbers, ids, uuids, and quoted values group into one pattern, with a count,
+  a share, the change against the period before, and a trend. Click a pattern to filter the Logs page to it.
+- **Log metrics.** Save a log search (hub and cloud share it with the project; an app's own dashboard keeps it in the
+  browser) and it becomes a chart of its matching lines over the time range.
+- **Log alerts.** An alert rule (hub or cloud) can count the lines of a log search over a window ("Alert on this search" on the
+  Logs page fills it in): `Log lines (error and up, "timed out") is 12 (above 10)`.
+- **Log retention per project.** Cloud projects can keep logs for more or less time than traces (Team → Projects → Logs
+  kept, 1 to 400 days); the hub has `--log-retention` (`WIZELENS_HUB_LOG_RETENTION`).
+- **Problems: what is above normal, and why.** A new **Problems** page compares every service and endpoint with the same
+  hour in the 4 weeks before (or the days before, on hosts that keep less): error rate, p95, and traffic. Anomalies that
+  start together on services that call each other become one problem card, which names a suspected cause: a new release,
+  a new error group, a query that got slower (or fails, or runs far more often), or a service further down the calls.
+  Plain statistics, no AI. It works in-app, on the hub, and in the cloud, from the same rollups on SQLite, Postgres, and
+  ClickHouse.
+- **"Is above normal" alerts** (hub and cloud). Pick it as the condition on error rate, p95, or requests, with high, medium, or low
+  sensitivity. The notice names the service or endpoint and its normal value. Every fired notice (Slack, email, webhook)
+  in the cloud links to the problem it is part of, with the suspected cause, and the Alerts page shows that link too.
+- **`list_problems` for AI tools** (hub and cloud): the problems, their suspected causes, and each anomaly against its
+  normal. In the cloud, without a project it covers every project you may read.
+- **Problems use the release.** The `release` option (above) also reads `OTEL_SERVICE_VERSION` when `WIZELENS_RELEASE` is
+  not set, in Node and .NET. Problems uses `service.version` to spot a new release.
+- **One stats rebuild for all of the above** (`FACTS_VERSION` 7): errors grouped by their first app frame, log patterns,
+  and the versions each service sends. Hosts rebuild their stats once after the upgrade, and the production ClickHouse
+  re-settles once. Cloud migrations 17 (uptime), 18 (source maps), 19 (logs), and 20 (problems) run in that order, after 11 to 16.
+
 - **Tags.** Name a search, and everything it finds wears that name as a colored chip in every list: requests, traces,
   spans, logs, errors, endpoints, services, and users. Click a chip, or type `tag:name`, to see them all. WizeLens keeps the tag,
   not a mark on the data, so a tag covers data from before it was made, stays when traces expire, and moves everywhere at
@@ -97,6 +153,15 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   40-developer company with its sources, and pricing questions. Linked from the top bar, the footer, and the Cloud page.
   The cloud docs have a new "Plans and billing" section: what a GB is, the Free cap's HTTP 429, the spend cap, history
   per plan, and that billing is off when you self-host.
+- **Browser source maps.** Minified browser stacks map back to your source: the Errors page, the error page, and the
+  trace page's Errors tab show each frame's original file, line, and function, with a few lines of code around the line
+  that threw, and the raw stack one click away. Errors
+  group by the first frame of your code, so one bug stays one error across builds (the stats rebuild once: facts
+  version 7). On your machine it needs no setup: the browser package, the Node add-on, and the hub read the maps your dev
+  server serves, and the hub (`--sourcemaps ./dist`) and the Node add-on (`sourceMaps: { dirs }`) read build folders. For
+  production, the new `@wizeworks/lens-cli` package uploads maps per release to the hub or the cloud (with a project's
+  ingest key): `npx @wizeworks/lens-cli sourcemaps upload ./dist`, or the Vite, webpack, and Next.js plugins at build time.
+  The React provider sends the release as `service.version` (the `release` prop, or what the build plugin sets).
 - **Install with no code change.** Platform teams can turn WizeLens on without touching a service:
   - **Node:** `NODE_OPTIONS="--import @wizeworks/lens-node/auto"`. It traces every `node:http` server, names Express,
     Fastify, Koa, Hono, and Next.js routes, records their errors, and hooks `pg`, `mysql2`, `better-sqlite3`,

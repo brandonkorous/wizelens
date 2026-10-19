@@ -1,4 +1,4 @@
-import type { AttributeValue, Attributes } from "@wizeworks/lens-core";
+import { type AttributeValue, type Attributes, type HubSender, INFRA_SERVICE } from "@wizeworks/lens-core";
 import { applyAliases, headerKey, headerValue, isHeaderKey } from "./semconv.js";
 
 /** OTLP shapes after JSON parse or protobuf decode. Ids are hex, 64-bit numbers are strings or numbers. */
@@ -60,18 +60,37 @@ export function hexId(v: string | undefined, length: 16 | 32): string | undefine
   return id;
 }
 
-/** The sender a resource describes. */
-export function senderOf(resource: OtlpResource | undefined) {
+/** The resource attributes of `keys` that it has, to copy onto points or spans. */
+export function resourcePick(resource: OtlpResource | undefined, keys: readonly string[]): Attributes {
+  const a = attributesOf(resource?.attributes);
+  const out: Attributes = {};
+  for (const k of keys) if (a[k] !== undefined && a[k] !== null && a[k] !== "") out[k] = a[k]!;
+  return out;
+}
+
+/** Where a resource runs in Kubernetes; undefined when it has no k8s attributes. */
+function k8sOf(str: (k: string) => string | undefined): HubSender["k8s"] {
+  const all = { cluster: str("k8s.cluster.name"), namespace: str("k8s.namespace.name"), pod: str("k8s.pod.name"), node: str("k8s.node.name") };
+  const k8s = Object.fromEntries(Object.entries(all).filter(([, v]) => v));
+  return Object.keys(k8s).length > 0 ? k8s : undefined;
+}
+
+/** The sender a resource describes. The collector's host and Kubernetes receivers send no service name: they are "infrastructure". */
+export function senderOf(resource: OtlpResource | undefined): HubSender {
   const a = attributesOf(resource?.attributes);
   const str = (k: string) => (typeof a[k] === "string" && a[k] ? String(a[k]).slice(0, 100) : undefined);
   const lang = str("telemetry.sdk.language");
+  const k8s = k8sOf(str);
+  const infra = !!(str("host.name") || k8s);
   return {
-    service: str("service.name") ?? "unknown_service",
+    service: str("service.name") ?? (infra ? INFRA_SERVICE : "unknown_service"),
     project: str("wizelens.project") ?? str("service.namespace"),
     version: str("service.version"),
     release: str("service.version"),
     runtime: lang ? `otlp ${lang}` : "otlp",
     environment: str("deployment.environment.name"),
-    host: str("host.name"),
+    // A pod's host name is the pod's name; senders without host.name (most SDKs) still get one row per pod.
+    host: str("host.name") ?? k8s?.pod,
+    ...(k8s ? { k8s } : {}),
   };
 }

@@ -20,8 +20,10 @@ export interface WizeLensProviderProps {
   capturePages?: boolean;
   /** Copy `console.*` calls into the page view's trace. Default true. */
   captureConsole?: boolean;
-  /** The web app's version, kept on browser spans for release markers and version compares. For example `import.meta.env.VITE_APP_VERSION`. */
+  /** The web app's version, kept on browser spans for release markers and version compares, and so browser stacks find the right source maps. Default: what the build plugin set. */
   release?: string;
+  /** Read this page's source maps (dev servers serve them) so errors group by source. Default true. */
+  resolveFrames?: boolean;
   children?: ReactNode;
 }
 
@@ -34,12 +36,13 @@ export function WizeLensProvider({
   capturePages = true,
   captureConsole = true,
   release,
+  resolveFrames = true,
   children,
 }: WizeLensProviderProps) {
   const recorder = useMemo(
-    () => (enabled ? createRecorder({ endpoint, propagateTo, capturePages, captureConsole, readServer: hud }) : null),
+    () => (enabled ? createRecorder({ endpoint, propagateTo, capturePages, captureConsole, readServer: hud, version: release, resolveFrames }) : null),
     // propagateTo is read once on purpose; pass a stable function.
-    [endpoint, enabled, capturePages, captureConsole, hud],
+    [endpoint, enabled, capturePages, captureConsole, hud, release, resolveFrames],
   );
 
   // Before install, so the first page load already carries the release.

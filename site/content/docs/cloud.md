@@ -79,12 +79,14 @@ may read, in the same organization only. A read key or a connected app gets only
 ## History
 
 Pages are computed on the server from stats tables, never from a sample of traces, so 7- and 30-day pages answer in well
-under a second on busy projects. Each organization keeps traces for 30 days by default (1 to 400).
+under a second on busy projects. Each organization keeps traces for 30 days by default (1 to 400). Each project can keep
+its logs for more or less time than that, under **Team → Projects → Logs kept** (see [Logs](/docs/logs/)).
 
 ## Alerts
 
 A rule watches one value over a window of 5 minutes to 24 hours: error rate, p95 or average latency, request count, new
-errors, slow queries, or one OpenTelemetry metric. It can watch everything, one service, or one endpoint. It fires when the
+errors, slow queries, the count of a log search, or one OpenTelemetry metric. It can watch everything, one service, or one
+endpoint. It fires when the
 value goes above, at or above, below, or at or below your threshold. A notice is sent when the state changes, and again every
 15 minutes to a day while it keeps firing, if you ask for reminders. **Acknowledge** stops the reminders; **mute** keeps it
 quiet for a while or until you unmute it. Notices go to up to five channels: Slack, Microsoft Teams, Discord, PagerDuty, a
@@ -105,6 +107,24 @@ it. **Alert on this** on a service, an endpoint, an error, or a metric chart ope
 the same alerts, without email.
 
 Webhook URLs must be https and may not point at private addresses, unless the cloud runs with `--allow-private-webhooks`.
+
+Pick **is above normal** as the condition, on error rate, p95, or requests, to skip the threshold. The rule then checks every
+service and endpoint against the same window at the same time in the 4 weeks before, with high, medium, or low sensitivity,
+and names the one that broke:
+
+```text
+p95 duration is above normal on pay POST /api/charge: 412 ms (normal 31 ms, alerts above 46 ms)
+Part of a problem: Error rate above normal on pay and 2 more. Suspected cause: pay 2.0.0 was released as it started.
+```
+
+Every fired notice links to the [problem](/docs/problems/) it is part of, when there is one.
+
+## Uptime checks and status pages
+
+The cloud calls your URLs every 1 to 60 minutes and keeps uptime, response time, incidents, and certificate end dates.
+Members and above add and change checks; every change is in the audit log. A project can turn on a public status page:
+an unguessable, read-only link that shows check names, state, uptime, and incident times. See
+[Uptime checks](/docs/uptime/).
 
 ## Share links
 
@@ -153,7 +173,7 @@ keys. Every organization is unlimited, and `--retention-days` sets history as be
 | `--retention-days <n>` | `WIZELENS_CLOUD_RETENTION_DAYS` | `30` |
 | `--ingest-per-minute <n>` | `WIZELENS_CLOUD_INGEST_PER_MINUTE` | `1200` ingest calls per key |
 | `--settle-workers <n>` | `WIZELENS_CLOUD_SETTLE_WORKERS` | Scale mode: threads that index new traces. `0` uses the main thread. Default: CPUs − 1, at most 4 |
-| `--allow-private-webhooks` | `WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1` | off |
+| `--allow-private-webhooks` | `WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1` | off (alert webhooks and uptime checks may not reach private addresses) |
 | `--stripe-secret-key <key>` | `WIZELENS_CLOUD_STRIPE_SECRET_KEY` | none: billing is off and every organization is unlimited. With it (`sk_…` or `rk_…`), plans and limits apply and new organizations start on Free |
 | `--stripe-webhook-secret <s>` | `WIZELENS_CLOUD_STRIPE_WEBHOOK_SECRET` | none; required with a Stripe key. The webhook goes to `<public-url>/_wizelens/api/auth/stripe/webhook` |
 | `--stripe-prices <json>` | `WIZELENS_CLOUD_STRIPE_PRICES` | none; required with a Stripe key. The price and meter ids `stripe-setup` prints |

@@ -1,0 +1,74 @@
+# OpenTelemetry Collector (contrib) config for one host (a VM or a Docker host): CPU, memory, disks, and network for the
+# WizeLens Hosts page, plus OTLP from apps on the host. Set WIZELENS_ENDPOINT (https://app.wizelens.com or your hub's URL)
+# and WIZELENS_INGEST_KEY (a cloud ingest key, or the hub's token; empty for a hub without one).
+#
+#   docker run -d --name wizelens-collector -v /:/hostfs:ro -v $PWD/host.yaml:/etc/otelcol-contrib/config.yaml \
+#     -e WIZELENS_ENDPOINT=https://app.wizelens.com -e WIZELENS_INGEST_KEY=wl_ik_... -e HOST_ROOT=/hostfs \
+#     -e OTEL_RESOURCE_ATTRIBUTES=host.name=$(hostname) \
+#     -p 4317:4317 -p 4318:4318 otel/opentelemetry-collector-contrib:0.137.0
+receivers:
+  hostmetrics:
+    # "/" when the collector runs on the host itself; "/hostfs" in Docker with the host's / mounted there.
+    root_path: ${env:HOST_ROOT:-/}
+    collection_interval: 30s
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization: { enabled: true }
+          system.cpu.logical.count: { enabled: true }
+      load: {}
+      memory:
+        metrics:
+          system.memory.utilization: { enabled: true }
+      disk: {}
+      filesystem:
+        exclude_fs_types:
+          match_type: strict
+          fs_types: [autofs, binfmt_misc, bpf, cgroup2, configfs, debugfs, devpts, devtmpfs, fusectl, hugetlbfs, iso9660, mqueue, nsfs, overlay, proc, procfs, pstore, rpc_pipefs, securityfs, selinuxfs, squashfs, sysfs, tmpfs, tracefs]
+        exclude_mount_points:
+          match_type: regexp
+          mount_points: ["/dev/.*", "/proc/.*", "/sys/.*", "/run/.*", "/var/lib/docker/.*", "/snap/.*"]
+      network: {}
+  otlp:
+    protocols:
+      grpc: { endpoint: 0.0.0.0:4317 }
+      http: { endpoint: 0.0.0.0:4318 }
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 400
+  # host.name and os.type: from OTEL_RESOURCE_ATTRIBUTES when set, else the machine's name.
+  resourcedetection:
+    detectors: [env, system]
+    system:
+      hostname_sources: [dns, os]
+  batch:
+    send_batch_size: 1024
+    timeout: 10s
+
+exporters:
+  otlphttp/wizelens:
+    endpoint: ${env:WIZELENS_ENDPOINT}
+    compression: gzip
+    headers:
+      Authorization: "Bearer ${env:WIZELENS_INGEST_KEY}"
+
+service:
+  pipelines:
+    metrics/host:
+      receivers: [hostmetrics]
+      processors: [memory_limiter, resourcedetection, batch]
+      exporters: [otlphttp/wizelens]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/wizelens]
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/wizelens]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/wizelens]

@@ -1,4 +1,4 @@
-// Service facts: the svc and svc.ep kinds (Services rows), edge (who calls whom), and bn.* (bottlenecks).
+// Service facts: the svc and svc.ep kinds (Services rows), svc.v (versions), edge (who calls whom), and bn.* (bottlenecks).
 import { browserTypeOf } from "../attributes.js";
 import { endpointNameOf } from "../models/service-detail.js";
 import { isConsumer, isProducer, queueOf } from "../stats/messaging.js";
@@ -65,5 +65,20 @@ function bottleneckContributions(trace: Trace): Contribution[] {
   ]).flatMap((c) => withServices(c, services));
 }
 
-/** Everything one trace adds to the service, edge, and bottleneck rollups. */
-export const serviceFacts = (trace: Trace): Contribution[] => [...serviceContributions(trace), ...edgeContributions(trace), ...bottleneckContributions(trace)];
+/** The span attribute that names the version of the service that ran it. */
+export const SERVICE_VERSION_ATTR = "service.version";
+
+/** One `svc.v` item per service name and version in the trace, at the first span that carried it. */
+function versionContributions(trace: Trace): Contribution[] {
+  const first = new Map<string, number>();
+  for (const s of trace.spans) {
+    const v = s.attributes[SERVICE_VERSION_ATTR];
+    if (v === undefined || v === null || v === "") continue;
+    const key = joinKey(displayService(s.service), String(v).slice(0, 100));
+    first.set(key, Math.min(first.get(key) ?? Infinity, s.startMs));
+  }
+  return [...first].map(([key, at]) => contribution("svc.v", key, at));
+}
+
+/** Everything one trace adds to the service, version, edge, and bottleneck rollups. */
+export const serviceFacts = (trace: Trace): Contribution[] => [...serviceContributions(trace), ...versionContributions(trace), ...edgeContributions(trace), ...bottleneckContributions(trace)];

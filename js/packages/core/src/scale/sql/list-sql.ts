@@ -5,10 +5,11 @@ import { LOG_LEVELS, type LogRow } from "../../stats/logs.js";
 import type { CriticalSpan } from "../../stats/traces.js";
 import type { Health } from "../../health.js";
 import type { LogLevel, Trace } from "../../types.js";
-import { type Agg, emptyAgg } from "../agg.js";
+import { LOOSE_TRACE_PREFIX } from "../../loose.js";
+import { aggregateSql } from "./list-agg-sql.js";
 import type { RequestItem, TraceItem } from "../facts-lists.js";
 import type { ListFilter, ListNeed, ListRows } from "../needs.js";
-import { boolOf, collate, floorOf, lit, msLit, num, numOrNull, type SqlSource, SqlText, scopeWhere, strOrNull, whereOf } from "./dialect.js";
+import { boolOf, collate, lit, msLit, num, numOrNull, type SqlSource, SqlText, scopeWhere, strOrNull, whereOf } from "./dialect.js";
 import { servicesOf } from "./write-sql.js";
 
 type Row = Record<string, unknown>;
@@ -105,6 +106,8 @@ const TABLES: Record<ListNeed["table"], TableSql> = {
       `level_rank ${f.exactLevel ? "=" : ">="} ${lit(LOG_LEVELS.indexOf(f.minLevel ?? "trace"))}`,
       ...(f.logService ? [`service = ${q.p(f.logService)}`] : []),
       ...(f.category ? [`category = ${q.p(f.category)}`] : []),
+      ...(f.pattern ? [`pattern = ${q.p(f.pattern)}`] : []),
+      ...(f.logOrigin ? [`${f.logOrigin === "outside" ? "" : "NOT "}(${q.startsWith("trace_id", LOOSE_TRACE_PREFIX)})`] : []),
       ...textWhere(q, "fact_logs", f.q),
     ],
     order: (d, need) => (need.sort.desc ? `time_ms DESC, ${tid(d)} ASC, idx ASC` : `time_ms ASC, ${tid(d)} DESC, idx DESC`),
@@ -167,28 +170,6 @@ async function itemsOf(src: SqlSource, t: TableSql, need: ListNeed, w: TimeWindo
   return (await src.run.all(sql, q.params)).map(t.item);
 }
 
-/** Totals and per-bucket aggregates of the filtered requests, like `aggregateRequests`. */
-async function aggregateSql(src: SqlSource, f: ListFilter, w: TimeWindow, buckets: number): Promise<{ total: Agg; series: Agg[] }> {
-  const q = new SqlText(src.d);
-  const b = floorOf(src.d, `((start_ms - ${lit(w.from)}) / ${lit(w.to - w.from)}) * ${lit(buckets)}`);
-  const failed = `CASE WHEN ${q.isTrue("failed")} THEN 1 ELSE 0 END`;
-  const cols = `${b} AS b, COUNT(*) AS n, SUM(${failed}) AS err, SUM(duration_ms) AS s, SUM(db_count) AS c0, SUM(CASE WHEN insights > 0 THEN 1 ELSE 0 END) AS c1, SUM(insights) AS c2`;
-  const rows = await src.run.all(`SELECT ${cols} FROM fact_requests ${whereFor(q, src, TABLES.requests, f, w)} GROUP BY ${b}`, q.params);
-  const blank = () => ({ ...emptyAgg(), firstMs: 0, lastMs: 0, topRank: 0 });
-  const total = blank();
-  const series = Array.from({ length: buckets }, blank);
-  for (const r of rows) {
-    const i = Math.min(buckets - 1, Math.max(0, num(r.b)));
-    for (const a of [total, series[i]!]) {
-      a.n += num(r.n);
-      a.err += num(r.err);
-      a.sum += num(r.s);
-      [num(r.c0), num(r.c1), num(r.c2)].forEach((v, k) => (a.c[k] = a.c[k]! + v));
-    }
-  }
-  return { total, series };
-}
-
 /** Answer one list need: count first when paging, then the page; or the first `limit` rows. */
 export async function listSql(src: SqlSource, need: ListNeed, w: TimeWindow): Promise<ListRows> {
   const t = TABLES[need.table];
@@ -202,6 +183,9 @@ export async function listSql(src: SqlSource, need: ListNeed, w: TimeWindow): Pr
     const items = await itemsOf(src, t, need, w, need.limit === undefined ? null : Math.max(0, need.limit), 0);
     out = { items, total: need.count ? await countOf(src, t, need.filter, w) : null, page: 1, pageSize: items.length };
   }
-  if (need.table === "requests" && need.aggregate) out.aggregate = await aggregateSql(src, need.filter, w, need.aggregate.buckets);
+  if (need.aggregate && (need.table === "requests" || need.table === "logs")) {
+    const q = new SqlText(src.d);
+    out.aggregate = await aggregateSql(src, q, need.table, whereFor(q, src, t, need.filter, w), w, need.aggregate.buckets);
+  }
   return out;
 }

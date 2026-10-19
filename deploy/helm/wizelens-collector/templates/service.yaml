@@ -1,0 +1,18 @@
+{{- if and .Values.agent.enabled .Values.otlpService.enabled }}
+# OTLP for apps in the cluster. Local traffic policy keeps each app on its own node's agent, which knows its pod.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "wlc.fullname" . }}-agent
+  labels:
+    {{- include "wlc.labels" . | nindent 4 }}
+    app.kubernetes.io/component: agent
+spec:
+  internalTrafficPolicy: Local
+  selector:
+    {{- include "wlc.selector" . | nindent 4 }}
+    app.kubernetes.io/component: agent
+  ports:
+    - { name: otlp-grpc, port: 4317, targetPort: otlp-grpc, protocol: TCP }
+    - { name: otlp-http, port: 4318, targetPort: otlp-http, protocol: TCP }
+{{- end }}

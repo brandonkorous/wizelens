@@ -13,6 +13,20 @@ export interface Notice {
   timeMs: number;
   /** Link to the rule in the dashboard. */
   url: string;
+  /** For "above normal" rules: the normal value and the line it crossed. */
+  baseline?: { normal: number; upper: number } | null;
+  /** The problem this alert is part of, when one was found as it fired. */
+  problem?: NoticeProblem | null;
+}
+
+/** A problem card on the Problems page, named in a notice. */
+export interface NoticeProblem {
+  id: string;
+  title: string;
+  /** The suspected cause in one sentence, or null. */
+  cause: string | null;
+  /** Link to the problem in the dashboard. */
+  url: string;
 }
 
 /** How notices leave: HTTP, and on the cloud a mail function that sends to members still allowed and says what it did. */
@@ -32,19 +46,28 @@ const SLACK_ICON: Record<AlertNoticeState, string> = { fired: ":rotating_light:"
 /** The notice in words, for chat and email. */
 export function noticeLines(n: Notice): { subject: string; lines: string[] } {
   const verb = VERB[n.state];
-  return { subject: `${verb}: ${n.rule} (${n.project})`, lines: [`${verb}: ${n.rule} in ${n.project}.`, n.message] };
+  const p = n.problem;
+  const problem = p ? [`Part of a problem: ${p.title}.${p.cause ? ` Suspected cause: ${p.cause}` : ""}`] : [];
+  return { subject: `${verb}: ${n.rule} (${n.project})`, lines: [`${verb}: ${n.rule} in ${n.project}.`, n.message, ...problem] };
 }
 
 type UrlChannel = Extract<AlertChannel, { url: string }>;
+
+/** The problem line of a chat message, with its link written the chat tool's way; "" without a problem. */
+function problemText(n: Notice, link: (url: string, title: string) => string): string {
+  const p = n.problem;
+  return p ? `\nPart of a problem: ${link(p.url, p.title)}${p.cause ? `. Suspected cause: ${p.cause}` : ""}` : "";
+}
 
 /** The body each chat tool expects. Webhooks get the notice as JSON. */
 export function chatBody(kind: UrlChannel["kind"], n: Notice): unknown {
   const { subject } = noticeLines(n);
   if (kind === "webhook") return n;
-  if (kind === "slack") return { text: `${SLACK_ICON[n.state]} *${subject}*\n${n.message}\n<${n.url}|Open WizeLens>` };
-  if (kind === "discord") return { content: `**${subject}**\n${n.message}\n${n.url}`, allowed_mentions: { parse: [] } };
+  if (kind === "slack") return { text: `${SLACK_ICON[n.state]} *${subject}*\n${n.message}${problemText(n, (u, t) => `<${u}|${t}>`)}\n<${n.url}|Open WizeLens>` };
+  if (kind === "discord") return { content: `**${subject}**\n${n.message}${problemText(n, (u, t) => `[${t}](${u})`)}\n${n.url}`, allowed_mentions: { parse: [] } };
   const open = [{ "@type": "OpenUri", name: "Open WizeLens", targets: [{ os: "default", uri: n.url }] }];
-  return { "@type": "MessageCard", "@context": "https://schema.org/extensions", summary: subject, themeColor: COLOR[n.state], title: subject, text: n.message, potentialAction: open };
+  const text = `${n.message}${problemText(n, (u, t) => `[${t}](${u})`)}`;
+  return { "@type": "MessageCard", "@context": "https://schema.org/extensions", summary: subject, themeColor: COLOR[n.state], title: subject, text, potentialAction: open };
 }
 
 /** PagerDuty events: fired and reminders trigger (one incident per rule), resolved resolves, and a test triggers then resolves its own key. */

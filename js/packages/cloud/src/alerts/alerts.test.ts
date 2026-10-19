@@ -7,6 +7,8 @@ import { span } from "../test/db.js";
 import { checkTarget } from "@wizeworks/lens-hub/kit";
 import { evaluateAll } from "./evaluate.js";
 import { settleCloud } from "../settle.js";
+import { writeChunked } from "../test/scale.js";
+import { ANOMALY_NOW, anomalyTraces } from "../../../core/src/testing/anomaly-scenario.js";
 
 let cloud: Cloud;
 const closers: (() => void)[] = [];
@@ -52,6 +54,29 @@ it("fires once when the error rate breaks the rule, then resolves", async () => 
   expect(list.body.events.map((e) => e.kind)).toEqual(["resolved", "fired"]);
   expect(list.body.events[0]!.delivery).toBe("webhook: sent");
 }, 60_000);
+
+it("an above normal rule fires on a spike, names what broke, and links its problem", async () => {
+  const clock = { now: ANOMALY_NOW };
+  let url: string;
+  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
+  const hook = await receiver();
+  const { owner, projectId } = await setupOwner(cloud, url);
+  const rule = { name: "Checkout p95", metric: "p95_ms", op: "above_normal", threshold: 3, windowMs: 900_000, channels: [{ kind: "webhook", url: hook.url }] };
+  expect((await owner.call("POST", `api/projects/${projectId}/alerts`, rule)).status).toBe(201);
+  expect((await owner.call("POST", `api/projects/${projectId}/alerts`, { ...rule, metric: "slow_queries" })).status).toBe(400);
+  expect((await owner.call("POST", `api/projects/${projectId}/alerts`, { ...rule, threshold: 50 })).status).toBe(400);
+  await writeChunked(cloud.app.db, projectId, anomalyTraces(), clock.now);
+  await settleCloud(cloud.app.db, clock.now + 10_000);
+  clock.now += 10_000;
+  await evaluateAll(cloud.app);
+  const fired = hook.bodies[0] as { state: string; message: string; baseline: { upper: number }; problem: { title: string; cause: string; url: string } };
+  expect(fired).toMatchObject({ state: "fired", rule: "Checkout p95", problem: { title: "Error rate above normal on pay and 2 more", cause: "pay 2.0.0 was released as it started." } });
+  expect(fired.message).toMatch(/^p95 duration is above normal on .+ \(normal \d+ ms, alerts above \d+ ms\)$/);
+  expect(fired.baseline.upper).toBeGreaterThan(0);
+  expect(fired.problem.url).toContain(`/_wizelens/#/problems?project=${projectId}&range=24h&problem=`);
+  const list = await owner.call<{ events: { kind: string; problem: { title: string } | null }[] }>("GET", `api/projects/${projectId}/alerts`);
+  expect(list.body.events[0]).toMatchObject({ kind: "fired", problem: { title: "Error rate above normal on pay and 2 more" } });
+});
 
 it("refuses webhooks into private networks unless allowed", async () => {
   expect(await checkTarget("http://example.com/hook", false)).toBe("Use an https:// URL.");

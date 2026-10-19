@@ -28,7 +28,7 @@ export interface CloudOptions extends BillingOptions {
   ingestPerMinute?: number;
   /** How often alert rules run, in ms. Default 60000. */
   alertIntervalMs?: number;
-  /** Let alert webhooks call private and local addresses, and plain http. For self-hosting on a private network. Default false. */
+  /** Let alert webhooks and uptime checks call private and local addresses (webhooks: also plain http). For self-hosting on a private network. Default false. */
   allowPrivateWebhooks?: boolean;
   /** PagerDuty's Events API URL; tests point it at a local server. */
   pagerDutyUrl?: string;

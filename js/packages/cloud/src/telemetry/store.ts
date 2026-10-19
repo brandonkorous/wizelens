@@ -12,6 +12,8 @@ export interface TraceQuery {
   from?: number;
   env?: string;
   session?: string;
+  /** Leave out loose batches (lines outside a request), which are not traces to list. */
+  noLoose?: boolean;
   limit: number;
 }
 
@@ -64,6 +66,8 @@ export interface TelemetryStore {
   slowestEndpoints(projectId: string, w: TimeWindow, minCount: number, limit: number): Promise<{ endpoint: string; p95Ms: number; count: number }[]>;
   metricData(m: MetricQuery, range: TimeRange, params: Readonly<Record<string, string>>, now: number): Promise<MetricData>;
   metricAlertData(m: MetricQuery, name: string, w: TimeWindow, now: number): Promise<MetricAlertData>;
+  /** Host and Kubernetes metric series for the Hosts and Kubernetes pages. */
+  infraData(m: MetricQuery, range: TimeRange, params: Readonly<Record<string, string>>, now: number): Promise<MetricData>;
   /** Build stats for quiet traces. Returns how many settled. */
   settle(now: number, o?: SettleOptions): Promise<number>;
   /** Drop traces, metrics, and rollups past each organization's retention. */

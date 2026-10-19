@@ -101,6 +101,7 @@ When the hub runs with `--token`, send that token as `Authorization: Bearer <tok
 | `get_overview` | "How is everything doing?" Requests, error rate, and duration against the window before, every service's health, the top errors, and the biggest insights. Hub and cloud. |
 | `get_timeseries` | "How did traffic, errors, and latency change over time?" Exact counts per bucket, for everything, one service, or one endpoint, over a range or a custom window. Hub and cloud. |
 | `group_requests` | "Which endpoints are busiest, failing most, or slowest?" Count, errors, error rate, and p95 per endpoint, sorted as you ask. Hub and cloud. |
+| `list_problems` | "Is anything wrong right now, and why?" Services and endpoints above their normal error rate, p95, or traffic, grouped into problems, each with a suspected cause: a new release, a new error, a query, or a service further down the calls. Hub and cloud. |
 | `list_traces` | "What happened recently? Anything slow or failing?" |
 | `get_trace` | "Show me everything that happened in this request, across services." |
 | `get_errors` | "What broke, and where?" |
