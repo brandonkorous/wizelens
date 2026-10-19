@@ -3,6 +3,9 @@
 Found 2026-10-19 by reading every page, model, host, and SDK. Each item names where the gap is. The phases are in
 build order: bugs first, then the shared pieces (filters, URL state) that later phases stand on.
 
+Phases 14 to 20 were added the same day from a comparison with Datadog, Dynatrace, and New Relic: the gaps that
+APM buyers expect and that phases 0 to 13 do not cover.
+
 ## Status
 
 | Phase | What | Size | State |
@@ -21,6 +24,13 @@ build order: bugs first, then the shared pieces (filters, URL state) that later 
 | 11 | Settings and Team | M | Not started |
 | 12 | AI tools (MCP) see what the UI shows | S | Not started |
 | 13 | SDK coverage | L | Not started |
+| 14 | Browser source maps | M | Not started |
+| 15 | Uptime checks | M | Not started |
+| 16 | Logs as a product: all logs, patterns, log alerts | L | Not started |
+| 17 | Anomaly detection and problems | L | Not started |
+| 18 | Hosts and Kubernetes | L | Not started |
+| 19 | Install with no code change | L | Not started |
+| 20 | Java, Python, and Go | XL | Not started |
 
 ## Rules for every phase
 
@@ -181,3 +191,72 @@ take no params besides a selection.
 - **Node:** NestJS requests, GraphQL, BullMQ and SQS, `node:http` and axios outside fetch.
 - **Browser:** a plain JavaScript package, then Vue, Angular, and Svelte (React only today).
 - **Other languages:** Python, Java, and Go send OTLP to a hub today. Write a guide per language first; SDKs later.
+
+## Phase 14 — Browser source maps
+
+Minified React stacks are unreadable, and front-end teams will not switch without this.
+
+- **Upload:** an API and CLI (`npx @wizeworks/lens-cli sourcemaps upload`) that store maps per release (phase 5
+  versions). Plugins for Vite, webpack, and Next.js that upload at build time.
+- **Hub and in-app:** read maps from the dev server or the build folder, so local stacks are readable with no upload.
+- **Resolve** browser stack frames on read, with file, line, function, and a few lines of source. Keep the raw frame.
+- **Group** browser errors by the resolved frame, not the minified one (the group key changes, facts change).
+
+## Phase 15 — Uptime checks
+
+The cheapest gap that buyers call a must.
+
+- **HTTP checks:** URL, method, headers, expected status and body text, interval (1 to 60 minutes), timeout.
+- Run from the cloud and from the hub. Results go in as spans of a `wizelens-uptime` service, so pages, search, and
+  phase 6 alerts work on them with no new path.
+- **Uptime page:** status per check, response time chart, uptime % over 24 hours, 7 days, and 30 days, incidents.
+- **TLS certificate expiry** warning. A public status page per project (cloud) comes after.
+
+## Phase 16 — Logs as a product
+
+Today the add-ons keep only lines written inside a request.
+
+- **All logs:** lines outside a request (startup, background jobs, timers) are kept too, with service and level.
+  Sampling and a level floor per service keep the volume in check.
+- **Patterns:** group similar lines (numbers and ids masked) with a count and a trend; click a pattern to filter.
+- **Log alerts:** count of a search over a window (phase 6 rules).
+- **Log metrics:** a chart from a saved search (phase 8 dashboards).
+- **Retention per project for logs**, apart from traces.
+
+## Phase 17 — Anomaly detection and problems
+
+This answers Dynatrace Davis, Datadog Watchdog, and New Relic Applied Intelligence. No built-in AI: plain statistics.
+
+- **Baselines** per service and endpoint for error rate, p95, and traffic, by hour of the week, from the rollups.
+- **Anomaly alerts:** "above normal" as a phase 6 rule type, next to fixed thresholds.
+- **Problems:** anomalies that start close together on services joined in the call map become one problem card. The
+  card names a suspected cause: a new release (phase 5), a new error group, a slow query, or a downstream service.
+- A Problems page and a problem link in alert notices. MCP gets `list_problems` (phase 12).
+
+## Phase 18 — Hosts and Kubernetes
+
+Infrastructure is Datadog's largest product. APM is sold on top of it.
+
+- **Recipe:** an OpenTelemetry Collector config (hostmetrics, kubeletstats, k8s_cluster, k8sattributes) and a Helm
+  chart that sends to the hub or cloud. No WizeLens agent.
+- **Hosts page:** CPU, memory, disk, and network per host, with the services on each host.
+- **Kubernetes page:** cluster, node, workload, and pod, with restarts, OOM kills, and pending pods.
+- **Trace links:** a span with `k8s.pod.name` links to its pod and node, and the service page shows its pods.
+
+## Phase 19 — Install with no code change
+
+Platform teams must be able to turn WizeLens on without touching app code. This counters Dynatrace OneAgent.
+
+- **Node:** `node --import @wizeworks/lens-node/auto`, set by `NODE_OPTIONS` and driven by env vars.
+- **.NET:** a startup hook package (`DOTNET_STARTUP_HOOKS`) that adds WizeLens with no `AddWizeLens()` call.
+- **Kubernetes:** a mutating webhook (or Helm values) that adds the hook and env vars to labeled pods.
+- The current code install stays and wins when both are present.
+
+## Phase 20 — Java, Python, and Go
+
+Most Datadog and Dynatrace estates run Java. Phase 13 writes the guides; this phase makes them first-class.
+
+- Start from the OpenTelemetry auto-instrumentation agents, with WizeLens defaults (env vars, sampling, redaction).
+- The insight rules (N+1, duplicate and slow queries, DB wait) run on generic OTel spans, so every language gets them.
+- Then thin SDKs where the agents miss detail: SQL parameters, request bodies, and log capture.
+
