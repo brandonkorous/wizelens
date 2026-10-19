@@ -15,7 +15,8 @@ import { createWizeLens } from "@wizeworks/lens-node";
 const wizelens = createWizeLens({ serviceName: "orders-api" });
 ```
 
-WizeLens needs Node 22.13 or newer (24 is best).
+WizeLens needs Node 22.13 or newer (24 is best). No access to the code? `node --import @wizeworks/lens-node/auto` does
+the same with no code: see [Install with no code change](/docs/auto-install/).
 
 ## Your framework
 

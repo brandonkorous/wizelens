@@ -3,7 +3,8 @@ import { W3CTraceContextPropagator } from "@opentelemetry/core";
 import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS } from "@wizeworks/lens-core";
 import { createHandler } from "./api.js";
 import { createMiddleware } from "./capture.js";
-import { addCleanup, registerParts, runCleanups } from "./adapters/registry.js";
+import { addCleanup, partsOf, registerParts, runCleanups } from "./adapters/registry.js";
+import { noteCodeInstall } from "./auto/state.js";
 import { createDbSpans, createTraceDb } from "./db.js";
 import { disabledWizeLens } from "./disabled.js";
 import { createGetTrace } from "./federation.js";
@@ -90,8 +91,15 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   return { hub, service, redactKeys, store, persister, tracing, logs, write, getTrace, handler, capture, metrics, middleware: createMiddleware(capture) };
 }
 
-/** Create the WizeLens add-on for one Node service. */
+/** Create the WizeLens add-on for one Node service. When the auto install also runs, this instance wins. */
 export function createWizeLens(options: WizeLensOptions): WizeLens {
+  const wizelens = buildWizeLens(options);
+  noteCodeInstall(wizelens, partsOf(wizelens));
+  return wizelens;
+}
+
+/** Build an instance without telling the auto install. The auto install builds its own with this. */
+export function buildWizeLens(options: WizeLensOptions): WizeLens {
   const basePath = normalizeBasePath(options.basePath);
   if (!isEnabled(options)) return disabledWizeLens(options, basePath);
   const p = buildParts(options, basePath);

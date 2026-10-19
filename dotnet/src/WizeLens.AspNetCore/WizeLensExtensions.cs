@@ -16,25 +16,58 @@ public static class WizeLensExtensions
 {
     private const string AzureActivitySwitch = "Azure.Experimental.EnableActivitySource";
 
-    /// <summary>Registers WizeLens. Pair with <see cref="UseWizeLens"/>.</summary>
+    /// <summary>Registers WizeLens. Pair with <see cref="UseWizeLens"/>. When the auto install already added it, this call takes it over.</summary>
     public static IServiceCollection AddWizeLens(this IServiceCollection services, Action<WizeLensOptions>? configure = null)
     {
         var options = new WizeLensOptions();
         configure?.Invoke(options);
-        // Azure SDKs (Service Bus) only emit activities with this switch; leave it alone when the app set it.
-        if (options.Enabled != false && !AppContext.TryGetSwitch(AzureActivitySwitch, out _)) AppContext.SetSwitch(AzureActivitySwitch, true);
+        SetAzureSwitch(options);
+        var install = WizeLensInstall.Find(services);
+        if (install is null) return AddWizeLensCore(services, options, auto: false);
+        // The code install wins: its options replace the auto install's, and nothing is registered twice.
+        install.Options = options;
+        install.Auto = false;
+        if (options.EnableMcp && !install.McpAdded) AddMcp(services, install);
+        return services;
+    }
 
+    /// <summary>Registers every WizeLens service once. The auto install calls it with <paramref name="auto"/> true.</summary>
+    internal static IServiceCollection AddWizeLensCore(IServiceCollection services, WizeLensOptions options, bool auto)
+    {
+        var install = new WizeLensInstall(options, auto);
+        services.AddSingleton(install);
         services.AddSingleton(sp =>
         {
             var env = sp.GetRequiredService<IHostEnvironment>();
-            options.IsEnabled = options.Enabled ?? WizeLensOptions.EnvFlag("WIZELENS_ENABLED") ?? env.IsDevelopment();
-            options.ServesDashboard = options.Dashboard ?? WizeLensOptions.EnvFlag("WIZELENS_DASHBOARD") ?? env.IsDevelopment();
-            options.ServiceName ??= env.ApplicationName;
-            options.Release ??= WizeLensOptions.EntryVersion();
-            WizeLensRuntime.Redactor = new Redactor(options.RedactKeys);
-            return options;
+            var resolved = install.Options;
+            resolved.IsEnabled = resolved.Enabled ?? WizeLensOptions.EnvFlag("WIZELENS_ENABLED") ?? env.IsDevelopment();
+            resolved.ServesDashboard = resolved.Dashboard ?? WizeLensOptions.EnvFlag("WIZELENS_DASHBOARD") ?? env.IsDevelopment();
+            resolved.ServiceName ??= env.ApplicationName;
+            resolved.Release ??= WizeLensOptions.EntryVersion();
+            WizeLensRuntime.Redactor = new Redactor(resolved.RedactKeys);
+            return resolved;
         });
         AddStores(services);
+        AddHostedServices(services);
+        services.AddSingleton<ILoggerProvider, WizeLensLoggerProvider>();
+
+        services.AddSingleton<TraceFederation>();
+        services.AddTransient<WizeLensFederationHandler>();
+        services.AddHttpClient(TraceFederation.ClientName, c => c.Timeout = TimeSpan.FromSeconds(2));
+        services.ConfigureHttpClientDefaults(b => b.AddHttpMessageHandler<WizeLensFederationHandler>());
+
+        if (options.EnableMcp) AddMcp(services, install);
+        return services;
+    }
+
+    // Azure SDKs (Service Bus) only emit activities with this switch; leave it alone when the app set it.
+    private static void SetAzureSwitch(WizeLensOptions options)
+    {
+        if (options.Enabled != false && !AppContext.TryGetSwitch(AzureActivitySwitch, out _)) AppContext.SetSwitch(AzureActivitySwitch, true);
+    }
+
+    private static void AddHostedServices(IServiceCollection services)
+    {
         // Registered before the listener: hosted services stop in reverse order, so the last flush sees everything.
         services.AddSingleton<TraceStorageService>();
         services.AddHostedService(sp => sp.GetRequiredService<TraceStorageService>());
@@ -48,23 +81,16 @@ public static class WizeLensExtensions
         services.AddHostedService(sp => sp.GetRequiredService<WizeLensActivityListener>());
         services.AddHostedService<EndpointObserver>();
         services.AddHostedService<SqlClientObserver>();
-        services.AddSingleton<ILoggerProvider, WizeLensLoggerProvider>();
+    }
 
-        services.AddSingleton<TraceFederation>();
-        services.AddTransient<WizeLensFederationHandler>();
-        services.AddHttpClient(TraceFederation.ClientName, c => c.Timeout = TimeSpan.FromSeconds(2));
-        services.ConfigureHttpClientDefaults(b => b.AddHttpMessageHandler<WizeLensFederationHandler>());
-
-        if (options.EnableMcp)
-        {
-            services.AddMcpServer(o => o.ServerInfo = new() { Name = "wizelens", Version = typeof(WizeLensExtensions).Assembly.GetName().Version?.ToString(3) ?? "0.0.0" })
-                .WithHttpTransport(o => o.Stateless = true)
-                .WithTools<WizeLensMcpTools>()
-                .WithTools<WizeLensMetricTools>()
-                .WithTools<WizeLensSearchTools>();
-        }
-
-        return services;
+    private static void AddMcp(IServiceCollection services, WizeLensInstall install)
+    {
+        install.McpAdded = true;
+        services.AddMcpServer(o => o.ServerInfo = new() { Name = "wizelens", Version = typeof(WizeLensExtensions).Assembly.GetName().Version?.ToString(3) ?? "0.0.0" })
+            .WithHttpTransport(o => o.Stateless = true)
+            .WithTools<WizeLensMcpTools>()
+            .WithTools<WizeLensMetricTools>()
+            .WithTools<WizeLensSearchTools>();
     }
 
     private static void AddStores(IServiceCollection services)
@@ -80,11 +106,12 @@ public static class WizeLensExtensions
         services.AddSingleton(sp => new MetricStore(sp.GetRequiredService<WizeLensOptions>().MetricsMaxAge, MetricStore.DefaultMaxPoints));
     }
 
-    /// <summary>Adds the middleware and maps <c>/_wizelens</c> (UI, API, MCP); call it early; does nothing when disabled.</summary>
+    /// <summary>Adds the middleware and maps <c>/_wizelens</c> (UI, API, MCP); call it early; does nothing when disabled or already added.</summary>
     public static IApplicationBuilder UseWizeLens(this IApplicationBuilder app)
     {
         var options = app.ApplicationServices.GetRequiredService<WizeLensOptions>();
-        if (!options.IsEnabled) return app;
+        if (!options.IsEnabled || options.PipelineAdded) return app;
+        options.PipelineAdded = true;
 
         app.UseMiddleware<WizeLensMiddleware>();
         if (app is IEndpointRouteBuilder endpoints) WizeLensEndpoints.Map(endpoints, options);

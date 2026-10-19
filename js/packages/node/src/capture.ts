@@ -9,7 +9,7 @@ export type { CaptureDeps } from "./request-capture.js";
 export { requestSpan } from "./request-capture.js";
 
 /** Express route template, including the mount path of nested routers. */
-function expressRoute(req: Req): string | undefined {
+export function expressRoute(req: Req): string | undefined {
   const routePath = req.route?.path;
   return typeof routePath === "string" ? `${req.baseUrl ?? ""}${routePath}` : undefined;
 }

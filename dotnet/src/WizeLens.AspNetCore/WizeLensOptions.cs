@@ -84,6 +84,9 @@ public sealed class WizeLensOptions
 
     internal bool IsEnabled { get; set; }
 
+    /// <summary>True once the middleware is in the pipeline, so a second UseWizeLens (or the auto install) adds nothing.</summary>
+    internal bool PipelineAdded { get; set; }
+
     /// <summary>True when the dashboard, read API, and MCP answer; false is send-only.</summary>
     internal bool ServesDashboard { get; set; }
 

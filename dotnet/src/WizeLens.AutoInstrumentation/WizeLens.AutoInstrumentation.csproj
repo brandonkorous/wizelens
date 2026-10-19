@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>WizeLens.AutoInstrumentation</RootNamespace>
+        <Description>WizeLens with no code change for ASP.NET Core: a startup hook (DOTNET_STARTUP_HOOKS) and hosting startup (ASPNETCORE_HOSTINGSTARTUPASSEMBLIES) that add WizeLens without AddWizeLens() or UseWizeLens(). Set by environment variables only.</Description>
+        <PackageTags>$(PackageTags);autoinstrumentation;startup-hook;kubernetes</PackageTags>
+        <!-- The startup hook loads from its own folder, so the build output carries every dependency next to it. -->
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\WizeLens.AspNetCore\WizeLens.AspNetCore.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="WizeLens.Tests" />
+    </ItemGroup>
+
+</Project>

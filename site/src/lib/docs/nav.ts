@@ -26,6 +26,7 @@ export const DOC_GROUPS: DocGroup[] = [
       { slug: "hub", title: "The local hub" },
       { slug: "cloud", title: "WizeLens Cloud" },
       { slug: "production", title: "Production" },
+      { slug: "auto-install", title: "No code change" },
       { slug: "sampling", title: "Sampling" },
       { slug: "ai-access", title: "AI access (MCP)" },
     ],
