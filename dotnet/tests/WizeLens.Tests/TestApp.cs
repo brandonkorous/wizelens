@@ -12,8 +12,7 @@ namespace WizeLens.Tests;
 /// <summary>Starts an in-memory app with WizeLens on and gives typed access to its API.</summary>
 internal sealed class TestApp : IAsyncDisposable
 {
-    // Activity listeners are process-wide, so apps under test must not run at the same time, and neither may a test that
-    // sends HTTP from this process: a running app records its HttpClient calls as its own requests.
+    // Listeners are process-wide: apps under test, and tests that send HTTP, must not run at the same time.
     public const string Collection = "wizelens-app";
 
     private TestApp(WebApplication app)
