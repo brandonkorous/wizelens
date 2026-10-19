@@ -1,6 +1,7 @@
 import { evaluateAll } from "./alerts/evaluate.js";
 import type { CloudApp } from "./app.js";
 import { pruneAuthRows } from "./repo/auth-prune.js";
+import { pruneServices } from "./repo/services.js";
 import { sendDigests } from "./notify/digest.js";
 import { checkHealth } from "./notify/health.js";
 import { sendTeamNotices } from "./notify/team.js";
@@ -28,11 +29,12 @@ function every(name: string, everyMs: number, job: () => Promise<unknown>): () =
   return () => (clearInterval(timer), clearTimeout(first));
 }
 
-/** Background work: retention, stats, rollups, sessions, alert rules, team and health notices, and digests. Returns a function that stops it. */
+/** Background work: retention, old services, stats, rollups, sessions, alert rules, team and health notices, and digests. Returns a function that stops it. */
 export function startJobs(app: CloudApp): () => void {
   const now = app.config.now;
   const stops = [
     every("retention", HOUSEKEEPING_MS, () => app.telemetry.prune(now())),
+    every("services", HOUSEKEEPING_MS, () => pruneServices(app.db, now())),
     every("settle", SETTLE_MS, () => app.telemetry.settle(now(), { defaultRetentionDays: app.config.retentionDays })),
     every("rollups", ROLLUP_PRUNE_MS, () => app.telemetry.pruneRollups(now())),
     every("sessions", HOUSEKEEPING_MS, () => pruneAuthRows(app.db)),

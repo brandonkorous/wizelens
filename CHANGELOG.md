@@ -6,6 +6,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Fixed
 
+- **Old pods no longer pile up in the service list.** The registry has one row per host, so every Kubernetes pod made a
+  new row, and the cloud never dropped them. The cloud now drops rows not heard from within the organization's retention
+  (the hub already did). The dashboard shows one row per service with "2 of 3 online"; a click shows its hosts, and hosts
+  offline for more than a day hide behind "Show old hosts". The top menu counts services, not pods.
+- **Admins can forget offline hosts** in the cloud (`POST api/projects/{p}/services/forget`). Each service keeps its newest
+  host, traces stay, and the audit log records it.
 - **The Ctrl+K backdrop covers the whole page.** It was inside the top bar, whose blur limited it to the top bar's box.
 - **Enter in the search box never picks a stale suggestion.** The list for the previous term stayed up while the new one
   loaded, so a quick Enter replaced the word with an unrelated value.

@@ -1,8 +1,8 @@
 import { Check, ChevronDown, Layers } from "lucide-react";
-import type { HubService } from "@wizeworks/lens-core";
+import { groupServices, type ServiceGroup } from "@wizeworks/lens-core";
 import { useEnvScope, useProjectScope } from "../data/prefs";
 import { type HubRegistry, inScope, presenceOf } from "../data/sources";
-import { fmtAgo } from "../format";
+import { fmtAgo, fmtCount } from "../format";
 import { Menu } from "./Menu";
 
 interface ChoicesProps {
@@ -31,14 +31,18 @@ function Choices({ title, values, value, onPick, all = true }: ChoicesProps) {
   );
 }
 
-function ServiceLine({ s }: { s: HubService }) {
-  const where = [s.project, s.environment, s.host].filter(Boolean).join(" · ");
+/** One service, however many hosts (pods) send for it. */
+function ServiceLine({ g }: { g: ServiceGroup }) {
+  const s = g.newest;
+  const hosts = g.instances.length > 1 ? `${fmtCount(g.online)} of ${fmtCount(g.instances.length)} hosts online` : s.host;
+  const where = [s.project, s.environment, hosts].filter(Boolean).join(" · ");
+  const online = g.online > 0;
   return (
     <div className="wl-menu-item wl-menu-static">
-      <span className={`wl-env-dot${s.online ? "" : " wl-off"}`} title={presenceOf(s)} />
+      <span className={`wl-env-dot${online ? "" : " wl-off"}`} title={online ? "Online" : presenceOf(s)} />
       <span className="wl-truncate">
         <strong>{s.service}</strong>
-        <span className="wl-muted wl-small"> · {s.online ? (s.runtime ?? s.via) : `seen ${fmtAgo(s.lastSeenMs)}`}</span>
+        <span className="wl-muted wl-small"> · {online ? (s.runtime ?? s.via) : `seen ${fmtAgo(s.lastSeenMs)}`}</span>
         {where && <span className="wl-muted wl-small wl-block">{where}</span>}
       </span>
     </div>
@@ -49,8 +53,8 @@ function ServiceLine({ s }: { s: HubService }) {
 export function HubMenu({ registry, projects }: { registry: HubRegistry | null; projects?: [string, string][] }) {
   const [env, setEnv] = useEnvScope();
   const [project, setProject] = useProjectScope();
-  const services = (registry?.services ?? []).filter((s) => inScope(s, { env, project }, !projects));
-  const online = services.filter((s) => s.online).length;
+  const services = groupServices((registry?.services ?? []).filter((s) => inScope(s, { env, project }, !projects)));
+  const online = services.filter((g) => g.online > 0).length;
   const projectName = projects ? projects.find(([id]) => id === project)?.[1] : project;
   const text = [projectName, env].filter(Boolean).join(" · ") || "All services";
   const pairs = (list: string[]) => list.map((v): [string, string] => [v, v]);
@@ -71,8 +75,8 @@ export function HubMenu({ registry, projects }: { registry: HubRegistry | null; 
           <Choices title="Project" values={projects ?? pairs(registry?.projects ?? [])} value={project} all={!projects} onPick={(v) => (setProject(v), close())} />
           <Choices title="Environment" values={pairs(registry?.environments ?? [])} value={env} onPick={(v) => (setEnv(v), close())} />
           <div className="wl-menu-head">Services</div>
-          {services.map((s) => (
-            <ServiceLine key={`${s.project}|${s.service}|${s.environment}|${s.host}`} s={s} />
+          {services.map((g) => (
+            <ServiceLine key={g.key} g={g} />
           ))}
           {services.length === 0 && <div className="wl-menu-note">No service has sent data yet. See Settings to connect one.</div>}
         </>

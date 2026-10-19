@@ -20,6 +20,7 @@ const ACTIONS: Record<string, string> = {
   "project.create": "Added a project",
   "project.clear": "Cleared a project's data",
   "project.delete": "Deleted a project",
+  "service.forget": "Forgot offline hosts",
   "key.create": "Made a key",
   "key.revoke": "Revoked a key",
   "share.create": "Shared a trace",
@@ -67,6 +68,7 @@ export function detailText(d: Record<string, unknown>, names: Names): string {
   if (typeof d.providerId === "string") parts.push(d.providerId);
   if (typeof d.retentionDays === "number") parts.push(`keep data ${d.retentionDays} days`);
   if (typeof d.days === "number") parts.push(`for ${d.days} days`);
+  if (typeof d.removed === "number") parts.push(`${d.removed} ${d.removed === 1 ? "host" : "hosts"}`);
   if (typeof d.line === "string" && parts.length === 0) parts.push(d.line);
   return parts.join(" · ");
 }
