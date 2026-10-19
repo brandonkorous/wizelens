@@ -1,5 +1,5 @@
 import { UserRound } from "lucide-react";
-import type { UserRow } from "@wizeworks/lens-core";
+import { userDoc, type UserRow } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
 import { fmtAgo, fmtCount, fmtMs, fmtPct } from "../../format";
 import { decodeParam, navigate, setQuery, userHref, useRoute } from "../../routes";
@@ -7,7 +7,8 @@ import { Pager } from "../../ui/Controls";
 import { UserSearch } from "./UserSearch";
 import { ModelState } from "../../ui/ModelState";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
-import { type Column, Table } from "../../ui/Table";
+import { type Column } from "../../ui/Table";
+import { GroupTaggedTable } from "../../ui/TaggedTable";
 import { UserPage } from "./UserPage";
 
 export const USER_COLUMNS: Column<UserRow>[] = [
@@ -32,7 +33,7 @@ function AllUsers() {
       <ModelState model={m} loading={loading} error={error} what="users" />
       {m && (
         <Panel title={`Users (${fmtCount(m.total)})`} flush>
-          <Table columns={USER_COLUMNS} rows={m.users} rowKey={(u) => u.user} onRowClick={(u) => navigate(userHref(u.user))} empty={<Empty title={q ? "No user matches" : "No signed-in users in this range"}>Send the user's id as <code>enduser.id</code> (the add-ons do it from the signed-in user) to see them here.</Empty>} />
+          <GroupTaggedTable group="users" docOf={(u) => userDoc(u.user)} tagged="user" columns={USER_COLUMNS} rows={m.users} rowKey={(u) => u.user} onRowClick={(u) => navigate(userHref(u.user))} empty={<Empty title={q ? "No user matches" : "No signed-in users in this range"}>Send the user's id as <code>enduser.id</code> (the add-ons do it from the signed-in user) to see them here.</Empty>} />
           {m.total > 0 && <Pager page={m.page} pageSize={m.size} total={m.total} noun="users" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />}
         </Panel>
       )}

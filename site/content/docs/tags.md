@@ -23,7 +23,7 @@ Three tags come on by default. Turn any of them off under **Settings → Tags**.
 
 On the local hub and on WizeLens Cloud:
 
-- **Tag this.** Open a request, a trace, an error, or a service, and press **Tag this**. Pick what to tag: the endpoint,
+- **Tag this.** Open a request, a trace, an error, a service, or a user, and press **Tag this**. Pick what to tag: the endpoint,
   the service, the user, or the error. WizeLens fills in a search that keeps finding it after the trace itself is gone,
   and shows what the search finds now. Name it, pick a color, and add it.
 - **Settings → Tags → New tag.** Write any search, such as `service:api route:/checkout*` or
@@ -57,7 +57,8 @@ in-app dashboard shows the line to add.
 If no tag has the name you typed, the Search page says so. AI tools get the same: `list_tags`, `tag:` in every
 search, and the tags of each result.
 
-## Lists of endpoints, services, and errors
+## Lists of endpoints, services, errors, and users
 
 A row that counts many requests shows a tag only when the tag's search describes the row itself. `service:api
-route:/orders/*` shows on that endpoint and its requests; `duration:>1s` shows on slow requests, never on an endpoint.
+route:/orders/*` shows on that endpoint and its requests; `user:ada` shows on that user and their requests; `duration:>1s`
+shows on slow requests, never on an endpoint.

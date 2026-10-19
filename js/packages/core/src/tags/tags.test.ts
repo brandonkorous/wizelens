@@ -10,7 +10,7 @@ import { makeRequest } from "../testing/fixtures.js";
 import { activeTags, BUILT_IN_TAGS, tagList } from "./builtins.js";
 import { checkTagInput } from "./check.js";
 import { expandTags } from "./expand.js";
-import { endpointDoc, errorGroupDoc, groupTags, serviceDoc } from "./groups.js";
+import { endpointDoc, errorGroupDoc, groupTags, serviceDoc, userDoc } from "./groups.js";
 import { matchKey, matchTags, tagMatchRequestOf } from "./match.js";
 import { endpointScope, errorScope, serviceScope, stableText, tagNameOf, userScope } from "./suggest.js";
 import type { TagRule } from "./types.js";
@@ -95,6 +95,8 @@ describe("tags on group rows", () => {
     const timeout = rule("bank", 'service:api error:true "did not answer"');
     expect(groupTagsOf([timeout, rules[0]!], "errors", errorGroupDoc({ service: "api", type: "TimeoutError", message: "bank 42 did not answer" }))).toEqual(["bank"]);
     expect(groupTagsOf([rule("web", "service:browser")], "services", serviceDoc("Web App"))).toEqual(["web"]);
+    const users = [rule("vip", "user:ada OR user:bob"), rule("vip-slow", "user:ada duration:>1s")];
+    expect([groupTagsOf(users, "users", userDoc("ada")), groupTagsOf(users, "users", userDoc("cy"))]).toEqual([["vip"], []]);
   });
 });
 

@@ -70,9 +70,9 @@ same way (`searchTraceIds` and `memorySearchIds` take the host's active tags).
 
 ## Lists of groups
 
-Error groups, endpoints, and services are counts over many requests, not one document. A rule shows on such a row when
+Error groups, endpoints, services, and users are counts over many requests, not one document. A rule shows on such a row when
 every field it names describes the row: `service`, `method`, `route`, `path` for endpoints; `service` for services;
-`service`, `error`, and free words (type and message) for error groups. A rule that names anything else (a duration, an
+`service`, `error`, and free words (type and message) for error groups; `user` for users. A rule that names anything else (a duration, an
 attribute) does not show on group rows.
 
 ## "Tag this"

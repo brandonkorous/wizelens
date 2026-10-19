@@ -60,9 +60,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   Insights get the same: **Mark fixed** and **Dismiss**. The Overview has a "New and Regressed Errors" panel. The hub
   and the cloud keep these states; in-app add-ons show no actions.
 - **Tags.** Name a search, and everything it finds wears that name as a colored chip in every list: requests, traces,
-  spans, logs, errors, endpoints, and services. Click a chip, or type `tag:name`, to see them all. WizeLens keeps the tag,
+  spans, logs, errors, endpoints, services, and users. Click a chip, or type `tag:name`, to see them all. WizeLens keeps the tag,
   not a mark on the data, so a tag covers data from before it was made, stays when traces expire, and moves everywhere at
-  once when its search changes. **Tag this** on a request, trace, error, service, or search fills in a search for the
+  once when its search changes. **Tag this** on a request, trace, error, service, user, or search fills in a search for the
   endpoint, service, user, or error, and shows what it finds before you save. Three built-in tags come on: `stream`
   (event streams such as MCP, which stay open on purpose), `probe` (health checks), and `bot`. Manage them under
   **Settings → Tags** on the hub and the cloud (members and up; each change is audited), or with the `tags` option in code

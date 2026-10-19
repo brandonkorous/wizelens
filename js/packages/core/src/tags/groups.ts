@@ -1,16 +1,17 @@
-// Tags on rows that count many requests (endpoints, services, error groups): a rule shows when every field it names describes the row.
+// Tags on rows that count many requests (endpoints, services, error groups, users): a rule shows when every field it names describes the row.
 import type { SearchField, SearchNode } from "../search/ast.js";
 import { compileSearch, type SearchDoc } from "../search/match.js";
 import { displayService, messageShape, rawService } from "../stats/errors.js";
 import type { ActiveTag } from "./types.js";
 
-export type GroupKind = "endpoints" | "services" | "errors";
+export type GroupKind = "endpoints" | "services" | "errors" | "users";
 
 /** What a group row can answer: these fields, and free words only for error groups (their type and message). */
 const GROUP_FIELDS: Record<GroupKind, { fields: ReadonlySet<SearchField>; text: boolean }> = {
   endpoints: { fields: new Set(["service", "method", "route", "path"]), text: false },
   services: { fields: new Set(["service"]), text: false },
   errors: { fields: new Set(["service", "error"]), text: true },
+  users: { fields: new Set(["user"]), text: false },
 };
 
 /** True when every leaf of the tree is something a row of `kind` answers. */
@@ -29,6 +30,9 @@ export function endpointDoc(service: string, endpoint: string): SearchDoc {
   const [method, route] = space > 0 ? [endpoint.slice(0, space), endpoint.slice(space + 1)] : [null, endpoint];
   return { kind: "requests", text: [], fields: { service: services(service), method, route, path: route }, attrs: [] };
 }
+
+/** A signed-in user (enduser.id). */
+export const userDoc = (user: string): SearchDoc => ({ kind: "requests", text: [], fields: { user }, attrs: [] });
 
 export const serviceDoc = (service: string): SearchDoc => ({ kind: "requests", text: [], fields: { service: services(service) }, attrs: [] });
 
