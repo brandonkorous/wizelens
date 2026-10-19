@@ -49,7 +49,8 @@ export interface ServicePageModel {
   /** True for services that run your code (APIs and workers). Only they have errors, requests, and logs here. */
   owned: boolean;
   starts: number[];
-  chart: { requests: Series; errors: Series; avgMs: Series; p95Ms: Series };
+  /** `prevRequests`: the compared period's count per bucket, for a faint line. */
+  chart: { requests: Series; errors: Series; avgMs: Series; p95Ms: Series; prevRequests: Series };
   /** Busiest first, at most 200. */
   endpoints: EndpointStat[];
   endpointCount: number;
@@ -89,7 +90,8 @@ function logsOf(d: NeedResults, name: string): ServicePageLogs {
 
 function chartOf(d: NeedResults): ServicePageModel["chart"] {
   const s = seriesOf(d, "chart", CHART_BUCKETS);
-  return { requests: counts(s), errors: s.map((a) => a.err), avgMs: avgs(s), p95Ms: s.map((a) => (a.hist && a.n ? histPercentile(a.hist, a.n, 95) : null)) };
+  const prevRequests = counts(seriesOf(d, "chart.prev", CHART_BUCKETS));
+  return { requests: counts(s), errors: s.map((a) => a.err), avgMs: avgs(s), p95Ms: s.map((a) => (a.hist && a.n ? histPercentile(a.hist, a.n, 95) : null)), prevRequests };
 }
 
 const NO_ERRORS: ServicePageErrors = { groups: [], total: 0, exceptions: 0, prevExceptions: 0 };
@@ -104,6 +106,7 @@ export const servicePage: PageDef<ServicePageModel> = {
     return [
       groupNeed("svc.ep", "svc.ep", "cur", { filter: { prefix: endpointPrefix(row.key) }, order: { by: "n", desc: true, limit: MODEL_LIST_MAX } }),
       seriesNeed("chart", "svc", "cur", CHART_BUCKETS, { filter: { keys: [row.key] }, hist: true }),
+      seriesNeed("chart.prev", "svc", "prev", CHART_BUCKETS, { filter: { keys: [row.key] } }),
       ...(isOwnedService(row.kind) ? ownedNeeds(row.name) : []),
     ];
   },

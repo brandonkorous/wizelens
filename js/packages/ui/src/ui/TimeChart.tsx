@@ -1,5 +1,6 @@
 import { type MouseEvent, type RefObject, useEffect, useRef, useState } from "react";
 import { fmtBucket, fmtTick } from "../format";
+import { setWindowPref } from "../data/period";
 import { areaPath, linePath, maxOf, niceMax, ticksOf } from "./chartMath";
 
 const spanOf = (starts: readonly number[]) => (starts.length > 1 ? starts[starts.length - 1]! - starts[0]! : 0);
@@ -9,6 +10,8 @@ export interface ChartSeries {
   values: (number | null)[];
   /** CSS color, for example "var(--wl-blue)". */
   color: string;
+  /** A faint dashed line, for the period a chart compares with. */
+  dashed?: boolean;
 }
 
 export interface TimeChartProps {
@@ -23,6 +26,8 @@ export interface TimeChartProps {
   separateBarScale?: boolean;
   /** Bars sit on top of each other instead of side by side. */
   stackBars?: boolean;
+  /** Drag across the chart to show that span (a custom time range). On unless false. */
+  zoom?: boolean;
 }
 
 const PAD = { left: 44, right: 8, top: 10, bottom: 26 };
@@ -114,8 +119,8 @@ function Plot({ p, f }: { p: TimeChartProps; f: Frame }) {
       {p.stackBars ? <StackedBars p={p} f={f} /> : <SideBars p={p} f={f} />}
       {(p.lines ?? []).map((s, si) => (
         <g key={s.label}>
-          {si === 0 && <path d={areaPath(s.values, f.x, f.y, f.base)} fill={s.color} opacity="0.08" />}
-          <path d={linePath(s.values, f.x, f.y)} fill="none" stroke={s.color} strokeWidth="2" strokeLinejoin="round" />
+          {si === 0 && !s.dashed && <path d={areaPath(s.values, f.x, f.y, f.base)} fill={s.color} opacity="0.08" />}
+          <path d={linePath(s.values, f.x, f.y)} fill="none" stroke={s.color} strokeWidth={s.dashed ? 1.5 : 2} strokeLinejoin="round" strokeDasharray={s.dashed ? "4 4" : undefined} opacity={s.dashed ? 0.7 : 1} />
         </g>
       ))}
     </g>
@@ -138,29 +143,56 @@ function Tip({ p, i, left }: { p: TimeChartProps; i: number; left: number }) {
   );
 }
 
+/** Drag across buckets to pick a span; letting go shows it as a custom range. */
+function useZoom(p: TimeChartProps, f: Frame) {
+  const [drag, setDragState] = useState<{ a: number; b: number } | null>(null);
+  // Mouse events can outrun renders, so the latest drag lives in a ref too.
+  const latest = useRef<{ a: number; b: number } | null>(null);
+  const setDrag = (d: { a: number; b: number } | null) => setDragState((latest.current = d));
+  const on = p.zoom !== false && p.starts.length > 1;
+  const finish = () => {
+    const d = latest.current;
+    if (d && d.a !== d.b) {
+      const size = p.starts[1]! - p.starts[0]!;
+      setWindowPref({ from: p.starts[Math.min(d.a, d.b)]!, to: p.starts[Math.max(d.a, d.b)]! + size });
+    }
+    setDrag(null);
+  };
+  const band = drag && drag.a !== drag.b ? { x: f.x(Math.min(drag.a, drag.b)) - f.slot / 2, w: (Math.abs(drag.a - drag.b) + 1) * f.slot } : null;
+  return { on, latest, setDrag, finish, band };
+}
+
 export function TimeChart(props: TimeChartProps) {
   const [ref, width] = useWidth();
   const [hover, setHover] = useState<number | null>(null);
   const height = props.height ?? 200;
   const f = frameOf(props, width, height);
+  const zoom = useZoom(props, f);
+  const indexAt = (e: MouseEvent<SVGSVGElement>) => Math.floor((e.clientX - e.currentTarget.getBoundingClientRect().left - PAD.left) / f.slot);
   const onMove = (e: MouseEvent<SVGSVGElement>) => {
-    const box = e.currentTarget.getBoundingClientRect();
-    const i = Math.floor((e.clientX - box.left - PAD.left) / f.slot);
-    setHover(i >= 0 && i < props.starts.length ? i : null);
+    const i = indexAt(e);
+    const inside = i >= 0 && i < props.starts.length;
+    setHover(inside ? i : null);
+    if (inside && zoom.latest.current) zoom.setDrag({ ...zoom.latest.current, b: i });
+  };
+  const onDown = (e: MouseEvent<SVGSVGElement>) => {
+    const i = indexAt(e);
+    if (zoom.on && i >= 0 && i < props.starts.length) zoom.setDrag({ a: i, b: i });
   };
   const series = [...(props.lines ?? []), ...(props.bars ?? [])];
   return (
     <div className="wl-chart" ref={ref}>
-      <svg width={width} height={height} onMouseMove={onMove} onMouseLeave={() => setHover(null)} role="img" aria-label={series.map((s) => s.label).join(", ")}>
+      <svg width={width} height={height} className={zoom.on ? "wl-chart-zoom" : undefined} onMouseMove={onMove} onMouseDown={onDown} onMouseUp={zoom.finish} onMouseLeave={() => (setHover(null), zoom.setDrag(null))} role="img" aria-label={series.map((s) => s.label).join(", ")}>
         <Axes p={props} f={f} width={width} />
         <Plot p={props} f={f} />
+        {zoom.band && <rect className="wl-chart-band" x={zoom.band.x} y={PAD.top} width={zoom.band.w} height={f.base - PAD.top} />}
         {hover !== null && <line x1={f.x(hover)} x2={f.x(hover)} y1={PAD.top} y2={f.base} stroke="var(--wl-line-strong)" />}
       </svg>
       {hover !== null && <Tip p={props} i={hover} left={Math.min(f.x(hover) + 12, width - 160)} />}
       <div className="wl-chart-legend">
         {series.map((s) => (
           <span key={s.label}>
-            <i style={{ background: s.color }} />
+            <i className={s.dashed ? "wl-legend-dashed" : undefined} style={{ background: s.dashed ? undefined : s.color, borderColor: s.color }} />
             {s.label}
           </span>
         ))}

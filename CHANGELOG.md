@@ -6,6 +6,14 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Links keep the view.** The time range, a custom window, the compare choice, environment, project, and service are in
+  the address bar, so a copied link (or an alert notice) opens exactly what you saw.
+- **Custom time range and zoom.** Pick any from–to in the range menu, or drag across a chart to zoom into that span.
+- **Compare with last week.** The range menu can compare numbers with the same time last week instead of the period
+  before. The Overview activity, Errors over time, and a service's traffic chart draw the compared period as a dashed line.
+- **Time zone and clock.** Settings can show times in UTC and on a 24-hour clock.
+- **Live or paused** on Logs and Requests: pause to keep the list still while new data comes in.
+
 - **Connect Claude to WizeLens Cloud with a sign-in, not a key.** Add `https://mcp.wizelens.com` to Claude (Settings →
   Connectors), Claude Code, Cursor, or any MCP client. It opens the WizeLens sign-in, and you pick one organization and
   either all its projects (also later ones) or only some. The app gets read-only access that renews on its own, so a

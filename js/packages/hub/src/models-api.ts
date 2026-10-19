@@ -5,6 +5,8 @@ import type { ApiContext } from "./api.js";
 import { hubExecutor, hubSettling } from "./scale-exec.js";
 
 const CACHE_MAX = 200;
+/** A custom window may start this much before the kept age (snapping, clock skew). */
+const WINDOW_SLACK_MS = 15 * 60_000;
 const RESERVED = new Set(["project", "range", "env"]);
 const cache = new Map<string, unknown>();
 
@@ -30,6 +32,7 @@ export async function sendPageModel(c: ApiContext, page: string, p: URLSearchPar
   const key = JSON.stringify([page, range, scope, params, now, store.settleGen]);
   if (cache.has(key)) return sendJson(res, 200, cache.get(key));
   const ctx = pageContext(range, now, params, { slowQueryMs: FACT_SLOW_QUERY_MS }, hubSettling(store, scope));
+  if (now - ctx.window.from > store.maxAgeMs + WINDOW_SLACK_MS) return sendJson(res, 400, { error: "This time window starts before the hub keeps data." });
   const value = await runPage(page, ctx, hubExecutor(store, scope, c.data.keepRemote));
   remember(key, value);
   sendJson(res, 200, value);

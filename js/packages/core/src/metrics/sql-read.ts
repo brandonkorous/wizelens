@@ -1,6 +1,7 @@
 // Metric reads as steps of SQL: hosts run each step's queries (sync on the hub, async on the cloud) and get MetricData back.
 import { planSeries, planTotals, snapWindow, type Tier } from "../scale/window.js";
-import { type TimeRange, type TimeWindow, windowOf } from "../stats/common.js";
+import { periodWindow } from "../stats/period.js";
+import { type TimeRange, type TimeWindow } from "../stats/common.js";
 import {
   addMetricPlaced,
   emptyMetricBuckets,
@@ -122,7 +123,7 @@ function bucketQueries(d: MetricDialect, scope: MetricSqlScope, w: TimeWindow, s
 
 /** The metrics page data, as SQL steps. `now` is aligned by the host. */
 export function* metricPageSteps(d: MetricDialect, scope: MetricSqlScope, range: TimeRange, now: number, params: Readonly<Record<string, string>>): MetricSteps<MetricData> {
-  const w = snapWindow(windowOf(range, now), now);
+  const w = snapWindow(periodWindow(range, now, params), now);
   const segments = planTotals(w, now, Number.POSITIVE_INFINITY);
   const base = { project: scope.project, env: scope.env };
   const [totals, ends] = [metricTotalsSql(d, base, segments), metricEndsSql(d, base, segments)];

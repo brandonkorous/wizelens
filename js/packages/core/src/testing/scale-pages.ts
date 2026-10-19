@@ -33,7 +33,7 @@ const STATIC: Partial<Record<PageName, Record<string, string>[]>> = {
   rendering: [{ q: "checkout" }, { q: "nothing" }],
   errors: [{ q: "pay" }, { q: "TIMEOUT" }, { service: "api" }, { service: "Web App" }, { type: "TimeoutError" }, { critical: "1" }, { sort: "count" }, { page: "2", size: "2" }, { endpoint: "POST /api/pay" }, { endpoint: "nope" }, { service: "api", critical: "1", sort: "count" }],
   database: [{ service: "api" }, { service: "orders" }, { q: "orders" }, { q: "SELECT" }, { table: "items" }, { operation: "select" }, { operation: "INSERT" }, { database: "postgresql" }, { sort: "count" }, { sort: "total", page: "2", size: "5" }, { page: "99" }],
-  overview: [{ service: "orders" }, { service: "api" }, { service: "Web App" }, { service: "nope" }],
+  overview: [{ from: String(SCENARIO_NOW - 3 * 3_600_000), to: String(SCENARIO_NOW - 3_600_000) }, { compare: "week" }, { service: "orders" }, { service: "api" }, { service: "Web App" }, { service: "nope" }],
   service: [{ service: "orders" }, { service: "Web App" }, { service: "nope" }],
 };
 

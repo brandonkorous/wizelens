@@ -1,6 +1,7 @@
 // What a page asks for (needs), what an executor answers (results), and how a page is defined.
 import type { ModelParams } from "../models/input.js";
 import type { TimeRange, TimeWindow } from "../stats/common.js";
+import type { Compare } from "../stats/period.js";
 import type { LogLevel, Trace } from "../types.js";
 import { type Agg, avgOfAgg } from "./agg.js";
 import { type RollupKind, splitKey } from "./kinds.js";
@@ -132,6 +133,10 @@ export interface PageContext {
   options: { slowQueryMs: number };
   /** Traces still waiting for their stats, when the host knows; null or absent when none. */
   settling?: number | null;
+  /** True when the window is a custom from–to; `range` is then the smallest preset that covers it. */
+  custom?: boolean;
+  /** What `prev` is: the window right before, or the same window a week earlier. */
+  compare?: Compare;
 }
 
 export interface NeedResults {

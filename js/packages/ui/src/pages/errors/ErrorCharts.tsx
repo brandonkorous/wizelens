@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { BarChart3 } from "lucide-react";
 import type { ErrorsModel } from "@wizeworks/lens-core";
-import { fmtCount } from "../../format";
+import { compareSeriesLabel, fmtCount } from "../../format";
 import { setQuery } from "../../routes";
 import { BarList } from "../../ui/BarList";
 import { Empty, Panel } from "../../ui/Panel";
@@ -20,6 +20,7 @@ export function ErrorsOverTimePanel({ stats }: { stats: ErrorsModel }) {
         <TimeChart
           starts={starts}
           stackBars
+          lines={[{ label: compareSeriesLabel(stats.meta.compare), values: stats.chart.prev, color: "var(--wl-slate)", dashed: true }]}
           bars={[
             { label: "Critical errors", values: critical, color: "var(--wl-red)" },
             { label: "Errors", values: plain, color: "color-mix(in srgb, var(--wl-red) 35%, transparent)" },

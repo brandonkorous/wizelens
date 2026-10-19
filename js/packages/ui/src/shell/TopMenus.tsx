@@ -1,7 +1,6 @@
-import { Calendar, ChevronDown, ExternalLink, Monitor, Moon, Sun } from "lucide-react";
-import { TIME_RANGES } from "@wizeworks/lens-core";
+import { ChevronDown, ExternalLink, Monitor, Moon, Sun } from "lucide-react";
 import type { Source } from "../data/sources";
-import { fmtKept, MODE_LABEL, useHost, useRange } from "../data/host";
+import { fmtKept, MODE_LABEL, useHost } from "../data/host";
 import { type Theme, useTheme } from "../data/prefs";
 import { Menu } from "./Menu";
 
@@ -53,29 +52,6 @@ export function ModeBadge() {
     <span className="wl-mode-badge" title={`WizeLens runs ${host.mode === "in-app" ? "inside this service" : `as a ${MODE_LABEL[host.mode].toLowerCase()}`}. Data older than ${fmtKept(host.keptMs)} is dropped.`}>
       {text}
     </span>
-  );
-}
-
-export function RangeMenu() {
-  const [range, setRange] = useRange();
-  const { ranges } = useHost();
-  const label = (
-    <>
-      <Calendar aria-hidden="true" />
-      <span className="wl-label">{TIME_RANGES[range].label}</span>
-      <ChevronDown aria-hidden="true" />
-    </>
-  );
-  return (
-    <Menu label={label} title="Time range">
-      {(close) =>
-        ranges.map((r) => (
-          <button key={r} type="button" className={`wl-menu-item${r === range ? " wl-active" : ""}`} onClick={() => (setRange(r), close())}>
-            {TIME_RANGES[r].label}
-          </button>
-        ))
-      }
-    </Menu>
   );
 }
 

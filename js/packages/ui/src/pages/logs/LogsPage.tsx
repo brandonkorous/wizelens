@@ -3,6 +3,7 @@ import { Bell, FileText, OctagonX, TriangleAlert } from "lucide-react";
 import { fmtCount } from "../../format";
 import { setQuery } from "../../routes";
 import { Pager } from "../../ui/Controls";
+import { LiveToggle } from "../../ui/LiveToggle";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
 import { Table } from "../../ui/Table";
@@ -40,10 +41,13 @@ function LogTable({ stats }: { stats: LogsModel }) {
 }
 
 export function LogsPage() {
-  const { model: stats, loading, error } = usePageModel("logs");
+  const [paused, setPaused] = useState(false);
+  const { model: stats, loading, error } = usePageModel("logs", undefined, paused);
   return (
     <div className="wl-logs-page">
-      <PageHeader title="Logs" subtitle="Every log line written while handling requests, across your services." />
+      <PageHeader title="Logs" subtitle="Every log line written while handling requests, across your services.">
+        <LiveToggle paused={paused} onChange={setPaused} />
+      </PageHeader>
       <ModelState model={stats} loading={loading} error={error} what="log lines" />
       {stats && (
         <>

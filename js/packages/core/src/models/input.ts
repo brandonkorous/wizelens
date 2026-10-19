@@ -1,5 +1,6 @@
 import type { Need, PageData } from "../scale/needs.js";
-import { COMPARE_LABEL, type TimeRange, type TimeWindow } from "../stats/common.js";
+import type { TimeRange, TimeWindow } from "../stats/common.js";
+import { type Compare, compareLabelOf } from "../stats/period.js";
 import { groupNeed, totalOf } from "./read.js";
 
 export interface ModelOptions {
@@ -25,6 +26,9 @@ export interface ModelMeta {
   sampled: Sampled | null;
   /** Traces still waiting for their stats; null or 0 when the stats are complete. */
   settling: number | null;
+  /** True for a custom from–to window. */
+  custom: boolean;
+  compare: Compare;
 }
 
 /** What every page needs for its meta: whether the window before had traces. */
@@ -34,10 +38,12 @@ export const metaOf = (d: PageData): ModelMeta => ({
   range: d.range,
   window: d.window,
   prev: d.prev,
-  compareLabel: COMPARE_LABEL[d.range],
+  compareLabel: compareLabelOf(d.range, !!d.custom, d.compare ?? "previous"),
   hasPrev: totalOf(d, "meta.prev").n > 0,
   sampled: null,
   settling: d.settling ?? null,
+  custom: !!d.custom,
+  compare: d.compare ?? "previous",
 });
 
 /** The service filter (a display name, as the dashboard shows it), or undefined for all services. */

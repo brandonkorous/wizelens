@@ -8,7 +8,8 @@ import { HubMenu } from "./HubMenu";
 import { UserMenu } from "./UserMenu";
 import { Notifications } from "./Notifications";
 import { SearchPalette, useSearchShortcut } from "./SearchPalette";
-import { EnvMenu, ModeBadge, RangeMenu, ThemeToggle } from "./TopMenus";
+import { RangeMenu } from "./RangeMenu";
+import { EnvMenu, ModeBadge, ThemeToggle } from "./TopMenus";
 
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 

@@ -10,7 +10,7 @@ import type { ServiceRow } from "../stats/services.js";
 import { headlineNeeds, headlinesFrom } from "./headlines.js";
 import { META_NEEDS, type ModelMeta, metaOf, scoped, serviceParam } from "./input.js";
 import { insightGroupsOf, insightNeeds } from "./insight-groups.js";
-import { aggByKey, avgs, counts, groupNeed, listNeed, listOf, seriesNeed, seriesOf, uniqueNeeds } from "./read.js";
+import { aggByKey, avgs, counts, groupNeed, listNeed, listOf, type Series, seriesNeed, seriesOf, uniqueNeeds } from "./read.js";
 import { edgeNeeds, edgesOfRows, serviceNeeds, serviceRowsOf } from "./service-rows.js";
 
 export interface TimingPart {
@@ -28,7 +28,8 @@ export interface OverviewModel {
   headlines: RequestHeadlines;
   /** Distinct insights, the same number the Insights page lists. */
   insightsFound: Headline;
-  activity: ActivitySeries & { avgDuration: (number | null)[] };
+  /** `prevRequests`: the compared period's requests per bucket, for a faint line. */
+  activity: ActivitySeries & { avgDuration: (number | null)[]; prevRequests: Series };
   timing: TimingPart[];
   services: ServiceRow[];
   recent: RequestItem[];
@@ -58,7 +59,8 @@ function timingOf(d: PageData): TimingPart[] {
 
 function activityOf(d: PageData): OverviewModel["activity"] {
   const s = seriesOf(d, "activity", ACTIVITY_BUCKETS);
-  return { starts: bucketStarts(d.window, ACTIVITY_BUCKETS), requests: counts(s), errors: s.map((a) => a.err), avgDuration: avgs(s) };
+  const prev = counts(seriesOf(d, "activity.prev", ACTIVITY_BUCKETS));
+  return { starts: bucketStarts(d.window, ACTIVITY_BUCKETS), requests: counts(s), errors: s.map((a) => a.err), avgDuration: avgs(s), prevRequests: prev };
 }
 
 /** The service's own row and the rows it calls; every row without a service filter. */
@@ -78,6 +80,7 @@ export const overviewPage: PageDef<OverviewModel> = {
       ...META_NEEDS,
       ...headlineNeeds("h", "req", undefined, service),
       seriesNeed("activity", "req", "cur", ACTIVITY_BUCKETS, one),
+      seriesNeed("activity.prev", "req", "prev", ACTIVITY_BUCKETS, one),
       groupNeed("timing", "req.part", "cur", { hist: true, ...one }),
       ...serviceNeeds("cur"),
       ...(service ? edgeNeeds() : []),

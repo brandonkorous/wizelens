@@ -3,6 +3,7 @@ import { type MetricPoint, metricsModel, type MetricsModel, TIME_RANGES, type Ti
 import { useRoute } from "../routes";
 import { apiFetch } from "./api";
 import { useHost, useRange } from "./host";
+import { usePeriodParams } from "./models";
 import { getScope, useServiceScope } from "./prefs";
 
 /** Where the metrics page gets its numbers: the server computes them, the browser does from raw points, or the host has none. */
@@ -24,8 +25,9 @@ const IN_APP_RANGE: TimeRange = "1h";
 function useParams(extra: Record<string, string> | undefined): Record<string, string> {
   const { query } = useRoute();
   const [service] = useServiceScope();
+  const period = usePeriodParams();
   const base = Object.fromEntries(query);
-  const key = new URLSearchParams({ ...(service && !base.service ? { service } : {}), ...base, ...extra }).toString();
+  const key = new URLSearchParams({ ...period, ...(service && !base.service ? { service } : {}), ...base, ...extra }).toString();
   return useMemo(() => Object.fromEntries(new URLSearchParams(key)), [key]);
 }
 

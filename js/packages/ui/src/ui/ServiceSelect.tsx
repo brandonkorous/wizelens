@@ -16,12 +16,12 @@ export function useServiceNames(more: readonly string[] = []): string[] {
   }, [registry, traces, key]);
 }
 
-/** Pick the service every page filters by. A link's own `service` gives way to the pick (on Services it names a row, so it stays). */
+/** Pick the service every page filters by; the address bar follows (on Services, `service` names a row, so it stays). */
 export function useSetService(): (service: string) => void {
   const [, setService] = useServiceScope();
   return (service) => {
     setService(service);
-    if (parseRoute(window.location.hash).page !== "services") setQuery({ service: null, page: null });
+    if (parseRoute(window.location.hash).page !== "services") setQuery({ page: null });
   };
 }
 

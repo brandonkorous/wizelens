@@ -31,7 +31,8 @@ export interface ErrorsModel {
   types: { type: string; count: number }[];
   services: ServiceErrorRow[];
   starts: number[];
-  chart: { plain: Series; critical: Series };
+  /** `prev`: the compared period's exceptions per bucket, for a faint line. */
+  chart: { plain: Series; critical: Series; prev: Series };
   cards: { exceptions: number; errorRate: number; endpoints: number; critical: number };
   change: { exceptions: number | null; errorRate: number | null; endpoints: number | null; critical: number | null };
   sparks: { exceptions: Series; errorRate: Series; critical: Series };
@@ -120,6 +121,7 @@ function pageNeeds(service: string | undefined): Need[] {
     groupNeed("req.svc", "req.svc", "cur"),
     seriesNeed("trend", "err.s", "cur", TREND_BUCKETS, { split: true }),
     seriesNeed("chart", "err", "cur", CHART_BUCKETS, one),
+    seriesNeed("chart.prev", "err", "prev", CHART_BUCKETS, one),
     seriesNeed("sparks", "err", "cur", SPARK_BUCKETS, one),
     seriesNeed("rate", "req", "cur", SPARK_BUCKETS, one),
   ];
@@ -157,7 +159,7 @@ export const errorsPage: PageDef<ErrorsModel> = {
       types: [...rowsOf(d, "err.t")].sort(byDesc((r) => r.agg.n)).map((r) => ({ type: r.key, count: r.agg.n })),
       services: servicesOf(d),
       starts: bucketStarts(d.window, CHART_BUCKETS),
-      chart: { plain: chart.map((a) => a.n - (a.c[0] ?? 0)), critical: counter(chart, 0) },
+      chart: { plain: chart.map((a) => a.n - (a.c[0] ?? 0)), critical: counter(chart, 0), prev: counts(seriesOf(d, "chart.prev", CHART_BUCKETS)) },
       cards,
       change: changeOf(d, cards),
       sparks: { exceptions: counts(sparks), errorRate: seriesOf(d, "rate", SPARK_BUCKETS).map((a) => (a.n ? (a.err / a.n) * 100 : null)), critical: counter(sparks, 0) },

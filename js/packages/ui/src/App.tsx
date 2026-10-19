@@ -6,7 +6,10 @@ import { AuthGate } from "./shell/auth/AuthGate";
 import { useData, useWindowed } from "./data/hooks";
 import { useHost } from "./data/host";
 import { useServerErrorCount } from "./data/models";
-import { applyTheme, setProjectScope, useTheme } from "./data/prefs";
+import { applyTheme, useTheme } from "./data/prefs";
+import { useViewInUrl } from "./data/urlState";
+import { useClockPref, useTimeZonePref } from "./data/period";
+import { setTimeFormat } from "./format";
 import { DatabasePage } from "./pages/database/DatabasePage";
 import { ErrorsPage } from "./pages/errors/ErrorsPage";
 import { InsightsPage } from "./pages/insights/InsightsPage";
@@ -19,7 +22,7 @@ import { SearchPage } from "./pages/search/SearchPage";
 import { ServicesPage } from "./pages/services/ServicesPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
 import { TracesPage } from "./pages/traces/TracesPage";
-import { AUTH_PAGES, type AuthPageId, type PageId, type Route, setQuery, useRoute } from "./routes";
+import { AUTH_PAGES, type AuthPageId, type PageId, type Route, useRoute } from "./routes";
 import { releaseMissing } from "./data/release";
 import { EmailBanner } from "./shell/EmailBanner";
 import { Sidebar } from "./shell/Sidebar";
@@ -92,13 +95,12 @@ function Shell() {
   const [theme] = useTheme();
   const dot = useHealthDot();
   useEffect(() => applyTheme(theme), [theme]);
-  // A link that names a project (alert notices) opens that project.
-  const linkedProject = route.query.get("project");
-  useEffect(() => {
-    if (!linkedProject) return;
-    setProjectScope(linkedProject);
-    setQuery({ project: null });
-  }, [linkedProject]);
+  const [zone] = useTimeZonePref();
+  const [clock] = useClockPref();
+  // Set before children render, so every time on the page uses the choice.
+  setTimeFormat({ utc: zone === "utc", hour12: clock === "12" });
+  // Range, period, and scope live in the address bar too, so links (alert notices, shared views) open the same view.
+  useViewInUrl();
   // A new page (or a new section of one) starts at the top, not where the last page was scrolled to.
   useEffect(() => {
     window.scrollTo(0, 0);
