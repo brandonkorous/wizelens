@@ -4,6 +4,21 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Added
+
+- **Connect Claude to WizeLens Cloud with a sign-in, not a key.** Add `https://mcp.wizelens.com` to Claude (Settings →
+  Connectors), Claude Code, Cursor, or any MCP client. It opens the WizeLens sign-in, and you pick one organization and
+  either all its projects (also later ones) or only some. The app gets read-only access that renews on its own, so a
+  scheduled task keeps working, until you remove it under **Account → Connected apps**. Admins see and remove everyone's
+  apps under **Team → Connected apps**, and leaving the organization ends access at once. The audit log shows who
+  connected which app and every call it made. This is OAuth 2.1 with PKCE and dynamic client registration through Better
+  Auth's OAuth provider. Read keys stay, for scripts and CI. Self-hosted: it works at `<public-url>/_wizelens/mcp`, and
+  `--mcp-url` (`WIZELENS_CLOUD_MCP_URL`) gives MCP its own name behind your proxy.
+- **`get_overview`, a health report for agents** (hub and cloud). Requests, error rate, and duration against the window
+  before; every service's status, traffic, errors, and p95; the top errors; and the biggest insights. In the cloud, called
+  without a project it reports on every project you may read, the ones that need attention first: one call for a morning
+  report on 20 APIs.
+
 ### Fixed
 
 - **No more "Preparing stats" flashing.** Every new trace waits a few seconds for its stats on purpose, so with live

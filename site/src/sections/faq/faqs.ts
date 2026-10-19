@@ -28,7 +28,7 @@ export const FAQS: Faq[] = [
   },
   {
     q: "Does WizeLens use AI?",
-    a: "There is no AI inside WizeLens. It has an optional, read-only MCP endpoint that your own AI agent can use to read traces, slow queries, N+1 problems, and errors. It is off by default, redacted, and every call is logged.",
+    a: "There is no AI inside WizeLens. It has an optional, read-only MCP endpoint that your own AI agent, such as Claude, can use to read traces, slow queries, N+1 problems, errors, and a health report. In the cloud, Claude signs in and reads only the projects you pick. It is off by default, redacted, and every call is logged.",
   },
   {
     q: "What does WizeLens work with?",

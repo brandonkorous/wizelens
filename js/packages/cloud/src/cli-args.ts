@@ -14,6 +14,8 @@ Usage: wizelens-cloud [options]
   --port <n>                Default 5970.                               (PORT)
   --host <addr>             Default 0.0.0.0.                            (WIZELENS_CLOUD_HOST)
   --public-url <url>        The address people use, for links.          (WIZELENS_CLOUD_PUBLIC_URL)
+  --mcp-url <url>           Another origin your proxy sends to MCP,     (WIZELENS_CLOUD_MCP_URL)
+                            e.g. https://mcp.example.com.
   --signup <invite|open>    Who can make an account. Default invite.    (WIZELENS_CLOUD_SIGNUP)
   --retention-days <n>      Default for new organizations. Default 30.  (WIZELENS_CLOUD_RETENTION_DAYS)
   --ingest-per-minute <n>   Ingest calls per key per minute. Default    (WIZELENS_CLOUD_INGEST_PER_MINUTE)
@@ -56,6 +58,7 @@ const OPTIONS = {
   port: { type: "string" },
   host: { type: "string" },
   "public-url": { type: "string" },
+  "mcp-url": { type: "string" },
   signup: { type: "string" },
   "retention-days": { type: "string" },
   "ingest-per-minute": { type: "string" },
@@ -88,6 +91,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CloudOp
     port: int(a.port ?? env.PORT),
     host: a.host ?? env.WIZELENS_CLOUD_HOST,
     publicUrl: text(a["public-url"], env.WIZELENS_CLOUD_PUBLIC_URL),
+    mcpUrl: text(a["mcp-url"], env.WIZELENS_CLOUD_MCP_URL),
     signup: signupOf(a.signup ?? env.WIZELENS_CLOUD_SIGNUP),
     retentionDays: int(a["retention-days"] ?? env.WIZELENS_CLOUD_RETENTION_DAYS),
     ingestPerMinute: int(a["ingest-per-minute"] ?? env.WIZELENS_CLOUD_INGEST_PER_MINUTE),

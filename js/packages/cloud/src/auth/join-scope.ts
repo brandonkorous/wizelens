@@ -5,10 +5,11 @@ import type { ProjectAccess } from "./principal.js";
 
 const primaryFirst = (primary: string, ids: readonly string[]) => [primary, ...ids.filter((id) => id !== primary)];
 
-/** Projects whose trace parts this caller may see: the primary project's organization only; a person sees all of it, a read key only its own projects. */
+/** Projects whose trace parts this caller may see: the primary project's organization only; a person sees all of it, a key or app only its own projects. */
 export async function joinScope(q: Queryable, access: ProjectAccess): Promise<string[]> {
   const { project, principal } = access;
-  const ids = principal.kind === "key" ? await inOrg(q, project.orgId, principal.key.projectIds) : await orgProjectIds(q, project.orgId);
+  const own = principal.kind === "key" ? principal.key.projectIds : principal.kind === "app" ? principal.projectIds : null;
+  const ids = own ? await inOrg(q, project.orgId, own) : await orgProjectIds(q, project.orgId);
   return primaryFirst(project.id, ids);
 }
 

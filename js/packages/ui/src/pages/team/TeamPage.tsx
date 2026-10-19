@@ -1,9 +1,10 @@
-import { Building2, FileClock, FolderKanban, KeyRound, Link2, ShieldCheck, Users } from "lucide-react";
+import { Building2, FileClock, FolderKanban, KeyRound, Link2, Plug, ShieldCheck, Users } from "lucide-react";
 import { currentProject, useAccount } from "../../data/account";
 import { useApi } from "../../data/useApi";
 import { useRoute } from "../../routes";
+import { AppsPanel } from "../account/AppsPanel";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
-import { type Section, SectionLayout } from "../../ui/Sections";
+import { type Section, SectionHead, SectionLayout } from "../../ui/Sections";
 import { AuditSection, SharesSection } from "./ActivityPanels";
 import { NewOrgPanel } from "./OrgPanels";
 import { SsoSection } from "./SsoPanel";
@@ -17,6 +18,7 @@ function sectionsOf(ctx: TeamCtx | null, current: NonNullable<ReturnType<typeof 
     !!ctx && { id: "people", label: "People", icon: Users, count: ctx.data.members.length, render: () => <PeopleSection {...ctx} /> },
     !!ctx && manage && { id: "projects", label: "Projects", icon: FolderKanban, count: ctx.data.projects.length, render: () => <ProjectsSection {...ctx} /> },
     !!ctx && manage && { id: "keys", label: "API keys", icon: KeyRound, count: ctx.data.keys.length, render: () => <KeysSection {...ctx} /> },
+    manage && { id: "apps", label: "Connected apps", icon: Plug, render: () => <><SectionHead title="Connected apps" description="AI apps people here connected with their own sign-in. Each reads only the projects its person picked." /><AppsPanel key={org.id} list={`./api/orgs/${org.id}/apps`} team /></> },
     manage && { id: "sso", label: "Single sign-on", icon: ShieldCheck, render: () => <SsoSection key={org.id} orgId={org.id} /> },
     { id: "links", label: "Shared links", icon: Link2, render: () => <SharesSection projectId={project.id} projectName={project.name} /> },
     manage && { id: "audit", label: "Audit log", icon: FileClock, render: () => <AuditSection orgId={org.id} org={ctx?.data ?? null} /> },
@@ -25,7 +27,7 @@ function sectionsOf(ctx: TeamCtx | null, current: NonNullable<ReturnType<typeof 
   return list.filter((s): s is Section => !!s);
 }
 
-/** The organization of the selected project, one section at a time: people, projects, keys, single sign-on, links, audit, and settings. */
+/** The organization of the selected project, one section at a time: people, projects, keys, connected apps, single sign-on, links, audit, and settings. */
 export function TeamPage() {
   const account = useAccount();
   const current = currentProject(account);

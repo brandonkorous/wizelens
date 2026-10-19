@@ -7,7 +7,7 @@ export const metadata = pageMeta({
   path: "/cloud/",
   title: "WizeLens Cloud: request tracing for your whole team, self-hosted",
   absolute: true,
-  description: "WizeLens for teams: roles, 30 days of history, alerts to Slack and webhooks, share links, and AI access by read key. Self-host it on Postgres.",
+  description: "WizeLens for teams: roles, 30 days of history, alerts to Slack and webhooks, share links, and AI access you scope by project. Self-host it on Postgres.",
   image: "cloud",
   imageAlt: "WizeLens Cloud: the same lens, for the team. An alert says the error rate is 3.4%, above 2%. Roles: owner, admin, member, viewer.",
 });

@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import { auth } from "../../data/account";
 import { AuthForm, EMAIL } from "./AuthForm";
 
-/** Where single sign-on sends the person back: this dashboard. A failure comes back as `?error=…` before the hash. */
-const here = () => `${window.location.origin}${window.location.pathname}#/`;
+/** Where single sign-on sends the person back: this dashboard, or the app sign-in page it started on. A failure comes back as `?error=…` before the hash. */
+const here = () => `${window.location.origin}${window.location.pathname}${window.location.hash.startsWith("#/oauth") ? window.location.hash : "#/"}`;
 
 const SSO_ERRORS: Record<string, string> = {
   sso_domain: "Single sign-on works only for emails at your company's verified domain.",

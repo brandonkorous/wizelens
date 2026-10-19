@@ -20,7 +20,7 @@ function firstCode(body) {
   return m[2].trimEnd();
 }
 
-const CODE_FILE = { "aspnet-core": "Program.cs", node: "server.ts", nextjs: "instrumentation.ts", react: "main.tsx", "quick-start": "Program.cs", "ai-access": "Program.cs" };
+const CODE_FILE = { "aspnet-core": "Program.cs", node: "server.ts", nextjs: "instrumentation.ts", react: "main.tsx", "quick-start": "Program.cs", "ai-access": "Terminal" };
 
 function docImages() {
   return DOC_LIST.filter((d) => d.slug !== "contract").map((d) => {

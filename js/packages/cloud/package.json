@@ -48,6 +48,7 @@
     "email:preview": "node dist/mail/preview.js"
   },
   "dependencies": {
+    "@better-auth/oauth-provider": "1.7.10",
     "@better-auth/passkey": "1.7.10",
     "@better-auth/sso": "1.7.10",
     "@electric-sql/pglite": "^0.5.10",

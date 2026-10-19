@@ -3,16 +3,17 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { registerFindTools } from "./mcp-find.js";
 import { registerMetricTools } from "./mcp-metrics.js";
+import { registerOverviewTool } from "./mcp-overview.js";
 import { projectsSource, registerProjectTools, singleSource } from "./mcp-projects.js";
 import { type McpDataSource, type McpProjects, type Source } from "./mcp-shared.js";
 import { registerSearchTools } from "./mcp-search.js";
 import { registerTraceTools } from "./mcp-traces.js";
 
-export type { McpDataSource, McpProject, McpProjects } from "./mcp-shared.js";
+export type { McpDataSource, McpProject, McpProjects, OverviewPage } from "./mcp-shared.js";
 
 const isProjects = (d: McpDataSource | McpProjects): d is McpProjects => "projects" in d;
 
-const MANY = "This key reads several projects. Call list_projects, then pass `project` to the other tools.";
+const MANY = "You can read several projects. Call list_projects, then pass `project` to the other tools. get_overview without `project` reports on all of them.";
 
 function createServer(data: McpDataSource | McpProjects): McpServer {
   const many = isProjects(data) && data.projects.length > 1;
@@ -23,6 +24,7 @@ function createServer(data: McpDataSource | McpProjects): McpServer {
   registerFindTools(server, src);
   registerMetricTools(server, src);
   registerSearchTools(server, src);
+  registerOverviewTool(server, src);
   return server;
 }
 

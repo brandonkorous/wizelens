@@ -42,6 +42,7 @@ export async function wireAuth(db: Db, config: CloudConfig, mailer: Mailer): Pro
       const deps: AuthDeps = {
         db,
         publicUrl: new URL(base).origin,
+        mcpUrl: config.mcpUrl,
         trustedOrigins: originsOf(base, !config.publicUrl),
         ssoOrigins: config.ssoOrigins,
         secrets,

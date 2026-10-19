@@ -11,10 +11,31 @@ import { securityDbHooks } from "./security-notices.js";
 import { afterSignup, confirmSsoEmail } from "./signup.js";
 
 const ALWAYS_OFF = ["/sign-in/social", "/link-social", "/get-access-token", "/refresh-token", "/account-info", "/delete-user/callback", "/update-session"];
+/** OAuth routes the cloud does not use: apps register themselves, and grants (repo/grants.ts) hold every consent. */
+const OAUTH_OFF = [
+  "/oauth2/introspect",
+  "/oauth2/userinfo",
+  "/oauth2/end-session",
+  "/oauth2/public-client-prelogin",
+  "/oauth2/get-consent",
+  "/oauth2/get-consents",
+  "/oauth2/update-consent",
+  "/oauth2/delete-consent",
+  "/oauth2/create-client",
+  "/oauth2/get-client",
+  "/oauth2/get-clients",
+  "/oauth2/update-client",
+  "/oauth2/delete-client",
+  "/oauth2/client/rotate-secret",
+  "/admin/oauth2/create-client",
+  "/admin/oauth2/update-client",
+  "/admin/oauth2/resources",
+];
 
 /** Invite ids are link secrets: no route lists them (managers see them on our Team page), nor, without real mail, by "their" email. */
 const disabledPaths = (deps: AuthDeps) => [
   ...ALWAYS_OFF,
+  ...OAUTH_OFF,
   "/organization/list-invitations",
   "/organization/get-full-organization",
   ...(deps.mailer.live ? [] : ["/organization/list-user-invitations"]),
@@ -55,6 +76,8 @@ export interface WizeAuth {
     getSession(a: { headers: Headers }): Promise<{ user: SessionUser; session: { id: string } } | null>;
     verifyPassword(a: { body: { password: string }; headers: Headers }): Promise<unknown>;
     createOrganization(a: { body: { name: string; slug: string; userId: string } }): Promise<{ id: string; name: string; slug: string } | null>;
+    wizelensOAuthVerify(a: { body: { token: string } }): Promise<Record<string, unknown> | null>;
+    getOAuthServerConfig(...args: unknown[]): Promise<unknown>;
   };
 }
 

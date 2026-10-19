@@ -1,6 +1,6 @@
 // Building blocks for the WizeLens hub (@wizeworks/lens-hub). Not a stable public API.
 export { handleMcp } from "./mcp.js";
-export type { McpDataSource, McpProject, McpProjects } from "./mcp.js";
+export type { McpDataSource, McpProject, McpProjects, OverviewPage } from "./mcp.js";
 export { sanitizeClientSpan } from "./client-spans.js";
 export { resolveUiDir, serveUi } from "./ui.js";
 export { firstHeader, readJson, sendJson, setCors } from "./http-util.js";

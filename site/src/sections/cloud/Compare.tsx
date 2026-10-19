@@ -11,7 +11,7 @@ const ROWS: [string, string, string, string][] = [
   ["People", "You", "Your team, with one shared token", "Organizations, roles, and invites"],
   ["Alerts", "", "", "Webhooks and Slack"],
   ["Share links", "", "", "Read-only, 1 to 30 days"],
-  ["AI access", "One read-only endpoint per service", "One endpoint for every service", "Read keys per project, audited"],
+  ["AI access", "One read-only endpoint per service", "One endpoint for every service", "Claude signs in, reads the projects you pick, audited"],
 ];
 
 // Where each way of running WizeLens fits, side by side.

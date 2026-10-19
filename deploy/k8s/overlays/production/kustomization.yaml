@@ -19,6 +19,8 @@ configMapGenerator:
   - name: cloud-config
     literals:
       - WIZELENS_CLOUD_PUBLIC_URL=https://app.wizelens.com
+      # Caddy sends mcp.wizelens.com here; the OAuth metadata on that name points agents at it.
+      - WIZELENS_CLOUD_MCP_URL=https://mcp.wizelens.com
       # Caddy writes the real visitor address as the only X-Forwarded-For entry (see the sparx Caddyfile).
       - WIZELENS_CLOUD_TRUST_PROXY=1
       # Settle in two worker threads; the pod has 2 CPUs.

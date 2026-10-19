@@ -1,9 +1,10 @@
-import { Bell, Laptop, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import { Bell, Laptop, Plug, ShieldCheck, Trash2, UserRound } from "lucide-react";
 import { useAccount } from "../../data/account";
 import { useRoute } from "../../routes";
 import { EmailBanner } from "../../shell/EmailBanner";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { type Section, SectionHead, SectionLayout } from "../../ui/Sections";
+import { AppsPanel } from "./AppsPanel";
 import { DeletePanel } from "./DeletePanel";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { PasskeysPanel } from "./PasskeysPanel";
@@ -12,7 +13,7 @@ import { ProfilePanel } from "./ProfilePanel";
 import { SessionsPanel } from "./SessionsPanel";
 import { TwoFactorPanel } from "./TwoFactorPanel";
 
-/** The signed-in person, one section at a time: profile, sign-in security, devices, emails, and deleting the account. */
+/** The signed-in person, one section at a time: profile, sign-in security, devices, connected apps, emails, and deleting the account. */
 export function AccountPage() {
   const account = useAccount();
   const { params } = useRoute();
@@ -34,6 +35,12 @@ export function AccountPage() {
       ),
     },
     { id: "devices", label: "Devices", icon: Laptop, render: () => <><SectionHead title="Devices" description="Where you are signed in now. Sign out of any you do not know." /><SessionsPanel sessionId={account.sessionId} /></> },
+    {
+      id: "apps",
+      label: "Connected apps",
+      icon: Plug,
+      render: () => <><SectionHead title="Connected apps" description="AI apps such as Claude that read your data with your sign-in, read-only, for the projects you picked." /><AppsPanel list="./api/me/apps" /></>,
+    },
     { id: "emails", label: "Emails", icon: Bell, render: () => <><SectionHead title="Emails" description="What WizeLens emails you, and when digests arrive." /><NotificationsPanel /></> },
     { id: "delete", label: "Delete account", icon: Trash2, render: () => <><SectionHead title="Delete account" /><DeletePanel account={account} /></> },
   ];

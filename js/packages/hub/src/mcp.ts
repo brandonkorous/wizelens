@@ -1,11 +1,21 @@
-import { searchSql, SQLITE_DIALECT, suggestSql } from "@wizeworks/lens-core";
-import { DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, type McpDataSource } from "@wizeworks/lens-node/kit";
+import { alignNow, FACT_SLOW_QUERY_MS, pageContext, runPage, searchSql, SQLITE_DIALECT, suggestSql, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, type McpDataSource, type OverviewPage } from "@wizeworks/lens-node/kit";
 import type { HubData } from "./data.js";
 import { metricsPage } from "./metrics-read.js";
-import { sqliteRunner } from "./scale-exec.js";
+import { hubExecutor, hubSettling, sqliteRunner } from "./scale-exec.js";
 
 /** Recent traces the MCP tools search through. */
 const MCP_RECENT = 2000;
+
+/** One page model over every service, as `api/models/<page>` serves it. */
+function pageOf(data: HubData) {
+  return <P extends OverviewPage>(page: P, range: TimeRange) => {
+    const store = data.store;
+    if (TIME_RANGES[range].ms > store.maxAgeMs) throw new Error("This range is longer than the hub keeps data.");
+    const ctx = pageContext(range, alignNow(store.now()), {}, { slowQueryMs: FACT_SLOW_QUERY_MS }, hubSettling(store, {}));
+    return runPage(page, ctx, hubExecutor(store, {}, data.keepRemote));
+  };
+}
 
 export function hubMcpSource(data: HubData, name: string, version: string, audit: (line: string) => void): McpDataSource {
   const src = { d: SQLITE_DIALECT, run: sqliteRunner(data.store.db), scope: {} };
@@ -21,5 +31,6 @@ export function hubMcpSource(data: HubData, name: string, version: string, audit
     search: (q) => searchSql(src, q),
     suggest: (r) => suggestSql(src, r),
     now: () => data.store.now(),
+    page: pageOf(data),
   };
 }

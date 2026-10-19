@@ -1,5 +1,8 @@
 import type { ZodTypeAny } from "zod";
-import type { MetricsModel, SearchPage, SearchQuery, Suggestion, SuggestRequest, TimeRange, Trace } from "@wizeworks/lens-core";
+import type { MetricsModel, ModelOf, SearchPage, SearchQuery, Suggestion, SuggestRequest, TimeRange, Trace } from "@wizeworks/lens-core";
+
+/** The page models get_overview reads. */
+export type OverviewPage = "overview" | "services" | "errors";
 
 /** What the MCP tools can read. Read-only by design. */
 export interface McpDataSource {
@@ -25,6 +28,8 @@ export interface McpDataSource {
   now?(): number;
   /** The environment memory search gives this service's documents (in-app), as the HTTP search does. */
   env?: string;
+  /** One dashboard page's model, from the host's stats. Without it, get_overview is left out. */
+  page?<P extends OverviewPage>(page: P, range: TimeRange): Promise<ModelOf<P>>;
 }
 
 /** One project a multi-project host serves. */
@@ -42,6 +47,8 @@ export interface McpProjects {
   /** True when every project has the metric tools. */
   metrics: boolean;
   metricRanges?: readonly TimeRange[];
+  /** True when every project has get_overview. */
+  overview?: boolean;
   projects: readonly McpProject[];
   /** The data of one project from `projects`. */
   open(projectId: string): Promise<McpDataSource>;
@@ -55,6 +62,7 @@ export interface McpDefaults {
   nPlusOneThreshold: number;
   metrics: boolean;
   metricRanges?: readonly TimeRange[];
+  overview: boolean;
 }
 
 /** Where the tools read. */
@@ -64,6 +72,8 @@ export interface Source {
   arg: Record<string, ZodTypeAny>;
   /** The data for one tool call, after the call is audited. */
   open(tool: string, args: object): Promise<McpDataSource>;
+  /** Several projects: the data of each, for a call that names none. Each one is audited. */
+  each?(tool: string, args: object): Promise<{ project: McpProject; data: McpDataSource }[]>;
 }
 
 export const READ_ONLY = { readOnlyHint: true, openWorldHint: false };
