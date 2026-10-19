@@ -9,3 +9,4 @@ export * from "./traces.js";
 export * from "./services.js";
 export * from "./messaging.js";
 export * from "./logs.js";
+export * from "./period.js";

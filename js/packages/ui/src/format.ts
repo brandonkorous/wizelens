@@ -12,6 +12,9 @@ export function fmtMs(ms: number | null | undefined): string {
   return `${(ms / 1000).toFixed(ms < 10_000 ? 2 : 1)} s`;
 }
 
+/** The legend label of a chart's compared-period line. */
+export const compareSeriesLabel = (compare: "previous" | "week"): string => (compare === "week" ? "Last week" : "Period before");
+
 /** "482,391". */
 export const fmtCount = (n: number | null | undefined): string => (n === null || n === undefined || !Number.isFinite(n) ? DASH : Math.round(n).toLocaleString("en-US"));
 
@@ -41,33 +44,40 @@ export function fmtShort(n: number): string {
   return fmtCount(n);
 }
 
+/** How times show: in the browser's zone or UTC, on a 12- or 24-hour clock. Set from the Settings page. */
+let timeFormat = { utc: false, hour12: true };
+export const setTimeFormat = (f: { utc: boolean; hour12: boolean }): void => void (timeFormat = f);
+export const isUtc = (): boolean => timeFormat.utc;
+
+const opts = (o: Intl.DateTimeFormatOptions): Intl.DateTimeFormatOptions => ({ ...o, ...(o.hour ? { hour12: timeFormat.hour12 } : {}), ...(timeFormat.utc ? { timeZone: "UTC" } : {}) });
+
 /** "8:42:17 PM". */
-export const fmtTime = (epochMs: number): string => new Date(epochMs).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" });
+export const fmtTime = (epochMs: number): string => new Date(epochMs).toLocaleTimeString("en-US", opts({ hour: "numeric", minute: "2-digit", second: "2-digit" }));
 
 /** "Oct 15, 2026". */
-export const fmtDate = (epochMs: number): string => new Date(epochMs).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+export const fmtDate = (epochMs: number): string => new Date(epochMs).toLocaleDateString("en-US", opts({ month: "short", day: "numeric", year: "numeric" }));
 
 /** "Oct 15, 2026, 8:42 PM". */
 export const fmtDateTime = (epochMs: number): string =>
-  new Date(epochMs).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+  new Date(epochMs).toLocaleString("en-US", opts({ month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }));
 
 const TWO_DAYS_MS = 2 * 24 * 60 * 60_000;
 
 /** Axis label for a chart tick: time of day for short ranges, the date when the chart spans days. */
 export const fmtTick = (epochMs: number, spanMs = 0): string =>
   spanMs > TWO_DAYS_MS
-    ? new Date(epochMs).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-    : new Date(epochMs).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    ? new Date(epochMs).toLocaleDateString("en-US", opts({ month: "short", day: "numeric" }))
+    : new Date(epochMs).toLocaleTimeString("en-US", opts({ hour: "numeric", minute: "2-digit" }));
 
 /** Tooltip label for one chart bucket: with the date when the chart spans days. */
 export const fmtBucket = (epochMs: number, spanMs = 0): string =>
-  spanMs > TWO_DAYS_MS ? new Date(epochMs).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric" }) : fmtTick(epochMs);
+  spanMs > TWO_DAYS_MS ? new Date(epochMs).toLocaleString("en-US", opts({ month: "short", day: "numeric", hour: "numeric" })) : fmtTick(epochMs);
 
 /** "20:42:17.123", for trace timelines. */
 export function fmtClock(epochMs: number): string {
-  const d = new Date(epochMs);
+  const d = new Date(timeFormat.utc ? epochMs : epochMs - new Date(epochMs).getTimezoneOffset() * 60_000);
   const pad = (n: number, w = 2) => String(n).padStart(w, "0");
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`;
+  return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}.${pad(d.getUTCMilliseconds(), 3)}`;
 }
 
 export function fmtAgo(epochMs: number, now = Date.now()): string {

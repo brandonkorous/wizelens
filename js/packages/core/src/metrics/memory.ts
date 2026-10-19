@@ -1,6 +1,7 @@
 // Metric rollups built in memory from raw points, so in-app hosts run the same model as the hub and the cloud.
 import { planSeries, planTotals, snapWindow } from "../scale/window.js";
-import { type TimeRange, type TimeWindow, windowOf } from "../stats/common.js";
+import { periodWindow } from "../stats/period.js";
+import { type TimeRange, type TimeWindow } from "../stats/common.js";
 import {
   addMetricPlaced,
   emptyMetricBuckets,
@@ -80,7 +81,7 @@ const planOf = (w: TimeWindow, n: number, now: number, o: MemoryMetricOptions): 
 
 /** The metrics page data from raw points. */
 export function metricDataOf(points: readonly MetricPoint[], range: TimeRange, now: number, params: Readonly<Record<string, string>>, o: MemoryMetricOptions = {}): MetricData {
-  const w = o.tiers ? snapWindow(windowOf(range, now), now) : windowOf(range, now);
+  const w = o.tiers ? snapWindow(periodWindow(range, now, params), now) : periodWindow(range, now, params);
   const sparkPlan = planOf(w, METRIC_SPARK_BUCKETS, now, o);
   const linePlan = planOf(w, METRIC_BUCKETS, now, o);
   const all = build(points).flatMap((b) => {

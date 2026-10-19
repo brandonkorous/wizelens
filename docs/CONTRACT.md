@@ -659,6 +659,12 @@ at 200 rows (Requests and Logs page through all rows). Request rows in models ca
 not settled yet (null when none). Every new trace waits a few seconds on purpose, so those are not counted. The dashboard says
 "Stats are catching up" while it is above 0, and search's `settling` uses the same rule. The cloud caches answers for 15 seconds; the hub until its stats change.
 
+**Period.** Every page (and `api/models/metrics`) also takes `from` and `to` (epoch ms) for a custom window; `range` then
+names the smallest preset that covers it, and hosts refuse a window that starts before what they keep. `compare=week`
+compares with the same window a week earlier instead of the window right before. `meta.custom` and `meta.compare` say
+which; `meta.compareLabel` reads "vs. previous period" or "vs. same time last week". The dashboard keeps `range`, `from`,
+`to`, `compare`, `env`, `project`, and `service` in the address bar, so a link opens the same view.
+
 **Filters.** Every page but Services and Service takes `service` (a display name: "Web App" for the browser), and its cards,
 charts, and lists count that service only: requests and traces that went through it, and the queries, errors, and log lines
 it wrote. The dashboard sends the service chosen in the top bar unless the link names one. Page filters, all in the URL:

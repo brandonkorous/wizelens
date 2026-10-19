@@ -1,6 +1,6 @@
 import { Clock, Gauge, Timer, TriangleAlert } from "lucide-react";
 import { percentChange, type ServiceKind, type ServicePageModel, type ServiceRow } from "@wizeworks/lens-core";
-import { fmtCount, fmtMs, fmtPct } from "../../format";
+import { compareSeriesLabel, fmtCount, fmtMs, fmtPct } from "../../format";
 import { Panel } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
 import { TimeChart } from "../../ui/TimeChart";
@@ -33,7 +33,7 @@ export function TrafficPanel({ m, row }: { m: ServicePageModel; row: ServiceRow 
     <Panel title={`${label} Over Time`}>
       <TimeChart
         starts={m.starts}
-        lines={[{ label, values: m.chart.requests, color: "var(--wl-blue)" }]}
+        lines={[{ label, values: m.chart.requests, color: "var(--wl-blue)" }, { label: compareSeriesLabel(m.meta.compare), values: m.chart.prevRequests, color: "var(--wl-slate)", dashed: true }]}
         bars={[{ label: "Errors", values: m.chart.errors, color: ERROR_BARS }]}
         height={220}
         separateBarScale

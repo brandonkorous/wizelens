@@ -2,6 +2,7 @@ import { BookOpen, Plug, Server, SlidersHorizontal } from "lucide-react";
 import { TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import { useData } from "../../data/hooks";
 import { useHost, useRange } from "../../data/host";
+import { type ClockChoice, type TimeZoneChoice, useClockPref, useTimeZonePref } from "../../data/period";
 import { type Theme, useTheme } from "../../data/prefs";
 import { useRoute } from "../../routes";
 import { FormRow, SelectField } from "../../ui/Field";
@@ -18,9 +19,14 @@ const THEMES: [Theme, string][] = [
   ["system", "Same as my system"],
 ];
 
+const ZONES: [TimeZoneChoice, string][] = [["local", "My computer's time zone"], ["utc", "UTC"]];
+const CLOCKS: [ClockChoice, string][] = [["12", "12-hour (2:05 PM)"], ["24", "24-hour (14:05)"]];
+
 function Preferences() {
   const [theme, setTheme] = useTheme();
   const [range, setRange] = useRange();
+  const [zone, setZone] = useTimeZonePref();
+  const [clock, setClock] = useClockPref();
   const ranges = useHost().ranges.map((r): [TimeRange, string] => [r, TIME_RANGES[r].label]);
   return (
     <>
@@ -29,6 +35,10 @@ function Preferences() {
         <FormRow>
           <SelectField label="Theme" value={theme} options={THEMES} onChange={setTheme} />
           <SelectField label="Default time range" value={range} options={ranges} onChange={setRange} hint="Pages open with this range." />
+        </FormRow>
+        <FormRow>
+          <SelectField label="Time zone" value={zone} options={ZONES} onChange={setZone} hint="Times and charts show in this zone." />
+          <SelectField label="Clock" value={clock} options={CLOCKS} onChange={setClock} />
         </FormRow>
       </Panel>
     </>

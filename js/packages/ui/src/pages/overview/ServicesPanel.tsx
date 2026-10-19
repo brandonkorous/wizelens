@@ -16,7 +16,7 @@ const STATUS: Record<ServiceStatus, [Tone, string]> = {
 };
 const MAX_ROWS = 5;
 
-function columns(range: TimeRange): Column<ServiceRow>[] {
+function columns(range: TimeRange | null): Column<ServiceRow>[] {
   return [
     {
       key: "name",
@@ -33,12 +33,12 @@ function columns(range: TimeRange): Column<ServiceRow>[] {
     },
     { key: "status", header: "Status", cell: (s) => <DotText tone={STATUS[s.status][0]} colorText>{STATUS[s.status][1]}</DotText> },
     { key: "avg", header: "Avg Latency", cell: (s) => fmtMs(s.avgMs), className: "wl-nowrap" },
-    { key: "requests", header: `Requests (${range})`, cell: (s) => fmtCount(s.requests), className: "wl-nowrap" },
+    { key: "requests", header: range ? `Requests (${range})` : "Requests", cell: (s) => fmtCount(s.requests), className: "wl-nowrap" },
   ];
 }
 
 /** The busiest services and databases with their health. */
-export function ServicesPanel({ rows, range }: { rows: readonly ServiceRow[]; range: TimeRange }) {
+export function ServicesPanel({ rows, range }: { rows: readonly ServiceRow[]; range: TimeRange | null }) {
   const cols = columns(range);
   return (
     <Panel title="Services" action={<ViewAll href={hrefTo("services")} />}>

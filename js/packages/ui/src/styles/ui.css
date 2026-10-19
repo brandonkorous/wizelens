@@ -38,6 +38,9 @@
 .wl-spark { flex: none; }
 
 .wl-chart { position: relative; width: 100%; }
+.wl-chart-zoom { cursor: crosshair; user-select: none; }
+.wl-chart-band { fill: var(--wl-accent); opacity: 0.12; }
+.wl-chart-legend i.wl-legend-dashed { background: none; border-top: 2px dashed; height: 0; }
 .wl-chart svg { display: block; overflow: visible; }
 .wl-chart-axis { font-size: 12px; fill: var(--wl-muted); font-variant-numeric: tabular-nums; }
 .wl-chart-grid { stroke: var(--wl-chart-grid); }
@@ -147,3 +150,9 @@
 .wl-link-btn:hover { text-decoration: underline; }
 .wl-update-later { margin-left: 14px; color: var(--wl-accent-text); opacity: 0.8; }
 @media (max-width: 640px) { .wl-hide-sm { display: none; } }
+
+.wl-live { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border: 1px solid var(--wl-line-strong); border-radius: 999px; background: var(--wl-surface); color: var(--wl-fg); font: inherit; font-weight: 600; cursor: pointer; }
+.wl-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--wl-ok); box-shadow: 0 0 0 0 color-mix(in srgb, var(--wl-ok) 60%, transparent); animation: wl-live-pulse 1.6s ease-out infinite; }
+.wl-live.wl-paused .wl-live-dot { background: var(--wl-muted); animation: none; }
+@keyframes wl-live-pulse { to { box-shadow: 0 0 0 7px transparent; } }
+@media (prefers-reduced-motion: reduce) { .wl-live-dot { animation: none; } }

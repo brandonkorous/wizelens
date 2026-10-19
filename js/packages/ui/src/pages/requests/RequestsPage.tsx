@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { filterFromQuery, requestOf, type RequestItem } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
 import { useServiceScope } from "../../data/prefs";
 import { useRoute } from "../../routes";
 import { ModelState } from "../../ui/ModelState";
+import { LiveToggle } from "../../ui/LiveToggle";
 import { Panel, PageHeader } from "../../ui/Panel";
 import { useTrace } from "../trace/useTrace";
 import { RequestFilters } from "./RequestFilters";
@@ -28,14 +30,17 @@ function Selected({ id, row }: { id: string; row: RequestItem | null }) {
 
 export function RequestsPage() {
   const route = useRoute();
-  const { model, loading, error } = usePageModel("requests");
+  const [paused, setPaused] = useState(false);
+  const { model, loading, error } = usePageModel("requests", undefined, paused);
   const [service] = useServiceScope();
   const linked = filterFromQuery(route.query);
   const filter = { ...linked, service: linked.service || service };
   const selectedId = route.query.get("trace");
   return (
     <>
-      <PageHeader title="Requests" subtitle="Inspect and analyze recent request activity across your stack." />
+      <PageHeader title="Requests" subtitle="Inspect and analyze recent request activity across your stack.">
+        <LiveToggle paused={paused} onChange={setPaused} />
+      </PageHeader>
       <ModelState model={model} loading={loading} error={error} what="requests" />
       <RequestFilters filter={filter} methods={model?.options.methods ?? []} services={model?.options.services ?? []} />
       {model && <RequestsCards headlines={model.headlines} compareLabel={model.meta.compareLabel} empty={model.total === 0} />}

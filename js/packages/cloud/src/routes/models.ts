@@ -44,6 +44,8 @@ export async function projectPage<P extends PageName>(app: CloudApp, project: { 
   if (hit) return hit as ModelOf<P>;
   const t = app.telemetry;
   const pc = pageContext(range, now, params, { slowQueryMs: FACT_SLOW_QUERY_MS }, await t.settling(project.id, { env, before: app.config.now() - SETTLE_BEHIND_MS }));
+  // A custom window (`from`, `to`) may start before what the organization keeps; a little slack covers snapping.
+  if (now - pc.window.from > days * DAY_MS + 15 * 60_000) fail(400, "This time window starts before the organization keeps data.");
   const value = await runPage(page, pc, t.executor(project.id, days * DAY_MS, env));
   remember(key, value, app.config.now());
   return value;

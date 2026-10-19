@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { memoryExecutor, type ModelOf, pageContext, type PageName, runPageSync, type SyncExecutor, type TimeRange, type Trace } from "@wizeworks/lens-core";
 import { useRoute } from "../routes";
 import { useChangeTick } from "./changes";
 import { useHost, useRange } from "./host";
+import { getPeriod, parseWindow, periodParams, useComparePref, useWindowPref } from "./period";
 import { getScope, useServiceScope } from "./prefs";
 import { provider, useData } from "./provider";
 import { apiFetch } from "./api";
@@ -22,15 +23,24 @@ const STREAM_FALLBACK_MS = 120_000;
 /** Pages where `service` names a row or the page itself, not a filter: the chosen service does not apply there. */
 const OWN_SERVICE: ReadonlySet<PageName> = new Set(["services", "service"]);
 
-/** Model parameters: the chosen service (unless the link names one), the route's query, then `extra` (for example a value from the path). */
-export function withScope(page: PageName, query: Record<string, string>, service: string): Record<string, string> {
-  return service && !OWN_SERVICE.has(page) && !query.service ? { service, ...query } : query;
+/** Model parameters: the period (custom window, compare), the chosen service, then the route's query (a link's values win). */
+export function withScope(page: PageName, query: Record<string, string>, service: string, period: Record<string, string> = NO_PARAMS): Record<string, string> {
+  const scoped: Record<string, string> = service && !OWN_SERVICE.has(page) && !query.service ? { service } : {};
+  return { ...period, ...scoped, ...query };
+}
+
+/** The period choices as model parameters, kept in step with the stored choices. */
+export function usePeriodParams(): Record<string, string> {
+  const [windowPref] = useWindowPref();
+  const [compare] = useComparePref();
+  return useMemo(() => periodParams(parseWindow(windowPref), compare), [windowPref, compare]);
 }
 
 function useParams(page: PageName, extra: Record<string, string> = NO_PARAMS): Record<string, string> {
   const { query } = useRoute();
   const [service] = useServiceScope();
-  const key = new URLSearchParams({ ...withScope(page, Object.fromEntries(query), service), ...extra }).toString();
+  const period = usePeriodParams();
+  const key = new URLSearchParams({ ...withScope(page, Object.fromEntries(query), service, period), ...extra }).toString();
   return useMemo(() => Object.fromEntries(new URLSearchParams(key)), [key]);
 }
 
@@ -90,7 +100,8 @@ function useServerModel<P extends PageName>(page: P, params: Record<string, stri
 
 /** A model once, outside React: for exports. Same rules as `usePageModel`. */
 export async function loadPageModel<P extends PageName>(page: P, query: Record<string, string>, range: TimeRange, server: boolean): Promise<ModelOf<P>> {
-  const params = withScope(page, query, getScope().service);
+  const { window, compare } = getPeriod();
+  const params = withScope(page, query, getScope().service, periodParams(window, compare));
   if (server) return apiFetch<ModelOf<P>>(modelUrl(page, params, range));
   const data = provider.getSnapshot();
   const slowQueryMs = data.info?.analysis?.slowQueryMs ?? DEFAULT_SLOW_QUERY_MS;
@@ -105,10 +116,18 @@ export function useServerErrorCount(): number | null {
 }
 
 /** One page's numbers. Hosts with `serverStats` compute them; otherwise the browser does, from the loaded traces. */
-export function usePageModel<P extends PageName>(page: P, extra?: Record<string, string>): PageModel<P> {
+export function usePageModel<P extends PageName>(page: P, extra?: Record<string, string>, paused = false): PageModel<P> {
   const params = useParams(page, extra);
   const server = useHost().has("serverStats");
   const local = useLocalModel(page, params, !server);
   const remote = useServerModel(page, params, server);
-  return server ? remote : local;
+  return useHeld(server ? remote : local, paused, JSON.stringify(params));
+}
+
+/** While paused, the page keeps what it showed for the same parameters: new data waits. Changing a filter still loads. */
+function useHeld<P extends PageName>(m: PageModel<P>, paused: boolean, key: string): PageModel<P> {
+  const held = useRef<{ key: string; m: PageModel<P> } | null>(null);
+  if (paused && held.current?.key === key) return held.current.m;
+  if (m.model) held.current = { key, m };
+  return m;
 }

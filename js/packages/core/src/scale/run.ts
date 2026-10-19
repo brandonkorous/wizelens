@@ -1,6 +1,7 @@
 // Run a page: build its context, answer its needs (and follow-up needs), then compute its model.
 import type { ModelParams } from "../models/input.js";
-import { previousWindow, type TimeRange, windowOf } from "../stats/common.js";
+import { type TimeRange, windowOf } from "../stats/common.js";
+import { compareOf, compareWindow, customWindow, rangeCovering } from "../stats/period.js";
 import { FACT_SLOW_QUERY_MS } from "./facts.js";
 import type { Executor, Need, NeedResults, PageContext, PageDef, SyncExecutor } from "./needs.js";
 import { scopeNeed, unscopeResults } from "./scope.js";
@@ -12,10 +13,12 @@ export type PageRegistry = Readonly<Record<string, PageDef<unknown>>>;
 /** The model type of a page definition. */
 export type ModelOfDef<D> = D extends PageDef<infer M> ? M : never;
 
-/** The context for a range ending at `now`: the window, the one before it, params, and options. */
+/** The context for a range ending at `now` (or the custom `from`–`to` in params): the window, the one it is compared with (`compare`), params, and options. */
 export function pageContext(range: TimeRange, now: number, params: ModelParams, options: { slowQueryMs: number } = { slowQueryMs: FACT_SLOW_QUERY_MS }, settling: number | null = null): PageContext {
-  const window = snapWindow(windowOf(range, now), now);
-  return { range, window, prev: previousWindow(window), now, params, options, settling };
+  const custom = customWindow(params, now);
+  const window = snapWindow(custom ?? windowOf(range, now), now);
+  const compare = compareOf(params);
+  return { range: custom ? rangeCovering(custom.to - custom.from) : range, window, prev: compareWindow(window, compare), now, params, options, settling, custom: !!custom, compare };
 }
 
 /** Results of two need runs together. Later ids replace earlier ones. */

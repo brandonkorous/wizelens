@@ -23,7 +23,7 @@ export function OverviewPage() {
             <TimingPanel m={model} />
           </div>
           <div className="wl-grid wl-ov-mid">
-            <ServicesPanel rows={model.services} range={model.meta.range} />
+            <ServicesPanel rows={model.services} range={model.meta.custom ? null : model.meta.range} />
             <RecentRequestsPanel rows={model.recent} />
           </div>
           <LatestInsights groups={model.insights} />
