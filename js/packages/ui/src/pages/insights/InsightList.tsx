@@ -1,14 +1,15 @@
-import type { InsightGroup } from "@wizeworks/lens-core";
+import type { InsightGroup, IssueInfo } from "@wizeworks/lens-core";
 import { fmtAgo, fmtCount, fmtMs } from "../../format";
 import { setQuery } from "../../routes";
 import { ImpactBadge } from "../../ui/Badges";
+import { IssueBadge } from "../../ui/IssueControls";
 import { Empty } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 import { AREA_LABEL } from "./advice";
 
 const RANK = { high: 3, medium: 2, low: 1 } as const;
 
-function columns(now: number, compact: boolean): Column<InsightGroup>[] {
+function columns(now: number, compact: boolean, issues: Record<string, IssueInfo>): Column<InsightGroup>[] {
   const all: (Column<InsightGroup> | false)[] = [
     { key: "impact", header: "Impact", cell: (g) => <ImpactBadge impact={g.impact} />, sort: (g) => RANK[g.impact] },
     {
@@ -16,7 +17,9 @@ function columns(now: number, compact: boolean): Column<InsightGroup>[] {
       header: "Insight",
       cell: (g) => (
         <div className="wl-insight-cell">
-          <strong>{g.title}</strong>
+          <strong>
+            {g.title} <IssueBadge kind="insight" info={issues[g.key]} />
+          </strong>
           <span className="wl-muted wl-small">{g.description}</span>
           <code className="wl-mono wl-small wl-truncate">{g.shape}</code>
         </div>
@@ -32,7 +35,15 @@ function columns(now: number, compact: boolean): Column<InsightGroup>[] {
   return all.filter((c): c is Column<InsightGroup> => !!c);
 }
 
-export function InsightList({ groups, selected, now, filtered }: { groups: InsightGroup[]; selected: string | null; now: number; filtered: boolean }) {
+export interface InsightListProps {
+  groups: InsightGroup[];
+  issues: Record<string, IssueInfo>;
+  selected: string | null;
+  now: number;
+  filtered: boolean;
+}
+
+export function InsightList({ groups, issues, selected, now, filtered }: InsightListProps) {
   const empty = filtered ? (
     <Empty title="No insights match these filters" />
   ) : (
@@ -40,7 +51,7 @@ export function InsightList({ groups, selected, now, filtered }: { groups: Insig
   );
   return (
     <Table
-      columns={columns(now, selected !== null)}
+      columns={columns(now, selected !== null, issues)}
       rows={groups}
       rowKey={(g) => g.key}
       selectedKey={selected}

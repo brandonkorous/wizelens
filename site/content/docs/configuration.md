@@ -24,6 +24,7 @@ Pass options to `builder.Services.AddWizeLens(o => { ... })`.
 | `CaptureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
 | `HubUrl` / `HubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a hub or the cloud. |
 | `Project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
+| `Release` | `WIZELENS_RELEASE`, else the entry assembly's informational version | The app's version, kept on every span (`service.version`) for release markers and version compares. |
 | `Sampling.Rate` | `WIZELENS_SAMPLE_RATE`, else `1` | Share of traces kept (0 to 1). |
 | `Sampling.KeepErrors` | `true` | Keep every trace with an error. |
 | `Sampling.KeepSlowMs` | `1000` | Keep every trace with a server-side span this long (`null` turns it off). |
@@ -54,6 +55,7 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | `captureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
 | `hub` / `hubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a hub or the cloud. |
 | `project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
+| `release` | `WIZELENS_RELEASE`, else `npm_package_version` | The app's version, kept on every span (`service.version`) for release markers and version compares. |
 | `sampling` | `{ rate: WIZELENS_SAMPLE_RATE ?? 1, keepErrors: true, keepSlowMs: 1000 }` | See [Sampling](/docs/sampling/). |
 | `captureMetrics` | `true` | Sample the runtime every `metricsIntervalMs`. |
 | `metricsIntervalMs` / `metricsMaxAgeMs` | 10 s / 1 h | How often metrics are taken, and how long they are kept in memory. |
@@ -69,6 +71,7 @@ Props on `WizeLensProvider`.
 | `enabled` | `true` | Pass `import.meta.env.DEV` (or similar). |
 | `hud` | `true` | Show the in-page HUD. `false` also stops reading traces back, for a send-only server. |
 | `propagateTo` | same origin | Which requests get a `traceparent` header. |
+| `release` | none | The web app's version, kept on browser spans for release markers and version compares. |
 | `slowMs` | `500` | Requests at or over this many ms show as "warning". |
 | `capturePages` | `true` | Send page views, React render stats, and browser errors. |
 | `captureConsole` | `true` | Copy browser `console` calls into the page view's trace (at most 500 per page). |
@@ -82,6 +85,7 @@ Props on `WizeLensProvider`.
 | `WIZELENS_HUB` | .NET, Node | Send to this hub or cloud. |
 | `WIZELENS_HUB_TOKEN` | .NET, Node | The hub token, or a cloud ingest key. |
 | `WIZELENS_PROJECT` | .NET, Node | Project name on a shared hub. |
+| `WIZELENS_RELEASE` | .NET, Node | The app's version (`service.version` on every span). |
 | `WIZELENS_SAMPLE_RATE` | .NET, Node | Sampling rate, 0 to 1. |
 
 ## Redaction

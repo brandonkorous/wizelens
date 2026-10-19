@@ -78,13 +78,21 @@ under a second on busy projects. Each organization keeps traces for 30 days by d
 ## Alerts
 
 A rule watches one value over a window of 5 minutes to 24 hours: error rate, p95 or average latency, request count, new
-errors, slow queries, or one OpenTelemetry metric. It fires when the value goes above or below your threshold. A notice is
-sent only when the state changes, to a webhook or a Slack incoming webhook:
+errors, slow queries, or one OpenTelemetry metric. It can watch everything, one service, or one endpoint. It fires when the
+value goes above, at or above, below, or at or below your threshold. A notice is sent when the state changes, and again every
+15 minutes to a day while it keeps firing, if you ask for reminders. **Acknowledge** stops the reminders; **mute** keeps it
+quiet for a while or until you unmute it. Notices go to up to five channels: Slack, Microsoft Teams, Discord, PagerDuty, a
+webhook, or email to members:
 
 ```text
 Error rate is 3.4% (above 2%)
+Error rate is 3.1% (still above 2%)
 Error rate is 1.1% (no longer above 2%)
 ```
+
+Each rule has its own page: its value against the line over time, every notice and change, and a link to the traces behind
+it. **Alert on this** on a service, an endpoint, an error, or a metric chart opens a new rule filled in for it. The hub runs
+the same alerts, without email.
 
 Webhook URLs must be https and may not point at private addresses, unless the cloud runs with `--allow-private-webhooks`.
 
@@ -93,6 +101,35 @@ Webhook URLs must be https and may not point at private addresses, unless the cl
 A share link opens one trace, read-only, for anyone with the link, for 1 to 30 days. You can revoke it. Nothing else is
 reachable with it. It shows the parts of the trace its maker may read; after the maker leaves the organization, only the
 shared project's part.
+
+## Plans and billing
+
+Only the hosted cloud at app.wizelens.com has plans. Every plan has unlimited users, alerts, share links, and MCP access.
+See [Pricing](/pricing/) for the price check.
+
+| Plan | Price per month | Data per month | History (max) | Adds |
+|---|---|---|---|---|
+| Free | $0 | 10 GB | 14 days | Stops at 10 GB until the 1st |
+| Team | $29 | 50 GB | 30 days | Extra data instead of a stop; a spend cap |
+| Business | $99 | 150 GB | 90 days | SAML and OIDC single sign-on, SCIM, audit log export |
+| Enterprise | Custom | Custom | Up to 400 days | Set by contract |
+
+- **Extra data** on Team and Business is priced in steps on the GB above the plan's included GB: the first 500 GB at
+  $0.30 a GB, the next 1,500 GB at $0.20, and the rest at $0.10. Team at 120 GB a month is $29 + 70 × $0.30 = $50.
+- **Yearly** billing is 12 months for the price of 10: Team $290, Business $990. Extra data is billed each month, on a
+  usage invoice for the calendar month (UTC), so the steps start again on the 1st on monthly and yearly plans alike.
+- **A GB** is 1,000,000,000 bytes of request body the cloud accepts on ingest and OTLP, counted as sent: a compressed body counts
+  compressed. Reading, search, alerts, and MCP calls never count. Sampling and compression both lower it.
+- **At the Free limit**, ingest and OTLP answer HTTP 429 ("This organization reached the Free plan's 10 GB for this
+  month") until the 1st (UTC) or an upgrade. The add-ons and OpenTelemetry exporters back off on 429, and what you
+  already sent stays readable. Owners and admins get an email at 80% and 100%.
+- **Spend cap** (Team and Business, optional): an owner sets a monthly limit for extra data, in dollars. Past it, ingest
+  answers 429 ("This organization reached its monthly spend cap of $N") until the 1st.
+- **History** is capped by the plan. A downgrade lowers the organization's retention to the new plan's maximum.
+- **Cancel** under Manage billing. The plan runs to the end of the paid period, then the organization moves to Free.
+
+When you self-host, billing is off: the cloud has no plans, no caps, and no billing pages unless it starts with Stripe
+keys. Every organization is unlimited, and `--retention-days` sets history as before.
 
 ## Options
 

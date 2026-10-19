@@ -53,6 +53,8 @@ export interface WizeLensOptions {
   nPlusOneThreshold?: number;
   /** The project this service belongs to, so a shared hub can group it. Default: the WIZELENS_PROJECT variable. */
   project?: string;
+  /** The app's version, kept on every span as `service.version` for release markers and version compares. Default: the WIZELENS_RELEASE variable, else npm_package_version. */
+  release?: string;
   /** Also send everything to this local hub, for example "http://localhost:5960". Default: the WIZELENS_HUB variable. */
   hub?: string;
   /** Access token for the hub. Default: the WIZELENS_HUB_TOKEN variable. */

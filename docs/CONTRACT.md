@@ -127,7 +127,7 @@ interface Trace extends TraceSummary {
 type HostMode = "in-app" | "hub" | "cloud";
 type Capability =
   | "federation" | "environments" | "registry" | "accounts" | "alerts" | "sharing"
-  | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search";
+  | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search" | "issues";
 
 interface ServiceInfo {
   mode?: HostMode;          // absent = "in-app"
@@ -198,17 +198,18 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `environments` | The host holds more than one environment and project; the top-bar picker filters by them | | ✅ | ✅ |
 | `registry` | The host knows its services (`api/services`): online state, project, environment, runtime | | ✅ | ✅ |
 | `accounts` | People sign in; the top bar shows the user and the Team page appears | | | ✅ |
-| `alerts` | The host runs alert rules; the Alerts page and the bell show them | | | ✅ |
+| `alerts` | The host runs alert rules; the Alerts page and the bell show them. The hub at `api/alerts?project=`, the cloud at `api/projects/:project/alerts` | | ✅ | ✅ |
 | `sharing` | Traces can be shared by a read-only link | | | ✅ |
 | `serverStats` | The host computes page numbers itself (`api/models/<page>`); ranges reach 7 and 30 days | | ✅ | ✅ |
 | `metrics` | The host keeps metrics; the Metrics page appears | ✅ | ✅ | ✅ |
 | `serverMetrics` | The host computes the Metrics page itself (`api/models/metrics`). Without it, the browser reads `api/metrics/points` | | ✅ | ✅ |
 | `search` | The host answers the search language (`api/search`, `api/search/suggest`); the Search page and Ctrl+K use it. Without it, the browser searches the loaded traces | ✅ | ✅ | ✅ |
 | `changes` | The host streams `api/changes?project=` (server-sent events): an `event: data` line each time the project gets new stats, at most every 2 s (the hub: each settle round), and a comment every 25 s. The dashboard reloads the open page then, keeping the old numbers on screen until the new ones arrive | | ✅ | ✅ |
+| `issues` | The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. See "Issue states" below | | ✅ | ✅ |
 
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search"]`, plus `metrics` when metrics are on. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "issues", "alerts"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -220,6 +221,7 @@ answers `mode: "hub"` and `capabilities: ["federation", "environments", "registr
 | Keep traces with a slow server-side span (ms) | `Sampling.KeepSlowMs` | `sampling.keepSlowMs` | 1000 (null = off) |
 | Tag the current request | `WizeLensRequest.Tag(key, value?)` | `wizelens.tag(key, value?)` | — |
 | Set the current user | automatic from `HttpContext.User` | `wizelens.setUser(id)` | — |
+| The app's version (`service.version` on every span) | `Release` | `release` (React: `release` prop) | `WIZELENS_RELEASE`, else the entry assembly's informational version (.NET) or `npm_package_version` (Node) |
 
 ## Metrics (v0.8)
 
@@ -352,6 +354,19 @@ Server name `wizelens`. Disabled by default. Every call is written to the app lo
 On the hub, the cloud, and the Node add-on, `list_traces`, `get_errors`, and `find_slow_queries` read the whole store
 through search (the newest traces in memory are merged in, since the store indexes a trace once it goes quiet), not the
 newest 500 traces. `find_slow_queries` reads up to 5,000 matching queries, newest first, and returns the slowest.
+
+## Issue states
+
+Hosts with the `issues` capability keep a state per error group (`kind: "error"`, key `service|type|message`) and per
+insight (`kind: "insight"`, the insight key): `open`, `resolved` (with the time), or `ignored` (until a time, or for good),
+and an assignee (cloud). A resolved issue that happens after it was resolved is **regressed**. The hub answers
+`GET api/issues?project=` and `POST api/issues?project=`; the cloud answers `GET api/projects/:project/issues` (with the
+members issues can be assigned to) and `POST api/projects/:project/issues` (members who can write; each change writes an
+audit line `issue.<action>`). A POST body is `{ kind, key, action: "resolve" | "ignore" | "reopen" | "assign", untilMs?, assignee? }`.
+
+The Errors model takes `status` (`unresolved` by default, `resolved`, `ignored`, `all`) and `new=1` (first seen in the
+range), and returns `issues` (status, first seen over all kept data, new, assignee) and `hasIssues`. The Insights model
+takes `status` the same way. The Overview model returns `freshErrors`, the newest new and regressed groups.
 
 ## Search (v0.9)
 
@@ -532,7 +547,7 @@ the rollups. Page answers are cached per page, parameters, scope, 10-second "now
 
 `@wizeworks/lens-cloud` (command `wizelens-cloud`, default port **5970**) is the hosted service. It serves the same dashboard,
 answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats",
-"metrics", "serverMetrics", "search", "changes"]`,
+"metrics", "serverMetrics", "search", "changes", "issues"]`,
 and keeps data in Postgres (`DATABASE_URL=postgres://...`). PGlite (`pglite:<folder>` or `memory`) runs the same SQL in-process,
 for tests and trials.
 
@@ -700,6 +715,12 @@ Pages read small tables built from the stored traces, never the traces themselve
   are rebuilt from its spans and logs, and the rollups get its new contribution minus the old one (kept as JSON in
   `traces.contrib`). `settled_ms` is set to the `updated_ms` that was read, so a late span settles the trace again. Representatives,
   first and last times, and ids are display fields and are never taken back out.
+- **Releases** (`FACTS_VERSION` 5): `rel` counts each span that starts work in its service (no parent, or a parent in another
+  service) under `service|version`, from the span's `service.version`, with a histogram. Hosts copy `sender.release` onto the
+  sender's spans that have no version (OTLP: the resource's `service.version`). `HubSender.version` stays the add-on's own
+  version. Every page's `meta.releases` lists the versions first seen in its window (chart markers); the Service page has
+  `versions` (requests, error rate, p95, and error groups first seen while each was the newest); Errors and Insights take
+  `release` with `service` (groups first seen while that version was the newest) and return the service's `releases`.
 - **Endpoints** (`FACTS_VERSION` 4): `ep.call` and `ep.q` file each outgoing call and query under the endpoint (`svc.ep` key
   head) whose http.server span it ran under. `svc.ep` and `edge` keep histograms (p50/p95/p99), and `svc.ep`, `db.q`, and
   `pv.route` keep their newest trace ids. List needs take `traceIds`.
@@ -716,16 +737,24 @@ Pages read small tables built from the stored traces, never the traces themselve
 
 ### Alerts
 
-A rule watches one metric over a window (5 min to 24 h), optionally in one environment: `error_rate` (%), `p95_ms`, `avg_ms`,
-`requests`, `new_errors` (error groups not seen in the window before), `slow_queries`. It fires when the value is above (`>`) or
-below (`<`) the threshold. No data never fires, except `requests <` (traffic stopped). Rules run every minute. A notice is sent
-only when the state changes (fired, resolved), to a webhook (the JSON notice), a Slack incoming webhook, or email
-(`{ "kind": "email", "to": [...] }`: 1 to 20 addresses of members of the organization, confirmed ones when mail is on, checked again
-at each send), and kept as an event.
-The message says what happened: `Requests is 79 (above 5)` when fired, `(no longer above 5)` when resolved, and
-`(alerts when above 5)` for a test notice. `PATCH` changes only the fields it sends.
+The hub and the cloud both run alert rules (the hub sends no email). A rule watches one metric over a window (5 min to 24 h),
+optionally in one environment, and for trace metrics optionally one `service` (display name) or one `endpoint` of it
+(`"GET /api/orders/{id}"`; `slow_queries` is per service only): `error_rate` (%), `p95_ms`, `avg_ms`, `requests`, `new_errors`
+(error groups not seen in the window before), `slow_queries`. It fires when the value is above (`>`), at or above (`>=`), below
+(`<`), or at or below (`<=`) the threshold. No data never fires, except `requests` below (traffic stopped). Rules run every minute.
+A notice is sent when the state changes (fired, resolved), and again every `remindMs` (15 min, 1 h, 4 h, or 1 day; 0 for never)
+while it keeps firing and nobody acknowledged it. `POST …/:id/ack` acknowledges a firing rule (reminders stop until it resolves);
+`POST …/:id/mute` with `{ untilMs }` mutes it (`-1` until unmuted, `null` unmutes): its state still changes, quietly. Turning a rule
+off clears its state. Each check keeps its value (30 days); `GET …/:id?from=&to=` returns the rule, its events, and those values.
+A rule sends to up to 5 channels: a webhook (the JSON notice), a Slack, Microsoft Teams (a MessageCard), or Discord incoming webhook,
+PagerDuty (`{ "kind": "pagerduty", "routingKey": "…" }`, Events API v2: fired and reminders trigger one incident per rule, resolved
+resolves it, a test triggers and resolves its own key), or email (cloud: `{ "kind": "email", "to": [...] }`: 1 to 20 addresses of
+members of the organization, confirmed ones when mail is on, checked again at each send). Every notice, mute, and acknowledgement is
+kept as an event (`fired`, `resolved`, `remind`, `test`, `ack`, `mute`, `unmute`).
+The message says what happened: `Requests is 79 (above 5)` when fired, `(no longer above 5)` when resolved, `(still above 5)` for a
+reminder, and `(alerts when above 5)` for a test notice. `PATCH` changes only the fields it sends.
 Webhook URLs must be https and may not resolve to private, loopback, or link-local addresses, unless the cloud runs with
-`--allow-private-webhooks` (self-hosting on a private network).
+`--allow-private-webhooks` (self-hosting on a private network). The hub allows them by default (it runs on your own network).
 
 A rule can also watch one OpenTelemetry metric: `metric: "metric"`, `metricName` (required), `metricStat`
 (`last`, `avg`, `max`, `p95`, `p99`, or `rate`; default `avg`), and `metricService` (optional). The threshold is in the metric's

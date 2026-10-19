@@ -20,6 +20,7 @@ export function allRoutes(): Route[] {
     { path: "/node/", source: "src/sections/stacks/data/node.ts", priority: 0.9, change: "monthly" },
     { path: "/react/", source: "src/sections/stacks/data/react.ts", priority: 0.9, change: "monthly" },
     { path: "/cloud/", source: "src/sections/cloud/Cloud.tsx", priority: 0.8, change: "monthly" },
+    { path: "/pricing/", source: "src/sections/pricing/plans.ts", priority: 0.8, change: "monthly" },
     { path: "/story/", source: "src/sections/story/scene.ts", priority: 0.7, change: "yearly" },
     { path: "/changelog/", source: "../CHANGELOG.md", priority: 0.6, change: "weekly" },
     ...docs,

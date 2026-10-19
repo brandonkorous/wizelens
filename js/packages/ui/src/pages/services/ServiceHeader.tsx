@@ -1,4 +1,5 @@
 import { ArrowLeft } from "lucide-react";
+import { AlertOnThis } from "../../ui/AlertOnThis";
 import { groupServices, type ServiceGroup, type ServiceRow } from "@wizeworks/lens-core";
 import { useData } from "../../data/hooks";
 import { useHost } from "../../data/host";
@@ -51,6 +52,11 @@ export function ServiceHeader({ row, groups }: { row: ServiceRow; groups: readon
         <span className="wl-svc-status">
           <StatusText status={row.status} />
         </span>
+        {(row.kind === "api" || row.kind === "worker") && (
+          <span className="wl-dhead-actions">
+            <AlertOnThis fields={{ metric: "error_rate", service: row.name, name: `${row.name} errors` }} />
+          </span>
+        )}
       </h1>
       <dl className="wl-stats">
         {statsOf(row, groups, updatedMs).map(([k, v]) => (

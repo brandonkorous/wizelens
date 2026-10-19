@@ -27,14 +27,18 @@ function Cards({ m }: { m: InsightsModel }) {
   );
 }
 
-/** Service, area, impact, and search live in the URL (the service in the shared scope), so a filtered view can be shared. */
-function Filters() {
+const STATUSES: [string, string][] = [["unresolved", "Open"], ["resolved", "Fixed"], ["ignored", "Dismissed"], ["all", "All Statuses"]];
+
+/** Service, status, release, area, impact, and search live in the URL (the service in the shared scope), so a filtered view can be shared. */
+function Filters({ issues, releases }: { issues: boolean; releases: string[] }) {
   const q = useRoute().query;
   const [scope] = useServiceScope();
   const [text, setText] = useSearchText(q.get("q") ?? "", {});
   return (
     <Panel className="wl-filters">
       <ServiceSelect value={q.get("service") ?? scope} />
+      {issues && <Select label="Status" value={q.get("status") ?? "unresolved"} onChange={(v) => setQuery({ status: v === "unresolved" ? null : v, key: null })} options={STATUSES} />}
+      {releases.length > 0 && <Select label="Release" value={q.get("release") ?? ""} onChange={(v) => setQuery({ release: v || null, key: null })} options={[["", "Any Release"], ...releases.map((v): [string, string] => [v, `New in ${v}`])]} />}
       <Select label="Area" value={q.get("area") ?? "all"} onChange={(v) => setQuery({ area: v === "all" ? null : v })} options={[["all", "All Areas"], ["database", "Database"], ["http", "HTTP"], ["render", "Rendering"]]} />
       <Select label="Impact" value={q.get("impact") ?? "all"} onChange={(v) => setQuery({ impact: v === "all" ? null : v })} options={[["all", "All Impacts"], ["high", "High"], ["medium", "Medium"], ["low", "Low"]]} />
       <SearchInput value={text} onChange={setText} placeholder="Search by query, endpoint, route, or component…" />
@@ -48,12 +52,12 @@ function InsightsBody({ m, wanted }: { m: InsightsModel; wanted: string | null }
   return (
     <>
       <Cards m={m} />
-      <Filters />
+      <Filters issues={m.hasIssues} releases={m.releases.map((r) => r.version)} />
       <div className={`wl-grid${wanted ? " wl-grid-side" : ""}`}>
         <Panel flush title={`Insights (${fmtCount(m.matching)})`}>
-          <InsightList groups={m.groups} selected={m.selected?.key ?? null} now={now} filtered={m.matching !== m.totals.count} />
+          <InsightList groups={m.groups} issues={m.issues} selected={m.selected?.key ?? null} now={now} filtered={m.matching !== m.totals.count} />
         </Panel>
-        {wanted && (m.selected ? <InsightDetail group={m.selected} now={now} /> : <Panel><Empty title="This insight is not in the selected time range" /></Panel>)}
+        {wanted && (m.selected ? <InsightDetail group={m.selected} info={m.issues[m.selected.key]} now={now} /> : <Panel><Empty title="This insight is not in the selected time range" /></Panel>)}
       </div>
     </>
   );

@@ -6,6 +6,22 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Alerts on the hub,** not only the cloud. Rules can watch one service or one endpoint, and use **at or above** and
+  **at or below**. **Remind** while a rule keeps firing, **acknowledge** to stop the reminders, **mute** for an hour, a day, or
+  until unmuted, and turn rules **on or off** from the list. Rules send to up to five channels, all editable: Slack,
+  **Microsoft Teams**, **Discord**, **PagerDuty**, webhooks, and email (cloud). Each rule has its own page: its value against
+  the line over time, every notice and change, and a link to the traces behind it. **Alert on this** opens a new rule from a
+  service, an endpoint, an error, or a metric chart.
+- **Releases.** Add-ons send the app's version (`release`, or `WIZELENS_RELEASE`; .NET reads the entry assembly's
+  version, Node reads `npm_package_version`, React takes a `release` prop, and OpenTelemetry apps send `service.version`).
+  Every chart marks the time a new version first sent data. The service page compares its newest versions: requests, error
+  rate, p95, and the error groups each one brought. Errors and Insights get a **New in this release** filter.
+- **Error tracker workflow.** Resolve an error group, or ignore it for an hour, a day, a week, or for good. A resolved
+  group that happens again shows as **Regressed** and comes back to the list. The Errors page lists unresolved groups by
+  default, with a Status filter and a **New only** filter. "First seen" is now the first time over all kept data, not the
+  start of the range. On the cloud, a group can be **assigned** to a member, and each change writes an audit line.
+  Insights get the same: **Mark fixed** and **Dismiss**. The Overview has a "New and Regressed Errors" panel. The hub
+  and the cloud keep these states; in-app add-ons show no actions.
 - **A page for each error, endpoint, query, and page route.** An error shows its count over time, its endpoints, the users
   and browsers of its newest occurrences, the stack, and those occurrences. An endpoint shows requests, errors, and
   p50/p95/p99 over time, the queries it runs, what it calls, its errors, and its slowest requests. A query shows its runs
@@ -24,7 +40,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   before. The Overview activity, Errors over time, and a service's traffic chart draw the compared period as a dashed line.
 - **Time zone and clock.** Settings can show times in UTC and on a 24-hour clock.
 - **Live or paused** on Logs and Requests: pause to keep the list still while new data comes in.
-
+- **A pricing page at wizelens.com/pricing.** The four cloud plans (Free, Team $29, Business $99, Enterprise), the
+  steps for extra data, yearly billing at 12 months for the price of 10, a slider that prices your monthly GB on every
+  plan as you move it, what self-hosting costs (nothing), a year-one cost comparison with Datadog and Dynatrace for a
+  40-developer company with its sources, and pricing questions. Linked from the top bar, the footer, and the Cloud page.
+  The cloud docs have a new "Plans and billing" section: what a GB is, the Free cap's HTTP 429, the spend cap, history
+  per plan, and that billing is off when you self-host.
 - **Connect Claude to WizeLens Cloud with a sign-in, not a key.** Add `https://mcp.wizelens.com` to Claude (Settings →
   Connectors), Claude Code, Cursor, or any MCP client. It opens the WizeLens sign-in, and you pick one organization and
   either all its projects (also later ones) or only some. The app gets read-only access that renews on its own, so a

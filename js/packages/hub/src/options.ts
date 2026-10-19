@@ -28,9 +28,18 @@ export interface HubOptions {
   /** Where MCP audit lines go. Default console.info. */
   audit?: (line: string) => void;
   now?: () => number;
+  /** How often alert rules run, in ms. Default 60000. */
+  alertIntervalMs?: number;
+  /** Let alert webhooks call plain http and private or local addresses. Default true: the hub runs on your own network. */
+  allowPrivateWebhooks?: boolean;
+  /** How alert notices are sent; tests replace it. Default the global fetch. */
+  fetch?: typeof fetch;
+  /** PagerDuty's Events API URL; tests point it at a local server. */
+  pagerDutyUrl?: string;
 }
 
-export interface ResolvedHubOptions extends Required<Omit<HubOptions, "token" | "uiDir" | "audit" | "now">> {
+export interface ResolvedHubOptions extends Required<Omit<HubOptions, "token" | "uiDir" | "audit" | "now" | "pagerDutyUrl">> {
+  pagerDutyUrl: string | undefined;
   token: string | undefined;
   uiDir: string | undefined;
   audit: (line: string) => void;
@@ -54,5 +63,9 @@ export function resolveHubOptions(o: HubOptions = {}): ResolvedHubOptions {
     name: o.name ?? "wizelens-hub",
     audit: o.audit ?? ((line) => console.info(line)),
     now: o.now ?? Date.now,
+    alertIntervalMs: o.alertIntervalMs ?? 60_000,
+    allowPrivateWebhooks: o.allowPrivateWebhooks ?? true,
+    fetch: o.fetch ?? ((...a) => fetch(...a)),
+    pagerDutyUrl: o.pagerDutyUrl,
   };
 }

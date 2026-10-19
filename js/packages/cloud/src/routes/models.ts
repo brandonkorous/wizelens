@@ -1,6 +1,7 @@
-import { alignNow, FACT_SLOW_QUERY_MS, isPageName, isTimeRange, type ModelOf, type PageName, pageContext, runPage, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { alignNow, FACT_SLOW_QUERY_MS, ISSUE_PAGES, isPageName, isTimeRange, issueStatesOf, type ModelOf, type PageName, pageContext, runPage, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import type { CloudApp, Ctx } from "../app.js";
 import { fail, sendJson } from "../http/http.js";
+import { listIssues } from "../repo/issues.js";
 import type { Router } from "../http/router.js";
 import { projectOf } from "./data.js";
 import { metricParamsOf, metricRange, projectMetrics } from "./metrics.js";
@@ -46,7 +47,8 @@ export async function projectPage<P extends PageName>(app: CloudApp, project: { 
   const pc = pageContext(range, now, params, { slowQueryMs: FACT_SLOW_QUERY_MS }, await t.settling(project.id, { env, before: app.config.now() - SETTLE_BEHIND_MS }));
   // A custom window (`from`, `to`) may start before what the organization keeps; a little slack covers snapping.
   if (now - pc.window.from > days * DAY_MS + 15 * 60_000) fail(400, "This time window starts before the organization keeps data.");
-  const value = await runPage(page, pc, t.executor(project.id, days * DAY_MS, env));
+  const issues = ISSUE_PAGES.has(page) ? { issues: issueStatesOf(await listIssues(app.db, project.id)) } : {};
+  const value = await runPage(page, { ...pc, ...issues }, t.executor(project.id, days * DAY_MS, env));
   remember(key, value, app.config.now());
   return value;
 }

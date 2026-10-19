@@ -32,6 +32,8 @@ Each service keeps its own dashboard too.
 - **It knows your services.** Which are online, idle, or offline, what they run on, and when they last sent data.
 - **Any language.** OTLP over HTTP, JSON or protobuf: traces, logs, and metrics.
 - **One MCP endpoint** for every service, with `--mcp`.
+- **Alerts,** like the cloud's: to Slack, Teams, Discord, PagerDuty, or a webhook (no email). Webhooks may be plain http or on
+  your own network.
 
 An OpenTelemetry app shows as "Idle" between sends. That is normal: it only sends when it has data.
 

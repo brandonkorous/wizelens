@@ -84,7 +84,9 @@ export type Capability =
   /** The host answers `api/search` and `api/search/suggest` (docs/SEARCH-PLAN.md). */
   | "search"
   /** The host streams `api/changes` (server-sent events) when a project gets new stats, so pages reload at once. */
-  | "changes";
+  | "changes"
+  /** The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. */
+  | "issues";
 
 /** What an in-app add-on offers today. Also the default when a host does not say. */
 export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];

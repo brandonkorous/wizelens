@@ -4,7 +4,7 @@ import { afterEach, expect, it } from "vitest";
 import type { Cloud } from "../server.js";
 import { setupOwner, startCloud } from "../test/cloud.js";
 import { span } from "../test/db.js";
-import { checkTarget } from "./notify.js";
+import { checkTarget } from "@wizeworks/lens-hub/kit";
 import { evaluateAll } from "./evaluate.js";
 import { settleCloud } from "../settle.js";
 

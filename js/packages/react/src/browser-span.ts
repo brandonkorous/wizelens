@@ -7,7 +7,12 @@ import {
   pathShape,
   type Span,
   type SpanEvent,
+  VERSION_ATTR,
 } from "@wizeworks/lens-core";
+
+/** The web app's version, put on every browser span as `service.version`. */
+let release: string | undefined;
+export const setBrowserRelease = (v: string | undefined): void => void (release = v?.trim().slice(0, 50) || undefined);
 
 /** The page view a browser span belongs to. */
 export interface ViewRef {
@@ -56,6 +61,7 @@ export function browserSpan(i: BrowserSpanInput): Span {
       [ATTR_BROWSER_TYPE]: i.type,
       [ATTR_BROWSER_SESSION]: i.sessionId,
       [ATTR_BROWSER_ROUTE]: i.route,
+      ...(release ? { [VERSION_ATTR]: release } : {}),
     },
     events: i.events ?? [],
   };

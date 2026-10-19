@@ -3,6 +3,7 @@ import { Router } from "../http/router.js";
 import { alertRoutes } from "./alerts.js";
 import { appRoutes } from "./apps.js";
 import { changeRoutes } from "./changes.js";
+import { issueRoutes } from "./issues.js";
 import { meRoutes } from "./me.js";
 import { mcpRoutes } from "./mcp.js";
 import { shareRoutes } from "./shares.js";
@@ -25,6 +26,7 @@ export function allRoutes(): Router<Ctx> {
   changeRoutes(r);
   searchRoutes(r);
   alertRoutes(r);
+  issueRoutes(r);
   shareRoutes(r);
   mcpRoutes(r);
   appRoutes(r);

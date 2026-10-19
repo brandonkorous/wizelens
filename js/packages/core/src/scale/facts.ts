@@ -11,10 +11,11 @@ import { type RequestItem, requestItemOf, traceCritical, type TraceItem, traceIt
 import { renderFacts } from "./facts-render.js";
 import { requestContributions } from "./facts-requests.js";
 import { endpointFacts } from "./facts-endpoints.js";
+import { releaseFacts } from "./facts-releases.js";
 import { serviceFacts, traceServices } from "./facts-services.js";
 
 /** Bump when fact semantics change: hosts then rebuild their facts and rollups. */
-export const FACTS_VERSION = 4;
+export const FACTS_VERSION = 5;
 /** A trace waits a few seconds for its stats on purpose; only one written longer ago than this counts as stats running behind. */
 export const SETTLE_BEHIND_MS = 60_000;
 /** Slow query threshold that hosts fix when a trace settles; the same as `analyzeTrace`'s default. */
@@ -57,6 +58,7 @@ function buildFacts(trace: Trace, o: FactOptions): TraceFacts {
     ...errorFacts(trace),
     ...logFacts(logs),
     ...renderFacts(trace),
+    ...releaseFacts(trace),
   ];
   return {
     traceId: trace.traceId,

@@ -1,12 +1,14 @@
 // What a page asks for (needs), what an executor answers (results), and how a page is defined.
 import type { ModelParams } from "../models/input.js";
 import type { TimeRange, TimeWindow } from "../stats/common.js";
+import type { IssueStates } from "../issues.js";
 import type { Compare } from "../stats/period.js";
 import type { LogLevel, Trace } from "../types.js";
 import { type Agg, avgOfAgg } from "./agg.js";
 import { type RollupKind, splitKey } from "./kinds.js";
 
-export type WindowRef = "cur" | "prev";
+/** "all": everything the host keeps, for first and last seen over all time. */
+export type WindowRef = "cur" | "prev" | "all";
 /** Bucket counts the pages use for series. */
 export type BucketCount = 16 | 24 | 48;
 
@@ -18,6 +20,8 @@ export interface KeyFilter {
   parts?: readonly (string | null)[];
   /** Text the key must hold, each one, ignoring ASCII case. */
   contains?: readonly string[];
+  /** Keys to leave out. */
+  exclude?: readonly string[];
 }
 
 export type AggOrder = "n" | "sum" | "avg" | "lastMs" | "c0" | "c1" | "c2" | "c3" | "c4" | "c5";
@@ -139,6 +143,8 @@ export interface PageContext {
   custom?: boolean;
   /** What `prev` is: the window right before, or the same window a week earlier. */
   compare?: Compare;
+  /** Issue states (resolved, ignored, assigned) on hosts that keep them; absent elsewhere. */
+  issues?: IssueStates;
 }
 
 export interface NeedResults {
@@ -170,7 +176,8 @@ export interface SyncExecutor {
 export const emptyResults = (): NeedResults => ({ groups: {}, series: {}, lists: {}, traces: {} });
 
 /** The window a need refers to. */
-export const windowOfRef = (ctx: Pick<PageContext, "window" | "prev">, ref: WindowRef): TimeWindow => (ref === "cur" ? ctx.window : ctx.prev);
+export const windowOfRef = (ctx: Pick<PageContext, "window" | "prev" | "now">, ref: WindowRef): TimeWindow =>
+  ref === "cur" ? ctx.window : ref === "prev" ? ctx.prev : { from: 0, to: ctx.now };
 
 /** Lower case for ASCII letters only, the way every SQL engine's lower() agrees. */
 export const lowerAscii = (s: string): string => s.replace(/[A-Z]/g, (c) => c.toLowerCase());
@@ -179,6 +186,7 @@ export const lowerAscii = (s: string): string => s.replace(/[A-Z]/g, (c) => c.to
 export function keyMatches(key: string, f: KeyFilter | undefined): boolean {
   if (!f) return true;
   if (f.contains?.some((t) => !lowerAscii(key).includes(lowerAscii(t)))) return false;
+  if (f.exclude?.includes(key)) return false;
   if (f.prefix !== undefined && !key.startsWith(f.prefix)) return false;
   if (f.keys && !f.keys.includes(key)) return false;
   if (!f.parts) return true;
