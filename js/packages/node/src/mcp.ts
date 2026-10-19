@@ -10,12 +10,13 @@ import { type McpDataSource, type McpProjects, type Source } from "./mcp-shared.
 import { registerSearchTools } from "./mcp-search.js";
 import { registerTagTools } from "./mcp-tags.js";
 import { registerTraceTools } from "./mcp-traces.js";
+import { registerTrafficTools } from "./mcp-traffic.js";
 
 export type { McpDataSource, McpProject, McpProjects, OverviewPage } from "./mcp-shared.js";
 
 const isProjects = (d: McpDataSource | McpProjects): d is McpProjects => "projects" in d;
 
-const MANY = "You can read several projects. Call list_projects, then pass `project` to the other tools. get_overview without `project` reports on all of them.";
+const MANY = "You can read several projects. Call list_projects, then pass `project` to the other tools. get_overview, get_timeseries, and group_requests without `project` cover all of them.";
 
 function createServer(data: McpDataSource | McpProjects): McpServer {
   const many = isProjects(data) && data.projects.length > 1;
@@ -28,6 +29,7 @@ function createServer(data: McpDataSource | McpProjects): McpServer {
   registerSearchTools(server, src);
   registerTagTools(server, src);
   registerOverviewTool(server, src);
+  registerTrafficTools(server, src);
   registerProblemTools(server, src);
   return server;
 }

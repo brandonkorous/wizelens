@@ -38,6 +38,7 @@ const STATIC: Partial<Record<PageName, Record<string, string>[]>> = {
   database: [{ service: "api" }, { service: "orders" }, { q: "orders" }, { q: "SELECT" }, { table: "items" }, { operation: "select" }, { operation: "INSERT" }, { database: "postgresql" }, { sort: "count" }, { sort: "total", page: "2", size: "5" }, { page: "99" }],
   overview: [{ from: String(SCENARIO_NOW - 3 * 3_600_000), to: String(SCENARIO_NOW - 3_600_000) }, { compare: "week" }, { service: "orders" }, { service: "api" }, { service: "Web App" }, { service: "nope" }],
   service: [{ service: "orders" }, { service: "Web App" }, { service: "nope" }],
+  traffic: [{ service: "orders" }, { service: "api:api", buckets: "48" }, { endpoint: "POST /api/pay" }, { service: "api", endpoint: "POST /api/pay", buckets: "16" }, { service: "nope" }, { from: String(SCENARIO_NOW - 3 * 3_600_000), to: String(SCENARIO_NOW - 3_600_000) }],
   problems: [{ sensitivity: "high", problem: "nope", at: String(SCENARIO_NOW - 3_600_000), focus: "api:orders", service: "orders" }],
   users: [{}, { q: "user-1" }, { page: "2", size: "2" }],
   user: [{ user: "user-9" }, { user: "user-0" }, { user: "nobody" }],
