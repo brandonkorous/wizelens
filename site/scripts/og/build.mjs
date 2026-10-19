@@ -49,6 +49,7 @@ const IMAGES = [
   { name: "story", el: T.story },
   { name: "changelog", el: () => T.changelog(releases()) },
   { name: "cloud", el: T.cloud },
+  { name: "pricing", el: T.pricing },
   { name: "docs-contract", el: () => T.doc({ title: "Wire contract", description: "The wire format every WizeLens add-on, the hub, and the cloud follow.", path: "/docs/contract/", code: null }) },
   ...docImages(),
   ...legalImages(),

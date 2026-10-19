@@ -28,9 +28,10 @@ function Hero() {
         <div className="wl-cloud-copy">
           <Headline lines={["The same lens,", "for the team."]} />
           <div className="wl-cloud-intro wl-rise" style={riseDelay(0.35)}>
-            <p className="wl-lede">WizeLens Cloud is the dashboard you already know, with accounts, 30 days of history, alerts, share links, and AI access you can scope. Today you run it yourself, on your own Postgres.</p>
+            <p className="wl-lede">WizeLens Cloud is the dashboard you already know, with accounts, history, alerts, share links, and AI access you can scope. Start free at app.wizelens.com, or run it yourself on your own Postgres.</p>
             <div className="wl-hero-cta">
-              <a href="/docs/cloud/" className="wl-btn wl-btn-primary">Self-host guide <ArrowRight /></a>
+              <a href="https://app.wizelens.com" className="wl-btn wl-btn-primary">Start free <ArrowRight /></a>
+              <a href="/pricing/" className="wl-btn wl-btn-ghost">See pricing</a>
             </div>
             <CopyCommand command="npx @wizeworks/lens-cloud" />
           </div>
@@ -82,6 +83,9 @@ function SelfHost() {
             <li><b>Make an ingest key</b> per app and set WIZELENS_HUB and WIZELENS_HUB_TOKEN.</li>
           </ol>
           <ul className="wl-cloud-safe">{SAFE.map((s) => <li key={s}>{s}</li>)}</ul>
+          <div className="wl-hero-cta">
+            <a href="/docs/cloud/" className="wl-btn wl-btn-ghost">Self-host guide <ArrowRight /></a>
+          </div>
         </div>
       </div>
     </section>

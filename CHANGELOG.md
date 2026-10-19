@@ -13,7 +13,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   before. The Overview activity, Errors over time, and a service's traffic chart draw the compared period as a dashed line.
 - **Time zone and clock.** Settings can show times in UTC and on a 24-hour clock.
 - **Live or paused** on Logs and Requests: pause to keep the list still while new data comes in.
-
+- **A pricing page at wizelens.com/pricing.** The four cloud plans (Free, Team $29, Business $99, Enterprise), the
+  steps for extra data, yearly billing at 12 months for the price of 10, a slider that prices your monthly GB on every
+  plan as you move it, what self-hosting costs (nothing), a year-one cost comparison with Datadog and Dynatrace for a
+  40-developer company with its sources, and pricing questions. Linked from the top bar, the footer, and the Cloud page.
+  The cloud docs have a new "Plans and billing" section: what a GB is, the Free cap's HTTP 429, the spend cap, history
+  per plan, and that billing is off when you self-host.
 - **Connect Claude to WizeLens Cloud with a sign-in, not a key.** Add `https://mcp.wizelens.com` to Claude (Settings →
   Connectors), Claude Code, Cursor, or any MCP client. It opens the WizeLens sign-in, and you pick one organization and
   either all its projects (also later ones) or only some. The app gets read-only access that renews on its own, so a
