@@ -41,6 +41,8 @@ async function matchAndSearch(clickhouseUrl?: string): Promise<void> {
   expect(page.body.unknownTags).toEqual(["typo"]);
   const suggest = await owner.call<{ items: { value: string }[] }>("GET", `api/search/suggest?project=${projectId}&field=tag&prefix=s`);
   expect(suggest.body.items.map((s) => s.value)).toEqual(["stream", "slow"]);
+  const list = await owner.call<{ rows: { traceId: string }[] }>("GET", `api/models/requests?project=${projectId}&range=1h&q=${encodeURIComponent("tag:slow")}`);
+  expect(list.body.rows.map((r) => r.traceId)).toEqual([PAY]);
 }
 
 it("matches tags and expands tag: on Postgres", () => matchAndSearch());

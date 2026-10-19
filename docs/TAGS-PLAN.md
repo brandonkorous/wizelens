@@ -65,7 +65,8 @@ after the last, on the host's own search engine (memory, SQLite, Postgres, or Cl
 fields.
 
 `api/search` expands `tag:` with the project's rules before it runs, and returns `unknownTags` for names that match
-no rule, so a typo is not a silent empty page.
+no rule, so a typo is not a silent empty page. The search box on the Requests, Traces, and Logs lists expands `tag:` the
+same way (`searchTraceIds` and `memorySearchIds` take the host's active tags).
 
 ## Lists of groups
 

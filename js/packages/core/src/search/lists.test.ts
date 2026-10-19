@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { runPageSync } from "../models/index.js";
 import { memoryExecutor } from "../scale/memory.js";
 import { pageContext } from "../scale/run.js";
+import { activeTags } from "../tags/builtins.js";
 import { SCENARIO_NOW, scenarioTraces } from "../testing/scenario.js";
 import { isStructuredSearch, memorySearchIds } from "./lists.js";
 import { searchMemory } from "./run.js";
@@ -27,6 +28,14 @@ describe("search on list pages", () => {
     const logs = runPageSync("logs", { ...pageContext("7d", SCENARIO_NOW, { q: "level:error", size: "500" }), searchIds: logIds }, ex);
     expect(logs.rows.length).toBeGreaterThan(0);
     expect(logs.rows.every((r) => logIds.includes(r.traceId))).toBe(true);
+  });
+
+  it("finds what a tag's search finds when the list search names the tag", () => {
+    const tags = activeTags([{ id: "t1", name: "broken", color: "red", query: "status:5xx", builtIn: false, enabled: true }]);
+    const ids = memorySearchIds(traces, "requests", "tag:broken", window, tags);
+    expect(ids.length).toBeGreaterThan(0);
+    expect(ids).toEqual(memorySearchIds(traces, "requests", "status:5xx", window));
+    expect(memorySearchIds(traces, "requests", "tag:broken", window)).toEqual([]);
   });
 
   it("counts every kind and spreads the chosen one over time", async () => {
