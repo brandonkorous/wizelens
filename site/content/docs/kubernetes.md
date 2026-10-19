@@ -1,6 +1,6 @@
 ---
 title: Hosts and Kubernetes
-description: Send host and Kubernetes metrics with the OpenTelemetry Collector. See CPU, memory, disks, and network per host, and nodes, workloads, and pods with restarts, out-of-memory kills, and pending pods.
+description: Send host and Kubernetes metrics with the OpenTelemetry Collector, and see hosts, nodes, workloads, and pods with restarts and OOM kills.
 ---
 
 WizeLens has no agent of its own. The standard OpenTelemetry Collector (the `contrib` build) reads your hosts and your
