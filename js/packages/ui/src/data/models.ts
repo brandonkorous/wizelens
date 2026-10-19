@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { memoryExecutor, type ModelOf, pageContext, type PageName, runPageSync, type SyncExecutor, type TimeRange, type Trace } from "@wizeworks/lens-core";
 import { useRoute } from "../routes";
 import { useChangeTick } from "./changes";
+import { useIssueTick } from "./issues";
 import { useHost, useRange } from "./host";
 import { getPeriod, parseWindow, periodParams, useComparePref, useWindowPref } from "./period";
 import { getScope, useServiceScope } from "./prefs";
@@ -82,7 +83,7 @@ function modelUrl(page: PageName, params: Record<string, string>, range: string)
 function useServerModel<P extends PageName>(page: P, params: Record<string, string>, enabled: boolean): PageModel<P> {
   const [range] = useRange();
   const { updatedMs } = useData();
-  const changes = useChangeTick();
+  const changes = `${useChangeTick()}.${useIssueTick()}`;
   // New data reloads at once when the host streams changes; the old numbers stay on screen until the new ones arrive.
   const tick = `${changes} ${Math.floor(updatedMs / (useHost().has("changes") ? STREAM_FALLBACK_MS : SERVER_REFRESH_MS))}`;
   const url = enabled ? modelUrl(page, params, range) : null;

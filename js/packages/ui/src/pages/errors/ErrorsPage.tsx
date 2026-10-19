@@ -60,7 +60,7 @@ function ErrorsBody({ stats }: { stats: ErrorsModel }) {
           <RecentExceptionsPanel stats={stats} selected={selected} />
           <ErrorsByServicePanel stats={stats} />
         </div>
-        <ErrorDetailsPanel groups={stats.groups} group={group} linked={!!linked} />
+        <ErrorDetailsPanel groups={stats.groups} group={group} linked={!!linked} issues={stats.issues} />
       </div>
     </>
   );

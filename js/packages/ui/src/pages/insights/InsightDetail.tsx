@@ -1,8 +1,9 @@
 import { X } from "lucide-react";
-import type { InsightGroup } from "@wizeworks/lens-core";
+import type { InsightGroup, IssueInfo } from "@wizeworks/lens-core";
 import { fmtAgo, fmtCount, fmtMs } from "../../format";
 import { hrefTo, setQuery, traceHref } from "../../routes";
 import { Badge, CopyButton, ImpactBadge } from "../../ui/Badges";
+import { IssueActions, IssueBadge } from "../../ui/IssueControls";
 import { KeyValues, Panel } from "../../ui/Panel";
 import { adviceFor, AREA_LABEL } from "./advice";
 
@@ -26,7 +27,7 @@ function Endpoints({ group }: { group: InsightGroup }) {
   );
 }
 
-export function InsightDetail({ group, now }: { group: InsightGroup; now: number }) {
+export function InsightDetail({ group, info, now }: { group: InsightGroup; info: IssueInfo | undefined; now: number }) {
   const advice = adviceFor(group);
   const example = group.area === "render" ? traceHref(group.exampleTraceId) : traceHref(group.exampleTraceId, "insights");
   return (
@@ -40,8 +41,10 @@ export function InsightDetail({ group, now }: { group: InsightGroup; now: number
       <div className="wl-side-meta">
         <ImpactBadge impact={group.impact} />
         <Badge tone="neutral">{AREA_LABEL[group.area]}</Badge>
+        <IssueBadge kind="insight" info={info} />
         <span>Last seen {fmtAgo(group.lastSeenMs, now)}</span>
       </div>
+      <IssueActions kind="insight" issueKey={group.key} info={info} />
       <p className="wl-insight-desc">{group.description}</p>
       <div className="wl-section-title">
         Pattern <CopyButton text={group.shape} label="Copy pattern" />

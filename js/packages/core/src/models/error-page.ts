@@ -5,6 +5,7 @@ import type { PageDef } from "../scale/needs.js";
 import { bucketStarts } from "../stats/common.js";
 import type { ErrorGroup } from "../stats/errors.js";
 import { CHART_BUCKETS } from "./database.js";
+import { type IssueInfo, issueInfos } from "./error-issues.js";
 import { errorGroupOf } from "./errors.js";
 import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
 import { byDesc, counter, counts, groupNeed, listNeed, listOf, rowsOf, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
@@ -25,6 +26,10 @@ export interface ErrorPageModel {
   requests: RequestItem[];
   /** The newest occurrences as traces, for errors outside requests (browser errors). */
   traces: TraceItem[];
+  /** Its status, first seen over all time, and assignee. */
+  issue: IssueInfo | null;
+  /** True when the host keeps issue states. */
+  hasIssues: boolean;
 }
 
 const keysOf = (group: string) => ({ filter: { keys: [group] } });
@@ -40,6 +45,7 @@ export const errorPage: PageDef<ErrorPageModel> = {
       groupNeed("ge", "err.ge", "cur", { filter: { prefix: joinKey(group, "") } }),
       seriesNeed("chart", "err.g", "cur", CHART_BUCKETS, keysOf(group)),
       seriesNeed("chart.prev", "err.g", "prev", CHART_BUCKETS, keysOf(group)),
+      groupNeed("life", "err.g", "all", keysOf(group)),
     ]);
   },
   followUp(_ctx, first) {
@@ -60,6 +66,8 @@ export const errorPage: PageDef<ErrorPageModel> = {
       endpoints: ge.map((r) => ({ endpoint: splitKey(r.key)[1]!, count: r.agg.n })),
       requests: listOf<RequestItem>(d, "requests").items,
       traces: listOf<TraceItem>(d, "traces").items,
+      issue: row ? (issueInfos(d, [row.key])[row.key] ?? null) : null,
+      hasIssues: !!d.issues,
     };
   },
 };

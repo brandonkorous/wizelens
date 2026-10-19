@@ -24,6 +24,10 @@ CREATE TABLE IF NOT EXISTS metrics (
   time_ms REAL NOT NULL, project TEXT NOT NULL DEFAULT '', env TEXT NOT NULL DEFAULT '', service TEXT NOT NULL,
   name TEXT NOT NULL, series_key TEXT NOT NULL, json TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS issues (
+  project TEXT NOT NULL, kind TEXT NOT NULL, key TEXT NOT NULL, status TEXT NOT NULL, until_ms REAL, resolved_ms REAL,
+  assignee TEXT, updated_ms REAL NOT NULL, PRIMARY KEY (project, kind, key)
+);
 CREATE INDEX IF NOT EXISTS ix_metrics_time ON metrics(time_ms);
 CREATE INDEX IF NOT EXISTS ix_metrics_name ON metrics(name, time_ms);
 CREATE INDEX IF NOT EXISTS ix_metrics_project ON metrics(project, time_ms);

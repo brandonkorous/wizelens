@@ -23,6 +23,7 @@ function kindWhere(q: SqlText, src: SqlSource, kind: RollupKind, f: KeyFilter | 
   if (f?.prefix !== undefined) out.push(q.startsWith("key", f.prefix));
   if (f?.keys) out.push(q.in("key", f.keys));
   for (const t of f?.contains ?? []) out.push(q.contains("lower(key)", lowerAscii(t)));
+  if (f?.exclude?.length) out.push(`NOT (${q.in("key", f.exclude)})`);
   if (f?.parts) {
     const pieces = f.parts.flatMap((p, i) => (i ? [KEY_SEP, p] : [p]));
     out.push(q.matches("key", pieces), `length(key) - length(replace(key, ${q.p(KEY_SEP)}, '')) = ${lit(f.parts.length - 1)}`);
