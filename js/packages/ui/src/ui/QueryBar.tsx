@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { checkSearch, type Suggestion, type TimeRange } from "@wizeworks/lens-core";
 import { fetchSuggest } from "../data/search";
 import { applySuggestion, type TokenAt, tokenAt } from "./queryToken";
+import "../styles/query.css";
 
 export interface QueryBarProps {
   value: string;

@@ -14,6 +14,8 @@ export interface Settler {
   run: ProjectRunner;
   /** Batches at once: one reads and computes while others wait on their writes. */
   depth: number;
+  /** Queues the next page of a stats rebuild, when one runs. */
+  refill?: () => Promise<void>;
 }
 
 /** Settle one batch of taken traces, one project at a time. A failure releases the ones not written yet. */
@@ -40,6 +42,7 @@ export async function settleClickHouse(s: Settler, now: number, o: SettleOptions
   const running: Promise<number>[] = [];
   const started: Promise<number>[] = [];
   let total = 0;
+  await s.refill?.();
   try {
     for (;;) {
       const due = s.queue.take(now, batch);

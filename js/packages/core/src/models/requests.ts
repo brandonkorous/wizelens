@@ -44,11 +44,11 @@ export function requestKeyFilter(f: RequestFilter): KeyFilter | undefined {
 
 const sortOf = (p: ModelParams) => ({ key: isSortKey(p.sort) ? p.sort : "time", desc: p.desc !== "0" });
 
-function needs(p: ModelParams): Need[] {
-  const f = filterFromQuery(p);
-  const filter = requestListFilter(f);
-  // Text, endpoint, user, and insights are not rollup keys: headlines then come from the matching rows.
-  const q = f.q.trim() !== "" || !!(f.endpoint || f.user || f.insights);
+function needs(p: ModelParams, ids?: readonly string[]): Need[] {
+  const f = ids ? { ...filterFromQuery(p), q: "" } : filterFromQuery(p);
+  const filter = { ...requestListFilter(f), ...(ids ? { traceIds: ids } : {}) };
+  // Text, a search, endpoint, user, and insights are not rollup keys: headlines then come from the matching rows.
+  const q = !!ids || f.q.trim() !== "" || !!(f.endpoint || f.user || f.insights);
   const out: Need[] = [
     ...META_NEEDS,
     listNeed("rows", "requests", "cur", { filter, sort: sortOf(p), page: pageParams(p, 15), ...(q ? { aggregate: { buckets: SPARK_BUCKETS } } : {}) }),
@@ -72,7 +72,7 @@ const distinct = (values: readonly string[]): string[] => [...new Set(values)].s
 
 /** The Requests page. Params: method, status, duration, service (a display name), q, endpoint, user, insights, sort, desc, page, size, trace. */
 export const requestsPage: PageDef<RequestsModel> = {
-  needs: (ctx) => needs(ctx.params),
+  needs: (ctx) => needs(ctx.params, ctx.searchIds),
   model(d) {
     const list = listOf<RequestItem>(d, "rows");
     const services = rowsOf(d, "opt.svc").filter((r) => (r.agg.c[2] ?? 0) > 0);

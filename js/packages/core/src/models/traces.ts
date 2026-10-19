@@ -92,7 +92,7 @@ const selectedNeed = (traceId: string | null): TraceNeed => ({ type: "trace", id
 /** The Traces page. Params: the filter (`traceFilterOf`), page, size, and trace (the selected id). */
 export const tracesPage: PageDef<TracesModel> = {
   needs: (ctx) => {
-    const f = traceFilterOf(ctx.params);
+    const f = ctx.searchIds ? { ...traceFilterOf(ctx.params), q: "" } : traceFilterOf(ctx.params);
     const service = f.service || undefined;
     const one = scoped(service);
     return uniqueNeeds([
@@ -104,7 +104,7 @@ export const tracesPage: PageDef<TracesModel> = {
       ...insightNeeds("cur", "all", service),
       ...insightNeeds("prev", "all", service),
       seriesNeed("ins.series", "req", "cur", BUCKETS, one),
-      listNeed("recent", "traces", "cur", { filter: traceListFilter(f), sort: { key: f.sort, desc: true }, page: pageParams(ctx.params, RECENT) }),
+      listNeed("recent", "traces", "cur", { filter: { ...traceListFilter(f), ...(ctx.searchIds ? { traceIds: ctx.searchIds } : {}) }, sort: { key: f.sort, desc: true }, page: pageParams(ctx.params, RECENT) }),
       groupNeed("bn.layer", "bn.layer", "cur", { top: true, ...one }),
       groupNeed("bn.owner", "bn.owner", "cur", one),
       listNeed("critical", "critical", "cur", { filter: service ? { service: rawService(service) } : {}, sort: { key: "duration", desc: true }, limit: CRITICAL }),

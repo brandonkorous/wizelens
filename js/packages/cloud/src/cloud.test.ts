@@ -53,7 +53,8 @@ describe("cloud data", () => {
     ({ cloud, url } = await startCloud());
     const { owner, orgId, projectId } = await setupOwner(cloud, url);
     const key = await ingestKey(owner, orgId, projectId);
-    const batch = { sender: { service: "orders-api", environment: "prod" }, spans: [span(T1, "1".repeat(16))] };
+    // A recent time: the retention job, a second after start, drops anything older than the organization keeps.
+    const batch = { sender: { service: "orders-api", environment: "prod" }, spans: [span(T1, "1".repeat(16), { startMs: Date.now() - 60_000 })] };
     const send = (auth: string) => fetch(`${url}/_wizelens/api/ingest`, { method: "POST", headers: { Authorization: `Bearer ${auth}` }, body: JSON.stringify(batch) });
     expect((await send("wl_ik_wrong")).status).toBe(401);
     expect((await send(key)).status).toBe(204);

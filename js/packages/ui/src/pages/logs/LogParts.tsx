@@ -3,12 +3,12 @@ import { type LogLevel, LOG_LEVELS, type LogRow, type LogsModel, VOLUME_GROUPS }
 import { fmtTime } from "../../format";
 import { hrefTo, setQuery, traceHref } from "../../routes";
 import { Badge, type Tone } from "../../ui/Badges";
-import { SearchInput, Select } from "../../ui/Controls";
+import { Select } from "../../ui/Controls";
+import { ListQueryBar } from "../../ui/ListQueryBar";
 import { Check } from "../../ui/Field";
 import { FilterChips } from "../../ui/FilterChips";
 import { Empty, KeyValues, Panel } from "../../ui/Panel";
 import { ServiceSelect } from "../../ui/ServiceSelect";
-import { useSearchText } from "../../ui/useSearchText";
 import { type Column } from "../../ui/Table";
 import { TimeChart } from "../../ui/TimeChart";
 
@@ -21,12 +21,11 @@ const LEVEL_OPTIONS: [string, string][] = [["trace", "All levels"], ["debug", "D
 /** Level (and that level only), service, text, and the category and trace a link or a click set. */
 export function LogFilters({ stats }: { stats: LogsModel }) {
   const { filter, services } = stats;
-  const [text, setText] = useSearchText(filter.query);
   return (
     <section className="wl-panel wl-filters">
       <Select label="Minimum level" value={filter.minLevel} options={LEVEL_OPTIONS} onChange={(v) => setQuery({ level: v === "trace" ? null : v, page: null })} />
       <ServiceSelect value={filter.service} services={services} />
-      <SearchInput value={text} placeholder="Search messages, categories, or trace IDs…" onChange={setText} />
+      <ListQueryBar value={filter.query} placeholder="Messages, categories, or trace IDs; or level:error service:api" />
       <Check label="This level only" disabled={filter.minLevel === "trace"} checked={!!filter.exact} onChange={(e) => setQuery({ exact: e.target.checked ? "1" : null, page: null })} />
       <button type="button" className="wl-btn" onClick={() => setQuery({ level: null, exact: null, category: null, trace: null, q: null, page: null })}>
         <RotateCcw aria-hidden="true" /> Reset
