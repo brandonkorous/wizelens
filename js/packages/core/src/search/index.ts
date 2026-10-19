@@ -10,4 +10,6 @@ export { numberOf } from "./match.js";
 export { docEntries, logOwner, spanItemOf, type DocEntry, type SearchItem, type SearchItems, type SpanItem } from "./items.js";
 export { clampLimit, compareEntries, decodeCursor, encodeCursor, pageOf, SEARCH_PAGE_MAX, searchMemory, type SearchCursor, type SearchPage, type SearchQuery } from "./run.js";
 export { searchRequestOf, suggestRequestOf, type SearchRequest, type SuggestRequestResult } from "./request.js";
+export { isStructuredSearch, LIST_SEARCH_KIND, LIST_SEARCH_MAX, memorySearchIds, searchTraceIds } from "./lists.js";
+export { searchSummary, type SearchSummary, SUMMARY_CAP } from "./summary.js";
 export { DATA_FIELDS, fieldSuggestions, FIXED_VALUES, suggestMemory, type Suggestion, type SuggestRequest } from "./suggest.js";
