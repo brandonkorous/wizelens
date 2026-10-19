@@ -73,6 +73,15 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - MCP `get_trace` and share links join the same way: a read key as far as its projects, a share link as far as its maker
   may read when it is opened (only the shared project once the maker leaves the organization).
 
+### Cloud MCP
+
+- **A read key for several projects connects**: before, the cloud MCP endpoint refused every call without `?project=`, so
+  an agent's tool link failed at start. Now `list_projects` names the key's projects, and every tool takes a `project`
+  argument (id or name). A key for one project, or `?project=`, works as before.
+- The cloud loads a project's recent traces only when a tool reads them, not on every MCP request.
+- Tests connect a real MCP client (initialize, tools/list, a call) to the cloud (also on ClickHouse), the hub, and the
+  Node and .NET add-ons.
+
 ### Cloud mail
 
 - `--mail-reply-to` (`WIZELENS_CLOUD_MAIL_REPLY_TO`) sets where replies go, for a sender address with no inbox (Resend and SMTP).

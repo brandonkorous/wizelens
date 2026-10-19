@@ -29,7 +29,8 @@ Then point any MCP client at the streamable HTTP endpoint:
 
 - **Hub:** start it with `--mcp`. One endpoint, `http://localhost:5960/_wizelens/mcp`, covers every service.
 - **Cloud:** make a **read key** on the Team page for the projects the agent may see, and send it as
-  `Authorization: Bearer wl_rk_...` to `/_wizelens/mcp`.
+  `Authorization: Bearer wl_rk_...` to `/_wizelens/mcp`. A key for one project reads that project. A key for several
+  adds `list_projects`, and every tool takes a `project` argument (its id or name). `?project=` fixes one project instead.
 
 ## Tools
 

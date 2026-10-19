@@ -238,7 +238,8 @@ all get only the kept traces. The **Settings** page shows the rate, so read coun
 Turn on the read-only MCP endpoint per service (`EnableMcp = true` / `enableMcp: true`), then point your MCP client at
 `http://localhost:<port>/_wizelens/mcp`. Secrets are redacted before anything is stored. On the hub, start it with `--mcp`:
 one endpoint (`http://localhost:5960/_wizelens/mcp`) then covers every service. On the cloud, make a **read key** on the Team
-page for the projects the agent may see, and send it as `Authorization: Bearer wl_rk_...`. Every call is in the audit log.
+page for the projects the agent may see, and send it as `Authorization: Bearer wl_rk_...`. A key for several projects needs
+no `?project=`: the agent calls `list_projects` and names a project on each tool call. Every call is in the audit log.
 
 ## Checks when something is missing
 

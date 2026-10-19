@@ -591,7 +591,7 @@ retention, and the audit log.
 | POST / GET / DELETE | `api/projects/{p}/shares[/{id}]` | Read: viewer; change: member |
 | GET | `api/shared/{token}` | Anyone with the link: `{ trace, expiresMs }` |
 | POST | `api/ingest`, `/v1/traces`, `/v1/logs`, `/v1/metrics` | Ingest key |
-| POST | `mcp?project=` | Read key (the project can be left out when the key has one) |
+| POST | `mcp?project=` | Read key. Without `?project=`, a key for one project reads it; a key for several adds `list_projects` and a `project` argument (id or name) on every tool |
 
 ### Page models (`serverStats`)
 

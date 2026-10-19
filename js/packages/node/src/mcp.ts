@@ -3,25 +3,31 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { registerFindTools } from "./mcp-find.js";
 import { registerMetricTools } from "./mcp-metrics.js";
-import { type Audit, type McpDataSource } from "./mcp-shared.js";
+import { projectsSource, registerProjectTools, singleSource } from "./mcp-projects.js";
+import { type McpDataSource, type McpProjects, type Source } from "./mcp-shared.js";
 import { registerSearchTools } from "./mcp-search.js";
 import { registerTraceTools } from "./mcp-traces.js";
 
-export type { McpDataSource } from "./mcp-shared.js";
+export type { McpDataSource, McpProject, McpProjects } from "./mcp-shared.js";
 
-function createServer(data: McpDataSource): McpServer {
-  const server = new McpServer({ name: "wizelens", version: data.version });
-  const audit: Audit = (tool, args) =>
-    data.audit(`[wizelens] mcp tool=${tool} service=${data.service} args=${JSON.stringify(args ?? {})}`);
-  registerTraceTools(server, data, audit);
-  registerFindTools(server, data, audit);
-  registerMetricTools(server, data, audit);
-  registerSearchTools(server, data, audit);
+const isProjects = (d: McpDataSource | McpProjects): d is McpProjects => "projects" in d;
+
+const MANY = "This key reads several projects. Call list_projects, then pass `project` to the other tools.";
+
+function createServer(data: McpDataSource | McpProjects): McpServer {
+  const many = isProjects(data) && data.projects.length > 1;
+  const server = new McpServer({ name: "wizelens", version: data.version }, many ? { instructions: MANY } : undefined);
+  const src: Source = isProjects(data) ? projectsSource(data) : singleSource(data);
+  if (isProjects(data)) registerProjectTools(server, data);
+  registerTraceTools(server, src);
+  registerFindTools(server, src);
+  registerMetricTools(server, src);
+  registerSearchTools(server, src);
   return server;
 }
 
-/** Handle one MCP streamable HTTP request in stateless mode. */
-export async function handleMcp(data: McpDataSource, req: IncomingMessage, res: ServerResponse, body: unknown): Promise<void> {
+/** Handle one MCP streamable HTTP request in stateless mode, for one data source or several projects. */
+export async function handleMcp(data: McpDataSource | McpProjects, req: IncomingMessage, res: ServerResponse, body: unknown): Promise<void> {
   const server = createServer(data);
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   res.on("close", () => {

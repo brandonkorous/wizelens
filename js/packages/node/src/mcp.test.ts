@@ -1,3 +1,5 @@
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createWizeLens } from "./index.js";
 import { type Running, startApp } from "./test/helpers.js";
@@ -53,6 +55,14 @@ describe("MCP", () => {
     expect(JSON.parse(bad.result.content[0]!.text)).toMatchObject({ start: 0, end: 11 });
     const fields = await rpc<Call>(5, "tools/call", { name: "search_fields", arguments: { prefix: "stat" } });
     expect(JSON.parse(fields.result.content[0]!.text)[0]).toMatchObject({ value: "status" });
+  });
+
+  it("connects like an agent: initialize, the GET stream, tools/list, and a call", async () => {
+    const client = new Client({ name: "test-agent", version: "1.0.0" });
+    await client.connect(new StreamableHTTPClientTransport(new URL(`${app.base}/_wizelens/mcp`)));
+    expect((await client.listTools()).tools.map((t) => t.name)).toContain("get_errors");
+    expect((await client.callTool({ name: "list_traces", arguments: {} })).isError).toBeFalsy();
+    await client.close();
   });
 
   it("is off unless enabled", async () => {
