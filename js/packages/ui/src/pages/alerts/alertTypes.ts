@@ -35,6 +35,8 @@ export interface AlertEvent {
   message: string;
   timeMs: number;
   delivery: string;
+  /** The problem a fired notice linked to, or null. */
+  problem: { id: string; title: string; url: string } | null;
 }
 
 export interface AlertsData {

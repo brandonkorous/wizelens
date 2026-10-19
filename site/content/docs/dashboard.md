@@ -1,6 +1,6 @@
 ---
 title: The dashboard
-description: Ten pages, one look, at /_wizelens on every service, the hub, and the cloud.
+description: Eleven pages, one look, at /_wizelens on every service, the hub, and the cloud.
 ---
 
 Pick a time range in the top bar. Every number compares itself with the range before it. Search everything with
@@ -13,6 +13,7 @@ Pick a time range in the top bar. Every number compares itself with the range be
 | Page | What you get |
 |---|---|
 | **Overview** | Requests, duration, SQL, error rate, and insights at a glance; request activity, timing breakdown, services, recent requests, latest insights |
+| **Problems** | Services and endpoints above their normal error rate, p95, or traffic, grouped into problems with a suspected cause. See [Problems](/docs/problems/) |
 | **Requests** | Filter by method, status, duration, service, or text; export to CSV; a side panel with summary, headers, response, tags, and timing |
 | **Traces** | One request as layers: browser, network, routing, handler, each service, each database, render. Plus bottlenecks and the slowest spans |
 | **Database** | Slow queries over time, time per operation, top slow queries, table hot spots |

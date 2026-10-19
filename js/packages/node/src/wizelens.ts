@@ -21,7 +21,7 @@ import { createErrorMiddleware, recordException, setUser, tag } from "./request-
 import { TraceStore } from "./store.js";
 import { isEnabled, servesDashboard } from "./mode.js";
 import { localMapLoader } from "./sourcemaps.js";
-import { createTracing, installGlobals } from "./tracing.js";
+import { createTracing, installGlobals, serviceVersionOf } from "./tracing.js";
 import type { WizeLens, WizeLensOptions } from "./types.js";
 import { resolveUiDir } from "./ui.js";
 
@@ -67,7 +67,7 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const persister = openPersister(store, options, dashboard);
   const selfEndpoints = new Set<string>(options.publicEndpoint ? [options.publicEndpoint] : []);
   const fetch = options.instrumentFetch ?? true;
-  const tracing = createTracing(store, { service, version: VERSION, redactKeys, fetch }, selfEndpoints);
+  const tracing = createTracing(store, { service, version: VERSION, serviceVersion: serviceVersionOf(options), redactKeys, fetch }, selfEndpoints);
   const logs = createLogSink(store, service, redactKeys, looseLogsOf(options.logs));
   const write = createLogWriter(logs, !!options.logToConsole);
   const getTrace = createGetTrace(store, selfEndpoints);

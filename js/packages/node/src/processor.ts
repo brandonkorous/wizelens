@@ -90,6 +90,8 @@ export class StoreSpanProcessor implements SpanProcessor {
     private readonly store: TraceStore,
     private readonly service: string,
     private readonly redactKeys: readonly string[],
+    /** The app's version, kept as `service.version` on spans that do not set one. */
+    private readonly serviceVersion?: string,
   ) {}
 
   onStart(_span: SdkSpan, _parentContext: Context): void {}
@@ -97,7 +99,9 @@ export class StoreSpanProcessor implements SpanProcessor {
   onEnd(span: ReadableSpan): void {
     // A local root has no parent, or a parent in another process.
     const parent = span.parentSpanContext;
-    this.store.addSpan(toContractSpan(span, this.service, this.redactKeys), !parent || !!parent.isRemote);
+    const out = toContractSpan(span, this.service, this.redactKeys);
+    if (this.serviceVersion && out.attributes["service.version"] === undefined) out.attributes["service.version"] = this.serviceVersion;
+    this.store.addSpan(out, !parent || !!parent.isRemote);
   }
 
   forceFlush(): Promise<void> {

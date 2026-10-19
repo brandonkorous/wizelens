@@ -159,6 +159,7 @@ interface SamplingInfo {
 | Category | Attributes |
 |---|---|
 | http.server | `http.request.method`, `http.route`, `url.path`, `url.query`, `http.response.status_code`, `server.address`, `client.address` (first `X-Forwarded-For` value, else the socket), `user_agent.original`, `http.request.header.{name}` / `http.response.header.{name}` (lower-case names, values joined with `, `, max 50 headers, 1 KB each, redacted), `http.request.body.size`, `http.response.body.size`, `wizelens.request.id`, `enduser.id` (when known), `wizelens.tag.{key}` (app tags), `wizelens.server.routed_ms` (when the runtime can tell), `wizelens.response.body` + `wizelens.response.body.truncated` (only with body capture on: text and JSON, first 16 KB) |
+| any span | `service.version`: the version of the app that ran it, so Problems can name a new release. Node: `serviceVersion`, else `OTEL_SERVICE_VERSION`, else `npm_package_version`. .NET: `ServiceVersion`, else `OTEL_SERVICE_VERSION`, else the entry assembly's informational version. OTLP: the resource's `service.version`, copied onto spans that have none |
 | internal | `wizelens.layer` = `handler` for a controller action or endpoint handler span |
 | gRPC (on http.server / http.client) | `rpc.system` = `grpc`, `rpc.service` (e.g. `orders.v1.Orders`), `rpc.method` (e.g. `GetOrder`), `rpc.grpc.status_code` (number). Name: `{service}/{method}`. A non-zero status code on the server is an error. |
 | messaging | Kind `producer` (send) or `consumer` (receive / process). `messaging.system` (`rabbitmq`, `kafka`, `servicebus`), `messaging.operation.type` (`send`, `receive`, `process`), `messaging.destination.name` (queue, topic, or exchange), `messaging.message.id`, `messaging.batch.message_count`, `messaging.message.body.size`. Name: `{operation} {destination}`. |
@@ -415,6 +416,7 @@ Server name `wizelens`. Disabled by default. Every call is written to the app lo
 | `search` | `q`, `kind?=requests`, `range?=24h`, `limit?=20`, `cursor?` | SearchPage (below); a bad `q` is an error with `start`/`end` |
 | `search_fields` | `field?`, `prefix?`, `range?=24h` | `{ value, help?, count? }[]` |
 | `get_overview` | `range?=24h` (1h, 6h, 24h, 7d) | Hub and cloud. `{ window, stillSettling, requests, errorRatePercent, avgDurationMs` (each `{ value, previous, changePercent }`), `needsAttention, services, exceptions, topErrors` (10, most first), `insights }`, from the overview, services, and errors page models. On a multi-project cloud reader with no `project`: `{ range, totals, projects[] }`, one report per project, those needing attention first |
+| `list_problems` | `range?=24h` (1h, 6h, 24h, 7d) | Hub and cloud. `{ window, baseline, problems, ongoing, list[] }` from the problems page model: each problem `{ id, title, started, ended, ongoing, services, suspectedCause, otherCauses, anomalies[] ({ metric, service, endpoint, started, ongoing, value, normal, alertsAbove }), moreAnomalies }`, ongoing first. On a multi-project cloud reader with no `project`: `{ range, projects[] }` |
 | `list_projects` | none | Cloud, when the reader has more than one project: `{ id, name }[]` |
 
 On the hub, the cloud, and the Node add-on, `list_traces`, `get_errors`, and `find_slow_queries` read the whole store
@@ -613,7 +615,7 @@ interface IngestBatch {
 | GET | `/_wizelens/api/models/{page}` | One page model (see "Page models"): `range`, `project`, `env`, and the page's own parameters. Ranges up to the hub's age limit. `serverStats` |
 | GET / POST | `/_wizelens/api/saved-searches?project=&kind=logs` | `{ searches: SavedSearch[] }`, or save `{ name, kind?: "logs", params }` (201 `{ search }`; `params` keeps only the Logs page filters `level`, `exact`, `service`, `category`, `q`, `pattern`, `origin`). `savedSearches` |
 | DELETE | `/_wizelens/api/saved-searches/{id}` | 204, or 404 |
-| POST | `/_wizelens/mcp` | With `--mcp`. The same tools, over the newest 2000 traces of every service, plus `list_metrics`, `get_metric`, and `get_overview` |
+| POST | `/_wizelens/mcp` | With `--mcp`. The same tools, over the newest 2000 traces of every service, plus `list_metrics`, `get_metric`, `get_overview`, and `list_problems` |
 | GET / POST | `/_wizelens/api/uptime?project=` | `UptimeList` / add a check (`project` in the body). See "Uptime checks". 404 with `--no-uptime` |
 | PATCH / DELETE | `/_wizelens/api/uptime/{id}` | Change (only the fields sent) or delete a check |
 | POST | `/_wizelens/api/uptime/{id}/run` | Run a check now; answers the check |
@@ -822,9 +824,10 @@ retention, and the audit log.
 
 Every dashboard page is one definition in `@wizeworks/lens-core` (`PAGES`: overview, requests, traces, database, rendering,
 errors, logs, `log-patterns` (the top 50 patterns of the Logs filter, with counts, change, and trend), `log-chart` (the lines of
-one log search per bucket, its total, and its change), services, service, insights, `uptime`, and `badges`, the sidebar counts).
-`uptime` reads the `svc.ep` rollups of the `wizelens-uptime` service: runs, failures, and average response time per check
-(`check`: one check id), per bucket, and in total against the window before. `service` is the full page of one service
+one log search per bucket, its total, and its change), services, service, insights, problems, `uptime`, and `badges`, the sidebar
+counts). `problems` is described under "Problems" below. `uptime` reads the `svc.ep` rollups of the `wizelens-uptime` service:
+runs, failures, and average response time per check (`check`: one check id), per bucket, and in total against the window before.
+`service` is the full page of one service
 (`service`: a Services row key such as `api:orders`, or a name): its numbers against the window before, traffic and latency over
 time, endpoints, callers, and for APIs and workers the top error groups, slowest requests, and newest log lines. A page says what it needs from its URL parameters (filters,
 sort, page, selected item): rollup groups and series over the chosen window and the window before it, list rows, or one trace.
@@ -869,6 +872,8 @@ Pages read small tables built from the stored traces, never the traces themselve
   `rollup_10s` (kept 6 h 10 min), `rollup_5m` (kept 50 h), `rollup_1h` (kept for the retention). Each row has `n`, `err`,
   `sum_v`, counters `c0`..`c5`, `first_ms`, `last_ms`, and one representative (`top`, `top_rank`) and newest trace ids (`ids`).
   `hist_<tier>` holds a log-bucket histogram per row (bins 4% wide, so percentiles are within 2%).
+  Since `FACTS_VERSION` 5, `svc.v` counts traces per service name and `service.version` (key `<service>\u001f<version>`),
+  so a page can tell when a version first sent data.
 - A query reads the coarsest tier that still gives a window enough buckets, and finer tiers at the window's edges; an edge
   bucket that no kept tier can split is weighted by its overlap. Series place each tier bucket by its midpoint, or spread it
   over the page buckets it overlaps when page buckets are not whole tier buckets.
@@ -903,6 +908,41 @@ The message says what happened: `Requests is 79 (above 5)` when fired, `(no long
 `(alerts when above 5)` for a test notice. `PATCH` changes only the fields it sends.
 Webhook URLs must be https and may not resolve to private, loopback, or link-local addresses, unless the cloud runs with
 `--allow-private-webhooks` (self-hosting on a private network).
+
+**Above normal** (`op: "above_normal"`) works on `error_rate`, `p95_ms`, and `requests`. The threshold is the sensitivity: how
+many spreads above normal (2 high, 3 medium, the default, 4 low; 1 to 10 allowed). The rule judges every Services row and every
+endpoint over its window against the same window in earlier weeks (see "Problems") and fires when any one is above normal;
+its value is that one's value. The message names it: `p95 duration is above normal on pay POST /api/charge: 412 ms (normal 31 ms,
+alerts above 46 ms)`. A notice carries `baseline: { normal, upper }` for these rules (else null). Every fired notice also carries
+`problem: { id, title, cause, url }` (or null): the problem near that time on the Problems page (on the breaching service, for
+above normal rules), with the suspected cause in one sentence and a dashboard link (`#/problems?project=&problem=&at=&service=`).
+Slack and email show it; events keep it (`problem: { id, title, url } | null` in `GET api/projects/{project}/alerts`).
+
+### Problems
+
+The `problems` page model finds anomalies with plain statistics, no model or training:
+
+- **Baselines** per Services row (`svc`) and per endpoint (`svc.ep`) for error rate (%), p95 (ms), and traffic (count per
+  bucket), read from the rollups. Buckets sit on a fixed grid (1 min for 15m, 2.5 min for 1h, 15 min for 6h, 30 min for 24h,
+  4 h for 7d, 12 h for 30d) from the bucket holding the window's start to the one holding now, so ids stay put as time moves.
+  Each bucket is compared with the same bucket in the 4 weeks before (the same hour of the week). While fewer than two of those
+  weeks have traces, it uses the 6 days before (the same hour of the day), for hosts that keep less. A key needs two earlier
+  windows with data before it is judged; until the page has two, `baseline.learning` is true.
+- **Above normal**: value > mean + k × spread, with k from `sensitivity` (high 2, medium 3, low 4) and the spread the larger of
+  the samples' standard deviation and a floor (traffic: √mean and 10% of the mean; error rate: the binomial deviation and
+  0.5 points; p95: 10% of the mean and 5 ms). A bucket needs 10 requests (traffic), 5 failures (error rate), or 10 items (p95).
+  Consecutive buckets above normal make one anomaly; it is ongoing while it reaches the newest bucket (or the one before,
+  while the newest has too little data).
+- **Problems**: anomalies that start within 15 minutes (or two buckets) of each other on the same service, or on services
+  joined in the call map (`edge`), become one problem. Its suspected cause, most telling first: a **release** (a `svc.v` version
+  first seen up to that span before the start, or in the first bucket, and not seen in the week before the window), a **new
+  error group** (first seen near the start, not in the week before), a **query** (an endpoint of a database row above normal),
+  or a **downstream** service (called by others in the problem, calling none of them).
+- Params: `sensitivity`, `problem` (an id), and `at` (ms) with `service` (a row key or name) to find one from a link.
+  The model: `{ meta, baseline: { mode: "week"|"day", samples, learning }, sensitivity, starts, bucketMs, problems (50 at most,
+  ongoing then newest), total, ongoing, anomalies, services, selected }`. A problem: `{ id, title, metric, startMs, endMs,
+  ongoing, services[], anomalies (20 at most, furthest over first, each with its peak and per-bucket values, normals, and
+  lines), anomalyCount, cause, causes[] }`.
 
 A rule can also watch one OpenTelemetry metric: `metric: "metric"`, `metricName` (required), `metricStat`
 (`last`, `avg`, `max`, `p95`, `p99`, or `rate`; default `avg`), and `metricService` (optional). The threshold is in the metric's
@@ -987,7 +1027,8 @@ Data tables are keyed by `project_id`. Times are `double precision` epoch ms, ex
 secrets (keys, shares, status page links) are stored as SHA-256 hashes only; Better Auth stores reset and confirm tokens hashed. Migration 8 added
 `fact_search` and `fact_attrs` (see "Search"). Migration 10 added `issues` (see "Issue states"). Migration 11 added
 `uptime_checks`, `uptime_incidents`, and `status_pages` (see "Uptime checks"). Migration 12 added `sourcemaps` (see "Source maps").
-Migration 13 added `fact_logs.pattern`, `projects.log_retention_days`, `alert_rules.log_search`, and `saved_searches`.
+Migration 13 added `fact_logs.pattern`, `projects.log_retention_days`, `alert_rules.log_search`, and `saved_searches`. Migration 14 added
+`alert_events.problem` (see "Problems").
 
 ### Telemetry stores (small mode and scale mode)
 

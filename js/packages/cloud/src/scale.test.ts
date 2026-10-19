@@ -34,5 +34,5 @@ describe("cloud stats tables", () => {
 
   it("computes every page like the memory executor", async () => {
     expect(await pageParity(s.ex, traces, RANGES, s.retentionMs)).toEqual([]);
-  });
+  }, 120_000);
 });

@@ -216,6 +216,10 @@ CREATE INDEX ix_metric_1h_time ON metric_1h (project_id, bucket_ms);
   UPTIME_MIGRATION,
   SOURCEMAPS_MIGRATION,
   LOGS_MIGRATION,
+  // Migration 14: an alert event names the problem it is part of (docs/CONTRACT.md, "Problems").
+  `
+ALTER TABLE alert_events ADD COLUMN problem TEXT NOT NULL DEFAULT '';
+`,
 ];
 
 export const MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS wizelens_migrations (version INTEGER PRIMARY KEY, applied_ms DOUBLE PRECISION NOT NULL)`;

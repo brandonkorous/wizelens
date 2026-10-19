@@ -19,7 +19,10 @@ export const ALERT_METRICS = {
 } as const;
 
 export type AlertMetric = keyof typeof ALERT_METRICS;
-export type AlertOp = ">" | "<";
+/** A fixed line (above or below the threshold), or "above_normal": above the baseline, with the threshold as the number of spreads. */
+export type AlertOp = ">" | "<" | "above_normal";
+
+export const isAlertOp = (v: unknown): v is AlertOp => v === ">" || v === "<" || v === "above_normal";
 
 export const isAlertMetric = (v: unknown): v is AlertMetric => typeof v === "string" && v in ALERT_METRICS;
 
@@ -75,7 +78,7 @@ export const alertPage = (metric: AlertMetric, search: ModelParams = {}): PageDe
 /** True when the value breaks the rule. No data never fires, except "requests < n" (traffic stopped). */
 export function alertBreached(metric: AlertMetric, op: AlertOp, value: number | null, threshold: number): boolean {
   const v = value ?? (metric === "requests" ? 0 : null);
-  if (v === null) return false;
+  if (v === null || op === "above_normal") return false;
   return op === ">" ? v > threshold : v < threshold;
 }
 
@@ -84,7 +87,7 @@ export type AlertNoticeState = "fired" | "resolved" | "test";
 
 /** "above 5%", "no longer above 5%", or "alerts when above 5%": the rule, worded for the notice. */
 export function conditionText(op: AlertOp, threshold: string, state: AlertNoticeState = "fired"): string {
-  const rule = `${op === ">" ? "above" : "below"} ${threshold}`;
+  const rule = op === "above_normal" ? "above normal" : `${op === ">" ? "above" : "below"} ${threshold}`;
   return state === "resolved" ? `no longer ${rule}` : state === "test" ? `alerts when ${rule}` : rule;
 }
 

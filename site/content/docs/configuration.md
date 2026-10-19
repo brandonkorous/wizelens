@@ -13,6 +13,7 @@ Pass options to `builder.Services.AddWizeLens(o => { ... })`.
 | `Dashboard` | `WIZELENS_DASHBOARD`, else Development only | Serve the dashboard, read API, and MCP. `false` is send-only. See [Production](/docs/production/). |
 | `BasePath` | `/_wizelens` | Where the dashboard and API live. |
 | `ServiceName` | app name | Name shown for this service. |
+| `ServiceVersion` | `OTEL_SERVICE_VERSION`, else the entry assembly's informational version | Kept on every span as `service.version`, so [Problems](/docs/problems/) can name a new release. |
 | `Storage` | `Sqlite`, or `Memory` when send-only | `Sqlite` (survives restarts) or `Memory`. |
 | `StoragePath` | `.wizelens/traces.db` | SQLite file, relative to the content root. |
 | `MaxTraces` | `2000` | Traces kept in memory and on disk. |
@@ -40,6 +41,7 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | Option | Default | Description |
 |---|---|---|
 | `serviceName` | *(required)* | Name shown for this service. |
+| `serviceVersion` | `OTEL_SERVICE_VERSION`, else `npm_package_version` | Kept on every span as `service.version`, so [Problems](/docs/problems/) can name a new release. |
 | `enabled` | `WIZELENS_ENABLED`, else on unless `NODE_ENV=production` | Turn WizeLens on or off. |
 | `dashboard` | `WIZELENS_DASHBOARD`, else on unless `NODE_ENV=production` | Serve the dashboard, read API, and MCP. `false` is send-only. See [Production](/docs/production/). |
 | `basePath` | `/_wizelens` | Where the dashboard and API live. |

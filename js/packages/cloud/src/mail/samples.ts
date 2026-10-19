@@ -25,6 +25,17 @@ const notice = (state: "fired" | "resolved") => ({
   url: `${APP}/#/alerts?project=p1`,
 });
 
+/** An "above normal" alert that is part of a problem. */
+const problemNotice = {
+  ...notice("fired"),
+  rule: "Checkout p95",
+  message: "p95 duration is above normal on pay POST /api/charge: 412 ms (normal 31 ms, alerts above 46 ms)",
+  value: 412,
+  threshold: 3,
+  baseline: { normal: 31, upper: 46 },
+  problem: { id: "k3x9a", title: "Error rate above normal on pay and 2 more", cause: "pay 2.0.0 was released as it started.", url: `${APP}/#/problems?project=p1&problem=k3x9a` },
+};
+
 const h = (value: number, previous: number): Headline => ({ value, previous, change: ((value - previous) / previous) * 100, series: [] });
 
 const WEEK: DigestData = {
@@ -54,6 +65,7 @@ export const SAMPLES: Record<string, EmailContent> = {
   invite: emails.invite("Olive", "Acme", "member", LINK),
   "alert-fired": emails.alert(notice("fired")),
   "alert-resolved": emails.alert(notice("resolved")),
+  "alert-problem": emails.alert(problemNotice),
   "security-password": security.passwordChanged(LINKS, AT),
   "security-email": security.emailChanged(LINKS, "olive@new.io", AT),
   "security-2fa-off": security.twoFactorChanged(LINKS, false, AT),

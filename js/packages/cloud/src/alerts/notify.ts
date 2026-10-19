@@ -13,6 +13,20 @@ export interface Notice {
   timeMs: number;
   /** Link to the project in the dashboard. */
   url: string;
+  /** For "above normal" rules: the normal value and the line it crossed. */
+  baseline?: { normal: number; upper: number } | null;
+  /** The problem this alert is part of, when one was found as it fired. */
+  problem?: NoticeProblem | null;
+}
+
+/** A problem card on the Problems page, named in a notice. */
+export interface NoticeProblem {
+  id: string;
+  title: string;
+  /** The suspected cause in one sentence, or null. */
+  cause: string | null;
+  /** Link to the problem in the dashboard. */
+  url: string;
 }
 
 type HttpChannel = Extract<Channel, { url: string }>;
@@ -43,14 +57,16 @@ export async function checkTarget(url: string, allowPrivate: boolean): Promise<s
 /** The notice in words, for Slack and email. */
 export function noticeLines(n: Notice): { subject: string; lines: string[] } {
   const verb = n.state === "fired" ? "Alert" : n.state === "resolved" ? "Resolved" : "Test";
-  return { subject: `${verb}: ${n.rule} (${n.project})`, lines: [`${verb}: ${n.rule} in ${n.project}.`, n.message] };
+  const problem = n.problem ? [`Part of a problem: ${n.problem.title}.${n.problem.cause ? ` Suspected cause: ${n.problem.cause}` : ""}`] : [];
+  return { subject: `${verb}: ${n.rule} (${n.project})`, lines: [`${verb}: ${n.rule} in ${n.project}.`, n.message, ...problem] };
 }
 
 function bodyOf(channel: HttpChannel, n: Notice): unknown {
   if (channel.kind === "webhook") return n;
   const icon = n.state === "fired" ? ":rotating_light:" : n.state === "resolved" ? ":white_check_mark:" : ":bell:";
   const { subject } = noticeLines(n);
-  return { text: `${icon} *${subject}*\n${n.message}\n<${n.url}|Open WizeLens>` };
+  const problem = n.problem ? `\nPart of a problem: <${n.problem.url}|${n.problem.title}>${n.problem.cause ? `. Suspected cause: ${n.problem.cause}` : ""}` : "";
+  return { text: `${icon} *${subject}*\n${n.message}${problem}\n<${n.url}|Open WizeLens>` };
 }
 
 async function post(c: HttpChannel, n: Notice, out: Outbox): Promise<string> {

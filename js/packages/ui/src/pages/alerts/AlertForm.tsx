@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from "react";
-import { ALERT_METRICS, type AlertMetric, type AlertOp } from "@wizeworks/lens-core";
+import { ALERT_METRICS, type AlertMetric, type AlertOp, isAnomalyMetric } from "@wizeworks/lens-core";
 import { Select } from "../../ui/Controls";
 import { Field, FormRow } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
@@ -17,7 +17,31 @@ const METRICS: [AlertMetric | "metric", string][] = [
 const OPS: [AlertOp, string][] = [
   [">", "is above"],
   ["<", "is below"],
+  ["above_normal", "is above normal"],
 ];
+/** How many spreads above normal an "above normal" rule fires at. */
+const SENSITIVITY: [string, string][] = [
+  ["2", "High sensitivity"],
+  ["3", "Medium sensitivity"],
+  ["4", "Low sensitivity"],
+];
+
+/** The threshold, or for "above normal" the sensitivity; a metric without a baseline turns "above normal" off. */
+function LineFields({ r, set }: { r: RuleDraft; set: <K extends keyof RuleDraft>(k: K) => (v: RuleDraft[K]) => void }) {
+  const normal = r.op === "above_normal";
+  const ops = isAnomalyMetric(r.metric) ? OPS : OPS.filter(([op]) => op !== "above_normal");
+  const spreads = SENSITIVITY.some(([v]) => Number(v) === r.threshold) ? String(r.threshold) : "3";
+  return (
+    <>
+      <Select label="Condition" value={r.op} options={ops} onChange={(op) => (set("op")(op), op === "above_normal" && set("threshold")(3))} />
+      {normal ? (
+        <Select label="Sensitivity" value={spreads} options={SENSITIVITY} onChange={(v) => set("threshold")(Number(v))} />
+      ) : (
+        <Field label="Threshold" type="number" step="any" required value={r.threshold} onChange={(e) => set("threshold")(Number(e.target.value))} />
+      )}
+    </>
+  );
+}
 
 export const EMPTY_RULE: RuleDraft = {
   name: "",
@@ -54,13 +78,15 @@ export function AlertForm({ initial, isNew = false, onSave, onCancel }: { initia
           <Field label="Environment (optional)" value={r.env} onChange={(e) => set("env")(e.target.value)} placeholder="All" />
         </FormRow>
         <FormRow>
-          <Select label="Metric" value={r.metric} options={METRICS} onChange={set("metric")} />
-          <Select label="Condition" value={r.op} options={OPS} onChange={set("op")} />
-          <Field label="Threshold" type="number" step="any" required value={r.threshold} onChange={(e) => set("threshold")(Number(e.target.value))} />
+          <Select label="Metric" value={r.metric} options={METRICS} onChange={(m) => (set("metric")(m), !isAnomalyMetric(m) && r.op === "above_normal" && set("op")(">"))} />
+          <LineFields r={r} set={set} />
           <Select label="Over the last" value={String(r.windowMs)} options={WINDOWS} onChange={(v) => set("windowMs")(Number(v))} />
         </FormRow>
         {r.metric === "metric" && <MetricRuleFields r={r} set={set} />}
         {r.metric === "log_count" && <LogRuleFields search={r.logSearch ?? {}} onChange={set("logSearch")} />}
+        {r.op === "above_normal" && (
+          <p className="wl-muted wl-small">Fires when any service or endpoint is above its normal: the same window at the same time in earlier weeks (or days, on hosts that keep less). The notice names it and links to its problem.</p>
+        )}
         <ChannelFields channel={channel} onChange={setChannel} />
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
         <FormRow>

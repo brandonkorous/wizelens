@@ -40,6 +40,7 @@ export const DOC_GROUPS: DocGroup[] = [
       { slug: "logs", title: "Logs" },
       { slug: "insights", title: "Insights" },
       { slug: "uptime", title: "Uptime checks" },
+      { slug: "problems", title: "Problems" },
     ],
   },
   {

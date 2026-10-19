@@ -1,0 +1,31 @@
+/* Problems page: problem cards, one problem's header, causes, and anomalies. */
+.wl-pb-page > .wl-panel { margin: 0 0 18px; }
+.wl-pb-foot { color: var(--wl-muted); font-size: 13px; }
+.wl-pb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.wl-pb-card { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border: 1px solid var(--wl-line); border-radius: 10px; background: var(--wl-surface); }
+.wl-pb-card.wl-pb-ongoing { border-left: 3px solid var(--wl-red); }
+.wl-pb-card-head { display: flex; align-items: center; gap: 10px; color: var(--wl-fg); text-decoration: none; min-width: 0; }
+.wl-pb-card-head:hover .wl-pb-title { color: var(--wl-accent-text); }
+.wl-pb-card-head svg { flex: none; color: var(--wl-muted); }
+.wl-pb-title { font-size: 15px; min-width: 0; word-break: break-word; }
+.wl-pb-when { margin-left: auto; color: var(--wl-muted); font-size: 13px; white-space: nowrap; }
+.wl-pb-cause { display: flex; align-items: baseline; gap: 8px; color: var(--wl-fg-2); font-size: 13.5px; text-decoration: none; min-width: 0; }
+.wl-pb-cause svg { flex: none; align-self: center; color: var(--wl-orange); }
+.wl-pb-cause strong { flex: none; color: var(--wl-fg); }
+.wl-pb-cause span { min-width: 0; word-break: break-word; }
+.wl-pb-cause:hover span { text-decoration: underline; }
+.wl-pb-nocause { margin: 0; color: var(--wl-muted); font-size: 13.5px; }
+.wl-pb-also { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--wl-line); }
+.wl-pb-also h3 { margin: 0; font-size: 13px; color: var(--wl-muted); font-weight: 600; }
+.wl-pb-head .wl-back { display: flex; width: max-content; }
+.wl-pb-head-title { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 22px; }
+.wl-pb-head-title span { min-width: 0; word-break: break-word; }
+.wl-pb-head .wl-pb-when { margin: 4px 0 0; white-space: normal; }
+.wl-pb-head .wl-stats { margin-bottom: 0; }
+.wl-pb-page .wl-panel-flush .wl-table th:first-child, .wl-pb-page .wl-panel-flush .wl-table td:first-child { padding-left: 20px; }
+.wl-pb-page .wl-panel-flush .wl-table th:last-child, .wl-pb-page .wl-panel-flush .wl-table td:last-child { padding-right: 20px; }
+.wl-pb-where { max-width: 420px; word-break: break-word; }
+@media (max-width: 640px) {
+  .wl-pb-card-head { flex-wrap: wrap; }
+  .wl-pb-when { margin-left: 0; white-space: normal; }
+}

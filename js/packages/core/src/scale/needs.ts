@@ -7,10 +7,10 @@ import type { LogLevel, Trace } from "../types.js";
 import { type Agg, avgOfAgg } from "./agg.js";
 import { type RollupKind, splitKey } from "./kinds.js";
 
-/** "all": everything the host keeps, for first and last seen over all time. */
-export type WindowRef = "cur" | "prev" | "all";
-/** Bucket counts the pages use for series. */
-export type BucketCount = 16 | 24 | 48;
+/** The page's window (cur), the one before it (prev), all kept data (all), the week before cur (before), cur moved back whole days or weeks, or a fixed span. */
+export type WindowRef = "cur" | "prev" | "all" | "before" | `cur-${number}d` | `cur-${number}w` | TimeWindow;
+/** Buckets in a series: most pages use 16, 24, or 48; Problems uses a fixed grid, so its count varies. */
+export type BucketCount = number;
 
 /** Which keys of a kind to read. All given conditions must hold. */
 export interface KeyFilter {
@@ -179,9 +179,20 @@ export interface SyncExecutor {
 
 export const emptyResults = (): NeedResults => ({ groups: {}, series: {}, lists: {}, traces: {} });
 
+const DAY_MS = 86_400_000;
+const SHIFT = /^cur-(\d+)([dw])$/;
+
 /** The window a need refers to. */
-export const windowOfRef = (ctx: Pick<PageContext, "window" | "prev" | "now">, ref: WindowRef): TimeWindow =>
-  ref === "cur" ? ctx.window : ref === "prev" ? ctx.prev : { from: 0, to: ctx.now };
+export function windowOfRef(ctx: Pick<PageContext, "window" | "prev" | "now">, ref: WindowRef): TimeWindow {
+  if (typeof ref === "object") return ref;
+  if (ref === "cur") return ctx.window;
+  if (ref === "prev") return ctx.prev;
+  if (ref === "all") return { from: 0, to: ctx.now };
+  if (ref === "before") return { from: ctx.window.from - 7 * DAY_MS, to: ctx.window.from };
+  const m = SHIFT.exec(ref);
+  const back = m ? Number(m[1]) * (m[2] === "w" ? 7 : 1) * DAY_MS : 0;
+  return { from: ctx.window.from - back, to: ctx.window.to - back };
+}
 
 /** Lower case for ASCII letters only, the way every SQL engine's lower() agrees. */
 export const lowerAscii = (s: string): string => s.replace(/[A-Z]/g, (c) => c.toLowerCase());

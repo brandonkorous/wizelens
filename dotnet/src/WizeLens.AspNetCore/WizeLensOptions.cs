@@ -31,6 +31,9 @@ public sealed class WizeLensOptions
     /// <summary>Name shown for spans from this app. Default: the application name.</summary>
     public string? ServiceName { get; set; }
 
+    /// <summary>This app's version, kept on its spans as <c>service.version</c> so Problems can name a new release. Default: OTEL_SERVICE_VERSION, else the entry assembly's informational version.</summary>
+    public string? ServiceVersion { get; set; }
+
     /// <summary>How many traces to keep (in memory and on disk). The oldest trace is dropped first. Default 2000.</summary>
     public int MaxTraces { get; set; } = 2000;
 
@@ -97,6 +100,15 @@ public sealed class WizeLensOptions
         "false" or "0" or "off" or "no" => false,
         _ => null,
     };
+
+    /// <summary>OTEL_SERVICE_VERSION, else the entry assembly's informational version, else null.</summary>
+    internal static string? DefaultServiceVersion()
+    {
+        var env = Environment.GetEnvironmentVariable("OTEL_SERVICE_VERSION");
+        if (!string.IsNullOrWhiteSpace(env)) return env.Trim();
+        var attr = System.Reflection.Assembly.GetEntryAssembly()?.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false);
+        return attr is { Length: > 0 } ? ((System.Reflection.AssemblyInformationalVersionAttribute)attr[0]).InformationalVersion : null;
+    }
 
     /// <summary>True when WizeLens is on and collects metrics.</summary>
     internal bool MetricsOn => IsEnabled && CaptureMetrics;
