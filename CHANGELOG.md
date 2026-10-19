@@ -35,6 +35,13 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   rows, built when traces settle (facts version 2, so stats rebuild once; cloud migration 8).
 - **MCP `search` and `search_fields`**: AI agents search with the same language, on the host's whole store.
 - Request searches also match the error messages of the request's spans.
+- **Indexed "contains" searches.** The hub keeps SQLite FTS5 trigram indexes over the search text of search rows,
+  requests, traces, and log lines, so words of 3 or more characters read an index instead of the whole time window (an
+  older hub file fills them once on start). The cloud on Postgres adds `pg_trgm` GIN indexes after it starts, without
+  blocking writes; a database without `pg_trgm` keeps scanning, with the same results.
+- **MCP `list_traces`, `get_errors`, and `find_slow_queries` read the whole store**, not the newest 500 traces, and take a
+  `range` (default 24h). `list_traces` also takes `q` in the search language. `find_slow_queries` returns the slowest
+  queries, not the newest. The newest traces, which the store indexes once they go quiet, are merged in.
 
 ### Cloud scale mode: telemetry in ClickHouse
 
@@ -45,6 +52,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - Everything that touches telemetry goes through one `TelemetryStore`. Retention is a TTL per row; deleting or clearing a project
   removes its rows there too.
 - **`wizelens-cloud copy-telemetry`** copies an existing database's telemetry into ClickHouse before switching.
+- **Faster on ClickHouse.** Time filters now use the sort key (the times were whole-number literals against Float64
+  columns, which ClickHouse cannot match to the key), so the overview page reads a fraction of the rows: 2.2 s to 0.7 s on
+  1.1 million spans in the load test. Settling writes its tables at once, in batches of 2,000, and keeps going while a
+  backlog lasts (461 to 946 traces/s on 4 CPUs).
+- **`scripts/load-test.mjs`** sends synthetic traffic to a cloud and times ingest, indexing, searches, and pages against
+  the plan's targets. `--ingest-per-minute` (`WIZELENS_CLOUD_INGEST_PER_MINUTE`) raises the per-key ingest limit for it.
 - `deploy/docker-compose.cloud.yml` has a `scale` profile with ClickHouse. The hosted cloud gets a ClickHouse StatefulSet with a
   nightly `BACKUP` to Azure Blob (`deploy/README.md`, "ClickHouse").
 

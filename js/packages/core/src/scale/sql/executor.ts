@@ -2,7 +2,7 @@
 import { inWindow } from "../../stats/common.js";
 import type { Trace } from "../../types.js";
 import { emptyResults, type Executor, type NeedResults, type PageContext, type TraceNeed, windowOfRef } from "../needs.js";
-import { collate, lit, num, type SqlSource, SqlText, scopeWhere } from "./dialect.js";
+import { collate, msLit, num, type SqlSource, SqlText, scopeWhere } from "./dialect.js";
 import { listSql } from "./list-sql.js";
 import { groupsSql, seriesSqlRows } from "./rollup-sql.js";
 
@@ -26,7 +26,7 @@ async function traceSql(o: SqlExecutorOptions, need: TraceNeed, ctx: PageContext
     }
   }
   const q = new SqlText(o.d);
-  const where = [...scopeWhere(q, o.scope), `start_ms >= ${lit(ctx.window.from)}`, `start_ms < ${lit(ctx.window.to)}`];
+  const where = [...scopeWhere(q, o.scope), `start_ms >= ${msLit(q.d, ctx.window.from)}`, `start_ms < ${msLit(q.d, ctx.window.to)}`];
   const [newest] = await o.run.all(`SELECT trace_id FROM fact_traces WHERE ${where.join(" AND ")} ORDER BY start_ms DESC, ${collate(o.d, "trace_id")} LIMIT 1`, q.params);
   return newest ? ((await o.loadTrace(String(newest.trace_id))) ?? null) : null;
 }

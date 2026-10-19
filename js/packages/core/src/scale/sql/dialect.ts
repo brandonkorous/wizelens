@@ -53,6 +53,9 @@ export function lit(v: number): string {
   return String(v);
 }
 
+/** A time (ms) written into SQL to compare with a time column. ClickHouse uses its sort key only when the literal is a Float64, as the column is. */
+export const msLit = (d: Dialect, v: number): string => (d.name === "ch" ? `toFloat64(${lit(v)})` : lit(v));
+
 /** Collects parameters in text order, so the same builder serves `$n` and `?`. */
 export class SqlText {
   readonly params: unknown[] = [];

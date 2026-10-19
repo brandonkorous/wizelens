@@ -7,7 +7,7 @@ import { loadTraces } from "./read.js";
 import { factObjects, tombstones, writeDeltas } from "./settle-rows.js";
 import { byProject, nextVer, type RetentionCache } from "./util.js";
 
-const BATCH = 500;
+const BATCH = 2_000;
 const BUDGET_MS = 2_000;
 
 type Row = Record<string, unknown>;
@@ -53,11 +53,10 @@ async function projectWork(ch: ChClient, project: string, items: readonly Dirty[
   return work;
 }
 
-/** Write one project's work: tombstones first, then live rows, rollups, and the settle states. */
+/** Write one project's work: facts (with tombstones) and rollups at once, then the settle states, so a failed write settles again. */
 async function writeWork(ch: ChClient, project: string, w: ProjectWork, ver: number, retentionMs: number): Promise<void> {
   const dead = await tombstones(ch, project, w.resettled, w.facts, ver);
-  for (const t of FACT_TABLES) await ch.insert(`${t}_t`, [...dead[t], ...w.facts[t]]);
-  await writeDeltas(ch, mergeDeltas(w.deltas), () => retentionMs);
+  await Promise.all([...FACT_TABLES.map((t) => ch.insert(`${t}_t`, [...dead[t], ...w.facts[t]])), writeDeltas(ch, mergeDeltas(w.deltas), () => retentionMs)]);
   await ch.insert("settle_state", w.states);
 }
 

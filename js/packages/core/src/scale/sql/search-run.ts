@@ -3,7 +3,7 @@ import type { SearchKind } from "../../search/ast.js";
 import type { SearchItems, SpanItem } from "../../search/items.js";
 import { clampLimit, pageOf, type SearchPage, type SearchQuery } from "../../search/run.js";
 import type { SpanCategory, SpanKind, SpanStatus } from "../../types.js";
-import { collate, type Dialect, lit, num, numOrNull, type SqlSource, SqlText, scopeWhere, strOrNull, textOf } from "./dialect.js";
+import { collate, type Dialect, lit, msLit, num, numOrNull, type SqlSource, SqlText, scopeWhere, strOrNull, textOf } from "./dialect.js";
 import { logRowOfRow, requestItemOfRow, traceItemOfRow } from "./list-sql.js";
 import { searchCond } from "./search-sql.js";
 import { servicesOf } from "./write-sql.js";
@@ -39,7 +39,7 @@ function searchSqlText<K extends SearchKind>(src: SqlSource, query: SearchQuery<
   const from = join.table ? `fact_search s JOIN ${join.table} r ON r.${project} = s.${project} AND ${join.on(src.d)}` : "fact_search s";
   const where = [
     ...scopeWhere(q, { ...src.scope, env: query.env ?? src.scope.env }, "s."), `s.kind = ${q.p(query.kind)}`,
-    `s.time_ms >= ${lit(query.window.from)}`, `s.time_ms < ${lit(query.window.to)}`,
+    `s.time_ms >= ${msLit(q.d, query.window.from)}`, `s.time_ms < ${msLit(q.d, query.window.to)}`,
     ...(query.cursor ? [cursorCond(q, query.cursor)] : []), searchCond(q, query.kind, query.node, src.scope.project),
   ];
   const cols = join.table ? "r.*, s.time_ms AS s_time, s.owner AS s_owner" : "s.*, s.time_ms AS s_time, s.owner AS s_owner";

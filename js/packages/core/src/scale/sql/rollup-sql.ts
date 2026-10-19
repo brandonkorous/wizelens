@@ -4,7 +4,7 @@ import { type Agg, emptyAgg, trimAgg } from "../agg.js";
 import { KEY_SEP, KIND_SPEC, type KindSpec, type RollupKind } from "../kinds.js";
 import type { AggOrder, GroupNeed, GroupRows, KeyFilter, SeriesNeed, SeriesRows } from "../needs.js";
 import { planSeries, planTotals, type Segment, spreadBucket, type Tier } from "../window.js";
-import { collate, floorOf, lit, num, type SqlSource, SqlText, scopeWhere } from "./dialect.js";
+import { collate, floorOf, lit, msLit, num, type SqlSource, SqlText, scopeWhere } from "./dialect.js";
 import { idsOfText } from "./write-sql.js";
 
 const COUNTERS = ["c0", "c1", "c2", "c3", "c4", "c5"];
@@ -38,7 +38,7 @@ function branches(q: SqlText, src: SqlSource, need: GroupNeed, b: Branches): str
   return b.segs
     .map((s) => {
       const cols = b.cols(s.weight);
-      const where = [...kindWhere(q, src, need.kind, need.filter), ...b.extra(q), `bucket_ms >= ${lit(s.from)}`, `bucket_ms < ${lit(s.to)}`];
+      const where = [...kindWhere(q, src, need.kind, need.filter), ...b.extra(q), `bucket_ms >= ${msLit(q.d, s.from)}`, `bucket_ms < ${msLit(q.d, s.to)}`];
       return `SELECT ${cols} FROM ${b.table(s.tier)} WHERE ${where.join(" AND ")}`;
     })
     .join(" UNION ALL ");
@@ -161,7 +161,7 @@ function seriesSql(q: SqlText, src: SqlSource, need: SeriesNeed, w: TimeWindow, 
   const b = plan.mode === "sql" ? floorOf(src.d, `((bucket_ms + ${lit(half)} - ${lit(w.from)}) / ${lit(w.to - w.from)}) * ${lit(need.buckets)}`) : "bucket_ms";
   const range = plan.mode === "sql"
     ? [`bucket_ms + ${lit(half)} >= ${lit(w.from)}`, `bucket_ms + ${lit(half)} < ${lit(w.to)}`]
-    : [`bucket_ms > ${lit(w.from - t.ms)}`, `bucket_ms < ${lit(w.to)}`];
+    : [`bucket_ms > ${msLit(q.d, w.from - t.ms)}`, `bucket_ms < ${msLit(q.d, w.to)}`];
   const cols = hist ? ["bin", "cnt"] : VALUES;
   const where = [...kindWhere(q, src, need.kind, need.filter), ...(hist ? [] : ["n > 0.5"]), ...range];
   const inner = `SELECT ${key}${b} AS b, ${cols.join(", ")} FROM ${hist ? t.hist : t.table} WHERE ${where.join(" AND ")}`;

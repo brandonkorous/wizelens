@@ -14,6 +14,8 @@ Usage: wizelens-cloud [options]
   --public-url <url>        The address people use, for links.          (WIZELENS_CLOUD_PUBLIC_URL)
   --signup <invite|open>    Who can make an account. Default invite.    (WIZELENS_CLOUD_SIGNUP)
   --retention-days <n>      Default for new organizations. Default 30.  (WIZELENS_CLOUD_RETENTION_DAYS)
+  --ingest-per-minute <n>   Ingest calls per key per minute. Default    (WIZELENS_CLOUD_INGEST_PER_MINUTE)
+                            1200.
   --allow-private-webhooks  Let alert webhooks reach private addresses. (WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1)
   --auth-secret <text>      Signs sessions, encrypts 2FA secrets. 32+   (WIZELENS_CLOUD_AUTH_SECRET)
                             characters; "2:new,1:old" rotates.
@@ -53,6 +55,7 @@ const OPTIONS = {
   "public-url": { type: "string" },
   signup: { type: "string" },
   "retention-days": { type: "string" },
+  "ingest-per-minute": { type: "string" },
   "allow-private-webhooks": { type: "boolean" },
   "auth-secret": { type: "string" },
   "smtp-url": { type: "string" },
@@ -83,6 +86,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CloudOp
     publicUrl: text(a["public-url"], env.WIZELENS_CLOUD_PUBLIC_URL),
     signup: signupOf(a.signup ?? env.WIZELENS_CLOUD_SIGNUP),
     retentionDays: int(a["retention-days"] ?? env.WIZELENS_CLOUD_RETENTION_DAYS),
+    ingestPerMinute: int(a["ingest-per-minute"] ?? env.WIZELENS_CLOUD_INGEST_PER_MINUTE),
     allowPrivateWebhooks: a["allow-private-webhooks"] ?? env.WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS === "1",
     authSecret: text(a["auth-secret"], env.WIZELENS_CLOUD_AUTH_SECRET),
     smtpUrl: text(a["smtp-url"], env.WIZELENS_CLOUD_SMTP_URL),

@@ -8,7 +8,7 @@ import type { LogLevel, Trace } from "../../types.js";
 import { type Agg, emptyAgg } from "../agg.js";
 import type { RequestItem, TraceItem } from "../facts-lists.js";
 import type { ListFilter, ListNeed, ListRows } from "../needs.js";
-import { boolOf, collate, floorOf, lit, num, numOrNull, type SqlSource, SqlText, scopeWhere, strOrNull, whereOf } from "./dialect.js";
+import { boolOf, collate, floorOf, lit, msLit, num, numOrNull, type SqlSource, SqlText, scopeWhere, strOrNull, whereOf } from "./dialect.js";
 import { servicesOf } from "./write-sql.js";
 
 type Row = Record<string, unknown>;
@@ -124,7 +124,7 @@ function criticalOfRow(r: Row): CriticalSpan {
 }
 
 function whereFor(q: SqlText, src: SqlSource, t: TableSql, f: ListFilter, w: TimeWindow): string {
-  const conds = [...scopeWhere(q, src.scope), `${t.time} >= ${lit(w.from)}`, `${t.time} < ${lit(w.to)}`];
+  const conds = [...scopeWhere(q, src.scope), `${t.time} >= ${msLit(q.d, w.from)}`, `${t.time} < ${msLit(q.d, w.to)}`];
   if (f.traceId) conds.push(`trace_id = ${q.p(f.traceId)}`);
   return whereOf([...conds, ...t.where(q, f)]);
 }

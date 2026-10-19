@@ -323,13 +323,17 @@ Server name `wizelens`. Disabled by default. Every call is written to the app lo
 
 | Tool | Args | Returns |
 |---|---|---|
-| `list_traces` | `limit?=20`, `minDurationMs?`, `status?` | TraceSummary[] |
+| `list_traces` | `limit?=20`, `minDurationMs?`, `status?`, `q?`, `range?=24h` | Node hosts: TraceItem[] (`{ traceId, path, durationMs, health, status, services, startMs, spanCount, slow }`); .NET: TraceSummary[] |
 | `get_trace` | `traceId`, `federate?=true` | Trace (spans + logs, redacted) |
-| `find_slow_queries` | `thresholdMs?=100`, `limit?=20` | `{ traceId, spanId, durationMs, query, service }[]` |
+| `find_slow_queries` | `thresholdMs?=100`, `limit?=20`, `range?=24h` (Node hosts) | `{ traceId, spanId, durationMs, query, service }[]`, slowest first |
 | `find_n_plus_one` | `minRepeats?=5` | `{ traceId, kind: "db"\|"http", shape, count, totalMs }[]` |
-| `get_errors` | `limit?=20` | `{ traceId, spanId, service, name, message, type, stack }[]` |
+| `get_errors` | `limit?=20`, `range?=24h` (Node hosts) | `{ traceId, spanId, service, name, message, type, stack }[]` |
 | `search` | `q`, `kind?=requests`, `range?=24h`, `limit?=20`, `cursor?` | SearchPage (below); a bad `q` is an error with `start`/`end` |
 | `search_fields` | `field?`, `prefix?`, `range?=24h` | `{ value, help?, count? }[]` |
+
+On the hub, the cloud, and the Node add-on, `list_traces`, `get_errors`, and `find_slow_queries` read the whole store
+through search (the newest traces in memory are merged in, since the store indexes a trace once it goes quiet), not the
+newest 500 traces. `find_slow_queries` reads up to 5,000 matching queries, newest first, and returns the slowest.
 
 ## Search (v0.9)
 

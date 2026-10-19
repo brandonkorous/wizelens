@@ -2,7 +2,7 @@
 import { isSearchField } from "../../search/ast.js";
 import { DATA_FIELDS, fieldSuggestions, fixedSuggestions, type Suggestion, type SuggestRequest, topCounts } from "../../search/suggest.js";
 import { KEY_SEP } from "../kinds.js";
-import { collate, likeEscape, lit, lowerOf, num, type SqlSource, SqlText, scopeWhere } from "./dialect.js";
+import { collate, likeEscape, lit, lowerOf, msLit, num, type SqlSource, SqlText, scopeWhere } from "./dialect.js";
 
 const COLUMN: Record<string, string> = { service: "service", env: "env", name: "name", method: "method", path: "path", route: "route", category: "category", user: "end_user" };
 
@@ -14,7 +14,7 @@ function attrSql(q: SqlText, src: SqlSource, r: SuggestRequest): string {
   const key = r.field?.slice(1);
   const pick = key ? "a.value" : "a.key";
   const where = [
-    ...scopeWhere(q, src.scope, "s."), "s.kind = 'spans'", `s.time_ms >= ${lit(r.window.from)}`, `s.time_ms < ${lit(r.window.to)}`,
+    ...scopeWhere(q, src.scope, "s."), "s.kind = 'spans'", `s.time_ms >= ${msLit(q.d, r.window.from)}`, `s.time_ms < ${msLit(q.d, r.window.to)}`,
     ...(key ? [`a.key = ${q.p(key)}`] : []), `${lowerOf(q.d, pick)} LIKE ${q.p(prefixLike(key ? r.prefix : r.prefix.replace(/^@/, "")))}${likeEscape(q.d)}`,
   ];
   const project = src.d.project;
@@ -25,7 +25,7 @@ function attrSql(q: SqlText, src: SqlSource, r: SuggestRequest): string {
 /** One field's values on the rows of its kind in the window. */
 function fieldSql(q: SqlText, src: SqlSource, r: SuggestRequest, kind: string, col: string): string {
   const where = [
-    ...scopeWhere(q, src.scope, "s."), `s.kind = ${q.p(kind)}`, `s.time_ms >= ${lit(r.window.from)}`, `s.time_ms < ${lit(r.window.to)}`,
+    ...scopeWhere(q, src.scope, "s."), `s.kind = ${q.p(kind)}`, `s.time_ms >= ${msLit(q.d, r.window.from)}`, `s.time_ms < ${msLit(q.d, r.window.to)}`,
     `s.${col} IS NOT NULL`, `s.${col} <> ''`, `${lowerOf(q.d, `s.${col}`)} LIKE ${q.p(prefixLike(col === "service" ? KEY_SEP + r.prefix : r.prefix))}${likeEscape(q.d)}`,
   ];
   return `SELECT s.${col} AS v, COUNT(*) AS n FROM fact_search s WHERE ${where.join(" AND ")} GROUP BY s.${col} ORDER BY n DESC, ${collate(src.d, `s.${col}`)} LIMIT ${lit(r.limit)}`;
