@@ -52,13 +52,13 @@ internal sealed class WizeLensSearchTools(TraceStore store, IHostEnvironment env
     }
 
     /// <summary>The window of a named range back from now (default 24h), or null when there is no such range.</summary>
-    private static SearchWindow? WindowOf(string? range)
+    internal static SearchWindow? WindowOf(string? range)
     {
         var now = (double)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         return SearchRequests.RangeMs(range ?? "24h") is { } ms ? new SearchWindow(now - ms, now) : null;
     }
 
-    private static string UnknownRange(string range) =>
+    internal static string UnknownRange(string range) =>
         $"Unknown range \"{range}\". Use {string.Join(", ", SearchRequests.TimeRanges.Select(r => r.Name))}.";
 
     private static CallToolResult Ok(object value) => new() { Content = [new TextContentBlock { Text = Json(value) }] };

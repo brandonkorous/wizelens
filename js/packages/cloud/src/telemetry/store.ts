@@ -28,6 +28,8 @@ export interface SettleOptions {
   defaultRetentionDays?: number;
   batch?: number;
   budgetMs?: number;
+  /** Called for each project whose stats a batch wrote. */
+  onSettled?: (projectId: string) => void;
 }
 
 /** One telemetry backend. Postgres ("small mode") and ClickHouse ("scale mode") answer the same calls with the same results. */

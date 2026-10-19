@@ -21,6 +21,11 @@ function remember(key: string, value: unknown, now: number): void {
   cache.set(key, { atMs: now, value });
 }
 
+/** Drop a project's cached pages when it gets new data, so the dashboard's reload sees it. */
+export function forgetModels(projectId: string): void {
+  for (const key of cache.keys()) if (key.startsWith(`["${projectId}",`)) cache.delete(key);
+}
+
 /** Model parameters: every query value except the ones that pick the data. */
 const paramsOf = (url: URL): Record<string, string> => Object.fromEntries([...url.searchParams].filter(([k]) => !RESERVED.has(k)).sort());
 

@@ -38,7 +38,8 @@ export function startJobs(app: CloudApp): () => void {
     every("retention", HOUSEKEEPING_MS, () => app.telemetry.prune(now())),
     every("services", HOUSEKEEPING_MS, () => pruneServices(app.db, now())),
     every("settle", SETTLE_MS, async () => {
-      while ((await app.telemetry.settle(now(), { defaultRetentionDays: app.config.retentionDays })) >= SETTLE_BACKLOG);
+      const o = { defaultRetentionDays: app.config.retentionDays, onSettled: (p: string) => app.changes.emit(p) };
+      while ((await app.telemetry.settle(now(), o)) >= SETTLE_BACKLOG);
     }),
     every("rollups", ROLLUP_PRUNE_MS, () => app.telemetry.pruneRollups(now())),
     every("sessions", HOUSEKEEPING_MS, () => pruneAuthRows(app.db)),

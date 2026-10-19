@@ -8,6 +8,7 @@ import { parseIngest } from "./ingest.js";
 import type { ResolvedHubOptions } from "./options.js";
 import { metricParams, metricsPage, rangeOf } from "./metrics-read.js";
 import { sendPageModel } from "./models-api.js";
+import { streamChanges } from "./changes-api.js";
 import { sendSearch, sendSuggest } from "./search-api.js";
 import { countRows, distinctOf, listServices, type TraceQuery } from "./store-read.js";
 
@@ -24,7 +25,7 @@ const num = (p: URLSearchParams, k: string) => (p.has(k) && Number.isFinite(Numb
 export function hubInfo(c: ApiContext): ServiceInfo {
   return {
     mode: "hub",
-    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search"],
+    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes"],
     service: c.o.name,
     version: c.version,
     runtime: `node ${process.version} · lens-node ${NODE_VERSION}`,
@@ -90,6 +91,7 @@ export async function handleApi(c: ApiContext, sub: string, req: IncomingMessage
     return sendJson(res, 200, full ? c.data.traces(q) : c.data.summaries(q));
   }
   if (sub === "api/search" && method === "GET") return sendSearch(c, url.searchParams, res);
+  if (sub === "api/changes" && method === "GET") return streamChanges(c, req, res);
   if (sub === "api/search/suggest" && method === "GET") return sendSuggest(c, url.searchParams, res);
   if (sub === "api/models/metrics" && method === "GET") return sendJson(res, 200, metrics(c, url.searchParams));
   if (sub.startsWith("api/models/") && method === "GET") return sendPageModel(c, sub.slice("api/models/".length), url.searchParams, res);

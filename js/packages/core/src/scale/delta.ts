@@ -64,12 +64,12 @@ function sideDelta(s: StoredContributions | null, sign: 1 | -1, now: number, ret
   }
 }
 
-/** New minus old on all three tiers. Buckets a tier no longer keeps are skipped. Tops and ids come only from `next`. */
+/** New minus old on all three tiers, not yet summed: callers merge a whole batch with `mergeDeltas`. Buckets a tier no longer keeps are skipped. Tops and ids come only from `next`. */
 export function settleDelta(old: StoredContributions | null, next: StoredContributions | null, now: number, retentionMs: number): SettleDelta {
   const out: SettleDelta = { rollup: [], hist: [] };
   sideDelta(old, -1, now, retentionMs, out);
   sideDelta(next, 1, now, retentionMs, out);
-  return mergeDeltas([out]);
+  return out;
 }
 
 const rowId = (d: Omit<HistDelta, "bin" | "cnt">) => `${d.tier}\u0000${d.project}\u0000${d.env}\u0000${d.kind}\u0000${d.key}\u0000${d.bucket}`;
@@ -82,26 +82,24 @@ function mergeIds(a: RollupDelta, b: RollupDelta): string {
   return ids.slice(0, KIND_SPEC[a.kind].ids).join(" ");
 }
 
-function mergeRow(a: RollupDelta, b: RollupDelta): RollupDelta {
-  const pick = <T>(x: T | null, y: T | null, f: (p: T, q: T) => T) => (x === null ? y : y === null ? x : f(x, y));
-  const top = (b.topRank ?? -Infinity) > (a.topRank ?? -Infinity) ? { top: b.top, topRank: b.topRank } : { top: a.top, topRank: a.topRank };
-  return {
-    ...a,
-    n: a.n + b.n,
-    err: a.err + b.err,
-    sum: a.sum + b.sum,
-    c: a.c.map((v, i) => v + (b.c[i] ?? 0)),
-    firstMs: pick(a.firstMs, b.firstMs, Math.min),
-    lastMs: pick(a.lastMs, b.lastMs, Math.max),
-    ...top,
-    ids: mergeIds(a, b),
-  };
+const idCount = (ids: string): number => (ids ? ids.split(" ").length : 0);
+
+/** Add `b` into `a`, which the merge owns. Ids merge first, while the last times still say which side is newer. */
+function addInto(a: RollupDelta, b: RollupDelta): void {
+  if (b.ids && (later(a.lastMs, b.lastMs) || idCount(a.ids) < KIND_SPEC[a.kind].ids)) a.ids = mergeIds(a, b);
+  a.n += b.n;
+  a.err += b.err;
+  a.sum += b.sum;
+  for (let i = 0; i < a.c.length; i++) a.c[i]! += b.c[i] ?? 0;
+  if (b.firstMs !== null) a.firstMs = a.firstMs === null ? b.firstMs : Math.min(a.firstMs, b.firstMs);
+  if (b.lastMs !== null) a.lastMs = a.lastMs === null ? b.lastMs : Math.max(a.lastMs, b.lastMs);
+  if ((b.topRank ?? -Infinity) > (a.topRank ?? -Infinity)) (a.top = b.top), (a.topRank = b.topRank);
 }
 
 const isEmpty = (d: RollupDelta) =>
   [d.n, d.err, d.sum, ...d.c].every((v) => Math.abs(v) < EPS) && d.firstMs === null && d.topRank === null && d.ids === "";
 
-/** Sum the deltas of a whole batch per (tier, scope, kind, key, bucket), and drop changes that net to nothing. */
+/** Sum the deltas of a whole batch per (tier, scope, kind, key, bucket), and drop changes that net to nothing. Inputs are not changed. */
 export function mergeDeltas(parts: readonly SettleDelta[]): SettleDelta {
   const rollup = new Map<string, RollupDelta>();
   const hist = new Map<string, HistDelta>();
@@ -109,12 +107,14 @@ export function mergeDeltas(parts: readonly SettleDelta[]): SettleDelta {
     for (const d of p.rollup) {
       const id = rowId(d);
       const had = rollup.get(id);
-      rollup.set(id, had ? mergeRow(had, d) : d);
+      if (had) addInto(had, d);
+      else rollup.set(id, { ...d, c: [...d.c] });
     }
     for (const h of p.hist) {
       const id = `${rowId(h)}\u0000${h.bin}`;
       const had = hist.get(id);
-      hist.set(id, had ? { ...had, cnt: had.cnt + h.cnt } : h);
+      if (had) had.cnt += h.cnt;
+      else hist.set(id, { ...h });
     }
   }
   return { rollup: [...rollup.values()].filter((d) => !isEmpty(d)), hist: [...hist.values()].filter((h) => Math.abs(h.cnt) >= EPS) };

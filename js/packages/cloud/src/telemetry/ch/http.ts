@@ -40,7 +40,11 @@ function endpointOf(url: string): Endpoint {
   return { base: `${u.protocol}//${u.host}/`, headers, database };
 }
 
-const SETTINGS = { prefer_column_name_to_alias: "1", output_format_json_quote_64bit_integers: "0", output_format_json_quote_denormals: "0", date_time_output_format: "iso" };
+// Column statistics stay off: they gave nothing here, and one read failed with UNKNOWN_CODEC while loading them under load.
+const SETTINGS = {
+  prefer_column_name_to_alias: "1", output_format_json_quote_64bit_integers: "0", output_format_json_quote_denormals: "0", date_time_output_format: "iso",
+  use_statistics: "0", use_statistics_for_part_pruning: "0", allow_statistics_optimize: "0",
+};
 
 const refused = (err: unknown) => (err as { cause?: { code?: string } }).cause?.code === "ECONNREFUSED";
 

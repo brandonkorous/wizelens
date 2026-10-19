@@ -70,7 +70,7 @@ describe("settleDelta", () => {
     const both = mergeDeltas([settleDelta(old, next, SCENARIO_NOW, RETENTION), settleDelta(next, old, SCENARIO_NOW, RETENTION)]);
     for (const r of both.rollup) for (const v of [r.n, r.err, r.sum, ...r.c]) expect(Math.abs(v)).toBeLessThan(1e-9);
     expect(both.hist).toEqual([]);
-    expect(settleDelta(old, old, SCENARIO_NOW, RETENTION).rollup.every((r) => r.n === 0 && r.firstMs !== null)).toBe(true);
+    expect(mergeDeltas([settleDelta(old, old, SCENARIO_NOW, RETENTION)]).rollup.every((r) => r.n === 0 && r.firstMs !== null)).toBe(true);
   });
 
   it("subtracts an old contribution without touching first, last, or top", () => {

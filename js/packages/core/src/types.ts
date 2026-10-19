@@ -82,7 +82,9 @@ export type Capability =
   | "metrics"
   | "serverMetrics"
   /** The host answers `api/search` and `api/search/suggest` (docs/SEARCH-PLAN.md). */
-  | "search";
+  | "search"
+  /** The host streams `api/changes` (server-sent events) when a project gets new stats, so pages reload at once. */
+  | "changes";
 
 /** What an in-app add-on offers today. Also the default when a host does not say. */
 export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];

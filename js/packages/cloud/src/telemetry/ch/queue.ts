@@ -17,6 +17,8 @@ const RECOVER_MS = 6 * 3_600_000;
 
 export class SettleQueue {
   private readonly items = new Map<string, Dirty>();
+  /** Keys a settle batch holds, so an overlapping batch skips them. */
+  private readonly busy = new Set<string>();
 
   /** A trace got new parts. */
   touch(project: string, traceId: string, env: string, now: number): void {
@@ -28,13 +30,26 @@ export class SettleQueue {
 
   /** Traces quiet for a while, or busy ones not settled for long: newest first. */
   due(now: number, limit: number): Dirty[] {
-    const ready = [...this.items.values()].filter((d) => d.settledMs < d.updatedMs && (d.updatedMs <= now - QUIET_MS || d.settledMs <= now - BUSY_MS));
-    return ready.sort((a, b) => b.updatedMs - a.updatedMs).slice(0, limit);
+    const ready = [...this.items.entries()].filter(([k, d]) => !this.busy.has(k) && d.settledMs < d.updatedMs && (d.updatedMs <= now - QUIET_MS || d.settledMs <= now - BUSY_MS));
+    return ready.map(([, d]) => d).sort((a, b) => b.updatedMs - a.updatedMs).slice(0, limit);
+  }
+
+  /** Due traces for one batch, held until settled or released. Copies, so a write that lands meanwhile keeps its trace dirty. */
+  take(now: number, limit: number): Dirty[] {
+    const out = this.due(now, limit).map((d) => ({ ...d }));
+    for (const d of out) this.busy.add(`${d.project} ${d.traceId}`);
+    return out;
+  }
+
+  /** A failed batch: its traces wait for the next run. */
+  release(items: readonly Dirty[]): void {
+    for (const d of items) this.busy.delete(`${d.project} ${d.traceId}`);
   }
 
   /** Settled as of `updatedMs`: done unless something newer came in since. */
   settled(d: Dirty, updatedMs: number): void {
     const k = `${d.project} ${d.traceId}`;
+    this.busy.delete(k);
     const it = this.items.get(k);
     if (!it) return;
     if (it.updatedMs <= updatedMs) this.items.delete(k);
@@ -49,7 +64,7 @@ export class SettleQueue {
   }
 
   clear(project?: string): void {
-    for (const [k, d] of this.items) if (!project || d.project === project) this.items.delete(k);
+    for (const [k, d] of this.items) if (!project || d.project === project) (this.items.delete(k), this.busy.delete(k));
   }
 
   get size(): number {
