@@ -2,10 +2,10 @@ import { useMemo } from "react";
 import { Bell, BellRing, Lightbulb, TriangleAlert } from "lucide-react";
 import { errorInfo, isErrorSpan, requestRows, type Trace } from "@wizeworks/lens-core";
 import { useHost } from "../data/host";
-import { getScope, useSeenPref } from "../data/prefs";
+import { useSeenPref } from "../data/prefs";
 import { useApi } from "../data/useApi";
-import type { AlertsData } from "../pages/alerts/alertTypes";
-import { hrefTo } from "../routes";
+import { type AlertsData, useAlertsApi } from "../pages/alerts/alertTypes";
+import { alertHref } from "../routes";
 import { fmtAgo } from "../format";
 import { traceHref } from "../routes";
 import { Menu } from "./Menu";
@@ -55,13 +55,13 @@ function notesOf(traces: readonly Trace[], now: number): Note[] {
 /** Alerts that fired in the last day, on hosts that run alert rules. */
 function useAlertNotes(now: number): Note[] {
   const on = useHost().has("alerts");
-  const project = getScope().project;
-  const { data } = useApi<AlertsData>(on && project ? `./api/projects/${project}/alerts` : null);
+  const api = useAlertsApi();
+  const { data } = useApi<AlertsData>(on && api.ready ? api.url() : null);
   return useMemo(
     () =>
       (data?.events ?? [])
-        .filter((e) => e.kind === "fired" && e.timeMs >= now - DAY_MS)
-        .map((e): Note => ({ key: `a|${e.id}`, kind: "alert", title: `Alert: ${e.ruleName}`, detail: e.message, timeMs: e.timeMs, count: 1, href: hrefTo("alerts") })),
+        .filter((e) => (e.kind === "fired" || e.kind === "remind") && e.timeMs >= now - DAY_MS)
+        .map((e): Note => ({ key: `a|${e.id}`, kind: "alert", title: `${e.kind === "remind" ? "Still firing" : "Alert"}: ${e.ruleName}`, detail: e.message, timeMs: e.timeMs, count: 1, href: alertHref(e.ruleId) })),
     [data, now],
   );
 }

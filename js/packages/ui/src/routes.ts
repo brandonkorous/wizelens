@@ -74,6 +74,9 @@ export const errorHref = (groupKey: string) => hrefTo("errors", [enc(groupKey)])
 export const endpointHref = (service: string, endpoint: string) => hrefTo("services", [enc(service), "endpoints", enc(endpoint)]);
 export const queryHref = (query: string) => hrefTo("database", ["queries", enc(query)]);
 export const routeHref = (route: string) => hrefTo("rendering", ["routes", enc(route)]);
+export const alertHref = (id: string) => hrefTo("alerts", [enc(id)]);
+/** The Alerts page with a new rule open, filled from what the person was looking at. */
+export const newAlertHref = (fields: Record<string, string>) => hrefTo("alerts", [], { new: "1", ...fields });
 
 export function navigate(href: string): void {
   window.location.hash = href.replace(/^#/, "");

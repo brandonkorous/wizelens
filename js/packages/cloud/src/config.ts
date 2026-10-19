@@ -29,6 +29,8 @@ export interface CloudOptions {
   alertIntervalMs?: number;
   /** Let alert webhooks call private and local addresses, and plain http. For self-hosting on a private network. Default false. */
   allowPrivateWebhooks?: boolean;
+  /** PagerDuty's Events API URL; tests point it at a local server. */
+  pagerDutyUrl?: string;
   /** Outgoing mail: "smtp://user:pass@host:587" (STARTTLS) or "smtps://user:pass@host:465". Without it, mail is written to the log. */
   smtpUrl?: string;
   /** Outgoing mail through the Resend API (a `re_` key). Used in place of `smtpUrl`. */
@@ -59,7 +61,7 @@ export interface CloudOptions {
   jobs?: boolean;
 }
 
-type Optional = "uiDir" | "clickhouseUrl" | "publicUrl" | "mcpUrl" | "smtpUrl" | "resendApiKey" | "resendWebhookSecret" | "mailReplyTo" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords";
+type Optional = "uiDir" | "clickhouseUrl" | "publicUrl" | "mcpUrl" | "smtpUrl" | "resendApiKey" | "resendWebhookSecret" | "mailReplyTo" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords" | "pagerDutyUrl";
 export type CloudConfig = Required<Omit<CloudOptions, Optional>> & Pick<CloudOptions, Optional> & { secureCookies: boolean };
 
 /** Mail links must use the public address: a link built from the request's Host header could point anywhere. */
@@ -105,6 +107,7 @@ export function resolveConfig(o: CloudOptions = {}): CloudConfig {
     ingestPerMinute: o.ingestPerMinute ?? 1200,
     alertIntervalMs: o.alertIntervalMs ?? 60_000,
     allowPrivateWebhooks: o.allowPrivateWebhooks ?? false,
+    pagerDutyUrl: o.pagerDutyUrl,
     smtpUrl: o.smtpUrl,
     resendApiKey: o.resendApiKey,
     resendWebhookSecret: o.resendWebhookSecret,

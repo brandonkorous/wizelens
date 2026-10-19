@@ -24,6 +24,13 @@ CREATE TABLE IF NOT EXISTS metrics (
   time_ms REAL NOT NULL, project TEXT NOT NULL DEFAULT '', env TEXT NOT NULL DEFAULT '', service TEXT NOT NULL,
   name TEXT NOT NULL, series_key TEXT NOT NULL, json TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS alert_rules (id TEXT PRIMARY KEY, project TEXT NOT NULL, json TEXT NOT NULL, created_ms REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS alert_events (
+  id TEXT PRIMARY KEY, rule_id TEXT NOT NULL, project TEXT NOT NULL, kind TEXT NOT NULL, value REAL, threshold REAL NOT NULL,
+  message TEXT NOT NULL, time_ms REAL NOT NULL, delivery TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_alert_events_project ON alert_events(project, time_ms);
+CREATE TABLE IF NOT EXISTS alert_values (rule_id TEXT NOT NULL, time_ms REAL NOT NULL, value REAL, PRIMARY KEY (rule_id, time_ms));
 CREATE TABLE IF NOT EXISTS issues (
   project TEXT NOT NULL, kind TEXT NOT NULL, key TEXT NOT NULL, status TEXT NOT NULL, until_ms REAL, resolved_ms REAL,
   assignee TEXT, updated_ms REAL NOT NULL, PRIMARY KEY (project, kind, key)

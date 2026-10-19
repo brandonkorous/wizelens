@@ -2,7 +2,9 @@ import { avgOfAgg } from "../scale/agg.js";
 import { FACT_SLOW_QUERY_MS } from "../scale/facts.js";
 import { histPercentile } from "../scale/hist.js";
 import type { Need, NeedResults, PageContext, PageDef } from "../scale/needs.js";
+import { joinKey } from "../scale/kinds.js";
 import { percentOf, previousWindow, TIME_RANGES, type TimeRange } from "../stats/common.js";
+import { rawService } from "../stats/errors.js";
 import { groupNeed, rowsOf, totalOf } from "./read.js";
 
 /** What an alert rule watches. */
@@ -16,21 +18,58 @@ export const ALERT_METRICS = {
 } as const;
 
 export type AlertMetric = keyof typeof ALERT_METRICS;
-export type AlertOp = ">" | "<";
+export type AlertOp = ">" | "<" | ">=" | "<=";
 
+export const ALERT_OPS: readonly AlertOp[] = [">", "<", ">=", "<="];
+export const isAlertOp = (v: unknown): v is AlertOp => ALERT_OPS.includes(v as AlertOp);
 export const isAlertMetric = (v: unknown): v is AlertMetric => typeof v === "string" && v in ALERT_METRICS;
 
-const ALERT_NEEDS: Record<AlertMetric, readonly Need[]> = {
-  error_rate: [groupNeed("req", "req", "cur")],
-  p95_ms: [groupNeed("req", "req", "cur", { hist: true })],
-  avg_ms: [groupNeed("req", "req", "cur")],
-  requests: [groupNeed("req", "req", "cur")],
-  new_errors: [groupNeed("err.cur", "err.g", "cur"), groupNeed("err.prev", "err.g", "prev")],
-  slow_queries: [groupNeed("db", "db", "cur")],
-};
+/** True when `value op threshold` holds. */
+export function opHolds(op: AlertOp, value: number, threshold: number): boolean {
+  if (op === ">") return value > threshold;
+  if (op === "<") return value < threshold;
+  return op === ">=" ? value >= threshold : value <= threshold;
+}
+
+/** What a rule watches: one service (display name), or one endpoint of it ("GET /api/orders/{id}"). Empty for all. */
+export interface AlertScope {
+  service?: string;
+  endpoint?: string;
+}
+
+/** Why a scope does not fit a metric, or null. */
+export function alertScopeProblem(metric: AlertMetric, scope: AlertScope): string | null {
+  if (scope.endpoint && !scope.service) return "An endpoint needs its service.";
+  if (scope.endpoint && metric === "slow_queries") return "Slow queries are counted per service, not per endpoint.";
+  return null;
+}
+
+/** One endpoint's needs: its `svc.ep` row, or its error groups (`err.ge`). */
+function endpointNeeds(metric: AlertMetric, service: string, endpoint: string): Need[] {
+  if (metric === "new_errors") {
+    const f = { filter: { prefix: `${service}|`, parts: [null, endpoint] } };
+    return [groupNeed("err.cur", "err.ge", "cur", f), groupNeed("err.prev", "err.ge", "prev", f)];
+  }
+  if (metric === "slow_queries") return [];
+  return [groupNeed("req", "svc.ep", "cur", { filter: { keys: [joinKey(`api:${rawService(service)}`, endpoint)] }, hist: metric === "p95_ms" })];
+}
 
 /** What an alert metric reads: request, error group, or database rollups of the window (and the one before, for "new"). */
-export const alertNeeds = (metric: AlertMetric): Need[] => [...ALERT_NEEDS[metric]];
+export function alertNeeds(metric: AlertMetric, scope: AlertScope = {}): Need[] {
+  const service = scope.service || undefined;
+  if (service && scope.endpoint) return endpointNeeds(metric, service, scope.endpoint);
+  const one = service ? { service } : {};
+  switch (metric) {
+    case "new_errors": {
+      const f = service ? { filter: { prefix: `${service}|` } } : {};
+      return [groupNeed("err.cur", "err.g", "cur", f), groupNeed("err.prev", "err.g", "prev", f)];
+    }
+    case "slow_queries":
+      return [groupNeed("db", "db", "cur", one)];
+    default:
+      return [groupNeed("req", "req", "cur", { ...one, ...(metric === "p95_ms" ? { hist: true } : {}) })];
+  }
+}
 
 /** The value of a metric over its window, from the answers to `alertNeeds`. Null when there is no data. */
 export function alertValueOf(metric: AlertMetric, d: NeedResults): number | null {
@@ -63,22 +102,26 @@ export function alertContext(windowMs: number, now: number, options = { slowQuer
 }
 
 /** An alert metric as a page, so hosts run it with `computePage` like any page. */
-export const alertPage = (metric: AlertMetric): PageDef<number | null> => ({ needs: () => alertNeeds(metric), model: (d) => alertValueOf(metric, d) });
+export const alertPage = (metric: AlertMetric, scope: AlertScope = {}): PageDef<number | null> => ({ needs: () => alertNeeds(metric, scope), model: (d) => alertValueOf(metric, d) });
 
 /** True when the value breaks the rule. No data never fires, except "requests < n" (traffic stopped). */
 export function alertBreached(metric: AlertMetric, op: AlertOp, value: number | null, threshold: number): boolean {
   const v = value ?? (metric === "requests" ? 0 : null);
   if (v === null) return false;
-  return op === ">" ? v > threshold : v < threshold;
+  return opHolds(op, v, threshold);
 }
 
-/** Why a notice was sent: the rule broke, it is fine again, or someone pressed Test. */
-export type AlertNoticeState = "fired" | "resolved" | "test";
+/** Why a notice was sent: the rule broke, it is fine again, it still breaks (a reminder), or someone pressed Test. */
+export type AlertNoticeState = "fired" | "resolved" | "remind" | "test";
 
-/** "above 5%", "no longer above 5%", or "alerts when above 5%": the rule, worded for the notice. */
+const OP_WORDS: Record<AlertOp, string> = { ">": "above", "<": "below", ">=": "at or above", "<=": "at or below" };
+
+/** "above 5%", "no longer above 5%", "still above 5%", or "alerts when above 5%": the rule, worded for the notice. */
 export function conditionText(op: AlertOp, threshold: string, state: AlertNoticeState = "fired"): string {
-  const rule = `${op === ">" ? "above" : "below"} ${threshold}`;
-  return state === "resolved" ? `no longer ${rule}` : state === "test" ? `alerts when ${rule}` : rule;
+  const rule = `${OP_WORDS[op]} ${threshold}`;
+  if (state === "resolved") return `no longer ${rule}`;
+  if (state === "remind") return `still ${rule}`;
+  return state === "test" ? `alerts when ${rule}` : rule;
 }
 
 /** "Error rate is 7.5% (above 5%)". */

@@ -1,6 +1,7 @@
 import { evaluateAll } from "./alerts/evaluate.js";
 import type { CloudApp } from "./app.js";
 import { pruneAuthRows } from "./repo/auth-prune.js";
+import { pruneAlertValues } from "./repo/alert-events.js";
 import { pruneServices } from "./repo/services.js";
 import { sendDigests } from "./notify/digest.js";
 import { checkHealth } from "./notify/health.js";
@@ -44,6 +45,7 @@ export function startJobs(app: CloudApp): () => void {
     every("rollups", ROLLUP_PRUNE_MS, () => app.telemetry.pruneRollups(now())),
     every("sessions", HOUSEKEEPING_MS, () => pruneAuthRows(app.db)),
     every("alerts", app.config.alertIntervalMs, () => evaluateAll(app)),
+    every("alert values", HOUSEKEEPING_MS, () => pruneAlertValues(app.db, now())),
     every("team notices", NOTICE_MS, async () => {
       while ((await sendTeamNotices(app)) > 0);
     }),

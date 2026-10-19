@@ -1,16 +1,31 @@
-import { alertBreached, alignNow, alertContext, alertMessage, alertPage, computePage, metricAlertMessage, metricAlertUnit, metricAlertValueOf } from "@wizeworks/lens-core";
+import {
+  alertBreached,
+  alertContext,
+  alertMessage,
+  type AlertNoticeState,
+  alertPage,
+  type AlertRule,
+  alertStep,
+  alignNow,
+  computePage,
+  metricAlertMessage,
+  metricAlertUnit,
+  metricAlertValueOf,
+  opHolds,
+} from "@wizeworks/lens-core";
+import { deliver, type Notice, type Outbox } from "@wizeworks/lens-hub/kit";
 import type { CloudApp } from "../app.js";
-import { addEvent, type AlertRule, enabledRules, saveEvaluation } from "../repo/alerts.js";
-import { projectRetentionMs } from "../scale-exec.js";
 import { alertMail } from "../mail/templates.js";
+import { addEvent } from "../repo/alert-events.js";
+import { enabledRules, saveEvaluation } from "../repo/alerts.js";
 import { memberEmails } from "../repo/users.js";
-import { deliver, type Notice, type Outbox } from "./notify.js";
+import { projectRetentionMs } from "../scale-exec.js";
 
-/** Names for the notice: project and the dashboard link. */
-async function noticeOf(app: CloudApp, rule: AlertRule, state: Notice["state"], value: number | null, now: number): Promise<Notice> {
+/** Names for the notice: project and the link to the rule's page. */
+async function noticeOf(app: CloudApp, rule: AlertRule, state: AlertNoticeState, value: number | null, now: number): Promise<Notice> {
   const [p] = await app.db.query<{ name: string }>("SELECT name FROM projects WHERE id = $1", [rule.projectId]);
-  const base = app.baseUrl();
   return {
+    ruleId: rule.id,
     rule: rule.name,
     project: p?.name ?? rule.projectId,
     state,
@@ -18,7 +33,7 @@ async function noticeOf(app: CloudApp, rule: AlertRule, state: Notice["state"], 
     value,
     threshold: rule.threshold,
     timeMs: now,
-    url: `${base}/_wizelens/#/alerts?project=${rule.projectId}`,
+    url: `${app.baseUrl()}/_wizelens/#/alerts/${rule.id}?project=${rule.projectId}`,
   };
 }
 
@@ -31,21 +46,22 @@ async function measureMetric(app: CloudApp, rule: AlertRule, now: number) {
   return { value: metricAlertValueOf(data, stat), sample: data.series[0], stat };
 }
 
-async function messageOf(app: CloudApp, rule: AlertRule, state: Notice["state"], value: number | null, now: number): Promise<string> {
+async function messageOf(app: CloudApp, rule: AlertRule, state: AlertNoticeState, value: number | null, now: number): Promise<string> {
   if (rule.metric !== "metric") return alertMessage(rule.metric, rule.op, value, rule.threshold, state);
   const { sample, stat } = await measureMetric(app, rule, now);
   const unit = sample ? metricAlertUnit(sample, stat) : "";
   return metricAlertMessage(rule.metricName, stat, rule.op, value, rule.threshold, unit, state);
 }
 
-/** The metric over the rule's window: from the stats tables, or from the metric's points. */
+/** The metric over the rule's window: from the stats tables (one service or endpoint when scoped), or from the metric's points. */
 async function measure(app: CloudApp, rule: AlertRule, now: number): Promise<number | null> {
   if (rule.metric === "metric") return (await measureMetric(app, rule, now)).value;
   const retentionMs = await projectRetentionMs(app.db, rule.projectId, app.config.retentionDays);
-  return computePage(alertPage(rule.metric), alertContext(rule.windowMs, alignNow(now)), app.telemetry.executor(rule.projectId, retentionMs, rule.env || undefined));
+  const page = alertPage(rule.metric, { service: rule.service, endpoint: rule.endpoint });
+  return computePage(page, alertContext(rule.windowMs, alignNow(now)), app.telemetry.executor(rule.projectId, retentionMs, rule.env || undefined));
 }
 
-/** Webhooks, Slack, and email. Email goes only to addresses that still belong to confirmed members of the organization. */
+/** Webhooks, chat, PagerDuty, and email. Email goes only to addresses that still belong to confirmed members of the organization. */
 async function outboxOf(app: CloudApp, projectId: string): Promise<Outbox> {
   const [p] = await app.db.query<{ org_id: string }>("SELECT org_id FROM projects WHERE id = $1", [projectId]);
   const members = new Set(p ? await memberEmails(app.db, p.org_id, app.mailer.live) : []);
@@ -55,24 +71,27 @@ async function outboxOf(app: CloudApp, projectId: string): Promise<Outbox> {
     const note = app.mailer.live ? `sent to ${ok.length}` : "mail is not set up (see the cloud log)";
     return `email: ${note}${ok.length < to.length ? `, ${to.length - ok.length} no longer members` : ""}`;
   };
-  return { http: app.config.fetch, allowPrivate: app.config.allowPrivateWebhooks, email };
+  return { http: app.config.fetch, allowPrivate: app.config.allowPrivateWebhooks, email, pagerDutyUrl: app.config.pagerDutyUrl };
 }
 
 /** Send a notice and keep it as an event. */
-export async function notify(app: CloudApp, rule: AlertRule, state: Notice["state"], value: number | null, now: number): Promise<string> {
+export async function notify(app: CloudApp, rule: AlertRule, state: AlertNoticeState, value: number | null, now: number): Promise<string> {
   const notice = await noticeOf(app, rule, state, value, now);
   const delivery = await deliver(rule.channels, notice, await outboxOf(app, rule.projectId));
   await addEvent(app.db, rule, { kind: state, value, message: notice.message, timeMs: now, delivery });
   return delivery;
 }
 
-/** Check one rule. It notifies only when the state changes: ok to firing, or firing to ok. */
+/** True when the value breaks the rule. */
+export const breaches = (rule: AlertRule, value: number | null): boolean =>
+  rule.metric === "metric" ? value !== null && opHolds(rule.op, value, rule.threshold) : alertBreached(rule.metric, rule.op, value, rule.threshold);
+
+/** Check one rule: keep its value, and send a notice when it starts or stops firing, or a reminder while it keeps firing. */
 export async function evaluateRule(app: CloudApp, rule: AlertRule, now: number): Promise<void> {
   const value = await measure(app, rule, now);
-  const firing = rule.metric === "metric" ? value !== null && (rule.op === ">" ? value > rule.threshold : value < rule.threshold) : alertBreached(rule.metric, rule.op, value, rule.threshold);
-  const next = firing ? "firing" : "ok";
-  await saveEvaluation(app.db, rule.id, next, value, now);
-  if (next !== rule.state) await notify(app, rule, firing ? "fired" : "resolved", value, now);
+  const step = alertStep(rule, breaches(rule, value), now);
+  await saveEvaluation(app.db, rule, { state: step.state, ackMs: step.ackMs, notified: step.notice !== null }, value, now);
+  if (step.notice) await notify(app, rule, step.notice, value, now);
 }
 
 /** Check every enabled rule once. One failing rule does not stop the others. */

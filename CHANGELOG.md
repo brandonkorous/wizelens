@@ -6,6 +6,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Alerts on the hub,** not only the cloud. Rules can watch one service or one endpoint, and use **at or above** and
+  **at or below**. **Remind** while a rule keeps firing, **acknowledge** to stop the reminders, **mute** for an hour, a day, or
+  until unmuted, and turn rules **on or off** from the list. Rules send to up to five channels, all editable: Slack,
+  **Microsoft Teams**, **Discord**, **PagerDuty**, webhooks, and email (cloud). Each rule has its own page: its value against
+  the line over time, every notice and change, and a link to the traces behind it. **Alert on this** opens a new rule from a
+  service, an endpoint, an error, or a metric chart.
 - **Releases.** Add-ons send the app's version (`release`, or `WIZELENS_RELEASE`; .NET reads the entry assembly's
   version, Node reads `npm_package_version`, React takes a `release` prop, and OpenTelemetry apps send `service.version`).
   Every chart marks the time a new version first sent data. The service page compares its newest versions: requests, error

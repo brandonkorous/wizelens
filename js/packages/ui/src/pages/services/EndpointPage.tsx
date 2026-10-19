@@ -4,6 +4,7 @@ import { usePageModel } from "../../data/models";
 import { compareSeriesLabel, fmtAgo, fmtCount, fmtMs, fmtPct } from "../../format";
 import { errorHref, hrefTo, navigate, queryHref, traceHref } from "../../routes";
 import { DotText, toneOfStatus } from "../../ui/Badges";
+import { AlertOnThis } from "../../ui/AlertOnThis";
 import { DetailHead } from "../../ui/DetailHead";
 import { ModelState } from "../../ui/ModelState";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
@@ -93,7 +94,7 @@ export function EndpointPage({ service, endpoint }: { service: string; endpoint:
   return (
     <div className="wl-dpage">
       <ModelState model={m} loading={loading} error={error} what="this endpoint" />
-      <DetailHead back={[serviceHref(service), name]} icon={Waypoints} title={endpoint} mono stats={stats} />
+      <DetailHead back={[serviceHref(service), name]} icon={Waypoints} title={endpoint} mono stats={stats} actions={<AlertOnThis fields={{ metric: "p95_ms", service: name, endpoint, name: `${endpoint} is slow` }} />} />
       {m && !m.totals && <Panel><Empty title="This endpoint served nothing in this time range">Pick a longer time range at the top.</Empty></Panel>}
       {m?.totals && (
         <>
