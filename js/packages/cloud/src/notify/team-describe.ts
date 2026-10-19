@@ -20,6 +20,10 @@ export const NOTICED = new Set([
   "share.create",
   "share.revoke",
   "org.update",
+  "plan.change",
+  "billing.cap",
+  "scim.token.create",
+  "scim.token.revoke",
 ]);
 
 export interface AuditRow {
@@ -78,6 +82,10 @@ export async function describe(row: AuditRow, names: Names): Promise<string> {
     "share.create": async () => `${who} shared a trace from ${await project()} for ${Number(d.days) || 7} days.`,
     "share.revoke": () => `${who} revoked a share link.`,
     "org.update": () => `${who} changed the organization settings${typeof d.retentionDays === "number" ? ` (keep data ${d.retentionDays} days)` : ""}.`,
+    "plan.change": () => `The plan changed from ${s(d.from) || "another plan"} to ${s(d.plan)}.`,
+    "billing.cap": () => `${who} ${d.capUsd === null ? "removed the spend cap" : `set the spend cap to $${String(d.capUsd)} a month`}.`,
+    "scim.token.create": () => `${who} made a SCIM token (${s(d.name)}).`,
+    "scim.token.revoke": () => `${who} revoked a SCIM token.`,
   };
   return (await say[row.action]?.()) ?? `${who}: ${row.action}.`;
 }

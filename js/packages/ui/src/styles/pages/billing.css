@@ -1,0 +1,44 @@
+/* Cloud billing: the usage bar, plan cards, the plan prompt on gated features, and the usage banner. */
+.wl-banner-warn { background: var(--wl-amber-soft); color: var(--wl-amber-text); }
+.wl-banner a { color: inherit; font-weight: 600; text-decoration: underline; }
+
+.wl-usage { display: grid; gap: 8px; }
+.wl-usage-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+.wl-usage-head strong { font-size: 24px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.wl-usage-track { height: 12px; border-radius: 6px; background: var(--wl-surface-2); overflow: hidden; }
+.wl-usage-track i { display: block; height: 100%; border-radius: 6px; background: var(--wl-accent); transition: width 0.3s ease; }
+.wl-usage-track.wl-usage-warn i { background: var(--wl-amber); }
+.wl-usage-track.wl-usage-full i { background: var(--wl-error); }
+.wl-usage-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 16px 0; }
+.wl-usage-facts div { padding: 10px 12px; border-radius: 10px; background: var(--wl-surface-2); }
+.wl-usage-facts dt { font-size: 12px; color: var(--wl-muted); }
+.wl-usage-facts dd { margin: 2px 0 0; font-size: 16px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.wl-usage-days { display: flex; align-items: flex-end; gap: 3px; height: 56px; margin-bottom: 8px; }
+.wl-usage-days span { flex: 1 1 0; display: flex; align-items: flex-end; height: 100%; min-width: 3px; }
+.wl-usage-days i { display: block; width: 100%; border-radius: 2px 2px 0 0; background: var(--wl-chart-bar); }
+.wl-usage-days span:hover i { background: var(--wl-accent); }
+
+.wl-segmented { display: inline-flex; padding: 2px; border: 1px solid var(--wl-line-strong); border-radius: 9px; background: var(--wl-surface-2); }
+.wl-segmented button { padding: 5px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--wl-fg-2); font: inherit; font-size: 13px; cursor: pointer; }
+.wl-segmented button.wl-active { background: var(--wl-surface); color: var(--wl-fg); font-weight: 600; box-shadow: var(--wl-shadow); }
+
+.wl-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.wl-plan { display: flex; flex-direction: column; gap: 6px; padding: 16px; border: 1px solid var(--wl-line); border-radius: var(--wl-radius); background: var(--wl-surface); }
+.wl-plan-current { border-color: var(--wl-accent); box-shadow: 0 0 0 1px var(--wl-accent); }
+.wl-plan h3 { margin: 0; font-size: 15px; }
+.wl-plan-price { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+.wl-plan p { margin: 0; }
+.wl-plan ul { display: grid; gap: 6px; margin: 6px 0 10px; padding: 0; list-style: none; font-size: 13px; color: var(--wl-fg-2); }
+.wl-plan li { display: flex; gap: 6px; align-items: flex-start; }
+.wl-plan li svg { flex: none; width: 15px; height: 15px; margin-top: 2px; color: var(--wl-ok); }
+.wl-plan > .wl-btn, .wl-plan > .wl-badge { margin-top: auto; align-self: flex-start; }
+
+.wl-plan-prompt { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.wl-plan-prompt > svg { flex: none; width: 22px; height: 22px; color: var(--wl-accent); }
+.wl-plan-prompt > div { flex: 1 1 260px; }
+.wl-plan-prompt p { margin: 2px 0 0; font-size: 13px; }
+
+@media (max-width: 640px) {
+  .wl-plans { grid-template-columns: 1fr; }
+  .wl-usage-head strong { font-size: 20px; }
+}

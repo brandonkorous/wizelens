@@ -32,6 +32,18 @@ const ACTIONS: Record<string, string> = {
   "mcp.call": "AI agent read data",
   "app.connect": "Connected an app",
   "app.disconnect": "Disconnected an app",
+  "plan.change": "Changed the plan",
+  "billing.cap": "Set the spend cap",
+  "ingest.blocked": "Stopped taking data",
+  "audit.export": "Exported the audit log",
+  "scim.token.create": "Made a SCIM token",
+  "scim.token.revoke": "Revoked a SCIM token",
+  "scim.user.create": "SCIM added a person",
+  "scim.user.update": "SCIM changed a person",
+  "scim.user.delete": "SCIM removed a person",
+  "scim.group.create": "SCIM added a group",
+  "scim.group.update": "SCIM changed a group",
+  "scim.group.delete": "SCIM removed a group",
 };
 
 export const actionText = (action: string): string => ACTIONS[action] ?? action;
@@ -51,6 +63,8 @@ export function actorText(actor: string, names: Names): string {
   const [kind, id = ""] = actor.split(":");
   if (kind === "user") return names.people.get(id) ?? "Former member";
   if (kind === "key") return names.keys.has(id) ? `Key ${names.keys.get(id)}` : "Revoked key";
+  if (kind === "scim") return "Identity provider (SCIM)";
+  if (kind === "stripe") return "Stripe";
   return "WizeLens";
 }
 
@@ -73,6 +87,11 @@ export function detailText(d: Record<string, unknown>, names: Names): string {
   if (typeof d.providerId === "string") parts.push(d.providerId);
   if (typeof d.retentionDays === "number") parts.push(`keep data ${d.retentionDays} days`);
   if (typeof d.days === "number") parts.push(`for ${d.days} days`);
+  if (typeof d.plan === "string") parts.push(`${typeof d.from === "string" ? `${d.from} to ` : ""}${d.plan}`);
+  if (d.capUsd !== undefined) parts.push(d.capUsd === null ? "no cap" : `$${String(d.capUsd)} a month`);
+  if (typeof d.reason === "string") parts.push(d.reason === "cap" ? "spend cap reached" : "Free plan data used up");
+  if (typeof d.userName === "string") parts.push(d.userName);
+  if (typeof d.format === "string") parts.push(d.format.toUpperCase());
   if (typeof d.removed === "number") parts.push(`${d.removed} ${d.removed === 1 ? "host" : "hosts"}`);
   if (typeof d.line === "string" && parts.length === 0) parts.push(d.line);
   return parts.join(" · ");
