@@ -20,7 +20,7 @@ internal sealed class WizeLensMiddleware(RequestDelegate next, WizeLensOptions o
             await HandleOwnPathAsync(context, basePath);
             return;
         }
-        if (IsPreflight(context.Request))
+        if (IsPreflight(context.Request) || IsHealthProbe(context.Request))
         {
             await SkipAsync(context);
             return;
@@ -59,6 +59,16 @@ internal sealed class WizeLensMiddleware(RequestDelegate next, WizeLensOptions o
     /// <summary>A CORS preflight: sent before a cross-origin call, with no traceparent, so it is not traced.</summary>
     internal static bool IsPreflight(HttpRequest request) =>
         HttpMethods.IsOptions(request.Method) && request.Headers.ContainsKey("Access-Control-Request-Method");
+
+    // Kubernetes probes, Google and AWS load balancer checks, and Google uptime checks: 200 traces an hour that hid every visit.
+    private static readonly string[] ProbeAgents = ["kube-probe/", "GoogleHC/", "ELB-HealthChecker/", "GoogleStackdriverMonitoring-UptimeChecks"];
+
+    /// <summary>A health check from the platform, not a visitor, so it is not traced.</summary>
+    internal static bool IsHealthProbe(HttpRequest request)
+    {
+        var agent = request.Headers.UserAgent.ToString();
+        return ProbeAgents.Any(p => agent.StartsWith(p, StringComparison.Ordinal));
+    }
 
     private async Task SkipAsync(HttpContext context)
     {

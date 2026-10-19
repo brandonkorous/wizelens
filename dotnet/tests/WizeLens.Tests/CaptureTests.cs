@@ -60,6 +60,27 @@ public class CaptureTests
         Assert.False(response.Headers.Contains("X-WizeLens-Trace"));
     }
 
+    [Theory]
+    [InlineData("kube-probe/1.35")]
+    [InlineData("GoogleHC/1.0")]
+    [InlineData("ELB-HealthChecker/2.0")]
+    [InlineData("GoogleStackdriverMonitoring-UptimeChecks(https://cloud.google.com/monitoring)")]
+    public async Task Health_check_is_not_traced(string agent)
+    {
+        // Three small apps' probes were 200 traces an hour, and the trace list showed nothing else.
+        await using var app = await TestApp.StartAsync(a => a.MapGet("/health", () => "ok"));
+        using var probe = new HttpRequestMessage(HttpMethod.Get, "/health");
+        probe.Headers.TryAddWithoutValidation("User-Agent", agent);
+        var response = await app.Client.SendAsync(probe);
+        Assert.Equal("ok", await response.Content.ReadAsStringAsync());
+        Assert.False(response.Headers.Contains("X-WizeLens-Trace"));
+        Assert.Empty(app.Store.All());
+
+        // A visitor on the same path is still traced.
+        var visitor = await app.Client.GetAsync("/health");
+        Assert.True(visitor.Headers.Contains("X-WizeLens-Trace"));
+    }
+
     [Fact]
     public void Tag_outside_a_request_does_nothing() => WizeLensRequest.Tag("lonely", "value");
 

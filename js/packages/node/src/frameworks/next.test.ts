@@ -64,6 +64,23 @@ it("skips build files and serves the dashboard without calling the app", async (
   expect(appCalls).toBe(before + 1);
 });
 
+it("traces no health check, and lets none of Next.js's spans start a trace of their own", async () => {
+  // Three small apps' probes were 200 traces an hour, and the trace list showed nothing else.
+  await new Promise((r) => setTimeout(r, 30));
+  const before = wl.store.all().length;
+  const callsBefore = appCalls;
+  for (const agent of ["kube-probe/1.35", "GoogleHC/1.0", "ELB-HealthChecker/2.0", "GoogleStackdriverMonitoring-UptimeChecks(https://cloud.google.com/monitoring)"]) {
+    const res = await fetch(`${base}/api/health`, { headers: { "user-agent": agent } });
+    expect(res.headers.get("x-wizelens-trace")).toBeNull();
+  }
+  await new Promise((r) => setTimeout(r, 30));
+  expect(appCalls).toBe(callsBefore + 4);
+  expect(wl.store.all().length).toBe(before);
+  // A visitor on the same path is still traced.
+  const visitor = await traceOf(await fetch(`${base}/api/health`, { headers: { "user-agent": "Mozilla/5.0" } }));
+  expect(visitor.spans.length).toBeGreaterThan(0);
+});
+
 it("records an onRequestError error once, with a log", async () => {
   const t = await traceOf(await fetch(`${base}/boom`));
   const server = t.spans.find((s) => s.category === "http.server")!;

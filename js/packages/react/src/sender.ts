@@ -47,7 +47,8 @@ async function post(send: typeof fetch, endpoint: string, { spans, logs }: Batch
     await send(`${endpoint}/api/client-spans`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(logs.length > 0 ? { spans, logs } : { spans }),
+      // `sentAt` lets the server move these times onto its own clock when this browser's clock is wrong.
+      body: JSON.stringify(logs.length > 0 ? { spans, logs, sentAt: Date.now() } : { spans, sentAt: Date.now() }),
       keepalive: true,
     });
   } catch {

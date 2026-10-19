@@ -19,6 +19,19 @@ const MAX_EVENTS = 50;
 const LEVELS: readonly LogLevel[] = ["trace", "debug", "info", "warn", "error", "critical"];
 const text = (v: unknown, fallback: string, max: number) => (typeof v === "string" && v ? v.slice(0, max) : fallback);
 
+// A crawler's clock put its page view 4.6 hours before the server request. Within this gap the difference is network time.
+const CLOCK_TOLERANCE_MS = 10_000;
+
+/** How far (ms) to move a browser's times onto this server's clock: 0 when it sent no clock, or one close enough. */
+export function browserClockOffset(sentAt: unknown, receivedAt: number): number {
+  const sent = Number(sentAt);
+  if (!Number.isFinite(sent) || sent <= 0) return 0;
+  const offset = receivedAt - sent;
+  return Math.abs(offset) > CLOCK_TOLERANCE_MS ? offset : 0;
+}
+
+const shifted = (ms: number, shiftMs: number) => (ms ? ms + shiftMs : ms);
+
 function toAttributes(raw: unknown, redactKeys: readonly string[]): Attributes {
   const out: Attributes = {};
   if (raw && typeof raw === "object") {
@@ -27,17 +40,17 @@ function toAttributes(raw: unknown, redactKeys: readonly string[]): Attributes {
   return redactAttributes(out, redactKeys);
 }
 
-function toEvents(raw: unknown, redactKeys: readonly string[]): SpanEvent[] {
+function toEvents(raw: unknown, redactKeys: readonly string[], shiftMs: number): SpanEvent[] {
   const events = Array.isArray(raw) ? raw : [];
   return events.slice(0, MAX_EVENTS).flatMap((e) => {
     if (!e || typeof e !== "object") return [];
     const ev = e as Record<string, unknown>;
-    return [{ name: String(ev.name ?? "event"), timeMs: Number(ev.timeMs) || 0, attributes: toAttributes(ev.attributes, redactKeys) }];
+    return [{ name: String(ev.name ?? "event"), timeMs: shifted(Number(ev.timeMs) || 0, shiftMs), attributes: toAttributes(ev.attributes, redactKeys) }];
   });
 }
 
-/** Validate and redact one span posted by the browser. Returns null when it is not a valid span. */
-export function sanitizeClientSpan(raw: unknown, redactKeys: readonly string[]): Span | null {
+/** Validate and redact one span posted by the browser, moved by `shiftMs` (see browserClockOffset). Returns null when it is not a valid span. */
+export function sanitizeClientSpan(raw: unknown, redactKeys: readonly string[], shiftMs = 0): Span | null {
   if (!raw || typeof raw !== "object") return null;
   const s = raw as Record<string, unknown>;
   if (typeof s.traceId !== "string" || !HEX32.test(s.traceId)) return null;
@@ -51,22 +64,22 @@ export function sanitizeClientSpan(raw: unknown, redactKeys: readonly string[]):
     kind: SPAN_KINDS.includes(s.kind as ContractKind) ? (s.kind as ContractKind) : "client",
     category: CATEGORIES.includes(s.category as SpanCategory) ? (s.category as SpanCategory) : "browser",
     service: typeof s.service === "string" && s.service ? s.service.slice(0, 100) : "browser",
-    startMs: Number(s.startMs) || 0,
+    startMs: shifted(Number(s.startMs) || 0, shiftMs),
     durationMs: Math.max(0, Number(s.durationMs) || 0),
     status: s.status === "error" || s.status === "ok" ? s.status : "unset",
     statusMessage: typeof s.statusMessage === "string" ? s.statusMessage : null,
     attributes: toAttributes(s.attributes, redactKeys),
-    events: toEvents(s.events, redactKeys),
+    events: toEvents(s.events, redactKeys, shiftMs),
   };
 }
 
-/** Validate and redact one browser log line. Returns null when it has no valid trace. */
-export function sanitizeClientLog(raw: unknown, redactKeys: readonly string[]): { traceId: string; log: LogRecord } | null {
+/** Validate and redact one browser log line, moved by `shiftMs`. Returns null when it has no valid trace. */
+export function sanitizeClientLog(raw: unknown, redactKeys: readonly string[], shiftMs = 0): { traceId: string; log: LogRecord } | null {
   if (!raw || typeof raw !== "object") return null;
   const l = raw as Record<string, unknown>;
   if (typeof l.traceId !== "string" || !HEX32.test(l.traceId)) return null;
   const log: LogRecord = {
-    timeMs: Number(l.timeMs) || Date.now(),
+    timeMs: shifted(Number(l.timeMs), shiftMs) || Date.now(),
     level: LEVELS.includes(l.level as LogLevel) ? (l.level as LogLevel) : "info",
     category: text(l.category, "console", 100),
     message: typeof l.message === "string" ? l.message.slice(0, 4000) : "",

@@ -2,7 +2,7 @@ import { type IncomingMessage, Server as HttpServer, type ServerResponse } from 
 import { Server as HttpsServer } from "node:https";
 import { context, type Span as OtelSpan } from "@opentelemetry/api";
 import { patchMethod } from "../adapters/registry.js";
-import { type CaptureDeps, captureRequest, isOwnPath, isPreflight, pathOf, requestSpan, serveOwnPath } from "../request-capture.js";
+import { type CaptureDeps, captureRequest, isOwnPath, isUntraced, pathOf, requestSpan, serveOwnPath, withoutTracing } from "../request-capture.js";
 
 /** True for a path that is not traced, for example a static file. */
 export type IgnorePath = (path: string) => boolean;
@@ -20,7 +20,8 @@ function onRequest(d: CaptureDeps, ignore: IgnorePath, req: IncomingMessage, res
     void serveOwnPath(d, req, res);
     return true;
   }
-  if (isPreflight(req) || ignore(path) || requestSpan(req)) return emit();
+  if (requestSpan(req)) return emit();
+  if (isUntraced(req) || ignore(path)) return withoutTracing(emit);
   // The framework names the route on this span: Next.js sets http.route on the span around its own.
   const captured = captureRequest(d, req, res, rawUrl, () => attributeOf(captured.span, "http.route"));
   return context.with(captured.ctx, emit);

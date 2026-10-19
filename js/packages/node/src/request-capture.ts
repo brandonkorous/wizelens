@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { TLSSocket } from "node:tls";
 import { type Context, context, ROOT_CONTEXT, type Span as OtelSpan, SpanKind, SpanStatusCode, trace, type Tracer } from "@opentelemetry/api";
-import type { W3CTraceContextPropagator } from "@opentelemetry/core";
+import { suppressTracing, type W3CTraceContextPropagator } from "@opentelemetry/core";
 import {
   ATTR_REQUEST_ABORTED,
   ATTR_REQUEST_ID,
@@ -54,6 +54,21 @@ export const isOwnPath = (d: CaptureDeps, path: string): boolean => path === d.b
 
 /** A CORS preflight. The browser sends it before a cross-origin call, with no traceparent, so it is not traced. */
 export const isPreflight = (req: IncomingMessage): boolean => req.method === "OPTIONS" && req.headers["access-control-request-method"] !== undefined;
+
+// Kubernetes probes, Google and AWS load balancer checks, and Google uptime checks: 200 traces an hour that hid every visit.
+const PROBE_AGENTS = ["kube-probe/", "GoogleHC/", "ELB-HealthChecker/", "GoogleStackdriverMonitoring-UptimeChecks"];
+
+/** True for a health check from the platform, not a visitor. */
+export function isHealthProbe(req: IncomingMessage): boolean {
+  const agent = req.headers["user-agent"];
+  return typeof agent === "string" && PROBE_AGENTS.some((p) => agent.startsWith(p));
+}
+
+/** True for a request WizeLens does not trace: a CORS preflight, or a health check. */
+export const isUntraced = (req: IncomingMessage): boolean => isPreflight(req) || isHealthProbe(req);
+
+/** Run an untraced request with tracing off. Otherwise Next.js and the database adapters still start spans, each its own trace. */
+export const withoutTracing = <T>(fn: () => T): T => context.with(suppressTracing(context.active()), fn);
 
 /** Serve the dashboard and API. Resolves when the response is written. */
 export function serveOwnPath(d: CaptureDeps, req: IncomingMessage, res: ServerResponse): Promise<void> {
