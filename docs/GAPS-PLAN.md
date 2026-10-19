@@ -26,7 +26,7 @@ APM buyers expect and that phases 0 to 13 do not cover.
 | 13 | SDK coverage | L | Not started |
 | 14 | Browser source maps | M | Not started |
 | 15 | Uptime checks | M | Not started |
-| 16 | Logs as a product: all logs, patterns, log alerts | L | Not started |
+| 16 | Logs as a product: all logs, patterns, log alerts | L | Done |
 | 17 | Anomaly detection and problems | L | Not started |
 | 18 | Hosts and Kubernetes | L | Not started |
 | 19 | Install with no code change | L | Not started |
