@@ -34,7 +34,7 @@ async function receiver(): Promise<{ url: string; bodies: unknown[] }> {
 it("fires once when the error rate breaks the rule, then resolves", async () => {
   const clock = { now: 1_800_000_000_000 };
   let url: string;
-  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
+  ({ cloud, url } = await startCloud({ jobs: false, now: () => clock.now, allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
   const hook = await receiver();
   const { owner, orgId, projectId } = await setupOwner(cloud, url);
   const key = (await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", projectIds: [projectId] })).body.token;
@@ -58,7 +58,7 @@ it("fires once when the error rate breaks the rule, then resolves", async () => 
 it("an above normal rule fires on a spike, names what broke, and links its problem", async () => {
   const clock = { now: ANOMALY_NOW };
   let url: string;
-  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
+  ({ cloud, url } = await startCloud({ jobs: false, now: () => clock.now, allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
   const hook = await receiver();
   const { owner, projectId } = await setupOwner(cloud, url);
   const rule = { name: "Checkout p95", metric: "p95_ms", op: "above_normal", threshold: 3, windowMs: 900_000, channels: [{ kind: "webhook", url: hook.url }] };

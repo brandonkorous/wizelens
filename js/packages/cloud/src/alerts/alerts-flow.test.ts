@@ -33,7 +33,7 @@ const failed = (id: string, at: number, route: string) =>
 async function start(pd: string) {
   const clock = { now: 1_800_000_000_000 };
   let url: string;
-  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateWebhooks: true, alertIntervalMs: 3_600_000, pagerDutyUrl: pd }));
+  ({ cloud, url } = await startCloud({ jobs: false, now: () => clock.now, allowPrivateWebhooks: true, alertIntervalMs: 3_600_000, pagerDutyUrl: pd }));
   const { owner, orgId, projectId } = await setupOwner(cloud, url);
   const key = (await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", projectIds: [projectId] })).body.token;
   const send = (spans: unknown[]) => fetch(`${url}/_wizelens/api/ingest`, { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: JSON.stringify({ sender: { service: "api" }, spans }) });
