@@ -23,7 +23,7 @@ export interface HubStoreOptions {
 /** What one write holds. Spans and logs are already checked and redacted. */
 export interface HubWrite {
   sender: HubSender;
-  via: "addon" | "otlp";
+  via: "addon" | "otlp" | "uptime";
   spans: readonly Span[];
   logs: readonly HubLog[];
   remotes: readonly HubRemote[];

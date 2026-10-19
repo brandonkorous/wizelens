@@ -8,3 +8,6 @@ export type { HubWrite } from "./store.js";
 export { fromExponential, pointsOf, writesFromMetrics } from "./otlp/metrics.js";
 export type { OtlpMetric, OtlpResourceMetrics } from "./otlp/metrics.js";
 export { encodeMetrics } from "./otlp/proto.js";
+export { runCheck } from "./uptime/run.js";
+export type { RunOptions } from "./uptime/run.js";
+export { isPrivateAddress } from "./uptime/guard.js";

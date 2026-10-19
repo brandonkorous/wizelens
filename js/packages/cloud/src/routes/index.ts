@@ -13,6 +13,8 @@ import { notifyRoutes } from "./notify.js";
 import { orgRoutes } from "./orgs.js";
 import { projectRoutes } from "./projects.js";
 import { searchRoutes } from "./search.js";
+import { statusRoutes } from "./status.js";
+import { uptimeRoutes } from "./uptime.js";
 
 /** Every route below `/_wizelens/`, except ingest and OTLP (they use ingest keys and are matched first). */
 export function allRoutes(): Router<Ctx> {
@@ -28,6 +30,8 @@ export function allRoutes(): Router<Ctx> {
   alertRoutes(r);
   issueRoutes(r);
   shareRoutes(r);
+  uptimeRoutes(r);
+  statusRoutes(r);
   mcpRoutes(r);
   appRoutes(r);
   return r;

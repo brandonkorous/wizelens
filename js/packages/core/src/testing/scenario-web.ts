@@ -1,7 +1,8 @@
 // Browser and background scenario traces: page views with React renders, a failed fetch, and a job. Test-only.
 import { ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_ROUTE, ATTR_BROWSER_TYPE, ATTR_PAGE, ATTR_REACT_COMMITS, ATTR_REACT_COMPONENTS, type ReactComponentStat } from "../attributes.js";
 import type { Attributes, Trace } from "../types.js";
-import { draft, type Draft, exception, fetchSpan, finish, log, query, span } from "./scenario-kit.js";
+import { UPTIME_SERVICE, uptimeRoute } from "../uptime/check.js";
+import { draft, type Draft, exception, fetchSpan, finish, log, query, server, span } from "./scenario-kit.js";
 
 type PageTimings = Partial<Record<keyof typeof ATTR_PAGE, number>>;
 
@@ -61,5 +62,14 @@ export function job(id: string, at: number, i: number): Trace {
   log(d, at + 1, "trace", "Job tick", "worker-svc", root.spanId);
   log(d, at + 2, "debug", "Reading changes", "worker-svc", root.spanId);
   log(d, at + 900, "info", `Synced ${120 + i} users`, "worker-svc", root.spanId);
+  return finish(d);
+}
+
+/** An uptime check run of one of two checks; every third anchor it is down. */
+export function uptimeRun(id: string, at: number, i: number): Trace {
+  const d = draft(id);
+  const down = i % 3 === 0;
+  const error = down ? { type: "UptimeCheckFailed", message: "Home: expected status 200-299, got 503" } : undefined;
+  server(d, { at, ms: 80 + i * 7, path: "/health", route: uptimeRoute(i % 2 ? "ck-api" : "ck-home"), service: UPTIME_SERVICE, status: down ? 503 : 200, error });
   return finish(d);
 }

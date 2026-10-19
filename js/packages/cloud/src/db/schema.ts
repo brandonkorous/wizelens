@@ -5,6 +5,7 @@ import { OAUTH_MIGRATION } from "./schema-oauth.js";
 import { ISSUES_MIGRATION } from "./schema-issues.js";
 import { SEARCH_MIGRATION } from "./schema-search.js";
 import { SSO_MIGRATION } from "./schema-sso.js";
+import { UPTIME_MIGRATION } from "./schema-uptime.js";
 
 // Cloud schema, one entry per version. Never edit a shipped entry: add a new one (docs/CONTRACT.md, "Cloud storage").
 export const MIGRATIONS: readonly string[] = [
@@ -210,6 +211,7 @@ CREATE INDEX ix_metric_1h_time ON metric_1h (project_id, bucket_ms);
   SEARCH_MIGRATION,
   OAUTH_MIGRATION,
   ISSUES_MIGRATION,
+  UPTIME_MIGRATION,
 ];
 
 export const MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS wizelens_migrations (version INTEGER PRIMARY KEY, applied_ms DOUBLE PRECISION NOT NULL)`;

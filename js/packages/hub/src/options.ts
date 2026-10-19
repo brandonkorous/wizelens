@@ -17,6 +17,8 @@ export interface HubOptions {
   maxAgeMs?: number;
   /** Most metric points kept. Default 2,000,000. */
   maxMetricPoints?: number;
+  /** Run uptime checks (they can reach any address this machine can). Default true. */
+  uptime?: boolean;
   /** Expose the read-only MCP endpoint at `/_wizelens/mcp`. Default false. */
   enableMcp?: boolean;
   /** Key fragments to redact. Default: the contract list. */
@@ -49,6 +51,7 @@ export function resolveHubOptions(o: HubOptions = {}): ResolvedHubOptions {
     maxAgeMs: o.maxAgeMs ?? 7 * 24 * 60 * 60_000,
     maxMetricPoints: o.maxMetricPoints ?? 2_000_000,
     enableMcp: o.enableMcp ?? false,
+    uptime: o.uptime ?? true,
     redactKeys: o.redactKeys ?? [...DEFAULT_REDACT_KEYS],
     uiDir: o.uiDir,
     name: o.name ?? "wizelens-hub",

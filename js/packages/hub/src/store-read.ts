@@ -62,7 +62,7 @@ export function getStoredTrace(db: DatabaseSync, traceId: string, keepRemote?: (
 }
 
 interface ServiceRow {
-  via: "addon" | "otlp";
+  via: "addon" | "otlp" | "uptime";
   info: string;
   first_seen: number;
   last_seen: number;

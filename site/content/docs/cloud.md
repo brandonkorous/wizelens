@@ -88,6 +88,13 @@ Error rate is 1.1% (no longer above 2%)
 
 Webhook URLs must be https and may not point at private addresses, unless the cloud runs with `--allow-private-webhooks`.
 
+## Uptime checks and status pages
+
+The cloud calls your URLs every 1 to 60 minutes and keeps uptime, response time, incidents, and certificate end dates.
+Members and above add and change checks; every change is in the audit log. A project can turn on a public status page:
+an unguessable, read-only link that shows check names, state, uptime, and incident times. See
+[Uptime checks](/docs/uptime/).
+
 ## Share links
 
 A share link opens one trace, read-only, for anyone with the link, for 1 to 30 days. You can revoke it. Nothing else is
@@ -135,4 +142,4 @@ keys. Every organization is unlimited, and `--retention-days` sets history as be
 | `--retention-days <n>` | `WIZELENS_CLOUD_RETENTION_DAYS` | `30` |
 | `--ingest-per-minute <n>` | `WIZELENS_CLOUD_INGEST_PER_MINUTE` | `1200` ingest calls per key |
 | `--settle-workers <n>` | `WIZELENS_CLOUD_SETTLE_WORKERS` | Scale mode: threads that index new traces. `0` uses the main thread. Default: CPUs − 1, at most 4 |
-| `--allow-private-webhooks` | `WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1` | off |
+| `--allow-private-webhooks` | `WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1` | off (alert webhooks and uptime checks may not reach private addresses) |

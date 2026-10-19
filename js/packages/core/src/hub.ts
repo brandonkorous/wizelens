@@ -60,8 +60,8 @@ export interface IngestBatch {
 
 /** One service the hub knows, from `GET {hub}/_wizelens/api/services`. */
 export interface HubService extends HubSender {
-  /** "addon" for WizeLens add-ons, "otlp" for plain OpenTelemetry senders. */
-  via: "addon" | "otlp";
+  /** "addon" for WizeLens add-ons, "otlp" for plain OpenTelemetry senders, "uptime" for the host's own uptime checks. */
+  via: "addon" | "otlp" | "uptime";
   firstSeenMs: number;
   lastSeenMs: number;
   online: boolean;

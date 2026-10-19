@@ -2,7 +2,7 @@
 import type { Trace } from "../types.js";
 import { cartDup, checkoutFlow, grpcCall, ordersN1, payFail, reportSlow } from "./scenario-api.js";
 import { traceIdOf } from "./scenario-kit.js";
-import { fetchOnly, job, pageCheckout, pageHome } from "./scenario-web.js";
+import { fetchOnly, job, pageCheckout, pageHome, uptimeRun } from "./scenario-web.js";
 
 const MIN = 60_000;
 const HOUR = 60 * MIN;
@@ -19,7 +19,7 @@ export const SCENARIO_ANCHORS: readonly number[] = [
 ];
 
 /** Every kind of trace, one of each per anchor, 9 s apart. */
-export const SCENARIO_BUILDERS = [ordersN1, cartDup, reportSlow, payFail, checkoutFlow, pageCheckout, pageHome, fetchOnly, job, grpcCall] as const;
+export const SCENARIO_BUILDERS = [ordersN1, cartDup, reportSlow, payFail, checkoutFlow, pageCheckout, pageHome, fetchOnly, job, grpcCall, uptimeRun] as const;
 
 /** Build the scenario's traces, newest first. */
 export function buildScenario(now = SCENARIO_NOW): Trace[] {

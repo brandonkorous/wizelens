@@ -19,6 +19,8 @@ export const NOTICED = new Set([
   "project.clear",
   "share.create",
   "share.revoke",
+  "status.enable",
+  "status.disable",
   "org.update",
 ]);
 
@@ -77,6 +79,8 @@ export async function describe(row: AuditRow, names: Names): Promise<string> {
     "project.clear": async () => `${who} deleted all data of ${await project()}.`,
     "share.create": async () => `${who} shared a trace from ${await project()} for ${Number(d.days) || 7} days.`,
     "share.revoke": () => `${who} revoked a share link.`,
+    "status.enable": async () => `${who} ${d.newLink ? "made a new link for" : "turned on"} the public status page of ${await project()}.`,
+    "status.disable": async () => `${who} turned off the public status page of ${await project()}.`,
     "org.update": () => `${who} changed the organization settings${typeof d.retentionDays === "number" ? ` (keep data ${d.retentionDays} days)` : ""}.`,
   };
   return (await say[row.action]?.()) ?? `${who}: ${row.action}.`;

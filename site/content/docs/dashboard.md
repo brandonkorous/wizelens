@@ -22,6 +22,7 @@ Pick a time range in the top bar. Every number compares itself with the range be
 | **Metrics** | CPU, memory, GC, request times, and your own counters per service, as charts; split by any attribute |
 | **Services** | Health of each service, database, and outside host, and a map of who calls whom |
 | **Insights** | Every N+1, duplicate query, slow query, and render problem, ranked, with how to fix it |
+| **Uptime** | Hub and cloud: checks that call your URLs on a schedule, with uptime, response time, incidents, and certificate warnings ([more](/docs/uptime/)) |
 | **Settings** | How each connected service is set up, and your dashboard preferences |
 
 ![The Traces page](/shots/traces.jpg)

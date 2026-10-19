@@ -16,6 +16,8 @@ export interface StatCardProps {
   danger?: boolean;
   /** The list behind the number; the whole card links there. */
   href?: string;
+  /** A line in place of the change, for numbers with nothing to compare (for example "3 of 4 checks"). */
+  note?: string;
 }
 
 function Change({ change, upIsGood, compareLabel }: Pick<StatCardProps, "change" | "upIsGood" | "compareLabel">) {
@@ -35,7 +37,7 @@ function Change({ change, upIsGood, compareLabel }: Pick<StatCardProps, "change"
 }
 
 /** A number card: icon, label, value, change against the previous period, and a sparkline. */
-export function StatCard({ icon: Icon, label, value, change, upIsGood, compareLabel, series, danger = false, href }: StatCardProps) {
+export function StatCard({ icon: Icon, label, value, change, upIsGood, compareLabel, series, danger = false, href, note }: StatCardProps) {
   const Box = href ? "a" : "section";
   return (
     <Box className={`wl-panel wl-stat${href ? " wl-stat-link" : ""}`} {...(href ? { href, title: `See the ${label.toLowerCase()}` } : {})}>
@@ -44,7 +46,7 @@ export function StatCard({ icon: Icon, label, value, change, upIsGood, compareLa
       <div />
       <div className="wl-stat-value">{value}</div>
       <div className="wl-stat-foot">
-        <Change change={change} upIsGood={upIsGood} compareLabel={compareLabel} />
+        {note === undefined ? <Change change={change} upIsGood={upIsGood} compareLabel={compareLabel} /> : <div className="wl-delta"><span>{note}</span></div>}
       </div>
       {series && <div className="wl-stat-spark"><Sparkline values={series} width={240} height={28} stretch color={danger ? "var(--wl-red)" : "var(--wl-blue)"} /></div>}
     </Box>

@@ -88,7 +88,11 @@ export type Capability =
   /** The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. */
   | "issues"
   /** The host answers `api/models/hosts` and `api/models/kubernetes` from OpenTelemetry Collector metrics. */
-  | "infra";
+  | "infra"
+  /** The host runs uptime checks: `api/uptime` (hub) or `api/projects/<id>/uptime` (cloud), and the `uptime` page model. */
+  | "uptime"
+  /** Projects can turn on a public status page at `api/status/<token>`. */
+  | "statusPages";
 
 /** What an in-app add-on offers today. Also the default when a host does not say. */
 export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];
