@@ -44,7 +44,8 @@ internal static class EmbeddedUi
         }
 
         context.Response.ContentType = ContentTypes.TryGetContentType(name, out var type) ? type : "application/octet-stream";
-        context.Response.Headers.CacheControl = name.EndsWith("index.html", StringComparison.Ordinal)
+        // The page and its build id must always be fresh; the hashed files never change.
+        context.Response.Headers.CacheControl = name.EndsWith("index.html", StringComparison.Ordinal) || name.EndsWith("version.json", StringComparison.Ordinal)
             ? "no-cache"
             : "public, max-age=31536000, immutable";
 

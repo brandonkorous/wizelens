@@ -16,7 +16,7 @@ export const pgRetentionOf = (db: Db): RetentionOf => async (ids) => {
 /** The telemetry store for this cloud: ClickHouse (scale mode) when a URL is set, else the cloud's own database. */
 export async function openTelemetry(config: CloudConfig, db: Db): Promise<TelemetryStore> {
   const store = config.clickhouseUrl
-    ? await openClickHouse({ url: config.clickhouseUrl, retentionOf: pgRetentionOf(db), defaultRetentionDays: config.retentionDays, now: config.now })
+    ? await openClickHouse({ url: config.clickhouseUrl, retentionOf: pgRetentionOf(db), defaultRetentionDays: config.retentionDays, now: config.now, settleWorkers: config.settleWorkers })
     : pgTelemetry(db);
   return withCachedCounts(store, Date.now);
 }

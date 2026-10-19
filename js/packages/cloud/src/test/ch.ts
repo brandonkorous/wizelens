@@ -2,7 +2,7 @@
 import type { Trace } from "@wizeworks/lens-core";
 import { SCENARIO_NOW } from "../../../core/src/testing/scenario.js";
 import { chClient } from "../telemetry/ch/http.js";
-import { openClickHouse } from "../telemetry/ch/store.js";
+import { type ChStoreOptions, openClickHouse } from "../telemetry/ch/store.js";
 import type { TelemetryStore } from "../telemetry/store.js";
 
 export const CH_URL = process.env.WIZELENS_TEST_CLICKHOUSE ?? "";
@@ -18,10 +18,10 @@ export interface ChTest {
 }
 
 /** A fresh database with one project, kept `days` days. The default outlives the fixed test clock, so TTLs keep the rows. */
-export async function chTest(days = 1000, now = SCENARIO_NOW): Promise<ChTest> {
+export async function chTest(days = 1000, now = SCENARIO_NOW, extra: Partial<ChStoreOptions> = {}): Promise<ChTest> {
   const name = `wl_test_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
   const url = `${CH_URL.replace(/\/$/, "")}/${name}`;
-  const store = await openClickHouse({ url, retentionOf: async (ids) => new Map(ids.map((id) => [id, days])), defaultRetentionDays: days, now: () => now, ttl: false });
+  const store = await openClickHouse({ url, retentionOf: async (ids) => new Map(ids.map((id) => [id, days])), defaultRetentionDays: days, now: () => now, ttl: false, ...extra });
   const drop = async () => {
     const u = new URL(url);
     u.pathname = "/default";

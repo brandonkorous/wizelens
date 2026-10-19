@@ -21,6 +21,8 @@ configMapGenerator:
       - WIZELENS_CLOUD_PUBLIC_URL=https://app.wizelens.com
       # Caddy writes the real visitor address as the only X-Forwarded-For entry (see the sparx Caddyfile).
       - WIZELENS_CLOUD_TRUST_PROXY=1
+      # Settle in two worker threads; the pod has 2 CPUs.
+      - WIZELENS_CLOUD_SETTLE_WORKERS=2
       # Invite only until open sign-up is a product decision.
       - WIZELENS_CLOUD_SIGNUP=invite
       - WIZELENS_CLOUD_MAIL_FROM=WizeLens Hello <hello@updates.wizelens.com>
