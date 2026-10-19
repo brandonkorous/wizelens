@@ -21,9 +21,9 @@ const REFRESH_MS = 10_000;
 /** In-app add-ons keep metrics for one hour. */
 const IN_APP_RANGE: TimeRange = "1h";
 
-function useParams(): Record<string, string> {
+function useParams(extra: Record<string, string> | undefined): Record<string, string> {
   const { query } = useRoute();
-  const key = query.toString();
+  const key = new URLSearchParams({ ...Object.fromEntries(query), ...extra }).toString();
   return useMemo(() => Object.fromEntries(new URLSearchParams(key)), [key]);
 }
 
@@ -58,11 +58,11 @@ function serverUrl(params: Record<string, string>, range: TimeRange): string {
   return `./api/models/metrics?${q.toString()}`;
 }
 
-/** The metrics page model. Hubs and the cloud compute it; in-app add-ons send raw points and the browser computes it. */
-export function useMetricsModel(): MetricsState {
+/** The metrics page model. Hubs and the cloud compute it; in-app add-ons send raw points and the browser computes it. `extra` adds to the route's query. */
+export function useMetricsModel(extra?: Record<string, string>): MetricsState {
   const host = useHost();
   const [chosen] = useRange();
-  const params = useParams();
+  const params = useParams(extra);
   const tick = useTick(REFRESH_MS);
   const source: MetricsSource = host.has("serverMetrics") ? "server" : host.has("metrics") ? "points" : "none";
   const clipped = source === "points" && TIME_RANGES[chosen].ms > TIME_RANGES[IN_APP_RANGE].ms;

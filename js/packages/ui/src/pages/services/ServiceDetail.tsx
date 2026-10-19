@@ -1,10 +1,10 @@
-import { X } from "lucide-react";
+import { ExternalLink, X } from "lucide-react";
 import type { EndpointStat, ServiceDetailModel, ServiceEdge, ServiceRow } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
 import { setQuery } from "../../routes";
 import { Empty, KeyValues, Panel } from "../../ui/Panel";
 import { TimeChart } from "../../ui/TimeChart";
-import { KIND_LABEL, KindName, StatusText } from "./serviceParts";
+import { KIND_LABEL, KindName, serviceHref, StatusText } from "./serviceParts";
 
 function EndpointList({ items, kind }: { items: EndpointStat[]; kind: ServiceRow["kind"] }) {
   if (items.length === 0) return <Empty>Nothing recorded in this range.</Empty>;
@@ -55,7 +55,7 @@ function EdgeList({ title, edges, side }: { title: string; edges: ServiceEdge[];
   );
 }
 
-/** One service: numbers, traffic over time, busiest endpoints, and who it talks to. */
+/** A quick look at one service: numbers, traffic over time, busiest endpoints, who it talks to, and a link to its full page. */
 export function ServiceDetail({ detail }: { detail: ServiceDetailModel }) {
   const { row, endpoints: items, incoming, outgoing } = detail;
   const title = (
@@ -67,6 +67,9 @@ export function ServiceDetail({ detail }: { detail: ServiceDetailModel }) {
   return (
     <Panel title={title} className="wl-svc-detail">
       <KeyValues rows={[["Kind", KIND_LABEL[row.kind]], ["Status", <StatusText status={row.status} />], ["Requests", fmtCount(row.requests)], ["Errors", `${fmtCount(row.errors)} (${fmtPct(row.errorRate)})`], ["Avg latency", fmtMs(row.avgMs)], ["p95 latency", fmtMs(row.p95Ms)], ...(row.detail ? [["Detail", row.detail] as [string, string]] : [])]} />
+      <a className="wl-btn wl-btn-primary-outline wl-svc-full" href={serviceHref(row.key)}>
+        <ExternalLink aria-hidden="true" /> View full service
+      </a>
       <div className="wl-section-title">Traffic</div>
       <TimeChart starts={detail.starts} bars={[{ label: "Requests", values: detail.traffic, color: "var(--wl-blue)" }]} height={140} />
       <div className="wl-section-title">{row.kind === "database" ? "Busiest queries" : "Busiest endpoints"}</div>

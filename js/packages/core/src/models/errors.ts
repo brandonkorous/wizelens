@@ -40,7 +40,8 @@ function endpointsByGroup(rows: readonly Row[]): Map<string, string[]> {
   return out;
 }
 
-function groupOf({ key, agg }: Row, endpoints: Map<string, string[]>): ErrorGroup {
+/** One error group from an `err.g` row; `endpoints` from `endpointsByGroup` (empty when not read). */
+export function errorGroupOf({ key, agg }: Row, endpoints: ReadonlyMap<string, string[]> = new Map()): ErrorGroup {
   const latest = agg.top as ErrorEvent;
   const { type, message, service, endpoint } = latest;
   const list = (endpoints.get(key) ?? []).slice(0, GROUP_LIST_MAX);
@@ -117,7 +118,7 @@ export const errorsPage: PageDef<ErrorsModel> = {
       meta: metaOf(d),
       hasRequests: totalOf(d, "req.cur").n > 0,
       exceptions: cards.exceptions,
-      groups: [...rowsOf(d, "groups")].sort(byDesc((r) => r.agg.lastMs)).map((r) => groupOf(r, endpoints)),
+      groups: [...rowsOf(d, "groups")].sort(byDesc((r) => r.agg.lastMs)).map((r) => errorGroupOf(r, endpoints)),
       types: [...rowsOf(d, "err.t")].sort(byDesc((r) => r.agg.n)).map((r) => ({ type: r.key, count: r.agg.n })),
       services: servicesOf(d),
       starts: bucketStarts(d.window, CHART_BUCKETS),

@@ -2,7 +2,7 @@ import type { ComponentType } from "react";
 import { Box, Cog, Database, Globe, Inbox, Monitor } from "lucide-react";
 import type { ServiceKind, ServiceRow, ServiceStatus } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
-import { setQuery } from "../../routes";
+import { hrefTo, setQuery } from "../../routes";
 import { DotText, type Tone } from "../../ui/Badges";
 import { Empty } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
@@ -18,6 +18,18 @@ const STATUS: Record<ServiceStatus, [Tone, string]> = {
 };
 
 export const statusTone = (s: ServiceStatus): Tone => STATUS[s][0];
+
+/** Link to the full page of a service, by its row key or its name. */
+export const serviceHref = (keyOrName: string): string => hrefTo("services", [encodeURIComponent(keyOrName)]);
+
+/** The service id from the path; a broken escape is kept as typed. */
+export function serviceIdOf(param: string): string {
+  try {
+    return decodeURIComponent(param);
+  } catch {
+    return param;
+  }
+}
 
 export function StatusText({ status }: { status: ServiceStatus }) {
   const [tone, label] = STATUS[status];

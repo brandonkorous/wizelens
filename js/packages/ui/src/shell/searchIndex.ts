@@ -1,4 +1,4 @@
-import { errorInfo, isErrorSpan, requestRows, type Trace } from "@wizeworks/lens-core";
+import { displayService, errorInfo, isErrorSpan, requestRows, type Trace } from "@wizeworks/lens-core";
 import { fmtMs } from "../format";
 import { hrefTo, type PageId, traceHref } from "../routes";
 
@@ -46,7 +46,7 @@ function errorHits(traces: readonly Trace[], q: string): SearchHit[] {
 function serviceHits(traces: readonly Trace[], q: string): SearchHit[] {
   const names = new Set<string>();
   for (const t of traces) for (const s of t.services) if (has(s, q)) names.add(s);
-  return [...names].slice(0, LIMIT).map((s) => ({ key: `s${s}`, kind: "service" as const, title: s, detail: "Service", href: hrefTo("services", [], { service: s }) }));
+  return [...names].slice(0, LIMIT).map((s) => ({ key: `s${s}`, kind: "service" as const, title: s, detail: "Service", href: hrefTo("services", [encodeURIComponent(displayService(s))]) }));
 }
 
 /** Search pages, requests, trace ids, errors, and services in the loaded traces. `server` leaves requests to the host's search. */

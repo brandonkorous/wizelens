@@ -14,6 +14,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   CPU core and ingest and pages stay fast during a backlog. `--settle-workers <n>` (`WIZELENS_CLOUD_SETTLE_WORKERS`);
   default CPUs − 1, at most 4; `0` keeps it in the main thread. A worker that dies fails only its batch, which settles
   again, and a new worker takes its place. The production pod has 2 CPUs and 2 workers.
+- **A full page for each service** (`#/services/<name>`). It shows health, requests, error rate, and latency against the
+  window before; traffic and latency over time; every endpoint or query; who calls the service and what it calls; and for
+  APIs and workers its top errors, slowest requests, newest log lines, runtime metrics, and hosts. The quick look on the
+  Services page has a "View full service" button. Search and the Overview's service list open the full page.
 
 ## [0.3.0-alpha.3] — Search and scale
 

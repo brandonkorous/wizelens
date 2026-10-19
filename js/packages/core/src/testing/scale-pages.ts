@@ -32,6 +32,7 @@ const STATIC: Partial<Record<PageName, Record<string, string>[]>> = {
   insights: [{ area: "database" }, { impact: "high" }, { q: "orders" }],
   rendering: [{ all: "routes" }],
   errors: [{ q: "pay" }],
+  service: [{ service: "orders" }, { service: "Web App" }, { service: "nope" }],
 };
 
 /** Params per page: the fixed ones, plus selections picked from the memory models (a trace, a service row, an insight). */
@@ -39,7 +40,7 @@ function paramsOf(page: PageName, range: TimeRange, mem: SyncExecutor): Record<s
   const ctx = pageContext(range, SCENARIO_NOW, {});
   const extra: Record<string, string>[] = [];
   if (page === "traces") extra.push(...runPageSync("traces", ctx, mem).recent.slice(0, 2).map((t) => ({ trace: t.traceId })));
-  if (page === "services") extra.push(...runPageSync("services", ctx, mem).rows.map((r) => ({ service: r.key })));
+  if (page === "services" || page === "service") extra.push(...runPageSync("services", ctx, mem).rows.map((r) => ({ service: r.key })));
   if (page === "insights") extra.push(...runPageSync("insights", ctx, mem).groups.slice(0, 2).map((g) => ({ key: g.key })));
   return [{}, ...(STATIC[page] ?? []), ...extra];
 }

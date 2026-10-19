@@ -19,10 +19,10 @@ const NO_PARAMS: Record<string, string> = {};
 const SERVER_REFRESH_MS = 15_000;
 const STREAM_FALLBACK_MS = 120_000;
 
-/** The route's query as plain model parameters. */
-function useParams(): Record<string, string> {
+/** The route's query as plain model parameters, with `extra` on top (for example a value from the path). */
+function useParams(extra: Record<string, string> = NO_PARAMS): Record<string, string> {
   const { query } = useRoute();
-  const key = query.toString();
+  const key = new URLSearchParams({ ...Object.fromEntries(query), ...extra }).toString();
   return useMemo(() => Object.fromEntries(new URLSearchParams(key)), [key]);
 }
 
@@ -96,8 +96,8 @@ export function useServerErrorCount(): number | null {
 }
 
 /** One page's numbers. Hosts with `serverStats` compute them; otherwise the browser does, from the loaded traces. */
-export function usePageModel<P extends PageName>(page: P): PageModel<P> {
-  const params = useParams();
+export function usePageModel<P extends PageName>(page: P, extra?: Record<string, string>): PageModel<P> {
+  const params = useParams(extra);
   const server = useHost().has("serverStats");
   const local = useLocalModel(page, params, !server);
   const remote = useServerModel(page, params, server);
