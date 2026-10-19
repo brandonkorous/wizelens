@@ -23,8 +23,10 @@ describe("search on list pages", () => {
     const m = runPageSync("requests", ctx, ex);
     expect(m.total).toBe(ids.length);
     expect(m.rows.every((r) => (r.status ?? 0) >= 500)).toBe(true);
-    const logs = runPageSync("logs", { ...pageContext("7d", SCENARIO_NOW, { q: "level:error" }), searchIds: memorySearchIds(traces, "logs", "level:error", window) }, ex);
+    const logIds = memorySearchIds(traces, "logs", "level:error", window);
+    const logs = runPageSync("logs", { ...pageContext("7d", SCENARIO_NOW, { q: "level:error", size: "500" }), searchIds: logIds }, ex);
     expect(logs.rows.length).toBeGreaterThan(0);
+    expect(logs.rows.every((r) => logIds.includes(r.traceId))).toBe(true);
   });
 
   it("counts every kind and spreads the chosen one over time", async () => {
