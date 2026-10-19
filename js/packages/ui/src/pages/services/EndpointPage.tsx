@@ -90,7 +90,7 @@ function Lists({ m }: { m: EndpointPageModel }) {
 export function EndpointPage({ service, endpoint }: { service: string; endpoint: string }) {
   const { model: m, loading, error } = usePageModel("endpoint", { service, endpoint });
   const name = service.includes(":") ? service.slice(service.indexOf(":") + 1) : service;
-  const stats: [string, string][] = m?.totals ? [["Service", name], ["Requests", fmtCount(m.totals.count)], ["Average", fmtMs(m.totals.avgMs)], ["p50", fmtMs(m.totals.p50Ms)], ["p95", fmtMs(m.totals.p95Ms)], ["p99", fmtMs(m.totals.p99Ms)]] : [["Service", name]];
+  const stats: [string, string][] = m?.totals ? [["Service", name], ["Requests", fmtCount(m.totals.count)], ["Users", fmtCount(m.users.count)], ["Average", fmtMs(m.totals.avgMs)], ["p50", fmtMs(m.totals.p50Ms)], ["p95", fmtMs(m.totals.p95Ms)], ["p99", fmtMs(m.totals.p99Ms)]] : [["Service", name]];
   return (
     <div className="wl-dpage">
       <ModelState model={m} loading={loading} error={error} what="this endpoint" />

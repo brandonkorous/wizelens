@@ -51,6 +51,8 @@ export interface LogFilter {
   category?: string;
   /** Only this trace's lines, or "" for all. */
   traceId?: string;
+  /** Only lines of this signed-in user's requests, or "" for all. */
+  user?: string;
 }
 
 export const levelRank = (level: LogLevel): number => LOG_LEVELS.indexOf(level);

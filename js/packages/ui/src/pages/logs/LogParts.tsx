@@ -27,10 +27,10 @@ export function LogFilters({ stats }: { stats: LogsModel }) {
       <ServiceSelect value={filter.service} services={services} />
       <ListQueryBar value={filter.query} placeholder="Messages, categories, or trace IDs; or level:error service:api" />
       <Check label="This level only" disabled={filter.minLevel === "trace"} checked={!!filter.exact} onChange={(e) => setQuery({ exact: e.target.checked ? "1" : null, page: null })} />
-      <button type="button" className="wl-btn" onClick={() => setQuery({ level: null, exact: null, category: null, trace: null, q: null, page: null })}>
+      <button type="button" className="wl-btn" onClick={() => setQuery({ level: null, exact: null, category: null, trace: null, q: null, user: null, page: null })}>
         <RotateCcw aria-hidden="true" /> Reset
       </button>
-      <FilterChips chips={[["Category", "category", filter.category ?? ""], ["Trace", "trace", filter.traceId ?? ""]]} />
+      <FilterChips chips={[["Category", "category", filter.category ?? ""], ["Trace", "trace", filter.traceId ?? ""], ["User", "user", filter.user ?? ""]]} />
     </section>
   );
 }

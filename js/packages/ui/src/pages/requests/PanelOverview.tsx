@@ -1,7 +1,7 @@
 import { ExternalLink } from "lucide-react";
 import type { RequestItem } from "@wizeworks/lens-core";
 import { fmtMs } from "../../format";
-import { traceHref } from "../../routes";
+import { traceHref, userHref } from "../../routes";
 import { BarList, type BarItem } from "../../ui/BarList";
 import { CopyButton, DotText, toneOfStatus } from "../../ui/Badges";
 import { KeyValues } from "../../ui/Panel";
@@ -32,7 +32,7 @@ function Summary({ r }: { r: RequestItem }) {
         ["Fetch Calls", countMs(r.fetchCount, r.fetchMs)],
         ["User Agent", r.userAgent ?? <span className="wl-muted">Not captured</span>],
         ["IP Address", r.clientAddress ?? <span className="wl-muted">Not captured</span>],
-        ["User", r.user ?? <span className="wl-muted">Anonymous</span>],
+        ["User", r.user ? <a href={userHref(r.user)}>{r.user}</a> : <span className="wl-muted">Anonymous</span>],
         ["Trace ID", <Copyable text={r.traceId} />],
         ["Request ID", <Copyable text={r.requestId} />],
       ]}

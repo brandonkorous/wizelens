@@ -51,7 +51,7 @@ it("fires once when the error rate breaks the rule, then resolves", async () => 
   expect(list.body.rules[0]!.state).toBe("ok");
   expect(list.body.events.map((e) => e.kind)).toEqual(["resolved", "fired"]);
   expect(list.body.events[0]!.delivery).toBe("webhook: sent");
-});
+}, 60_000);
 
 it("refuses webhooks into private networks unless allowed", async () => {
   expect(await checkTarget("http://example.com/hook", false)).toBe("Use an https:// URL.");

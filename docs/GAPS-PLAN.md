@@ -20,7 +20,7 @@ APM buyers expect and that phases 0 to 13 do not cover.
 | 7 | SLOs, Apdex, and error budgets | M | Done |
 | 8 | Saving and sharing: saved views and searches, dashboards, exports | L | Done |
 | 9 | Search everywhere: query bar on list pages, more kinds | M | Done |
-| 10 | Users: users affected, user filter, user page | M | Not started |
+| 10 | Users: users affected, user filter, user page | M | Done |
 | 11 | Settings and Team | M | Not started |
 | 12 | AI tools (MCP) see what the UI shows | S | Not started |
 | 13 | SDK coverage | L | Not started |

@@ -370,6 +370,14 @@ The Errors model takes `status` (`unresolved` by default, `resolved`, `ignored`,
 range), and returns `issues` (status, first seen over all kept data, new, assignee) and `hasIssues`. The Insights model
 takes `status` the same way. The Overview model returns `freshErrors`, the newest new and regressed groups.
 
+## Users
+
+Requests carry the signed-in user (`enduser.id`). Facts keep `usr` (per user: requests, failures, durations), and one key per item
+and user for error groups (`err.u`), insights (`ins.u`), and endpoints (`ep.u`, `service|endpoint|user`), so pages count distinct
+users. The Error and Endpoint pages return `users` (`{ count, top }`), Insights `selectedUsers` for its `key`. Errors and Logs
+take `user` (Requests already did). The `users` page lists users by requests (`q`, `page`, `size`); the `user` page (`user`) has
+their totals, requests over time, newest and slowest requests, and the error groups they hit. `FACTS_VERSION` 6.
+
 ## Saved views and dashboards
 
 Hosts with `saved` keep items per project at `api/saved?project=` (hub) or `api/projects/:project/saved` (cloud):

@@ -1,7 +1,8 @@
 import { X } from "lucide-react";
-import type { InsightGroup, IssueInfo } from "@wizeworks/lens-core";
+import type { ReactNode } from "react";
+import type { InsightGroup, IssueInfo, UsersAffected } from "@wizeworks/lens-core";
 import { fmtAgo, fmtCount, fmtMs } from "../../format";
-import { hrefTo, setQuery, traceHref } from "../../routes";
+import { hrefTo, setQuery, traceHref, userHref } from "../../routes";
 import { Badge, CopyButton, ImpactBadge } from "../../ui/Badges";
 import { IssueActions, IssueBadge } from "../../ui/IssueControls";
 import { KeyValues, Panel } from "../../ui/Panel";
@@ -27,7 +28,20 @@ function Endpoints({ group }: { group: InsightGroup }) {
   );
 }
 
-export function InsightDetail({ group, info, now }: { group: InsightGroup; info: IssueInfo | undefined; now: number }) {
+/** "3: user-9, user-1, user-4" with links to each user's page. */
+function UsersLine({ users }: { users: UsersAffected }) {
+  if (!users.count) return <>0</>;
+  return (
+    <span>
+      {fmtCount(users.count)}:{" "}
+      {users.top.slice(0, 3).map((u, i) => (
+        <span key={u.user}>{i > 0 && ", "}<a href={userHref(u.user)}>{u.user}</a></span>
+      ))}
+    </span>
+  );
+}
+
+export function InsightDetail({ group, info, users, now }: { group: InsightGroup; info: IssueInfo | undefined; users: UsersAffected | null; now: number }) {
   const advice = adviceFor(group);
   const example = group.area === "render" ? traceHref(group.exampleTraceId) : traceHref(group.exampleTraceId, "insights");
   return (
@@ -50,7 +64,7 @@ export function InsightDetail({ group, info, now }: { group: InsightGroup; info:
         Pattern <CopyButton text={group.shape} label="Copy pattern" />
       </div>
       <pre className="wl-code wl-insight-shape">{group.shape}</pre>
-      <KeyValues rows={[["Seen in", `${fmtCount(group.occurrences)} ${group.area === "render" ? (group.key.includes("|component|") ? "renders" : "page views") : "requests"}`], ["Repeats", fmtCount(group.count)], ["Time involved", fmtMs(group.totalMs)]]} />
+      <KeyValues rows={[["Seen in", `${fmtCount(group.occurrences)} ${group.area === "render" ? (group.key.includes("|component|") ? "renders" : "page views") : "requests"}`], ["Repeats", fmtCount(group.count)], ["Time involved", fmtMs(group.totalMs)], ...(users ? [["Users affected", <UsersLine key="u" users={users} />] as [string, ReactNode]] : [])]} />
       <div className="wl-section-title">Why it matters</div>
       <p className="wl-insight-desc">{advice.why}</p>
       <div className="wl-section-title">How to fix it</div>
