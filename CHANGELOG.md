@@ -18,6 +18,23 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   before; every service's status, traffic, errors, and p95; the top errors; and the biggest insights. In the cloud, called
   without a project it reports on every project you may read, the ones that need attention first: one call for a morning
   report on 20 APIs.
+- **Filter every page by service.** Pick a service in the top bar menu (or any page's Service filter) and every page
+  counts that service only: Overview, Requests, Traces, Database, Errors, Logs, Insights, and Metrics. A chip in the top
+  bar clears it. Links that name a service still win.
+- **Errors:** filter by type, endpoint, critical, and text; order by newest or most frequent; page through every group
+  (the list stopped at the newest 200). Error types and services can be clicked to filter.
+- **Database:** filter by database, operation, table, and text; order by slowest, most frequent, or total time; page through
+  every query. New columns: max, total time, slow, and errors. Endpoints link to their requests; operation bars and table
+  rows filter the list.
+- **Traces:** filter by status and duration, order by newest or slowest, and page; the timeline shows the first listed trace.
+- **Logs:** "this level only", a category filter (click a category), a trace filter, and rows that open to show attributes.
+- **Requests:** exact endpoint and user filters (as chips), "with insights", and DB time and errors columns to sort by.
+  Links from errors, insights, the Database page, and the service page use the exact endpoint, not a text search.
+- **Rendering:** search routes and components; LCP and large images columns.
+
+### Changed
+
+- Stats are rebuilt once after this update (`FACTS_VERSION` 3), so each count can be read per service.
 
 ### Fixed
 

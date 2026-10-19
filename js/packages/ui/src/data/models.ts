@@ -3,7 +3,7 @@ import { memoryExecutor, type ModelOf, pageContext, type PageName, runPageSync, 
 import { useRoute } from "../routes";
 import { useChangeTick } from "./changes";
 import { useHost, useRange } from "./host";
-import { getScope } from "./prefs";
+import { getScope, useServiceScope } from "./prefs";
 import { provider, useData } from "./provider";
 import { apiFetch } from "./api";
 
@@ -19,10 +19,18 @@ const NO_PARAMS: Record<string, string> = {};
 const SERVER_REFRESH_MS = 15_000;
 const STREAM_FALLBACK_MS = 120_000;
 
-/** The route's query as plain model parameters, with `extra` on top (for example a value from the path). */
-function useParams(extra: Record<string, string> = NO_PARAMS): Record<string, string> {
+/** Pages where `service` names a row or the page itself, not a filter: the chosen service does not apply there. */
+const OWN_SERVICE: ReadonlySet<PageName> = new Set(["services", "service"]);
+
+/** Model parameters: the chosen service (unless the link names one), the route's query, then `extra` (for example a value from the path). */
+export function withScope(page: PageName, query: Record<string, string>, service: string): Record<string, string> {
+  return service && !OWN_SERVICE.has(page) && !query.service ? { service, ...query } : query;
+}
+
+function useParams(page: PageName, extra: Record<string, string> = NO_PARAMS): Record<string, string> {
   const { query } = useRoute();
-  const key = new URLSearchParams({ ...Object.fromEntries(query), ...extra }).toString();
+  const [service] = useServiceScope();
+  const key = new URLSearchParams({ ...withScope(page, Object.fromEntries(query), service), ...extra }).toString();
   return useMemo(() => Object.fromEntries(new URLSearchParams(key)), [key]);
 }
 
@@ -81,7 +89,8 @@ function useServerModel<P extends PageName>(page: P, params: Record<string, stri
 }
 
 /** A model once, outside React: for exports. Same rules as `usePageModel`. */
-export async function loadPageModel<P extends PageName>(page: P, params: Record<string, string>, range: TimeRange, server: boolean): Promise<ModelOf<P>> {
+export async function loadPageModel<P extends PageName>(page: P, query: Record<string, string>, range: TimeRange, server: boolean): Promise<ModelOf<P>> {
+  const params = withScope(page, query, getScope().service);
   if (server) return apiFetch<ModelOf<P>>(modelUrl(page, params, range));
   const data = provider.getSnapshot();
   const slowQueryMs = data.info?.analysis?.slowQueryMs ?? DEFAULT_SLOW_QUERY_MS;
@@ -97,7 +106,7 @@ export function useServerErrorCount(): number | null {
 
 /** One page's numbers. Hosts with `serverStats` compute them; otherwise the browser does, from the loaded traces. */
 export function usePageModel<P extends PageName>(page: P, extra?: Record<string, string>): PageModel<P> {
-  const params = useParams(extra);
+  const params = useParams(page, extra);
   const server = useHost().has("serverStats");
   const local = useLocalModel(page, params, !server);
   const remote = useServerModel(page, params, server);

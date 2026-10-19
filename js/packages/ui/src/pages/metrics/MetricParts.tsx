@@ -1,7 +1,9 @@
 import { fmtMetric, type MetricArea, type MetricInfo, type MetricsModel } from "@wizeworks/lens-core";
+import { useServiceScope } from "../../data/prefs";
 import { setQuery } from "../../routes";
 import { SearchInput, Select } from "../../ui/Controls";
 import { Empty, Panel } from "../../ui/Panel";
+import { useSetService } from "../../ui/ServiceSelect";
 import { Sparkline } from "../../ui/Sparkline";
 
 export const LINE_COLORS = ["var(--wl-blue)", "var(--wl-green)", "var(--wl-orange)", "var(--wl-red)", "var(--wl-k-db)", "var(--wl-k-messaging)", "var(--wl-k-render)", "var(--wl-amber)", "var(--wl-k-browser)", "var(--wl-slate)"];
@@ -67,11 +69,13 @@ function MetricRow({ m, active }: { m: MetricInfo; active: boolean }) {
 export function MetricList({ model, params }: { model: MetricsModel; params: Record<string, string> }) {
   const areas = [...new Set(model.catalog.map((m) => m.area))];
   const services: [string, string][] = [["", "All services"], ...model.services.map((s): [string, string] => [s, s])];
+  const [scope] = useServiceScope();
+  const pick = useSetService();
   return (
     <Panel title={`Metrics (${model.catalog.length})`} className="wl-metric-list">
       <div className="wl-metric-filters">
         <SearchInput value={params.q ?? ""} onChange={(q) => setQuery({ q: q || null })} placeholder="Find a metric" />
-        {model.services.length > 1 && <Select value={params.service ?? ""} options={services} onChange={(s) => setQuery({ service: s || null })} label="Service" small />}
+        {(model.services.length > 1 || scope) && <Select value={params.service ?? scope} options={services} onChange={pick} label="Service" small />}
       </div>
       {model.catalog.length === 0 && <Empty title="No metrics in this range">Pick a wider range, or check that your services send metrics.</Empty>}
       {areas.map((area) => (

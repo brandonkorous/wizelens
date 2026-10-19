@@ -29,7 +29,13 @@ export interface ErrorEvent {
   tags: string[];
 }
 
-export const displayService = (service: string): string => (service === "browser" ? "Web App" : service);
+/** How the dashboard names the browser's service. */
+export const WEB_APP = "Web App";
+
+export const displayService = (service: string): string => (service === "browser" ? WEB_APP : service);
+
+/** The service name as spans carry it, from its display name. */
+export const rawService = (service: string): string => (service === WEB_APP ? "browser" : service);
 
 /** Message with ids and numbers replaced, so the same error with other values groups together. */
 export function messageShape(message: string): string {

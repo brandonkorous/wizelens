@@ -1,11 +1,11 @@
 import { splitKey } from "../scale/kinds.js";
-import type { NeedResults, PageDef } from "../scale/needs.js";
+import type { ListFilter, NeedResults, PageDef } from "../scale/needs.js";
 import { bucketStarts, percentChange } from "../stats/common.js";
 import { type LogFilter, LOG_LEVELS, type LogRow } from "../stats/logs.js";
 import { SPARK_BUCKETS } from "../stats/overview.js";
 import type { LogLevel } from "../types.js";
 import { CHART_BUCKETS } from "./database.js";
-import { META_NEEDS, type ModelMeta, type ModelParams, metaOf, pageParams } from "./input.js";
+import { META_NEEDS, type ModelMeta, type ModelParams, metaOf, pageParams, scoped } from "./input.js";
 import { aggByKey, counts, groupNeed, listNeed, listOf, rowsOf, type Series, seriesNeed, sumSeries, uniqueNeeds } from "./read.js";
 
 /** Levels shown as one color in the volume chart. */
@@ -34,7 +34,25 @@ export interface LogsModel {
 
 const isLevel = (v: string | undefined): v is LogLevel => !!v && (LOG_LEVELS as readonly string[]).includes(v);
 
-export const logFilterOf = (p: ModelParams): LogFilter => ({ minLevel: isLevel(p.level) ? p.level : "trace", service: p.service ?? "", query: p.q ?? "" });
+/** The filter from URL parameters: level (and exact=1 for that level only), service, category, trace, q. */
+export const logFilterOf = (p: ModelParams): LogFilter => ({
+  minLevel: isLevel(p.level) ? p.level : "trace",
+  exact: p.exact === "1" && isLevel(p.level),
+  service: p.service ?? "",
+  category: p.category ?? "",
+  traceId: p.trace ?? "",
+  query: p.q ?? "",
+});
+
+/** The list filter for the logs table. */
+const listFilterOf = (f: LogFilter): ListFilter => ({
+  minLevel: f.minLevel,
+  ...(f.exact ? { exactLevel: true } : {}),
+  ...(f.service ? { logService: f.service } : {}),
+  ...(f.category ? { category: f.category } : {}),
+  ...(f.traceId ? { traceId: f.traceId } : {}),
+  ...(f.query ? { q: f.query } : {}),
+});
 
 type Counts = { total: number; warnings: number; errors: number; critical: number };
 
@@ -50,19 +68,19 @@ function changeOf(cur: Counts, prev: Counts): LogsModel["change"] {
   return { total: change(cur.total, prev.total), warnings: change(cur.warnings, prev.warnings), errors: change(cur.errors, prev.errors), critical: change(cur.critical, prev.critical) };
 }
 
-/** The Logs page. Params: level, service, q, page, size. */
+/** The Logs page. Params: the filter (`logFilterOf`), page, size. The cards and charts follow the service. */
 export const logsPage: PageDef<LogsModel> = {
   needs: (ctx) => {
     const f = logFilterOf(ctx.params);
-    const filter = { minLevel: f.minLevel, ...(f.service ? { logService: f.service } : {}), ...(f.query ? { q: f.query } : {}) };
+    const one = scoped(f.service || undefined);
     return uniqueNeeds([
       ...META_NEEDS,
-      groupNeed("log.cur", "log", "cur"),
-      groupNeed("log.prev", "log", "prev"),
+      groupNeed("log.cur", "log", "cur", one),
+      groupNeed("log.prev", "log", "prev", one),
       groupNeed("log.s", "log.s", "cur"),
-      listNeed("rows", "logs", "cur", { filter, page: pageParams(ctx.params, 30) }),
-      seriesNeed("volume", "log", "cur", CHART_BUCKETS, { split: true }),
-      seriesNeed("sparks", "log", "cur", SPARK_BUCKETS, { split: true }),
+      listNeed("rows", "logs", "cur", { filter: listFilterOf(f), page: pageParams(ctx.params, 30) }),
+      seriesNeed("volume", "log", "cur", CHART_BUCKETS, { split: true, ...one }),
+      seriesNeed("sparks", "log", "cur", SPARK_BUCKETS, { split: true, ...one }),
     ]);
   },
   model(d) {

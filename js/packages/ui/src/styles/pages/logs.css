@@ -7,3 +7,5 @@
 .wl-logs-page .wl-log-msg { min-width: 260px; word-break: break-word; }
 .wl-logs-page .wl-log-trace { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .wl-logs-page .wl-badge { text-transform: capitalize; }
+.wl-log-detail { display: flex; flex-direction: column; gap: 10px; max-width: 900px; font-size: 13px; }
+.wl-log-detail .wl-kv { font-family: var(--wl-mono); font-size: 12.5px; }

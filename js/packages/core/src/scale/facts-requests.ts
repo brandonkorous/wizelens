@@ -1,7 +1,8 @@
 // Request facts: the req* kinds (totals, filter dimensions, per service, time parts) and the ins* kinds.
 import { insightHits } from "../stats/insights.js";
 import { isFailed, type RequestRow } from "../stats/requests.js";
-import { type Contribution, contribution } from "./agg.js";
+import { displayService } from "../stats/errors.js";
+import { type Contribution, contribution, withServices } from "./agg.js";
 import { joinKey } from "./kinds.js";
 
 export type StatusClass = "1xx" | "2xx" | "3xx" | "4xx" | "5xx" | "none";
@@ -65,5 +66,6 @@ export function requestContributions(r: RequestRow): Contribution[] {
   for (const s of new Set([r.service, ...r.services])) {
     out.push(contribution("req.svc", joinKey(s, ...dims), at, { ...base, c: [r.dbCount, withInsights, s === r.service ? 1 : 0] }));
   }
-  return [...out, ...partContributions(r), ...insightContributions(r)];
+  const services = [r.service, ...r.services].map(displayService);
+  return [...out, ...partContributions(r), ...insightContributions(r)].flatMap((c) => withServices(c, services));
 }

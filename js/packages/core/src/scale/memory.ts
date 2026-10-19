@@ -5,7 +5,7 @@ import { addContribution, type Agg, type Contribution, emptyAgg, trimAgg } from 
 import { type FactOptions, type TraceFacts, traceFacts } from "./facts.js";
 import { KIND_SPEC, type RollupKind } from "./kinds.js";
 import { runList } from "./memory-lists.js";
-import { emptyResults, type GroupNeed, type GroupRows, keyMatches, type NeedResults, type PageContext, type SeriesNeed, type SeriesRows, sortGroups, type SyncExecutor, type TraceNeed, windowOfRef } from "./needs.js";
+import { emptyResults, type GroupNeed, type GroupRows, keyMatches, type NeedResults, orderValue, type PageContext, type SeriesNeed, type SeriesRows, sortGroups, type SyncExecutor, type TraceNeed, windowOfRef } from "./needs.js";
 
 interface Item {
   c: Contribution;
@@ -35,10 +35,12 @@ function runGroups(items: readonly Item[], need: GroupNeed, w: TimeWindow): Grou
     if (!a) map.set(c.key, (a = emptyAgg(spec.hist)));
     addContribution(a, c, traceId, spec);
   }
-  const rows = [...map].filter(([, a]) => a.n > 0.5).map(([key, a]) => ({ key, agg: trimAgg(a, need) }));
+  const keep = (a: Agg) => a.n > 0.5 && (!need.having || orderValue(a, need.having.by) >= need.having.min);
+  const rows = [...map].filter(([, a]) => keep(a)).map(([key, a]) => ({ key, agg: trimAgg(a, need) }));
   // Without an order, rows come by key, so both executors agree.
   if (!need.order) return { rows: rows.sort((x, y) => (x.key < y.key ? -1 : x.key > y.key ? 1 : 0)), total: rows.length };
-  return { rows: sortGroups(rows, need.order.by, need.order.desc).slice(0, need.order.limit), total: rows.length };
+  const from = need.order.offset ?? 0;
+  return { rows: sortGroups(rows, need.order.by, need.order.desc).slice(from, from + need.order.limit), total: rows.length };
 }
 
 function runSeries(items: readonly Item[], need: SeriesNeed, w: TimeWindow): SeriesRows {

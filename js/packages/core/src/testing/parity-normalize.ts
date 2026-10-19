@@ -42,23 +42,34 @@ const str = (k: string): Key => (x) => String(x[k]);
 /** Rows that tie on what a page sorts by may come in another order: put them in one order on both sides. */
 const TIES: Record<string, (m: Obj) => void> = {
   traces: (m) => {
+    // The filter and paging are new; the legacy model had none.
+    for (const k of ["filter", "page", "size"]) delete m[k];
     m.critical = sortBy(m.critical, num("durationMs"), str("traceId"), str("spanId"));
+  },
+  requests: (m) => {
+    // Service options carry display names now ("Web App", not "browser").
+    const o = m.options as { services: string[] };
+    o.services = [...new Set(o.services.map((s) => (s === "browser" ? "Web App" : s)))].sort();
+  },
+  logs: (m) => {
+    // The exact level, category, and trace filters are new; the legacy filter had none.
+    const f = m.filter as Obj;
+    for (const k of ["exact", "category", "traceId"]) delete f[k];
   },
   rendering: (m) => {
     // The route count is new; the legacy model had none.
     delete m.routeCount;
   },
   database: (m) => {
-    // The table count is new; the legacy model had none.
-    delete m.tableCount;
+    // The table count, the filter, paging, and database options are new; the legacy model had none.
+    for (const k of ["tableCount", "filter", "page", "size", "databases"]) delete m[k];
     m.queries = sortBy(m.queries, num("avgMs"), str("key"));
     m.tables = sortBy(m.tables, num("queries"), str("table"));
   },
   errors: (m) => {
     m.services = sortBy(m.services, num("exceptions"), num("requests"), str("service"));
-    // The selected group by key and the group count are new; the legacy model had neither.
-    delete m.selected;
-    delete m.groupCount;
+    // The selected group, the filter, paging, and endpoint options are new; the legacy model had none.
+    for (const k of ["selected", "groupCount", "filter", "page", "size", "endpoints"]) delete m[k];
   },
   services: (m) => {
     m.rows = sortBy(m.rows, num("requests"), str("key"));

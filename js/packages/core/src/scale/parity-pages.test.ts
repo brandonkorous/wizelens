@@ -9,7 +9,7 @@ import { pageContext } from "./run.js";
 
 describe("parity: database, rendering, errors, logs, services", () => {
   it("database matches", () => {
-    for (const range of PARITY_RANGES) expect(parityOf("database", range)).toEqual([]);
+    for (const range of PARITY_RANGES) expect(parityOf("database", range, { size: "200" })).toEqual([]);
   });
 
   it("rendering matches", () => {
@@ -17,12 +17,15 @@ describe("parity: database, rendering, errors, logs, services", () => {
   });
 
   it("errors matches", () => {
-    for (const range of PARITY_RANGES) expect(parityOf("errors", range)).toEqual([]);
+    // The legacy model listed up to 200 groups; one page that size holds them all.
+    for (const range of PARITY_RANGES) expect(parityOf("errors", range, { size: "200" })).toEqual([]);
   });
 
   it("logs matches with every filter and on page 2", () => {
     const params: Record<string, string>[] = [{}, { level: "warn" }, { level: "error" }, { level: "bogus" }, { service: "api" }, { service: "Web App" }, { q: "order" }, { q: "5c0" }, { level: "info", service: "orders", q: "placed" }, { page: "2", size: "5" }, { page: "999" }];
-    for (const range of PARITY_RANGES) for (const p of params) expect(parityOf("logs", range, p)).toEqual([]);
+    // With a service, the cards and charts count that service only now; the legacy model counted every line.
+    const skip = (p: Record<string, string>) => (p.service ? ["totalLines", "volume", "cards", "change", "sparks"] : []);
+    for (const range of PARITY_RANGES) for (const p of params) expect(parityOf("logs", range, p, skip(p))).toEqual([]);
   });
 
   it("services matches, with every row selected by key, and by name", () => {
@@ -45,7 +48,7 @@ describe("parity: a live slow query threshold, as in-app hosts use", () => {
   it("database matches at 10 ms", () => {
     const ex = memoryExecutor(scenarioTraces(), { slowQueryMs: 10 });
     for (const range of PARITY_RANGES) {
-      const now = runPageSync("database", pageContext(range, SCENARIO_NOW, {}, { slowQueryMs: 10 }), ex);
+      const now = runPageSync("database", pageContext(range, SCENARIO_NOW, { size: "200" }, { slowQueryMs: 10 }), ex);
       const before = legacy.PAGE_MODELS.database(legacy.modelInput(scenarioTraces(), range, SCENARIO_NOW, { slowQueryMs: 10 }, {}));
       expect(now.summary.slow).not.toBe(newModel("database", range).summary.slow);
       expect(differences(normalizeModel("database", now), normalizeModel("database", before))).toEqual([]);

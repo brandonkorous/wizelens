@@ -3,6 +3,7 @@ import { fmtCount, fmtMs } from "../../format";
 import { PageHeader } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
 import { OperationsPanel, SlowQueriesPanel } from "./DbCharts";
+import { DbFilters } from "./DbFilters";
 import { TableHotspotsPanel, TopQueriesPanel } from "./DbTables";
 import { InsightCards } from "./InsightCards";
 import type { DatabaseModel } from "@wizeworks/lens-core";
@@ -37,13 +38,16 @@ export function DatabasePage() {
 function DatabaseBody({ stats }: { stats: DatabaseModel }) {
   return (
     <>
+      <DbFilters stats={stats} />
       <DbStatCards stats={stats} />
       <div className="wl-grid wl-grid-2">
         <SlowQueriesPanel stats={stats} />
         <OperationsPanel stats={stats} />
       </div>
-      <div className="wl-grid wl-grid-2-even">
+      <div className="wl-grid">
         <TopQueriesPanel stats={stats} />
+      </div>
+      <div className="wl-grid">
         <TableHotspotsPanel stats={stats} />
       </div>
       <InsightCards insights={stats.insights} area="database" />

@@ -8,6 +8,7 @@ import { PageHeader } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
 import { LayerTimeline } from "./LayerTimeline";
 import { RecentTraces } from "./RecentTraces";
+import { TraceFilters } from "./TraceFilters";
 import { TraceAttributes } from "./TraceAttributes";
 import { BottleneckPanel, CriticalSpansPanel } from "./TraceSidePanels";
 import "../../styles/pages/traces.css";
@@ -30,9 +31,10 @@ function TracesBody({ m }: { m: TracesModel }) {
   const data = useData();
   return (
     <>
+      <TraceFilters filter={m.filter} />
       <Cards m={m} />
       <div className="wl-grid wl-traces-top">
-        <RecentTraces items={m.recent} total={m.matching} selectedId={m.selected?.traceId ?? null} />
+        <RecentTraces items={m.recent} total={m.matching} page={m.page} size={m.size} selectedId={m.selected?.traceId ?? null} />
         <LayerTimeline trace={m.selected} />
       </div>
       <div className="wl-grid wl-grid-3">

@@ -1,5 +1,6 @@
 import type { RequestItem } from "../scale/facts-lists.js";
 import { splitKey } from "../scale/kinds.js";
+import { displayService, rawService } from "../stats/errors.js";
 import type { KeyFilter, ListFilter, Need, PageData, PageDef } from "../scale/needs.js";
 import { SPARK_BUCKETS, type RequestHeadlines } from "../stats/overview.js";
 import { headlineNeeds, headlinesFrom, headlinesOf } from "./headlines.js";
@@ -26,7 +27,9 @@ const DURATION_KEYS = new Set(DURATION_OPTIONS.map(([k]) => k).filter(Boolean));
 /** The filter as list filters, leaving out empty values and unknown durations (which filter nothing). */
 export function requestListFilter(f: RequestFilter): ListFilter {
   const out: ListFilter = {};
-  for (const k of ["method", "status", "service", "q"] as const) if (f[k]) out[k] = f[k];
+  for (const k of ["method", "status", "q", "endpoint", "user"] as const) if (f[k]) out[k] = f[k];
+  if (f.service) out.service = rawService(f.service);
+  if (f.insights) out.insights = true;
   if (DURATION_KEYS.has(f.duration)) out.duration = f.duration;
   return out;
 }
@@ -35,7 +38,7 @@ export function requestListFilter(f: RequestFilter): ListFilter {
 export function requestKeyFilter(f: RequestFilter): KeyFilter | undefined {
   const status = f.status === "failed" ? null : f.status || null;
   const parts = [f.method || null, status, f.status === "failed" ? "1" : null, DURATION_KEYS.has(f.duration) ? f.duration : null];
-  const all = f.service ? [f.service, ...parts] : parts;
+  const all = f.service ? [rawService(f.service), ...parts] : parts;
   return all.some((p) => p !== null) ? { parts: all } : undefined;
 }
 
@@ -44,7 +47,8 @@ const sortOf = (p: ModelParams) => ({ key: isSortKey(p.sort) ? p.sort : "time", 
 function needs(p: ModelParams): Need[] {
   const f = filterFromQuery(p);
   const filter = requestListFilter(f);
-  const q = f.q.trim() !== "";
+  // Text, endpoint, user, and insights are not rollup keys: headlines then come from the matching rows.
+  const q = f.q.trim() !== "" || !!(f.endpoint || f.user || f.insights);
   const out: Need[] = [
     ...META_NEEDS,
     listNeed("rows", "requests", "cur", { filter, sort: sortOf(p), page: pageParams(p, 15), ...(q ? { aggregate: { buckets: SPARK_BUCKETS } } : {}) }),
@@ -66,7 +70,7 @@ function headlinesOfPage(d: PageData): RequestHeadlines {
 
 const distinct = (values: readonly string[]): string[] => [...new Set(values)].sort();
 
-/** The Requests page. Params: method, status, duration, service, q, sort, desc, page, size, trace. */
+/** The Requests page. Params: method, status, duration, service (a display name), q, endpoint, user, insights, sort, desc, page, size, trace. */
 export const requestsPage: PageDef<RequestsModel> = {
   needs: (ctx) => needs(ctx.params),
   model(d) {
@@ -75,7 +79,7 @@ export const requestsPage: PageDef<RequestsModel> = {
     return {
       meta: metaOf(d),
       headlines: headlinesOfPage(d),
-      options: { methods: distinct(rowsOf(d, "opt.dim").map((r) => splitKey(r.key)[0]!)), services: distinct(services.map((r) => splitKey(r.key)[0]!)) },
+      options: { methods: distinct(rowsOf(d, "opt.dim").map((r) => splitKey(r.key)[0]!)), services: distinct(services.map((r) => displayService(splitKey(r.key)[0]!))) },
       filtered: isFiltered(filterFromQuery(d.params)),
       rows: list.items,
       total: list.total ?? list.items.length,

@@ -5,7 +5,8 @@ import { isConsumer, isProducer, queueOf } from "../stats/messaging.js";
 import { databaseOf, edgeCallsOf, externalCallsOf, hostOf, isFailedSpan, type ServiceKind } from "../stats/services.js";
 import { traceParts } from "../stats/traces.js";
 import type { Span, Trace } from "../types.js";
-import { type Contribution, contribution } from "./agg.js";
+import { displayService } from "../stats/errors.js";
+import { type Contribution, contribution, withServices } from "./agg.js";
 import { joinKey } from "./kinds.js";
 
 /** What a Services row shows besides its numbers. The `svc` kind keeps the newest one as its top. */
@@ -50,14 +51,18 @@ function edgeContributions(trace: Trace): Contribution[] {
   );
 }
 
+/** Every service with a span in the trace, by display name: the services a whole-trace count is filed under. */
+export const traceServices = (t: Trace): string[] => [...new Set(t.spans.map((s) => displayService(s.service)))];
+
 /** Bottleneck parts at the trace's start time, with the same filter as `bottlenecks`. */
 function bottleneckContributions(trace: Trace): Contribution[] {
   const parts = traceParts(trace).filter((p) => p.kind !== "browser" && p.ms > 0 && !p.key.startsWith("page:"));
   const at = trace.startMs;
+  const services = traceServices(trace);
   return parts.flatMap((p) => [
     contribution("bn.layer", p.key, at, { sum: p.ms, top: { rank: at, data: { label: p.label, kind: p.kind } } }),
     contribution("bn.owner", p.owner, at, { sum: p.ms }),
-  ]);
+  ]).flatMap((c) => withServices(c, services));
 }
 
 /** Everything one trace adds to the service, edge, and bottleneck rollups. */

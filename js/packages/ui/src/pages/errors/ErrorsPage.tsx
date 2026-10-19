@@ -5,6 +5,7 @@ import { PageHeader } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
 import { ErrorsOverTimePanel, TopErrorTypesPanel } from "./ErrorCharts";
 import { ErrorDetailsPanel } from "./ErrorDetails";
+import { ErrorFilters } from "./ErrorFilters";
 import { ErrorsByServicePanel, RecentExceptionsPanel } from "./ErrorTables";
 import type { ErrorsModel } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
@@ -41,6 +42,7 @@ function ErrorsBody({ stats }: { stats: ErrorsModel }) {
   const selected = group?.key ?? null;
   return (
     <>
+      <ErrorFilters stats={stats} />
       <ErrorStatCards stats={stats} />
       <div className="wl-grid wl-grid-2">
         <ErrorsOverTimePanel stats={stats} />

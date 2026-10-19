@@ -5,12 +5,13 @@ import type { PageData, PageDef } from "../scale/needs.js";
 import { type InsightGroup, insightHeadline } from "../stats/insights.js";
 import { bucketStarts } from "../stats/common.js";
 import { ACTIVITY_BUCKETS, type ActivitySeries, type Headline, type RequestHeadlines } from "../stats/overview.js";
+import { rawService } from "../stats/errors.js";
 import type { ServiceRow } from "../stats/services.js";
 import { headlineNeeds, headlinesFrom } from "./headlines.js";
-import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
+import { META_NEEDS, type ModelMeta, metaOf, scoped, serviceParam } from "./input.js";
 import { insightGroupsOf, insightNeeds } from "./insight-groups.js";
 import { aggByKey, avgs, counts, groupNeed, listNeed, listOf, seriesNeed, seriesOf, uniqueNeeds } from "./read.js";
-import { serviceNeeds, serviceRowsOf } from "./service-rows.js";
+import { edgeNeeds, edgesOfRows, serviceNeeds, serviceRowsOf } from "./service-rows.js";
 
 export interface TimingPart {
   key: string;
@@ -60,19 +61,31 @@ function activityOf(d: PageData): OverviewModel["activity"] {
   return { starts: bucketStarts(d.window, ACTIVITY_BUCKETS), requests: counts(s), errors: s.map((a) => a.err), avgDuration: avgs(s) };
 }
 
-/** The Overview page. */
+/** The service's own row and the rows it calls; every row without a service filter. */
+function servicesOf(d: PageData, service: string | undefined): ServiceRow[] {
+  const rows = serviceRowsOf(d, "cur");
+  if (!service) return rows;
+  const calls = new Set(edgesOfRows(d).filter((e) => e.from === service).map((e) => e.to));
+  return rows.filter((r) => r.name === service || calls.has(r.name));
+}
+
+/** The Overview page. Params: service (a display name). */
 export const overviewPage: PageDef<OverviewModel> = {
-  needs: () =>
-    uniqueNeeds([
+  needs: (ctx) => {
+    const service = serviceParam(ctx.params);
+    const one = scoped(service);
+    return uniqueNeeds([
       ...META_NEEDS,
-      ...headlineNeeds("h", "req"),
-      seriesNeed("activity", "req", "cur", ACTIVITY_BUCKETS),
-      groupNeed("timing", "req.part", "cur", { hist: true }),
+      ...headlineNeeds("h", "req", undefined, service),
+      seriesNeed("activity", "req", "cur", ACTIVITY_BUCKETS, one),
+      groupNeed("timing", "req.part", "cur", { hist: true, ...one }),
       ...serviceNeeds("cur"),
-      listNeed("recent", "requests", "cur", { limit: TOP_RECENT }),
-      ...insightNeeds("cur"),
-      ...insightNeeds("prev"),
-    ]),
+      ...(service ? edgeNeeds() : []),
+      listNeed("recent", "requests", "cur", { limit: TOP_RECENT, filter: service ? { service: rawService(service) } : {} }),
+      ...insightNeeds("cur", "all", service),
+      ...insightNeeds("prev", "all", service),
+    ]);
+  },
   model(d) {
     const groups = insightGroupsOf(d, "cur");
     const headlines = headlinesFrom(d, "h");
@@ -83,7 +96,7 @@ export const overviewPage: PageDef<OverviewModel> = {
       insightsFound: insightHeadline(groups, insightGroupsOf(d, "prev"), d.window),
       activity: activityOf(d),
       timing: timingOf(d),
-      services: serviceRowsOf(d, "cur").slice(0, TOP_SERVICES),
+      services: servicesOf(d, serviceParam(d.params)).slice(0, TOP_SERVICES),
       recent: listOf<RequestItem>(d, "recent").items,
       insights: groups.slice(0, TOP_INSIGHTS),
     };

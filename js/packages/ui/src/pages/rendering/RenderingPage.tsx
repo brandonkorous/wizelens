@@ -2,7 +2,9 @@ import { Gauge, Server, TriangleAlert, Zap } from "lucide-react";
 import { fmtCount, fmtMs } from "../../format";
 import { useRoute } from "../../routes";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
+import { SearchInput } from "../../ui/Controls";
 import { StatCard } from "../../ui/StatCard";
+import { useSearchText } from "../../ui/useSearchText";
 import { PhasePanel, RouteChartPanel } from "./RenderCharts";
 import { ComponentTable, RouteTable } from "./RenderTables";
 import type { RenderingModel } from "@wizeworks/lens-core";
@@ -47,6 +49,16 @@ function Cards({ data }: { data: RenderingModel }) {
   );
 }
 
+/** Text that narrows the route and component tables. */
+function RenderSearch() {
+  const [text, setText] = useSearchText(useRoute().query.get("q") ?? "", {});
+  return (
+    <section className="wl-panel wl-filters">
+      <SearchInput value={text} onChange={setText} placeholder="Search routes and components…" />
+    </section>
+  );
+}
+
 export function RenderingPage() {
   const { model: data, loading, error } = usePageModel("rendering");
   const all = useRoute().query.get("all");
@@ -64,6 +76,7 @@ export function RenderingPage() {
             <RouteChartPanel m={data} />
             <PhasePanel m={data} />
           </div>
+          <RenderSearch />
           <div className="wl-grid">
             <RouteTable routes={data.routes} total={data.routeCount} all={all === "routes"} />
             <ComponentTable components={data.components} total={data.componentCount} hasReact={data.hasReact} all={all === "components"} />

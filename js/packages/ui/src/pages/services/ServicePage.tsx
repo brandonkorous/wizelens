@@ -40,7 +40,7 @@ function ServiceBody({ m, row }: { m: ServicePageModel; row: ServiceRow }) {
       {WITH_ENDPOINTS.has(row.kind) && <EndpointsPanel m={m} row={row} />}
       {m.owned && (
         <div className="wl-grid wl-grid-2-even">
-          <ErrorsPanel m={m} />
+          <ErrorsPanel m={m} name={row.name} />
           <SlowestPanel m={m} name={row.name} />
         </div>
       )}

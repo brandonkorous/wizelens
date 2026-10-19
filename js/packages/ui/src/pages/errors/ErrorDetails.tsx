@@ -25,6 +25,10 @@ function Pager({ groups, index }: { groups: ErrorGroup[]; index: number }) {
   );
 }
 
+/** Failed requests of the error's endpoint; browser errors (no request) search the route instead. */
+const affectedHref = (g: ErrorGroup) =>
+  g.latest.method ? hrefTo("requests", [], { endpoint: g.endpoint, status: "failed" }) : hrefTo("requests", [], { q: pathOf(g.endpoint), status: "failed" });
+
 function Occurrences({ group }: { group: ErrorGroup }) {
   const Icon = group.latest.browser ? Monitor : group.type.toLowerCase().includes("db") || group.type.toLowerCase().includes("sql") ? Database : Server;
   return (
@@ -33,7 +37,7 @@ function Occurrences({ group }: { group: ErrorGroup }) {
         <Icon aria-hidden="true" />
         {fmtCount(group.count)} occurrence{group.count === 1 ? "" : "s"}
       </span>
-      <a className="wl-view-all" href={hrefTo("requests", [], { q: pathOf(group.endpoint), status: "failed" })}>
+      <a className="wl-view-all" href={affectedHref(group)}>
         View affected requests <ArrowRight aria-hidden="true" />
       </a>
     </div>

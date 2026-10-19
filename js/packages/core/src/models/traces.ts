@@ -1,16 +1,18 @@
 import type { Health } from "../health.js";
 import { type Agg, avgOfAgg } from "../scale/agg.js";
 import type { TraceItem } from "../scale/facts-lists.js";
-import type { PageData, PageDef } from "../scale/needs.js";
+import type { PageData, PageDef, TraceNeed } from "../scale/needs.js";
 import { requestOf } from "../stats/requests.js";
 import { type Bottleneck, type CriticalSpan, type LayerKind, type TraceCards, traceDurationOf } from "../stats/traces.js";
 import type { Trace } from "../types.js";
-import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
+import { rawService } from "../stats/errors.js";
+import { META_NEEDS, type ModelMeta, metaOf, pageParams, scoped } from "./input.js";
+import { type TraceFilter, traceFilterOf, traceListFilter } from "./trace-filter.js";
 import { insightGroupsOf, insightNeeds } from "./insight-groups.js";
 import { avgs, byDesc, counter, counts, groupNeed, listNeed, listOf, type Row, rowsOf, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
 
 const BUCKETS = 24;
-const RECENT = 10;
+const RECENT = 15;
 const CRITICAL = 25;
 const BOTTLENECKS = 8;
 
@@ -28,8 +30,13 @@ export interface TraceListItem {
 export interface TracesModel {
   meta: ModelMeta;
   cards: { cur: TraceCards; prev: TraceCards; insights: number; prevInsights: number | null; insightSeries: (number | null)[] };
+  /** One page of the traces that match the filter. */
   recent: TraceListItem[];
+  /** Traces that match the filter, on every page. */
   matching: number;
+  filter: TraceFilter;
+  page: number;
+  size: number;
   bottlenecks: { layer: Bottleneck[]; service: Bottleneck[] };
   critical: CriticalSpan[];
   /** The `trace` parameter's trace, else the newest one. */
@@ -73,30 +80,39 @@ function cards(d: PageData): TracesModel["cards"] {
   const hasPrev = totalOf(d, "meta.prev").n > 0;
   return {
     cur: cardsOf(totalOf(d, "t.cur"), seriesOf(d, "t.series", BUCKETS)),
-    prev: cardsOf(totalOf(d, "meta.prev"), seriesOf(d, "t.prevSeries", BUCKETS)),
+    prev: cardsOf(totalOf(d, "t.prev"), seriesOf(d, "t.prevSeries", BUCKETS)),
     insights: insightGroupsOf(d, "cur").length,
     prevInsights: hasPrev ? insightGroupsOf(d, "prev").length : null,
     insightSeries: counter(seriesOf(d, "ins.series", BUCKETS), 2),
   };
 }
 
-/** The Traces page. Params: q (search), trace (selected id). */
+const selectedNeed = (traceId: string | null): TraceNeed => ({ type: "trace", id: "selected", traceId, windows: ["cur", "prev"] });
+
+/** The Traces page. Params: the filter (`traceFilterOf`), page, size, and trace (the selected id). */
 export const tracesPage: PageDef<TracesModel> = {
-  needs: (ctx) =>
-    uniqueNeeds([
+  needs: (ctx) => {
+    const f = traceFilterOf(ctx.params);
+    const service = f.service || undefined;
+    const one = scoped(service);
+    return uniqueNeeds([
       ...META_NEEDS,
-      groupNeed("t.cur", "trace", "cur"),
-      seriesNeed("t.series", "trace", "cur", BUCKETS),
-      seriesNeed("t.prevSeries", "trace", "prev", BUCKETS),
-      ...insightNeeds("cur"),
-      ...insightNeeds("prev"),
-      seriesNeed("ins.series", "req", "cur", BUCKETS),
-      listNeed("recent", "traces", "cur", { filter: { q: ctx.params.q ?? "" }, limit: RECENT, count: true }),
-      groupNeed("bn.layer", "bn.layer", "cur", { top: true }),
-      groupNeed("bn.owner", "bn.owner", "cur"),
-      listNeed("critical", "critical", "cur", { sort: { key: "duration", desc: true }, limit: CRITICAL }),
-      { type: "trace", id: "selected", traceId: ctx.params.trace || null, windows: ["cur", "prev"] },
-    ]),
+      groupNeed("t.cur", "trace", "cur", one),
+      groupNeed("t.prev", "trace", "prev", one),
+      seriesNeed("t.series", "trace", "cur", BUCKETS, one),
+      seriesNeed("t.prevSeries", "trace", "prev", BUCKETS, one),
+      ...insightNeeds("cur", "all", service),
+      ...insightNeeds("prev", "all", service),
+      seriesNeed("ins.series", "req", "cur", BUCKETS, one),
+      listNeed("recent", "traces", "cur", { filter: traceListFilter(f), sort: { key: f.sort, desc: true }, page: pageParams(ctx.params, RECENT) }),
+      groupNeed("bn.layer", "bn.layer", "cur", { top: true, ...one }),
+      groupNeed("bn.owner", "bn.owner", "cur", one),
+      listNeed("critical", "critical", "cur", { filter: service ? { service: rawService(service) } : {}, sort: { key: "duration", desc: true }, limit: CRITICAL }),
+      ...(ctx.params.trace ? [selectedNeed(ctx.params.trace)] : []),
+    ]);
+  },
+  // Without a chosen trace, the first one of the list (as filtered) shows; with no list, the newest.
+  followUp: (ctx, first) => (ctx.params.trace ? [] : [selectedNeed(listOf<TraceItem>(first, "recent").items[0]?.traceId ?? null)]),
   model(d) {
     const recent = listOf<TraceItem>(d, "recent");
     return {
@@ -104,6 +120,9 @@ export const tracesPage: PageDef<TracesModel> = {
       cards: cards(d),
       recent: recent.items.map(listItemOf),
       matching: recent.total ?? recent.items.length,
+      filter: traceFilterOf(d.params),
+      page: recent.page,
+      size: recent.pageSize,
       bottlenecks: { layer: bottlenecksOf(rowsOf(d, "bn.layer"), "layer"), service: bottlenecksOf(rowsOf(d, "bn.owner"), "service") },
       critical: listOf<CriticalSpan>(d, "critical").items,
       selected: d.traces.selected ?? null,

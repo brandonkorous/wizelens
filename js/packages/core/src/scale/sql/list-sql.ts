@@ -1,5 +1,5 @@
 // List reads over the fact tables: the same filters, order, and paging as the memory executor's lists.
-import { isSortKey, type SortKey } from "../../models/request-filter.js";
+import { durationRange, isSortKey, type SortKey } from "../../models/request-filter.js";
 import type { TimeWindow } from "../../stats/common.js";
 import { LOG_LEVELS, type LogRow } from "../../stats/logs.js";
 import type { CriticalSpan } from "../../stats/traces.js";
@@ -25,6 +25,8 @@ const SORT_COLUMNS: Record<SortKey, string> = {
   fetch: "fetch_ms",
   service: "service",
   insights: "insights",
+  errors: "errors",
+  db: "db_ms",
 };
 const TEXT_SORTS = new Set<SortKey>(["path", "method", "service"]);
 
@@ -39,6 +41,9 @@ function requestWhere(q: SqlText, f: ListFilter): string[] {
     out.push(Number.isFinite(hundred) ? `COALESCE(status, 0) >= ${lit(hundred)} AND COALESCE(status, 0) < ${lit(hundred + 100)}` : "1 = 0");
   }
   if (f.duration && DURATIONS.has(f.duration)) out.push(`dur_class = ${q.p(f.duration)}`);
+  if (f.endpoint) out.push(`endpoint = ${q.p(f.endpoint)}`);
+  if (f.user) out.push(`end_user = ${q.p(f.user)}`);
+  if (f.insights) out.push(`insights > 0`);
   const s = (f.q ?? "").trim().toLowerCase();
   if (s) out.push(`(${q.startsWith("trace_id", s)} OR ${q.textHas("fact_requests", "search", s)})`);
   return out;
@@ -48,6 +53,17 @@ function requestWhere(q: SqlText, f: ListFilter): string[] {
 function textWhere(q: SqlText, table: string, text: string | undefined): string[] {
   const s = (text ?? "").trim().toLowerCase();
   return s ? [`(${q.startsWith("trace_id", s)} OR ${q.textHas(table, "search", s)})`] : [];
+}
+
+/** Trace conditions, the same as `traceMatches` and the memory text match. */
+function traceWhere(q: SqlText, f: ListFilter): string[] {
+  const out = textWhere(q, "fact_traces", f.q);
+  if (f.service) out.push(q.contains("services", `\u001f${f.service}\u001f`));
+  if (f.status === "error") out.push(`status = 'error'`);
+  if (f.status === "ok") out.push(`status <> 'error'`);
+  const range = f.duration ? durationRange(f.duration) : null;
+  if (range) out.push(`duration_ms >= ${lit(range[0])}${Number.isFinite(range[1]) ? ` AND duration_ms < ${lit(range[1])}` : ""}`);
+  return out;
 }
 
 interface TableSql {
@@ -75,21 +91,29 @@ const TABLES: Record<ListNeed["table"], TableSql> = {
   traces: {
     table: "fact_traces",
     time: "start_ms",
-    where: (q, f) => textWhere(q, "fact_traces", f.q),
-    order: (d, need) => (need.sort.desc ? `start_ms DESC, ${tid(d)} ASC` : `start_ms ASC, ${tid(d)} DESC`),
+    where: traceWhere,
+    order: (d, need) => {
+      if (need.sort.key === "duration") return `duration_ms ${need.sort.desc ? "DESC" : "ASC"}, start_ms DESC, ${tid(d)} ASC`;
+      return need.sort.desc ? `start_ms DESC, ${tid(d)} ASC` : `start_ms ASC, ${tid(d)} DESC`;
+    },
     item: traceItemOfRow,
   },
   logs: {
     table: "fact_logs",
     time: "time_ms",
-    where: (q, f) => [`level_rank >= ${lit(LOG_LEVELS.indexOf(f.minLevel ?? "trace"))}`, ...(f.logService ? [`service = ${q.p(f.logService)}`] : []), ...textWhere(q, "fact_logs", f.q)],
+    where: (q, f) => [
+      `level_rank ${f.exactLevel ? "=" : ">="} ${lit(LOG_LEVELS.indexOf(f.minLevel ?? "trace"))}`,
+      ...(f.logService ? [`service = ${q.p(f.logService)}`] : []),
+      ...(f.category ? [`category = ${q.p(f.category)}`] : []),
+      ...textWhere(q, "fact_logs", f.q),
+    ],
     order: (d, need) => (need.sort.desc ? `time_ms DESC, ${tid(d)} ASC, idx ASC` : `time_ms ASC, ${tid(d)} DESC, idx DESC`),
     item: logRowOfRow,
   },
   critical: {
     table: "fact_critical",
     time: "start_ms",
-    where: () => [],
+    where: (q, f) => (f.service ? [`service = ${q.p(f.service)}`] : []),
     order: (d) => `duration_ms DESC, start_ms DESC, ${tid(d)} ASC, ${collate(d, "span_id")} ASC`,
     item: criticalOfRow,
   },

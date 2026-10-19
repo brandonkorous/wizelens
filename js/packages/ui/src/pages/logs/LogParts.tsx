@@ -1,10 +1,14 @@
 import { RotateCcw } from "lucide-react";
 import { type LogLevel, LOG_LEVELS, type LogRow, type LogsModel, VOLUME_GROUPS } from "@wizeworks/lens-core";
 import { fmtTime } from "../../format";
-import { setQuery, traceHref } from "../../routes";
+import { hrefTo, setQuery, traceHref } from "../../routes";
 import { Badge, type Tone } from "../../ui/Badges";
 import { SearchInput, Select } from "../../ui/Controls";
-import { Empty, Panel } from "../../ui/Panel";
+import { Check } from "../../ui/Field";
+import { FilterChips } from "../../ui/FilterChips";
+import { Empty, KeyValues, Panel } from "../../ui/Panel";
+import { ServiceSelect } from "../../ui/ServiceSelect";
+import { useSearchText } from "../../ui/useSearchText";
 import { type Column } from "../../ui/Table";
 import { TimeChart } from "../../ui/TimeChart";
 
@@ -14,18 +18,32 @@ export const LevelBadge = ({ level }: { level: LogLevel }) => <Badge tone={LEVEL
 
 const LEVEL_OPTIONS: [string, string][] = [["trace", "All levels"], ["debug", "Debug and up"], ["info", "Info and up"], ["warn", "Warnings and up"], ["error", "Errors and up"], ["critical", "Critical only"]];
 
+/** Level (and that level only), service, text, and the category and trace a link or a click set. */
 export function LogFilters({ stats }: { stats: LogsModel }) {
   const { filter, services } = stats;
-  const serviceOptions: [string, string][] = [["", "All services"], ...services.map((s): [string, string] => [s, s])];
+  const [text, setText] = useSearchText(filter.query);
   return (
     <section className="wl-panel wl-filters">
       <Select label="Minimum level" value={filter.minLevel} options={LEVEL_OPTIONS} onChange={(v) => setQuery({ level: v === "trace" ? null : v, page: null })} />
-      <Select label="Service" value={filter.service} options={serviceOptions} onChange={(v) => setQuery({ service: v, page: null })} />
-      <SearchInput value={filter.query} placeholder="Search messages, categories, or trace IDs…" onChange={(v) => setQuery({ q: v, page: null })} />
-      <button type="button" className="wl-btn" onClick={() => setQuery({ level: null, service: null, q: null, page: null })}>
+      <ServiceSelect value={filter.service} services={services} />
+      <SearchInput value={text} placeholder="Search messages, categories, or trace IDs…" onChange={setText} />
+      <Check label="This level only" disabled={filter.minLevel === "trace"} checked={!!filter.exact} onChange={(e) => setQuery({ exact: e.target.checked ? "1" : null, page: null })} />
+      <button type="button" className="wl-btn" onClick={() => setQuery({ level: null, exact: null, category: null, trace: null, q: null, page: null })}>
         <RotateCcw aria-hidden="true" /> Reset
       </button>
+      <FilterChips chips={[["Category", "category", filter.category ?? ""], ["Trace", "trace", filter.traceId ?? ""]]} />
     </section>
+  );
+}
+
+/** A log line's attributes and span, under its row. */
+export function LogDetail({ row }: { row: LogRow }) {
+  const attrs = Object.entries(row.attributes ?? {});
+  return (
+    <div className="wl-log-detail">
+      {attrs.length === 0 ? <span className="wl-muted">No attributes.</span> : <KeyValues rows={attrs.map(([k, v]): [string, string] => [k, typeof v === "string" ? v : JSON.stringify(v)])} />}
+      <a href={hrefTo("logs", [], { trace: row.traceId })} onClick={(e) => e.stopPropagation()}>All lines of this request</a>
+    </div>
   );
 }
 
@@ -44,7 +62,7 @@ export const LOG_COLUMNS: Column<LogRow>[] = [
   { key: "time", header: "Time", className: "wl-nowrap", sort: (r) => r.timeMs, cell: (r) => fmtTime(r.timeMs) },
   { key: "level", header: "Level", sort: (r) => LOG_LEVELS.indexOf(r.level), cell: (r) => <LevelBadge level={r.level} /> },
   { key: "service", header: "Service", className: "wl-nowrap", cell: (r) => r.service },
-  { key: "category", header: "Category", className: "wl-log-cat", cell: (r) => <span className="wl-truncate" title={r.category}>{r.category}</span> },
+  { key: "category", header: "Category", className: "wl-log-cat", cell: (r) => <button type="button" className="wl-link-btn wl-truncate" title={`Only ${r.category}`} onClick={(e) => (e.stopPropagation(), setQuery({ category: r.category, page: null }))}>{r.category}</button> },
   { key: "message", header: "Message", className: "wl-log-msg", cell: (r) => r.message },
   { key: "trace", header: "Request", className: "wl-log-trace", cell: (r) => <a href={traceHref(r.traceId, "logs")} title={r.traceId} onClick={(e) => e.stopPropagation()}>{r.traceName}</a> },
 ];

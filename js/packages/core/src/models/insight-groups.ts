@@ -2,6 +2,7 @@
 import { type Agg } from "../scale/agg.js";
 import { splitKey } from "../scale/kinds.js";
 import type { Need, NeedResults, WindowRef } from "../scale/needs.js";
+import { WEB_APP } from "../stats/errors.js";
 import { compareInsights, type InsightGroup, insightGroupOf, type InsightHit } from "../stats/insights.js";
 import { componentInsight, routeInsight } from "../stats/rendering.js";
 import { byDesc, groupNeed, rowsOf } from "./read.js";
@@ -12,11 +13,13 @@ export type InsightScope = "all" | "requests";
 
 const ids = (win: WindowRef) => ({ ins: `ig.${win}.ins`, ep: `ig.${win}.ins.ep` });
 
-/** Needs for the insight groups of one window. */
-export function insightNeeds(win: WindowRef, scope: InsightScope = "all"): Need[] {
+/** Needs for the insight groups of one window. With a service, its request insights, and page insights only for the web app. */
+export function insightNeeds(win: WindowRef, scope: InsightScope = "all", service?: string): Need[] {
   const id = ids(win);
-  const requests = [groupNeed(id.ins, "ins", win, { top: true }), groupNeed(id.ep, "ins.ep", win)];
-  return scope === "requests" ? requests : [...requests, ...routeNeeds(win), ...componentNeeds(win)];
+  const one = service ? { service } : {};
+  const requests = [groupNeed(id.ins, "ins", win, { top: true, ...one }), groupNeed(id.ep, "ins.ep", win, one)];
+  const pages = scope === "all" && (!service || service === WEB_APP);
+  return pages ? [...requests, ...routeNeeds(win), ...componentNeeds(win)] : requests;
 }
 
 type InsightTop = Pick<InsightHit, "kind" | "shape" | "endpoint" | "traceId" | "startMs">;

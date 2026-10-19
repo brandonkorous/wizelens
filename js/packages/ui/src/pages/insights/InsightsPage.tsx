@@ -2,8 +2,12 @@ import { Clock, Lightbulb, TriangleAlert } from "lucide-react";
 import { type InsightsModel, percentChange } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
 import { fmtCount, fmtMs } from "../../format";
+import { useServiceScope } from "../../data/prefs";
 import { setQuery, useRoute } from "../../routes";
 import { SearchInput, Select } from "../../ui/Controls";
+import { FilterChips } from "../../ui/FilterChips";
+import { ServiceSelect } from "../../ui/ServiceSelect";
+import { useSearchText } from "../../ui/useSearchText";
 import { ModelState } from "../../ui/ModelState";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
@@ -23,14 +27,18 @@ function Cards({ m }: { m: InsightsModel }) {
   );
 }
 
-/** Area, impact, and search live in the URL, so a filtered view can be shared. */
+/** Service, area, impact, and search live in the URL (the service in the shared scope), so a filtered view can be shared. */
 function Filters() {
   const q = useRoute().query;
+  const [scope] = useServiceScope();
+  const [text, setText] = useSearchText(q.get("q") ?? "", {});
   return (
     <Panel className="wl-filters">
+      <ServiceSelect value={q.get("service") ?? scope} />
       <Select label="Area" value={q.get("area") ?? "all"} onChange={(v) => setQuery({ area: v === "all" ? null : v })} options={[["all", "All Areas"], ["database", "Database"], ["http", "HTTP"], ["render", "Rendering"]]} />
       <Select label="Impact" value={q.get("impact") ?? "all"} onChange={(v) => setQuery({ impact: v === "all" ? null : v })} options={[["all", "All Impacts"], ["high", "High"], ["medium", "Medium"], ["low", "Low"]]} />
-      <SearchInput value={q.get("q") ?? ""} onChange={(v) => setQuery({ q: v })} placeholder="Search by query, endpoint, route, or component…" />
+      <SearchInput value={text} onChange={setText} placeholder="Search by query, endpoint, route, or component…" />
+      <FilterChips chips={[["Endpoint", "endpoint", q.get("endpoint") ?? ""]]} />
     </Panel>
   );
 }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BarChart3 } from "lucide-react";
 import type { ErrorsModel } from "@wizeworks/lens-core";
 import { fmtCount } from "../../format";
+import { setQuery } from "../../routes";
 import { BarList } from "../../ui/BarList";
 import { Empty, Panel } from "../../ui/Panel";
 import { TimeChart } from "../../ui/TimeChart";
@@ -41,6 +42,7 @@ export function TopErrorTypesPanel({ stats }: { stats: ErrorsModel }) {
     value: t.count,
     display: fmtCount(t.count),
     color: t.count === top ? "var(--wl-red)" : "color-mix(in srgb, var(--wl-red) 50%, transparent)",
+    onClick: () => setQuery({ type: t.type === stats.filter.type ? null : t.type, page: null, group: null }),
   }));
   const toggle = stats.types.length > TOP_TYPES && (
     <button type="button" className="wl-view-all wl-link-btn" onClick={() => setAll(!all)}>

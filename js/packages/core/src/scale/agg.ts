@@ -1,6 +1,6 @@
 // Contributions (what one item adds to a rollup) and aggregates (what a rollup row holds).
 import { addHist, type Hist, histOf } from "./hist.js";
-import { COUNTER_SLOTS, type KindSpec, type RollupKind } from "./kinds.js";
+import { COUNTER_SLOTS, joinKey, type KindSpec, type RollupKind, SERVICE_KIND } from "./kinds.js";
 
 /** What one item (a request, a span, a log line) adds to one rollup group. */
 export interface Contribution {
@@ -34,6 +34,12 @@ export interface Agg {
   topRank: number;
   /** Newest trace ids first. */
   ids: string[];
+}
+
+/** A contribution and, for kinds that count per service, a copy keyed by each service first. Services are display names. */
+export function withServices(c: Contribution, services: readonly string[]): Contribution[] {
+  const kind = SERVICE_KIND[c.kind];
+  return kind && kind !== "log.s" ? [c, ...[...new Set(services)].map((s) => ({ ...c, kind, key: joinKey(s, c.key) }))] : [c];
 }
 
 /** One item's contribution: n = 1 and nothing else unless given. */

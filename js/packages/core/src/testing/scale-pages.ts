@@ -26,12 +26,14 @@ export function tierMemory(traces: readonly Trace[], retentionMs: number): SyncE
 }
 
 const STATIC: Partial<Record<PageName, Record<string, string>[]>> = {
-  requests: [{ method: "POST" }, { status: "5xx" }, { status: "failed", duration: "medium" }, { duration: "slowest" }, { service: "orders" }, { q: "orders" }, { q: "orders", status: "failed" }, { sort: "duration", desc: "0", page: "2", size: "5" }, { status: "bogus" }],
-  traces: [{ q: "checkout" }, { q: "nothing-matches" }, { trace: "f".repeat(32) }],
-  logs: [{ level: "warn" }, { level: "error", service: "api" }, { q: "order" }, { page: "2", size: "5" }],
-  insights: [{ area: "database" }, { impact: "high" }, { q: "orders" }],
-  rendering: [{ all: "routes" }],
-  errors: [{ q: "pay" }],
+  requests: [{ endpoint: "POST /api/pay" }, { user: "nope" }, { insights: "1" }, { sort: "errors" }, { sort: "db", desc: "0" }, { service: "Web App" }, { method: "POST" }, { status: "5xx" }, { status: "failed", duration: "medium" }, { duration: "slowest" }, { service: "orders" }, { q: "orders" }, { q: "orders", status: "failed" }, { sort: "duration", desc: "0", page: "2", size: "5" }, { status: "bogus" }],
+  traces: [{ q: "checkout" }, { q: "nothing-matches" }, { trace: "f".repeat(32) }, { service: "orders" }, { service: "Web App" }, { status: "error" }, { status: "ok" }, { duration: "slowest" }, { sort: "duration" }, { page: "2", size: "5" }, { service: "api", status: "error", sort: "duration" }],
+  logs: [{ level: "warn" }, { level: "error", service: "api" }, { q: "order" }, { page: "2", size: "5" }, { service: "orders" }, { level: "warn", exact: "1" }, { category: "api.app" }, { trace: "f".repeat(32) }],
+  insights: [{ area: "database" }, { impact: "high" }, { q: "orders" }, { service: "api" }, { service: "Web App" }, { endpoint: "GET /api/orders/{id}" }],
+  rendering: [{ q: "checkout" }, { q: "nothing" }],
+  errors: [{ q: "pay" }, { q: "TIMEOUT" }, { service: "api" }, { service: "Web App" }, { type: "TimeoutError" }, { critical: "1" }, { sort: "count" }, { page: "2", size: "2" }, { endpoint: "POST /api/pay" }, { endpoint: "nope" }, { service: "api", critical: "1", sort: "count" }],
+  database: [{ service: "api" }, { service: "orders" }, { q: "orders" }, { q: "SELECT" }, { table: "items" }, { operation: "select" }, { operation: "INSERT" }, { database: "postgresql" }, { sort: "count" }, { sort: "total", page: "2", size: "5" }, { page: "99" }],
+  overview: [{ service: "orders" }, { service: "api" }, { service: "Web App" }, { service: "nope" }],
   service: [{ service: "orders" }, { service: "Web App" }, { service: "nope" }],
 };
 

@@ -2,7 +2,7 @@
 import type { TimeWindow } from "../../stats/common.js";
 import { type Agg, emptyAgg, trimAgg } from "../agg.js";
 import { KEY_SEP, KIND_SPEC, type KindSpec, type RollupKind } from "../kinds.js";
-import type { AggOrder, GroupNeed, GroupRows, KeyFilter, SeriesNeed, SeriesRows } from "../needs.js";
+import { type AggOrder, type GroupNeed, type GroupRows, type KeyFilter, lowerAscii, type SeriesNeed, type SeriesRows } from "../needs.js";
 import { planSeries, planTotals, type Segment, spreadBucket, type Tier } from "../window.js";
 import { collate, floorOf, lit, msLit, num, type SqlSource, SqlText, scopeWhere } from "./dialect.js";
 import { idsOfText } from "./write-sql.js";
@@ -22,6 +22,7 @@ function kindWhere(q: SqlText, src: SqlSource, kind: RollupKind, f: KeyFilter | 
   const out = [...scopeWhere(q, src.scope), `kind = ${q.p(kind)}`];
   if (f?.prefix !== undefined) out.push(q.startsWith("key", f.prefix));
   if (f?.keys) out.push(q.in("key", f.keys));
+  for (const t of f?.contains ?? []) out.push(q.contains("lower(key)", lowerAscii(t)));
   if (f?.parts) {
     const pieces = f.parts.flatMap((p, i) => (i ? [KEY_SEP, p] : [p]));
     out.push(q.matches("key", pieces), `length(key) - length(replace(key, ${q.p(KEY_SEP)}, '')) = ${lit(f.parts.length - 1)}`);
@@ -60,9 +61,11 @@ function totalsSql(q: SqlText, src: SqlSource, need: GroupNeed, segs: readonly S
   const inner = branches(q, src, need, { segs, table: (t) => sumTable(src, t.table), cols: (w) => `key, ${weighted(VALUES, w)}, first_ms, last_ms`, extra: () => liveRow(src) });
   const sums = VALUES.map((c) => `SUM(${c}) AS ${c}`).join(", ");
   const o = ordered ? need.order : undefined;
-  const limit = o && Number.isFinite(o.limit) ? ` LIMIT ${lit(Math.max(0, Math.floor(o.limit)))}` : "";
+  const offset = o?.offset ? ` OFFSET ${lit(Math.max(0, Math.floor(o.offset)))}` : "";
+  const limit = o && Number.isFinite(o.limit) ? ` LIMIT ${lit(Math.max(0, Math.floor(o.limit)))}${offset}` : "";
   const order = o ? ` ORDER BY ${orderExpr(o.by)} ${o.desc ? "DESC" : "ASC"}, ${collate(src.d, "key")}${limit}` : "";
-  return `SELECT key, ${sums}, MIN(first_ms) AS first_ms, MAX(last_ms) AS last_ms, COUNT(*) OVER () AS total FROM (${inner}) s GROUP BY key HAVING SUM(n) > 0.5${order}`;
+  const having = need.having ? ` AND ${orderExpr(need.having.by)} >= ${lit(need.having.min)}` : "";
+  return `SELECT key, ${sums}, MIN(first_ms) AS first_ms, MAX(last_ms) AS last_ms, COUNT(*) OVER () AS total FROM (${inner}) s GROUP BY key HAVING SUM(n) > 0.5${having}${order}`;
 }
 
 /** A group row as the memory executor trims it: extras only when asked for. */
@@ -134,6 +137,13 @@ function parseTop(v: unknown): unknown {
 
 const byKeyOrder = (x: { key: string }, y: { key: string }) => (x.key < y.key ? -1 : x.key > y.key ? 1 : 0);
 
+/** How many groups match, for a page past the last one (it returns no row to carry the count). */
+async function countGroups(src: SqlSource, need: GroupNeed, segs: readonly Segment[]): Promise<number> {
+  const q = new SqlText(src.d);
+  const [row] = await src.run.all(`SELECT COUNT(*) AS total FROM (${totalsSql(q, src, need, segs, false)}) c`, q.params);
+  return row ? num(row.total) : 0;
+}
+
 /** Groups of one kind over a window, from the tier segments that cover it. */
 export async function groupsSql(src: SqlSource, need: GroupNeed, w: TimeWindow, now: number, retentionMs: number): Promise<GroupRows> {
   const spec = KIND_SPEC[need.kind];
@@ -143,7 +153,7 @@ export async function groupsSql(src: SqlSource, need: GroupNeed, w: TimeWindow, 
   const found = await src.run.all(totalsSql(q, src, need, segs, need.order?.limit !== 0), q.params);
   const rounded = segs.some((s) => s.weight < 1);
   const all = found.map((r) => ({ key: String(r.key), agg: groupAgg(r, spec, need, rounded) }));
-  const total = found.length ? num(found[0]!.total) : 0;
+  const total = found.length ? num(found[0]!.total) : need.order?.offset ? await countGroups(src, need, segs) : 0;
   const rows = need.order ? (need.order.limit === 0 ? [] : all) : all.sort(byKeyOrder);
   const keys = rows.length < total ? rows.map((r) => r.key) : null;
   if (rows.length && need.hist && spec.hist) await addHists(src, need, segs, rows, keys);

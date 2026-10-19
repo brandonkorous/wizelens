@@ -40,6 +40,12 @@ export const metaOf = (d: PageData): ModelMeta => ({
   settling: d.settling ?? null,
 });
 
+/** The service filter (a display name, as the dashboard shows it), or undefined for all services. */
+export const serviceParam = (p: ModelParams): string | undefined => p.service?.trim() || undefined;
+
+/** Need fields for one service, or none for all of them. */
+export const scoped = (service: string | undefined): { service?: string } => (service ? { service } : {});
+
 /** A whole-number URL parameter, within bounds. */
 export function intParam(p: ModelParams, key: string, fallback: number, min: number, max: number): number {
   const n = Number(p[key]);

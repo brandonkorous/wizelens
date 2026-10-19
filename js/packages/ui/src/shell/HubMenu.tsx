@@ -1,6 +1,7 @@
 import { Check, ChevronDown, Layers } from "lucide-react";
-import { groupServices, type ServiceGroup } from "@wizeworks/lens-core";
-import { useEnvScope, useProjectScope } from "../data/prefs";
+import { displayService, groupServices, type ServiceGroup } from "@wizeworks/lens-core";
+import { useEnvScope, useProjectScope, useServiceScope } from "../data/prefs";
+import { useSetService } from "../ui/ServiceSelect";
 import { type HubRegistry, inScope, presenceOf } from "../data/sources";
 import { fmtAgo, fmtCount } from "../format";
 import { Menu } from "./Menu";
@@ -31,21 +32,22 @@ function Choices({ title, values, value, onPick, all = true }: ChoicesProps) {
   );
 }
 
-/** One service, however many hosts (pods) send for it. */
-function ServiceLine({ g }: { g: ServiceGroup }) {
+/** One service, however many hosts (pods) send for it. A click filters every page by it. */
+function ServiceLine({ g, active, onPick }: { g: ServiceGroup; active: boolean; onPick: () => void }) {
   const s = g.newest;
   const hosts = g.instances.length > 1 ? `${fmtCount(g.online)} of ${fmtCount(g.instances.length)} hosts online` : s.host;
   const where = [s.project, s.environment, hosts].filter(Boolean).join(" · ");
   const online = g.online > 0;
   return (
-    <div className="wl-menu-item wl-menu-static">
+    <button type="button" className={`wl-menu-item${active ? " wl-active" : ""}`} onClick={onPick}>
       <span className={`wl-env-dot${online ? "" : " wl-off"}`} title={online ? "Online" : presenceOf(s)} />
       <span className="wl-truncate">
         <strong>{s.service}</strong>
         <span className="wl-muted wl-small"> · {online ? (s.runtime ?? s.via) : `seen ${fmtAgo(s.lastSeenMs)}`}</span>
         {where && <span className="wl-muted wl-small wl-block">{where}</span>}
       </span>
-    </div>
+      {active && <Check size={14} aria-hidden="true" className="wl-menu-check" />}
+    </button>
   );
 }
 
@@ -53,10 +55,12 @@ function ServiceLine({ g }: { g: ServiceGroup }) {
 export function HubMenu({ registry, projects }: { registry: HubRegistry | null; projects?: [string, string][] }) {
   const [env, setEnv] = useEnvScope();
   const [project, setProject] = useProjectScope();
+  const [service] = useServiceScope();
+  const pick = useSetService();
   const services = groupServices((registry?.services ?? []).filter((s) => inScope(s, { env, project }, !projects)));
   const online = services.filter((g) => g.online > 0).length;
   const projectName = projects ? projects.find(([id]) => id === project)?.[1] : project;
-  const text = [projectName, env].filter(Boolean).join(" · ") || "All services";
+  const text = [projectName, env].filter(Boolean).join(" · ") || "All projects";
   const pairs = (list: string[]) => list.map((v): [string, string] => [v, v]);
   const label = (
     <>
@@ -75,8 +79,14 @@ export function HubMenu({ registry, projects }: { registry: HubRegistry | null; 
           <Choices title="Project" values={projects ?? pairs(registry?.projects ?? [])} value={project} all={!projects} onPick={(v) => (setProject(v), close())} />
           <Choices title="Environment" values={pairs(registry?.environments ?? [])} value={env} onPick={(v) => (setEnv(v), close())} />
           <div className="wl-menu-head">Services</div>
+          {services.length > 0 && (
+            <button type="button" className={`wl-menu-item${service ? "" : " wl-active"}`} onClick={() => (pick(""), close())}>
+              <span className="wl-truncate">All services</span>
+              {!service && <Check size={14} aria-hidden="true" className="wl-menu-check" />}
+            </button>
+          )}
           {services.map((g) => (
-            <ServiceLine key={g.key} g={g} />
+            <ServiceLine key={g.key} g={g} active={displayService(g.service) === service} onPick={() => (pick(displayService(g.service)), close())} />
           ))}
           {services.length === 0 && <div className="wl-menu-note">No service has sent data yet. See Settings to connect one.</div>}
         </>
