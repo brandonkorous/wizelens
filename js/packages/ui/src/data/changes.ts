@@ -1,6 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useHost } from "./host";
 import { getScope } from "./prefs";
+import { checkRelease } from "./release";
 
 // Live reloads on hosts with the "changes" capability: one event stream per tab, shared by every page, and a counter that moves when the project gets new data.
 const shared = { url: "", stream: null as EventSource | null, users: 0, tick: 0, subs: new Set<() => void>() };
@@ -11,6 +12,8 @@ function acquire(url: string): void {
     shared.url = url;
     shared.stream = new EventSource(url);
     shared.stream.addEventListener("data", () => ((shared.tick += 1), shared.subs.forEach((fn) => fn())));
+    // The stream opens again after the host restarts, which is when a new release lands.
+    shared.stream.addEventListener("open", () => void checkRelease());
   }
   shared.users += 1;
 }

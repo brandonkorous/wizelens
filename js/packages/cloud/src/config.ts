@@ -1,3 +1,4 @@
+import { availableParallelism } from "node:os";
 import { DEFAULT_REDACT_KEYS } from "@wizeworks/lens-core";
 import type { Mail } from "./mail/mailer.js";
 
@@ -8,6 +9,8 @@ export interface CloudOptions {
   database?: string;
   /** Scale mode: telemetry in ClickHouse, `http(s)://user:password@host:8123/database`. Accounts stay in `database`. */
   clickhouseUrl?: string;
+  /** Scale mode: worker threads that settle new traces. 0 settles in the main thread. Default: one less than the CPUs, at most 4. */
+  settleWorkers?: number;
   /** Default 5970. 0 picks a free port. */
   port?: number;
   /** Default "0.0.0.0". */
@@ -81,6 +84,7 @@ export function resolveConfig(o: CloudOptions = {}): CloudConfig {
   return {
     database: o.database ?? "pglite:./.wizelens-cloud",
     clickhouseUrl: o.clickhouseUrl,
+    settleWorkers: o.settleWorkers ?? Math.min(4, availableParallelism() - 1),
     port: o.port ?? 5970,
     host: o.host ?? "0.0.0.0",
     publicUrl: o.publicUrl?.replace(/\/+$/, ""),

@@ -56,7 +56,7 @@ describe.skipIf(!CH_URL)("ClickHouse store over time", () => {
     const name = `wl_test_ttl_${Date.now().toString(36)}`;
     const url = `${CH_URL.replace(/\/$/, "")}/${name}`;
     const store = await openClickHouse({ url, retentionOf: async (ids) => new Map(ids.map((id) => [id, 1])), defaultRetentionDays: 1, now: Date.now });
-    opened.push({ store, projectId: "p", retentionMs: 0, drop: () => chClient({ url: url.replace(name, "default") }).command(`DROP DATABASE IF EXISTS ${name}`) });
+    opened.push({ store, projectId: "p", retentionMs: 0, url, drop: () => chClient({ url: url.replace(name, "default") }).command(`DROP DATABASE IF EXISTS ${name}`) });
     const shift = (t: Trace, by: number) => buildTrace(t.traceId, t.spans.map((s) => ({ ...s, startMs: s.startMs + by })), [], []);
     const [old, fresh] = [shift(traces[0]!, Date.now() - 3 * 86_400_000 - SCENARIO_NOW), shift(traces[1]!, Date.now() - SCENARIO_NOW)];
     for (const tr of [old, fresh]) await store.write("p", { sender: { service: "api" }, via: "addon", spans: tr.spans, logs: [], remotes: [] }, Date.now());

@@ -202,7 +202,7 @@ counting twice), and an open dashboard reloads on `api/changes` instead of a tim
 
 Open work:
 
-1. Indexing past about 1,000 traces/s needs a second core: settle in a worker thread, and the cloud pod at 2 CPUs.
+1. Done after this run: settle runs in worker threads (`--settle-workers`), and the cloud pod has 2 CPUs.
 2. Pages still run about 30 small queries each; one query per page section would bring them under 100 ms.
 3. A phrase that shows up in most 8,192-row blocks cannot skip any; a search over 30 days then reads all 30 days.
 4. Not yet run: 100 million spans (about 3 hours of ingest at 2,000 traces/s).

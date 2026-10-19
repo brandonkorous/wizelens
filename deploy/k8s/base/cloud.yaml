@@ -27,7 +27,8 @@ spec:
           livenessProbe: { httpGet: { path: /healthz, port: 5970 }, periodSeconds: 20 }
           resources:
             requests: { cpu: 50m, memory: 192Mi }
-            limits: { cpu: "1", memory: 768Mi }
+            # Two settle worker threads beside the main thread (WIZELENS_CLOUD_SETTLE_WORKERS).
+            limits: { cpu: "2", memory: 1Gi }
           securityContext: { runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false }
 ---
 apiVersion: v1

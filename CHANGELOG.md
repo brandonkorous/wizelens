@@ -2,6 +2,19 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **"A new version is ready" notice.** When a host starts a new release, an open dashboard shows a notice with
+  Refresh and Later, and keeps working until you refresh. It checks `version.json` every 5 minutes, when the tab comes
+  back into view, and when the live-update stream reconnects. A page whose file is gone after a release asks for a
+  refresh instead of breaking.
+- **Settle in worker threads (cloud, scale mode).** Indexing new traces runs in worker threads, so it uses more than one
+  CPU core and ingest and pages stay fast during a backlog. `--settle-workers <n>` (`WIZELENS_CLOUD_SETTLE_WORKERS`);
+  default CPUs − 1, at most 4; `0` keeps it in the main thread. A worker that dies fails only its batch, which settles
+  again, and a new worker takes its place. The production pod has 2 CPUs and 2 workers.
+
 ## [0.3.0-alpha.3] — Search and scale
 
 One search language everywhere, the cloud on ClickHouse at scale, live updates, traces across projects, and trace times you can trust.

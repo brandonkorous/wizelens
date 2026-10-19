@@ -50,10 +50,11 @@ export async function serveUi(uiDir: string | null, relPath: string, res: Server
   if (!existsSync(file) || extname(file) === "") file = join(uiDir, "index.html");
   try {
     const body = await readFile(file);
-    const isIndex = file.endsWith("index.html");
+    // The page and its build id must always be fresh; the hashed files never change.
+    const fresh = file.endsWith("index.html") || file.endsWith("version.json");
     res.writeHead(200, {
       "Content-Type": TYPES[extname(file)] ?? "application/octet-stream",
-      "Cache-Control": isIndex ? "no-cache" : "public, max-age=31536000, immutable",
+      "Cache-Control": fresh ? "no-cache" : "public, max-age=31536000, immutable",
     });
     res.end(body);
   } catch {

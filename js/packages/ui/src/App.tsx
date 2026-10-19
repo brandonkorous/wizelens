@@ -20,13 +20,19 @@ import { ServicesPage } from "./pages/services/ServicesPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
 import { TracesPage } from "./pages/traces/TracesPage";
 import { AUTH_PAGES, type AuthPageId, type PageId, type Route, useRoute } from "./routes";
+import { releaseMissing } from "./data/release";
 import { EmailBanner } from "./shell/EmailBanner";
 import { Sidebar } from "./shell/Sidebar";
 import { TopBar } from "./shell/TopBar";
+import { UpdateBanner, UpdateNeeded } from "./shell/UpdateBanner";
+
+/** A page loaded on first visit. If its file is gone (a new release), the page asks for a refresh instead of breaking. */
+const lazyPage = (load: () => Promise<ComponentType>) =>
+  lazy(() => load().then((Page) => ({ default: Page }), () => (releaseMissing(), { default: UpdateNeeded })));
 
 // Cloud-only pages load on first visit, so in-app and hub dashboards never download them.
-const TeamPage = lazy(() => import("./pages/team/TeamPage").then((m) => ({ default: m.TeamPage })));
-const AccountPage = lazy(() => import("./pages/account/AccountPage").then((m) => ({ default: m.AccountPage })));
+const TeamPage = lazyPage(() => import("./pages/team/TeamPage").then((m) => m.TeamPage));
+const AccountPage = lazyPage(() => import("./pages/account/AccountPage").then((m) => m.AccountPage));
 
 const PAGES: Record<Exclude<PageId, "trace" | "shared" | AuthPageId>, ComponentType> = {
   overview: OverviewPage,
@@ -102,6 +108,7 @@ function Shell() {
       <Sidebar page={route.page} counts={{ errors }} dot={dot} />
       <div className="wl-main">
         <TopBar data={data} />
+        <UpdateBanner />
         <EmailBanner />
         <main className="wl-page">
           <PageView route={route} />
