@@ -660,6 +660,12 @@ retention, and the audit log.
   (`/` and `/mcp` to `/_wizelens/mcp`, `/.well-known/*` as is). Requests on that host get its metadata (`resource` is the
   origin, or `<origin>/mcp`) and its `resource_metadata` pointer; sign-in stays on the public URL. The hosted cloud uses
   `https://mcp.wizelens.com`.
+- **SCIM provisioning** (Better Auth's SCIM plugin, `@better-auth/scim`): an admin makes a `wl_sc_…` token for the
+  organization (hashed in `scim_tokens`); the identity provider calls `<public-url>/_wizelens/api/auth/scim/v2` with it.
+  Each token is one connection (`org-<id>`) whose provisioning domain is the organization. A user it creates or activates
+  becomes a `member`; a deactivated one leaves the organization (owners stay) and loses its sessions. An existing account
+  is linked only when its email is confirmed and it is already a member or at the organization's proven SSO domain.
+  Changes write `scim.user.*` and `scim.group.*` (actor `scim:<token id>`); tokens write `scim.token.create` and `.revoke`.
 - **Audit log**: org changes, member and invite changes (also those through Better Auth), keys, projects, shares, and every MCP tool
   call, with who did it.
 
@@ -667,7 +673,7 @@ retention, and the audit log.
 
 | Method | Path | Who |
 |---|---|---|
-| GET | `api/me` | Anyone: `{ signedIn, needsSetup, signup, mail, sso, user?, sessionId?, orgs?[] with projects, blockingOrgs? }`. `sso`: some provider has a proven domain |
+| GET | `api/me` | Anyone: `{ signedIn, needsSetup, signup, mail, sso, billing, user?, sessionId?, orgs?[] with projects and plan, blockingOrgs? }`. `sso`: some provider has a proven domain. `billing`: the cloud bills through Stripe; off, every `plan` is `unlimited` |
 | GET | `api/invites/{id}` | Anyone with the link: `{ orgName, email, role, inviter }` |
 | * | `api/auth/*` | Better Auth: sign-up, sign-in (email, passkey), `two-factor/*`, sessions, password, email, `delete-user`, `organization/*` (invite, accept, roles, remove, leave), `sign-in/sso`, `sso/*` (register with `organizationId`, providers, update, delete, domain proof; owner or admin). Send `organizationId` on every `organization/*` change |
 | POST / GET / PATCH / DELETE | `api/orgs`, `api/orgs/{org}` | Signed in; read: any member; name and retention: admin; delete (with `password`): owner |
@@ -688,6 +694,13 @@ retention, and the audit log.
 | POST | `api/auth/wizelens/oauth-grant` | Signed in within 15 minutes: `{ organizationId, allProjects, projectIds, oauth_query }` from the consent page. Answers `{ id }` |
 | GET / DELETE | `api/me/apps[/{id}]` | Signed in: the apps this person connected (`{ apps: [{ id, app, clientId, orgId, orgName, userEmail, allProjects, projects, createdMs, usedMs }] }`), or end one |
 | GET / DELETE | `api/orgs/{org}/apps[/{id}]` | Admin: every app connected in the organization, or end one |
+| GET | `api/orgs/{org}/usage` | Any member: `{ billing, plan, includedGb, maxRetentionDays, month, monthGb, days[{ day, gb, bytes, spans, logs, points }], overageUsd, projectedGb, projectedOverageUsd, spendCapUsd, blocked, reason, subscription, plans[] }` (see "Plans and billing") |
+| PATCH | `api/orgs/{org}/billing` | Owner, billing on, Team or Business: `{ spendCapUsd: whole dollars or null }` |
+| GET | `api/orgs/{org}/audit/export?format=csv\|json` | Admin, plan with audit export (402 otherwise): the whole log as a download; writes `audit.export` |
+| GET / POST / DELETE | `api/orgs/{org}/scim`, `…/scim/tokens[/{id}]` | Admin: `{ allowed, plan?, baseUrl, tokens }`; a new `wl_sc_…` token is in the answer once (402 without SCIM on the plan) |
+| * | `api/auth/scim/v2/*` | SCIM 2.0 (Better Auth's SCIM plugin): `Users`, `Groups`, `ServiceProviderConfig`, `Schemas`, `ResourceTypes`, with `Authorization: Bearer wl_sc_…` (no dashboard header) |
+| * | `api/auth/subscription/*` | Better Auth's Stripe plugin, billing on: `upgrade`, `cancel`, `restore`, `list`, `billing-portal`, each with `customerType: "organization"` and `referenceId` (owner or admin); `success` (Stripe's redirect back) |
+| POST | `api/auth/stripe/webhook` | Stripe, signed (`Stripe-Signature`, `--stripe-webhook-secret`); 404 with billing off |
 
 ### Page models (`serverStats`)
 
@@ -818,6 +831,48 @@ the time it is opened: after the maker leaves the organization, the link shows o
 Each organization keeps traces for `retention_days` (default 30, 1 to 400). Older traces are deleted every 10 minutes.
 `POST …/projects/{id}/clear` deletes a project's data now.
 
+### Plans and billing
+
+Billing is off unless the cloud starts with `--stripe-secret-key` (then `--stripe-webhook-secret` and `--stripe-prices`,
+JSON of `teamMonthly`, `teamAnnual`, `businessMonthly`, `businessAnnual`, `overage`, `meter`, are required, and so is
+`--public-url`). Off, every organization is `unlimited`: no caps, no gates, no billing UI. Plans live in
+`cloud/src/billing/plans.ts`:
+
+| Plan | Included GB a month | Retention max | Overage | SSO, SCIM, audit export |
+|---|---|---|---|---|
+| `free` | 10 (then 429) | 14 | no | no |
+| `team` | 50 | 30 | yes | no |
+| `business` | 150 | 90 | yes | yes |
+| `enterprise` | `orgs.plan_gb` (none: no limit) | `orgs.plan_retention_days`, at most 400 | no | yes |
+| `unlimited` | none | 400 | no | yes |
+
+- **Usage**: the request body of `api/ingest` and OTLP as sent (before gzip is undone), counted only when accepted, plus spans,
+  logs, and metric points, per organization per UTC day in `usage_daily`. Counters flush every minute and at shutdown. A GB
+  is 10^9 bytes. Months are calendar months in UTC.
+- **Free cap**: at the included GB, ingest and OTLP answer 429 `{ error: "This organization reached the Free plan's 10 GB
+  for this month. …" }` with `Retry-After: 3600` until the 1st or an upgrade. **Spend cap** (Team, Business): past
+  `spend_cap_cents` of overage, 429 "This organization reached its monthly spend cap of $N. …". The first block of a month
+  writes `ingest.blocked`. Mail to owners and admins at 80% and 100% of the included GB and at the spend cap, once a month each
+  (`usage_notices`).
+- **Overage**: graduated on the GB above the included GB each month: 500 GB at $0.30, 1,500 GB at $0.20, then $0.10.
+- **Gates**: SSO provider setup (`sso/register`, `sso/update-provider`) answers 402 `PLAN_REQUIRED`; SCIM tokens stop
+  working and their routes answer 402; audit export answers 402 with `{ plan }`. Retention above the plan's maximum answers
+  402; a plan change lowers retention to the new maximum.
+- **Stripe** (Better Auth's Stripe plugin, the organization is the customer and the subscription's `reference_id`):
+  Checkout starts Team or Business, monthly or yearly; the customer portal changes, cancels, and holds cards and invoices.
+  Webhook events (`checkout.session.completed`, `customer.subscription.created|updated|deleted`) update `subscriptions`, then
+  `orgs.plan` follows: `active`, `trialing`, or `past_due` keeps the paid plan (a failed payment keeps it through Stripe's
+  retries); otherwise Free. Plans set by hand (`enterprise`, `unlimited`) stay without a subscription. Changes write
+  `plan.change`. A paid organization also gets a **usage subscription**: only the graduated metered price on the
+  `wizelens_gb` meter, monthly, anchored to the 1st (UTC), metadata `wizelensRole: usage`; the webhook handles its events
+  itself (it is remade if it ends while the plan runs) and passes every other event to the plugin. Five minutes after each UTC
+  day ends, the whole GB above the included GB since the 1st, less what was reported that month, goes to the meter as one event
+  per organization and day (`identifier: wl-<org>-<day>`, `usage_reports`), so a rerun never bills twice. When the plan ends,
+  finished days are reported, then the usage subscription is canceled with a final invoice.
+- **Commands**: `wizelens-cloud stripe-setup` makes the products, prices (lookup keys `wizelens_team_monthly`, …,
+  `wizelens_gb_overage`), the meter, and the webhook, and prints the options. `wizelens-cloud plan set <org> <plan>
+  [--gb N] [--retention-days N]` sets a plan by hand (audit actor `cli`).
+
 ### Cloud storage
 
 Postgres, one schema, migrations in `wizelens_migrations`. Tables: `orgs`, `users`, `members`, `sessions`, `invites`, `accounts`,
@@ -834,7 +889,12 @@ users, organizations, and members kept their rows and ids. Passwords moved to `a
 new ids (so new links). A test checks that Better Auth finds nothing to change in the schema, and Better Auth checks it again at start.
 Data tables are keyed by `project_id`. Times are `double precision` epoch ms, except in Better Auth's tables (`timestamptz`). Our
 secrets (keys, shares) are stored as SHA-256 hashes only; Better Auth stores reset and confirm tokens hashed. Migration 8 added
-`fact_search` and `fact_attrs` (see "Search").
+`fact_search` and `fact_attrs` (see "Search"). Migration 9 added OAuth for MCP clients. Migration 10 added `issues`. Migration 11 added the alert changes (see "Alerts"). Migration 12 added SLOs. Migration 13 added saved views and page shares. Migration 14 added billing:
+`orgs.plan` (existing organizations `unlimited`), `plan_gb`, `plan_retention_days`, `spend_cap_cents`, `stripe_customer_id`,
+`overage_subscription_id`; `users.stripe_customer_id`; Better Auth's `subscriptions`; `usage_daily`, `usage_notices`,
+`usage_reports`; and `scim_tokens` (hashed `wl_sc_…`). Migration 15 added the SCIM plugin's tables in snake_case
+(`scim_users`, `scim_groups`, `scim_group_members`, `scim_subjects`, `scim_projection_grants`, `scim_identity_tombstones`,
+`scim_connection_bindings`); their provisioning domain is the organization id.
 
 ### Telemetry stores (small mode and scale mode)
 

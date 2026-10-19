@@ -119,6 +119,7 @@ Vault names cannot hold `_`, so `DATABASE_URL` is stored as `DATABASE-URL`.
 | `WIZELENS-CLOUD-RESEND-WEBHOOK-SECRET` | no: without it, addresses that bounce keep getting mail | a person |
 | `WIZELENS-CLOUD-SMTP-URL` | no: SMTP in place of Resend (never set both) | a person |
 | `WIZELENS-CLOUD-SSO-ORIGINS` | no: without it there is no OIDC single sign-on | a person |
+| `WIZELENS-CLOUD-STRIPE-SECRET-KEY`, `WIZELENS-CLOUD-STRIPE-WEBHOOK-SECRET`, `WIZELENS-CLOUD-STRIPE-PRICES` | no: all three turn billing on; without them every organization is unlimited (a partial set is skipped with a warning) | a person, from `wizelens-cloud stripe-setup` |
 
 A deploy fails if a required secret is missing. After you add or change a secret, run Deploy from the Actions tab. The pod restarts only when the secrets change.
 

@@ -23,11 +23,11 @@ Competitor Research" doc.
 
 | Phase | What | Size | State |
 |---|---|---|---|
-| B1 | Plans, the billing switch, and the plan per organization | S | Not started |
-| B2 | Usage metering | M | Not started |
-| B3 | Limits: Free cap, retention by plan, feature gates, spend cap | M | Not started |
-| B4 | Stripe: checkout, portal, webhooks, metered overage, setup command | L | Not started |
-| B5 | Billing page and plan prompts in the dashboard | M | Not started |
+| B1 | Plans, the billing switch, and the plan per organization | S | Done |
+| B2 | Usage metering | M | Done |
+| B3 | Limits: Free cap, retention by plan, feature gates, spend cap | M | Done |
+| B4 | Stripe: checkout, portal, webhooks, metered overage, setup command | L | Done |
+| B5 | Billing page and plan prompts in the dashboard | M | Done |
 | B6 | Pricing page on wizelens.com, docs, deploy notes | M | Not started |
 
 ## Rules

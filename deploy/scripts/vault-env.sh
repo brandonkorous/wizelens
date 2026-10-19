@@ -26,6 +26,19 @@ for name in "${optional[@]}"; do
   if value=$(read_secret "$name"); then printf '%s=%s\n' "$name" "$value" >> "$OUT/cloud.env"; echo "optional secret present: $name"; fi
 done
 
+# Billing (Stripe): all three or none. None keeps billing off; a partial set would stop the cloud, so it is skipped with a warning.
+stripe=(WIZELENS_CLOUD_STRIPE_SECRET_KEY WIZELENS_CLOUD_STRIPE_WEBHOOK_SECRET WIZELENS_CLOUD_STRIPE_PRICES)
+stripe_lines=()
+for name in "${stripe[@]}"; do
+  if value=$(read_secret "$name"); then stripe_lines+=("$name=$value"); fi
+done
+if [ ${#stripe_lines[@]} -eq ${#stripe[@]} ]; then
+  printf '%s\n' "${stripe_lines[@]}" >> "$OUT/cloud.env"
+  echo "billing: Stripe secrets present"
+elif [ ${#stripe_lines[@]} -gt 0 ]; then
+  echo "::warning::Only ${#stripe_lines[@]} of the 3 Stripe secrets are in $VAULT (${stripe[*]//_/-}); billing stays off."
+fi
+
 # For the db-role Job only, never the app. printf '%s' keeps out the newline az adds, which psql would reject.
 printf '%s' "$(read_secret DATABASE_ADMIN_URL)" > "$OUT/admin-url"
 printf '%s' "$(read_secret WIZELENS_APP_PASSWORD)" > "$OUT/app-password"

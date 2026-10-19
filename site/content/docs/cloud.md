@@ -50,6 +50,12 @@ Organizations hold projects. People join an organization with a role:
 
 People join with an invite link (7 days, one use). Run the cloud with `--signup open` to let anyone sign up; each new
 person then gets their own organization. Org changes, member changes, keys, shares, and every MCP call go to the audit log.
+Admins export the audit log as CSV or JSON (Business and Enterprise on the hosted cloud).
+
+**SCIM.** Under Team, SCIM, an admin makes a token and pastes it with the SCIM base URL
+(`<public-url>/_wizelens/api/auth/scim/v2`) into Okta, Entra ID, or another identity provider. People it creates join as
+members, and people it deactivates leave the organization (owners stay). Admins set roles in WizeLens. On the hosted
+cloud, SCIM and single sign-on are on Business and Enterprise.
 
 ## Keys
 
@@ -148,3 +154,16 @@ keys. Every organization is unlimited, and `--retention-days` sets history as be
 | `--ingest-per-minute <n>` | `WIZELENS_CLOUD_INGEST_PER_MINUTE` | `1200` ingest calls per key |
 | `--settle-workers <n>` | `WIZELENS_CLOUD_SETTLE_WORKERS` | Scale mode: threads that index new traces. `0` uses the main thread. Default: CPUs − 1, at most 4 |
 | `--allow-private-webhooks` | `WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1` | off |
+| `--stripe-secret-key <key>` | `WIZELENS_CLOUD_STRIPE_SECRET_KEY` | none: billing is off and every organization is unlimited. With it (`sk_…` or `rk_…`), plans and limits apply and new organizations start on Free |
+| `--stripe-webhook-secret <s>` | `WIZELENS_CLOUD_STRIPE_WEBHOOK_SECRET` | none; required with a Stripe key. The webhook goes to `<public-url>/_wizelens/api/auth/stripe/webhook` |
+| `--stripe-prices <json>` | `WIZELENS_CLOUD_STRIPE_PRICES` | none; required with a Stripe key. The price and meter ids `stripe-setup` prints |
+
+To turn billing on, run `wizelens-cloud stripe-setup --stripe-secret-key sk_… --public-url https://lens.example.com`
+once. It makes the Team and Business products with monthly and yearly prices, the `wizelens_gb` meter with its
+graduated price, and the webhook (with the events `checkout.session.completed` and `customer.subscription.created`,
+`.updated`, and `.deleted`), then prints the three options to deploy with. A rerun reuses what exists. Organizations that
+existed before billing was turned on stay unlimited until you move them.
+
+`wizelens-cloud plan set <org id or slug> <free|team|business|enterprise|unlimited> [--gb N] [--retention-days N]
+[--database <url>]` sets a plan by hand, for an Enterprise contract (with its own GB and retention) or for support.
+The change goes to the organization's audit log.

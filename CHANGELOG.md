@@ -6,6 +6,24 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Plans and billing for the hosted cloud** (off unless the cloud starts with Stripe keys, so self-hosting stays free and
+  unlimited). Free (10 GB a month, 14 days), Team ($29, 50 GB, 30 days), Business ($99, 150 GB, 90 days, SSO, SCIM, audit
+  export), and Enterprise (set by hand). Every plan has unlimited users, alerts, MCP, and share links, and there is never a
+  seat fee. Usage is the request body as sent, counted per organization per day. Free stops at 10 GB with a 429 until the
+  1st; Team and Business keep going and bill extra GB in steps ($0.30, $0.20, $0.10 a GB) on a monthly usage invoice, with an
+  optional spend cap. Owners and admins get mail at 80% and 100%. Retention is capped by the plan. Checkout, the customer
+  portal, and webhooks go through Better Auth's Stripe plugin, with the organization as the customer; the Stripe meter gets
+  each organization's extra GB once a day, never twice. `wizelens-cloud stripe-setup` makes the products, prices, meter,
+  and webhook in one command; `wizelens-cloud plan set` sets a plan by hand. New options: `--stripe-secret-key`,
+  `--stripe-webhook-secret`, `--stripe-prices`.
+- **Billing page** (Team, Billing; owners and admins): the plan, this month's GB against the included GB, a month-end
+  projection, extra data so far, plan cards (monthly or yearly), Manage billing (Stripe portal), and the spend cap. A banner
+  shows at 80% and 100% on Free and when a cap stops ingest. Single sign-on, SCIM, and audit export show the plan they need
+  and an upgrade button instead of an error.
+- **SCIM provisioning** (cloud, Business and Enterprise; any self-hosted cloud). Make a token under Team, SCIM, and Okta,
+  Entra ID, or another identity provider adds people as members and removes them when they are deactivated. Through Better
+  Auth's SCIM plugin; every change goes to the audit log.
+- **Audit log export** as CSV or JSON (Team, Audit log).
 - **Saved views and searches.** The star in the top bar saves the page you are on, with its filters and time range. Saved
   views show under Saved in the sidebar; saved searches also show under the Search box. On the cloud they are yours until
   you share them with the team.

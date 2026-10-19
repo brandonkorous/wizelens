@@ -2,6 +2,7 @@ import { getMigrations } from "better-auth/db/migration";
 import { afterEach, describe, expect, it } from "vitest";
 import { dayOf } from "./billing/usage.js";
 import { overageCents } from "./billing/plans.js";
+import { optionsFromArgs } from "./cli-args.js";
 import { setPlan } from "./repo/billing.js";
 import type { Cloud } from "./server.js";
 import { type Client, type Me, setupOwner, startCloud } from "./test/cloud.js";
@@ -44,6 +45,12 @@ describe("billing off (no Stripe key)", () => {
     expect((await owner.call("PATCH", `api/orgs/${orgId}`, { retentionDays: 400 })).status).toBe(200);
     expect((await owner.call("GET", `api/orgs/${orgId}/audit/export?format=csv`)).status).toBe(200);
     expect((await owner.call("POST", `api/orgs/${orgId}/scim/tokens`, { name: "Okta" })).status).toBe(201);
+  });
+
+  it("reads the Stripe options from flags, then the environment", () => {
+    const env = { WIZELENS_CLOUD_STRIPE_SECRET_KEY: "sk_env", WIZELENS_CLOUD_STRIPE_WEBHOOK_SECRET: "whsec_env", WIZELENS_CLOUD_STRIPE_PRICES: "{}" };
+    expect(optionsFromArgs([], env)).toMatchObject({ stripeSecretKey: "sk_env", stripeWebhookSecret: "whsec_env", stripePrices: "{}" });
+    expect(optionsFromArgs(["--stripe-secret-key", "sk_flag"], env)).toMatchObject({ stripeSecretKey: "sk_flag" });
   });
 
   it("refuses half a Stripe setup", async () => {
