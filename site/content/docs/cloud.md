@@ -98,4 +98,5 @@ shared project's part.
 | `--public-url <url>` | `WIZELENS_CLOUD_PUBLIC_URL` | the request's own address |
 | `--signup <invite\|open>` | `WIZELENS_CLOUD_SIGNUP` | `invite` |
 | `--retention-days <n>` | `WIZELENS_CLOUD_RETENTION_DAYS` | `30` |
+| `--ingest-per-minute <n>` | `WIZELENS_CLOUD_INGEST_PER_MINUTE` | `1200` ingest calls per key |
 | `--allow-private-webhooks` | `WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1` | off |

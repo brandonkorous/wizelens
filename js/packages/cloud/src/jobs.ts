@@ -8,6 +8,8 @@ import { sendTeamNotices } from "./notify/team.js";
 
 const HOUSEKEEPING_MS = 10 * 60_000;
 const SETTLE_MS = 3_000;
+/** A settle run this big means a backlog: settle again at once instead of waiting for the next tick. */
+const SETTLE_BACKLOG = 1_000;
 const ROLLUP_PRUNE_MS = 60_000;
 const NOTICE_MS = 60_000;
 const DIGEST_MS = 10 * 60_000;
@@ -35,7 +37,10 @@ export function startJobs(app: CloudApp): () => void {
   const stops = [
     every("retention", HOUSEKEEPING_MS, () => app.telemetry.prune(now())),
     every("services", HOUSEKEEPING_MS, () => pruneServices(app.db, now())),
-    every("settle", SETTLE_MS, () => app.telemetry.settle(now(), { defaultRetentionDays: app.config.retentionDays })),
+    every("settle", SETTLE_MS, async () => {
+      const o = { defaultRetentionDays: app.config.retentionDays, onSettled: (p: string) => app.changes.emit(p) };
+      while ((await app.telemetry.settle(now(), o)) >= SETTLE_BACKLOG);
+    }),
     every("rollups", ROLLUP_PRUNE_MS, () => app.telemetry.pruneRollups(now())),
     every("sessions", HOUSEKEEPING_MS, () => pruneAuthRows(app.db)),
     every("alerts", app.config.alertIntervalMs, () => evaluateAll(app)),

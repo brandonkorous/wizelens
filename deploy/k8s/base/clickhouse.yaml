@@ -64,7 +64,7 @@ spec:
           startupProbe: { httpGet: { path: /ping, port: 8123 }, periodSeconds: 5, failureThreshold: 120 }
           resources:
             requests: { cpu: 200m, memory: 1Gi }
-            limits: { memory: 3Gi }
+            limits: { memory: 4Gi }
       volumes:
         - name: config
           configMap: { name: clickhouse-config }

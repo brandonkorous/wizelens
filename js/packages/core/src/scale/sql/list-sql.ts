@@ -8,7 +8,7 @@ import type { LogLevel, Trace } from "../../types.js";
 import { type Agg, emptyAgg } from "../agg.js";
 import type { RequestItem, TraceItem } from "../facts-lists.js";
 import type { ListFilter, ListNeed, ListRows } from "../needs.js";
-import { boolOf, collate, floorOf, lit, num, numOrNull, type SqlSource, SqlText, scopeWhere, strOrNull, whereOf } from "./dialect.js";
+import { boolOf, collate, floorOf, lit, msLit, num, numOrNull, type SqlSource, SqlText, scopeWhere, strOrNull, whereOf } from "./dialect.js";
 import { servicesOf } from "./write-sql.js";
 
 type Row = Record<string, unknown>;
@@ -40,14 +40,14 @@ function requestWhere(q: SqlText, f: ListFilter): string[] {
   }
   if (f.duration && DURATIONS.has(f.duration)) out.push(`dur_class = ${q.p(f.duration)}`);
   const s = (f.q ?? "").trim().toLowerCase();
-  if (s) out.push(`(${q.startsWith("trace_id", s)} OR ${q.contains("search", s)})`);
+  if (s) out.push(`(${q.startsWith("trace_id", s)} OR ${q.textHas("fact_requests", "search", s)})`);
   return out;
 }
 
 /** Text search over a table's search column, or a trace id prefix. */
-function textWhere(q: SqlText, text: string | undefined): string[] {
+function textWhere(q: SqlText, table: string, text: string | undefined): string[] {
   const s = (text ?? "").trim().toLowerCase();
-  return s ? [`(${q.startsWith("trace_id", s)} OR ${q.contains("search", s)})`] : [];
+  return s ? [`(${q.startsWith("trace_id", s)} OR ${q.textHas(table, "search", s)})`] : [];
 }
 
 interface TableSql {
@@ -75,14 +75,14 @@ const TABLES: Record<ListNeed["table"], TableSql> = {
   traces: {
     table: "fact_traces",
     time: "start_ms",
-    where: (q, f) => textWhere(q, f.q),
+    where: (q, f) => textWhere(q, "fact_traces", f.q),
     order: (d, need) => (need.sort.desc ? `start_ms DESC, ${tid(d)} ASC` : `start_ms ASC, ${tid(d)} DESC`),
     item: traceItemOfRow,
   },
   logs: {
     table: "fact_logs",
     time: "time_ms",
-    where: (q, f) => [`level_rank >= ${lit(LOG_LEVELS.indexOf(f.minLevel ?? "trace"))}`, ...(f.logService ? [`service = ${q.p(f.logService)}`] : []), ...textWhere(q, f.q)],
+    where: (q, f) => [`level_rank >= ${lit(LOG_LEVELS.indexOf(f.minLevel ?? "trace"))}`, ...(f.logService ? [`service = ${q.p(f.logService)}`] : []), ...textWhere(q, "fact_logs", f.q)],
     order: (d, need) => (need.sort.desc ? `time_ms DESC, ${tid(d)} ASC, idx ASC` : `time_ms ASC, ${tid(d)} DESC, idx DESC`),
     item: logRowOfRow,
   },
@@ -124,7 +124,7 @@ function criticalOfRow(r: Row): CriticalSpan {
 }
 
 function whereFor(q: SqlText, src: SqlSource, t: TableSql, f: ListFilter, w: TimeWindow): string {
-  const conds = [...scopeWhere(q, src.scope), `${t.time} >= ${lit(w.from)}`, `${t.time} < ${lit(w.to)}`];
+  const conds = [...scopeWhere(q, src.scope), `${t.time} >= ${msLit(q.d, w.from)}`, `${t.time} < ${msLit(q.d, w.to)}`];
   if (f.traceId) conds.push(`trace_id = ${q.p(f.traceId)}`);
   return whereOf([...conds, ...t.where(q, f)]);
 }

@@ -46,7 +46,6 @@ function mcpSource(options: WizeLensOptions, store: TraceStore, getTrace: McpDat
     version: VERSION,
     slowQueryMs: options.slowQueryMs ?? DEFAULT_SLOW_QUERY_MS,
     nPlusOneThreshold: options.nPlusOneThreshold ?? DEFAULT_N_PLUS_ONE,
-    list: (limit) => store.list(limit),
     all: () => store.all(),
     get: getTrace,
     audit: options.audit ?? ((line: string) => console.info(line)),

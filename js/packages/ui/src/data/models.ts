@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { memoryExecutor, type ModelOf, pageContext, type PageName, runPageSync, type SyncExecutor, type TimeRange, type Trace } from "@wizeworks/lens-core";
 import { useRoute } from "../routes";
+import { useChangeTick } from "./changes";
 import { useHost, useRange } from "./host";
 import { getScope } from "./prefs";
 import { provider, useData } from "./provider";
@@ -14,8 +15,9 @@ export interface PageModel<P extends PageName> {
 
 const DEFAULT_SLOW_QUERY_MS = 100;
 const NO_PARAMS: Record<string, string> = {};
-/** How often a server model is asked for again while the page is open. */
+/** How often a server model is asked for again while the page is open; with a change stream, only as a fallback. */
 const SERVER_REFRESH_MS = 15_000;
+const STREAM_FALLBACK_MS = 120_000;
 
 /** The route's query as plain model parameters. */
 function useParams(): Record<string, string> {
@@ -62,7 +64,9 @@ function modelUrl(page: PageName, params: Record<string, string>, range: string)
 function useServerModel<P extends PageName>(page: P, params: Record<string, string>, enabled: boolean): PageModel<P> {
   const [range] = useRange();
   const { updatedMs } = useData();
-  const tick = Math.floor(updatedMs / SERVER_REFRESH_MS);
+  const changes = useChangeTick();
+  // New data reloads at once when the host streams changes; the old numbers stay on screen until the new ones arrive.
+  const tick = `${changes} ${Math.floor(updatedMs / (useHost().has("changes") ? STREAM_FALLBACK_MS : SERVER_REFRESH_MS))}`;
   const url = enabled ? modelUrl(page, params, range) : null;
   const [state, setState] = useState<{ url: string | null; model: ModelOf<P> | null; error: string | null }>({ url: null, model: null, error: null });
   useEffect(() => {

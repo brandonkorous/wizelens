@@ -40,6 +40,12 @@ export const FACT_DDL: readonly string[] = [
     "INDEX ix_trace trace_id TYPE bloom_filter GRANULARITY 1"),
 ];
 
+/** Changes to shipped fact tables, in order. The n-gram bloom filled up at 8,192 rows a block and skipped nothing; the text index lists each block's n-grams. */
+export const FACT_ALTERS: readonly string[] = [
+  "ALTER TABLE fact_search_t ADD INDEX IF NOT EXISTS ix_text_ngrams text TYPE text(tokenizer = ngrams(3)) GRANULARITY 1",
+  "ALTER TABLE fact_search_t DROP INDEX IF EXISTS ix_text",
+];
+
 /** Fact tables (storage names) and the columns that identify a row within a trace, for tombstones. */
 export const FACT_KEYS: Record<string, readonly string[]> = {
   fact_requests_t: ["start_ms"],

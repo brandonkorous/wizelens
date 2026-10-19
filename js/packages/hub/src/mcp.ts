@@ -14,7 +14,6 @@ export function hubMcpSource(data: HubData, name: string, version: string, audit
     version,
     slowQueryMs: DEFAULT_SLOW_QUERY_MS,
     nPlusOneThreshold: DEFAULT_N_PLUS_ONE,
-    list: (limit) => data.summaries({ limit }),
     all: () => data.traces({ limit: MCP_RECENT }),
     get: (traceId, federate) => data.getTrace(traceId, federate),
     audit,

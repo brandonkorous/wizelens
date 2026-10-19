@@ -4,7 +4,7 @@ import { type Agg, emptyAgg, trimAgg } from "../agg.js";
 import { KEY_SEP, KIND_SPEC, type KindSpec, type RollupKind } from "../kinds.js";
 import type { AggOrder, GroupNeed, GroupRows, KeyFilter, SeriesNeed, SeriesRows } from "../needs.js";
 import { planSeries, planTotals, type Segment, spreadBucket, type Tier } from "../window.js";
-import { collate, floorOf, lit, num, type SqlSource, SqlText, scopeWhere } from "./dialect.js";
+import { collate, floorOf, lit, msLit, num, type SqlSource, SqlText, scopeWhere } from "./dialect.js";
 import { idsOfText } from "./write-sql.js";
 
 const COUNTERS = ["c0", "c1", "c2", "c3", "c4", "c5"];
@@ -12,6 +12,10 @@ const VALUES = ["n", "err", "sum_v", ...COUNTERS];
 const IDS_BUCKETS = 3;
 
 type Row = Record<string, unknown>;
+
+// ClickHouse sums raw rollup rows (merged FINAL views cost 3-4 times as much); a row may hold part of a bucket, so "n > 0.5" moves to the key, and a bucket netted to zero adds nothing but may stretch first and last seen.
+const sumTable = (src: SqlSource, name: string): string => (src.d.name === "ch" ? `${name}_t` : name);
+const liveRow = (src: SqlSource): string[] => (src.d.name === "ch" ? [] : ["n > 0.5"]);
 
 /** Conditions on a rollup or hist table for the scope, the kind, and the key filter. */
 function kindWhere(q: SqlText, src: SqlSource, kind: RollupKind, f: KeyFilter | undefined): string[] {
@@ -38,7 +42,7 @@ function branches(q: SqlText, src: SqlSource, need: GroupNeed, b: Branches): str
   return b.segs
     .map((s) => {
       const cols = b.cols(s.weight);
-      const where = [...kindWhere(q, src, need.kind, need.filter), ...b.extra(q), `bucket_ms >= ${lit(s.from)}`, `bucket_ms < ${lit(s.to)}`];
+      const where = [...kindWhere(q, src, need.kind, need.filter), ...b.extra(q), `bucket_ms >= ${msLit(q.d, s.from)}`, `bucket_ms < ${msLit(q.d, s.to)}`];
       return `SELECT ${cols} FROM ${b.table(s.tier)} WHERE ${where.join(" AND ")}`;
     })
     .join(" UNION ALL ");
@@ -53,7 +57,7 @@ function orderExpr(by: AggOrder): string {
 }
 
 function totalsSql(q: SqlText, src: SqlSource, need: GroupNeed, segs: readonly Segment[], ordered: boolean): string {
-  const inner = branches(q, src, need, { segs, table: (t) => t.table, cols: (w) => `key, ${weighted(VALUES, w)}, first_ms, last_ms`, extra: () => ["n > 0.5"] });
+  const inner = branches(q, src, need, { segs, table: (t) => sumTable(src, t.table), cols: (w) => `key, ${weighted(VALUES, w)}, first_ms, last_ms`, extra: () => liveRow(src) });
   const sums = VALUES.map((c) => `SUM(${c}) AS ${c}`).join(", ");
   const o = ordered ? need.order : undefined;
   const limit = o && Number.isFinite(o.limit) ? ` LIMIT ${lit(Math.max(0, Math.floor(o.limit)))}` : "";
@@ -77,7 +81,7 @@ function groupAgg(r: Row, spec: KindSpec, need: GroupNeed, rounded: boolean): Ag
 async function addHists(src: SqlSource, need: GroupNeed, segs: readonly Segment[], rows: GroupRows["rows"], keys: string[] | null): Promise<void> {
   const q = new SqlText(src.d);
   const extra = (x: SqlText) => (keys ? [x.in("key", keys)] : []);
-  const inner = branches(q, src, need, { segs, table: (t) => t.hist, cols: (w) => `key, bin, ${weighted(["cnt"], w)}`, extra });
+  const inner = branches(q, src, need, { segs, table: (t) => sumTable(src, t.hist), cols: (w) => `key, bin, ${weighted(["cnt"], w)}`, extra });
   const byKey = new Map(rows.map((r) => [r.key, r.agg]));
   for (const h of await src.run.all(`SELECT key, bin, SUM(cnt) AS cnt FROM (${inner}) s GROUP BY key, bin`, q.params)) {
     const a = byKey.get(String(h.key));
@@ -159,14 +163,15 @@ function seriesSql(q: SqlText, src: SqlSource, need: SeriesNeed, w: TimeWindow, 
   const half = t.ms / 2;
   const key = need.split ? "key, " : "";
   const b = plan.mode === "sql" ? floorOf(src.d, `((bucket_ms + ${lit(half)} - ${lit(w.from)}) / ${lit(w.to - w.from)}) * ${lit(need.buckets)}`) : "bucket_ms";
+  // The bucket's middle is in the window; written on the column alone so the sort key can answer it.
   const range = plan.mode === "sql"
-    ? [`bucket_ms + ${lit(half)} >= ${lit(w.from)}`, `bucket_ms + ${lit(half)} < ${lit(w.to)}`]
-    : [`bucket_ms > ${lit(w.from - t.ms)}`, `bucket_ms < ${lit(w.to)}`];
+    ? [`bucket_ms >= ${msLit(q.d, w.from - half)}`, `bucket_ms < ${msLit(q.d, w.to - half)}`]
+    : [`bucket_ms > ${msLit(q.d, w.from - t.ms)}`, `bucket_ms < ${msLit(q.d, w.to)}`];
   const cols = hist ? ["bin", "cnt"] : VALUES;
-  const where = [...kindWhere(q, src, need.kind, need.filter), ...(hist ? [] : ["n > 0.5"]), ...range];
-  const inner = `SELECT ${key}${b} AS b, ${cols.join(", ")} FROM ${hist ? t.hist : t.table} WHERE ${where.join(" AND ")}`;
+  const where = [...kindWhere(q, src, need.kind, need.filter), ...(hist ? [] : liveRow(src)), ...range];
+  const inner = `SELECT ${key}${b} AS b, ${cols.join(", ")} FROM ${sumTable(src, hist ? t.hist : t.table)} WHERE ${where.join(" AND ")}`;
   const sums = hist ? "bin, SUM(cnt) AS cnt" : VALUES.map((c) => `SUM(${c}) AS ${c}`).join(", ");
-  return `SELECT ${key}b, ${sums} FROM (${inner}) s GROUP BY ${key}b${hist ? ", bin" : ""}`;
+  return `SELECT ${key}b, ${sums} FROM (${inner}) s GROUP BY ${key}b${hist ? ", bin" : " HAVING SUM(n) > 0.5"}`;
 }
 
 /** Where a row lands: one page bucket, or its overlap with each. */

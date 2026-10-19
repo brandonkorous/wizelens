@@ -1,14 +1,24 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { findNPlusOneDb, findNPlusOneHttp, queryText, type Trace } from "@wizeworks/lens-core";
+import { findNPlusOneDb, findNPlusOneHttp, parseSearch, queryText, type TimeRange, type Trace } from "@wizeworks/lens-core";
 import { z } from "zod";
-import { json, READ_ONLY, type Source } from "./mcp-shared.js";
+import { json, type McpDataSource, READ_ONLY, type Source } from "./mcp-shared.js";
+import { findAll, rangeArg } from "./mcp-store.js";
 
-function slowQueries(traces: Trace[], threshold: number) {
-  return traces.flatMap((t) =>
-    t.spans
-      .filter((s) => s.category === "db" && s.durationMs >= threshold)
-      .map((s) => ({ traceId: t.traceId, spanId: s.spanId, durationMs: s.durationMs, query: queryText(s), service: s.service })),
-  );
+/** How many slow queries are read, newest first, before the slowest are picked. */
+const SLOW_SCAN = 5_000;
+
+/** The slowest database spans over `threshold` in the range, with their SQL. Only the picked spans load their trace. */
+async function slowQueries(data: McpDataSource, threshold: number, range: TimeRange, limit: number) {
+  const spans = await findAll(data, "spans", parseSearch(`category:db duration:>=${threshold}ms`), range, SLOW_SCAN);
+  const top = spans.sort((a, b) => b.durationMs - a.durationMs).slice(0, limit);
+  const traces = new Map<string, Promise<Trace | undefined>>();
+  const rows = [];
+  for (const s of top) {
+    const trace = await (traces.get(s.traceId) ?? traces.set(s.traceId, Promise.resolve(data.get(s.traceId, false))).get(s.traceId)!);
+    const span = trace?.spans.find((x) => x.spanId === s.spanId);
+    rows.push({ traceId: s.traceId, spanId: s.spanId, durationMs: s.durationMs, query: span ? queryText(span) : s.name, service: s.service });
+  }
+  return rows;
 }
 
 function nPlusOne(traces: Trace[], n: number) {
@@ -23,14 +33,12 @@ function registerSlowQueries(server: McpServer, src: Source): void {
     ...src.arg,
     thresholdMs: z.number().min(0).optional().describe(`Default ${src.defaults.slowQueryMs}.`),
     limit: z.number().int().min(1).max(500).optional().describe("Default 20."),
+    range: rangeArg("to look"),
   };
-  const description = "Find database queries slower than a threshold across recent traces.";
+  const description = "Find the slowest database queries over a threshold, from the whole store.";
   server.registerTool("find_slow_queries", { description, inputSchema, annotations: READ_ONLY }, async (args) => {
     const data = await src.open("find_slow_queries", args);
-    const rows = slowQueries(await data.all(), args.thresholdMs ?? data.slowQueryMs)
-      .sort((a, b) => b.durationMs - a.durationMs)
-      .slice(0, args.limit ?? 20);
-    return json(rows);
+    return json(await slowQueries(data, args.thresholdMs ?? data.slowQueryMs, args.range ?? "24h", args.limit ?? 20));
   });
 }
 

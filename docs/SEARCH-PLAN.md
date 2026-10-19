@@ -17,8 +17,9 @@ One search language works the same in all three places.
 | 7. Copy production data | `wizelens-cloud copy-telemetry` built and tested; runbook in `deploy/README.md` |
 | 8. Docs | CONTRACT, CHANGELOG, deploy README |
 
-Not done yet: hub FTS5 and Postgres `pg_trgm` indexes (searches are correct, but scan the time window), MCP `list_traces` /
-`get_errors` / `find_slow_queries` on the store instead of the newest 500–2000 traces, and the load test targets in section 10.
+Done since: hub FTS5 trigram indexes, Postgres `pg_trgm` (best effort), MCP `list_traces` / `get_errors` /
+`find_slow_queries` on the store, the load test (`scripts/load-test.mjs`) and the speed work it led to, and live reloads
+(`api/changes`). Results and the open work are in section 10.
 
 ## Why
 
@@ -180,6 +181,31 @@ lightweight `DELETE` for that org.
 - Load test targets on one node: 2,000 traces/s ingest; search under 300 ms over 30 days at 100M
   spans; pages under 100 ms.
 - Piggles test bed: point the local cloud at ClickHouse and run real traffic.
+
+### Load test results (2026-10-19)
+
+One cloud process and ClickHouse 26.8 in Docker with the production limits (4 CPUs, 4 GiB, the production config), on
+about 192,000 traces (960,000 spans, 384,000 log lines) spread over 30 days. Run: `node scripts/load-test.mjs <url> <setup
+token> --rate 2000 --seconds 120 --workers 32` against a cloud started with `--ingest-per-minute 1000000`.
+
+| Measure | Target | First run | Now |
+|---|---|---|---|
+| Ingest | 2,000 traces/s | 1,883 traces/s | 1,545 traces/s (indexing now runs at the same time, in the same process) |
+| Indexing (settle) | keep up with ingest | 461 traces/s | about 935 traces/s on recent data |
+| Search, 30 days, p50 | under 300 ms | 155–732 ms | 42–186 ms; a rare phrase over 30 days 429–465 ms |
+| Pages, p50 | under 100 ms | 91–2,230 ms | requests 60, logs 60, errors (7d) 193, database 213, overview 237 (7d) / 295 ms (24h) |
+
+What changed: time filters use ClickHouse's sort key (Float64 literals), rollup sums skip `FINAL`, searches fetch only the
+page's rows and look at the newest day first, the n-gram bloom became a text index, settle batches overlap and merge in
+place, column statistics are off, settle inserts carry deduplication tokens (a dropped connection is retried without
+counting twice), and an open dashboard reloads on `api/changes` instead of a timer.
+
+Open work:
+
+1. Indexing past about 1,000 traces/s needs a second core: settle in a worker thread, and the cloud pod at 2 CPUs.
+2. Pages still run about 30 small queries each; one query per page section would bring them under 100 ms.
+3. A phrase that shows up in most 8,192-row blocks cannot skip any; a search over 30 days then reads all 30 days.
+4. Not yet run: 100 million spans (about 3 hours of ingest at 2,000 traces/s).
 
 ## 11. Build order
 

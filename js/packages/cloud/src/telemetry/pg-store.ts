@@ -1,6 +1,7 @@
 // Small mode: telemetry in the same Postgres (or PGlite) as accounts. The default, and what self-hosters and tests run.
 import { PG_DIALECT, searchSql, suggestSql, type TimeWindow } from "@wizeworks/lens-core";
 import type { Db } from "../db/db.js";
+import { ensureTrigram } from "../db/trigram.js";
 import { loadMetricAlertData, loadMetricData } from "../repo/metric-read.js";
 import { METRIC_TABLES } from "../repo/metric-write.js";
 import { getJoinedTrace } from "../repo/trace-join.js";
@@ -43,6 +44,8 @@ export function pgTelemetry(db: Db): TelemetryStore {
     reset = resetFacts(db);
     reset.catch((err: unknown) => console.error("Facts reset failed; settling tries again.", err));
   };
+  // Trigram indexes build in the background too; close waits for them.
+  let trigram: Promise<unknown> = Promise.resolve();
   return {
     kind: "postgres",
     write: (projectId, w, now) => db.tx((q) => writeTelemetry(q, projectId, w, now)),
@@ -71,6 +74,7 @@ export function pgTelemetry(db: Db): TelemetryStore {
     },
     pruneRollups: (now) => pruneRollups(db, now),
     async checkFactsVersion() {
+      trigram = ensureTrigram(db).catch((err: unknown) => console.error("Trigram indexes failed; text searches scan until the next start.", err));
       if (!(await factsStale(db))) return false;
       startReset();
       return true;
@@ -78,6 +82,6 @@ export function pgTelemetry(db: Db): TelemetryStore {
     async clearProject(projectId) {
       for (const table of TELEMETRY_TABLES) await db.query(`DELETE FROM ${table} WHERE project_id = $1`, [projectId]);
     },
-    close: async () => undefined,
+    close: async () => void (await trigram),
   };
 }

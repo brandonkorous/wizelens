@@ -4,11 +4,12 @@ import type { SettleOptions } from "../store.js";
 import type { ChClient } from "./http.js";
 import type { Dirty, SettleQueue } from "./queue.js";
 import { loadTraces } from "./read.js";
-import { factObjects, tombstones, writeDeltas } from "./settle-rows.js";
+import { factObjects, type Label, tombstones, writeDeltas } from "./settle-rows.js";
 import { byProject, nextVer, type RetentionCache } from "./util.js";
 
-const BATCH = 500;
+const BATCH = 2_000;
 const BUDGET_MS = 2_000;
+const DEPTH = 3;
 
 type Row = Record<string, unknown>;
 
@@ -53,36 +54,56 @@ async function projectWork(ch: ChClient, project: string, items: readonly Dirty[
   return work;
 }
 
-/** Write one project's work: tombstones first, then live rows, rollups, and the settle states. */
-async function writeWork(ch: ChClient, project: string, w: ProjectWork, ver: number, retentionMs: number): Promise<void> {
+/** Write one project's work: facts (with tombstones) and rollups at once, then the settle states, so a failed write settles again. */
+async function writeWork(ch: ChClient, project: string, w: ProjectWork, ver: number, retentionMs: number, label: Label): Promise<void> {
   const dead = await tombstones(ch, project, w.resettled, w.facts, ver);
-  for (const t of FACT_TABLES) await ch.insert(`${t}_t`, [...dead[t], ...w.facts[t]]);
-  await writeDeltas(ch, mergeDeltas(w.deltas), () => retentionMs);
-  await ch.insert("settle_state", w.states);
+  const facts = FACT_TABLES.map((t) => ch.insert(`${t}_t`, [...dead[t], ...w.facts[t]], label(t)));
+  await Promise.all([...facts, writeDeltas(ch, mergeDeltas(w.deltas), () => retentionMs, label)]);
+  await ch.insert("settle_state", w.states, label("settle_state"));
 }
 
-/** Settle one batch of due traces. Returns how many. */
-async function settleBatch(ch: ChClient, queue: SettleQueue, retention: RetentionCache, now: number, batch: number): Promise<number> {
-  const due = queue.due(now, batch);
-  if (!due.length) return 0;
-  const days = await retention.daysOf(due.map((d) => d.project));
-  for (const [project, items] of byProject(due)) {
-    const retentionMs = days.get(project)! * 86_400_000;
-    const ver = nextVer(now);
-    await writeWork(ch, project, await projectWork(ch, project, items, now, retentionMs, ver), ver, retentionMs);
-    for (const d of items) queue.settled(d, d.updatedMs);
+/** Settle one batch of taken traces. A failure releases the ones not written yet. */
+async function settleItems(ch: ChClient, queue: SettleQueue, retention: RetentionCache, now: number, due: readonly Dirty[], o: SettleOptions): Promise<number> {
+  let left = [...due];
+  try {
+    const days = await retention.daysOf(due.map((d) => d.project));
+    for (const [project, items] of byProject(due)) {
+      const retentionMs = days.get(project)! * 86_400_000;
+      const ver = nextVer(now);
+      const label: Label = (table) => ({ insert_deduplication_token: `${ver}:${project}:${table}` });
+      await writeWork(ch, project, await projectWork(ch, project, items, now, retentionMs, ver), ver, retentionMs, label);
+      for (const d of items) queue.settled(d, d.updatedMs);
+      left = left.filter((d) => d.project !== project);
+      o.onSettled?.(project);
+    }
+    return due.length;
+  } finally {
+    queue.release(left);
   }
-  return due.length;
 }
 
-/** Settle due traces in batches until none are left or the budget is spent. */
+/** Settle due traces until none are left or the budget is spent. Batches overlap (`DEPTH` at once): one reads and computes while others wait on their writes. */
 export async function settleClickHouse(ch: ChClient, queue: SettleQueue, retention: RetentionCache, now: number, o: SettleOptions = {}): Promise<number> {
   const start = Date.now();
   const batch = o.batch ?? BATCH;
+  const running: Promise<number>[] = [];
+  const started: Promise<number>[] = [];
   let total = 0;
-  for (;;) {
-    const n = await settleBatch(ch, queue, retention, now, batch);
-    total += n;
-    if (n < batch || Date.now() - start >= (o.budgetMs ?? BUDGET_MS)) return total;
+  try {
+    for (;;) {
+      const due = queue.take(now, batch);
+      if (due.length) {
+        const run = settleItems(ch, queue, retention, now, due, o);
+        // Handled now, awaited in turn: a batch that fails while another is awaited must not end the process.
+        run.catch(() => undefined);
+        running.push(run);
+        started.push(run);
+      }
+      const last = !due.length || due.length < batch || Date.now() - start >= (o.budgetMs ?? BUDGET_MS);
+      while (running.length && (last || running.length >= DEPTH)) total += await running.shift()!;
+      if (last) return total;
+    }
+  } finally {
+    await Promise.allSettled(started);
   }
 }

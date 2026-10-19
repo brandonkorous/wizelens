@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PG_DIALECT, searchSql, suggestSql, windowOf } from "@wizeworks/lens-core";
 import { scenarioTraces, SCENARIO_NOW } from "../../core/src/testing/scenario.js";
 import { searchParity, suggestParity } from "../../core/src/testing/search-parity.js";
+import { ensureTrigram } from "./db/trigram.js";
 import { pgRunner } from "./scale-exec.js";
 import { type ScaleDb, scaleDb, settleAll, writeTraces } from "./test/scale.js";
 
@@ -26,5 +27,19 @@ describe("cloud search", () => {
     const src = { d: PG_DIALECT, run: pgRunner(s.db), scope: { project: "other" } };
     const page = await searchSql(src, { kind: "spans", node: null, window: windowOf("30d", SCENARIO_NOW), limit: 50 });
     expect(page.items).toEqual([]);
+  });
+});
+
+describe("cloud trigram indexes", () => {
+  it("build on PGlite and serve contains searches", async () => {
+    expect(await ensureTrigram(s.db)).toBe(true);
+    expect(await ensureTrigram(s.db)).toBe(true);
+    const names = await s.db.query<{ indexname: string }>("SELECT indexname FROM pg_indexes WHERE indexname LIKE '%_trgm' ORDER BY indexname");
+    expect(names.map((r) => r.indexname)).toEqual(["ix_fact_logs_trgm", "ix_fact_requests_trgm", "ix_fact_search_trgm", "ix_fact_traces_trgm"]);
+    const plan = await s.db.tx(async (q) => {
+      await q.query("SET LOCAL enable_seqscan = off");
+      return q.query<{ "QUERY PLAN": string }>("EXPLAIN SELECT 1 FROM fact_search WHERE text LIKE $1", ["%pay%"]);
+    });
+    expect(plan.map((r) => r["QUERY PLAN"]).join("\n")).toContain("ix_fact_search_trgm");
   });
 });

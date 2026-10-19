@@ -57,8 +57,12 @@ const HIST_INPUT = "project_id String, env String, kind String, key String, buck
 const histInsert = (table: string) =>
   `${table}_t SELECT project_id, env, kind, key, bucket_ms, bin, sum(cnt), max(expire_ms) FROM input('${HIST_INPUT}') GROUP BY project_id, env, kind, key, bucket_ms, bin`;
 
+/** Settings that make one batch's insert into a table safe to send again: ClickHouse keeps the first copy of a token. */
+export type Label = (table: string) => Record<string, string>;
+
 /** Write a merged settle delta into every tier. `retentionMs` is per project. */
-export async function writeDeltas(ch: ChClient, delta: SettleDelta, retentionMs: (project: string) => number): Promise<void> {
+export async function writeDeltas(ch: ChClient, delta: SettleDelta, retentionMs: (project: string) => number, label: Label): Promise<void> {
+  const writes: Promise<void>[] = [];
   for (const tier of TIERS) {
     const rollups = delta.rollup.filter((r) => r.tier === tier.name).map((r) => ({
       project_id: r.project, env: r.env, kind: r.kind, key: r.key, bucket_ms: r.bucket, n: r.n, err: r.err, sum_v: r.sum,
@@ -68,7 +72,7 @@ export async function writeDeltas(ch: ChClient, delta: SettleDelta, retentionMs:
     const hists = delta.hist.filter((h) => h.tier === tier.name).map((h) => ({
       project_id: h.project, env: h.env, kind: h.kind, key: h.key, bucket_ms: h.bucket, bin: h.bin, cnt: h.cnt, expire_ms: h.bucket + retentionMs(h.project),
     }));
-    await ch.insert(rollupInsert(tier.table), rollups);
-    await ch.insert(histInsert(tier.hist), hists);
+    writes.push(ch.insert(rollupInsert(tier.table), rollups, label(tier.table)), ch.insert(histInsert(tier.hist), hists, label(tier.hist)));
   }
+  await Promise.all(writes);
 }

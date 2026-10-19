@@ -8,6 +8,7 @@ import type { WizeAuth } from "./auth/auth.js";
 import { authHandler } from "./auth/bridge.js";
 import { AUTH_BASE_PATH } from "./auth/options.js";
 import { wireAuth } from "./auth/wire.js";
+import { Changes } from "./changes.js";
 import { type CloudConfig, type CloudOptions, resolveConfig } from "./config.js";
 import { openDb } from "./db/db.js";
 import { migrate } from "./db/migrate.js";
@@ -22,6 +23,7 @@ import { RESEND_WEBHOOK_PATH, resendWebhook } from "./mail/webhook.js";
 import { openTelemetry } from "./telemetry/index.js";
 import { allRoutes } from "./routes/index.js";
 import { ingestBatch, ingestOtlp } from "./routes/ingest.js";
+import { forgetModels } from "./routes/models.js";
 
 const require = createRequire(import.meta.url);
 export const CLOUD_VERSION: string = (require("../package.json") as { version: string }).version;
@@ -83,27 +85,29 @@ function onError(err: unknown, res: ServerResponse): void {
   sendJson(res, 500, { error: "Something went wrong on the server." });
 }
 
-/** The database (migrated) and the telemetry store (its stats rebuilt when the facts version changed). */
+/** The database (migrated), the telemetry store (its stats rebuilt when the facts version changed), and the new-data signal. */
 async function openStores(config: CloudConfig) {
   const db = await openDb(config.database);
   await migrate(db);
   const telemetry = await openTelemetry(config, db);
   await telemetry.checkFactsVersion();
-  return { db, telemetry };
+  const changes = new Changes();
+  changes.onAny(forgetModels);
+  return { db, telemetry, changes };
 }
 
 /** Open the database, bring its schema up to date, and build the server. Call `listen()` to start. */
 export async function createCloud(options: CloudOptions = {}): Promise<Cloud> {
   const config = resolveConfig(options);
-  const { db, telemetry } = await openStores(config);
+  const stores = await openStores(config);
+  const { db, telemetry } = stores;
   const mailer = await createMailer(config, db);
   const wiring = await wireAuth(db, config, mailer);
   let auth: WizeAuth | undefined;
   let handler: ReturnType<typeof authHandler> | undefined;
   let listenUrl = config.publicUrl ?? `http://localhost:${config.port}`;
   const app: CloudApp = {
-    db,
-    telemetry,
+    ...stores,
     config,
     version: CLOUD_VERSION,
     startedMs: config.now(),

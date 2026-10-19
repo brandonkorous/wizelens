@@ -1,4 +1,4 @@
-import { toSummary, type Trace } from "@wizeworks/lens-core";
+import type { Trace } from "@wizeworks/lens-core";
 import { parseJson, readBody } from "@wizeworks/lens-hub/kit";
 import { DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, handleMcp, type McpDataSource, type McpProjects } from "@wizeworks/lens-node/kit";
 import type { Ctx } from "../app.js";
@@ -27,7 +27,6 @@ async function projectSource(ctx: Ctx, access: ProjectAccess, writes: Writes): P
     version: ctx.app.version,
     slowQueryMs: DEFAULT_SLOW_QUERY_MS,
     nPlusOneThreshold: DEFAULT_N_PLUS_ONE,
-    list: async (limit) => (await traces()).slice(0, limit).map(toSummary),
     all: traces,
     get: (traceId, federate) => telemetry.joinedTrace(project.id, federate ? scope : [project.id], traceId),
     metrics: (range, params) => projectMetrics(telemetry, project.id, range, params, { now: ctx.app.config.now() }),

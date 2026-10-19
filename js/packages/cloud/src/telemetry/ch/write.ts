@@ -60,7 +60,7 @@ export async function writeRaw(ch: ChClient, queue: SettleQueue, projectId: stri
     ch.insert("metric_points_raw", pointRows(w, projectId, expire), ASYNC),
   ]);
   // Bounds and the update log go last, so a settle never sees a trace before its parts.
-  await ch.insert("trace_heads", heads, ASYNC);
-  await ch.insert("trace_updates", heads.map((h) => ({ project_id: h.project_id, trace_id: h.trace_id, updated_ms: now, env: h.env })), ASYNC);
+  const updates = heads.map((h) => ({ project_id: h.project_id, trace_id: h.trace_id, updated_ms: now, env: h.env }));
+  await Promise.all([ch.insert("trace_heads", heads, ASYNC), ch.insert("trace_updates", updates, ASYNC)]);
   for (const h of heads) queue.touch(projectId, h.trace_id, h.env, now);
 }

@@ -15,7 +15,7 @@ export const SEARCH_PARITY_QUERIES = [
   "level:error", "level:<info", "message:*timeout*", "trace:a", "span:*", "pay", '"/api/cart"', "select", "SELECT", "orders OR billing",
   "(service:api OR service:billing) error:true", "NOT (status:5xx OR level:error)", "-select -pay", "@db.system.name:*", "@db.system.name:postgres*",
   "@http.response.status_code:>=500", "@http.response.status_code:500", "@enduser.id:*", "-@enduser.id:*", "@client.address:10.*",
-  "@http.route:*{id}*", "@exception.type:*Error", "@missing.key:*", "@url.path:/api/pay", "*",
+  "@http.route:*{id}*", "@exception.type:*Error", "@missing.key:*", "@url.path:/api/pay", "*", "pa", "ers", '"/api/c"', "-ord",
 ];
 
 /** Which document an item is: a log key, a trace and span id, or a trace id. */

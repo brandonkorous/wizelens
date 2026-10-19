@@ -1,6 +1,7 @@
 import { FACT_TABLES, FACTS_VERSION, PG_DIALECT, settleStatements, type Statement, tierPruneStatements, type TraceState, type Trace } from "@wizeworks/lens-core";
 import type { Db, Queryable } from "./db/db.js";
 import { loadTraces } from "./repo/trace-read.js";
+import type { SettleOptions } from "./telemetry/store.js";
 
 // Settling: traces quiet for a while get their facts and rollups rebuilt from the stored spans and logs (docs/CONTRACT.md).
 const BATCH = 500;
@@ -45,32 +46,33 @@ async function loadAll(q: Queryable, rows: readonly TraceStateRow[]): Promise<Ma
 }
 
 /** Settle one batch in one transaction. -1 when another instance holds the lock. */
-async function settleBatch(db: Db, now: number, batch: number, defaultDays: number): Promise<number> {
+async function settleBatch(db: Db, now: number, batch: number, defaultDays: number): Promise<{ n: number; projects: string[] }> {
   return db.tx(async (q) => {
     const [lock] = await q.query<{ ok: boolean }>("SELECT pg_try_advisory_xact_lock($1) AS ok", [LOCK]);
-    if (!lock?.ok) return -1;
+    if (!lock?.ok) return { n: -1, projects: [] };
     const rows = await q.query<TraceStateRow>(
       `SELECT t.project_id, t.trace_id, t.env, t.updated_ms, t.contrib, o.retention_days FROM traces t
        LEFT JOIN projects p ON p.id = t.project_id LEFT JOIN orgs o ON o.id = p.org_id
        WHERE t.settled_ms < t.updated_ms AND (t.updated_ms <= $1 OR t.settled_ms <= $2) ORDER BY t.start_ms DESC LIMIT $3`,
       [now - QUIET_MS, now - BUSY_MS, batch],
     );
-    if (!rows.length) return 0;
+    if (!rows.length) return { n: 0, projects: [] };
     const traces = await loadAll(q, rows);
     const work = rows.map((r) => ({ state: stateOf(r, defaultDays), trace: traces.get(`${r.project_id} ${r.trace_id}`) }));
     await runStatements(q, settleStatements(PG_DIALECT, work, now, true));
-    return rows.length;
+    return { n: rows.length, projects: [...new Set(rows.map((r) => r.project_id))] };
   });
 }
 
 /** Settle dirty traces in batches until none are left or the budget is spent. Returns how many settled. */
-export async function settleCloud(db: Db, now: number, o: { defaultRetentionDays?: number; batch?: number; budgetMs?: number } = {}): Promise<number> {
+export async function settleCloud(db: Db, now: number, o: SettleOptions = {}): Promise<number> {
   const start = Date.now();
   const batch = o.batch ?? BATCH;
   let total = 0;
   for (;;) {
-    const n = await settleBatch(db, now, batch, o.defaultRetentionDays ?? 30);
+    const { n, projects } = await settleBatch(db, now, batch, o.defaultRetentionDays ?? 30);
     if (n > 0) total += n;
+    for (const p of projects) o.onSettled?.(p);
     if (n < batch || Date.now() - start >= (o.budgetMs ?? BUDGET_MS)) return total;
   }
 }
