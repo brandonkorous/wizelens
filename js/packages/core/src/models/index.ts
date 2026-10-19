@@ -15,6 +15,7 @@ import { routePage } from "./route-page.js";
 import { servicePage } from "./service-page.js";
 import { servicesPage } from "./services.js";
 import { tracesPage } from "./traces.js";
+import { uptimePage } from "./uptime.js";
 
 export * from "./input.js";
 export * from "./request-filter.js";
@@ -42,6 +43,7 @@ export * from "./insights.js";
 export * from "./traces.js";
 export * from "./badges.js";
 export * from "./alerts.js";
+export * from "./uptime.js";
 
 /** Every page by name: what it needs and how its model is built. Hosts serve them at `api/models/<name>`; in-app runs them in the browser. */
 export const PAGES = {
@@ -60,6 +62,7 @@ export const PAGES = {
   route: routePage,
   insights: insightsPage,
   badges: badgesPage,
+  uptime: uptimePage,
 } satisfies Record<string, PageDef<unknown>>;
 
 export type PageName = keyof typeof PAGES;

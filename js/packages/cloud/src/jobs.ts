@@ -5,6 +5,8 @@ import { pruneServices } from "./repo/services.js";
 import { sendDigests } from "./notify/digest.js";
 import { checkHealth } from "./notify/health.js";
 import { sendTeamNotices } from "./notify/team.js";
+import { pruneIncidents } from "./repo/uptime.js";
+import { runUptime } from "./uptime/run.js";
 
 const HOUSEKEEPING_MS = 10 * 60_000;
 const SETTLE_MS = 3_000;
@@ -13,6 +15,7 @@ const SETTLE_BACKLOG = 1_000;
 const ROLLUP_PRUNE_MS = 60_000;
 const NOTICE_MS = 60_000;
 const DIGEST_MS = 10 * 60_000;
+const UPTIME_MS = 15_000;
 
 /** Run `job` now and then every `everyMs`. A failed run logs and waits for the next one. */
 function every(name: string, everyMs: number, job: () => Promise<unknown>): () => void {
@@ -31,7 +34,7 @@ function every(name: string, everyMs: number, job: () => Promise<unknown>): () =
   return () => (clearInterval(timer), clearTimeout(first));
 }
 
-/** Background work: retention, old services, stats, rollups, sessions, alert rules, team and health notices, and digests. Returns a function that stops it. */
+/** Background work: retention, old services, stats, rollups, sessions, alert rules, team and health notices, digests, and uptime checks. Returns a function that stops it. */
 export function startJobs(app: CloudApp): () => void {
   const now = app.config.now;
   const stops = [
@@ -49,6 +52,8 @@ export function startJobs(app: CloudApp): () => void {
     }),
     every("project health", HOUSEKEEPING_MS, () => checkHealth(app)),
     every("digests", DIGEST_MS, () => sendDigests(app)),
+    every("uptime", UPTIME_MS, () => runUptime(app)),
+    every("uptime incidents", HOUSEKEEPING_MS, () => pruneIncidents(app.db, now())),
   ];
   return () => stops.forEach((stop) => stop());
 }

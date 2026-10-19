@@ -23,6 +23,7 @@ import { SearchPage } from "./pages/search/SearchPage";
 import { ServicesPage } from "./pages/services/ServicesPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
 import { TracesPage } from "./pages/traces/TracesPage";
+import { UptimePage } from "./pages/uptime/UptimePage";
 import { AUTH_PAGES, type AuthPageId, type PageId, type Route, useRoute } from "./routes";
 import { releaseMissing } from "./data/release";
 import { EmailBanner } from "./shell/EmailBanner";
@@ -38,7 +39,7 @@ const lazyPage = (load: () => Promise<ComponentType>) =>
 const TeamPage = lazyPage(() => import("./pages/team/TeamPage").then((m) => m.TeamPage));
 const AccountPage = lazyPage(() => import("./pages/account/AccountPage").then((m) => m.AccountPage));
 
-const PAGES: Record<Exclude<PageId, "trace" | "shared" | AuthPageId>, ComponentType> = {
+const PAGES: Record<Exclude<PageId, "trace" | "shared" | "status" | AuthPageId>, ComponentType> = {
   overview: OverviewPage,
   search: SearchPage,
   requests: RequestsPage,
@@ -52,6 +53,7 @@ const PAGES: Record<Exclude<PageId, "trace" | "shared" | AuthPageId>, ComponentT
   insights: InsightsPage,
   settings: SettingsPage,
   alerts: AlertsPage,
+  uptime: UptimePage,
   team: TeamPage,
   account: AccountPage,
 };
@@ -77,7 +79,7 @@ function PageView({ route }: { route: Route }) {
     return <TraceDetail key={traceId} traceId={traceId!} view={view as never} />;
   }
   const page = route.page;
-  const elsewhere = page === "shared" || (AUTH_PAGES as readonly string[]).includes(page) || (page === "account" && !cloud);
+  const elsewhere = page === "shared" || page === "status" || (AUTH_PAGES as readonly string[]).includes(page) || (page === "account" && !cloud);
   const Page = elsewhere ? OverviewPage : PAGES[page as keyof typeof PAGES];
   return <Page />;
 }

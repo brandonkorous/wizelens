@@ -11,12 +11,14 @@ import { type HubOptions, resolveHubOptions } from "./options.js";
 import { handleOtlp, otlpSignalOf } from "./otlp/index.js";
 import { settleQuietly } from "./settle.js";
 import { HubStore } from "./store.js";
+import { runDueChecks } from "./uptime/schedule.js";
 
 const require = createRequire(import.meta.url);
 export const HUB_VERSION: string = (require("../package.json") as { version: string }).version;
 const BASE = "/_wizelens";
 const PRUNE_MS = 60_000;
 const SETTLE_MS = 2_000;
+const UPTIME_MS = 15_000;
 
 export interface Hub {
   readonly server: Server;
@@ -73,6 +75,8 @@ export function createHub(options: HubOptions = {}): Hub {
   timer.unref();
   const settler = setInterval(() => settleQuietly(store), SETTLE_MS);
   settler.unref();
+  const uptime = setInterval(() => o.uptime && void runDueChecks(data, { allowPrivate: true, now: o.now }).catch(() => undefined), UPTIME_MS);
+  uptime.unref();
   return {
     server,
     data,
@@ -89,6 +93,7 @@ export function createHub(options: HubOptions = {}): Hub {
       new Promise((resolve) => {
         clearInterval(timer);
         clearInterval(settler);
+        clearInterval(uptime);
         server.closeAllConnections?.();
         server.close(() => (store.close(), resolve()));
       }),

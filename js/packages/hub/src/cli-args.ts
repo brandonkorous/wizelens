@@ -19,6 +19,7 @@ Usage: wizelens-hub [options]
                       Keep at most this many metric points.
                       Default 2000000.                         (WIZELENS_HUB_MAX_METRIC_POINTS)
   --mcp               Turn on the read-only MCP endpoint.      (WIZELENS_HUB_MCP=1)
+  --no-uptime         Do not run uptime checks.                (WIZELENS_HUB_UPTIME=0)
   --import <file>     Copy an add-on's .wizelens/traces.db into
                       the hub at start. Can repeat.
   --help              Show this help.
@@ -50,6 +51,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
       "max-traces": { type: "string" },
       "max-metric-points": { type: "string" },
       mcp: { type: "boolean" },
+      "no-uptime": { type: "boolean" },
       import: { type: "string", multiple: true },
       help: { type: "boolean", short: "h" },
     },
@@ -64,6 +66,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
     maxTraces: int(a["max-traces"] ?? env.WIZELENS_HUB_MAX_TRACES),
     maxMetricPoints: int(a["max-metric-points"] ?? env.WIZELENS_HUB_MAX_METRIC_POINTS),
     enableMcp: a.mcp ?? env.WIZELENS_HUB_MCP === "1",
+    uptime: !(a["no-uptime"] ?? env.WIZELENS_HUB_UPTIME === "0"),
     imports: a.import ?? [],
   };
 }

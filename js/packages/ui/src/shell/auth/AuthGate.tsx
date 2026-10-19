@@ -4,6 +4,7 @@ import { useHost } from "../../data/host";
 import { pendingOAuth } from "../../data/oauth";
 import { useData } from "../../data/provider";
 import { SharedTrace } from "../../pages/shared/SharedTrace";
+import { StatusPage } from "../../pages/status/StatusPage";
 import { type Route, useRoute } from "../../routes";
 import { AuthScreen, SetupScreen } from "./AuthScreen";
 import { InviteScreen } from "./InviteScreen";
@@ -45,7 +46,7 @@ function accountScreen(route: Route, account: AccountState): ReactNode {
   }
 }
 
-/** Shared links open for anyone. On hosts with accounts, everything else needs sign-in first. */
+/** Shared links and status pages open for anyone. On hosts with accounts, everything else needs sign-in first. */
 export function AuthGate({ children }: { children: ReactNode }) {
   const route = useRoute();
   const data = useData();
@@ -61,6 +62,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     if (signedIn && !isOAuthPage(route.page) && route.page !== "two-factor") pendingOAuth.set(null);
   }, [signedIn, route.page]);
   if (route.page === "shared") return <SharedTrace token={route.params[0] ?? ""} />;
+  if (route.page === "status") return <StatusPage token={route.params[0] ?? ""} />;
   if (!data.info && data.loading) return <Splash />;
   if (!accounts) return <>{children}</>;
   if (!account) return <Splash />;

@@ -206,9 +206,12 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `search` | The host answers the search language (`api/search`, `api/search/suggest`); the Search page and Ctrl+K use it. Without it, the browser searches the loaded traces | ✅ | ✅ | ✅ |
 | `changes` | The host streams `api/changes?project=` (server-sent events): an `event: data` line each time the project gets new stats, at most every 2 s (the hub: each settle round), and a comment every 25 s. The dashboard reloads the open page then, keeping the old numbers on screen until the new ones arrive | | ✅ | ✅ |
 
+| `uptime` | The host runs uptime checks (`api/uptime` on the hub, `api/projects/{p}/uptime` in the cloud) and serves the `uptime` page model; the Uptime page appears. See "Uptime checks" | | ✅ (unless `--no-uptime`) | ✅ |
+| `statusPages` | A project can turn on a public status page (`api/status/{token}`) | | | ✅ |
+
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search"]`, plus `metrics` when metrics are on. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "uptime"]` (`uptime` only while checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -471,9 +474,15 @@ interface IngestBatch {
 | GET | `/_wizelens/api/models/metrics` | The Metrics page: `range`, `project`, `env`, `service`, `metric`, `group`, `stat`, `q`. Read from the metric rollups (see "Metrics"), with no point cap |
 | GET | `/_wizelens/api/models/{page}` | One page model (see "Page models"): `range`, `project`, `env`, and the page's own parameters. Ranges up to the hub's age limit. `serverStats` |
 | POST | `/_wizelens/mcp` | With `--mcp`. The same tools, over the newest 2000 traces of every service, plus `list_metrics`, `get_metric`, and `get_overview` |
+| GET / POST | `/_wizelens/api/uptime?project=` | `UptimeList` / add a check (`project` in the body). See "Uptime checks". 404 with `--no-uptime` |
+| PATCH / DELETE | `/_wizelens/api/uptime/{id}` | Change (only the fields sent) or delete a check |
+| POST | `/_wizelens/api/uptime/{id}/run` | Run a check now; answers the check |
 | GET | `/healthz` | `ok` |
 
-`HubService` is the sender plus `via` (`"addon"` or `"otlp"`), `firstSeenMs`, `lastSeenMs`, and `online` (heard from in the
+Uptime changes with an `Origin` header must come from the hub's own origin, so another site open in the browser cannot add
+checks to a hub without a token.
+
+`HubService` is the sender plus `via` (`"addon"`, `"otlp"`, or `"uptime"` for the host's own checks), `firstSeenMs`, `lastSeenMs`, and `online` (heard from in the
 last 30 seconds). OTLP apps send only when they have data, so the dashboard shows a quiet OTLP app as "Idle", not "Offline".
 
 There is one row per service, environment, and host, so each Kubernetes pod is its own row. The dashboard groups them into
@@ -527,6 +536,10 @@ trace id (facts) or `(kind, bucket_ms, project, env, key)` (rollups), since hub 
 upgrade by themselves when opened: the new columns and tables are added, and the settle job backfills the stats, newest traces
 first. The hub settles every 2 seconds for at most 150 ms at a time. Pruning by age or by count takes the dropped traces out of
 the rollups. Page answers are cached per page, parameters, scope, 10-second "now", and settle generation (200 entries).
+
+Schema version 4 adds `uptime_checks` (one row per check: its settings, `project`, `state`, the newest result, `tls_expires_ms`,
+and `next_ms`) and `uptime_incidents` (`check_id`, `start_ms`, `end_ms` or null while open, `reason`). Results themselves are
+traces. Incidents that ended more than 90 days ago are dropped.
 
 ## Cloud (v0.7, phase 3)
 
@@ -637,6 +650,11 @@ retention, and the audit log.
 | GET / POST / PATCH / DELETE | `api/projects/{p}/alerts[/{id}]`, `…/{id}/test` | Read: viewer; change: member |
 | POST / GET / DELETE | `api/projects/{p}/shares[/{id}]` | Read: viewer; change: member |
 | GET | `api/shared/{token}` | Anyone with the link: `{ trace, expiresMs }` |
+| GET / POST | `api/projects/{p}/uptime` | Read: viewer or read key (`UptimeList`); add: member (audited `uptime.create`) |
+| PATCH / DELETE | `api/projects/{p}/uptime/{id}` | Member (audited `uptime.update`, `uptime.delete`) |
+| POST | `api/projects/{p}/uptime/{id}/run` | Member. Runs the check now and answers it |
+| GET / POST / PATCH / DELETE | `api/projects/{p}/status-page` | Read: viewer (`{ enabled, title?, createdMs?, views? }`); on or new link (`{ title }`, answers `{ url, title }` once), rename, off: member (audited `status.enable`, `status.disable`) |
+| GET | `api/status/{token}` | Anyone with the link: `StatusPageView` |
 | POST | `api/ingest`, `/v1/traces`, `/v1/logs`, `/v1/metrics` | Ingest key |
 | POST | `mcp?project=` | Read key or connected app (OAuth access token). Without `?project=`, a reader with one project reads it; one with several adds `list_projects` and a `project` argument (id or name) on every tool, and `get_overview` without it reports on all |
 | GET | `/.well-known/oauth-protected-resource[/_wizelens/mcp]`, `/.well-known/oauth-authorization-server/_wizelens/api/auth` | Anyone (CORS open). OAuth metadata for MCP clients |
@@ -648,7 +666,9 @@ retention, and the audit log.
 ### Page models (`serverStats`)
 
 Every dashboard page is one definition in `@wizeworks/lens-core` (`PAGES`: overview, requests, traces, database, rendering,
-errors, logs, services, service, insights, and `badges`, the sidebar counts). `service` is the full page of one service
+errors, logs, services, service, insights, `uptime`, and `badges`, the sidebar counts). `uptime` reads the `svc.ep` rollups of the
+`wizelens-uptime` service: runs, failures, and average response time per check (`check`: one check id), per bucket, and in total
+against the window before. `service` is the full page of one service
 (`service`: a Services row key such as `api:orders`, or a name): its numbers against the window before, traffic and latency over
 time, endpoints, callers, and for APIs and workers the top error groups, slowest requests, and newest log lines. A page says what it needs from its URL parameters (filters,
 sort, page, selected item): rollup groups and series over the chosen window and the window before it, list rows, or one trace.
@@ -752,6 +772,38 @@ A share link (`#/shared/<token>`, 1 to 30 days) opens one trace, read-only, for 
 Views are counted. Nothing else is reachable with the token. The trace is joined as far as the link's maker may read at
 the time it is opened: after the maker leaves the organization, the link shows only the shared project's part.
 
+### Uptime checks
+
+Hubs and the cloud call URLs on a schedule (`uptime` capability). A check (`UptimeCheckInput` in `@wizeworks/lens-core`, the same
+rules on both): `url` (http or https, no credentials in it), `method` (GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS), `headers`
+(up to 20), `expectStatus` (`"200"`, `"200-299"` (default), or a list like `"200,301-302"`), `expectBody` (text the body must
+contain; not with HEAD), `intervalMin` (1 to 60), `timeoutMs` (1 to 60 s), `env`, `enabled`, and `name`. At most 100 per project
+(hub: per hub). Redirects are followed (up to 5) unless `expectStatus` names a 3xx code. The body is read up to 1 MB.
+
+- **A run** passes when the status matches and the body holds the text. It keeps `state` (`pending` until the first run, `up`,
+  `down`), the last status, time, duration, error, and the end of the TLS certificate (`tlsExpiresMs`, https only; read by a bare
+  handshake that sends nothing when the certificate itself is refused). Checks run every 15 seconds when due; each due check is
+  claimed first (cloud: `FOR UPDATE SKIP LOCKED`), so replicas and slow runs never run it twice.
+- **Results are telemetry.** Each run is one trace with one `http.server` span of the service `wizelens-uptime`, written through
+  the normal write path in the check's project and environment: `http.request.method`, `http.route` = `/uptime/{checkId}` (the
+  endpoint key the `uptime` page groups by), `url.full` and `url.path` without the query string, `server.address`,
+  `http.response.status_code`, `wizelens.uptime.check_id`, `wizelens.uptime.check_name`, `wizelens.uptime.ok`, and with TLS
+  `tls.server.not_after` and `wizelens.uptime.tls_days_left`. A failed run has status `error`, the reason as `statusMessage`, an
+  `exception` event (`UptimeCheckFailed`), and an error log line; a certificate within 14 days of its end (`TLS_WARN_DAYS`) adds a
+  warn log line. So Requests, Errors, Logs, Search, the service page, and alert rules all see them.
+- **Incidents**: a run that fails after a passing (or pending) one opens an incident with the reason; the next passing run closes
+  it at its start. Turning a check off closes its open incident. Uptime for 24 h, 7 days, and 30 days is the share of time since
+  the check was made not covered by incidents, so it does not depend on trace retention. Incidents are kept 90 days.
+- `UptimeList`: `{ checks: (UptimeCheck & { uptime: { "24h", "7d", "30d" } })[], incidents: (UptimeIncident & { checkName })[], nowMs }`.
+  Header values whose names look secret (`authorization`, `cookie`, `token`, `api-key`, ...) show as `[redacted]`; sending
+  `[redacted]` back keeps the stored value. The cloud stores headers encrypted with the auth secret (`v<version>:<ciphertext>`).
+- **Private addresses**: cloud checks may not reach loopback, private, link-local, carrier-grade NAT, multicast, or reserved
+  addresses, checked when a check is saved and again at every connection (also after redirects and DNS changes), unless the cloud
+  runs with `--allow-private-webhooks`. Hubs may reach any address their machine can; `--no-uptime` turns checks off.
+- **Status pages** (cloud, `statusPages`): off by default. Turning one on makes a `wl_st_` token (only its hash is kept); a new link
+  stops the old one. `#/status/<token>` shows the title, each enabled check's name and state, uptime for 24 h, 7 days, and 30 days,
+  one bar per UTC day for 30 days, and incident times of the last 30 days: never URLs, headers, or error text.
+
 ### Retention
 
 Each organization keeps traces for `retention_days` (default 30, 1 to 400). Older traces are deleted every 10 minutes.
@@ -772,8 +824,9 @@ retention). Migration 4 moved accounts to Better Auth: its tables use our snake_
 users, organizations, and members kept their rows and ids. Passwords moved to `accounts`, sessions started over, and open invites got
 new ids (so new links). A test checks that Better Auth finds nothing to change in the schema, and Better Auth checks it again at start.
 Data tables are keyed by `project_id`. Times are `double precision` epoch ms, except in Better Auth's tables (`timestamptz`). Our
-secrets (keys, shares) are stored as SHA-256 hashes only; Better Auth stores reset and confirm tokens hashed. Migration 8 added
-`fact_search` and `fact_attrs` (see "Search").
+secrets (keys, shares, status page links) are stored as SHA-256 hashes only; Better Auth stores reset and confirm tokens hashed. Migration 8 added
+`fact_search` and `fact_attrs` (see "Search"). Migration 10 added `uptime_checks`, `uptime_incidents`, and `status_pages` (see
+"Uptime checks").
 
 ### Telemetry stores (small mode and scale mode)
 

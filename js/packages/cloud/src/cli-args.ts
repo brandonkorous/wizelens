@@ -20,7 +20,8 @@ Usage: wizelens-cloud [options]
   --retention-days <n>      Default for new organizations. Default 30.  (WIZELENS_CLOUD_RETENTION_DAYS)
   --ingest-per-minute <n>   Ingest calls per key per minute. Default    (WIZELENS_CLOUD_INGEST_PER_MINUTE)
                             1200.
-  --allow-private-webhooks  Let alert webhooks reach private addresses. (WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1)
+  --allow-private-webhooks  Let alert webhooks and uptime checks reach (WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1)
+                            private addresses.
   --auth-secret <text>      Signs sessions, encrypts 2FA secrets. 32+   (WIZELENS_CLOUD_AUTH_SECRET)
                             characters; "2:new,1:old" rotates.
                             Required with Postgres.

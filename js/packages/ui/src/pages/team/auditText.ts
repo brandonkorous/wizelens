@@ -32,6 +32,11 @@ const ACTIONS: Record<string, string> = {
   "mcp.call": "AI agent read data",
   "app.connect": "Connected an app",
   "app.disconnect": "Disconnected an app",
+  "uptime.create": "Added an uptime check",
+  "uptime.update": "Changed an uptime check",
+  "uptime.delete": "Deleted an uptime check",
+  "status.enable": "Turned on a status page or made a new link",
+  "status.disable": "Turned off a status page",
 };
 
 export const actionText = (action: string): string => ACTIONS[action] ?? action;
@@ -64,6 +69,8 @@ export function detailText(d: Record<string, unknown>, names: Names): string {
   if (d.allProjects === true) parts.push("all projects");
   if (typeof d.userEmail === "string") parts.push(`for ${d.userEmail}`);
   if (typeof d.name === "string") parts.push(d.name);
+  if (typeof d.title === "string") parts.push(d.title);
+  if (typeof d.url === "string") parts.push(d.url);
   if (typeof d.email === "string") parts.push(d.email);
   if (typeof d.role === "string") parts.push(`as ${d.role}`);
   if (typeof d.kind === "string") parts.push(`${d.kind} key`);

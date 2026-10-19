@@ -78,7 +78,7 @@ describe("hub stats over time", () => {
     writeTraces(store, traces);
     settleAll(store, clock);
     const gen = store.settleGen;
-    expect(store.prune()).toBe(60);
+    expect(store.prune()).toBe(traces.length - 150);
     expect(store.settleGen).toBe(gen + 1);
     expect(count(store.db, "fact_traces")).toBe(150);
     expect(await parity(hubExecutor(store), traces.slice(0, 150), undefined, DISPLAY)).toEqual([]);
@@ -88,7 +88,7 @@ describe("hub stats over time", () => {
     const path = join(dir, "v2.db");
     writeV2(path, traces, 1);
     const { store, clock } = clockStore(path);
-    expect(store.db.prepare("SELECT value FROM meta WHERE key = 'schema'").get()).toEqual({ value: "3" });
+    expect(store.db.prepare("SELECT value FROM meta WHERE key = 'schema'").get()).toEqual({ value: "4" });
     expect(hubSettling(store, {}, 0)).toBe(traces.length);
     settleAll(store, clock);
     expect(await parity(hubExecutor(store), traces)).toEqual([]);

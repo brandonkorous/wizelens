@@ -6,6 +6,20 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Uptime checks** (hub and cloud). The new **Uptime** page calls your URLs every 1 to 60 minutes: method, headers,
+  expected status (`200`, `200-299`, or a list), text the body must contain, and a timeout. It shows each check's status,
+  uptime for 24 hours, 7 days, and 30 days, response time over the range, and incidents with their reason. **Run now** tests
+  a check at once. Every run is also a request of the `wizelens-uptime` service, so Requests, Errors, Logs, Search, the
+  service page, and alert rules see them with nothing new to learn. The hub runs checks from your machine (`--no-uptime`
+  turns them off); the cloud runs them as a background job, claimed so replicas never run one twice, and refuses private
+  and local addresses unless started with `--allow-private-webhooks`. In the cloud, members and above change checks, every
+  change is in the audit log, and header values are stored encrypted with the auth secret.
+- **TLS certificate warnings.** https checks show how many days the certificate has left, and the Uptime page warns when
+  one ends within 14 days or has ended (also when the certificate is refused). The run adds a warning log line too.
+- **Public status pages** (cloud). A project can turn on an unguessable, read-only link that shows check names, their
+  state, uptime for 24 hours, 7 days, and 30 days, a bar per day for 30 days, and incident times. Never URLs, headers, or
+  errors. A new link stops the old one; turning it on and off is in the audit log and the team notices.
+
 - **A page for each error, endpoint, query, and page route.** An error shows its count over time, its endpoints, the users
   and browsers of its newest occurrences, the stack, and those occurrences. An endpoint shows requests, errors, and
   p50/p95/p99 over time, the queries it runs, what it calls, its errors, and its slowest requests. A query shows its runs

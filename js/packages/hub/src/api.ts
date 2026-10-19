@@ -10,6 +10,7 @@ import { metricParams, metricsPage, rangeOf } from "./metrics-read.js";
 import { sendPageModel } from "./models-api.js";
 import { streamChanges } from "./changes-api.js";
 import { sendSearch, sendSuggest } from "./search-api.js";
+import { handleUptime } from "./uptime/api.js";
 import { countRows, distinctOf, listServices, type TraceQuery } from "./store-read.js";
 
 export interface ApiContext {
@@ -25,7 +26,7 @@ const num = (p: URLSearchParams, k: string) => (p.has(k) && Number.isFinite(Numb
 export function hubInfo(c: ApiContext): ServiceInfo {
   return {
     mode: "hub",
-    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes"],
+    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes", ...(c.o.uptime ? (["uptime"] as const) : [])],
     service: c.o.name,
     version: c.version,
     runtime: `node ${process.version} · lens-node ${NODE_VERSION}`,
@@ -93,6 +94,7 @@ export async function handleApi(c: ApiContext, sub: string, req: IncomingMessage
   if (sub === "api/search" && method === "GET") return sendSearch(c, url.searchParams, res);
   if (sub === "api/changes" && method === "GET") return streamChanges(c, req, res);
   if (sub === "api/search/suggest" && method === "GET") return sendSuggest(c, url.searchParams, res);
+  if (sub === "api/uptime" || sub.startsWith("api/uptime/")) return handleUptime(c, sub, req, res, url);
   if (sub === "api/models/metrics" && method === "GET") return sendJson(res, 200, metrics(c, url.searchParams));
   if (sub.startsWith("api/models/") && method === "GET") return sendPageModel(c, sub.slice("api/models/".length), url.searchParams, res);
   const m = /^api\/traces\/([0-9a-f]{32})$/.exec(sub);
