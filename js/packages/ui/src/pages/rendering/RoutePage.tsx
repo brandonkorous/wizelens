@@ -8,7 +8,9 @@ import { DetailHead } from "../../ui/DetailHead";
 import { ModelState } from "../../ui/ModelState";
 import { Empty, Panel } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
-import { type Column, Table } from "../../ui/Table";
+import { type Column } from "../../ui/Table";
+import { TaggedTable } from "../../ui/TaggedTable";
+import { traceRow } from "../../data/tagMatch";
 import { TimeChart } from "../../ui/TimeChart";
 import "../../styles/pages/rendering.css";
 
@@ -60,7 +62,7 @@ function Body({ m }: { m: RoutePageModel }) {
       <div className="wl-grid wl-grid-2-even">
         <Panel title={`Components (${fmtCount(m.components.length)})`}>{components.length ? <BarList items={components} /> : <Empty>No React render data for this route.</Empty>}</Panel>
         <Panel title={`Newest Page Loads (${fmtCount(m.loads.length)})`} flush>
-          <Table columns={LOAD_COLUMNS} rows={m.loads} rowKey={(t) => t.traceId} onRowClick={(t) => navigate(traceHref(t.traceId))} empty={<Empty>No page load in this range.</Empty>} />
+          <TaggedTable kind="traces" itemOf={traceRow} tagged="path" columns={LOAD_COLUMNS} rows={m.loads} rowKey={(t) => t.traceId} onRowClick={(t) => navigate(traceHref(t.traceId))} empty={<Empty>No page load in this range.</Empty>} />
         </Panel>
       </div>
     </>

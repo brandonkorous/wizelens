@@ -19,7 +19,7 @@ export const SEARCH_PARITY_QUERIES = [
 ];
 
 /** Which document an item is: a log key, a trace and span id, or a trace id. */
-function idOf(item: unknown): string {
+export function idOf(item: unknown): string {
   const r = item as { key?: string; traceId: string; spanId?: string };
   return r.key ?? (r.spanId ? `${r.traceId}:${r.spanId}` : r.traceId);
 }
@@ -27,7 +27,7 @@ function idOf(item: unknown): string {
 const pageSize = (kind: SearchKind, i: number): number => [7, 50, 200][(i + kind.length) % 3]!;
 
 /** Every page of one search, following the cursor. */
-async function allPages(run: (q: SearchQuery) => Promise<SearchPage>, q: Omit<SearchQuery, "cursor">): Promise<unknown[]> {
+export async function allPages(run: (q: SearchQuery) => Promise<SearchPage>, q: Omit<SearchQuery, "cursor">): Promise<unknown[]> {
   const items: unknown[] = [];
   let cursor: string | null = null;
   for (let pages = 0; pages < 1000; pages++) {

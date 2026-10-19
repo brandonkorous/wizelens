@@ -41,7 +41,8 @@ function searchSqlText<K extends SearchKind>(src: SqlSource, query: SearchQuery<
   const where = [
     ...scopeWhere(q, { ...src.scope, env: query.env ?? src.scope.env }, "s."), `s.kind = ${q.p(query.kind)}`,
     `s.time_ms >= ${msLit(q.d, query.window.from)}`, `s.time_ms < ${msLit(q.d, query.window.to)}`,
-    ...(query.cursor ? [cursorCond(q, query.cursor)] : []), searchCond(q, query.kind, query.node, src.scope.project),
+    ...(query.cursor ? [cursorCond(q, query.cursor)] : []), ...(query.traceIds ? [q.in("s.trace_id", query.traceIds)] : []),
+    searchCond(q, query.kind, query.node, src.scope.project),
   ];
   const cols = join.table ? "r.*, s.time_ms AS s_time, s.owner AS s_owner" : "s.*, s.time_ms AS s_time, s.owner AS s_owner";
   const order = `s.time_ms DESC, ${collate(src.d, "s.trace_id")} ASC, ${collate(src.d, "s.owner")} ASC`;

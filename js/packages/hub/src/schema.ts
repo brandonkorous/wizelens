@@ -46,6 +46,10 @@ CREATE INDEX IF NOT EXISTS ix_traces_start ON traces(start_ms);
 CREATE INDEX IF NOT EXISTS ix_traces_env ON traces(env, start_ms);
 CREATE INDEX IF NOT EXISTS ix_traces_project ON traces(project, start_ms);
 CREATE INDEX IF NOT EXISTS ix_spans_session ON spans(session) WHERE session IS NOT NULL;
+CREATE TABLE IF NOT EXISTS tag_rules (
+  id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, color TEXT NOT NULL, query TEXT NOT NULL, created_ms REAL NOT NULL, updated_ms REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS tag_builtins (name TEXT PRIMARY KEY, enabled INTEGER NOT NULL);
 `;
 
 export interface HubStatements {

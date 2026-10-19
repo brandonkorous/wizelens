@@ -10,12 +10,13 @@ export const isRole = isOrgRole;
 export const ac = createAccessControl(ACCESS_STATEMENTS);
 export const authRoles = Object.fromEntries(ROLES.map((r) => [r, ac.newRole(ROLE_GRANTS[r] as Parameters<typeof ac.newRole>[0])])) as Record<Role, ReturnType<typeof ac.newRole>>;
 
-/** What our own routes check. Read: data, members. Write: alerts, shares. Manage: projects, keys, settings. Own: delete the organization. */
-export type Permission = "read" | "write" | "manage" | "own";
+/** What our own routes check. Read: data, members. Write: alerts, shares. Tag: tag rules. Manage: projects, keys, settings. Own: delete the organization. */
+export type Permission = "read" | "write" | "tag" | "manage" | "own";
 
 const NEEDS: Record<Permission, AccessGrant> = {
   read: { project: ["read"] },
   write: { alert: ["create"], share: ["create"] },
+  tag: { tag: ["create", "update", "delete"] },
   manage: { project: ["create"], key: ["create"] },
   own: { organization: ["delete"] },
 };

@@ -28,6 +28,7 @@ const OPTIONS: Option[] = [
   { setting: "Response bodies", dotnet: "CaptureResponseBody", node: "captureResponseBody", env: "–" },
   { setting: "Metrics", dotnet: "CaptureMetrics", node: "captureMetrics", env: "–" },
   { setting: "Redacted keys", dotnet: "RedactKeys", node: "redactKeys", env: "–" },
+  { setting: "Tags", dotnet: "Tags.Rules, Tags.DisableBuiltIns", node: "tags.rules, tags.disableBuiltIns", env: "–" },
 ];
 
 const code = (text: string) => (text === "–" ? <span className="wl-muted">–</span> : <code className="wl-mono wl-small">{text}</code>);

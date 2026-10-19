@@ -13,6 +13,7 @@ import { SOURCEMAPS_MIGRATION } from "./schema-sourcemaps.js";
 import { SLOS_MIGRATION } from "./schema-slos.js";
 import { SSO_MIGRATION } from "./schema-sso.js";
 import { UPTIME_MIGRATION } from "./schema-uptime.js";
+import { TAGS_MIGRATION } from "./schema-tags.js";
 
 // Cloud schema, one entry per version. Never edit a shipped entry: add a new one (docs/CONTRACT.md, "Cloud storage").
 export const MIGRATIONS: readonly string[] = [
@@ -223,10 +224,11 @@ CREATE INDEX ix_metric_1h_time ON metric_1h (project_id, bucket_ms);
   SAVED_MIGRATION,
   BILLING_MIGRATION,
   SCIM_MIGRATION,
+  TAGS_MIGRATION,
   UPTIME_MIGRATION,
   SOURCEMAPS_MIGRATION,
   LOGS_MIGRATION,
-  // Migration 19: an alert event names the problem it is part of (docs/CONTRACT.md, "Problems").
+  // Migration 20: an alert event names the problem it is part of (docs/CONTRACT.md, "Problems").
   `
 ALTER TABLE alert_events ADD COLUMN problem TEXT NOT NULL DEFAULT '';
 `,

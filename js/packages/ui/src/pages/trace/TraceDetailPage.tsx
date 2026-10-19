@@ -8,6 +8,7 @@ import { FindingList } from "./FindingList";
 import { ShareButton } from "./ShareButton";
 import { CompareButton, DownloadButton } from "./TraceTools";
 import { TraceHeader } from "./TraceHeader";
+import { TagThisTrace, TraceTags } from "./TraceTags";
 import { type Tab, TraceTabs } from "./TraceTabs";
 import { useTrace } from "./useTrace";
 
@@ -58,7 +59,7 @@ export function TraceBody({ trace, view, loading = false, onRefresh, shared = fa
   const select = (spanId: string | null) => (setSelected(spanId), setHighlight(new Set()));
   return (
     <div className="wl-detail">
-      <TraceHeader trace={trace} timing={timing} health={health} loading={loading} onRefresh={onRefresh} backHref={shared ? null : hrefTo("traces", [], { trace: trace.traceId })} actions={actions} />
+      <TraceHeader trace={trace} timing={timing} health={health} loading={loading} onRefresh={onRefresh} backHref={shared ? null : hrefTo("traces", [], { trace: trace.traceId })} actions={shared ? actions : <>{actions}<TagThisTrace trace={trace} /></>} tags={shared ? null : <TraceTags trace={trace} />} />
       <div id="wl-insights">
         <FindingList findings={findings} onSelect={onFinding} />
       </div>

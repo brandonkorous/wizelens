@@ -1,11 +1,12 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { annotateErrorFrames, answerResolve, HEADER_HOP, type MapLoader, type ServiceInfo, SOURCEMAPS_RESOLVE_PATH, type Span, type Trace, type TraceSummary } from "@wizeworks/lens-core";
+import { annotateErrorFrames, answerResolve, HEADER_HOP, type MapLoader, type ServiceInfo, SOURCEMAPS_RESOLVE_PATH, type Span, type TagRule, type Trace, type TraceSummary } from "@wizeworks/lens-core";
 import { browserClockOffset, remoteOf, sanitizeClientLog, sanitizeClientSpan } from "./client-spans.js";
 import { firstHeader, readJson, sendJson, setCors } from "./http-util.js";
 import { handleMcp, type McpDataSource } from "./mcp.js";
 import type { MetricStore } from "./metrics/store.js";
 import { sendSearch, sendSuggest } from "./search-api.js";
 import type { TraceStore } from "./store.js";
+import { sendTagMatch, sendTags } from "./tags-api.js";
 import type { Req } from "./types.js";
 import { serveUi } from "./ui.js";
 
@@ -29,6 +30,8 @@ export interface ApiDeps {
   dashboard: boolean;
   /** Build folders and dev servers to read source maps from; null when off. */
   sourceMaps?: MapLoader | null;
+  /** The `tags` option's rules and the built-ins (docs/TAGS-PLAN.md). */
+  tags: readonly TagRule[];
 }
 
 const CLIENT_SPANS = "api/client-spans";
@@ -91,8 +94,10 @@ async function handleApi(d: ApiDeps, sub: string, method: string, req: Req, res:
   if (traceMatch && method === "GET") return sendTrace(d, traceMatch[1]!, req, res, url);
   if (sub === CLIENT_SPANS && method === "POST") return receiveClientSpans(d, req, res);
   if (sub === SOURCEMAPS_RESOLVE_PATH && method === "POST" && d.sourceMaps) return sendResolve(d.sourceMaps, req, res);
-  if (sub === "api/search" && method === "GET") return sendSearch(d.store, url.searchParams, res, d.info().environment);
-  if (sub === "api/search/suggest" && method === "GET") return sendSuggest(d.store, url.searchParams, res, d.info().environment);
+  if (sub === "api/search" && method === "GET") return sendSearch(d.store, d.tags, url.searchParams, res, d.info().environment);
+  if (sub === "api/search/suggest" && method === "GET") return sendSuggest(d.store, d.tags, url.searchParams, res, d.info().environment);
+  if (sub === "api/tags" && method === "GET") return sendTags(d.tags, res);
+  if (sub === "api/tags/match" && method === "POST") return sendTagMatch(d.store, d.tags, req, res, d.info().environment);
   if (sub === "api/metrics/points" && method === "GET" && d.metrics) {
     const since = Number(url.searchParams.get("since"));
     return sendJson(res, 200, { points: d.metrics.since(Number.isFinite(since) ? since : 0) });

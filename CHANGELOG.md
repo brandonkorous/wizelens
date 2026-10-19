@@ -113,8 +113,17 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   not set, in Node and .NET. Problems uses `service.version` to spot a new release.
 - **One stats rebuild for all of the above** (`FACTS_VERSION` 7): errors grouped by their first app frame, log patterns,
   and the versions each service sends. Hosts rebuild their stats once after the upgrade, and the production ClickHouse
-  re-settles once. Cloud migrations 16 (uptime), 17 (source maps), 18 (logs), and 19 (problems) run in that order, after 11 to 15.
+  re-settles once. Cloud migrations 17 (uptime), 18 (source maps), 19 (logs), and 20 (problems) run in that order, after 11 to 16.
 
+- **Tags.** Name a search, and everything it finds wears that name as a colored chip in every list: requests, traces,
+  spans, logs, errors, endpoints, services, and users. Click a chip, or type `tag:name`, to see them all. WizeLens keeps the tag,
+  not a mark on the data, so a tag covers data from before it was made, stays when traces expire, and moves everywhere at
+  once when its search changes. **Tag this** on a request, trace, error, service, user, or search fills in a search for the
+  endpoint, service, user, or error, and shows what it finds before you save. Three built-in tags come on: `stream`
+  (event streams such as MCP, which stay open on purpose), `probe` (health checks), and `bot`. Manage them under
+  **Settings → Tags** on the hub and the cloud (members and up; each change is audited), or with the `tags` option in code
+  for the in-app dashboard. AI tools get `list_tags`, `tag:` in every search, and the tags of each result. See the Tags
+  docs page and docs/TAGS-PLAN.md.
 - **A page for each error, endpoint, query, and page route.** An error shows its count over time, its endpoints, the users
   and browsers of its newest occurrences, the stack, and those occurrences. An endpoint shows requests, errors, and
   p50/p95/p99 over time, the queries it runs, what it calls, its errors, and its slowest requests. A query shows its runs

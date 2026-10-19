@@ -37,6 +37,7 @@ export const SEARCH_FIELDS = {
   user: { type: "text", help: "End user id", kinds: ["requests", "spans"] },
   error: { type: "bool", help: "true when it failed", kinds: ALL },
   message: { type: "text", help: "Log message", kinds: ["logs"] },
+  tag: { type: "text", help: "Tag: a tag rule's name, or a tag the app sets", kinds: ALL },
 } as const satisfies Record<string, FieldSpec>;
 
 export type SearchField = keyof typeof SEARCH_FIELDS;

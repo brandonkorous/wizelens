@@ -1,9 +1,10 @@
 // Search from the dashboard: the host's `api/search` when it has one, else the traces the browser holds.
 import { useEffect, useState } from "react";
-import { checkSearch, decodeCursor, type SearchKind, type SearchPage, searchMemory, type Suggestion, suggestMemory, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { activeTags, checkSearch, decodeCursor, expandTags, type SearchKind, type SearchPage, searchMemory, type Suggestion, suggestMemory, suggestTags, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import { apiFetch, ApiError } from "./api";
 import { getScope } from "./prefs";
 import { provider } from "./provider";
+import { currentTags } from "./tags";
 
 export interface SearchArgs {
   q: string;
@@ -15,6 +16,8 @@ export interface SearchArgs {
 export interface SearchAnswer extends SearchPage {
   tookMs?: number;
   settling?: number | null;
+  /** Names after tag: that no tag rule has. */
+  unknownTags?: string[];
 }
 
 /** Why a search gave nothing: a mistake in the search (with its position), or the host could not answer. */
@@ -31,7 +34,9 @@ function localSearch(a: SearchArgs, cursor: string | null): SearchAnswer {
   const parsed = checkSearch(a.q);
   if (!parsed.ok) throw Object.assign(new Error(parsed.error), { start: parsed.start, end: parsed.end });
   const now = Date.now();
-  return searchMemory(provider.getSnapshot().traces, { kind: a.kind, node: parsed.node, window: { from: now - TIME_RANGES[a.range].ms, to: now }, limit: a.limit, cursor: decodeCursor(cursor) });
+  const { node, unknownTags } = expandTags(parsed.node, activeTags(currentTags()));
+  const page = searchMemory(provider.getSnapshot().traces, { kind: a.kind, node, window: { from: now - TIME_RANGES[a.range].ms, to: now }, limit: a.limit, cursor: decodeCursor(cursor) });
+  return { ...page, unknownTags };
 }
 
 /** One page of results; `server` is the host's `search` capability. */
@@ -61,7 +66,8 @@ export function failureOf(err: unknown): SearchFailure {
 export async function fetchSuggest(field: string | null, prefix: string, range: TimeRange, server: boolean): Promise<Suggestion[]> {
   if (!server) {
     const now = Date.now();
-    return suggestMemory(provider.getSnapshot().traces, { field, prefix, window: { from: now - TIME_RANGES[range].ms, to: now }, limit: 12 });
+    const r = { field, prefix, window: { from: now - TIME_RANGES[range].ms, to: now }, limit: 12 };
+    return suggestTags(r, currentTags()) ?? suggestMemory(provider.getSnapshot().traces, r);
   }
   const q = scopeParams(new URLSearchParams({ prefix, range, limit: "12" }));
   if (field) q.set("field", field);

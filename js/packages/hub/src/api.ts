@@ -19,6 +19,7 @@ import { handleSavedSearches } from "./saved-searches.js";
 import { sendSearch, sendSuggest } from "./search-api.js";
 import { handleUptime } from "./uptime/api.js";
 import { type HubMaps, listMaps, resolveMaps, uploadSourceMap } from "./sourcemaps-api.js";
+import { handleTags } from "./tags-api.js";
 import { countRows, distinctOf, listServices, type TraceQuery } from "./store-read.js";
 
 export interface ApiContext {
@@ -37,7 +38,7 @@ const num = (p: URLSearchParams, k: string) => (p.has(k) && Number.isFinite(Numb
 export function hubInfo(c: ApiContext): ServiceInfo {
   return {
     mode: "hub",
-    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "savedSearches", "saved", ...(c.o.uptime ? (["uptime"] as const) : [])],
+    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "savedSearches", "saved", "tags", ...(c.o.uptime ? (["uptime"] as const) : [])],
     service: c.o.name,
     version: c.version,
     runtime: `node ${process.version} · lens-node ${NODE_VERSION}`,
@@ -115,6 +116,7 @@ export async function handleApi(c: ApiContext, sub: string, req: IncomingMessage
   if (sub === "api/slos" || sub.startsWith("api/slos/")) return handleSlos(c.data.store, sub, req, res, url, c.o.now());
   if (sub === "api/apdex") return handleApdex(c.data.store.db, method, url.searchParams.get("project") ?? "", req, res);
   if (sub === "api/alerts" || sub.startsWith("api/alerts/")) return handleAlerts(c.alerts, c.o.now(), sub, req, res, url);
+  if (await handleTags(c, sub, req, res, url)) return;
   if (sub === "api/models/metrics" && method === "GET") return sendJson(res, 200, metrics(c, url.searchParams));
   if ((sub === "api/models/hosts" || sub === "api/models/kubernetes") && method === "GET") return sendJson(res, 200, infraPage(c.data.store.db, sub === "api/models/hosts" ? "hosts" : "kubernetes", url.searchParams, c.o.now()));
   if (sub.startsWith("api/saved-searches") && (await handleSavedSearches(c.data.store.db, sub, req, res, url, c.o.now()))) return;

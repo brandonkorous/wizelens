@@ -1,4 +1,4 @@
-import { requestOf, type Trace, type TraceListItem } from "@wizeworks/lens-core";
+import { requestOf, type TagRule, type Trace, type TraceListItem } from "@wizeworks/lens-core";
 export { tracePath } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, shortId } from "../../format";
 import { hrefTo, setQuery, useRoute } from "../../routes";
@@ -7,6 +7,8 @@ import { Pager } from "../../ui/Controls";
 import { ListQueryBar } from "../../ui/ListQueryBar";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { ExportButton } from "../../ui/ExportButton";
+import { TagChips } from "../../ui/TagChips";
+import { traceRow, useRowTags } from "../../data/tagMatch";
 
 export function traceTone(t: Trace): Tone {
   const row = requestOf(t);
@@ -15,7 +17,7 @@ export function traceTone(t: Trace): Tone {
 }
 
 
-function TraceRow({ item, selected }: { item: TraceListItem; selected: boolean }) {
+function TraceRow({ item, selected, tags }: { item: TraceListItem; selected: boolean; tags: readonly TagRule[] }) {
   return (
     <tr className={`wl-clickable${selected ? " wl-selected" : ""}`} onClick={() => setQuery({ trace: item.traceId })}>
       <td>
@@ -23,7 +25,12 @@ function TraceRow({ item, selected }: { item: TraceListItem; selected: boolean }
           {shortId(item.traceId)}
         </a>
       </td>
-      <td className="wl-wrap">{item.path}</td>
+      <td className="wl-wrap">
+        <span className="wl-tagged">
+          <span>{item.path}</span>
+          <TagChips tags={tags} />
+        </span>
+      </td>
       <td className="wl-num">{fmtMs(item.durationMs)}</td>
       <td className="wl-num">
         <Dot tone={item.health ? toneOfHealth(item.health) : item.status === "error" ? "danger" : "success"} title={item.status} />
@@ -43,6 +50,7 @@ export interface RecentTracesProps {
 /** One page of the traces that match the filter, with a search box. A click shows the trace on the right. */
 export function RecentTraces({ items, total, page, size, selectedId }: RecentTracesProps) {
   const query = useRoute().query.get("q") ?? "";
+  const tagsOf = useRowTags("traces", items, traceRow);
   return (
     <Panel title={`Traces (${fmtCount(total)})`} action={<span className="wl-row-actions"><ExportButton page="traces" disabled={total === 0} /><ViewAll href={hrefTo("requests", [], { q: query })} label="View requests" /></span>}>
       <ListQueryBar value={query} reset={{ trace: null }} placeholder="ID, path, or service; or service:api duration:>2s" />
@@ -61,7 +69,7 @@ export function RecentTraces({ items, total, page, size, selectedId }: RecentTra
             </thead>
             <tbody>
               {items.map((t) => (
-                <TraceRow key={t.traceId} item={t} selected={t.traceId === selectedId} />
+                <TraceRow key={t.traceId} item={t} selected={t.traceId === selectedId} tags={tagsOf(t)} />
               ))}
             </tbody>
           </table>

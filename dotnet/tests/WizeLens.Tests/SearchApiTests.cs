@@ -84,7 +84,7 @@ public class SearchApiTests
     public async Task Mcp_tools_search_and_list_fields()
     {
         await using var app = await StartWithTraceAsync();
-        var tools = new WizeLensSearchTools(app.Store, app.App.Services.GetRequiredService<IHostEnvironment>(), NullLogger<WizeLensSearchTools>.Instance);
+        var tools = new WizeLensSearchTools(app.Store, app.App.Services.GetRequiredService<WizeLensOptions>(), app.App.Services.GetRequiredService<IHostEnvironment>(), NullLogger<WizeLensSearchTools>.Instance);
         var page = tools.Search("path:/ping", limit: 5);
         Assert.NotEqual(true, page.IsError);
         Assert.Equal("/ping?x=1", Assert.Single(Text(page).GetProperty("items").EnumerateArray()).GetProperty("path").GetString());

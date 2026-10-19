@@ -12,6 +12,7 @@ export const ACCESS_STATEMENTS = {
   alert: ["read", "create", "update", "delete"],
   share: ["create", "revoke"],
   audit: ["read"],
+  tag: ["create", "update", "delete"],
 } as const;
 
 export type AccessStatements = typeof ACCESS_STATEMENTS;
@@ -27,14 +28,15 @@ const ALL_DATA = {
   alert: ["read", "create", "update", "delete"],
   share: ["create", "revoke"],
   audit: ["read"],
+  tag: ["create", "update", "delete"],
 } as const satisfies AccessGrant;
 const READ = { project: ["read"], key: ["read"], alert: ["read"], ac: ["read"] } as const satisfies AccessGrant;
 const PEOPLE = { member: ["create", "update", "delete"], invitation: ["create", "cancel"], ac: ["create", "read", "update", "delete"] } as const satisfies AccessGrant;
 
-/** What each role may do. Viewers read; members also make alerts and share links; admins also manage projects, keys, and people; owners also delete the organization. */
+/** What each role may do. Viewers read; members also make alerts, tags, and share links; admins also manage projects, keys, and people; owners also delete the organization. */
 export const ROLE_GRANTS: Record<OrgRole, AccessGrant> = {
   viewer: READ,
-  member: { ...READ, alert: ALL_DATA.alert, share: ALL_DATA.share },
+  member: { ...READ, alert: ALL_DATA.alert, share: ALL_DATA.share, tag: ALL_DATA.tag },
   admin: { ...PEOPLE, ...ALL_DATA, organization: ["update"] },
   owner: { ...PEOPLE, ...ALL_DATA, organization: ["update", "delete"] },
 };

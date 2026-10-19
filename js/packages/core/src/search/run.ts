@@ -19,6 +19,8 @@ export interface SearchQuery<K extends SearchKind = SearchKind> {
   limit: number;
   cursor?: SearchCursor | null;
   env?: string;
+  /** Only these traces, when set: tag matching (tags/match.ts) checks one page of rows. */
+  traceIds?: readonly string[];
 }
 
 export interface SearchPage<K extends SearchKind = SearchKind> {
@@ -67,7 +69,9 @@ export function searchMemory<K extends SearchKind>(traces: readonly Trace[], q: 
   const limit = clampLimit(q.limit);
   const keyOf = (e: DocEntry<K>) => ({ timeMs: e.timeMs, traceId: String(e.doc.fields.trace), owner: e.owner });
   const hits: DocEntry<K>[] = [];
+  const only = q.traceIds ? new Set(q.traceIds) : null;
   for (const t of traces) {
+    if (only && !only.has(t.traceId)) continue;
     for (const e of docEntries(t, q.kind, q.env)) {
       if (e.timeMs < q.window.from || e.timeMs >= q.window.to) continue;
       if (q.cursor && compareEntries(keyOf(e), q.cursor) <= 0) continue;

@@ -45,12 +45,14 @@ All `api/*` endpoints return JSON (camelCase) and send `Access-Control-Allow-Ori
 
 | Method + path | Returns |
 |---|---|
-| `GET /` and static files | Dashboard UI (from `@wizeworks/lens-ui` build). Hash routing: `#/`, `#/requests`, `#/traces`, `#/traces/{traceId}[/{view}]`, `#/database`, `#/rendering`, `#/errors`, `#/logs`, `#/services`, `#/insights`, `#/settings`. `{view}` is one of `timeline`, `sql`, `http`, `logs`, `errors`, `insights`. |
+| `GET /` and static files | Dashboard UI (from `@wizeworks/lens-ui` build). Hash routing: `#/`, `#/requests`, `#/traces`, `#/traces/{traceId}[/{view}]`, `#/database`, `#/rendering`, `#/errors`, `#/logs`, `#/services`, `#/insights`, `#/settings[/{section}]` (`tags` is one section). `{view}` is one of `timeline`, `sql`, `http`, `logs`, `errors`, `insights`. |
 | `GET api/info` | `ServiceInfo` (see Types) |
 | `GET api/traces?limit=50&session={id}` | `TraceSummary[]`, newest first. With `session`, only traces that have a span whose `wizelens.browser.session` equals `{id}`. Loose batches (lines outside a request) are left out of summaries on every host; `full=true` includes them. |
 | `GET api/traces?full=true&limit=1000&since={ms}` | `Trace[]` from this service only (no federation), newest first. `limit` max 5000. With `since`, only traces whose last activity (`startMs + durationMs`) is at or after `{ms}`. The dashboard uses this for its charts and merges the results of every service it knows. |
 | `GET api/traces/{traceId}?federate=true` | `Trace` (404 if unknown and no remote has it) |
 | `POST api/client-spans` | Body `{ spans: Span[], logs?: (LogRecord & { traceId })[], sentAt?: number }`. Browser spans and browser log lines. Stored into their traces. At most 500 spans and 100 logs per call; log messages are cut at 4000 characters. 204. |
+| `GET api/tags` | `TagList` (see "Tags"): the built-ins and the rules of the `tags` option, `editable: false` |
+| `POST api/tags/match` | Body `{ kind, items: { traceId, owner, timeMs }[] }` (up to 200). `{ matches }`: tag names per row (see "Tags") |
 | `POST mcp` (+ GET for SSE if SDK needs) | MCP streamable HTTP. Only when MCP is enabled. 404 otherwise. |
 
 ### Federation (`federate=true`)
@@ -128,7 +130,7 @@ type HostMode = "in-app" | "hub" | "cloud";
 type Capability =
   | "federation" | "environments" | "registry" | "accounts" | "alerts" | "sharing"
   | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search" | "issues"
-  | "infra" | "uptime" | "statusPages" | "sourcemaps" | "savedSearches" | "slos" | "saved";
+  | "infra" | "uptime" | "statusPages" | "sourcemaps" | "savedSearches" | "slos" | "saved" | "tags";
 
 interface ServiceInfo {
   mode?: HostMode;          // absent = "in-app"
@@ -208,6 +210,7 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `search` | The host answers the search language (`api/search`, `api/search/suggest`); the Search page and Ctrl+K use it. Without it, the browser searches the loaded traces | ✅ | ✅ | ✅ |
 | `infra` | The host answers `api/models/hosts` and `api/models/kubernetes` from OpenTelemetry Collector metrics (see "Hosts and Kubernetes"); the Hosts and Kubernetes pages appear | | ✅ | ✅ |
 | `sourcemaps` | The host resolves browser stacks at `api/sourcemaps/resolve` (see "Source maps"). Without it, the dashboard resolves them in the browser from the maps the site serves | ✅ (Node) | ✅ | ✅ |
+| `tags` | The host answers `api/tags` and `api/tags/match` (see "Tags"); lists show tag chips, Settings shows Tags, and "Tag this" appears. `editable` in `api/tags` says whether rules can change there | ✅ | ✅ | ✅ |
 | `changes` | The host streams `api/changes?project=` (server-sent events): an `event: data` line each time the project gets new stats, at most every 2 s (the hub: each settle round), and a comment every 25 s. The dashboard reloads the open page then, keeping the old numbers on screen until the new ones arrive | | ✅ | ✅ |
 | `saved` | The host keeps saved views, saved searches, and dashboards. See "Saved views and dashboards" below | | ✅ | ✅ |
 | `slos` | The host keeps SLOs and Apdex targets. See "SLOs and Apdex" below | | ✅ | ✅ |
@@ -216,9 +219,9 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `statusPages` | A project can turn on a public status page (`api/status/{token}`) | | | ✅ |
 | `savedSearches` | The host keeps saved searches (`api/saved-searches`). Without it, the dashboard keeps them in the browser | | ✅ | ✅ |
 
-Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search"]`, plus `metrics` when metrics are on and `sourcemaps` (Node) unless `sourceMaps: false`. The hub
+Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search", "tags"]`, plus `metrics` when metrics are on and `sourcemaps` (Node) unless `sourceMaps: false`. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "savedSearches", "saved", "uptime"]` (`uptime` only while checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "savedSearches", "saved", "tags", "uptime"]` (`uptime` only while checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -232,6 +235,8 @@ answers `mode: "hub"` and `capabilities: ["federation", "environments", "registr
 | Lowest level kept outside a request | `Logs.MinLevel` (`LogLevel`) | `logs.minLevel` | info, or `WIZELENS_LOGS_MIN_LEVEL` |
 | Share kept outside a request, below warn (0..1) | `Logs.SampleRate` | `logs.sampleRate` | 1, or `WIZELENS_LOGS_SAMPLE_RATE` |
 | Tag the current request | `WizeLensRequest.Tag(key, value?)` | `wizelens.tag(key, value?)` | — |
+| Tag rules (see "Tags") | `Tags.Rules.Add(new(name, query, color))` | `tags.rules: [{ name, query, color? }]` | none; a bad rule throws at startup |
+| Turn off built-in tags | `Tags.DisableBuiltIns.Add("bot")` | `tags.disableBuiltIns: ["bot"]` | all on |
 | Set the current user | automatic from `HttpContext.User` | `wizelens.setUser(id)` | — |
 | The app's version (`service.version` on every span) | `Release` | `release` (React: `release` prop) | `WIZELENS_RELEASE`, else the entry assembly's informational version (.NET) or `npm_package_version` (Node) |
 
@@ -418,11 +423,14 @@ Server name `wizelens`. Disabled by default. Every call is written to the app lo
 | `find_slow_queries` | `thresholdMs?=100`, `limit?=20`, `range?=24h` (Node hosts) | `{ traceId, spanId, durationMs, query, service }[]`, slowest first |
 | `find_n_plus_one` | `minRepeats?=5` | `{ traceId, kind: "db"\|"http", shape, count, totalMs }[]` |
 | `get_errors` | `limit?=20`, `range?=24h` (Node hosts) | `{ traceId, spanId, service, name, message, type, stack }[]` |
-| `search` | `q`, `kind?=requests`, `range?=24h`, `limit?=20`, `cursor?` | SearchPage (below); a bad `q` is an error with `start`/`end` |
+| `search` | `q`, `kind?=requests`, `range?=24h`, `limit?=20`, `cursor?` | SearchPage (below) plus `tags` (tag names per row, as `api/tags/match` answers) and `unknownTags`; a bad `q` is an error with `start`/`end` |
+| `list_tags` | none | `{ name, query, builtIn, enabled }[]`: the names `tag:` reads |
 | `search_fields` | `field?`, `prefix?`, `range?=24h` | `{ value, help?, count? }[]` |
 | `get_overview` | `range?=24h` (1h, 6h, 24h, 7d) | Hub and cloud. `{ window, stillSettling, requests, errorRatePercent, avgDurationMs` (each `{ value, previous, changePercent }`), `needsAttention, services, exceptions, topErrors` (10, most first), `insights }`, from the overview, services, and errors page models. On a multi-project cloud reader with no `project`: `{ range, totals, projects[] }`, one report per project, those needing attention first |
 | `list_problems` | `range?=24h` (1h, 6h, 24h, 7d) | Hub and cloud. `{ window, baseline, problems, ongoing, list[] }` from the problems page model: each problem `{ id, title, started, ended, ongoing, services, suspectedCause, otherCauses, anomalies[] ({ metric, service, endpoint, started, ongoing, value, normal, alertsAbove }), moreAnomalies }`, ongoing first. On a multi-project cloud reader with no `project`: `{ range, projects[] }` |
 | `list_projects` | none | Cloud, when the reader has more than one project: `{ id, name }[]` |
+
+Every tool that takes a search expands `tag:` with the host's tags first.
 
 On the hub, the cloud, and the Node add-on, `list_traces`, `get_errors`, and `find_slow_queries` read the whole store
 through search (the newest traces in memory are merged in, since the store indexes a trace once it goes quiet), not the
@@ -488,8 +496,8 @@ docs/search-vectors.json (the TS and .NET suites both run them). Hosts with the 
 
 | Endpoint | Params | Returns |
 |---|---|---|
-| `GET api/search` | `q`, `kind` (requests, traces, spans, logs), `range` or `from`/`to` (epoch ms), `env`, `project` (hub, cloud), `limit` (1–200, default 50), `cursor` | `{ kind, items, next, tookMs, settling }`; 400 `{ ok: false, error, start?, end? }` |
-| `GET api/search/suggest` | `field` (none: fields and attribute keys; `service`; `@user.id`), `prefix`, `range`, `limit` (1–50) | `{ items: { value, help?, count? }[] }` |
+| `GET api/search` | `q`, `kind` (requests, traces, spans, logs), `range` or `from`/`to` (epoch ms), `env`, `project` (hub, cloud), `limit` (1–200, default 50), `cursor` | `{ kind, items, next, tookMs, settling, unknownTags }`; 400 `{ ok: false, error, start?, end? }` |
+| `GET api/search/suggest` | `field` (none: fields and attribute keys; `service`; `@user.id`; `tag`: the host's enabled tags), `prefix`, `range`, `limit` (1–50) | `{ items: { value, help?, count? }[] }` |
 
 - Items: RequestItem, TraceItem, SpanItem (`traceId, spanId, startMs, durationMs, service, name, kind, category, status,
   method, path, route, httpStatus, user`), or LogRow. Order: newest first, then trace id and part (span id or log index)
@@ -497,6 +505,9 @@ docs/search-vectors.json (the TS and .NET suites both run them). Hosts with the 
 - Text matches are case-insensitive "contains"; `field:value` is case-insensitive equality; `*` is any text. A field a kind
   does not have never matches (so `-field:x` does). Request and trace text includes their spans' error messages; their
   `@attribute` filters match any span of the trace.
+- `tag:name` stands for the tag rule `name` OR the app tag `@wizelens.tag.name:*`; `tag:key:value` is the app tag
+  `@wizelens.tag.key:value`; `tag:pat*` is every rule whose name fits; `tag:*` is any rule. Hosts expand it before the search
+  runs, so every engine sees plain fields. `unknownTags` lists names after `tag:` that no rule has.
 - Hub and cloud: settling writes one `fact_search` row per request, trace, span, and log line, and one `fact_attrs` row
   per present attribute value (lowercased, cut at 512 characters, plus its number). Both come from the same document
   builders as the memory search, so all hosts return the same results.
@@ -557,6 +568,28 @@ interface ResolvedFrame {
 
 Stack lines in Chrome, Edge, and Node (`at fn (url:line:col)`), Firefox, and Safari (`fn@url:line:col`) formats are read;
 native and `eval` frames are skipped. Index maps (`sections`) and `sourceRoot` are supported.
+## Tags (v0.10)
+
+A tag is a rule: a name, a color, and a search (docs/TAGS-PLAN.md). Hosts keep rules in settings, never in telemetry, and
+check them each time data is shown, so a tag covers old and new data alike and outlives what it matched.
+
+- `TagRule`: `{ id, name, color, query, builtIn, enabled }`. `name`: 1–40 of `a-z 0-9 - _`, starting with a letter or digit,
+  unique. `color`: `blue`, `green`, `amber`, `orange`, `red`, `violet`, `slate`. `query`: 1–2000 characters of the search
+  language that parse, match less than everything, and never use `tag:`. At most 50 rules per project (hub: per hub).
+- Built-ins, ids `builtin:{name}`, on until turned off; only `enabled` changes: `stream` (`text/event-stream` responses),
+  `probe` (Kubernetes, Google, and AWS health checks by user agent), `bot` (crawlers by user agent). Their searches are in
+  docs/search-vectors.json, and both suites check them.
+- `GET api/tags` → `TagList` `{ tags: TagRule[] (built-ins first, then by name), editable, max }`. In-app: the `tags` option,
+  read-only. Hub: `POST` `{ name, color, query }`, `PATCH /{id}` (what is sent changes; a built-in takes only `{ enabled }`),
+  `DELETE /{id}`; 400 answers `{ ok: false, field, error }`.
+- `POST api/tags/match` `{ kind, items: { traceId, owner, timeMs }[] }` → `{ matches: { "traceId owner": name[] } }`, rows
+  without a tag left out, names in rule order. `owner` is the span id (spans), log index (logs), or `""`. Each enabled rule runs
+  as a search of `kind` over just those traces, from an hour before the first `timeMs` to an hour after the last, on the host's
+  own engine, so a tag shows exactly where the same search finds the row. The dashboard gives trace rows the tags their request
+  matches too (route and user are request fields).
+- Rows that count many requests (endpoints, services, error groups) show a rule only when every field it names describes the
+  row: `service`, `method`, `route`, `path` (endpoints); `service` (services); `service`, `error`, and free words on the type and
+  message (error groups). The dashboard checks these itself with the same compiler.
 
 ## Storage (v0.2)
 
@@ -664,6 +697,8 @@ interface IngestBatch {
 | GET / POST | `/_wizelens/api/uptime?project=` | `UptimeList` / add a check (`project` in the body). See "Uptime checks". 404 with `--no-uptime` |
 | PATCH / DELETE | `/_wizelens/api/uptime/{id}` | Change (only the fields sent) or delete a check |
 | POST | `/_wizelens/api/uptime/{id}/run` | Run a check now; answers the check |
+| GET / POST / PATCH / DELETE | `/_wizelens/api/tags[/{id}]` | Tag rules for the whole hub (see "Tags"). Changes only from the hub's own pages (a request with an `Origin` of another site gets 403), and with the token when one is set |
+| POST | `/_wizelens/api/tags/match` | `?project=&env=`; see "Tags" |
 | GET | `/healthz` | `ok` |
 
 Uptime changes with an `Origin` header must come from the hub's own origin, so another site open in the browser cannot add
@@ -726,6 +761,8 @@ CREATE TABLE metrics  (time_ms REAL, project TEXT, env TEXT, service TEXT, name 
 CREATE TABLE sourcemaps (project TEXT, release TEXT, file TEXT, map BLOB, bytes INTEGER, uploaded_ms REAL,
                        PRIMARY KEY (project, release, file));                                            -- map gzipped
 CREATE TABLE saved_searches (id TEXT PRIMARY KEY, project TEXT, kind TEXT, name TEXT, params TEXT, created_ms REAL); -- kind 'logs'
+CREATE TABLE tag_rules    (id TEXT PRIMARY KEY, name TEXT UNIQUE, color TEXT, query TEXT, created_ms REAL, updated_ms REAL);
+CREATE TABLE tag_builtins (name TEXT PRIMARY KEY, enabled INTEGER);                                     -- built-ins turned off
 ```
 
 Log retention: `--log-retention <time>` (`WIZELENS_HUB_LOG_RETENTION`, default `--retention`). Each prune drops loose batches
@@ -755,7 +792,7 @@ traces. Incidents that ended more than 90 days ago are dropped.
 
 `@wizeworks/lens-cloud` (command `wizelens-cloud`, default port **5970**) is the hosted service. It serves the same dashboard,
 answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats",
-"metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "savedSearches", "slos", "saved"]`,
+"metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "savedSearches", "slos", "saved", "tags"]`,
 and keeps data in Postgres (`DATABASE_URL=postgres://...`). PGlite (`pglite:<folder>` or `memory`) runs the same SQL in-process,
 for tests and trials.
 
@@ -766,7 +803,7 @@ Accounts, sessions, organizations, members, and invites are [Better Auth](https:
 retention, and the audit log.
 
 - **Organizations** hold **projects**. People join organizations with a role: `owner`, `admin`, `member`, `viewer`.
-  Viewers read. Members also make alerts and share links. Admins also manage projects, keys, members, and invites. Owners also
+  Viewers read. Members also make alerts, tags, and share links. Admins also manage projects, keys, members, and invites. Owners also
   manage owners and delete the organization. The roles are plain data in `@wizeworks/lens-core` (`ACCESS_STATEMENTS`,
   `ROLE_GRANTS`); the cloud and the dashboard both build Better Auth access control from it. An organization always keeps one owner:
   Better Auth checks it, and a deferred database trigger (`members_keep_owner`) refuses any change that would leave none.
@@ -867,12 +904,13 @@ retention, and the audit log.
 | GET | `api/models/{page}?project=&range=&env=&…` | Member or read key. See "Page models". `metrics` is a page too |
 | GET / POST / PATCH / DELETE | `api/projects/{p}/alerts[/{id}]`, `…/{id}/test` | Read: viewer; change: member |
 | POST / GET / DELETE | `api/projects/{p}/shares[/{id}]` | Read: viewer; change: member |
-| GET | `api/shared/{token}` | Anyone with the link: `{ trace, expiresMs }` |
 | GET / POST | `api/projects/{p}/uptime` | Read: viewer or read key (`UptimeList`); add: member (audited `uptime.create`) |
 | PATCH / DELETE | `api/projects/{p}/uptime/{id}` | Member (audited `uptime.update`, `uptime.delete`) |
 | POST | `api/projects/{p}/uptime/{id}/run` | Member. Runs the check now and answers it |
 | GET / POST / PATCH / DELETE | `api/projects/{p}/status-page` | Read: viewer (`{ enabled, title?, createdMs?, views? }`); on or new link (`{ title }`, answers `{ url, title }` once), rename, off: member (audited `status.enable`, `status.disable`) |
 | GET | `api/status/{token}` | Anyone with the link: `StatusPageView` |
+| GET / POST / PATCH / DELETE | `api/tags[/{id}]?project=` | Read: viewer or read key (`editable` says if the caller may change); change: member (the `tag` permission). Each change writes `tag.create`, `tag.update`, `tag.delete`, `tag.enable`, or `tag.disable` to the audit log |
+| POST | `api/tags/match?project=&env=` | Viewer or read key; see "Tags" |
 | GET | `api/shared/{token}` | Anyone with the link: `{ trace, expiresMs }`, or for a page link `{ page, title, params, model, createdMs, expiresMs }` |
 | GET / POST / GET, PATCH, DELETE | `api/projects/{p}/saved[/{id}]` | Read: viewer (own and shared items); add: member; change: the owner; delete: the owner or an admin |
 | POST | `api/ingest`, `/v1/traces`, `/v1/logs`, `/v1/metrics` | Ingest key |
@@ -1144,7 +1182,7 @@ JSON of `teamMonthly`, `teamAnnual`, `businessMonthly`, `businessAnnual`, `overa
 ### Cloud storage
 
 Postgres, one schema, migrations in `wizelens_migrations`. Tables: `orgs`, `users`, `members`, `sessions`, `invites`, `accounts`,
-`verifications`, `two_factors`, `passkeys`, `rate_limits`, `cloud_meta`, `sso_providers`, `projects`, `api_keys`, `traces`, `spans`, `logs`, `services`, `metric_points`, `alert_rules`, `alert_events`, `shares`, `audit`.
+`verifications`, `two_factors`, `passkeys`, `rate_limits`, `cloud_meta`, `sso_providers`, `projects`, `api_keys`, `traces`, `spans`, `logs`, `services`, `metric_points`, `alert_rules`, `alert_events`, `shares`, `audit`, `tag_rules`, `tag_builtins`.
 Migration 2 added `metric_points` and the metric columns of `alert_rules`. Migration 5 added `sso_providers`. Migration 3 added the stats tables (see "Stats
 tables"): `traces.settled_ms` and `traces.contrib`, `scale_meta`, `fact_requests`, `fact_traces`, `fact_logs`, `fact_critical`,
 `rollup_10s`/`5m`/`1h`, `hist_10s`/`5m`/`1h`, `metric_series`, and `metric_10s`/`5m`/`1h`. The cloud settles every 3 seconds in batches
@@ -1162,10 +1200,11 @@ secrets (keys, shares, status page links) are stored as SHA-256 hashes only; Bet
 `overage_subscription_id`; `users.stripe_customer_id`; Better Auth's `subscriptions`; `usage_daily`, `usage_notices`,
 `usage_reports`; and `scim_tokens` (hashed `wl_sc_…`). Migration 15 added the SCIM plugin's tables in snake_case
 (`scim_users`, `scim_groups`, `scim_group_members`, `scim_subjects`, `scim_projection_grants`, `scim_identity_tombstones`,
-`scim_connection_bindings`); their provisioning domain is the organization id. Migration 16 added `uptime_checks`,
-`uptime_incidents`, and `status_pages` (see "Uptime checks"). Migration 17 added `sourcemaps` (see "Source maps"). Migration 18
-added `fact_logs.pattern`, `projects.log_retention_days`, `alert_rules.log_search`, and `saved_searches`. Migration 19 added
-`alert_events.problem` (see "Problems").
+`scim_connection_bindings`); their provisioning domain is the organization id. Migration 16 added `tag_rules`
+(per project, unique name) and `tag_builtins` (the built-ins a project turned off); they stay in Postgres in scale mode too.
+Migration 17 added `uptime_checks`, `uptime_incidents`, and `status_pages` (see "Uptime checks"). Migration 18 added
+`sourcemaps` (see "Source maps"). Migration 19 added `fact_logs.pattern`, `projects.log_retention_days`,
+`alert_rules.log_search`, and `saved_searches`. Migration 20 added `alert_events.problem` (see "Problems").
 
 ### Telemetry stores (small mode and scale mode)
 

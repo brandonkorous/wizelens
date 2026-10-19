@@ -3,6 +3,7 @@ import { DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, type McpDataSource, type Ove
 import type { HubData } from "./data.js";
 import { metricsPage } from "./metrics-read.js";
 import { hubExecutor, hubSettling, sqliteRunner } from "./scale-exec.js";
+import { hubTags } from "./tags.js";
 
 /** Recent traces the MCP tools search through. */
 const MCP_RECENT = 2000;
@@ -32,5 +33,6 @@ export function hubMcpSource(data: HubData, name: string, version: string, audit
     suggest: (r) => suggestSql(src, r),
     now: () => data.store.now(),
     page: pageOf(data),
+    tags: () => hubTags(data.store.db),
   };
 }

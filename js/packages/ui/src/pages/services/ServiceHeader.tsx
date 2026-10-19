@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { AlertOnThis } from "../../ui/AlertOnThis";
-import { groupServices, type ServiceGroup, type ServiceRow } from "@wizeworks/lens-core";
+import { groupServices, type ServiceGroup, type ServiceRow, serviceDoc, serviceScope } from "@wizeworks/lens-core";
 import { useData } from "../../data/hooks";
 import { useHost } from "../../data/host";
 import { useEnvScope, useProjectScope } from "../../data/prefs";
@@ -8,6 +8,9 @@ import { inScope, VIA_LABEL } from "../../data/sources";
 import { fmtAgo, fmtCount } from "../../format";
 import { hrefTo } from "../../routes";
 import { KIND_ICON, KIND_LABEL, StatusText } from "./serviceParts";
+import { useGroupTags } from "../../data/tagMatch";
+import { TagChips } from "../../ui/TagChips";
+import { TagThis } from "../../ui/TagThis";
 
 const DETAIL_LABEL: Partial<Record<ServiceRow["kind"], string>> = { database: "System", external: "Host", queue: "Queue", web: "Source" };
 
@@ -41,6 +44,8 @@ function statsOf(row: ServiceRow, groups: readonly ServiceGroup[], now: number):
 export function ServiceHeader({ row, groups }: { row: ServiceRow; groups: readonly ServiceGroup[] }) {
   const { updatedMs } = useData();
   const Icon = KIND_ICON[row.kind];
+  const tags = useGroupTags()("services", serviceDoc(row.name));
+  const own = row.kind === "api" || row.kind === "worker" || row.kind === "web";
   return (
     <section className="wl-panel wl-svc-head">
       <a className="wl-back" href={hrefTo("services")}>
@@ -52,9 +57,11 @@ export function ServiceHeader({ row, groups }: { row: ServiceRow; groups: readon
         <span className="wl-svc-status">
           <StatusText status={row.status} />
         </span>
-        {(row.kind === "api" || row.kind === "worker") && (
+        <TagChips tags={tags} />
+        {own && (
           <span className="wl-dhead-actions">
-            <AlertOnThis fields={{ metric: "error_rate", service: row.name, name: `${row.name} errors` }} />
+            {row.kind !== "web" && <AlertOnThis fields={{ metric: "error_rate", service: row.name, name: `${row.name} errors` }} />}
+            <TagThis scopes={[serviceScope(row.name)]} />
           </span>
         )}
       </h1>

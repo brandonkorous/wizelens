@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { W3CTraceContextPropagator } from "@opentelemetry/core";
-import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS } from "@wizeworks/lens-core";
+import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS, type TagRule, tagsFromOptions } from "@wizeworks/lens-core";
 import { createHandler } from "./api.js";
 import { createMiddleware } from "./capture.js";
 import { addCleanup, partsOf, registerParts, runCleanups } from "./adapters/registry.js";
@@ -43,7 +43,7 @@ function openPersister(store: TraceStore, options: WizeLensOptions, dashboard: b
   return persister;
 }
 
-function mcpSource(options: WizeLensOptions, store: TraceStore, getTrace: McpDataSource["get"], metrics: MetricStore | null): McpDataSource {
+function mcpSource(options: WizeLensOptions, store: TraceStore, getTrace: McpDataSource["get"], metrics: MetricStore | null, tags: readonly TagRule[]): McpDataSource {
   return {
     service: options.serviceName,
     version: VERSION,
@@ -53,6 +53,7 @@ function mcpSource(options: WizeLensOptions, store: TraceStore, getTrace: McpDat
     get: getTrace,
     audit: options.audit ?? ((line: string) => console.info(line)),
     env: process.env.NODE_ENV || "development",
+    tags: () => tags,
     ...mcpMetrics(metrics),
   };
 }
@@ -60,6 +61,7 @@ function mcpSource(options: WizeLensOptions, store: TraceStore, getTrace: McpDat
 function buildParts(options: WizeLensOptions, basePath: string) {
   installGlobals();
   const service = options.serviceName;
+  const tags = tagsFromOptions(options.tags);
   const redactKeys = options.redactKeys ?? DEFAULT_REDACT_KEYS;
   const sampling = samplingInfo(options.sampling);
   const sampler = sampling ? new TraceSampler(sampling) : undefined;
@@ -77,11 +79,11 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const metrics = createMetricParts(options, redactKeys);
   const sourceMaps = localMapLoader(options.sourceMaps);
   const info = () => buildInfo({ options, store, redactKeys, startedMs, sqlite, metrics: !!metrics, sourceMaps: !!sourceMaps });
-  const mcp = mcpSource(options, store, getTrace, metrics?.store ?? null);
+  const mcp = mcpSource(options, store, getTrace, metrics?.store ?? null, tags);
   const uiDir = resolveUiDir(options.uiDir);
   const hub = connectHub(options, store, info, dashboard ? selfEndpoints : null, metrics?.store ?? null);
   const enableMcp = dashboard && !!options.enableMcp;
-  const handler = createHandler({ basePath, store, redactKeys, uiDir, enableMcp, mcp, info, getTrace, metrics: metrics?.store ?? null, selfEndpoints, dashboard, sourceMaps });
+  const handler = createHandler({ basePath, store, redactKeys, uiDir, enableMcp, mcp, info, getTrace, metrics: metrics?.store ?? null, selfEndpoints, dashboard, sourceMaps, tags });
   const capture = {
     tracer: tracing.tracer,
     basePath,

@@ -1,9 +1,11 @@
 import { useState } from "react";
-import type { EndpointStat, ServiceEdge, ServicePageModel, ServiceRow } from "@wizeworks/lens-core";
+import { endpointDoc, type EndpointStat, type ServiceEdge, type ServicePageModel, type ServiceRow } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
 import { endpointHref, hrefTo, navigate, queryHref } from "../../routes";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
+import { withTags } from "../../ui/TagChips";
+import { useGroupTags } from "../../data/tagMatch";
 import { serviceHref } from "./serviceParts";
 
 export const TOP = 10;
@@ -52,6 +54,8 @@ export function EndpointsPanel({ m, row }: { m: ServicePageModel; row: ServiceRo
   const rows = all ? m.endpoints : m.endpoints.slice(0, TOP);
   const more = moreHref(row);
   const title = row.kind === "database" ? "Queries" : row.kind === "api" ? "Endpoints" : "Operations";
+  const groupTags = useGroupTags();
+  const columns = row.kind === "api" || row.kind === "worker" ? withTags(endpointColumns(row.kind), "name", (e) => groupTags("endpoints", endpointDoc(row.name, e.name))) : endpointColumns(row.kind);
   const action = (
     <span className="wl-row-actions">
       <ToggleAll open={all} total={m.endpoints.length} onToggle={() => setAll(!all)} />
@@ -60,7 +64,7 @@ export function EndpointsPanel({ m, row }: { m: ServicePageModel; row: ServiceRo
   );
   return (
     <Panel title={`${title} (${fmtCount(m.endpointCount)})`} action={action} flush>
-      <Table columns={endpointColumns(row.kind)} rows={rows} rowKey={(e) => e.name} onRowClick={endpointClick(row)} defaultSort={{ key: "count", desc: true }} empty={<Empty>Nothing recorded in this range.</Empty>} />
+      <Table columns={columns} rows={rows} rowKey={(e) => e.name} onRowClick={endpointClick(row)} defaultSort={{ key: "count", desc: true }} empty={<Empty>Nothing recorded in this range.</Empty>} />
     </Panel>
   );
 }

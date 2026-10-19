@@ -8,6 +8,7 @@ import { registerProblemTools } from "./mcp-problems.js";
 import { projectsSource, registerProjectTools, singleSource } from "./mcp-projects.js";
 import { type McpDataSource, type McpProjects, type Source } from "./mcp-shared.js";
 import { registerSearchTools } from "./mcp-search.js";
+import { registerTagTools } from "./mcp-tags.js";
 import { registerTraceTools } from "./mcp-traces.js";
 
 export type { McpDataSource, McpProject, McpProjects, OverviewPage } from "./mcp-shared.js";
@@ -25,6 +26,7 @@ function createServer(data: McpDataSource | McpProjects): McpServer {
   registerFindTools(server, src);
   registerMetricTools(server, src);
   registerSearchTools(server, src);
+  registerTagTools(server, src);
   registerOverviewTool(server, src);
   registerProblemTools(server, src);
   return server;

@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Tracer } from "@opentelemetry/api";
-import type { Trace } from "@wizeworks/lens-core";
+import type { TagOptions, Trace } from "@wizeworks/lens-core";
 import type { LogOptions } from "./loose-logs.js";
 import type { SamplingOptions } from "./sampling.js";
 import type { SourceMapOptions } from "./sourcemaps.js";
@@ -67,6 +67,8 @@ export interface WizeLensOptions {
   sourceMaps?: SourceMapOptions | false;
   /** Lines written outside a request (startup, jobs, timers): on or off, the lowest level, and a sample rate. Default: on, "info" and up, all. */
   logs?: LogOptions;
+  /** Tag rules: `{ rules: [{ name: "checkout", query: "route:/checkout*", color: "green" }], disableBuiltIns: ["bot"] }`. A bad rule throws at startup. */
+  tags?: TagOptions;
 }
 
 export interface DbCallInfo {

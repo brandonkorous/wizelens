@@ -179,6 +179,10 @@
     "help": "Log message"
    },
    {
+    "value": "tag",
+    "help": "Tag: a tag rule's name, or a tag the app sets"
+   },
+   {
     "value": "@db.query.text",
     "count": 8
    },

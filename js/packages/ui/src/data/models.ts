@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { isStructuredSearch, LIST_SEARCH_KIND, memorySearchIds, memoryExecutor, type ModelOf, pageContext, type PageName, type Release, runPageSync, type SyncExecutor, type TimeRange, type Trace } from "@wizeworks/lens-core";
+import { type ActiveTag, activeTags, isStructuredSearch, LIST_SEARCH_KIND, memorySearchIds, memoryExecutor, type ModelOf, pageContext, type PageName, type Release, runPageSync, type SyncExecutor, type TimeRange, type Trace } from "@wizeworks/lens-core";
 import { useRoute } from "../routes";
 import { useChangeTick } from "./changes";
 import { useIssueTick } from "./issues";
@@ -10,6 +10,7 @@ import { getPeriod, parseWindow, periodParams, useComparePref, useWindowPref } f
 import { getScope, useServiceScope } from "./prefs";
 import { provider, useData } from "./provider";
 import { apiFetch } from "./api";
+import { currentTags, useTags } from "./tags";
 
 export interface PageModel<P extends PageName> {
   model: ModelOf<P> | null;
@@ -58,11 +59,13 @@ function executorFor(traces: readonly Trace[], slowQueryMs: number): SyncExecuto
   return ex;
 }
 
+const NO_ACTIVE: readonly ActiveTag[] = [];
+
 /** A page computed in the browser from the loaded traces, the same way hosts compute it from their database. */
-function localModel<P extends PageName>(page: P, params: Record<string, string>, range: TimeRange, traces: readonly Trace[], now: number, slowQueryMs: number): ModelOf<P> {
+function localModel<P extends PageName>(page: P, params: Record<string, string>, range: TimeRange, traces: readonly Trace[], now: number, slowQueryMs: number, tags: readonly ActiveTag[]): ModelOf<P> {
   const ctx = pageContext(range, now, params, { slowQueryMs });
   const kind = LIST_SEARCH_KIND[page];
-  const search = kind && isStructuredSearch(params.q) ? { searchIds: memorySearchIds(traces, kind, params.q!, ctx.window) } : {};
+  const search = kind && isStructuredSearch(params.q) ? { searchIds: memorySearchIds(traces, kind, params.q!, ctx.window, tags) } : {};
   return runPageSync(page, { ...ctx, ...search }, executorFor(traces, slowQueryMs));
 }
 
@@ -70,9 +73,10 @@ function useLocalModel<P extends PageName>(page: P, params: Record<string, strin
   const data = useData();
   const [range] = useRange();
   const slowQueryMs = data.info?.analysis?.slowQueryMs ?? DEFAULT_SLOW_QUERY_MS;
+  const tags = useTags()?.active ?? NO_ACTIVE;
   const model = useMemo(
-    () => (enabled ? localModel(page, params, range, data.traces, data.updatedMs, slowQueryMs) : null),
-    [enabled, page, data.traces, data.updatedMs, range, slowQueryMs, params],
+    () => (enabled ? localModel(page, params, range, data.traces, data.updatedMs, slowQueryMs, tags) : null),
+    [enabled, page, data.traces, data.updatedMs, range, slowQueryMs, params, tags],
   );
   return { model, loading: data.loading, error: null };
 }
@@ -111,7 +115,7 @@ export async function loadPageModel<P extends PageName>(page: P, query: Record<s
   if (server) return apiFetch<ModelOf<P>>(modelUrl(page, params, range));
   const data = provider.getSnapshot();
   const slowQueryMs = data.info?.analysis?.slowQueryMs ?? DEFAULT_SLOW_QUERY_MS;
-  return localModel(page, params, range, data.traces, data.updatedMs, slowQueryMs);
+  return localModel(page, params, range, data.traces, data.updatedMs, slowQueryMs, activeTags(currentTags()));
 }
 
 /** The sidebar error count from the host (0 until it loads) on hosts that compute stats; null elsewhere, where the browser counts. */

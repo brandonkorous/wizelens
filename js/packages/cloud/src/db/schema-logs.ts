@@ -1,4 +1,4 @@
-// Migration 18: logs as a product. Pattern ids on log facts, log retention per project, log alert searches, and saved searches.
+// Migration 19: logs as a product. Pattern ids on log facts, log retention per project, log alert searches, and saved searches.
 export const LOGS_MIGRATION = `
 ALTER TABLE fact_logs ADD COLUMN pattern TEXT NOT NULL DEFAULT '';
 CREATE INDEX ix_fact_logs_pattern ON fact_logs (project_id, pattern, time_ms);

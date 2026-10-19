@@ -1,6 +1,6 @@
-import { checkSearch, decodeCursor, type SearchItems, type SearchKind, type SearchNode, type SearchQuery, searchMemory, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { activeTags, checkSearch, decodeCursor, expandTags, type SearchItems, type SearchKind, type SearchNode, type SearchQuery, searchMemory, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import { z } from "zod";
-import type { McpDataSource } from "./mcp-shared.js";
+import { type McpDataSource, tagsOf } from "./mcp-shared.js";
 
 // Tools that read the whole store through search, not a slice of recent traces (docs/SEARCH-PLAN.md, "MCP").
 export const RANGES = Object.keys(TIME_RANGES) as [TimeRange, ...TimeRange[]];
@@ -36,9 +36,9 @@ async function storePages(data: McpDataSource, base: Omit<SearchQuery, "limit" |
   return out;
 }
 
-/** The matches of a search, newest first, up to `max`: the store, plus the newest traces in memory, which the store indexes only once they go quiet. */
+/** The matches of a search, newest first, up to `max`: the store, plus the newest traces in memory, which the store indexes only once they go quiet. `tag:` reads the host's tags. */
 export async function findAll<K extends SearchKind>(data: McpDataSource, kind: K, node: SearchNode | null, range: TimeRange, max: number): Promise<SearchItems[K][]> {
-  const base = { kind, node, window: windowOf(data, range), env: data.env };
+  const base = { kind, node: expandTags(node, activeTags(await tagsOf(data))).node, window: windowOf(data, range), env: data.env };
   const recent = searchMemory(await data.all(), { ...base, limit: max }).items as unknown[];
   if (!data.search) return recent as SearchItems[K][];
   const seen = new Map<string, unknown>();

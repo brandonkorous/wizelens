@@ -100,7 +100,9 @@ export type Capability =
   /** The host keeps SLOs and Apdex targets (`api/slos`, `api/apdex`). */
   | "slos"
   /** The host keeps saved views, saved searches, and dashboards (`api/saved`). */
-  | "saved";
+  | "saved"
+  /** The host answers `api/tags` and `api/tags/match` (docs/TAGS-PLAN.md); `editable` in `api/tags` says if rules can change there. */
+  | "tags";
 
 /** What an in-app add-on offers today. Also the default when a host does not say. */
 export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];

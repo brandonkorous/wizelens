@@ -31,6 +31,7 @@ public static class SearchFields
         ["user"] = new(FieldType.Text, "End user id", [SearchKinds.Requests, SearchKinds.Spans]),
         ["error"] = new(FieldType.Bool, "true when it failed", AllKinds),
         ["message"] = new(FieldType.Text, "Log message", [SearchKinds.Logs]),
+        ["tag"] = new(FieldType.Text, "Tag: a tag rule's name, or a tag the app sets", AllKinds),
     };
 
     public static bool IsField(string name) => All.ContainsKey(name);

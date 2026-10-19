@@ -1,8 +1,9 @@
-import { alignNow, APDEX_PAGES, FACT_SLOW_QUERY_MS, hostsModelOf, INFRA_PARAMS, ISSUE_PAGES, isPageName, isStructuredSearch, isTimeRange, issueStatesOf, kubeModelOf, LIST_SEARCH_KIND, type ModelOf, type PageName, pageContext, runPage, searchTraceIds, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { activeTags, alignNow, APDEX_PAGES, FACT_SLOW_QUERY_MS, hostsModelOf, INFRA_PARAMS, ISSUE_PAGES, isPageName, isStructuredSearch, isTimeRange, issueStatesOf, kubeModelOf, LIST_SEARCH_KIND, type ModelOf, type PageName, pageContext, runPage, searchTraceIds, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import type { CloudApp, Ctx } from "../app.js";
 import { fail, sendJson } from "../http/http.js";
 import { listIssues } from "../repo/issues.js";
 import { apdexTargets } from "../repo/slos.js";
+import { projectTags } from "../repo/tags.js";
 import type { Router } from "../http/router.js";
 import { listServices } from "../repo/trace-read.js";
 import { projectOf } from "./data.js";
@@ -52,7 +53,7 @@ export async function projectPage<P extends PageName>(app: CloudApp, project: { 
   const issues = ISSUE_PAGES.has(page) ? { issues: issueStatesOf(await listIssues(app.db, project.id)) } : {};
   const apdex = APDEX_PAGES.has(page) ? { apdex: await apdexTargets(app.db, project.id) } : {};
   const kind = LIST_SEARCH_KIND[page];
-  const search = kind && isStructuredSearch(params.q) ? { searchIds: await searchTraceIds((q) => t.search(project.id, q), kind, params.q!, pc.window, env) } : {};
+  const search = kind && isStructuredSearch(params.q) ? { searchIds: await searchTraceIds((q) => t.search(project.id, q), kind, params.q!, pc.window, env, activeTags(await projectTags(app.db, project.id))) } : {};
   const value = await runPage(page, { ...pc, ...issues, ...apdex, ...search }, t.executor(project.id, days * DAY_MS, env));
   remember(key, value, app.config.now());
   return value;

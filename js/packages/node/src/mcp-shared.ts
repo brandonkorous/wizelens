@@ -1,5 +1,5 @@
 import type { ZodTypeAny } from "zod";
-import type { MetricsModel, ModelOf, SearchPage, SearchQuery, Suggestion, SuggestRequest, TimeRange, Trace } from "@wizeworks/lens-core";
+import { type MetricsModel, type ModelOf, type SearchPage, type SearchQuery, type Suggestion, type SuggestRequest, type TagRule, tagList, type TimeRange, type Trace } from "@wizeworks/lens-core";
 
 /** The page models get_overview and list_problems read. */
 export type OverviewPage = "overview" | "services" | "errors" | "problems";
@@ -30,7 +30,12 @@ export interface McpDataSource {
   env?: string;
   /** One dashboard page's model, from the host's stats. Without it, get_overview is left out. */
   page?<P extends OverviewPage>(page: P, range: TimeRange): Promise<ModelOf<P>>;
+  /** The project's tags (docs/TAGS-PLAN.md). Without it, only the built-ins. */
+  tags?(): readonly TagRule[] | Promise<readonly TagRule[]>;
 }
+
+/** The tags a tool reads: the host's, or the built-ins. */
+export const tagsOf = async (data: McpDataSource): Promise<readonly TagRule[]> => (data.tags ? await data.tags() : tagList([], new Set()));
 
 /** One project a multi-project host serves. */
 export interface McpProject {

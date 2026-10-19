@@ -1,6 +1,6 @@
 // Panels only your own services (APIs and workers) have: errors, slow requests, logs, and runtime metrics.
 import { useState } from "react";
-import { type ErrorGroup, isFailed, type LogRow, type RequestItem, type ServicePageModel } from "@wizeworks/lens-core";
+import { type ErrorGroup, errorGroupDoc, isFailed, type LogRow, type RequestItem, type ServicePageModel } from "@wizeworks/lens-core";
 import { useData } from "../../data/hooks";
 import { useMetricsModel } from "../../data/metrics";
 import { fmtAgo, fmtCount, fmtMs } from "../../format";
@@ -9,6 +9,8 @@ import { DotText, toneOfStatus } from "../../ui/Badges";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { Sparkline } from "../../ui/Sparkline";
 import { type Column, Table } from "../../ui/Table";
+import { withTags } from "../../ui/TagChips";
+import { logRow, traceRow, useGroupTags, useRowTags } from "../../data/tagMatch";
 import { LOG_COLUMNS } from "../logs/LogParts";
 import { ToggleAll, TOP } from "./ServiceTables";
 import "../../styles/pages/logs.css";
@@ -30,6 +32,7 @@ export function ErrorsPanel({ m, name }: { m: ServicePageModel; name: string }) 
   const { updatedMs } = useData();
   const [all, setAll] = useState(false);
   const { groups, total } = m.errors;
+  const groupTags = useGroupTags();
   const action = (
     <span className="wl-row-actions">
       <ToggleAll open={all} total={groups.length} onToggle={() => setAll(!all)} />
@@ -38,7 +41,7 @@ export function ErrorsPanel({ m, name }: { m: ServicePageModel; name: string }) 
   );
   return (
     <Panel title={`Top Errors (${fmtCount(total)})`} action={action} flush>
-      <Table columns={errorColumns(updatedMs)} rows={all ? groups : groups.slice(0, TOP)} rowKey={(g) => g.key} onRowClick={(g) => navigate(errorHref(g.key))} empty={<Empty title="No exceptions">Nothing failed in this time range.</Empty>} />
+      <Table columns={withTags(errorColumns(updatedMs), "error", (g) => groupTags("errors", errorGroupDoc(g)))} rows={all ? groups : groups.slice(0, TOP)} rowKey={(g) => g.key} onRowClick={(g) => navigate(errorHref(g.key))} empty={<Empty title="No exceptions">Nothing failed in this time range.</Empty>} />
     </Panel>
   );
 }
@@ -51,10 +54,11 @@ const SLOW_COLUMNS: Column<RequestItem>[] = [
 
 /** The slowest requests that went through this service. A row opens the trace. */
 export function SlowestPanel({ m, name }: { m: ServicePageModel; name: string }) {
+  const tagsOf = useRowTags("requests", m.slowest, traceRow);
   const action = m.requestCount > 0 && <ViewAll href={hrefTo("requests", [], { service: name, sort: "duration" })} label={`View all ${fmtCount(m.requestCount)}`} />;
   return (
     <Panel title="Slowest Requests" action={action} flush>
-      <Table columns={SLOW_COLUMNS} rows={m.slowest} rowKey={(r) => r.traceId} onRowClick={(r) => navigate(traceHref(r.traceId))} empty={<Empty title="No requests">No request went through this service in this range.</Empty>} />
+      <Table columns={withTags(SLOW_COLUMNS, "path", tagsOf)} rows={m.slowest} rowKey={(r) => r.traceId} onRowClick={(r) => navigate(traceHref(r.traceId))} empty={<Empty title="No requests">No request went through this service in this range.</Empty>} />
     </Panel>
   );
 }
@@ -67,6 +71,7 @@ const SERVICE_LOG_COLUMNS = LOG_COLUMNS.filter((c) => c.key !== "service").map((
 /** The newest log lines of this service, with its warning and error counts. */
 export function LogsPanel({ m, name }: { m: ServicePageModel; name: string }) {
   const { total, warnings, errors, rows } = m.logs;
+  const tagsOf = useRowTags("logs", rows, logRow);
   const action = (
     <span className="wl-row-actions">
       {total > 0 && <span className="wl-muted wl-small">{fmtCount(warnings)} warnings · {fmtCount(errors)} errors</span>}
@@ -75,7 +80,7 @@ export function LogsPanel({ m, name }: { m: ServicePageModel; name: string }) {
   );
   return (
     <Panel title="Recent Logs" action={action} flush className="wl-svc-logs">
-      <Table columns={SERVICE_LOG_COLUMNS} rows={rows} rowKey={(r) => r.key} empty={<Empty title="No log lines">Lines this service writes through WizeLens loggers show up here.</Empty>} />
+      <Table columns={withTags(SERVICE_LOG_COLUMNS, "message", tagsOf)} rows={rows} rowKey={(r) => r.key} empty={<Empty title="No log lines">Lines this service writes through WizeLens loggers show up here.</Empty>} />
     </Panel>
   );
 }

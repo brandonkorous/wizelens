@@ -1,11 +1,15 @@
 import { ExternalLink } from "lucide-react";
-import type { RequestItem } from "@wizeworks/lens-core";
+import { useMemo } from "react";
+import { endpointScope, type RequestItem, serviceScope, userScope } from "@wizeworks/lens-core";
 import { fmtMs } from "../../format";
 import { traceHref, userHref } from "../../routes";
 import { BarList, type BarItem } from "../../ui/BarList";
 import { CopyButton, DotText, toneOfStatus } from "../../ui/Badges";
 import { KeyValues } from "../../ui/Panel";
 import { statusText } from "./spanInfo";
+import { traceRow, useRowTags } from "../../data/tagMatch";
+import { TagChips } from "../../ui/TagChips";
+import { TagThis } from "../../ui/TagThis";
 
 const countMs = (n: number, ms: number) => (n === 0 ? "0" : `${n} (${fmtMs(ms)})`);
 
@@ -42,13 +46,21 @@ function Summary({ r }: { r: RequestItem }) {
 
 const tagClass = (tag: string) => (/:(hit|ok|success|true)$/i.test(tag) ? "wl-chip wl-chip-green" : tag.startsWith("user:") ? "wl-chip" : "wl-chip wl-chip-blue");
 
-function Tags({ tags }: { tags: string[] }) {
-  if (tags.length === 0) return <p className="wl-muted wl-small">No tags. Add them with WizeLensRequest.Tag(…) in .NET or wizelens.tag(…) in Node.</p>;
+const requestScopes = (r: RequestItem) => [endpointScope(r.service, r.endpoint), serviceScope(r.service), ...(r.user ? [userScope(r.user)] : [])];
+
+/** Tags from tag rules, then tags the app set on the request, and Tag this. */
+function Tags({ r }: { r: RequestItem }) {
+  const rows = useMemo(() => [r], [r]);
+  const ruleTags = useRowTags("requests", rows, traceRow)(r);
+  const none = ruleTags.length === 0 && r.tags.length === 0;
   return (
-    <div className="wl-chips">
-      {tags.map((t) => (
+    <div className="wl-chips wl-rq-tags">
+      <TagChips tags={ruleTags} />
+      {r.tags.map((t) => (
         <span key={t} className={tagClass(t)}>{t}</span>
       ))}
+      {none && <span className="wl-muted wl-small">No tags. Tag this request's endpoint, service, or user, or set tags in code with WizeLensRequest.Tag(…) or wizelens.tag(…).</span>}
+      <TagThis scopes={requestScopes(r)} />
     </div>
   );
 }
@@ -72,7 +84,7 @@ export function PanelOverview({ r }: { r: RequestItem }) {
       <h3 className="wl-section-title">Summary</h3>
       <Summary r={r} />
       <h3 className="wl-section-title">Tags</h3>
-      <Tags tags={r.tags} />
+      <Tags r={r} />
       <div className="wl-rq-timing-head">
         <h3 className="wl-section-title">Timing Breakdown</h3>
         <strong>{fmtMs(r.durationMs)}</strong>

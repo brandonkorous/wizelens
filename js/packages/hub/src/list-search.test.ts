@@ -1,6 +1,7 @@
 import { afterEach, expect, it } from "vitest";
 import type { Hub } from "./hub.js";
 import { settleHub } from "./settle.js";
+import { createTag } from "./tags.js";
 import { post, span, startHub } from "./test/helpers.js";
 
 let hub: Hub;
@@ -19,4 +20,7 @@ it("narrows the Requests list to a structured search, and keeps free words as te
   expect(await total("NOT status:5xx")).toBe(2);
   expect(await total("pay")).toBe(1);
   expect(await total("")).toBe(4);
+  createTag(hub.data.store.db, { name: "broken", color: "red", query: "status:5xx" }, Date.now());
+  expect(await total("tag:broken")).toBe(2);
+  expect(await total("NOT tag:broken")).toBe(2);
 });
