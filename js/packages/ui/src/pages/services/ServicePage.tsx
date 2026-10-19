@@ -10,6 +10,7 @@ import { LatencyPanel, ServiceCards, TrafficPanel } from "./ServiceCharts";
 import { ServiceHeader, useHostGroups } from "./ServiceHeader";
 import { ErrorsPanel, LogsPanel, RuntimePanel, SlowestPanel } from "./ServiceOwned";
 import { EdgesPanel, EndpointsPanel } from "./ServiceTables";
+import { VersionsPanel } from "./ServiceVersions";
 import "../../styles/pages/services.css";
 
 /** Kinds whose spans are listed by endpoint, query, or call. */
@@ -48,6 +49,7 @@ function ServiceBody({ m, row }: { m: ServicePageModel; row: ServiceRow }) {
         <EdgesPanel title="Called By" edges={m.incoming} side="from" empty="Nothing called this service in this range." />
         <EdgesPanel title="Calls" edges={m.outgoing} side="to" empty="This service called nothing in this range." />
       </div>
+      {m.owned && <VersionsPanel m={m} name={row.name} />}
       {m.owned && <LogsPanel m={m} name={row.name} />}
       {m.owned && <RuntimePanel name={row.name} />}
       {groups.map((g) => (

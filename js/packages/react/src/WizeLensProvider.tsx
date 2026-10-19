@@ -1,4 +1,5 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
+import { setBrowserRelease } from "./browser-span.js";
 import { Hud } from "./Hud.js";
 import { createRecorder, type RecordedRequest, type Recorder } from "./recorder.js";
 
@@ -19,6 +20,8 @@ export interface WizeLensProviderProps {
   capturePages?: boolean;
   /** Copy `console.*` calls into the page view's trace. Default true. */
   captureConsole?: boolean;
+  /** The web app's version, kept on browser spans for release markers and version compares. For example `import.meta.env.VITE_APP_VERSION`. */
+  release?: string;
   children?: ReactNode;
 }
 
@@ -30,6 +33,7 @@ export function WizeLensProvider({
   slowMs,
   capturePages = true,
   captureConsole = true,
+  release,
   children,
 }: WizeLensProviderProps) {
   const recorder = useMemo(
@@ -38,6 +42,8 @@ export function WizeLensProvider({
     [endpoint, enabled, capturePages, captureConsole, hud],
   );
 
+  // Before install, so the first page load already carries the release.
+  useEffect(() => setBrowserRelease(release), [release]);
   useEffect(() => recorder?.install(), [recorder]);
 
   return (

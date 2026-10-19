@@ -6,6 +6,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Releases.** Add-ons send the app's version (`release`, or `WIZELENS_RELEASE`; .NET reads the entry assembly's
+  version, Node reads `npm_package_version`, React takes a `release` prop, and OpenTelemetry apps send `service.version`).
+  Every chart marks the time a new version first sent data. The service page compares its newest versions: requests, error
+  rate, p95, and the error groups each one brought. Errors and Insights get a **New in this release** filter.
 - **Error tracker workflow.** Resolve an error group, or ignore it for an hour, a day, a week, or for good. A resolved
   group that happens again shows as **Regressed** and comes back to the list. The Errors page lists unresolved groups by
   default, with a Status filter and a **New only** filter. "First seen" is now the first time over all kept data, not the

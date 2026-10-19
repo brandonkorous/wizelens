@@ -52,6 +52,7 @@ Calls answered by another WizeLens server on the page's origin work the same way
 | `enabled` | `true` | Pass `import.meta.env.DEV` (or similar). |
 | `hud` | `true` | Show the in-page HUD. |
 | `propagateTo` | same origin | Which requests get a `traceparent` header. |
+| `release` | none | The web app's version, kept on browser spans for release markers and version compares. |
 | `slowMs` | `500` | Requests at or over this many ms show as "warning" (orange). |
 | `capturePages` | `true` | Send page views, React render stats, and browser errors. |
 | `captureConsole` | `true` | Copy browser `console` calls into the page view's trace. |

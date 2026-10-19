@@ -17,7 +17,10 @@ export interface HubSender {
   service: string;
   /** The project (later: the cloud tenant) this service belongs to. Groups services on a shared hub. */
   project?: string;
+  /** The WizeLens add-on's version (for OpenTelemetry senders, the app's). */
   version?: string;
+  /** The app's own version, put on its spans as `service.version` (releases). */
+  release?: string;
   /** For example "node v24.1.0", ".NET 10.0.1", or "otlp python". */
   runtime?: string;
   environment?: string;

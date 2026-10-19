@@ -221,6 +221,7 @@ answers `mode: "hub"` and `capabilities: ["federation", "environments", "registr
 | Keep traces with a slow server-side span (ms) | `Sampling.KeepSlowMs` | `sampling.keepSlowMs` | 1000 (null = off) |
 | Tag the current request | `WizeLensRequest.Tag(key, value?)` | `wizelens.tag(key, value?)` | — |
 | Set the current user | automatic from `HttpContext.User` | `wizelens.setUser(id)` | — |
+| The app's version (`service.version` on every span) | `Release` | `release` (React: `release` prop) | `WIZELENS_RELEASE`, else the entry assembly's informational version (.NET) or `npm_package_version` (Node) |
 
 ## Metrics (v0.8)
 
@@ -714,6 +715,12 @@ Pages read small tables built from the stored traces, never the traces themselve
   are rebuilt from its spans and logs, and the rollups get its new contribution minus the old one (kept as JSON in
   `traces.contrib`). `settled_ms` is set to the `updated_ms` that was read, so a late span settles the trace again. Representatives,
   first and last times, and ids are display fields and are never taken back out.
+- **Releases** (`FACTS_VERSION` 5): `rel` counts each span that starts work in its service (no parent, or a parent in another
+  service) under `service|version`, from the span's `service.version`, with a histogram. Hosts copy `sender.release` onto the
+  sender's spans that have no version (OTLP: the resource's `service.version`). `HubSender.version` stays the add-on's own
+  version. Every page's `meta.releases` lists the versions first seen in its window (chart markers); the Service page has
+  `versions` (requests, error rate, p95, and error groups first seen while each was the newest); Errors and Insights take
+  `release` with `service` (groups first seen while that version was the newest) and return the service's `releases`.
 - **Endpoints** (`FACTS_VERSION` 4): `ep.call` and `ep.q` file each outgoing call and query under the endpoint (`svc.ep` key
   head) whose http.server span it ran under. `svc.ep` and `edge` keep histograms (p50/p95/p99), and `svc.ep`, `db.q`, and
   `pv.route` keep their newest trace ids. List needs take `traceIds`.

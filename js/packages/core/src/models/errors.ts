@@ -6,6 +6,7 @@ import { SPARK_BUCKETS } from "../stats/overview.js";
 import { CHART_BUCKETS } from "./database.js";
 import { endpointGroupKeys, endpointGroupsNeed, ERROR_PAGE_SIZE, type ErrorFilter, errorFilterOf, errorListNeed } from "./error-filter.js";
 import { type IssueInfo, issueInfos, issueKeys, lifeNeed } from "./error-issues.js";
+import { firstSeenBounds, releasesNeed, releasesOf } from "./release-rows.js";
 import { META_NEEDS, type ModelMeta, metaOf, pageParams, scoped } from "./input.js";
 import { aggByKey, byDesc, counter, counts, groupCount, groupNeed, type Row, rowsOf, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
 
@@ -31,6 +32,8 @@ export interface ErrorsModel {
   issues: Record<string, IssueInfo>;
   /** True when the host keeps issue states (resolve, ignore, assign work). */
   hasIssues: boolean;
+  /** The chosen service's versions, newest first, for the release filter. */
+  releases: { version: string; firstMs: number }[];
   /** The `group` parameter's group, found by key even when it is not among the listed groups; null without one. */
   selected: ErrorGroup | null;
   types: { type: string; count: number }[];
@@ -140,12 +143,14 @@ export const errorsPage: PageDef<ErrorsModel> = {
   needs: (ctx) => {
     const f = errorFilterOf(ctx.params);
     const endpoint = f.endpoint ? [endpointGroupsNeed(f.endpoint)] : [];
-    return uniqueNeeds([...selectedNeeds(ctx.params.group), ...pageNeeds(f.service || undefined), lifeNeed(f.service), ...endpoint]);
+    const releases = f.service ? [releasesNeed("rel.svc", f.service)] : [];
+    return uniqueNeeds([...selectedNeeds(ctx.params.group), ...pageNeeds(f.service || undefined), lifeNeed(f.service), ...endpoint, ...releases]);
   },
   // The list comes second: the status, "new", and endpoint filters pick its keys from the first answers.
   followUp(ctx, first) {
     const f = errorFilterOf(ctx.params);
-    return [errorListNeed(f, ctx.params, issueKeys(ctx, first, f.status, f.fresh, f.endpoint ? endpointGroupKeys(first) : undefined))];
+    const bounds = firstSeenBounds(first, "rel.svc", f.release, f.fresh ? ctx.window.from : null);
+    return [errorListNeed(f, ctx.params, issueKeys(ctx, first, f.status, bounds, f.endpoint ? endpointGroupKeys(first) : undefined))];
   },
   model(d) {
     const cards = cardsOf(d, "cur");
@@ -163,6 +168,7 @@ export const errorsPage: PageDef<ErrorsModel> = {
       endpoints: rowsOf(d, "endpoints").map((r) => ({ endpoint: r.key, count: r.agg.n })),
       issues: issueInfos(d, [...rowsOf(d, "groups"), ...rowsOf(d, "selected")].map((r) => r.key)),
       hasIssues: !!d.issues,
+      releases: releasesOf(d, "rel.svc").map((r) => ({ version: r.version, firstMs: r.firstMs })),
       selected: rowsOf(d, "selected").map((r) => errorGroupOf(r, endpoints))[0] ?? null,
       types: [...rowsOf(d, "err.t")].sort(byDesc((r) => r.agg.n)).map((r) => ({ type: r.key, count: r.agg.n })),
       services: servicesOf(d),

@@ -1,7 +1,9 @@
 import type { Need, PageData } from "../scale/needs.js";
 import type { TimeRange, TimeWindow } from "../stats/common.js";
 import { type Compare, compareLabelOf } from "../stats/period.js";
+import type { Release } from "../releases.js";
 import { groupNeed, totalOf } from "./read.js";
+import { releasesNeed, releasesOf } from "./release-rows.js";
 
 export interface ModelOptions {
   slowQueryMs: number;
@@ -29,10 +31,12 @@ export interface ModelMeta {
   /** True for a custom from–to window. */
   custom: boolean;
   compare: Compare;
+  /** Versions that first sent data in this window, newest first: the release markers on charts. */
+  releases: Release[];
 }
 
-/** What every page needs for its meta: whether the window before had traces. */
-export const META_NEEDS: readonly Need[] = [groupNeed("meta.prev", "trace", "prev")];
+/** What every page needs for its meta: whether the window before had traces, and the releases. */
+export const META_NEEDS: readonly Need[] = [groupNeed("meta.prev", "trace", "prev"), releasesNeed("meta.rel")];
 
 export const metaOf = (d: PageData): ModelMeta => ({
   range: d.range,
@@ -44,6 +48,7 @@ export const metaOf = (d: PageData): ModelMeta => ({
   settling: d.settling ?? null,
   custom: !!d.custom,
   compare: d.compare ?? "previous",
+  releases: releasesOf(d, "meta.rel").filter((r) => r.firstMs >= d.window.from && r.firstMs < d.window.to),
 });
 
 /** The service filter (a display name, as the dashboard shows it), or undefined for all services. */

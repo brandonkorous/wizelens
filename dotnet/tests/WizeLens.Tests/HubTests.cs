@@ -30,6 +30,7 @@ public class HubTests
             o.HubUrl = "hub.test:5960/_wizelens/";
             o.HubToken = "s3cret";
             o.Project = "shop";
+            o.Release = "4.2.0";
             o.HubHandler = hub;
         });
 
@@ -62,6 +63,9 @@ public class HubTests
         Assert.Equal("test-api", sender.GetProperty("service").GetString());
         Assert.Equal("shop", sender.GetProperty("project").GetString());
         Assert.Equal("Development", sender.GetProperty("environment").GetString());
+        Assert.Equal("4.2.0", sender.GetProperty("release").GetString());
+        var server = spans.First(s => s.GetProperty("category").GetString() == "http.server");
+        Assert.Equal("4.2.0", server.GetProperty("attributes").GetProperty("service.version").GetString());
         // The calls to the hub are not traced by the app itself.
         Assert.Single(app.Store.All());
     }

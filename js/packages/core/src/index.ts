@@ -10,6 +10,7 @@ export * from "./redact.js";
 export * from "./trace.js";
 export * from "./span-time.js";
 export * from "./issues.js";
+export * from "./releases.js";
 export * from "./analysis.js";
 export * from "./health.js";
 export * from "./busy.js";
