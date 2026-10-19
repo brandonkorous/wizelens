@@ -41,8 +41,8 @@ Monetization (open core): the add-on is MIT. Cloud and team features are paid. D
 | History | Retention per organization (default 30 days); delete a project's data |
 | Release | Docker image and a compose file with Postgres; built and checked in CI |
 
-Not in phase 3: billing and plans (later, by decision), single sign-on, email delivery (invite links are copied by hand), and
-running the hosted service itself (that needs a provider account; `deploy/docker-compose.cloud.yml` is ready for one).
+Not in phase 3: billing and plans (later, by decision). Single sign-on (OIDC and SAML), email delivery, and the hosted service
+(on the shared sparx AKS cluster) came after it.
 
 ## Phase 2 scope (complete)
 

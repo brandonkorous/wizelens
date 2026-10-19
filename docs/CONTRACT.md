@@ -125,7 +125,9 @@ interface Trace extends TraceSummary {
 }
 
 type HostMode = "in-app" | "hub" | "cloud";
-type Capability = "federation" | "environments" | "accounts" | "alerts" | "sharing" | "serverStats";
+type Capability =
+  | "federation" | "environments" | "registry" | "accounts" | "alerts" | "sharing"
+  | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search";
 
 interface ServiceInfo {
   mode?: HostMode;          // absent = "in-app"
@@ -198,13 +200,15 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `accounts` | People sign in; the top bar shows the user and the Team page appears | | | ✅ |
 | `alerts` | The host runs alert rules; the Alerts page and the bell show them | | | ✅ |
 | `sharing` | Traces can be shared by a read-only link | | | ✅ |
-| `serverStats` | The host computes page numbers itself (`api/models/<page>`); ranges reach 7 and 30 days | | | ✅ |
+| `serverStats` | The host computes page numbers itself (`api/models/<page>`); ranges reach 7 and 30 days | | ✅ | ✅ |
 | `metrics` | The host keeps metrics; the Metrics page appears | ✅ | ✅ | ✅ |
 | `serverMetrics` | The host computes the Metrics page itself (`api/models/metrics`). Without it, the browser reads `api/metrics/points` | | ✅ | ✅ |
+| `search` | The host answers the search language (`api/search`, `api/search/suggest`); the Search page and Ctrl+K use it. Without it, the browser searches the loaded traces | ✅ | ✅ | ✅ |
 | `changes` | The host streams `api/changes?project=` (server-sent events): an `event: data` line each time the project gets new stats, at most every 2 s (the hub: each settle round), and a comment every 25 s. The dashboard reloads the open page then, keeping the old numbers on screen until the new ones arrive | | ✅ | ✅ |
 
-Add-ons answer `mode: "in-app"` and `capabilities: ["federation"]`. The hub answers `mode: "hub"` and
-`capabilities: ["federation", "environments", "registry"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
+Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search"]`, plus `metrics` when metrics are on. The hub
+answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
+"search", "changes"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -525,7 +529,8 @@ the rollups. Page answers are cached per page, parameters, scope, 10-second "now
 ## Cloud (v0.7, phase 3)
 
 `@wizeworks/lens-cloud` (command `wizelens-cloud`, default port **5970**) is the hosted service. It serves the same dashboard,
-answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats"]`,
+answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats",
+"metrics", "serverMetrics", "search", "changes"]`,
 and keeps data in Postgres (`DATABASE_URL=postgres://...`). PGlite (`pglite:<folder>` or `memory`) runs the same SQL in-process,
 for tests and trials.
 

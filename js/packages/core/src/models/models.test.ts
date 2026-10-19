@@ -48,6 +48,7 @@ describe("page models", () => {
     const paged = run("requests", { sort: "path", desc: "0", size: "5", page: "2" });
     expect(paged).toMatchObject({ total: 7, page: 2, pageSize: 5 });
     expect(paged.rows).toHaveLength(2);
+    expect(run("requests", { status: "bogus", duration: "bogus" })).toMatchObject({ total: 7, filtered: false });
   });
 
   it("finds the N+1 and the error, and counts it for the sidebar", () => {
@@ -58,9 +59,19 @@ describe("page models", () => {
     expect(run("badges")).toEqual({ errors: 1 });
   });
 
+
   it("selects a service and fills its detail", () => {
     const m = run("services", { service: "api" });
     expect(m.selected?.row.name).toBe("api");
     expect(m.selected?.endpoints.length).toBeGreaterThan(0);
+  });
+});
+
+describe("error links", () => {
+  it("opens a linked error group by key, and says when it is not in the range", () => {
+    const key = run("errors").groups[0]!.key;
+    expect(run("errors", { group: key }).selected?.key).toBe(key);
+    expect(run("errors", { group: "nope" }).selected).toBeNull();
+    expect(run("errors").selected).toBeNull();
   });
 });

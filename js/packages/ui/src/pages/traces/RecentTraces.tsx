@@ -1,6 +1,6 @@
 import { requestOf, type Trace, type TraceListItem } from "@wizeworks/lens-core";
 export { tracePath } from "@wizeworks/lens-core";
-import { fmtMs, shortId } from "../../format";
+import { fmtMs, fmtShownOf, shortId } from "../../format";
 import { hrefTo, setQuery, useRoute } from "../../routes";
 import { Dot, toneOfHealth, type Tone } from "../../ui/Badges";
 import { SearchInput } from "../../ui/Controls";
@@ -34,7 +34,7 @@ function TraceRow({ item, selected }: { item: TraceListItem; selected: boolean }
 export function RecentTraces({ items, total, selectedId }: { items: readonly TraceListItem[]; total: number; selectedId: string | null }) {
   const query = useRoute().query.get("q") ?? "";
   return (
-    <Panel title="Recent Traces" action={<ViewAll href={hrefTo("requests")} />}>
+    <Panel title={`Recent Traces (${fmtShownOf(items.length, total)})`} action={<ViewAll href={hrefTo("requests", [], { q: query })} />}>
       <SearchInput value={query} onChange={(v) => setQuery({ q: v })} placeholder="Search traces by ID, path, or service…" />
       {items.length === 0 ? (
         <Empty>{query && total === 0 ? "No traces match." : "No traces in this time range yet."}</Empty>

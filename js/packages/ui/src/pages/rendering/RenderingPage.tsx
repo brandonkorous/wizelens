@@ -65,8 +65,8 @@ export function RenderingPage() {
             <PhasePanel m={data} />
           </div>
           <div className="wl-grid">
-            <RouteTable routes={data.routes} all={all === "routes"} />
-            <ComponentTable components={data.components} hasReact={data.hasReact} all={all === "components"} />
+            <RouteTable routes={data.routes} total={data.routeCount} all={all === "routes"} />
+            <ComponentTable components={data.components} total={data.componentCount} hasReact={data.hasReact} all={all === "components"} />
           </div>
         </>
       )}

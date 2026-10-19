@@ -22,6 +22,8 @@ export interface RenderingModel {
   routes: RouteRow[];
   components: ComponentRow[];
   componentCount: number;
+  /** Routes before the list limit. */
+  routeCount: number;
   hasReact: boolean;
   starts: number[];
   chart: { avg: Series; p75: Series; views: Series };
@@ -84,11 +86,13 @@ export const renderingPage: PageDef<RenderingModel> = {
   },
   model(d) {
     const components = componentRowsOf(d, "cur");
+    const routes = routeRowsOf(d, "cur");
     const withIssues = components.filter((c) => c.issues.length > 0).length;
     return {
       meta: metaOf(d),
       views: viewsOf(d, "cur"),
-      routes: routeRowsOf(d, "cur").slice(0, MODEL_LIST_MAX),
+      routes: routes.slice(0, MODEL_LIST_MAX),
+      routeCount: routes.length,
       components: components.slice(0, MODEL_LIST_MAX),
       componentCount: components.length,
       hasReact: totalOf(d, "react.cur").n > 0,

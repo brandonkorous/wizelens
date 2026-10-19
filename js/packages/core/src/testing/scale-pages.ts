@@ -41,6 +41,7 @@ function paramsOf(page: PageName, range: TimeRange, mem: SyncExecutor): Record<s
   const extra: Record<string, string>[] = [];
   if (page === "traces") extra.push(...runPageSync("traces", ctx, mem).recent.slice(0, 2).map((t) => ({ trace: t.traceId })));
   if (page === "services" || page === "service") extra.push(...runPageSync("services", ctx, mem).rows.map((r) => ({ service: r.key })));
+  if (page === "errors") extra.push(...runPageSync("errors", ctx, mem).groups.slice(0, 2).map((g) => ({ group: g.key })), { group: "nope" });
   if (page === "insights") extra.push(...runPageSync("insights", ctx, mem).groups.slice(0, 2).map((g) => ({ key: g.key })));
   return [{}, ...(STATIC[page] ?? []), ...extra];
 }
@@ -52,9 +53,11 @@ function slim(model: unknown): unknown {
   return t ? { ...m, selected: { traceId: t.traceId, spanCount: t.spanCount, logs: t.logs.length } } : model;
 }
 
-/** Error group trace ids come from the newest few buckets in SQL: check they are newest memory ids, then align them. */
+/** Error group trace ids (listed and selected) come from the newest few buckets in SQL: check they are newest memory ids, then align them. */
 function alignIds(sql: unknown, want: unknown, out: string[]): void {
-  const groups = (m: unknown) => ((m as { groups?: unknown }).groups ?? []) as { traceIds?: string[] }[];
+  type Group = { traceIds?: string[] };
+  const one = (m: unknown) => (m as { selected?: unknown }).selected as Group | null | undefined;
+  const groups = (m: unknown): Group[] => [...(((m as { groups?: unknown }).groups ?? []) as Group[]), ...(one(m)?.traceIds ? [one(m)!] : [])];
   groups(sql).forEach((g, i) => {
     const w = groups(want)[i]?.traceIds;
     if (!g.traceIds || !w) return;

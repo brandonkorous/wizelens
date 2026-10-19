@@ -1,5 +1,5 @@
 import type { ComponentRow, RouteIssue, RouteRow } from "@wizeworks/lens-core";
-import { fmtCount, fmtMs } from "../../format";
+import { fmtCount, fmtMs, fmtShownOf } from "../../format";
 import { hrefTo, navigate, traceHref } from "../../routes";
 import { CountBadge, DotText, ImpactBadge, type Tone } from "../../ui/Badges";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
@@ -53,9 +53,9 @@ function more(all: boolean, what: "routes" | "components", total: number, label:
   return all ? <ViewAll href={hrefTo("rendering")} label="Show fewer" /> : <ViewAll href={hrefTo("rendering", [], { all: what })} label={label} />;
 }
 
-export function RouteTable({ routes, all }: { routes: RouteRow[]; all: boolean }) {
+export function RouteTable({ routes, total, all }: { routes: RouteRow[]; total: number; all: boolean }) {
   return (
-    <Panel flush title="Pages & Routes" action={more(all, "routes", routes.length, "View all pages")}>
+    <Panel flush title={`Pages & Routes (${fmtShownOf(routes.length, total)})`} action={more(all, "routes", routes.length, "View all pages")}>
       <Table
         columns={ROUTE_COLUMNS}
         rows={all ? routes : routes.slice(0, PREVIEW)}
@@ -67,7 +67,7 @@ export function RouteTable({ routes, all }: { routes: RouteRow[]; all: boolean }
   );
 }
 
-export function ComponentTable({ components, hasReact, all }: { components: ComponentRow[]; hasReact: boolean; all: boolean }) {
+export function ComponentTable({ components, total, hasReact, all }: { components: ComponentRow[]; total: number; hasReact: boolean; all: boolean }) {
   const empty = hasReact ? (
     <Empty title="No component renders in this range" />
   ) : (
@@ -76,7 +76,7 @@ export function ComponentTable({ components, hasReact, all }: { components: Comp
     </Empty>
   );
   return (
-    <Panel flush title="Component Hotspots" action={more(all, "components", components.length, "View all components")}>
+    <Panel flush title={`Component Hotspots (${fmtShownOf(components.length, total)})`} action={more(all, "components", components.length, "View all components")}>
       <Table
         columns={COMPONENT_COLUMNS}
         rows={all ? components : components.slice(0, PREVIEW)}

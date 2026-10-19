@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Database } from "lucide-react";
 import type { DatabaseModel, QueryRow, TableRow } from "@wizeworks/lens-core";
-import { fmtCount, fmtMs, fmtShort } from "../../format";
+import { fmtCount, fmtMs, fmtShort, fmtShownOf } from "../../format";
 import { navigate, traceHref } from "../../routes";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
@@ -33,7 +33,7 @@ export function TopQueriesPanel({ stats }: { stats: DatabaseModel }) {
   const [all, setAll] = useState(false);
   const rows = all ? stats.queries : stats.queries.slice(0, TOP);
   return (
-    <Panel title="Top Slow Queries" action={<ToggleAll open={all} total={stats.queries.length} onToggle={() => setAll(!all)} />}>
+    <Panel title={`Slowest Queries (${fmtShownOf(stats.queries.length, stats.queryShapes)})`} action={<ToggleAll open={all} total={stats.queries.length} onToggle={() => setAll(!all)} />}>
       <Table
         columns={queryColumns(stats.slowMs)}
         rows={rows}
@@ -56,7 +56,7 @@ export function TableHotspotsPanel({ stats }: { stats: DatabaseModel }) {
   const [all, setAll] = useState(false);
   const rows = all ? stats.tables : stats.tables.slice(0, TOP);
   return (
-    <Panel title="Table Hotspots" action={<ToggleAll open={all} total={stats.tables.length} onToggle={() => setAll(!all)} />}>
+    <Panel title={`Table Hotspots (${fmtShownOf(stats.tables.length, stats.tableCount)})`} action={<ToggleAll open={all} total={stats.tables.length} onToggle={() => setAll(!all)} />}>
       <Table columns={TABLE_COLUMNS} rows={rows} rowKey={(t) => t.table} empty={<Empty>No table names found in the queries.</Empty>} />
       <p className="wl-db-note">Rows returned come from the driver. Index use and rows scanned need query plans, which WizeLens does not run.</p>
     </Panel>

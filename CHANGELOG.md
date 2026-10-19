@@ -6,6 +6,18 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Fixed
 
+- **A link to an error opens that error.** The Errors page showed the first listed error when the linked one was not
+  among the newest 200 (links from the service page do that). It now loads the linked group by key, or says it is not
+  in the time range.
+- **The trace page uses your app's thresholds** for slow queries and N+1, like the Insights page. It used 100 ms and 5.
+- **Cut lists say so.** Errors, Database, Rendering, and Traces titles show "200 of 1,240" when a list holds only part.
+  "Top Slow Queries" is now "Slowest Queries".
+- **Links keep their place.** Database insight cards open the insight. "View affected requests" shows failed requests.
+  The Traces "View all" keeps the search. "View all" on Critical Spans shows only when there are more.
+- **Alert notice links open the right project**, and the Alerts page says when a host does not run alerts.
+- **An unknown status or duration in a Requests link filters nothing**, the same as an empty one (status matched
+  nothing before).
+
 - **No more "Preparing stats" flashing.** Every new trace waits a few seconds for its stats on purpose, so with live
   traffic the banner showed "1 trace left" almost all the time. Now the hub and the cloud count only traces whose stats
   run more than a minute behind (after a restart, a stats rebuild, or a big copy). The banner then says "Stats are
