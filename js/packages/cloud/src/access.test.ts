@@ -14,7 +14,7 @@ async function withTrace() {
   ({ cloud, url } = await startCloud());
   const { owner, orgId, projectId } = await setupOwner(cloud, url);
   const key = (await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", projectIds: [projectId] })).body.token;
-  const failed = span(T1, "1".repeat(16), { status: "error", statusMessage: "boom", events: [{ name: "exception", timeMs: 1_000_010, attributes: { "exception.type": "Boom", "exception.message": "boom" } }] });
+  const failed = span(T1, "1".repeat(16), { status: "error", statusMessage: "boom", startMs: Date.now() - 1000, events: [{ name: "exception", timeMs: Date.now() - 990, attributes: { "exception.type": "Boom", "exception.message": "boom" } }] });
   await fetch(`${url}/_wizelens/api/ingest`, { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: JSON.stringify({ sender: { service: "api" }, spans: [failed] }) });
   return { url, owner, orgId, projectId };
 }

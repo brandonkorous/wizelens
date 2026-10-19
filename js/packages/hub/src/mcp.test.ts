@@ -14,7 +14,7 @@ it("MCP reads traces from every service in the hub", async () => {
   let url: string;
   const audit: string[] = [];
   ({ hub, url } = await startHub({ enableMcp: true, audit: (l) => audit.push(l) }));
-  const failed = span(T1, "1".repeat(16), { status: "error", statusMessage: "kaboom", service: "billing" });
+  const failed = span(T1, "1".repeat(16), { status: "error", statusMessage: "kaboom", service: "billing", startMs: Date.now() - 1000 });
   await post(`${url}/_wizelens/api/ingest`, { sender: { service: "billing" }, spans: [failed] });
   const res = await rpc(url, 1, "tools/call", { name: "list_traces", arguments: {} });
   const body = (await res.json()) as { result: { content: { text: string }[] } };
@@ -38,7 +38,7 @@ it("MCP lists and reads metrics", async () => {
 it("an agent connects: initialize, the GET stream, tools/list, and a call", async () => {
   let url: string;
   ({ hub, url } = await startHub({ enableMcp: true }));
-  await post(`${url}/_wizelens/api/ingest`, { sender: { service: "billing" }, spans: [span(T1, "1".repeat(16), { service: "billing" })] });
+  await post(`${url}/_wizelens/api/ingest`, { sender: { service: "billing" }, spans: [span(T1, "1".repeat(16), { service: "billing", startMs: Date.now() - 1000 })] });
   const client = new Client({ name: "test-agent", version: "1.0.0" });
   await client.connect(new StreamableHTTPClientTransport(new URL(`${url}/_wizelens/mcp`)));
   expect((await client.listTools()).tools.map((t) => t.name)).toContain("list_traces");

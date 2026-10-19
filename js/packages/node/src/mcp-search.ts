@@ -1,9 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { checkSearch, decodeCursor, SEARCH_KINDS, searchMemory, suggestMemory, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { checkSearch, decodeCursor, SEARCH_KINDS, searchMemory, suggestMemory } from "@wizeworks/lens-core";
 import { z } from "zod";
-import { json, type McpDataSource, READ_ONLY, type Source } from "./mcp-shared.js";
-
-const RANGES = Object.keys(TIME_RANGES) as [TimeRange, ...TimeRange[]];
+import { json, READ_ONLY, type Source } from "./mcp-shared.js";
+import { RANGES, windowOf } from "./mcp-store.js";
 
 const LANGUAGE = [
   "Search language: words and \"phrases\" match text (path, SQL, messages, errors).",
@@ -11,11 +10,6 @@ const LANGUAGE = [
   "@attribute:value for any span or log attribute, such as @user.id:42 or @db.system.name:postgres.",
   "Use >, >=, <, <= (status:>=500, duration:>1s), ranges a..b, * wildcards (path:/api/*), -term or NOT to exclude, OR, and parentheses.",
 ].join(" ");
-
-const windowOf = (data: McpDataSource, range: TimeRange) => {
-  const now = data.now?.() ?? Date.now();
-  return { from: now - TIME_RANGES[range].ms, to: now };
-};
 
 function registerSearch(server: McpServer, src: Source): void {
   const inputSchema = {

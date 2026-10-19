@@ -10,6 +10,8 @@ export interface Queryable {
 export interface Db extends Queryable {
   /** Run `fn` in one transaction. It rolls back when `fn` throws. */
   tx<T>(fn: (q: Queryable) => Promise<T>): Promise<T>;
+  /** Run `fn` on one connection, outside a transaction (session settings, CREATE INDEX CONCURRENTLY). */
+  session<T>(fn: (q: Queryable) => Promise<T>): Promise<T>;
   /** Run several statements without parameters (migrations, before anything else uses the database). */
   exec(sql: string): Promise<void>;
   close(): Promise<void>;
@@ -45,6 +47,14 @@ export async function openPostgres(url: string): Promise<Db> {
         client.release();
       }
     },
+    async session<T>(fn: (q: Queryable) => Promise<T>): Promise<T> {
+      const client = await pool.connect();
+      try {
+        return await fn(wrap(client));
+      } finally {
+        client.release();
+      }
+    },
     exec: async (sql) => void (await pool.query(sql)),
     close: () => pool.end(),
   };
@@ -52,12 +62,13 @@ export async function openPostgres(url: string): Promise<Db> {
 
 /** PGlite (a folder, or memory), for tests and trials. All queries share one Kysely queue with Better Auth: PGlite has one connection. */
 export async function openPglite(dir?: string): Promise<Db> {
-  const [{ PGlite }, { Kysely, CompiledQuery }, { PGliteDialect }] = await Promise.all([
+  const [{ PGlite }, { pg_trgm }, { Kysely, CompiledQuery }, { PGliteDialect }] = await Promise.all([
     import("@electric-sql/pglite"),
+    import("@electric-sql/pglite/contrib/pg_trgm"),
     import("kysely"),
     import("kysely-pglite-dialect"),
   ]);
-  const lite = await PGlite.create(dir);
+  const lite = await PGlite.create(dir, { extensions: { pg_trgm } });
   const kysely: Kysely<unknown> = new Kysely({ dialect: new PGliteDialect(lite) });
   const run = (k: Kysely<unknown> | Transaction<unknown>): Queryable => ({
     query: async <T>(sql: string, params: unknown[] = []) => (await k.executeQuery<T>(CompiledQuery.raw(sql, params))).rows,
@@ -67,6 +78,7 @@ export async function openPglite(dir?: string): Promise<Db> {
     authDatabase: { db: kysely, type: "postgres", transaction: true },
     ...run(kysely),
     tx: <T>(fn: (q: Queryable) => Promise<T>) => kysely.transaction().execute((t) => fn(run(t))),
+    session: <T>(fn: (q: Queryable) => Promise<T>) => fn(run(kysely)),
     exec: async (sql) => void (await lite.exec(sql)),
     close: () => kysely.destroy(),
   };

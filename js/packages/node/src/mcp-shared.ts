@@ -1,5 +1,5 @@
 import type { ZodTypeAny } from "zod";
-import type { MetricsModel, SearchPage, SearchQuery, Suggestion, SuggestRequest, TimeRange, Trace, TraceSummary } from "@wizeworks/lens-core";
+import type { MetricsModel, SearchPage, SearchQuery, Suggestion, SuggestRequest, TimeRange, Trace } from "@wizeworks/lens-core";
 
 /** What the MCP tools can read. Read-only by design. */
 export interface McpDataSource {
@@ -9,8 +9,7 @@ export interface McpDataSource {
   slowQueryMs: number;
   /** Default repeats for find_n_plus_one. */
   nPlusOneThreshold: number;
-  /** Recent traces, newest first. A host may load them only when a tool asks. */
-  list(limit: number): TraceSummary[] | Promise<TraceSummary[]>;
+  /** Recent traces, newest first, for the tools that read whole traces in memory. A host may load them only when a tool asks. */
   all(): Trace[] | Promise<Trace[]>;
   get(traceId: string, federate: boolean): Promise<Trace | undefined>;
   audit(line: string): void;
@@ -18,7 +17,7 @@ export interface McpDataSource {
   metrics?(range: TimeRange, params: Record<string, string>): MetricsModel | Promise<MetricsModel>;
   /** Ranges the metric tools offer, shortest first. Default all. */
   metricRanges?: readonly TimeRange[];
-  /** Search on the host's store. Without it, the search tools read `all()` in memory. */
+  /** Search on the host's store. Without it, the search, list, error, and slow query tools read `all()` in memory. */
   search?(q: SearchQuery): SearchPage | Promise<SearchPage>;
   /** Autocomplete on the host's store. Without it, `all()` in memory. */
   suggest?(r: SuggestRequest): Suggestion[] | Promise<Suggestion[]>;

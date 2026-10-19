@@ -6,10 +6,12 @@ export interface Dialect {
   name: DialectName;
   /** The project column: project_id on the cloud, project on the hub. */
   project: string;
+  /** Text columns have trigram indexes (`<table>_fts`, SQLite FTS5) that "contains" can read. */
+  fts?: boolean;
 }
 
 export const PG_DIALECT: Dialect = { name: "pg", project: "project_id" };
-export const SQLITE_DIALECT: Dialect = { name: "sqlite", project: "project" };
+export const SQLITE_DIALECT: Dialect = { name: "sqlite", project: "project", fts: true };
 /** ClickHouse reads views with the Postgres table names, so the same SQL reads merged rows. */
 export const CH_DIALECT: Dialect = { name: "ch", project: "project_id" };
 
@@ -81,6 +83,13 @@ export class SqlText {
   contains(col: string, part: string): string {
     if (this.d.name === "ch") return `${col} LIKE ${this.p(`%${part.replace(/[\\%_]/g, (c) => `\\${c}`)}%`)}`;
     return this.d.name === "pg" ? `strpos(${col}, ${this.p(part)}) > 0` : `instr(${col}, ${this.p(part)}) > 0`;
+  }
+
+  /** `table.col` holds `part`, the way trigram indexes can answer: FTS5 (3 or more characters), or LIKE for pg_trgm and ClickHouse. */
+  textHas(table: string, col: string, part: string, alias = ""): string {
+    if (this.d.name === "pg") return `${alias}${col} LIKE ${this.p(`%${part.replace(/[\\%_]/g, (c) => `\\${c}`)}%`)}`;
+    if (!this.d.fts || [...part].length < 3) return this.contains(`${alias}${col}`, part);
+    return `${alias}rowid IN (SELECT rowid FROM ${table}_fts WHERE ${table}_fts MATCH ${this.p(`"${part.replaceAll('"', '""')}"`)})`;
   }
 
   /** `col` matches literal pieces with "any text" between them (null), case-sensitive. */

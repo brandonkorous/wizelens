@@ -101,7 +101,7 @@ export function searchCond(q: SqlText, kind: SearchKind, node: SearchNode | null
     case "not":
       return `NOT (${searchCond(q, kind, node.item, project)})`;
     case "text":
-      return holds(q.d, "s.text", node.value.toLowerCase(), q);
+      return q.textHas("fact_search", "text", node.value.toLowerCase(), "s.");
     case "field":
       return safe(q.d, fieldCond(q, kind, node));
     default:
