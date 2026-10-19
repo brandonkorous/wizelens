@@ -2,6 +2,7 @@
 import { optionsFromArgs, USAGE } from "./cli-args.js";
 import { type Cloud, CLOUD_VERSION, createCloud } from "./server.js";
 import { copyMain } from "./copy-cli.js";
+import { planMain, stripeSetupMain } from "./billing/cli.js";
 
 function notes(cloud: Cloud): string[] {
   const { app } = cloud;
@@ -17,6 +18,8 @@ function notes(cloud: Cloud): string[] {
 
 async function main(): Promise<void> {
   if (process.argv[2] === "copy-telemetry") return copyMain(process.argv.slice(3));
+  if (process.argv[2] === "plan") return planMain(process.argv.slice(3), process.env);
+  if (process.argv[2] === "stripe-setup") return stripeSetupMain(process.argv.slice(3), process.env);
   const options = optionsFromArgs(process.argv.slice(2), process.env);
   if (options === "help") return void process.stdout.write(USAGE);
   const cloud = await createCloud(options);
@@ -31,6 +34,7 @@ async function main(): Promise<void> {
       `  Database    ${db}`,
       `  Telemetry   ${cloud.app.telemetry.kind === "clickhouse" ? "ClickHouse" : "the database above"}`,
       `  Mail        ${{ resend: "Resend", smtp: "SMTP", test: "test sender", log: "log only" }[cloud.app.mailer.via]}`,
+      `  Billing     ${cloud.app.billing.on ? "Stripe (plans and limits on)" : "off (every organization is unlimited)"}`,
       ...notes(cloud),
     ].join("\n"),
   );

@@ -52,6 +52,30 @@ export const passkeySchema = {
   },
 };
 
+/** Better Auth's Stripe plugin: the organization is the Stripe customer and owns the subscription (billing/stripe-plugin.ts). */
+export const stripeSchema = {
+  user: { modelName: "users", fields: { stripeCustomerId: "stripe_customer_id" } },
+  organization: { modelName: "orgs", fields: { stripeCustomerId: "stripe_customer_id" } },
+  subscription: {
+    modelName: "subscriptions",
+    fields: {
+      referenceId: "reference_id",
+      stripeCustomerId: "stripe_customer_id",
+      stripeSubscriptionId: "stripe_subscription_id",
+      periodStart: "period_start",
+      periodEnd: "period_end",
+      trialStart: "trial_start",
+      trialEnd: "trial_end",
+      cancelAtPeriodEnd: "cancel_at_period_end",
+      cancelAt: "cancel_at",
+      canceledAt: "canceled_at",
+      endedAt: "ended_at",
+      billingInterval: "billing_interval",
+      stripeScheduleId: "stripe_schedule_id",
+    },
+  },
+};
+
 export const ssoSchema = {
   ssoProvider: {
     modelName: "sso_providers",

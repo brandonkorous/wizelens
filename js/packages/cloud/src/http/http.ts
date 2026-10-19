@@ -7,6 +7,8 @@ export class HttpError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    /** More fields for the JSON answer, for example the plan a 402 needs. */
+    readonly extra: Record<string, unknown> = {},
   ) {
     super(message);
   }

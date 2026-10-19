@@ -4,7 +4,7 @@ import { suppressionOf } from "../repo/suppressions.js";
 import { resendSender } from "./resend.js";
 
 /** "account": mail the person asked for. "security": notices about their own account. The rest: mail someone or something else started. */
-export type MailKind = "account" | "security" | "invite" | "alert" | "team" | "health" | "digest";
+export type MailKind = "account" | "security" | "invite" | "alert" | "team" | "health" | "digest" | "billing";
 
 /** Kinds a spam complaint does not stop: the person asked for them, or they protect the account. */
 const ALWAYS = new Set<MailKind>(["account", "security"]);

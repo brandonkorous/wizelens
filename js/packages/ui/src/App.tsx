@@ -29,6 +29,7 @@ import { TracesPage } from "./pages/traces/TracesPage";
 import { AUTH_PAGES, type AuthPageId, type PageId, type Route, useRoute } from "./routes";
 import { releaseMissing } from "./data/release";
 import { EmailBanner } from "./shell/EmailBanner";
+import { UsageBanner } from "./shell/UsageBanner";
 import { Sidebar } from "./shell/Sidebar";
 import { TopBar } from "./shell/TopBar";
 import { UpdateBanner, UpdateNeeded } from "./shell/UpdateBanner";
@@ -127,6 +128,7 @@ function Shell() {
         <TopBar data={data} />
         <UpdateBanner />
         <EmailBanner />
+        <UsageBanner />
         <main className="wl-page">
           <PageView route={route} />
         </main>

@@ -4,8 +4,8 @@ import type { WizeAuth } from "./auth.js";
 import { AUTH_BASE_PATH, CLIENT_IP_HEADER } from "./options.js";
 
 const SAFE = new Set(["GET", "HEAD", "OPTIONS"]);
-/** Paths an outside party posts to (sign-in providers, and OAuth apps such as Claude), which cannot send the dashboard header. */
-const EXTERNAL: RegExp[] = [/^\/callback\/[^/]+$/, /^\/sso\/callback(\/[^/]+)?$/, /^\/sso\/saml2\/sp\/(acs|slo)\/[^/]+$/, /^\/oauth2\/(token|register|revoke)$/];
+/** Paths an outside party posts to (sign-in providers, OAuth apps such as Claude, SCIM from identity providers), which cannot send the dashboard header. */
+const EXTERNAL: RegExp[] = [/^\/callback\/[^/]+$/, /^\/sso\/callback(\/[^/]+)?$/, /^\/sso\/saml2\/sp\/(acs|slo)\/[^/]+$/, /^\/oauth2\/(token|register|revoke)$/, /^\/scim\/v2\/[A-Za-z]+(\/[^/]+)?$/];
 const IP_HEADERS = ["x-forwarded-for", "x-real-ip", "cf-connecting-ip", "true-client-ip", "forwarded", CLIENT_IP_HEADER];
 const MAX_BODY = 64 * 1024;
 const MAX_EXTERNAL_BODY = 1024 * 1024;

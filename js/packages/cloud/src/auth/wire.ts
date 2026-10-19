@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import type { StripeDeps } from "../billing/stripe-plugin.js";
 import type { CloudConfig } from "../config.js";
 import type { Db } from "../db/db.js";
 import type { Mailer } from "../mail/mailer.js";
@@ -31,7 +32,7 @@ function originsOf(publicUrl: string, local: boolean): string[] {
 }
 
 /** Secrets, the setup gate, and the rest Better Auth needs; Better Auth itself starts once the address is known. */
-export async function wireAuth(db: Db, config: CloudConfig, mailer: Mailer): Promise<AuthWiring> {
+export async function wireAuth(db: Db, config: CloudConfig, mailer: Mailer, stripe?: StripeDeps): Promise<AuthWiring> {
   clearAuthEnv();
   const [secrets, setup] = await Promise.all([resolveSecrets(db, config.authSecret), setupGate(db, config.setupToken)]);
   let base = config.publicUrl;
@@ -51,6 +52,8 @@ export async function wireAuth(db: Db, config: CloudConfig, mailer: Mailer): Pro
         setup,
         checkPwned: config.checkPwnedPasswords ?? db.kind === "postgres",
         retentionDays: config.retentionDays,
+        billingOn: config.billing.on,
+        stripe,
       };
       return createAuth(deps);
     },

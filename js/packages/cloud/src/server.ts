@@ -8,6 +8,8 @@ import type { WizeAuth } from "./auth/auth.js";
 import { authHandler } from "./auth/bridge.js";
 import { AUTH_BASE_PATH } from "./auth/options.js";
 import { wireAuth } from "./auth/wire.js";
+import { createBilling } from "./billing/service.js";
+import { STRIPE_WEBHOOK_PATH, stripeWebhook } from "./billing/webhook.js";
 import { Changes } from "./changes.js";
 import { type CloudConfig, type CloudOptions, resolveConfig } from "./config.js";
 import { openDb } from "./db/db.js";
@@ -72,6 +74,7 @@ async function route(p: Parts, req: IncomingMessage, res: ServerResponse): Promi
   const ctx: Ctx = { req, res, url, params: {}, app: p.app };
   if (path === "/healthz") return void res.writeHead(200, { "Content-Type": "text/plain" }).end("ok");
   if (path === "/" || path === BASE) return void res.writeHead(302, { Location: `${BASE}/${url.search}` }).end();
+  if (path === STRIPE_WEBHOOK_PATH && req.method === "POST") return stripeWebhook(p.app, req, res);
   if (path.startsWith(`${AUTH_BASE_PATH}/`)) return p.auth()(req, res);
   if (path.startsWith("/.well-known/") && (await serveOAuthMetadata(p.app, req, res, path))) return;
   const signal = otlpSignalOf(path);
@@ -82,7 +85,7 @@ async function route(p: Parts, req: IncomingMessage, res: ServerResponse): Promi
 
 function onError(err: unknown, res: ServerResponse): void {
   if (res.headersSent) return void res.end();
-  if (err instanceof HttpError) return sendJson(res, err.status, { error: err.message });
+  if (err instanceof HttpError) return sendJson(res, err.status, { ...err.extra, error: err.message });
   console.error("[wizelens-cloud]", err);
   sendJson(res, 500, { error: "Something went wrong on the server." });
 }
@@ -98,15 +101,20 @@ async function openStores(config: CloudConfig) {
   return { db, telemetry, changes };
 }
 
+/** Mail, plans and usage (Stripe with billing on), and the auth wiring. */
+async function openServices(config: CloudConfig, db: Awaited<ReturnType<typeof openDb>>) {
+  const mailer = await createMailer(config, db);
+  const billing = await createBilling(config, db);
+  return { mailer, billing, wiring: await wireAuth(db, config, mailer, billing.stripe) };
+}
+
 /** Open the database, bring its schema up to date, and build the server. Call `listen()` to start. */
 export async function createCloud(options: CloudOptions = {}): Promise<Cloud> {
   const config = resolveConfig(options);
   const stores = await openStores(config);
   const { db, telemetry } = stores;
-  const mailer = await createMailer(config, db);
-  const wiring = await wireAuth(db, config, mailer);
-  let auth: WizeAuth | undefined;
-  let handler: ReturnType<typeof authHandler> | undefined;
+  const { mailer, billing, wiring } = await openServices(config, db);
+  let [auth, handler]: [WizeAuth | undefined, ReturnType<typeof authHandler> | undefined] = [undefined, undefined];
   let listenUrl = config.publicUrl ?? `http://localhost:${config.port}`;
   const app: CloudApp = {
     ...stores,
@@ -114,6 +122,7 @@ export async function createCloud(options: CloudOptions = {}): Promise<Cloud> {
     version: CLOUD_VERSION,
     startedMs: config.now(),
     mailer,
+    billing,
     secrets: wiring.secrets,
     get auth(): WizeAuth {
       if (!auth) throw new Error("The cloud is not listening yet.");
@@ -143,6 +152,7 @@ export async function createCloud(options: CloudOptions = {}): Promise<Cloud> {
       stopJobs();
       server.closeAllConnections?.();
       await new Promise<void>((resolve) => server.close(() => resolve()));
+      await billing.usage.flush().catch((err: unknown) => console.error("[wizelens-cloud] usage flush failed:", err));
       await mailer.close();
       await telemetry.close();
       await db.close();

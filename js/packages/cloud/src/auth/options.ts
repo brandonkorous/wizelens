@@ -86,6 +86,8 @@ export function rateLimitOptions(): BetterAuthOptions["rateLimit"] {
       "/get-session": { window: 10, max: 60 },
       "/sso/register": { window: 60, max: 5 },
       "/sso/verify-domain": { window: 60, max: 5 },
+      // An identity provider's first sync sends a call per person; tokens are checked on every call.
+      "/scim/v2/*": { window: 60, max: 1200 },
     },
   };
 }

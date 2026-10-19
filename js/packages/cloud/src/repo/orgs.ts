@@ -10,6 +10,8 @@ export interface Org {
   name: string;
   slug: string;
   retentionDays: number;
+  /** The plan column; "unlimited" is what applies while billing is off (routes/me.ts). */
+  plan: string;
 }
 
 export interface Membership extends Org {
@@ -33,7 +35,7 @@ export interface PendingInvite {
   expiresMs: number;
 }
 
-const ORG_COLUMNS = `o.id, o.name, o.slug, o.retention_days AS "retentionDays"`;
+const ORG_COLUMNS = `o.id, o.name, o.slug, o.retention_days AS "retentionDays", o.plan`;
 const ms = (column: string) => `(extract(epoch FROM ${column}) * 1000)::double precision`;
 
 /** A slug no organization has yet, from the name. */
@@ -75,5 +77,8 @@ export const pendingInvites = (q: Queryable, orgId: string): Promise<PendingInvi
 export async function deleteOrgEverything(q: Queryable, orgId: string): Promise<void> {
   for (const { id } of await q.query<{ id: string }>("SELECT id FROM projects WHERE org_id = $1", [orgId])) await deleteProjectData(q, id);
   await q.query("DELETE FROM audit WHERE org_id = $1", [orgId]);
+  await q.query("DELETE FROM subscriptions WHERE reference_id = $1", [orgId]);
+  // SCIM rows carry the organization as their provisioning domain (auth/scim.ts); group members and grants go with them.
+  for (const t of ["scim_groups", "scim_users", "scim_identity_tombstones", "scim_connection_bindings"]) await q.query(`DELETE FROM ${t} WHERE provisioning_domain_id = $1`, [orgId]);
   await q.query("DELETE FROM orgs WHERE id = $1", [orgId]);
 }
