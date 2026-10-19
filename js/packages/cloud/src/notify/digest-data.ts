@@ -1,4 +1,4 @@
-import { alignNow, FACT_SLOW_QUERY_MS, type Headline, pageContext, runPage, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { alignNow, FACT_SLOW_QUERY_MS, type Headline, pageContext, runPage, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import type { Queryable } from "../db/db.js";
 import type { DigestPeriod } from "../repo/mail-prefs.js";
 import type { TelemetryStore } from "../telemetry/store.js";
@@ -29,7 +29,7 @@ async function alertsFired(q: Queryable, projectId: string, from: number, to: nu
 export async function digestData(q: Queryable, t: TelemetryStore, projectId: string, retentionDays: number, period: DigestPeriod, now: number): Promise<DigestData | null> {
   const range = RANGE_OF[period];
   if (TIME_RANGES[range].ms > retentionDays * DAY_MS) return null;
-  const pc = pageContext(range, alignNow(now), {}, { slowQueryMs: FACT_SLOW_QUERY_MS }, await t.settling(projectId));
+  const pc = pageContext(range, alignNow(now), {}, { slowQueryMs: FACT_SLOW_QUERY_MS }, await t.settling(projectId, { before: now - SETTLE_BEHIND_MS }));
   const ex = t.executor(projectId, retentionDays * DAY_MS);
   const [overview, errors] = await Promise.all([runPage("overview", pc, ex), runPage("errors", pc, ex)]);
   const { from, to } = pc.window;

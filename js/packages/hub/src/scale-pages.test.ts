@@ -16,7 +16,7 @@ describe("hub pages", () => {
     expect((await pageParity(hubExecutor(store), traces.slice(2), ["1h"], RETENTION_MS)).length).toBeGreaterThan(5);
   });
 
-  it("serves page models, with a settling count until the stats are built", async () => {
+  it("serves page models, with no settling count while a new trace waits its few seconds", async () => {
     const { hub, url } = await startHub();
     try {
       const get = async (path: string) => {
@@ -26,7 +26,7 @@ describe("hub pages", () => {
       expect((await get("info")).body.capabilities).toContain("serverStats");
       const startMs = Date.now() - 60_000;
       await post(`${url}/_wizelens/api/ingest`, { sender: { service: "orders-api", project: "shop" }, spans: [span(T1, "1".repeat(16), { startMs, attributes: { "http.request.method": "GET", "url.path": "/orders", "http.response.status_code": 500 } })] });
-      expect((await get("models/overview?range=1h&project=shop")).body.meta!.settling).toBe(1);
+      expect((await get("models/overview?range=1h&project=shop")).body.meta!.settling).toBeNull();
       settleHub(hub.data.store);
       const overview = await get("models/overview?range=1h&project=shop");
       expect(overview.body.meta!.settling).toBeNull();

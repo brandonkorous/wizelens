@@ -24,7 +24,7 @@ function Results({ kind, s }: { kind: SearchKind; s: SearchState }) {
   const empty = s.loading ? <Empty title="Searching…" /> : <Empty title="Nothing matches">Try fewer terms, another kind, or a wider time range.</Empty>;
   return (
     <Panel title={`${TABS.find(([k]) => k === kind)![1]} (${rows.length}${s.more ? "+" : ""})`} flush>
-      {settling ? <p className="wl-search-note wl-muted wl-small">{settling} new traces are still being indexed.</p> : null}
+      {settling ? <p className="wl-search-note wl-muted wl-small">Search is catching up: {settling} {settling === 1 ? "trace is" : "traces are"} not in the results yet.</p> : null}
       {s.failure ? <Failure failure={s.failure} /> : <Table columns={SEARCH_COLUMNS[kind] as never} rows={rows as never[]} rowKey={(r) => resultKey(kind, r)} empty={empty} />}
       {s.more && (
         <div className="wl-search-more">

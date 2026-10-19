@@ -10,11 +10,11 @@ describe("hub stats tables", () => {
   it("settles the scenario and answers every need like the memory executor", async () => {
     const { store, clock } = clockStore();
     writeTraces(store, traces);
-    expect(hubSettling(store)).toBe(traces.length);
+    expect(hubSettling(store, {}, 0)).toBe(traces.length);
     const t0 = performance.now();
     expect(settleAll(store, clock)).toBe(traces.length);
     const settleMs = performance.now() - t0;
-    expect(hubSettling(store)).toBeNull();
+    expect(hubSettling(store, {}, 0)).toBeNull();
     expect(store.settleGen).toBe(1);
     expect(await parity(hubExecutor(store), traces)).toEqual([]);
     expect(await parity(hubExecutor(store, { project: "shop", env: "prod" }), traces, ["24h"])).toEqual([]);
@@ -30,9 +30,20 @@ describe("hub stats tables", () => {
     writeTraces(store, traces.slice(0, 1));
     clock.now += 1_000;
     expect(settleHub(store)).toBe(0);
-    expect(hubSettling(store, { project: "shop" })).toBe(1);
-    expect(hubSettling(store, { project: "admin" })).toBeNull();
+    expect(hubSettling(store, { project: "shop" }, 0)).toBe(1);
+    expect(hubSettling(store, { project: "admin" }, 0)).toBeNull();
     expect(settleAll(store, clock)).toBe(1);
+  });
+
+  it("counts only traces whose stats run behind, not the few seconds every trace waits", () => {
+    const { store, clock } = clockStore();
+    writeTraces(store, traces.slice(0, 2));
+    clock.now += 5_000;
+    expect(hubSettling(store)).toBeNull();
+    clock.now += 60_000;
+    expect(hubSettling(store)).toBe(2);
+    expect(settleAll(store, clock)).toBe(2);
+    expect(hubSettling(store)).toBeNull();
   });
 
   it("finds differences when the data differs", async () => {

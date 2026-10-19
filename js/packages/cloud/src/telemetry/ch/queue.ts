@@ -56,10 +56,10 @@ export class SettleQueue {
     else it.settledMs = updatedMs;
   }
 
-  /** How many traces of a project (optionally one environment) still wait. */
-  count(project: string, env?: string): number {
+  /** How many traces of a project (optionally one environment, last written at or before `before`) still wait. */
+  count(project: string, env?: string, before = Infinity): number {
     let n = 0;
-    for (const d of this.items.values()) if (d.project === project && (!env || d.env === env)) n++;
+    for (const d of this.items.values()) if (d.project === project && (!env || d.env === env) && d.updatedMs <= before) n++;
     return n;
   }
 

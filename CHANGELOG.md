@@ -4,6 +4,13 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Fixed
+
+- **No more "Preparing stats" flashing.** Every new trace waits a few seconds for its stats on purpose, so with live
+  traffic the banner showed "1 trace left" almost all the time. Now the hub and the cloud count only traces whose stats
+  run more than a minute behind (after a restart, a stats rebuild, or a big copy). The banner then says "Stats are
+  catching up", and search says "Search is catching up".
+
 ### Added
 
 - **"A new version is ready" notice.** When a host starts a new release, an open dashboard shows a notice with

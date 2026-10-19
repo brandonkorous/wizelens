@@ -1,7 +1,7 @@
 import type { ModelMeta } from "@wizeworks/lens-core";
 import { fmtCount } from "../format";
 
-/** Banners above a page: loading, a failed load, numbers based on part of the data, or stats still being prepared. */
+/** Banners above a page: loading, a failed load, numbers based on part of the data, or stats running behind. */
 export function ModelState({ model, loading, error, what }: { model: { meta: ModelMeta } | null; loading: boolean; error: string | null; what: string }) {
   const sampled = model?.meta.sampled;
   const settling = model?.meta.settling ?? 0;
@@ -16,7 +16,7 @@ export function ModelState({ model, loading, error, what }: { model: { meta: Mod
       )}
       {settling > 0 && (
         <div className="wl-banner wl-banner-info">
-          Preparing stats: {fmtCount(settling)} {settling === 1 ? "trace" : "traces"} left to add up. Numbers may be low until it finishes.
+          Stats are catching up: {fmtCount(settling)} {settling === 1 ? "trace" : "traces"} left. Numbers may be low for a few minutes.
         </div>
       )}
     </>

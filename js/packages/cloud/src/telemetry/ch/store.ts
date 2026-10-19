@@ -85,7 +85,7 @@ function chTelemetry(ch: ChClient, { settler, pool }: ReturnType<typeof settlerO
     lastTraceMs: () => lastTraceMs(ch, Date.now()),
     executor: (projectId, retentionMs, env) =>
       sqlExecutor({ ...src(projectId), scope: { project: projectId, env }, retentionMs, loadTrace: (id) => getTrace(ch, [projectId], id).then((t) => t ?? null) }),
-    settling: async (projectId, env) => queue.count(projectId, env) || null,
+    settling: async (projectId, o = {}) => queue.count(projectId, o.env, o.before) || null,
     search: (projectId, q) => searchSql(src(projectId), q),
     suggest: (projectId, r) => suggestSql(src(projectId), r),
     slowestEndpoints: (projectId, w, minCount, limit) => slowestEndpoints(ch, projectId, w, minCount, limit),

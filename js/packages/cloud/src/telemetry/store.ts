@@ -24,6 +24,12 @@ export interface MetricQuery {
 /** How long each project's organization keeps data, in days; the default when a project has none. */
 export type RetentionOf = (projectIds: readonly string[]) => Promise<Map<string, number>>;
 
+/** Which waiting traces `settling` counts: one environment, and only those last written at or before `before`. */
+export interface SettlingScope {
+  env?: string;
+  before?: number;
+}
+
 export interface SettleOptions {
   defaultRetentionDays?: number;
   batch?: number;
@@ -51,7 +57,7 @@ export interface TelemetryStore {
   /** Page needs from the project's stats. */
   executor(projectId: string, retentionMs: number, env?: string): Executor;
   /** Traces still waiting for their stats, or null when none. */
-  settling(projectId: string, env?: string): Promise<number | null>;
+  settling(projectId: string, o?: SettlingScope): Promise<number | null>;
   search(projectId: string, q: SearchQuery): Promise<SearchPage>;
   suggest(projectId: string, r: SuggestRequest): Promise<Suggestion[]>;
   /** The slowest endpoints by p95 in a window, with at least `minCount` requests. */

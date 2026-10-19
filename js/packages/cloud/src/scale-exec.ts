@@ -1,6 +1,7 @@
 import { type Executor, PG_DIALECT, type SqlRunner, sqlExecutor } from "@wizeworks/lens-core";
 import type { Queryable } from "./db/db.js";
 import { getTrace } from "./repo/trace-read.js";
+import type { SettlingScope } from "./telemetry/store.js";
 
 const DAY_MS = 86_400_000;
 
@@ -24,11 +25,11 @@ export function cloudExecutor(q: Queryable, projectId: string, retentionMs: numb
   });
 }
 
-/** Traces of a project still waiting for their stats, for `pageContext(..., settling)`. Null when none. */
-export async function cloudSettling(q: Queryable, projectId: string, env?: string): Promise<number | null> {
+/** Traces of a project still waiting for their stats, optionally only those last written at or before `before`. Null when none. */
+export async function cloudSettling(q: Queryable, projectId: string, o: SettlingScope = {}): Promise<number | null> {
   const [row] = await q.query<{ n: number }>(
-    "SELECT count(*)::int AS n FROM traces WHERE project_id = $1 AND settled_ms < updated_ms AND ($2::text = '' OR env = $2::text)",
-    [projectId, env ?? ""],
+    "SELECT count(*)::int AS n FROM traces WHERE project_id = $1 AND settled_ms < updated_ms AND ($2::text = '' OR env = $2::text) AND ($3::float8 IS NULL OR updated_ms <= $3::float8)",
+    [projectId, o.env ?? "", o.before ?? null],
   );
   return row?.n || null;
 }

@@ -104,10 +104,11 @@ export function pruneStats(store: HubStore, doomed: readonly TraceStateRow[]): v
   if (doomed.length) store.settleGen++;
 }
 
-/** Traces whose stats are not built yet, for "Preparing stats". */
-export function settlingCount(db: DatabaseSync, scope: { project?: string; env?: string } = {}): number {
+/** Traces whose stats are not built yet, optionally only those last written at or before `before`. */
+export function settlingCount(db: DatabaseSync, scope: { project?: string; env?: string } = {}, before?: number): number {
   const where = ["settled_ms < updated_ms"];
   const args: SQLInputValue[] = [];
+  if (before !== undefined) where.push("updated_ms <= ?"), args.push(before);
   if (scope.project) where.push("project = ?"), args.push(scope.project);
   if (scope.env) where.push("env = ?"), args.push(scope.env);
   return (db.prepare(`SELECT count(*) AS n FROM traces WHERE ${where.join(" AND ")}`).get(...args) as { n: number }).n;
