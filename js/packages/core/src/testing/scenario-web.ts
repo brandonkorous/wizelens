@@ -10,6 +10,7 @@ import {
   ATTR_SERVICE_VERSION,
   type ReactComponentStat,
 } from "../attributes.js";
+import { LOOSE_TRACE_PREFIX } from "../loose.js";
 import type { Attributes, Trace } from "../types.js";
 import { UPTIME_SERVICE, uptimeRoute } from "../uptime/check.js";
 import { draft, type Draft, exception, fetchSpan, finish, log, query, server, span } from "./scenario-kit.js";
@@ -64,6 +65,16 @@ export function fetchOnly(id: string, at: number, i: number): Trace {
   const attributes: Attributes = { [ATTR_BROWSER_TYPE]: "error", [ATTR_BROWSER_ROUTE]: "/checkout", [ATTR_SERVICE_VERSION]: i % 2 === 0 ? "1.4.0" : "1.3.9" };
   span(d, { category: "browser", service: "browser", startMs: at + 40, durationMs: 0, name: "error", status: "error", events, attributes });
   log(d, at + 41, "warn", "Missing endpoint", "browser");
+  return finish(d);
+}
+
+/** Lines outside a request (startup, a timer): a loose trace with no spans, whose messages vary only in numbers and ids. */
+export function outside(id: string, at: number, i: number): Trace {
+  const d = draft(LOOSE_TRACE_PREFIX + id.slice(0, 16));
+  log(d, at, "info", `Cache warmed in ${100 + i} ms`, "orders");
+  log(d, at + 5, "debug", "Timer tick", "orders");
+  log(d, at + 10, i % 2 ? "warn" : "info", `Retrying job ${4000 + i} for tenant 'acme-${i}'`, "worker-svc", null, { attempt: 1 + (i % 3) });
+  if (i % 3 === 0) log(d, at + 20, "error", `Lost connection to 10.0.0.${i} after ${i} retries`, "worker-svc");
   return finish(d);
 }
 

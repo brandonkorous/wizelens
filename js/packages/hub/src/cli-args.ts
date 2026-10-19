@@ -14,6 +14,10 @@ Usage: wizelens-hub [options]
   --token <text>      Require this token on every call.        (WIZELENS_HUB_TOKEN)
   --retention <time>  Keep traces this long: 30m, 24h, 7d.
                       Default 7d.                              (WIZELENS_HUB_RETENTION)
+  --log-retention <time>
+                      Keep log lines this long. Lines in a
+                      request go with their trace when that
+                      is sooner. Default: --retention.         (WIZELENS_HUB_LOG_RETENTION)
   --max-traces <n>    Keep at most this many. Default 50000.   (WIZELENS_HUB_MAX_TRACES)
   --max-metric-points <n>
                       Keep at most this many metric points.
@@ -51,6 +55,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
       data: { type: "string" },
       token: { type: "string" },
       retention: { type: "string" },
+      "log-retention": { type: "string" },
       "max-traces": { type: "string" },
       "max-metric-points": { type: "string" },
       mcp: { type: "boolean" },
@@ -67,6 +72,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
     storagePath: a.data ?? env.WIZELENS_HUB_DATA,
     token: a.token ?? env[HUB_TOKEN_ENV],
     maxAgeMs: parseDuration(a.retention ?? env.WIZELENS_HUB_RETENTION),
+    logMaxAgeMs: parseDuration(a["log-retention"] ?? env.WIZELENS_HUB_LOG_RETENTION),
     maxTraces: int(a["max-traces"] ?? env.WIZELENS_HUB_MAX_TRACES),
     maxMetricPoints: int(a["max-metric-points"] ?? env.WIZELENS_HUB_MAX_METRIC_POINTS),
     enableMcp: a.mcp ?? env.WIZELENS_HUB_MCP === "1",

@@ -8,16 +8,18 @@ export interface Project {
   orgId: string;
   name: string;
   slug: string;
+  /** Days log lines are kept, or null for the organization's retention. */
+  logRetentionDays: number | null;
 }
 
-const COLUMNS = `id, org_id AS "orgId", name, slug`;
+const COLUMNS = `id, org_id AS "orgId", name, slug, log_retention_days AS "logRetentionDays"`;
 
 export async function createProject(q: Queryable, orgId: string, name: string, now: number): Promise<Project> {
   const base = slugOf(name);
   const taken = new Set((await q.query<{ slug: string }>("SELECT slug FROM projects WHERE org_id = $1", [orgId])).map((r) => r.slug));
   let slug = base;
   for (let i = 2; taken.has(slug); i++) slug = `${base}-${i}`;
-  const p = { id: newId(), orgId, name: name.trim().slice(0, 100) || slug, slug };
+  const p = { id: newId(), orgId, name: name.trim().slice(0, 100) || slug, slug, logRetentionDays: null };
   await q.query("INSERT INTO projects (id, org_id, name, slug, created_ms) VALUES ($1, $2, $3, $4, $5)", [p.id, orgId, p.name, slug, now]);
   return p;
 }

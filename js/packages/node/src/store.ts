@@ -1,16 +1,8 @@
-import { ATTR_BROWSER_SESSION, buildTrace, type LogRecord, type SamplingInfo, type Span, type Trace, type TraceSummary, toSummary } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_SESSION, buildTrace, isLooseTraceId, type LogRecord, type SamplingInfo, type Span, type Trace, type TraceSummary, toSummary } from "@wizeworks/lens-core";
 import type { Held, TraceSampler, Verdict } from "./sampling.js";
 import type { StoredTrace, TraceChanges } from "./store-types.js";
 
-interface Entry {
-  traceId: string;
-  spans: Map<string, Span>;
-  logs: LogRecord[];
-  remotes: Set<string>;
-  sessions: Set<string>;
-  /** Earliest span start or log time. Used for age eviction. */
-  startMs: number;
-}
+import { type Entry, EntryMap, LooseBatcher } from "./store-entries.js";
 
 export type { StoredTrace, TraceChanges } from "./store-types.js";
 
@@ -43,7 +35,8 @@ interface Dirty {
 
 /** In-memory ring buffer of traces, keyed by trace id. This is always the read path. */
 export class TraceStore {
-  readonly #entries = new Map<string, Entry>();
+  readonly #entries: EntryMap;
+  readonly #loose: LooseBatcher;
   readonly #dirty = new Map<string, Dirty>();
   readonly #maxTraces: number;
   readonly #maxAgeMs: number;
@@ -60,6 +53,8 @@ export class TraceStore {
     this.#maxLogs = options.maxLogsPerTrace ?? 1000;
     this.#now = options.now ?? Date.now;
     this.#sampler = options.sampler;
+    this.#entries = new EntryMap(this.#maxTraces, Math.max(10, Math.floor(this.#maxTraces / 4)));
+    this.#loose = new LooseBatcher(this.#maxLogs);
   }
 
   get size(): number {
@@ -80,19 +75,7 @@ export class TraceStore {
   }
 
   #entry(traceId: string, startMs: number): Entry {
-    let entry = this.#entries.get(traceId);
-    if (!entry) {
-      entry = { traceId, spans: new Map(), logs: [], remotes: new Set(), sessions: new Set(), startMs };
-      this.#entries.set(traceId, entry);
-      while (this.#entries.size > this.#maxTraces) {
-        const oldest = this.#entries.keys().next().value;
-        if (oldest === undefined) break;
-        this.#entries.delete(oldest);
-      }
-    } else if (startMs < entry.startMs) {
-      entry.startMs = startMs;
-    }
-    return entry;
+    return this.#entries.touch(traceId, startMs);
   }
 
   /** Hear every new span, log, and remote. Returns the unsubscribe function. */
@@ -122,6 +105,13 @@ export class TraceStore {
 
   addLog(traceId: string, log: LogRecord): void {
     this.#gate(traceId, this.#sampler?.log(traceId, log), () => this.#putLog(traceId, log));
+  }
+
+  /** A line written outside a request: into the current loose batch, never sampled with traces. Returns its trace id. */
+  addLooseLog(log: LogRecord): string {
+    const traceId = this.#loose.idFor(log.timeMs);
+    this.#putLog(traceId, log);
+    return traceId;
   }
 
   addRemote(traceId: string, endpoint: string): void {
@@ -203,10 +193,10 @@ export class TraceStore {
   pruneByAge(): number {
     const cutoff = this.#now() - this.#maxAgeMs;
     let dropped = 0;
-    for (const [id, entry] of this.#entries) {
+    for (const entry of [...this.#entries.values()]) {
       if (entry.startMs < cutoff) {
-        this.#entries.delete(id);
-        this.#dirty.delete(id);
+        this.#entries.delete(entry.traceId);
+        this.#dirty.delete(entry.traceId);
         dropped++;
       }
     }
@@ -218,7 +208,7 @@ export class TraceStore {
     return entry ? buildTrace(entry.traceId, [...entry.spans.values()], entry.logs, entry.remotes) : undefined;
   }
 
-  /** All traces, newest first. With `session`, only traces that have a browser span from that tab. */
+  /** All traces and loose batches (lines outside a request), newest first. With `session`, only traces that have a browser span from that tab. */
   all(session?: string): Trace[] {
     this.pruneByAge();
     const traces: Trace[] = [];
@@ -230,8 +220,9 @@ export class TraceStore {
     return traces.sort((a, b) => b.startMs - a.startMs);
   }
 
+  /** Trace summaries, newest first; loose batches are not traces, so they are left out. */
   list(limit = 50, session?: string): TraceSummary[] {
-    return this.all(session).slice(0, Math.max(0, limit)).map(toSummary);
+    return this.all(session).filter((t) => !isLooseTraceId(t.traceId)).slice(0, Math.max(0, limit)).map(toSummary);
   }
 
   clear(): void {

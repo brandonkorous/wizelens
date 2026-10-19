@@ -53,6 +53,7 @@ Run it with `--host 0.0.0.0 --token <text>`. Then:
 | `--data <file>` | `WIZELENS_HUB_DATA` | `~/.wizelens/hub/hub.db` (`memory` for none) |
 | `--token <text>` | `WIZELENS_HUB_TOKEN` | none |
 | `--retention <time>` | `WIZELENS_HUB_RETENTION` | `7d` |
+| `--log-retention <time>` | `WIZELENS_HUB_LOG_RETENTION` | same as `--retention` (see [Logs](/docs/logs/)) |
 | `--max-traces <n>` | `WIZELENS_HUB_MAX_TRACES` | `50000` |
 | `--max-metric-points <n>` | `WIZELENS_HUB_MAX_METRIC_POINTS` | `2000000` raw points |
 | `--mcp` | `WIZELENS_HUB_MCP=1` | off |

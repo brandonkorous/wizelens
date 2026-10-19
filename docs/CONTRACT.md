@@ -47,7 +47,7 @@ All `api/*` endpoints return JSON (camelCase) and send `Access-Control-Allow-Ori
 |---|---|
 | `GET /` and static files | Dashboard UI (from `@wizeworks/lens-ui` build). Hash routing: `#/`, `#/requests`, `#/traces`, `#/traces/{traceId}[/{view}]`, `#/database`, `#/rendering`, `#/errors`, `#/logs`, `#/services`, `#/insights`, `#/settings`. `{view}` is one of `timeline`, `sql`, `http`, `logs`, `errors`, `insights`. |
 | `GET api/info` | `ServiceInfo` (see Types) |
-| `GET api/traces?limit=50&session={id}` | `TraceSummary[]`, newest first. With `session`, only traces that have a span whose `wizelens.browser.session` equals `{id}`. |
+| `GET api/traces?limit=50&session={id}` | `TraceSummary[]`, newest first. With `session`, only traces that have a span whose `wizelens.browser.session` equals `{id}`. Loose batches (lines outside a request) are left out of summaries on every host; `full=true` includes them. |
 | `GET api/traces?full=true&limit=1000&since={ms}` | `Trace[]` from this service only (no federation), newest first. `limit` max 5000. With `since`, only traces whose last activity (`startMs + durationMs`) is at or after `{ms}`. The dashboard uses this for its charts and merges the results of every service it knows. |
 | `GET api/traces/{traceId}?federate=true` | `Trace` (404 if unknown and no remote has it) |
 | `POST api/client-spans` | Body `{ spans: Span[], logs?: (LogRecord & { traceId })[], sentAt?: number }`. Browser spans and browser log lines. Stored into their traces. At most 500 spans and 100 logs per call; log messages are cut at 4000 characters. 204. |
@@ -127,7 +127,8 @@ interface Trace extends TraceSummary {
 type HostMode = "in-app" | "hub" | "cloud";
 type Capability =
   | "federation" | "environments" | "registry" | "accounts" | "alerts" | "sharing"
-  | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search" | "issues";
+  | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search" | "issues"
+  | "infra" | "uptime" | "statusPages" | "sourcemaps" | "savedSearches";
 
 interface ServiceInfo {
   mode?: HostMode;          // absent = "in-app"
@@ -210,10 +211,11 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `issues` | The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. See "Issue states" below | | ✅ | ✅ |
 | `uptime` | The host runs uptime checks (`api/uptime` on the hub, `api/projects/{p}/uptime` in the cloud) and serves the `uptime` page model; the Uptime page appears. See "Uptime checks" | | ✅ (unless `--no-uptime`) | ✅ |
 | `statusPages` | A project can turn on a public status page (`api/status/{token}`) | | | ✅ |
+| `savedSearches` | The host keeps saved searches (`api/saved-searches`). Without it, the dashboard keeps them in the browser | | ✅ | ✅ |
 
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search"]`, plus `metrics` when metrics are on and `sourcemaps` (Node) unless `sourceMaps: false`. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes", "issues", "infra", "sourcemaps", "uptime"]` (`uptime` only while checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "issues", "infra", "sourcemaps", "savedSearches", "uptime"]` (`uptime` only while checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -223,6 +225,9 @@ answers `mode: "hub"` and `capabilities: ["federation", "environments", "registr
 | Sampling rate (0..1) | `Sampling.Rate` | `sampling.rate` | 1, or `WIZELENS_SAMPLE_RATE` |
 | Keep traces with an error | `Sampling.KeepErrors` | `sampling.keepErrors` | true |
 | Keep traces with a slow server-side span (ms) | `Sampling.KeepSlowMs` | `sampling.keepSlowMs` | 1000 (null = off) |
+| Keep log lines outside a request | `Logs.Outside` | `logs.outside` | true, or `WIZELENS_LOGS_OUTSIDE` |
+| Lowest level kept outside a request | `Logs.MinLevel` (`LogLevel`) | `logs.minLevel` | info, or `WIZELENS_LOGS_MIN_LEVEL` |
+| Share kept outside a request, below warn (0..1) | `Logs.SampleRate` | `logs.sampleRate` | 1, or `WIZELENS_LOGS_SAMPLE_RATE` |
 | Tag the current request | `WizeLensRequest.Tag(key, value?)` | `wizelens.tag(key, value?)` | — |
 | Set the current user | automatic from `HttpContext.User` | `wizelens.setUser(id)` | — |
 
@@ -353,6 +358,32 @@ another process); it is kept when any span has status `error` (with `keepErrors`
 at least `keepSlowMs` long. Otherwise it is dropped. A held trace whose root never ends is dropped after 60 s. Items that come
 after the choice follow it; an error after a drop keeps the rest of the trace. Sampling applies to the store, the SQLite
 file, and the hub sends alike.
+
+## Logs outside a request (v0.10)
+
+A log line written while no span is current (startup, background jobs, timers) is kept as a **loose** line when the add-on's
+options allow it: `Logs.Outside` / `logs.outside` is on, its level is at or above `Logs.MinLevel` / `logs.minLevel`, and,
+below `warn`, a random draw falls inside `Logs.SampleRate` / `logs.sampleRate` (warn and up are always kept). Trace sampling
+never applies to loose lines. Categories that start with `wizelens` (and `[wizelens]` console notices) are never kept.
+
+- Loose lines go into a **loose batch**: a trace with no spans whose id is 16 zeros plus 16 random hex digits
+  (`LOOSE_TRACE_PREFIX`, `isLooseTraceId`). An add-on starts a new batch for each 5-minute window (`LOOSE_WINDOW_MS`) or when
+  the batch holds its per-trace log limit (1000). `spanId` is null; service, category, attributes, redaction, and length
+  limits are those of request lines.
+- Loose batches are stored, persisted, and sent to the hub as ordinary traces (no new wire field). In-app stores cap them
+  apart from traces: at most max(10, `MaxTraces` / 4) batches, so neither pushes the other out.
+- They are not traces to list: `api/traces` summaries, trace lists, the Traces page, `trace` rollups, and `traces`/`requests`
+  search leave them out. Their lines are on the Logs page, in `logs` search, and in `full=true` reads. A Logs row of a loose
+  line has an empty `traceName`.
+- The Logs page filter `origin=request|outside` (list filter `logOrigin`) keeps one side.
+
+### Log patterns
+
+`logPattern(message)` takes the first line, masks uuids (`<uuid>`), quoted values (`<str>`), hex and mixed ids (`<id>`),
+and numbers (`<num>`), collapses spaces, and cuts it at 200 characters. `patternIdOf(message)` is its 14-hex-digit hash. Log
+facts carry it in `fact_logs.pattern`; the list filter `pattern` (URL `pattern=`) keeps one pattern. The `log.p` rollup counts
+lines by `service␟level␟pattern␟origin` (`r` or `o`), with the newest line as its top (`{ pattern, message, category, traceId }`).
+`log`, `log.s`, and `log.p` are the log kinds (`LOG_KINDS`): they follow the log retention.
 
 ## Not traced
 
@@ -580,6 +611,8 @@ interface IngestBatch {
 | GET | `/_wizelens/api/models/metrics` | The Metrics page: `range`, `project`, `env`, `service`, `metric`, `group`, `stat`, `q`. Read from the metric rollups (see "Metrics"), with no point cap |
 | GET | `/_wizelens/api/models/hosts`, `/_wizelens/api/models/kubernetes` | The Hosts and Kubernetes pages (see "Hosts and Kubernetes"): `range`, `project`, `env`, `host`, `node`, `pod`, `cluster`, `ns`, `workload`, `service`, `q` |
 | GET | `/_wizelens/api/models/{page}` | One page model (see "Page models"): `range`, `project`, `env`, and the page's own parameters. Ranges up to the hub's age limit. `serverStats` |
+| GET / POST | `/_wizelens/api/saved-searches?project=&kind=logs` | `{ searches: SavedSearch[] }`, or save `{ name, kind?: "logs", params }` (201 `{ search }`; `params` keeps only the Logs page filters `level`, `exact`, `service`, `category`, `q`, `pattern`, `origin`). `savedSearches` |
+| DELETE | `/_wizelens/api/saved-searches/{id}` | 204, or 404 |
 | POST | `/_wizelens/mcp` | With `--mcp`. The same tools, over the newest 2000 traces of every service, plus `list_metrics`, `get_metric`, and `get_overview` |
 | GET / POST | `/_wizelens/api/uptime?project=` | `UptimeList` / add a check (`project` in the body). See "Uptime checks". 404 with `--no-uptime` |
 | PATCH / DELETE | `/_wizelens/api/uptime/{id}` | Change (only the fields sent) or delete a check |
@@ -607,7 +640,7 @@ Trace `remotes` that point at a service which sends to the hub are hidden, so th
 - Span kind, status, events, and attributes map one to one. Category uses the same rules as the add-ons.
 - Older attribute names are copied to the current ones when the current one is missing: `http.method`, `http.status_code`,
   `http.url`, `http.target`, `http.scheme`, `db.statement`, `db.system`, `db.name`, `db.operation`, `net.peer.name`, `net.peer.port`.
-- Log records keep their trace id. Records without one are skipped (WizeLens shows logs per trace).
+- Log records keep their trace id. Records without one (startup, jobs) go into a loose batch: `looseTraceIdOf(project|service|environment|host, time)`, one per source and 5-minute window, with `spanId` null.
   Severity 1–4 trace, 5–8 debug, 9–12 info, 13–16 warn, 17–20 error, 21–24 critical.
 - Metrics: gauge, sum, histogram, exponential histogram, and summary, as described in "Metrics". Metric attributes are redacted.
 
@@ -633,7 +666,14 @@ CREATE TABLE services (project TEXT, service TEXT, environment TEXT, host TEXT, 
 CREATE TABLE metrics  (time_ms REAL, project TEXT, env TEXT, service TEXT, name TEXT, series_key TEXT, json TEXT); -- series_key = sha1
 CREATE TABLE sourcemaps (project TEXT, release TEXT, file TEXT, map BLOB, bytes INTEGER, uploaded_ms REAL,
                        PRIMARY KEY (project, release, file));                                            -- map gzipped
+CREATE TABLE saved_searches (id TEXT PRIMARY KEY, project TEXT, kind TEXT, name TEXT, params TEXT, created_ms REAL); -- kind 'logs'
 ```
+
+Log retention: `--log-retention <time>` (`WIZELENS_HUB_LOG_RETENTION`, default `--retention`). Each prune drops loose batches
+older than it (through the trace prune, so they leave the rollups), raw log rows older than it, their `fact_logs`, `logs`
+search rows, and log attributes, and the log kinds' rollup buckets past it. Loose batches do not count toward
+`--max-traces` and are not pruned by `--retention`; the 1 h tier ages trace kinds by `--retention` and log kinds by
+`--log-retention`. `fact_logs` gained `pattern` (added to older files when opened).
 
 Metric points older than the trace age limit are dropped, then the oldest past `--max-metric-points`
 (`WIZELENS_HUB_MAX_METRIC_POINTS`, default 2,000,000). That cap is for raw points only: the metric rollup tiers drop buckets past
@@ -656,7 +696,7 @@ traces. Incidents that ended more than 90 days ago are dropped.
 
 `@wizeworks/lens-cloud` (command `wizelens-cloud`, default port **5970**) is the hosted service. It serves the same dashboard,
 answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats",
-"metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps"]`,
+"metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "savedSearches"]`,
 and keeps data in Postgres (`DATABASE_URL=postgres://...`). PGlite (`pglite:<folder>` or `memory`) runs the same SQL in-process,
 for tests and trials.
 
@@ -756,6 +796,8 @@ retention, and the audit log.
 | POST / DELETE | `api/orgs/{org}/keys[/{id}]` | Admin. The secret is in the answer once |
 | GET | `api/orgs/{org}/audit?before=` | Admin |
 | GET | `api/info`, `api/traces`, `api/traces/{id}`, `api/services` — all with `?project=` | Member or read key. `api/traces/{id}` joins other projects (see "Traces across projects") |
+| PATCH | `api/orgs/{org}/projects/{p}` | Admin. `{ logRetentionDays }`: 1 to 400, or null to follow the organization. Answers the project (with `logRetentionDays`) and writes `project.update` to the audit log |
+| GET / POST / DELETE | `api/projects/{p}/saved-searches[/{id}]` | Reader lists (`?kind=logs`), writer saves or deletes. Shared with everyone who can read the project. `savedSearches` |
 | POST | `api/projects/{p}/services/forget` | Admin. Forgets offline hosts; each service keeps its newest host. Answers `{ removed }` and writes `service.forget` to the audit log |
 | GET | `api/models/{page}?project=&range=&env=&…` | Member or read key. See "Page models". `metrics` is a page too |
 | GET / POST / PATCH / DELETE | `api/projects/{p}/alerts[/{id}]`, `…/{id}/test` | Read: viewer; change: member |
@@ -779,9 +821,10 @@ retention, and the audit log.
 ### Page models (`serverStats`)
 
 Every dashboard page is one definition in `@wizeworks/lens-core` (`PAGES`: overview, requests, traces, database, rendering,
-errors, logs, services, service, insights, `uptime`, and `badges`, the sidebar counts). `uptime` reads the `svc.ep` rollups of the
-`wizelens-uptime` service: runs, failures, and average response time per check (`check`: one check id), per bucket, and in total
-against the window before. `service` is the full page of one service
+errors, logs, `log-patterns` (the top 50 patterns of the Logs filter, with counts, change, and trend), `log-chart` (the lines of
+one log search per bucket, its total, and its change), services, service, insights, `uptime`, and `badges`, the sidebar counts).
+`uptime` reads the `svc.ep` rollups of the `wizelens-uptime` service: runs, failures, and average response time per check
+(`check`: one check id), per bucket, and in total against the window before. `service` is the full page of one service
 (`service`: a Services row key such as `api:orders`, or a name): its numbers against the window before, traffic and latency over
 time, endpoints, callers, and for APIs and workers the top error groups, slowest requests, and newest log lines. A page says what it needs from its URL parameters (filters,
 sort, page, selected item): rollup groups and series over the chosen window and the window before it, list rows, or one trace.
@@ -850,7 +893,8 @@ Pages read small tables built from the stored traces, never the traces themselve
 ### Alerts
 
 A rule watches one metric over a window (5 min to 24 h), optionally in one environment: `error_rate` (%), `p95_ms`, `avg_ms`,
-`requests`, `new_errors` (error groups not seen in the window before), `slow_queries`. It fires when the value is above (`>`) or
+`requests`, `new_errors` (error groups not seen in the window before), `slow_queries`, `log_count` (lines that match the rule's
+`logSearch`, the Logs page filters, for example `{ "level": "error", "q": "timed out" }`). It fires when the value is above (`>`) or
 below (`<`) the threshold. No data never fires, except `requests <` (traffic stopped). Rules run every minute. A notice is sent
 only when the state changes (fired, resolved), to a webhook (the JSON notice), a Slack incoming webhook, or email
 (`{ "kind": "email", "to": [...] }`: 1 to 20 addresses of members of the organization, confirmed ones when mail is on, checked again
@@ -919,7 +963,10 @@ contain; not with HEAD), `intervalMin` (1 to 60), `timeoutMs` (1 to 60 s), `env`
 
 ### Retention
 
-Each organization keeps traces for `retention_days` (default 30, 1 to 400). Older traces are deleted every 10 minutes.
+Each organization keeps traces for `retention_days` (default 30, 1 to 400). Older traces are deleted every 10 minutes. Each
+project keeps log lines for `projects.log_retention_days` (1 to 400; null follows the organization): the same job drops loose
+batches, raw log rows, log facts, log search rows and attributes, and the log kinds' rollup buckets past it, and the 1 h tier ages
+only the other kinds by the organization's retention.
 `POST …/projects/{id}/clear` deletes a project's data now.
 
 ### Cloud storage
@@ -939,8 +986,8 @@ new ids (so new links). A test checks that Better Auth finds nothing to change i
 Data tables are keyed by `project_id`. Times are `double precision` epoch ms, except in Better Auth's tables (`timestamptz`). Our
 secrets (keys, shares, status page links) are stored as SHA-256 hashes only; Better Auth stores reset and confirm tokens hashed. Migration 8 added
 `fact_search` and `fact_attrs` (see "Search"). Migration 10 added `issues` (see "Issue states"). Migration 11 added
-`uptime_checks`, `uptime_incidents`, and `status_pages` (see
-"Uptime checks"). Migration 12 added `sourcemaps` (see "Source maps").
+`uptime_checks`, `uptime_incidents`, and `status_pages` (see "Uptime checks"). Migration 12 added `sourcemaps` (see "Source maps").
+Migration 13 added `fact_logs.pattern`, `projects.log_retention_days`, `alert_rules.log_search`, and `saved_searches`.
 
 ### Telemetry stores (small mode and scale mode)
 
@@ -954,6 +1001,8 @@ Postgres keeps accounts, organizations, projects, keys, the service registry, al
   tombstones, so a trace settled again drops the rows it no longer has). Views with the Postgres names read the merged rows (`FINAL`),
   so the shared SQL (dialect `ch`) answers pages, lists, searches, and metrics with the same results; the parity tests run the same
   cases on memory, SQLite, Postgres, and ClickHouse. Rows expire by TTL at their organization's retention (written with each row;
-  a retention change moves it with a background mutation). One cloud process writes telemetry: its settle queue lives in memory and
+  a retention change moves it with a background mutation). Log rows (raw lines, `fact_logs`, `logs` search rows, log attributes,
+  loose batches, and the log kinds' rollup rows) expire by the project's log retention, never past the trace retention for a line
+  in a request; `project_retention.log_days` remembers it. One cloud process writes telemetry: its settle queue lives in memory and
   is rebuilt on start from the update log of the last 6 hours. `wizelens-cloud copy-telemetry` copies a small-mode database into
   ClickHouse once (projects already there are skipped). Deployment: `deploy/README.md`, "ClickHouse".

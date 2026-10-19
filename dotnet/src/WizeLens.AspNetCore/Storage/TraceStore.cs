@@ -42,6 +42,7 @@ public sealed partial class TraceStore
         lock (entry)
         {
             entry.Logs.Add(log);
+            if (TraceIds.IsLoose(entry.TraceId)) entry.StartMs = Math.Min(entry.StartMs, log.TimeMs);
             entry.Touch();
         }
         _dirty.TryAdd(entry.TraceId, 0);
@@ -83,17 +84,20 @@ public sealed partial class TraceStore
         lock (entry) return entry.Build();
     }
 
-    /// <summary>All traces that have at least one span, newest first.</summary>
+    /// <summary>All traces that have at least one span, newest first; loose batches are left out.</summary>
     public IReadOnlyList<Trace> All() => Newest(int.MaxValue, session: null);
+
+    /// <summary>Every trace and loose batch, newest first, for search: a loose batch adds only log documents.</summary>
+    public IReadOnlyList<Trace> Searchable() => Newest(int.MaxValue, session: null, includeLoose: true);
 
     /// <summary>Newest traces first. With <paramref name="session"/>, only traces with a browser span from that tab.</summary>
     public IReadOnlyList<TraceSummary> Summaries(int limit, string? session = null) =>
         [.. Newest(Math.Max(0, limit), session).Select(t => t.ToSummary())];
 
-    /// <summary>Newest full traces first. With <paramref name="sinceMs"/>, only traces active at or after that time.</summary>
+    /// <summary>Newest full traces first, loose batches too. With <paramref name="sinceMs"/>, only traces active at or after that time.</summary>
     public IReadOnlyList<Trace> Recent(int limit, double? sinceMs = null)
     {
-        var traces = Newest(int.MaxValue, session: null);
+        var traces = Newest(int.MaxValue, session: null, includeLoose: true);
         var picked = sinceMs is { } since ? traces.Where(t => t.StartMs + t.DurationMs >= since) : traces;
         return [.. picked.Take(Math.Max(0, limit))];
     }
@@ -108,19 +112,10 @@ public sealed partial class TraceStore
             {
                 double age;
                 lock (entry) age = entry.AgeMs;
-                if (age < cutoffMs && _traces.TryRemove(id, out _))
-                {
-                    _dirty.TryRemove(id, out _);
-                    removed++;
-                }
+                if (age < cutoffMs && Remove(id)) removed++;
             }
 
-            if (removed > 0)
-            {
-                // Rebuild the eviction order so it does not keep ids that are gone.
-                _order.Clear();
-                foreach (var id in _traces.OrderBy(kv => kv.Value.AgeMs).Select(kv => kv.Key)) _order.Enqueue(id);
-            }
+            if (removed > 0) RebuildOrder();
         }
         return removed;
     }
@@ -131,6 +126,8 @@ public sealed partial class TraceStore
         {
             _traces.Clear();
             _order.Clear();
+            _looseOrder.Clear();
+            _looseCount = 0;
             _dirty.Clear();
         }
     }
@@ -190,14 +187,14 @@ public sealed partial class TraceStore
         return result;
     }
 
-    private List<Trace> Newest(int limit, string? session)
+    private List<Trace> Newest(int limit, string? session, bool includeLoose = false)
     {
         var picked = new List<TraceEntry>();
         foreach (var entry in _traces.Values)
         {
             lock (entry)
             {
-                if (entry.Spans.Count == 0) continue;
+                if (entry.Spans.Count == 0 && !(includeLoose && entry.Logs.Count > 0 && TraceIds.IsLoose(entry.TraceId))) continue;
                 if (session is not null && !entry.Sessions.Contains(session)) continue;
                 picked.Add(entry);
             }
@@ -219,11 +216,7 @@ public sealed partial class TraceStore
             if (_traces.TryGetValue(traceId, out existing)) return existing;
             var entry = new TraceEntry(traceId.ToLowerInvariant());
             _traces[traceId] = entry;
-            _order.Enqueue(traceId);
-            while (_traces.Count > _maxTraces && _order.TryDequeue(out var oldest))
-            {
-                if (_traces.TryRemove(oldest, out _)) _dirty.TryRemove(oldest, out _);
-            }
+            Track(traceId);
             return entry;
         }
     }

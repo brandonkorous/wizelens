@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { BellRing, Plus } from "lucide-react";
-import { ALERT_METRICS, METRIC_ALERT_STATS } from "@wizeworks/lens-core";
+import { ALERT_METRICS, cleanSearchParams, logSearchText, METRIC_ALERT_STATS } from "@wizeworks/lens-core";
 import { currentProject, useAccount } from "../../data/account";
 import { apiSend } from "../../data/api";
 import { useHost } from "../../data/host";
 import { getScope } from "../../data/prefs";
 import { act, useApi } from "../../data/useApi";
 import { fmtAgo } from "../../format";
+import { setQuery, useRoute } from "../../routes";
 import { Badge, DotText } from "../../ui/Badges";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
@@ -17,7 +18,8 @@ const unitOf = (r: AlertRule) => (r.metric === "metric" ? "" : ALERT_METRICS[r.m
 const plain = (v: number) => (Number.isInteger(v) ? String(v) : Math.abs(v) < 1 ? v.toPrecision(3) : v.toFixed(1));
 const fmtValue = (r: AlertRule, v: number | null) => (v === null ? "–" : `${plain(v)}${unitOf(r) === "%" ? "%" : unitOf(r) ? ` ${unitOf(r)}` : ""}`);
 const ruleLabel = (r: AlertRule) =>
-  r.metric === "metric" ? `${r.metricName} ${METRIC_ALERT_STATS[r.metricStat || "avg"].toLowerCase()}${r.metricService ? ` (${r.metricService})` : ""}` : ALERT_METRICS[r.metric].label;
+  r.metric === "metric" ? `${r.metricName} ${METRIC_ALERT_STATS[r.metricStat || "avg"].toLowerCase()}${r.metricService ? ` (${r.metricService})` : ""}`
+  : r.metric === "log_count" && logSearchText(r.logSearch ?? {}) ? `Log lines (${logSearchText(r.logSearch ?? {})})` : ALERT_METRICS[r.metric].label;
 
 function ruleColumns(canWrite: boolean, onEdit: (r: AlertRule) => void, onTest: (r: AlertRule) => void, onDelete: (r: AlertRule) => void): Column<AlertRule>[] {
   return [
@@ -61,17 +63,30 @@ export function AlertsPage() {
   );
 }
 
+/** A new log count rule from the Logs page's "Alert on this search" (`?log=` holds its filters as JSON). */
+function logRule(json: string): RuleDraft {
+  let search: Record<string, string> = {};
+  try {
+    search = cleanSearchParams(JSON.parse(json));
+  } catch {
+    // A broken link starts from an empty search.
+  }
+  return { ...EMPTY_RULE, name: logSearchText(search).slice(0, 100) || "Log lines", metric: "log_count", threshold: 10, logSearch: search };
+}
+
 function AlertRules() {
   const project = getScope().project;
   const { data, error, reload } = useApi<AlertsData>(project ? `./api/projects/${project}/alerts` : null);
   const role = currentProject(useAccount())?.org.role;
   const canWrite = role !== undefined && role !== "viewer";
-  const [editing, setEditing] = useState<AlertRule | "new" | null>(null);
+  const fromLogs = useRoute().query.get("log");
+  const [editing, setEditing] = useState<AlertRule | "new" | null>(fromLogs ? "new" : null);
+  const close = () => (setEditing(null), fromLogs && setQuery({ log: null }));
   const [note, setNote] = useState<string | null>(null);
   const base = `./api/projects/${project}/alerts`;
   const save = async (r: RuleDraft) => {
     const err = await act(() => (editing === "new" ? apiSend("POST", base, r) : apiSend("PATCH", `${base}/${(editing as AlertRule).id}`, r)), reload);
-    if (!err) setEditing(null);
+    if (!err) close();
     return err;
   };
   const test = (r: AlertRule) => void apiSend<{ delivery: string }>("POST", `${base}/${r.id}/test`).then((x) => (setNote(`Test sent: ${x.delivery}`), reload()), (e: unknown) => setNote(String(e)));
@@ -82,7 +97,7 @@ function AlertRules() {
       <PageHeader title="Alerts" subtitle="Get told when error rates, latency, traffic, or any metric cross a line. Checked every minute.">{add}</PageHeader>
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
       {note && <div className="wl-banner wl-banner-info">{note}</div>}
-      {editing && <AlertForm initial={editing === "new" ? EMPTY_RULE : editing} onSave={save} onCancel={() => setEditing(null)} />}
+      {editing && <AlertForm initial={editing === "new" ? (fromLogs ? logRule(fromLogs) : EMPTY_RULE) : editing} isNew={editing === "new"} onSave={save} onCancel={close} />}
       <Panel title="Rules" flush>
         <Table columns={ruleColumns(canWrite, setEditing, test, remove)} rows={data?.rules ?? []} rowKey={(r) => r.id} empty={<Empty title="No alerts yet"><BellRing aria-hidden="true" /> Add one to hear about problems before your users do.</Empty>} />
       </Panel>

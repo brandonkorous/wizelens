@@ -17,6 +17,8 @@ export interface HubStoreOptions {
   maxAgeMs?: number;
   /** Most metric points kept. Default 2,000,000. */
   maxMetricPoints?: number;
+  /** Oldest log line kept, in ms. Default: `maxAgeMs`. Lines outside a request go at this age; lines in a request go with their trace when that is sooner. */
+  logMaxAgeMs?: number;
   now?: () => number;
 }
 
@@ -44,6 +46,7 @@ export class HubStore {
   readonly maxTraces: number;
   readonly maxAgeMs: number;
   readonly maxMetricPoints: number;
+  readonly logMaxAgeMs: number;
   readonly path: string;
   readonly now: () => number;
   readonly #stmts: HubStatements;
@@ -55,6 +58,7 @@ export class HubStore {
     this.maxTraces = Math.max(1, o.maxTraces ?? 50_000);
     this.maxAgeMs = Math.max(60_000, o.maxAgeMs ?? 7 * DAY_MS);
     this.maxMetricPoints = Math.max(1, o.maxMetricPoints ?? 2_000_000);
+    this.logMaxAgeMs = Math.max(60_000, o.logMaxAgeMs ?? this.maxAgeMs);
     this.now = o.now ?? Date.now;
     if (o.path !== ":memory:") mkdirSync(dirname(o.path), { recursive: true });
     this.db = new DatabaseSync(o.path);
@@ -100,15 +104,23 @@ export class HubStore {
     this.#stmts.upsertService.run(s.project ?? "", s.service, s.environment ?? "", s.host ?? "", via, JSON.stringify(sender), now, now);
   }
 
-  /** Drop traces past the age or count limit, and services not seen for as long. Returns traces dropped. */
+  /** Traces past the age or count limit, and loose batches (lines outside a request) past the log age. */
+  #doomed(cutoff: number, logCutoff: number): TraceStateRow[] {
+    const loose = "substr(trace_id, 1, 16) = '0000000000000000'";
+    return this.db
+      .prepare(
+        `SELECT trace_id, project, env, contrib FROM traces WHERE trace_id IN (SELECT trace_id FROM traces WHERE start_ms < ? AND NOT ${loose}
+         UNION SELECT trace_id FROM traces WHERE start_ms < ? AND ${loose}
+         UNION SELECT trace_id FROM (SELECT trace_id FROM traces WHERE NOT ${loose} ORDER BY start_ms DESC LIMIT -1 OFFSET ?))`,
+      )
+      .all(cutoff, logCutoff, this.maxTraces) as unknown as TraceStateRow[];
+  }
+
+  /** Drop traces past the age or count limit, log lines past the log age, and services not seen for as long. Returns traces dropped. */
   prune(): number {
     const cutoff = this.now() - this.maxAgeMs;
-    const doomed = this.db
-      .prepare(
-        `SELECT trace_id, project, env, contrib FROM traces WHERE trace_id IN (SELECT trace_id FROM traces WHERE start_ms < ?
-         UNION SELECT trace_id FROM (SELECT trace_id FROM traces ORDER BY start_ms DESC LIMIT -1 OFFSET ?))`,
-      )
-      .all(cutoff, this.maxTraces) as unknown as TraceStateRow[];
+    const logCutoff = this.now() - this.logMaxAgeMs;
+    const doomed = this.#doomed(cutoff, logCutoff);
     this.db.exec("BEGIN");
     try {
       pruneStats(this, doomed);
@@ -116,7 +128,8 @@ export class HubStore {
         const del = this.db.prepare(`DELETE FROM ${table} WHERE trace_id = ?`);
         for (const r of doomed) del.run(r.trace_id);
       }
-      this.db.prepare("DELETE FROM services WHERE last_seen < ?").run(cutoff);
+      this.db.prepare("DELETE FROM logs WHERE time_ms < ?").run(logCutoff);
+      this.db.prepare("DELETE FROM services WHERE last_seen < ?").run(Math.min(cutoff, logCutoff));
       this.#pruneMetrics(cutoff);
       this.db.exec("COMMIT");
     } catch (err) {

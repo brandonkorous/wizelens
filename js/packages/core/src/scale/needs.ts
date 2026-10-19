@@ -80,6 +80,10 @@ export interface ListFilter {
   logService?: string;
   /** Logs: only this category. */
   category?: string;
+  /** Logs: only lines of this pattern id (`patternIdOf`). */
+  pattern?: string;
+  /** Logs: only lines written in a request, or only lines outside one. */
+  logOrigin?: "request" | "outside";
 }
 
 /** Rows of a fact table in a window: filtered, sorted, then paged or limited. */
@@ -95,7 +99,7 @@ export interface ListNeed {
   page?: { page: number; size: number };
   limit?: number;
   count?: boolean;
-  /** Requests only: totals and per-bucket aggregates of the filtered rows, like a "req" rollup. */
+  /** Requests and logs: totals and per-bucket aggregates of the filtered rows, like a "req" or "log" rollup (logs: err is lines at error and up). */
   aggregate?: { buckets: BucketCount };
 }
 

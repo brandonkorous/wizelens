@@ -22,6 +22,10 @@ const REQUEST_COLS = [
   "client_address Nullable(String), end_user Nullable(String), request_id Nullable(String), tags String, search String",
 ].join(", ");
 
+/** The log fact columns as shipped; `pattern` came later (FACT_ALTERS). */
+const LOG_COLS = "idx Int32, env LowCardinality(String), time_ms Float64, level LowCardinality(String), level_rank Int16, service LowCardinality(String), category String, message String, trace_name String, span_id Nullable(String), attributes String, search String";
+const LOG_NAMES = LOG_COLS.split(/,\s*/).map((c) => c.split(/\s+/)[0]!).join(", ");
+
 const SEARCH_COLS = [
   "kind LowCardinality(String), owner String, env LowCardinality(String), time_ms Float64, span_id Nullable(String), service String",
   "name Nullable(String), method Nullable(String), path Nullable(String), route Nullable(String), status Nullable(Int32), outcome Nullable(String)",
@@ -32,7 +36,7 @@ const SEARCH_COLS = [
 export const FACT_DDL: readonly string[] = [
   ...fact("fact_requests", REQUEST_COLS, "project_id, start_ms, trace_id", "start_ms"),
   ...fact("fact_traces", "env LowCardinality(String), start_ms Float64, path String, duration_ms Float64, health Nullable(String), status String, services String, span_count Int32, slow Bool, search String", "project_id, start_ms, trace_id", "start_ms"),
-  ...fact("fact_logs", "idx Int32, env LowCardinality(String), time_ms Float64, level LowCardinality(String), level_rank Int16, service LowCardinality(String), category String, message String, trace_name String, span_id Nullable(String), attributes String, search String", "project_id, time_ms, trace_id, idx", "time_ms"),
+  ...fact("fact_logs", LOG_COLS, "project_id, time_ms, trace_id, idx", "time_ms"),
   ...fact("fact_critical", "span_id String, env LowCardinality(String), start_ms Float64, duration_ms Float64, name String, service LowCardinality(String), layer LowCardinality(String)", "project_id, start_ms, trace_id, span_id", "start_ms"),
   ...fact("fact_search", SEARCH_COLS, "project_id, kind, time_ms, trace_id, owner", "time_ms",
     "INDEX ix_text text TYPE ngrambf_v1(3, 65536, 2, 0) GRANULARITY 1, INDEX ix_trace trace_id TYPE bloom_filter GRANULARITY 1"),
@@ -40,10 +44,13 @@ export const FACT_DDL: readonly string[] = [
     "INDEX ix_trace trace_id TYPE bloom_filter GRANULARITY 1"),
 ];
 
-/** Changes to shipped fact tables, in order. The n-gram bloom filled up at 8,192 rows a block and skipped nothing; the text index lists each block's n-grams. */
+/** Changes to shipped fact tables, in order. The n-gram bloom filled up at 8,192 rows a block and skipped nothing; the text index lists each block's n-grams. Log facts gained their pattern id. */
 export const FACT_ALTERS: readonly string[] = [
   "ALTER TABLE fact_search_t ADD INDEX IF NOT EXISTS ix_text_ngrams text TYPE text(tokenizer = ngrams(3)) GRANULARITY 1",
   "ALTER TABLE fact_search_t DROP INDEX IF EXISTS ix_text",
+  "ALTER TABLE fact_logs_t ADD COLUMN IF NOT EXISTS pattern String DEFAULT ''",
+  "ALTER TABLE fact_logs_t ADD INDEX IF NOT EXISTS ix_pattern pattern TYPE bloom_filter GRANULARITY 1",
+  `CREATE OR REPLACE VIEW fact_logs AS SELECT project_id, trace_id, ${LOG_NAMES}, pattern FROM fact_logs_t FINAL`,
 ];
 
 /** Fact tables (storage names) and the columns that identify a row within a trace, for tombstones. */

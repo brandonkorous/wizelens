@@ -35,7 +35,7 @@ internal sealed class WizeLensSearchTools(TraceStore store, IHostEnvironment env
         var parsed = SearchCheck.Check(q);
         if (!parsed.Ok) return Error(new { error = parsed.Error, start = parsed.Start, end = parsed.End });
         var query = new SearchQuery(kind ?? SearchKinds.Requests, parsed.Node, window, limit ?? 20, SearchRun.DecodeCursor(cursor), environment.EnvironmentName);
-        return Ok(SearchRun.SearchMemory(store.All(), query));
+        return Ok(SearchRun.SearchMemory(store.Searchable(), query));
     }
 
     [McpServerTool(Name = "search_fields", ReadOnly = true, OpenWorld = false), Description("List search fields, attribute keys seen in the data, or the common values of one field, to build a search.")]
@@ -48,7 +48,7 @@ internal sealed class WizeLensSearchTools(TraceStore store, IHostEnvironment env
         if (field?.Length > 200 || prefix?.Length > 200) return Error(new { error = "field and prefix can be at most 200 characters." });
         if (WindowOf(range) is not { } window) return Error(new { error = UnknownRange(range!) });
         var request = new SuggestRequest(string.IsNullOrEmpty(field) ? null : field, prefix ?? "", window, 50, environment.EnvironmentName);
-        return Ok(SearchSuggest.SuggestMemory(store.All(), request));
+        return Ok(SearchSuggest.SuggestMemory(store.Searchable(), request));
     }
 
     /// <summary>The window of a named range back from now (default 24h), or null when there is no such range.</summary>

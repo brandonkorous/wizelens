@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { isLooseTraceId } from "../loose.js";
 import { percentileOf, sumOf } from "../stats/common.js";
 import { insightGroupOf, type InsightSummary, requestInsightGroups } from "../stats/insights.js";
 import { isFailed, requestRows } from "../stats/requests.js";
@@ -67,7 +68,8 @@ describe("request facts", () => {
 
 describe("trace facts", () => {
   it("counts traces, spans, and slow traces", () => {
-    const cards = traceCards(traces, { from: 0, to: SCENARIO_NOW + 1 }, 4);
+    // Lines outside a request are not a trace.
+    const cards = traceCards(traces.filter((t) => !isLooseTraceId(t.traceId)), { from: 0, to: SCENARIO_NOW + 1 }, 4);
     const a = totalOf(traces, "trace");
     expect([a.n, a.sum / a.n, a.c[0]]).toEqual([cards.count, cards.avgSpans, cards.slow]);
   });

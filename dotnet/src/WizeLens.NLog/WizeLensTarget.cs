@@ -7,7 +7,7 @@ using MsLogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace WizeLens.NLog;
 
-/// <summary>Puts NLog events into the trace of the request that wrote them: <c>xsi:type="WizeLens"</c>.</summary>
+/// <summary>Puts NLog events into the trace of the request that wrote them, or the loose batch outside one: <c>xsi:type="WizeLens"</c>.</summary>
 [Target("WizeLens")]
 public sealed class WizeLensTarget : TargetWithLayout
 {
@@ -45,9 +45,13 @@ public sealed class WizeLensTarget : TargetWithLayout
             if (!_destination(out var store, out var options)) return;
             var level = MapLevel(logEvent.Level);
             var category = string.IsNullOrEmpty(logEvent.LoggerName) ? "NLog" : logEvent.LoggerName;
-            if (!LogCapture.Accepts(options, category, level) || Parse(RenderLogEvent(ActivityContext, logEvent)) is not { } target) return;
+            if (!LogCapture.Accepts(options, category, level)) return;
+            var context = RenderLogEvent(ActivityContext, logEvent);
+            var target = Parse(context);
+            if (target is null && context != Loose) return;
             var entry = new LogEntry(level, category, RenderLogEvent(Layout, logEvent), logEvent.Exception);
-            LogCapture.Write(store, options, target, entry, Attributes(logEvent));
+            if (target is { } t) LogCapture.Write(store, options, t, entry, Attributes(logEvent));
+            else LogCapture.WriteLoose(store, options, entry, Attributes(logEvent));
         }
         catch
         {
@@ -55,7 +59,11 @@ public sealed class WizeLensTarget : TargetWithLayout
         }
     }
 
-    private static string CaptureActivity(LogEventInfo _) => LogTarget.Current() is { } t ? $"{t.TraceId}-{t.SpanId}" : "";
+    // Marks an event written outside a request, read on the logging thread like the trace.
+    private const string Loose = "loose";
+
+    private static string CaptureActivity(LogEventInfo _) =>
+        LogTarget.Current() is { } t ? $"{t.TraceId}-{t.SpanId}" : LogTarget.Outside() ? Loose : "";
 
     private static LogTarget? Parse(string value)
     {

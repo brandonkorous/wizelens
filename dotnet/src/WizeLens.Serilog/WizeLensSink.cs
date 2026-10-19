@@ -7,7 +7,7 @@ using WizeLens.Capture;
 
 namespace WizeLens.Serilog;
 
-/// <summary>Puts Serilog events into the trace of the request that wrote them.</summary>
+/// <summary>Puts Serilog events into the trace of the request that wrote them, or into the loose batch outside one.</summary>
 internal sealed class WizeLensSink(LogDestination destination) : ILogEventSink
 {
     private const string SourceContext = "SourceContext";
@@ -24,9 +24,12 @@ internal sealed class WizeLensSink(LogDestination destination) : ILogEventSink
             if (!destination(out var store, out var options)) return;
             var level = MapLevel(logEvent.Level);
             var category = Category(logEvent);
-            if (!LogCapture.Accepts(options, category, level) || TargetOf(logEvent) is not { } target) return;
+            if (!LogCapture.Accepts(options, category, level)) return;
+            var target = TargetOf(logEvent);
+            if (target is null && !IsOutside(logEvent)) return;
             var entry = new LogEntry(level, category, logEvent.RenderMessage(CultureInfo.InvariantCulture), logEvent.Exception);
-            LogCapture.Write(store, options, target, entry, Attributes(logEvent));
+            if (target is { } t) LogCapture.Write(store, options, t, entry, Attributes(logEvent));
+            else LogCapture.WriteLoose(store, options, entry, Attributes(logEvent));
         }
         catch
         {
@@ -42,6 +45,9 @@ internal sealed class WizeLensSink(LogDestination destination) : ILogEventSink
         if (activity is not null && activity.TraceId == traceId && (!activity.Recorded || WizeLensContext.Suppressed)) return null;
         return new LogTarget(traceId.ToHexString(), logEvent.SpanId?.ToHexString());
     }
+
+    /// <summary>True when the event was written outside a request: it carries no trace and none is current.</summary>
+    internal static bool IsOutside(LogEvent logEvent) => logEvent.TraceId is null && LogTarget.Outside();
 
     private static string Category(LogEvent logEvent) =>
         logEvent.Properties.TryGetValue(SourceContext, out var value) && value is ScalarValue { Value: string name } ? name : "Serilog";

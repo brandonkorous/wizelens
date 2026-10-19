@@ -1,5 +1,6 @@
 // Facts: small flat records from one trace (list rows and rollup contributions), built with the stats code.
 import { DEFAULT_SLOW_MS } from "../health.js";
+import { isLooseTraceId } from "../loose.js";
 import type { LogRow } from "../stats/logs.js";
 import { requestOf } from "../stats/requests.js";
 import { type CriticalSpan, traceDurationOf } from "../stats/traces.js";
@@ -34,7 +35,8 @@ export interface TraceFacts {
   startMs: number;
   /** Null when the trace is not a request (a page view, a job). */
   request: RequestItem | null;
-  trace: TraceItem;
+  /** Null for the lines outside a request (a loose trace), which are not a trace to list. */
+  trace: TraceItem | null;
   logs: LogRow[];
   critical: CriticalSpan[];
   /** Raw, with exact item times. */
@@ -48,8 +50,9 @@ function traceContributions(t: Trace): Contribution[] {
 function buildFacts(trace: Trace, o: FactOptions): TraceFacts {
   const row = requestOf(trace);
   const logs = traceLogRows(trace);
+  const loose = isLooseTraceId(trace.traceId);
   const contributions = [
-    ...traceContributions(trace),
+    ...(loose ? [] : traceContributions(trace)),
     ...(row ? requestContributions(row) : []),
     ...serviceFacts(trace),
     ...endpointFacts(trace),
@@ -62,7 +65,7 @@ function buildFacts(trace: Trace, o: FactOptions): TraceFacts {
     traceId: trace.traceId,
     startMs: trace.startMs,
     request: row ? requestItemOf(row) : null,
-    trace: traceItemOf(trace),
+    trace: loose ? null : traceItemOf(trace),
     logs,
     critical: traceCritical(trace, o.criticalPerTrace),
     contributions,

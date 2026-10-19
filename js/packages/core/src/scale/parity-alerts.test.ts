@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ALERT_METRICS, alertContext, type AlertMetric, alertPage } from "../models/alerts.js";
 import { inWindow } from "../stats/common.js";
+import { filterLogs, logRows } from "../stats/logs.js";
 import { alertValue } from "../testing/legacy/alerts.js";
 import { relErr } from "../testing/scale-util.js";
 import { SCENARIO_NOW, scenarioTraces } from "../testing/scenario.js";
@@ -18,11 +19,22 @@ describe("parity: alert values", () => {
       const ctx = alertContext(windowMs, SCENARIO_NOW);
       const cur = traces.filter((t) => inWindow(t.startMs, ctx.window));
       const prev = traces.filter((t) => inWindow(t.startMs, ctx.prev));
-      for (const metric of Object.keys(ALERT_METRICS) as AlertMetric[]) {
+      for (const metric of (Object.keys(ALERT_METRICS) as AlertMetric[]).filter((m) => m !== "log_count")) {
         const want = alertValue(metric, cur, prev, 100);
         const got = computePageSync(alertPage(metric), ctx, ex);
         if (want === null || got === null) expect([metric, windowMs, got]).toEqual([metric, windowMs, want]);
         else expect([metric, windowMs, relErr(got, want) <= (metric === "p95_ms" ? 0.025 : 1e-9)]).toEqual([metric, windowMs, true]);
+      }
+    }
+  });
+
+  it("a log count counts the lines of its search in the window", () => {
+    for (const windowMs of WINDOWS) {
+      const ctx = alertContext(windowMs, SCENARIO_NOW);
+      const rows = logRows(traces).filter((r) => inWindow(r.timeMs, ctx.window));
+      for (const search of [{}, { level: "warn" }, { level: "error", exact: "1" }, { q: "order" }] as Record<string, string>[]) {
+        const f = { minLevel: (search as { level?: "warn" }).level ?? "trace", exact: "exact" in search, service: "", query: (search as { q?: string }).q ?? "" } as const;
+        expect([windowMs, search, computePageSync(alertPage("log_count", search), ctx, ex)]).toEqual([windowMs, search, filterLogs(rows, f).length]);
       }
     }
   });

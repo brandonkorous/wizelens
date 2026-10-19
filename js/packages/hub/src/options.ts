@@ -16,6 +16,8 @@ export interface HubOptions {
   maxTraces?: number;
   /** Oldest trace (and metric point) kept, in ms. Default 7 days. */
   maxAgeMs?: number;
+  /** Oldest log line kept, in ms. Default: `maxAgeMs`. Lines in a request go with their trace when that is sooner. */
+  logMaxAgeMs?: number;
   /** Most metric points kept. Default 2,000,000. */
   maxMetricPoints?: number;
   /** Run uptime checks (they can reach any address this machine can). Default true. */
@@ -53,6 +55,7 @@ export function resolveHubOptions(o: HubOptions = {}): ResolvedHubOptions {
     token: o.token || undefined,
     maxTraces: o.maxTraces ?? 50_000,
     maxAgeMs: o.maxAgeMs ?? 7 * 24 * 60 * 60_000,
+    logMaxAgeMs: o.logMaxAgeMs ?? o.maxAgeMs ?? 7 * 24 * 60 * 60_000,
     maxMetricPoints: o.maxMetricPoints ?? 2_000_000,
     enableMcp: o.enableMcp ?? false,
     uptime: o.uptime ?? true,

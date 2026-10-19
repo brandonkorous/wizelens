@@ -94,7 +94,9 @@ export type Capability =
   /** Projects can turn on a public status page at `api/status/<token>`. */
   | "statusPages"
   /** The host resolves browser stacks at `api/sourcemaps/resolve` (uploaded maps, a build folder, or a dev server). */
-  | "sourcemaps";
+  | "sourcemaps"
+  /** The host keeps saved searches (`api/saved-searches`); without it the dashboard keeps them in the browser. */
+  | "savedSearches";
 
 /** What an in-app add-on offers today. Also the default when a host does not say. */
 export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];

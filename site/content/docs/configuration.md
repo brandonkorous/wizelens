@@ -27,6 +27,9 @@ Pass options to `builder.Services.AddWizeLens(o => { ... })`.
 | `Sampling.Rate` | `WIZELENS_SAMPLE_RATE`, else `1` | Share of traces kept (0 to 1). |
 | `Sampling.KeepErrors` | `true` | Keep every trace with an error. |
 | `Sampling.KeepSlowMs` | `1000` | Keep every trace with a server-side span this long (`null` turns it off). |
+| `Logs.Outside` | `WIZELENS_LOGS_OUTSIDE`, else `true` | Keep log lines written outside a request (startup, jobs, timers). See [Logs](/docs/logs/). |
+| `Logs.MinLevel` | `WIZELENS_LOGS_MIN_LEVEL`, else `Information` | Lowest level kept for lines outside a request. |
+| `Logs.SampleRate` | `WIZELENS_LOGS_SAMPLE_RATE`, else `1` | Share of lines outside a request below `Warning` that are kept (0 to 1). |
 | `CaptureMetrics` | `true` | Read every `Meter` in the app. |
 | `MetricsInterval` / `MetricsMaxAge` | 10 s / 1 h | How often metrics are taken, and how long they are kept in memory. |
 
@@ -46,7 +49,7 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | `enableMcp` | `false` | Expose the read-only MCP endpoint. |
 | `redactKeys` | see [Redaction](#redaction) | Key fragments whose values are redacted. |
 | `instrumentFetch` | `true` | Trace outgoing `fetch` and undici calls. |
-| `captureConsole` | `true` | Copy `console.*` lines into the trace. |
+| `captureConsole` | `true` | Copy `console.*` lines into the trace, or outside a request as loose lines. |
 | `traceQueriesOutsideRequests` | `false` | Database adapters also trace queries outside a request. |
 | `publicEndpoint` | auto | Override `X-WizeLens-Endpoint`, for example behind a proxy. |
 | `audit` | `console.info` | Where MCP audit lines go. |
@@ -56,6 +59,7 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | `project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
 | `sampling` | `{ rate: WIZELENS_SAMPLE_RATE ?? 1, keepErrors: true, keepSlowMs: 1000 }` | See [Sampling](/docs/sampling/). |
 | `sourceMaps` | dev servers on `localhost` | `{ dirs, origins, fetch }`: where browser stacks find their maps; `false` turns it off. See [Source maps](/docs/source-maps/). |
+| `logs` | `{ outside: true, minLevel: "info", sampleRate: 1 }`, or the `WIZELENS_LOGS_*` variables | Log lines written outside a request. See [Logs](/docs/logs/). |
 | `captureMetrics` | `true` | Sample the runtime every `metricsIntervalMs`. |
 | `metricsIntervalMs` / `metricsMaxAgeMs` | 10 s / 1 h | How often metrics are taken, and how long they are kept in memory. |
 | `ignore(path)` | none | Next.js only: paths to skip. |
@@ -84,6 +88,9 @@ Props on `WizeLensProvider`.
 | `WIZELENS_HUB_TOKEN` | .NET, Node | The hub token, or a cloud ingest key. |
 | `WIZELENS_PROJECT` | .NET, Node | Project name on a shared hub. |
 | `WIZELENS_SAMPLE_RATE` | .NET, Node | Sampling rate, 0 to 1. |
+| `WIZELENS_LOGS_OUTSIDE` | .NET, Node | Keep log lines outside a request (`true`/`false`). |
+| `WIZELENS_LOGS_MIN_LEVEL` | .NET, Node | Lowest level kept outside a request: `trace`, `debug`, `info`, `warn`, `error`, `critical`. |
+| `WIZELENS_LOGS_SAMPLE_RATE` | .NET, Node | Share of lines outside a request below warn that are kept, 0 to 1. |
 
 ## Redaction
 

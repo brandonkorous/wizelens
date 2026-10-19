@@ -41,9 +41,9 @@ export function ProjectsSection({ org, data, reload }: TeamCtx) {
   const [adding, setAdding] = useState(false);
   return (
     <>
-      <SectionHead title="Projects" description="Each project keeps its own traces, dashboards, and alerts. A trace that crosses projects still opens whole for people who can read both." action={<AddButton label="New project" open={adding} onOpen={() => setAdding(true)} />} />
+      <SectionHead title="Projects" description="Each project keeps its own traces, logs, dashboards, and alerts. Logs can be kept for more or less time than traces. A trace that crosses projects still opens whole for people who can read both." action={<AddButton label="New project" open={adding} onOpen={() => setAdding(true)} />} />
       {adding && <NewProjectForm orgId={org.id} reload={reload} onClose={() => setAdding(false)} />}
-      <ProjectsPanel orgId={org.id} data={data} reload={reload} />
+      <ProjectsPanel orgId={org.id} retentionDays={org.retentionDays} data={data} reload={reload} />
     </>
   );
 }

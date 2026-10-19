@@ -20,6 +20,7 @@ const ACTIONS: Record<string, string> = {
   "project.create": "Added a project",
   "project.clear": "Cleared a project's data",
   "project.delete": "Deleted a project",
+  "project.update": "Changed a project's settings",
   "service.forget": "Forgot offline hosts",
   "key.create": "Made a key",
   "key.revoke": "Revoked a key",
@@ -79,6 +80,8 @@ export function detailText(d: Record<string, unknown>, names: Names): string {
   if (Array.isArray(d.projectIds)) parts.push(`for ${d.projectIds.map((id) => project(id, names)).join(", ")}`);
   if (typeof d.providerId === "string") parts.push(d.providerId);
   if (typeof d.retentionDays === "number") parts.push(`keep data ${d.retentionDays} days`);
+  if (typeof d.logRetentionDays === "number") parts.push(`keep logs ${d.logRetentionDays} days`);
+  if (d.logRetentionDays === null) parts.push("logs follow the organization");
   if (typeof d.days === "number") parts.push(`for ${d.days} days`);
   if (typeof d.removed === "number") parts.push(`${d.removed} ${d.removed === 1 ? "host" : "hosts"}`);
   if (typeof d.line === "string" && parts.length === 0) parts.push(d.line);

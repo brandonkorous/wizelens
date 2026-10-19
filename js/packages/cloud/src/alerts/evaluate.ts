@@ -32,7 +32,7 @@ async function measureMetric(app: CloudApp, rule: AlertRule, now: number) {
 }
 
 async function messageOf(app: CloudApp, rule: AlertRule, state: Notice["state"], value: number | null, now: number): Promise<string> {
-  if (rule.metric !== "metric") return alertMessage(rule.metric, rule.op, value, rule.threshold, state);
+  if (rule.metric !== "metric") return alertMessage(rule.metric, rule.op, value, rule.threshold, state, rule.logSearch);
   const { sample, stat } = await measureMetric(app, rule, now);
   const unit = sample ? metricAlertUnit(sample, stat) : "";
   return metricAlertMessage(rule.metricName, stat, rule.op, value, rule.threshold, unit, state);
@@ -42,7 +42,7 @@ async function messageOf(app: CloudApp, rule: AlertRule, state: Notice["state"],
 async function measure(app: CloudApp, rule: AlertRule, now: number): Promise<number | null> {
   if (rule.metric === "metric") return (await measureMetric(app, rule, now)).value;
   const retentionMs = await projectRetentionMs(app.db, rule.projectId, app.config.retentionDays);
-  return computePage(alertPage(rule.metric), alertContext(rule.windowMs, alignNow(now)), app.telemetry.executor(rule.projectId, retentionMs, rule.env || undefined));
+  return computePage(alertPage(rule.metric, rule.logSearch), alertContext(rule.windowMs, alignNow(now)), app.telemetry.executor(rule.projectId, retentionMs, rule.env || undefined));
 }
 
 /** Webhooks, Slack, and email. Email goes only to addresses that still belong to confirmed members of the organization. */

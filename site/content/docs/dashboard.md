@@ -18,7 +18,7 @@ Pick a time range in the top bar. Every number compares itself with the range be
 | **Database** | Slow queries over time, time per operation, top slow queries, table hot spots |
 | **Rendering** | Render time per route, SSR, hydration, image loading, layout shift, and the React components that render too often |
 | **Errors** | Exceptions over time, top types, errors by service, and the stack trace and request of each one. Browser errors too |
-| **Logs** | Every log line from every service, filtered by level, service, or text |
+| **Logs** | Every log line from every service, in requests and outside them, filtered by level, service, text, or pattern; patterns, charts from saved searches. See [Logs](/docs/logs/) |
 | **Metrics** | CPU, memory, GC, request times, and your own counters per service, as charts; split by any attribute |
 | **Services** | Health of each service, database, and outside host, and a map of who calls whom |
 | **Insights** | Every N+1, duplicate query, slow query, and render problem, ranked, with how to fix it |

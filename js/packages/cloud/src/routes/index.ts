@@ -12,6 +12,7 @@ import { modelRoutes } from "./models.js";
 import { notifyRoutes } from "./notify.js";
 import { orgRoutes } from "./orgs.js";
 import { projectRoutes } from "./projects.js";
+import { savedSearchRoutes } from "./saved-searches.js";
 import { searchRoutes } from "./search.js";
 import { statusRoutes } from "./status.js";
 import { uptimeRoutes } from "./uptime.js";
@@ -30,6 +31,7 @@ export function allRoutes(): Router<Ctx> {
   searchRoutes(r);
   alertRoutes(r);
   issueRoutes(r);
+  savedSearchRoutes(r);
   shareRoutes(r);
   uptimeRoutes(r);
   statusRoutes(r);

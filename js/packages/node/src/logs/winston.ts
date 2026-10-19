@@ -1,6 +1,5 @@
 import { addCleanup, logSinkOf } from "../adapters/registry.js";
 import type { LogEntry, LogSink } from "../logger.js";
-import { activeSpan } from "../spans.js";
 import type { WizeLens } from "../types.js";
 import { markDirect } from "./captured.js";
 import { errorAttributes, formatArgs, levelFromName } from "./levels.js";
@@ -40,7 +39,7 @@ function toEntry(info: Info): LogEntry {
   return { level: levelFromName(level), category, message, attributes: { ...attributes, ...extra, ...errorAttributes(err) } };
 }
 
-/** Copy winston log lines written during a request into its trace. Child loggers made from it are covered too. */
+/** Copy winston log lines into WizeLens: into the trace of the request they belong to, or (outside one) as loose lines. Child loggers made from it are covered too. */
 export function instrumentWinston(wizelens: WizeLens, logger: unknown): boolean {
   const sink = logSinkOf(wizelens);
   const target = logger as WinstonLike | null;
@@ -54,7 +53,7 @@ export function instrumentWinston(wizelens: WizeLens, logger: unknown): boolean 
   const original = target.write;
   target.write = function (this: WinstonLike, info: Info) {
     const level = String(info?.[LEVEL] ?? info?.level ?? "");
-    if (sinks.size > 0 && activeSpan() && (this.isLevelEnabled?.(level) ?? true)) {
+    if (sinks.size > 0 && (this.isLevelEnabled?.(level) ?? true)) {
       try {
         const entry = toEntry(info);
         for (const s of sinks) s(entry);

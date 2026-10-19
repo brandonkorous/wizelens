@@ -70,6 +70,9 @@ public sealed class WizeLensOptions
     /// <summary>Keeps only part of the traces, for busy services. Default: all, or the WIZELENS_SAMPLE_RATE variable.</summary>
     public WizeLensSampling Sampling { get; set; } = new();
 
+    /// <summary>Keeps log lines written outside a request too, with a level floor and sampling. On by default.</summary>
+    public WizeLensLogs Logs { get; set; } = new();
+
     /// <summary>Collects metrics from every meter in the app (.NET runtime, ASP.NET Core, HttpClient, your own). On by default.</summary>
     public bool CaptureMetrics { get; set; } = true;
 

@@ -15,6 +15,9 @@ internal readonly record struct LogTarget(string TraceId, string? SpanId)
         var activity = Activity.Current;
         return activity is { Recorded: true } ? new(activity.TraceId.ToHexString(), activity.SpanId.ToHexString()) : null;
     }
+
+    /// <summary>True when no trace is current and WizeLens is not working: the line was written outside a request.</summary>
+    public static bool Outside() => !WizeLensContext.Suppressed && Activity.Current is null;
 }
 
 /// <summary>One log line from any source (ILogger, Serilog, NLog), before it becomes a <see cref="LogRecord"/>.</summary>
@@ -53,24 +56,43 @@ internal static class LogCapture
     {
         try
         {
-            var record = new LogRecord
-            {
-                TimeMs = ActivityMapper.ToUnixMs(DateTime.UtcNow),
-                Level = MapLevel(entry.Level),
-                Category = entry.Category,
-                Message = entry.Message,
-                Service = options.ServiceName ?? "app",
-                SpanId = target.SpanId,
-            };
-            foreach (var (key, value) in attributes ?? []) record.Attributes[key] = value;
-            if (entry.EventId != 0) record.Attributes["event.id"] = entry.EventId;
-            AddException(record, entry.Exception);
-            store.AddLog(target.TraceId, WizeLensRuntime.Redactor.Redact(record));
+            store.AddLog(target.TraceId, Build(options, target.SpanId, entry, attributes));
         }
         catch
         {
             // WizeLens must never break the app.
         }
+    }
+
+    /// <summary>Stores a record written outside a request in the loose batch, when the Logs options keep it; never throws.</summary>
+    public static void WriteLoose(TraceStore store, WizeLensOptions options, LogEntry entry, IEnumerable<KeyValuePair<string, object?>>? attributes)
+    {
+        try
+        {
+            if (entry.Category.StartsWith("WizeLens", StringComparison.Ordinal) || !options.Logs.Keeps(entry.Level)) return;
+            store.AddLooseLog(Build(options, null, entry, attributes));
+        }
+        catch
+        {
+            // WizeLens must never break the app.
+        }
+    }
+
+    private static LogRecord Build(WizeLensOptions options, string? spanId, LogEntry entry, IEnumerable<KeyValuePair<string, object?>>? attributes)
+    {
+        var record = new LogRecord
+        {
+            TimeMs = ActivityMapper.ToUnixMs(DateTime.UtcNow),
+            Level = MapLevel(entry.Level),
+            Category = entry.Category,
+            Message = entry.Message,
+            Service = options.ServiceName ?? "app",
+            SpanId = spanId,
+        };
+        foreach (var (key, value) in attributes ?? []) record.Attributes[key] = value;
+        if (entry.EventId != 0) record.Attributes["event.id"] = entry.EventId;
+        AddException(record, entry.Exception);
+        return WizeLensRuntime.Redactor.Redact(record);
     }
 
     private static void AddException(LogRecord record, Exception? exception)

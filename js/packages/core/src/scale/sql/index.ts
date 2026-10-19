@@ -2,6 +2,7 @@ export { CH_DIALECT, PG_DIALECT, SQLITE_DIALECT } from "./dialect.js";
 export type { Dialect, DialectName, SqlRunner, SqlScope, SqlSource, Statement } from "./dialect.js";
 export { sqlExecutor } from "./executor.js";
 export type { SqlExecutorOptions } from "./executor.js";
+export { LOG_KINDS_SQL, logPruneStatements } from "./log-prune-sql.js";
 export { pruneStatements, settleStatements, storedOf, tierPruneStatements } from "./settle-sql.js";
 export type { TraceState } from "./settle-sql.js";
 export { FACT_COLUMNS, FACT_TABLES, factRows, IDS_MAX, NONE_HIGH, NONE_LOW } from "./write-sql.js";

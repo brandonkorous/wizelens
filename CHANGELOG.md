@@ -36,6 +36,21 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - **Public status pages** (cloud). A project can turn on an unguessable, read-only link that shows check names, their
   state, uptime for 24 hours, 7 days, and 30 days, a bar per day for 30 days, and incident times. Never URLs, headers, or
   errors. A new link stops the old one; turning it on and off is in the audit log and the team notices.
+- **Logs outside a request.** Both add-ons now keep lines written at startup, in background jobs, and on timers, with
+  their service and level, from every logger they read (.NET `ILogger`, Serilog, NLog; Node `console`, pino, winston,
+  bunyan, log4js, consola, NestJS, OpenTelemetry logs). The Logs page shows them as "Outside a request" and can show only
+  them, or only lines in requests. New options keep the volume in check: `Logs.Outside` / `logs.outside`,
+  `Logs.MinLevel` / `logs.minLevel` (default info), and `Logs.SampleRate` / `logs.sampleRate` (warnings and up are always
+  kept), or `WIZELENS_LOGS_OUTSIDE`, `WIZELENS_LOGS_MIN_LEVEL`, and `WIZELENS_LOGS_SAMPLE_RATE`. OTLP log records with no
+  trace id are kept the same way on the hub and the cloud.
+- **Log patterns.** Lines that differ only in numbers, ids, uuids, and quoted values group into one pattern, with a count,
+  a share, the change against the period before, and a trend. Click a pattern to filter the Logs page to it.
+- **Log metrics.** Save a log search (hub and cloud share it with the project; an app's own dashboard keeps it in the
+  browser) and it becomes a chart of its matching lines over the time range.
+- **Log alerts.** A cloud alert rule can count the lines of a log search over a window ("Alert on this search" on the
+  Logs page fills it in): `Log lines (error and up, "timed out") is 12 (above 10)`.
+- **Log retention per project.** Cloud projects can keep logs for more or less time than traces (Team → Projects → Logs
+  kept, 1 to 400 days); the hub has `--log-retention` (`WIZELENS_HUB_LOG_RETENTION`).
 
 - **A page for each error, endpoint, query, and page route.** An error shows its count over time, its endpoints, the users
   and browsers of its newest occurrences, the stack, and those occurrences. An endpoint shows requests, errors, and

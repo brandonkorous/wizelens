@@ -3,7 +3,7 @@ using WizeLens.Storage;
 
 namespace WizeLens.Capture;
 
-/// <summary>Attaches <see cref="ILogger"/> records to the trace of the current request.</summary>
+/// <summary>Attaches <see cref="ILogger"/> records to the trace of the current request, or to the loose batch outside one.</summary>
 [ProviderAlias("WizeLens")]
 internal sealed class WizeLensLoggerProvider(TraceStore store, WizeLensOptions options, IServiceProvider services) : ILoggerProvider
 {
@@ -43,11 +43,14 @@ internal sealed class WizeLensLoggerProvider(TraceStore store, WizeLensOptions o
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
-            if (!IsEnabled(logLevel) || LogTarget.Current() is not { } target || provider.HandledByLibrarySink()) return;
+            if (!IsEnabled(logLevel)) return;
+            var target = LogTarget.Current();
+            if ((target is null && !LogTarget.Outside()) || provider.HandledByLibrarySink()) return;
             try
             {
                 var entry = new LogEntry(logLevel, category, formatter(state, exception), exception, eventId.Id);
-                LogCapture.Write(store, options, target, entry, Attributes(state));
+                if (target is { } t) LogCapture.Write(store, options, t, entry, Attributes(state));
+                else LogCapture.WriteLoose(store, options, entry, Attributes(state));
             }
             catch
             {

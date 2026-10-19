@@ -1,4 +1,4 @@
-import { isAlertMetric, isMetricAlertStat, MAX_METRIC_NAME } from "@wizeworks/lens-core";
+import { cleanSearchParams, isAlertMetric, isMetricAlertStat, MAX_METRIC_NAME } from "@wizeworks/lens-core";
 import { notify } from "../alerts/evaluate.js";
 import { checkTarget } from "../alerts/notify.js";
 import type { Ctx } from "../app.js";
@@ -38,18 +38,19 @@ async function channelsOf(ctx: Ctx, orgId: string, raw: unknown): Promise<Channe
   return out;
 }
 
-/** The metric part of a rule: for "metric" rules, the OpenTelemetry metric to read. */
-function metricPart(b: Record<string, unknown>): Pick<RuleInput, "metric" | "metricName" | "metricStat" | "metricService"> {
+/** The metric part of a rule: for "metric" rules, the OpenTelemetry metric to read; for "log_count" rules, the log search. */
+function metricPart(b: Record<string, unknown>): Pick<RuleInput, "metric" | "metricName" | "metricStat" | "metricService" | "logSearch"> {
   if (b.metric !== "metric") {
-    if (!isAlertMetric(b.metric)) fail(400, "Pick a metric: error_rate, p95_ms, avg_ms, requests, new_errors, slow_queries, or metric.");
-    return { metric: b.metric as RuleInput["metric"], metricName: "", metricStat: "", metricService: "" };
+    if (!isAlertMetric(b.metric)) fail(400, "Pick a metric: error_rate, p95_ms, avg_ms, requests, new_errors, slow_queries, log_count, or metric.");
+    const logSearch = b.metric === "log_count" ? cleanSearchParams(b.logSearch) : {};
+    return { metric: b.metric as RuleInput["metric"], metricName: "", metricStat: "", metricService: "", logSearch };
   }
   const name = typeof b.metricName === "string" ? b.metricName.trim() : "";
   if (!name || name.length > MAX_METRIC_NAME) fail(400, "Set metricName to the metric to watch, for example process.cpu.utilization.");
   const stat = b.metricStat ?? "avg";
   if (!isMetricAlertStat(stat)) fail(400, "Pick a metricStat: last, avg, max, p95, p99, or rate.");
   const service = typeof b.metricService === "string" ? b.metricService.trim().slice(0, 100) : "";
-  return { metric: "metric", metricName: name, metricStat: stat as RuleInput["metricStat"], metricService: service };
+  return { metric: "metric", metricName: name, metricStat: stat as RuleInput["metricStat"], metricService: service, logSearch: {} };
 }
 
 /** Check a rule from the request body. A change sends only what it changes: the rest comes from `current`. */

@@ -2,6 +2,7 @@ import type { CloudConfig } from "../config.js";
 import type { Db } from "../db/db.js";
 import { withCachedCounts } from "./cached.js";
 import { openClickHouse } from "./ch/store.js";
+import { logDaysOf } from "../repo/log-retention.js";
 import { pgTelemetry } from "./pg-store.js";
 import type { RetentionOf, TelemetryStore } from "./store.js";
 
@@ -13,10 +14,13 @@ export const pgRetentionOf = (db: Db): RetentionOf => async (ids) => {
   return new Map(rows.map((r) => [r.id, r.d]));
 };
 
+/** Log retention days of the projects that still exist: their own, else their organization's. */
+export const pgLogRetentionOf = (db: Db): RetentionOf => (ids) => logDaysOf(db, ids);
+
 /** The telemetry store for this cloud: ClickHouse (scale mode) when a URL is set, else the cloud's own database. */
 export async function openTelemetry(config: CloudConfig, db: Db): Promise<TelemetryStore> {
   const store = config.clickhouseUrl
-    ? await openClickHouse({ url: config.clickhouseUrl, retentionOf: pgRetentionOf(db), defaultRetentionDays: config.retentionDays, now: config.now, settleWorkers: config.settleWorkers })
+    ? await openClickHouse({ url: config.clickhouseUrl, retentionOf: pgRetentionOf(db), logRetentionOf: pgLogRetentionOf(db), defaultRetentionDays: config.retentionDays, now: config.now, settleWorkers: config.settleWorkers })
     : pgTelemetry(db);
   return withCachedCounts(store, Date.now);
 }

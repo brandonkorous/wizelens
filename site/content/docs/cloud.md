@@ -73,12 +73,13 @@ may read, in the same organization only. A read key or a connected app gets only
 ## History
 
 Pages are computed on the server from stats tables, never from a sample of traces, so 7- and 30-day pages answer in well
-under a second on busy projects. Each organization keeps traces for 30 days by default (1 to 400).
+under a second on busy projects. Each organization keeps traces for 30 days by default (1 to 400). Each project can keep
+its logs for more or less time than that, under **Team → Projects → Logs kept** (see [Logs](/docs/logs/)).
 
 ## Alerts
 
 A rule watches one value over a window of 5 minutes to 24 hours: error rate, p95 or average latency, request count, new
-errors, slow queries, or one OpenTelemetry metric. It fires when the value goes above or below your threshold. A notice is
+errors, slow queries, the count of a log search, or one OpenTelemetry metric. It fires when the value goes above or below your threshold. A notice is
 sent only when the state changes, to a webhook or a Slack incoming webhook:
 
 ```text
