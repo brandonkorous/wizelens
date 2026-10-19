@@ -19,6 +19,8 @@ import { writeRaw } from "./write.js";
 export interface ChStoreOptions {
   url: string;
   retentionOf: RetentionOf;
+  /** Log retention days per project; the trace retention when absent. */
+  logRetentionOf?: RetentionOf;
   defaultRetentionDays: number;
   /** The clock for recovery on start. */
   now: () => number;
@@ -36,11 +38,12 @@ const DEFAULT_WORKER = new URL("./settle-worker.js", import.meta.url);
 /** Settle in worker threads when there are any and the worker file is built (it is not when tests run the sources), else here. */
 function settlerOf(ch: ChClient, o: ChStoreOptions, queue: SettleQueue): { settler: Settler; pool: SettlePool | null } {
   const retention = new RetentionCache(o.retentionOf, o.defaultRetentionDays);
+  const logRetention = new RetentionCache(o.logRetentionOf ?? o.retentionOf, o.defaultRetentionDays);
   const entry = o.worker?.entry ?? DEFAULT_WORKER;
   const size = existsSync(fileURLToPath(entry)) ? Math.max(0, o.settleWorkers ?? 0) : 0;
-  if (!size) return { settler: { queue, retention, run: (t) => settleProject(ch, t), depth: DEPTH }, pool: null };
+  if (!size) return { settler: { queue, retention, logRetention, run: (t) => settleProject(ch, t), depth: DEPTH }, pool: null };
   const pool = new SettlePool({ url: o.url, size, ...o.worker });
-  return { settler: { queue, retention, run: pool.run, depth: Math.max(DEPTH, size * 2) }, pool };
+  return { settler: { queue, retention, logRetention, run: pool.run, depth: Math.max(DEPTH, size * 2) }, pool };
 }
 
 export const chRunner = (ch: ChClient): SqlRunner => ({ all: (sql, params) => ch.query<Record<string, unknown>>(sql, params) });
@@ -61,11 +64,11 @@ export async function openClickHouse(o: ChStoreOptions): Promise<TelemetryStore>
   await migrateClickHouse(o.url, ch, { ttl: o.ttl });
   const queue = new SettleQueue();
   await queue.recover(ch, o.now());
-  return chTelemetry(ch, settlerOf(ch, o, queue), o.retentionOf);
+  return chTelemetry(ch, settlerOf(ch, o, queue), { days: o.retentionOf, logDays: o.logRetentionOf ?? o.retentionOf });
 }
 
-function chTelemetry(ch: ChClient, { settler, pool }: ReturnType<typeof settlerOf>, retentionOf: RetentionOf): TelemetryStore {
-  const { queue, retention } = settler;
+function chTelemetry(ch: ChClient, { settler, pool }: ReturnType<typeof settlerOf>, retentionOf: { days: RetentionOf; logDays: RetentionOf }): TelemetryStore {
+  const { queue, retention, logRetention } = settler;
   const src = (projectId: string) => ({ d: CH_DIALECT, run: chRunner(ch), scope: { project: projectId } });
   const metrics = new MetricWriter(ch);
   const runMetric = (s: { sql: string; args: unknown[] }) => ch.query(s.sql, s.args) as Promise<MetricRows>;
@@ -73,7 +76,7 @@ function chTelemetry(ch: ChClient, { settler, pool }: ReturnType<typeof settlerO
     kind: "clickhouse",
     async write(projectId, w, now) {
       const retentionMs = await retention.msOf(projectId);
-      await writeRaw(ch, queue, projectId, w, now, retentionMs);
+      await writeRaw(ch, queue, projectId, w, now, { ms: retentionMs, logMs: await logRetention.msOf(projectId) });
       await metrics.write(projectId, w.sender.environment ?? "", w.metrics ?? [], now, retentionMs);
     },
     traces: async (t) => loadTraces(ch, [t.projectId], await findTraceIds(ch, t, Date.now())),

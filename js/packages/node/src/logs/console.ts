@@ -15,7 +15,8 @@ function capture(level: LogLevel, args: unknown[]): void {
   busy = true;
   try {
     const entry = { level, category: "console", message: formatArgs(args), attributes: errorAttributes(firstError(args)) };
-    for (const sink of sinks) sink(entry);
+    // WizeLens's own notices ("[wizelens] ...") are not app lines.
+    if (!entry.message.startsWith("[wizelens]")) for (const sink of sinks) sink(entry);
   } finally {
     busy = false;
   }
@@ -39,7 +40,7 @@ function unpatch(): void {
   originals.clear();
 }
 
-/** Copy `console.*` calls made during a request into its trace. Returns a stop function. */
+/** Copy `console.*` calls into WizeLens: into the trace of their request, or (outside one) as loose lines. Returns a stop function. */
 export function captureConsole(sink: LogSink): () => void {
   if (sinks.size === 0) patch();
   sinks.add(sink);

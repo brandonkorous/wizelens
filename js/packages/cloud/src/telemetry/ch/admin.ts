@@ -1,5 +1,5 @@
 // ClickHouse upkeep: the facts version, clearing projects, retention changes, and projects that no longer exist.
-import { FACTS_VERSION, TIERS } from "@wizeworks/lens-core";
+import { FACTS_VERSION, LOG_KINDS_SQL, LOOSE_TRACE_PREFIX, TIERS } from "@wizeworks/lens-core";
 import type { RetentionOf } from "../store.js";
 import type { ChClient } from "./http.js";
 import type { SettleQueue } from "./queue.js";
@@ -37,32 +37,48 @@ export async function clearProjectCh(ch: ChClient, queue: SettleQueue, projectId
   for (const t of PROJECT_TABLES) await ch.command(`DELETE FROM ${t} WHERE project_id = {p1:String}`, [projectId], { lightweight_deletes_sync: "0" });
 }
 
-/** Projects with telemetry here, with the retention their rows were written with. */
-async function knownProjects(ch: ChClient): Promise<Map<string, number | null>> {
+type Kept = { days: number; logDays: number };
+
+/** Projects with telemetry here, with the retention (trace and log days) their rows were written with. */
+async function knownProjects(ch: ChClient): Promise<Map<string, Kept | null>> {
   const ids = await ch.query<{ project_id: string }>("SELECT DISTINCT project_id FROM trace_heads UNION DISTINCT SELECT DISTINCT project_id FROM metric_series_t");
-  const kept = await ch.query<{ project_id: string; days: number }>("SELECT project_id, days FROM project_retention FINAL");
-  const days = new Map(kept.map((r) => [r.project_id, r.days]));
+  const kept = await ch.query<{ project_id: string; days: number; log_days: number }>("SELECT project_id, days, if(log_days = 0, days, log_days) AS log_days FROM project_retention FINAL");
+  const days = new Map(kept.map((r) => [r.project_id, { days: Number(r.days), logDays: Number(r.log_days) }]));
   return new Map(ids.map((r) => [r.project_id, days.get(r.project_id) ?? null]));
 }
 
+const LOOSE = `startsWith(trace_id, '${LOOSE_TRACE_PREFIX}')`;
+const LOG_ROW: Record<string, string> = { logs_raw: "1", fact_logs_t: "1", fact_search_t: "kind = 'logs'", fact_attrs_t: "src = 'l'" };
+
+/** The days a table's row is kept, as SQL: log rows by the log days (never past their trace in a request), loose batches and log kinds by the log days. */
+function daysSql(table: string): string {
+  if (table in LOG_ROW) return `if(${LOOSE}, {p3:Float64}, if(${LOG_ROW[table]}, least({p2:Float64}, {p3:Float64}), {p2:Float64}))`;
+  if (table === "trace_heads" || table === "settle_state" || table.startsWith("fact_")) return `if(${LOOSE}, {p3:Float64}, {p2:Float64})`;
+  if (table === "rollup_1h_t" || table === "hist_1h_t") return `if(kind IN (${LOG_KINDS_SQL}), {p3:Float64}, {p2:Float64})`;
+  return "{p2:Float64}";
+}
+
 /** A new retention for a project's existing rows: their expiry moves (a mutation, run in the background). */
-async function moveExpiry(ch: ChClient, projectId: string, days: number): Promise<void> {
+async function moveExpiry(ch: ChClient, projectId: string, k: Kept): Promise<void> {
   for (const [table, col] of Object.entries(EXPIRE_FROM)) {
-    await ch.command(`ALTER TABLE ${table} UPDATE expire_ms = ${col} + {p2:Float64} WHERE project_id = {p1:String}`, [projectId, days * DAY_MS]);
+    await ch.command(`ALTER TABLE ${table} UPDATE expire_ms = ${col} + ${daysSql(table)} WHERE project_id = {p1:String}`, [projectId, k.days * DAY_MS, k.logDays * DAY_MS]);
   }
 }
 
-/** Retention runs out by TTL. Here: drop projects deleted in Postgres, and follow retention changes. */
-export async function syncProjects(ch: ChClient, queue: SettleQueue, retentionOf: RetentionOf, now: number): Promise<void> {
+/** Retention runs out by TTL. Here: drop projects deleted in Postgres, and follow retention changes (traces and logs). */
+export async function syncProjects(ch: ChClient, queue: SettleQueue, retentionOf: { days: RetentionOf; logDays: RetentionOf }, now: number): Promise<void> {
   const known = await knownProjects(ch);
   if (!known.size) return;
-  const current = await retentionOf([...known.keys()]);
+  const current = await retentionOf.days([...known.keys()]);
+  const currentLog = await retentionOf.logDays([...known.keys()]);
   for (const [id, had] of known) {
     const days = current.get(id);
     if (days === undefined) await clearProjectCh(ch, queue, id);
-    else if (had !== days) {
-      if (had !== null) await moveExpiry(ch, id, days);
-      await ch.insert("project_retention", [{ project_id: id, days, ver: nextVer(now) }]);
+    else {
+      const k = { days, logDays: currentLog.get(id) ?? days };
+      if (had && had.days === k.days && had.logDays === k.logDays) continue;
+      if (had) await moveExpiry(ch, id, k);
+      await ch.insert("project_retention", [{ project_id: id, days: k.days, log_days: k.logDays, ver: nextVer(now) }]);
     }
   }
 }

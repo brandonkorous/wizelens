@@ -1,5 +1,5 @@
 import type { DatabaseSync, SQLInputValue, StatementSync } from "node:sqlite";
-import { pruneStatements, SQLITE_DIALECT, settleStatements, type Statement, tierByName, tierCutoff, tierPruneStatements, type TraceState } from "@wizeworks/lens-core";
+import { LOG_KINDS_SQL, logPruneStatements, pruneStatements, SQLITE_DIALECT, settleStatements, type Statement, tierByName, tierCutoff, tierPruneStatements, type TraceState } from "@wizeworks/lens-core";
 import { loadTraces } from "./store-read.js";
 import type { HubStore } from "./store.js";
 
@@ -53,6 +53,7 @@ const stateOf = (store: HubStore, r: TraceStateRow): TraceState => ({
   updatedMs: r.updated_ms ?? 0,
   contrib: r.contrib,
   retentionMs: store.maxAgeMs,
+  logRetentionMs: store.logMaxAgeMs,
 });
 
 /** Settle one batch of dirty traces, newest first. Returns how many. */
@@ -94,13 +95,14 @@ export function settleQuietly(store: HubStore): void {
   }
 }
 
-/** In the prune transaction: take the doomed traces out of the rollups, drop their facts, and age out rollup buckets. */
+/** In the prune transaction: take the doomed traces out of the rollups, drop their facts, age out rollup buckets, and drop log facts past the log age. */
 export function pruneStats(store: HubStore, doomed: readonly TraceStateRow[]): void {
   const now = store.now();
   runStatements(store.db, pruneStatements(SQLITE_DIALECT, doomed.map((r) => stateOf(store, r)), now, false));
   runStatements(store.db, tierPruneStatements(now, true));
   const cutoff = tierCutoff(tierByName("1h"), now, store.maxAgeMs);
-  for (const t of ["rollup_1h", "hist_1h"]) store.db.prepare(`DELETE FROM ${t} WHERE bucket_ms <= ?`).run(cutoff);
+  for (const t of ["rollup_1h", "hist_1h"]) store.db.prepare(`DELETE FROM ${t} WHERE bucket_ms <= ? AND kind NOT IN (${LOG_KINDS_SQL})`).run(cutoff);
+  runStatements(store.db, logPruneStatements(SQLITE_DIALECT, null, now, store.logMaxAgeMs));
   if (doomed.length) store.settleGen++;
 }
 

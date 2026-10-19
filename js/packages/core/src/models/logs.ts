@@ -34,7 +34,7 @@ export interface LogsModel {
 
 const isLevel = (v: string | undefined): v is LogLevel => !!v && (LOG_LEVELS as readonly string[]).includes(v);
 
-/** The filter from URL parameters: level (and exact=1 for that level only), service, category, trace, q. */
+/** The filter from URL parameters: level (and exact=1 for that level only), service, category, trace, q, pattern, and origin (request or outside). */
 export const logFilterOf = (p: ModelParams): LogFilter => ({
   minLevel: isLevel(p.level) ? p.level : "trace",
   exact: p.exact === "1" && isLevel(p.level),
@@ -42,16 +42,20 @@ export const logFilterOf = (p: ModelParams): LogFilter => ({
   category: p.category ?? "",
   traceId: p.trace ?? "",
   query: p.q ?? "",
+  pattern: p.pattern ?? "",
+  origin: p.origin === "request" || p.origin === "outside" ? p.origin : "",
 });
 
-/** The list filter for the logs table. */
-const listFilterOf = (f: LogFilter): ListFilter => ({
+/** The list filter for the logs table (and for log charts and log alerts). */
+export const logListFilterOf = (f: LogFilter): ListFilter => ({
   minLevel: f.minLevel,
   ...(f.exact ? { exactLevel: true } : {}),
   ...(f.service ? { logService: f.service } : {}),
   ...(f.category ? { category: f.category } : {}),
   ...(f.traceId ? { traceId: f.traceId } : {}),
   ...(f.query ? { q: f.query } : {}),
+  ...(f.pattern ? { pattern: f.pattern } : {}),
+  ...(f.origin ? { logOrigin: f.origin } : {}),
 });
 
 type Counts = { total: number; warnings: number; errors: number; critical: number };
@@ -78,7 +82,7 @@ export const logsPage: PageDef<LogsModel> = {
       groupNeed("log.cur", "log", "cur", one),
       groupNeed("log.prev", "log", "prev", one),
       groupNeed("log.s", "log.s", "cur"),
-      listNeed("rows", "logs", "cur", { filter: listFilterOf(f), page: pageParams(ctx.params, 30) }),
+      listNeed("rows", "logs", "cur", { filter: logListFilterOf(f), page: pageParams(ctx.params, 30) }),
       seriesNeed("volume", "log", "cur", CHART_BUCKETS, { split: true, ...one }),
       seriesNeed("sparks", "log", "cur", SPARK_BUCKETS, { split: true, ...one }),
     ]);

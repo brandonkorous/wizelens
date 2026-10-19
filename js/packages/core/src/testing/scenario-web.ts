@@ -1,5 +1,6 @@
 // Browser and background scenario traces: page views with React renders, a failed fetch, and a job. Test-only.
 import { ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_ROUTE, ATTR_BROWSER_TYPE, ATTR_PAGE, ATTR_REACT_COMMITS, ATTR_REACT_COMPONENTS, type ReactComponentStat } from "../attributes.js";
+import { LOOSE_TRACE_PREFIX } from "../loose.js";
 import type { Attributes, Trace } from "../types.js";
 import { draft, type Draft, exception, fetchSpan, finish, log, query, span } from "./scenario-kit.js";
 
@@ -50,6 +51,16 @@ export function fetchOnly(id: string, at: number, i: number): Trace {
   const events = exception("TypeError", `cart.items is undefined (line ${10 + (i % 3)})`, at + 40);
   span(d, { category: "browser", service: "browser", startMs: at + 40, durationMs: 0, name: "error", status: "error", events, attributes: { [ATTR_BROWSER_TYPE]: "error", [ATTR_BROWSER_ROUTE]: "/checkout" } });
   log(d, at + 41, "warn", "Missing endpoint", "browser");
+  return finish(d);
+}
+
+/** Lines outside a request (startup, a timer): a loose trace with no spans, whose messages vary only in numbers and ids. */
+export function outside(id: string, at: number, i: number): Trace {
+  const d = draft(LOOSE_TRACE_PREFIX + id.slice(0, 16));
+  log(d, at, "info", `Cache warmed in ${100 + i} ms`, "orders");
+  log(d, at + 5, "debug", "Timer tick", "orders");
+  log(d, at + 10, i % 2 ? "warn" : "info", `Retrying job ${4000 + i} for tenant 'acme-${i}'`, "worker-svc", null, { attempt: 1 + (i % 3) });
+  if (i % 3 === 0) log(d, at + 20, "error", `Lost connection to 10.0.0.${i} after ${i} retries`, "worker-svc");
   return finish(d);
 }
 

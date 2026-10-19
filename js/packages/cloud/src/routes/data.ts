@@ -32,7 +32,7 @@ async function retentionMs(ctx: Ctx): Promise<number> {
 async function info(ctx: Ctx): Promise<void> {
   const value: ServiceInfo = {
     mode: "cloud",
-    capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats", "metrics", "serverMetrics", "search", "changes"],
+    capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats", "metrics", "serverMetrics", "search", "changes", "savedSearches"],
     service: "WizeLens Cloud",
     version: ctx.app.version,
     runtime: `node ${process.version}`,
@@ -54,6 +54,7 @@ async function traces(ctx: Ctx): Promise<void> {
   q.before = num(p, "before");
   q.env = p.get("env") || undefined;
   q.session = p.get("session") || undefined;
+  q.noLoose = !full;
   const list = await ctx.app.telemetry.traces(q);
   sendJson(ctx.res, 200, full ? list : list.map(({ spans: _s, logs: _l, remotes: _r, ...summary }) => summary));
 }

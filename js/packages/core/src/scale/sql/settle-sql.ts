@@ -18,6 +18,8 @@ export interface TraceState {
   contrib: string | null;
   /** How long the 1 h tier keeps buckets for its project. */
   retentionMs: number;
+  /** How long the 1 h tier keeps log buckets for its project; the trace retention when absent. */
+  logRetentionMs?: number;
 }
 
 /** Stored contributions from a trace row, or null when missing, broken, or of another facts version. */
@@ -57,7 +59,7 @@ export function settleStatements(d: Dialect, batch: readonly { state: TraceState
     const scope = { project: state.project, env: state.env };
     const facts = hasData(trace) ? traceFacts(trace) : null;
     const next = facts ? compact(facts, scope) : null;
-    deltas.push(settleDelta(storedOf(state.contrib), next, now, state.retentionMs));
+    deltas.push(settleDelta(storedOf(state.contrib), next, now, state.retentionMs, state.logRetentionMs));
     if (facts) {
       const r = factRows(facts, scope, trace ?? undefined);
       for (const t of FACT_TABLES) rows[t].push(...r[t]);
@@ -69,7 +71,7 @@ export function settleStatements(d: Dialect, batch: readonly { state: TraceState
 
 /** Writes for traces about to be deleted: take their contributions out of the rollups and drop their facts. */
 export function pruneStatements(d: Dialect, doomed: readonly TraceState[], now: number, scoped: boolean): Statement[] {
-  const delta = mergeDeltas(doomed.map((s) => settleDelta(storedOf(s.contrib), null, now, s.retentionMs)));
+  const delta = mergeDeltas(doomed.map((s) => settleDelta(storedOf(s.contrib), null, now, s.retentionMs, s.logRetentionMs)));
   return [...deltaStatements(d, delta), ...deletesOf(d, doomed, scoped)];
 }
 

@@ -1,10 +1,12 @@
+import { isLooseTraceId } from "../loose.js";
 import type { Attributes, LogLevel, Trace } from "../types.js";
 import { memoByObject } from "./common.js";
 import { displayService } from "./errors.js";
+import { patternIdOf } from "./log-patterns.js";
 
 export const LOG_LEVELS: readonly LogLevel[] = ["trace", "debug", "info", "warn", "error", "critical"];
 
-/** One log line, with the trace it was written in. */
+/** One log line, with the trace it was written in. Lines outside a request have a loose trace id and no trace name. */
 export interface LogRow {
   key: string;
   traceId: string;
@@ -22,7 +24,7 @@ function rowsOf(trace: Trace): LogRow[] {
   return trace.logs.map((l, i) => ({
     key: `${trace.traceId}:${i}`,
     traceId: trace.traceId,
-    traceName: trace.rootName,
+    traceName: isLooseTraceId(trace.traceId) ? "" : trace.rootName,
     spanId: l.spanId,
     timeMs: l.timeMs,
     level: l.level,
@@ -51,6 +53,10 @@ export interface LogFilter {
   category?: string;
   /** Only this trace's lines, or "" for all. */
   traceId?: string;
+  /** Only lines of this pattern id (`patternIdOf`), or "" for all. */
+  pattern?: string;
+  /** Only lines written in a request, only lines outside one, or "" for both. */
+  origin?: "request" | "outside" | "";
 }
 
 export const levelRank = (level: LogLevel): number => LOG_LEVELS.indexOf(level);
@@ -64,6 +70,8 @@ export function filterLogs(rows: readonly LogRow[], f: LogFilter): LogRow[] {
       (!f.service || r.service === f.service) &&
       (!f.category || r.category === f.category) &&
       (!f.traceId || r.traceId === f.traceId) &&
+      (!f.pattern || patternIdOf(r.message) === f.pattern) &&
+      (!f.origin || (f.origin === "outside") === isLooseTraceId(r.traceId)) &&
       (!q || r.message.toLowerCase().includes(q) || r.category.toLowerCase().includes(q) || r.traceName.toLowerCase().includes(q) || r.traceId.startsWith(q)),
   );
 }

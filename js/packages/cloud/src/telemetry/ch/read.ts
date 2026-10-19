@@ -1,5 +1,5 @@
 // Trace reads on ClickHouse: lists from the bounds table, whole traces from the raw spans and logs.
-import { buildTrace, type LogRecord, type Span, type Trace } from "@wizeworks/lens-core";
+import { buildTrace, type LogRecord, LOOSE_TRACE_PREFIX, type Span, type Trace } from "@wizeworks/lens-core";
 import type { TraceQuery } from "../store.js";
 import type { ChClient } from "./http.js";
 
@@ -16,6 +16,7 @@ async function idsWithin(ch: ChClient, t: TraceQuery, now: number, backMs: numbe
   if (t.since !== undefined) rows.push(`updated_ms >= ${p(t.since, "Float64")}`);
   if (t.before !== undefined) rows.push(`start_ms < ${p(t.before, "Float64")}`);
   if (t.session) rows.push(`trace_id IN (SELECT trace_id FROM spans_raw WHERE project_id = {p1:String} AND session = ${p(t.session, "String")})`);
+  if (t.noLoose) rows.push(`NOT startsWith(trace_id, ${p(LOOSE_TRACE_PREFIX, "String")})`);
   const having = ["1"];
   if (t.from !== undefined) having.push(`s >= ${p(t.from, "Float64")}`);
   if (t.before !== undefined) having.push(`s < ${p(t.before, "Float64")}`);

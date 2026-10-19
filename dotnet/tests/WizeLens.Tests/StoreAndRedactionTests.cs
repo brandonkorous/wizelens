@@ -34,14 +34,14 @@ public class StoreAndRedactionTests
         var store = new TraceStore(maxTraces: 3);
         for (var i = 1; i <= 5; i++)
         {
-            store.AddSpan(new Span { TraceId = $"{i:x32}", SpanId = $"{i:x16}", StartMs = i });
+            store.AddSpan(new Span { TraceId = $"a{i:x31}", SpanId = $"{i:x16}", StartMs = i });
         }
 
         Assert.Equal(3, store.Count);
-        Assert.Null(store.Get($"{1:x32}"));
-        Assert.Null(store.Get($"{2:x32}"));
-        Assert.NotNull(store.Get($"{5:x32}"));
-        Assert.Equal([$"{5:x32}", $"{4:x32}", $"{3:x32}"], store.Summaries(10).Select(s => s.TraceId));
+        Assert.Null(store.Get($"a{1:x31}"));
+        Assert.Null(store.Get($"a{2:x31}"));
+        Assert.NotNull(store.Get($"a{5:x31}"));
+        Assert.Equal([$"a{5:x31}", $"a{4:x31}", $"a{3:x31}"], store.Summaries(10).Select(s => s.TraceId));
     }
 
     [Fact]

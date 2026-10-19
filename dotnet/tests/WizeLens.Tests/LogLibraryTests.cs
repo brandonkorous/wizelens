@@ -33,6 +33,8 @@ public class LogLibraryTests
 
     private List<LogRecord> Logs(Activity activity) => _store.Get(activity.TraceId.ToHexString())?.Logs ?? [];
 
+    private List<LogRecord> LooseLogs() => [.. _store.Recent(100).Where(t => TraceIds.IsLoose(t.TraceId)).SelectMany(t => t.Logs)];
+
     private global::Serilog.Core.Logger SerilogLogger() =>
         new LoggerConfiguration().MinimumLevel.Verbose().WriteTo.Sink(new WizeLensSink(Destination)).CreateLogger();
 
@@ -57,10 +59,24 @@ public class LogLibraryTests
     }
 
     [Fact]
-    public void Serilog_event_outside_a_request_is_skipped()
+    public void Serilog_event_outside_a_request_goes_into_the_loose_batch()
     {
         using var logger = SerilogLogger();
-        logger.Information("startup");
+        logger.ForContext("SourceContext", "Orders.Jobs").Information("startup {Step}", 1);
+        logger.Debug("below the floor");
+
+        var log = Assert.Single(LooseLogs());
+        Assert.Equal(("info", "Orders.Jobs", "startup 1", "svc"), (log.Level, log.Category, log.Message, log.Service));
+        Assert.Null(log.SpanId);
+        Assert.Equal(1L, log.Attributes["Step"]);
+    }
+
+    [Fact]
+    public void Serilog_event_outside_a_request_is_skipped_when_outside_is_off()
+    {
+        _options.Logs.Outside = false;
+        using var logger = SerilogLogger();
+        logger.Warning("startup");
         Assert.Equal(0, _store.Count);
     }
 
@@ -120,16 +136,27 @@ public class LogLibraryTests
     }
 
     [Fact]
-    public void NLog_levels_map_and_events_outside_a_request_are_skipped()
+    public void NLog_levels_map_and_events_outside_a_request_go_into_the_loose_batch()
     {
         using var factory = NLogFactory(async: false);
         var logger = factory.GetLogger("app");
         logger.Info("startup");
-        Assert.Equal(0, _store.Count);
+        logger.Debug("below the floor");
+        var loose = Assert.Single(LooseLogs());
+        Assert.Equal(("info", "app", "startup"), (loose.Level, loose.Category, loose.Message));
 
         using var activity = StartRequest();
         foreach (var level in global::NLog.LogLevel.AllLoggingLevels) logger.Log(level, "x");
         Assert.Equal(["trace", "debug", "info", "warn", "error", "critical"], Logs(activity).Select(l => l.Level));
+    }
+
+    [Fact]
+    public void NLog_async_wrapper_keeps_lines_outside_a_request_loose()
+    {
+        using var factory = NLogFactory(async: true);
+        factory.GetLogger("worker").Warn("tick");
+        factory.Flush(TimeSpan.FromSeconds(5));
+        Assert.Equal("tick", Assert.Single(LooseLogs()).Message);
     }
 
     [Fact]

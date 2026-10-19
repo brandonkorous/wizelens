@@ -6,6 +6,7 @@ import { loadMetricAlertData, loadMetricData } from "../repo/metric-read.js";
 import { METRIC_TABLES } from "../repo/metric-write.js";
 import { getJoinedTrace } from "../repo/trace-join.js";
 import { countRows, getTrace, queryTraces, traceEnvsPg } from "../repo/trace-read.js";
+import { pruneLogsByRetention } from "../repo/log-retention.js";
 import { pruneByRetention, pruneMetricsByRetention, writeTelemetry } from "../repo/trace-write.js";
 import { cloudExecutor, cloudSettling, pgRunner } from "../scale-exec.js";
 import { factsStale, pruneRollups, resetFacts, settleCloud, STATS_TABLES } from "../settle.js";
@@ -69,6 +70,7 @@ export function pgTelemetry(db: Db): TelemetryStore {
     },
     async prune(now) {
       while ((await pruneByRetention(db, now)) > 0);
+      await pruneLogsByRetention(db, now);
       await pruneMetricsByRetention(db, now);
       await pruneRollups(db, now, true);
     },

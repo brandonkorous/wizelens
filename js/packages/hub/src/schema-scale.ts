@@ -1,5 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import { FACTS_VERSION } from "@wizeworks/lens-core";
+import { SAVED_SEARCH_SCHEMA } from "./saved-searches.js";
 import { upgradeFts } from "./schema-fts.js";
 import { HUB_SCHEMA, HUB_SCHEMA_VERSION } from "./schema.js";
 
@@ -50,7 +51,7 @@ CREATE INDEX IF NOT EXISTS ix_fact_traces_project ON fact_traces (project, start
 CREATE TABLE IF NOT EXISTS fact_logs (
   project TEXT NOT NULL DEFAULT '', trace_id TEXT NOT NULL, idx INTEGER NOT NULL, env TEXT NOT NULL DEFAULT '', time_ms REAL NOT NULL,
   level TEXT NOT NULL, level_rank INTEGER NOT NULL, service TEXT NOT NULL, category TEXT NOT NULL, message TEXT NOT NULL,
-  trace_name TEXT NOT NULL, span_id TEXT, attributes TEXT NOT NULL, search TEXT NOT NULL, PRIMARY KEY (trace_id, idx)
+  trace_name TEXT NOT NULL, span_id TEXT, attributes TEXT NOT NULL, search TEXT NOT NULL, pattern TEXT NOT NULL DEFAULT '', PRIMARY KEY (trace_id, idx)
 );
 CREATE INDEX IF NOT EXISTS ix_fact_logs_time ON fact_logs (time_ms);
 CREATE INDEX IF NOT EXISTS ix_fact_logs_project ON fact_logs (project, time_ms);
@@ -109,6 +110,10 @@ export function upgradeHubSchema(db: DatabaseSync): void {
   if (!cols.has("settled_ms")) db.exec("ALTER TABLE traces ADD COLUMN settled_ms REAL NOT NULL DEFAULT 0");
   if (!cols.has("contrib")) db.exec("ALTER TABLE traces ADD COLUMN contrib TEXT");
   db.exec(HUB_SCALE_SCHEMA);
+  db.exec(SAVED_SEARCH_SCHEMA);
+  const logCols = new Set((db.prepare("PRAGMA table_info(fact_logs)").all() as { name: string }[]).map((c) => c.name));
+  if (!logCols.has("pattern")) db.exec("ALTER TABLE fact_logs ADD COLUMN pattern TEXT NOT NULL DEFAULT ''");
+  db.exec("CREATE INDEX IF NOT EXISTS ix_fact_logs_pattern ON fact_logs (pattern, time_ms)");
   upgradeFts(db);
   const facts = db.prepare("SELECT value FROM meta WHERE key = 'facts'").get() as { value: string } | undefined;
   if (facts?.value !== String(FACTS_VERSION)) rebuildStats(db);

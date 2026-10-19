@@ -115,6 +115,17 @@ export function useServerErrorCount(): number | null {
   return server ? (badges.model?.errors ?? 0) : null;
 }
 
+/** A page with these parameters only (and the chosen service), not the route's: for example a saved search's chart. */
+export function usePageModelOf<P extends PageName>(page: P, own: Record<string, string>): PageModel<P> {
+  const [service] = useServiceScope();
+  const key = new URLSearchParams(withScope(page, own, service)).toString();
+  const params = useMemo(() => Object.fromEntries(new URLSearchParams(key)), [key]);
+  const server = useHost().has("serverStats");
+  const local = useLocalModel(page, params, !server);
+  const remote = useServerModel(page, params, server);
+  return server ? remote : local;
+}
+
 /** One page's numbers. Hosts with `serverStats` compute them; otherwise the browser does, from the loaded traces. */
 export function usePageModel<P extends PageName>(page: P, extra?: Record<string, string>, paused = false): PageModel<P> {
   const params = useParams(page, extra);

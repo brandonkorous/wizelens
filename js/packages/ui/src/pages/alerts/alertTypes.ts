@@ -12,6 +12,8 @@ export interface AlertRule {
   metricName: string;
   metricStat: MetricAlertStat | "";
   metricService: string;
+  /** For "log_count" rules: the log search (Logs page filters) whose lines are counted. */
+  logSearch?: Record<string, string>;
   op: AlertOp;
   threshold: number;
   windowMs: number;

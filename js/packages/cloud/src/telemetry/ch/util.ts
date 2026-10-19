@@ -1,4 +1,5 @@
 // Shared bits of the ClickHouse store: row versions, retention lookups, and row objects from column lists.
+import { isLooseTraceId } from "@wizeworks/lens-core";
 import type { RetentionOf } from "../store.js";
 
 const DAY_MS = 86_400_000;
@@ -35,6 +36,15 @@ export class RetentionCache {
     return (await this.daysOf([projectId])).get(projectId)! * DAY_MS;
   }
 }
+
+/** How long a project keeps trace rows and log rows, in ms. */
+export interface Keep {
+  ms: number;
+  logMs: number;
+}
+
+/** How long a log line is kept: the log retention outside a request; in one, never past its trace. */
+export const logKeepOf = (traceId: string, keep: Keep): number => (isLooseTraceId(traceId) ? keep.logMs : Math.min(keep.ms, keep.logMs));
 
 /** A row object from a column list and values in the same order. */
 export function rowOf(cols: readonly string[], values: readonly unknown[]): Record<string, unknown> {

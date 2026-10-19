@@ -1,4 +1,5 @@
 // Writes for the stats tables, shared by both hosts: fact rows, rollup and hist upserts, and fact deletes.
+import { patternIdOf } from "../../stats/log-patterns.js";
 import { levelRank, type LogRow } from "../../stats/logs.js";
 import type { CriticalSpan } from "../../stats/traces.js";
 import type { Scope } from "../compact.js";
@@ -40,7 +41,7 @@ const int32 = (v: number | null): number | null => (v === null || !Number.isFini
 export const FACT_COLUMNS = {
   fact_requests: ["trace_id", "env", "start_ms", "method", "path", "endpoint", "status", "status_class", "failed", "dur_class", "aborted", "duration_ms", "server_ms", "db_ms", "db_count", "fetch_count", "fetch_ms", "render_ms", "network_ms", "service", "services", "errors", "insights", "health", "user_agent", "client_address", "end_user", "request_id", "tags", "search"],
   fact_traces: ["trace_id", "env", "start_ms", "path", "duration_ms", "health", "status", "services", "span_count", "slow", "search"],
-  fact_logs: ["trace_id", "idx", "env", "time_ms", "level", "level_rank", "service", "category", "message", "trace_name", "span_id", "attributes", "search"],
+  fact_logs: ["trace_id", "idx", "env", "time_ms", "level", "level_rank", "service", "category", "message", "trace_name", "span_id", "attributes", "search", "pattern"],
   fact_critical: ["trace_id", "span_id", "env", "start_ms", "duration_ms", "name", "service", "layer"],
   ...SEARCH_COLUMNS,
 } as const;
@@ -59,7 +60,7 @@ const traceValues = (t: TraceItem, env: string): unknown[] => [t.traceId, env, t
 function logValues(l: LogRow, env: string): unknown[] {
   const idx = Number(l.key.slice(l.key.lastIndexOf(":") + 1));
   const search = searchText([l.message, l.category, l.traceName]);
-  return [l.traceId, int32(idx), env, l.timeMs, l.level, levelRank(l.level), l.service, l.category, l.message, l.traceName, l.spanId, JSON.stringify(l.attributes ?? {}), search];
+  return [l.traceId, int32(idx), env, l.timeMs, l.level, levelRank(l.level), l.service, l.category, l.message, l.traceName, l.spanId, JSON.stringify(l.attributes ?? {}), search, patternIdOf(l.message)];
 }
 
 const criticalValues = (s: CriticalSpan, env: string): unknown[] => [s.traceId, s.spanId, env, s.startMs, s.durationMs, s.name, s.service, s.layer];
@@ -70,7 +71,7 @@ export function factRows(f: TraceFacts, scope: Scope, trace?: Trace): Record<Fac
   return {
     ...(trace ? searchRows(trace, scope) : { fact_search: [], fact_attrs: [] }),
     fact_requests: f.request ? [p(requestValues(f.request, scope.env))] : [],
-    fact_traces: [p(traceValues(f.trace, scope.env))],
+    fact_traces: f.trace ? [p(traceValues(f.trace, scope.env))] : [],
     fact_logs: f.logs.map((l) => p(logValues(l, scope.env))),
     fact_critical: f.critical.map((s) => p(criticalValues(s, scope.env))),
   };

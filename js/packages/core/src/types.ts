@@ -84,7 +84,9 @@ export type Capability =
   /** The host answers `api/search` and `api/search/suggest` (docs/SEARCH-PLAN.md). */
   | "search"
   /** The host streams `api/changes` (server-sent events) when a project gets new stats, so pages reload at once. */
-  | "changes";
+  | "changes"
+  /** The host keeps saved searches (`api/saved-searches`); without it the dashboard keeps them in the browser. */
+  | "savedSearches";
 
 /** What an in-app add-on offers today. Also the default when a host does not say. */
 export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];

@@ -28,7 +28,9 @@ export function tierMemory(traces: readonly Trace[], retentionMs: number): SyncE
 const STATIC: Partial<Record<PageName, Record<string, string>[]>> = {
   requests: [{ endpoint: "POST /api/pay" }, { user: "nope" }, { insights: "1" }, { sort: "errors" }, { sort: "db", desc: "0" }, { service: "Web App" }, { method: "POST" }, { status: "5xx" }, { status: "failed", duration: "medium" }, { duration: "slowest" }, { service: "orders" }, { q: "orders" }, { q: "orders", status: "failed" }, { sort: "duration", desc: "0", page: "2", size: "5" }, { status: "bogus" }],
   traces: [{ q: "checkout" }, { q: "nothing-matches" }, { trace: "f".repeat(32) }, { service: "orders" }, { service: "Web App" }, { status: "error" }, { status: "ok" }, { duration: "slowest" }, { sort: "duration" }, { page: "2", size: "5" }, { service: "api", status: "error", sort: "duration" }],
-  logs: [{ level: "warn" }, { level: "error", service: "api" }, { q: "order" }, { page: "2", size: "5" }, { service: "orders" }, { level: "warn", exact: "1" }, { category: "api.app" }, { trace: "f".repeat(32) }],
+  logs: [{ level: "warn" }, { level: "error", service: "api" }, { q: "order" }, { page: "2", size: "5" }, { service: "orders" }, { level: "warn", exact: "1" }, { category: "api.app" }, { trace: "f".repeat(32) }, { origin: "outside" }, { origin: "request", level: "info" }],
+  "log-patterns": [{ level: "warn" }, { service: "worker-svc" }, { level: "error", exact: "1" }, { pattern: "nope" }, { origin: "outside" }, { origin: "request", service: "orders" }],
+  "log-chart": [{ level: "error" }, { q: "retrying" }, { origin: "outside" }, { service: "orders", level: "info" }],
   insights: [{ area: "database" }, { impact: "high" }, { q: "orders" }, { service: "api" }, { service: "Web App" }, { endpoint: "GET /api/orders/{id}" }],
   rendering: [{ q: "checkout" }, { q: "nothing" }],
   errors: [{ q: "pay" }, { q: "TIMEOUT" }, { service: "api" }, { service: "Web App" }, { type: "TimeoutError" }, { critical: "1" }, { sort: "count" }, { page: "2", size: "2" }, { endpoint: "POST /api/pay" }, { endpoint: "nope" }, { service: "api", critical: "1", sort: "count" }],
@@ -49,6 +51,7 @@ function paramsOf(page: PageName, range: TimeRange, mem: SyncExecutor): Record<s
   if (page === "route") extra.push(...runPageSync("rendering", ctx, mem).routes.slice(0, 2).map((r) => ({ route: r.route })), { route: "nope" });
   if (page === "errors") extra.push(...runPageSync("errors", ctx, mem).groups.slice(0, 2).map((g) => ({ group: g.key })), { group: "nope" });
   if (page === "insights") extra.push(...runPageSync("insights", ctx, mem).groups.slice(0, 2).map((g) => ({ key: g.key })));
+  if (page === "logs" || page === "log-chart" || page === "log-patterns") extra.push(...runPageSync("log-patterns", ctx, mem).rows.slice(0, 2).map((r) => ({ pattern: r.id })));
   return [{}, ...(STATIC[page] ?? []), ...extra];
 }
 

@@ -34,3 +34,6 @@ export const RAW_TABLES: readonly string[] = [
     project_id String, days UInt32, ver UInt64
   ) ENGINE = ReplacingMergeTree(ver) ORDER BY project_id`,
 ];
+
+/** Changes to shipped raw tables, in order. Log retention per project: 0 means the trace retention. */
+export const RAW_ALTERS: readonly string[] = ["ALTER TABLE project_retention ADD COLUMN IF NOT EXISTS log_days UInt32 DEFAULT 0"];

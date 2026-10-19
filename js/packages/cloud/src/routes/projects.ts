@@ -27,6 +27,18 @@ async function dropProject(ctx: Ctx): Promise<void> {
   sendJson(ctx.res, 200, { ok: true });
 }
 
+/** PATCH a project's settings: `logRetentionDays` (1 to 400, or null for the organization's retention). */
+async function changeProject(ctx: Ctx): Promise<void> {
+  const { org, project } = ctx.params as { org: string; project: string };
+  const { user } = await requireOrg(ctx, org, "manage");
+  if (!(await projectInOrg(ctx.app.db, org, project))) return fail(404, "Project not found.");
+  const days = (await readJsonBody(ctx.req)).logRetentionDays;
+  if (days !== null && (!Number.isInteger(days) || (days as number) < 1 || (days as number) > 400)) fail(400, "Log retention is 1 to 400 days, or null to follow the organization.");
+  await ctx.app.db.query("UPDATE projects SET log_retention_days = $1 WHERE id = $2", [days, project]);
+  await audit(ctx.app.db, org, `user:${user.id}`, "project.update", { projectId: project, logRetentionDays: days }, now(ctx));
+  sendJson(ctx.res, 200, await projectInOrg(ctx.app.db, org, project));
+}
+
 /** Ingest keys belong to one project. Read keys name the projects they may read. */
 async function newKey(ctx: Ctx): Promise<void> {
   const org = ctx.params.org!;
@@ -52,6 +64,7 @@ async function dropKey(ctx: Ctx): Promise<void> {
 
 export function projectRoutes(r: Router<Ctx>): void {
   r.on("POST", "api/orgs/:org/projects", newProject)
+    .on("PATCH", "api/orgs/:org/projects/:project", changeProject)
     .on("DELETE", "api/orgs/:org/projects/:project", dropProject)
     .on("POST", "api/orgs/:org/projects/:project/clear", dropProject)
     .on("POST", "api/orgs/:org/keys", newKey)

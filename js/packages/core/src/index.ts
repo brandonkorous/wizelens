@@ -6,6 +6,8 @@ export * from "./switches.js";
 export * from "./attributes.js";
 export * from "./sampling.js";
 export * from "./ids.js";
+export * from "./loose.js";
+export * from "./saved-searches.js";
 export * from "./redact.js";
 export * from "./trace.js";
 export * from "./span-time.js";

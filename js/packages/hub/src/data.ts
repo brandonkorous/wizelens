@@ -29,7 +29,7 @@ export class HubData {
   }
 
   summaries(q: TraceQuery): TraceSummary[] {
-    return this.traces(q).map(toSummary);
+    return this.traces({ ...q, noLoose: true }).map(toSummary);
   }
 
   /** One trace, plus the parts held by add-ons that do not send here. */

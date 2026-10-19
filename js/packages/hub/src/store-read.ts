@@ -1,5 +1,5 @@
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
-import { buildTrace, HUB_ONLINE_MS, type HubSender, type HubService, type LogRecord, type Span, type Trace } from "@wizeworks/lens-core";
+import { buildTrace, HUB_ONLINE_MS, LOOSE_TRACE_PREFIX, type HubSender, type HubService, type LogRecord, type Span, type Trace } from "@wizeworks/lens-core";
 
 export interface TraceQuery {
   /** Only traces that changed at or after this time (epoch ms, hub clock). */
@@ -10,6 +10,8 @@ export interface TraceQuery {
   project?: string;
   /** Only traces with a browser span from this tab. */
   session?: string;
+  /** Leave out loose batches (lines outside a request), which are not traces to list. */
+  noLoose?: boolean;
   limit: number;
 }
 
@@ -25,6 +27,7 @@ export function findTraceIds(db: DatabaseSync, q: TraceQuery): string[] {
   if (q.env) add("env = ?", q.env);
   if (q.project) add("project = ?", q.project);
   if (q.session) add("trace_id IN (SELECT trace_id FROM spans WHERE session = ?)", q.session);
+  if (q.noLoose) add("substr(trace_id, 1, 16) <> ?", LOOSE_TRACE_PREFIX);
   const sql = `SELECT trace_id FROM traces ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY start_ms DESC LIMIT ?`;
   return (db.prepare(sql).all(...args, q.limit) as { trace_id: string }[]).map((r) => r.trace_id);
 }

@@ -12,6 +12,8 @@ export interface TraceQuery {
   from?: number;
   env?: string;
   session?: string;
+  /** Leave out loose batches (lines outside a request), which are not traces to list. */
+  noLoose?: boolean;
   limit: number;
 }
 

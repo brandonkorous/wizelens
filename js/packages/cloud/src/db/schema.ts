@@ -1,4 +1,5 @@
 import { AUTH_MIGRATION } from "./schema-auth.js";
+import { LOGS_MIGRATION } from "./schema-logs.js";
 import { MAIL_MIGRATION } from "./schema-mail.js";
 import { NOTIFY_MIGRATION } from "./schema-notify.js";
 import { OAUTH_MIGRATION } from "./schema-oauth.js";
@@ -208,6 +209,7 @@ CREATE INDEX ix_metric_1h_time ON metric_1h (project_id, bucket_ms);
   NOTIFY_MIGRATION,
   SEARCH_MIGRATION,
   OAUTH_MIGRATION,
+  LOGS_MIGRATION,
 ];
 
 export const MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS wizelens_migrations (version INTEGER PRIMARY KEY, applied_ms DOUBLE PRECISION NOT NULL)`;

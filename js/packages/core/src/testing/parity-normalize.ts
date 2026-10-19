@@ -56,9 +56,9 @@ const TIES: Record<string, (m: Obj) => void> = {
     o.services = [...new Set(o.services.map((s) => (s === "browser" ? "Web App" : s)))].sort();
   },
   logs: (m) => {
-    // The exact level, category, and trace filters are new; the legacy filter had none.
+    // The exact level, category, trace, pattern, and origin filters are new; the legacy filter had none.
     const f = m.filter as Obj;
-    for (const k of ["exact", "category", "traceId"]) delete f[k];
+    for (const k of ["exact", "category", "traceId", "pattern", "origin"]) delete f[k];
   },
   rendering: (m) => {
     // The route count is new; the legacy model had none.

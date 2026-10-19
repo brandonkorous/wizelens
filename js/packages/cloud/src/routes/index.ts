@@ -11,6 +11,7 @@ import { modelRoutes } from "./models.js";
 import { notifyRoutes } from "./notify.js";
 import { orgRoutes } from "./orgs.js";
 import { projectRoutes } from "./projects.js";
+import { savedSearchRoutes } from "./saved-searches.js";
 import { searchRoutes } from "./search.js";
 
 /** Every route below `/_wizelens/`, except ingest and OTLP (they use ingest keys and are matched first). */
@@ -25,6 +26,7 @@ export function allRoutes(): Router<Ctx> {
   changeRoutes(r);
   searchRoutes(r);
   alertRoutes(r);
+  savedSearchRoutes(r);
   shareRoutes(r);
   mcpRoutes(r);
   appRoutes(r);

@@ -11,6 +11,7 @@ import { connectHub } from "./hub-connect.js";
 import { samplingInfo, TraceSampler } from "./sampling.js";
 import { buildInfo, DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, VERSION } from "./info.js";
 import { createLogSink, createLogWriter, makeLogger } from "./logger.js";
+import { looseLogsOf } from "./loose-logs.js";
 import { captureConsole } from "./logs/console.js";
 import type { McpDataSource } from "./mcp.js";
 import { createMetricParts, mcpMetrics } from "./metrics/setup.js";
@@ -66,7 +67,7 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const selfEndpoints = new Set<string>(options.publicEndpoint ? [options.publicEndpoint] : []);
   const fetch = options.instrumentFetch ?? true;
   const tracing = createTracing(store, { service, version: VERSION, redactKeys, fetch }, selfEndpoints);
-  const logs = createLogSink(store, service, redactKeys);
+  const logs = createLogSink(store, service, redactKeys, looseLogsOf(options.logs));
   const write = createLogWriter(logs, !!options.logToConsole);
   const getTrace = createGetTrace(store, selfEndpoints);
   const startedMs = Date.now();

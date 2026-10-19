@@ -4,6 +4,8 @@ import { badgesPage } from "./badges.js";
 import { databasePage } from "./database.js";
 import { errorsPage } from "./errors.js";
 import { insightsPage } from "./insights.js";
+import { logChartPage } from "./log-chart.js";
+import { logPatternsPage } from "./log-patterns.js";
 import { logsPage } from "./logs.js";
 import { overviewPage } from "./overview.js";
 import { renderingPage } from "./rendering.js";
@@ -31,6 +33,8 @@ export * from "./requests.js";
 export * from "./database.js";
 export * from "./errors.js";
 export * from "./logs.js";
+export * from "./log-patterns.js";
+export * from "./log-chart.js";
 export * from "./rendering.js";
 export * from "./services.js";
 export * from "./service-page.js";
@@ -52,6 +56,8 @@ export const PAGES = {
   rendering: renderingPage,
   errors: errorsPage,
   logs: logsPage,
+  "log-patterns": logPatternsPage,
+  "log-chart": logChartPage,
   services: servicesPage,
   service: servicePage,
   error: errorPage,
