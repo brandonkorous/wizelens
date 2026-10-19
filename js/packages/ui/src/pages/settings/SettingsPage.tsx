@@ -1,4 +1,4 @@
-import { BookOpen, Plug, Server, SlidersHorizontal, Tag } from "lucide-react";
+import { BookOpen, FolderCog, Plug, Server, SlidersHorizontal, Tag } from "lucide-react";
 import { TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import { useData } from "../../data/hooks";
 import { useHost, useRange } from "../../data/host";
@@ -10,6 +10,7 @@ import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { type Section, SectionHead, SectionLayout } from "../../ui/Sections";
 import { HubConnect } from "./HubConnect";
 import { OptionsReference } from "./OptionsReference";
+import { ProjectSettings } from "./ProjectSettings";
 import { SourceSettings } from "./SourceSettings";
 import { TagsSettings } from "./TagsSettings";
 import "../../styles/pages/settings.css";
@@ -48,20 +49,22 @@ function Preferences() {
 
 /** What each mode calls the services on this page, and where their settings are changed. */
 function servicesText(mode: string | undefined): { label: string; description: string } {
-  if (mode === "cloud") return { label: "This cloud", description: "How this WizeLens Cloud is set up. Start options change it: run wizelens-cloud --help." };
-  if (mode === "hub") return { label: "This hub", description: "How this hub is set up. Start options change it: run wizelens-hub --help." };
+  if (mode === "cloud") return { label: "This cloud", description: "How this WizeLens Cloud is set up. Start options change it: run wizelens-cloud --help. Projects change their own under This project." };
+  if (mode === "hub") return { label: "This hub", description: "How this hub is set up. Start options change it: run wizelens-hub --help. Projects change their own under This project." };
   return { label: "Services", description: "How WizeLens is set up in each service this dashboard reads. Settings live in each app's code: change one, then restart the service." };
 }
 
 /** Preferences, how to connect a service (hub and cloud), how each service is set up, and every add-on option. */
 export function SettingsPage() {
   const data = useData();
+  const host = useHost();
   const { params } = useRoute();
   const mode = data.info?.mode;
   const services = servicesText(mode);
   const tagsOn = useHost().has("tags");
   const sections: Section[] = [
     { id: "dashboard", label: "Dashboard", icon: SlidersHorizontal, render: () => <Preferences /> },
+    ...(host.has("settings") ? [{ id: "project", label: "This project", icon: FolderCog, render: () => <ProjectSettings /> }] : []),
     ...(mode === "hub" || mode === "cloud" || data.info?.hub ? [{ id: "connect", label: mode === "in-app" ? "Sends to" : "Connect a service", icon: Plug, render: () => <HubConnect info={data.info} /> }] : []),
     {
       id: "services",

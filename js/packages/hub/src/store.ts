@@ -2,11 +2,13 @@ import { createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { ATTR_BROWSER_SESSION, type HubLog, INFRA_SERVICE, type HubRemote, type HubSender, logKey, type MetricPoint, seriesKeyOf, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_SESSION, DEFAULT_REDACT_KEYS, FACT_N_PLUS_ONE, FACT_SLOW_QUERY_MS, type HubLog, INFRA_SERVICE, redactSignals, type HubRemote, type HubSender, logKey, type MetricPoint, seriesKeyOf, type Span } from "@wizeworks/lens-core";
 import { type HubStatements, prepareHubStatements } from "./schema.js";
 import { upgradeHubSchema } from "./schema-scale.js";
 import { pruneStats, type TraceStateRow } from "./settle.js";
 import { pruneMetricRollups, writeMetricRollups } from "./metrics-write.js";
+import { projectSettings } from "./settings.js";
+import { pruneProjectRows, shorterKeeps } from "./settings-prune.js";
 
 export interface HubStoreOptions {
   /** SQLite file, or ":memory:". */
@@ -19,6 +21,10 @@ export interface HubStoreOptions {
   maxMetricPoints?: number;
   /** Oldest log line kept, in ms. Default: `maxAgeMs`. Lines outside a request go at this age; lines in a request go with their trace when that is sooner. */
   logMaxAgeMs?: number;
+  /** Thresholds and redacted keys for projects that set none. */
+  slowQueryMs?: number;
+  nPlusOneThreshold?: number;
+  redactKeys?: readonly string[];
   now?: () => number;
 }
 
@@ -47,6 +53,9 @@ export class HubStore {
   readonly maxAgeMs: number;
   readonly maxMetricPoints: number;
   readonly logMaxAgeMs: number;
+  readonly slowQueryMs: number;
+  readonly nPlusOneThreshold: number;
+  readonly redactKeys: readonly string[];
   readonly path: string;
   readonly now: () => number;
   readonly #stmts: HubStatements;
@@ -59,6 +68,9 @@ export class HubStore {
     this.maxAgeMs = Math.max(60_000, o.maxAgeMs ?? 7 * DAY_MS);
     this.maxMetricPoints = Math.max(1, o.maxMetricPoints ?? 2_000_000);
     this.logMaxAgeMs = Math.max(60_000, o.logMaxAgeMs ?? this.maxAgeMs);
+    this.slowQueryMs = o.slowQueryMs ?? FACT_SLOW_QUERY_MS;
+    this.nPlusOneThreshold = o.nPlusOneThreshold ?? FACT_N_PLUS_ONE;
+    this.redactKeys = o.redactKeys ?? DEFAULT_REDACT_KEYS;
     this.now = o.now ?? Date.now;
     if (o.path !== ":memory:") mkdirSync(dirname(o.path), { recursive: true });
     this.db = new DatabaseSync(o.path);
@@ -67,11 +79,12 @@ export class HubStore {
     this.#stmts = prepareHubStatements(this.db);
   }
 
-  /** Save one batch in one transaction. */
+  /** Save one batch in one transaction, with the project's extra keys hidden too. */
   write(w: HubWrite): void {
+    const own = projectSettings(this.db, w.sender.project ?? "").redactKeys;
     this.db.exec("BEGIN");
     try {
-      this.#writeAll(w);
+      this.#writeAll(redactSignals(w, own));
       this.db.exec("COMMIT");
     } catch (err) {
       this.db.exec("ROLLBACK");
@@ -104,23 +117,25 @@ export class HubStore {
     this.#stmts.upsertService.run(s.project ?? "", s.service, s.environment ?? "", s.host ?? "", via, JSON.stringify(sender), now, now);
   }
 
-  /** Traces past the age or count limit, and loose batches (lines outside a request) past the log age. */
-  #doomed(cutoff: number, logCutoff: number): TraceStateRow[] {
+  /** Traces past the age or count limit, loose batches (lines outside a request) past the log age, and traces of projects that keep less. */
+  #doomed(cutoff: number, logCutoff: number, shorter: readonly { project: string; keepMs: number }[]): TraceStateRow[] {
     const loose = "substr(trace_id, 1, 16) = '0000000000000000'";
+    const own = shorter.map(() => " UNION SELECT trace_id FROM traces WHERE project = ? AND start_ms < ?").join("");
     return this.db
       .prepare(
         `SELECT trace_id, project, env, contrib FROM traces WHERE trace_id IN (SELECT trace_id FROM traces WHERE start_ms < ? AND NOT ${loose}
-         UNION SELECT trace_id FROM traces WHERE start_ms < ? AND ${loose}
+         UNION SELECT trace_id FROM traces WHERE start_ms < ? AND ${loose}${own}
          UNION SELECT trace_id FROM (SELECT trace_id FROM traces WHERE NOT ${loose} ORDER BY start_ms DESC LIMIT -1 OFFSET ?))`,
       )
-      .all(cutoff, logCutoff, this.maxTraces) as unknown as TraceStateRow[];
+      .all(cutoff, logCutoff, ...shorter.flatMap((x) => [x.project, this.now() - x.keepMs]), this.maxTraces) as unknown as TraceStateRow[];
   }
 
   /** Drop traces past the age or count limit, log lines past the log age, and services not seen for as long. Returns traces dropped. */
   prune(): number {
     const cutoff = this.now() - this.maxAgeMs;
     const logCutoff = this.now() - this.logMaxAgeMs;
-    const doomed = this.#doomed(cutoff, logCutoff);
+    const shorter = shorterKeeps(this);
+    const doomed = this.#doomed(cutoff, logCutoff, shorter);
     this.db.exec("BEGIN");
     try {
       pruneStats(this, doomed);
@@ -131,6 +146,7 @@ export class HubStore {
       this.db.prepare("DELETE FROM logs WHERE time_ms < ?").run(logCutoff);
       this.db.prepare("DELETE FROM services WHERE last_seen < ?").run(Math.min(cutoff, logCutoff));
       this.#pruneMetrics(cutoff);
+      for (const s of shorter) pruneProjectRows(this.db, s.project, this.now(), s.keepMs);
       this.db.exec("COMMIT");
     } catch (err) {
       this.db.exec("ROLLBACK");

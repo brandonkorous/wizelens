@@ -1,11 +1,12 @@
 import { HUB_ONLINE_MS } from "@wizeworks/lens-core";
 import type { Queryable } from "../db/db.js";
+import { KEEP_DAYS } from "./settings.js";
 
 /** Drop registry rows not heard from within the organization's retention, like the traces they sent. Returns how many. */
 export async function pruneServices(q: Queryable, now: number): Promise<number> {
   const rows = await q.query(
     `DELETE FROM services s USING projects p, orgs o WHERE p.id = s.project_id AND o.id = p.org_id
-     AND s.last_seen < $1 - o.retention_days * 86400000.0 RETURNING s.host`,
+     AND s.last_seen < $1 - ${KEEP_DAYS} * 86400000.0 RETURNING s.host`,
     [now],
   );
   return rows.length;

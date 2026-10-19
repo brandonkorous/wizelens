@@ -1,5 +1,5 @@
-import { alignNow, FACT_SLOW_QUERY_MS, pageContext, runPage, searchSql, SQLITE_DIALECT, suggestSql, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
-import { DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, type McpDataSource, type OverviewPage } from "@wizeworks/lens-node/kit";
+import { alignNow, pageContext, runPage, searchSql, SQLITE_DIALECT, suggestSql, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { type McpDataSource, type OverviewPage } from "@wizeworks/lens-node/kit";
 import type { HubData } from "./data.js";
 import { metricsPage } from "./metrics-read.js";
 import { hubExecutor, hubSettling, sqliteRunner } from "./scale-exec.js";
@@ -15,7 +15,7 @@ function pageOf(data: HubData) {
   return <P extends OverviewPage>(page: P, range: TimeRange, params: Record<string, string> = {}) => {
     const store = data.store;
     if (TIME_RANGES[range].ms > store.maxAgeMs) throw new Error("This range is longer than the hub keeps data.");
-    const ctx = pageContext(range, alignNow(store.now()), params, { slowQueryMs: FACT_SLOW_QUERY_MS }, hubSettling(store, {}));
+    const ctx = pageContext(range, alignNow(store.now()), params, { slowQueryMs: store.slowQueryMs }, hubSettling(store, {}));
     if (store.now() - ctx.window.from > store.maxAgeMs + KEEP_SLACK_MS) throw new Error("This time window starts before the hub keeps data.");
     return runPage(page, ctx, hubExecutor(store, {}, data.keepRemote));
   };
@@ -26,8 +26,8 @@ export function hubMcpSource(data: HubData, name: string, version: string, audit
   return {
     service: name,
     version,
-    slowQueryMs: DEFAULT_SLOW_QUERY_MS,
-    nPlusOneThreshold: DEFAULT_N_PLUS_ONE,
+    slowQueryMs: data.store.slowQueryMs,
+    nPlusOneThreshold: data.store.nPlusOneThreshold,
     all: () => data.traces({ limit: MCP_RECENT }),
     get: (traceId, federate) => data.getTrace(traceId, federate),
     audit,

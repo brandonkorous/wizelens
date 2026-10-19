@@ -57,12 +57,30 @@ Admins export the audit log as CSV or JSON (Business and Enterprise on the hoste
 members, and people it deactivates leave the organization (owners stay). Admins set roles in WizeLens. On the hosted
 cloud, SCIM and single sign-on are on Business and Enterprise.
 
+A member or viewer can have their own role on one project: more (up to admin of that project), less, or no access.
+No access hides the project everywhere: the dashboard, trace links across projects, connected apps, and AI agents.
+Owners and admins always keep their organization role. Set it in **Team → Projects → Access**.
+
+The audit log pages back through all history and filters by action and by person. The export (CSV or JSON, on plans
+with audit export) follows the same filters, and is itself in the log.
+
+## Project settings
+
+Each project can set its own slow query and N+1 thresholds, more redacted keys, and a shorter retention than its
+organization, in **Settings → This project**. Owners, admins, and admins of the project change them. Thresholds and
+keys apply to data that arrives after you save. A shorter retention deletes older data within minutes.
+
 ## Keys
 
 - **Ingest key** (`wl_ik_…`): one project. Apps send data with it. The project comes from the key, never from the sender.
 - **Read key** (`wl_rk_…`): one or more projects, read-only. For scripts, CI, and agents with no person to sign in.
 
 Only a hash of each key is stored. The secret is shown once, when you make the key.
+
+- **Expiry:** a key can stop working after 30, 90, 180, or 365 days. Expired keys stay in the list until revoked.
+- **Scopes:** an ingest key can send only traces, logs, or metrics; a read key can use only the API or only MCP.
+- **Rotate:** a new secret for the same key, with the same projects, scopes, and lifetime. The old secret keeps
+  working for 24 hours, so apps can switch without a gap.
 
 ## AI apps
 
@@ -172,6 +190,8 @@ keys. Every organization is unlimited, and `--retention-days` sets history as be
 | `--signup <invite\|open>` | `WIZELENS_CLOUD_SIGNUP` | `invite` |
 | `--retention-days <n>` | `WIZELENS_CLOUD_RETENTION_DAYS` | `30` |
 | `--ingest-per-minute <n>` | `WIZELENS_CLOUD_INGEST_PER_MINUTE` | `1200` ingest calls per key |
+| `--slow-query-ms <n>` | `WIZELENS_CLOUD_SLOW_QUERY_MS` | `100`: a database call this slow is slow |
+| `--n-plus-one <n>` | `WIZELENS_CLOUD_N_PLUS_ONE` | `5` similar calls in a request make an N+1 |
 | `--settle-workers <n>` | `WIZELENS_CLOUD_SETTLE_WORKERS` | Scale mode: threads that index new traces. `0` uses the main thread. Default: CPUs − 1, at most 4 |
 | `--allow-private-webhooks` | `WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1` | off (alert webhooks and uptime checks may not reach private addresses) |
 | `--stripe-secret-key <key>` | `WIZELENS_CLOUD_STRIPE_SECRET_KEY` | none: billing is off and every organization is unlimited. With it (`sk_…` or `rk_…`), plans and limits apply and new organizations start on Free |

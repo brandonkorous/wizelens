@@ -8,3 +8,4 @@
 .wl-settings-mcp { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
 .wl-snippet:first-child { border-top: 0; padding-top: 0; }
 .wl-snippet:last-child { padding-bottom: 0; }
+.wl-chip.wl-chip-own { background: var(--wl-accent-soft); color: var(--wl-accent-text); }

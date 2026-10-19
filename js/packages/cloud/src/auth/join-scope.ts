@@ -1,5 +1,6 @@
 import type { Queryable } from "../db/db.js";
 import { membership } from "../repo/orgs.js";
+import { hiddenProjects } from "../repo/project-roles.js";
 import { inOrg, orgProjectIds } from "../repo/trace-join.js";
 import type { ProjectAccess } from "./principal.js";
 
@@ -9,13 +10,15 @@ const primaryFirst = (primary: string, ids: readonly string[]) => [primary, ...i
 export async function joinScope(q: Queryable, access: ProjectAccess): Promise<string[]> {
   const { project, principal } = access;
   const own = principal.kind === "key" ? principal.key.projectIds : principal.kind === "app" ? principal.projectIds : null;
+  const hidden = principal.kind === "user" ? await hiddenProjects(q, project.orgId, principal.user.id) : new Set<string>();
   const ids = own ? await inOrg(q, project.orgId, own) : await orgProjectIds(q, project.orgId);
-  return primaryFirst(project.id, ids);
+  return primaryFirst(project.id, ids.filter((id) => !hidden.has(id)));
 }
 
 /** For a share link: what its maker may read now. A maker who left the organization, or is not a person, gets only the shared project. */
 export async function makerScope(q: Queryable, createdBy: string, orgId: string, projectId: string): Promise<string[]> {
   const userId = createdBy.startsWith("user:") ? createdBy.slice("user:".length) : "";
   if (!userId || !(await membership(q, userId, orgId))) return [projectId];
-  return primaryFirst(projectId, await orgProjectIds(q, orgId));
+  const hidden = await hiddenProjects(q, orgId, userId);
+  return primaryFirst(projectId, (await orgProjectIds(q, orgId)).filter((id) => !hidden.has(id)));
 }

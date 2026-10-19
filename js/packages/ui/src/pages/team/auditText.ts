@@ -24,6 +24,15 @@ const ACTIONS: Record<string, string> = {
   "service.forget": "Forgot offline hosts",
   "key.create": "Made a key",
   "key.revoke": "Revoked a key",
+  "key.rotate": "Rotated a key",
+  "project.role": "Changed access to a project",
+  "project.settings": "Changed project settings",
+  "slo.create": "Added an SLO",
+  "slo.delete": "Deleted an SLO",
+  "issue.resolve": "Resolved an issue",
+  "issue.ignore": "Ignored an issue",
+  "issue.reopen": "Reopened an issue",
+  "issue.assign": "Assigned an issue",
   "share.create": "Shared a trace",
   "share.revoke": "Revoked a shared link",
   "sso.create": "Added an identity provider",
@@ -53,6 +62,27 @@ const ACTIONS: Record<string, string> = {
 };
 
 export const actionText = (action: string): string => ACTIONS[action] ?? action;
+
+/** The first part of an action ("key" of "key.create"), in words, for the filter. */
+export const GROUP_LABEL: Record<string, string> = {
+  org: "Organization",
+  member: "Members",
+  invite: "Invites",
+  project: "Projects",
+  key: "API keys",
+  share: "Shared links",
+  sso: "Single sign-on",
+  mcp: "AI agents",
+  app: "Connected apps",
+  slo: "SLOs",
+  issue: "Issues",
+  service: "Services",
+  audit: "Audit log",
+  plan: "Plan",
+  billing: "Billing",
+  ingest: "Data intake",
+  scim: "SCIM",
+};
 
 /** Names for the ids an entry can hold: people, keys, and projects. */
 export function namesOf(data: OrgData | null) {
@@ -87,7 +117,7 @@ export function detailText(d: Record<string, unknown>, names: Names): string {
   if (typeof d.title === "string") parts.push(d.title);
   if (typeof d.url === "string") parts.push(d.url);
   if (typeof d.email === "string") parts.push(d.email);
-  if (typeof d.role === "string") parts.push(`as ${d.role}`);
+  if (typeof d.role === "string") parts.push(d.role === "none" ? "no access" : `as ${d.role}`);
   if (typeof d.kind === "string") parts.push(`${d.kind} key`);
   const p = project(d.projectId, names);
   if (p && p !== d.name) parts.push(`project ${p}`);
@@ -96,6 +126,12 @@ export function detailText(d: Record<string, unknown>, names: Names): string {
   if (typeof d.retentionDays === "number") parts.push(`keep data ${d.retentionDays} days`);
   if (typeof d.logRetentionDays === "number") parts.push(`keep logs ${d.logRetentionDays} days`);
   if (d.logRetentionDays === null) parts.push("logs follow the organization");
+  if (typeof d.slowQueryMs === "number") parts.push(`slow query ${d.slowQueryMs} ms`);
+  if (typeof d.nPlusOneThreshold === "number") parts.push(`N+1 at ${d.nPlusOneThreshold}`);
+  if (Array.isArray(d.redactKeys)) parts.push(`redact ${d.redactKeys.join(", ")}`);
+  if (typeof d.userId === "string" && "role" in d) parts.push(`for ${names.people.get(d.userId) ?? "a former member"}`);
+  if ("role" in d && d.role === null) parts.push("back to the organization role");
+  if (typeof d.lines === "number") parts.push(`${d.lines} lines`);
   if (typeof d.days === "number") parts.push(`for ${d.days} days`);
   if (typeof d.plan === "string") parts.push(`${typeof d.from === "string" ? `${d.from} to ` : ""}${d.plan}`);
   if (d.capUsd !== undefined) parts.push(d.capUsd === null ? "no cap" : `$${String(d.capUsd)} a month`);

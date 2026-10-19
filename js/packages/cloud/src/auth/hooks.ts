@@ -7,6 +7,7 @@ import type { AuthDeps } from "./deps.js";
 import { emailChangeOf } from "./email-token.js";
 import { isLegacyHash } from "./password.js";
 import { rememberPasskey, securityAfter } from "./security-notices.js";
+import { pruneProjectRoles } from "../repo/project-roles.js";
 
 type Mw = Parameters<typeof createAuthMiddleware>[0];
 type HookCtx = Parameters<Mw>[0];
@@ -114,6 +115,7 @@ async function auditOrgChange(deps: AuthDeps, ctx: HookCtx): Promise<void> {
   const removed = ctx.request && removedEmailOf.get(ctx.request);
   const detail = { ...Object.fromEntries(Object.entries((ctx.body ?? {}) as Record<string, unknown>).filter(([k]) => !SECRET_KEYS.includes(k))), ...(removed ? { memberEmail: removed } : {}) };
   await audit(deps.db, orgId, actor ? `user:${actor}` : "system", action, detail, Date.now());
+  await pruneProjectRoles(deps.db, orgId);
 }
 
 async function auditSsoChange(deps: AuthDeps, ctx: HookCtx): Promise<void> {

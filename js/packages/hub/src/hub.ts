@@ -66,7 +66,7 @@ async function route(c: Ctx, req: IncomingMessage, res: ServerResponse): Promise
 /** Create the local hub: one place for the traces of every service, with the dashboard, the API, OTLP, and MCP. */
 export function createHub(options: HubOptions = {}): Hub {
   const o = resolveHubOptions(options);
-  const store = new HubStore({ path: o.storagePath === "memory" ? ":memory:" : o.storagePath, maxTraces: o.maxTraces, maxAgeMs: o.maxAgeMs, logMaxAgeMs: o.logMaxAgeMs, maxMetricPoints: o.maxMetricPoints, now: o.now });
+  const store = new HubStore({ path: o.storagePath === "memory" ? ":memory:" : o.storagePath, maxTraces: o.maxTraces, maxAgeMs: o.maxAgeMs, logMaxAgeMs: o.logMaxAgeMs, maxMetricPoints: o.maxMetricPoints, slowQueryMs: o.slowQueryMs, nPlusOneThreshold: o.nPlusOneThreshold, redactKeys: o.redactKeys, now: o.now });
   const data = new HubData(store);
   const base = { url: `http://localhost:${o.port}` };
   const alerts = hubAlertDeps(store, o, base);

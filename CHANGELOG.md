@@ -6,6 +6,14 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Project settings.** Each project sets its own slow query and N+1 thresholds, more redacted keys, and a shorter
+  retention, in Settings → This project (hub and cloud). New hub start options `--slow-query-ms`, `--n-plus-one`, and
+  `--redact-keys`; cloud `--slow-query-ms` and `--n-plus-one`.
+- **Roles per project.** A member or viewer can have more, less, or no access to one project (Team → Projects → Access).
+  No access hides the project in lists, cross-project traces, connected apps, digests, and MCP.
+- **API keys** can expire, keep to scopes (ingest: traces, logs, metrics; read: API, MCP), and rotate with a 24 hour grace
+  period for the old secret.
+- **Audit log** pages back through all history and filters by action and by person; the export follows the filters.
 - **`get_timeseries` and `group_requests`, exact traffic for agents** (hub and cloud). `get_timeseries` gives requests,
   errors, error rate, average, and p95 per bucket (16, 24, or 48) for every request, one service, or one endpoint.
   `group_requests` gives each endpoint's count, errors, error rate, average, and p95, sorted by any of them. Both read the
@@ -233,6 +241,7 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Fixed
 
+- Danger links (Revoke, Delete) in tables show in red, as meant.
 - **A link to an error opens that error.** The Errors page showed the first listed error when the linked one was not
   among the newest 200 (links from the service page do that). It now loads the linked group by key, or says it is not
   in the time range.

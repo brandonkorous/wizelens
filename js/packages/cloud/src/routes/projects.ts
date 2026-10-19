@@ -3,7 +3,9 @@ import { requireOrg } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson, str } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
-import { createKey, createProject, deleteProject, deleteProjectData, type KeyKind, listProjects, projectInOrg, revokeKey } from "../repo/projects.js";
+import { membership } from "../repo/orgs.js";
+import { isProjectRole, overridable, type ProjectRole, setProjectRole } from "../repo/project-roles.js";
+import { createProject, deleteProject, deleteProjectData, projectInOrg } from "../repo/projects.js";
 
 const now = (ctx: Ctx) => ctx.app.config.now();
 
@@ -39,26 +41,18 @@ async function changeProject(ctx: Ctx): Promise<void> {
   sendJson(ctx.res, 200, await projectInOrg(ctx.app.db, org, project));
 }
 
-/** Ingest keys belong to one project. Read keys name the projects they may read. */
-async function newKey(ctx: Ctx): Promise<void> {
-  const org = ctx.params.org!;
+/** Give a member or viewer more, less, or no access to one project; null goes back to their organization role. */
+async function setRole(ctx: Ctx): Promise<void> {
+  const { org, project, user: target } = ctx.params as { org: string; project: string; user: string };
   const { user } = await requireOrg(ctx, org, "manage");
-  const body = await readJsonBody(ctx.req);
-  const kind = body.kind as KeyKind;
-  if (kind !== "ingest" && kind !== "read") fail(400, 'Set kind to "ingest" or "read".');
-  const known = new Set((await listProjects(ctx.app.db, org)).map((p) => p.id));
-  const ids = Array.isArray(body.projectIds) ? body.projectIds.filter((id): id is string => typeof id === "string" && known.has(id)) : [];
-  if (ids.length === 0 || (kind === "ingest" && ids.length !== 1)) fail(400, "Pick one project for an ingest key, or one or more for a read key.");
-  const key = await createKey(ctx.app.db, org, kind, str(body, "name", false), ids, user.id, now(ctx));
-  await audit(ctx.app.db, org, `user:${user.id}`, "key.create", { keyId: key.id, kind, projectIds: ids }, now(ctx));
-  sendJson(ctx.res, 201, key);
-}
-
-async function dropKey(ctx: Ctx): Promise<void> {
-  const { org, key } = ctx.params as { org: string; key: string };
-  const { user } = await requireOrg(ctx, org, "manage");
-  if (!(await revokeKey(ctx.app.db, org, key, now(ctx)))) fail(404, "Key not found.");
-  await audit(ctx.app.db, org, `user:${user.id}`, "key.revoke", { keyId: key }, now(ctx));
+  if (!(await projectInOrg(ctx.app.db, org, project))) fail(404, "Project not found.");
+  const m = await membership(ctx.app.db, target, org);
+  if (!m) return fail(404, "Member not found.");
+  if (!overridable(m.role)) fail(400, "Owners and admins always keep their organization role on every project.");
+  const role = (await readJsonBody(ctx.req)).role ?? null;
+  if (role !== null && !isProjectRole(role)) fail(400, "Pick none, viewer, member, admin, or null for the organization role.");
+  await setProjectRole(ctx.app.db, project, target, role as ProjectRole | null);
+  await audit(ctx.app.db, org, `user:${user.id}`, "project.role", { projectId: project, userId: target, role }, now(ctx));
   sendJson(ctx.res, 200, { ok: true });
 }
 
@@ -67,6 +61,5 @@ export function projectRoutes(r: Router<Ctx>): void {
     .on("PATCH", "api/orgs/:org/projects/:project", changeProject)
     .on("DELETE", "api/orgs/:org/projects/:project", dropProject)
     .on("POST", "api/orgs/:org/projects/:project/clear", dropProject)
-    .on("POST", "api/orgs/:org/keys", newKey)
-    .on("DELETE", "api/orgs/:org/keys/:key", dropKey);
+    .on("PUT", "api/orgs/:org/projects/:project/roles/:user", setRole);
 }

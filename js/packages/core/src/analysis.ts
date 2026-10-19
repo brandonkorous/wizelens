@@ -167,14 +167,17 @@ export function findErrors(trace: Trace): Finding[] {
   }));
 }
 
+/** The thresholds `analyzeTrace` uses when none are given. */
+export const ANALYSIS_DEFAULTS = { nPlusOneThreshold: 5, slowQueryMs: 100 } as const;
+
 /** Run every analysis on one trace. */
 export function analyzeTrace(trace: Trace, options: AnalysisOptions = {}): Finding[] {
-  const n = options.nPlusOneThreshold ?? 5;
+  const n = options.nPlusOneThreshold ?? ANALYSIS_DEFAULTS.nPlusOneThreshold;
   return [
     ...findErrors(trace),
     ...findNPlusOneDb(trace, n),
     ...findNPlusOneHttp(trace, n),
     ...findDuplicateQueries(trace),
-    ...findSlowQueries(trace, options.slowQueryMs ?? 100),
+    ...findSlowQueries(trace, options.slowQueryMs ?? ANALYSIS_DEFAULTS.slowQueryMs),
   ];
 }

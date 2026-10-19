@@ -15,8 +15,22 @@ export interface ApiKey {
   name: string;
   prefix: string;
   projectIds: string[];
+  /** What it may do; null for everything its kind allows. */
+  scopes: string[] | null;
   createdMs: number;
   lastUsedMs: number | null;
+  /** Null: never expires. */
+  expiresMs: number | null;
+  rotatedFrom: string | null;
+}
+
+/** A member's or viewer's own role on one project; "none" hides the project from them. */
+export type ProjectRole = "none" | "viewer" | "member" | "admin";
+
+export interface ProjectRoleRow {
+  projectId: string;
+  userId: string;
+  role: ProjectRole;
 }
 
 /** An open invite. Its id is the secret part of the invite link. */
@@ -34,6 +48,8 @@ export interface OrgData {
   projects: Project[];
   invites: Invite[];
   keys: ApiKey[];
+  /** Empty for members and viewers. */
+  projectRoles: ProjectRoleRow[];
 }
 
 export const ROLE_LABEL: Record<Role, string> = { viewer: "Viewer", member: "Member", admin: "Admin", owner: "Owner" };

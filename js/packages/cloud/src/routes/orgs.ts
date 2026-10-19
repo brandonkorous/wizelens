@@ -6,8 +6,9 @@ import { requireOrg, requireUser } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson, str } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { requireRetention } from "../billing/gate.js";
-import { audit, listAudit } from "../repo/audit.js";
+import { audit, auditFacets, auditFilterOf, listAudit } from "../repo/audit.js";
 import { hasLivePlan } from "../repo/billing.js";
+import { hiddenProjects, listProjectRoles } from "../repo/project-roles.js";
 import { orgDeletionNotice } from "../notify/team.js";
 import { deleteOrgEverything, listMembers, pendingInvites, setRetention } from "../repo/orgs.js";
 import { listKeys, listProjects } from "../repo/projects.js";
@@ -18,16 +19,18 @@ import { clearProjects } from "../telemetry/index.js";
 const now = (ctx: Ctx) => ctx.app.config.now();
 
 async function overview(ctx: Ctx): Promise<void> {
-  const { role } = await requireOrg(ctx, ctx.params.org!, "read");
+  const { role, user } = await requireOrg(ctx, ctx.params.org!, "read");
   const db = ctx.app.db;
   const id = ctx.params.org!;
   const manage = role === "owner" || role === "admin";
+  const hidden = manage ? new Set<string>() : await hiddenProjects(db, id, user.id);
   sendJson(ctx.res, 200, {
     role,
     members: await listMembers(db, id),
-    projects: await listProjects(db, id),
+    projects: (await listProjects(db, id)).filter((p) => !hidden.has(p.id)),
     invites: manage ? await pendingInvites(db, id) : [],
     keys: manage ? await listKeys(db, id) : [],
+    projectRoles: manage ? await listProjectRoles(db, id) : [],
   });
 }
 
@@ -69,10 +72,18 @@ async function deleteOrg(ctx: Ctx): Promise<void> {
   sendJson(ctx.res, 200, { ok: true });
 }
 
+const AUDIT_PAGE = 100;
+
+/** `GET api/orgs/:org/audit`: newest first, `limit` (1 to 500) at a time; page back with `before` = the last time. */
 async function auditLog(ctx: Ctx): Promise<void> {
   await requireOrg(ctx, ctx.params.org!, "manage");
-  const before = Number(ctx.url.searchParams.get("before")) || undefined;
-  sendJson(ctx.res, 200, await listAudit(ctx.app.db, ctx.params.org!, 100, before));
+  const limit = Math.min(500, Math.max(1, Number(ctx.url.searchParams.get("limit")) || AUDIT_PAGE));
+  sendJson(ctx.res, 200, await listAudit(ctx.app.db, ctx.params.org!, limit, auditFilterOf(ctx.url.searchParams)));
+}
+
+async function auditFacetsOf(ctx: Ctx): Promise<void> {
+  await requireOrg(ctx, ctx.params.org!, "manage");
+  sendJson(ctx.res, 200, await auditFacets(ctx.app.db, ctx.params.org!));
 }
 
 export function orgRoutes(r: Router<Ctx>): void {
@@ -80,5 +91,6 @@ export function orgRoutes(r: Router<Ctx>): void {
     .on("GET", "api/orgs/:org", overview)
     .on("PATCH", "api/orgs/:org", changeOrg)
     .on("DELETE", "api/orgs/:org", deleteOrg)
-    .on("GET", "api/orgs/:org/audit", auditLog);
+    .on("GET", "api/orgs/:org/audit", auditLog)
+    .on("GET", "api/orgs/:org/audit/facets", auditFacetsOf);
 }
