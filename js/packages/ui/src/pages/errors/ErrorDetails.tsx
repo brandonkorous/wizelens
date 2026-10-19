@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, Database, ExternalLink, Monitor, Server } from "lucide-react";
 import type { ErrorGroup } from "@wizeworks/lens-core";
 import { fmtCount, fmtDateTime } from "../../format";
 import { errorHref, hrefTo, setQuery } from "../../routes";
 import { Badge } from "../../ui/Badges";
 import { Empty, KeyValues, Panel, TabBar } from "../../ui/Panel";
-import { ErrorTags, RequestContext, StackTrace } from "./ErrorDetailTabs";
+import { ErrorTags, RequestContext } from "./ErrorDetailTabs";
+import { ErrorStack } from "./ResolvedStack";
 
 type Tab = "stack" | "context" | "tags";
 
@@ -44,6 +45,15 @@ function Occurrences({ group }: { group: ErrorGroup }) {
   );
 }
 
+// Browser errors: where in the original source they come from, and the release that threw them.
+function originRows(group: ErrorGroup): [string, ReactNode][] {
+  const e = group.latest;
+  return [
+    ...(e.frame ? [["Source", <span key="f" className="wl-mono">{e.frame}</span>] as [string, ReactNode]] : []),
+    ...(e.release ? [["Release", e.release] as [string, ReactNode]] : []),
+  ];
+}
+
 function GroupDetails({ group }: { group: ErrorGroup }) {
   const [tab, setTab] = useState<Tab>("stack");
   return (
@@ -62,13 +72,14 @@ function GroupDetails({ group }: { group: ErrorGroup }) {
         rows={[
           ["Endpoint", <span key="e" className="wl-mono">{pathOf(group.endpoint)}</span>],
           ["Service", group.service],
+          ...originRows(group),
           ["First seen", fmtDateTime(group.firstSeenMs)],
           ["Last seen", fmtDateTime(group.lastSeenMs)],
         ]}
       />
       <div className="wl-err-tabs">
         <TabBar<Tab> tabs={[["stack", "Stack Trace"], ["context", "Request Context"], ["tags", "Tags"]]} value={tab} onChange={setTab} />
-        {tab === "stack" && <StackTrace event={group.latest} />}
+        {tab === "stack" && <ErrorStack event={group.latest} />}
         {tab === "context" && <RequestContext event={group.latest} />}
         {tab === "tags" && <ErrorTags event={group.latest} />}
       </div>

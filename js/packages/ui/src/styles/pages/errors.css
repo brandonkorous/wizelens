@@ -25,6 +25,29 @@
 .wl-stack ol { margin: 0; padding: 0 0 0 46px; font: 12px/1.7 var(--wl-mono); color: var(--wl-muted); }
 .wl-stack li { padding-left: 6px; }
 .wl-stack li::marker { color: var(--wl-muted); }
-.wl-stack li code { color: var(--wl-fg-2); white-space: pre; }
-.wl-stack li:first-child code { color: var(--wl-accent-text); }
+.wl-stack ol:not(.wl-frames) li code { color: var(--wl-fg-2); white-space: pre; }
+.wl-stack ol:not(.wl-frames) li:first-child code { color: var(--wl-accent-text); }
 .wl-stack p { margin: 8px 0 0 12px; }
+
+/* Browser stacks after source maps: frames with a few lines of source, and the raw stack one click away. */
+.wl-stack-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.wl-seg { display: inline-flex; padding: 2px; border: 1px solid var(--wl-line); border-radius: 8px; background: var(--wl-surface-2); }
+.wl-seg button { padding: 4px 12px; border: 0; border-radius: 6px; background: none; color: var(--wl-muted); font: 600 12px var(--wl-sans); cursor: pointer; }
+.wl-seg button.wl-active { background: var(--wl-surface); color: var(--wl-fg); box-shadow: 0 1px 2px rgb(0 0 0 / 8%); }
+.wl-seg button:disabled { opacity: 0.45; cursor: default; }
+.wl-frames-box { padding: 6px 36px 6px 0; max-height: 460px; }
+.wl-stack ol.wl-frames { list-style: none; margin: 0; padding: 0; font: 12px/1.6 var(--wl-mono); color: var(--wl-fg-2); }
+.wl-stack .wl-frames li { padding-left: 0; }
+.wl-frame + .wl-frame { border-top: 1px solid var(--wl-line); }
+.wl-frame-head { display: flex; align-items: baseline; gap: 8px; width: 100%; padding: 6px 12px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.wl-frame-head svg { flex: none; width: 13px; height: 13px; align-self: center; color: var(--wl-muted); }
+.wl-frame-fn { color: var(--wl-accent-text); font-weight: 600; }
+.wl-frame-loc { min-width: 0; color: var(--wl-fg-2); overflow-wrap: anywhere; }
+.wl-frame-lib .wl-frame-fn, .wl-frame-lib .wl-frame-loc { color: var(--wl-muted); font-weight: 400; }
+.wl-frame-raw { padding: 0 12px 8px 33px; color: var(--wl-muted); overflow-wrap: anywhere; }
+.wl-src { margin: 0 12px 8px 33px; padding: 6px 0; border: 1px solid var(--wl-line); border-radius: 8px; background: var(--wl-surface); overflow-x: auto; font: inherit; }
+.wl-src-line { display: flex; }
+.wl-src-no { flex: none; width: 44px; padding-right: 10px; text-align: right; color: var(--wl-muted); user-select: none; }
+.wl-src-line code { white-space: pre; color: var(--wl-fg-2); padding-right: 12px; }
+.wl-src-hit { background: var(--wl-accent-soft); }
+.wl-src-hit code, .wl-src-hit .wl-src-no { color: var(--wl-accent-text); font-weight: 600; }

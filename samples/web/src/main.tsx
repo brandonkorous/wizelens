@@ -9,7 +9,8 @@ import "./styles.css";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     {/* Every fetch gets a traceparent header, so the server trace links back to the click. */}
-    <WizeLensProvider endpoint="/_wizelens" enabled={import.meta.env.DEV}>
+    {/* VITE_WIZELENS=1 keeps it on in a production build, to see minified stacks mapped back to the source. */}
+    <WizeLensProvider endpoint="/_wizelens" enabled={import.meta.env.DEV || import.meta.env.VITE_WIZELENS === "1"}>
       <App />
     </WizeLensProvider>
   </StrictMode>,

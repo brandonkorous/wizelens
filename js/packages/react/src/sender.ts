@@ -1,4 +1,4 @@
-import type { Span } from "@wizeworks/lens-core";
+import { ATTR_SERVICE_VERSION, type Span } from "@wizeworks/lens-core";
 import type { ClientLog } from "./console-capture.js";
 
 /** Queues browser spans and logs, and posts each to `{endpoint}/api/client-spans` of the server that holds its trace. */
@@ -56,8 +56,19 @@ async function post(send: typeof fetch, endpoint: string, { spans, logs }: Batch
   }
 }
 
-/** `endpointOf` names the server that holds a trace; spans go there when it is on this page's origin. */
-export function createSender(endpointUrl: string, getFetch: () => typeof fetch | null, endpointOf: (traceId: string) => string = () => endpointUrl): Sender {
+// The app version goes on every span, so a browser stack finds the maps of the build that threw it.
+function withVersion(span: Span, version: string | null): Span {
+  if (version && span.attributes[ATTR_SERVICE_VERSION] == null) span.attributes[ATTR_SERVICE_VERSION] = version;
+  return span;
+}
+
+/** `endpointOf` names the server that holds a trace; spans go there when it is on this page's origin. `version` goes on every span. */
+export function createSender(
+  endpointUrl: string,
+  getFetch: () => typeof fetch | null,
+  endpointOf: (traceId: string) => string = () => endpointUrl,
+  version: string | null = null,
+): Sender {
   const queue: Span[] = [];
   const logs: ClientLog[] = [];
   const held = new Map<string, Span>();
@@ -77,8 +88,10 @@ export function createSender(endpointUrl: string, getFetch: () => typeof fetch |
     await Promise.all([...groups].map(([endpoint, batch]) => post(send, endpoint, batch)));
   }
 
+  const stamp = (span: Span) => withVersion(span, version);
+
   function push(span: Span): void {
-    queue.push(span);
+    queue.push(stamp(span));
     if (queue.length >= BATCH) void flush(false);
   }
 
@@ -88,7 +101,7 @@ export function createSender(endpointUrl: string, getFetch: () => typeof fetch |
       logs.push(entry);
       if (logs.length >= 100) void flush(false);
     },
-    hold: (id, span) => void held.set(id, span),
+    hold: (id, span) => void held.set(id, stamp(span)),
     release(id) {
       const span = held.get(id);
       if (!span) return false;

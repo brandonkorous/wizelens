@@ -19,6 +19,8 @@ export interface InfoInputs {
   sqlite: () => boolean;
   /** True when the add-on keeps metrics. */
   metrics?: boolean;
+  /** True when the add-on resolves browser stacks with source maps. */
+  sourceMaps?: boolean;
 }
 
 /** `api/info`: who this service is and how WizeLens is set up. */
@@ -26,7 +28,7 @@ export function buildInfo(i: InfoInputs): ServiceInfo {
   const o = i.options;
   return {
     mode: "in-app",
-    capabilities: [...IN_APP_CAPABILITIES, "search", ...(i.metrics ? (["metrics"] as const) : [])],
+    capabilities: [...IN_APP_CAPABILITIES, "search", ...(i.metrics ? (["metrics"] as const) : []), ...(i.sourceMaps ? (["sourcemaps"] as const) : [])],
     service: o.serviceName,
     version: VERSION,
     runtime: `node ${process.version}`,

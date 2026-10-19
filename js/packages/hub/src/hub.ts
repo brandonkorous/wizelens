@@ -10,6 +10,7 @@ import { hubMcpSource } from "./mcp.js";
 import { type HubOptions, resolveHubOptions } from "./options.js";
 import { handleOtlp, otlpSignalOf } from "./otlp/index.js";
 import { settleQuietly } from "./settle.js";
+import { hubMaps } from "./sourcemaps-api.js";
 import { HubStore } from "./store.js";
 
 const require = createRequire(import.meta.url);
@@ -64,7 +65,7 @@ export function createHub(options: HubOptions = {}): Hub {
   const o = resolveHubOptions(options);
   const store = new HubStore({ path: o.storagePath === "memory" ? ":memory:" : o.storagePath, maxTraces: o.maxTraces, maxAgeMs: o.maxAgeMs, maxMetricPoints: o.maxMetricPoints, now: o.now });
   const data = new HubData(store);
-  const c: Ctx = { data, o, version: HUB_VERSION, startedMs: o.now(), uiDir: resolveUiDir(o.uiDir) };
+  const c: Ctx = { data, o, version: HUB_VERSION, startedMs: o.now(), uiDir: resolveUiDir(o.uiDir), maps: hubMaps(store.db, o.sourceMaps) };
   const server = createServer((req, res) => {
     route(c, req, res).catch(() => !res.headersSent && sendJson(res, 500, { error: "internal error" }));
   });

@@ -1,5 +1,5 @@
 import { errorInfo } from "../analysis.js";
-import { ATTR_BROWSER_ROUTE, browserTypeOf } from "../attributes.js";
+import { ATTR_BROWSER_ROUTE, ATTR_ERROR_FRAME, ATTR_SERVICE_VERSION, browserTypeOf } from "../attributes.js";
 import { isErrorSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { groupBy, memoByObject, percentOf } from "./common.js";
@@ -7,7 +7,7 @@ import { isFailed, type RequestRow, requestOf } from "./requests.js";
 
 /** One error: a span with an exception, or a failed span without one. */
 export interface ErrorEvent {
-  /** Group key: service, type, and message shape. */
+  /** Group key: service, type, and message shape; browser errors add their first app frame after source maps. */
   key: string;
   traceId: string;
   spanId: string;
@@ -24,6 +24,10 @@ export interface ErrorEvent {
   /** The request failed with a 5xx, or a critical log line was written. */
   critical: boolean;
   browser: boolean;
+  /** Browser errors: the first app frame after source maps ("src/App.tsx:checkout"), or null. */
+  frame: string | null;
+  /** The app version that sent it (service.version), or null. */
+  release: string | null;
   userAgent: string | null;
   user: string | null;
   tags: string[];
@@ -53,17 +57,25 @@ function errorSpans(trace: Trace): Span[] {
   return withException.length ? withException : failed;
 }
 
+const textAttr = (v: unknown): string | null => (typeof v === "string" && v ? v : null);
+
+/** Service, type, and message shape; a browser error's group frame splits errors with the same message thrown in other places. */
+export const errorKeyOf = (service: string, type: string, message: string, frame: string | null): string =>
+  `${service}|${type}|${messageShape(message)}${frame ? `|${frame}` : ""}`;
+
 function eventOf(trace: Trace, span: Span, row: RequestRow | null, critical: boolean): ErrorEvent {
   const info = errorInfo(span);
   const type = info.type ?? (span.statusMessage?.startsWith("HTTP") ? "HttpError" : "Error");
   const service = displayService(span.service);
   const browser = browserTypeOf(span) !== null;
   const route = span.attributes[ATTR_BROWSER_ROUTE];
+  const ex = span.events.find((e) => e.name === "exception");
+  const frame = browser ? textAttr(ex?.attributes[ATTR_ERROR_FRAME]) : null;
   return {
-    key: `${service}|${type}|${messageShape(info.message)}`,
+    key: errorKeyOf(service, type, info.message, frame),
     traceId: trace.traceId,
     spanId: span.spanId,
-    timeMs: span.events.find((e) => e.name === "exception")?.timeMs ?? span.startMs + span.durationMs,
+    timeMs: ex?.timeMs ?? span.startMs + span.durationMs,
     type,
     message: info.message,
     stack: info.stack,
@@ -74,6 +86,8 @@ function eventOf(trace: Trace, span: Span, row: RequestRow | null, critical: boo
     status: row?.status ?? null,
     critical,
     browser,
+    frame,
+    release: textAttr(span.attributes[ATTR_SERVICE_VERSION]),
     userAgent: row?.userAgent ?? null,
     user: row?.user ?? null,
     tags: row?.tags ?? [],

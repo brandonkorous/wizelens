@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { DEFAULT_REDACT_KEYS, HUB_DEFAULT_PORT } from "@wizeworks/lens-core";
+import type { SourceMapOptions } from "@wizeworks/lens-node/kit";
 
 export interface HubOptions {
   /** Port to listen on. Default 5960. 0 picks a free port. */
@@ -27,10 +28,13 @@ export interface HubOptions {
   name?: string;
   /** Where MCP audit lines go. Default console.info. */
   audit?: (line: string) => void;
+  /** Source maps with no upload: build folders, and dev servers on this machine (default). False turns them off; uploads still work. */
+  sourceMaps?: SourceMapOptions | false;
   now?: () => number;
 }
 
-export interface ResolvedHubOptions extends Required<Omit<HubOptions, "token" | "uiDir" | "audit" | "now">> {
+export interface ResolvedHubOptions extends Required<Omit<HubOptions, "token" | "uiDir" | "audit" | "now" | "sourceMaps">> {
+  sourceMaps: SourceMapOptions | false | undefined;
   token: string | undefined;
   uiDir: string | undefined;
   audit: (line: string) => void;
@@ -53,6 +57,7 @@ export function resolveHubOptions(o: HubOptions = {}): ResolvedHubOptions {
     uiDir: o.uiDir,
     name: o.name ?? "wizelens-hub",
     audit: o.audit ?? ((line) => console.info(line)),
+    sourceMaps: o.sourceMaps,
     now: o.now ?? Date.now,
   };
 }

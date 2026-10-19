@@ -12,3 +12,5 @@ export type { SdkResourceMetrics } from "./metrics/otel.js";
 export { exponentialToExplicit } from "./metrics/exponential.js";
 export type { ExponentialHistogram } from "./metrics/exponential.js";
 export { DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, VERSION } from "./info.js";
+export { dirMapLoader, localMapLoader } from "./sourcemaps.js";
+export type { SourceMapOptions } from "./sourcemaps.js";

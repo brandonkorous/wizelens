@@ -56,6 +56,7 @@ Run it with `--host 0.0.0.0 --token <text>`. Then:
 | `--max-metric-points <n>` | `WIZELENS_HUB_MAX_METRIC_POINTS` | `2000000` raw points |
 | `--mcp` | `WIZELENS_HUB_MCP=1` | off |
 | `--import <file>` | | Copy an add-on's `.wizelens/traces.db` in at start |
+| `--sourcemaps <dir>` | `WIZELENS_HUB_SOURCEMAPS=a,b` | Read browser [source maps](/docs/source-maps/) from a build folder. Can repeat |
 
 `wizelens-hub --help` lists every option.
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { checkout } from "./coupon";
 
 interface Action {
   label: string;
@@ -61,6 +62,10 @@ export function Home() {
             <span>{a.hint}</span>
           </button>
         ))}
+        <button type="button" onClick={() => checkout("")}>
+          <strong>Throw a browser error</strong>
+          <span>An uncaught error in React code: source maps show the original line</span>
+        </button>
       </div>
       {result && <ResultView result={result} />}
     </>

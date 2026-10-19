@@ -55,6 +55,7 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | `hub` / `hubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a hub or the cloud. |
 | `project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
 | `sampling` | `{ rate: WIZELENS_SAMPLE_RATE ?? 1, keepErrors: true, keepSlowMs: 1000 }` | See [Sampling](/docs/sampling/). |
+| `sourceMaps` | dev servers on `localhost` | `{ dirs, origins, fetch }`: where browser stacks find their maps; `false` turns it off. See [Source maps](/docs/source-maps/). |
 | `captureMetrics` | `true` | Sample the runtime every `metricsIntervalMs`. |
 | `metricsIntervalMs` / `metricsMaxAgeMs` | 10 s / 1 h | How often metrics are taken, and how long they are kept in memory. |
 | `ignore(path)` | none | Next.js only: paths to skip. |

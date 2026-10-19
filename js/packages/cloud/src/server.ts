@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
+import { SOURCEMAPS_PATH } from "@wizeworks/lens-core";
 import { otlpSignalOf } from "@wizeworks/lens-hub/kit";
 import { resolveUiDir, serveUi } from "@wizeworks/lens-node/kit";
 import type { CloudApp, Ctx } from "./app.js";
@@ -23,6 +24,8 @@ import { RESEND_WEBHOOK_PATH, resendWebhook } from "./mail/webhook.js";
 import { openTelemetry } from "./telemetry/index.js";
 import { allRoutes } from "./routes/index.js";
 import { ingestBatch, ingestOtlp } from "./routes/ingest.js";
+import { listProjectMaps, uploadSourceMap } from "./routes/sourcemaps.js";
+import { cloudMapLoaders } from "./repo/sourcemaps.js";
 import { serveOAuthMetadata } from "./routes/oauth-meta.js";
 import { forgetModels } from "./routes/models.js";
 
@@ -54,6 +57,9 @@ const needsClientHeader = (req: IncomingMessage, sub: string) =>
 async function routeBase(p: Parts, ctx: Ctx, sub: string): Promise<void> {
   const { req, res } = ctx;
   if (sub === "api/ingest" && req.method === "POST") return ingestBatch(ctx, p.ingest);
+  // Build tools upload source maps with the project's ingest key.
+  if (sub === SOURCEMAPS_PATH && req.method === "POST") return uploadSourceMap(ctx, p.ingest);
+  if (sub === SOURCEMAPS_PATH && req.method === "GET") return listProjectMaps(ctx, p.ingest);
   // Resend signs its webhook, so it needs no dashboard header.
   if (sub === RESEND_WEBHOOK_PATH && req.method === "POST") return resendWebhook(ctx);
   // Stop links come from mail apps (RFC 8058 one-click POST), with the signed token as the only proof.
@@ -95,7 +101,7 @@ async function openStores(config: CloudConfig) {
   await telemetry.checkFactsVersion();
   const changes = new Changes();
   changes.onAny(forgetModels);
-  return { db, telemetry, changes };
+  return { db, telemetry, changes, maps: cloudMapLoaders(db) };
 }
 
 /** Open the database, bring its schema up to date, and build the server. Call `listen()` to start. */

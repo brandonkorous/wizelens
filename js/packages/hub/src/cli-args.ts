@@ -21,6 +21,9 @@ Usage: wizelens-hub [options]
   --mcp               Turn on the read-only MCP endpoint.      (WIZELENS_HUB_MCP=1)
   --import <file>     Copy an add-on's .wizelens/traces.db into
                       the hub at start. Can repeat.
+  --sourcemaps <dir>  Read browser source maps from this build
+                      folder. Can repeat. Dev servers on this
+                      machine need no option.                  (WIZELENS_HUB_SOURCEMAPS=a,b)
   --help              Show this help.
 `;
 
@@ -51,6 +54,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
       "max-metric-points": { type: "string" },
       mcp: { type: "boolean" },
       import: { type: "string", multiple: true },
+      sourcemaps: { type: "string", multiple: true },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -65,5 +69,6 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
     maxMetricPoints: int(a["max-metric-points"] ?? env.WIZELENS_HUB_MAX_METRIC_POINTS),
     enableMcp: a.mcp ?? env.WIZELENS_HUB_MCP === "1",
     imports: a.import ?? [],
+    sourceMaps: { dirs: a.sourcemaps ?? (env.WIZELENS_HUB_SOURCEMAPS ?? "").split(",").map((d) => d.trim()).filter(Boolean) },
   };
 }
