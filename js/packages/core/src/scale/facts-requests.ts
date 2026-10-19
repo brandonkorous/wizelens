@@ -42,6 +42,7 @@ function insightContributions(r: RequestRow): Contribution[] {
     return [
       contribution("ins", key, r.startMs, { sum: h.totalMs, c: [h.count], top: { rank: r.startMs, data } }),
       contribution("ins.ep", joinKey(key, h.endpoint), r.startMs),
+      ...(r.user ? [contribution("ins.u", joinKey(key, r.user), r.startMs)] : []),
     ];
   });
 }
@@ -51,6 +52,12 @@ function partContributions(r: RequestRow): Contribution[] {
     const v = p.pick(r);
     return v === null ? [] : [contribution("req.part", p.key, r.startMs, { sum: v, values: [v] })];
   });
+}
+
+/** A signed-in user's request: their totals (`usr`) and the endpoint they used (`ep.u`, `service|endpoint|user`). */
+function userContributions(r: RequestRow, base: Pick<Contribution, "err" | "sum">): Contribution[] {
+  if (!r.user) return [];
+  return [contribution("usr", r.user, r.startMs, { ...base, values: [r.durationMs] }), contribution("ep.u", joinKey(displayService(r.service), r.endpoint, r.user), r.startMs)];
 }
 
 /** Everything one request adds to the rollups. */
@@ -67,5 +74,5 @@ export function requestContributions(r: RequestRow): Contribution[] {
     out.push(contribution("req.svc", joinKey(s, ...dims), at, { ...base, c: [r.dbCount, withInsights, s === r.service ? 1 : 0] }));
   }
   const services = [r.service, ...r.services].map(displayService);
-  return [...out, ...partContributions(r), ...insightContributions(r)].flatMap((c) => withServices(c, services));
+  return [...out, ...partContributions(r), ...insightContributions(r), ...userContributions(r, base)].flatMap((c) => withServices(c, services));
 }

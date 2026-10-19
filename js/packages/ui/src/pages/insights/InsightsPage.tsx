@@ -58,7 +58,7 @@ function InsightsBody({ m, wanted }: { m: InsightsModel; wanted: string | null }
         <Panel flush title={`Insights (${fmtCount(m.matching)})`} action={<ExportButton page="insights" disabled={m.matching === 0} />}>
           <InsightList groups={m.groups} issues={m.issues} selected={m.selected?.key ?? null} now={now} filtered={m.matching !== m.totals.count} />
         </Panel>
-        {wanted && (m.selected ? <InsightDetail group={m.selected} info={m.issues[m.selected.key]} now={now} /> : <Panel><Empty title="This insight is not in the selected time range" /></Panel>)}
+        {wanted && (m.selected ? <InsightDetail group={m.selected} info={m.issues[m.selected.key]} users={m.selectedUsers} now={now} /> : <Panel><Empty title="This insight is not in the selected time range" /></Panel>)}
       </div>
     </>
   );

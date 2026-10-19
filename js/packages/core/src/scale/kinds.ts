@@ -15,6 +15,7 @@ export type RollupKind =
   | "pv" | "pv.route" | "pv.m" | "pv.large" | "pv.g"
   | "react" | "rc" | "rc.route"
   | "rel"
+  | "usr" | "err.u" | "ins.u" | "ep.u"
   | ScopedKind;
 
 /** Kinds that also count per service: each item adds a copy keyed by its service first (see `SERVICE_KIND`). */
@@ -87,6 +88,12 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   "rc.route": spec(),
   /** Per service version (`service|version`): its requests and jobs, failures, and durations. */
   rel: spec([], { hist: true }),
+  /** Per signed-in user (`enduser.id`): their requests, failures, and durations. */
+  usr: spec([], { hist: true }),
+  /** Who an error group, an insight, or an endpoint (`service|endpoint`) touched: one key per item and user. */
+  "err.u": spec(),
+  "ins.u": spec(),
+  "ep.u": spec(),
 };
 
 /** Every kind's fields; the per-service copies keep their base kind's. */

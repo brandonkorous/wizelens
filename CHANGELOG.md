@@ -6,6 +6,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Users.** A Users page lists the signed-in users (`enduser.id`) by requests, with failures and latency; each user has a page
+  with their requests over time, the errors they hit, and their slowest and newest requests. Error groups, endpoints, and
+  insights show how many users they touched. Errors and Logs filter by user, like Requests.
 - **Search everywhere.** Requests, Traces, and Logs have the search box with autocomplete: free words filter as before, and
   `status:5xx duration:>1s @user.id:42` narrows the list to what the search finds. The Search page counts each kind and shows
   when the results happened. Ctrl+K also finds error groups, queries, insights, metrics, alerts, SLOs, saved views, and

@@ -3,6 +3,7 @@ import type { ErrorsModel } from "@wizeworks/lens-core";
 import { setQuery } from "../../routes";
 import { SearchInput, Select } from "../../ui/Controls";
 import { Check } from "../../ui/Field";
+import { FilterChips } from "../../ui/FilterChips";
 import { ServiceSelect } from "../../ui/ServiceSelect";
 import { useSearchText } from "../../ui/useSearchText";
 
@@ -21,7 +22,7 @@ export function ErrorFilters({ stats }: { stats: ErrorsModel }) {
   const set = (key: string) => (value: string) => setQuery({ [key]: value || null, page: null, group: null });
   const types = withCurrent(stats.types.map((t) => t.type), f.type);
   const endpoints = withCurrent(stats.endpoints.map((e) => e.endpoint), f.endpoint);
-  const reset = () => setQuery({ type: null, endpoint: null, critical: null, q: null, sort: null, status: null, new: null, release: null, page: null, group: null });
+  const reset = () => setQuery({ type: null, endpoint: null, critical: null, q: null, sort: null, status: null, new: null, release: null, user: null, page: null, group: null });
   const releases = withCurrent(stats.releases.map((r) => r.version), f.release);
   const flag = (key: string) => (e: { target: { checked: boolean } }) => setQuery({ [key]: e.target.checked ? "1" : null, page: null, group: null });
   return (
@@ -35,6 +36,7 @@ export function ErrorFilters({ stats }: { stats: ErrorsModel }) {
       <SearchInput value={text} onChange={setText} placeholder="Search errors by type or message…" />
       <Check label="Critical only" checked={f.critical} onChange={flag("critical")} />
       <Check label="New only" checked={f.fresh} onChange={flag("new")} />
+      <FilterChips chips={[["User", "user", f.user]]} />
       <button type="button" className="wl-btn" onClick={reset}>
         <RotateCcw aria-hidden="true" /> Reset
       </button>

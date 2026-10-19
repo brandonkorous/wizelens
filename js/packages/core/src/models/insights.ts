@@ -8,6 +8,7 @@ import { insightGroupsOf, insightNeeds } from "./insight-groups.js";
 import { type IssueInfo, isIssueFilter } from "./error-issues.js";
 import { groupNeed, rowsOf, uniqueNeeds } from "./read.js";
 import { firstSeenBounds, inBounds, releasesNeed, releasesOf } from "./release-rows.js";
+import { type UsersAffected, usersNeed, usersOf } from "./user-rows.js";
 
 export interface InsightTotals {
   count: number;
@@ -32,6 +33,8 @@ export interface InsightsModel {
   hasIssues: boolean;
   /** The chosen service's versions, newest first, for the release filter. */
   releases: { version: string; firstMs: number }[];
+  /** Signed-in users the `key` insight touched. */
+  selectedUsers: UsersAffected | null;
 }
 
 const totalsOf = (groups: readonly InsightGroup[]): InsightTotals => ({
@@ -68,7 +71,8 @@ export const insightsPage: PageDef<InsightsModel> = {
     const service = serviceParam(ctx.params);
     const life = groupNeed("ins.life", "ins", "all", service ? { service } : {});
     const releases = service ? [releasesNeed("rel.svc", service)] : [];
-    return uniqueNeeds([...META_NEEDS, ...insightNeeds("cur", "all", service), ...insightNeeds("prev", "all", service), life, ...releases]);
+    const users = ctx.params.key ? [usersNeed("users", "ins.u", [ctx.params.key])] : [];
+    return uniqueNeeds([...META_NEEDS, ...insightNeeds("cur", "all", service), ...insightNeeds("prev", "all", service), life, ...releases, ...users]);
   },
   model(d) {
     const groups = insightGroupsOf(d, "cur");
@@ -89,6 +93,7 @@ export const insightsPage: PageDef<InsightsModel> = {
       issues: all,
       hasIssues: !!d.issues,
       releases: releasesOf(d, "rel.svc").map((r) => ({ version: r.version, firstMs: r.firstMs })),
+      selectedUsers: d.params.key ? usersOf(d, "users") : null,
     };
   },
 };

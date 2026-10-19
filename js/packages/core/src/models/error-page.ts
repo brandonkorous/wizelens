@@ -6,6 +6,7 @@ import { bucketStarts } from "../stats/common.js";
 import type { ErrorGroup } from "../stats/errors.js";
 import { CHART_BUCKETS } from "./database.js";
 import { type IssueInfo, issueInfos } from "./error-issues.js";
+import { type UsersAffected, usersNeed, usersOf } from "./user-rows.js";
 import { errorGroupOf } from "./errors.js";
 import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
 import { byDesc, counter, counts, groupNeed, listNeed, listOf, rowsOf, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
@@ -30,6 +31,8 @@ export interface ErrorPageModel {
   issue: IssueInfo | null;
   /** True when the host keeps issue states. */
   hasIssues: boolean;
+  /** Signed-in users it touched in the range. */
+  users: UsersAffected;
 }
 
 const keysOf = (group: string) => ({ filter: { keys: [group] } });
@@ -46,6 +49,7 @@ export const errorPage: PageDef<ErrorPageModel> = {
       seriesNeed("chart", "err.g", "cur", CHART_BUCKETS, keysOf(group)),
       seriesNeed("chart.prev", "err.g", "prev", CHART_BUCKETS, keysOf(group)),
       groupNeed("life", "err.g", "all", keysOf(group)),
+      usersNeed("users", "err.u", [group]),
     ]);
   },
   followUp(_ctx, first) {
@@ -68,6 +72,7 @@ export const errorPage: PageDef<ErrorPageModel> = {
       traces: listOf<TraceItem>(d, "traces").items,
       issue: row ? (issueInfos(d, [row.key])[row.key] ?? null) : null,
       hasIssues: !!d.issues,
+      users: usersOf(d, "users"),
     };
   },
 };
