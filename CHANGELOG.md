@@ -6,6 +6,17 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **SLOs and error budgets.** An SLO says how much of a service's or an endpoint's traffic must succeed, or be fast enough,
+  over 7 or 30 days. The SLOs page shows how much error budget is left and how fast it burns over the last hour and 6 hours;
+  each SLO has a page with its budget and good share over time. **Alert on burn rate** makes an alert rule that watches it.
+- **Apdex** on the Overview and each service page, against a target time per service (500 ms unless you set one on the SLOs
+  page).
+- **Alerts on the hub,** not only the cloud. Rules can watch one service or one endpoint, and use **at or above** and
+  **at or below**. **Remind** while a rule keeps firing, **acknowledge** to stop the reminders, **mute** for an hour, a day, or
+  until unmuted, and turn rules **on or off** from the list. Rules send to up to five channels, all editable: Slack,
+  **Microsoft Teams**, **Discord**, **PagerDuty**, webhooks, and email (cloud). Each rule has its own page: its value against
+  the line over time, every notice and change, and a link to the traces behind it. **Alert on this** opens a new rule from a
+  service, an endpoint, an error, or a metric chart.
 - **Releases.** Add-ons send the app's version (`release`, or `WIZELENS_RELEASE`; .NET reads the entry assembly's
   version, Node reads `npm_package_version`, React takes a `release` prop, and OpenTelemetry apps send `service.version`).
   Every chart marks the time a new version first sent data. The service page compares its newest versions: requests, error
@@ -51,7 +62,7 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   a share, the change against the period before, and a trend. Click a pattern to filter the Logs page to it.
 - **Log metrics.** Save a log search (hub and cloud share it with the project; an app's own dashboard keeps it in the
   browser) and it becomes a chart of its matching lines over the time range.
-- **Log alerts.** A cloud alert rule can count the lines of a log search over a window ("Alert on this search" on the
+- **Log alerts.** An alert rule (hub or cloud) can count the lines of a log search over a window ("Alert on this search" on the
   Logs page fills it in): `Log lines (error and up, "timed out") is 12 (above 10)`.
 - **Log retention per project.** Cloud projects can keep logs for more or less time than traces (Team → Projects → Logs
   kept, 1 to 400 days); the hub has `--log-retention` (`WIZELENS_HUB_LOG_RETENTION`).
@@ -61,16 +72,16 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   a new error group, a query that got slower (or fails, or runs far more often), or a service further down the calls.
   Plain statistics, no AI. It works in-app, on the hub, and in the cloud, from the same rollups on SQLite, Postgres, and
   ClickHouse.
-- **"Is above normal" alerts** (cloud). Pick it as the condition on error rate, p95, or requests, with high, medium, or low
+- **"Is above normal" alerts** (hub and cloud). Pick it as the condition on error rate, p95, or requests, with high, medium, or low
   sensitivity. The notice names the service or endpoint and its normal value. Every fired notice (Slack, email, webhook)
-  now links to the problem it is part of, with the suspected cause, and the Alerts page shows that link too.
+  in the cloud links to the problem it is part of, with the suspected cause, and the Alerts page shows that link too.
 - **`list_problems` for AI tools** (hub and cloud): the problems, their suspected causes, and each anomaly against its
   normal. In the cloud, without a project it covers every project you may read.
 - **Problems use the release.** The `release` option (above) also reads `OTEL_SERVICE_VERSION` when `WIZELENS_RELEASE` is
   not set, in Node and .NET. Problems uses `service.version` to spot a new release.
 - **One stats rebuild for all of the above** (`FACTS_VERSION` 6): errors grouped by their first app frame, log patterns,
   and the versions each service sends. Hosts rebuild their stats once after the upgrade, and the production ClickHouse
-  re-settles once. Cloud migrations 11 (uptime), 12 (source maps), 13 (logs), and 14 (problems) run in that order.
+  re-settles once. Cloud migrations 13 (uptime), 14 (source maps), 15 (logs), and 16 (problems) run in that order, after 11 and 12 (alerts and SLOs).
 
 - **A page for each error, endpoint, query, and page route.** An error shows its count over time, its endpoints, the users
   and browsers of its newest occurrences, the stack, and those occurrences. An endpoint shows requests, errors, and

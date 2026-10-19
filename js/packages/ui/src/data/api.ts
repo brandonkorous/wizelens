@@ -22,7 +22,7 @@ export const apiFetch = async <T>(url: string): Promise<T> =>
   parse<T>(await fetch(url, { headers: { Accept: "application/json" }, credentials: "same-origin", signal: AbortSignal.timeout(TIMEOUT_MS) }));
 
 /** Send a change. The header tells the server it comes from the dashboard, not from another site. */
-export const apiSend = async <T = unknown>(method: "POST" | "PATCH" | "DELETE", url: string, body?: unknown): Promise<T> =>
+export const apiSend = async <T = unknown>(method: "POST" | "PUT" | "PATCH" | "DELETE", url: string, body?: unknown): Promise<T> =>
   parse<T>(
     await fetch(url, {
       method,

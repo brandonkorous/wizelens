@@ -54,6 +54,7 @@ const TIES: Record<string, (m: Obj) => void> = {
     // The compared period's line is new; the legacy model had none.
     delete (m.activity as Obj).prevRequests;
     delete m.freshErrors;
+    delete m.apdex;
   },
   requests: (m) => {
     // Service options carry display names now ("Web App", not "browser").

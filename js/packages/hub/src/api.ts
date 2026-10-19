@@ -3,7 +3,10 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { annotateErrorFrames, HEADER_HOP, type ServiceInfo, SOURCEMAPS_PATH, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core";
 import { DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, firstHeader, sendJson, VERSION as NODE_VERSION } from "@wizeworks/lens-node/kit";
 import { parseJson, readBody } from "./body.js";
+import { handleAlerts } from "./alerts/api.js";
+import type { HubAlertDeps } from "./alerts/evaluate.js";
 import { handleIssues } from "./issues.js";
+import { handleApdex, handleSlos } from "./slos.js";
 import type { HubData } from "./data.js";
 import { parseIngest } from "./ingest.js";
 import type { ResolvedHubOptions } from "./options.js";
@@ -19,6 +22,7 @@ import { countRows, distinctOf, listServices, type TraceQuery } from "./store-re
 
 export interface ApiContext {
   data: HubData;
+  alerts: HubAlertDeps;
   o: ResolvedHubOptions;
   version: string;
   startedMs: number;
@@ -32,7 +36,7 @@ const num = (p: URLSearchParams, k: string) => (p.has(k) && Number.isFinite(Numb
 export function hubInfo(c: ApiContext): ServiceInfo {
   return {
     mode: "hub",
-    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes", "issues", "infra", "sourcemaps", "savedSearches", ...(c.o.uptime ? (["uptime"] as const) : [])],
+    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "savedSearches", ...(c.o.uptime ? (["uptime"] as const) : [])],
     service: c.o.name,
     version: c.version,
     runtime: `node ${process.version} · lens-node ${NODE_VERSION}`,
@@ -106,6 +110,9 @@ export async function handleApi(c: ApiContext, sub: string, req: IncomingMessage
   if (sub === "api/search/suggest" && method === "GET") return sendSuggest(c, url.searchParams, res);
   if (sub === "api/issues" && (method === "GET" || method === "POST")) return handleIssues(c.data.store.db, method, url.searchParams.get("project") ?? "", req, res, c.o.now());
   if (sub === "api/uptime" || sub.startsWith("api/uptime/")) return handleUptime(c, sub, req, res, url);
+  if (sub === "api/slos" || sub.startsWith("api/slos/")) return handleSlos(c.data.store, sub, req, res, url, c.o.now());
+  if (sub === "api/apdex") return handleApdex(c.data.store.db, method, url.searchParams.get("project") ?? "", req, res);
+  if (sub === "api/alerts" || sub.startsWith("api/alerts/")) return handleAlerts(c.alerts, c.o.now(), sub, req, res, url);
   if (sub === "api/models/metrics" && method === "GET") return sendJson(res, 200, metrics(c, url.searchParams));
   if ((sub === "api/models/hosts" || sub === "api/models/kubernetes") && method === "GET") return sendJson(res, 200, infraPage(c.data.store.db, sub === "api/models/hosts" ? "hosts" : "kubernetes", url.searchParams, c.o.now()));
   if (sub.startsWith("api/saved-searches") && (await handleSavedSearches(c.data.store.db, sub, req, res, url, c.o.now()))) return;

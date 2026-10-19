@@ -1,3 +1,4 @@
+import { ALERTS2_MIGRATION } from "./schema-alerts.js";
 import { AUTH_MIGRATION } from "./schema-auth.js";
 import { LOGS_MIGRATION } from "./schema-logs.js";
 import { MAIL_MIGRATION } from "./schema-mail.js";
@@ -6,6 +7,7 @@ import { OAUTH_MIGRATION } from "./schema-oauth.js";
 import { ISSUES_MIGRATION } from "./schema-issues.js";
 import { SEARCH_MIGRATION } from "./schema-search.js";
 import { SOURCEMAPS_MIGRATION } from "./schema-sourcemaps.js";
+import { SLOS_MIGRATION } from "./schema-slos.js";
 import { SSO_MIGRATION } from "./schema-sso.js";
 import { UPTIME_MIGRATION } from "./schema-uptime.js";
 
@@ -213,10 +215,12 @@ CREATE INDEX ix_metric_1h_time ON metric_1h (project_id, bucket_ms);
   SEARCH_MIGRATION,
   OAUTH_MIGRATION,
   ISSUES_MIGRATION,
+  ALERTS2_MIGRATION,
+  SLOS_MIGRATION,
   UPTIME_MIGRATION,
   SOURCEMAPS_MIGRATION,
   LOGS_MIGRATION,
-  // Migration 14: an alert event names the problem it is part of (docs/CONTRACT.md, "Problems").
+  // Migration 16: an alert event names the problem it is part of (docs/CONTRACT.md, "Problems").
   `
 ALTER TABLE alert_events ADD COLUMN problem TEXT NOT NULL DEFAULT '';
 `,

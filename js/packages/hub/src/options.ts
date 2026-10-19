@@ -35,10 +35,19 @@ export interface HubOptions {
   /** Source maps with no upload: build folders, and dev servers on this machine (default). False turns them off; uploads still work. */
   sourceMaps?: SourceMapOptions | false;
   now?: () => number;
+  /** How often alert rules run, in ms. Default 60000. */
+  alertIntervalMs?: number;
+  /** Let alert webhooks call plain http and private or local addresses. Default true: the hub runs on your own network. */
+  allowPrivateWebhooks?: boolean;
+  /** How alert notices are sent; tests replace it. Default the global fetch. */
+  fetch?: typeof fetch;
+  /** PagerDuty's Events API URL; tests point it at a local server. */
+  pagerDutyUrl?: string;
 }
 
-export interface ResolvedHubOptions extends Required<Omit<HubOptions, "token" | "uiDir" | "audit" | "now" | "sourceMaps">> {
+export interface ResolvedHubOptions extends Required<Omit<HubOptions, "token" | "uiDir" | "audit" | "now" | "sourceMaps" | "pagerDutyUrl">> {
   sourceMaps: SourceMapOptions | false | undefined;
+  pagerDutyUrl: string | undefined;
   token: string | undefined;
   uiDir: string | undefined;
   audit: (line: string) => void;
@@ -65,5 +74,9 @@ export function resolveHubOptions(o: HubOptions = {}): ResolvedHubOptions {
     audit: o.audit ?? ((line) => console.info(line)),
     sourceMaps: o.sourceMaps,
     now: o.now ?? Date.now,
+    alertIntervalMs: o.alertIntervalMs ?? 60_000,
+    allowPrivateWebhooks: o.allowPrivateWebhooks ?? true,
+    fetch: o.fetch ?? ((...a) => fetch(...a)),
+    pagerDutyUrl: o.pagerDutyUrl,
   };
 }

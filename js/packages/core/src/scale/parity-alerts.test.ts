@@ -34,7 +34,7 @@ describe("parity: alert values", () => {
       const rows = logRows(traces).filter((r) => inWindow(r.timeMs, ctx.window));
       for (const search of [{}, { level: "warn" }, { level: "error", exact: "1" }, { q: "order" }] as Record<string, string>[]) {
         const f = { minLevel: (search as { level?: "warn" }).level ?? "trace", exact: "exact" in search, service: "", query: (search as { q?: string }).q ?? "" } as const;
-        expect([windowMs, search, computePageSync(alertPage("log_count", search), ctx, ex)]).toEqual([windowMs, search, filterLogs(rows, f).length]);
+        expect([windowMs, search, computePageSync(alertPage("log_count", {}, search), ctx, ex)]).toEqual([windowMs, search, filterLogs(rows, f).length]);
       }
     }
   });

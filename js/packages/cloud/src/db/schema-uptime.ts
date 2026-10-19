@@ -1,4 +1,4 @@
-// Migration 11: uptime checks, their incidents, and public status pages. Results are spans of the wizelens-uptime service.
+// Migration 13: uptime checks, their incidents, and public status pages. Results are spans of the wizelens-uptime service.
 export const UPTIME_MIGRATION = `
 CREATE TABLE uptime_checks (
   id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects (id) ON DELETE CASCADE, name TEXT NOT NULL, url TEXT NOT NULL,

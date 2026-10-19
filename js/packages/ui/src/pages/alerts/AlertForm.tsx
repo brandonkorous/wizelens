@@ -1,47 +1,23 @@
 import { type FormEvent, useState } from "react";
-import { ALERT_METRICS, type AlertMetric, type AlertOp, isAnomalyMetric } from "@wizeworks/lens-core";
+import { ALERT_METRICS, type AlertMetric, type AlertRuleInput, isAnomalyMetric } from "@wizeworks/lens-core";
 import { Select } from "../../ui/Controls";
-import { Field, FormRow } from "../../ui/Field";
+import { Check, Field, FormRow } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
-import { type AlertRule, type Channel, WINDOWS } from "./alertTypes";
+import { REMINDS, WINDOWS } from "./alertTypes";
 import { ChannelFields } from "./ChannelFields";
+import { AboveNormalNote, LineFields } from "./LineFields";
 import { LogRuleFields } from "./LogRuleFields";
 import { MetricRuleFields } from "./MetricRuleFields";
+import { ScopeFields } from "./ScopeFields";
+import { SloFields } from "./SloFields";
 
-export type RuleDraft = Omit<AlertRule, "id" | "state" | "lastValue" | "lastEvalMs">;
+export type RuleDraft = AlertRuleInput;
 
-const METRICS: [AlertMetric | "metric", string][] = [
+const METRICS: [RuleDraft["metric"], string][] = [
   ...Object.entries(ALERT_METRICS).map(([k, m]): [AlertMetric, string] => [k as AlertMetric, `${m.label}${m.unit ? ` (${m.unit})` : ""}`]),
   ["metric", "A metric (CPU, memory, your own)"],
+  ["slo", "An SLO's burn rate (×)"],
 ];
-const OPS: [AlertOp, string][] = [
-  [">", "is above"],
-  ["<", "is below"],
-  ["above_normal", "is above normal"],
-];
-/** How many spreads above normal an "above normal" rule fires at. */
-const SENSITIVITY: [string, string][] = [
-  ["2", "High sensitivity"],
-  ["3", "Medium sensitivity"],
-  ["4", "Low sensitivity"],
-];
-
-/** The threshold, or for "above normal" the sensitivity; a metric without a baseline turns "above normal" off. */
-function LineFields({ r, set }: { r: RuleDraft; set: <K extends keyof RuleDraft>(k: K) => (v: RuleDraft[K]) => void }) {
-  const normal = r.op === "above_normal";
-  const ops = isAnomalyMetric(r.metric) ? OPS : OPS.filter(([op]) => op !== "above_normal");
-  const spreads = SENSITIVITY.some(([v]) => Number(v) === r.threshold) ? String(r.threshold) : "3";
-  return (
-    <>
-      <Select label="Condition" value={r.op} options={ops} onChange={(op) => (set("op")(op), op === "above_normal" && set("threshold")(3))} />
-      {normal ? (
-        <Select label="Sensitivity" value={spreads} options={SENSITIVITY} onChange={(v) => set("threshold")(Number(v))} />
-      ) : (
-        <Field label="Threshold" type="number" step="any" required value={r.threshold} onChange={(e) => set("threshold")(Number(e.target.value))} />
-      )}
-    </>
-  );
-}
 
 export const EMPTY_RULE: RuleDraft = {
   name: "",
@@ -49,29 +25,43 @@ export const EMPTY_RULE: RuleDraft = {
   metricName: "",
   metricStat: "",
   metricService: "",
-  logSearch: {},
   op: ">",
   threshold: 5,
   windowMs: 300_000,
   env: "",
+  service: "",
+  endpoint: "",
   channels: [],
   enabled: true,
+  remindMs: 0,
+  sloId: "",
+  logSearch: {},
 };
 
-/** New or changed rule: what to watch, when it fires, and where the notice goes. */
-export function AlertForm({ initial, isNew = false, onSave, onCancel }: { initial: RuleDraft; isNew?: boolean; onSave: (r: RuleDraft) => Promise<string | null>; onCancel: () => void }) {
+/** Only the fields a rule keeps, from a draft or a kept rule. */
+export const draftOf = (r: RuleDraft): RuleDraft => Object.fromEntries(Object.keys(EMPTY_RULE).map((k) => [k, r[k as keyof RuleDraft]])) as unknown as RuleDraft;
+
+/** The draft ready to send: metric rules drop the scope, trace rules drop the metric fields, and empty channels go. */
+function cleaned(r: RuleDraft): RuleDraft {
+  const none = { metricName: "", metricStat: "" as const, metricService: "" };
+  const metric =
+    r.metric === "metric" ? { metricStat: r.metricStat || "avg", service: "", endpoint: "", sloId: "" } : r.metric === "slo" ? { ...none, service: "", endpoint: "" } : { ...none, sloId: "", endpoint: r.service ? r.endpoint : "" };
+  const channels = r.channels.filter((c) => (c.kind === "email" ? c.to.length > 0 : c.kind === "pagerduty" ? c.routingKey.trim() !== "" : c.url.trim() !== ""));
+  const logs = r.metric === "log_count" ? { service: "", endpoint: "", logSearch: r.logSearch ?? {} } : { logSearch: {} };
+  return { ...draftOf(r), ...metric, ...logs, channels };
+}
+
+/** New or changed rule: what to watch, when it fires, how often it reminds, and where notices go. */
+export function AlertForm({ initial, title, onSave, onCancel }: { initial: RuleDraft; title: string; onSave: (r: RuleDraft) => Promise<string | null>; onCancel: () => void }) {
   const [r, setR] = useState(initial);
-  const [channel, setChannel] = useState<Channel>(initial.channels[0] ?? { kind: "slack", url: "" });
   const [error, setError] = useState<string | null>(null);
   const set = <K extends keyof RuleDraft>(k: K) => (v: RuleDraft[K]) => setR((x) => ({ ...x, [k]: v }));
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    const metric = r.metric === "metric" ? { metricStat: r.metricStat || "avg", logSearch: {} } : { metricName: "", metricStat: "", metricService: "", ...(r.metric === "log_count" ? {} : { logSearch: {} }) };
-    const used = channel.kind === "email" ? channel.to.length > 0 : channel.url !== "";
-    void onSave({ ...r, ...metric, channels: used ? [channel] : [] } as RuleDraft).then(setError);
+    void onSave(cleaned(r)).then(setError);
   };
   return (
-    <Panel title={initial.name && !isNew ? `Edit "${initial.name}"` : "New alert"}>
+    <Panel title={title}>
       <form className="wl-form" onSubmit={submit}>
         <FormRow>
           <Field label="Name" required value={r.name} onChange={(e) => set("name")(e.target.value)} placeholder="Checkout errors" />
@@ -82,12 +72,13 @@ export function AlertForm({ initial, isNew = false, onSave, onCancel }: { initia
           <LineFields r={r} set={set} />
           <Select label="Over the last" value={String(r.windowMs)} options={WINDOWS} onChange={(v) => set("windowMs")(Number(v))} />
         </FormRow>
-        {r.metric === "metric" && <MetricRuleFields r={r} set={set} />}
-        {r.metric === "log_count" && <LogRuleFields search={r.logSearch ?? {}} onChange={set("logSearch")} />}
-        {r.op === "above_normal" && (
-          <p className="wl-muted wl-small">Fires when any service or endpoint is above its normal: the same window at the same time in earlier weeks (or days, on hosts that keep less). The notice names it and links to its problem.</p>
-        )}
-        <ChannelFields channel={channel} onChange={setChannel} />
+        {r.op === "above_normal" && <AboveNormalNote />}
+        {r.metric === "metric" ? <MetricRuleFields r={r} set={set} /> : r.metric === "slo" ? <SloFields r={r} set={set} /> : r.metric === "log_count" ? <LogRuleFields search={r.logSearch ?? {}} onChange={set("logSearch")} /> : <ScopeFields r={r} set={set} />}
+        <FormRow>
+          <Select label="Remind while firing" value={String(r.remindMs)} options={REMINDS} onChange={(v) => set("remindMs")(Number(v))} />
+          <Check label="On" checked={r.enabled} onChange={(e) => set("enabled")(e.target.checked)} />
+        </FormRow>
+        <ChannelFields channels={r.channels} onChange={set("channels")} />
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
         <FormRow>
           <button type="submit" className="wl-btn wl-btn-primary">Save alert</button>

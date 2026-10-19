@@ -1,62 +1,30 @@
-import type { AlertMetric, AlertOp, MetricAlertStat } from "@wizeworks/lens-core";
+import type { AlertRule, AlertRuleInput } from "@wizeworks/lens-core";
 import { newId } from "../auth/crypto.js";
 import type { Queryable } from "../db/db.js";
 
-/** Where a notice goes: a webhook, a Slack incoming webhook, or email to members of the organization. */
-export type Channel = { kind: "webhook" | "slack"; url: string } | { kind: "email"; to: string[] };
-
-export interface AlertRule {
-  id: string;
-  projectId: string;
-  name: string;
-  /** A trace metric, or "metric" for one OpenTelemetry metric named by `metricName`. */
-  metric: AlertMetric | "metric";
-  /** For "metric" rules: the metric, what to read from it, and optionally one service. Empty otherwise. */
-  metricName: string;
-  metricStat: MetricAlertStat | "";
-  metricService: string;
-  /** For "log_count" rules: the log search (Logs page filters) whose lines are counted. Empty otherwise. */
-  logSearch: Record<string, string>;
-  op: AlertOp;
-  threshold: number;
-  windowMs: number;
-  env: string;
-  channels: Channel[];
-  enabled: boolean;
-  state: "ok" | "firing";
-  lastValue: number | null;
-  lastEvalMs: number | null;
-}
-
-export interface AlertEvent {
-  id: string;
-  ruleId: string;
-  ruleName: string;
-  kind: "fired" | "resolved" | "test";
-  value: number | null;
-  threshold: number;
-  message: string;
-  timeMs: number;
-  delivery: string;
-  /** The problem a fired notice named, or null. */
-  problem: EventProblem | null;
-}
-
-/** A problem card a notice linked to. */
-export interface EventProblem {
-  id: string;
-  title: string;
-  url: string;
-}
-
-export type RuleInput = Omit<AlertRule, "id" | "projectId" | "state" | "lastValue" | "lastEvalMs">;
+export type { AlertChannel as Channel, AlertRule } from "@wizeworks/lens-core";
+export type RuleInput = AlertRuleInput;
 
 const RULE_COLUMNS = `id, project_id AS "projectId", name, metric, metric_name AS "metricName", metric_stat AS "metricStat",
-  metric_service AS "metricService", log_search AS "logSearch", op, threshold, window_ms AS "windowMs", env, channels, enabled, state,
-  last_value AS "lastValue", last_eval_ms AS "lastEvalMs"`;
+  metric_service AS "metricService", slo_id AS "sloId", log_search AS "logSearch", op, threshold, window_ms AS "windowMs", env, service, endpoint, channels, enabled,
+  remind_ms AS "remindMs", state, last_value AS "lastValue", last_eval_ms AS "lastEvalMs", muted_until_ms AS "mutedUntilMs",
+  ack_ms AS "ackMs", last_notified_ms AS "lastNotifiedMs"`;
 
 type RuleRow = Omit<AlertRule, "channels" | "logSearch"> & { channels: string; logSearch: string };
-const toRule = (r: RuleRow): AlertRule => ({ ...r, channels: JSON.parse(r.channels) as Channel[], logSearch: JSON.parse(r.logSearch || "{}") as Record<string, string> });
+const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
+const toRule = (r: RuleRow): AlertRule => ({
+  ...r,
+  threshold: Number(r.threshold),
+  windowMs: Number(r.windowMs),
+  remindMs: Number(r.remindMs),
+  lastValue: num(r.lastValue),
+  lastEvalMs: num(r.lastEvalMs),
+  mutedUntilMs: num(r.mutedUntilMs),
+  ackMs: num(r.ackMs),
+  lastNotifiedMs: num(r.lastNotifiedMs),
+  channels: JSON.parse(r.channels) as AlertRule["channels"],
+  logSearch: JSON.parse(r.logSearch || "{}") as Record<string, string>,
+});
 
 export async function listRules(q: Queryable, projectId: string): Promise<AlertRule[]> {
   return (await q.query<RuleRow>(`SELECT ${RULE_COLUMNS} FROM alert_rules WHERE project_id = $1 ORDER BY name`, [projectId])).map(toRule);
@@ -71,22 +39,26 @@ export async function ruleById(q: Queryable, projectId: string, id: string): Pro
   return row && toRule(row);
 }
 
+const inputValues = (r: RuleInput) => [r.name, r.metric, r.op, r.threshold, r.windowMs, r.env, JSON.stringify(r.channels), r.enabled, r.metricName, r.metricStat, r.metricService, r.service, r.endpoint, r.remindMs, r.sloId, JSON.stringify(r.logSearch ?? {})];
+
 export async function createRule(q: Queryable, projectId: string, r: RuleInput, by: string, now: number): Promise<string> {
   const id = newId();
   await q.query(
-    `INSERT INTO alert_rules (id, project_id, name, metric, op, threshold, window_ms, env, channels, enabled, created_by, created_ms,
-       metric_name, metric_stat, metric_service, log_search)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
-    [id, projectId, r.name, r.metric, r.op, r.threshold, r.windowMs, r.env, JSON.stringify(r.channels), r.enabled, by, now, r.metricName, r.metricStat, r.metricService, JSON.stringify(r.logSearch)],
+    `INSERT INTO alert_rules (id, project_id, name, metric, op, threshold, window_ms, env, channels, enabled, metric_name, metric_stat,
+       metric_service, service, endpoint, remind_ms, slo_id, log_search, created_by, created_ms)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
+    [id, projectId, ...inputValues(r), by, now],
   );
   return id;
 }
 
+/** Turning a rule off also clears its firing state and acknowledgement. */
 export async function updateRule(q: Queryable, projectId: string, id: string, r: RuleInput): Promise<void> {
   await q.query(
     `UPDATE alert_rules SET name = $3, metric = $4, op = $5, threshold = $6, window_ms = $7, env = $8, channels = $9, enabled = $10,
-       metric_name = $11, metric_stat = $12, metric_service = $13, log_search = $14, state = CASE WHEN $10 THEN state ELSE 'ok' END WHERE project_id = $1 AND id = $2`,
-    [projectId, id, r.name, r.metric, r.op, r.threshold, r.windowMs, r.env, JSON.stringify(r.channels), r.enabled, r.metricName, r.metricStat, r.metricService, JSON.stringify(r.logSearch)],
+       metric_name = $11, metric_stat = $12, metric_service = $13, service = $14, endpoint = $15, remind_ms = $16, slo_id = $17, log_search = $18,
+       state = CASE WHEN $10 THEN state ELSE 'ok' END, ack_ms = CASE WHEN $10 THEN ack_ms ELSE NULL END WHERE project_id = $1 AND id = $2`,
+    [projectId, id, ...inputValues(r)],
   );
 }
 
@@ -94,31 +66,21 @@ export async function deleteRule(q: Queryable, projectId: string, id: string): P
   return (await q.query("DELETE FROM alert_rules WHERE project_id = $1 AND id = $2 RETURNING id", [projectId, id])).length > 0;
 }
 
-export async function saveEvaluation(q: Queryable, id: string, state: AlertRule["state"], value: number | null, now: number): Promise<void> {
-  await q.query("UPDATE alert_rules SET state = $2, last_value = $3, last_eval_ms = $4 WHERE id = $1", [id, state, value, now]);
+/** Mute until a time (null unmutes). */
+export async function muteRule(q: Queryable, projectId: string, id: string, untilMs: number | null): Promise<void> {
+  await q.query("UPDATE alert_rules SET muted_until_ms = $3 WHERE project_id = $1 AND id = $2", [projectId, id, untilMs]);
 }
 
-export async function addEvent(q: Queryable, rule: AlertRule, e: Omit<AlertEvent, "id" | "ruleId" | "ruleName" | "threshold">): Promise<void> {
+/** Acknowledge the current firing: reminders stop until it resolves. */
+export async function ackRule(q: Queryable, projectId: string, id: string, now: number): Promise<void> {
+  await q.query("UPDATE alert_rules SET ack_ms = $3 WHERE project_id = $1 AND id = $2 AND state = 'firing'", [projectId, id, now]);
+}
+
+/** Keep an evaluation: the state, its acknowledgement, the value (also in the rule's history), and when it last sent a notice. */
+export async function saveEvaluation(q: Queryable, r: AlertRule, step: { state: AlertRule["state"]; ackMs: number | null; notified: boolean }, value: number | null, now: number): Promise<void> {
   await q.query(
-    `INSERT INTO alert_events (id, rule_id, project_id, kind, value, threshold, message, time_ms, delivery, problem) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-    [newId(), rule.id, rule.projectId, e.kind, e.value, rule.threshold, e.message, e.timeMs, e.delivery, e.problem ? JSON.stringify(e.problem) : ""],
+    "UPDATE alert_rules SET state = $2, ack_ms = $3, last_value = $4, last_eval_ms = $5, last_notified_ms = CASE WHEN $6 THEN $5 ELSE last_notified_ms END WHERE id = $1",
+    [r.id, step.state, step.ackMs, value, now, step.notified],
   );
-}
-
-function problemOf(text: string): EventProblem | null {
-  if (!text) return null;
-  try {
-    return JSON.parse(text) as EventProblem;
-  } catch {
-    return null;
-  }
-}
-
-export async function listEvents(q: Queryable, projectId: string, limit: number): Promise<AlertEvent[]> {
-  const rows = await q.query<Omit<AlertEvent, "problem"> & { problem: string }>(
-    `SELECT e.id, e.rule_id AS "ruleId", r.name AS "ruleName", e.kind, e.value, e.threshold, e.message, e.time_ms AS "timeMs", e.delivery, e.problem
-     FROM alert_events e JOIN alert_rules r ON r.id = e.rule_id WHERE e.project_id = $1 ORDER BY e.time_ms DESC LIMIT $2`,
-    [projectId, limit],
-  );
-  return rows.map((r) => ({ ...r, problem: problemOf(r.problem) }));
+  await q.query("INSERT INTO alert_values (rule_id, time_ms, value) VALUES ($1, $2, $3) ON CONFLICT (rule_id, time_ms) DO UPDATE SET value = $3", [r.id, now, value]);
 }

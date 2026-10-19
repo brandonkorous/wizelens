@@ -96,7 +96,9 @@ export type Capability =
   /** The host resolves browser stacks at `api/sourcemaps/resolve` (uploaded maps, a build folder, or a dev server). */
   | "sourcemaps"
   /** The host keeps saved searches (`api/saved-searches`); without it the dashboard keeps them in the browser. */
-  | "savedSearches";
+  | "savedSearches"
+  /** The host keeps SLOs and Apdex targets (`api/slos`, `api/apdex`). */
+  | "slos";
 
 /** What an in-app add-on offers today. Also the default when a host does not say. */
 export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];

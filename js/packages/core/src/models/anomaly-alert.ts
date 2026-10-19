@@ -6,6 +6,7 @@ import type { Agg } from "../scale/agg.js";
 import type { ServiceRowInfo } from "../scale/facts-services.js";
 import { KEY_SEP } from "../scale/kinds.js";
 import type { NeedResults, PageDef, WindowRef } from "../scale/needs.js";
+import type { AlertNoticeState } from "./alerts.js";
 import { aggByKey, groupNeed, rowsOf } from "./read.js";
 
 const LEVELS = [
@@ -70,12 +71,12 @@ export function anomalyAlertPage(metric: AnomalyMetric, spreads: number): PageDe
 }
 
 /** "p95 duration is above normal on orders GET /orders: 950 ms (normal 300 ms, line 520 ms)". */
-export function anomalyAlertMessage(metric: AnomalyMetric, r: AnomalyAlertValue, state: "fired" | "resolved" | "test"): string {
+export function anomalyAlertMessage(metric: AnomalyMetric, r: AnomalyAlertValue, state: AlertNoticeState): string {
   const label = ANOMALY_LABEL[metric];
   const unit = (n: number) => (metric === "error_rate" ? `${n.toFixed(1)}%` : metric === "p95_ms" ? `${Math.round(n)} ms` : `${Math.round(n)} requests`);
   if (state === "test") return `${label} alerts when a service or endpoint is above its normal.`;
   if (!r.breach) return r.learning ? `${label}: not enough history yet to know what is normal.` : `${label} is back to normal everywhere.`;
   const b = r.breach;
   const where = b.endpoint ? `${b.name} ${b.endpoint}` : b.name;
-  return `${label} is above normal on ${where}: ${unit(b.value)} (normal ${unit(b.normal)}, alerts above ${unit(b.upper)})`;
+  return `${label} is ${state === "remind" ? "still " : ""}above normal on ${where}: ${unit(b.value)} (normal ${unit(b.normal)}, alerts above ${unit(b.upper)})`;
 }

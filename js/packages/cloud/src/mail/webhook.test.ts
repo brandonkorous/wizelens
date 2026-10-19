@@ -26,7 +26,7 @@ async function start() {
 
 const bounce = (to: string, type: string) => ({ type: "email.bounced", data: { to: [to], bounce: { type, subType: "General", message: "Mailbox does not exist." } } });
 const settle = () => new Promise((r) => setTimeout(r, 100));
-const notice = { rule: "Errors", project: "shop", state: "fired", message: "Error rate is 12 (above 10)", value: 12, threshold: 10, timeMs: 0, url: "https://x" } as const;
+const notice = { ruleId: "r1", rule: "Errors", project: "shop", state: "fired", message: "Error rate is 12 (above 10)", value: 12, threshold: 10, timeMs: 0, url: "https://x" } as const;
 const alert = (to: string) => alertMail(to, notice);
 
 it("puts hard bounces on the list, so no mail goes there again", async () => {

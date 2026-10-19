@@ -4,6 +4,7 @@ import { alertRoutes } from "./alerts.js";
 import { appRoutes } from "./apps.js";
 import { changeRoutes } from "./changes.js";
 import { issueRoutes } from "./issues.js";
+import { sloRoutes } from "./slos.js";
 import { meRoutes } from "./me.js";
 import { mcpRoutes } from "./mcp.js";
 import { shareRoutes } from "./shares.js";
@@ -32,6 +33,7 @@ export function allRoutes(): Router<Ctx> {
   alertRoutes(r);
   issueRoutes(r);
   savedSearchRoutes(r);
+  sloRoutes(r);
   shareRoutes(r);
   uptimeRoutes(r);
   statusRoutes(r);

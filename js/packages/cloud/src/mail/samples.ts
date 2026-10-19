@@ -15,6 +15,7 @@ const AT = Date.UTC(2026, 9, 18, 14, 30);
 const LINKS = { account: `${APP}/#/account`, forgot: `${APP}/#/forgot-password` };
 
 const notice = (state: "fired" | "resolved") => ({
+  ruleId: "r1",
   rule: "Checkout errors",
   project: "shop",
   state,

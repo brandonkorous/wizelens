@@ -1,7 +1,8 @@
-import { alignNow, FACT_SLOW_QUERY_MS, hostsModelOf, INFRA_PARAMS, ISSUE_PAGES, isPageName, isTimeRange, issueStatesOf, kubeModelOf, type ModelOf, type PageName, pageContext, runPage, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { alignNow, APDEX_PAGES, FACT_SLOW_QUERY_MS, hostsModelOf, INFRA_PARAMS, ISSUE_PAGES, isPageName, isTimeRange, issueStatesOf, kubeModelOf, type ModelOf, type PageName, pageContext, runPage, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import type { CloudApp, Ctx } from "../app.js";
 import { fail, sendJson } from "../http/http.js";
 import { listIssues } from "../repo/issues.js";
+import { apdexTargets } from "../repo/slos.js";
 import type { Router } from "../http/router.js";
 import { listServices } from "../repo/trace-read.js";
 import { projectOf } from "./data.js";
@@ -49,7 +50,8 @@ export async function projectPage<P extends PageName>(app: CloudApp, project: { 
   // A custom window (`from`, `to`) may start before what the organization keeps; a little slack covers snapping.
   if (now - pc.window.from > days * DAY_MS + 15 * 60_000) fail(400, "This time window starts before the organization keeps data.");
   const issues = ISSUE_PAGES.has(page) ? { issues: issueStatesOf(await listIssues(app.db, project.id)) } : {};
-  const value = await runPage(page, { ...pc, ...issues }, t.executor(project.id, days * DAY_MS, env));
+  const apdex = APDEX_PAGES.has(page) ? { apdex: await apdexTargets(app.db, project.id) } : {};
+  const value = await runPage(page, { ...pc, ...issues, ...apdex }, t.executor(project.id, days * DAY_MS, env));
   remember(key, value, app.config.now());
   return value;
 }

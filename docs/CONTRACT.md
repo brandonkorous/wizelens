@@ -128,7 +128,7 @@ type HostMode = "in-app" | "hub" | "cloud";
 type Capability =
   | "federation" | "environments" | "registry" | "accounts" | "alerts" | "sharing"
   | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search" | "issues"
-  | "infra" | "uptime" | "statusPages" | "sourcemaps" | "savedSearches";
+  | "infra" | "uptime" | "statusPages" | "sourcemaps" | "savedSearches" | "slos";
 
 interface ServiceInfo {
   mode?: HostMode;          // absent = "in-app"
@@ -200,7 +200,7 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `environments` | The host holds more than one environment and project; the top-bar picker filters by them | | ✅ | ✅ |
 | `registry` | The host knows its services (`api/services`): online state, project, environment, runtime | | ✅ | ✅ |
 | `accounts` | People sign in; the top bar shows the user and the Team page appears | | | ✅ |
-| `alerts` | The host runs alert rules; the Alerts page and the bell show them | | | ✅ |
+| `alerts` | The host runs alert rules; the Alerts page and the bell show them. The hub at `api/alerts?project=`, the cloud at `api/projects/:project/alerts` | | ✅ | ✅ |
 | `sharing` | Traces can be shared by a read-only link | | | ✅ |
 | `serverStats` | The host computes page numbers itself (`api/models/<page>`); ranges reach 7 and 30 days | | ✅ | ✅ |
 | `metrics` | The host keeps metrics; the Metrics page appears | ✅ | ✅ | ✅ |
@@ -209,6 +209,7 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `infra` | The host answers `api/models/hosts` and `api/models/kubernetes` from OpenTelemetry Collector metrics (see "Hosts and Kubernetes"); the Hosts and Kubernetes pages appear | | ✅ | ✅ |
 | `sourcemaps` | The host resolves browser stacks at `api/sourcemaps/resolve` (see "Source maps"). Without it, the dashboard resolves them in the browser from the maps the site serves | ✅ (Node) | ✅ | ✅ |
 | `changes` | The host streams `api/changes?project=` (server-sent events): an `event: data` line each time the project gets new stats, at most every 2 s (the hub: each settle round), and a comment every 25 s. The dashboard reloads the open page then, keeping the old numbers on screen until the new ones arrive | | ✅ | ✅ |
+| `slos` | The host keeps SLOs and Apdex targets. See "SLOs and Apdex" below | | ✅ | ✅ |
 | `issues` | The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. See "Issue states" below | | ✅ | ✅ |
 | `uptime` | The host runs uptime checks (`api/uptime` on the hub, `api/projects/{p}/uptime` in the cloud) and serves the `uptime` page model; the Uptime page appears. See "Uptime checks" | | ✅ (unless `--no-uptime`) | ✅ |
 | `statusPages` | A project can turn on a public status page (`api/status/{token}`) | | | ✅ |
@@ -216,7 +217,7 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search"]`, plus `metrics` when metrics are on and `sourcemaps` (Node) unless `sourceMaps: false`. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes", "issues", "infra", "sourcemaps", "savedSearches", "uptime"]` (`uptime` only while checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "savedSearches", "uptime"]` (`uptime` only while checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -436,6 +437,22 @@ audit line `issue.<action>`). A POST body is `{ kind, key, action: "resolve" | "
 The Errors model takes `status` (`unresolved` by default, `resolved`, `ignored`, `all`) and `new=1` (first seen in the
 range), and returns `issues` (status, first seen over all kept data, new, assignee) and `hasIssues`. The Insights model
 takes `status` the same way. The Overview model returns `freshErrors`, the newest new and regressed groups.
+
+## SLOs and Apdex
+
+An SLO covers one service (display name) or one endpoint of it, over the last 7 or 30 days. A request is good when it did not
+fail (`kind: "success"`), or did not fail and took at most `thresholdMs` (`kind: "latency"`, from the duration histograms, so
+within about 4%). `target` is the percent that must be good (above 0, below 100). The error budget is the bad requests the target
+allows; `budgetLeft` is 1 minus the bad requests over that budget (0 is spent, below 0 is over). The burn rate over a window is the
+bad share over the allowed bad share: 1 spends the budget exactly over the SLO's window. Hosts answer `GET api/slos?project=` (hub)
+or `api/projects/:project/slos` (cloud) with every SLO's report (status over its window, with 48 buckets of good share and budget
+left, and the burn rate over the last 1 and 6 hours) and the Apdex targets; `POST` adds one, and `GET`, `PATCH`, and `DELETE` work
+on `…/slos/:id`. An alert rule with `metric: "slo"` and `sloId` watches an SLO's burn rate over its own window.
+
+Apdex scores requests against a target time per service (`GET` and `PUT api/apdex?project=` or `api/projects/:project/apdex`,
+`{ apdex: { service: ms } }`; 500 ms without one): at or under the target is satisfied, under four times it tolerating, and
+slower or failed requests frustrated; the score is (satisfied + tolerating / 2) / all. The Overview model returns `apdex` for the
+services that run your code, each against its own target, and the Service page returns the service's.
 
 ## Search (v0.9)
 
@@ -699,7 +716,7 @@ traces. Incidents that ended more than 90 days ago are dropped.
 
 `@wizeworks/lens-cloud` (command `wizelens-cloud`, default port **5970**) is the hosted service. It serves the same dashboard,
 answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats",
-"metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "savedSearches"]`,
+"metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "savedSearches", "slos"]`,
 and keeps data in Postgres (`DATABASE_URL=postgres://...`). PGlite (`pglite:<folder>` or `memory`) runs the same SQL in-process,
 for tests and trials.
 
@@ -904,23 +921,32 @@ Pages read small tables built from the stored traces, never the traces themselve
 
 ### Alerts
 
-A rule watches one metric over a window (5 min to 24 h), optionally in one environment: `error_rate` (%), `p95_ms`, `avg_ms`,
-`requests`, `new_errors` (error groups not seen in the window before), `slow_queries`, `log_count` (lines that match the rule's
-`logSearch`, the Logs page filters, for example `{ "level": "error", "q": "timed out" }`). It fires when the value is above (`>`) or
-below (`<`) the threshold. No data never fires, except `requests <` (traffic stopped). Rules run every minute. A notice is sent
-only when the state changes (fired, resolved), to a webhook (the JSON notice), a Slack incoming webhook, or email
-(`{ "kind": "email", "to": [...] }`: 1 to 20 addresses of members of the organization, confirmed ones when mail is on, checked again
-at each send), and kept as an event.
-The message says what happened: `Requests is 79 (above 5)` when fired, `(no longer above 5)` when resolved, and
-`(alerts when above 5)` for a test notice. `PATCH` changes only the fields it sends.
+The hub and the cloud both run alert rules (the hub sends no email). A rule watches one metric over a window (5 min to 24 h),
+optionally in one environment, and for trace metrics optionally one `service` (display name) or one `endpoint` of it
+(`"GET /api/orders/{id}"`; `slow_queries` is per service only): `error_rate` (%), `p95_ms`, `avg_ms`, `requests`, `new_errors`
+(error groups not seen in the window before), `slow_queries`, and `log_count` (lines that match the rule's `logSearch`, the Logs
+page filters, for example `{ "level": "error", "q": "timed out" }`; no `service` or `endpoint`, the search names its service). It
+fires when the value is above (`>`), at or above (`>=`), below
+(`<`), or at or below (`<=`) the threshold. No data never fires, except `requests` below (traffic stopped). Rules run every minute.
+A notice is sent when the state changes (fired, resolved), and again every `remindMs` (15 min, 1 h, 4 h, or 1 day; 0 for never)
+while it keeps firing and nobody acknowledged it. `POST …/:id/ack` acknowledges a firing rule (reminders stop until it resolves);
+`POST …/:id/mute` with `{ untilMs }` mutes it (`-1` until unmuted, `null` unmutes): its state still changes, quietly. Turning a rule
+off clears its state. Each check keeps its value (30 days); `GET …/:id?from=&to=` returns the rule, its events, and those values.
+A rule sends to up to 5 channels: a webhook (the JSON notice), a Slack, Microsoft Teams (a MessageCard), or Discord incoming webhook,
+PagerDuty (`{ "kind": "pagerduty", "routingKey": "…" }`, Events API v2: fired and reminders trigger one incident per rule, resolved
+resolves it, a test triggers and resolves its own key), or email (cloud: `{ "kind": "email", "to": [...] }`: 1 to 20 addresses of
+members of the organization, confirmed ones when mail is on, checked again at each send). Every notice, mute, and acknowledgement is
+kept as an event (`fired`, `resolved`, `remind`, `test`, `ack`, `mute`, `unmute`).
+The message says what happened: `Requests is 79 (above 5)` when fired, `(no longer above 5)` when resolved, `(still above 5)` for a
+reminder, and `(alerts when above 5)` for a test notice. `PATCH` changes only the fields it sends.
 Webhook URLs must be https and may not resolve to private, loopback, or link-local addresses, unless the cloud runs with
-`--allow-private-webhooks` (self-hosting on a private network).
+`--allow-private-webhooks` (self-hosting on a private network). The hub allows them by default (it runs on your own network).
 
 **Above normal** (`op: "above_normal"`) works on `error_rate`, `p95_ms`, and `requests`. The threshold is the sensitivity: how
 many spreads above normal (2 high, 3 medium, the default, 4 low; 1 to 10 allowed). The rule judges every Services row and every
 endpoint over its window against the same window in earlier weeks (see "Problems") and fires when any one is above normal;
 its value is that one's value. The message names it: `p95 duration is above normal on pay POST /api/charge: 412 ms (normal 31 ms,
-alerts above 46 ms)`. A notice carries `baseline: { normal, upper }` for these rules (else null). Every fired notice also carries
+alerts above 46 ms)`. A notice carries `baseline: { normal, upper }` for these rules (else null). In the cloud, every fired or reminder notice also carries
 `problem: { id, title, cause, url }` (or null): the problem near that time on the Problems page (on the breaching service, for
 above normal rules), with the suspected cause in one sentence and a dashboard link (`#/problems?project=&problem=&at=&service=`).
 Slack and email show it; events keep it (`problem: { id, title, url } | null` in `GET api/projects/{project}/alerts`).
@@ -1032,10 +1058,12 @@ users, organizations, and members kept their rows and ids. Passwords moved to `a
 new ids (so new links). A test checks that Better Auth finds nothing to change in the schema, and Better Auth checks it again at start.
 Data tables are keyed by `project_id`. Times are `double precision` epoch ms, except in Better Auth's tables (`timestamptz`). Our
 secrets (keys, shares, status page links) are stored as SHA-256 hashes only; Better Auth stores reset and confirm tokens hashed. Migration 8 added
-`fact_search` and `fact_attrs` (see "Search"). Migration 10 added `issues` (see "Issue states"). Migration 11 added
-`uptime_checks`, `uptime_incidents`, and `status_pages` (see "Uptime checks"). Migration 12 added `sourcemaps` (see "Source maps").
-Migration 13 added `fact_logs.pattern`, `projects.log_retention_days`, `alert_rules.log_search`, and `saved_searches`. Migration 14 added
-`alert_events.problem` (see "Problems").
+`fact_search` and `fact_attrs` (see "Search"). Migration 10 added `issues` (see "Issue states"). Migration 11 added the alert
+rule scope, reminder, mute, and acknowledgement columns and `alert_values` (see "Alerts"). Migration 12 added `slos` and
+`apdex_targets` (see "SLOs and Apdex"). Migration 13 added `uptime_checks`, `uptime_incidents`, and `status_pages` (see "Uptime
+checks"). Migration 14 added `sourcemaps` (see "Source maps"). Migration 15 added `fact_logs.pattern`,
+`projects.log_retention_days`, `alert_rules.log_search`, and `saved_searches`. Migration 16 added `alert_events.problem` (see
+"Problems").
 
 ### Telemetry stores (small mode and scale mode)
 

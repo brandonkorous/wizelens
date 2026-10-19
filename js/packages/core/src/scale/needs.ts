@@ -149,6 +149,8 @@ export interface PageContext {
   compare?: Compare;
   /** Issue states (resolved, ignored, assigned) on hosts that keep them; absent elsewhere. */
   issues?: IssueStates;
+  /** Apdex targets per service, in ms, on hosts that keep them; services without one use 500 ms. */
+  apdex?: Readonly<Record<string, number>>;
 }
 
 export interface NeedResults {

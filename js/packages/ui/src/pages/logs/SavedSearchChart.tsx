@@ -15,7 +15,7 @@ export const searchQuery = (params: Record<string, string>): Record<string, stri
 });
 
 /** The Alerts page with a new log count rule for these filters. */
-export const alertHref = (params: Record<string, string>) => hrefTo("alerts", [], { log: JSON.stringify(params) });
+export const alertHref = (params: Record<string, string>) => hrefTo("alerts", [], { new: "1", log: JSON.stringify(params) });
 
 function Change({ pct }: { pct: number | null }) {
   if (pct === null) return null;

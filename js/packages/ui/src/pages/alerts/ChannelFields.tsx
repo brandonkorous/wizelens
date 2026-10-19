@@ -1,3 +1,5 @@
+import { Plus, X } from "lucide-react";
+import { MAX_ALERT_CHANNELS } from "@wizeworks/lens-core";
 import { currentProject, useAccount } from "../../data/account";
 import { useHost } from "../../data/host";
 import { useApi } from "../../data/useApi";
@@ -7,10 +9,19 @@ import type { OrgData } from "../team/teamTypes";
 import type { Channel } from "./alertTypes";
 
 const URL_KINDS: [Channel["kind"], string][] = [
-  ["webhook", "Webhook (JSON)"],
   ["slack", "Slack incoming webhook"],
+  ["teams", "Microsoft Teams webhook"],
+  ["discord", "Discord webhook"],
+  ["pagerduty", "PagerDuty (Events API v2)"],
+  ["webhook", "Webhook (JSON)"],
 ];
 const ALL_KINDS: [Channel["kind"], string][] = [...URL_KINDS, ["email", "Email to members"]];
+const PLACEHOLDER: Partial<Record<Channel["kind"], string>> = {
+  slack: "https://hooks.slack.com/services/…",
+  teams: "https://….webhook.office.com/…",
+  discord: "https://discord.com/api/webhooks/…",
+  webhook: "https://example.com/wizelens",
+};
 
 /** Members of the current project's organization to send to. The cloud sends only to confirmed emails. */
 function MemberEmails({ to, onChange }: { to: string[]; onChange: (to: string[]) => void }) {
@@ -30,19 +41,42 @@ function MemberEmails({ to, onChange }: { to: string[]; onChange: (to: string[])
   );
 }
 
-/** Where the notice goes: a URL for webhooks and Slack; on the cloud, also email to members. */
-export function ChannelFields({ channel, onChange }: { channel: Channel; onChange: (c: Channel) => void }) {
+const blank = (kind: Channel["kind"]): Channel => (kind === "email" ? { kind, to: [] } : kind === "pagerduty" ? { kind, routingKey: "" } : { kind, url: "" });
+
+/** One channel: its kind, and its URL, routing key, or members. */
+function ChannelRow({ channel, onChange, onRemove }: { channel: Channel; onChange: (c: Channel) => void; onRemove: () => void }) {
   const cloud = useHost().has("accounts");
-  const pick = (kind: Channel["kind"]) => onChange(kind === "email" ? { kind, to: channel.kind === "email" ? channel.to : [] } : { kind, url: channel.kind === "email" ? "" : channel.url });
+  const pick = (kind: Channel["kind"]) => onChange(kind === channel.kind ? channel : blank(kind));
   return (
-    <>
+    <div className="wl-alert-channel">
       <FormRow>
         <Select label="Send to" value={channel.kind} options={cloud ? ALL_KINDS : URL_KINDS} onChange={pick} />
-        {channel.kind !== "email" && (
-          <Field label="URL" type="url" value={channel.url} onChange={(e) => onChange({ kind: channel.kind, url: e.target.value } as Channel)} placeholder="https://hooks.slack.com/services/…" />
-        )}
+        {"url" in channel && <Field label="URL" type="url" required value={channel.url} onChange={(e) => onChange({ ...channel, url: e.target.value })} placeholder={PLACEHOLDER[channel.kind]} />}
+        {channel.kind === "pagerduty" && <Field label="Routing key" required value={channel.routingKey} onChange={(e) => onChange({ kind: "pagerduty", routingKey: e.target.value })} placeholder="The integration key of a PagerDuty service" />}
+        <button type="button" className="wl-icon-btn wl-alert-channel-remove" aria-label="Remove this channel" onClick={onRemove}>
+          <X size={16} />
+        </button>
       </FormRow>
       {channel.kind === "email" && <MemberEmails to={channel.to} onChange={(to) => onChange({ kind: "email", to })} />}
-    </>
+    </div>
+  );
+}
+
+/** Where the notice goes: up to five channels. None keeps it on the dashboard only. */
+export function ChannelFields({ channels, onChange }: { channels: Channel[]; onChange: (c: Channel[]) => void }) {
+  const set = (i: number) => (c: Channel) => onChange(channels.map((x, j) => (j === i ? c : x)));
+  return (
+    <div className="wl-alert-channels">
+      <div className="wl-section-title">Notify</div>
+      {channels.length === 0 && <p className="wl-muted wl-small">No channels: the alert shows on the dashboard and in the bell only.</p>}
+      {channels.map((c, i) => (
+        <ChannelRow key={i} channel={c} onChange={set(i)} onRemove={() => onChange(channels.filter((_, j) => j !== i))} />
+      ))}
+      {channels.length < MAX_ALERT_CHANNELS && (
+        <button type="button" className="wl-btn" onClick={() => onChange([...channels, blank("slack")])}>
+          <Plus aria-hidden="true" /> Add a channel
+        </button>
+      )}
+    </div>
   );
 }

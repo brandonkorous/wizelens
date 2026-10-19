@@ -227,7 +227,8 @@ The same dashboard for a whole team, with history. Run `wizelens-cloud` with Pos
 
 - **Teams:** organizations, projects, owner, admin, member, and viewer roles, invite links, and an audit log.
 - **History:** 7- and 30-day ranges, computed on the server; retention per organization.
-- **Alerts:** error rate, latency, traffic, new errors, and slow queries, to webhooks and Slack.
+- **Alerts:** error rate, latency, traffic, new errors, slow queries, or any metric, for everything, one service, or one
+  endpoint; reminders, acknowledge, and mute; to Slack, Teams, Discord, PagerDuty, webhooks, and email. On the hub and the cloud.
 - **Sharing:** read-only links to a single trace that expire.
 - **Safe AI access:** read keys limited to chosen projects; every MCP call is logged.
 

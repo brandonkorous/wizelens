@@ -33,6 +33,9 @@ Each service keeps its own dashboard too.
 - **Any language.** OTLP over HTTP, JSON or protobuf: traces, logs, and metrics.
 - **One MCP endpoint** for every service, with `--mcp`.
 - **Uptime checks** that call your sites and APIs on a schedule from this machine. See [Uptime checks](/docs/uptime/).
+- **SLOs and Apdex,** like the cloud's: error budgets, burn rates, and a target time per service.
+- **Alerts,** like the cloud's: to Slack, Teams, Discord, PagerDuty, or a webhook (no email). Webhooks may be plain http or on
+  your own network.
 
 An OpenTelemetry app shows as "Idle" between sends. That is normal: it only sends when it has data.
 

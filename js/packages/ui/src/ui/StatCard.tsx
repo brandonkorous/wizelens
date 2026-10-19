@@ -16,7 +16,7 @@ export interface StatCardProps {
   danger?: boolean;
   /** The list behind the number; the whole card links there. */
   href?: string;
-  /** A line in place of the change, for numbers with nothing to compare (for example "3 of 4 checks"). */
+  /** Words in place of the change, for numbers without one (an Apdex rating and its target). */
   note?: string;
 }
 
@@ -46,7 +46,7 @@ export function StatCard({ icon: Icon, label, value, change, upIsGood, compareLa
       <div />
       <div className="wl-stat-value">{value}</div>
       <div className="wl-stat-foot">
-        {note === undefined ? <Change change={change} upIsGood={upIsGood} compareLabel={compareLabel} /> : <div className="wl-delta"><span>{note}</span></div>}
+        {note ? <div className="wl-delta"><span>{note}</span></div> : <Change change={change} upIsGood={upIsGood} compareLabel={compareLabel} />}
       </div>
       {series && <div className="wl-stat-spark"><Sparkline values={series} width={240} height={28} stretch color={danger ? "var(--wl-red)" : "var(--wl-blue)"} /></div>}
     </Box>
