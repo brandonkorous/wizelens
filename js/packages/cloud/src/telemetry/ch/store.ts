@@ -77,6 +77,8 @@ function chTelemetry(ch: ChClient, { settler, pool, rebuild }: ReturnType<typeof
   const src = (projectId: string) => ({ d: CH_DIALECT, run: chRunner(ch), scope: { project: projectId } });
   const metrics = new MetricWriter(ch);
   const runMetric = (s: { sql: string; args: unknown[] }) => ch.query(s.sql, s.args) as Promise<MetricRows>;
+  // One settle at a time: the queue hands each trace to one run, so a second call waits for the first rather than return before its traces are written.
+  let settled: Promise<unknown> = Promise.resolve();
   return {
     kind: "clickhouse",
     async write(projectId, w, now) {
@@ -100,7 +102,11 @@ function chTelemetry(ch: ChClient, { settler, pool, rebuild }: ReturnType<typeof
     metricData: (m, range, params, now) => runMetricAsync(metricPageSteps("ch", { project: m.projectId, env: m.env }, range, alignNow(now), params), runMetric),
     metricAlertData: (m, name, w, now) => runMetricAsync(metricAlertSteps("ch", { project: m.projectId, env: m.env, service: m.service }, name, w, now), runMetric),
     infraData: (m, range, params, now) => runMetricAsync(infraSteps("ch", { project: m.projectId, env: m.env }, range, alignNow(now), params), runMetric),
-    settle: (now, o) => settleClickHouse(settler, now, o),
+    settle(now, o) {
+      const run = settled.then(() => settleClickHouse(settler, now, o));
+      settled = run.catch(() => undefined);
+      return run;
+    },
     prune: (now) => syncProjects(ch, queue, retentionOf, now),
     pruneRollups: async () => undefined,
     checkFactsVersion: () => checkFactsVersionCh(ch, rebuild),
