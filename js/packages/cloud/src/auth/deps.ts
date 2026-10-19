@@ -1,3 +1,4 @@
+import type { StripeDeps } from "../billing/stripe-plugin.js";
 import type { SignupMode } from "../config.js";
 import type { Db } from "../db/db.js";
 import type { Mailer } from "../mail/mailer.js";
@@ -21,6 +22,10 @@ export interface AuthDeps {
   setup: { token(): string | null; done(): void };
   checkPwned: boolean;
   retentionDays: number;
+  /** Billing is on (a Stripe key): plans limit features and retention. Off: everything is unlimited. */
+  billingOn: boolean;
+  /** The Stripe plugin's client, secret, prices, and plan sync, when billing is on. */
+  stripe?: StripeDeps;
 }
 
 /** A link into the dashboard. Tokens go in the hash, so they never reach a server log. */

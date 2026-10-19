@@ -5,7 +5,9 @@ import { createOrgFor } from "../auth/auth.js";
 import { requireOrg, requireUser } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson, str } from "../http/http.js";
 import type { Router } from "../http/router.js";
+import { requireRetention } from "../billing/gate.js";
 import { audit, listAudit } from "../repo/audit.js";
+import { hasLivePlan } from "../repo/billing.js";
 import { orgDeletionNotice } from "../notify/team.js";
 import { deleteOrgEverything, listMembers, pendingInvites, setRetention } from "../repo/orgs.js";
 import { listKeys, listProjects } from "../repo/projects.js";
@@ -32,7 +34,7 @@ async function overview(ctx: Ctx): Promise<void> {
 async function newOrg(ctx: Ctx): Promise<void> {
   const user = await requireUser(ctx);
   const name = str(await readJsonBody(ctx.req), "name");
-  sendJson(ctx.res, 201, await createOrgFor(ctx.app.auth, { db: ctx.app.db, retentionDays: ctx.app.config.retentionDays }, user.id, name));
+  sendJson(ctx.res, 201, await createOrgFor(ctx.app.auth, { db: ctx.app.db, retentionDays: ctx.app.config.retentionDays, billingOn: ctx.app.billing.on }, user.id, name));
 }
 
 async function changeOrg(ctx: Ctx): Promise<void> {
@@ -41,6 +43,7 @@ async function changeOrg(ctx: Ctx): Promise<void> {
   const days = body.retentionDays;
   if (days !== undefined && (!Number.isInteger(days) || (days as number) < 1 || (days as number) > 400)) fail(400, "Retention is 1 to 400 days.");
   const name = typeof body.name === "string" && body.name.trim() ? body.name.trim().slice(0, 100) : undefined;
+  if (days !== undefined) await requireRetention(ctx.app, ctx.params.org!, days as number);
   if (name) await ctx.app.db.query("UPDATE orgs SET name = $1 WHERE id = $2", [name, ctx.params.org!]);
   if (days !== undefined) await setRetention(ctx.app.db, ctx.params.org!, days as number);
   await audit(ctx.app.db, ctx.params.org!, `user:${user.id}`, "org.update", { name, retentionDays: days }, now(ctx));
@@ -57,6 +60,7 @@ async function deleteOrg(ctx: Ctx): Promise<void> {
     if (isAPIError(err)) fail(400, "The password is not right.");
     throw err;
   }
+  if (await hasLivePlan(ctx.app.db, ctx.params.org!)) fail(409, "Cancel the paid plan first: Billing, Manage billing. Then delete the organization.");
   const tell = await orgDeletionNotice(ctx.app, ctx.params.org!, user.id);
   const projects = await orgProjectIds(ctx.app.db, ctx.params.org!);
   await ctx.app.db.tx((q) => deleteOrgEverything(q, ctx.params.org!));

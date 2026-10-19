@@ -31,6 +31,8 @@ async function invitedNow(deps: AuthDeps, ctx: Ctx, email: string): Promise<bool
 export function signupGate(deps: AuthDeps): Validate {
   return async ({ user, source }, ctx) => {
     if (source.action !== "create-user") return;
+    // SCIM creates people for the organization whose token it holds (auth/scim.ts), so the token is the invite.
+    if ((source as { method?: string }).method === "scim") return;
     const db = await getCurrentAdapter(ctx.context.adapter);
     const viaSso = ssoProviderOf(source);
     if (viaSso) return (await ssoTrusts(db, viaSso, String(user.email ?? ""))) ? undefined : { error: "sso_domain", errorDescription: "Single sign-on works only for emails at the provider's verified domain." };
@@ -44,8 +46,8 @@ export function signupGate(deps: AuthDeps): Validate {
   };
 }
 
-/** A new account from single sign-on: the provider's organization takes it in. */
-const bySso = (ctx: unknown) => String((ctx as { path?: unknown } | null)?.path ?? "").startsWith("/sso/");
+/** A new account from single sign-on or SCIM: the provider's organization takes it in, so it gets no organization of its own. */
+const bySso = (ctx: unknown) => /^\/(sso|scim)\//.test(String((ctx as { path?: unknown } | null)?.path ?? ""));
 
 /** The provider proved the domain and the gate checked the email, so an SSO account starts confirmed. */
 export async function confirmSsoEmail<U extends { email: string; emailVerified?: boolean }>(user: U, ctx: unknown): Promise<{ data: U } | undefined> {

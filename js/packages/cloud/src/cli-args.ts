@@ -4,6 +4,8 @@ import type { CloudOptions, SignupMode } from "./config.js";
 export const USAGE = `wizelens-cloud: the WizeLens service for many teams.
 
 Usage: wizelens-cloud [options]
+       wizelens-cloud plan set <org> <plan> [--gb <n>] [--retention-days <n>]
+       wizelens-cloud stripe-setup --stripe-secret-key <key>
 
   --database <url>          postgres://..., pglite:<folder>, or memory.
                             Default pglite:./.wizelens-cloud.          (DATABASE_URL)
@@ -42,7 +44,13 @@ Usage: wizelens-cloud [options]
   --sso-origins <list>      Identity provider origins for OIDC single   (WIZELENS_CLOUD_SSO_ORIGINS)
                             sign-on, comma separated, for example
                             https://acme.okta.com. SAML needs none.
-  --help                    Show this help.
+  --stripe-secret-key <key> Turns billing on (sk_... or rk_...).       (WIZELENS_CLOUD_STRIPE_SECRET_KEY)
+                            Without it, every organization is unlimited.
+  --stripe-webhook-secret <s>  The Stripe webhook's whsec_ secret.     (WIZELENS_CLOUD_STRIPE_WEBHOOK_SECRET)
+                            Webhook URL: <public-url>/_wizelens/api/auth/stripe/webhook
+  --stripe-prices <json>    Price and meter ids, as stripe-setup        (WIZELENS_CLOUD_STRIPE_PRICES)
+                            prints them.
+  --help                   Show this help.
 `;
 
 const int = (v: string | undefined) => (v && /^\d+$/.test(v) ? Number(v) : undefined);
@@ -74,6 +82,9 @@ const OPTIONS = {
   "check-pwned-passwords": { type: "boolean" },
   "no-check-pwned-passwords": { type: "boolean" },
   "sso-origins": { type: "string" },
+  "stripe-secret-key": { type: "string" },
+  "stripe-webhook-secret": { type: "string" },
+  "stripe-prices": { type: "string" },
   help: { type: "boolean", short: "h" },
 } as const;
 
@@ -106,5 +117,8 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CloudOp
     setupToken: text(a["setup-token"], env.WIZELENS_CLOUD_SETUP_TOKEN),
     checkPwnedPasswords: pwnedOf(a, env),
     ssoOrigins: list(text(a["sso-origins"], env.WIZELENS_CLOUD_SSO_ORIGINS)),
+    stripeSecretKey: text(a["stripe-secret-key"], env.WIZELENS_CLOUD_STRIPE_SECRET_KEY),
+    stripeWebhookSecret: text(a["stripe-webhook-secret"], env.WIZELENS_CLOUD_STRIPE_WEBHOOK_SECRET),
+    stripePrices: text(a["stripe-prices"], env.WIZELENS_CLOUD_STRIPE_PRICES),
   };
 }

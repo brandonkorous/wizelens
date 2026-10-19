@@ -1,4 +1,5 @@
 import { betterAuth, type BetterAuthOptions } from "better-auth";
+import { PLANS } from "../billing/plans.js";
 import { audit } from "../repo/audit.js";
 import { freeSlug } from "../repo/orgs.js";
 import { createProject } from "../repo/projects.js";
@@ -95,14 +96,15 @@ export function createAuth(deps: AuthDeps): WizeAuth {
   return auth;
 }
 
-/** A new organization with `userId` as owner, the cloud's default retention, a first project, and an audit line. */
-export async function createOrgFor(auth: WizeAuth, deps: Pick<AuthDeps, "db" | "retentionDays">, userId: string, name: string): Promise<{ id: string; name: string; slug: string }> {
+/** A new organization with `userId` as owner, the cloud's default retention (Free plan's at most, with billing on), a first project, and an audit line. */
+export async function createOrgFor(auth: WizeAuth, deps: Pick<AuthDeps, "db" | "retentionDays" | "billingOn">, userId: string, name: string): Promise<{ id: string; name: string; slug: string }> {
   const clean = name.trim().slice(0, 100) || "My organization";
   const org = await auth.api.createOrganization({ body: { name: clean, slug: await freeSlug(deps.db, clean), userId } });
   if (!org) throw new Error("Could not create the organization.");
   const now = Date.now();
   await deps.db.tx(async (q) => {
-    await q.query("UPDATE orgs SET retention_days = $1 WHERE id = $2", [deps.retentionDays, org.id]);
+    const plan = deps.billingOn ? "free" : "unlimited";
+    await q.query("UPDATE orgs SET retention_days = $1, plan = $2 WHERE id = $3", [Math.min(deps.retentionDays, PLANS[plan].maxRetentionDays), plan, org.id]);
     await createProject(q, org.id, "My app", now);
     await audit(q, org.id, `user:${userId}`, "org.create", { name: clean }, now);
   });

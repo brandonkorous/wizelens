@@ -2,6 +2,7 @@ import type { BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getSessionFromCtx, isAPIError } from "better-auth/api";
 import { isOrgRole } from "@wizeworks/lens-core";
 import { audit } from "../repo/audit.js";
+import { auditScim, billingGuard } from "./billing-hooks.js";
 import type { AuthDeps } from "./deps.js";
 import { emailChangeOf } from "./email-token.js";
 import { isLegacyHash } from "./password.js";
@@ -127,12 +128,16 @@ async function auditSsoChange(deps: AuthDeps, ctx: HookCtx): Promise<void> {
 
 export function authHooks(deps: AuthDeps): BetterAuthOptions["hooks"] {
   return {
-    before: createAuthMiddleware(guard),
+    before: createAuthMiddleware(async (ctx) => {
+      await billingGuard(deps, ctx);
+      return guard(ctx);
+    }),
     after: createAuthMiddleware(async (ctx) => {
       if (isAPIError(ctx.context.returned) || ctx.context.returned instanceof Error) return;
       if (ctx.path === "/sign-in/email") await upgradeHash(ctx);
       await auditOrgChange(deps, ctx);
       await auditSsoChange(deps, ctx);
+      await auditScim(deps, ctx);
       await securityAfter(deps, ctx);
     }),
   };

@@ -2,6 +2,7 @@ import type { Headline } from "@wizeworks/lens-core";
 import type { DigestData } from "../notify/digest-data.js";
 import type { EmailContent } from "./content.js";
 import * as emails from "./emails.js";
+import { spendCapReached, usageNotice } from "./emails-billing.js";
 import { digest } from "./emails-digest.js";
 import { projectBack, projectQuiet } from "./emails-health.js";
 import * as security from "./emails-security.js";
@@ -67,5 +68,9 @@ export const SAMPLES: Record<string, EmailContent> = {
   "health-quiet": projectQuiet("shop", "Acme", AT, AT + 3 * 3_600_000, `${APP}/#/`, STOP),
   "health-back": projectBack("shop", "Acme", 5 * 3_600_000, `${APP}/#/`, STOP),
   "digest-weekly": digest("shop", "Acme", "weekly", WEEK, { project: `${APP}/#/`, stop: STOP }),
+  "billing-usage-80": usageNotice({ org: "Acme", plan: "Free", usedGb: 8.1, includedGb: 10, percent: 80, overage: false, url: `${APP}/#/team/billing` }),
+  "billing-usage-100": usageNotice({ org: "Acme", plan: "Free", usedGb: 10, includedGb: 10, percent: 100, overage: false, url: `${APP}/#/team/billing` }),
+  "billing-usage-team": usageNotice({ org: "Acme", plan: "Team", usedGb: 50.2, includedGb: 50, percent: 100, overage: true, url: `${APP}/#/team/billing` }),
+  "billing-spend-cap": spendCapReached("Acme", 40, `${APP}/#/team/billing`),
   "digest-daily": digest("shop", "Acme", "daily", { ...WEEK, alertsFired: 0, errorRate: h(0.9, 1.4), errors: [] }, { project: `${APP}/#/`, stop: STOP }),
 };

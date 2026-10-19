@@ -1,5 +1,6 @@
 import { evaluateAll } from "./alerts/evaluate.js";
 import type { CloudApp } from "./app.js";
+import { sendUsageNotices } from "./billing/notices.js";
 import { pruneAuthRows } from "./repo/auth-prune.js";
 import { pruneAlertValues } from "./repo/alert-events.js";
 import { pruneServices } from "./repo/services.js";
@@ -14,6 +15,8 @@ const SETTLE_BACKLOG = 1_000;
 const ROLLUP_PRUNE_MS = 60_000;
 const NOTICE_MS = 60_000;
 const DIGEST_MS = 10 * 60_000;
+const USAGE_MS = 60_000;
+const REPORT_MS = 10 * 60_000;
 
 /** Run `job` now and then every `everyMs`. A failed run logs and waits for the next one. */
 function every(name: string, everyMs: number, job: () => Promise<unknown>): () => void {
@@ -32,7 +35,7 @@ function every(name: string, everyMs: number, job: () => Promise<unknown>): () =
   return () => (clearInterval(timer), clearTimeout(first));
 }
 
-/** Background work: retention, old services, stats, rollups, sessions, alert rules, team and health notices, and digests. Returns a function that stops it. */
+/** Background work: retention, old services, stats, rollups, sessions, alert rules, team and health notices, digests, usage, and the Stripe meter. Returns a function that stops it. */
 export function startJobs(app: CloudApp): () => void {
   const now = app.config.now;
   const stops = [
@@ -51,6 +54,8 @@ export function startJobs(app: CloudApp): () => void {
     }),
     every("project health", HOUSEKEEPING_MS, () => checkHealth(app)),
     every("digests", DIGEST_MS, () => sendDigests(app)),
+    every("usage", USAGE_MS, async () => (await app.billing.usage.flush(), await sendUsageNotices(app))),
+    ...(app.billing.report ? [every("billing report", REPORT_MS, app.billing.report)] : []),
   ];
   return () => stops.forEach((stop) => stop());
 }

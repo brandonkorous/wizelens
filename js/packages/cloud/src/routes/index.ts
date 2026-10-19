@@ -2,6 +2,7 @@ import type { Ctx } from "../app.js";
 import { Router } from "../http/router.js";
 import { alertRoutes } from "./alerts.js";
 import { appRoutes } from "./apps.js";
+import { billingRoutes } from "./billing.js";
 import { changeRoutes } from "./changes.js";
 import { issueRoutes } from "./issues.js";
 import { savedRoutes } from "./saved.js";
@@ -14,6 +15,7 @@ import { modelRoutes } from "./models.js";
 import { notifyRoutes } from "./notify.js";
 import { orgRoutes } from "./orgs.js";
 import { projectRoutes } from "./projects.js";
+import { scimRoutes } from "./scim.js";
 import { searchRoutes } from "./search.js";
 
 /** Every route below `/_wizelens/`, except ingest and OTLP (they use ingest keys and are matched first). */
@@ -34,5 +36,7 @@ export function allRoutes(): Router<Ctx> {
   shareRoutes(r);
   mcpRoutes(r);
   appRoutes(r);
+  billingRoutes(r);
+  scimRoutes(r);
   return r;
 }
