@@ -33,6 +33,8 @@ export interface WizeLensOptions {
   uiDir?: string;
   /** Capture outgoing fetch / undici calls. Default true. */
   instrumentFetch?: boolean;
+  /** Capture outgoing `node:http` / `node:https` calls, so axios, got, node-fetch v2, and the AWS SDK are traced too. Default true. */
+  instrumentHttp?: boolean;
   /** Database adapters also trace queries that run outside a request (startup, jobs). Default false. */
   traceQueriesOutsideRequests?: boolean;
   /** Copy `console.log`, `warn`, `error`, `info`, `debug`, and `trace` calls into WizeLens (into their request trace, or outside one as loose lines). Default true. */

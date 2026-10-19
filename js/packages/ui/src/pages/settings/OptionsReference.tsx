@@ -25,6 +25,7 @@ const OPTIONS: Option[] = [
   { setting: "Slow query", dotnet: "SlowQueryMs", node: "slowQueryMs", env: "–" },
   { setting: "N+1 threshold", dotnet: "NPlusOneThreshold", node: "nPlusOneThreshold", env: "–" },
   { setting: "AI access (MCP)", dotnet: "EnableMcp", node: "enableMcp", env: "–" },
+  { setting: "Outgoing HTTP calls (fetch, node:http)", dotnet: "–", node: "instrumentFetch, instrumentHttp", env: "–" },
   { setting: "Response bodies", dotnet: "CaptureResponseBody", node: "captureResponseBody", env: "–" },
   { setting: "Metrics", dotnet: "CaptureMetrics", node: "captureMetrics", env: "–" },
   { setting: "Redacted keys", dotnet: "RedactKeys", node: "redactKeys", env: "–" },
