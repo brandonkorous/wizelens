@@ -467,6 +467,12 @@ services that run your code, each against its own target, and the Service page r
 
 ## Search (v0.9)
 
+The Requests, Traces, and Logs page models read `q` in the search language too. Free words keep the old text filter; a
+search with fields, attributes, `NOT`, or `OR` makes the host run it (up to 1000 trace ids; `searchIds` on the page context) and
+the list keeps only those traces. Hubs, the cloud, and in-app hosts (in the browser) all do it. The Search page counts every kind
+(up to 1000 each, "1000+" past that) and shows when the chosen kind's results happened, through the same `api/search`.
+
+
 One language on every host; the grammar, fields, and plan are in docs/SEARCH-PLAN.md, the shared test cases in
 docs/search-vectors.json (the TS and .NET suites both run them). Hosts with the `search` capability answer:
 

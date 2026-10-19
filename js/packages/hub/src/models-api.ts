@@ -4,6 +4,7 @@ import { sendJson } from "@wizeworks/lens-node/kit";
 import type { ApiContext } from "./api.js";
 import { issueStates, issuesVersion } from "./issues.js";
 import { apdexTargets, apdexVersion } from "./slos.js";
+import { listSearch } from "./list-search.js";
 import { hubExecutor, hubSettling } from "./scale-exec.js";
 
 const CACHE_MAX = 200;
@@ -37,7 +38,8 @@ export async function sendPageModel(c: ApiContext, page: string, p: URLSearchPar
   if (now - ctx.window.from > store.maxAgeMs + WINDOW_SLACK_MS) return sendJson(res, 400, { error: "This time window starts before the hub keeps data." });
   const issues = ISSUE_PAGES.has(page) ? { issues: issueStates(store.db, scope.project ?? "") } : {};
   const apdex = APDEX_PAGES.has(page) ? { apdex: apdexTargets(store.db, scope.project ?? "") } : {};
-  const value = await runPage(page, { ...ctx, ...issues, ...apdex }, hubExecutor(store, scope, c.data.keepRemote));
+  const search = await listSearch(store, page, params, ctx.window, scope);
+  const value = await runPage(page, { ...ctx, ...issues, ...apdex, ...search }, hubExecutor(store, scope, c.data.keepRemote));
   remember(key, value);
   sendJson(res, 200, value);
 }

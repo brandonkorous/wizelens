@@ -3,6 +3,7 @@ import { FACTS_VERSION, LOG_KINDS_SQL, LOOSE_TRACE_PREFIX, TIERS } from "@wizewo
 import type { RetentionOf } from "../store.js";
 import type { ChClient } from "./http.js";
 import type { SettleQueue } from "./queue.js";
+import { ensureMeta, type Rebuild } from "./rebuild.js";
 import { PROJECT_TABLES } from "./schema.js";
 import { DAY_MS, nextVer } from "./util.js";
 
@@ -20,13 +21,13 @@ const EXPIRE_FROM: Record<string, string> = {
   rollup_1h_t: "bucket_ms", hist_1h_t: "bucket_ms", metric_1h_t: "bucket_ms",
 };
 
-/** When the facts version changed: empty the stats and queue every trace again. True when it did. */
-export async function checkFactsVersionCh(ch: ChClient, queue: SettleQueue): Promise<boolean> {
-  await ch.command("CREATE TABLE IF NOT EXISTS ch_meta (key String, value String, ver UInt64) ENGINE = ReplacingMergeTree(ver) ORDER BY key");
+/** When the facts version changed: empty the stats and settle every trace again, a page at a time. True when it did. */
+export async function checkFactsVersionCh(ch: ChClient, rebuild: Rebuild): Promise<boolean> {
+  await ensureMeta(ch);
   const [row] = await ch.query<{ value: string }>("SELECT value FROM ch_meta FINAL WHERE key = 'facts'");
   if (row?.value === String(FACTS_VERSION)) return false;
   for (const t of STATS) await ch.command(`TRUNCATE TABLE IF EXISTS ${t}`);
-  await queue.requeueAll(ch);
+  await rebuild.start();
   await ch.insert("ch_meta", [{ key: "facts", value: String(FACTS_VERSION), ver: nextVer(Date.now()) }]);
   return true;
 }

@@ -42,14 +42,14 @@ function traceRowsOf(facts: readonly TraceFacts[], f: ListFilter, w: TimeWindow,
 const logIndex = (r: LogRow) => Number(r.key.slice(r.key.lastIndexOf(":") + 1));
 
 function logRowsOf(facts: readonly TraceFacts[], f: ListFilter, w: TimeWindow, desc: boolean): LogRow[] {
-  const rows = facts.flatMap((x) => (!f.traceId || x.traceId === f.traceId ? x.logs.filter((l) => inWindow(l.timeMs, w)) : []));
+  const rows = facts.flatMap((x) => (traceOk(x.traceId, f) ? x.logs.filter((l) => inWindow(l.timeMs, w)) : []));
   const sorted = filterLogs(rows, { minLevel: f.minLevel ?? "trace", exact: f.exactLevel, service: f.logService ?? "", category: f.category ?? "", query: f.q ?? "", pattern: f.pattern ?? "", origin: f.logOrigin ?? "" });
   sorted.sort((a, b) => b.timeMs - a.timeMs || cmp(a.traceId, b.traceId) || logIndex(a) - logIndex(b));
   return desc ? sorted : sorted.reverse();
 }
 
 function criticalRowsOf(facts: readonly TraceFacts[], f: ListFilter, w: TimeWindow): CriticalSpan[] {
-  const rows = facts.flatMap((x) => (!f.traceId || x.traceId === f.traceId ? x.critical.filter((s) => inWindow(s.startMs, w) && (!f.service || s.service === f.service)) : []));
+  const rows = facts.flatMap((x) => (traceOk(x.traceId, f) ? x.critical.filter((s) => inWindow(s.startMs, w) && (!f.service || s.service === f.service)) : []));
   return rows.sort((a, b) => b.durationMs - a.durationMs || newest<CriticalSpan>((s) => s.startMs)(a, b) || cmp(a.spanId, b.spanId));
 }
 

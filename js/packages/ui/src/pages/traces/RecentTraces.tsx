@@ -3,8 +3,8 @@ export { tracePath } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, shortId } from "../../format";
 import { hrefTo, setQuery, useRoute } from "../../routes";
 import { Dot, toneOfHealth, type Tone } from "../../ui/Badges";
-import { Pager, SearchInput } from "../../ui/Controls";
-import { useSearchText } from "../../ui/useSearchText";
+import { Pager } from "../../ui/Controls";
+import { ListQueryBar } from "../../ui/ListQueryBar";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { ExportButton } from "../../ui/ExportButton";
 
@@ -43,10 +43,9 @@ export interface RecentTracesProps {
 /** One page of the traces that match the filter, with a search box. A click shows the trace on the right. */
 export function RecentTraces({ items, total, page, size, selectedId }: RecentTracesProps) {
   const query = useRoute().query.get("q") ?? "";
-  const [text, setText] = useSearchText(query);
   return (
     <Panel title={`Traces (${fmtCount(total)})`} action={<span className="wl-row-actions"><ExportButton page="traces" disabled={total === 0} /><ViewAll href={hrefTo("requests", [], { q: query })} label="View requests" /></span>}>
-      <SearchInput value={text} onChange={setText} placeholder="Search traces by ID, path, or service…" />
+      <ListQueryBar value={query} reset={{ trace: null }} placeholder="ID, path, or service; or service:api duration:>2s" />
       {items.length === 0 ? (
         <Empty>{query && total === 0 ? "No traces match." : "No traces in this time range yet."}</Empty>
       ) : (

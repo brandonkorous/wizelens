@@ -2,7 +2,7 @@ import { displayService, errorInfo, isErrorSpan, requestRows, type Trace } from 
 import { fmtMs } from "../format";
 import { hrefTo, type PageId, traceHref } from "../routes";
 
-export type HitKind = "page" | "request" | "trace" | "error" | "service" | "log" | "search";
+export type HitKind = "page" | "request" | "trace" | "error" | "service" | "log" | "search" | "query" | "insight" | "metric" | "alert" | "slo" | "saved";
 
 export interface SearchHit {
   key: string;

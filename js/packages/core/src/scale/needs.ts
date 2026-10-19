@@ -149,6 +149,8 @@ export interface PageContext {
   compare?: Compare;
   /** Issue states (resolved, ignored, assigned) on hosts that keep them; absent elsewhere. */
   issues?: IssueStates;
+  /** Trace ids that match a structured search in `q` (fields, attributes, NOT, OR): lists keep only these, and `q` is not read as text. */
+  searchIds?: readonly string[];
   /** Apdex targets per service, in ms, on hosts that keep them; services without one use 500 ms. */
   apdex?: Readonly<Record<string, number>>;
 }

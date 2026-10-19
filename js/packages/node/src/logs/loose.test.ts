@@ -39,12 +39,14 @@ describe("lines outside a request", () => {
     console.info("console ready");
     console.warn("[wizelens] own notice");
     wl.logger.info("logger line");
-    expect(looseLines(wl).map((l) => [l.level, l.service, l.message, l.spanId])).toEqual([
-      ["info", "jobs-api", "pino started", null],
-      ["warn", "jobs-api", "winston warmed", null],
+    // The lines can fall in two loose batches when a batch window ends between them, so the order is not checked.
+    const byMessage = (a: unknown[], b: unknown[]) => String(a[2]).localeCompare(String(b[2]));
+    expect(looseLines(wl).map((l) => [l.level, l.service, l.message, l.spanId]).sort(byMessage)).toEqual([
       ["error", "jobs-api", "bunyan failed", null],
       ["info", "jobs-api", "console ready", null],
       ["info", "jobs-api", "logger line", null],
+      ["info", "jobs-api", "pino started", null],
+      ["warn", "jobs-api", "winston warmed", null],
     ]);
     expect(wl.store.list(50)).toEqual([]);
   });
