@@ -20,7 +20,7 @@ import { StatCard } from "../../ui/StatCard";
 import { type Column, Table } from "../../ui/Table";
 import { TimeChart } from "../../ui/TimeChart";
 import { serviceHref } from "../services/serviceParts";
-import { StackTrace } from "./ErrorDetailTabs";
+import { ErrorStack } from "./ResolvedStack";
 import { errorScopes } from "./ErrorDetails";
 import "../../styles/pages/errors.css";
 
@@ -84,7 +84,7 @@ function Body({ m }: { m: ErrorPageModel }) {
       </Panel>
       <Breakdown m={m} />
       <Panel title="Latest Stack Trace">
-        <StackTrace event={g.latest} />
+        <ErrorStack event={g.latest} />
       </Panel>
       <Panel title={`Newest Occurrences (${fmtCount(m.requests.length || m.traces.length)})`} flush action={<ViewAll href={traceHref(g.latest.traceId)} label="Open latest trace" />}>
         <TaggedTable kind="requests" itemOf={traceRow} tagged="path" columns={OCCURRENCE_COLUMNS} rows={m.requests} rowKey={(r) => r.traceId} onRowClick={(r) => navigate(traceHref(r.traceId, "errors"))} empty={<Empty>These occurrences were not requests (for example browser errors). Open the latest trace to see one.</Empty>} />

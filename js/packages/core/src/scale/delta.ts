@@ -1,5 +1,5 @@
 // Rollup changes when a trace settles: new contributions minus old ones, on every tier that still keeps the bucket.
-import { COUNTER_SLOTS, KIND_SPEC, type RollupKind } from "./kinds.js";
+import { COUNTER_SLOTS, KIND_SPEC, LOG_KINDS, type RollupKind } from "./kinds.js";
 import type { StoredContribution, StoredContributions } from "./compact.js";
 import { isKept, TIERS, type Tier, type TierName } from "./window.js";
 
@@ -44,6 +44,9 @@ export interface SettleDelta {
 
 const EPS = 1e-9;
 
+/** How long the 1 h tier keeps buckets: log kinds follow the log retention. */
+type Keep = { ms: number; logMs: number };
+
 function rowDelta(s: StoredContributions, r: StoredContribution, tier: Tier, sign: 1 | -1): RollupDelta {
   const c = new Array<number>(COUNTER_SLOTS).fill(0).map((_, i) => sign * (r.c?.[i] ?? 0));
   const adds = sign > 0;
@@ -53,10 +56,10 @@ function rowDelta(s: StoredContributions, r: StoredContribution, tier: Tier, sig
   return { tier: tier.name, project: s.project, env: s.env, kind: r.k, key: r.key, bucket, n: sign * r.n, err: sign * r.err, sum: sign * r.sum, c, firstMs: adds ? r.f : null, lastMs: adds ? r.l : null, ...top, ids };
 }
 
-function sideDelta(s: StoredContributions | null, sign: 1 | -1, now: number, retentionMs: number, out: SettleDelta): void {
+function sideDelta(s: StoredContributions | null, sign: 1 | -1, now: number, keep: Keep, out: SettleDelta): void {
   for (const r of s?.rows ?? []) {
     for (const tier of TIERS) {
-      if (!isKept(tier, r.b, now, retentionMs)) continue;
+      if (!isKept(tier, r.b, now, LOG_KINDS.has(r.k) ? keep.logMs : keep.ms)) continue;
       const d = rowDelta(s!, r, tier, sign);
       out.rollup.push(d);
       for (const [bin, cnt] of Object.entries(r.h ?? {})) out.hist.push({ tier: d.tier, project: d.project, env: d.env, kind: d.kind, key: d.key, bucket: d.bucket, bin: Number(bin), cnt: sign * cnt });
@@ -64,11 +67,12 @@ function sideDelta(s: StoredContributions | null, sign: 1 | -1, now: number, ret
   }
 }
 
-/** New minus old on all three tiers, not yet summed: callers merge a whole batch with `mergeDeltas`. Buckets a tier no longer keeps are skipped. Tops and ids come only from `next`. */
-export function settleDelta(old: StoredContributions | null, next: StoredContributions | null, now: number, retentionMs: number): SettleDelta {
+/** New minus old on all three tiers, not yet summed: callers merge a whole batch with `mergeDeltas`. Buckets a tier no longer keeps (log kinds by the log retention) are skipped. Tops and ids come only from `next`. */
+export function settleDelta(old: StoredContributions | null, next: StoredContributions | null, now: number, retentionMs: number, logRetentionMs = retentionMs): SettleDelta {
+  const keep = { ms: retentionMs, logMs: logRetentionMs };
   const out: SettleDelta = { rollup: [], hist: [] };
-  sideDelta(old, -1, now, retentionMs, out);
-  sideDelta(next, 1, now, retentionMs, out);
+  sideDelta(old, -1, now, keep, out);
+  sideDelta(next, 1, now, keep, out);
   return out;
 }
 

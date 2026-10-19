@@ -27,6 +27,9 @@ export interface AlertRuleInput {
   metricName: string;
   metricStat: MetricAlertStat | "";
   metricService: string;
+  /** For "log_count" rules: the log search (Logs page filters) whose lines are counted. Empty otherwise. */
+  logSearch: Record<string, string>;
+  /** A fixed line, or "above_normal" (error rate, p95, or requests), whose threshold is the number of spreads above normal. */
   op: AlertOp;
   threshold: number;
   windowMs: number;

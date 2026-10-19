@@ -1,0 +1,67 @@
+{{- if .Values.cluster.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "wlc.fullname" . }}-cluster
+  labels:
+    {{- include "wlc.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cluster
+spec:
+  # One replica: two would send every cluster metric twice.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "wlc.selector" . | nindent 6 }}
+      app.kubernetes.io/component: cluster
+  template:
+    metadata:
+      labels:
+        {{- include "wlc.selector" . | nindent 8 }}
+        app.kubernetes.io/component: cluster
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-cluster.yaml") . | sha256sum }}
+        {{- with .Values.cluster.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "wlc.serviceAccount" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.cluster.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      containers:
+        - name: otelcol
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["--config=/conf/config.yaml"]
+          env:
+            {{- include "wlc.env" . | nindent 12 }}
+          livenessProbe:
+            httpGet: { path: /, port: 13133 }
+          readinessProbe:
+            httpGet: { path: /, port: 13133 }
+          resources:
+            {{- toYaml .Values.cluster.resources | nindent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - { name: config, mountPath: /conf }
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "wlc.fullname" . }}-cluster
+      {{- with .Values.cluster.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.cluster.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

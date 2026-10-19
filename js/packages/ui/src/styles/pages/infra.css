@@ -1,0 +1,25 @@
+/* Hosts and Kubernetes pages: usage bars, name chips, and page spacing. */
+.wl-infra-page > .wl-panel, .wl-infra-page > .wl-grid, .wl-infra-page > .wl-banner { margin: 0 0 18px; }
+.wl-infra-page .wl-panel-flush .wl-table th:first-child, .wl-infra-page .wl-panel-flush .wl-table td:first-child { padding-left: 20px; }
+.wl-infra-page .wl-panel-flush .wl-table th:last-child, .wl-infra-page .wl-panel-flush .wl-table td:last-child { padding-right: 20px; }
+.wl-infra-page .wl-page-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.wl-infra-page .wl-panel-head .wl-tabbar { margin: 0; }
+
+.wl-usage { display: inline-flex; align-items: center; gap: 8px; min-width: 120px; font-variant-numeric: tabular-nums; }
+.wl-usage-track { position: relative; flex: 1; min-width: 60px; max-width: 110px; height: 6px; border-radius: 999px; background: var(--wl-surface-3); overflow: hidden; }
+.wl-usage-track > span { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--wl-blue); }
+.wl-usage.wl-warn .wl-usage-track > span { background: var(--wl-orange); }
+.wl-usage.wl-bad .wl-usage-track > span { background: var(--wl-red); }
+.wl-usage.wl-bad .wl-usage-num { color: var(--wl-error); font-weight: 650; }
+.wl-usage-num { min-width: 44px; text-align: right; font-size: 13px; }
+
+.wl-infra-chips { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.wl-infra-chip {
+  padding: 2px 8px; border-radius: 999px; border: 1px solid var(--wl-line); background: var(--wl-surface-2);
+  color: var(--wl-fg); font-size: 12px; text-decoration: none; white-space: nowrap;
+}
+.wl-infra-chip:hover { border-color: var(--wl-accent); text-decoration: none; }
+.wl-infra-page .wl-stat-foot svg { vertical-align: -2px; }
+
+/* Pod and node links on a span. */
+.wl-span-k8s { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }

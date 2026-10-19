@@ -20,6 +20,7 @@ const ACTIONS: Record<string, string> = {
   "project.create": "Added a project",
   "project.clear": "Cleared a project's data",
   "project.delete": "Deleted a project",
+  "project.update": "Changed a project's settings",
   "service.forget": "Forgot offline hosts",
   "key.create": "Made a key",
   "key.revoke": "Revoked a key",
@@ -32,6 +33,11 @@ const ACTIONS: Record<string, string> = {
   "mcp.call": "AI agent read data",
   "app.connect": "Connected an app",
   "app.disconnect": "Disconnected an app",
+  "uptime.create": "Added an uptime check",
+  "uptime.update": "Changed an uptime check",
+  "uptime.delete": "Deleted an uptime check",
+  "status.enable": "Turned on a status page or made a new link",
+  "status.disable": "Turned off a status page",
   "plan.change": "Changed the plan",
   "billing.cap": "Set the spend cap",
   "ingest.blocked": "Stopped taking data",
@@ -78,6 +84,8 @@ export function detailText(d: Record<string, unknown>, names: Names): string {
   if (d.allProjects === true) parts.push("all projects");
   if (typeof d.userEmail === "string") parts.push(`for ${d.userEmail}`);
   if (typeof d.name === "string") parts.push(d.name);
+  if (typeof d.title === "string") parts.push(d.title);
+  if (typeof d.url === "string") parts.push(d.url);
   if (typeof d.email === "string") parts.push(d.email);
   if (typeof d.role === "string") parts.push(`as ${d.role}`);
   if (typeof d.kind === "string") parts.push(`${d.kind} key`);
@@ -86,6 +94,8 @@ export function detailText(d: Record<string, unknown>, names: Names): string {
   if (Array.isArray(d.projectIds)) parts.push(`for ${d.projectIds.map((id) => project(id, names)).join(", ")}`);
   if (typeof d.providerId === "string") parts.push(d.providerId);
   if (typeof d.retentionDays === "number") parts.push(`keep data ${d.retentionDays} days`);
+  if (typeof d.logRetentionDays === "number") parts.push(`keep logs ${d.logRetentionDays} days`);
+  if (d.logRetentionDays === null) parts.push("logs follow the organization");
   if (typeof d.days === "number") parts.push(`for ${d.days} days`);
   if (typeof d.plan === "string") parts.push(`${typeof d.from === "string" ? `${d.from} to ` : ""}${d.plan}`);
   if (d.capUsd !== undefined) parts.push(d.capUsd === null ? "no cap" : `$${String(d.capUsd)} a month`);

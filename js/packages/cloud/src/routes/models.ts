@@ -1,10 +1,11 @@
-import { activeTags, alignNow, APDEX_PAGES, FACT_SLOW_QUERY_MS, ISSUE_PAGES, isPageName, isStructuredSearch, LIST_SEARCH_KIND, searchTraceIds, isTimeRange, issueStatesOf, type ModelOf, type PageName, pageContext, runPage, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { activeTags, alignNow, APDEX_PAGES, FACT_SLOW_QUERY_MS, hostsModelOf, INFRA_PARAMS, ISSUE_PAGES, isPageName, isStructuredSearch, isTimeRange, issueStatesOf, kubeModelOf, LIST_SEARCH_KIND, type ModelOf, type PageName, pageContext, runPage, searchTraceIds, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import type { CloudApp, Ctx } from "../app.js";
 import { fail, sendJson } from "../http/http.js";
 import { listIssues } from "../repo/issues.js";
 import { apdexTargets } from "../repo/slos.js";
 import { projectTags } from "../repo/tags.js";
 import type { Router } from "../http/router.js";
+import { listServices } from "../repo/trace-read.js";
 import { projectOf } from "./data.js";
 import { metricParamsOf, metricRange, projectMetrics } from "./metrics.js";
 
@@ -73,10 +74,28 @@ async function metrics(ctx: Ctx): Promise<void> {
   sendJson(ctx.res, 200, value);
 }
 
+/** `GET api/models/hosts` and `api/models/kubernetes`: host and Kubernetes metrics with the services on them. */
+async function infra(ctx: Ctx, page: "hosts" | "kubernetes"): Promise<void> {
+  const { project } = await projectOf(ctx);
+  const range = metricRange(ctx, await retentionDays(ctx.app, project.orgId));
+  const now = alignNow(ctx.app.config.now());
+  const env = ctx.url.searchParams.get("env") || undefined;
+  const params = Object.fromEntries(INFRA_PARAMS.flatMap((k) => (ctx.url.searchParams.get(k) ? [[k, ctx.url.searchParams.get(k)!.slice(0, 300)]] : [])));
+  const key = JSON.stringify([project.id, page, range, env, params, now]);
+  const hit = cached(key, ctx.app.config.now());
+  if (hit) return sendJson(ctx.res, 200, hit);
+  const data = await ctx.app.telemetry.infraData({ projectId: project.id, env }, range, params, now);
+  const registry = (await listServices(ctx.app.db, project.id, ctx.app.config.now())).filter((s) => !env || (s.environment ?? "") === env);
+  const value = page === "hosts" ? hostsModelOf(data, registry) : kubeModelOf(data, registry);
+  remember(key, value, ctx.app.config.now());
+  sendJson(ctx.res, 200, value);
+}
+
 /** `GET api/models/<page>?project=&range=&env=&...`: one page's numbers, from the project's stats tables. */
 async function model(ctx: Ctx): Promise<void> {
   const page = ctx.params.page!;
   if (page === "metrics") return metrics(ctx);
+  if (page === "hosts" || page === "kubernetes") return infra(ctx, page);
   if (!isPageName(page)) return fail(404, `No model named "${page}".`);
   const { project } = await projectOf(ctx);
   const range = ctx.url.searchParams.get("range") ?? "24h";

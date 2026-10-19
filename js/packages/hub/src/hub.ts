@@ -11,13 +11,16 @@ import { type HubOptions, resolveHubOptions } from "./options.js";
 import { handleOtlp, otlpSignalOf } from "./otlp/index.js";
 import { hubAlertDeps, startAlertLoop } from "./alerts/loop.js";
 import { settleQuietly } from "./settle.js";
+import { hubMaps } from "./sourcemaps-api.js";
 import { HubStore } from "./store.js";
+import { runDueChecks } from "./uptime/schedule.js";
 
 const require = createRequire(import.meta.url);
 export const HUB_VERSION: string = (require("../package.json") as { version: string }).version;
 const BASE = "/_wizelens";
 const PRUNE_MS = 60_000;
 const SETTLE_MS = 2_000;
+const UPTIME_MS = 15_000;
 
 export interface Hub {
   readonly server: Server;
@@ -63,11 +66,11 @@ async function route(c: Ctx, req: IncomingMessage, res: ServerResponse): Promise
 /** Create the local hub: one place for the traces of every service, with the dashboard, the API, OTLP, and MCP. */
 export function createHub(options: HubOptions = {}): Hub {
   const o = resolveHubOptions(options);
-  const store = new HubStore({ path: o.storagePath === "memory" ? ":memory:" : o.storagePath, maxTraces: o.maxTraces, maxAgeMs: o.maxAgeMs, maxMetricPoints: o.maxMetricPoints, now: o.now });
+  const store = new HubStore({ path: o.storagePath === "memory" ? ":memory:" : o.storagePath, maxTraces: o.maxTraces, maxAgeMs: o.maxAgeMs, logMaxAgeMs: o.logMaxAgeMs, maxMetricPoints: o.maxMetricPoints, now: o.now });
   const data = new HubData(store);
   const base = { url: `http://localhost:${o.port}` };
   const alerts = hubAlertDeps(store, o, base);
-  const c: Ctx = { data, alerts, o, version: HUB_VERSION, startedMs: o.now(), uiDir: resolveUiDir(o.uiDir) };
+  const c: Ctx = { data, alerts, o, version: HUB_VERSION, startedMs: o.now(), uiDir: resolveUiDir(o.uiDir), maps: hubMaps(store.db, o.sourceMaps) };
   const server = createServer((req, res) => {
     route(c, req, res).catch(() => !res.headersSent && sendJson(res, 500, { error: "internal error" }));
   });
@@ -76,6 +79,8 @@ export function createHub(options: HubOptions = {}): Hub {
   timer.unref();
   const settler = setInterval(() => settleQuietly(store), SETTLE_MS);
   settler.unref();
+  const uptime = setInterval(() => o.uptime && void runDueChecks(data, { allowPrivate: true, now: o.now }).catch(() => undefined), UPTIME_MS);
+  uptime.unref();
   const stopAlerts = startAlertLoop(alerts, o);
   return {
     server,
@@ -94,6 +99,7 @@ export function createHub(options: HubOptions = {}): Hub {
       new Promise((resolve) => {
         clearInterval(timer);
         clearInterval(settler);
+        clearInterval(uptime);
         stopAlerts();
         server.closeAllConnections?.();
         server.close(() => (store.close(), resolve()));

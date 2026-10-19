@@ -1,5 +1,6 @@
 import type { IncomingMessage } from "node:http";
 import { Transform } from "node:stream";
+import { annotateErrorFrames } from "@wizeworks/lens-core";
 import type { Ctx } from "../app.js";
 import { bearerOf, fail, sendJson } from "../http/http.js";
 import type { RateLimiter } from "../http/limiter.js";
@@ -21,6 +22,9 @@ async function ingestTarget(ctx: Ctx, limiter: RateLimiter): Promise<Target> {
   if (!limiter.take(key.id)) fail(429, "Too many calls for this key. Slow down and retry.");
   return { projectId: key.projectIds[0]!, orgId: key.orgId };
 }
+
+/** The project of an ingest key, for calls that are not telemetry (source map uploads). */
+export const ingestProject = async (ctx: Ctx, limiter: RateLimiter): Promise<string> => (await ingestTarget(ctx, limiter)).projectId;
 
 /** 429 when the organization reached its Free GB or its spend cap. Add-ons and OTLP exporters back off and retry. */
 async function overLimit(ctx: Ctx, orgId: string): Promise<boolean> {
@@ -58,12 +62,14 @@ export async function ingestBatch(ctx: Ctx, limiter: RateLimiter): Promise<void>
     return fail(400, "The body is not valid JSON.");
   }
   if (!w) fail(400, "sender.service is required.");
+  // Browser errors group by their original frame: add it with the project's uploaded maps before they are stored.
+  await annotateErrorFrames(w!.spans, ctx.app.maps(t.projectId));
   await save(ctx, t)(w!);
   ctx.app.billing.usage.add(t.orgId, { bytes: body.bytes() });
   ctx.res.writeHead(204).end();
 }
 
-/** `POST /v1/traces`, `/v1/logs`, and `/v1/metrics`: OpenTelemetry apps. */
+/** `POST /v1/traces`, `/v1/logs`, and `/v1/metrics`: OpenTelemetry apps and collectors. */
 export async function ingestOtlp(ctx: Ctx, signal: OtlpSignal, limiter: RateLimiter): Promise<void> {
   const t = await ingestTarget(ctx, limiter);
   if (await overLimit(ctx, t.orgId)) return;

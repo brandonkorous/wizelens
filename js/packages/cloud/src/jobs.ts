@@ -7,6 +7,8 @@ import { pruneServices } from "./repo/services.js";
 import { sendDigests } from "./notify/digest.js";
 import { checkHealth } from "./notify/health.js";
 import { sendTeamNotices } from "./notify/team.js";
+import { pruneIncidents } from "./repo/uptime.js";
+import { runUptime } from "./uptime/run.js";
 
 const HOUSEKEEPING_MS = 10 * 60_000;
 const SETTLE_MS = 3_000;
@@ -15,6 +17,7 @@ const SETTLE_BACKLOG = 1_000;
 const ROLLUP_PRUNE_MS = 60_000;
 const NOTICE_MS = 60_000;
 const DIGEST_MS = 10 * 60_000;
+const UPTIME_MS = 15_000;
 const USAGE_MS = 60_000;
 const REPORT_MS = 10 * 60_000;
 
@@ -35,7 +38,7 @@ function every(name: string, everyMs: number, job: () => Promise<unknown>): () =
   return () => (clearInterval(timer), clearTimeout(first));
 }
 
-/** Background work: retention, old services, stats, rollups, sessions, alert rules, team and health notices, digests, usage, and the Stripe meter. Returns a function that stops it. */
+/** Background work: retention, old services, stats, rollups, sessions, alert rules, team and health notices, digests, uptime checks, usage, and the Stripe meter. Returns a function that stops it. */
 export function startJobs(app: CloudApp): () => void {
   const now = app.config.now;
   const stops = [
@@ -54,6 +57,8 @@ export function startJobs(app: CloudApp): () => void {
     }),
     every("project health", HOUSEKEEPING_MS, () => checkHealth(app)),
     every("digests", DIGEST_MS, () => sendDigests(app)),
+    every("uptime", UPTIME_MS, () => runUptime(app)),
+    every("uptime incidents", HOUSEKEEPING_MS, () => pruneIncidents(app.db, now())),
     every("usage", USAGE_MS, async () => (await app.billing.usage.flush(), await sendUsageNotices(app))),
     ...(app.billing.report ? [every("billing report", REPORT_MS, app.billing.report)] : []),
   ];

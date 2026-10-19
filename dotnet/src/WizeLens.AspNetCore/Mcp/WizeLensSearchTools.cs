@@ -39,8 +39,8 @@ internal sealed class WizeLensSearchTools(TraceStore store, WizeLensOptions opti
         var active = TagRules.Active(options.TagList);
         var (node, unknownTags) = TagExpand.Expand(parsed.Node, active);
         var query = new SearchQuery(kind ?? SearchKinds.Requests, node, window, limit ?? 20, SearchRun.DecodeCursor(cursor), environment.EnvironmentName);
-        var page = SearchRun.SearchMemory(store.All(), query);
-        var tags = TagMatch.Match(store.All(), page.Kind, [.. page.Items.Select(i => TagSuggest.ItemOf(page.Kind, i))], active, environment.EnvironmentName);
+        var page = SearchRun.SearchMemory(store.Searchable(), query);
+        var tags = TagMatch.Match(store.Searchable(), page.Kind, [.. page.Items.Select(i => TagSuggest.ItemOf(page.Kind, i))], active, environment.EnvironmentName);
         return Ok(new { kind = page.Kind, items = page.Items, next = page.Next, tags, unknownTags });
     }
 
@@ -54,7 +54,7 @@ internal sealed class WizeLensSearchTools(TraceStore store, WizeLensOptions opti
         if (field?.Length > 200 || prefix?.Length > 200) return Error(new { error = "field and prefix can be at most 200 characters." });
         if (WindowOf(range) is not { } window) return Error(new { error = UnknownRange(range!) });
         var request = new SuggestRequest(string.IsNullOrEmpty(field) ? null : field, prefix ?? "", window, 50, environment.EnvironmentName);
-        return Ok(TagSuggest.Suggest(request, options.TagList) ?? SearchSuggest.SuggestMemory(store.All(), request));
+        return Ok(TagSuggest.Suggest(request, options.TagList) ?? SearchSuggest.SuggestMemory(store.Searchable(), request));
     }
 
     [McpServerTool(Name = "list_tags", ReadOnly = true, OpenWorld = false), Description("List the project's tags: built-in and custom tag rules, each a name for a search. Use tag:name in search, list_traces q, or anything that takes a search.")]

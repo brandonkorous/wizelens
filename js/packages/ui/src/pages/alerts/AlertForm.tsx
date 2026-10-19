@@ -1,10 +1,12 @@
 import { type FormEvent, useState } from "react";
-import { ALERT_METRICS, type AlertMetric, type AlertOp, type AlertRuleInput } from "@wizeworks/lens-core";
+import { ALERT_METRICS, type AlertMetric, type AlertRuleInput, isAnomalyMetric } from "@wizeworks/lens-core";
 import { Select } from "../../ui/Controls";
 import { Check, Field, FormRow } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
 import { REMINDS, WINDOWS } from "./alertTypes";
 import { ChannelFields } from "./ChannelFields";
+import { AboveNormalNote, LineFields } from "./LineFields";
+import { LogRuleFields } from "./LogRuleFields";
 import { MetricRuleFields } from "./MetricRuleFields";
 import { ScopeFields } from "./ScopeFields";
 import { SloFields } from "./SloFields";
@@ -15,12 +17,6 @@ const METRICS: [RuleDraft["metric"], string][] = [
   ...Object.entries(ALERT_METRICS).map(([k, m]): [AlertMetric, string] => [k as AlertMetric, `${m.label}${m.unit ? ` (${m.unit})` : ""}`]),
   ["metric", "A metric (CPU, memory, your own)"],
   ["slo", "An SLO's burn rate (×)"],
-];
-const OPS: [AlertOp, string][] = [
-  [">", "is above"],
-  [">=", "is at or above"],
-  ["<", "is below"],
-  ["<=", "is at or below"],
 ];
 
 export const EMPTY_RULE: RuleDraft = {
@@ -39,6 +35,7 @@ export const EMPTY_RULE: RuleDraft = {
   enabled: true,
   remindMs: 0,
   sloId: "",
+  logSearch: {},
 };
 
 /** Only the fields a rule keeps, from a draft or a kept rule. */
@@ -50,7 +47,8 @@ function cleaned(r: RuleDraft): RuleDraft {
   const metric =
     r.metric === "metric" ? { metricStat: r.metricStat || "avg", service: "", endpoint: "", sloId: "" } : r.metric === "slo" ? { ...none, service: "", endpoint: "" } : { ...none, sloId: "", endpoint: r.service ? r.endpoint : "" };
   const channels = r.channels.filter((c) => (c.kind === "email" ? c.to.length > 0 : c.kind === "pagerduty" ? c.routingKey.trim() !== "" : c.url.trim() !== ""));
-  return { ...draftOf(r), ...metric, channels };
+  const logs = r.metric === "log_count" ? { service: "", endpoint: "", logSearch: r.logSearch ?? {} } : { logSearch: {} };
+  return { ...draftOf(r), ...metric, ...logs, channels };
 }
 
 /** New or changed rule: what to watch, when it fires, how often it reminds, and where notices go. */
@@ -70,12 +68,12 @@ export function AlertForm({ initial, title, onSave, onCancel }: { initial: RuleD
           <Field label="Environment (optional)" value={r.env} onChange={(e) => set("env")(e.target.value)} placeholder="All" />
         </FormRow>
         <FormRow>
-          <Select label="Metric" value={r.metric} options={METRICS} onChange={set("metric")} />
-          <Select label="Condition" value={r.op} options={OPS} onChange={set("op")} />
-          <Field label="Threshold" type="number" step="any" required value={r.threshold} onChange={(e) => set("threshold")(Number(e.target.value))} />
+          <Select label="Metric" value={r.metric} options={METRICS} onChange={(m) => (set("metric")(m), !isAnomalyMetric(m) && r.op === "above_normal" && set("op")(">"))} />
+          <LineFields r={r} set={set} />
           <Select label="Over the last" value={String(r.windowMs)} options={WINDOWS} onChange={(v) => set("windowMs")(Number(v))} />
         </FormRow>
-        {r.metric === "metric" ? <MetricRuleFields r={r} set={set} /> : r.metric === "slo" ? <SloFields r={r} set={set} /> : <ScopeFields r={r} set={set} />}
+        {r.op === "above_normal" && <AboveNormalNote />}
+        {r.metric === "metric" ? <MetricRuleFields r={r} set={set} /> : r.metric === "slo" ? <SloFields r={r} set={set} /> : r.metric === "log_count" ? <LogRuleFields search={r.logSearch ?? {}} onChange={set("logSearch")} /> : <ScopeFields r={r} set={set} />}
         <FormRow>
           <Select label="Remind while firing" value={String(r.remindMs)} options={REMINDS} onChange={(v) => set("remindMs")(Number(v))} />
           <Check label="On" checked={r.enabled} onChange={(e) => set("enabled")(e.target.checked)} />

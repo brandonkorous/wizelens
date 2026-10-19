@@ -1,7 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Tracer } from "@opentelemetry/api";
 import type { TagOptions, Trace } from "@wizeworks/lens-core";
+import type { LogOptions } from "./loose-logs.js";
 import type { SamplingOptions } from "./sampling.js";
+import type { SourceMapOptions } from "./sourcemaps.js";
 import type { TraceStore } from "./store.js";
 
 export interface WizeLensOptions {
@@ -33,7 +35,7 @@ export interface WizeLensOptions {
   instrumentFetch?: boolean;
   /** Database adapters also trace queries that run outside a request (startup, jobs). Default false. */
   traceQueriesOutsideRequests?: boolean;
-  /** Copy `console.log`, `warn`, `error`, `info`, `debug`, and `trace` calls made during a request into its trace. Default true. */
+  /** Copy `console.log`, `warn`, `error`, `info`, `debug`, and `trace` calls into WizeLens (into their request trace, or outside one as loose lines). Default true. */
   captureConsole?: boolean;
   /** Keep runtime metrics (CPU, memory, heap, event loop, GC) and app metrics from `wizelensMetricExporter`. Default true. */
   captureMetrics?: boolean;
@@ -53,7 +55,7 @@ export interface WizeLensOptions {
   nPlusOneThreshold?: number;
   /** The project this service belongs to, so a shared hub can group it. Default: the WIZELENS_PROJECT variable. */
   project?: string;
-  /** The app's version, kept on every span as `service.version` for release markers and version compares. Default: the WIZELENS_RELEASE variable, else npm_package_version. */
+  /** The app's version, kept on every span as `service.version` for release markers, version compares, and Problems. Default: WIZELENS_RELEASE, else OTEL_SERVICE_VERSION, else npm_package_version. */
   release?: string;
   /** Also send everything to this local hub, for example "http://localhost:5960". Default: the WIZELENS_HUB variable. */
   hub?: string;
@@ -61,6 +63,10 @@ export interface WizeLensOptions {
   hubToken?: string;
   /** Keep only part of the traces, for busy services. Default: all, or the WIZELENS_SAMPLE_RATE variable. */
   sampling?: SamplingOptions;
+  /** Where browser stacks find their source maps: build folders and dev servers on this machine (default). False turns it off. */
+  sourceMaps?: SourceMapOptions | false;
+  /** Lines written outside a request (startup, jobs, timers): on or off, the lowest level, and a sample rate. Default: on, "info" and up, all. */
+  logs?: LogOptions;
   /** Tag rules: `{ rules: [{ name: "checkout", query: "route:/checkout*", color: "green" }], disableBuiltIns: ["bot"] }`. A bad rule throws at startup. */
   tags?: TagOptions;
 }

@@ -12,6 +12,8 @@ export interface Project {
   orgId: string;
   name: string;
   slug: string;
+  /** Cloud: days log lines are kept, or null for the organization's retention. */
+  logRetentionDays?: number | null;
 }
 
 export interface OrgWithProjects {

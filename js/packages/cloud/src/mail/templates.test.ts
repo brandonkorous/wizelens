@@ -16,7 +16,7 @@ it("renders every email as HTML and text from one content", async () => {
     expect(mail.html, name).not.toMatch(/undefined|\[object Object\]/);
     expect(mail.text, name).toContain(content.heading);
     if (content.action) expect(mail.text.split("\n"), name).toContain(content.action.url);
-    if (content.action) expect(mail.html, name).toContain(`href="${content.action.url}"`);
+    if (content.action) expect(mail.html, name).toContain(`href="${content.action.url.replaceAll("&", "&amp;")}"`);
   }
 });
 

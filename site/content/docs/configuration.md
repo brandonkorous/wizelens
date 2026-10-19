@@ -24,10 +24,13 @@ Pass options to `builder.Services.AddWizeLens(o => { ... })`.
 | `CaptureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
 | `HubUrl` / `HubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a hub or the cloud. |
 | `Project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
-| `Release` | `WIZELENS_RELEASE`, else the entry assembly's informational version | The app's version, kept on every span (`service.version`) for release markers and version compares. |
+| `Release` | `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else the entry assembly's informational version | The app's version, kept on every span (`service.version`) for release markers, version compares, and [Problems](/docs/problems/). |
 | `Sampling.Rate` | `WIZELENS_SAMPLE_RATE`, else `1` | Share of traces kept (0 to 1). |
 | `Sampling.KeepErrors` | `true` | Keep every trace with an error. |
 | `Sampling.KeepSlowMs` | `1000` | Keep every trace with a server-side span this long (`null` turns it off). |
+| `Logs.Outside` | `WIZELENS_LOGS_OUTSIDE`, else `true` | Keep log lines written outside a request (startup, jobs, timers). See [Logs](/docs/logs/). |
+| `Logs.MinLevel` | `WIZELENS_LOGS_MIN_LEVEL`, else `Information` | Lowest level kept for lines outside a request. |
+| `Logs.SampleRate` | `WIZELENS_LOGS_SAMPLE_RATE`, else `1` | Share of lines outside a request below `Warning` that are kept (0 to 1). |
 | `CaptureMetrics` | `true` | Read every `Meter` in the app. |
 | `MetricsInterval` / `MetricsMaxAge` | 10 s / 1 h | How often metrics are taken, and how long they are kept in memory. |
 | `Tags.Rules` / `Tags.DisableBuiltIns` | none / none | Tag rules for the dashboard, such as `new("checkout", "route:/checkout*", "green")`, and built-in tags to turn off. A bad rule throws at start. See [Tags](/docs/tags/). |
@@ -49,7 +52,7 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | `redactKeys` | see [Redaction](#redaction) | Key fragments whose values are redacted. |
 | `tags` | none | `{ rules: [{ name, query, color? }], disableBuiltIns: ["bot"] }`: tag rules for the dashboard, and built-in tags to turn off. A bad rule throws at start. See [Tags](/docs/tags/). |
 | `instrumentFetch` | `true` | Trace outgoing `fetch` and undici calls. |
-| `captureConsole` | `true` | Copy `console.*` lines into the trace. |
+| `captureConsole` | `true` | Copy `console.*` lines into the trace, or outside a request as loose lines. |
 | `traceQueriesOutsideRequests` | `false` | Database adapters also trace queries outside a request. |
 | `publicEndpoint` | auto | Override `X-WizeLens-Endpoint`, for example behind a proxy. |
 | `audit` | `console.info` | Where MCP audit lines go. |
@@ -57,8 +60,10 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | `captureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
 | `hub` / `hubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a hub or the cloud. |
 | `project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
-| `release` | `WIZELENS_RELEASE`, else `npm_package_version` | The app's version, kept on every span (`service.version`) for release markers and version compares. |
+| `release` | `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else `npm_package_version` | The app's version, kept on every span (`service.version`) for release markers, version compares, and [Problems](/docs/problems/). |
 | `sampling` | `{ rate: WIZELENS_SAMPLE_RATE ?? 1, keepErrors: true, keepSlowMs: 1000 }` | See [Sampling](/docs/sampling/). |
+| `sourceMaps` | dev servers on `localhost` | `{ dirs, origins, fetch }`: where browser stacks find their maps; `false` turns it off. See [Source maps](/docs/source-maps/). |
+| `logs` | `{ outside: true, minLevel: "info", sampleRate: 1 }`, or the `WIZELENS_LOGS_*` variables | Log lines written outside a request. See [Logs](/docs/logs/). |
 | `captureMetrics` | `true` | Sample the runtime every `metricsIntervalMs`. |
 | `metricsIntervalMs` / `metricsMaxAgeMs` | 10 s / 1 h | How often metrics are taken, and how long they are kept in memory. |
 | `ignore(path)` | none | Next.js only: paths to skip. |
@@ -73,7 +78,7 @@ Props on `WizeLensProvider`.
 | `enabled` | `true` | Pass `import.meta.env.DEV` (or similar). |
 | `hud` | `true` | Show the in-page HUD. `false` also stops reading traces back, for a send-only server. |
 | `propagateTo` | same origin | Which requests get a `traceparent` header. |
-| `release` | none | The web app's version, kept on browser spans for release markers and version compares. |
+| `release` | from the build plugin | The web app's version, kept on browser spans for release markers and version compares, and so stacks find the right [source maps](/docs/source-maps/). |
 | `slowMs` | `500` | Requests at or over this many ms show as "warning". |
 | `capturePages` | `true` | Send page views, React render stats, and browser errors. |
 | `captureConsole` | `true` | Copy browser `console` calls into the page view's trace (at most 500 per page). |
@@ -88,6 +93,9 @@ Props on `WizeLensProvider`.
 | `WIZELENS_HUB_TOKEN` | .NET, Node, Java, Python, Go | The hub token, or a cloud ingest key. |
 | `WIZELENS_PROJECT` | .NET, Node, Java, Python, Go | Project name on a shared hub. |
 | `WIZELENS_RELEASE` | .NET, Node | The app's version (`service.version` on every span). |
+| `WIZELENS_LOGS_OUTSIDE` | .NET, Node | Keep log lines outside a request (`true`/`false`). |
+| `WIZELENS_LOGS_MIN_LEVEL` | .NET, Node | Lowest level kept outside a request: `trace`, `debug`, `info`, `warn`, `error`, `critical`. |
+| `WIZELENS_LOGS_SAMPLE_RATE` | .NET, Node | Share of lines outside a request below warn that are kept, 0 to 1. |
 | `WIZELENS_SAMPLE_RATE` | .NET, Node, Java, Python, Go | Sampling rate, 0 to 1. |
 | `WIZELENS_KEEP_SLOW_MS`, `WIZELENS_KEEP_ERRORS` | Java, Python, Go | What sampling always keeps. |
 | `WIZELENS_CAPTURE_BODY`, `WIZELENS_CAPTURE_SQL_PARAMETERS` | Java, Python, Go | Request and response bodies; SQL parameters. |

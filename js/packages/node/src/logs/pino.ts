@@ -1,6 +1,5 @@
 import { addCleanup, logSinkOf } from "../adapters/registry.js";
 import type { LogEntry, LogSink } from "../logger.js";
-import { activeSpan } from "../spans.js";
 import type { WizeLens } from "../types.js";
 import { markDirect } from "./captured.js";
 import { errorAttributes, levelFromNumber } from "./levels.js";
@@ -57,7 +56,7 @@ function toEntry(logger: Bag, obj: unknown, msg: unknown, num: number, keys: Key
 
 function wrap(original: Write, keys: Keys, sinks: Set<LogSink>): Write {
   return function (this: Bag, obj, msg, num) {
-    if (sinks.size > 0 && activeSpan()) {
+    if (sinks.size > 0) {
       try {
         const entry = toEntry(this, obj, msg, num, keys);
         if (entry) for (const sink of sinks) sink(entry);
@@ -69,7 +68,7 @@ function wrap(original: Write, keys: Keys, sinks: Set<LogSink>): Write {
   };
 }
 
-/** Copy pino log lines written during a request into its trace. Covers every logger made by the same pino copy. */
+/** Copy pino log lines into WizeLens: into the trace of the request they belong to, or (outside one) as loose lines. Covers every logger made by the same pino copy. */
 export function instrumentPino(wizelens: WizeLens, logger: unknown): boolean {
   const sink = logSinkOf(wizelens);
   if (!sink || !logger || typeof logger !== "object") return false;

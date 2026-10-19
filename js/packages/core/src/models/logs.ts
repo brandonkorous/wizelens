@@ -34,7 +34,7 @@ export interface LogsModel {
 
 const isLevel = (v: string | undefined): v is LogLevel => !!v && (LOG_LEVELS as readonly string[]).includes(v);
 
-/** The filter from URL parameters: level (and exact=1 for that level only), service, category, trace, q, user. */
+/** The filter from URL parameters: level (and exact=1 for that level only), service, category, trace, q, pattern, origin (request or outside), and user. */
 export const logFilterOf = (p: ModelParams): LogFilter => ({
   minLevel: isLevel(p.level) ? p.level : "trace",
   exact: p.exact === "1" && isLevel(p.level),
@@ -42,17 +42,21 @@ export const logFilterOf = (p: ModelParams): LogFilter => ({
   category: p.category ?? "",
   traceId: p.trace ?? "",
   query: p.q ?? "",
+  pattern: p.pattern ?? "",
+  origin: p.origin === "request" || p.origin === "outside" ? p.origin : "",
   user: p.user?.trim() ?? "",
 });
 
-/** The list filter for the logs table. */
-const listFilterOf = (f: LogFilter): ListFilter => ({
+/** The list filter for the logs table (and for log charts and log alerts). */
+export const logListFilterOf = (f: LogFilter): ListFilter => ({
   minLevel: f.minLevel,
   ...(f.exact ? { exactLevel: true } : {}),
   ...(f.service ? { logService: f.service } : {}),
   ...(f.category ? { category: f.category } : {}),
   ...(f.traceId ? { traceId: f.traceId } : {}),
   ...(f.query ? { q: f.query } : {}),
+  ...(f.pattern ? { pattern: f.pattern } : {}),
+  ...(f.origin ? { logOrigin: f.origin } : {}),
 });
 
 type Counts = { total: number; warnings: number; errors: number; critical: number };
@@ -75,7 +79,7 @@ const USER_TRACES = 1000;
 
 /** The table's lines: by the filter, and only these traces when a search or a user picked them. */
 const rowsNeed = (ctx: PageContext, f: LogFilter, ids: readonly string[] | undefined): Need =>
-  listNeed("rows", "logs", "cur", { filter: ids ? { ...listFilterOf({ ...f, query: ctx.searchIds ? "" : f.query }), traceIds: ids } : listFilterOf(f), page: pageParams(ctx.params, 30) });
+  listNeed("rows", "logs", "cur", { filter: ids ? { ...logListFilterOf({ ...f, query: ctx.searchIds ? "" : f.query }), traceIds: ids } : logListFilterOf(f), page: pageParams(ctx.params, 30) });
 
 export const logsPage: PageDef<LogsModel> = {
   needs: (ctx) => {

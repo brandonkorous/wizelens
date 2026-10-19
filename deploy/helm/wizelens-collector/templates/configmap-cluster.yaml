@@ -1,0 +1,35 @@
+{{- if .Values.cluster.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "wlc.fullname" . }}-cluster
+  labels:
+    {{- include "wlc.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    receivers:
+      k8s_cluster:
+        auth_type: serviceAccount
+        collection_interval: {{ .Values.cluster.collectionInterval }}
+        node_conditions_to_report: [Ready, MemoryPressure, DiskPressure]
+        allocatable_types_to_report: [cpu, memory]
+        resource_attributes:
+          k8s.container.status.last_terminated_reason: { enabled: true }
+    processors:
+      {{- include "wlc.processors" (dict "root" . "mib" .Values.cluster.memoryLimitMib) | nindent 6 }}
+      k8sattributes:
+        {{- include "wlc.k8sattributes" . | nindent 8 }}
+    exporters:
+      {{- include "wlc.exporters" . | nindent 6 }}
+    extensions:
+      health_check: { endpoint: "${env:MY_POD_IP}:13133" }
+    service:
+      extensions: [health_check]
+      telemetry:
+        metrics: { level: none }
+      pipelines:
+        metrics:
+          receivers: [k8s_cluster]
+          processors: [memory_limiter, k8sattributes, resource/wizelens, batch]
+          exporters: [otlphttp/wizelens]
+{{- end }}

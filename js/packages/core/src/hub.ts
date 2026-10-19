@@ -25,9 +25,18 @@ export interface HubSender {
   runtime?: string;
   environment?: string;
   host?: string;
+  /** Where it runs in Kubernetes, from the OTLP resource (k8s.* attributes). */
+  k8s?: HubSenderK8s;
   /** The add-on's own WizeLens URL, when it has one. The hub skips it when it federates. */
   endpoint?: string;
   startedMs?: number;
+}
+
+export interface HubSenderK8s {
+  cluster?: string;
+  namespace?: string;
+  pod?: string;
+  node?: string;
 }
 
 /** One log line and the trace it belongs to. */
@@ -54,8 +63,8 @@ export interface IngestBatch {
 
 /** One service the hub knows, from `GET {hub}/_wizelens/api/services`. */
 export interface HubService extends HubSender {
-  /** "addon" for WizeLens add-ons, "otlp" for plain OpenTelemetry senders. */
-  via: "addon" | "otlp";
+  /** "addon" for WizeLens add-ons, "otlp" for plain OpenTelemetry senders, "uptime" for the host's own uptime checks. */
+  via: "addon" | "otlp" | "uptime";
   firstSeenMs: number;
   lastSeenMs: number;
   online: boolean;

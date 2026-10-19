@@ -6,7 +6,7 @@ import { PERIOD_KEYS, parseWindow, windowText } from "./period";
 import { KEYS, onViewWrite, readPref, SCOPE, writePref } from "./prefs";
 
 /** Pages whose numbers follow the view choices. */
-const VIEW_PAGES: ReadonlySet<PageId> = new Set(["overview", "search", "requests", "traces", "database", "rendering", "errors", "logs", "metrics", "services", "insights"]);
+const VIEW_PAGES: ReadonlySet<PageId> = new Set(["overview", "problems", "search", "requests", "traces", "database", "rendering", "errors", "logs", "metrics", "services", "insights"]);
 
 type ViewValues = Record<string, string | null>;
 

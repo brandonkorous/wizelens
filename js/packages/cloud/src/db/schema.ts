@@ -1,5 +1,6 @@
 import { ALERTS2_MIGRATION } from "./schema-alerts.js";
 import { AUTH_MIGRATION } from "./schema-auth.js";
+import { LOGS_MIGRATION } from "./schema-logs.js";
 import { BILLING_MIGRATION } from "./schema-billing.js";
 import { MAIL_MIGRATION } from "./schema-mail.js";
 import { NOTIFY_MIGRATION } from "./schema-notify.js";
@@ -8,8 +9,10 @@ import { OAUTH_MIGRATION } from "./schema-oauth.js";
 import { SAVED_MIGRATION } from "./schema-saved.js";
 import { SCIM_MIGRATION } from "./schema-scim.js";
 import { SEARCH_MIGRATION } from "./schema-search.js";
+import { SOURCEMAPS_MIGRATION } from "./schema-sourcemaps.js";
 import { SLOS_MIGRATION } from "./schema-slos.js";
 import { SSO_MIGRATION } from "./schema-sso.js";
+import { UPTIME_MIGRATION } from "./schema-uptime.js";
 import { TAGS_MIGRATION } from "./schema-tags.js";
 
 // Cloud schema, one entry per version. Never edit a shipped entry: add a new one (docs/CONTRACT.md, "Cloud storage").
@@ -222,6 +225,13 @@ CREATE INDEX ix_metric_1h_time ON metric_1h (project_id, bucket_ms);
   BILLING_MIGRATION,
   SCIM_MIGRATION,
   TAGS_MIGRATION,
+  UPTIME_MIGRATION,
+  SOURCEMAPS_MIGRATION,
+  LOGS_MIGRATION,
+  // Migration 20: an alert event names the problem it is part of (docs/CONTRACT.md, "Problems").
+  `
+ALTER TABLE alert_events ADD COLUMN problem TEXT NOT NULL DEFAULT '';
+`,
 ];
 
 export const MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS wizelens_migrations (version INTEGER PRIMARY KEY, applied_ms DOUBLE PRECISION NOT NULL)`;

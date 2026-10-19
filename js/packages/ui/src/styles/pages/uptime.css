@@ -1,0 +1,31 @@
+/* Uptime page, one check's page, and the public status page. */
+.wl-banner-warning { background: var(--wl-amber-soft); color: var(--wl-amber-text); }
+.wl-uptime-certs { display: grid; gap: 4px; }
+.wl-uptime-name a { display: grid; gap: 2px; min-width: 0; max-width: 420px; color: inherit; }
+.wl-uptime-name a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wl-uptime-name a:hover strong { color: var(--wl-accent); }
+.wl-uptime-response { display: inline-flex; align-items: center; gap: 8px; }
+.wl-uptime-actions { display: inline-flex; flex-wrap: wrap; gap: 8px; margin-left: auto; font-size: 14px; font-weight: 500; letter-spacing: 0; }
+.wl-uptime-error { margin: 12px 0 0; }
+.wl-uptime-status-note { margin: 0 0 12px; font-size: 13.5px; }
+
+.wl-status-title { margin: 0; font-size: 20px; }
+.wl-status-by { display: inline-flex; align-items: center; gap: 8px; }
+.wl-status-by .wl-brand-row { font-size: 15px; }
+.wl-status-by .wl-brand-row svg { width: 20px; height: 20px; }
+.wl-status-main { max-width: 920px; margin: 0 auto; }
+.wl-status-main > .wl-panel { margin-bottom: 18px; }
+.wl-status-summary { margin-bottom: 18px; padding: 14px 18px; border-radius: 12px; background: var(--wl-ok-soft); color: var(--wl-ok); font-weight: 650; font-size: 16px; }
+.wl-status-summary.wl-status-down { background: var(--wl-error-soft); color: var(--wl-error); }
+.wl-status-checks { display: grid; gap: 22px; margin: 0; padding: 0; list-style: none; }
+.wl-status-check { display: grid; gap: 8px; }
+.wl-status-check-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.wl-status-bars { display: flex; gap: 3px; height: 34px; }
+.wl-status-bar { flex: 1 1 0; min-width: 3px; border-radius: 3px; }
+.wl-status-bar.wl-tone-neutral { background: var(--wl-line); }
+.wl-status-check-foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.wl-status-incidents { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
+@media (max-width: 640px) {
+  .wl-status-check-foot span:first-child, .wl-status-check-foot span:last-child { display: none; }
+  .wl-status-bars { gap: 2px; }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "sample-next-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Sample Next.js app for WizeLens: the Node add-on, the React provider, and source maps uploaded by withWizeLens at build time.",
+  "scripts": {
+    "dev": "next dev --port 5180",
+    "build": "next build",
+    "start": "next start --port 5180"
+  },
+  "dependencies": {
+    "@wizeworks/lens-node": "workspace:*",
+    "@wizeworks/lens-react": "workspace:*",
+    "next": "^16.4.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@wizeworks/lens-cli": "workspace:*",
+    "typescript": "^7.0.2"
+  }
+}

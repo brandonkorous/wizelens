@@ -31,7 +31,7 @@ internal static class SearchEndpoints
         if (!r.Ok) return Results.Json(ErrorBody(r.Error!, r.Start, r.End), WizeLensJson.Options, statusCode: StatusCodes.Status400BadRequest);
         var watch = Stopwatch.StartNew();
         var (node, unknownTags) = TagExpand.Expand(r.Query!.Node, TagRules.Active(options.TagList));
-        var page = SearchRun.SearchMemory(store.All(), r.Query with { Node = node, Env = environment.EnvironmentName });
+        var page = SearchRun.SearchMemory(store.Searchable(), r.Query with { Node = node, Env = environment.EnvironmentName });
         var tookMs = Math.Round(watch.Elapsed.TotalMilliseconds, MidpointRounding.AwayFromZero);
         return Results.Json(new { kind = page.Kind, items = page.Items, next = page.Next, tookMs, settling = (object?)null, unknownTags }, WizeLensJson.Options);
     }
@@ -41,7 +41,7 @@ internal static class SearchEndpoints
     {
         var r = SearchRequests.SuggestRequestOf(Params(request), NowMs(), options.MaxAge.TotalMilliseconds);
         if (!r.Ok) return Results.Json(ErrorBody(r.Error!, null, null), WizeLensJson.Options, statusCode: StatusCodes.Status400BadRequest);
-        var items = TagSuggest.Suggest(r.Request!, options.TagList) ?? SearchSuggest.SuggestMemory(store.All(), r.Request! with { Env = environment.EnvironmentName });
+        var items = TagSuggest.Suggest(r.Request!, options.TagList) ?? SearchSuggest.SuggestMemory(store.Searchable(), r.Request! with { Env = environment.EnvironmentName });
         return Results.Json(new { items }, WizeLensJson.Options);
     }
 

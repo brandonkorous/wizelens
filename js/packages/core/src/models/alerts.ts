@@ -5,7 +5,9 @@ import type { Need, NeedResults, PageContext, PageDef } from "../scale/needs.js"
 import { joinKey } from "../scale/kinds.js";
 import { percentOf, previousWindow, TIME_RANGES, type TimeRange } from "../stats/common.js";
 import { rawService } from "../stats/errors.js";
-import { groupNeed, rowsOf, totalOf } from "./read.js";
+import type { ModelParams } from "./input.js";
+import { logFilterOf, logListFilterOf } from "./logs.js";
+import { groupNeed, listNeed, listOf, rowsOf, totalOf } from "./read.js";
 
 /** What an alert rule watches. */
 export const ALERT_METRICS = {
@@ -15,17 +17,21 @@ export const ALERT_METRICS = {
   requests: { label: "Requests", unit: "" },
   new_errors: { label: "New error types", unit: "" },
   slow_queries: { label: "Slow queries", unit: "" },
+  log_count: { label: "Log lines", unit: "" },
 } as const;
 
 export type AlertMetric = keyof typeof ALERT_METRICS;
-export type AlertOp = ">" | "<" | ">=" | "<=";
+/** A fixed line, or "above_normal": above the baseline, with the threshold as the number of spreads. */
+export type AlertOp = ">" | "<" | ">=" | "<=" | "above_normal";
 
+/** The fixed lines; "above_normal" is offered on its own, for the metrics with a baseline. */
 export const ALERT_OPS: readonly AlertOp[] = [">", "<", ">=", "<="];
-export const isAlertOp = (v: unknown): v is AlertOp => ALERT_OPS.includes(v as AlertOp);
+export const isAlertOp = (v: unknown): v is AlertOp => ALERT_OPS.includes(v as AlertOp) || v === "above_normal";
 export const isAlertMetric = (v: unknown): v is AlertMetric => typeof v === "string" && v in ALERT_METRICS;
 
-/** True when `value op threshold` holds. */
+/** True when `value op threshold` holds. "above_normal" is judged against the baseline, never here. */
 export function opHolds(op: AlertOp, value: number, threshold: number): boolean {
+  if (op === "above_normal") return false;
   if (op === ">") return value > threshold;
   if (op === "<") return value < threshold;
   return op === ">=" ? value >= threshold : value <= threshold;
@@ -41,6 +47,7 @@ export interface AlertScope {
 export function alertScopeProblem(metric: AlertMetric, scope: AlertScope): string | null {
   if (scope.endpoint && !scope.service) return "An endpoint needs its service.";
   if (scope.endpoint && metric === "slow_queries") return "Slow queries are counted per service, not per endpoint.";
+  if ((scope.service || scope.endpoint) && metric === "log_count") return "A log alert picks its service in the log search.";
   return null;
 }
 
@@ -54,8 +61,9 @@ function endpointNeeds(metric: AlertMetric, service: string, endpoint: string): 
   return [groupNeed("req", "svc.ep", "cur", { filter: { keys: [joinKey(`api:${rawService(service)}`, endpoint)] }, hist: metric === "p95_ms" })];
 }
 
-/** What an alert metric reads: request, error group, or database rollups of the window (and the one before, for "new"). */
-export function alertNeeds(metric: AlertMetric, scope: AlertScope = {}): Need[] {
+/** What an alert metric reads: request, error group, or database rollups of the window (and the one before, for "new"), or the lines of a log search. */
+export function alertNeeds(metric: AlertMetric, scope: AlertScope = {}, search: ModelParams = {}): Need[] {
+  if (metric === "log_count") return [listNeed("logs", "logs", "cur", { filter: logListFilterOf(logFilterOf(search)), limit: 0, count: true })];
   const service = scope.service || undefined;
   if (service && scope.endpoint) return endpointNeeds(metric, service, scope.endpoint);
   const one = service ? { service } : {};
@@ -87,6 +95,8 @@ export function alertValueOf(metric: AlertMetric, d: NeedResults): number | null
       const before = new Set(rowsOf(d, "err.prev").map((r) => r.key));
       return rowsOf(d, "err.cur").filter((r) => !before.has(r.key)).length;
     }
+    case "log_count":
+      return listOf(d, "logs").total ?? 0;
     case "slow_queries":
       return totalOf(d, "db").c[0] ?? 0;
   }
@@ -102,7 +112,10 @@ export function alertContext(windowMs: number, now: number, options = { slowQuer
 }
 
 /** An alert metric as a page, so hosts run it with `computePage` like any page. */
-export const alertPage = (metric: AlertMetric, scope: AlertScope = {}): PageDef<number | null> => ({ needs: () => alertNeeds(metric, scope), model: (d) => alertValueOf(metric, d) });
+export const alertPage = (metric: AlertMetric, scope: AlertScope = {}, search: ModelParams = {}): PageDef<number | null> => ({
+  needs: () => alertNeeds(metric, scope, search),
+  model: (d) => alertValueOf(metric, d),
+});
 
 /** True when the value breaks the rule. No data never fires, except "requests < n" (traffic stopped). */
 export function alertBreached(metric: AlertMetric, op: AlertOp, value: number | null, threshold: number): boolean {
@@ -114,19 +127,29 @@ export function alertBreached(metric: AlertMetric, op: AlertOp, value: number | 
 /** Why a notice was sent: the rule broke, it is fine again, it still breaks (a reminder), or someone pressed Test. */
 export type AlertNoticeState = "fired" | "resolved" | "remind" | "test";
 
-const OP_WORDS: Record<AlertOp, string> = { ">": "above", "<": "below", ">=": "at or above", "<=": "at or below" };
+const OP_WORDS: Record<AlertOp, string> = { ">": "above", "<": "below", ">=": "at or above", "<=": "at or below", above_normal: "above normal" };
 
 /** "above 5%", "no longer above 5%", "still above 5%", or "alerts when above 5%": the rule, worded for the notice. */
 export function conditionText(op: AlertOp, threshold: string, state: AlertNoticeState = "fired"): string {
-  const rule = `${OP_WORDS[op]} ${threshold}`;
+  const rule = op === "above_normal" ? OP_WORDS[op] : `${OP_WORDS[op]} ${threshold}`;
   if (state === "resolved") return `no longer ${rule}`;
   if (state === "remind") return `still ${rule}`;
   return state === "test" ? `alerts when ${rule}` : rule;
 }
 
-/** "Error rate is 7.5% (above 5%)". */
-export function alertMessage(metric: AlertMetric, op: AlertOp, value: number | null, threshold: number, state: AlertNoticeState = "fired"): string {
+/** A log search in words, for notices and lists: `error and up, service api, "timeout"`, or "" for every line. */
+export function logSearchText(search: ModelParams): string {
+  const f = logFilterOf(search);
+  const level = f.minLevel === "trace" ? [] : [f.exact ? f.minLevel : `${f.minLevel} and up`];
+  const origin = f.origin === "outside" ? ["outside requests"] : f.origin === "request" ? ["in requests"] : [];
+  const named = [f.service && `service ${f.service}`, f.category && `category ${f.category}`, f.pattern && `pattern ${f.pattern}`, f.query && `"${f.query}"`];
+  return [...level, ...origin, ...named].filter(Boolean).join(", ");
+}
+
+/** "Error rate is 7.5% (above 5%)"; a log count names its search: "Log lines (error and up) is 12 (above 5)". */
+export function alertMessage(metric: AlertMetric, op: AlertOp, value: number | null, threshold: number, state: AlertNoticeState = "fired", search: ModelParams = {}): string {
   const m = ALERT_METRICS[metric];
   const fmt = (n: number) => `${Number.isInteger(n) ? n : n.toFixed(1)}${m.unit === "%" ? "%" : m.unit ? ` ${m.unit}` : ""}`;
-  return `${m.label} is ${value === null ? "not measured" : fmt(value)} (${conditionText(op, fmt(threshold), state)})`;
+  const what = metric === "log_count" && logSearchText(search) ? `${m.label} (${logSearchText(search)})` : m.label;
+  return `${what} is ${value === null ? "not measured" : fmt(value)} (${conditionText(op, fmt(threshold), state)})`;
 }

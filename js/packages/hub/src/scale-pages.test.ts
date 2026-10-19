@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { pageParity } from "../../core/src/testing/scale-pages.js";
+import { pageContext, runPage } from "@wizeworks/lens-core";
+import { ANOMALY_NOW, anomalyTraces } from "../../core/src/testing/anomaly-scenario.js";
+import { pageParity, problemsParity } from "../../core/src/testing/scale-pages.js";
 import { scenarioTraces } from "../../core/src/testing/scenario.js";
 import { hubExecutor } from "./scale-exec.js";
 import { settleHub } from "./settle.js";
@@ -15,6 +17,17 @@ describe("hub pages", () => {
     expect(await pageParity(hubExecutor(store), traces, RANGES, RETENTION_MS)).toEqual([]);
     expect((await pageParity(hubExecutor(store), traces.slice(2), ["1h"], RETENTION_MS)).length).toBeGreaterThan(5);
   });
+
+  it("finds the spike's problem from SQL like the memory executor", async () => {
+    const traces = anomalyTraces();
+    const { store, clock } = clockStore();
+    clock.now = ANOMALY_NOW;
+    writeTraces(store, traces);
+    settleAll(store, clock);
+    expect(await problemsParity(hubExecutor(store), traces, ANOMALY_NOW, ["1h", "6h", "24h"], RETENTION_MS)).toEqual([]);
+    const m = await runPage("problems", pageContext("1h", ANOMALY_NOW, {}), hubExecutor(store));
+    expect(m.problems.map((p) => p.cause?.kind)).toEqual(["release"]);
+  }, 60_000);
 
   it("serves page models, with no settling count while a new trace waits its few seconds", async () => {
     const { hub, url } = await startHub();

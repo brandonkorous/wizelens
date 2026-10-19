@@ -13,6 +13,8 @@ import { LOG_COLUMNS, LogDetail, LogFilters, LogVolumePanel } from "./LogParts";
 import type { LogsModel } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
 import { ModelState } from "../../ui/ModelState";
+import { LogMetricsPanel } from "./LogMetrics";
+import { LogPatternsPanel } from "./LogPatterns";
 import "../../styles/pages/logs.css";
 import { ExportButton } from "../../ui/ExportButton";
 
@@ -49,7 +51,7 @@ export function LogsPage() {
   const { model: stats, loading, error } = usePageModel("logs", undefined, paused);
   return (
     <div className="wl-logs-page">
-      <PageHeader title="Logs" subtitle="Every log line written while handling requests, across your services.">
+      <PageHeader title="Logs" subtitle="Every log line across your services: in requests, and outside them (startup, jobs, timers).">
         <LiveToggle paused={paused} onChange={setPaused} />
       </PageHeader>
       <ModelState model={stats} loading={loading} error={error} what="log lines" />
@@ -57,7 +59,9 @@ export function LogsPage() {
         <>
           <LogStatCards stats={stats} />
           <LogVolumePanel stats={stats} />
+          <LogMetricsPanel />
           <LogFilters stats={stats} />
+          <LogPatternsPanel />
           <LogTable stats={stats} />
         </>
       )}

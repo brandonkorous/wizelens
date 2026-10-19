@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { HEADER_HOP, type ServiceInfo, type TagRule, type Trace, type TraceSummary } from "@wizeworks/lens-core";
+import { annotateErrorFrames, answerResolve, HEADER_HOP, type MapLoader, type ServiceInfo, SOURCEMAPS_RESOLVE_PATH, type Span, type TagRule, type Trace, type TraceSummary } from "@wizeworks/lens-core";
 import { browserClockOffset, remoteOf, sanitizeClientLog, sanitizeClientSpan } from "./client-spans.js";
 import { firstHeader, readJson, sendJson, setCors } from "./http-util.js";
 import { handleMcp, type McpDataSource } from "./mcp.js";
@@ -28,6 +28,8 @@ export interface ApiDeps {
   selfEndpoints: ReadonlySet<string>;
   /** False is send-only: only the browser span intake answers. */
   dashboard: boolean;
+  /** Build folders and dev servers to read source maps from; null when off. */
+  sourceMaps?: MapLoader | null;
   /** The `tags` option's rules and the built-ins (docs/TAGS-PLAN.md). */
   tags: readonly TagRule[];
 }
@@ -61,9 +63,10 @@ async function receiveClientSpans(d: ApiDeps, req: Req, res: ServerResponse): Pr
     const shiftMs = browserClockOffset(body?.sentAt, Date.now());
     const spans = Array.isArray(body?.spans) ? body.spans.slice(0, MAX_CLIENT_SPANS) : [];
     const origin = firstHeader(req.headers.origin);
-    for (const raw of spans) {
-      const span = sanitizeClientSpan(raw, d.redactKeys, shiftMs);
-      if (!span) continue;
+    const clean = spans.map((raw) => sanitizeClientSpan(raw, d.redactKeys, shiftMs)).filter((s): s is Span => s !== null);
+    // Browser errors group by their original frame: add it now, while the maps are at hand.
+    if (d.sourceMaps) await annotateErrorFrames(clean, d.sourceMaps);
+    for (const span of clean) {
       d.store.addSpan(span);
       const remote = remoteOf(span, origin);
       if (remote && !d.selfEndpoints.has(remote)) d.store.addRemote(span.traceId, remote);
@@ -79,12 +82,18 @@ async function receiveClientSpans(d: ApiDeps, req: Req, res: ServerResponse): Pr
   }
 }
 
+async function sendResolve(load: MapLoader, req: Req, res: ServerResponse): Promise<void> {
+  const answer = await answerResolve(await readJson(req).catch(() => undefined), load);
+  sendJson(res, answer.status, answer.body);
+}
+
 async function handleApi(d: ApiDeps, sub: string, method: string, req: Req, res: ServerResponse, url: URL): Promise<void> {
   if (sub === "api/info" && method === "GET") return sendJson(res, 200, d.info());
   if (sub === "api/traces" && method === "GET") return sendJson(res, 200, listTraces(d.store, url.searchParams));
   const traceMatch = /^api\/traces\/([0-9a-f]{32})$/.exec(sub);
   if (traceMatch && method === "GET") return sendTrace(d, traceMatch[1]!, req, res, url);
   if (sub === CLIENT_SPANS && method === "POST") return receiveClientSpans(d, req, res);
+  if (sub === SOURCEMAPS_RESOLVE_PATH && method === "POST" && d.sourceMaps) return sendResolve(d.sourceMaps, req, res);
   if (sub === "api/search" && method === "GET") return sendSearch(d.store, d.tags, url.searchParams, res, d.info().environment);
   if (sub === "api/search/suggest" && method === "GET") return sendSuggest(d.store, d.tags, url.searchParams, res, d.info().environment);
   if (sub === "api/tags" && method === "GET") return sendTags(d.tags, res);

@@ -1,4 +1,4 @@
-import { ALERT_METRICS, type AlertChannel, type AlertRule, METRIC_ALERT_STATS } from "@wizeworks/lens-core";
+import { ALERT_METRICS, type AlertChannel, type AlertRule, logSearchText, METRIC_ALERT_STATS } from "@wizeworks/lens-core";
 import { currentProject, useAccount } from "../../data/account";
 import { useHost } from "../../data/host";
 import { getScope } from "../../data/prefs";
@@ -15,6 +15,8 @@ export interface AlertEvent {
   message: string;
   timeMs: number;
   delivery: string;
+  /** The problem a fired notice named (cloud), or null. */
+  problem?: { id: string; title: string; url: string } | null;
 }
 
 export interface AlertsData {
@@ -47,7 +49,8 @@ export const REMINDS: [string, string][] = [
 
 export const windowLabel = (ms: number) => WINDOWS.find(([v]) => Number(v) === ms)?.[1] ?? `${Math.round(ms / 60_000)} min`;
 
-export const OP_SIGN: Record<AlertRule["op"], string> = { ">": ">", "<": "<", ">=": "≥", "<=": "≤" };
+export const OP_SIGN: Record<AlertRule["op"], string> = { ">": ">", "<": "<", ">=": "≥", "<=": "≤", above_normal: "above normal" };
+const SENSITIVITY_NAME: Record<number, string> = { 2: "high", 3: "medium", 4: "low" };
 
 const unitOf = (r: AlertRule) => (r.metric === "metric" ? "" : r.metric === "slo" ? "×" : ALERT_METRICS[r.metric].unit);
 const plain = (v: number) => (Number.isInteger(v) ? String(v) : Math.abs(v) < 1 ? v.toPrecision(3) : v.toFixed(1));
@@ -58,12 +61,16 @@ export const fmtValue = (r: AlertRule, v: number | null) => (v === null ? "–" 
 export function ruleLabel(r: AlertRule): string {
   if (r.metric === "metric") return `${r.metricName} ${METRIC_ALERT_STATS[r.metricStat || "avg"].toLowerCase()}${r.metricService ? ` (${r.metricService})` : ""}`;
   if (r.metric === "slo") return "SLO burn rate";
+  if (r.metric === "log_count" && logSearchText(r.logSearch ?? {})) return `Log lines (${logSearchText(r.logSearch ?? {})})`;
   const scope = r.endpoint ? ` of ${r.endpoint} (${r.service})` : r.service ? ` of ${r.service}` : "";
   return `${ALERT_METRICS[r.metric].label}${scope}`;
 }
 
+/** "> 5%", or for "above normal" rules their sensitivity: "above normal (medium)". */
+const lineText = (r: AlertRule) => (r.op === "above_normal" ? `above normal (${SENSITIVITY_NAME[r.threshold] ?? `${r.threshold} spreads`})` : `${OP_SIGN[r.op]} ${fmtValue(r, r.threshold)}`);
+
 /** "Error rate > 5% over 5 minutes · Production". */
-export const ruleText = (r: AlertRule) => `${ruleLabel(r)} ${OP_SIGN[r.op]} ${fmtValue(r, r.threshold)} over ${windowLabel(r.windowMs)}${r.env ? ` · ${r.env}` : ""}`;
+export const ruleText = (r: AlertRule) => `${ruleLabel(r)} ${lineText(r)} over ${windowLabel(r.windowMs)}${r.env ? ` · ${r.env}` : ""}`;
 
 /** Where a host keeps alert rules: the cloud by project id, the hub by `?project=` (empty for all). */
 export function useAlertsApi(): { url: (path?: string) => string; ready: boolean; canWrite: boolean } {

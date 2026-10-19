@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
-import { ATTR_BROWSER_SESSION, logKey, PG_DIALECT, pruneStatements, seriesKeyOf, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_SESSION, INFRA_SERVICE, logKey, LOOSE_TRACE_PREFIX, PG_DIALECT, pruneStatements, seriesKeyOf, type Span } from "@wizeworks/lens-core";
 import type { HubWrite } from "@wizeworks/lens-hub/kit";
 import type { Db, Queryable } from "../db/db.js";
 import { runStatements, stateOf, type TraceStateRow } from "../settle.js";
+import { LOG_DAYS_SQL } from "./log-retention.js";
 import { pruneMetricRollups, writeMetricRollups } from "./metric-write.js";
 
 const CHUNK = 200;
@@ -40,6 +41,8 @@ function traceRows(w: HubWrite, projectId: string, now: number): unknown[][] {
 /** Record the sender in the project's service registry (Postgres, whatever keeps the telemetry). */
 export async function writeService(q: Queryable, projectId: string, w: HubWrite, now: number): Promise<void> {
   const s = w.sender;
+  // The collector's host and Kubernetes receivers are not a service.
+  if (s.service === INFRA_SERVICE) return;
   await q.query(
     `INSERT INTO services (project_id, service, environment, host, via, info, first_seen, last_seen) VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
      ON CONFLICT (project_id, service, environment, host) DO UPDATE SET via = EXCLUDED.via, info = EXCLUDED.info, last_seen = EXCLUDED.last_seen`,
@@ -92,12 +95,13 @@ export async function pruneMetricsByRetention(q: Queryable, now: number): Promis
   await pruneMetricRollups(q, now);
 }
 
-/** Drop traces older than each organization's retention. Returns how many traces were dropped. */
+/** Drop traces older than each organization's retention, and loose batches (lines outside a request) older than the log retention. Returns how many were dropped. */
 export async function pruneByRetention(q: Queryable, now: number): Promise<number> {
+  const loose = `substr(t.trace_id, 1, 16) = '${LOOSE_TRACE_PREFIX}'`;
   const prune = async (x: Queryable) => {
     const doomed = await x.query<TraceStateRow>(
-      `SELECT t.project_id, t.trace_id, t.env, t.contrib, o.retention_days FROM traces t JOIN projects p ON p.id = t.project_id JOIN orgs o ON o.id = p.org_id
-       WHERE t.start_ms < $1 - o.retention_days * 86400000.0 LIMIT 5000`,
+      `SELECT t.project_id, t.trace_id, t.env, t.contrib, o.retention_days, p.log_retention_days FROM traces t JOIN projects p ON p.id = t.project_id JOIN orgs o ON o.id = p.org_id
+       WHERE (NOT ${loose} AND t.start_ms < $1 - o.retention_days * 86400000.0) OR (${loose} AND t.start_ms < $1 - ${LOG_DAYS_SQL} * 86400000.0) LIMIT 5000`,
       [now],
     );
     // Take their contributions out of the rollups and drop their facts first.

@@ -1,4 +1,4 @@
-import { FACT_TABLES, FACTS_VERSION, PG_DIALECT, settleStatements, type Statement, tierPruneStatements, type TraceState, type Trace } from "@wizeworks/lens-core";
+import { FACT_TABLES, FACTS_VERSION, LOG_KINDS_SQL, PG_DIALECT, settleStatements, type Statement, tierPruneStatements, type TraceState, type Trace } from "@wizeworks/lens-core";
 import type { Db, Queryable } from "./db/db.js";
 import { loadTraces } from "./repo/trace-read.js";
 import type { SettleOptions } from "./telemetry/store.js";
@@ -21,6 +21,7 @@ export interface TraceStateRow {
   updated_ms?: number;
   contrib: string | null;
   retention_days: number | null;
+  log_retention_days?: number | null;
 }
 
 /** Run statements one by one, in the caller's transaction. */
@@ -35,6 +36,7 @@ export const stateOf = (r: TraceStateRow, defaultDays: number): TraceState => ({
   updatedMs: r.updated_ms ?? 0,
   contrib: r.contrib,
   retentionMs: (r.retention_days ?? defaultDays) * DAY_MS,
+  logRetentionMs: (r.log_retention_days ?? r.retention_days ?? defaultDays) * DAY_MS,
 });
 
 async function loadAll(q: Queryable, rows: readonly TraceStateRow[]): Promise<Map<string, Trace>> {
@@ -51,7 +53,7 @@ async function settleBatch(db: Db, now: number, batch: number, defaultDays: numb
     const [lock] = await q.query<{ ok: boolean }>("SELECT pg_try_advisory_xact_lock($1) AS ok", [LOCK]);
     if (!lock?.ok) return { n: -1, projects: [] };
     const rows = await q.query<TraceStateRow>(
-      `SELECT t.project_id, t.trace_id, t.env, t.updated_ms, t.contrib, o.retention_days FROM traces t
+      `SELECT t.project_id, t.trace_id, t.env, t.updated_ms, t.contrib, o.retention_days, p.log_retention_days FROM traces t
        LEFT JOIN projects p ON p.id = t.project_id LEFT JOIN orgs o ON o.id = p.org_id
        WHERE t.settled_ms < t.updated_ms AND (t.updated_ms <= $1 OR t.settled_ms <= $2) ORDER BY t.start_ms DESC LIMIT $3`,
       [now - QUIET_MS, now - BUSY_MS, batch],
@@ -77,12 +79,12 @@ export async function settleCloud(db: Db, now: number, o: SettleOptions = {}): P
   }
 }
 
-/** Age out rollup buckets: 10 s and 5 min by their keep time, 1 h by each organization's retention. */
+/** Age out rollup buckets: 10 s and 5 min by their keep time, 1 h by each organization's retention (log kinds by the log retention, in pruneLogsByRetention). */
 export async function pruneRollups(q: Queryable, now: number, empties = false): Promise<void> {
   await runStatements(q, tierPruneStatements(now, empties));
   for (const t of ["rollup_1h", "hist_1h"]) {
     await q.query(
-      `DELETE FROM ${t} r USING projects p, orgs o WHERE p.id = r.project_id AND o.id = p.org_id AND r.bucket_ms <= $1 - o.retention_days * 86400000.0`,
+      `DELETE FROM ${t} r USING projects p, orgs o WHERE p.id = r.project_id AND o.id = p.org_id AND r.bucket_ms <= $1 - o.retention_days * 86400000.0 AND r.kind NOT IN (${LOG_KINDS_SQL})`,
       [now - 3_600_000],
     );
   }

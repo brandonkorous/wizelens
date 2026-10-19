@@ -17,7 +17,7 @@ interface ConsolaLike {
   removeReporter?(reporter: Reporter): unknown;
 }
 
-/** Copy consola log lines written during a request into its trace. */
+/** Copy consola log lines into WizeLens: into the trace of the request they belong to, or (outside one) as loose lines. */
 export function instrumentConsola(wizelens: WizeLens, consola: unknown): boolean {
   const sink = logSinkOf(wizelens);
   const target = consola as ConsolaLike | null;

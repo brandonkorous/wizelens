@@ -25,7 +25,6 @@ export function wizelensLogProcessor(wizelens: WizeLens) {
       const scope = record.instrumentationScope?.name;
       if (!sink || isBridged(scope)) return;
       const span = record.spanContext ?? (ctx ? trace.getSpanContext(ctx) : undefined);
-      if (!span) return;
       const body = record.body;
       sink({
         level: record.severityNumber ? levelFromSeverity(record.severityNumber) : levelFromName(record.severityText),
@@ -33,7 +32,7 @@ export function wizelensLogProcessor(wizelens: WizeLens) {
         message: typeof body === "string" ? body : JSON.stringify(body ?? ""),
         attributes: record.attributes,
         timeMs: timeOf(record.hrTime),
-        span: { traceId: span.traceId, spanId: span.spanId },
+        ...(span ? { span: { traceId: span.traceId, spanId: span.spanId } } : {}),
       });
     },
     forceFlush: async (): Promise<void> => {},

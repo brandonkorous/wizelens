@@ -87,6 +87,16 @@ export type Capability =
   | "changes"
   /** The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. */
   | "issues"
+  /** The host answers `api/models/hosts` and `api/models/kubernetes` from OpenTelemetry Collector metrics. */
+  | "infra"
+  /** The host runs uptime checks: `api/uptime` (hub) or `api/projects/<id>/uptime` (cloud), and the `uptime` page model. */
+  | "uptime"
+  /** Projects can turn on a public status page at `api/status/<token>`. */
+  | "statusPages"
+  /** The host resolves browser stacks at `api/sourcemaps/resolve` (uploaded maps, a build folder, or a dev server). */
+  | "sourcemaps"
+  /** The host keeps saved searches (`api/saved-searches`); without it the dashboard keeps them in the browser. */
+  | "savedSearches"
   /** The host keeps SLOs and Apdex targets (`api/slos`, `api/apdex`). */
   | "slos"
   /** The host keeps saved views, saved searches, and dashboards (`api/saved`). */

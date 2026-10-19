@@ -12,6 +12,7 @@ import { connectHub, releaseOf } from "./hub-connect.js";
 import { samplingInfo, TraceSampler } from "./sampling.js";
 import { buildInfo, DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, VERSION } from "./info.js";
 import { createLogSink, createLogWriter, makeLogger } from "./logger.js";
+import { looseLogsOf } from "./loose-logs.js";
 import { captureConsole } from "./logs/console.js";
 import type { McpDataSource } from "./mcp.js";
 import { createMetricParts, mcpMetrics } from "./metrics/setup.js";
@@ -20,6 +21,7 @@ import { SqlitePersister } from "./persist.js";
 import { createErrorMiddleware, recordException, setUser, tag } from "./request-api.js";
 import { TraceStore } from "./store.js";
 import { isEnabled, servesDashboard } from "./mode.js";
+import { localMapLoader } from "./sourcemaps.js";
 import { createTracing, installGlobals } from "./tracing.js";
 import type { WizeLens, WizeLensOptions } from "./types.js";
 import { resolveUiDir } from "./ui.js";
@@ -69,18 +71,19 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const selfEndpoints = new Set<string>(options.publicEndpoint ? [options.publicEndpoint] : []);
   const fetch = options.instrumentFetch ?? true;
   const tracing = createTracing(store, { service, version: VERSION, release: releaseOf(options), redactKeys, fetch }, selfEndpoints);
-  const logs = createLogSink(store, service, redactKeys);
+  const logs = createLogSink(store, service, redactKeys, looseLogsOf(options.logs));
   const write = createLogWriter(logs, !!options.logToConsole);
   const getTrace = createGetTrace(store, selfEndpoints);
   const startedMs = Date.now();
   const sqlite = () => !!persister?.active;
   const metrics = createMetricParts(options, redactKeys);
-  const info = () => buildInfo({ options, store, redactKeys, startedMs, sqlite, metrics: !!metrics });
+  const sourceMaps = localMapLoader(options.sourceMaps);
+  const info = () => buildInfo({ options, store, redactKeys, startedMs, sqlite, metrics: !!metrics, sourceMaps: !!sourceMaps });
   const mcp = mcpSource(options, store, getTrace, metrics?.store ?? null, tags);
   const uiDir = resolveUiDir(options.uiDir);
   const hub = connectHub(options, store, info, dashboard ? selfEndpoints : null, metrics?.store ?? null);
   const enableMcp = dashboard && !!options.enableMcp;
-  const handler = createHandler({ basePath, store, redactKeys, uiDir, enableMcp, mcp, info, getTrace, metrics: metrics?.store ?? null, selfEndpoints, dashboard, tags });
+  const handler = createHandler({ basePath, store, redactKeys, uiDir, enableMcp, mcp, info, getTrace, metrics: metrics?.store ?? null, selfEndpoints, dashboard, sourceMaps, tags });
   const capture = {
     tracer: tracing.tracer,
     basePath,

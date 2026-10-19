@@ -1,10 +1,10 @@
 // Ingest into ClickHouse: raw spans, logs, trace bounds, the update log, and metric points. Server-side async inserts batch the small writes.
 import { createHash } from "node:crypto";
-import { ATTR_BROWSER_SESSION, logKey, seriesKeyOf, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_SESSION, isLooseTraceId, logKey, seriesKeyOf, type Span } from "@wizeworks/lens-core";
 import type { HubWrite } from "@wizeworks/lens-hub/kit";
 import type { ChClient } from "./http.js";
 import type { SettleQueue } from "./queue.js";
-import { nextVer } from "./util.js";
+import { type Keep, logKeepOf, nextVer } from "./util.js";
 
 /** Small batches from many add-ons: ClickHouse buffers them into one part, and answers once they are written. */
 export const ASYNC = { async_insert: "1", wait_for_async_insert: "1" };
@@ -17,7 +17,7 @@ const sessionOf = (s: Span) => {
 };
 
 /** One bounds row per trace in the batch: its earliest start and latest end here. */
-function headRows(w: HubWrite, projectId: string, now: number, expire: (ms: number) => number) {
+function headRows(w: HubWrite, projectId: string, now: number, keep: Keep) {
   const bounds = new Map<string, [number, number]>();
   const touch = (id: string, start: number, end: number) => {
     const b = bounds.get(id);
@@ -26,7 +26,7 @@ function headRows(w: HubWrite, projectId: string, now: number, expire: (ms: numb
   for (const s of w.spans) touch(s.traceId, s.startMs, s.startMs + s.durationMs);
   for (const { traceId, log } of w.logs) touch(traceId, log.timeMs, log.timeMs);
   const env = w.sender.environment ?? "";
-  return [...bounds].map(([trace_id, [start, end]]) => ({ project_id: projectId, trace_id, start_ms: start, end_ms: end, updated_ms: now, env, expire_ms: expire(start) }));
+  return [...bounds].map(([trace_id, [start, end]]) => ({ project_id: projectId, trace_id, start_ms: start, end_ms: end, updated_ms: now, env, expire_ms: start + (isLooseTraceId(trace_id) ? keep.logMs : keep.ms) }));
 }
 
 function spanRows(w: HubWrite, projectId: string, ver: number, expire: (ms: number) => number) {
@@ -36,9 +36,9 @@ function spanRows(w: HubWrite, projectId: string, ver: number, expire: (ms: numb
   }));
 }
 
-function logRows(w: HubWrite, projectId: string, ver: number, expire: (ms: number) => number) {
+function logRows(w: HubWrite, projectId: string, ver: number, keep: Keep) {
   return w.logs.map(({ traceId, log }) => ({
-    project_id: projectId, trace_id: traceId, key: sha1(logKey(log)), time_ms: log.timeMs, json: JSON.stringify(log), ver, expire_ms: expire(log.timeMs),
+    project_id: projectId, trace_id: traceId, key: sha1(logKey(log)), time_ms: log.timeMs, json: JSON.stringify(log), ver, expire_ms: log.timeMs + logKeepOf(traceId, keep),
   }));
 }
 
@@ -50,13 +50,13 @@ function pointRows(w: HubWrite, projectId: string, expire: (ms: number) => numbe
 }
 
 /** Save one batch's raw telemetry and queue its traces for settling. Metric rollups are written by the caller. */
-export async function writeRaw(ch: ChClient, queue: SettleQueue, projectId: string, w: HubWrite, now: number, retentionMs: number): Promise<void> {
-  const expire = (ms: number) => ms + retentionMs;
+export async function writeRaw(ch: ChClient, queue: SettleQueue, projectId: string, w: HubWrite, now: number, keep: Keep): Promise<void> {
+  const expire = (ms: number) => ms + keep.ms;
   const ver = nextVer(now);
-  const heads = headRows(w, projectId, now, expire);
+  const heads = headRows(w, projectId, now, keep);
   await Promise.all([
     ch.insert("spans_raw", spanRows(w, projectId, ver, expire), ASYNC),
-    ch.insert("logs_raw", logRows(w, projectId, ver, expire), ASYNC),
+    ch.insert("logs_raw", logRows(w, projectId, ver, keep), ASYNC),
     ch.insert("metric_points_raw", pointRows(w, projectId, expire), ASYNC),
   ]);
   // Bounds and the update log go last, so a settle never sees a trace before its parts.

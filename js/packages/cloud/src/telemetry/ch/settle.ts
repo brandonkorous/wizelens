@@ -10,6 +10,7 @@ const BUDGET_MS = 2_000;
 export interface Settler {
   queue: SettleQueue;
   retention: RetentionCache;
+  logRetention: RetentionCache;
   /** Settles one project task: in a worker thread, or in this thread. */
   run: ProjectRunner;
   /** Batches at once: one reads and computes while others wait on their writes. */
@@ -23,8 +24,9 @@ async function settleItems(s: Settler, now: number, due: readonly Dirty[], o: Se
   let left = [...due];
   try {
     const days = await s.retention.daysOf(due.map((d) => d.project));
+    const logDays = await s.logRetention.daysOf(due.map((d) => d.project));
     for (const [project, items] of byProject(due)) {
-      await s.run({ project, items: [...items], now, retentionMs: days.get(project)! * 86_400_000, ver: nextVer(now) });
+      await s.run({ project, items: [...items], now, retentionMs: days.get(project)! * 86_400_000, logRetentionMs: logDays.get(project)! * 86_400_000, ver: nextVer(now) });
       for (const d of items) s.queue.settled(d, d.updatedMs);
       left = left.filter((d) => d.project !== project);
       o.onSettled?.(project);

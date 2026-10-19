@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { isLooseTraceId } from "../loose.js";
 import { browserTypeOf } from "../attributes.js";
 import { componentRows } from "../stats/rendering-components.js";
 import { pageViews, renderPhases, routeIssues, routeRows } from "../stats/rendering.js";
@@ -71,7 +72,8 @@ describe("list facts", () => {
       const f = traceFacts(t);
       const row = requestOf(t);
       expect(f.request).toEqual(row ? { ...row, findings: undefined } : null);
-      expect(f.trace).toMatchObject({ ...traceListItem(t), startMs: t.startMs, spanCount: t.spanCount });
+      if (isLooseTraceId(t.traceId)) expect(f.trace).toBeNull();
+      else expect(f.trace).toMatchObject({ ...traceListItem(t), startMs: t.startMs, spanCount: t.spanCount });
       expect(f.logs).toEqual(logRows([t]));
       expect(f.critical).toEqual(criticalSpans([t], 5));
     }

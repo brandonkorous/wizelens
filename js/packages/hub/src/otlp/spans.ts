@@ -1,9 +1,9 @@
-import { type Attributes, isDbCall, redactAttributes, type Span, stampVersion, type SpanCategory, type SpanKind } from "@wizeworks/lens-core";
+import { type Attributes, isDbCall, redactAttributes, SPAN_RESOURCE_KEYS, type Span, stampVersion, type SpanCategory, type SpanKind } from "@wizeworks/lens-core";
 import type { HubWrite } from "../store.js";
 import { foldDbParams } from "./db-params.js";
 import { hideNestedDb } from "./nested.js";
 import { splitTarget } from "./semconv.js";
-import { attributesOf, hexId, nanosToMs, type OtlpKeyValue, type OtlpResource, senderOf } from "./values.js";
+import { attributesOf, hexId, nanosToMs, type OtlpKeyValue, type OtlpResource, resourcePick, senderOf } from "./values.js";
 
 export interface OtlpSpan {
   traceId?: string;
@@ -58,8 +58,8 @@ function clientName(a: Attributes, fallback: string): string {
   }
 }
 
-/** One OTLP span as a contract span. Null when its ids are not valid. */
-export function toSpan(s: OtlpSpan, service: string, redactKeys: readonly string[]): Span | null {
+/** One OTLP span as a contract span, with the resource's Kubernetes attributes (`resource`) under its own. Null when its ids are not valid. */
+export function toSpan(s: OtlpSpan, service: string, redactKeys: readonly string[], resource: Attributes = {}): Span | null {
   const traceId = hexId(s.traceId, 32);
   const spanId = hexId(s.spanId, 16);
   if (!traceId || !spanId) return null;
@@ -67,7 +67,7 @@ export function toSpan(s: OtlpSpan, service: string, redactKeys: readonly string
   const raw = attributesOf(s.attributes);
   splitTarget(raw);
   foldDbParams(raw, redactKeys);
-  const attributes = redactAttributes(raw, redactKeys);
+  const attributes = redactAttributes({ ...resource, ...raw }, redactKeys);
   const category = categoryOf(kind, attributes);
   const startMs = nanosToMs(s.startTimeUnixNano);
   const name = String(s.name ?? "span").slice(0, 500);
@@ -97,7 +97,9 @@ export function writesFromSpans(list: readonly OtlpResourceSpans[], redactKeys: 
   return list.map((rs) => {
     const sender = senderOf(rs.resource);
     const spans = (rs.scopeSpans ?? []).flatMap((ss) => ss.spans ?? []);
-    const mapped = spans.map((s) => toSpan(s, sender.service, redactKeys)).filter((s): s is Span => s !== null);
+    const resource = resourcePick(rs.resource, SPAN_RESOURCE_KEYS);
+    const mapped = spans.map((s) => toSpan(s, sender.service, redactKeys, resource)).filter((s): s is Span => s !== null);
+    // The resource's service.version goes on the sender's spans, for releases and so Problems can tell a new one.
     return { sender, via: "otlp" as const, spans: stampVersion(hideNestedDb(mapped), sender), logs: [], remotes: [] };
   });
 }

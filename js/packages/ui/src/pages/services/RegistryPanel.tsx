@@ -6,7 +6,7 @@ import { useData } from "../../data/hooks";
 import { useHost } from "../../data/host";
 import { useEnvScope, useProjectScope } from "../../data/prefs";
 import { provider } from "../../data/provider";
-import { inScope, presenceOf } from "../../data/sources";
+import { inScope, presenceOf, VIA_LABEL } from "../../data/sources";
 import { act } from "../../data/useApi";
 import { fmtAgo, fmtCount } from "../../format";
 import { Badge, DotText } from "../../ui/Badges";
@@ -26,7 +26,7 @@ function columns(now: number): Column<ServiceGroup>[] {
     { key: "project", header: "Project", cell: (g) => g.project ?? "–", sort: (g) => g.project ?? "" },
     { key: "env", header: "Environment", cell: (g) => g.environment ?? "–", sort: (g) => g.environment ?? "" },
     { key: "hosts", header: "Hosts", cell: hostsText, sort: (g) => -g.instances.length },
-    { key: "via", header: "Sends with", cell: (g) => <Badge tone={g.newest.via === "addon" ? "info" : "neutral"}>{g.newest.via === "addon" ? "WizeLens" : "OTLP"}</Badge> },
+    { key: "via", header: "Sends with", cell: (g) => <Badge tone={g.newest.via === "addon" ? "info" : "neutral"}>{VIA_LABEL[g.newest.via]}</Badge> },
     { key: "runtime", header: "Runtime", cell: (g) => <span className="wl-muted wl-small">{g.newest.runtime ?? "–"}</span>, className: "wl-hide-sm" },
     { key: "seen", header: "Last seen", cell: (g) => fmtAgo(g.newest.lastSeenMs, now), sort: (g) => -g.newest.lastSeenMs },
   ];

@@ -3,7 +3,9 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { afterEach, expect, it } from "vitest";
 import type { Hub } from "./hub.js";
 import { settleHub } from "./settle.js";
+import { ANOMALY_NOW, anomalyTraces } from "../../core/src/testing/anomaly-scenario.js";
 import { post, span, startHub, T1 } from "./test/helpers.js";
+import { RETENTION_MS, settleAll, writeTraces } from "./test/scale.js";
 
 let hub: Hub;
 afterEach(() => hub?.close());
@@ -61,6 +63,20 @@ it("get_overview reports every service: health, traffic, and the top errors", as
   expect(report.requests.value).toBe(1);
   expect(report.services).toEqual([expect.objectContaining({ name: "billing", status: "unhealthy" })]);
   expect(report.needsAttention).toEqual(["billing: unhealthy"]);
+});
+
+it("list_problems names the spike after a release, with its suspected cause", async () => {
+  let url: string;
+  const clock = { now: ANOMALY_NOW };
+  ({ hub, url } = await startHub({ enableMcp: true, now: () => clock.now, maxAgeMs: RETENTION_MS }));
+  writeTraces(hub.data.store, anomalyTraces());
+  settleAll(hub.data.store, clock);
+  const res = (await (await rpc(url, 1, "tools/call", { name: "list_problems", arguments: { range: "1h" } })).json()) as { result: { content: { text: string }[] } };
+  const report = JSON.parse(res.result.content[0]!.text) as { baseline: string; ongoing: number; list: { title: string; suspectedCause: string; otherCauses: string[]; services: string[] }[] };
+  expect(report.baseline).toBe("normal is the same hour in earlier weeks (4 with data)");
+  expect(report.ongoing).toBe(1);
+  expect(report.list[0]).toMatchObject({ title: "Error rate above normal on pay and 2 more", suspectedCause: "pay 2.0.0 was released as it started." });
+  expect(report.list[0]!.otherCauses[0]).toBe("A new error in pay: TimeoutError: charge store timed out");
 });
 
 it("MCP is off unless enabled", async () => {

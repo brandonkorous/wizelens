@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import type { MapLoader } from "@wizeworks/lens-core";
 import type { WizeAuth } from "./auth/auth.js";
 import type { AuthSecret } from "./auth/secret.js";
 import type { Billing } from "./billing/service.js";
@@ -26,6 +27,8 @@ export interface CloudApp {
   billing: Billing;
   /** New data per project, for open dashboards. */
   changes: Changes;
+  /** Uploaded source maps of one project, cached. */
+  maps(projectId: string): MapLoader;
   /** The address for links: the public URL, or the address the cloud listens on. */
   baseUrl(req?: IncomingMessage): string;
 }
