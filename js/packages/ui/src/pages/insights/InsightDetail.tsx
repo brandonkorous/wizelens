@@ -6,9 +6,10 @@ import { Badge, CopyButton, ImpactBadge } from "../../ui/Badges";
 import { KeyValues, Panel } from "../../ui/Panel";
 import { adviceFor, AREA_LABEL } from "./advice";
 
+/** The requests of an endpoint that had insights, or the route on the Rendering page. */
 function endpointHref(g: InsightGroup, endpoint: string): string {
-  if (g.area === "render") return hrefTo("rendering");
-  return hrefTo("requests", [], { q: endpoint.replace(/^[A-Z]+ /, "") });
+  if (g.area === "render") return hrefTo("rendering", [], { q: endpoint });
+  return hrefTo("requests", [], { endpoint, insights: "1" });
 }
 
 function Endpoints({ group }: { group: InsightGroup }) {

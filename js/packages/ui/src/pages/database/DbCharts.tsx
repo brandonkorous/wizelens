@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { DatabaseModel } from "@wizeworks/lens-core";
 import { fmtMs } from "../../format";
+import { setQuery } from "../../routes";
 import { BarList } from "../../ui/BarList";
 import { Select } from "../../ui/Controls";
 import { Empty, Panel } from "../../ui/Panel";
@@ -43,7 +44,8 @@ export function OperationsPanel({ stats }: { stats: DatabaseModel }) {
   const [stat, setStat] = useState<OpStat>("avg");
   const items = stats.operations.map((o) => {
     const value = stat === "avg" ? (o.avgMs ?? 0) : stat === "total" ? o.totalMs : o.count;
-    return { key: o.operation, label: o.operation, value, display: o.count === 0 ? "–" : OP_FORMAT[stat](value) };
+    const pick = () => setQuery({ operation: o.operation === stats.filter.operation ? null : o.operation, page: null });
+    return { key: o.operation, label: o.operation, value, display: o.count === 0 ? "–" : OP_FORMAT[stat](value), onClick: pick };
   });
   const top = Math.max(0, ...items.map((i) => i.value));
   for (const i of items) Object.assign(i, { color: i.value === top ? "var(--wl-blue)" : "color-mix(in srgb, var(--wl-blue) 55%, transparent)" });

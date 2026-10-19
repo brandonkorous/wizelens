@@ -1,6 +1,6 @@
 // Panels only your own services (APIs and workers) have: errors, slow requests, logs, and runtime metrics.
 import { useState } from "react";
-import { type ErrorGroup, isFailed, type RequestItem, type ServicePageModel } from "@wizeworks/lens-core";
+import { type ErrorGroup, isFailed, type LogRow, type RequestItem, type ServicePageModel } from "@wizeworks/lens-core";
 import { useData } from "../../data/hooks";
 import { useMetricsModel } from "../../data/metrics";
 import { fmtAgo, fmtCount, fmtMs } from "../../format";
@@ -26,19 +26,19 @@ function errorColumns(now: number): Column<ErrorGroup>[] {
 }
 
 /** The service's most frequent errors. A row opens it on the Errors page. */
-export function ErrorsPanel({ m }: { m: ServicePageModel }) {
+export function ErrorsPanel({ m, name }: { m: ServicePageModel; name: string }) {
   const { updatedMs } = useData();
   const [all, setAll] = useState(false);
   const { groups, total } = m.errors;
   const action = (
     <span className="wl-row-actions">
       <ToggleAll open={all} total={groups.length} onToggle={() => setAll(!all)} />
-      <ViewAll href={hrefTo("errors")} label="View errors" />
+      <ViewAll href={hrefTo("errors", [], { service: name })} label="View errors" />
     </span>
   );
   return (
     <Panel title={`Top Errors (${fmtCount(total)})`} action={action} flush>
-      <Table columns={errorColumns(updatedMs)} rows={all ? groups : groups.slice(0, TOP)} rowKey={(g) => g.key} onRowClick={(g) => navigate(hrefTo("errors", [], { group: g.key }))} empty={<Empty title="No exceptions">Nothing failed in this time range.</Empty>} />
+      <Table columns={errorColumns(updatedMs)} rows={all ? groups : groups.slice(0, TOP)} rowKey={(g) => g.key} onRowClick={(g) => navigate(hrefTo("errors", [], { service: name, sort: "count", group: g.key }))} empty={<Empty title="No exceptions">Nothing failed in this time range.</Empty>} />
     </Panel>
   );
 }
@@ -59,7 +59,10 @@ export function SlowestPanel({ m, name }: { m: ServicePageModel; name: string })
   );
 }
 
-const SERVICE_LOG_COLUMNS = LOG_COLUMNS.filter((c) => c.key !== "service");
+// The service is the page's own, and a category here is plain text (the Logs page filters by it).
+const SERVICE_LOG_COLUMNS = LOG_COLUMNS.filter((c) => c.key !== "service").map((c) =>
+  c.key === "category" ? { ...c, cell: (r: LogRow) => <span className="wl-truncate" title={r.category}>{r.category}</span> } : c,
+);
 
 /** The newest log lines of this service, with its warning and error counts. */
 export function LogsPanel({ m, name }: { m: ServicePageModel; name: string }) {

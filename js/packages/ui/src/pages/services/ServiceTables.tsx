@@ -35,8 +35,15 @@ export function ToggleAll({ open, total, onToggle }: { open: boolean; total: num
 /** Where the full list lives on another page, by kind. */
 function moreHref(row: ServiceRow): [string, string] | null {
   if (row.kind === "api" || row.kind === "worker") return [hrefTo("requests", [], { service: row.name }), "View requests"];
-  if (row.kind === "database") return [hrefTo("database"), "View database"];
+  if (row.kind === "database") return [hrefTo("database", [], { database: row.name }), "View queries"];
   return null;
+}
+
+/** API endpoints open their requests; database queries open the Database page on that query. */
+function endpointClick(row: ServiceRow): ((e: EndpointStat) => void) | undefined {
+  if (row.kind === "api") return (e) => navigate(hrefTo("requests", [], { endpoint: e.name, service: row.name }));
+  if (row.kind === "database") return (e) => navigate(hrefTo("database", [], { database: row.name, q: e.name }));
+  return undefined;
 }
 
 /** Every endpoint, query, or call of the service, busiest first. */
@@ -53,7 +60,7 @@ export function EndpointsPanel({ m, row }: { m: ServicePageModel; row: ServiceRo
   );
   return (
     <Panel title={`${title} (${fmtCount(m.endpointCount)})`} action={action} flush>
-      <Table columns={endpointColumns(row.kind)} rows={rows} rowKey={(e) => e.name} defaultSort={{ key: "count", desc: true }} empty={<Empty>Nothing recorded in this range.</Empty>} />
+      <Table columns={endpointColumns(row.kind)} rows={rows} rowKey={(e) => e.name} onRowClick={endpointClick(row)} defaultSort={{ key: "count", desc: true }} empty={<Empty>Nothing recorded in this range.</Empty>} />
     </Panel>
   );
 }

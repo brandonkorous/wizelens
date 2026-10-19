@@ -659,6 +659,20 @@ at 200 rows (Requests and Logs page through all rows). Request rows in models ca
 not settled yet (null when none). Every new trace waits a few seconds on purpose, so those are not counted. The dashboard says
 "Stats are catching up" while it is above 0, and search's `settling` uses the same rule. The cloud caches answers for 15 seconds; the hub until its stats change.
 
+**Filters.** Every page but Services and Service takes `service` (a display name: "Web App" for the browser), and its cards,
+charts, and lists count that service only: requests and traces that went through it, and the queries, errors, and log lines
+it wrote. The dashboard sends the service chosen in the top bar unless the link names one. Page filters, all in the URL:
+
+| Page | Parameters |
+|---|---|
+| errors | `type`, `endpoint`, `critical=1`, `q`, `sort` (`recent`, `count`), `page`, `size`, `group`. The list pages through every matching group; cards and charts follow `service` only |
+| database | `q`, `table`, `operation`, `database`, `sort` (`avg`, `count`, `total`), `page`, `size` |
+| traces | `status` (`error`, `ok`), `duration` (as Requests), `q`, `sort` (`time`, `duration`), `page`, `size`, `trace`. Without `trace`, the first listed trace shows |
+| logs | `level`, `exact=1` (that level only), `category`, `trace`, `q`, `page`, `size` |
+| requests | as before, plus `endpoint` (exact), `user`, `insights=1`, and sorts `errors` and `db` |
+| insights | `area`, `impact`, `q`, `endpoint`, `key` |
+| rendering | `q` (route or component name) |
+
 ### Stats tables (hub and cloud)
 
 Pages read small tables built from the stored traces, never the traces themselves (only `selected` traces are read whole).
@@ -675,6 +689,11 @@ Pages read small tables built from the stored traces, never the traces themselve
   are rebuilt from its spans and logs, and the rollups get its new contribution minus the old one (kept as JSON in
   `traces.contrib`). `settled_ms` is set to the `updated_ms` that was read, so a late span settles the trace again. Representatives,
   first and last times, and ids are display fields and are never taken back out.
+- **Per-service copies** (`FACTS_VERSION` 3): the kinds in `SCOPED_BASE` (`req`, `req.part`, `trace`, `ins`, `ins.ep`,
+  `bn.*`, `db*`, `err`, `err.t`, `err.e`) also write a `<kind>@svc` row keyed by the service first. A need with `service`
+  reads that copy and gets its keys back without the service. `db.qd` keys a query shape by operation and database first.
+  Group needs can also filter keys by text (`contains`, ASCII case-insensitive), keep rows over a value (`having`), and skip
+  rows (`order.offset`).
 - The slow query threshold is fixed when a trace settles (100 ms). `FACTS_VERSION` in `@wizeworks/lens-core` names the fact
   rules: when it changes, a host clears its stats and rebuilds them (hub: `meta('facts')`; cloud: `scale_meta('facts')`).
 - Times are those of each item (request start, span start, log time), so an item near a window edge counts where it happened.

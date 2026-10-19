@@ -26,8 +26,8 @@ export function headlinesOf(cur: Agg, prev: Agg, buckets: readonly Agg[]): Reque
 }
 
 /** Needs for headlines over a request kind: both windows' totals and the window's buckets. */
-export function headlineNeeds(prefix: string, kind: RequestKind, filter?: KeyFilter): Need[] {
-  const more = filter ? { filter } : {};
+export function headlineNeeds(prefix: string, kind: RequestKind, filter?: KeyFilter, service?: string): Need[] {
+  const more = { ...(filter ? { filter } : {}), ...(service ? { service } : {}) };
   return [groupNeed(`${prefix}.cur`, kind, "cur", more), groupNeed(`${prefix}.prev`, kind, "prev", more), seriesNeed(`${prefix}.series`, kind, "cur", SPARK_BUCKETS, more)];
 }
 

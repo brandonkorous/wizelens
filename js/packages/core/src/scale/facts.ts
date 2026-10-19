@@ -4,16 +4,16 @@ import type { LogRow } from "../stats/logs.js";
 import { requestOf } from "../stats/requests.js";
 import { type CriticalSpan, traceDurationOf } from "../stats/traces.js";
 import type { Trace } from "../types.js";
-import { type Contribution, contribution } from "./agg.js";
+import { type Contribution, contribution, withServices } from "./agg.js";
 import { dbFacts } from "./facts-db.js";
 import { errorFacts, logFacts } from "./facts-errors.js";
 import { type RequestItem, requestItemOf, traceCritical, type TraceItem, traceItemOf, traceLogRows } from "./facts-lists.js";
 import { renderFacts } from "./facts-render.js";
 import { requestContributions } from "./facts-requests.js";
-import { serviceFacts } from "./facts-services.js";
+import { serviceFacts, traceServices } from "./facts-services.js";
 
 /** Bump when fact semantics change: hosts then rebuild their facts and rollups. */
-export const FACTS_VERSION = 2;
+export const FACTS_VERSION = 3;
 /** A trace waits a few seconds for its stats on purpose; only one written longer ago than this counts as stats running behind. */
 export const SETTLE_BEHIND_MS = 60_000;
 /** Slow query threshold that hosts fix when a trace settles; the same as `analyzeTrace`'s default. */
@@ -40,15 +40,15 @@ export interface TraceFacts {
   contributions: Contribution[];
 }
 
-function traceContribution(t: Trace): Contribution {
-  return contribution("trace", "", t.startMs, { sum: t.spanCount, c: [traceDurationOf(t) >= DEFAULT_SLOW_MS ? 1 : 0] });
+function traceContributions(t: Trace): Contribution[] {
+  return withServices(contribution("trace", "", t.startMs, { sum: t.spanCount, c: [traceDurationOf(t) >= DEFAULT_SLOW_MS ? 1 : 0] }), traceServices(t));
 }
 
 function buildFacts(trace: Trace, o: FactOptions): TraceFacts {
   const row = requestOf(trace);
   const logs = traceLogRows(trace);
   const contributions = [
-    traceContribution(trace),
+    ...traceContributions(trace),
     ...(row ? requestContributions(row) : []),
     ...serviceFacts(trace),
     ...dbFacts(trace, o.slowQueryMs),

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Bell, FileText, OctagonX, TriangleAlert } from "lucide-react";
 import { fmtCount } from "../../format";
 import { setQuery } from "../../routes";
@@ -5,7 +6,7 @@ import { Pager } from "../../ui/Controls";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
 import { Table } from "../../ui/Table";
-import { LOG_COLUMNS, LogFilters, LogVolumePanel } from "./LogParts";
+import { LOG_COLUMNS, LogDetail, LogFilters, LogVolumePanel } from "./LogParts";
 import type { LogsModel } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
 import { ModelState } from "../../ui/ModelState";
@@ -26,9 +27,11 @@ function LogStatCards({ stats }: { stats: LogsModel }) {
 
 function LogTable({ stats }: { stats: LogsModel }) {
   const { rows, page, pageSize, matching } = stats;
+  const [open, setOpen] = useState<string | null>(null);
+  const toggle = (key: string) => setOpen(open === key ? null : key);
   return (
     <Panel title={`Log Lines (${fmtCount(matching)})`} flush>
-      <Table columns={LOG_COLUMNS} rows={rows} rowKey={(r) => r.key} empty={<Empty title="No matching log lines">Try a lower level, another service, or a wider time range.</Empty>} />
+      <Table columns={LOG_COLUMNS} rows={rows} rowKey={(r) => r.key} selectedKey={open} onRowClick={(r) => toggle(r.key)} detail={(r) => <LogDetail row={r} />} empty={<Empty title="No matching log lines">Try a lower level, another service, or a wider time range.</Empty>} />
       {matching > 0 && (
         <Pager page={page} pageSize={pageSize} total={matching} noun="lines" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />
       )}

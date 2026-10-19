@@ -8,7 +8,7 @@ build order: bugs first, then the shared pieces (filters, URL state) that later 
 | Phase | What | Size | State |
 |---|---|---|---|
 | 0 | Bugs and loose ends | S | Done |
-| 1 | Filters on every page, and a global service filter | L | Not started |
+| 1 | Filters on every page, and a global service filter | L | Done |
 | 2 | Time and URL state: links that keep the view, custom range, zoom, live tail | M | Not started |
 | 3 | Detail pages: error group, endpoint, query, route; a better trace page | L | Not started |
 | 4 | Error tracker workflow: resolve, ignore, regressed, true first seen | M | Not started |

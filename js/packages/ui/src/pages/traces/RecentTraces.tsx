@@ -1,9 +1,10 @@
 import { requestOf, type Trace, type TraceListItem } from "@wizeworks/lens-core";
 export { tracePath } from "@wizeworks/lens-core";
-import { fmtMs, fmtShownOf, shortId } from "../../format";
+import { fmtCount, fmtMs, shortId } from "../../format";
 import { hrefTo, setQuery, useRoute } from "../../routes";
 import { Dot, toneOfHealth, type Tone } from "../../ui/Badges";
-import { SearchInput } from "../../ui/Controls";
+import { Pager, SearchInput } from "../../ui/Controls";
+import { useSearchText } from "../../ui/useSearchText";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 
 export function traceTone(t: Trace): Tone {
@@ -30,12 +31,21 @@ function TraceRow({ item, selected }: { item: TraceListItem; selected: boolean }
   );
 }
 
-/** The newest traces in the range, with a search box. A click shows the trace on the right. */
-export function RecentTraces({ items, total, selectedId }: { items: readonly TraceListItem[]; total: number; selectedId: string | null }) {
+export interface RecentTracesProps {
+  items: readonly TraceListItem[];
+  total: number;
+  page: number;
+  size: number;
+  selectedId: string | null;
+}
+
+/** One page of the traces that match the filter, with a search box. A click shows the trace on the right. */
+export function RecentTraces({ items, total, page, size, selectedId }: RecentTracesProps) {
   const query = useRoute().query.get("q") ?? "";
+  const [text, setText] = useSearchText(query);
   return (
-    <Panel title={`Recent Traces (${fmtShownOf(items.length, total)})`} action={<ViewAll href={hrefTo("requests", [], { q: query })} />}>
-      <SearchInput value={query} onChange={(v) => setQuery({ q: v })} placeholder="Search traces by ID, path, or service…" />
+    <Panel title={`Traces (${fmtCount(total)})`} action={<ViewAll href={hrefTo("requests", [], { q: query })} label="View requests" />}>
+      <SearchInput value={text} onChange={setText} placeholder="Search traces by ID, path, or service…" />
       {items.length === 0 ? (
         <Empty>{query && total === 0 ? "No traces match." : "No traces in this time range yet."}</Empty>
       ) : (
@@ -57,6 +67,7 @@ export function RecentTraces({ items, total, selectedId }: { items: readonly Tra
           </table>
         </div>
       )}
+      {total > size && <Pager page={page} pageSize={size} total={total} noun="traces" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />}
     </Panel>
   );
 }

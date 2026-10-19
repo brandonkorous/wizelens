@@ -1,10 +1,11 @@
 import { splitKey } from "../scale/kinds.js";
-import type { NeedResults, PageData, PageDef, WindowRef } from "../scale/needs.js";
+import type { Need, NeedResults, PageData, PageDef, WindowRef } from "../scale/needs.js";
 import { bucketStarts, percentChange, percentOf } from "../stats/common.js";
 import { displayService, type ErrorEvent, type ErrorGroup, type ServiceErrors } from "../stats/errors.js";
 import { SPARK_BUCKETS } from "../stats/overview.js";
-import { CHART_BUCKETS, MODEL_LIST_MAX } from "./database.js";
-import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
+import { CHART_BUCKETS } from "./database.js";
+import { endpointGroupKeys, endpointGroupsNeed, ERROR_PAGE_SIZE, type ErrorFilter, errorFilterOf, errorListNeed } from "./error-filter.js";
+import { META_NEEDS, type ModelMeta, metaOf, pageParams, scoped } from "./input.js";
 import { aggByKey, byDesc, counter, counts, groupCount, groupNeed, type Row, rowsOf, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
 
 export interface ServiceErrorRow extends ServiceErrors {
@@ -16,9 +17,15 @@ export interface ErrorsModel {
   meta: ModelMeta;
   hasRequests: boolean;
   exceptions: number;
+  filter: ErrorFilter;
+  /** One page of the groups that match the filter. */
   groups: ErrorGroup[];
-  /** Groups before the list limit. */
+  /** Groups that match the filter, on every page. */
   groupCount: number;
+  page: number;
+  size: number;
+  /** The busiest endpoints with errors, for the endpoint filter. */
+  endpoints: { endpoint: string; count: number }[];
   /** The `group` parameter's group, found by key even when it is not among the listed groups; null without one. */
   selected: ErrorGroup | null;
   types: { type: string; count: number }[];
@@ -31,6 +38,8 @@ export interface ErrorsModel {
 }
 
 const TREND_BUCKETS = 16;
+/** Endpoints offered by the endpoint filter. */
+const ENDPOINT_OPTIONS = 50;
 /** Groups keep at most this many trace ids and endpoints, so the model stays small over long ranges. */
 const GROUP_LIST_MAX = 50;
 
@@ -89,34 +98,47 @@ function changeOf(d: PageData, cards: ErrorsModel["cards"]): ErrorsModel["change
   return { exceptions: change(cards.exceptions, prev.exceptions), errorRate: change(cards.errorRate, prev.errorRate), endpoints: change(cards.endpoints, prev.endpoints), critical: change(cards.critical, prev.critical) };
 }
 
-const windowNeeds = (win: WindowRef) => [
-  groupNeed(`req.${win}`, "req", win),
-  groupNeed(`err.${win}`, "err", win),
-  groupNeed(`err.g.${win}`, "err.g", win),
-  groupNeed(`err.e.${win}`, "err.e", win, { order: { by: "n", desc: true, limit: 0 } }),
+/** Card needs of one window; with a service, only its requests and errors. */
+const windowNeeds = (win: WindowRef, service: string | undefined) => [
+  groupNeed(`req.${win}`, "req", win, scoped(service)),
+  groupNeed(`err.${win}`, "err", win, scoped(service)),
+  groupNeed(`err.g.${win}`, "err.g", win, service ? { filter: { prefix: `${service}|` } } : {}),
+  groupNeed(`err.e.${win}`, "err.e", win, { order: { by: "n", desc: true, limit: 0 }, ...scoped(service) }),
   groupNeed(`err.s.${win}`, "err.s", win),
 ];
+
+/** Every need besides the group list: cards, charts, types, endpoints, and the services table. */
+function pageNeeds(service: string | undefined): Need[] {
+  const one = scoped(service);
+  return [
+    ...META_NEEDS,
+    ...windowNeeds("cur", service),
+    ...windowNeeds("prev", service),
+    groupNeed("err.ge", "err.ge", "cur", service ? { filter: { prefix: `${service}|` } } : {}),
+    groupNeed("err.t", "err.t", "cur", one),
+    groupNeed("endpoints", "err.e", "cur", { order: { by: "n", desc: true, limit: ENDPOINT_OPTIONS }, ...one }),
+    groupNeed("req.svc", "req.svc", "cur"),
+    seriesNeed("trend", "err.s", "cur", TREND_BUCKETS, { split: true }),
+    seriesNeed("chart", "err", "cur", CHART_BUCKETS, one),
+    seriesNeed("sparks", "err", "cur", SPARK_BUCKETS, one),
+    seriesNeed("rate", "req", "cur", SPARK_BUCKETS, one),
+  ];
+}
 
 /** The `group` parameter's group by key, so a link to an older or busier group than the list holds still opens it. */
 const selectedNeeds = (group: string | undefined) => (group ? [groupNeed("selected", "err.g", "cur", { top: true, ids: true, filter: { keys: [group] } })] : []);
 
-/** The Errors page. Params: group (the selected group's key). */
+/** The Errors page. Params: the filter (`errorFilterOf`), page, size, and group (the selected group's key). */
 export const errorsPage: PageDef<ErrorsModel> = {
-  needs: (ctx) =>
-    uniqueNeeds([
-      ...selectedNeeds(ctx.params.group),
-      ...META_NEEDS,
-      ...windowNeeds("cur"),
-      ...windowNeeds("prev"),
-      groupNeed("groups", "err.g", "cur", { top: true, ids: true, order: { by: "lastMs", desc: true, limit: MODEL_LIST_MAX } }),
-      groupNeed("err.ge", "err.ge", "cur"),
-      groupNeed("err.t", "err.t", "cur"),
-      groupNeed("req.svc", "req.svc", "cur"),
-      seriesNeed("trend", "err.s", "cur", TREND_BUCKETS, { split: true }),
-      seriesNeed("chart", "err", "cur", CHART_BUCKETS),
-      seriesNeed("sparks", "err", "cur", SPARK_BUCKETS),
-      seriesNeed("rate", "req", "cur", SPARK_BUCKETS),
-    ]),
+  needs: (ctx) => {
+    const f = errorFilterOf(ctx.params);
+    const list = f.endpoint ? [endpointGroupsNeed(f.endpoint)] : [errorListNeed(f, ctx.params)];
+    return uniqueNeeds([...selectedNeeds(ctx.params.group), ...pageNeeds(f.service || undefined), ...list]);
+  },
+  followUp(ctx, first) {
+    const f = errorFilterOf(ctx.params);
+    return f.endpoint ? [errorListNeed(f, ctx.params, endpointGroupKeys(first))] : [];
+  },
   model(d) {
     const cards = cardsOf(d, "cur");
     const endpoints = endpointsByGroup(rowsOf(d, "err.ge"));
@@ -126,8 +148,11 @@ export const errorsPage: PageDef<ErrorsModel> = {
       meta: metaOf(d),
       hasRequests: totalOf(d, "req.cur").n > 0,
       exceptions: cards.exceptions,
-      groups: [...rowsOf(d, "groups")].sort(byDesc((r) => r.agg.lastMs)).map((r) => errorGroupOf(r, endpoints)),
+      filter: errorFilterOf(d.params),
+      groups: rowsOf(d, "groups").map((r) => errorGroupOf(r, endpoints)),
       groupCount: groupCount(d, "groups"),
+      ...pageParams(d.params, ERROR_PAGE_SIZE),
+      endpoints: rowsOf(d, "endpoints").map((r) => ({ endpoint: r.key, count: r.agg.n })),
       selected: rowsOf(d, "selected").map((r) => errorGroupOf(r, endpoints))[0] ?? null,
       types: [...rowsOf(d, "err.t")].sort(byDesc((r) => r.agg.n)).map((r) => ({ type: r.key, count: r.agg.n })),
       services: servicesOf(d),

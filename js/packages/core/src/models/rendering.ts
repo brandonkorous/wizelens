@@ -77,7 +77,7 @@ const firstNeeds = (): Need[] => [
   seriesNeed("views", "pv", "cur", RENDER_BUCKETS),
 ];
 
-/** The Rendering page. */
+/** The Rendering page. Params: q (text in a route or component name). */
 export const renderingPage: PageDef<RenderingModel> = {
   needs: () => uniqueNeeds(firstNeeds()),
   followUp(_ctx, first) {
@@ -85,9 +85,12 @@ export const renderingPage: PageDef<RenderingModel> = {
     return names.length ? [seriesNeed("issues", "rc", "cur", RENDER_BUCKETS, { split: true, filter: { keys: names } })] : [];
   },
   model(d) {
-    const components = componentRowsOf(d, "cur");
-    const routes = routeRowsOf(d, "cur");
-    const withIssues = components.filter((c) => c.issues.length > 0).length;
+    // The text filter narrows the two tables; the cards count everything.
+    const q = (d.params.q ?? "").trim().toLowerCase();
+    const all = componentRowsOf(d, "cur");
+    const components = all.filter((c) => !q || c.name.toLowerCase().includes(q));
+    const routes = routeRowsOf(d, "cur").filter((r) => !q || r.route.toLowerCase().includes(q));
+    const withIssues = all.filter((c) => c.issues.length > 0).length;
     return {
       meta: metaOf(d),
       views: viewsOf(d, "cur"),

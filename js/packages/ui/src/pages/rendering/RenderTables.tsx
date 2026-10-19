@@ -23,6 +23,8 @@ const ROUTE_COLUMNS: Column<RouteRow>[] = [
   { key: "render", header: hint("Avg. Render Time", "Full page loads and in-app route changes"), num: true, cell: (r) => fmtMs(r.avgRenderMs), sort: (r) => r.avgRenderMs ?? -1 },
   { key: "ssr", header: hint("SSR Time", LOADS_ONLY), num: true, cell: (r) => fmtMs(r.avgSsrMs), sort: (r) => r.avgSsrMs ?? -1 },
   { key: "hydration", header: hint("Hydration Time", LOADS_ONLY), num: true, cell: (r) => fmtMs(r.avgHydrationMs), sort: (r) => r.avgHydrationMs ?? -1 },
+  { key: "lcp", header: hint("LCP", "Largest Contentful Paint. " + LOADS_ONLY), num: true, cell: (r) => fmtMs(r.avgLcpMs), sort: (r) => r.avgLcpMs ?? -1 },
+  { key: "images", header: hint("Large Images", "Images larger than they are shown"), num: true, cell: (r) => (r.largeImages ? fmtCount(r.largeImages) : "–"), sort: (r) => r.largeImages },
   { key: "cls", header: "Layout Shift", num: true, cell: (r) => (r.avgCls === null ? "–" : r.avgCls.toFixed(2)), sort: (r) => r.avgCls ?? -1 },
   {
     key: "issue",

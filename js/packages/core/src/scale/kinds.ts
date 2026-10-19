@@ -9,11 +9,17 @@ export type RollupKind =
   | "trace" | "req" | "req.dim" | "req.svc" | "req.part"
   | "svc" | "svc.ep" | "edge" | "bn.layer" | "bn.owner"
   | "ins" | "ins.ep"
-  | "db" | "db.q" | "db.qe" | "db.t" | "db.op"
+  | "db" | "db.q" | "db.qd" | "db.qe" | "db.t" | "db.op"
   | "err" | "err.g" | "err.ge" | "err.t" | "err.s" | "err.e"
   | "log" | "log.s"
   | "pv" | "pv.route" | "pv.m" | "pv.large" | "pv.g"
-  | "react" | "rc" | "rc.route";
+  | "react" | "rc" | "rc.route"
+  | ScopedKind;
+
+/** Kinds that also count per service: each item adds a copy keyed by its service first (see `SERVICE_KIND`). */
+export const SCOPED_BASE = ["req", "req.part", "trace", "ins", "ins.ep", "bn.layer", "bn.owner", "db", "db.q", "db.qd", "db.qe", "db.t", "db.op", "err", "err.t", "err.e"] as const;
+export type ScopedBase = (typeof SCOPED_BASE)[number];
+export type ScopedKind = `${ScopedBase}@svc`;
 
 export interface KindSpec {
   /** Names of the counters, in slot order (c0, c1, ...). */
@@ -39,7 +45,7 @@ const spec = (counters: readonly string[] = [], over: Partial<KindSpec> = {}): K
 
 const REQ = ["dbCount", "withInsights", "insights"];
 
-export const KIND_SPEC: Record<RollupKind, KindSpec> = {
+const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   trace: spec(["slow"]),
   req: spec(REQ, { hist: true }),
   "req.dim": spec(REQ),
@@ -54,6 +60,8 @@ export const KIND_SPEC: Record<RollupKind, KindSpec> = {
   "ins.ep": spec(),
   db: spec(["slow"]),
   "db.q": spec(["slow"], { top: "largest" }),
+  /** `db.q` keyed by operation and database first, for the Database page filters. */
+  "db.qd": spec(["slow"], { top: "largest" }),
   "db.qe": spec(),
   "db.t": spec(["withRows", "rows"]),
   "db.op": spec(),
@@ -73,6 +81,15 @@ export const KIND_SPEC: Record<RollupKind, KindSpec> = {
   react: spec(),
   rc: spec(["renders", "actualMs", "selfMs", "wasted", "context"], { ints: [0, 3, 4], top: "newest" }),
   "rc.route": spec(),
+};
+
+/** Every kind's fields; the per-service copies keep their base kind's. */
+export const KIND_SPEC = { ...BASE_SPEC, ...Object.fromEntries(SCOPED_BASE.map((k) => [`${k}@svc`, BASE_SPEC[k]])) } as Record<RollupKind, KindSpec>;
+
+/** The per-service kind of a kind, when it has one. `log.s` is already keyed by service and level. */
+export const SERVICE_KIND: Partial<Record<RollupKind, RollupKind>> = {
+  ...Object.fromEntries(SCOPED_BASE.map((k) => [k, `${k}@svc`])),
+  log: "log.s",
 };
 
 export const ROLLUP_KINDS = Object.keys(KIND_SPEC) as RollupKind[];

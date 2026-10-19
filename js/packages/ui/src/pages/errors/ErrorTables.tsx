@@ -1,14 +1,14 @@
-import { useState } from "react";
 import { ArrowDown, ArrowUp, Box, Monitor } from "lucide-react";
-import { type ErrorGroup, type ErrorsModel, percentChange, type ServiceErrorRow } from "@wizeworks/lens-core";
-import { fmtCount, fmtPct, fmtShownOf, fmtTime } from "../../format";
+import { type ErrorGroup, type ErrorsModel, isErrorFiltered, percentChange, type ServiceErrorRow } from "@wizeworks/lens-core";
+import { fmtCount, fmtPct, fmtTime } from "../../format";
 import { setQuery } from "../../routes";
 import { DotText } from "../../ui/Badges";
+import { Pager } from "../../ui/Controls";
 import { Empty, Panel } from "../../ui/Panel";
 import { Sparkline } from "../../ui/Sparkline";
+import { useSetService } from "../../ui/ServiceSelect";
 import { type Column, Table } from "../../ui/Table";
 
-const TOP = 5;
 
 const pathOf = (endpoint: string) => endpoint.replace(/^[A-Z]+ /, "");
 
@@ -21,24 +21,23 @@ const GROUP_COLUMNS: Column<ErrorGroup>[] = [
   { key: "count", header: "Count", num: true, sort: (g) => g.count, cell: (g) => fmtCount(g.count) },
 ];
 
+/** One page of the exception groups that match the filter. A row shows its details. */
 export function RecentExceptionsPanel({ stats, selected }: { stats: ErrorsModel; selected: string | null }) {
-  const [all, setAll] = useState(false);
-  const rows = all ? stats.groups : stats.groups.slice(0, TOP);
-  const toggle = stats.groups.length > TOP && (
-    <button type="button" className="wl-view-all wl-link-btn" onClick={() => setAll(!all)}>
-      {all ? `Show latest ${TOP}` : `View all ${stats.groups.length}`}
-    </button>
-  );
+  const filtered = isErrorFiltered(stats.filter);
+  const title = stats.filter.sort === "count" ? "Most Frequent Exceptions" : "Recent Exceptions";
   return (
-    <Panel title={`Recent Exceptions (${fmtShownOf(stats.groups.length, stats.groupCount)})`} action={toggle}>
+    <Panel title={`${title} (${fmtCount(stats.groupCount)})`} flush className="wl-err-list">
       <Table
         columns={GROUP_COLUMNS}
-        rows={rows}
+        rows={stats.groups}
         rowKey={(g) => g.key}
         selectedKey={selected}
         onRowClick={(g) => setQuery({ group: g.key })}
-        empty={<Empty title="No exceptions">Nothing failed in this time range.</Empty>}
+        empty={<Empty title={filtered ? "No matching exceptions" : "No exceptions"}>{filtered ? "Try another filter or a wider time range." : "Nothing failed in this time range."}</Empty>}
       />
+      {stats.groupCount > 0 && (
+        <Pager page={stats.page} pageSize={stats.size} total={stats.groupCount} noun="groups" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />
+      )}
     </Panel>
   );
 }
@@ -65,10 +64,12 @@ function serviceColumns(): Column<ServiceErrorRow>[] {
   ];
 }
 
+/** Exceptions and error rate per service. A row filters the page by that service. */
 export function ErrorsByServicePanel({ stats }: { stats: ErrorsModel }) {
+  const pick = useSetService();
   return (
     <Panel title="Errors by Service">
-      <Table columns={serviceColumns()} rows={stats.services} rowKey={(s) => s.service} empty={<Empty>No services seen yet.</Empty>} />
+      <Table columns={serviceColumns()} rows={stats.services} rowKey={(s) => s.service} selectedKey={stats.filter.service || null} onRowClick={(s) => pick(s.service === stats.filter.service ? "" : s.service)} empty={<Empty>No services seen yet.</Empty>} />
     </Panel>
   );
 }

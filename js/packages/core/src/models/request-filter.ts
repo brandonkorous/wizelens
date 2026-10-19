@@ -11,9 +11,15 @@ export interface RequestFilter {
   duration: string;
   service: string;
   q: string;
+  /** The exact endpoint, for example "GET /api/orders/{id}". */
+  endpoint: string;
+  /** The signed-in user (`enduser.id`). */
+  user: string;
+  /** "1" for requests with insights only. */
+  insights: string;
 }
 
-export const FILTER_KEYS = ["method", "status", "duration", "service", "q"] as const;
+export const FILTER_KEYS = ["method", "status", "duration", "service", "q", "endpoint", "user", "insights"] as const;
 
 export const STATUS_OPTIONS: [string, string][] = [
   ["", "All Statuses"],
@@ -40,7 +46,7 @@ export function filterFromQuery(query: URLSearchParams | ModelParams): RequestFi
   const get = (k: string) => (query instanceof URLSearchParams ? query.get(k) : query[k]) ?? "";
   const status = STATUS_KEYS.has(get("status")) ? get("status") : "";
   const duration = Object.hasOwn(DURATIONS, get("duration")) ? get("duration") : "";
-  return { method: get("method"), status, duration, service: get("service"), q: get("q") };
+  return { method: get("method"), status, duration, service: get("service"), q: get("q"), endpoint: get("endpoint"), user: get("user"), insights: get("insights") === "1" ? "1" : "" };
 }
 
 function statusMatches(r: Row, status: string): boolean {
@@ -51,9 +57,15 @@ function statusMatches(r: Row, status: string): boolean {
   return code >= hundred && code < hundred + 100;
 }
 
+/** The [from, to) milliseconds of a duration class, or null for an unknown one. */
+export function durationRange(duration: string): [number, number] | null {
+  const range = Object.hasOwn(DURATIONS, duration) ? DURATIONS[duration] : undefined;
+  return range ? [range[1], range[2]] : null;
+}
+
 function durationMatches(r: Row, duration: string): boolean {
-  const range = DURATIONS[duration];
-  return !range || (r.durationMs >= range[1] && r.durationMs < range[2]);
+  const range = durationRange(duration);
+  return !range || (r.durationMs >= range[0] && r.durationMs < range[1]);
 }
 
 function textMatches(r: Row, q: string): boolean {
@@ -70,6 +82,9 @@ export function applyFilter<R extends Row>(rows: readonly R[], f: RequestFilter)
       (!f.service || r.service === f.service || r.services.includes(f.service)) &&
       statusMatches(r, f.status) &&
       durationMatches(r, f.duration) &&
+      (!f.endpoint || r.endpoint === f.endpoint) &&
+      (!f.user || r.user === f.user) &&
+      (!f.insights || r.insights > 0) &&
       textMatches(r, f.q.trim()),
   );
 }
@@ -84,7 +99,7 @@ export function optionsOf(rows: readonly Row[]): { methods: string[]; services: 
   };
 }
 
-export type SortKey = "time" | "path" | "method" | "status" | "duration" | "sql" | "fetch" | "service" | "insights";
+export type SortKey = "time" | "path" | "method" | "status" | "duration" | "sql" | "fetch" | "service" | "insights" | "errors" | "db";
 
 export interface Sort {
   key: SortKey;
@@ -101,6 +116,8 @@ const SORT_VALUE: Record<SortKey, (r: Row) => number | string> = {
   fetch: (r) => r.fetchMs,
   service: (r) => r.service,
   insights: (r) => r.insights,
+  errors: (r) => r.errors,
+  db: (r) => r.dbMs,
 };
 
 export const isSortKey = (v: string | undefined): v is SortKey => !!v && v in SORT_VALUE;

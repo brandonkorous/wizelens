@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import type { DataSnapshot } from "../data/store";
 import { useAccount } from "../data/account";
 import { useHost } from "../data/host";
+import { ServiceChip } from "../ui/ServiceSelect";
 import { HubMenu } from "./HubMenu";
 import { UserMenu } from "./UserMenu";
 import { Notifications } from "./Notifications";
@@ -33,6 +34,7 @@ export function TopBar({ data }: { data: DataSnapshot }) {
       </button>
       <span className="wl-spacer" />
       <ModeBadge />
+      <ServiceChip />
       {data.registry ? <HubMenu registry={data.registry} projects={projects} /> : <EnvMenu sources={data.sources} />}
       <RangeMenu />
       <Notifications traces={data.traces} now={data.updatedMs} />

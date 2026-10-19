@@ -2,7 +2,8 @@
 import type { ModelParams } from "../models/input.js";
 import { previousWindow, type TimeRange, windowOf } from "../stats/common.js";
 import { FACT_SLOW_QUERY_MS } from "./facts.js";
-import type { Executor, NeedResults, PageContext, PageDef, SyncExecutor } from "./needs.js";
+import type { Executor, Need, NeedResults, PageContext, PageDef, SyncExecutor } from "./needs.js";
+import { scopeNeed, unscopeResults } from "./scope.js";
 import { snapWindow } from "./window.js";
 
 /** Pages by name. The page models fill one of these; hosts look pages up in it. */
@@ -27,18 +28,25 @@ export function mergeResults(a: NeedResults, b: NeedResults): NeedResults {
   };
 }
 
+/** Answer needs, reading per-service kinds for `service` needs. */
+async function answer(ex: Executor, needs: readonly Need[], ctx: PageContext): Promise<NeedResults> {
+  return unscopeResults(await ex.run(needs.map(scopeNeed), ctx), needs);
+}
+
+const answerSync = (ex: SyncExecutor, needs: readonly Need[], ctx: PageContext): NeedResults => unscopeResults(ex.runSync(needs.map(scopeNeed), ctx), needs);
+
 /** Compute a page with a database executor. */
 export async function computePage<M>(def: PageDef<M>, ctx: PageContext, ex: Executor): Promise<M> {
-  const first = await ex.run(def.needs(ctx), ctx);
+  const first = await answer(ex, def.needs(ctx), ctx);
   const more = def.followUp?.(ctx, first) ?? [];
-  const all = more.length ? mergeResults(first, await ex.run(more, ctx)) : first;
+  const all = more.length ? mergeResults(first, await answer(ex, more, ctx)) : first;
   return def.model({ ...ctx, ...all });
 }
 
 /** Compute a page with the memory executor, in one go. */
 export function computePageSync<M>(def: PageDef<M>, ctx: PageContext, ex: SyncExecutor): M {
-  const first = ex.runSync(def.needs(ctx), ctx);
+  const first = answerSync(ex, def.needs(ctx), ctx);
   const more = def.followUp?.(ctx, first) ?? [];
-  const all = more.length ? mergeResults(first, ex.runSync(more, ctx)) : first;
+  const all = more.length ? mergeResults(first, answerSync(ex, more, ctx)) : first;
   return def.model({ ...ctx, ...all });
 }

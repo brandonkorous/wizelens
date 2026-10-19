@@ -45,6 +45,12 @@ export interface LogFilter {
   service: string;
   /** Text to find in the message, category, or trace name. */
   query: string;
+  /** Only this level, not this level and up. */
+  exact?: boolean;
+  /** Only this category, or "" for all. */
+  category?: string;
+  /** Only this trace's lines, or "" for all. */
+  traceId?: string;
 }
 
 export const levelRank = (level: LogLevel): number => LOG_LEVELS.indexOf(level);
@@ -54,8 +60,10 @@ export function filterLogs(rows: readonly LogRow[], f: LogFilter): LogRow[] {
   const q = f.query.trim().toLowerCase();
   return rows.filter(
     (r) =>
-      levelRank(r.level) >= min &&
+      (f.exact ? levelRank(r.level) === min : levelRank(r.level) >= min) &&
       (!f.service || r.service === f.service) &&
+      (!f.category || r.category === f.category) &&
+      (!f.traceId || r.traceId === f.traceId) &&
       (!q || r.message.toLowerCase().includes(q) || r.category.toLowerCase().includes(q) || r.traceName.toLowerCase().includes(q) || r.traceId.startsWith(q)),
   );
 }

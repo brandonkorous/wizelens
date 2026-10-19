@@ -2,7 +2,7 @@ import type { PageDef } from "../scale/needs.js";
 import { type InsightGroup, insightHeadline } from "../stats/insights.js";
 import type { Headline } from "../stats/overview.js";
 import { MODEL_LIST_MAX } from "./database.js";
-import { META_NEEDS, type ModelMeta, type ModelParams, metaOf } from "./input.js";
+import { META_NEEDS, type ModelMeta, type ModelParams, metaOf, serviceParam } from "./input.js";
 import { insightGroupsOf, insightNeeds } from "./insight-groups.js";
 import { uniqueNeeds } from "./read.js";
 
@@ -31,17 +31,21 @@ const totalsOf = (groups: readonly InsightGroup[]): InsightTotals => ({
   totalMs: groups.reduce((t, g) => t + g.totalMs, 0),
 });
 
-/** Area, impact, and text filters. "all" or "" means no filter. */
+/** Area, impact, endpoint, and text filters. "all" or "" means no filter. */
 function matches(g: InsightGroup, p: ModelParams): boolean {
   if (p.area && p.area !== "all" && g.area !== p.area) return false;
+  if (p.endpoint && !g.endpoints.includes(p.endpoint)) return false;
   if (p.impact && p.impact !== "all" && g.impact !== p.impact) return false;
   const q = (p.q ?? "").toLowerCase();
   return !q || `${g.title} ${g.description} ${g.shape} ${g.endpoints.join(" ")}`.toLowerCase().includes(q);
 }
 
-/** The Insights page. Params: area, impact, q, key. */
+/** The Insights page. Params: area, impact, q, endpoint, service, key. */
 export const insightsPage: PageDef<InsightsModel> = {
-  needs: () => uniqueNeeds([...META_NEEDS, ...insightNeeds("cur"), ...insightNeeds("prev")]),
+  needs: (ctx) => {
+    const service = serviceParam(ctx.params);
+    return uniqueNeeds([...META_NEEDS, ...insightNeeds("cur", "all", service), ...insightNeeds("prev", "all", service)]);
+  },
   model(d) {
     const groups = insightGroupsOf(d, "cur");
     const prev = insightGroupsOf(d, "prev");

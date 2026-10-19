@@ -15,6 +15,8 @@ export interface KeyFilter {
   keys?: readonly string[];
   /** Key parts to match, in order; null matches any value. */
   parts?: readonly (string | null)[];
+  /** Text the key must hold, each one, ignoring ASCII case. */
+  contains?: readonly string[];
 }
 
 export type AggOrder = "n" | "sum" | "avg" | "lastMs" | "c0" | "c1" | "c2" | "c3" | "c4" | "c5";
@@ -29,8 +31,12 @@ export interface GroupNeed {
   hist?: boolean;
   top?: boolean;
   ids?: boolean;
-  /** Sort by this (ties by key) and keep the first `limit` rows. `total` still counts all rows. */
-  order?: { by: AggOrder; desc: boolean; limit: number };
+  /** Sort by this (ties by key), skip `offset` rows, and keep `limit`. `total` still counts all rows. */
+  order?: { by: AggOrder; desc: boolean; limit: number; offset?: number };
+  /** Only rows whose value (as an order reads it) is at least `min`, for example critical groups (`c0` at least 1). */
+  having?: { by: AggOrder; min: number };
+  /** Only this service's items (display name), from the kind's per-service copy; keys come back without it. */
+  service?: string;
 }
 
 /** A kind per page bucket: summed over keys, or per key with `split`. */
@@ -43,6 +49,8 @@ export interface SeriesNeed {
   filter?: KeyFilter;
   split?: boolean;
   hist?: boolean;
+  /** Only this service's items, as on `GroupNeed`. */
+  service?: string;
 }
 
 export type ListTable = "requests" | "traces" | "logs" | "critical";
@@ -55,8 +63,16 @@ export interface ListFilter {
   duration?: string;
   service?: string;
   q?: string;
+  /** Requests: the exact endpoint, the user, and only those with insights. */
+  endpoint?: string;
+  user?: string;
+  insights?: boolean;
   minLevel?: LogLevel;
+  /** Logs: only `minLevel`, not it and up. */
+  exactLevel?: boolean;
   logService?: string;
+  /** Logs: only this category. */
+  category?: string;
 }
 
 /** Rows of a fact table in a window: filtered, sorted, then paged or limited. */
@@ -149,9 +165,13 @@ export const emptyResults = (): NeedResults => ({ groups: {}, series: {}, lists:
 /** The window a need refers to. */
 export const windowOfRef = (ctx: Pick<PageContext, "window" | "prev">, ref: WindowRef): TimeWindow => (ref === "cur" ? ctx.window : ctx.prev);
 
-/** True when a rollup key passes the filter: prefix, key list, and key parts (null matches any part). */
+/** Lower case for ASCII letters only, the way every SQL engine's lower() agrees. */
+export const lowerAscii = (s: string): string => s.replace(/[A-Z]/g, (c) => c.toLowerCase());
+
+/** True when a rollup key passes the filter: prefix, key list, text, and key parts (null matches any part). */
 export function keyMatches(key: string, f: KeyFilter | undefined): boolean {
   if (!f) return true;
+  if (f.contains?.some((t) => !lowerAscii(key).includes(lowerAscii(t)))) return false;
   if (f.prefix !== undefined && !key.startsWith(f.prefix)) return false;
   if (f.keys && !f.keys.includes(key)) return false;
   if (!f.parts) return true;

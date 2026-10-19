@@ -78,6 +78,8 @@
 }
 .wl-mode-badge { padding: 4px 10px; border-radius: 999px; background: var(--wl-surface-2); color: var(--wl-muted); font-size: 12.5px; white-space: nowrap; }
 @media (max-width: 1100px) { .wl-mode-badge { display: none; } }
+.wl-scope-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 200px; height: 32px; padding: 0 10px 0 12px; border: 1px solid var(--wl-accent); border-radius: 999px; background: var(--wl-accent-soft); color: var(--wl-accent-text); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.wl-scope-chip:hover { background: var(--wl-surface-2); }
 .wl-search-box { flex: 1 1 auto; min-width: 44px; }
 .wl-search-box kbd { white-space: nowrap; }
 @media (min-width: 1101px) { .wl-search-box { min-width: 260px; } }

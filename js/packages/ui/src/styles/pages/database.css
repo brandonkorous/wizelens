@@ -1,5 +1,7 @@
 /* Database page: query table, table hotspots, and the insight cards. */
-.wl-db-page .wl-db-query { max-width: 300px; }
+.wl-db-page .wl-db-query { max-width: 420px; }
+.wl-db-queries .wl-table th:first-child, .wl-db-queries .wl-table td:first-child { padding-left: 20px; }
+.wl-db-queries .wl-table th:last-child, .wl-db-queries .wl-table td:last-child { padding-right: 20px; }
 .wl-db-page .wl-db-query span { display: block; }
 .wl-db-note { margin: 12px 0 0; font-size: 12px; color: var(--wl-muted); }
 

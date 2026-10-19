@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 
 export interface BarItem {
   key?: string;
@@ -10,6 +10,8 @@ export interface BarItem {
   color?: string;
   /** Text between the label and the bar, for example "32%". */
   share?: ReactNode;
+  /** Makes the row a button, for example to filter by it. */
+  onClick?: () => void;
 }
 
 /** Horizontal bars, scaled to the largest value (or to `max`). */
@@ -20,7 +22,11 @@ export function BarList({ items, max, compact = false }: { items: BarItem[]; max
       {items.map((item, idx) => {
         const width = top > 0 ? Math.max(1.5, (item.value / top) * 100) : 0;
         return (
-          <div key={item.key ?? idx} className={`wl-bar-row${compact ? " wl-compact" : ""}`}>
+          <div
+            key={item.key ?? idx}
+            className={`wl-bar-row${compact ? " wl-compact" : ""}${item.onClick ? " wl-clickable" : ""}`}
+            {...(item.onClick ? { role: "button", tabIndex: 0, onClick: item.onClick, onKeyDown: (e: KeyboardEvent) => e.key === "Enter" && item.onClick?.() } : {})}
+          >
             <span className="wl-truncate">{item.label}</span>
             {compact && <span className="wl-num wl-muted">{item.share}</span>}
             <div className="wl-bar-track">

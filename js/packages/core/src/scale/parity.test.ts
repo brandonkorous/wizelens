@@ -20,7 +20,9 @@ describe("parity: overview, traces, insights", () => {
       const prev = traces.find((t) => inWindow(t.startMs, pageContext(range, SCENARIO_NOW, {}).prev));
       const list: Record<string, string>[] = [{}, { q: "checkout" }, { q: ids[3]!.slice(0, 7) }, { q: "nothing-matches" }, { trace: ids[2]! }, { trace: prev?.traceId ?? "" }, { trace: "f".repeat(32) }];
       for (const params of list) {
-        expect(parityOf("traces", range, params)).toEqual([]);
+        // Legacy: 10 traces, and the newest trace of all shown; now pages of 15, and a search shows its first match.
+        const skip = params.q && !params.trace ? ["selected"] : [];
+        expect(parityOf("traces", range, { size: "10", ...params }, skip)).toEqual([]);
       }
     }
   });

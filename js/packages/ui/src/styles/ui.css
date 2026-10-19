@@ -51,6 +51,8 @@
 
 .wl-bars { display: flex; flex-direction: column; gap: 14px; }
 .wl-bar-row { display: grid; grid-template-columns: minmax(90px, 30%) minmax(0, 1fr) auto; align-items: center; gap: 12px; font-size: 14px; }
+.wl-bar-row.wl-clickable { cursor: pointer; border-radius: 6px; }
+.wl-bar-row.wl-clickable:hover .wl-truncate { color: var(--wl-accent-text); text-decoration: underline; }
 .wl-bar-row.wl-compact { grid-template-columns: minmax(80px, 34%) 44px minmax(0, 1fr); gap: 10px; }
 .wl-bar-track { height: 16px; border-radius: 4px; background: var(--wl-surface-2); overflow: hidden; }
 .wl-bar-track i { display: block; height: 100%; border-radius: 4px; background: var(--wl-accent); }
@@ -66,6 +68,7 @@
 .wl-table tbody tr.wl-clickable { cursor: pointer; }
 .wl-table tbody tr.wl-clickable:hover td { background: var(--wl-surface-2); }
 .wl-table tbody tr.wl-selected td { background: var(--wl-selected); }
+.wl-table tbody tr.wl-row-detail td { background: var(--wl-surface-2); padding-top: 4px; padding-bottom: 14px; }
 .wl-table .wl-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .wl-table .wl-wrap { word-break: break-word; }
 .wl-table .wl-nowrap { white-space: nowrap; }
@@ -97,7 +100,10 @@
 .wl-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .wl-path-chip { padding: 2px 8px; border: 1px solid var(--wl-line); border-radius: 6px; font: 12.5px var(--wl-mono); background: var(--wl-surface-2); white-space: nowrap; }
 
-.wl-filters { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; padding: 16px; }
+.wl-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 18px; padding: 16px; }
+.wl-filter-chips { display: flex; flex-wrap: wrap; gap: 8px; flex-basis: 100%; }
+.wl-filter-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 420px; padding: 4px 8px 4px 10px; border: 1px solid var(--wl-line-strong); border-radius: 999px; background: var(--wl-surface-2); color: var(--wl-fg); font: inherit; font-size: 13px; cursor: pointer; }
+.wl-filter-chip:hover { border-color: var(--wl-accent); }
 .wl-select { height: 40px; padding: 0 34px 0 12px; border: 1px solid var(--wl-line-strong); border-radius: 9px; background-color: var(--wl-surface); background-image: linear-gradient(45deg, transparent 50%, var(--wl-muted) 50%), linear-gradient(135deg, var(--wl-muted) 50%, transparent 50%); background-position: right 17px center, right 12px center; background-size: 5px 5px; background-repeat: no-repeat; color: var(--wl-fg); font: inherit; appearance: none; cursor: pointer; min-width: 140px; }
 .wl-select.wl-small { height: 32px; min-width: 0; font-size: 13px; }
 .wl-input { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid var(--wl-line-strong); border-radius: 9px; background: var(--wl-surface); color: var(--wl-muted); flex: 1; min-width: 200px; }

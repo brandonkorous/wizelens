@@ -1,5 +1,6 @@
 import { filterFromQuery, requestOf, type RequestItem } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
+import { useServiceScope } from "../../data/prefs";
 import { useRoute } from "../../routes";
 import { ModelState } from "../../ui/ModelState";
 import { Panel, PageHeader } from "../../ui/Panel";
@@ -28,7 +29,9 @@ function Selected({ id, row }: { id: string; row: RequestItem | null }) {
 export function RequestsPage() {
   const route = useRoute();
   const { model, loading, error } = usePageModel("requests");
-  const filter = filterFromQuery(route.query);
+  const [service] = useServiceScope();
+  const linked = filterFromQuery(route.query);
+  const filter = { ...linked, service: linked.service || service };
   const selectedId = route.query.get("trace");
   return (
     <>

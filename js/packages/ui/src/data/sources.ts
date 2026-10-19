@@ -44,7 +44,7 @@ export interface HubRegistry {
 }
 
 /** True when a hub service fits the chosen project and environment. */
-export const inScope = (s: HubService, scope: Scope, byProject = true) =>
+export const inScope = (s: HubService, scope: Pick<Scope, "env" | "project">, byProject = true) =>
   (!scope.env || s.environment === scope.env) && (!byProject || !scope.project || s.project === scope.project);
 
 /** "Online", or for a quiet service: "Offline" (add-ons send a heartbeat) or "Idle" (OTLP apps send only when they have data). */
