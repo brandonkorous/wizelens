@@ -61,18 +61,19 @@ internal static partial class WizeLensEndpoints
             return Results.BadRequest();
         }
         var origin = context.Request.Headers.Origin.ToString();
+        var offset = BrowserClock.Offset(body?.SentAt, ActivityMapper.ToUnixMs(DateTime.UtcNow));
         foreach (var span in (body?.Spans ?? []).Take(MaxClientSpans))
         {
-            if (!Normalize(span)) continue;
+            if (!Normalize(span, offset)) continue;
             store.AddSpan(WizeLensRuntime.Redactor.Redact(span));
             var remote = ClientRemote.Of(span, origin);
             if (remote is not null) store.AddRemote(span.TraceId, remote);
         }
-        ClientLogs.Add(store, body?.Logs);
+        ClientLogs.Add(store, body?.Logs, offset);
         return Results.NoContent();
     }
 
-    private static bool Normalize(Span span)
+    private static bool Normalize(Span span, double offset)
     {
         if (!TraceIdRegex().IsMatch(span.TraceId ?? "") || !SpanIdRegex().IsMatch(span.SpanId ?? "")) return false;
         span.TraceId = span.TraceId!.ToLowerInvariant();
@@ -82,6 +83,8 @@ internal static partial class WizeLensEndpoints
         if (string.IsNullOrEmpty(span.Category)) span.Category = SpanCategories.Browser;
         span.Attributes ??= [];
         span.Events ??= [];
+        span.StartMs = BrowserClock.Shift(span.StartMs, offset);
+        foreach (var e in span.Events) e.TimeMs = BrowserClock.Shift(e.TimeMs, offset);
         return true;
     }
 

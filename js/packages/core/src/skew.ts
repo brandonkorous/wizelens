@@ -2,10 +2,13 @@ import type { LogRecord, Span } from "./types.js";
 
 // Services run on different clocks. A server span must sit inside the call that started it, so shift its service's part of the tree.
 
+// A span never starts before its parent in its own service. Next.js dates clientComponentLoading from an old chunk load, so a 44 ms page read as 2,181 s.
+
 const isCall = (s: Span) => s.category === "http.client" || s.category === "browser";
 
 /** Shift (ms) for span `s`, given its already shifted parent and the shift the parent passed down. */
 function offsetFor(s: Span, parent: Span | undefined, inherited: number): number {
+  if (parent && parent.service === s.service && s.startMs + inherited < parent.startMs) return parent.startMs - s.startMs;
   if (!parent || s.category !== "http.server" || parent.service === s.service || !isCall(parent)) return inherited;
   const start = s.startMs + inherited;
   if (start >= parent.startMs && start + s.durationMs <= parent.startMs + parent.durationMs) return inherited;

@@ -16,6 +16,7 @@ description: What to check when a request, query, log line, or service does not 
 | Fewer requests than you sent | Sampling is on. See the **Settings** page and `WIZELENS_SAMPLE_RATE`. |
 | Old data is gone after a restart | Traces are kept for 24 hours or 2,000 traces. Change `MaxAge` / `maxAgeMs` and `MaxTraces` / `maxTraces`. |
 | No CORS preflight requests | By design: `OPTIONS` preflights carry no `traceparent`, so they are not traced. |
+| No health check requests | By design: Kubernetes probes and Google and AWS health checks are not traced. Other requests to the same path are. |
 
 ## The SQLite file
 

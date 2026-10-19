@@ -17,6 +17,15 @@ describe("clock skew", () => {
     expect(t.logs[0]!.timeMs).toBe(1031);
   });
 
+  it("starts a span with its parent when it claims to start before it, in the same service", () => {
+    // Next.js reports clientComponentLoading from the first unreported chunk load, which can be hours old.
+    const stale = makeSpan({ category: "internal", service: "gateway", spanId: "e".repeat(16), parentSpanId: gateway.spanId, startMs: 1000 - 2_181_000, durationMs: 40 });
+    const t = buildTrace("t".repeat(32), [gateway, call, stale], [], []);
+    expect(t.spans.find((s) => s.spanId === stale.spanId)!.startMs).toBe(1000);
+    expect(t.startMs).toBe(1000);
+    expect(t.durationMs).toBe(100);
+  });
+
   it("leaves spans that already fit alone", () => {
     const orders = makeSpan({ category: "http.server", service: "orders", parentSpanId: call.spanId, startMs: 1025, durationMs: 30 });
     const t = buildTrace("t".repeat(32), [gateway, call, orders], [], []);

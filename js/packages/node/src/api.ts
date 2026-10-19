@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { HEADER_HOP, type ServiceInfo, type Trace, type TraceSummary } from "@wizeworks/lens-core";
-import { remoteOf, sanitizeClientLog, sanitizeClientSpan } from "./client-spans.js";
+import { browserClockOffset, remoteOf, sanitizeClientLog, sanitizeClientSpan } from "./client-spans.js";
 import { firstHeader, readJson, sendJson, setCors } from "./http-util.js";
 import { handleMcp, type McpDataSource } from "./mcp.js";
 import type { MetricStore } from "./metrics/store.js";
@@ -54,11 +54,12 @@ async function sendTrace(d: ApiDeps, traceId: string, req: IncomingMessage, res:
 
 async function receiveClientSpans(d: ApiDeps, req: Req, res: ServerResponse): Promise<void> {
   try {
-    const body = (await readJson(req)) as { spans?: unknown; logs?: unknown } | undefined;
+    const body = (await readJson(req)) as { spans?: unknown; logs?: unknown; sentAt?: unknown } | undefined;
+    const shiftMs = browserClockOffset(body?.sentAt, Date.now());
     const spans = Array.isArray(body?.spans) ? body.spans.slice(0, MAX_CLIENT_SPANS) : [];
     const origin = firstHeader(req.headers.origin);
     for (const raw of spans) {
-      const span = sanitizeClientSpan(raw, d.redactKeys);
+      const span = sanitizeClientSpan(raw, d.redactKeys, shiftMs);
       if (!span) continue;
       d.store.addSpan(span);
       const remote = remoteOf(span, origin);
@@ -66,7 +67,7 @@ async function receiveClientSpans(d: ApiDeps, req: Req, res: ServerResponse): Pr
     }
     const logs = Array.isArray(body?.logs) ? body.logs.slice(0, MAX_CLIENT_LOGS) : [];
     for (const raw of logs) {
-      const entry = sanitizeClientLog(raw, d.redactKeys);
+      const entry = sanitizeClientLog(raw, d.redactKeys, shiftMs);
       if (entry) d.store.addLog(entry.traceId, entry.log);
     }
     res.writeHead(204).end();

@@ -106,6 +106,8 @@ public sealed class ClientSpansRequest
 {
     public List<Span> Spans { get; set; } = [];
     public List<ClientLog> Logs { get; set; } = [];
+    /// <summary>The browser's clock when it sent this, in Unix ms. Null from an older browser package.</summary>
+    public double? SentAt { get; set; }
 }
 
 /// <summary>A browser log line posted with <see cref="ClientSpansRequest"/>.</summary>

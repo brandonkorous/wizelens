@@ -6,6 +6,15 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Fixed
 
+- **A wrong clock no longer makes a request hours long.** Next.js dates its `NextNodeServer.clientComponentLoading` span
+  from an old chunk load, so a 44 ms page read as 2,181 s. A span that starts before its parent in the same service now
+  starts with its parent. A browser whose clock was 4.6 hours behind (a crawler's renderer) made a page read as 4.6 hours:
+  the browser now sends its clock with each batch, and the add-on (Node and .NET) moves the browser's times onto its own
+  when they differ by more than 10 s.
+- **Health checks are not traced** (Node and .NET). Kubernetes probes, Google and AWS load balancer checks, and Google
+  uptime checks were about 200 traces an hour on three small apps and hid every visit. The request runs with tracing off,
+  so Next.js and database spans do not start traces of their own either.
+
 - **Old pods no longer pile up in the service list.** The registry has one row per host, so every Kubernetes pod made a
   new row, and the cloud never dropped them. The cloud now drops rows not heard from within the organization's retention
   (the hub already did). The dashboard shows one row per service with "2 of 3 online"; a click shows its hosts, and hosts

@@ -15,20 +15,20 @@ internal static partial class ClientLogs
     private static readonly HashSet<string> Levels = ["trace", "debug", "info", "warn", "error", "critical"];
 
     /// <summary>Stores the valid lines, at most <see cref="MaxLogs"/>; returns how many were stored.</summary>
-    public static int Add(TraceStore store, IEnumerable<ClientLog>? logs)
+    public static int Add(TraceStore store, IEnumerable<ClientLog>? logs, double offset = 0)
     {
         var added = 0;
         foreach (var log in (logs ?? []).Take(MaxLogs))
         {
-            if (ToRecord(log) is not { } record) continue;
+            if (ToRecord(log, offset) is not { } record) continue;
             store.AddLog(log.TraceId!.ToLowerInvariant(), WizeLensRuntime.Redactor.Redact(record));
             added++;
         }
         return added;
     }
 
-    /// <summary>The stored form of one line, or null when its trace or span id is not valid.</summary>
-    internal static LogRecord? ToRecord(ClientLog? log)
+    /// <summary>The stored form of one line, moved by <paramref name="offset"/> (see <see cref="BrowserClock"/>), or null when its trace or span id is not valid.</summary>
+    internal static LogRecord? ToRecord(ClientLog? log, double offset = 0)
     {
         if (log is null || !TraceIdRegex().IsMatch(log.TraceId ?? "")) return null;
         var hasSpan = !string.IsNullOrEmpty(log.SpanId);
@@ -36,7 +36,7 @@ internal static partial class ClientLogs
         var level = log.Level?.ToLowerInvariant() ?? "";
         return new LogRecord
         {
-            TimeMs = double.IsFinite(log.TimeMs) && log.TimeMs > 0 ? log.TimeMs : ActivityMapper.ToUnixMs(DateTime.UtcNow),
+            TimeMs = double.IsFinite(log.TimeMs) && log.TimeMs > 0 ? BrowserClock.Shift(log.TimeMs, offset) : ActivityMapper.ToUnixMs(DateTime.UtcNow),
             Level = Levels.Contains(level) ? level : "info",
             Category = Cap(log.Category, MaxName, "console"),
             Message = Cap(log.Message, MaxMessage, ""),
