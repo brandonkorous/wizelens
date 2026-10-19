@@ -46,6 +46,23 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   40-developer company with its sources, and pricing questions. Linked from the top bar, the footer, and the Cloud page.
   The cloud docs have a new "Plans and billing" section: what a GB is, the Free cap's HTTP 429, the spend cap, history
   per plan, and that billing is off when you self-host.
+- **Install with no code change.** Platform teams can turn WizeLens on without touching a service:
+  - **Node:** `NODE_OPTIONS="--import @wizeworks/lens-node/auto"`. It traces every `node:http` server, names Express,
+    Fastify, Koa, Hono, and Next.js routes, records their errors, and hooks `pg`, `mysql2`, `better-sqlite3`,
+    `node:sqlite`, Prisma Client, gRPC, amqplib, kafkajs, Service Bus, pino, winston, and bunyan as the app loads them.
+    Set by variables only: `OTEL_SERVICE_NAME` (else the `package.json` name), `WIZELENS_HUB`, `WIZELENS_ENABLED`, and the
+    rest. `WIZELENS_AUTO_SKIP` leaves hooks off.
+  - **.NET:** the new `WizeLens.AutoInstrumentation` package is a startup hook
+    (`DOTNET_STARTUP_HOOKS=.../WizeLens.AutoInstrumentation.dll`) and hosting startup that does what `AddWizeLens()` and
+    `UseWizeLens()` do, and also records EF Core commands and the exceptions an exception page catches. Each release has
+    the hook folder as `wizelens-dotnet-auto-<version>.zip`.
+  - **Kubernetes:** a mutating webhook (Helm chart `oci://ghcr.io/brandonkorous/charts/wizelens-inject`, image
+    `ghcr.io/brandonkorous/wizelens-inject`) adds the hook and the variables to pods labeled
+    `wizelens.dev/inject: node` or `dotnet`.
+  - The code install stays and wins: when the app calls `createWizeLens()` or `AddWizeLens()` too, the auto install steps
+    aside and nothing is counted twice. `UseWizeLens()` now adds its middleware once, however often it is called.
+  - New samples with no WizeLens code: `samples/auto-node` and `samples/auto-dotnet`.
+
 - **Connect Claude to WizeLens Cloud with a sign-in, not a key.** Add `https://mcp.wizelens.com` to Claude (Settings →
   Connectors), Claude Code, Cursor, or any MCP client. It opens the WizeLens sign-in, and you pick one organization and
   either all its projects (also later ones) or only some. The app gets read-only access that renews on its own, so a

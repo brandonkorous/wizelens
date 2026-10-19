@@ -20,7 +20,7 @@ type KoaNext = () => Promise<unknown>;
 const KEEP = [HEADER_TRACE, HEADER_ENDPOINT, "Access-Control-Expose-Headers"];
 
 /** Koa's error handler removes all headers, then sets `err.headers`. Keep the WizeLens headers so the browser can link the failure. */
-function keepHeaders(err: unknown, res: ServerResponse): void {
+export function keepHeaders(err: unknown, res: ServerResponse): void {
   if (!err || typeof err !== "object") return;
   const e = err as { headers?: Record<string, unknown> };
   const kept = Object.fromEntries(KEEP.map((h) => [h, res.getHeader(h)]).filter(([, v]) => v !== undefined));

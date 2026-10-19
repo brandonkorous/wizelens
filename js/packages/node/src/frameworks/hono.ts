@@ -6,7 +6,7 @@ import { recordOn } from "../spans.js";
 import type { WizeLens } from "../types.js";
 
 // Minimal Hono shape, so the add-on has no dependency on Hono. Node objects come from @hono/node-server.
-interface HonoContextLike {
+export interface HonoContextLike {
   env?: { incoming?: IncomingMessage; outgoing?: ServerResponse };
   req: { matchedRoutes?: { method: string; path: string }[] };
   error?: unknown;
@@ -18,7 +18,7 @@ type HonoNext = () => Promise<void>;
 const alreadySent = () => new Response(null, { headers: { "x-hono-already-sent": "true" } });
 
 /** The route of the handler that answered: the last matched route that is not middleware. */
-function honoRoute(c: HonoContextLike): string | undefined {
+export function honoRoute(c: HonoContextLike): string | undefined {
   const routes = c.req.matchedRoutes ?? [];
   return routes.filter((r) => r.method !== "ALL").pop()?.path;
 }

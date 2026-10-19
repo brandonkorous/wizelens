@@ -8,7 +8,7 @@ import { type CaptureDeps, captureRequest, isOwnPath, isUntraced, pathOf, reques
 export type IgnorePath = (path: string) => boolean;
 
 /** A string attribute of a live SDK span. The OTel API has no getter, so this reads the SDK field. */
-function attributeOf(span: OtelSpan, key: string): string | undefined {
+export function attributeOf(span: OtelSpan, key: string): string | undefined {
   const value = (span as unknown as { attributes?: Record<string, unknown> }).attributes?.[key];
   return typeof value === "string" ? value : undefined;
 }

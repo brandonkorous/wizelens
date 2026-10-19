@@ -1,0 +1,128 @@
+{{- /* The TLS pair, the webhook Deployment, and its registration share one template, so they always carry the same certificate. */ -}}
+{{- $name := include "wizelens-inject.fullname" . -}}
+{{- $host := printf "%s.%s.svc" $name .Release.Namespace -}}
+{{- $ca := genCA (printf "%s-ca" $name) 3650 -}}
+{{- $cert := genSignedCert $host nil (list $host (printf "%s.%s" $name .Release.Namespace) $name) 3650 $ca -}}
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/tls
+metadata:
+  name: {{ $name }}-tls
+  labels: {{- include "wizelens-inject.labels" . | nindent 4 }}
+data:
+  tls.crt: {{ $cert.Cert | b64enc }}
+  tls.key: {{ $cert.Key | b64enc }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels: {{- include "wizelens-inject.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels: {{- include "wizelens-inject.selector" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "wizelens-inject.selector" . | nindent 8 }}
+      annotations:
+        checksum/tls: {{ $cert.Cert | sha256sum }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: webhook
+          image: {{ include "wizelens-inject.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: https
+              containerPort: 8443
+          env:
+            - { name: TLS_CERT_FILE, value: /tls/tls.crt }
+            - { name: TLS_KEY_FILE, value: /tls/tls.key }
+            - { name: WIZELENS_INJECT_IMAGE, value: {{ include "wizelens-inject.image" . | quote }} }
+            - { name: WIZELENS_INJECT_PULL_POLICY, value: {{ .Values.image.pullPolicy | quote }} }
+            - { name: WIZELENS_INJECT_HUB, value: {{ .Values.hub | quote }} }
+            - { name: WIZELENS_INJECT_PROJECT, value: {{ .Values.project | quote }} }
+            - { name: WIZELENS_INJECT_DASHBOARD, value: {{ .Values.dashboard | toString | quote }} }
+            - { name: WIZELENS_INJECT_HUB_TOKEN_SECRET, value: {{ .Values.hubTokenSecret.name | quote }} }
+            - { name: WIZELENS_INJECT_HUB_TOKEN_KEY, value: {{ .Values.hubTokenSecret.key | quote }} }
+          readinessProbe:
+            httpGet: { path: /healthz, port: https, scheme: HTTPS }
+          livenessProbe:
+            httpGet: { path: /healthz, port: https, scheme: HTTPS }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - { name: tls, mountPath: /tls, readOnly: true }
+      volumes:
+        - name: tls
+          secret:
+            secretName: {{ $name }}-tls
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels: {{- include "wizelens-inject.labels" . | nindent 4 }}
+spec:
+  selector: {{- include "wizelens-inject.selector" . | nindent 4 }}
+  ports:
+    - name: https
+      port: 443
+      targetPort: https
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ $name }}
+  labels: {{- include "wizelens-inject.labels" . | nindent 4 }}
+webhooks:
+  - name: inject.wizelens.dev
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: {{ .Values.failurePolicy }}
+    timeoutSeconds: 5
+    reinvocationPolicy: Never
+    clientConfig:
+      service:
+        name: {{ $name }}
+        namespace: {{ .Release.Namespace }}
+        path: /mutate
+        port: 443
+      caBundle: {{ $ca.Cert | b64enc }}
+    rules:
+      - operations: ["CREATE"]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+        scope: Namespaced
+    objectSelector:
+      matchExpressions:
+        - key: wizelens.dev/inject
+          operator: In
+          values: ["node", "dotnet"]
+    namespaceSelector:
+      {{- with .Values.namespaceLabels }}
+      matchLabels: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values: [{{ .Release.Namespace | quote }}, "kube-system"]

@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/WizeLens.AspNetCore/WizeLens.AspNetCore.csproj" />
+    <Project Path="src/WizeLens.AutoInstrumentation/WizeLens.AutoInstrumentation.csproj" />
     <Project Path="src/WizeLens.EntityFrameworkCore/WizeLens.EntityFrameworkCore.csproj" />
     <Project Path="src/WizeLens.Kafka/WizeLens.Kafka.csproj" />
     <Project Path="src/WizeLens.NLog/WizeLens.NLog.csproj" />
@@ -11,5 +12,6 @@
   </Folder>
   <Folder Name="/samples/">
     <Project Path="../samples/gateway-api/GatewayApi.csproj" />
+    <Project Path="../samples/auto-dotnet/AutoDotnet.csproj" />
   </Folder>
 </Solution>

@@ -37,6 +37,9 @@ export function registerParts(wizelens: WizeLens, p: AdapterParts): void {
   parts.set(wizelens, p);
 }
 
+/** Everything an enabled instance gives its adapters, or null. */
+export const partsOf = (wizelens: WizeLens): AdapterParts | null => parts.get(wizelens) ?? null;
+
 /** The database span factory of an enabled instance, or null. */
 export const dbSpansOf = (wizelens: WizeLens): StartDbSpan | null => parts.get(wizelens)?.dbSpans ?? null;
 

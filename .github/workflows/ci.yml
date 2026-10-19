@@ -98,6 +98,48 @@ jobs:
           curl -sf -X POST -H "Content-Type: application/json" -d '{"resourceSpans":[]}' http://localhost:5960/v1/traces
           curl -sf http://localhost:5960/_wizelens/api/info | grep -q '"mode":"hub"'
 
+  inject-image:
+    name: No-code install (Kubernetes webhook and image)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Webhook tests
+        run: node --test "deploy/inject/webhook/*.test.mjs"
+
+      - name: Lint and render the Helm chart
+        run: |
+          helm lint deploy/inject/chart --set hub=http://wizelens-hub.wizelens:5960
+          helm template wl deploy/inject/chart --namespace wizelens --set namespaceLabels.team=shop > /dev/null
+
+      - name: Build the image
+        run: docker build -f deploy/inject/Dockerfile -t wizelens-inject:ci .
+
+      - name: The image holds both hooks, and the Node one traces a server
+        run: |
+          docker run --rm --entrypoint ls wizelens-inject:ci /wizelens/node/dist/auto.js /wizelens/dotnet/WizeLens.AutoInstrumentation.dll /wizelens/dotnet/WizeLens.AspNetCore.dll
+          docker run --rm --entrypoint node -e NODE_ENV=development -e WIZELENS_DASHBOARD=false wizelens-inject:ci \
+            --import /wizelens/node/dist/auto.js /app/selftest.mjs
+
+      - name: The webhook answers a review with a patch
+        run: |
+          docker run -d --name inject -p 8443:8443 wizelens-inject:ci
+          for i in $(seq 1 30); do curl -sf http://localhost:8443/healthz && break; sleep 1; done
+          curl -sf -X POST -H "Content-Type: application/json" http://localhost:8443/mutate \
+            -d '{"request":{"uid":"ci","namespace":"shop","object":{"metadata":{"labels":{"wizelens.dev/inject":"node"}},"spec":{"containers":[{"name":"app","image":"app"}]}}}}' \
+            | grep -q '"patchType":"JSONPatch"'
+
+      - uses: helm/kind-action@v1
+        with:
+          cluster_name: wizelens
+
+      - name: In a cluster, labeled pods of both samples are injected and traced
+        run: bash deploy/inject/test/kind.sh wizelens
+
   cloud-postgres:
     name: Cloud on Postgres
     runs-on: ubuntu-latest

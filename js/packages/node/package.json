@@ -44,6 +44,10 @@
       "types": "./dist/next.d.ts",
       "import": "./dist/next.js"
     },
+    "./auto": {
+      "types": "./dist/auto.d.ts",
+      "import": "./dist/auto.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

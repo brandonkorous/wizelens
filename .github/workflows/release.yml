@@ -46,6 +46,13 @@ jobs:
           dotnet pack dotnet/WizeLens.slnx -c Release --no-build -o artifacts/nuget
           pnpm -r --filter "./js/packages/*" exec pnpm pack --pack-destination "$GITHUB_WORKSPACE/artifacts/npm"
 
+      # The .NET startup hook folder for DOTNET_STARTUP_HOOKS, for machines that do not pull the inject image.
+      - name: Zip the .NET startup hook
+        run: |
+          dotnet publish dotnet/src/WizeLens.AutoInstrumentation/WizeLens.AutoInstrumentation.csproj -c Release --no-build -o artifacts/dotnet-auto
+          rm -f artifacts/dotnet-auto/*.pdb
+          (cd artifacts/dotnet-auto && zip -qr "../wizelens-dotnet-auto-${GITHUB_REF_NAME#v}.zip" .)
+
       # NuGet before npm: a NuGet push can run again (--skip-duplicate), but npm never takes the same version twice.
       # The temporary key lasts one hour, so it is fetched right before the push. The policy is on nuget.org user bkorous.
       - name: NuGet login (OIDC to a temporary key)
@@ -73,10 +80,11 @@ jobs:
           files: |
             artifacts/nuget/*.nupkg
             artifacts/npm/*.tgz
+            artifacts/wizelens-dotnet-auto-*.zip
           generate_release_notes: true
 
   hub-image:
-    name: Publish the hub and cloud images
+    name: Publish the hub, cloud, and inject images and the inject chart
     needs: release
     runs-on: ubuntu-latest
     steps:
@@ -97,3 +105,17 @@ jobs:
             docker push "$IMAGE:$VERSION"
             if [[ "$VERSION" != *-* ]]; then docker tag "$IMAGE:$VERSION" "$IMAGE:latest" && docker push "$IMAGE:latest"; fi
           done
+
+      - name: Build and push the inject image (the Kubernetes webhook and the no-code hooks it copies into pods)
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          IMAGE="ghcr.io/brandonkorous/wizelens-inject"
+          docker build -f deploy/inject/Dockerfile -t "$IMAGE:$VERSION" .
+          docker push "$IMAGE:$VERSION"
+          if [[ "$VERSION" != *-* ]]; then docker tag "$IMAGE:$VERSION" "$IMAGE:latest" && docker push "$IMAGE:latest"; fi
+
+      - name: Push the inject Helm chart to oci://ghcr.io/brandonkorous/charts
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
+          helm package deploy/inject/chart --destination artifacts/chart
+          helm push artifacts/chart/wizelens-inject-*.tgz oci://ghcr.io/brandonkorous/charts

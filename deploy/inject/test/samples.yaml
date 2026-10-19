@@ -1,0 +1,50 @@
+# The two auto-install samples, labeled for injection. Their images have no WizeLens in them.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auto-node
+spec:
+  selector:
+    matchLabels: { app: auto-node }
+  template:
+    metadata:
+      labels: { app: auto-node, wizelens.dev/inject: node }
+    spec:
+      containers:
+        - name: app
+          image: wizelens-sample-node:ci
+          imagePullPolicy: Never
+          ports: [{ containerPort: 5300 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auto-node
+spec:
+  selector: { app: auto-node }
+  ports: [{ port: 5300 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auto-dotnet
+spec:
+  selector:
+    matchLabels: { app: auto-dotnet }
+  template:
+    metadata:
+      labels: { app: auto-dotnet, wizelens.dev/inject: dotnet }
+    spec:
+      containers:
+        - name: app
+          image: wizelens-sample-dotnet:ci
+          imagePullPolicy: Never
+          ports: [{ containerPort: 8080 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auto-dotnet
+spec:
+  selector: { app: auto-dotnet }
+  ports: [{ port: 8080 }]
