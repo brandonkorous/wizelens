@@ -6,6 +6,13 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Saved views and searches.** The star in the top bar saves the page you are on, with its filters and time range. Saved
+  views show under Saved in the sidebar; saved searches also show under the Search box. On the cloud they are yours until
+  you share them with the team.
+- **Dashboards:** your own pages of metric charts. A chart shows one to six metrics, filtered by any attribute value and
+  split by any attribute, as lines, areas, stacked bars, numbers, or a table. The Metrics page API takes the same filter.
+- **CSV export** on Errors, Logs, Database, Traces, Insights, and Search, next to Requests.
+- **Share a page** (cloud): a read-only link to a page as it is now, its numbers kept for 1 to 30 days. Not only traces.
 - **SLOs and error budgets.** An SLO says how much of a service's or an endpoint's traffic must succeed, or be fast enough,
   over 7 or 30 days. The SLOs page shows how much error budget is left and how fast it burns over the last hour and 6 hours;
   each SLO has a page with its budget and good share over time. **Alert on burn rate** makes an alert rule that watches it.

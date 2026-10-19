@@ -15,7 +15,7 @@ export interface MetricsInput {
   points: readonly MetricPoint[];
   range: TimeRange;
   now: number;
-  /** `metric`, `service`, `group` (an attribute key or "service"), `stat` (p50, p95, p99, avg), `q` (name search). */
+  /** `metric`, `service`, `group` (an attribute key or "service"), `stat` (p50, p95, p99, avg), `q` (name search), `where` (key=value,...). */
   params: Readonly<Record<string, string>>;
 }
 
@@ -53,6 +53,9 @@ export interface MetricDetail extends MetricInfo {
   percentiles: Record<HistogramStat, (number | null)[]> | null;
   countRate: (number | null)[] | null;
   summary: { last: number | null; min: number | null; max: number | null; avg: number | null };
+  /** The `where` filter in use ("key=value", comma-separated), and the values each key has (at most 50 per key). */
+  where: string;
+  values: Record<string, string[]>;
 }
 
 export interface RuntimeStat {
@@ -151,7 +154,7 @@ function summaryOf(values: readonly (number | null)[]): MetricDetail["summary"] 
   return { last: lastOf(values), min: Math.min(...vs), max: Math.max(...vs), avg: vs.reduce((t, v) => t + v, 0) / vs.length };
 }
 
-function detailOf(name: string, series: Series, w: TimeWindow, p: Readonly<Record<string, string>>): MetricDetail {
+function detailOf(name: string, series: Series, w: TimeWindow, p: Readonly<Record<string, string>>): Omit<MetricDetail, "where" | "values"> {
   const stat = statOf(p);
   const services = new Set(series.map((s) => s.service));
   const attrKeys = new Set(series.flatMap((s) => Object.keys(s.attributes)));
@@ -173,6 +176,19 @@ function detailOf(name: string, series: Series, w: TimeWindow, p: Readonly<Recor
   };
 }
 
+/** Series whose attributes (or "service") match every `key=value` of `where`. */
+export function whereFilter(series: Series, where: string | undefined): Series {
+  const pairs = (where ?? "").split(",").map((p) => p.split("=")).filter((p) => p.length === 2 && p[0]!.trim()).map(([k, v]) => [k!.trim(), v!.trim()] as const);
+  return pairs.length === 0 ? series : series.filter((s) => pairs.every(([k, v]) => groupValue(s, k) === v));
+}
+
+/** The values each key of a metric has, to pick a `where` from. */
+function valuesOf(series: Series): Record<string, string[]> {
+  const out: Record<string, Set<string>> = { service: new Set(series.map((s) => s.service)) };
+  for (const s of series) for (const k of Object.keys(s.attributes)) (out[k] ??= new Set()).add(groupValue(s, k));
+  return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, [...v].sort().slice(0, 50)]));
+}
+
 function runtimeOf(names: Map<string, MetricSeriesData[]>, services: readonly string[]): MetricsModel["runtime"] {
   return services.flatMap((service) => {
     const stats = RUNTIME_METRICS.flatMap((def) => {
@@ -187,6 +203,14 @@ function runtimeOf(names: Map<string, MetricSeriesData[]>, services: readonly st
     });
     return stats.length > 0 ? [{ service, stats }] : [];
   });
+}
+
+/** The chosen metric, narrowed by `where`; with no series left, still its name and the values to pick from. */
+function selectedOf(name: string, all: Series, d: MetricData): MetricDetail {
+  const kept = whereFilter(all, d.params.where);
+  const detail = detailOf(name, kept.length ? kept : all, d.window, d.params);
+  const empty = kept.length === 0 ? { lines: [], percentiles: null, countRate: null, summary: { last: null, min: null, max: null, avg: null } } : {};
+  return { ...detail, ...empty, where: d.params.where ?? "", values: valuesOf(all) };
 }
 
 /** The metrics page from rollup data: the list of metrics, the runtime strip per service, and the chosen metric's chart. */
@@ -205,7 +229,7 @@ export function metricsModelOf(d: MetricData): MetricsModel {
     meta: { range: d.range, window: d.window, sampled: null, points },
     services: d.services,
     catalog,
-    selected: chosen ? detailOf(d.params.metric!, chosen, d.window, d.params) : null,
+    selected: chosen ? selectedOf(d.params.metric!, chosen, d) : null,
     runtime: runtimeOf(names, service ? [service] : d.services),
   };
 }

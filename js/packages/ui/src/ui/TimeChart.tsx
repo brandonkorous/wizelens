@@ -33,6 +33,8 @@ export interface TimeChartProps {
   zoom?: boolean;
   /** Release markers (versions that first sent data in the window). On unless false. */
   releases?: boolean;
+  /** Fill under every line, not only the first. */
+  areas?: boolean;
 }
 
 const PAD = { left: 44, right: 8, top: 10, bottom: 26 };
@@ -124,7 +126,7 @@ function Plot({ p, f }: { p: TimeChartProps; f: Frame }) {
       {p.stackBars ? <StackedBars p={p} f={f} /> : <SideBars p={p} f={f} />}
       {(p.lines ?? []).map((s, si) => (
         <g key={s.label}>
-          {si === 0 && !s.dashed && <path d={areaPath(s.values, f.x, f.y, f.base)} fill={s.color} opacity="0.08" />}
+          {(si === 0 || p.areas) && !s.dashed && <path d={areaPath(s.values, f.x, f.y, f.base)} fill={s.color} opacity={p.areas ? 0.18 : 0.08} />}
           <path d={linePath(s.values, f.x, f.y)} fill="none" stroke={s.color} strokeWidth={s.dashed ? 1.5 : 2} strokeLinejoin="round" strokeDasharray={s.dashed ? "4 4" : undefined} opacity={s.dashed ? 0.7 : 1} />
         </g>
       ))}

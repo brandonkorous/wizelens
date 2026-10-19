@@ -16,6 +16,7 @@ export type PageId =
   | "settings"
   | "alerts"
   | "slos"
+  | "dashboards"
   | "team"
   | "shared"
   | "account"
@@ -32,7 +33,7 @@ export interface Route {
 }
 
 export const AUTH_PAGES: readonly AuthPageId[] = ["setup", "two-factor", "forgot-password", "reset-password", "verify-email", "invite", "delete-account", "oauth", "oauth-consent"];
-const PAGES: readonly PageId[] = ["overview", "search", "requests", "traces", "database", "rendering", "errors", "logs", "metrics", "services", "insights", "settings", "alerts", "slos", "team", "shared", "account", ...AUTH_PAGES];
+const PAGES: readonly PageId[] = ["overview", "search", "requests", "traces", "database", "rendering", "errors", "logs", "metrics", "services", "insights", "settings", "alerts", "slos", "dashboards", "team", "shared", "account", ...AUTH_PAGES];
 const TRACE_ID = /^[0-9a-f]{32}$/;
 
 /** Read a hash like "#/requests?status=5xx" or "#/traces/<id>/sql". */
@@ -77,6 +78,7 @@ export const queryHref = (query: string) => hrefTo("database", ["queries", enc(q
 export const routeHref = (route: string) => hrefTo("rendering", ["routes", enc(route)]);
 export const alertHref = (id: string) => hrefTo("alerts", [enc(id)]);
 export const sloHref = (id: string) => hrefTo("slos", [enc(id)]);
+export const dashboardHref = (id: string) => hrefTo("dashboards", [enc(id)]);
 /** The Alerts page with a new rule open, filled from what the person was looking at. */
 export const newAlertHref = (fields: Record<string, string>) => hrefTo("alerts", [], { new: "1", ...fields });
 

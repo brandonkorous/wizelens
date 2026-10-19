@@ -4,6 +4,7 @@ import { useRoute } from "../routes";
 import { useChangeTick } from "./changes";
 import { useIssueTick } from "./issues";
 import { publishReleases } from "./releases";
+import { useSharedModel } from "./sharedModel";
 import { useHost, useRange } from "./host";
 import { getPeriod, parseWindow, periodParams, useComparePref, useWindowPref } from "./period";
 import { getScope, useServiceScope } from "./prefs";
@@ -121,9 +122,11 @@ export function useServerErrorCount(): number | null {
 export function usePageModel<P extends PageName>(page: P, extra?: Record<string, string>, paused = false): PageModel<P> {
   const params = useParams(page, extra);
   const server = useHost().has("serverStats");
-  const local = useLocalModel(page, params, !server);
-  const remote = useServerModel(page, params, server);
-  const shown = useHeld(server ? remote : local, paused, JSON.stringify(params));
+  const shared = useSharedModel(page);
+  const local = useLocalModel(page, params, !server && !shared);
+  const remote = useServerModel(page, params, server && !shared);
+  const held = useHeld(server ? remote : local, paused, JSON.stringify(params));
+  const shown = shared ? { model: shared.model as ModelOf<P>, loading: false, error: null } : held;
   const releases = (shown.model as { meta?: { releases?: Release[] } } | null)?.meta?.releases;
   useEffect(() => publishReleases(releases), [releases]);
   return shown;

@@ -47,7 +47,7 @@ function ServicesBody({ m }: { m: ServicesModel }) {
   );
 }
 
-function AllServices() {
+export function AllServices() {
   const { model, loading, error } = usePageModel("services");
   return (
     <>

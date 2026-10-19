@@ -30,6 +30,11 @@ describe("metrics model from rollups vs the raw-point model", () => {
       for (const params of paramSets(points, range)) {
         const want = legacyModel({ points, range, now: METRIC_NOW, params });
         const got = metricsModel({ points, range, now: METRIC_NOW, params });
+        // The where filter and its values are new; the legacy model has neither.
+        if (got.selected) {
+          const { where: _w, values: _v, ...rest } = got.selected;
+          got.selected = rest as typeof got.selected;
+        }
         expect(diffClose(got, want), JSON.stringify(params)).toEqual([]);
       }
     });

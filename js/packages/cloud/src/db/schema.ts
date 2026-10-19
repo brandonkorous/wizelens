@@ -4,6 +4,7 @@ import { MAIL_MIGRATION } from "./schema-mail.js";
 import { NOTIFY_MIGRATION } from "./schema-notify.js";
 import { OAUTH_MIGRATION } from "./schema-oauth.js";
 import { ISSUES_MIGRATION } from "./schema-issues.js";
+import { SAVED_MIGRATION } from "./schema-saved.js";
 import { SEARCH_MIGRATION } from "./schema-search.js";
 import { SLOS_MIGRATION } from "./schema-slos.js";
 import { SSO_MIGRATION } from "./schema-sso.js";
@@ -214,6 +215,7 @@ CREATE INDEX ix_metric_1h_time ON metric_1h (project_id, bucket_ms);
   ISSUES_MIGRATION,
   ALERTS2_MIGRATION,
   SLOS_MIGRATION,
+  SAVED_MIGRATION,
 ];
 
 export const MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS wizelens_migrations (version INTEGER PRIMARY KEY, applied_ms DOUBLE PRECISION NOT NULL)`;

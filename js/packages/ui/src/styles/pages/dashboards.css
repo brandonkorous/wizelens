@@ -1,0 +1,6 @@
+.wl-dash-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wl-gap, 20px); }
+.wl-dash-wide { grid-column: 1 / -1; }
+.wl-dash-numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+.wl-dash-number { display: grid; gap: 4px; min-width: 0; }
+.wl-dash-number strong { font-size: 28px; font-weight: 650; }
+@media (max-width: 1100px) { .wl-dash-grid { grid-template-columns: minmax(0, 1fr); } }

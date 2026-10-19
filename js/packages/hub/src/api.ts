@@ -6,6 +6,7 @@ import { parseJson, readBody } from "./body.js";
 import { handleAlerts } from "./alerts/api.js";
 import type { HubAlertDeps } from "./alerts/evaluate.js";
 import { handleIssues } from "./issues.js";
+import { handleSaved } from "./saved.js";
 import { handleApdex, handleSlos } from "./slos.js";
 import type { HubData } from "./data.js";
 import { parseIngest } from "./ingest.js";
@@ -30,7 +31,7 @@ const num = (p: URLSearchParams, k: string) => (p.has(k) && Number.isFinite(Numb
 export function hubInfo(c: ApiContext): ServiceInfo {
   return {
     mode: "hub",
-    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes", "issues", "alerts", "slos"],
+    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes", "issues", "alerts", "slos", "saved"],
     service: c.o.name,
     version: c.version,
     runtime: `node ${process.version} · lens-node ${NODE_VERSION}`,
@@ -99,6 +100,7 @@ export async function handleApi(c: ApiContext, sub: string, req: IncomingMessage
   if (sub === "api/changes" && method === "GET") return streamChanges(c, req, res);
   if (sub === "api/search/suggest" && method === "GET") return sendSuggest(c, url.searchParams, res);
   if (sub === "api/issues" && (method === "GET" || method === "POST")) return handleIssues(c.data.store.db, method, url.searchParams.get("project") ?? "", req, res, c.o.now());
+  if (sub === "api/saved" || sub.startsWith("api/saved/")) return handleSaved(c.data.store.db, sub, req, res, url, c.o.now());
   if (sub === "api/slos" || sub.startsWith("api/slos/")) return handleSlos(c.data.store, sub, req, res, url, c.o.now());
   if (sub === "api/apdex") return handleApdex(c.data.store.db, method, url.searchParams.get("project") ?? "", req, res);
   if (sub === "api/alerts" || sub.startsWith("api/alerts/")) return handleAlerts(c.alerts, c.o.now(), sub, req, res, url);
