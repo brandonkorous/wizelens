@@ -26,7 +26,7 @@ export const BEATS: Beat[] = [
   { kind: "audit", text: "audit  mcp  find_n_plus_one  read-only  12 ms" },
 ];
 
-export const TOOLS = ["get_overview", "list_traces", "get_trace", "find_slow_queries", "find_n_plus_one", "get_errors", "search", "get_metric"];
+export const TOOLS = ["get_overview", "get_timeseries", "group_requests", "list_traces", "get_trace", "find_slow_queries", "find_n_plus_one", "get_errors", "search", "get_metric"];
 
 export const GUARDS = [
   { title: "Off by default.", body: "Nothing is reachable until you turn it on, per service." },

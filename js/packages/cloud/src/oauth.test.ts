@@ -58,6 +58,10 @@ it("gives every project, also new ones, when the person picks all", async () => 
   expect((await listed(agent!)).sort()).toEqual([first, second, third].sort());
   const report = JSON.parse(textOf(await agent!.callTool({ name: "get_overview", arguments: { range: "24h" } }))) as { totals: { projects: number }; projects: unknown[] };
   expect(report.totals.projects).toBe(3);
+  const series = JSON.parse(textOf(await agent!.callTool({ name: "get_timeseries", arguments: { range: "6h" } }))) as { projects: { projectId: string; points: unknown[] }[] };
+  expect(series.projects.map((p) => p.projectId).sort()).toEqual([first, second, third].sort());
+  const groups = await agent!.callTool({ name: "group_requests", arguments: { range: "6h", project: first } });
+  expect(JSON.parse(textOf(groups))).toMatchObject({ endpoints: 0, rows: [] });
 });
 
 it("asks for refresh tokens, and a refreshed token still works", async () => {

@@ -33,7 +33,9 @@ read WizeLens every morning. Ask it something like:
 > Every weekday at 8:00, call `get_overview` for the last 24 hours. Tell me which services need attention, which errors
 > are new or growing, and which endpoints got slower. Keep it short.
 
-`get_overview` with no project reads every project the connection may see, so one call covers 20 APIs or more.
+`get_overview` with no project reads every project the connection may see, so one call covers 20 APIs or more. For
+charts, `get_timeseries` gives exact requests, errors, and p95 per hour (or any bucket), and `group_requests` gives the same
+per endpoint. Both count every request, not a sample.
 
 ### What a connected app gets
 
@@ -97,6 +99,8 @@ When the hub runs with `--token`, send that token as `Authorization: Bearer <tok
 | Tool | What it answers |
 |---|---|
 | `get_overview` | "How is everything doing?" Requests, error rate, and duration against the window before, every service's health, the top errors, and the biggest insights. Hub and cloud. |
+| `get_timeseries` | "How did traffic, errors, and latency change over time?" Exact counts per bucket, for everything, one service, or one endpoint, over a range or a custom window. Hub and cloud. |
+| `group_requests` | "Which endpoints are busiest, failing most, or slowest?" Count, errors, error rate, and p95 per endpoint, sorted as you ask. Hub and cloud. |
 | `list_traces` | "What happened recently? Anything slow or failing?" |
 | `get_trace` | "Show me everything that happened in this request, across services." |
 | `get_errors` | "What broke, and where?" |

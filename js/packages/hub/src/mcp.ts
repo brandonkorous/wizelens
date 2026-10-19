@@ -7,13 +7,16 @@ import { hubTags } from "./tags.js";
 
 /** Recent traces the MCP tools search through. */
 const MCP_RECENT = 2000;
+/** A custom window may start a little before what the hub keeps: snapping moves it. */
+const KEEP_SLACK_MS = 15 * 60_000;
 
 /** One page model over every service, as `api/models/<page>` serves it. */
 function pageOf(data: HubData) {
-  return <P extends OverviewPage>(page: P, range: TimeRange) => {
+  return <P extends OverviewPage>(page: P, range: TimeRange, params: Record<string, string> = {}) => {
     const store = data.store;
     if (TIME_RANGES[range].ms > store.maxAgeMs) throw new Error("This range is longer than the hub keeps data.");
-    const ctx = pageContext(range, alignNow(store.now()), {}, { slowQueryMs: FACT_SLOW_QUERY_MS }, hubSettling(store, {}));
+    const ctx = pageContext(range, alignNow(store.now()), params, { slowQueryMs: FACT_SLOW_QUERY_MS }, hubSettling(store, {}));
+    if (store.now() - ctx.window.from > store.maxAgeMs + KEEP_SLACK_MS) throw new Error("This time window starts before the hub keeps data.");
     return runPage(page, ctx, hubExecutor(store, {}, data.keepRemote));
   };
 }

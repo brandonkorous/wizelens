@@ -6,6 +6,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **`get_timeseries` and `group_requests`, exact traffic for agents** (hub and cloud). `get_timeseries` gives requests,
+  errors, error rate, average, and p95 per bucket (16, 24, or 48) for every request, one service, or one endpoint.
+  `group_requests` gives each endpoint's count, errors, error rate, average, and p95, sorted by any of them. Both read the
+  stats tables, so the numbers are exact over any range, or a custom `from`–`to` window, and not a sample of recent
+  traces. Without `project`, a reader of several projects gets them all. The new `traffic` page model answers both.
 - **Plans and billing for the hosted cloud** (off unless the cloud starts with Stripe keys, so self-hosting stays free and
   unlimited). Free (10 GB a month, 14 days), Team ($29, 50 GB, 30 days), Business ($99, 150 GB, 90 days, SSO, SCIM, audit
   export), and Enterprise (set by hand). Every plan has unlimited users, alerts, MCP, and share links, and there is never a

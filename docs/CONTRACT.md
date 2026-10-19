@@ -359,6 +359,8 @@ Server name `wizelens`. Disabled by default. Every call is written to the app lo
 | `list_tags` | none | `{ name, query, builtIn, enabled }[]`: the names `tag:` reads |
 | `search_fields` | `field?`, `prefix?`, `range?=24h` | `{ value, help?, count? }[]` |
 | `get_overview` | `range?=24h` (1h, 6h, 24h, 7d) | Hub and cloud. `{ window, stillSettling, requests, errorRatePercent, avgDurationMs` (each `{ value, previous, changePercent }`), `needsAttention, services, exceptions, topErrors` (10, most first), `insights }`, from the overview, services, and errors page models. On a multi-project cloud reader with no `project`: `{ range, totals, projects[] }`, one report per project, those needing attention first |
+| `get_timeseries` | `range?=24h` (1h, 6h, 24h, 7d, 30d) or `from` + `to` (ISO 8601), `service?`, `endpoint?`, `buckets?=24` (16, 24, 48) | Hub and cloud, from the `traffic` page model. `{ window: { from, to, stillSettling }, scope: { service, endpoint, found }, bucketMinutes, totals, points[] }`; totals and each point are `{ requests, errors, errorRatePercent, avgMs, p95Ms }`, points with `start`. Without `endpoint` and `service`: every request (`req`); with `service`: that service (`svc`); with `endpoint`: that endpoint (`svc.ep`), of one service or all. On a multi-project reader with no `project`: `{ projects[] }`, one per project |
+| `group_requests` | `range?=24h` or `from` + `to`, `service?`, `sort?=requests` (requests, errors, errorRate, p95, avg), `limit?=50` (up to 200), `minRequests?=0` | Hub and cloud, from the `traffic` page model. `{ window, endpoints, requests, shown, rows[] }`: `endpoints` and `requests` count every endpoint kept by `minRequests`; each row is `{ project?, service, endpoint, requests, errors, errorRatePercent, avgMs, p95Ms }` for the endpoints of APIs and web apps (`svc.ep`). With no `project` on a multi-project reader, across every project |
 | `list_projects` | none | Cloud, when the reader has more than one project: `{ id, name }[]` |
 
 Every tool that takes a search expands `tag:` with the host's tags first.
@@ -563,7 +565,7 @@ interface IngestBatch {
 | POST | `/v1/traces`, `/v1/logs`, `/v1/metrics` | OTLP/HTTP, JSON or protobuf, optional gzip. Also under `/_wizelens/v1/...` |
 | GET | `/_wizelens/api/models/metrics` | The Metrics page: `range`, `project`, `env`, `service`, `metric`, `group`, `stat`, `q`. Read from the metric rollups (see "Metrics"), with no point cap |
 | GET | `/_wizelens/api/models/{page}` | One page model (see "Page models"): `range`, `project`, `env`, and the page's own parameters. Ranges up to the hub's age limit. `serverStats` |
-| POST | `/_wizelens/mcp` | With `--mcp`. The same tools, over the newest 2000 traces of every service, plus `list_metrics`, `get_metric`, and `get_overview` |
+| POST | `/_wizelens/mcp` | With `--mcp`. The same tools, over the newest 2000 traces of every service, plus `list_metrics`, `get_metric`, `get_overview`, `get_timeseries`, and `group_requests` |
 | GET / POST / PATCH / DELETE | `/_wizelens/api/tags[/{id}]` | Tag rules for the whole hub (see "Tags"). Changes only from the hub's own pages (a request with an `Origin` of another site gets 403), and with the token when one is set |
 | POST | `/_wizelens/api/tags/match` | `?project=&env=`; see "Tags" |
 | GET | `/healthz` | `ok` |
@@ -789,6 +791,11 @@ names the smallest preset that covers it, and hosts refuse a window that starts 
 compares with the same window a week earlier instead of the window right before. `meta.custom` and `meta.compare` say
 which; `meta.compareLabel` reads "vs. previous period" or "vs. same time last week". The dashboard keeps `range`, `from`,
 `to`, `compare`, `env`, `project`, and `service` in the address bar, so a link opens the same view.
+
+**Traffic.** `traffic` (`service`: a row key or name, `endpoint`, `buckets`: 16, 24, or 48, default 24) is for agents
+(`get_timeseries`, `group_requests`): `scope`, `bucketMs`, `points` (requests, errors, error rate, average, and p95 per
+bucket), `totals`, and `endpoints` (every endpoint of the APIs and web apps in scope, up to 100 services and 200 endpoints
+each, busiest first). `scope.found` is false for a service with no traffic in the window.
 
 **Detail pages.** `error` (`group`: a group key), `endpoint` (`service`: a row key or name, `endpoint`), `query` (`q`: a query
 shape), and `route` (`route`) give one item's numbers over time, where it happens, and its newest traces (from the row's

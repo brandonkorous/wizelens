@@ -1,8 +1,8 @@
 import type { ZodTypeAny } from "zod";
 import { type MetricsModel, type ModelOf, type SearchPage, type SearchQuery, type Suggestion, type SuggestRequest, type TagRule, tagList, type TimeRange, type Trace } from "@wizeworks/lens-core";
 
-/** The page models get_overview reads. */
-export type OverviewPage = "overview" | "services" | "errors";
+/** The page models get_overview, get_timeseries, and group_requests read. */
+export type OverviewPage = "overview" | "services" | "errors" | "traffic";
 
 /** What the MCP tools can read. Read-only by design. */
 export interface McpDataSource {
@@ -28,8 +28,8 @@ export interface McpDataSource {
   now?(): number;
   /** The environment memory search gives this service's documents (in-app), as the HTTP search does. */
   env?: string;
-  /** One dashboard page's model, from the host's stats. Without it, get_overview is left out. */
-  page?<P extends OverviewPage>(page: P, range: TimeRange): Promise<ModelOf<P>>;
+  /** One dashboard page's model, from the host's stats, with page params (`from` and `to` in epoch ms give a custom window). Without it, the report tools are left out. */
+  page?<P extends OverviewPage>(page: P, range: TimeRange, params?: Record<string, string>): Promise<ModelOf<P>>;
   /** The project's tags (docs/TAGS-PLAN.md). Without it, only the built-ins. */
   tags?(): readonly TagRule[] | Promise<readonly TagRule[]>;
 }

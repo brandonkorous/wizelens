@@ -15,6 +15,7 @@ import { routePage } from "./route-page.js";
 import { servicePage } from "./service-page.js";
 import { servicesPage } from "./services.js";
 import { tracesPage } from "./traces.js";
+import { trafficPage } from "./traffic.js";
 import { userPage, usersPage } from "./users.js";
 
 export * from "./input.js";
@@ -45,6 +46,7 @@ export * from "./query-page.js";
 export * from "./route-page.js";
 export * from "./insights.js";
 export * from "./traces.js";
+export * from "./traffic.js";
 export * from "./badges.js";
 export * from "./alerts.js";
 export * from "./alert-rule.js";
@@ -77,6 +79,7 @@ export const PAGES = {
   badges: badgesPage,
   users: usersPage,
   user: userPage,
+  traffic: trafficPage,
 } satisfies Record<string, PageDef<unknown>>;
 
 export type PageName = keyof typeof PAGES;

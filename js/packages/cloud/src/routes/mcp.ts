@@ -47,7 +47,7 @@ async function projectSource(ctx: Ctx, access: ProjectAccess, r: Reader, writes:
     metrics: (range, params) => projectMetrics(telemetry, project.id, range, params, { now: ctx.app.config.now() }),
     search: (q) => telemetry.search(project.id, q),
     suggest: (r) => telemetry.suggest(project.id, r),
-    page: (page, range) => projectPage(ctx.app, project, page, range),
+    page: (page, range, params) => projectPage(ctx.app, project, page, range, params),
     now: () => ctx.app.config.now(),
     tags: () => projectTags(db, project.id),
     // Every tool call is kept in the organization's audit log.
