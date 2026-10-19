@@ -617,7 +617,9 @@ retention, and the audit log.
 ### Page models (`serverStats`)
 
 Every dashboard page is one definition in `@wizeworks/lens-core` (`PAGES`: overview, requests, traces, database, rendering,
-errors, logs, services, insights, and `badges`, the sidebar counts). A page says what it needs from its URL parameters (filters,
+errors, logs, services, service, insights, and `badges`, the sidebar counts). `service` is the full page of one service
+(`service`: a Services row key such as `api:orders`, or a name): its numbers against the window before, traffic and latency over
+time, endpoints, callers, and for APIs and workers the top error groups, slowest requests, and newest log lines. A page says what it needs from its URL parameters (filters,
 sort, page, selected item): rollup groups and series over the chosen window and the window before it, list rows, or one trace.
 An executor answers those needs and the page builds a JSON object from the answers. In-app hosts answer them in the browser from
 the loaded traces; hosts with `serverStats` answer them on the server, so ranges reach `7d` and `30d`. Lists in a model are capped

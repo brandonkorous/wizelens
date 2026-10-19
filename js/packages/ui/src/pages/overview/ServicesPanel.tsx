@@ -5,6 +5,7 @@ import { hrefTo, navigate } from "../../routes";
 import { DotText, type Tone } from "../../ui/Badges";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
+import { serviceHref } from "../services/serviceParts";
 
 const KIND_ICON: Record<ServiceKind, typeof Box> = { api: Box, web: Monitor, worker: Cog, queue: Inbox, database: Database, external: Globe };
 const STATUS: Record<ServiceStatus, [Tone, string]> = {
@@ -45,7 +46,7 @@ export function ServicesPanel({ rows, range }: { rows: readonly ServiceRow[]; ra
         columns={cols}
         rows={rows.slice(0, MAX_ROWS)}
         rowKey={(s) => s.key}
-        onRowClick={(s) => navigate(hrefTo("services", [], { service: s.name }))}
+        onRowClick={(s) => navigate(serviceHref(s.key))}
         empty={<Empty>No services seen in this range.</Empty>}
       />
     </Panel>

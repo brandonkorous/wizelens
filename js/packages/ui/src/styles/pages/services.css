@@ -1,4 +1,4 @@
-/* Services page: service table, detail panel, and dependency map. */
+/* Services page: service table, detail panel, dependency map, and the full page of one service. */
 .wl-svc-detail .wl-side-head { width: 100%; margin: 0; }
 .wl-svc-detail .wl-side-head h2 { margin-right: auto; }
 .wl-svc-endpoints td, .wl-svc-endpoints th { padding: 8px 6px; font-size: 13px; }
@@ -16,3 +16,26 @@
 .wl-dep-edge path { stroke: var(--wl-line-strong); stroke-width: 1.5; }
 .wl-dep-edge.wl-failing path { stroke: var(--wl-red); }
 .wl-dep-edge text { font-size: 11px; fill: var(--wl-muted); font-variant-numeric: tabular-nums; }
+
+.wl-svc-full { margin-top: 14px; }
+
+.wl-svc-page > .wl-panel { margin: 0 0 18px; }
+.wl-svc-head .wl-back { display: flex; width: max-content; }
+.wl-svc-title { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 24px; }
+.wl-svc-title svg { flex: none; color: var(--wl-fg-2); }
+.wl-svc-name { min-width: 0; word-break: break-word; }
+.wl-svc-status { font-size: 14px; font-weight: 600; letter-spacing: 0; }
+.wl-svc-head .wl-stats { margin-bottom: 0; }
+.wl-svc-page .wl-panel-flush .wl-table th:first-child, .wl-svc-page .wl-panel-flush .wl-table td:first-child { padding-left: 20px; }
+.wl-svc-page .wl-panel-flush .wl-table th:last-child, .wl-svc-page .wl-panel-flush .wl-table td:last-child { padding-right: 20px; }
+.wl-svc-page .wl-svc-ep-name { max-width: 520px; }
+.wl-svc-page .wl-svc-wide { max-width: 320px; }
+.wl-svc-page .wl-svc-mid { max-width: 180px; }
+.wl-svc-page .wl-svc-ep-name span, .wl-svc-page .wl-svc-wide span, .wl-svc-page .wl-svc-mid span { display: block; }
+.wl-svc-logs .wl-log-cat { max-width: 160px; color: var(--wl-muted); font-size: 13px; }
+.wl-svc-logs .wl-log-cat span { display: block; }
+.wl-svc-logs .wl-log-msg { min-width: 260px; word-break: break-word; }
+.wl-svc-logs .wl-log-trace { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.wl-svc-logs .wl-badge { text-transform: capitalize; }
+.wl-svc-page .wl-row-actions { align-items: center; }
+.wl-svc-runtime .wl-metric-tile svg { display: block; width: 100%; height: 28px; }

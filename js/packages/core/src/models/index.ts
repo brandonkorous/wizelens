@@ -8,6 +8,7 @@ import { logsPage } from "./logs.js";
 import { overviewPage } from "./overview.js";
 import { renderingPage } from "./rendering.js";
 import { requestsPage } from "./requests.js";
+import { servicePage } from "./service-page.js";
 import { servicesPage } from "./services.js";
 import { tracesPage } from "./traces.js";
 
@@ -25,6 +26,7 @@ export * from "./errors.js";
 export * from "./logs.js";
 export * from "./rendering.js";
 export * from "./services.js";
+export * from "./service-page.js";
 export * from "./insights.js";
 export * from "./traces.js";
 export * from "./badges.js";
@@ -40,6 +42,7 @@ export const PAGES = {
   errors: errorsPage,
   logs: logsPage,
   services: servicesPage,
+  service: servicePage,
   insights: insightsPage,
   badges: badgesPage,
 } satisfies Record<string, PageDef<unknown>>;

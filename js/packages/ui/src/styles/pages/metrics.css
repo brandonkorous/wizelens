@@ -2,15 +2,15 @@
 .wl-metrics-page .wl-metric-runtime { display: grid; gap: 14px; margin-bottom: 18px; }
 .wl-metrics-page .wl-metric-service { padding: 14px 16px; }
 .wl-metrics-page .wl-metric-service h2 { margin: 0 0 10px; font-size: 14px; }
-.wl-metrics-page .wl-metric-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-.wl-metrics-page .wl-metric-tile {
-  display: grid; gap: 4px; padding: 10px 12px; text-align: left; cursor: pointer; font: inherit; color: inherit;
+.wl-metric-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.wl-metric-tile {
+  display: grid; gap: 4px; padding: 10px 12px; text-align: left; cursor: pointer; font: inherit; color: inherit; text-decoration: none;
   background: var(--wl-surface-2); border: 1px solid var(--wl-line); border-radius: var(--wl-radius);
 }
-.wl-metrics-page .wl-metric-tile:hover { border-color: var(--wl-line-strong); }
-.wl-metrics-page .wl-metric-tile.wl-active { border-color: var(--wl-accent); background: var(--wl-accent-soft); }
-.wl-metrics-page .wl-metric-tile span { color: var(--wl-muted); font-size: 12px; }
-.wl-metrics-page .wl-metric-tile strong { font-size: 18px; font-variant-numeric: tabular-nums; }
+.wl-metric-tile:hover { border-color: var(--wl-line-strong); text-decoration: none; }
+.wl-metric-tile.wl-active { border-color: var(--wl-accent); background: var(--wl-accent-soft); }
+.wl-metric-tile span { color: var(--wl-muted); font-size: 12px; }
+.wl-metric-tile strong { font-size: 18px; font-variant-numeric: tabular-nums; }
 .wl-metrics-page .wl-metric-body { display: grid; grid-template-columns: minmax(300px, 420px) minmax(0, 1fr); gap: 18px; align-items: start; }
 .wl-metrics-page .wl-metric-list ul { list-style: none; margin: 0 0 10px; padding: 0; }
 .wl-metrics-page .wl-metric-list li button {

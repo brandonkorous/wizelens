@@ -1,6 +1,7 @@
 import { Box, Database, Gauge, TriangleAlert } from "lucide-react";
 import { percentChange, type ServicesModel } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
+import { useRoute } from "../../routes";
 import { fmtCount, fmtPct } from "../../format";
 import { ModelState } from "../../ui/ModelState";
 import { PageHeader, Panel } from "../../ui/Panel";
@@ -8,7 +9,8 @@ import { StatCard } from "../../ui/StatCard";
 import { DependencyMap } from "./DependencyMap";
 import { RegistryPanel } from "./RegistryPanel";
 import { ServiceDetail } from "./ServiceDetail";
-import { ServiceTable } from "./serviceParts";
+import { ServicePage } from "./ServicePage";
+import { serviceIdOf, ServiceTable } from "./serviceParts";
 import "../../styles/pages/services.css";
 
 function Cards({ m }: { m: ServicesModel }) {
@@ -44,7 +46,7 @@ function ServicesBody({ m }: { m: ServicesModel }) {
   );
 }
 
-export function ServicesPage() {
+function AllServices() {
   const { model, loading, error } = usePageModel("services");
   return (
     <>
@@ -53,4 +55,10 @@ export function ServicesPage() {
       {model && <ServicesBody m={model} />}
     </>
   );
+}
+
+/** All services, or one service's full page at `#/services/<key or name>`. */
+export function ServicesPage() {
+  const [id] = useRoute().params;
+  return id ? <ServicePage key={id} id={serviceIdOf(id)} /> : <AllServices />;
 }

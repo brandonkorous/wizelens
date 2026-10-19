@@ -18,8 +18,8 @@ function columns(now: number): Column<HubService>[] {
   ];
 }
 
-/** The hosts (pods) of one service. Hosts offline for more than a day hide until asked for. */
-export function RegistryHosts({ group, now, onClose }: { group: ServiceGroup; now: number; onClose: () => void }) {
+/** The hosts (pods) of one service. Hosts offline for more than a day hide until asked for. Without `onClose`, no Close button. */
+export function RegistryHosts({ group, now, onClose }: { group: ServiceGroup; now: number; onClose?: () => void }) {
   const [showOld, setShowOld] = useState(false);
   const old = group.instances.filter((s) => isOldInstance(s, now)).length;
   const rows = showOld ? group.instances : group.instances.filter((s) => !isOldInstance(s, now));
@@ -27,7 +27,7 @@ export function RegistryHosts({ group, now, onClose }: { group: ServiceGroup; no
   const action = (
     <span className="wl-row-actions">
       {old > 0 && <Check label={`Show old hosts (${fmtCount(old)})`} checked={showOld} onChange={(e) => setShowOld(e.target.checked)} />}
-      <button type="button" className="wl-link-btn" onClick={onClose}>Close</button>
+      {onClose && <button type="button" className="wl-link-btn" onClick={onClose}>Close</button>}
     </span>
   );
   return (
