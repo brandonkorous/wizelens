@@ -49,7 +49,12 @@ WizeLens brings back the "open the hood on this request" experience and makes it
 
 ## 🚀 Quick start
 
-> **Alpha:** packages are not on NuGet / npm yet. Use project references, or run the sample below.
+> **Alpha:** packages are on NuGet and npm as prereleases. Add `--prerelease` to `dotnet add package`.
+
+```bash
+dotnet add package WizeLens.AspNetCore --prerelease
+npm install @wizeworks/lens-node @wizeworks/lens-react
+```
 
 ### ASP.NET Core (.NET 10)
 

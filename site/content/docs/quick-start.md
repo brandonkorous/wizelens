@@ -5,7 +5,7 @@ description: From nothing to your first trace in about five minutes. Pick the pa
 
 WizeLens is on in development only. In production it does nothing unless you turn it on yourself.
 
-> **Alpha:** the packages are not on NuGet or npm yet. Until they are, use project references, or run the sample in the repo.
+> **Alpha:** the packages are prereleases on NuGet and npm. Expect changes between versions.
 
 ## 1. Add it to your API
 
