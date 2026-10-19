@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, Database, ExternalLink, Monitor, Server } from "lucide-react";
-import type { ErrorGroup } from "@wizeworks/lens-core";
+import type { ErrorGroup, IssueInfo } from "@wizeworks/lens-core";
 import { fmtCount, fmtDateTime } from "../../format";
 import { errorHref, hrefTo, setQuery } from "../../routes";
 import { Badge } from "../../ui/Badges";
+import { IssueActions, IssueBadge } from "../../ui/IssueControls";
 import { Empty, KeyValues, Panel, TabBar } from "../../ui/Panel";
 import { ErrorTags, RequestContext, StackTrace } from "./ErrorDetailTabs";
 
@@ -44,7 +45,7 @@ function Occurrences({ group }: { group: ErrorGroup }) {
   );
 }
 
-function GroupDetails({ group }: { group: ErrorGroup }) {
+function GroupDetails({ group, info }: { group: ErrorGroup; info: IssueInfo | undefined }) {
   const [tab, setTab] = useState<Tab>("stack");
   return (
     <>
@@ -53,7 +54,9 @@ function GroupDetails({ group }: { group: ErrorGroup }) {
           {group.type}: {group.message}
         </h2>
         <Badge tone="danger">{group.critical ? "Critical" : "Error"}</Badge>
+        <IssueBadge info={info} />
       </div>
+      <IssueActions kind="error" issueKey={group.key} info={info} />
       <a className="wl-btn wl-btn-primary-outline wl-err-full" href={errorHref(group.key)}>
         <ExternalLink aria-hidden="true" /> View full error
       </a>
@@ -62,7 +65,7 @@ function GroupDetails({ group }: { group: ErrorGroup }) {
         rows={[
           ["Endpoint", <span key="e" className="wl-mono">{pathOf(group.endpoint)}</span>],
           ["Service", group.service],
-          ["First seen", fmtDateTime(group.firstSeenMs)],
+          ["First seen", fmtDateTime(info?.firstSeenMs || group.firstSeenMs)],
           ["Last seen", fmtDateTime(group.lastSeenMs)],
         ]}
       />
@@ -77,7 +80,7 @@ function GroupDetails({ group }: { group: ErrorGroup }) {
 }
 
 /** The chosen group, or a note when a linked group is not in this range. The pager steps through the listed groups. */
-export function ErrorDetailsPanel({ groups, group, linked }: { groups: ErrorGroup[]; group: ErrorGroup | null; linked: boolean }) {
+export function ErrorDetailsPanel({ groups, group, linked, issues }: { groups: ErrorGroup[]; group: ErrorGroup | null; linked: boolean; issues: Record<string, IssueInfo> }) {
   const index = group ? groups.findIndex((g) => g.key === group.key) : -1;
   const empty = linked ? (
     <Empty title="This error is not in the selected time range">Pick a longer time range at the top, or pick another exception.</Empty>
@@ -86,7 +89,7 @@ export function ErrorDetailsPanel({ groups, group, linked }: { groups: ErrorGrou
   );
   return (
     <Panel title="Error Details" action={index >= 0 && groups.length > 1 && <Pager groups={groups} index={index} />} className="wl-err-details">
-      {group ? <GroupDetails key={group.key} group={group} /> : empty}
+      {group ? <GroupDetails key={group.key} group={group} info={issues[group.key]} /> : empty}
     </Panel>
   );
 }

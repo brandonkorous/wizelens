@@ -46,9 +46,14 @@ const TIES: Record<string, (m: Obj) => void> = {
     for (const k of ["filter", "page", "size"]) delete m[k];
     m.critical = sortBy(m.critical, num("durationMs"), str("traceId"), str("spanId"));
   },
+  insights: (m) => {
+    // Issue states are new; the legacy model had none.
+    for (const k of ["issues", "hasIssues"]) delete m[k];
+  },
   overview: (m) => {
     // The compared period's line is new; the legacy model had none.
     delete (m.activity as Obj).prevRequests;
+    delete m.freshErrors;
   },
   requests: (m) => {
     // Service options carry display names now ("Web App", not "browser").
@@ -73,7 +78,7 @@ const TIES: Record<string, (m: Obj) => void> = {
   errors: (m) => {
     m.services = sortBy(m.services, num("exceptions"), num("requests"), str("service"));
     // The selected group, the filter, paging, and endpoint options are new; the legacy model had none.
-    for (const k of ["selected", "groupCount", "filter", "page", "size", "endpoints"]) delete m[k];
+    for (const k of ["selected", "groupCount", "filter", "page", "size", "endpoints", "issues", "hasIssues"]) delete m[k];
     delete (m.chart as Obj).prev;
   },
   services: (m) => {

@@ -2,6 +2,7 @@ import { usePageModel } from "../../data/models";
 import { PageHeader } from "../../ui/Panel";
 import { ModelState } from "../../ui/ModelState";
 import { ActivityPanel } from "./ActivityPanel";
+import { FreshErrorsPanel } from "./FreshErrorsPanel";
 import { LatestInsights } from "./LatestInsights";
 import { OverviewCards } from "./OverviewCards";
 import { RecentRequestsPanel } from "./RecentRequestsPanel";
@@ -26,6 +27,7 @@ export function OverviewPage() {
             <ServicesPanel rows={model.services} range={model.meta.custom ? null : model.meta.range} />
             <RecentRequestsPanel rows={model.recent} />
           </div>
+          <FreshErrorsPanel rows={model.freshErrors} />
           <LatestInsights groups={model.insights} />
         </>
       )}

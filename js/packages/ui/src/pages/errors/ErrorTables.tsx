@@ -1,20 +1,29 @@
 import { ArrowDown, ArrowUp, Box, Monitor } from "lucide-react";
-import { type ErrorGroup, type ErrorsModel, isErrorFiltered, percentChange, type ServiceErrorRow } from "@wizeworks/lens-core";
+import { type ErrorGroup, type ErrorsModel, type IssueInfo, isErrorFiltered, percentChange, type ServiceErrorRow } from "@wizeworks/lens-core";
 import { fmtCount, fmtPct, fmtTime } from "../../format";
 import { setQuery } from "../../routes";
 import { DotText } from "../../ui/Badges";
 import { Pager } from "../../ui/Controls";
 import { Empty, Panel } from "../../ui/Panel";
 import { Sparkline } from "../../ui/Sparkline";
+import { IssueBadge } from "../../ui/IssueControls";
 import { useSetService } from "../../ui/ServiceSelect";
 import { type Column, Table } from "../../ui/Table";
 
-
 const pathOf = (endpoint: string) => endpoint.replace(/^[A-Z]+ /, "");
 
-const GROUP_COLUMNS: Column<ErrorGroup>[] = [
+const groupColumns = (issues: Record<string, IssueInfo>): Column<ErrorGroup>[] => [
   { key: "time", header: "Time", className: "wl-nowrap", sort: (g) => g.lastSeenMs, cell: (g) => fmtTime(g.lastSeenMs) },
-  { key: "status", header: "Status", cell: (g) => <DotText tone="danger" colorText>{g.critical ? "Critical" : "Error"}</DotText> },
+  {
+    key: "status",
+    header: "Status",
+    cell: (g) => (
+      <span className="wl-err-status">
+        <DotText tone="danger" colorText>{g.critical ? "Critical" : "Error"}</DotText>
+        <IssueBadge info={issues[g.key]} />
+      </span>
+    ),
+  },
   { key: "error", header: "Error", className: "wl-err-text", cell: (g) => <span className="wl-truncate" title={`${g.type}: ${g.message}`}>{g.type}: {g.message}</span> },
   { key: "endpoint", header: "Endpoint", className: "wl-err-endpoint", cell: (g) => <span className="wl-truncate" title={g.endpoint}>{pathOf(g.endpoint)}</span> },
   { key: "service", header: "Service", className: "wl-nowrap", cell: (g) => g.service },
@@ -28,7 +37,7 @@ export function RecentExceptionsPanel({ stats, selected }: { stats: ErrorsModel;
   return (
     <Panel title={`${title} (${fmtCount(stats.groupCount)})`} flush className="wl-err-list">
       <Table
-        columns={GROUP_COLUMNS}
+        columns={groupColumns(stats.issues)}
         rows={stats.groups}
         rowKey={(g) => g.key}
         selectedKey={selected}

@@ -5,12 +5,15 @@ import type { PageData, PageDef } from "../scale/needs.js";
 import { type InsightGroup, insightHeadline } from "../stats/insights.js";
 import { bucketStarts } from "../stats/common.js";
 import { ACTIVITY_BUCKETS, type ActivitySeries, type Headline, type RequestHeadlines } from "../stats/overview.js";
-import { rawService } from "../stats/errors.js";
+import { type ErrorGroup, rawService } from "../stats/errors.js";
 import type { ServiceRow } from "../stats/services.js";
 import { headlineNeeds, headlinesFrom } from "./headlines.js";
 import { META_NEEDS, type ModelMeta, metaOf, scoped, serviceParam } from "./input.js";
 import { insightGroupsOf, insightNeeds } from "./insight-groups.js";
-import { aggByKey, avgs, counts, groupNeed, listNeed, listOf, type Series, seriesNeed, seriesOf, uniqueNeeds } from "./read.js";
+import { issueInfos, lifeNeed } from "./error-issues.js";
+import { errorGroupOf } from "./errors.js";
+import { insightIssues } from "./insights.js";
+import { aggByKey, avgs, counts, groupNeed, listNeed, listOf, rowsOf, type Series, seriesNeed, seriesOf, uniqueNeeds } from "./read.js";
 import { edgeNeeds, edgesOfRows, serviceNeeds, serviceRowsOf } from "./service-rows.js";
 
 export interface TimingPart {
@@ -34,6 +37,8 @@ export interface OverviewModel {
   services: ServiceRow[];
   recent: RequestItem[];
   insights: InsightGroup[];
+  /** Error groups first seen in this range, or resolved and back again; newest first. */
+  freshErrors: { group: ErrorGroup; why: "new" | "regressed" }[];
 }
 
 const PARTS: { key: string; label: string; shade: number }[] = [
@@ -47,6 +52,26 @@ const PARTS: { key: string; label: string; shade: number }[] = [
 const TOP_SERVICES = 5;
 const TOP_RECENT = 5;
 const TOP_INSIGHTS = 3;
+/** Recent error groups looked at for "new" and "regressed", and how many the panel shows. */
+const RECENT_ERRORS = 50;
+const TOP_FRESH = 5;
+
+/** Insights nobody marked fixed or dismissed. */
+function openInsights(d: PageData, groups: InsightGroup[]): InsightGroup[] {
+  const info = insightIssues(d, groups);
+  return groups.filter((g) => info[g.key]!.status === "unresolved" || info[g.key]!.status === "regressed");
+}
+
+function freshErrorsOf(d: PageData): OverviewModel["freshErrors"] {
+  const rows = rowsOf(d, "err.recent");
+  const info = issueInfos(d, rows.map((r) => r.key));
+  const out = rows.flatMap((r) => {
+    const i = info[r.key]!;
+    const why = i.status === "regressed" ? "regressed" : i.isNew && i.status === "unresolved" ? "new" : null;
+    return why ? [{ group: errorGroupOf(r), why } as const] : [];
+  });
+  return out.slice(0, TOP_FRESH);
+}
 
 /** Where request time goes: average and p95 of each part. */
 function timingOf(d: PageData): TimingPart[] {
@@ -87,6 +112,8 @@ export const overviewPage: PageDef<OverviewModel> = {
       listNeed("recent", "requests", "cur", { limit: TOP_RECENT, filter: service ? { service: rawService(service) } : {} }),
       ...insightNeeds("cur", "all", service),
       ...insightNeeds("prev", "all", service),
+      lifeNeed(service ?? ""),
+      groupNeed("err.recent", "err.g", "cur", { top: true, order: { by: "lastMs", desc: true, limit: RECENT_ERRORS }, ...(service ? { filter: { prefix: `${service}|` } } : {}) }),
     ]);
   },
   model(d) {
@@ -101,7 +128,8 @@ export const overviewPage: PageDef<OverviewModel> = {
       timing: timingOf(d),
       services: servicesOf(d, serviceParam(d.params)).slice(0, TOP_SERVICES),
       recent: listOf<RequestItem>(d, "recent").items,
-      insights: groups.slice(0, TOP_INSIGHTS),
+      insights: openInsights(d, groups).slice(0, TOP_INSIGHTS),
+      freshErrors: freshErrorsOf(d),
     };
   },
 };

@@ -63,7 +63,9 @@ describe("traces across projects", () => {
 describe("who sees the joined parts", () => {
   it("gives a person of another tenant nothing from org A", async () => {
     const eve = await joinWithInvite(url, await invite(owner, orgB, "eve@beta.io", "admin"), "eve@beta.io", "Eve");
-    expect((await eve.call<Trace>("GET", `api/traces/${T1}?project=${pb}`)).body.services).toEqual(["intruder"]);
+    const own = await eve.call<Trace>("GET", `api/traces/${T1}?project=${pb}`);
+    // Status and body in the failure message, for a failure seen only on Windows CI.
+    expect({ status: own.status, services: own.body.services ?? own.body }).toEqual({ status: 200, services: ["intruder"] });
     expect((await eve.call("GET", `api/traces/${T1}?project=${pa1}`)).status).toBe(404);
   });
 
@@ -96,6 +98,7 @@ describe("who sees the joined parts", () => {
   it("joins a share link as far as its maker may read, and stops when the maker leaves", async () => {
     const vic = await joinWithInvite(url, await invite(owner, orgA, "vic@acme.io", "member"), "vic@acme.io");
     const made = await vic.call<{ url: string }>("POST", `api/projects/${pa1}/shares`, { traceId: T1, days: 3 });
+    expect({ status: made.status, body: made.status === 201 ? "ok" : made.body }).toEqual({ status: 201, body: "ok" });
     const token = made.body.url.split("/shared/")[1]!;
     const shared = async () => (await new Client(url).call<{ trace: Trace }>("GET", `api/shared/${token}`)).body.trace.services.sort();
     expect(await shared()).toEqual(["api-rest", "console"]);

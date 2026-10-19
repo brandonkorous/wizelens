@@ -28,3 +28,4 @@
 .wl-stack li code { color: var(--wl-fg-2); white-space: pre; }
 .wl-stack li:first-child code { color: var(--wl-accent-text); }
 .wl-stack p { margin: 8px 0 0 12px; }
+.wl-err-status { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }

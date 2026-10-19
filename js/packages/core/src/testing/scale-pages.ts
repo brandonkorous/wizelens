@@ -1,7 +1,8 @@
 // Whole-page parity for SQL executors: every page and range against the memory executor. Test-only: excluded from the build.
 import { PAGES, type PageName, runPage, runPageSync } from "../models/index.js";
 import { memoryExecutor } from "../scale/memory.js";
-import { type Executor, type SyncExecutor, windowOfRef } from "../scale/needs.js";
+import { issueId, type IssueState, type IssueStates } from "../issues.js";
+import { type Executor, type PageContext, type SyncExecutor, windowOfRef } from "../scale/needs.js";
 import { pageContext } from "../scale/run.js";
 import type { TimeRange } from "../stats/common.js";
 import type { Trace } from "../types.js";
@@ -47,7 +48,8 @@ function paramsOf(page: PageName, range: TimeRange, mem: SyncExecutor): Record<s
   if (page === "endpoint") extra.push(...runPageSync("service", pageContext(range, SCENARIO_NOW, { service: "api:orders" }), mem).endpoints.slice(0, 3).map((e) => ({ service: "api:orders", endpoint: e.name })), { service: "api", endpoint: "nope" });
   if (page === "query") extra.push(...runPageSync("database", pageContext(range, SCENARIO_NOW, { size: "200" }), mem).queries.slice(0, 3).map((q) => ({ q: q.query })), { q: "nope" });
   if (page === "route") extra.push(...runPageSync("rendering", ctx, mem).routes.slice(0, 2).map((r) => ({ route: r.route })), { route: "nope" });
-  if (page === "errors") extra.push(...runPageSync("errors", ctx, mem).groups.slice(0, 2).map((g) => ({ group: g.key })), { group: "nope" });
+  if (page === "errors") extra.push(...runPageSync("errors", ctx, mem).groups.slice(0, 2).map((g) => ({ group: g.key })), { group: "nope" }, { _issues: "1" }, { _issues: "1", status: "resolved" }, { _issues: "1", status: "ignored" }, { new: "1" });
+  if (page === "insights" || page === "overview") extra.push({ _issues: "1" });
   if (page === "insights") extra.push(...runPageSync("insights", ctx, mem).groups.slice(0, 2).map((g) => ({ key: g.key })));
   return [{}, ...(STATIC[page] ?? []), ...extra];
 }
@@ -87,6 +89,13 @@ function alignIdLists(page: PageName, sql: unknown, want: unknown, out: string[]
   if (g(sql)?.traceIds && g(want)?.traceIds) g(sql)!.traceIds = g(want)!.traceIds;
 }
 
+/** Issue states for `_issues=1` cases: the two newest error groups resolved (the first one before it last happened) and ignored. */
+function demoIssues(ctx: PageContext, mem: SyncExecutor): IssueStates {
+  const [a, b] = runPageSync("errors", { ...ctx, params: {} }, mem).groups;
+  const state = (key: string, status: IssueState["status"], resolvedMs: number | null): IssueState => ({ kind: "error", key, status, untilMs: null, resolvedMs, assignee: null, updatedMs: 0 });
+  return Object.fromEntries([...(a ? [state(a.key, "resolved", a.lastSeenMs - 1)] : []), ...(b ? [state(b.key, "ignored", null)] : [])].map((s) => [issueId(s.kind, s.key), s]));
+}
+
 /** Differences between SQL and memory pages for every page, range, and param set. */
 export async function pageParity(ex: Executor, traces: readonly Trace[], ranges: readonly TimeRange[], retentionMs: number): Promise<string[]> {
   const mem = tierMemory(traces, retentionMs);
@@ -94,7 +103,8 @@ export async function pageParity(ex: Executor, traces: readonly Trace[], ranges:
   for (const page of Object.keys(PAGES) as PageName[]) {
     for (const range of ranges) {
       for (const params of paramsOf(page, range, mem)) {
-        const ctx = pageContext(range, SCENARIO_NOW, params);
+        const base = pageContext(range, SCENARIO_NOW, params);
+        const ctx = params._issues ? { ...base, issues: demoIssues(base, mem) } : base;
         const sql = slim(await runPage(page, ctx, ex));
         const want = slim(runPageSync(page, ctx, mem));
         const ids: string[] = [];

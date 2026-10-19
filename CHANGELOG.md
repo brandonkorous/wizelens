@@ -6,6 +6,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Error tracker workflow.** Resolve an error group, or ignore it for an hour, a day, a week, or for good. A resolved
+  group that happens again shows as **Regressed** and comes back to the list. The Errors page lists unresolved groups by
+  default, with a Status filter and a **New only** filter. "First seen" is now the first time over all kept data, not the
+  start of the range. On the cloud, a group can be **assigned** to a member, and each change writes an audit line.
+  Insights get the same: **Mark fixed** and **Dismiss**. The Overview has a "New and Regressed Errors" panel. The hub
+  and the cloud keep these states; in-app add-ons show no actions.
 - **A page for each error, endpoint, query, and page route.** An error shows its count over time, its endpoints, the users
   and browsers of its newest occurrences, the stack, and those occurrences. An endpoint shows requests, errors, and
   p50/p95/p99 over time, the queries it runs, what it calls, its errors, and its slowest requests. A query shows its runs

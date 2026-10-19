@@ -127,7 +127,7 @@ interface Trace extends TraceSummary {
 type HostMode = "in-app" | "hub" | "cloud";
 type Capability =
   | "federation" | "environments" | "registry" | "accounts" | "alerts" | "sharing"
-  | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search";
+  | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search" | "issues";
 
 interface ServiceInfo {
   mode?: HostMode;          // absent = "in-app"
@@ -205,10 +205,11 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `serverMetrics` | The host computes the Metrics page itself (`api/models/metrics`). Without it, the browser reads `api/metrics/points` | | ✅ | ✅ |
 | `search` | The host answers the search language (`api/search`, `api/search/suggest`); the Search page and Ctrl+K use it. Without it, the browser searches the loaded traces | ✅ | ✅ | ✅ |
 | `changes` | The host streams `api/changes?project=` (server-sent events): an `event: data` line each time the project gets new stats, at most every 2 s (the hub: each settle round), and a comment every 25 s. The dashboard reloads the open page then, keeping the old numbers on screen until the new ones arrive | | ✅ | ✅ |
+| `issues` | The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. See "Issue states" below | | ✅ | ✅ |
 
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search"]`, plus `metrics` when metrics are on. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "issues"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -352,6 +353,19 @@ Server name `wizelens`. Disabled by default. Every call is written to the app lo
 On the hub, the cloud, and the Node add-on, `list_traces`, `get_errors`, and `find_slow_queries` read the whole store
 through search (the newest traces in memory are merged in, since the store indexes a trace once it goes quiet), not the
 newest 500 traces. `find_slow_queries` reads up to 5,000 matching queries, newest first, and returns the slowest.
+
+## Issue states
+
+Hosts with the `issues` capability keep a state per error group (`kind: "error"`, key `service|type|message`) and per
+insight (`kind: "insight"`, the insight key): `open`, `resolved` (with the time), or `ignored` (until a time, or for good),
+and an assignee (cloud). A resolved issue that happens after it was resolved is **regressed**. The hub answers
+`GET api/issues?project=` and `POST api/issues?project=`; the cloud answers `GET api/projects/:project/issues` (with the
+members issues can be assigned to) and `POST api/projects/:project/issues` (members who can write; each change writes an
+audit line `issue.<action>`). A POST body is `{ kind, key, action: "resolve" | "ignore" | "reopen" | "assign", untilMs?, assignee? }`.
+
+The Errors model takes `status` (`unresolved` by default, `resolved`, `ignored`, `all`) and `new=1` (first seen in the
+range), and returns `issues` (status, first seen over all kept data, new, assignee) and `hasIssues`. The Insights model
+takes `status` the same way. The Overview model returns `freshErrors`, the newest new and regressed groups.
 
 ## Search (v0.9)
 
@@ -532,7 +546,7 @@ the rollups. Page answers are cached per page, parameters, scope, 10-second "now
 
 `@wizeworks/lens-cloud` (command `wizelens-cloud`, default port **5970**) is the hosted service. It serves the same dashboard,
 answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats",
-"metrics", "serverMetrics", "search", "changes"]`,
+"metrics", "serverMetrics", "search", "changes", "issues"]`,
 and keeps data in Postgres (`DATABASE_URL=postgres://...`). PGlite (`pglite:<folder>` or `memory`) runs the same SQL in-process,
 for tests and trials.
 
