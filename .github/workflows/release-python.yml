@@ -1,0 +1,62 @@
+name: Release Python
+
+# Push a tag like python/v0.1.0a1 (the version in python/pyproject.toml) to publish the wizelens package to PyPI.
+# PyPI trusted publishing (GitHub OIDC): no token is stored. See docs/RELEASING.md.
+on:
+  push:
+    tags: ["python/v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check the tag matches python/pyproject.toml
+        run: node scripts/check-sdk-version.mjs "$GITHUB_REF_NAME"
+
+      - name: Install and test
+        run: |
+          pip install -e "python[test]" build
+          pytest python
+
+      - name: Build the sdist and wheel
+        run: python -m build python --outdir dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pypi
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    # The PyPI trusted publisher names this environment, so only this job can publish.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/wizelens/
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pypi
+          path: dist/
+
+      - name: Publish to PyPI (trusted publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') }}
+          generate_release_notes: true

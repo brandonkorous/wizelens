@@ -20,7 +20,7 @@ Set these where each service runs, then restart it:
 ```bash
 WIZELENS_HUB=http://localhost:5960                  # .NET and Node add-ons
 WIZELENS_PROJECT=my-shop                            # optional: groups services by project
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960   # any other OpenTelemetry app (Python, Go, Java, ...)
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960   # any other OpenTelemetry app: see Java, Python, and Go
 ```
 
 Each service keeps its own dashboard too.

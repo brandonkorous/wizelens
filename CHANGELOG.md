@@ -81,6 +81,25 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   - The code install stays and wins: when the app calls `createWizeLens()` or `AddWizeLens()` too, the auto install steps
     aside and nothing is counted twice. `UseWizeLens()` now adds its middleware once, however often it is called.
   - New samples with no WizeLens code: `samples/auto-node` and `samples/auto-dotnet`.
+- **Java, Python, and Go are first-class.** Start from the OpenTelemetry agents (the Java agent, `opentelemetry-instrument`,
+  the Go SDK and contrib) and every insight works on what they send: N+1 queries, N+1 HTTP calls, slow queries, and
+  database waits, on old and new semantic-convention names. Thin SDKs add what the agents leave out, with WizeLens
+  defaults: the **Java** extension (`com.wizelens:wizelens`, loaded with `-Dotel.javaagent.extensions`) plus a servlet body
+  filter; the **Python** package (`pip install wizelens`, found by `opentelemetry-instrument` on its own) with ASGI, Flask,
+  and Django body capture; and the **Go** module (`github.com/brandonkorous/wizelens/go`) with `Start`, `Handler`,
+  `Transport`, `OpenDB`, and `Logger`. All three keep every trace with an error or a slow span when sampling, the same
+  way the add-ons do, put SQL parameters on queries (sensitive names redacted), send logs with their trace, and keep
+  request and response bodies with `WIZELENS_CAPTURE_BODY=true`. Runnable samples in `samples/java-spring`,
+  `samples/python-fastapi`, and `samples/go-net-http` call each other, so one request crosses three languages. Guides:
+  `/docs/java/`, `/docs/python/`, `/docs/go/`.
+- **Release workflows for the SDKs.** Tags `python/v*` (PyPI, trusted publishing), `java/v*` (Maven Central, Central
+  Portal token and signing key from repository secrets), and `go/v*` (checks the module and warms the Go proxy) publish
+  them, each checked against its own version. Setup steps are in `docs/RELEASING.md`.
+- **The request body** shows on a request's Headers tab when a service captured it (`wizelens.request.body`).
+- **OTLP mapping:** more older names map to the current ones (`db.sql.table`, `net.host.name`, `http.user_agent`,
+  `http.flavor`, `messaging.operation`, `code.*`, and others); `http.target` splits into path and query; agents' SQL
+  parameters (`db.query.parameter.<key>`, Python's `db.statement.parameters`) become `wizelens.db.parameters`; header
+  lists join with `, ` and header names use dashes; an ORM span over a driver span counts as one query.
 
 - **Connect Claude to WizeLens Cloud with a sign-in, not a key.** Add `https://mcp.wizelens.com` to Claude (Settings →
   Connectors), Claude Code, Cursor, or any MCP client. It opens the WizeLens sign-in, and you pick one organization and
@@ -111,6 +130,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 ### Changed
 
 - Stats are rebuilt once after this update (`FACTS_VERSION` 4), so each count can be read per service and per endpoint.
+- **Duplicate queries need known parameters.** A statement with placeholders but no captured parameters is no longer a
+  duplicate query (the agents sanitize SQL, so two runs may have had different values). Node and .NET always capture
+  parameters, so their results do not change.
 
 ### Fixed
 

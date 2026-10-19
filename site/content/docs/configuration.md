@@ -80,13 +80,16 @@ Props on `WizeLensProvider`.
 
 | Variable | Used by | Means |
 |---|---|---|
-| `WIZELENS_ENABLED` | .NET, Node | Turn WizeLens on (`true`) or off (`false`). |
+| `WIZELENS_ENABLED` | .NET, Node, Java, Python, Go | Turn WizeLens on (`true`) or off (`false`). |
 | `WIZELENS_DASHBOARD` | .NET, Node | Serve the dashboard, read API, and MCP (`true`), or send only (`false`). |
-| `WIZELENS_HUB` | .NET, Node | Send to this hub or cloud. |
-| `WIZELENS_HUB_TOKEN` | .NET, Node | The hub token, or a cloud ingest key. |
-| `WIZELENS_PROJECT` | .NET, Node | Project name on a shared hub. |
+| `WIZELENS_HUB` | .NET, Node, Java, Python, Go | Send to this hub or cloud. |
+| `WIZELENS_HUB_TOKEN` | .NET, Node, Java, Python, Go | The hub token, or a cloud ingest key. |
+| `WIZELENS_PROJECT` | .NET, Node, Java, Python, Go | Project name on a shared hub. |
 | `WIZELENS_RELEASE` | .NET, Node | The app's version (`service.version` on every span). |
-| `WIZELENS_SAMPLE_RATE` | .NET, Node | Sampling rate, 0 to 1. |
+| `WIZELENS_SAMPLE_RATE` | .NET, Node, Java, Python, Go | Sampling rate, 0 to 1. |
+| `WIZELENS_KEEP_SLOW_MS`, `WIZELENS_KEEP_ERRORS` | Java, Python, Go | What sampling always keeps. |
+| `WIZELENS_CAPTURE_BODY`, `WIZELENS_CAPTURE_SQL_PARAMETERS` | Java, Python, Go | Request and response bodies; SQL parameters. |
+| `WIZELENS_REDACT_KEYS` | Java, Python, Go | More key fragments to redact. |
 
 ## Redaction
 
