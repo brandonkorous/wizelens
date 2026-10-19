@@ -2,9 +2,12 @@
   <Folder Name="/src/">
     <Project Path="src/WizeLens.AspNetCore/WizeLens.AspNetCore.csproj" />
     <Project Path="src/WizeLens.AutoInstrumentation/WizeLens.AutoInstrumentation.csproj" />
+    <Project Path="src/WizeLens.Elasticsearch/WizeLens.Elasticsearch.csproj" />
     <Project Path="src/WizeLens.EntityFrameworkCore/WizeLens.EntityFrameworkCore.csproj" />
     <Project Path="src/WizeLens.Kafka/WizeLens.Kafka.csproj" />
+    <Project Path="src/WizeLens.MongoDB/WizeLens.MongoDB.csproj" />
     <Project Path="src/WizeLens.NLog/WizeLens.NLog.csproj" />
+    <Project Path="src/WizeLens.Redis/WizeLens.Redis.csproj" />
     <Project Path="src/WizeLens.Serilog/WizeLens.Serilog.csproj" />
   </Folder>
   <Folder Name="/tests/">

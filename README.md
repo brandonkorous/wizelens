@@ -222,6 +222,7 @@ Open any trace for the full detail: timeline, SQL, HTTP, logs, and errors. Searc
 | Exceptions | ✅ | ✅ |
 | Metrics | ✅ every `Meter`: .NET runtime, ASP.NET Core, `HttpClient`, your own | ✅ CPU, memory, heap, event loop, GC, and OpenTelemetry metrics (`wizelensMetricExporter`) |
 | Databases with no code change | ✅ Npgsql, MySqlConnector, Microsoft.Data.SqlClient | |
+| Redis, MongoDB, Elasticsearch | ✅ `WizeLens.Redis` (StackExchange.Redis), `WizeLens.MongoDB` (MongoDB.Driver), `WizeLens.Elasticsearch` (Elastic.Clients.Elasticsearch 8+) | |
 | gRPC | ✅ Grpc.AspNetCore, Grpc.Net.Client | ✅ `instrumentGrpc` (`@grpc/grpc-js`) |
 | Message queues | ✅ RabbitMQ.Client, Azure Service Bus, MassTransit, Kafka (`WizeLens.Kafka`) | ✅ `instrumentAmqplib`, `instrumentKafkaJs`, `instrumentServiceBus` |
 | Request details | ✅ headers, client IP, user, request id, body sizes, tags | ✅ same; user and tags through `setUser()` / `tag()` |

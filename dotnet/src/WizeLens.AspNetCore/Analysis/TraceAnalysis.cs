@@ -19,7 +19,7 @@ public static partial class TraceAnalysis
     [
         .. trace.Spans
             .Where(IsRepeatable)
-            .Where(s => !HasUnknownParams(s.Attr("db.query.text")!, s.Attr("wizelens.db.parameters")))
+            .Where(s => !HasUnknownParams(s))
             .GroupBy(s => (Query: s.Attr("db.query.text")!, Params: s.Attr("wizelens.db.parameters") ?? ""))
             .Where(g => g.Count() >= 2)
             .Select(g => new DuplicateQuery(trace.TraceId, g.Key.Query, g.Key.Params, g.Count(), g.Sum(s => s.DurationMs), g.First().Service))
@@ -48,13 +48,41 @@ public static partial class TraceAnalysis
 
     /// <summary>A db span with query text that is not a session statement.</summary>
     private static bool IsRepeatable(Span s) =>
-        s.Category == SpanCategories.Db && s.Attr("db.query.text") is { } q && !IsSessionStatement(q);
+        s.Category == SpanCategories.Db && s.Attr("db.query.text") is not null && !IsSessionStatement(s);
 
     /// <summary>SET, BEGIN, COMMIT and the like: their repeats are by design, not N+1.</summary>
     public static bool IsSessionStatement(string query) => SessionRegex().IsMatch(query);
 
+    /// <summary>SQL session statements, Redis connection and transaction commands, MongoDB cursor and session commands.</summary>
+    public static bool IsSessionStatement(Span s) => s.Attr("db.system.name") switch
+    {
+        "redis" => RedisSessionCommands.Contains(s.Attr("db.operation.name") ?? ""),
+        "mongodb" => MongoSessionCommands.Contains(s.Attr("db.operation.name") ?? ""),
+        "elasticsearch" => false,
+        _ => IsSessionStatement(s.Attr("db.query.text") ?? s.Name),
+    };
+
     /// <summary>Placeholders but no captured parameters (OTLP agents): two such queries may differ, so they are never duplicates.</summary>
     public static bool HasUnknownParams(string query, object? parameters) => parameters is null && PlaceholderRegex().IsMatch(query);
+
+    /// <summary>As above; Redis, MongoDB, and Elasticsearch text never has values, so without parameters it is always unknown.</summary>
+    public static bool HasUnknownParams(Span s)
+    {
+        var parameters = s.Attr("wizelens.db.parameters");
+        return HasUnknownParams(s.Attr("db.query.text") ?? s.Name, parameters)
+            || parameters is null && s.Attr("db.system.name") is "redis" or "mongodb" or "elasticsearch";
+    }
+
+    private static readonly HashSet<string> RedisSessionCommands = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "MULTI", "EXEC", "DISCARD", "WATCH", "UNWATCH", "SELECT", "AUTH", "PING", "ECHO", "HELLO", "CLIENT", "QUIT", "RESET",
+        "READONLY", "READWRITE", "ASKING",
+    };
+
+    private static readonly HashSet<string> MongoSessionCommands = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "getMore", "killCursors", "endSessions", "commitTransaction", "abortTransaction",
+    };
 
     /// <summary>db spans at or above <paramref name="thresholdMs"/>.</summary>
     public static IEnumerable<SlowQuery> SlowQueries(Trace trace, double thresholdMs = 100) =>

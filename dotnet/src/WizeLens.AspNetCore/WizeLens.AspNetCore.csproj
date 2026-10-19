@@ -29,6 +29,9 @@
         <InternalsVisibleTo Include="WizeLens.Serilog" />
         <InternalsVisibleTo Include="WizeLens.NLog" />
         <InternalsVisibleTo Include="WizeLens.AutoInstrumentation" />
+        <InternalsVisibleTo Include="WizeLens.Redis" />
+        <InternalsVisibleTo Include="WizeLens.MongoDB" />
+        <InternalsVisibleTo Include="WizeLens.Elasticsearch" />
     </ItemGroup>
 
 </Project>

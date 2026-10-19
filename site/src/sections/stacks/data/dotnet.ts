@@ -37,7 +37,7 @@ export const DOTNET: Stack = {
   ],
   captures: [
     { title: "Requests", items: ["ASP.NET Core hosting", "Routing and handler time", "Headers, user, tags", "Response bodies (opt-in)"] },
-    { title: "Databases", items: ["EF Core", "Dapper", "Any ADO.NET provider", "Npgsql, SqlClient, MySqlConnector with no code"] },
+    { title: "Databases", items: ["EF Core", "Dapper", "Any ADO.NET provider", "Npgsql, SqlClient, MySqlConnector with no code", "Redis, MongoDB, Elasticsearch (WizeLens.Redis, .MongoDB, .Elasticsearch)"] },
     { title: "Calls out", items: ["HttpClient", "Grpc.Net.Client", "Grpc.AspNetCore"] },
     { title: "Messages", items: ["RabbitMQ.Client 7+", "Azure Service Bus", "MassTransit", "Kafka (WizeLens.Kafka)"] },
     { title: "Logs", items: ["ILogger", "Serilog (WizeLens.Serilog)", "NLog (WizeLens.NLog)", "Browser console lines"] },

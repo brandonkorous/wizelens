@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Description>Elasticsearch (Elastic.Clients.Elasticsearch 8+) adapter for WizeLens. Records every request as a db span in the trace of the request that sent it, as METHOD /index/_endpoint with ids as ?, never the bodies.</Description>
+        <PackageTags>$(PackageTags);elasticsearch;search</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\WizeLens.AspNetCore\WizeLens.AspNetCore.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="WizeLens.Tests" />
+    </ItemGroup>
+
+</Project>
