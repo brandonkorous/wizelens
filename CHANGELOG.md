@@ -85,6 +85,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   request and response bodies with `WIZELENS_CAPTURE_BODY=true`. Runnable samples in `samples/java-spring`,
   `samples/python-fastapi`, and `samples/go-net-http` call each other, so one request crosses three languages. Guides:
   `/docs/java/`, `/docs/python/`, `/docs/go/`.
+- **Release workflows for the SDKs.** Tags `python/v*` (PyPI, trusted publishing), `java/v*` (Maven Central, Central
+  Portal token and signing key from repository secrets), and `go/v*` (checks the module and warms the Go proxy) publish
+  them, each checked against its own version. Setup steps are in `docs/RELEASING.md`.
 - **The request body** shows on a request's Headers tab when a service captured it (`wizelens.request.body`).
 - **OTLP mapping:** more older names map to the current ones (`db.sql.table`, `net.host.name`, `http.user_agent`,
   `http.flavor`, `messaging.operation`, `code.*`, and others); `http.target` splits into path and query; agents' SQL

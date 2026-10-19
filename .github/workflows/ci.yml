@@ -205,7 +205,7 @@ jobs:
           cache: maven
 
       - name: Build and test
-        run: mvn -B -f java/pom.xml install
+        run: mvn -B -f java/pom.xml -P release -Dgpg.skip install   # also builds the sources and javadoc jars Central needs
 
       - name: Build the Spring sample
         run: mvn -B -f samples/java-spring/pom.xml package -DskipTests
@@ -226,6 +226,7 @@ jobs:
       - name: Vet and test
         working-directory: go
         run: |
+          go mod tidy && git diff --exit-code go.mod go.sum
           test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
           go vet ./...
           go test -race ./...

@@ -1,0 +1,48 @@
+name: Release Java
+
+# Push a tag like java/v0.1.0-alpha.1 (the version in java/pom.xml) to publish com.wizelens:wizelens to Maven Central.
+# Needs four repository secrets, set once (see docs/RELEASING.md):
+#   MAVEN_CENTRAL_USERNAME, MAVEN_CENTRAL_PASSWORD  the Central Portal user token (central.sonatype.com, View Account, Generate User Token)
+#   MAVEN_GPG_PRIVATE_KEY, MAVEN_GPG_PASSPHRASE     the armored private signing key and its passphrase
+on:
+  push:
+    tags: ["java/v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Writes a settings.xml server "central" from the token secrets, and imports the signing key.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+          server-id: central
+          server-username: MAVEN_CENTRAL_USERNAME
+          server-password: MAVEN_CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Check the tag matches java/pom.xml
+        run: node scripts/check-sdk-version.mjs "$GITHUB_REF_NAME"
+
+      - name: Test, sign, and publish to Maven Central
+        run: mvn -B -f java/pom.xml -P release deploy
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+
+      # The jar is also the agent extension (-Dotel.javaagent.extensions), so it goes on the release for direct download.
+      - name: GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: java/target/wizelens-*.jar
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true

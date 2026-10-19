@@ -120,7 +120,9 @@
   </build>
 
   <profiles>
-    <!-- mvn -P release deploy: sources, javadoc, signatures, and the Central Portal upload. Needs the owner's keys. -->
+    <!-- mvn -P release deploy (release-java.yml): sources, javadoc, signatures, and the Central Portal upload. -->
+    <!-- Try it with no keys: mvn -P release verify -Dgpg.skip -->
+
     <profile>
       <id>release</id>
       <build>
@@ -140,6 +142,9 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
             <version>3.11.2</version>
+            <configuration>
+              <doclint>none</doclint>
+            </configuration>
             <executions>
               <execution>
                 <id>attach-javadocs</id>
@@ -158,6 +163,13 @@
                 <goals><goal>sign</goal></goals>
               </execution>
             </executions>
+            <configuration>
+              <!-- The passphrase comes from MAVEN_GPG_PASSPHRASE; loopback lets gpg take it with no terminal. -->
+              <gpgArguments>
+                <arg>--pinentry-mode</arg>
+                <arg>loopback</arg>
+              </gpgArguments>
+            </configuration>
           </plugin>
           <plugin>
             <groupId>org.sonatype.central</groupId>
@@ -166,6 +178,8 @@
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>
+              <autoPublish>true</autoPublish>
+              <waitUntil>validated</waitUntil>
             </configuration>
           </plugin>
         </plugins>
