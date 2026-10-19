@@ -6,6 +6,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Releases.** Add-ons send the app's version (`release`, or `WIZELENS_RELEASE`; .NET reads the entry assembly's
+  version, Node reads `npm_package_version`, React takes a `release` prop, and OpenTelemetry apps send `service.version`).
+  Every chart marks the time a new version first sent data. The service page compares its newest versions: requests, error
+  rate, p95, and the error groups each one brought. Errors and Insights get a **New in this release** filter.
 - **Error tracker workflow.** Resolve an error group, or ignore it for an hour, a day, a week, or for good. A resolved
   group that happens again shows as **Regressed** and comes back to the list. The Errors page lists unresolved groups by
   default, with a Status filter and a **New only** filter. "First seen" is now the first time over all kept data, not the
@@ -62,10 +66,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   now links to the problem it is part of, with the suspected cause, and the Alerts page shows that link too.
 - **`list_problems` for AI tools** (hub and cloud): the problems, their suspected causes, and each anomaly against its
   normal. In the cloud, without a project it covers every project you may read.
-- **Apps report their version.** Spans carry `service.version`: `serviceVersion` in Node (else `OTEL_SERVICE_VERSION`, else
-  the npm package version), `ServiceVersion` in .NET (else `OTEL_SERVICE_VERSION`, else the app's informational version),
-  and the OTLP resource's `service.version` on the hub. Problems uses it to spot a new release.
-- **One stats rebuild for all of the above** (`FACTS_VERSION` 5): errors grouped by their first app frame, log patterns,
+- **Problems use the release.** The `release` option (above) also reads `OTEL_SERVICE_VERSION` when `WIZELENS_RELEASE` is
+  not set, in Node and .NET. Problems uses `service.version` to spot a new release.
+- **One stats rebuild for all of the above** (`FACTS_VERSION` 6): errors grouped by their first app frame, log patterns,
   and the versions each service sends. Hosts rebuild their stats once after the upgrade, and the production ClickHouse
   re-settles once. Cloud migrations 11 (uptime), 12 (source maps), 13 (logs), and 14 (problems) run in that order.
 
@@ -97,11 +100,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   trace page's Errors tab show each frame's original file, line, and function, with a few lines of code around the line
   that threw, and the raw stack one click away. Errors
   group by the first frame of your code, so one bug stays one error across builds (the stats rebuild once: facts
-  version 5). On your machine it needs no setup: the browser package, the Node add-on, and the hub read the maps your dev
+  version 6). On your machine it needs no setup: the browser package, the Node add-on, and the hub read the maps your dev
   server serves, and the hub (`--sourcemaps ./dist`) and the Node add-on (`sourceMaps: { dirs }`) read build folders. For
   production, the new `@wizeworks/lens-cli` package uploads maps per release to the hub or the cloud (with a project's
   ingest key): `npx @wizeworks/lens-cli sourcemaps upload ./dist`, or the Vite, webpack, and Next.js plugins at build time.
-  The React provider sends the release as `service.version` (the `version` prop, or what the build plugin sets).
+  The React provider sends the release as `service.version` (the `release` prop, or what the build plugin sets).
 
 - **Connect Claude to WizeLens Cloud with a sign-in, not a key.** Add `https://mcp.wizelens.com` to Claude (Settings →
   Connectors), Claude Code, Cursor, or any MCP client. It opens the WizeLens sign-in, and you pick one organization and

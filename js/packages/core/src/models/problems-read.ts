@@ -93,7 +93,7 @@ export function samplesOf(d: NeedResults, mode: BaselineMode): number {
 }
 
 /** Versions in the window, and whether the week before had them. */
-export function versionsOf(d: NeedResults): VersionSeen[] {
+export function versionsSeenOf(d: NeedResults): VersionSeen[] {
   const before = new Set(rowsOf(d, "pb.ver.before").map((r) => r.key));
   return rowsOf(d, "pb.ver").map((r) => {
     const [service = "", version = ""] = splitKey(r.key);

@@ -43,22 +43,18 @@ function instrumentFetch(provider: BasicTracerProvider, store: TraceStore, selfE
 export interface TracingOptions {
   service: string;
   version: string;
-  /** The app's version, kept on every span as `service.version`. */
-  serviceVersion?: string;
+  /** The app's version (`service.version`). */
+  release?: string;
   redactKeys: readonly string[];
   fetch: boolean;
 }
 
-/** The app's version: the option, else OTEL_SERVICE_VERSION, else the version npm runs the app with. */
-export const serviceVersionOf = (o: { serviceVersion?: string }): string | undefined =>
-  o.serviceVersion || process.env.OTEL_SERVICE_VERSION || process.env.npm_package_version || undefined;
-
 /** One tracer provider per WizeLens instance. Every finished span goes into the store. */
 export function createTracing(store: TraceStore, o: TracingOptions, selfEndpoints: ReadonlySet<string>): Tracing {
   const provider = new BasicTracerProvider({
-    resource: resourceFromAttributes({ "service.name": o.service, ...(o.serviceVersion ? { "service.version": o.serviceVersion } : {}) }),
+    resource: resourceFromAttributes({ "service.name": o.service, ...(o.release ? { "service.version": o.release } : {}) }),
     sampler: new AlwaysOnSampler(),
-    spanProcessors: [new StoreSpanProcessor(store, o.service, o.redactKeys, o.serviceVersion)],
+    spanProcessors: [new StoreSpanProcessor(store, o.service, o.redactKeys, o.release)],
   });
   const tracer = preciseTracer(provider.getTracer("@wizeworks/lens-node", o.version));
   const undici = o.fetch ? instrumentFetch(provider, store, selfEndpoints) : undefined;

@@ -32,6 +32,7 @@ describe("cloud stats tables", () => {
     expect(await parity({ ...s, ex: cloudExecutor(s.db, "other", s.retentionMs) }, traces, ["1h"])).not.toEqual([]);
   });
 
+  // Every page, range, and filter on PGlite: slow on a busy CI runner.
   it("computes every page like the memory executor", async () => {
     expect(await pageParity(s.ex, traces, RANGES, s.retentionMs)).toEqual([]);
   }, 120_000);

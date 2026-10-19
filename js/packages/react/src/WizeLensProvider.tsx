@@ -1,4 +1,5 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
+import { setBrowserRelease } from "./browser-span.js";
 import { Hud } from "./Hud.js";
 import { createRecorder, type RecordedRequest, type Recorder } from "./recorder.js";
 
@@ -19,8 +20,8 @@ export interface WizeLensProviderProps {
   capturePages?: boolean;
   /** Copy `console.*` calls into the page view's trace. Default true. */
   captureConsole?: boolean;
-  /** Your app's version (release), so browser stacks find the right source maps. Default: what the build plugin set. */
-  version?: string;
+  /** The web app's version, kept on browser spans for release markers and version compares, and so browser stacks find the right source maps. Default: what the build plugin set. */
+  release?: string;
   /** Read this page's source maps (dev servers serve them) so errors group by source. Default true. */
   resolveFrames?: boolean;
   children?: ReactNode;
@@ -34,16 +35,18 @@ export function WizeLensProvider({
   slowMs,
   capturePages = true,
   captureConsole = true,
-  version,
+  release,
   resolveFrames = true,
   children,
 }: WizeLensProviderProps) {
   const recorder = useMemo(
-    () => (enabled ? createRecorder({ endpoint, propagateTo, capturePages, captureConsole, readServer: hud, version, resolveFrames }) : null),
+    () => (enabled ? createRecorder({ endpoint, propagateTo, capturePages, captureConsole, readServer: hud, version: release, resolveFrames }) : null),
     // propagateTo is read once on purpose; pass a stable function.
-    [endpoint, enabled, capturePages, captureConsole, hud, version, resolveFrames],
+    [endpoint, enabled, capturePages, captureConsole, hud, release, resolveFrames],
   );
 
+  // Before install, so the first page load already carries the release.
+  useEffect(() => setBrowserRelease(release), [release]);
   useEffect(() => recorder?.install(), [recorder]);
 
   return (

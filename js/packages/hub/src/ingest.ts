@@ -7,6 +7,7 @@ import {
   type LogRecord,
   redactAttributes,
   sanitizeMetricPoint,
+  stampVersion,
   toAttributeValue,
 } from "@wizeworks/lens-core";
 import { sanitizeClientSpan } from "@wizeworks/lens-node/kit";
@@ -40,6 +41,7 @@ export function parseSender(raw: unknown): HubSender | null {
     service,
     project: text(s.project, 100),
     version: text(s.version, 50),
+    release: text(s.release, 50),
     runtime: text(s.runtime, 100),
     environment: text(s.environment, 50),
     host: text(s.host, 100),
@@ -85,9 +87,12 @@ export function parseIngest(raw: unknown, redactKeys: readonly string[]): HubWri
   const body = raw as Record<string, unknown> | null;
   const sender = parseSender(body?.sender);
   if (!body || !sender) return null;
-  const spans = list(body.spans)
-    .map((s) => sanitizeClientSpan(s, redactKeys))
-    .filter(notNull);
+  const spans = stampVersion(
+    list(body.spans)
+      .map((s) => sanitizeClientSpan(s, redactKeys))
+      .filter(notNull),
+    sender,
+  );
   return {
     sender,
     via: "addon",

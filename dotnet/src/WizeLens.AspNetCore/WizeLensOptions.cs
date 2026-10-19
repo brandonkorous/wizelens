@@ -31,9 +31,6 @@ public sealed class WizeLensOptions
     /// <summary>Name shown for spans from this app. Default: the application name.</summary>
     public string? ServiceName { get; set; }
 
-    /// <summary>This app's version, kept on its spans as <c>service.version</c> so Problems can name a new release. Default: OTEL_SERVICE_VERSION, else the entry assembly's informational version.</summary>
-    public string? ServiceVersion { get; set; }
-
     /// <summary>How many traces to keep (in memory and on disk). The oldest trace is dropped first. Default 2000.</summary>
     public int MaxTraces { get; set; } = 2000;
 
@@ -70,6 +67,9 @@ public sealed class WizeLensOptions
     /// <summary>The project this service belongs to, so a shared hub can group it. Default: the WIZELENS_PROJECT variable.</summary>
     public string? Project { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_PROJECT");
 
+    /// <summary>The app's version, kept on every span as <c>service.version</c> for release markers, version compares, and Problems. Default: the WIZELENS_RELEASE variable, else OTEL_SERVICE_VERSION, else the entry assembly's informational version.</summary>
+    public string? Release { get; set; } = NonEmptyEnv("WIZELENS_RELEASE") ?? NonEmptyEnv("OTEL_SERVICE_VERSION");
+
     /// <summary>Keeps only part of the traces, for busy services. Default: all, or the WIZELENS_SAMPLE_RATE variable.</summary>
     public WizeLensSampling Sampling { get; set; } = new();
 
@@ -93,6 +93,17 @@ public sealed class WizeLensOptions
     /// <summary>The storage in use: the option, or SQLite with the dashboard and memory without it.</summary>
     internal WizeLensStorage StorageKind => Storage ?? (ServesDashboard ? WizeLensStorage.Sqlite : WizeLensStorage.Memory);
 
+    /// <summary>The entry assembly's informational version without build metadata (the part after '+'), or null.</summary>
+    internal static string? EntryVersion()
+    {
+        var v = System.Reflection.Assembly.GetEntryAssembly()?.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+            .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion;
+        if (string.IsNullOrWhiteSpace(v)) return null;
+        var plus = v.IndexOf('+');
+        var clean = (plus > 0 ? v[..plus] : v).Trim();
+        return clean.Length > 50 ? clean[..50] : clean;
+    }
+
     /// <summary>Reads an on/off variable ("true", "1", "on", "yes" or "false", "0", "off", "no"). Null when unset or unknown.</summary>
     internal static bool? EnvFlag(string name) => Environment.GetEnvironmentVariable(name)?.Trim().ToLowerInvariant() switch
     {
@@ -101,14 +112,8 @@ public sealed class WizeLensOptions
         _ => null,
     };
 
-    /// <summary>OTEL_SERVICE_VERSION, else the entry assembly's informational version, else null.</summary>
-    internal static string? DefaultServiceVersion()
-    {
-        var env = Environment.GetEnvironmentVariable("OTEL_SERVICE_VERSION");
-        if (!string.IsNullOrWhiteSpace(env)) return env.Trim();
-        var attr = System.Reflection.Assembly.GetEntryAssembly()?.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false);
-        return attr is { Length: > 0 } ? ((System.Reflection.AssemblyInformationalVersionAttribute)attr[0]).InformationalVersion : null;
-    }
+    /// <summary>A variable's trimmed value, or null when it is unset or blank.</summary>
+    internal static string? NonEmptyEnv(string name) => Environment.GetEnvironmentVariable(name) is { } v && !string.IsNullOrWhiteSpace(v) ? v.Trim() : null;
 
     /// <summary>True when WizeLens is on and collects metrics.</summary>
     internal bool MetricsOn => IsEnabled && CaptureMetrics;

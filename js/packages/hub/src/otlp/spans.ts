@@ -1,4 +1,4 @@
-import { type Attributes, isDbCall, redactAttributes, SPAN_RESOURCE_KEYS, type Span, type SpanCategory, type SpanKind } from "@wizeworks/lens-core";
+import { type Attributes, isDbCall, redactAttributes, SPAN_RESOURCE_KEYS, type Span, stampVersion, type SpanCategory, type SpanKind } from "@wizeworks/lens-core";
 import type { HubWrite } from "../store.js";
 import { attributesOf, hexId, nanosToMs, type OtlpKeyValue, type OtlpResource, resourcePick, senderOf } from "./values.js";
 
@@ -93,8 +93,7 @@ export function writesFromSpans(list: readonly OtlpResourceSpans[], redactKeys: 
     const spans = (rs.scopeSpans ?? []).flatMap((ss) => ss.spans ?? []);
     const resource = resourcePick(rs.resource, SPAN_RESOURCE_KEYS);
     const mapped = spans.map((s) => toSpan(s, sender.service, redactKeys, resource)).filter((s): s is Span => s !== null);
-    // The resource's service.version goes on each span, so Problems can tell a new release.
-    if (sender.version) for (const s of mapped) s.attributes["service.version"] ??= sender.version;
-    return { sender, via: "otlp" as const, spans: mapped, logs: [], remotes: [] };
+    // The resource's service.version goes on the sender's spans, for releases and so Problems can tell a new one.
+    return { sender, via: "otlp" as const, spans: stampVersion(mapped, sender), logs: [], remotes: [] };
   });
 }

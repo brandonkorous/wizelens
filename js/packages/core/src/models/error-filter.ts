@@ -20,11 +20,13 @@ export interface ErrorFilter {
   status: IssueFilter;
   /** Only groups first seen in this range. */
   fresh: boolean;
+  /** Only groups first seen while this version of the service was the newest; needs `service`. */
+  release: string;
 }
 
 export const ERROR_PAGE_SIZE = 15;
 
-/** The filter from URL parameters: service, type, endpoint, critical=1, q, sort=count, status, new=1. */
+/** The filter from URL parameters: service, type, endpoint, critical=1, q, sort=count, status, new=1, release (with service). */
 export const errorFilterOf = (p: ModelParams): ErrorFilter => ({
   service: serviceParam(p) ?? "",
   type: p.type?.trim() ?? "",
@@ -34,10 +36,11 @@ export const errorFilterOf = (p: ModelParams): ErrorFilter => ({
   sort: p.sort === "count" ? "count" : "recent",
   status: isIssueFilter(p.status) ? p.status : "unresolved",
   fresh: p.new === "1",
+  release: serviceParam(p) ? (p.release?.trim() ?? "") : "",
 });
 
 /** True when a filter narrows the list (sort does not). */
-export const isErrorFiltered = (f: ErrorFilter): boolean => !!(f.service || f.type || f.endpoint || f.critical || f.q || f.fresh || f.status !== "unresolved");
+export const isErrorFiltered = (f: ErrorFilter): boolean => !!(f.service || f.type || f.endpoint || f.critical || f.q || f.fresh || !!f.release || f.status !== "unresolved");
 
 /** Groups that happened on the endpoint, read first when the filter names one. */
 export const endpointGroupsNeed = (endpoint: string): GroupNeed => groupNeed("ep.groups", "err.ge", "cur", { filter: { parts: [null, endpoint] } });

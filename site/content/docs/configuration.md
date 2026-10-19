@@ -13,7 +13,6 @@ Pass options to `builder.Services.AddWizeLens(o => { ... })`.
 | `Dashboard` | `WIZELENS_DASHBOARD`, else Development only | Serve the dashboard, read API, and MCP. `false` is send-only. See [Production](/docs/production/). |
 | `BasePath` | `/_wizelens` | Where the dashboard and API live. |
 | `ServiceName` | app name | Name shown for this service. |
-| `ServiceVersion` | `OTEL_SERVICE_VERSION`, else the entry assembly's informational version | Kept on every span as `service.version`, so [Problems](/docs/problems/) can name a new release. |
 | `Storage` | `Sqlite`, or `Memory` when send-only | `Sqlite` (survives restarts) or `Memory`. |
 | `StoragePath` | `.wizelens/traces.db` | SQLite file, relative to the content root. |
 | `MaxTraces` | `2000` | Traces kept in memory and on disk. |
@@ -25,6 +24,7 @@ Pass options to `builder.Services.AddWizeLens(o => { ... })`.
 | `CaptureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
 | `HubUrl` / `HubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a hub or the cloud. |
 | `Project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
+| `Release` | `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else the entry assembly's informational version | The app's version, kept on every span (`service.version`) for release markers, version compares, and [Problems](/docs/problems/). |
 | `Sampling.Rate` | `WIZELENS_SAMPLE_RATE`, else `1` | Share of traces kept (0 to 1). |
 | `Sampling.KeepErrors` | `true` | Keep every trace with an error. |
 | `Sampling.KeepSlowMs` | `1000` | Keep every trace with a server-side span this long (`null` turns it off). |
@@ -41,7 +41,6 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | Option | Default | Description |
 |---|---|---|
 | `serviceName` | *(required)* | Name shown for this service. |
-| `serviceVersion` | `OTEL_SERVICE_VERSION`, else `npm_package_version` | Kept on every span as `service.version`, so [Problems](/docs/problems/) can name a new release. |
 | `enabled` | `WIZELENS_ENABLED`, else on unless `NODE_ENV=production` | Turn WizeLens on or off. |
 | `dashboard` | `WIZELENS_DASHBOARD`, else on unless `NODE_ENV=production` | Serve the dashboard, read API, and MCP. `false` is send-only. See [Production](/docs/production/). |
 | `basePath` | `/_wizelens` | Where the dashboard and API live. |
@@ -59,6 +58,7 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | `captureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
 | `hub` / `hubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a hub or the cloud. |
 | `project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
+| `release` | `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else `npm_package_version` | The app's version, kept on every span (`service.version`) for release markers, version compares, and [Problems](/docs/problems/). |
 | `sampling` | `{ rate: WIZELENS_SAMPLE_RATE ?? 1, keepErrors: true, keepSlowMs: 1000 }` | See [Sampling](/docs/sampling/). |
 | `sourceMaps` | dev servers on `localhost` | `{ dirs, origins, fetch }`: where browser stacks find their maps; `false` turns it off. See [Source maps](/docs/source-maps/). |
 | `logs` | `{ outside: true, minLevel: "info", sampleRate: 1 }`, or the `WIZELENS_LOGS_*` variables | Log lines written outside a request. See [Logs](/docs/logs/). |
@@ -76,6 +76,7 @@ Props on `WizeLensProvider`.
 | `enabled` | `true` | Pass `import.meta.env.DEV` (or similar). |
 | `hud` | `true` | Show the in-page HUD. `false` also stops reading traces back, for a send-only server. |
 | `propagateTo` | same origin | Which requests get a `traceparent` header. |
+| `release` | from the build plugin | The web app's version, kept on browser spans for release markers and version compares, and so stacks find the right [source maps](/docs/source-maps/). |
 | `slowMs` | `500` | Requests at or over this many ms show as "warning". |
 | `capturePages` | `true` | Send page views, React render stats, and browser errors. |
 | `captureConsole` | `true` | Copy browser `console` calls into the page view's trace (at most 500 per page). |
@@ -89,6 +90,7 @@ Props on `WizeLensProvider`.
 | `WIZELENS_HUB` | .NET, Node | Send to this hub or cloud. |
 | `WIZELENS_HUB_TOKEN` | .NET, Node | The hub token, or a cloud ingest key. |
 | `WIZELENS_PROJECT` | .NET, Node | Project name on a shared hub. |
+| `WIZELENS_RELEASE` | .NET, Node | The app's version (`service.version` on every span). |
 | `WIZELENS_SAMPLE_RATE` | .NET, Node | Sampling rate, 0 to 1. |
 | `WIZELENS_LOGS_OUTSIDE` | .NET, Node | Keep log lines outside a request (`true`/`false`). |
 | `WIZELENS_LOGS_MIN_LEVEL` | .NET, Node | Lowest level kept outside a request: `trace`, `debug`, `info`, `warn`, `error`, `critical`. |

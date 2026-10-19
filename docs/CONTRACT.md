@@ -159,7 +159,7 @@ interface SamplingInfo {
 | Category | Attributes |
 |---|---|
 | http.server | `http.request.method`, `http.route`, `url.path`, `url.query`, `http.response.status_code`, `server.address`, `client.address` (first `X-Forwarded-For` value, else the socket), `user_agent.original`, `http.request.header.{name}` / `http.response.header.{name}` (lower-case names, values joined with `, `, max 50 headers, 1 KB each, redacted), `http.request.body.size`, `http.response.body.size`, `wizelens.request.id`, `enduser.id` (when known), `wizelens.tag.{key}` (app tags), `wizelens.server.routed_ms` (when the runtime can tell), `wizelens.response.body` + `wizelens.response.body.truncated` (only with body capture on: text and JSON, first 16 KB) |
-| any span | `service.version`: the version of the app that ran it, so Problems can name a new release. Node: `serviceVersion`, else `OTEL_SERVICE_VERSION`, else `npm_package_version`. .NET: `ServiceVersion`, else `OTEL_SERVICE_VERSION`, else the entry assembly's informational version. OTLP: the resource's `service.version`, copied onto spans that have none |
+| any span | `service.version`: the version of the app that ran it, so Problems can name a new release. Node: `release`, else `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else `npm_package_version`. .NET: `Release`, else `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else the entry assembly's informational version. OTLP: the resource's `service.version`, copied onto that service's spans that have none |
 | internal | `wizelens.layer` = `handler` for a controller action or endpoint handler span |
 | gRPC (on http.server / http.client) | `rpc.system` = `grpc`, `rpc.service` (e.g. `orders.v1.Orders`), `rpc.method` (e.g. `GetOrder`), `rpc.grpc.status_code` (number). Name: `{service}/{method}`. A non-zero status code on the server is an error. |
 | messaging | Kind `producer` (send) or `consumer` (receive / process). `messaging.system` (`rabbitmq`, `kafka`, `servicebus`), `messaging.operation.type` (`send`, `receive`, `process`), `messaging.destination.name` (queue, topic, or exchange), `messaging.message.id`, `messaging.batch.message_count`, `messaging.message.body.size`. Name: `{operation} {destination}`. |
@@ -231,6 +231,7 @@ answers `mode: "hub"` and `capabilities: ["federation", "environments", "registr
 | Share kept outside a request, below warn (0..1) | `Logs.SampleRate` | `logs.sampleRate` | 1, or `WIZELENS_LOGS_SAMPLE_RATE` |
 | Tag the current request | `WizeLensRequest.Tag(key, value?)` | `wizelens.tag(key, value?)` | — |
 | Set the current user | automatic from `HttpContext.User` | `wizelens.setUser(id)` | — |
+| The app's version (`service.version` on every span) | `Release` | `release` (React: `release` prop) | `WIZELENS_RELEASE`, else the entry assembly's informational version (.NET) or `npm_package_version` (Node) |
 
 ## Metrics (v0.8)
 
@@ -461,7 +462,7 @@ docs/search-vectors.json (the TS and .NET suites both run them). Hosts with the 
 Browser stacks from a production build are minified. Every host maps them back to the original source; the raw stack is
 always kept as sent (`exception.stacktrace`).
 
-**Release.** The browser package sends `service.version` on every browser span: the `version` prop (React), or
+**Release.** The browser package sends `service.version` on every browser span: the `release` prop (React), or
 `globalThis.__WIZELENS_RELEASE__` that the build plugins set. Uploaded maps are stored per project, release, and file, so a
 stack finds the maps of the build that threw it.
 
@@ -493,7 +494,7 @@ frame that a map covers and that is app code (not `node_modules` or bundler runt
 line number when there is none), for example `src/cart/Checkout.tsx:applyCoupon`. A host never replaces a frame already
 set. The error group key is `service|type|message shape`, plus `|<frame>` for browser errors that have one, so the same
 message thrown in two places is two groups, and one error stays one group across builds. Errors whose map was not found keep
-the key without a frame. This changed the facts: `FACTS_VERSION` 5.
+the key without a frame. This changed the facts: `FACTS_VERSION` 6.
 
 **Resolve on read.** `POST api/sourcemaps/resolve` (`?project=` on the hub and cloud) with `{ stack, release }` (the stack
 cut at 64 KB) answers `{ frames: ResolvedFrame[] }`:
@@ -872,7 +873,7 @@ Pages read small tables built from the stored traces, never the traces themselve
   `rollup_10s` (kept 6 h 10 min), `rollup_5m` (kept 50 h), `rollup_1h` (kept for the retention). Each row has `n`, `err`,
   `sum_v`, counters `c0`..`c5`, `first_ms`, `last_ms`, and one representative (`top`, `top_rank`) and newest trace ids (`ids`).
   `hist_<tier>` holds a log-bucket histogram per row (bins 4% wide, so percentiles are within 2%).
-  Since `FACTS_VERSION` 5, `svc.v` counts traces per service name and `service.version` (key `<service>\u001f<version>`),
+  Since `FACTS_VERSION` 6, `svc.v` counts traces per service name and `service.version` (key `<service>\u001f<version>`),
   so a page can tell when a version first sent data.
 - A query reads the coarsest tier that still gives a window enough buckets, and finer tiers at the window's edges; an edge
   bucket that no kept tier can split is weighted by its overlap. Series place each tier bucket by its midpoint, or spread it
@@ -881,6 +882,12 @@ Pages read small tables built from the stored traces, never the traces themselve
   are rebuilt from its spans and logs, and the rollups get its new contribution minus the old one (kept as JSON in
   `traces.contrib`). `settled_ms` is set to the `updated_ms` that was read, so a late span settles the trace again. Representatives,
   first and last times, and ids are display fields and are never taken back out.
+- **Releases** (`FACTS_VERSION` 5): `rel` counts each span that starts work in its service (no parent, or a parent in another
+  service) under `service|version`, from the span's `service.version`, with a histogram. Hosts copy `sender.release` onto the
+  sender's spans that have no version (OTLP: the resource's `service.version`). `HubSender.version` stays the add-on's own
+  version. Every page's `meta.releases` lists the versions first seen in its window (chart markers); the Service page has
+  `versions` (requests, error rate, p95, and error groups first seen while each was the newest); Errors and Insights take
+  `release` with `service` (groups first seen while that version was the newest) and return the service's `releases`.
 - **Endpoints** (`FACTS_VERSION` 4): `ep.call` and `ep.q` file each outgoing call and query under the endpoint (`svc.ep` key
   head) whose http.server span it ran under. `svc.ep` and `edge` keep histograms (p50/p95/p99), and `svc.ep`, `db.q`, and
   `pv.route` keep their newest trace ids. List needs take `traceIds`.

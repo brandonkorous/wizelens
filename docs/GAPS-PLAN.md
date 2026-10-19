@@ -15,7 +15,7 @@ APM buyers expect and that phases 0 to 13 do not cover.
 | 2 | Time and URL state: links that keep the view, custom range, zoom, live tail | M | Done |
 | 3 | Detail pages: error group, endpoint, query, route; a better trace page | L | Done |
 | 4 | Error tracker workflow: resolve, ignore, regressed, true first seen | M | Done |
-| 5 | Releases: markers, compare versions, new in this release | M | Not started |
+| 5 | Releases: markers, compare versions, new in this release | M | Done |
 | 6 | Alerts: scope, mute, history, hub alerts, more channels | M | Not started |
 | 7 | SLOs, Apdex, and error budgets | M | Not started |
 | 8 | Saving and sharing: saved views and searches, dashboards, exports | L | Not started |

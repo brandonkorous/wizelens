@@ -1,4 +1,5 @@
 // A rich, deterministic set of traces over many windows, for facts, executor, and parity tests. Test-only.
+import { VERSION_ATTR } from "../releases.js";
 import type { Trace } from "../types.js";
 import { cartDup, checkoutFlow, grpcCall, ordersN1, payFail, reportSlow } from "./scenario-api.js";
 import { traceIdOf } from "./scenario-kit.js";
@@ -21,9 +22,17 @@ export const SCENARIO_ANCHORS: readonly number[] = [
 /** Every kind of trace, one of each per anchor, 9 s apart. */
 export const SCENARIO_BUILDERS = [ordersN1, cartDup, reportSlow, payFail, checkoutFlow, pageCheckout, pageHome, fetchOnly, job, grpcCall, uptimeRun, outside] as const;
 
+/** The version server-side services ran at an anchor: 1.0.0 before a day ago, 1.2.0 in the last 20 minutes, 1.1.0 between. */
+export const scenarioVersion = (anchor: number): string => (SCENARIO_ANCHORS[anchor]! > DAY ? "1.0.0" : SCENARIO_ANCHORS[anchor]! < 20 * MIN ? "1.2.0" : "1.1.0");
+
+function withVersion(t: Trace, anchor: number): Trace {
+  for (const s of t.spans) if (s.service !== "browser") s.attributes[VERSION_ATTR] = scenarioVersion(anchor);
+  return t;
+}
+
 /** Build the scenario's traces, newest first. */
 export function buildScenario(now = SCENARIO_NOW): Trace[] {
-  const traces = SCENARIO_ANCHORS.flatMap((ago, a) => SCENARIO_BUILDERS.map((build, t) => build(traceIdOf(a, t), now - ago - 3_000 - t * 9_000, a)));
+  const traces = SCENARIO_ANCHORS.flatMap((ago, a) => SCENARIO_BUILDERS.map((build, t) => withVersion(build(traceIdOf(a, t), now - ago - 3_000 - t * 9_000, a), a)));
   return traces.sort((a, b) => b.startMs - a.startMs);
 }
 

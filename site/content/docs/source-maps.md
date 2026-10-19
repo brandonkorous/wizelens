@@ -84,7 +84,7 @@ Maps are found by the version your app sends with each browser span. The plugins
 to the provider:
 
 ```tsx
-<WizeLensProvider version={import.meta.env.VITE_APP_VERSION}>
+<WizeLensProvider release={import.meta.env.VITE_APP_VERSION}>
 ```
 
 The release shows on each error, next to its original source.

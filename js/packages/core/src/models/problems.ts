@@ -8,7 +8,7 @@ import type { ServiceRowInfo } from "../scale/facts-services.js";
 import type { PageData, PageDef } from "../scale/needs.js";
 import { bucketStarts } from "../stats/common.js";
 import { type ModelMeta, metaOf } from "./input.js";
-import { errorsOf, keyBucketsOf, problemFollowUp, problemGrid, problemNeeds, samplesOf, versionsOf } from "./problems-read.js";
+import { errorsOf, keyBucketsOf, problemFollowUp, problemGrid, problemNeeds, samplesOf, versionsSeenOf } from "./problems-read.js";
 import { rowsOf } from "./read.js";
 import { edgesOfRows, serviceRowsId } from "./service-rows.js";
 
@@ -65,7 +65,7 @@ function problemsModel(d: PageData): ProblemsModel {
   const spreads = SENSITIVITY[sensitivity] ?? DEFAULT_SPREADS;
   const anomalies = detectAnomalies(keyBucketsOf(d, mode), { starts, bucketMs, spreads, rowInfo: rowInfoOf(d) });
   const nearMs = Math.max(2 * bucketMs, PROBLEM_NEAR_MS);
-  const found = problemsOf(anomalies, { versions: versionsOf(d), errors: errorsOf(d, d), map: callMapOf(edgesOfRows(d)), nearMs, bucketMs });
+  const found = problemsOf(anomalies, { versions: versionsSeenOf(d), errors: errorsOf(d, d), map: callMapOf(edgesOfRows(d)), nearMs, bucketMs });
   const samples = samplesOf(d, mode);
   // The chosen service (the top bar filter) keeps the problems it is part of.
   const all = d.params.service ? found.filter((p) => involves(p, d.params.service!)) : found;

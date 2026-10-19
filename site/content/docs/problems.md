@@ -49,10 +49,11 @@ or the database.
 
 Problems can only name a release when spans carry `service.version`.
 
-- **Node:** `createWizeLens({ serviceName: "orders-api", serviceVersion: "2.4.0" })`, or set `OTEL_SERVICE_VERSION`. When you
+- **Node:** `createWizeLens({ serviceName: "orders-api", release: "2.4.0" })`, or set `WIZELENS_RELEASE` or `OTEL_SERVICE_VERSION`. When you
   start the app with npm, the package version is used.
-- **ASP.NET Core:** `o.ServiceVersion = "2.4.0"`, or `OTEL_SERVICE_VERSION`. By default it is the app's informational version.
-- **OpenTelemetry (OTLP):** set the `service.version` resource attribute. The hub copies it onto every span.
+- **ASP.NET Core:** `o.Release = "2.4.0"`, or `WIZELENS_RELEASE` or `OTEL_SERVICE_VERSION`. By default it is the app's informational version.
+- **OpenTelemetry (OTLP):** set the `service.version` resource attribute. The hub copies it onto every span of that service.
+- **React:** the `release` prop, or what the build plugin sets.
 
 ## Alerts and AI tools
 

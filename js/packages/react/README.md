@@ -18,6 +18,7 @@ import { WizeLensProvider } from "@wizeworks/lens-react";
 | `enabled` | `true` | Pass `import.meta.env.DEV` (or similar). |
 | `hud` | `true` | Show the in-page HUD. |
 | `propagateTo` | same origin | Which requests get a `traceparent` header. |
+| `release` | from the build plugin | The web app's version, kept on browser spans for release markers and version compares, and so stacks find the right source maps. |
 | `slowMs` | `500` | Requests at or over this many ms show as "warning". |
 | `capturePages` | `true` | Send page views, React render stats, and browser errors. |
 | `captureConsole` | `true` | Copy `console.log`, `info`, `warn`, `error`, `debug`, and `trace` calls into the page view's trace (at most 500 per page). |

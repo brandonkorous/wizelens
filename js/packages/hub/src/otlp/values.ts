@@ -100,6 +100,7 @@ export function senderOf(resource: OtlpResource | undefined): HubSender {
     service: str("service.name") ?? (infra ? INFRA_SERVICE : "unknown_service"),
     project: str("wizelens.project") ?? str("service.namespace"),
     version: str("service.version"),
+    release: str("service.version"),
     runtime: lang ? `otlp ${lang}` : "otlp",
     environment: str("deployment.environment.name"),
     // A pod's host name is the pod's name; senders without host.name (most SDKs) still get one row per pod.
