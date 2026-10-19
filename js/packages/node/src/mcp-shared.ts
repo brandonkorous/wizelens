@@ -1,8 +1,23 @@
 import type { ZodTypeAny } from "zod";
-import { type MetricsModel, type ModelOf, type SearchPage, type SearchQuery, type Suggestion, type SuggestRequest, type TagRule, tagList, type TimeRange, type Trace } from "@wizeworks/lens-core";
+import { type AlertRule, type MetricsModel, type ModelOf, type PageName, type SearchPage, type SearchQuery, type Suggestion, type SuggestRequest, type TagRule, tagList, type TimeRange, type Trace } from "@wizeworks/lens-core";
 
 /** The page models get_overview, list_problems, get_timeseries, and group_requests read. */
 export type OverviewPage = "overview" | "services" | "errors" | "problems" | "traffic";
+
+/** One alert event, as get_alerts lists it. */
+export interface McpAlertEvent {
+  ruleId: string;
+  kind: string;
+  value: number | null;
+  message: string;
+  timeMs: number;
+}
+
+/** The host's alert rules and their newest events. */
+export interface McpAlerts {
+  rules: AlertRule[];
+  events: McpAlertEvent[];
+}
 
 /** What the MCP tools can read. Read-only by design. */
 export interface McpDataSource {
@@ -14,6 +29,8 @@ export interface McpDataSource {
   nPlusOneThreshold: number;
   /** Recent traces, newest first, for the tools that read whole traces in memory. A host may load them only when a tool asks. */
   all(): Trace[] | Promise<Trace[]>;
+  /** With `search`: the traces the store's search does not have yet (not settled). Default `all()`. */
+  unsettled?(): Trace[] | Promise<Trace[]>;
   get(traceId: string, federate: boolean): Promise<Trace | undefined>;
   audit(line: string): void;
   /** The metrics page for a range and page parameters. Without it, the metric tools are left out. */
@@ -28,8 +45,10 @@ export interface McpDataSource {
   now?(): number;
   /** The environment memory search gives this service's documents (in-app), as the HTTP search does. */
   env?: string;
-  /** One dashboard page's model, from the host's stats, with page params (`from` and `to` in epoch ms give a custom window). Without it, the report tools are left out. */
-  page?<P extends OverviewPage>(page: P, range: TimeRange, params?: Record<string, string>): Promise<ModelOf<P>>;
+  /** One dashboard page's model, from the host's stats, with the page's parameters. Without it, get_overview and get_page are left out. */
+  page?<P extends PageName>(page: P, range: TimeRange, params?: Record<string, string>): Promise<ModelOf<P>>;
+  /** Alert rules and their newest events. Without it, get_alerts is left out. */
+  alerts?(): Promise<McpAlerts>;
   /** The project's tags (docs/TAGS-PLAN.md). Without it, only the built-ins. */
   tags?(): readonly TagRule[] | Promise<readonly TagRule[]>;
 }
@@ -52,8 +71,10 @@ export interface McpProjects {
   /** True when every project has the metric tools. */
   metrics: boolean;
   metricRanges?: readonly TimeRange[];
-  /** True when every project has get_overview. */
+  /** True when every project has get_overview and get_page. */
   overview?: boolean;
+  /** True when every project has get_alerts. */
+  alerts?: boolean;
   projects: readonly McpProject[];
   /** The data of one project from `projects`. */
   open(projectId: string): Promise<McpDataSource>;
@@ -68,6 +89,7 @@ export interface McpDefaults {
   metrics: boolean;
   metricRanges?: readonly TimeRange[];
   overview: boolean;
+  alerts: boolean;
 }
 
 /** Where the tools read. */

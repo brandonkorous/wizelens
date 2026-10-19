@@ -30,7 +30,7 @@ const rpc = async <T>(id: number, method: string, params: unknown): Promise<T> =
 describe("MCP", () => {
   it("lists the read-only tools", async () => {
     const body = await rpc<{ result: { tools: { name: string }[] } }>(1, "tools/list", {});
-    expect(body.result.tools.map((t) => t.name).sort()).toEqual(["find_n_plus_one", "find_slow_queries", "get_errors", "get_metric", "get_trace", "list_metrics", "list_tags", "list_traces", "search", "search_fields"]);
+    expect(body.result.tools.map((t) => t.name).sort()).toEqual(["find_n_plus_one", "find_slow_queries", "get_errors", "get_metric", "get_overview", "get_page", "get_timeseries", "get_trace", "group_requests", "list_metrics", "list_problems", "list_tags", "list_traces", "search", "search_fields"]);
   });
 
   it("calls a tool and writes an audit line", async () => {
