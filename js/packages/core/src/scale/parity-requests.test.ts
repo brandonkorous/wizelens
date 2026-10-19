@@ -28,8 +28,6 @@ const FILTERS: Record<string, string>[] = [
   { q: "beta" },
   { q: "orders", status: "failed" },
   { q: "  " },
-  { duration: "bogus" },
-  { status: "bogus" },
 ];
 
 const curRequests = (range: TimeRange) => requestRows(scenarioTraces().filter((t) => inWindow(t.startMs, pageContext(range, SCENARIO_NOW, {}).window)));
@@ -37,6 +35,10 @@ const curRequests = (range: TimeRange) => requestRows(scenarioTraces().filter((t
 describe("parity: requests", () => {
   it("matches with every filter", () => {
     for (const range of PARITY_RANGES) for (const f of [{}, ...FILTERS]) expect(parityOf("requests", range, f)).toEqual([]);
+  });
+
+  it("treats an unknown status or duration as no filter", () => {
+    for (const range of PARITY_RANGES) for (const f of [{ status: "bogus" }, { duration: "bogus" }] as Record<string, string>[]) expect(newModel("requests", range, f)).toEqual(newModel("requests", range));
   });
 
   it("matches with every sort key, both ways, and on page 2", () => {

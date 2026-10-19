@@ -33,9 +33,14 @@ const DURATIONS: Record<string, [string, number, number]> = {
 
 export const DURATION_OPTIONS: [string, string][] = [["", "Any Duration"], ...Object.entries(DURATIONS).map(([k, [label]]): [string, string] => [k, label])];
 
+const STATUS_KEYS = new Set(STATUS_OPTIONS.map(([k]) => k));
+
+/** The filter from URL parameters. An unknown status or duration filters nothing, the same as an empty one. */
 export function filterFromQuery(query: URLSearchParams | ModelParams): RequestFilter {
   const get = (k: string) => (query instanceof URLSearchParams ? query.get(k) : query[k]) ?? "";
-  return { method: get("method"), status: get("status"), duration: get("duration"), service: get("service"), q: get("q") };
+  const status = STATUS_KEYS.has(get("status")) ? get("status") : "";
+  const duration = Object.hasOwn(DURATIONS, get("duration")) ? get("duration") : "";
+  return { method: get("method"), status, duration, service: get("service"), q: get("q") };
 }
 
 function statusMatches(r: Row, status: string): boolean {

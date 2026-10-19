@@ -17,6 +17,10 @@ export interface ErrorsModel {
   hasRequests: boolean;
   exceptions: number;
   groups: ErrorGroup[];
+  /** Groups before the list limit. */
+  groupCount: number;
+  /** The `group` parameter's group, found by key even when it is not among the listed groups; null without one. */
+  selected: ErrorGroup | null;
   types: { type: string; count: number }[];
   services: ServiceErrorRow[];
   starts: number[];
@@ -93,10 +97,14 @@ const windowNeeds = (win: WindowRef) => [
   groupNeed(`err.s.${win}`, "err.s", win),
 ];
 
-/** The Errors page. */
+/** The `group` parameter's group by key, so a link to an older or busier group than the list holds still opens it. */
+const selectedNeeds = (group: string | undefined) => (group ? [groupNeed("selected", "err.g", "cur", { top: true, ids: true, filter: { keys: [group] } })] : []);
+
+/** The Errors page. Params: group (the selected group's key). */
 export const errorsPage: PageDef<ErrorsModel> = {
-  needs: () =>
+  needs: (ctx) =>
     uniqueNeeds([
+      ...selectedNeeds(ctx.params.group),
       ...META_NEEDS,
       ...windowNeeds("cur"),
       ...windowNeeds("prev"),
@@ -119,6 +127,8 @@ export const errorsPage: PageDef<ErrorsModel> = {
       hasRequests: totalOf(d, "req.cur").n > 0,
       exceptions: cards.exceptions,
       groups: [...rowsOf(d, "groups")].sort(byDesc((r) => r.agg.lastMs)).map((r) => errorGroupOf(r, endpoints)),
+      groupCount: groupCount(d, "groups"),
+      selected: rowsOf(d, "selected").map((r) => errorGroupOf(r, endpoints))[0] ?? null,
       types: [...rowsOf(d, "err.t")].sort(byDesc((r) => r.agg.n)).map((r) => ({ type: r.key, count: r.agg.n })),
       services: servicesOf(d),
       starts: bucketStarts(d.window, CHART_BUCKETS),

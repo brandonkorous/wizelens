@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { analyzeTrace, type Finding, healthOf, insightsOf, type Trace, type TraceView, traceTiming } from "@wizeworks/lens-core";
+import { useData } from "../../data/hooks";
 import { useHost } from "../../data/host";
 import { hrefTo } from "../../routes";
 import { Empty, Panel } from "../../ui/Panel";
@@ -43,7 +44,9 @@ export function TraceBody({ trace, view, loading = false, onRefresh, shared = fa
   useEffect(() => {
     if (view === "insights") document.getElementById("wl-insights")?.scrollIntoView({ block: "start" });
   }, [view]);
-  const findings = useMemo(() => analyzeTrace(trace), [trace]);
+  // The host's own thresholds, so the trace page finds what its Insights page finds.
+  const analysis = useData().info?.analysis;
+  const findings = useMemo(() => analyzeTrace(trace, analysis ?? {}), [trace, analysis]);
   const timing = useMemo(() => traceTiming(trace), [trace]);
   const health = healthOf({ status: trace.rootStatusCode, error: trace.errorCount > 0, totalMs: timing.totalMs, insights: insightsOf(findings).length });
   const onFinding = (f: Finding) => {

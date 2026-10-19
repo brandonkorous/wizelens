@@ -22,6 +22,8 @@ export interface DatabaseModel {
   queries: QueryRow[];
   queryShapes: number;
   tables: TableRow[];
+  /** Tables before the list limit. */
+  tableCount: number;
   operations: OperationRow[];
   starts: number[];
   chart: { total: Series; slow: Series; avg: Series };
@@ -107,6 +109,7 @@ export const databasePage: PageDef<DatabaseModel> = {
       queries: queriesOf(d),
       queryShapes: groupCount(d, "db.q"),
       tables: tablesOf(d),
+      tableCount: groupCount(d, "db.t"),
       operations: operationsOf(d),
       starts: bucketStarts(d.window, CHART_BUCKETS),
       chart: chartOf(seriesOf(d, "chart", CHART_BUCKETS)),

@@ -54,9 +54,9 @@ export function CriticalSpansPanel({ critical }: { critical: readonly CriticalSp
   const [all, setAll] = useState(false);
   const spans = critical.slice(0, all ? 25 : 6);
   const services = [...new Set(spans.map((s) => s.service))];
-  const action = (
+  const action = critical.length > 6 && (
     <button type="button" className="wl-view-all wl-link-btn" onClick={() => setAll(!all)}>
-      {all ? "Show fewer" : "View all"}
+      {all ? "Show fewer" : `View all ${critical.length}`}
     </button>
   );
   return (

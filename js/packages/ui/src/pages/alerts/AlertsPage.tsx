@@ -3,6 +3,7 @@ import { BellRing, Plus } from "lucide-react";
 import { ALERT_METRICS, METRIC_ALERT_STATS } from "@wizeworks/lens-core";
 import { currentProject, useAccount } from "../../data/account";
 import { apiSend } from "../../data/api";
+import { useHost } from "../../data/host";
 import { getScope } from "../../data/prefs";
 import { act, useApi } from "../../data/useApi";
 import { fmtAgo } from "../../format";
@@ -47,7 +48,20 @@ const EVENT_COLUMNS: Column<AlertEvent>[] = [
 ];
 
 /** Alert rules of the selected project, and what they sent. */
+/** Alerts on hosts that run them; elsewhere a note, so a typed or old link never calls an API the host lacks. */
 export function AlertsPage() {
+  if (useHost().has("alerts")) return <AlertRules />;
+  return (
+    <>
+      <PageHeader title="Alerts" subtitle="Get told when error rates, latency, traffic, or any metric cross a line." />
+      <Panel>
+        <Empty title="This host does not run alerts">Alerts run on WizeLens Cloud. Send your data there to use them.</Empty>
+      </Panel>
+    </>
+  );
+}
+
+function AlertRules() {
   const project = getScope().project;
   const { data, error, reload } = useApi<AlertsData>(project ? `./api/projects/${project}/alerts` : null);
   const role = currentProject(useAccount())?.org.role;

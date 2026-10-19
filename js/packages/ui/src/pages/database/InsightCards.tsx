@@ -1,6 +1,6 @@
 import { ChevronRight, Database, Globe, Monitor, TriangleAlert } from "lucide-react";
 import type { InsightGroup } from "@wizeworks/lens-core";
-import { hrefTo, traceHref } from "../../routes";
+import { hrefTo } from "../../routes";
 import { ImpactBadge } from "../../ui/Badges";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 
@@ -9,7 +9,7 @@ const AREA_ICON = { database: Database, http: Globe, render: Monitor };
 function InsightCard({ insight }: { insight: InsightGroup }) {
   const Icon = insight.impact === "medium" ? TriangleAlert : AREA_ICON[insight.area];
   return (
-    <a className="wl-insight-card" href={traceHref(insight.exampleTraceId, insight.area === "render" ? undefined : "insights")}>
+    <a className="wl-insight-card" href={hrefTo("insights", [], { key: insight.key })}>
       <span className={`wl-insight-icon wl-impact-${insight.impact}`}>
         <Icon aria-hidden="true" />
       </span>

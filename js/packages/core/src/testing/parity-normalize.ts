@@ -44,12 +44,21 @@ const TIES: Record<string, (m: Obj) => void> = {
   traces: (m) => {
     m.critical = sortBy(m.critical, num("durationMs"), str("traceId"), str("spanId"));
   },
+  rendering: (m) => {
+    // The route count is new; the legacy model had none.
+    delete m.routeCount;
+  },
   database: (m) => {
+    // The table count is new; the legacy model had none.
+    delete m.tableCount;
     m.queries = sortBy(m.queries, num("avgMs"), str("key"));
     m.tables = sortBy(m.tables, num("queries"), str("table"));
   },
   errors: (m) => {
     m.services = sortBy(m.services, num("exceptions"), num("requests"), str("service"));
+    // The selected group by key and the group count are new; the legacy model had neither.
+    delete m.selected;
+    delete m.groupCount;
   },
   services: (m) => {
     m.rows = sortBy(m.rows, num("requests"), str("key"));

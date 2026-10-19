@@ -33,7 +33,7 @@ function Occurrences({ group }: { group: ErrorGroup }) {
         <Icon aria-hidden="true" />
         {fmtCount(group.count)} occurrence{group.count === 1 ? "" : "s"}
       </span>
-      <a className="wl-view-all" href={hrefTo("requests", [], { q: pathOf(group.endpoint) })}>
+      <a className="wl-view-all" href={hrefTo("requests", [], { q: pathOf(group.endpoint), status: "failed" })}>
         View affected requests <ArrowRight aria-hidden="true" />
       </a>
     </div>
@@ -69,12 +69,17 @@ function GroupDetails({ group }: { group: ErrorGroup }) {
   );
 }
 
-export function ErrorDetailsPanel({ groups, selected }: { groups: ErrorGroup[]; selected: string | null }) {
-  const index = Math.max(0, groups.findIndex((g) => g.key === selected));
-  const group = groups[index];
+/** The chosen group, or a note when a linked group is not in this range. The pager steps through the listed groups. */
+export function ErrorDetailsPanel({ groups, group, linked }: { groups: ErrorGroup[]; group: ErrorGroup | null; linked: boolean }) {
+  const index = group ? groups.findIndex((g) => g.key === group.key) : -1;
+  const empty = linked ? (
+    <Empty title="This error is not in the selected time range">Pick a longer time range at the top, or pick another exception.</Empty>
+  ) : (
+    <Empty title="No error selected">Pick an exception to see its details.</Empty>
+  );
   return (
-    <Panel title="Error Details" action={groups.length > 1 && <Pager groups={groups} index={index} />} className="wl-err-details">
-      {group ? <GroupDetails key={group.key} group={group} /> : <Empty title="No error selected">Pick an exception to see its details.</Empty>}
+    <Panel title="Error Details" action={index >= 0 && groups.length > 1 && <Pager groups={groups} index={index} />} className="wl-err-details">
+      {group ? <GroupDetails key={group.key} group={group} /> : empty}
     </Panel>
   );
 }

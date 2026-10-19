@@ -36,7 +36,9 @@ export function ErrorsPage() {
 }
 
 function ErrorsBody({ stats }: { stats: ErrorsModel }) {
-  const selected = useRoute().query.get("group") ?? stats.groups[0]?.key ?? null;
+  const linked = useRoute().query.get("group");
+  const group = linked ? stats.selected : (stats.groups[0] ?? null);
+  const selected = group?.key ?? null;
   return (
     <>
       <ErrorStatCards stats={stats} />
@@ -49,7 +51,7 @@ function ErrorsBody({ stats }: { stats: ErrorsModel }) {
           <RecentExceptionsPanel stats={stats} selected={selected} />
           <ErrorsByServicePanel stats={stats} />
         </div>
-        <ErrorDetailsPanel groups={stats.groups} selected={selected} />
+        <ErrorDetailsPanel groups={stats.groups} group={group} linked={!!linked} />
       </div>
     </>
   );

@@ -10,7 +10,7 @@ One search language works the same in all three places.
 |---|---|
 | 1. Search language (TS + C#, shared vectors) | Done |
 | 2. Search on hub and cloud (`fact_search`, `fact_attrs`, API, autocomplete) | Done; parity with memory on SQLite and Postgres |
-| 3. UI (Search page, query bar, Ctrl+K) and MCP `search` / `search_fields` | Done (Node, hub, cloud); .NET API and MCP in progress |
+| 3. UI (Search page, query bar, Ctrl+K) and MCP `search` / `search_fields` | Done (Node, hub, cloud, .NET) |
 | 4. `TelemetryStore` interface in the cloud | Done |
 | 5. ClickHouse store (`--clickhouse`) | Done; parity with memory for pages, lists, search, autocomplete, metrics, alerts, and re-settled traces |
 | 6. Infra | Written, not applied: WizeLens `deploy/k8s/base/clickhouse*.yaml`, deploy steps; sparx.works branch `feat/wizelens-clickhouse` (password, backup storage, system/user node pools) |

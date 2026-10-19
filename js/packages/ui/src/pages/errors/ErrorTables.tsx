@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Box, Monitor } from "lucide-react";
 import { type ErrorGroup, type ErrorsModel, percentChange, type ServiceErrorRow } from "@wizeworks/lens-core";
-import { fmtCount, fmtPct, fmtTime } from "../../format";
+import { fmtCount, fmtPct, fmtShownOf, fmtTime } from "../../format";
 import { setQuery } from "../../routes";
 import { DotText } from "../../ui/Badges";
 import { Empty, Panel } from "../../ui/Panel";
@@ -30,7 +30,7 @@ export function RecentExceptionsPanel({ stats, selected }: { stats: ErrorsModel;
     </button>
   );
   return (
-    <Panel title="Recent Exceptions" action={toggle}>
+    <Panel title={`Recent Exceptions (${fmtShownOf(stats.groups.length, stats.groupCount)})`} action={toggle}>
       <Table
         columns={GROUP_COLUMNS}
         rows={rows}

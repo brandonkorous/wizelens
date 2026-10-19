@@ -15,6 +15,9 @@ export function fmtMs(ms: number | null | undefined): string {
 /** "482,391". */
 export const fmtCount = (n: number | null | undefined): string => (n === null || n === undefined || !Number.isFinite(n) ? DASH : Math.round(n).toLocaleString("en-US"));
 
+/** "200 of 1,240" when a list is cut, else "1,240". */
+export const fmtShownOf = (shown: number, total: number): string => (total > shown ? `${fmtCount(shown)} of ${fmtCount(total)}` : fmtCount(total));
+
 /** "0.42%", "12%", "100%". */
 export function fmtPct(pct: number | null | undefined): string {
   if (pct === null || pct === undefined || !Number.isFinite(pct)) return DASH;
