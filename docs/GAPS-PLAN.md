@@ -17,7 +17,7 @@ APM buyers expect and that phases 0 to 13 do not cover.
 | 4 | Error tracker workflow: resolve, ignore, regressed, true first seen | M | Done |
 | 5 | Releases: markers, compare versions, new in this release | M | Done |
 | 6 | Alerts: scope, mute, history, hub alerts, more channels | M | Done |
-| 7 | SLOs, Apdex, and error budgets | M | Not started |
+| 7 | SLOs, Apdex, and error budgets | M | Done |
 | 8 | Saving and sharing: saved views and searches, dashboards, exports | L | Not started |
 | 9 | Search everywhere: query bar on list pages, more kinds | M | Not started |
 | 10 | Users: users affected, user filter, user page | M | Not started |

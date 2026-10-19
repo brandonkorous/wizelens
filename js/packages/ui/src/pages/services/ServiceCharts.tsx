@@ -2,6 +2,7 @@ import { Clock, Gauge, Timer, TriangleAlert } from "lucide-react";
 import { percentChange, type ServiceKind, type ServicePageModel, type ServiceRow } from "@wizeworks/lens-core";
 import { compareSeriesLabel, fmtCount, fmtMs, fmtPct } from "../../format";
 import { Panel } from "../../ui/Panel";
+import { ApdexCard } from "../../ui/ApdexCard";
 import { StatCard } from "../../ui/StatCard";
 import { TimeChart } from "../../ui/TimeChart";
 
@@ -22,6 +23,7 @@ export function ServiceCards({ m, row }: { m: ServicePageModel; row: ServiceRow 
       <StatCard icon={TriangleAlert} label="Error Rate" value={fmtPct(row.errorRate)} change={change(row.errorRate, prev?.errorRate)} upIsGood={false} compareLabel={compareLabel} series={rate} danger />
       <StatCard icon={Clock} label="Avg Latency" value={fmtMs(row.avgMs)} change={change(row.avgMs, prev?.avgMs)} upIsGood={false} compareLabel={compareLabel} series={m.chart.avgMs} />
       <StatCard icon={Timer} label="p95 Latency" value={fmtMs(row.p95Ms)} change={change(row.p95Ms, prev?.p95Ms)} upIsGood={false} compareLabel={compareLabel} series={m.chart.p95Ms} />
+      {m.owned && <ApdexCard apdex={m.apdex} compareLabel={compareLabel} />}
     </div>
   );
 }

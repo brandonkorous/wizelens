@@ -49,14 +49,15 @@ export const windowLabel = (ms: number) => WINDOWS.find(([v]) => Number(v) === m
 
 export const OP_SIGN: Record<AlertRule["op"], string> = { ">": ">", "<": "<", ">=": "≥", "<=": "≤" };
 
-const unitOf = (r: AlertRule) => (r.metric === "metric" ? "" : ALERT_METRICS[r.metric].unit);
+const unitOf = (r: AlertRule) => (r.metric === "metric" ? "" : r.metric === "slo" ? "×" : ALERT_METRICS[r.metric].unit);
 const plain = (v: number) => (Number.isInteger(v) ? String(v) : Math.abs(v) < 1 ? v.toPrecision(3) : v.toFixed(1));
 
-export const fmtValue = (r: AlertRule, v: number | null) => (v === null ? "–" : `${plain(v)}${unitOf(r) === "%" ? "%" : unitOf(r) ? ` ${unitOf(r)}` : ""}`);
+export const fmtValue = (r: AlertRule, v: number | null) => (v === null ? "–" : `${plain(v)}${unitOf(r) === "%" || unitOf(r) === "×" ? unitOf(r) : unitOf(r) ? ` ${unitOf(r)}` : ""}`);
 
 /** "Error rate", or "process.cpu.utilization average (api)"; with its scope. */
 export function ruleLabel(r: AlertRule): string {
   if (r.metric === "metric") return `${r.metricName} ${METRIC_ALERT_STATS[r.metricStat || "avg"].toLowerCase()}${r.metricService ? ` (${r.metricService})` : ""}`;
+  if (r.metric === "slo") return "SLO burn rate";
   const scope = r.endpoint ? ` of ${r.endpoint} (${r.service})` : r.service ? ` of ${r.service}` : "";
   return `${ALERT_METRICS[r.metric].label}${scope}`;
 }

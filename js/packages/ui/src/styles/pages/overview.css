@@ -1,5 +1,5 @@
 /* Overview page: card row, chart rows, and the insight cards. */
-.wl-ov-cards { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.wl-ov-cards { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .wl-ov-top { grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); }
 .wl-ov-mid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
 .wl-ov-note { margin: 14px 0 0; color: var(--wl-muted); font-size: 12px; }

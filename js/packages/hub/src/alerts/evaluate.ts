@@ -17,7 +17,11 @@ import {
   type MetricRows,
   opHolds,
   runMetricSync,
+  sloBurnMessage,
+  sloBurnPage,
+  sloContext,
 } from "@wizeworks/lens-core";
+import { sloById } from "../slos.js";
 import { hubExecutor } from "../scale-exec.js";
 import type { HubStore } from "../store.js";
 import { deliver, type Notice, type Outbox } from "./deliver.js";
@@ -42,11 +46,16 @@ function measureMetric(store: HubStore, rule: AlertRule, now: number): { value: 
 
 async function measure(store: HubStore, rule: AlertRule, now: number): Promise<number | null> {
   if (rule.metric === "metric") return measureMetric(store, rule, now).value;
+  if (rule.metric === "slo") {
+    const slo = sloById(store.db, rule.projectId, rule.sloId);
+    return slo ? computePage(sloBurnPage(slo), sloContext(rule.windowMs, alignNow(now)), hubExecutor(store, { project: rule.projectId || undefined })) : null;
+  }
   const page = alertPage(rule.metric, { service: rule.service, endpoint: rule.endpoint });
   return computePage(page, alertContext(rule.windowMs, alignNow(now)), hubExecutor(store, { project: rule.projectId || undefined, env: rule.env || undefined }));
 }
 
 function messageOf(store: HubStore, rule: AlertRule, state: AlertNoticeState, value: number | null, now: number): string {
+  if (rule.metric === "slo") return sloBurnMessage(sloById(store.db, rule.projectId, rule.sloId)?.name ?? rule.sloId, rule.op, value, rule.threshold, state);
   if (rule.metric !== "metric") return alertMessage(rule.metric, rule.op, value, rule.threshold, state);
   return metricAlertMessage(rule.metricName, rule.metricStat || "avg", rule.op, value, rule.threshold, measureMetric(store, rule, now).unit, state);
 }
@@ -71,7 +80,7 @@ export async function notifyHub(deps: HubAlertDeps, rule: AlertRule, state: Aler
 }
 
 const breaches = (rule: AlertRule, value: number | null): boolean =>
-  rule.metric === "metric" ? value !== null && opHolds(rule.op, value, rule.threshold) : alertBreached(rule.metric, rule.op, value, rule.threshold);
+  rule.metric === "metric" || rule.metric === "slo" ? value !== null && opHolds(rule.op, value, rule.threshold) : alertBreached(rule.metric, rule.op, value, rule.threshold);
 
 /** Check one rule: keep its value, and notify when it starts or stops firing, or remind while it keeps firing. */
 export async function evaluateHubRule(deps: HubAlertDeps, rule: AlertRule, now: number): Promise<void> {

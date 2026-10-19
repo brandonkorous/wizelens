@@ -2,11 +2,13 @@
 import { isMetricAlertStat } from "../metrics/alert.js";
 import { MAX_METRIC_NAME } from "../metrics/types.js";
 import { ALERT_REMINDS_MS, ALERT_WINDOWS_MS, type AlertChannel, type AlertRuleInput, MAX_ALERT_CHANNELS } from "./alert-rule.js";
-import { alertScopeProblem, isAlertMetric, isAlertOp } from "./alerts.js";
+import { type AlertMetric, alertScopeProblem, isAlertMetric, isAlertOp } from "./alerts.js";
 
 export interface AlertParseHooks {
   /** Why a webhook-style URL may not be used, or null. */
   checkUrl: (url: string) => Promise<string | null>;
+  /** Why an SLO id may not be used (it does not exist in the project), or null. */
+  checkSlo?: (id: string) => Promise<string | null>;
   /** The email channel for these recipients, or why not; absent where the host sends no email. */
   email?: (to: unknown) => Promise<AlertChannel | string>;
 }
@@ -34,20 +36,26 @@ async function channelsOf(raw: unknown, hooks: AlertParseHooks): Promise<AlertCh
   return out;
 }
 
-type MetricPart = Pick<AlertRuleInput, "metric" | "metricName" | "metricStat" | "metricService">;
+type MetricPart = Pick<AlertRuleInput, "metric" | "metricName" | "metricStat" | "metricService" | "sloId">;
+const NO_METRIC = { metricName: "", metricStat: "" as const, metricService: "", sloId: "" };
 
-function metricPart(b: Record<string, unknown>): MetricPart | string {
-  if (b.metric !== "metric") return isAlertMetric(b.metric) ? { metric: b.metric, metricName: "", metricStat: "", metricService: "" } : "Pick a metric: error_rate, p95_ms, avg_ms, requests, new_errors, slow_queries, or metric.";
+async function metricPart(b: Record<string, unknown>, hooks: AlertParseHooks): Promise<MetricPart | string> {
+  if (b.metric === "slo") {
+    const sloId = text(b.sloId, 100);
+    const problem = !sloId ? "Set sloId to the SLO whose burn rate to watch." : hooks.checkSlo ? await hooks.checkSlo(sloId) : "This host keeps no SLOs.";
+    return problem ?? { metric: "slo", ...NO_METRIC, sloId };
+  }
+  if (b.metric !== "metric") return isAlertMetric(b.metric) ? { metric: b.metric, ...NO_METRIC } : "Pick a metric: error_rate, p95_ms, avg_ms, requests, new_errors, slow_queries, metric, or slo.";
   const name = text(b.metricName, MAX_METRIC_NAME + 1);
   if (!name || name.length > MAX_METRIC_NAME) return "Set metricName to the metric to watch, for example process.cpu.utilization.";
   const stat = b.metricStat ?? "avg";
   if (!isMetricAlertStat(stat)) return "Pick a metricStat: last, avg, max, p95, p99, or rate.";
-  return { metric: "metric", metricName: name, metricStat: stat, metricService: text(b.metricService, 100) };
+  return { metric: "metric", metricName: name, metricStat: stat, metricService: text(b.metricService, 100), sloId: "" };
 }
 
 /** The rule in a body, or why it is not valid. A change sends only what it changes: merge it over the current rule first. */
 export async function parseAlertRule(b: Record<string, unknown>, hooks: AlertParseHooks): Promise<AlertRuleInput | string> {
-  const metric = metricPart(b);
+  const metric = await metricPart(b, hooks);
   if (typeof metric === "string") return metric;
   if (!isAlertOp(b.op)) return 'Set op to ">", "<", ">=", or "<=".';
   const threshold = Number(b.threshold);
@@ -56,8 +64,9 @@ export async function parseAlertRule(b: Record<string, unknown>, hooks: AlertPar
   if (!ALERT_WINDOWS_MS.includes(windowMs)) return "Pick a window of 5, 15, 60, 360, or 1440 minutes.";
   const remindMs = Number(b.remindMs ?? 0);
   if (!ALERT_REMINDS_MS.includes(remindMs)) return "Pick a reminder of 0 (never), 15, 60, 240, or 1440 minutes.";
-  const scope = metric.metric === "metric" ? { service: "", endpoint: "" } : { service: text(b.service, 100), endpoint: text(b.endpoint, 300) };
-  const scopeProblem = metric.metric === "metric" ? null : alertScopeProblem(metric.metric, scope);
+  const traceRule = metric.metric !== "metric" && metric.metric !== "slo";
+  const scope = traceRule ? { service: text(b.service, 100), endpoint: text(b.endpoint, 300) } : { service: "", endpoint: "" };
+  const scopeProblem = traceRule ? alertScopeProblem(metric.metric as AlertMetric, scope) : null;
   if (scopeProblem) return scopeProblem;
   const channels = await channelsOf(b.channels, hooks);
   if (typeof channels === "string") return channels;

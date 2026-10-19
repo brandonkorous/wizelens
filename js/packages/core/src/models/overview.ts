@@ -10,6 +10,8 @@ import type { ServiceRow } from "../stats/services.js";
 import { headlineNeeds, headlinesFrom } from "./headlines.js";
 import { META_NEEDS, type ModelMeta, metaOf, scoped, serviceParam } from "./input.js";
 import { insightGroupsOf, insightNeeds } from "./insight-groups.js";
+import type { Apdex } from "./apdex.js";
+import { apdexNeed, apdexOverall } from "./apdex-rows.js";
 import { issueInfos, lifeNeed } from "./error-issues.js";
 import { errorGroupOf } from "./errors.js";
 import { insightIssues } from "./insights.js";
@@ -39,6 +41,8 @@ export interface OverviewModel {
   insights: InsightGroup[];
   /** Error groups first seen in this range, or resolved and back again; newest first. */
   freshErrors: { group: ErrorGroup; why: "new" | "regressed" }[];
+  /** Apdex of the services that run your code, each against its own target. */
+  apdex: Apdex | null;
 }
 
 const PARTS: { key: string; label: string; shade: number }[] = [
@@ -113,6 +117,7 @@ export const overviewPage: PageDef<OverviewModel> = {
       ...insightNeeds("cur", "all", service),
       ...insightNeeds("prev", "all", service),
       lifeNeed(service ?? ""),
+      apdexNeed(service ? `api:${rawService(service)}` : undefined),
       groupNeed("err.recent", "err.g", "cur", { top: true, order: { by: "lastMs", desc: true, limit: RECENT_ERRORS }, ...(service ? { filter: { prefix: `${service}|` } } : {}) }),
     ]);
   },
@@ -130,6 +135,7 @@ export const overviewPage: PageDef<OverviewModel> = {
       recent: listOf<RequestItem>(d, "recent").items,
       insights: openInsights(d, groups).slice(0, TOP_INSIGHTS),
       freshErrors: freshErrorsOf(d),
+      apdex: apdexOverall(d),
     };
   },
 };

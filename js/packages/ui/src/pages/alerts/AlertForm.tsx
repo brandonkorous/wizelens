@@ -7,12 +7,14 @@ import { REMINDS, WINDOWS } from "./alertTypes";
 import { ChannelFields } from "./ChannelFields";
 import { MetricRuleFields } from "./MetricRuleFields";
 import { ScopeFields } from "./ScopeFields";
+import { SloFields } from "./SloFields";
 
 export type RuleDraft = AlertRuleInput;
 
-const METRICS: [AlertMetric | "metric", string][] = [
+const METRICS: [RuleDraft["metric"], string][] = [
   ...Object.entries(ALERT_METRICS).map(([k, m]): [AlertMetric, string] => [k as AlertMetric, `${m.label}${m.unit ? ` (${m.unit})` : ""}`]),
   ["metric", "A metric (CPU, memory, your own)"],
+  ["slo", "An SLO's burn rate (×)"],
 ];
 const OPS: [AlertOp, string][] = [
   [">", "is above"],
@@ -36,6 +38,7 @@ export const EMPTY_RULE: RuleDraft = {
   channels: [],
   enabled: true,
   remindMs: 0,
+  sloId: "",
 };
 
 /** Only the fields a rule keeps, from a draft or a kept rule. */
@@ -43,7 +46,9 @@ export const draftOf = (r: RuleDraft): RuleDraft => Object.fromEntries(Object.ke
 
 /** The draft ready to send: metric rules drop the scope, trace rules drop the metric fields, and empty channels go. */
 function cleaned(r: RuleDraft): RuleDraft {
-  const metric = r.metric === "metric" ? { metricStat: r.metricStat || "avg", service: "", endpoint: "" } : { metricName: "", metricStat: "" as const, metricService: "", endpoint: r.service ? r.endpoint : "" };
+  const none = { metricName: "", metricStat: "" as const, metricService: "" };
+  const metric =
+    r.metric === "metric" ? { metricStat: r.metricStat || "avg", service: "", endpoint: "", sloId: "" } : r.metric === "slo" ? { ...none, service: "", endpoint: "" } : { ...none, sloId: "", endpoint: r.service ? r.endpoint : "" };
   const channels = r.channels.filter((c) => (c.kind === "email" ? c.to.length > 0 : c.kind === "pagerduty" ? c.routingKey.trim() !== "" : c.url.trim() !== ""));
   return { ...draftOf(r), ...metric, channels };
 }
@@ -70,7 +75,7 @@ export function AlertForm({ initial, title, onSave, onCancel }: { initial: RuleD
           <Field label="Threshold" type="number" step="any" required value={r.threshold} onChange={(e) => set("threshold")(Number(e.target.value))} />
           <Select label="Over the last" value={String(r.windowMs)} options={WINDOWS} onChange={(v) => set("windowMs")(Number(v))} />
         </FormRow>
-        {r.metric === "metric" ? <MetricRuleFields r={r} set={set} /> : <ScopeFields r={r} set={set} />}
+        {r.metric === "metric" ? <MetricRuleFields r={r} set={set} /> : r.metric === "slo" ? <SloFields r={r} set={set} /> : <ScopeFields r={r} set={set} />}
         <FormRow>
           <Select label="Remind while firing" value={String(r.remindMs)} options={REMINDS} onChange={(v) => set("remindMs")(Number(v))} />
           <Check label="On" checked={r.enabled} onChange={(e) => set("enabled")(e.target.checked)} />

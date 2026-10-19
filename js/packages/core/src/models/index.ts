@@ -48,6 +48,11 @@ export * from "./badges.js";
 export * from "./alerts.js";
 export * from "./alert-rule.js";
 export * from "./alert-parse.js";
+export * from "./apdex.js";
+export * from "./apdex-rows.js";
+export * from "./slo.js";
+export * from "./slo-parse.js";
+export * from "./slo-report.js";
 
 /** Every page by name: what it needs and how its model is built. Hosts serve them at `api/models/<name>`; in-app runs them in the browser. */
 export const PAGES = {
