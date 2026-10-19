@@ -36,7 +36,7 @@ export async function ingestBatch(ctx: Ctx, limiter: RateLimiter): Promise<void>
   ctx.res.writeHead(204).end();
 }
 
-/** `POST /v1/traces` and `/v1/logs`: OpenTelemetry apps. */
+/** `POST /v1/traces`, `/v1/logs`, and `/v1/metrics`: OpenTelemetry apps and collectors. */
 export async function ingestOtlp(ctx: Ctx, signal: OtlpSignal, limiter: RateLimiter): Promise<void> {
   const projectId = await ingestProject(ctx, limiter);
   await handleOtlp(signal, ctx.req, ctx.res, save(ctx, projectId), ctx.app.config.redactKeys);

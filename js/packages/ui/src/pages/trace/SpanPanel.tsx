@@ -3,6 +3,7 @@ import { displayService, endpointNameOf, errorEvents, normalizeQuery, queryText,
 import { fmtMs } from "../../format";
 import { endpointHref, errorHref, hrefTo, queryHref } from "../../routes";
 import { serviceHref } from "../services/serviceParts";
+import { SpanK8s } from "../infra/SpanK8s";
 import { ServiceChip } from "./tabParts";
 
 function prettyParams(raw: unknown): string | null {
@@ -136,6 +137,7 @@ export function SpanPanel({ span, trace, onClose }: { span: Span; trace: Trace; 
       </div>
       <Facts span={span} trace={trace} />
       <SpanLinks span={span} trace={trace} />
+      <SpanK8s attributes={span.attributes} />
       <Query span={span} />
       {span.events.length > 0 && <h3>Events</h3>}
       {span.events.map((e, i) => (

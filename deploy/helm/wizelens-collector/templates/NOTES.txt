@@ -1,0 +1,13 @@
+WizeLens collector is sending to {{ .Values.endpoint }}.
+{{- if and (not .Values.ingestKey) (not .Values.existingSecret.name) }}
+
+No ingest key is set. That is fine for a hub without a token; WizeLens Cloud needs one:
+  helm upgrade {{ .Release.Name }} <chart> --reuse-values --set ingestKey=wl_ik_...
+{{- end }}
+
+Hosts and Kubernetes appear in WizeLens within a minute or two.
+{{- if and .Values.agent.enabled .Values.otlpService.enabled }}
+
+Send your apps' traces through the node agent, so each span gets its pod and node:
+  OTEL_EXPORTER_OTLP_ENDPOINT=http://{{ include "wlc.fullname" . }}-agent.{{ .Release.Namespace }}:4318
+{{- end }}

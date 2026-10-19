@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { ATTR_BROWSER_SESSION, type HubLog, type HubRemote, type HubSender, logKey, type MetricPoint, seriesKeyOf, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_SESSION, type HubLog, INFRA_SERVICE, type HubRemote, type HubSender, logKey, type MetricPoint, seriesKeyOf, type Span } from "@wizeworks/lens-core";
 import { type HubStatements, prepareHubStatements } from "./schema.js";
 import { upgradeHubSchema } from "./schema-scale.js";
 import { pruneStats, type TraceStateRow } from "./settle.js";
@@ -80,7 +80,8 @@ export class HubStore {
     const env = w.sender.environment ?? "";
     const project = w.sender.project ?? "";
     const st = this.#stmts;
-    this.#touchService(w.sender, w.via, now);
+    // The collector's host and Kubernetes receivers are not a service.
+    if (w.sender.service !== INFRA_SERVICE) this.#touchService(w.sender, w.via, now);
     for (const s of w.spans) {
       st.upsertTrace.run(s.traceId, s.startMs, s.startMs + s.durationMs, now, env, project);
       st.upsertSpan.run(s.traceId, s.spanId, s.service, s.startMs, s.durationMs, sessionOf(s), JSON.stringify(s));

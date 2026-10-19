@@ -1,7 +1,7 @@
 // Scale mode: telemetry in ClickHouse. Reads go through views with the Postgres names, so the shared SQL answers pages and searches.
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { alignNow, CH_DIALECT, metricAlertSteps, metricPageSteps, type MetricRows, runMetricAsync, searchSql, sqlExecutor, type SqlRunner, suggestSql } from "@wizeworks/lens-core";
+import { alignNow, CH_DIALECT, infraSteps, metricAlertSteps, metricPageSteps, type MetricRows, runMetricAsync, searchSql, sqlExecutor, type SqlRunner, suggestSql } from "@wizeworks/lens-core";
 import type { RetentionOf, TelemetryStore } from "../store.js";
 import { checkFactsVersionCh, clearProjectCh, syncProjects } from "./admin.js";
 import { type ChClient, chClient } from "./http.js";
@@ -91,6 +91,7 @@ function chTelemetry(ch: ChClient, { settler, pool }: ReturnType<typeof settlerO
     slowestEndpoints: (projectId, w, minCount, limit) => slowestEndpoints(ch, projectId, w, minCount, limit),
     metricData: (m, range, params, now) => runMetricAsync(metricPageSteps("ch", { project: m.projectId, env: m.env }, range, alignNow(now), params), runMetric),
     metricAlertData: (m, name, w, now) => runMetricAsync(metricAlertSteps("ch", { project: m.projectId, env: m.env, service: m.service }, name, w, now), runMetric),
+    infraData: (m, range, params, now) => runMetricAsync(infraSteps("ch", { project: m.projectId, env: m.env }, range, alignNow(now), params), runMetric),
     settle: (now, o) => settleClickHouse(settler, now, o),
     prune: (now) => syncProjects(ch, queue, retentionOf, now),
     pruneRollups: async () => undefined,

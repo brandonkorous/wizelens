@@ -1,6 +1,6 @@
-import { type MetricHistogram, type MetricKind, type MetricPoint, sanitizeMetricPoint } from "@wizeworks/lens-core";
+import { type Attributes, INFRA_RESOURCE_KEYS, type MetricHistogram, type MetricKind, type MetricPoint, sanitizeMetricPoint } from "@wizeworks/lens-core";
 import type { HubWrite } from "../store.js";
-import { attributesOf, nanosToMs, type OtlpKeyValue, type OtlpResource, senderOf } from "./values.js";
+import { attributesOf, nanosToMs, type OtlpKeyValue, type OtlpResource, resourcePick, senderOf } from "./values.js";
 
 type Num = string | number | undefined;
 
@@ -86,8 +86,8 @@ function shapeOf(m: OtlpMetric): Shape | null {
   return null;
 }
 
-/** The points of one OTLP metric. Points that do not pass the core checks are skipped. */
-export function pointsOf(m: OtlpMetric, service: string, redactKeys: readonly string[]): MetricPoint[] {
+/** The points of one OTLP metric, with the resource's host and Kubernetes attributes (`resource`) under their own. Points that fail the core checks are skipped. */
+export function pointsOf(m: OtlpMetric, service: string, redactKeys: readonly string[], resource: Attributes = {}): MetricPoint[] {
   const shape = shapeOf(m);
   if (!shape || !m.name) return [];
   const temporality = temporalityOf(shape.data.aggregationTemporality);
@@ -98,7 +98,7 @@ export function pointsOf(m: OtlpMetric, service: string, redactKeys: readonly st
       kind: shape.kind,
       unit: m.unit ?? "",
       description: m.description,
-      attributes: attributesOf(dp.attributes),
+      attributes: { ...resource, ...attributesOf(dp.attributes) },
       timeMs: nanosToMs(dp.timeUnixNano),
       startMs: startMs || undefined,
       monotonic: shape.data.isMonotonic === true,
@@ -115,7 +115,8 @@ export function pointsOf(m: OtlpMetric, service: string, redactKeys: readonly st
 export function writesFromMetrics(list: readonly OtlpResourceMetrics[], redactKeys: readonly string[]): HubWrite[] {
   return list.map((rm) => {
     const sender = senderOf(rm.resource);
-    const metrics = (rm.scopeMetrics ?? []).flatMap((sm) => (sm.metrics ?? []).flatMap((m) => pointsOf(m, sender.service, redactKeys)));
+    const resource = resourcePick(rm.resource, INFRA_RESOURCE_KEYS);
+    const metrics = (rm.scopeMetrics ?? []).flatMap((sm) => (sm.metrics ?? []).flatMap((m) => pointsOf(m, sender.service, redactKeys, resource)));
     return { sender, via: "otlp" as const, spans: [], logs: [], remotes: [], metrics };
   });
 }
