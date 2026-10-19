@@ -21,6 +21,8 @@
     "koa",
     "hono",
     "nextjs",
+    "nestjs",
+    "graphql",
     "tracing",
     "opentelemetry",
     "profiler",

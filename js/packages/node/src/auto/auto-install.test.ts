@@ -70,6 +70,20 @@ describe("node --import @wizeworks/lens-node/auto", { timeout: 30_000 }, () => {
   });
 });
 
+describe("node --import @wizeworks/lens-node/auto with GraphQL", { timeout: 30_000 }, () => {
+  it("traces GraphQL operations from the CommonJS and ES module builds, and names the request after them", async () => {
+    await start("graphql.mjs", "auto-graphql");
+    const res = await app!.get(`/graphql?query=${encodeURIComponent('query GetOrders { orders(status: "open") }')}`);
+    expect(await res.json()).toEqual({ data: { orders: [{ id: 1 }] } });
+    await eventually(() => !!server("GET /graphql (GetOrders)")() && hub.spans.some((s) => s.name === "query GetOrders"));
+    const [op] = childrenOf(server("GET /graphql (GetOrders)")()!);
+    expect(op).toMatchObject({ name: "query GetOrders", attributes: { "graphql.document": 'query GetOrders { orders(status: "*") }' } });
+    await app!.get(`/graphql?esm=1&query=${encodeURIComponent("query FromEsm { orders }")}`);
+    await eventually(() => hub.spans.some((s) => s.name === "query FromEsm"));
+    expect(server("GET /graphql (FromEsm)")()).toBeDefined();
+  });
+});
+
 describe("the auto install and the code install", { timeout: 30_000 }, () => {
   it("steps aside when the app installs WizeLens in code: one span per request, owned by the code install", async () => {
     await start("code-install.mjs", "auto-name");

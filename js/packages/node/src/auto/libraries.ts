@@ -5,6 +5,7 @@ import { instrumentMongoDb } from "../adapters/mongodb.js";
 import { instrumentMysql2 } from "../adapters/mysql2.js";
 import { instrumentPg } from "../adapters/pg.js";
 import { instrumentRedis } from "../adapters/redis.js";
+import { instrumentGraphql, traceGraphqlFunction } from "../graphql/index.js";
 import { instrumentGrpc } from "../grpc/index.js";
 import { instrumentBunyan } from "../logs/bunyan.js";
 import { instrumentPino } from "../logs/pino.js";
@@ -85,13 +86,32 @@ const MESSAGING: [string, () => void][] = [
   ["grpc", () => onLoad(nm("@grpc/grpc-js/build/src/index.js"), (grpc) => void instrumentGrpc(autoHandle, grpc))],
 ];
 
+// The CommonJS file, the ES module file, and the function that runs operations: graphql-js, and GraphQL Yoga's executor.
+const GRAPHQL_FILES: [string, string, string][] = [
+  ["graphql/execution/execute.js", "graphql/execution/execute.mjs", "execute"],
+  ["graphql/subscription/subscribe.js", "graphql/subscription/subscribe.mjs", "subscribe"],
+  ["@graphql-tools/executor/cjs/execution/normalizedExecutor.js", "@graphql-tools/executor/esm/execution/normalizedExecutor.js", "normalizedExecutor"],
+];
+
+/** GraphQL: CommonJS builds are patched on load; ES module builds hand over the function. */
+function hookGraphql(): void {
+  for (const [cjs, esm, binding] of GRAPHQL_FILES) {
+    const id = `graphql-${binding}`;
+    onLoad(nm(cjs), (mod) => void instrumentGraphql(autoHandle, mod));
+    onEsm(esmPatch(nm(esm), id, binding, true));
+    onEsmBinding(id, (fn) => traceGraphqlFunction(autoHandle, fn));
+  }
+}
+
+const APIS: [string, () => void][] = [["graphql", hookGraphql]];
+
 const LOGGERS: [string, () => void][] = [
   ["pino", () => onLoad(nm("pino/pino.js"), (pino) => wrapFactory(pino, (logger) => instrumentPino(autoHandle, logger)))],
   ["winston", () => onLoad(nm("winston/lib/winston.js"), (w) => patchFactory(w, "createLogger", (logger) => instrumentWinston(autoHandle, logger)))],
   ["bunyan", () => onLoad(nm("bunyan/lib/bunyan.js"), (b) => patchFactory(b, "createLogger", (logger) => instrumentBunyan(autoHandle, logger)))],
 ];
 
-/** Hook every database, queue, RPC, and logging library the add-on supports, except the ones in WIZELENS_AUTO_SKIP. */
+/** Hook every database, queue, RPC, GraphQL, and logging library the add-on supports, except the ones in WIZELENS_AUTO_SKIP. */
 export function hookLibraries(): void {
-  for (const [name, hook] of [...DATABASES, ...MESSAGING, ...LOGGERS]) if (!skipped(name)) hook();
+  for (const [name, hook] of [...DATABASES, ...MESSAGING, ...APIS, ...LOGGERS]) if (!skipped(name)) hook();
 }
