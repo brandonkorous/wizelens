@@ -8,7 +8,7 @@ export const FAQS: Faq[] = [
   },
   {
     q: "Is WizeLens free?",
-    a: "Yes. The add-ons, the local hub, and the cloud service are open source under the MIT License. You can use them in any project, including paid ones.",
+    a: "Yes. The add-ons, the local hub, and the cloud service are open source under the MIT License. You can use them in any project, including paid ones, and run them yourself for free. The hosted WizeLens Cloud has a Free plan and paid plans for more data and history.",
   },
   {
     q: "Is WizeLens a replacement for Glimpse?",

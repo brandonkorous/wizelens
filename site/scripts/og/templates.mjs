@@ -56,3 +56,11 @@ export function cloud() {
         box({ flexDirection: "column" }, box({ fontSize: 23, fontWeight: 700 }, "Error rate is 3.4% (above 2%)"), box({ fontSize: 18, color: C.slate, marginTop: 4 }, "orders-api · production · sent to Slack"))),
       box({ flexWrap: "wrap", gap: 10 }, role("Owner", C.nightFg), role("Admin", C.blue), role("Member", "#0b7a68"), role("Viewer", C.slate)))) });
 }
+
+export function pricing() {
+  const plan = (name, price, gb, pick) => box({ flexDirection: "column", gap: 4, width: 178, padding: pick ? "16px 18px" : "18px 20px", borderRadius: 18, background: C.white, border: `${pick ? 3 : 1}px solid ${pick ? C.blue : C.line}` },
+    box({ fontSize: 20, color: C.slate }, name), box({ fontSize: 38, fontWeight: 700, letterSpacing: -1.5 }, price), box({ fontSize: 18, color: C.fg2 }, gb));
+  return frame({ dark: false, path: "/pricing/", children: box({ width: "100%", justifyContent: "space-between", alignItems: "center" },
+    box({ flexDirection: "column", width: 440 }, title("Pay for data. Not for people.", 76, false, 440), sub("Unlimited users and MCP on every plan. Free to self-host.", false, 420, 24)),
+    box({ flexWrap: "wrap", gap: 14, width: 460 }, plan("Free", "$0", "10 GB a month"), plan("Team", "$29", "50 GB a month", true), plan("Business", "$99", "150 GB, SSO"), plan("Enterprise", "Custom", "Up to 400 days"))) });
+}

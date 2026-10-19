@@ -30,6 +30,7 @@ import "@/styles/story.css";
 import "@/styles/changelog.css";
 import "@/styles/cloud.css";
 import "@/styles/faq.css";
+import "@/styles/pricing.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--wl-font-inter", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--wl-font-mono", display: "swap", preload: false });
