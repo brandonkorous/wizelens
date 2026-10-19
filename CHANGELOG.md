@@ -2,7 +2,9 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.0-alpha.3] — Search and scale
+
+One search language everywhere, the cloud on ClickHouse at scale, live updates, traces across projects, and trace times you can trust.
 
 ### Fixed
 
