@@ -75,9 +75,11 @@ export interface TraceHeaderProps {
   backHref: string | null;
   /** Extra buttons next to Refresh, for example Share. */
   actions?: ReactNode;
+  /** The trace's tags, under the title. */
+  tags?: ReactNode;
 }
 
-export function TraceHeader({ trace, timing, health, loading, onRefresh, backHref, actions }: TraceHeaderProps) {
+export function TraceHeader({ trace, timing, health, loading, onRefresh, backHref, actions, tags }: TraceHeaderProps) {
   const code = trace.rootStatusCode;
   return (
     <section className="wl-panel wl-trace-head">
@@ -101,6 +103,7 @@ export function TraceHeader({ trace, timing, health, loading, onRefresh, backHre
           )}
         </span>
       </div>
+      {tags}
       <Stats trace={trace} timing={timing} />
       <SplitBar timing={timing} failed={health === "critical"} />
       <div className="wl-muted wl-small wl-mono">

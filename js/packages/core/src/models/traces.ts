@@ -19,6 +19,8 @@ const BOTTLENECKS = 8;
 /** One row of the recent traces list. */
 export interface TraceListItem {
   traceId: string;
+  /** When the trace began, so a row can be matched against tag rules (tags/match.ts). */
+  startMs: number;
   path: string;
   durationMs: number;
   /** Request health when the trace is a request; else null, and `status` decides the color. */
@@ -53,6 +55,7 @@ export function tracePath(t: Pick<Trace, "rootUrl" | "rootName">): string {
 
 export const traceListItem = (t: Trace): TraceListItem => ({
   traceId: t.traceId,
+  startMs: t.startMs,
   path: tracePath(t),
   durationMs: traceDurationOf(t),
   health: requestOf(t)?.health ?? null,
@@ -60,7 +63,7 @@ export const traceListItem = (t: Trace): TraceListItem => ({
   services: t.services,
 });
 
-const listItemOf = ({ traceId, path, durationMs, health, status, services }: TraceItem): TraceListItem => ({ traceId, path, durationMs, health, status, services });
+const listItemOf = ({ traceId, startMs, path, durationMs, health, status, services }: TraceItem): TraceListItem => ({ traceId, startMs, path, durationMs, health, status, services });
 
 function cardsOf(total: Agg, s: readonly Agg[]): TraceCards {
   return { count: total.n, avgSpans: avgOfAgg(total), slow: total.c[0] ?? 0, series: { count: counts(s), avgSpans: avgs(s), slow: counter(s, 0) } };

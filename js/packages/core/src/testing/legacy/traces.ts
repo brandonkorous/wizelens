@@ -12,6 +12,7 @@ const RECENT = 10;
 /** One row of the recent traces list. */
 export interface TraceListItem {
   traceId: string;
+  startMs: number;
   path: string;
   durationMs: number;
   /** Request health when the trace is a request; else null, and `status` decides the color. */
@@ -41,6 +42,7 @@ export function tracePath(t: Pick<Trace, "rootUrl" | "rootName">): string {
 
 export const traceListItem = (t: Trace): TraceListItem => ({
   traceId: t.traceId,
+  startMs: t.startMs,
   path: tracePath(t),
   durationMs: traceDurationOf(t),
   health: requestOf(t)?.health ?? null,

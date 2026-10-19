@@ -1,4 +1,4 @@
-import type { LogRow, RequestItem, SearchItems, SearchKind, SpanItem, TraceItem } from "@wizeworks/lens-core";
+import { itemOwner, type LogRow, type RequestItem, type SearchItems, type SearchKind, type SpanItem, type TagMatchItem, type TraceItem } from "@wizeworks/lens-core";
 import { fmtDateTime, fmtMs } from "../../format";
 import { hrefTo, traceHref } from "../../routes";
 import { Badge, toneOfHealth, toneOfStatus } from "../../ui/Badges";
@@ -55,6 +55,15 @@ const LOGS: Column<LogRow>[] = [
 ];
 
 export const SEARCH_COLUMNS: { [K in SearchKind]: Column<SearchItems[K]>[] } = { requests: REQUESTS, traces: TRACES, spans: SPANS, logs: LOGS };
+
+/** The column each kind's tags follow. */
+export const TAGGED_COLUMN: Record<SearchKind, string> = { requests: "req", traces: "trace", spans: "span", logs: "msg" };
+
+/** A result as a row to match against tag rules. */
+export function resultItem(kind: SearchKind, r: SearchItems[SearchKind]): TagMatchItem {
+  const at = r as { traceId: string; startMs?: number; timeMs?: number };
+  return { traceId: at.traceId, owner: itemOwner(kind, r), timeMs: at.startMs ?? at.timeMs ?? 0 };
+}
 
 /** A key that is unique within one kind's results. */
 export function resultKey(kind: SearchKind, r: SearchItems[SearchKind]): string {

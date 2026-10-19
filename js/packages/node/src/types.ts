@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Tracer } from "@opentelemetry/api";
-import type { Trace } from "@wizeworks/lens-core";
+import type { TagOptions, Trace } from "@wizeworks/lens-core";
 import type { SamplingOptions } from "./sampling.js";
 import type { TraceStore } from "./store.js";
 
@@ -61,6 +61,8 @@ export interface WizeLensOptions {
   hubToken?: string;
   /** Keep only part of the traces, for busy services. Default: all, or the WIZELENS_SAMPLE_RATE variable. */
   sampling?: SamplingOptions;
+  /** Tag rules: `{ rules: [{ name: "checkout", query: "route:/checkout*", color: "green" }], disableBuiltIns: ["bot"] }`. A bad rule throws at startup. */
+  tags?: TagOptions;
 }
 
 export interface DbCallInfo {

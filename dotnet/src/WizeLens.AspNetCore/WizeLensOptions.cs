@@ -82,6 +82,12 @@ public sealed class WizeLensOptions
     /// <summary>Metric points older than this are dropped from memory. Default 1 hour.</summary>
     public TimeSpan MetricsMaxAge { get; set; } = TimeSpan.FromHours(1);
 
+    /// <summary>Tag rules kept in code, and built-in tags to turn off (docs/TAGS-PLAN.md). A bad rule throws in AddWizeLens.</summary>
+    public WizeLensTags Tags { get; set; } = new();
+
+    /// <summary>The built-ins and the rules from <see cref="Tags"/>, checked; set by AddWizeLens.</summary>
+    internal IReadOnlyList<Tagging.TagView> TagList { get; set; } = Tagging.TagRules.List([], []);
+
     internal bool IsEnabled { get; set; }
 
     /// <summary>True once the middleware is in the pipeline, so a second UseWizeLens (or the auto install) adds nothing.</summary>

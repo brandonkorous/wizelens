@@ -17,6 +17,7 @@ import { orgRoutes } from "./orgs.js";
 import { projectRoutes } from "./projects.js";
 import { scimRoutes } from "./scim.js";
 import { searchRoutes } from "./search.js";
+import { tagRoutes } from "./tags.js";
 
 /** Every route below `/_wizelens/`, except ingest and OTLP (they use ingest keys and are matched first). */
 export function allRoutes(): Router<Ctx> {
@@ -29,6 +30,7 @@ export function allRoutes(): Router<Ctx> {
   modelRoutes(r);
   changeRoutes(r);
   searchRoutes(r);
+  tagRoutes(r);
   alertRoutes(r);
   issueRoutes(r);
   sloRoutes(r);

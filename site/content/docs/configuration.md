@@ -30,6 +30,7 @@ Pass options to `builder.Services.AddWizeLens(o => { ... })`.
 | `Sampling.KeepSlowMs` | `1000` | Keep every trace with a server-side span this long (`null` turns it off). |
 | `CaptureMetrics` | `true` | Read every `Meter` in the app. |
 | `MetricsInterval` / `MetricsMaxAge` | 10 s / 1 h | How often metrics are taken, and how long they are kept in memory. |
+| `Tags.Rules` / `Tags.DisableBuiltIns` | none / none | Tag rules for the dashboard, such as `new("checkout", "route:/checkout*", "green")`, and built-in tags to turn off. A bad rule throws at start. See [Tags](/docs/tags/). |
 
 ## Node
 
@@ -46,6 +47,7 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | `maxTraces` / `maxAgeMs` | `2000` / 24 h | How much is kept. |
 | `enableMcp` | `false` | Expose the read-only MCP endpoint. |
 | `redactKeys` | see [Redaction](#redaction) | Key fragments whose values are redacted. |
+| `tags` | none | `{ rules: [{ name, query, color? }], disableBuiltIns: ["bot"] }`: tag rules for the dashboard, and built-in tags to turn off. A bad rule throws at start. See [Tags](/docs/tags/). |
 | `instrumentFetch` | `true` | Trace outgoing `fetch` and undici calls. |
 | `captureConsole` | `true` | Copy `console.*` lines into the trace. |
 | `traceQueriesOutsideRequests` | `false` | Database adapters also trace queries outside a request. |

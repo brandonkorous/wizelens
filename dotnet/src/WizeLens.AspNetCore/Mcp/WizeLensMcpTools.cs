@@ -7,6 +7,7 @@ using WizeLens.Analysis;
 using WizeLens.Model;
 using WizeLens.Search;
 using WizeLens.Storage;
+using WizeLens.Tagging;
 using WizeLens.Web;
 
 namespace WizeLens.Mcp;
@@ -32,7 +33,7 @@ internal sealed class WizeLensMcpTools(TraceStore store, WizeLensOptions options
         {
             var parsed = SearchCheck.Check(q);
             if (!parsed.Ok) return Json(new { error = parsed.Error, start = parsed.Start, end = parsed.End });
-            if (parsed.Node is not null) parts.Add(parsed.Node);
+            if (TagExpand.Expand(parsed.Node, TagRules.Active(options.TagList)).Node is { } node) parts.Add(node);
         }
         var traces = store.All().Where(t => t.StartMs >= window.From && t.StartMs < window.To);
         if (parts.Count > 0) traces = traces.Where(t => SearchRun.SearchMemory([t], new SearchQuery(SearchKinds.Traces, new AndNode(parts), window, 1, Env: environment.EnvironmentName)).Items.Count > 0);

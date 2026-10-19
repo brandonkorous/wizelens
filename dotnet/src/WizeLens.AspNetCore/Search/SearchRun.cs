@@ -11,7 +11,8 @@ public sealed record SearchCursor(double TimeMs, string TraceId, string Owner);
 /// <summary>A time window in epoch ms: From is in it, To is not.</summary>
 public sealed record SearchWindow(double From, double To);
 
-public sealed record SearchQuery(string Kind, SearchNode? Node, SearchWindow Window, int Limit, SearchCursor? Cursor = null, string? Env = null);
+/// <summary>TraceIds, when set, limits the search to those traces: tag matching (Tagging/TagMatch.cs) checks one page of rows.</summary>
+public sealed record SearchQuery(string Kind, SearchNode? Node, SearchWindow Window, int Limit, SearchCursor? Cursor = null, string? Env = null, IReadOnlyList<string>? TraceIds = null);
 
 /// <summary>One page of results; pass Next back as the cursor for the next page (null on the last page).</summary>
 public sealed record SearchPage(string Kind, IReadOnlyList<object> Items, string? Next);
@@ -74,8 +75,10 @@ public static class SearchRun
         var limit = ClampLimit(q.Limit);
         static SearchCursor KeyOf(DocEntry e) => new(e.TimeMs, JsText.Of(e.Doc.Fields.GetValueOrDefault("trace")), e.Owner);
         var hits = new List<DocEntry>();
+        var only = q.TraceIds is null ? null : new HashSet<string>(q.TraceIds, StringComparer.Ordinal);
         foreach (var t in traces)
         {
+            if (only is not null && !only.Contains(t.TraceId)) continue;
             foreach (var e in SearchItems.DocEntries(t, q.Kind, q.Env))
             {
                 if (e.TimeMs < q.Window.From || e.TimeMs >= q.Window.To) continue;

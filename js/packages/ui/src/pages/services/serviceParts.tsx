@@ -1,11 +1,13 @@
 import type { ComponentType } from "react";
 import { Box, Cog, Database, Globe, Inbox, Monitor } from "lucide-react";
-import type { ServiceKind, ServiceRow, ServiceStatus } from "@wizeworks/lens-core";
+import { type ServiceKind, type ServiceRow, type ServiceStatus, serviceDoc } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
 import { decodeParam, hrefTo, setQuery } from "../../routes";
 import { DotText, type Tone } from "../../ui/Badges";
 import { Empty } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
+import { withTags } from "../../ui/TagChips";
+import { useGroupTags } from "../../data/tagMatch";
 
 export const KIND_ICON: Record<ServiceKind, ComponentType<{ size?: number; "aria-hidden"?: boolean }>> = { api: Box, web: Monitor, worker: Cog, queue: Inbox, database: Database, external: Globe };
 export const KIND_LABEL: Record<ServiceKind, string> = { api: "API service", web: "Web app", worker: "Message worker", queue: "Queue", database: "Database", external: "Outside service" };
@@ -56,9 +58,10 @@ const COLUMNS: Column<ServiceRow>[] = [
 
 /** Every service, database, and outside host. A click opens its details. */
 export function ServiceTable({ rows, selectedKey }: { rows: ServiceRow[]; selectedKey: string | null }) {
+  const groupTags = useGroupTags();
   return (
     <Table
-      columns={COLUMNS}
+      columns={withTags(COLUMNS, "name", (r) => groupTags("services", serviceDoc(r.name)))}
       rows={rows}
       rowKey={(r) => r.key}
       selectedKey={selectedKey}

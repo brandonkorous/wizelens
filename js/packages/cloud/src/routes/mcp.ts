@@ -10,6 +10,7 @@ import { bearerOf, fail, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
 import { keyByToken, projectInOrg } from "../repo/projects.js";
+import { projectTags } from "../repo/tags.js";
 import { projectMetrics } from "./metrics.js";
 import { projectPage } from "./models.js";
 import { resourceMetadataUrl } from "./oauth-meta.js";
@@ -48,6 +49,7 @@ async function projectSource(ctx: Ctx, access: ProjectAccess, r: Reader, writes:
     suggest: (r) => telemetry.suggest(project.id, r),
     page: (page, range) => projectPage(ctx.app, project, page, range),
     now: () => ctx.app.config.now(),
+    tags: () => projectTags(db, project.id),
     // Every tool call is kept in the organization's audit log.
     audit: (line) => void writes.push(audit(db, project.orgId, actor, "mcp.call", { projectId: project.id, line, ...(r.via ? { app: r.via } : {}) }, ctx.app.config.now())),
   };

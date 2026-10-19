@@ -9,7 +9,7 @@ interface Column {
   type: "text" | "num" | "bool" | "services";
 }
 
-const COLUMNS: Record<SearchField | "outcome", Column> = {
+const COLUMNS: Record<Exclude<SearchField, "tag"> | "outcome", Column> = {
   service: { col: "s.service", type: "services" }, env: { col: "s.env", type: "text" }, trace: { col: "s.trace_id", type: "text" },
   span: { col: "s.span_id", type: "text" }, name: { col: "s.name", type: "text" }, method: { col: "s.method", type: "text" },
   path: { col: "s.path", type: "text" }, route: { col: "s.route", type: "text" }, status: { col: "s.status", type: "num" },
@@ -51,7 +51,7 @@ function numCond(q: SqlText, c: Column, cmp: Cmp, v: SearchValue): string {
 }
 
 function fieldCond(q: SqlText, kind: SearchKind, n: Extract<SearchNode, { type: "field" }>): string {
-  if (!(SEARCH_FIELDS[n.field].kinds as readonly SearchKind[]).includes(kind)) return FALSE;
+  if (n.field === "tag" || !(SEARCH_FIELDS[n.field].kinds as readonly SearchKind[]).includes(kind)) return FALSE;
   const c = COLUMNS[n.field === "status" && n.value.type === "spanStatus" ? "outcome" : n.field];
   if (n.value.type === "spanStatus") return `${c.col} = ${q.p(n.value.value)}`;
   if (c.type === "bool") return n.value.type === "exists" ? `${c.col} IS NOT NULL` : n.value.type === "bool" ? (n.value.value ? q.isTrue(c.col) : `NOT ${q.isTrue(c.col)}`) : FALSE;
@@ -90,7 +90,7 @@ function attrCond(q: SqlText, kind: SearchKind, n: Extract<SearchNode, { type: "
   return `EXISTS (SELECT 1 FROM fact_attrs a WHERE ${scope} AND a.trace_id = s.trace_id AND ${ownerCond(kind)} AND ${head} AND ${cond})`;
 }
 
-/** The condition for a search tree on documents of `kind`; null matches everything. Parameters go to `q` in text order. `project` lets ClickHouse look attributes up without correlation. */
+/** The condition for a search tree on documents of `kind`; null matches everything. Parameters go to `q` in text order. `project` lets ClickHouse look attributes up without correlation. Expand `tag:` first. */
 export function searchCond(q: SqlText, kind: SearchKind, node: SearchNode | null, project?: string): string {
   if (!node) return TRUE;
   switch (node.type) {

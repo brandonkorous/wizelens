@@ -45,6 +45,7 @@ export const DOC_GROUPS: DocGroup[] = [
       { slug: "hud", title: "The HUD" },
       { slug: "dashboard", title: "The dashboard" },
       { slug: "insights", title: "Insights" },
+      { slug: "tags", title: "Tags" },
     ],
   },
   {

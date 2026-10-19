@@ -363,6 +363,7 @@ Guardrails:
 | `Project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
 | `Sampling.Rate` | `WIZELENS_SAMPLE_RATE`, else `1` | Share of traces kept (0 to 1). Traces with an error or a slow span are kept at any rate. |
 | `Sampling.KeepErrors` / `Sampling.KeepSlowMs` | `true` / `1000` | What a sampled-out trace needs to be kept anyway (`null` turns the slow rule off). |
+| `Tags.Rules` / `Tags.DisableBuiltIns` | none / none | Tag rules for the dashboard, such as `new("checkout", "route:/checkout*", "green")`, and built-in tags to turn off. A bad rule throws at start. See Tags. |
 
 Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The user comes from `HttpContext.User`.
 
@@ -379,6 +380,7 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 | `maxTraces` / `maxAgeMs` | `2000` / 24 h | Retention. |
 | `enableMcp` | `false` | Expose the read-only MCP endpoint. |
 | `redactKeys` | see above | Key fragments whose values are redacted. |
+| `tags` | none | `{ rules: [{ name, query, color? }], disableBuiltIns: ["bot"] }`: tag rules for the dashboard, and built-in tags to turn off. A bad rule throws at start. See Tags. |
 | `instrumentFetch` | `true` | Trace outgoing `fetch` / undici calls. |
 | `traceQueriesOutsideRequests` | `false` | Database adapters also trace queries outside a request. |
 | `publicEndpoint` | auto | Override `X-WizeLens-Endpoint` (useful behind proxies). |

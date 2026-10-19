@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Hosting;
 using WizeLens.Search;
 using WizeLens.Storage;
+using WizeLens.Tagging;
 
 namespace WizeLens.Web;
 
@@ -23,15 +24,16 @@ internal static class SearchEndpoints
     private static Func<string, string?> Params(HttpRequest request) =>
         key => request.Query.TryGetValue(key, out var v) && v.Count > 0 ? v[0] ?? "" : null;
 
-    /// <summary><c>GET api/search?q=&amp;kind=&amp;range=&amp;limit=&amp;cursor=</c>. A bad search answers 400 with the error's position.</summary>
+    /// <summary><c>GET api/search?q=&amp;kind=&amp;range=&amp;limit=&amp;cursor=</c>. A bad search answers 400 with the error's position; <c>tag:</c> reads the Tags option.</summary>
     private static IResult Search(HttpRequest request, TraceStore store, WizeLensOptions options, IHostEnvironment environment)
     {
         var r = SearchRequests.SearchRequestOf(Params(request), NowMs(), options.MaxAge.TotalMilliseconds);
         if (!r.Ok) return Results.Json(ErrorBody(r.Error!, r.Start, r.End), WizeLensJson.Options, statusCode: StatusCodes.Status400BadRequest);
         var watch = Stopwatch.StartNew();
-        var page = SearchRun.SearchMemory(store.All(), r.Query! with { Env = environment.EnvironmentName });
+        var (node, unknownTags) = TagExpand.Expand(r.Query!.Node, TagRules.Active(options.TagList));
+        var page = SearchRun.SearchMemory(store.All(), r.Query with { Node = node, Env = environment.EnvironmentName });
         var tookMs = Math.Round(watch.Elapsed.TotalMilliseconds, MidpointRounding.AwayFromZero);
-        return Results.Json(new { kind = page.Kind, items = page.Items, next = page.Next, tookMs, settling = (object?)null }, WizeLensJson.Options);
+        return Results.Json(new { kind = page.Kind, items = page.Items, next = page.Next, tookMs, settling = (object?)null, unknownTags }, WizeLensJson.Options);
     }
 
     /// <summary><c>GET api/search/suggest?field=&amp;prefix=&amp;range=&amp;limit=</c>.</summary>
@@ -39,7 +41,8 @@ internal static class SearchEndpoints
     {
         var r = SearchRequests.SuggestRequestOf(Params(request), NowMs(), options.MaxAge.TotalMilliseconds);
         if (!r.Ok) return Results.Json(ErrorBody(r.Error!, null, null), WizeLensJson.Options, statusCode: StatusCodes.Status400BadRequest);
-        return Results.Json(new { items = SearchSuggest.SuggestMemory(store.All(), r.Request! with { Env = environment.EnvironmentName }) }, WizeLensJson.Options);
+        var items = TagSuggest.Suggest(r.Request!, options.TagList) ?? SearchSuggest.SuggestMemory(store.All(), r.Request! with { Env = environment.EnvironmentName });
+        return Results.Json(new { items }, WizeLensJson.Options);
     }
 
     /// <summary>The 400 body: <c>{ ok: false, error }</c>, with start and end when the search did not parse.</summary>

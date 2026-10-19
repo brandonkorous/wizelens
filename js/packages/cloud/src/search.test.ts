@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PG_DIALECT, searchSql, suggestSql, windowOf } from "@wizeworks/lens-core";
 import { scenarioTraces, SCENARIO_NOW } from "../../core/src/testing/scenario.js";
 import { searchParity, suggestParity } from "../../core/src/testing/search-parity.js";
+import { tagParity } from "../../core/src/testing/tag-parity.js";
 import { ensureTrigram } from "./db/trigram.js";
 import { pgRunner } from "./scale-exec.js";
 import { type ScaleDb, scaleDb, settleAll, writeTraces } from "./test/scale.js";
@@ -21,6 +22,7 @@ describe("cloud search", () => {
     const windows = [windowOf("30d", SCENARIO_NOW), windowOf("1h", SCENARIO_NOW)];
     expect(await searchParity((q) => searchSql(src, q), traces, windows, "prod")).toEqual([]);
     expect(await suggestParity((r) => suggestSql(src, r), traces, windows[0]!)).toEqual([]);
+    expect(await tagParity((q) => searchSql(src, q), traces, windows[0]!, "prod")).toEqual([]);
   });
 
   it("never reads another project's rows", async () => {

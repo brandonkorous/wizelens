@@ -1,0 +1,42 @@
+/* Tag chips: the tag's color as ink on a soft wash of itself, readable in both themes. */
+.wl-tags { display: inline-flex; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
+.wl-tagged { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
+.wl-tagged > :first-child { min-width: 0; }
+.wl-tagged .wl-tags { flex-wrap: nowrap; flex-shrink: 0; }
+.wl-tag {
+  --wl-tag: var(--wl-s0);
+  display: inline-flex; align-items: center; padding: 0 8px; border-radius: 999px; font-size: 11.5px; font-weight: 650; line-height: 19px;
+  white-space: nowrap; text-decoration: none; color: var(--wl-tag); background: color-mix(in srgb, var(--wl-tag) 14%, transparent);
+}
+.wl-tag:hover { background: color-mix(in srgb, var(--wl-tag) 24%, transparent); text-decoration: none; }
+.wl-tag:focus-visible { outline: 2px solid var(--wl-tag); outline-offset: 1px; }
+.wl-tag-blue { --wl-tag: var(--wl-s0); }
+.wl-tag-green { --wl-tag: var(--wl-s7); }
+.wl-tag-amber { --wl-tag: var(--wl-s5); }
+.wl-tag-orange { --wl-tag: var(--wl-s2); }
+.wl-tag-red { --wl-tag: var(--wl-error); }
+.wl-tag-violet { --wl-tag: var(--wl-s4); }
+.wl-tag-slate { --wl-tag: var(--wl-muted); }
+.wl-tag-off { opacity: 0.55; }
+
+/* The Tags settings section and the tag form. */
+.wl-tag-query { font-family: var(--wl-mono); font-size: 12.5px; word-break: break-word; }
+.wl-tag-colors { display: flex; flex-wrap: wrap; gap: 6px; border: 0; padding: 0; margin: 0; }
+.wl-tag-colors legend { font-size: 13px; font-weight: 600; margin-bottom: 6px; padding: 0; }
+.wl-tag-colors label { cursor: pointer; }
+.wl-tag-colors input { position: absolute; opacity: 0; pointer-events: none; }
+.wl-tag-colors input:checked + .wl-tag { box-shadow: 0 0 0 2px var(--wl-tag); }
+.wl-tag-colors input:focus-visible + .wl-tag { outline: 2px solid var(--wl-tag); outline-offset: 2px; }
+.wl-tag-preview { display: grid; gap: 6px; padding: 12px 14px; border-radius: 10px; background: var(--wl-surface-2); font-size: 13px; }
+.wl-tag-preview ul { margin: 0; padding-left: 18px; }
+.wl-tag-preview li { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wl-tag-scopes { display: grid; gap: 6px; border: 0; padding: 0; margin: 0; }
+.wl-tag-scopes legend { font-size: 13px; font-weight: 600; margin-bottom: 2px; padding: 0; }
+.wl-tag-code { margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--wl-code-bg); font-family: var(--wl-mono); font-size: 12.5px; overflow-x: auto; }
+.wl-dialog.wl-tag-dialog { width: min(560px, calc(100vw - 32px)); padding: 22px; }
+.wl-dialog.wl-tag-dialog > h2 { margin-bottom: 14px; }
+.wl-dialog.wl-tag-dialog form { padding: 0; }
+.wl-err-tagline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
+.wl-rq-tags { align-items: center; }
+.wl-trace-head > .wl-tags { margin: 2px 0 10px; }
+.wl-svc-endpoints .wl-tags { margin-left: 6px; }

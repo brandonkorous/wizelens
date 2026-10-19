@@ -59,6 +59,15 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   start of the range. On the cloud, a group can be **assigned** to a member, and each change writes an audit line.
   Insights get the same: **Mark fixed** and **Dismiss**. The Overview has a "New and Regressed Errors" panel. The hub
   and the cloud keep these states; in-app add-ons show no actions.
+- **Tags.** Name a search, and everything it finds wears that name as a colored chip in every list: requests, traces,
+  spans, logs, errors, endpoints, and services. Click a chip, or type `tag:name`, to see them all. WizeLens keeps the tag,
+  not a mark on the data, so a tag covers data from before it was made, stays when traces expire, and moves everywhere at
+  once when its search changes. **Tag this** on a request, trace, error, service, or search fills in a search for the
+  endpoint, service, user, or error, and shows what it finds before you save. Three built-in tags come on: `stream`
+  (event streams such as MCP, which stay open on purpose), `probe` (health checks), and `bot`. Manage them under
+  **Settings → Tags** on the hub and the cloud (members and up; each change is audited), or with the `tags` option in code
+  for the in-app dashboard. AI tools get `list_tags`, `tag:` in every search, and the tags of each result. See the Tags
+  docs page and docs/TAGS-PLAN.md.
 - **A page for each error, endpoint, query, and page route.** An error shows its count over time, its endpoints, the users
   and browsers of its newest occurrences, the stack, and those occurrences. An endpoint shows requests, errors, and
   p50/p95/p99 over time, the queries it runs, what it calls, its errors, and its slowest requests. A query shows its runs
