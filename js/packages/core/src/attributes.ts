@@ -108,6 +108,9 @@ export const ATTR_MESSAGING = {
 /** `messaging.operation.type` values used by the add-ons. */
 export type MessagingOperation = "send" | "receive" | "process";
 
+/** Database span: a salted hash of the values a call ran with (never the values), so repeats with the same values are found. */
+export const ATTR_DB_FINGERPRINT = "wizelens.db.fingerprint";
+
 /** Any of these marks a database call. Some libraries (Better Auth) send only the operation and the table, with no `db.system.name`. */
 export const DB_MARKERS = ["db.system.name", "db.system", "db.query.text", "db.operation.name", "db.collection.name"] as const;
 

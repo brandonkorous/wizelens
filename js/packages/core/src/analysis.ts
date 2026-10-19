@@ -1,5 +1,5 @@
 import type { Span, Trace } from "./types.js";
-import { findSlowQueries, hasUnknownParams, queryText, repeatableQueries } from "./db-findings.js";
+import { findSlowQueries, hasUnknownParams, queryText, repeatableQueries, valuesOf } from "./db-findings.js";
 import { isErrorSpan } from "./trace.js";
 
 export { dbSpans, findSlowQueries, hasUnknownParams, isSessionStatement, queryText, WAIT_MIN_QUERIES, WAIT_SHAPE } from "./db-findings.js";
@@ -81,7 +81,7 @@ const sum = (spans: readonly Span[]) => spans.reduce((t, s) => t + s.durationMs,
 
 export function findDuplicateQueries(trace: Trace): Finding[] {
   const known = repeatableQueries(trace).filter((s) => !hasUnknownParams(s));
-  const groups = groupBy(known, (s) => `${queryText(s)}\u0000${s.attributes["wizelens.db.parameters"] ?? ""}`);
+  const groups = groupBy(known, (s) => `${queryText(s)}\u0000${valuesOf(s)}`);
   const out: Finding[] = [];
   for (const spans of groups.values()) {
     if (spans.length < 2) continue;

@@ -26,7 +26,11 @@
     "profiler",
     "prisma",
     "typeorm",
-    "drizzle"
+    "drizzle",
+    "redis",
+    "ioredis",
+    "mongodb",
+    "elasticsearch"
   ],
   "type": "module",
   "main": "./dist/index.js",

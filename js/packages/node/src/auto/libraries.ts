@@ -1,6 +1,10 @@
 import { patchMethod } from "../adapters/registry.js";
+import { instrumentElasticsearch } from "../adapters/elasticsearch.js";
+import { instrumentIoRedis } from "../adapters/ioredis.js";
+import { instrumentMongoDb } from "../adapters/mongodb.js";
 import { instrumentMysql2 } from "../adapters/mysql2.js";
 import { instrumentPg } from "../adapters/pg.js";
+import { instrumentRedis } from "../adapters/redis.js";
 import { instrumentGrpc } from "../grpc/index.js";
 import { instrumentBunyan } from "../logs/bunyan.js";
 import { instrumentPino } from "../logs/pino.js";
@@ -49,6 +53,10 @@ const DATABASES: [string, () => void][] = [
   }],
   ["sqlite", hookSqlite],
   ["prisma", hookPrisma],
+  ["ioredis", () => onLoad(nm("ioredis/built/index.js"), (mod) => void instrumentIoRedis(autoHandle, mod))],
+  ["redis", () => onLoad(nm("@redis/client/dist/lib/client/index.js"), (mod) => void instrumentRedis(autoHandle, mod))],
+  ["mongodb", () => onLoad(nm("mongodb/lib/collection.js"), (mod) => void instrumentMongoDb(autoHandle, mod))],
+  ["elasticsearch", () => onLoad(nm("@elastic/transport/lib/Transport.js"), (mod) => void instrumentElasticsearch(autoHandle, mod))],
 ];
 
 /** BullMQ's ES build keeps each class in its own file. */

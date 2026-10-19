@@ -90,6 +90,8 @@ export interface DbCallInfo {
   outermost?: boolean;
   /** Skip the span when no request (or other span) is active. Set by the database adapters. */
   requireParent?: boolean;
+  /** More span attributes, for example `server.address`, `db.operation.batch.size`, or `wizelens.db.fingerprint`. */
+  attributes?: Record<string, string | number>;
 }
 
 export type LogFn = (message: string, attributes?: Record<string, unknown>) => void;
