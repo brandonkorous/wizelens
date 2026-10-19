@@ -36,6 +36,14 @@ async function activeHours(db: Db, projectId: string, from: number, to: number):
   return row?.n ?? 0;
 }
 
+/** Traces, then log lines, then metrics past retention, then the rollup buckets past their keep. */
+async function pruneAll(db: Db, now: number): Promise<void> {
+  while ((await pruneByRetention(db, now)) > 0);
+  await pruneLogsByRetention(db, now);
+  await pruneMetricsByRetention(db, now);
+  await pruneRollups(db, now, true);
+}
+
 /** Telemetry in the cloud's own database. Retention reads the organizations from the same database. */
 export function pgTelemetry(db: Db): TelemetryStore {
   const src = (projectId: string) => ({ d: PG_DIALECT, run: pgRunner(db), scope: { project: projectId } });
@@ -69,12 +77,7 @@ export function pgTelemetry(db: Db): TelemetryStore {
       await reset.catch(() => (startReset(), reset));
       return settleCloud(db, now, o);
     },
-    async prune(now) {
-      while ((await pruneByRetention(db, now)) > 0);
-      await pruneLogsByRetention(db, now);
-      await pruneMetricsByRetention(db, now);
-      await pruneRollups(db, now, true);
-    },
+    prune: (now) => pruneAll(db, now),
     pruneRollups: (now) => pruneRollups(db, now),
     async checkFactsVersion() {
       trigram = ensureTrigram(db).catch((err: unknown) => console.error("Trigram indexes failed; text searches scan until the next start.", err));

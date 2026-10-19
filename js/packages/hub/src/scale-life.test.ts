@@ -78,7 +78,7 @@ describe("hub stats over time", () => {
     writeTraces(store, traces);
     settleAll(store, clock);
     const gen = store.settleGen;
-    expect(store.prune()).toBe(traces.length - 150);
+    expect(store.prune()).toBe(traces.filter((t) => !isLooseTraceId(t.traceId)).length - 150);
     expect(store.settleGen).toBe(gen + 1);
     expect(count(store.db, "fact_traces")).toBe(150);
     const kept = [...traces.filter((t) => !isLooseTraceId(t.traceId)).slice(0, 150), ...traces.filter((t) => isLooseTraceId(t.traceId))]; // loose batches go by age only
