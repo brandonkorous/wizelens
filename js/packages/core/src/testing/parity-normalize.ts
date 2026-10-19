@@ -78,12 +78,12 @@ const TIES: Record<string, (m: Obj) => void> = {
   },
   services: (m) => {
     m.rows = sortBy(m.rows, num("requests"), str("key"));
-    // Edges come busiest first now; today they come in the order they are first seen.
-    m.edges = sortBy(m.edges, str("from"), str("to"));
+    // Edges come busiest first now (legacy: as first seen), and only stats tables give their p95.
+    m.edges = sortBy((m.edges as Obj[]).map(({ p95Ms: _p, ...e }) => e), str("from"), str("to"));
     const sel = m.selected as Obj | null;
     if (!sel) return;
-    sel.incoming = sortBy(sel.incoming, str("from"), str("to"));
-    sel.outgoing = sortBy(sel.outgoing, str("from"), str("to"));
+    sel.incoming = sortBy((sel.incoming as Obj[]).map(({ p95Ms: _p, ...e }) => e), str("from"), str("to"));
+    sel.outgoing = sortBy((sel.outgoing as Obj[]).map(({ p95Ms: _p, ...e }) => e), str("from"), str("to"));
     sel.endpoints = sortBy(sel.endpoints, num("count"), str("name"));
   },
 };

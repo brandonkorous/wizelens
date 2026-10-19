@@ -1,6 +1,7 @@
 import { type ComponentType, lazy, Suspense, useEffect, useMemo } from "react";
 import { errorEvents, type Health, isFailed, requestRows } from "@wizeworks/lens-core";
 import { TraceDetail } from "./pages/trace/TraceDetailPage";
+import { TraceCompare } from "./pages/trace/TraceCompare";
 import { AlertsPage } from "./pages/alerts/AlertsPage";
 import { AuthGate } from "./shell/auth/AuthGate";
 import { useData, useWindowed } from "./data/hooks";
@@ -71,7 +72,8 @@ function useHealthDot(): string | undefined {
 function PageView({ route }: { route: Route }) {
   const cloud = useHost().has("accounts");
   if (route.page === "trace") {
-    const [traceId, view] = route.params;
+    const [traceId, view, other] = route.params;
+    if (view === "compare" && other) return <TraceCompare key={`${traceId}/${other}`} a={traceId!} b={other} />;
     return <TraceDetail key={traceId} traceId={traceId!} view={view as never} />;
   }
   const page = route.page;
@@ -104,7 +106,7 @@ function Shell() {
   // A new page (or a new section of one) starts at the top, not where the last page was scrolled to.
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [route.page, route.params[0]]);
+  }, [route.page, route.params.join("/")]);
   useEffect(() => {
     document.title = data.info ? `WizeLens · ${data.info.service}` : "WizeLens";
   }, [data.info]);

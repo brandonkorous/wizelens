@@ -3,6 +3,7 @@ import { auth } from "../../data/account";
 import { fmtAgo, fmtDateTime } from "../../format";
 import { Badge } from "../../ui/Badges";
 import { Panel } from "../../ui/Panel";
+import { shortAgent } from "../../ui/agent";
 import { type Column, Table } from "../../ui/Table";
 import { ActionNotes, useAction } from "./useAction";
 
@@ -16,18 +17,6 @@ interface SessionRow {
 }
 
 const msOf = (d: Date | string) => new Date(d).getTime();
-
-const BROWSERS: [RegExp, string][] = [[/Edg\//, "Edge"], [/OPR\//, "Opera"], [/Firefox\//, "Firefox"], [/Chrome\//, "Chrome"], [/Safari\//, "Safari"]];
-const SYSTEMS: [RegExp, string][] = [[/iPhone|iPad/, "iOS"], [/Android/, "Android"], [/Windows/, "Windows"], [/Mac OS X|Macintosh/, "macOS"], [/CrOS/, "ChromeOS"], [/Linux/, "Linux"]];
-
-/** "Chrome on Windows" from a user agent; the start of it when it is not a known browser. */
-export function shortAgent(ua: string | null | undefined): string {
-  if (!ua) return "Unknown device";
-  const browser = BROWSERS.find(([r]) => r.test(ua))?.[1];
-  const system = SYSTEMS.find(([r]) => r.test(ua))?.[1];
-  if (browser) return system ? `${browser} on ${system}` : browser;
-  return ua.length > 40 ? `${ua.slice(0, 40)}…` : ua;
-}
 
 /** Where this account is signed in. Better Auth lists them only after a recent sign-in. */
 export function SessionsPanel({ sessionId }: { sessionId?: string }) {

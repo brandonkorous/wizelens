@@ -2,6 +2,7 @@
 .wl-errors-bottom { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; }
 .wl-errors-left { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .wl-errors-left .wl-panel + .wl-panel { margin-top: 0; }
+.wl-err-full { margin: 4px 0 14px; }
 .wl-err-list .wl-table th:first-child, .wl-err-list .wl-table td:first-child { padding-left: 20px; }
 .wl-err-list .wl-table th:last-child, .wl-err-list .wl-table td:last-child { padding-right: 20px; }
 @media (max-width: 1200px) { .wl-errors-bottom { grid-template-columns: minmax(0, 1fr); } }

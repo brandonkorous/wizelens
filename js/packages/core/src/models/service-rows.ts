@@ -15,7 +15,7 @@ export const EDGES_ID = "edge.cur";
 /** Needs for the service rows of a window. The hist gives p95. */
 export const serviceNeeds = (win: WindowRef): Need[] => [groupNeed(serviceRowsId(win), "svc", win, { hist: true, top: true })];
 
-export const edgeNeeds = (): Need[] => [groupNeed(EDGES_ID, "edge", "cur", { top: true })];
+export const edgeNeeds = (): Need[] => [groupNeed(EDGES_ID, "edge", "cur", { top: true, hist: true })];
 
 function rowOf({ key, agg }: Row): ServiceRow {
   const info = agg.top as ServiceRowInfo;
@@ -36,6 +36,6 @@ export function serviceRowsOf(d: NeedResults, win: WindowRef): ServiceRow[] {
 export function edgesOfRows(d: NeedResults): ServiceEdge[] {
   return [...rowsOf(d, EDGES_ID)].sort(byDesc((r) => r.agg.n)).map(({ agg }) => {
     const { from, to } = agg.top as { from: string; to: string };
-    return { from, to, calls: agg.n, avgMs: avgOfAgg(agg), errors: agg.err };
+    return { from, to, calls: agg.n, avgMs: avgOfAgg(agg), errors: agg.err, p95Ms: agg.hist ? histPercentile(agg.hist, agg.n, 95) : null };
   });
 }

@@ -9,6 +9,7 @@ import { StatCard } from "../../ui/StatCard";
 import { DependencyMap } from "./DependencyMap";
 import { RegistryPanel } from "./RegistryPanel";
 import { ServiceDetail } from "./ServiceDetail";
+import { EndpointPage } from "./EndpointPage";
 import { ServicePage } from "./ServicePage";
 import { serviceIdOf, ServiceTable } from "./serviceParts";
 import "../../styles/pages/services.css";
@@ -57,8 +58,9 @@ function AllServices() {
   );
 }
 
-/** All services, or one service's full page at `#/services/<key or name>`. */
+/** All services, one service's page at `#/services/<key or name>`, or one endpoint's at `.../endpoints/<endpoint>`. */
 export function ServicesPage() {
-  const [id] = useRoute().params;
+  const [id, part, endpoint] = useRoute().params;
+  if (id && part === "endpoints" && endpoint) return <EndpointPage key={`${id}/${endpoint}`} service={serviceIdOf(id)} endpoint={serviceIdOf(endpoint)} />;
   return id ? <ServicePage key={id} id={serviceIdOf(id)} /> : <AllServices />;
 }

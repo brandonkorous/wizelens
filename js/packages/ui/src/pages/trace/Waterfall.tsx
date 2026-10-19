@@ -1,7 +1,8 @@
 import { type KeyboardEvent, useMemo, useState } from "react";
-import { isErrorSpan, type Span, type SpanCategory, type Trace } from "@wizeworks/lens-core";
+import { isErrorSpan, selfTimes, type Span, type SpanCategory, type Trace } from "@wizeworks/lens-core";
 import { fmtMs, serviceSlot } from "../../format";
 import { Empty } from "../../ui/Panel";
+import { useSpanFilter, WaterfallBar } from "./WaterfallBar";
 
 interface Row {
   span: Span;
@@ -13,7 +14,7 @@ const CATEGORY_LABEL: Record<SpanCategory, string> = { "http.server": "IN", "htt
 const TICKS = [0, 0.25, 0.5, 0.75, 1];
 const byStart = (a: Span, b: Span) => a.startMs - b.startMs;
 
-function buildRows(spans: readonly Span[], collapsed: ReadonlySet<string>): Row[] {
+function buildRows(spans: readonly Span[], collapsed: ReadonlySet<string>, keep: ReadonlySet<string> | null): Row[] {
   const ids = new Set(spans.map((s) => s.spanId));
   const children = new Map<string, Span[]>();
   const roots: Span[] = [];
@@ -23,6 +24,7 @@ function buildRows(spans: readonly Span[], collapsed: ReadonlySet<string>): Row[
   }
   const rows: Row[] = [];
   const walk = (s: Span, depth: number) => {
+    if (keep && !keep.has(s.spanId)) return;
     const kids = (children.get(s.spanId) ?? []).sort(byStart);
     rows.push({ span: s, depth, hasChildren: kids.length > 0 });
     if (!collapsed.has(s.spanId)) for (const k of kids) walk(k, depth + 1);
@@ -50,6 +52,8 @@ interface RowProps {
   row: Row;
   trace: Trace;
   total: number;
+  /** Time not covered by the span's children. */
+  selfMs: number;
   selected: boolean;
   highlighted: boolean;
   collapsed: boolean;
@@ -94,6 +98,7 @@ function WaterfallRow(p: RowProps) {
         <span className={`wl-wf-bar wl-k-${span.category.replace(".", "-")}`} style={{ left: `${left}%`, width: `${width}%` }} />
         <span className="wl-wf-dur" style={left + width > 82 ? { right: `${100 - left + 0.5}%` } : { left: `calc(${left + width}% + 6px)` }}>
           {fmtMs(span.durationMs)}
+          {hasChildren && p.selfMs < span.durationMs - 0.5 && <span className="wl-wf-self"> · self {fmtMs(p.selfMs)}</span>}
         </span>
       </div>
     </div>
@@ -107,24 +112,31 @@ export interface WaterfallProps {
   onSelect: (spanId: string) => void;
 }
 
-/** Every span of the trace as a collapsible tree on a time axis. */
+/** Every span of the trace as a collapsible tree on a time axis, with search, errors only, and the critical path. */
 export function Waterfall({ trace, selected, highlight, onSelect }: WaterfallProps) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const rows = useMemo(() => buildRows(trace.spans, collapsed), [trace.spans, collapsed]);
+  const { filter, setFilter, keep } = useSpanFilter(trace);
+  const rows = useMemo(() => buildRows(trace.spans, collapsed, keep), [trace.spans, collapsed, keep]);
+  const self = useMemo(() => selfTimes(trace), [trace]);
   const total = Math.max(trace.durationMs, 0.001);
+  const expand = (open: boolean) => setCollapsed(open ? new Set() : new Set(trace.spans.filter((s) => trace.spans.some((c) => c.parentSpanId === s.spanId)).map((s) => s.spanId)));
   const toggle = (id: string) =>
     setCollapsed((c) => {
       const next = new Set(c);
       if (!next.delete(id)) next.add(id);
       return next;
     });
-  if (rows.length === 0) return <Empty>This trace has no spans.</Empty>;
+  if (trace.spans.length === 0) return <Empty>This trace has no spans.</Empty>;
   return (
-    <div className="wl-waterfall" role="tree">
-      <Axis total={total} />
-      {rows.map((row) => (
-        <WaterfallRow key={row.span.spanId} row={row} trace={trace} total={total} selected={selected === row.span.spanId} highlighted={highlight.has(row.span.spanId)} collapsed={collapsed.has(row.span.spanId)} onSelect={onSelect} onToggle={toggle} />
-      ))}
-    </div>
+    <>
+      <WaterfallBar filter={filter} onFilter={setFilter} shown={keep ? keep.size : trace.spans.length} total={trace.spans.length} onExpand={expand} />
+      <div className="wl-waterfall" role="tree">
+        <Axis total={total} />
+        {rows.length === 0 && <Empty>No span matches.</Empty>}
+        {rows.map((row) => (
+          <WaterfallRow key={row.span.spanId} row={row} trace={trace} total={total} selfMs={self.get(row.span.spanId) ?? 0} selected={selected === row.span.spanId} highlighted={highlight.has(row.span.spanId)} collapsed={collapsed.has(row.span.spanId)} onSelect={onSelect} onToggle={toggle} />
+        ))}
+      </div>
+    </>
   );
 }

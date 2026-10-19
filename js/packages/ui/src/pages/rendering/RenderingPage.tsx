@@ -1,6 +1,7 @@
 import { Gauge, Server, TriangleAlert, Zap } from "lucide-react";
 import { fmtCount, fmtMs } from "../../format";
-import { useRoute } from "../../routes";
+import { decodeParam, useRoute } from "../../routes";
+import { RoutePage } from "./RoutePage";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { SearchInput } from "../../ui/Controls";
 import { StatCard } from "../../ui/StatCard";
@@ -59,7 +60,13 @@ function RenderSearch() {
   );
 }
 
+/** All routes and components, or one route's page at `#/rendering/routes/<route>`. */
 export function RenderingPage() {
+  const [part, route] = useRoute().params;
+  return part === "routes" && route ? <RoutePage key={route} route={decodeParam(route)} /> : <AllRendering />;
+}
+
+function AllRendering() {
   const { model: data, loading, error } = usePageModel("rendering");
   const all = useRoute().query.get("all");
   const empty = !data || (data.views === 0 && !data.hasReact);

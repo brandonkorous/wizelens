@@ -10,7 +10,7 @@ build order: bugs first, then the shared pieces (filters, URL state) that later 
 | 0 | Bugs and loose ends | S | Done |
 | 1 | Filters on every page, and a global service filter | L | Done |
 | 2 | Time and URL state: links that keep the view, custom range, zoom, live tail | M | Done |
-| 3 | Detail pages: error group, endpoint, query, route; a better trace page | L | Not started |
+| 3 | Detail pages: error group, endpoint, query, route; a better trace page | L | Done |
 | 4 | Error tracker workflow: resolve, ignore, regressed, true first seen | M | Not started |
 | 5 | Releases: markers, compare versions, new in this release | M | Not started |
 | 6 | Alerts: scope, mute, history, hub alerts, more channels | M | Not started |

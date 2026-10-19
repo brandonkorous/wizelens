@@ -150,6 +150,7 @@ function criticalOfRow(r: Row): CriticalSpan {
 function whereFor(q: SqlText, src: SqlSource, t: TableSql, f: ListFilter, w: TimeWindow): string {
   const conds = [...scopeWhere(q, src.scope), `${t.time} >= ${msLit(q.d, w.from)}`, `${t.time} < ${msLit(q.d, w.to)}`];
   if (f.traceId) conds.push(`trace_id = ${q.p(f.traceId)}`);
+  if (f.traceIds) conds.push(q.in("trace_id", f.traceIds));
   return whereOf([...conds, ...t.where(q, f)]);
 }
 

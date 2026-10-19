@@ -4,7 +4,7 @@ import { type ErrorGroup, isFailed, type LogRow, type RequestItem, type ServiceP
 import { useData } from "../../data/hooks";
 import { useMetricsModel } from "../../data/metrics";
 import { fmtAgo, fmtCount, fmtMs } from "../../format";
-import { hrefTo, navigate, traceHref } from "../../routes";
+import { errorHref, hrefTo, navigate, traceHref } from "../../routes";
 import { DotText, toneOfStatus } from "../../ui/Badges";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { Sparkline } from "../../ui/Sparkline";
@@ -38,7 +38,7 @@ export function ErrorsPanel({ m, name }: { m: ServicePageModel; name: string }) 
   );
   return (
     <Panel title={`Top Errors (${fmtCount(total)})`} action={action} flush>
-      <Table columns={errorColumns(updatedMs)} rows={all ? groups : groups.slice(0, TOP)} rowKey={(g) => g.key} onRowClick={(g) => navigate(hrefTo("errors", [], { service: name, sort: "count", group: g.key }))} empty={<Empty title="No exceptions">Nothing failed in this time range.</Empty>} />
+      <Table columns={errorColumns(updatedMs)} rows={all ? groups : groups.slice(0, TOP)} rowKey={(g) => g.key} onRowClick={(g) => navigate(errorHref(g.key))} empty={<Empty title="No exceptions">Nothing failed in this time range.</Empty>} />
     </Panel>
   );
 }

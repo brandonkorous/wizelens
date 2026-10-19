@@ -1,11 +1,12 @@
 import { Bell, Boxes, Bug, TriangleAlert } from "lucide-react";
 import { fmtCount, fmtPct } from "../../format";
-import { useRoute } from "../../routes";
+import { decodeParam, hrefTo, useRoute } from "../../routes";
 import { PageHeader } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
 import { ErrorsOverTimePanel, TopErrorTypesPanel } from "./ErrorCharts";
 import { ErrorDetailsPanel } from "./ErrorDetails";
 import { ErrorFilters } from "./ErrorFilters";
+import { ErrorGroupPage } from "./ErrorGroupPage";
 import { ErrorsByServicePanel, RecentExceptionsPanel } from "./ErrorTables";
 import type { ErrorsModel } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
@@ -20,12 +21,18 @@ function ErrorStatCards({ stats }: { stats: ErrorsModel }) {
       <StatCard icon={Bug} label="Total Exceptions" value={fmtCount(cards.exceptions)} change={change.exceptions} series={sparks.exceptions} {...common} />
       <StatCard icon={TriangleAlert} label="Error Rate" value={stats.hasRequests ? fmtPct(cards.errorRate) : "–"} change={change.errorRate} series={sparks.errorRate} {...common} />
       <StatCard icon={Boxes} label="Impacted Endpoints" value={fmtCount(cards.endpoints)} change={change.endpoints} {...common} danger={false} />
-      <StatCard icon={Bell} label="Critical Incidents" value={fmtCount(cards.critical)} change={change.critical} series={sparks.critical} {...common} />
+      <StatCard icon={Bell} label="Critical Incidents" href={hrefTo("errors", [], { critical: "1" })} value={fmtCount(cards.critical)} change={change.critical} series={sparks.critical} {...common} />
     </div>
   );
 }
 
+/** All errors, or one error group's page at `#/errors/<key>`. */
 export function ErrorsPage() {
+  const [id] = useRoute().params;
+  return id ? <ErrorGroupPage key={id} group={decodeParam(id)} /> : <AllErrors />;
+}
+
+function AllErrors() {
   const { model, loading, error } = usePageModel("errors");
   return (
     <div className="wl-errors-page">

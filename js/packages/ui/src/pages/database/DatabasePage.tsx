@@ -4,6 +4,8 @@ import { PageHeader } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
 import { OperationsPanel, SlowQueriesPanel } from "./DbCharts";
 import { DbFilters } from "./DbFilters";
+import { QueryPage } from "./QueryPage";
+import { decodeParam, hrefTo, useRoute } from "../../routes";
 import { TableHotspotsPanel, TopQueriesPanel } from "./DbTables";
 import { InsightCards } from "./InsightCards";
 import type { DatabaseModel } from "@wizeworks/lens-core";
@@ -19,12 +21,18 @@ function DbStatCards({ stats }: { stats: DatabaseModel }) {
       <StatCard icon={Database} label="SQL Queries" value={fmtCount(summary.queries)} change={change.queries} upIsGood={false} compareLabel={compareLabel} series={sparks.queries} />
       <StatCard icon={Clock} label="Avg Query Duration" value={fmtMs(summary.avgMs)} change={change.avgMs} upIsGood={false} compareLabel={compareLabel} series={sparks.avgMs} />
       <StatCard icon={TriangleAlert} label="Slow Queries" value={fmtCount(summary.slow)} change={change.slow} upIsGood={false} compareLabel={compareLabel} series={sparks.slow} danger />
-      <StatCard icon={Lightbulb} label="Potential Improvements" value={fmtCount(insights.length)} change={change.insights} upIsGood={false} compareLabel={compareLabel} />
+      <StatCard icon={Lightbulb} label="Potential Improvements" href={hrefTo("insights", [], { area: "database" })} value={fmtCount(insights.length)} change={change.insights} upIsGood={false} compareLabel={compareLabel} />
     </div>
   );
 }
 
+/** All queries, or one query's page at `#/database/queries/<query>`. */
 export function DatabasePage() {
+  const [part, query] = useRoute().params;
+  return part === "queries" && query ? <QueryPage key={query} query={decodeParam(query)} /> : <AllQueries />;
+}
+
+function AllQueries() {
   const { model: stats, loading, error } = usePageModel("database");
   return (
     <div className="wl-db-page">

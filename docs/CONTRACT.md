@@ -665,6 +665,11 @@ compares with the same window a week earlier instead of the window right before.
 which; `meta.compareLabel` reads "vs. previous period" or "vs. same time last week". The dashboard keeps `range`, `from`,
 `to`, `compare`, `env`, `project`, and `service` in the address bar, so a link opens the same view.
 
+**Detail pages.** `error` (`group`: a group key), `endpoint` (`service`: a row key or name, `endpoint`), `query` (`q`: a query
+shape), and `route` (`route`) give one item's numbers over time, where it happens, and its newest traces (from the row's
+newest trace ids). The dashboard shows them at `#/errors/<key>`, `#/services/<service>/endpoints/<endpoint>`,
+`#/database/queries/<query>`, and `#/rendering/routes/<route>`.
+
 **Filters.** Every page but Services and Service takes `service` (a display name: "Web App" for the browser), and its cards,
 charts, and lists count that service only: requests and traces that went through it, and the queries, errors, and log lines
 it wrote. The dashboard sends the service chosen in the top bar unless the link names one. Page filters, all in the URL:
@@ -695,6 +700,9 @@ Pages read small tables built from the stored traces, never the traces themselve
   are rebuilt from its spans and logs, and the rollups get its new contribution minus the old one (kept as JSON in
   `traces.contrib`). `settled_ms` is set to the `updated_ms` that was read, so a late span settles the trace again. Representatives,
   first and last times, and ids are display fields and are never taken back out.
+- **Endpoints** (`FACTS_VERSION` 4): `ep.call` and `ep.q` file each outgoing call and query under the endpoint (`svc.ep` key
+  head) whose http.server span it ran under. `svc.ep` and `edge` keep histograms (p50/p95/p99), and `svc.ep`, `db.q`, and
+  `pv.route` keep their newest trace ids. List needs take `traceIds`.
 - **Per-service copies** (`FACTS_VERSION` 3): the kinds in `SCOPED_BASE` (`req`, `req.part`, `trace`, `ins`, `ins.ep`,
   `bn.*`, `db*`, `err`, `err.t`, `err.e`) also write a `<kind>@svc` row keyed by the service first. A need with `service`
   reads that copy and gets its keys back without the service. `db.qd` keys a query shape by operation and database first.

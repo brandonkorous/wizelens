@@ -1,6 +1,6 @@
 import type { ComponentRow, RouteIssue, RouteRow } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, fmtShownOf } from "../../format";
-import { hrefTo, navigate, traceHref } from "../../routes";
+import { hrefTo, navigate, routeHref, traceHref } from "../../routes";
 import { CountBadge, DotText, ImpactBadge, type Tone } from "../../ui/Badges";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
@@ -62,7 +62,7 @@ export function RouteTable({ routes, total, all }: { routes: RouteRow[]; total: 
         columns={ROUTE_COLUMNS}
         rows={all ? routes : routes.slice(0, PREVIEW)}
         rowKey={(r) => r.route}
-        onRowClick={(r) => navigate(traceHref(r.exampleTraceId))}
+        onRowClick={(r) => navigate(routeHref(r.route))}
         empty={<Empty title="No page views in this range" />}
       />
     </Panel>

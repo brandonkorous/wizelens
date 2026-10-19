@@ -59,6 +59,8 @@ export type ListTable = "requests" | "traces" | "logs" | "critical";
 /** Filters for list tables. Request filters match `applyFilter`; log filters match `filterLogs`. */
 export interface ListFilter {
   traceId?: string;
+  /** Only these traces, for example an error's newest occurrences. */
+  traceIds?: readonly string[];
   method?: string;
   status?: string;
   duration?: string;

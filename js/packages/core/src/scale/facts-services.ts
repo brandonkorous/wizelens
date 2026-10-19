@@ -40,14 +40,14 @@ function serviceContributions(trace: Trace): Contribution[] {
     const { key, ...info } = row;
     const base = { err: isFailedSpan(s) ? 1 : 0, sum: s.durationMs };
     const out = [contribution("svc", key, s.startMs, { ...base, values: [s.durationMs], top: { rank: s.startMs, data: info } })];
-    if (WITH_ENDPOINTS.has(row.kind)) out.push(contribution("svc.ep", joinKey(key, endpointNameOf(s, row.kind)), s.startMs, base));
+    if (WITH_ENDPOINTS.has(row.kind)) out.push(contribution("svc.ep", joinKey(key, endpointNameOf(s, row.kind)), s.startMs, { ...base, values: [s.durationMs] }));
     return out;
   });
 }
 
 function edgeContributions(trace: Trace): Contribution[] {
   return edgeCallsOf(trace).map(({ from, to, span }) =>
-    contribution("edge", joinKey(from, to), span.startMs, { err: isFailedSpan(span) ? 1 : 0, sum: span.durationMs, top: { rank: span.startMs, data: { from, to } } }),
+    contribution("edge", joinKey(from, to), span.startMs, { err: isFailedSpan(span) ? 1 : 0, sum: span.durationMs, values: [span.durationMs], top: { rank: span.startMs, data: { from, to } } }),
   );
 }
 

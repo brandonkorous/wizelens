@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { EndpointStat, ServiceEdge, ServicePageModel, ServiceRow } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
-import { hrefTo, navigate } from "../../routes";
+import { endpointHref, hrefTo, navigate, queryHref } from "../../routes";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 import { serviceHref } from "./serviceParts";
@@ -39,10 +39,10 @@ function moreHref(row: ServiceRow): [string, string] | null {
   return null;
 }
 
-/** API endpoints open their requests; database queries open the Database page on that query. */
+/** API endpoints open their page; database queries open theirs. */
 function endpointClick(row: ServiceRow): ((e: EndpointStat) => void) | undefined {
-  if (row.kind === "api") return (e) => navigate(hrefTo("requests", [], { endpoint: e.name, service: row.name }));
-  if (row.kind === "database") return (e) => navigate(hrefTo("database", [], { database: row.name, q: e.name }));
+  if (row.kind === "api") return (e) => navigate(endpointHref(row.key, e.name));
+  if (row.kind === "database") return (e) => navigate(queryHref(e.name));
   return undefined;
 }
 

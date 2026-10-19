@@ -1,8 +1,8 @@
 import type { ServiceEdge, ServiceRow } from "@wizeworks/lens-core";
-import { fmtCount, fmtMs } from "../../format";
-import { setQuery } from "../../routes";
+import { fmtCount, fmtMs, fmtPct } from "../../format";
+import { navigate, setQuery } from "../../routes";
 import { Empty } from "../../ui/Panel";
-import { KIND_ICON, statusTone } from "./serviceParts";
+import { KIND_ICON, serviceHref, statusTone } from "./serviceParts";
 
 const NODE_W = 190;
 const NODE_H = 46;
@@ -52,11 +52,15 @@ function Edge({ edge, a, b }: { edge: ServiceEdge; a: Placed; b: Placed }) {
   const x2 = b.x;
   const y2 = b.y + NODE_H / 2;
   const mid = (x1 + x2) / 2;
+  const rate = edge.calls ? (edge.errors / edge.calls) * 100 : 0;
+  const label = [fmtCount(edge.calls), edge.p95Ms != null ? `p95 ${fmtMs(edge.p95Ms)}` : fmtMs(edge.avgMs), ...(edge.errors ? [`${fmtPct(rate)} failed`] : [])].join(" · ");
   return (
-    <g className={edge.errors ? "wl-dep-edge wl-failing" : "wl-dep-edge"}>
+    <g className={edge.errors ? "wl-dep-edge wl-failing" : "wl-dep-edge"} onClick={() => navigate(serviceHref(edge.to))} role="link" aria-label={`Open ${edge.to}`}>
+      <title>{`${edge.from} → ${edge.to}: ${label}`}</title>
       <path d={`M${x1},${y1} C${mid},${y1} ${mid},${y2} ${x2},${y2}`} fill="none" />
+      <path className="wl-dep-hit" d={`M${x1},${y1} C${mid},${y1} ${mid},${y2} ${x2},${y2}`} fill="none" />
       <text x={mid} y={(y1 + y2) / 2 - 6} textAnchor="middle">
-        {fmtCount(edge.calls)} · {fmtMs(edge.avgMs)}
+        {label}
       </text>
     </g>
   );

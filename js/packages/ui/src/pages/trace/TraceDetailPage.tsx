@@ -6,6 +6,7 @@ import { hrefTo } from "../../routes";
 import { Empty, Panel } from "../../ui/Panel";
 import { FindingList } from "./FindingList";
 import { ShareButton } from "./ShareButton";
+import { CompareButton, DownloadButton } from "./TraceTools";
 import { TraceHeader } from "./TraceHeader";
 import { type Tab, TraceTabs } from "./TraceTabs";
 import { useTrace } from "./useTrace";
@@ -78,5 +79,12 @@ export function TraceDetail({ traceId, view }: { traceId: string; view?: TraceVi
       </Panel>
     );
   }
-  return <TraceBody trace={trace} view={view} loading={loading} onRefresh={reload} actions={sharing ? <ShareButton traceId={traceId} /> : undefined} />;
+  const actions = (
+    <>
+      <CompareButton trace={trace} />
+      <DownloadButton trace={trace} />
+      {sharing && <ShareButton traceId={traceId} />}
+    </>
+  );
+  return <TraceBody trace={trace} view={view} loading={loading} onRefresh={reload} actions={actions} />;
 }

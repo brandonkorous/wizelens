@@ -175,3 +175,11 @@
   .wl-insight { grid-template-columns: auto 1fr auto; }
   .wl-insight-shape { grid-column: 1 / -1; }
 }
+
+.wl-wf-bar-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 10px; }
+.wl-wf-bar-tools .wl-input { flex: 1 1 260px; max-width: 420px; }
+.wl-wf-self { color: var(--wl-muted); font-weight: 400; }
+.wl-sp-links { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+.wl-compare { position: relative; display: inline-flex; }
+.wl-compare-menu { width: 300px; }
+.wl-compare-input { width: 100%; height: 34px; margin-bottom: 4px; padding: 0 10px; border: 1px solid var(--wl-line-strong); border-radius: 8px; background: var(--wl-surface); color: var(--wl-fg); font: 13px var(--wl-mono); }
