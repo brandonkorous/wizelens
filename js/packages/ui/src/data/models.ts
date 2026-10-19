@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { memoryExecutor, type ModelOf, pageContext, type PageName, type Release, runPageSync, type SyncExecutor, type TimeRange, type Trace } from "@wizeworks/lens-core";
+import { isStructuredSearch, LIST_SEARCH_KIND, memorySearchIds, memoryExecutor, type ModelOf, pageContext, type PageName, type Release, runPageSync, type SyncExecutor, type TimeRange, type Trace } from "@wizeworks/lens-core";
 import { useRoute } from "../routes";
 import { useChangeTick } from "./changes";
 import { useIssueTick } from "./issues";
@@ -60,7 +60,10 @@ function executorFor(traces: readonly Trace[], slowQueryMs: number): SyncExecuto
 
 /** A page computed in the browser from the loaded traces, the same way hosts compute it from their database. */
 function localModel<P extends PageName>(page: P, params: Record<string, string>, range: TimeRange, traces: readonly Trace[], now: number, slowQueryMs: number): ModelOf<P> {
-  return runPageSync(page, pageContext(range, now, params, { slowQueryMs }), executorFor(traces, slowQueryMs));
+  const ctx = pageContext(range, now, params, { slowQueryMs });
+  const kind = LIST_SEARCH_KIND[page];
+  const search = kind && isStructuredSearch(params.q) ? { searchIds: memorySearchIds(traces, kind, params.q!, ctx.window) } : {};
+  return runPageSync(page, { ...ctx, ...search }, executorFor(traces, slowQueryMs));
 }
 
 function useLocalModel<P extends PageName>(page: P, params: Record<string, string>, enabled: boolean): PageModel<P> {

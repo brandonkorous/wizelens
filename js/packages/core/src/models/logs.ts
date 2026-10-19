@@ -78,7 +78,7 @@ export const logsPage: PageDef<LogsModel> = {
       groupNeed("log.cur", "log", "cur", one),
       groupNeed("log.prev", "log", "prev", one),
       groupNeed("log.s", "log.s", "cur"),
-      listNeed("rows", "logs", "cur", { filter: listFilterOf(f), page: pageParams(ctx.params, 30) }),
+      listNeed("rows", "logs", "cur", { filter: ctx.searchIds ? { ...listFilterOf({ ...f, query: "" }), traceIds: ctx.searchIds } : listFilterOf(f), page: pageParams(ctx.params, 30) }),
       seriesNeed("volume", "log", "cur", CHART_BUCKETS, { split: true, ...one }),
       seriesNeed("sparks", "log", "cur", SPARK_BUCKETS, { split: true, ...one }),
     ]);

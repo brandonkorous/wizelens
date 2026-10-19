@@ -30,11 +30,13 @@ beforeEach(async () => {
   pa2 = (await owner.call<{ id: string }>("POST", `api/orgs/${orgA}/projects`, { name: "Shared API" })).body.id;
   orgB = (await owner.call<{ id: string }>("POST", "api/orgs", { name: "Beta" })).body.id;
   pb = (await owner.call<Me>("GET", "api/me")).body.orgs.find((o) => o.id === orgB)!.projects[0]!.id;
-  const root = span(T1, "1".repeat(16), { service: "console", name: "GET /page" });
-  const api = span(T1, "2".repeat(16), { service: "api-rest", parentSpanId: "1".repeat(16), startMs: 1_000_005 });
+  // Recent times: the retention job runs a second after start and drops anything older than the organization keeps.
+  const at = Date.now() - 60_000;
+  const root = span(T1, "1".repeat(16), { service: "console", name: "GET /page", startMs: at });
+  const api = span(T1, "2".repeat(16), { service: "api-rest", parentSpanId: "1".repeat(16), startMs: at + 5 });
   await send(await key(orgA, "ingest", [pa1]), "console", [root]);
-  await send(await key(orgA, "ingest", [pa2]), "api-rest", [api, span(T2, "4".repeat(16), { service: "api-rest" })], [{ traceId: T1, log: { timeMs: 1_000_006, level: "info", category: "api", message: "from the api", attributes: {} } }]);
-  await send(await key(orgB, "ingest", [pb]), "intruder", [span(T1, "3".repeat(16), { service: "intruder" })], [{ traceId: T1, log: { timeMs: 1_000_007, level: "info", category: "x", message: "other tenant", attributes: {} } }]);
+  await send(await key(orgA, "ingest", [pa2]), "api-rest", [api, span(T2, "4".repeat(16), { service: "api-rest", startMs: at })], [{ traceId: T1, log: { timeMs: at + 6, level: "info", category: "api", message: "from the api", attributes: {} } }]);
+  await send(await key(orgB, "ingest", [pb]), "intruder", [span(T1, "3".repeat(16), { service: "intruder", startMs: at })], [{ traceId: T1, log: { timeMs: at + 7, level: "info", category: "x", message: "other tenant", attributes: {} } }]);
 });
 
 afterEach(async () => {

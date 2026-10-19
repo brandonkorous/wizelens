@@ -1,7 +1,9 @@
 import { Upload } from "lucide-react";
-import { SEARCH_KINDS, type SearchKind } from "@wizeworks/lens-core";
+import { SEARCH_KINDS, type SearchKind, type SearchSummary } from "@wizeworks/lens-core";
 import { downloadCsv, objectsToCsv } from "../../data/csv";
 import { useSavedItems } from "../../data/saved";
+import { useSearchSummary } from "../../data/searchSummary";
+import { TimeChart } from "../../ui/TimeChart";
 import { useHost, useRange } from "../../data/host";
 import { type SearchFailure, type SearchState, useSearch } from "../../data/search";
 import { setQuery, useRoute } from "../../routes";
@@ -13,6 +15,7 @@ import "../../styles/pages/search.css";
 
 const PAGE = 50;
 const TABS: [SearchKind, string][] = [["requests", "Requests"], ["traces", "Traces"], ["spans", "Spans"], ["logs", "Logs"]];
+const countText = (c: { n: number; more: boolean } | undefined) => (c ? `${c.n.toLocaleString()}${c.more ? "+" : ""}` : "");
 const isKind = (v: string | null): v is SearchKind => (SEARCH_KINDS as readonly string[]).includes(v ?? "");
 
 /** The host did not answer. A bad search is shown under the box instead. */
@@ -49,6 +52,16 @@ function Results({ kind, s }: { kind: SearchKind; s: SearchState }) {
   );
 }
 
+/** When the chosen kind's results happened (the first 1000 counted). */
+function ResultsOverTime({ summary, kind }: { summary: SearchSummary; kind: SearchKind }) {
+  const label = TABS.find(([k]) => k === kind)![1];
+  return (
+    <Panel title={`${label} Over Time`}>
+      <TimeChart starts={summary.starts} bars={[{ label, values: summary.histogram, color: "var(--wl-blue)" }]} height={140} />
+    </Panel>
+  );
+}
+
 /** Saved searches as links under the box; the star in the top bar saves the one open. */
 function SavedSearches() {
   const { items } = useSavedItems("search");
@@ -72,14 +85,17 @@ export function SearchPage() {
   const server = useHost().has("search");
   const s = useSearch({ q, kind, range, limit: PAGE }, server);
   const invalid = s.failure?.type === "invalid" ? s.failure : null;
+  const summary = useSearchSummary(q, kind, range, server);
+  const tabs = TABS.map(([k, label]): [SearchKind, string] => [k, summary ? `${label} (${countText(summary.counts[k])})` : label]);
   return (
     <div className="wl-search-page">
       <PageHeader title="Search" subtitle="Find any request, trace, span, or log line. Type a field such as service: or @ for an attribute." />
       <section className="wl-panel wl-search-bar">
         <QueryBar value={q} onSubmit={(next) => setQuery({ q: next || null })} range={range} server={server} serverError={invalid} />
-        <TabBar tabs={TABS} value={kind} onChange={(k) => setQuery({ kind: k === "requests" ? null : k })} />
+        <TabBar tabs={tabs} value={kind} onChange={(k) => setQuery({ kind: k === "requests" ? null : k })} />
         <SavedSearches />
       </section>
+      {summary && <ResultsOverTime summary={summary} kind={kind} />}
       <Results kind={kind} s={s} />
     </div>
   );
