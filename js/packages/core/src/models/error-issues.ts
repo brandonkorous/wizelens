@@ -2,6 +2,7 @@
 import { issueId, type IssueStates, type IssueStatus, issueStatusOf } from "../issues.js";
 import type { GroupNeed, NeedResults, PageContext } from "../scale/needs.js";
 import { groupNeed, rowsOf } from "./read.js";
+import { type Bounds, inBounds } from "./release-rows.js";
 
 export type IssueFilter = "unresolved" | "resolved" | "ignored" | "all";
 export const isIssueFilter = (v: string | undefined): v is IssueFilter => v === "unresolved" || v === "resolved" || v === "ignored" || v === "all";
@@ -24,15 +25,15 @@ const lifeOf = (d: NeedResults): Life => new Map(rowsOf(d, "life").map((r) => [r
 
 const statusOf = (issues: IssueStates, life: Life, key: string, now: number) => issueStatusOf(issues[issueId("error", key)], life.get(key)?.lastMs ?? 0, now);
 
-/** The keys the list keeps (`keys`) or leaves out (`exclude`) for a status and "new" filter, within `only` when given. */
-export function issueKeys(ctx: PageContext, first: NeedResults, status: IssueFilter, fresh: boolean, only?: readonly string[]): { keys?: string[]; exclude?: string[] } {
+/** The keys the list keeps (`keys`) or leaves out (`exclude`) for a status filter and first-seen bounds, within `only` when given. */
+export function issueKeys(ctx: PageContext, first: NeedResults, status: IssueFilter, bounds: Bounds | null, only?: readonly string[]): { keys?: string[]; exclude?: string[] } {
   const issues = ctx.issues ?? {};
   const life = lifeOf(first);
   const stated = Object.values(issues).filter((s) => s.kind === "error").map((s) => s.key);
   const has = (key: string, want: IssueStatus[]) => want.includes(statusOf(issues, life, key, ctx.now));
   let keys: string[] | undefined = only ? [...only] : undefined;
   if (status === "resolved" || status === "ignored") keys = (keys ?? stated).filter((k) => has(k, [status]));
-  if (fresh) keys = (keys ?? [...life.keys()]).filter((k) => (life.get(k)?.firstMs ?? 0) >= ctx.window.from);
+  if (bounds) keys = (keys ?? [...life.keys()]).filter((k) => inBounds(bounds, life.get(k)?.firstMs ?? 0));
   const exclude = status === "unresolved" ? stated.filter((k) => has(k, ["resolved", "ignored"])) : [];
   return { ...(keys ? { keys } : {}), ...(exclude.length ? { exclude } : {}) };
 }

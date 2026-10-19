@@ -1,7 +1,10 @@
 import { type MouseEvent, type RefObject, useEffect, useRef, useState } from "react";
+import type { Release } from "@wizeworks/lens-core";
 import { fmtBucket, fmtTick } from "../format";
 import { setWindowPref } from "../data/period";
+import { useReleases } from "../data/releases";
 import { areaPath, linePath, maxOf, niceMax, ticksOf } from "./chartMath";
+import { releaseIndex, ReleaseMarks } from "./ReleaseMarks";
 
 const spanOf = (starts: readonly number[]) => (starts.length > 1 ? starts[starts.length - 1]! - starts[0]! : 0);
 
@@ -28,6 +31,8 @@ export interface TimeChartProps {
   stackBars?: boolean;
   /** Drag across the chart to show that span (a custom time range). On unless false. */
   zoom?: boolean;
+  /** Release markers (versions that first sent data in the window). On unless false. */
+  releases?: boolean;
 }
 
 const PAD = { left: 44, right: 8, top: 10, bottom: 26 };
@@ -127,9 +132,10 @@ function Plot({ p, f }: { p: TimeChartProps; f: Frame }) {
   );
 }
 
-function Tip({ p, i, left }: { p: TimeChartProps; i: number; left: number }) {
+function Tip({ p, i, left, releases }: { p: TimeChartProps; i: number; left: number; releases: readonly Release[] }) {
   const fmt = p.format ?? ((v: number) => String(Math.round(v)));
   const all = [...(p.lines ?? []), ...(p.bars ?? [])];
+  const here = releases.filter((r) => Math.floor(releaseIndex(p.starts, r.firstMs) ?? -1) === i);
   return (
     <div className="wl-chart-tip" style={{ left, top: 0 }}>
       <strong>{fmtBucket(p.starts[i]!, spanOf(p.starts))}</strong>
@@ -137,6 +143,12 @@ function Tip({ p, i, left }: { p: TimeChartProps; i: number; left: number }) {
         <div key={s.label}>
           <span>{s.label}</span>
           <b>{s.values[i] == null ? "–" : fmt(s.values[i]!)}</b>
+        </div>
+      ))}
+      {here.map((r) => (
+        <div key={`${r.service}|${r.version}`} className="wl-chart-tip-release">
+          <span>{r.service}</span>
+          <b>{r.version} released</b>
         </div>
       ))}
     </div>
@@ -168,6 +180,8 @@ export function TimeChart(props: TimeChartProps) {
   const height = props.height ?? 200;
   const f = frameOf(props, width, height);
   const zoom = useZoom(props, f);
+  const all = useReleases();
+  const releases = props.releases === false ? [] : all;
   const indexAt = (e: MouseEvent<SVGSVGElement>) => Math.floor((e.clientX - e.currentTarget.getBoundingClientRect().left - PAD.left) / f.slot);
   const onMove = (e: MouseEvent<SVGSVGElement>) => {
     const i = indexAt(e);
@@ -185,10 +199,11 @@ export function TimeChart(props: TimeChartProps) {
       <svg width={width} height={height} className={zoom.on ? "wl-chart-zoom" : undefined} onMouseMove={onMove} onMouseDown={onDown} onMouseUp={zoom.finish} onMouseLeave={() => (setHover(null), zoom.setDrag(null))} role="img" aria-label={series.map((s) => s.label).join(", ")}>
         <Axes p={props} f={f} width={width} />
         <Plot p={props} f={f} />
+        <ReleaseMarks releases={releases} starts={props.starts} at={(i) => PAD.left + f.slot * i} top={PAD.top} base={f.base} />
         {zoom.band && <rect className="wl-chart-band" x={zoom.band.x} y={PAD.top} width={zoom.band.w} height={f.base - PAD.top} />}
         {hover !== null && <line x1={f.x(hover)} x2={f.x(hover)} y1={PAD.top} y2={f.base} stroke="var(--wl-line-strong)" />}
       </svg>
-      {hover !== null && <Tip p={props} i={hover} left={Math.min(f.x(hover) + 12, width - 160)} />}
+      {hover !== null && <Tip p={props} i={hover} left={Math.min(f.x(hover) + 12, width - 160)} releases={releases} />}
       <div className="wl-chart-legend">
         {series.map((s) => (
           <span key={s.label}>

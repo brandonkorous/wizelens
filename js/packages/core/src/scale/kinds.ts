@@ -14,6 +14,7 @@ export type RollupKind =
   | "log" | "log.s"
   | "pv" | "pv.route" | "pv.m" | "pv.large" | "pv.g"
   | "react" | "rc" | "rc.route"
+  | "rel"
   | ScopedKind;
 
 /** Kinds that also count per service: each item adds a copy keyed by its service first (see `SERVICE_KIND`). */
@@ -84,6 +85,8 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   react: spec(),
   rc: spec(["renders", "actualMs", "selfMs", "wasted", "context"], { ints: [0, 3, 4], top: "newest" }),
   "rc.route": spec(),
+  /** Per service version (`service|version`): its requests and jobs, failures, and durations. */
+  rel: spec([], { hist: true }),
 };
 
 /** Every kind's fields; the per-service copies keep their base kind's. */

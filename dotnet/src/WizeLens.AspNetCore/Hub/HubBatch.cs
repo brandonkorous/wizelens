@@ -29,12 +29,13 @@ internal sealed record HubRemoteItem(string TraceId, string Endpoint);
 
 /// <summary>Who sends the batch (contract type HubSender).</summary>
 internal sealed record HubSenderInfo(
-    string Service, string? Project, string Version, string Runtime, string Environment, string Host, string? Endpoint, double StartedMs)
+    string Service, string? Project, string Version, string? Release, string Runtime, string Environment, string Host, string? Endpoint, double StartedMs)
 {
     public static HubSenderInfo Of(WizeLensOptions options, string environment, string? endpoint) => new(
         options.ServiceName ?? "app",
         string.IsNullOrWhiteSpace(options.Project) ? null : options.Project,
         typeof(HubSenderInfo).Assembly.GetName().Version?.ToString(3) ?? "0.0.0",
+        options.Release,
         RuntimeInformation.FrameworkDescription,
         environment,
         System.Environment.MachineName,

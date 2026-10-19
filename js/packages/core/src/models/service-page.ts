@@ -13,6 +13,7 @@ import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
 import { aggByKey, avgs, byDesc, counts, groupCount, groupNeed, listNeed, listOf, rowsOf, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
 import { edgesOf, endpointPrefix, type EndpointStat, endpointStatsOf, findRow } from "./service-detail.js";
 import { edgeNeeds, edgesOfRows, serviceNeeds, serviceRowsOf } from "./service-rows.js";
+import { type VersionStat, versionNeeds, versionsOf } from "./service-versions.js";
 
 const TOP_ERRORS = 50;
 const SLOWEST = 10;
@@ -61,6 +62,8 @@ export interface ServicePageModel {
   slowest: RequestItem[];
   requestCount: number;
   logs: ServicePageLogs;
+  /** The service's newest versions compared (your own services that send a version). */
+  versions: VersionStat[];
 }
 
 /** Needs for an owned service's errors, requests, and logs, by its display name. */
@@ -73,6 +76,7 @@ function ownedNeeds(name: string): Need[] {
     listNeed("slowest", "requests", "cur", { filter: { service: name }, sort: { key: "duration", desc: true }, limit: SLOWEST, count: true }),
     listNeed("logs", "logs", "cur", { filter: { logService: shown }, limit: RECENT_LOGS, count: true }),
     groupNeed("log.s", "log.s", "cur", { filter: { parts: [shown, null] } }),
+    ...versionNeeds(shown),
   ];
 }
 
@@ -128,6 +132,7 @@ export const servicePage: PageDef<ServicePageModel> = {
       slowest: slowest.items,
       requestCount: slowest.total ?? slowest.items.length,
       logs: owned && row ? logsOf(d, row.name) : NO_LOGS,
+      versions: owned && row ? versionsOf(d, displayService(row.name)) : [],
     };
   },
 };

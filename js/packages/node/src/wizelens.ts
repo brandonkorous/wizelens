@@ -7,7 +7,7 @@ import { addCleanup, registerParts, runCleanups } from "./adapters/registry.js";
 import { createDbSpans, createTraceDb } from "./db.js";
 import { disabledWizeLens } from "./disabled.js";
 import { createGetTrace } from "./federation.js";
-import { connectHub } from "./hub-connect.js";
+import { connectHub, releaseOf } from "./hub-connect.js";
 import { samplingInfo, TraceSampler } from "./sampling.js";
 import { buildInfo, DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, VERSION } from "./info.js";
 import { createLogSink, createLogWriter, makeLogger } from "./logger.js";
@@ -65,7 +65,7 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const persister = openPersister(store, options, dashboard);
   const selfEndpoints = new Set<string>(options.publicEndpoint ? [options.publicEndpoint] : []);
   const fetch = options.instrumentFetch ?? true;
-  const tracing = createTracing(store, { service, version: VERSION, redactKeys, fetch }, selfEndpoints);
+  const tracing = createTracing(store, { service, version: VERSION, release: releaseOf(options), redactKeys, fetch }, selfEndpoints);
   const logs = createLogSink(store, service, redactKeys);
   const write = createLogWriter(logs, !!options.logToConsole);
   const getTrace = createGetTrace(store, selfEndpoints);

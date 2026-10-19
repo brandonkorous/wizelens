@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { memoryExecutor, type ModelOf, pageContext, type PageName, runPageSync, type SyncExecutor, type TimeRange, type Trace } from "@wizeworks/lens-core";
+import { memoryExecutor, type ModelOf, pageContext, type PageName, type Release, runPageSync, type SyncExecutor, type TimeRange, type Trace } from "@wizeworks/lens-core";
 import { useRoute } from "../routes";
 import { useChangeTick } from "./changes";
 import { useIssueTick } from "./issues";
+import { publishReleases } from "./releases";
 import { useHost, useRange } from "./host";
 import { getPeriod, parseWindow, periodParams, useComparePref, useWindowPref } from "./period";
 import { getScope, useServiceScope } from "./prefs";
@@ -122,7 +123,10 @@ export function usePageModel<P extends PageName>(page: P, extra?: Record<string,
   const server = useHost().has("serverStats");
   const local = useLocalModel(page, params, !server);
   const remote = useServerModel(page, params, server);
-  return useHeld(server ? remote : local, paused, JSON.stringify(params));
+  const shown = useHeld(server ? remote : local, paused, JSON.stringify(params));
+  const releases = (shown.model as { meta?: { releases?: Release[] } } | null)?.meta?.releases;
+  useEffect(() => publishReleases(releases), [releases]);
+  return shown;
 }
 
 /** While paused, the page keeps what it showed for the same parameters: new data waits. Changing a filter still loads. */

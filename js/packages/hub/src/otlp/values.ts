@@ -83,6 +83,7 @@ export function senderOf(resource: OtlpResource | undefined) {
     service: str("service.name") ?? "unknown_service",
     project: str("wizelens.project") ?? str("service.namespace"),
     version: str("service.version"),
+    release: str("service.version"),
     runtime: lang ? `otlp ${lang}` : "otlp",
     environment: str("deployment.environment.name"),
     host: str("host.name"),

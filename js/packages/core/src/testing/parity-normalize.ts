@@ -48,7 +48,7 @@ const TIES: Record<string, (m: Obj) => void> = {
   },
   insights: (m) => {
     // Issue states are new; the legacy model had none.
-    for (const k of ["issues", "hasIssues"]) delete m[k];
+    for (const k of ["issues", "hasIssues", "releases"]) delete m[k];
   },
   overview: (m) => {
     // The compared period's line is new; the legacy model had none.
@@ -78,7 +78,7 @@ const TIES: Record<string, (m: Obj) => void> = {
   errors: (m) => {
     m.services = sortBy(m.services, num("exceptions"), num("requests"), str("service"));
     // The selected group, the filter, paging, and endpoint options are new; the legacy model had none.
-    for (const k of ["selected", "groupCount", "filter", "page", "size", "endpoints", "issues", "hasIssues"]) delete m[k];
+    for (const k of ["selected", "groupCount", "filter", "page", "size", "endpoints", "issues", "hasIssues", "releases"]) delete m[k];
     delete (m.chart as Obj).prev;
   },
   services: (m) => {
@@ -98,7 +98,7 @@ export function normalizeModel(page: string, model: unknown): Obj {
   const m = copy(model) as Obj;
   if (m.meta && typeof m.meta === "object") {
     // Settling and sampling vary by host; custom windows and compare are new since the legacy models.
-    for (const k of ["settling", "sampled", "custom", "compare"]) delete (m.meta as Obj)[k];
+    for (const k of ["settling", "sampled", "custom", "compare", "releases"]) delete (m.meta as Obj)[k];
   }
   stripRequests(m);
   TIES[page]?.(m);
