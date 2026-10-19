@@ -13,7 +13,8 @@ Competitor Research" doc.
 | Business | $99 | 150 GB | 90 days | SAML and OIDC SSO, SCIM, audit log export |
 | Enterprise | Custom | Custom | Up to 400 days | Set by us: data residency, SLA, BAA |
 
-- **Extra data** on Team and Business: $0.30/GB up to 500 GB, $0.20/GB up to 2 TB, $0.10/GB above (graduated).
+- **Extra data** on Team and Business, counted above the plan's included GB each month: the first 500 GB at $0.30,
+  the next 1,500 GB at $0.20, the rest at $0.10 (graduated).
 - **Annual** billing: 10 months' price for 12. Plan prices are a first version; they live in one file.
 - **Never** a seat fee or an MCP fee.
 - **A GB** is the size of the request body the cloud accepts on ingest and OTLP, before compression is undone.
