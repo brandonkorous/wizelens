@@ -1,4 +1,4 @@
-import { entryServerSpan, ATTR_RESPONSE_BODY, ATTR_RESPONSE_BODY_TRUNCATED, REQUEST_HEADER_PREFIX, RESPONSE_HEADER_PREFIX, type Span, type Trace } from "@wizeworks/lens-core";
+import { entryServerSpan, ATTR_REQUEST_BODY, ATTR_REQUEST_BODY_TRUNCATED, ATTR_RESPONSE_BODY, ATTR_RESPONSE_BODY_TRUNCATED, REQUEST_HEADER_PREFIX, RESPONSE_HEADER_PREFIX, type Span, type Trace } from "@wizeworks/lens-core";
 
 /** The entry server span of a trace: the request the app received. */
 export function rootServer(trace: Trace | undefined): Span | undefined {
@@ -28,11 +28,17 @@ export interface BodyPreview {
   truncated: boolean;
 }
 
-/** The captured response body, pretty-printed when it is complete JSON. */
-export function bodyOf(span: Span | undefined): BodyPreview | null {
-  const raw = span?.attributes[ATTR_RESPONSE_BODY];
+const BODY_KEYS = {
+  request: [ATTR_REQUEST_BODY, ATTR_REQUEST_BODY_TRUNCATED],
+  response: [ATTR_RESPONSE_BODY, ATTR_RESPONSE_BODY_TRUNCATED],
+} as const;
+
+/** The captured request or response body, pretty-printed when it is complete JSON. */
+export function bodyOf(span: Span | undefined, which: keyof typeof BODY_KEYS = "response"): BodyPreview | null {
+  const [key, cut] = BODY_KEYS[which];
+  const raw = span?.attributes[key];
   if (typeof raw !== "string") return null;
-  const truncated = span?.attributes[ATTR_RESPONSE_BODY_TRUNCATED] === true;
+  const truncated = span?.attributes[cut] === true;
   if (truncated) return { text: raw, truncated };
   try {
     return { text: JSON.stringify(JSON.parse(raw), null, 2), truncated };

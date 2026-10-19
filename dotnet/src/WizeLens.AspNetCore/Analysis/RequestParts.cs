@@ -84,7 +84,8 @@ internal static partial class RequestParts
     {
         var db = t.Spans.Where(s => s.Category == SpanCategories.Db).ToList();
         var repeatable = db.Where(s => !TraceAnalysis.IsSessionStatement(QueryText(s))).ToList();
-        var duplicates = repeatable.GroupBy(s => $"{QueryText(s)}\0{(Value(s.Attributes, "wizelens.db.parameters") is { } p ? JsText.Of(p) : "")}").Count(g => g.Count() >= 2);
+        var known = repeatable.Where(s => !TraceAnalysis.HasUnknownParams(QueryText(s), Value(s.Attributes, "wizelens.db.parameters")));
+        var duplicates = known.GroupBy(s => $"{QueryText(s)}\0{(Value(s.Attributes, "wizelens.db.parameters") is { } p ? JsText.Of(p) : "")}").Count(g => g.Count() >= 2);
         var nPlusOneDb = repeatable.GroupBy(QueryText).Count(g => g.Count() >= nPlusOne);
         var nPlusOneHttp = t.Spans.Where(s => s.Category == SpanCategories.HttpClient).GroupBy(HttpShape).Count(g => g.Count() >= nPlusOne);
         return nPlusOneDb + nPlusOneHttp + duplicates + SlowFindings(db.Where(s => s.DurationMs >= slowQueryMs));

@@ -1,4 +1,5 @@
 import type { AttributeValue, Attributes } from "@wizeworks/lens-core";
+import { applyAliases, headerKey, headerValue, isHeaderKey } from "./semconv.js";
 
 /** OTLP shapes after JSON parse or protobuf decode. Ids are hex, 64-bit numbers are strings or numbers. */
 export interface OtlpAnyValue {
@@ -33,30 +34,15 @@ export function valueOf(v: OtlpAnyValue | undefined): AttributeValue {
   return null;
 }
 
-// Older semantic-convention names, mapped to the ones the dashboard reads.
-const ALIASES: Record<string, string> = {
-  "http.method": "http.request.method",
-  "http.status_code": "http.response.status_code",
-  "http.url": "url.full",
-  "http.target": "url.path",
-  "http.scheme": "url.scheme",
-  "db.statement": "db.query.text",
-  "db.system": "db.system.name",
-  "db.name": "db.namespace",
-  "db.operation": "db.operation.name",
-  "net.peer.name": "server.address",
-  "net.peer.port": "server.port",
-  "deployment.environment": "deployment.environment.name",
-};
-
 /** Key-value list as contract attributes, with older names copied to the current ones. */
 export function attributesOf(list: OtlpKeyValue[] | undefined): Attributes {
   const out: Attributes = {};
-  for (const kv of list ?? []) if (kv?.key) out[kv.key] = valueOf(kv.value);
-  for (const [old, current] of Object.entries(ALIASES)) {
-    if (out[old] !== undefined && out[current] === undefined) out[current] = out[old]!;
+  for (const kv of list ?? []) {
+    if (!kv?.key) continue;
+    if (isHeaderKey(kv.key)) out[headerKey(kv.key)] = headerValue(kv.value, valueOf);
+    else out[kv.key] = valueOf(kv.value);
   }
-  return out;
+  return applyAliases(out);
 }
 
 /** Unix nanoseconds (string or number) as epoch ms. */

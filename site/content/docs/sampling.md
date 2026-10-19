@@ -11,7 +11,8 @@ Set a rate between 0 and 1:
 |---|---|
 | Node | `createWizeLens({ serviceName: "orders-api", sampling: { rate: 0.1 } })` |
 | .NET | `AddWizeLens(o => o.Sampling.Rate = 0.1)` |
-| Both | `WIZELENS_SAMPLE_RATE=0.1` |
+| Java, Python, Go | `WIZELENS_SAMPLE_RATE=0.1`, with the [Java](/docs/java/) extension, [Python](/docs/python/) package, or [Go](/docs/go/) module |
+| All | `WIZELENS_SAMPLE_RATE=0.1` |
 
 ## What is always kept
 

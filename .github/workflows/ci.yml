@@ -165,3 +165,71 @@ jobs:
           for i in $(seq 1 60); do curl -sf http://localhost:5970/healthz && break; sleep 2; done
           node scripts/cloud-smoke.mjs http://localhost:5970
           docker compose -p wlci -f deploy/docker-compose.cloud.yml down -v
+
+  python:
+    name: Python SDK (${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.13"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install
+        run: pip install -e "python[test]" build
+
+      - name: Test
+        run: pytest python
+
+      - name: Build the package (trial run)
+        run: python -m build python --outdir artifacts/pypi
+
+      - name: Check the FastAPI sample
+        run: python -m py_compile samples/python-fastapi/app.py samples/python-fastapi/store.py
+
+  java:
+    name: Java SDK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Build and test
+        run: mvn -B -f java/pom.xml install
+
+      - name: Build the Spring sample
+        run: mvn -B -f samples/java-spring/pom.xml package -DskipTests
+
+  go:
+    name: Go SDK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+          cache-dependency-path: |
+            go/go.sum
+            samples/go-net-http/go.sum
+
+      - name: Vet and test
+        working-directory: go
+        run: |
+          test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+          go vet ./...
+          go test -race ./...
+
+      - name: Build the net/http sample
+        working-directory: samples/go-net-http
+        run: go vet ./... && go build ./...

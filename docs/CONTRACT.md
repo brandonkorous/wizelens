@@ -157,7 +157,7 @@ interface SamplingInfo {
 
 | Category | Attributes |
 |---|---|
-| http.server | `http.request.method`, `http.route`, `url.path`, `url.query`, `http.response.status_code`, `server.address`, `client.address` (first `X-Forwarded-For` value, else the socket), `user_agent.original`, `http.request.header.{name}` / `http.response.header.{name}` (lower-case names, values joined with `, `, max 50 headers, 1 KB each, redacted), `http.request.body.size`, `http.response.body.size`, `wizelens.request.id`, `enduser.id` (when known), `wizelens.tag.{key}` (app tags), `wizelens.server.routed_ms` (when the runtime can tell), `wizelens.response.body` + `wizelens.response.body.truncated` (only with body capture on: text and JSON, first 16 KB) |
+| http.server | `http.request.method`, `http.route`, `url.path`, `url.query`, `http.response.status_code`, `server.address`, `client.address` (first `X-Forwarded-For` value, else the socket), `user_agent.original`, `http.request.header.{name}` / `http.response.header.{name}` (lower-case names, values joined with `, `, max 50 headers, 1 KB each, redacted), `http.request.body.size`, `http.response.body.size`, `wizelens.request.id`, `enduser.id` (when known), `wizelens.tag.{key}` (app tags), `wizelens.server.routed_ms` (when the runtime can tell), `wizelens.response.body` + `wizelens.response.body.truncated` (only with body capture on: text and JSON, first 16 KB), `wizelens.request.body` + `wizelens.request.body.truncated` (the Java, Python, and Go SDKs, with `WIZELENS_CAPTURE_BODY=true`; complete JSON has sensitive keys redacted) |
 | internal | `wizelens.layer` = `handler` for a controller action or endpoint handler span |
 | gRPC (on http.server / http.client) | `rpc.system` = `grpc`, `rpc.service` (e.g. `orders.v1.Orders`), `rpc.method` (e.g. `GetOrder`), `rpc.grpc.status_code` (number). Name: `{service}/{method}`. A non-zero status code on the server is an error. |
 | messaging | Kind `producer` (send) or `consumer` (receive / process). `messaging.system` (`rabbitmq`, `kafka`, `servicebus`), `messaging.operation.type` (`send`, `receive`, `process`), `messaging.destination.name` (queue, topic, or exchange), `messaging.message.id`, `messaging.batch.message_count`, `messaging.message.body.size`. Name: `{operation} {destination}`. |
@@ -296,6 +296,8 @@ Applies to attributes, DB parameter names, and header names. List is configurabl
 ## Analysis (shared logic, same results in .NET and JS)
 
 - **Duplicate query**: ≥ 2 `db` spans in one trace with identical `db.query.text` AND identical `wizelens.db.parameters`.
+  A span with placeholders in its text (`?`, `$1`, `%s`, `%(name)s`, `:name`, `@name`) and no `wizelens.db.parameters`
+  (the OpenTelemetry agents sanitize SQL) is never a duplicate: its values are unknown.
 - **N+1 query**: ≥ 5 (configurable) `db` spans in one trace with identical `db.query.text` (params may differ).
 - **Session statements** (`SET`, `RESET`, `BEGIN`, `START TRANSACTION`, `COMMIT`, `END`, `ROLLBACK`, `SAVEPOINT`, `RELEASE`,
   `DISCARD`, `USE`) are never duplicates or N+1. Apps that set `SET LOCAL app.tenant_id` per query repeat them by design.
@@ -532,6 +534,18 @@ Trace `remotes` that point at a service which sends to the hub are hidden, so th
 - Span kind, status, events, and attributes map one to one. Category uses the same rules as the add-ons.
 - Older attribute names are copied to the current ones when the current one is missing: `http.method`, `http.status_code`,
   `http.url`, `http.target`, `http.scheme`, `db.statement`, `db.system`, `db.name`, `db.operation`, `net.peer.name`, `net.peer.port`.
+  Also `http.user_agent`, `http.client_ip`, `http.flavor`, `http.request_content_length`, `http.response_content_length`,
+  `db.sql.table` / `db.mongodb.collection` / `db.cassandra.table` / `db.cosmosdb.container` (→ `db.collection.name`),
+  `net.host.name`, `net.host.port`, `net.sock.peer.addr`, `net.sock.peer.port`, `messaging.operation`,
+  `messaging.destination`, `code.function`, `code.filepath`, `code.lineno`. The first older name wins.
+- `url.path` that holds a query (from `http.target`) is split into `url.path` and `url.query`.
+- Captured headers: a list value is joined with `, `, and `_` in the name becomes `-` (`http.request.header.content-type`).
+- SQL parameters: `db.query.parameter.<key>` (Java agent) become `wizelens.db.parameters`, a JSON array when every key
+  is a position, else an object with sensitive names redacted; the per-key attributes are removed. Python's
+  `db.statement.parameters` (the `str()` of a tuple or dict) is read as JSON the same way, or kept as text (redacted
+  whole when it names a secret). A value an SDK already set wins.
+- A `db` span whose parent in the same export is also a `db` span (an ORM over its driver, such as SQLAlchemy over
+  sqlite3) becomes `internal`, so the query counts once; its parameters move to the parent when the text matches.
 - Log records keep their trace id. Records without one are skipped (WizeLens shows logs per trace).
   Severity 1–4 trace, 5–8 debug, 9–12 info, 13–16 warn, 17–20 error, 21–24 critical.
 - Metrics: gauge, sum, histogram, exponential histogram, and summary, as described in "Metrics". Metric attributes are redacted.

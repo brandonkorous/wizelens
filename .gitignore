@@ -26,6 +26,15 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# ─── Java, Python, Go (SDKs and samples) ───────────────
+target/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.venv/
+*.jar
+!**/.mvn/wrapper/*.jar
+
 # ─── WizeLens local trace stores ───────────────────────
 .wizelens/
 

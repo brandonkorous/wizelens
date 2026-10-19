@@ -19,6 +19,7 @@ public static partial class TraceAnalysis
     [
         .. trace.Spans
             .Where(IsRepeatable)
+            .Where(s => !HasUnknownParams(s.Attr("db.query.text")!, s.Attr("wizelens.db.parameters")))
             .GroupBy(s => (Query: s.Attr("db.query.text")!, Params: s.Attr("wizelens.db.parameters") ?? ""))
             .Where(g => g.Count() >= 2)
             .Select(g => new DuplicateQuery(trace.TraceId, g.Key.Query, g.Key.Params, g.Count(), g.Sum(s => s.DurationMs), g.First().Service))
@@ -51,6 +52,9 @@ public static partial class TraceAnalysis
 
     /// <summary>SET, BEGIN, COMMIT and the like: their repeats are by design, not N+1.</summary>
     public static bool IsSessionStatement(string query) => SessionRegex().IsMatch(query);
+
+    /// <summary>Placeholders but no captured parameters (OTLP agents): two such queries may differ, so they are never duplicates.</summary>
+    public static bool HasUnknownParams(string query, object? parameters) => parameters is null && PlaceholderRegex().IsMatch(query);
 
     /// <summary>db spans at or above <paramref name="thresholdMs"/>.</summary>
     public static IEnumerable<SlowQuery> SlowQueries(Trace trace, double thresholdMs = 100) =>
@@ -96,4 +100,7 @@ public static partial class TraceAnalysis
 
     [GeneratedRegex(@"^\s*(SET|RESET|BEGIN|START\s+TRANSACTION|COMMIT|END|ROLLBACK|SAVEPOINT|RELEASE|DISCARD|USE)\b", RegexOptions.IgnoreCase)]
     private static partial Regex SessionRegex();
+
+    [GeneratedRegex(@"\?|\$\d+|%s|%\(\w+\)s|(?<![:\w]):[A-Za-z_]\w*|@[A-Za-z_]\w*")]
+    private static partial Regex PlaceholderRegex();
 }
