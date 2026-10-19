@@ -29,13 +29,15 @@ export function tierMemory(traces: readonly Trace[], retentionMs: number): SyncE
 const STATIC: Partial<Record<PageName, Record<string, string>[]>> = {
   requests: [{ endpoint: "POST /api/pay" }, { user: "nope" }, { insights: "1" }, { sort: "errors" }, { sort: "db", desc: "0" }, { service: "Web App" }, { method: "POST" }, { status: "5xx" }, { status: "failed", duration: "medium" }, { duration: "slowest" }, { service: "orders" }, { q: "orders" }, { q: "orders", status: "failed" }, { sort: "duration", desc: "0", page: "2", size: "5" }, { status: "bogus" }],
   traces: [{ q: "checkout" }, { q: "nothing-matches" }, { trace: "f".repeat(32) }, { service: "orders" }, { service: "Web App" }, { status: "error" }, { status: "ok" }, { duration: "slowest" }, { sort: "duration" }, { page: "2", size: "5" }, { service: "api", status: "error", sort: "duration" }],
-  logs: [{ level: "warn" }, { level: "error", service: "api" }, { q: "order" }, { page: "2", size: "5" }, { service: "orders" }, { level: "warn", exact: "1" }, { category: "api.app" }, { trace: "f".repeat(32) }],
+  logs: [{ level: "warn" }, { level: "error", service: "api" }, { q: "order" }, { page: "2", size: "5" }, { service: "orders" }, { level: "warn", exact: "1" }, { category: "api.app" }, { trace: "f".repeat(32) }, { user: "user-0" }, { user: "user-0", level: "warn" }],
   insights: [{ area: "database" }, { impact: "high" }, { q: "orders" }, { service: "api" }, { service: "Web App" }, { endpoint: "GET /api/orders/{id}" }, { service: "api", release: "1.0.0" }, { service: "api", release: "1.1.0" }],
   rendering: [{ q: "checkout" }, { q: "nothing" }],
-  errors: [{ q: "pay" }, { q: "TIMEOUT" }, { service: "api" }, { service: "Web App" }, { type: "TimeoutError" }, { critical: "1" }, { sort: "count" }, { page: "2", size: "2" }, { endpoint: "POST /api/pay" }, { endpoint: "nope" }, { service: "api", critical: "1", sort: "count" }, { service: "api", release: "1.0.0" }, { service: "api", release: "1.2.0", new: "1" }, { service: "api", release: "9.9" }],
+  errors: [{ q: "pay" }, { q: "TIMEOUT" }, { service: "api" }, { service: "Web App" }, { type: "TimeoutError" }, { critical: "1" }, { sort: "count" }, { page: "2", size: "2" }, { endpoint: "POST /api/pay" }, { endpoint: "nope" }, { service: "api", critical: "1", sort: "count" }, { service: "api", release: "1.0.0" }, { service: "api", release: "1.2.0", new: "1" }, { service: "api", release: "9.9" }, { user: "user-9" }, { user: "user-9", endpoint: "POST /api/pay" }],
   database: [{ service: "api" }, { service: "orders" }, { q: "orders" }, { q: "SELECT" }, { table: "items" }, { operation: "select" }, { operation: "INSERT" }, { database: "postgresql" }, { sort: "count" }, { sort: "total", page: "2", size: "5" }, { page: "99" }],
   overview: [{ from: String(SCENARIO_NOW - 3 * 3_600_000), to: String(SCENARIO_NOW - 3_600_000) }, { compare: "week" }, { service: "orders" }, { service: "api" }, { service: "Web App" }, { service: "nope" }],
   service: [{ service: "orders" }, { service: "Web App" }, { service: "nope" }],
+  users: [{}, { q: "user-1" }, { page: "2", size: "2" }],
+  user: [{ user: "user-9" }, { user: "user-0" }, { user: "nobody" }],
 };
 
 /** Params per page: the fixed ones, plus selections picked from the memory models (a trace, a service row, an insight). */

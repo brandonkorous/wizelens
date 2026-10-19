@@ -135,6 +135,14 @@ function pageNeeds(service: string | undefined): Need[] {
   ];
 }
 
+/** Groups the endpoint and user filters allow (both, when both are set); undefined for all. */
+function onlyKeys(f: ErrorFilter, first: NeedResults): string[] | undefined {
+  const byEndpoint = f.endpoint ? endpointGroupKeys(first) : undefined;
+  const byUser = f.user ? rowsOf(first, "user.groups").map((r) => splitKey(r.key)[0]!) : undefined;
+  if (byEndpoint && byUser) return byEndpoint.filter((k) => byUser.includes(k));
+  return byEndpoint ?? byUser;
+}
+
 /** The `group` parameter's group by key, so a link to an older or busier group than the list holds still opens it. */
 const selectedNeeds = (group: string | undefined) => (group ? [groupNeed("selected", "err.g", "cur", { top: true, ids: true, filter: { keys: [group] } })] : []);
 
@@ -144,13 +152,14 @@ export const errorsPage: PageDef<ErrorsModel> = {
     const f = errorFilterOf(ctx.params);
     const endpoint = f.endpoint ? [endpointGroupsNeed(f.endpoint)] : [];
     const releases = f.service ? [releasesNeed("rel.svc", f.service)] : [];
-    return uniqueNeeds([...selectedNeeds(ctx.params.group), ...pageNeeds(f.service || undefined), lifeNeed(f.service), ...endpoint, ...releases]);
+    const user = f.user ? [groupNeed("user.groups", "err.u", "cur", { filter: { parts: [null, f.user] }, order: { by: "n", desc: true, limit: 5000 } })] : [];
+    return uniqueNeeds([...selectedNeeds(ctx.params.group), ...pageNeeds(f.service || undefined), lifeNeed(f.service), ...endpoint, ...releases, ...user]);
   },
   // The list comes second: the status, "new", and endpoint filters pick its keys from the first answers.
   followUp(ctx, first) {
     const f = errorFilterOf(ctx.params);
     const bounds = firstSeenBounds(first, "rel.svc", f.release, f.fresh ? ctx.window.from : null);
-    return [errorListNeed(f, ctx.params, issueKeys(ctx, first, f.status, bounds, f.endpoint ? endpointGroupKeys(first) : undefined))];
+    return [errorListNeed(f, ctx.params, issueKeys(ctx, first, f.status, bounds, onlyKeys(f, first)))];
   },
   model(d) {
     const cards = cardsOf(d, "cur");

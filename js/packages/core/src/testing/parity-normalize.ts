@@ -48,7 +48,7 @@ const TIES: Record<string, (m: Obj) => void> = {
   },
   insights: (m) => {
     // Issue states are new; the legacy model had none.
-    for (const k of ["issues", "hasIssues", "releases"]) delete m[k];
+    for (const k of ["issues", "hasIssues", "releases", "selectedUsers"]) delete m[k];
   },
   overview: (m) => {
     // The compared period's line is new; the legacy model had none.
@@ -62,9 +62,9 @@ const TIES: Record<string, (m: Obj) => void> = {
     o.services = [...new Set(o.services.map((s) => (s === "browser" ? "Web App" : s)))].sort();
   },
   logs: (m) => {
-    // The exact level, category, and trace filters are new; the legacy filter had none.
+    // The exact level, category, trace, and user filters are new; the legacy filter had none.
     const f = m.filter as Obj;
-    for (const k of ["exact", "category", "traceId"]) delete f[k];
+    for (const k of ["exact", "category", "traceId", "user"]) delete f[k];
   },
   rendering: (m) => {
     // The route count is new; the legacy model had none.

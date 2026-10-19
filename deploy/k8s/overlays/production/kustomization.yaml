@@ -25,8 +25,8 @@ configMapGenerator:
       - WIZELENS_CLOUD_TRUST_PROXY=1
       # Settle in two worker threads; the pod has 2 CPUs.
       - WIZELENS_CLOUD_SETTLE_WORKERS=2
-      # Invite only until open sign-up is a product decision.
-      - WIZELENS_CLOUD_SIGNUP=invite
+      # Anyone can sign up from the pricing page; each new person gets their own organization.
+      - WIZELENS_CLOUD_SIGNUP=open
       - WIZELENS_CLOUD_MAIL_FROM=WizeLens Hello <hello@updates.wizelens.com>
       # The sending subdomain has no inbox, so replies go to the main address.
       - WIZELENS_CLOUD_MAIL_REPLY_TO=hello@wizelens.com

@@ -5,6 +5,7 @@ import { TraceCompare } from "./pages/trace/TraceCompare";
 import { AlertsPage } from "./pages/alerts/AlertsPage";
 import { SlosPage } from "./pages/slos/SlosPage";
 import { DashboardsPage } from "./pages/dashboards/DashboardsPage";
+import { UsersPage } from "./pages/users/UsersPage";
 import { AuthGate } from "./shell/auth/AuthGate";
 import { useData, useWindowed } from "./data/hooks";
 import { useHost } from "./data/host";
@@ -57,6 +58,7 @@ const PAGES: Record<Exclude<PageId, "trace" | "shared" | AuthPageId>, ComponentT
   alerts: AlertsPage,
   slos: SlosPage,
   dashboards: DashboardsPage,
+  users: UsersPage,
   team: TeamPage,
   account: AccountPage,
 };

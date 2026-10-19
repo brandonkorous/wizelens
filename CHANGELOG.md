@@ -24,6 +24,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   Entra ID, or another identity provider adds people as members and removes them when they are deactivated. Through Better
   Auth's SCIM plugin; every change goes to the audit log.
 - **Audit log export** as CSV or JSON (Team, Audit log).
+- **Users.** A Users page lists the signed-in users (`enduser.id`) by requests, with failures and latency; each user has a page
+  with their requests over time, the errors they hit, and their slowest and newest requests. Error groups, endpoints, and
+  insights show how many users they touched. Errors and Logs filter by user, like Requests.
 - **Search everywhere.** Requests, Traces, and Logs have the search box with autocomplete: free words filter as before, and
   `status:5xx duration:>1s @user.id:42` narrows the list to what the search finds. The Search page counts each kind and shows
   when the results happened. Ctrl+K also finds error groups, queries, insights, metrics, alerts, SLOs, saved views, and
