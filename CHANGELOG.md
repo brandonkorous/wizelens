@@ -12,7 +12,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   offline for more than a day hide behind "Show old hosts". The top menu counts services, not pods.
 - **Admins can forget offline hosts** in the cloud (`POST api/projects/{p}/services/forget`). Each service keeps its newest
   host, traces stay, and the audit log records it.
-
+- **The Ctrl+K backdrop covers the whole page.** It was inside the top bar, whose blur limited it to the top bar's box.
+- **Enter in the search box never picks a stale suggestion.** The list for the previous term stayed up while the new one
+  loaded, so a quick Enter replaced the word with an unrelated value.
 - **Pages no longer time out when counting is slow.** Every page asked for the project's trace and span counts and
   environments; on a busy database those scans filled all 10 Postgres connections. They are now shared for a minute
   (one scan per project at a time), and every query stops after 2 minutes.
@@ -79,6 +81,15 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   organization only. A read key gets only its own projects. `join=false` turns it off. Lists, stats, and alerts stay per project.
 - MCP `get_trace` and share links join the same way: a read key as far as its projects, a share link as far as its maker
   may read when it is opened (only the shared project once the maker leaves the organization).
+
+### Cloud MCP
+
+- **A read key for several projects connects**: before, the cloud MCP endpoint refused every call without `?project=`, so
+  an agent's tool link failed at start. Now `list_projects` names the key's projects, and every tool takes a `project`
+  argument (id or name). A key for one project, or `?project=`, works as before.
+- The cloud loads a project's recent traces only when a tool reads them, not on every MCP request.
+- Tests connect a real MCP client (initialize, tools/list, a call) to the cloud (also on ClickHouse), the hub, and the
+  Node and .NET add-ons.
 
 ### Cloud mail
 

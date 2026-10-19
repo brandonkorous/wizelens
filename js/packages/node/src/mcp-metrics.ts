@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { fmtMetric, type MetricDetail, type MetricsModel, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import { z } from "zod";
-import { type Audit, json, type McpDataSource, READ_ONLY } from "./mcp-shared.js";
+import { json, READ_ONLY, type Source } from "./mcp-shared.js";
 
 const POINTS = 12;
 const ALL_RANGES = Object.keys(TIME_RANGES) as TimeRange[];
@@ -42,22 +42,24 @@ function detailOf(d: MetricDetail) {
   };
 }
 
-function registerListMetrics(server: McpServer, data: McpDataSource, audit: Audit, ranges: [TimeRange, ...TimeRange[]]): void {
+function registerListMetrics(server: McpServer, src: Source, ranges: [TimeRange, ...TimeRange[]]): void {
   const inputSchema = {
+    ...src.arg,
     range: z.enum(ranges).optional().describe(`Time range. Default ${ranges.includes("1h") ? "1h" : ranges[0]}.`),
     service: z.string().optional().describe("Only this service."),
     q: z.string().optional().describe("Only metrics whose name has this text."),
   };
   const description = "List metrics (CPU, memory, GC, request rates, app metrics) with their newest values, and a runtime summary per service.";
   server.registerTool("list_metrics", { description, inputSchema, annotations: READ_ONLY }, async (args) => {
-    audit("list_metrics", args);
+    const data = await src.open("list_metrics", args);
     const range = args.range ?? (ranges.includes("1h") ? "1h" : ranges[0]);
     return json(catalogOf(await data.metrics!(range, { service: args.service ?? "", q: args.q ?? "" })));
   });
 }
 
-function registerGetMetric(server: McpServer, data: McpDataSource, audit: Audit, ranges: [TimeRange, ...TimeRange[]]): void {
+function registerGetMetric(server: McpServer, src: Source, ranges: [TimeRange, ...TimeRange[]]): void {
   const inputSchema = {
+    ...src.arg,
     name: z.string().min(1).describe("Metric name, for example process.cpu.utilization."),
     range: z.enum(ranges).optional().describe("Time range. Default 1h."),
     service: z.string().optional().describe("Only this service."),
@@ -66,7 +68,7 @@ function registerGetMetric(server: McpServer, data: McpDataSource, audit: Audit,
   };
   const description = "Get one metric over time: summary values and up to 12 points per line, formatted in its unit.";
   server.registerTool("get_metric", { description, inputSchema, annotations: READ_ONLY }, async (args) => {
-    audit("get_metric", args);
+    const data = await src.open("get_metric", args);
     const range = args.range ?? (ranges.includes("1h") ? "1h" : ranges[0]);
     const params = { metric: args.name, service: args.service ?? "", group: args.group ?? "", stat: args.stat ?? "" };
     const m = await data.metrics!(range, params);
@@ -75,9 +77,9 @@ function registerGetMetric(server: McpServer, data: McpDataSource, audit: Audit,
 }
 
 /** list_metrics and get_metric, when the data source has metrics. */
-export function registerMetricTools(server: McpServer, data: McpDataSource, audit: Audit): void {
-  if (!data.metrics) return;
-  const ranges = (data.metricRanges?.length ? data.metricRanges : ALL_RANGES) as [TimeRange, ...TimeRange[]];
-  registerListMetrics(server, data, audit, ranges);
-  registerGetMetric(server, data, audit, ranges);
+export function registerMetricTools(server: McpServer, src: Source): void {
+  if (!src.defaults.metrics) return;
+  const ranges = (src.defaults.metricRanges?.length ? src.defaults.metricRanges : ALL_RANGES) as [TimeRange, ...TimeRange[]];
+  registerListMetrics(server, src, ranges);
+  registerGetMetric(server, src, ranges);
 }
