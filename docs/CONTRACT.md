@@ -204,12 +204,13 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `metrics` | The host keeps metrics; the Metrics page appears | ✅ | ✅ | ✅ |
 | `serverMetrics` | The host computes the Metrics page itself (`api/models/metrics`). Without it, the browser reads `api/metrics/points` | | ✅ | ✅ |
 | `search` | The host answers the search language (`api/search`, `api/search/suggest`); the Search page and Ctrl+K use it. Without it, the browser searches the loaded traces | ✅ | ✅ | ✅ |
+| `infra` | The host answers `api/models/hosts` and `api/models/kubernetes` from OpenTelemetry Collector metrics (see "Hosts and Kubernetes"); the Hosts and Kubernetes pages appear | | ✅ | ✅ |
 | `changes` | The host streams `api/changes?project=` (server-sent events): an `event: data` line each time the project gets new stats, at most every 2 s (the hub: each settle round), and a comment every 25 s. The dashboard reloads the open page then, keeping the old numbers on screen until the new ones arrive | | ✅ | ✅ |
 | `issues` | The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. See "Issue states" below | | ✅ | ✅ |
 
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search"]`, plus `metrics` when metrics are on. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes", "issues"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "issues", "infra"]`. Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -283,6 +284,38 @@ same points in `IngestBatch.metrics`.
 | How long they are kept | `MetricsMaxAge` | `metricsMaxAgeMs` | 1 h |
 
 MCP: `list_metrics` (`range?`, `service?`, `q?`) and `get_metric` (`name`, `range?`, `service?`, `group?`, `stat?`), read-only.
+
+## Hosts and Kubernetes (phase 18)
+
+There is no WizeLens agent. The OpenTelemetry Collector (contrib) sends host and cluster metrics over OTLP; the recipe is
+`deploy/helm/wizelens-collector` (a DaemonSet with `kubeletstats`, `hostmetrics`, and an OTLP receiver; a one-replica
+Deployment with `k8s_cluster`; both with `k8sattributes`) and `deploy/collector/host.yaml` for one machine.
+
+**Ingest.** These resource attributes are copied onto every OTLP metric point, under the point's own (so one host, node,
+or pod is one series): `host.name`, `os.type`, `k8s.cluster.name`, `k8s.node.name`, `k8s.namespace.name`, `k8s.pod.name`,
+`k8s.container.name`, `k8s.deployment.name`, `k8s.statefulset.name`, `k8s.daemonset.name`, `k8s.job.name`,
+`k8s.cronjob.name`, and `k8s.container.status.last_terminated_reason` (`INFRA_RESOURCE_KEYS`). OTLP spans get the
+`k8s.cluster/node/namespace/pod/deployment/statefulset/daemonset` names the same way (`SPAN_RESOURCE_KEYS`), so a span links to
+its pod and node. A resource with no `service.name` but `host.name` or `k8s.*` attributes is the service `"infrastructure"`
+(`INFRA_SERVICE`) and is not written to the service registry. The sender gains `k8s?: { cluster?, namespace?, pod?, node? }`
+from the resource (add-ons may send it too), and its `host` falls back to `k8s.pod.name`, so each pod is its own registry row.
+
+**Read.** `infraSteps(dialect, scope, range, now, params)` reads the series of the metrics below over the window (totals and
+first and last values), plus 60 line buckets for the chosen host (`host`), node (`node`), or pod (`pod` = `namespace/name`)
+only; `infraDataOf(points, ...)` does the same from raw points. `hostsModelOf(data, registry)` and `kubeModelOf(data, registry)`
+build the pages; the registry gives the services on each host and in each pod (by host name, by `k8s.node`, by `k8s.pod`, or
+by a host name that is a pod's name). Other parameters: `q`, `cluster`, `ns`, `workload` (`namespace/Kind/name`), `service`.
+
+| Page | Metrics read |
+|---|---|
+| Hosts | `system.cpu.utilization` (or `system.cpu.time`), `system.cpu.logical.count`, `system.cpu.load_average.1m`, `system.memory.usage` / `.utilization`, `system.filesystem.usage` / `.utilization`, `system.disk.io`, `system.network.io` |
+| Kubernetes | `k8s.node.cpu.usage` (or `.utilization`), `k8s.node.memory.working_set`, `k8s.node.condition_ready`, `k8s.node.allocatable_cpu` / `_memory`, `k8s.node.network.io`, `k8s.pod.cpu.usage` (or `.utilization`), `k8s.pod.memory.working_set`, `k8s.pod.network.io`, `k8s.pod.phase`, `k8s.container.restarts` / `.ready` / `.memory_limit` / `.cpu_limit`, `k8s.deployment.desired` / `.available`, `k8s.statefulset.desired_pods` / `.ready_pods`, `k8s.daemonset.desired_scheduled_nodes` / `.ready_nodes`, `k8s.job.desired_successful_pods` / `.successful_pods` |
+
+CPU busy is 1 minus the average idle share per CPU. A pod's restarts are its containers' newest `k8s.container.restarts`;
+restarts in the range are the growth since the first point in the window. An out-of-memory kill is a container whose last
+exit reason is `OOMKilled`. A pending pod has `k8s.pod.phase` 1. A pod not reported within 5 minutes of the newest data is
+"Gone" and is not counted. Parity: `core/src/testing/infra-scenario.ts` (`INFRA_PARAM_SETS`) runs on memory, SQLite,
+Postgres, and ClickHouse.
 
 ## Redaction
 
@@ -483,6 +516,7 @@ interface IngestBatch {
 | POST | `/_wizelens/api/ingest` | `IngestBatch` |
 | POST | `/v1/traces`, `/v1/logs`, `/v1/metrics` | OTLP/HTTP, JSON or protobuf, optional gzip. Also under `/_wizelens/v1/...` |
 | GET | `/_wizelens/api/models/metrics` | The Metrics page: `range`, `project`, `env`, `service`, `metric`, `group`, `stat`, `q`. Read from the metric rollups (see "Metrics"), with no point cap |
+| GET | `/_wizelens/api/models/hosts`, `/_wizelens/api/models/kubernetes` | The Hosts and Kubernetes pages (see "Hosts and Kubernetes"): `range`, `project`, `env`, `host`, `node`, `pod`, `cluster`, `ns`, `workload`, `service`, `q` |
 | GET | `/_wizelens/api/models/{page}` | One page model (see "Page models"): `range`, `project`, `env`, and the page's own parameters. Ranges up to the hub's age limit. `serverStats` |
 | POST | `/_wizelens/mcp` | With `--mcp`. The same tools, over the newest 2000 traces of every service, plus `list_metrics`, `get_metric`, and `get_overview` |
 | GET | `/healthz` | `ok` |
@@ -499,7 +533,9 @@ Trace `remotes` that point at a service which sends to the hub are hidden, so th
 ### OTLP mapping
 
 - Resource `service.name` → service; `service.namespace` (or `wizelens.project`) → project;
-  `deployment.environment.name` (or `deployment.environment`) → environment; `host.name` → host.
+  `deployment.environment.name` (or `deployment.environment`) → environment; `host.name` (or `k8s.pod.name`) → host;
+  `k8s.cluster.name`, `k8s.namespace.name`, `k8s.pod.name`, `k8s.node.name` → `k8s`. Host and Kubernetes resource
+  attributes are copied onto metric points and spans (see "Hosts and Kubernetes").
 - Span kind, status, events, and attributes map one to one. Category uses the same rules as the add-ons.
 - Older attribute names are copied to the current ones when the current one is missing: `http.method`, `http.status_code`,
   `http.url`, `http.target`, `http.scheme`, `db.statement`, `db.system`, `db.name`, `db.operation`, `net.peer.name`, `net.peer.port`.
@@ -546,7 +582,7 @@ the rollups. Page answers are cached per page, parameters, scope, 10-second "now
 
 `@wizeworks/lens-cloud` (command `wizelens-cloud`, default port **5970**) is the hosted service. It serves the same dashboard,
 answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats",
-"metrics", "serverMetrics", "search", "changes", "issues"]`,
+"metrics", "serverMetrics", "search", "changes", "issues", "infra"]`,
 and keeps data in Postgres (`DATABASE_URL=postgres://...`). PGlite (`pglite:<folder>` or `memory`) runs the same SQL in-process,
 for tests and trials.
 

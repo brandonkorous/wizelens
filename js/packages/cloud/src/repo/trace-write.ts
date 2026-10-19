@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { ATTR_BROWSER_SESSION, logKey, PG_DIALECT, pruneStatements, seriesKeyOf, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_SESSION, INFRA_SERVICE, logKey, PG_DIALECT, pruneStatements, seriesKeyOf, type Span } from "@wizeworks/lens-core";
 import type { HubWrite } from "@wizeworks/lens-hub/kit";
 import type { Db, Queryable } from "../db/db.js";
 import { runStatements, stateOf, type TraceStateRow } from "../settle.js";
@@ -40,6 +40,8 @@ function traceRows(w: HubWrite, projectId: string, now: number): unknown[][] {
 /** Record the sender in the project's service registry (Postgres, whatever keeps the telemetry). */
 export async function writeService(q: Queryable, projectId: string, w: HubWrite, now: number): Promise<void> {
   const s = w.sender;
+  // The collector's host and Kubernetes receivers are not a service.
+  if (s.service === INFRA_SERVICE) return;
   await q.query(
     `INSERT INTO services (project_id, service, environment, host, via, info, first_seen, last_seen) VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
      ON CONFLICT (project_id, service, environment, host) DO UPDATE SET via = EXCLUDED.via, info = EXCLUDED.info, last_seen = EXCLUDED.last_seen`,

@@ -9,6 +9,12 @@ WizeLens runs on the shared sparx AKS cluster (`aks-sparx-prod-cus`, group `rg-s
 | `app.wizelens.com` | WizeLens Cloud | `cloud` |
 | `mcp.wizelens.com` | Cloud's MCP endpoint and its OAuth metadata (`/`, `/mcp`, `/.well-known/*`); sign-in stays on `app` | `cloud` |
 
+## Collector recipe for users
+
+`helm/wizelens-collector` and `collector/host.yaml` are not part of this deployment. They are the OpenTelemetry Collector
+recipe that users run to send host and Kubernetes metrics to a hub or the cloud (see `site/content/docs/kubernetes.md`).
+The workflow does not apply them.
+
 ## Where each piece lives
 
 | Piece | Where |

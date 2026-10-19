@@ -2,7 +2,7 @@
 import { PG_DIALECT, searchSql, suggestSql, type TimeWindow } from "@wizeworks/lens-core";
 import type { Db } from "../db/db.js";
 import { ensureTrigram } from "../db/trigram.js";
-import { loadMetricAlertData, loadMetricData } from "../repo/metric-read.js";
+import { loadInfraData, loadMetricAlertData, loadMetricData } from "../repo/metric-read.js";
 import { METRIC_TABLES } from "../repo/metric-write.js";
 import { getJoinedTrace } from "../repo/trace-join.js";
 import { countRows, getTrace, queryTraces, traceEnvsPg } from "../repo/trace-read.js";
@@ -63,6 +63,7 @@ export function pgTelemetry(db: Db): TelemetryStore {
     slowestEndpoints: (projectId, w, minCount, limit) => slowestEndpoints(db, projectId, w, minCount, limit),
     metricData: (m, range, params, now) => loadMetricData(db, m, range, params, now),
     metricAlertData: (m, name, w, now) => loadMetricAlertData(db, m, name, w, now),
+    infraData: (m, range, params, now) => loadInfraData(db, m, range, params, now),
     async settle(now, o) {
       await reset.catch(() => (startReset(), reset));
       return settleCloud(db, now, o);

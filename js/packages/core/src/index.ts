@@ -18,3 +18,4 @@ export * from "./models/index.js";
 export * from "./metrics/index.js";
 export * from "./scale/index.js";
 export * from "./search/index.js";
+export * from "./infra/index.js";

@@ -1,0 +1,73 @@
+# Where to send: WizeLens Cloud (https://app.wizelens.com) or a hub (for example http://wizelens-hub.wizelens:5960).
+# The collector adds /v1/metrics, /v1/traces, and /v1/logs.
+endpoint: https://app.wizelens.com
+
+# A cloud ingest key (wl_ik_...), or the hub's token. Leave empty for a hub without a token.
+ingestKey: ""
+
+# Read the key from a Secret you made yourself instead (kubectl create secret generic wizelens-ingest --from-literal=ingest-key=wl_ik_...).
+existingSecret:
+  name: ""
+  key: ingest-key
+
+# Shown as k8s.cluster.name on every node, pod, and workload. Set it when one project holds more than one cluster.
+clusterName: ""
+
+# deployment.environment.name for everything this collector sends (the environment picker). Empty leaves it unset.
+environment: ""
+
+# wizelens.project, for a hub that holds several projects. The cloud takes the project from the ingest key.
+project: ""
+
+image:
+  repository: otel/opentelemetry-collector-contrib
+  tag: "0.137.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# One collector per node (DaemonSet): node, pod, and container usage from the kubelet, the node's own host metrics,
+# and OTLP from apps on that node (each span gets its pod, node, and workload).
+agent:
+  enabled: true
+  # CPU, memory, disk, and network of each node, for the Hosts page.
+  hostMetrics: true
+  collectionInterval: 30s
+  # Talk to the kubelet over its address instead of the node name, for clusters where node names do not resolve.
+  kubeletUseNodeIp: false
+  # The kubelet's serving certificate is often self-signed.
+  kubeletInsecureSkipVerify: true
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 512Mi }
+  # The collector starts refusing data past this many MiB; keep it below the memory limit.
+  memoryLimitMib: 400
+  tolerations:
+    - operator: Exists
+  nodeSelector: {}
+  priorityClassName: ""
+  podAnnotations: {}
+
+# One collector for the whole cluster (Deployment): pod phases, restarts, out-of-memory kills, node conditions,
+# and workload desired and ready counts.
+cluster:
+  enabled: true
+  collectionInterval: 30s
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 512Mi }
+  memoryLimitMib: 400
+  tolerations: []
+  nodeSelector: {}
+  priorityClassName: ""
+  podAnnotations: {}
+
+# A Service in front of the agents that keeps traffic on the node, so apps can send OTLP to
+# http://<release>-wizelens-collector-agent.<namespace>:4318 and their spans get their pod and node.
+otlpService:
+  enabled: true

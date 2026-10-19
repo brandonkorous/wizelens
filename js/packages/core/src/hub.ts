@@ -22,9 +22,18 @@ export interface HubSender {
   runtime?: string;
   environment?: string;
   host?: string;
+  /** Where it runs in Kubernetes, from the OTLP resource (k8s.* attributes). */
+  k8s?: HubSenderK8s;
   /** The add-on's own WizeLens URL, when it has one. The hub skips it when it federates. */
   endpoint?: string;
   startedMs?: number;
+}
+
+export interface HubSenderK8s {
+  cluster?: string;
+  namespace?: string;
+  pod?: string;
+  node?: string;
 }
 
 /** One log line and the trace it belongs to. */

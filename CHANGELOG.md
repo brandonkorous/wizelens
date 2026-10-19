@@ -12,6 +12,17 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   start of the range. On the cloud, a group can be **assigned** to a member, and each change writes an audit line.
   Insights get the same: **Mark fixed** and **Dismiss**. The Overview has a "New and Regressed Errors" panel. The hub
   and the cloud keep these states; in-app add-ons show no actions.
+- **Hosts and Kubernetes, with no WizeLens agent.** Run the standard OpenTelemetry Collector with the new recipe: the Helm
+  chart `deploy/helm/wizelens-collector` (a DaemonSet that reads the kubelet, the node's own host metrics, and your apps'
+  OTLP; a Deployment that reads the cluster; RBAC; values for the endpoint, the ingest key, and the cluster name), or
+  `deploy/collector/host.yaml` for one machine. It sends to a hub or the cloud. The new **Hosts** page shows CPU, memory,
+  the fullest disk, and network per host, with the services on each, and a page per host with charts, file systems,
+  services, and pods. The new **Kubernetes** page shows ready nodes, pods, pending pods, restarts in the range, and
+  out-of-memory kills, with Pods, Workloads, and Nodes lists, filters for cluster and namespace, and a page per pod
+  (containers, restarts, last exits) and per node. A span with `k8s.pod.name` links to its pod and node, and a service's
+  page lists its pods and the hosts it runs on. OTLP metrics and spans now keep their resource's host and Kubernetes names;
+  resources with no service name are filed as "infrastructure" and stay out of the service list. Same numbers on the hub
+  (SQLite) and the cloud (Postgres and ClickHouse). Docs: [Hosts and Kubernetes](https://wizelens.com/docs/kubernetes/).
 - **A page for each error, endpoint, query, and page route.** An error shows its count over time, its endpoints, the users
   and browsers of its newest occurrences, the stack, and those occurrences. An endpoint shows requests, errors, and
   p50/p95/p99 over time, the queries it runs, what it calls, its errors, and its slowest requests. A query shows its runs
@@ -36,6 +47,7 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   40-developer company with its sources, and pricing questions. Linked from the top bar, the footer, and the Cloud page.
   The cloud docs have a new "Plans and billing" section: what a GB is, the Free cap's HTTP 429, the spend cap, history
   per plan, and that billing is off when you self-host.
+
 - **Connect Claude to WizeLens Cloud with a sign-in, not a key.** Add `https://mcp.wizelens.com` to Claude (Settings →
   Connectors), Claude Code, Cursor, or any MCP client. It opens the WizeLens sign-in, and you pick one organization and
   either all its projects (also later ones) or only some. The app gets read-only access that renews on its own, so a
