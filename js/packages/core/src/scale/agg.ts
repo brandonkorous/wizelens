@@ -43,6 +43,12 @@ export function withServices(c: Contribution, services: readonly string[]): Cont
 }
 
 /** One item's contribution: n = 1 and nothing else unless given. */
+/** A top rank for "the slowest": the duration, plus under 0.0001 ms that is larger for a lower trace id. Equal durations then never tie, so every store keeps the same trace. */
+export function slowestRank(durationMs: number, traceId: string): number {
+  const id = Number.parseInt(traceId.slice(0, 13), 16);
+  return durationMs + (Number.isFinite(id) ? 1 - id / 2 ** 52 : 0) * 1e-4;
+}
+
 export const contribution = (kind: RollupKind, key: string, timeMs: number, over: Partial<Contribution> = {}): Contribution => ({ kind, key, timeMs, n: 1, err: 0, sum: 0, ...over });
 
 export const zeroCounters = (): number[] => new Array<number>(COUNTER_SLOTS).fill(0);

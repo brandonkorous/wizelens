@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addContribution, type Agg, contribution, emptyAgg, mergeAgg, subtractAgg, trimAgg } from "./agg.js";
+import { addContribution, type Agg, contribution, emptyAgg, mergeAgg, slowestRank, subtractAgg, trimAgg } from "./agg.js";
 import { KIND_SPEC } from "./kinds.js";
 
 const spec = KIND_SPEC["err.g"];
@@ -42,5 +42,15 @@ describe("aggregates", () => {
     expect(trimAgg(a, {})).toMatchObject({ hist: null, top: null, topRank: 0, ids: [], firstMs: 10, lastMs: 10 });
     expect(trimAgg(a, { hist: true, top: true, times: false })).toMatchObject({ top: "a", topRank: 10, firstMs: 0, lastMs: 0 });
     expect(trimAgg(emptyAgg(), {})).toMatchObject({ firstMs: 0, lastMs: 0 });
+  });
+});
+
+describe("slowestRank", () => {
+  it("breaks a tie between equally slow calls by the lower trace id, and never reorders different durations", () => {
+    const low = slowestRank(120, "5c000002eeeeeeeeeeeeeeeeeeeeeeee");
+    const high = slowestRank(120, "5c001002eeeeeeeeeeeeeeeeeeeeeeee");
+    expect(low).toBeGreaterThan(high);
+    expect(slowestRank(120.001, "ffffffffffffffffffffffffffffffff")).toBeGreaterThan(slowestRank(120, "00000000000000000000000000000000"));
+    expect(slowestRank(120, "not-hex")).toBe(120);
   });
 });
