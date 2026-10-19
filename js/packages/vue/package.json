@@ -1,0 +1,52 @@
+{
+  "name": "@wizeworks/lens-vue",
+  "version": "0.3.0-alpha.3",
+  "description": "WizeLens for Vue 3 apps: a plugin that links browser calls to server traces, sends page views from vue-router, and reports component errors.",
+  "license": "MIT",
+  "author": "WizeWorks LLC",
+  "homepage": "https://github.com/brandonkorous/wizelens#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brandonkorous/wizelens.git",
+    "directory": "js/packages/vue"
+  },
+  "bugs": {
+    "url": "https://github.com/brandonkorous/wizelens/issues"
+  },
+  "keywords": [
+    "wizelens",
+    "vue",
+    "vue-router",
+    "tracing",
+    "web-vitals",
+    "profiler"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@wizeworks/lens-browser": "workspace:^"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

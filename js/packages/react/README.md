@@ -23,4 +23,6 @@ import { WizeLensProvider } from "@wizeworks/lens-react";
 | `capturePages` | `true` | Send page views, React render stats, and browser errors. |
 | `captureConsole` | `true` | Copy `console.log`, `info`, `warn`, `error`, `debug`, and `trace` calls into the page view's trace (at most 500 per page). |
 
+The browser capture itself (fetch, page views, Web Vitals, errors, console) lives in [@wizeworks/lens-browser](https://github.com/brandonkorous/wizelens/tree/main/js/packages/browser), which this package builds on. Not using React? See that package, or the Vue, Angular, and Svelte packages.
+
 MIT licensed.

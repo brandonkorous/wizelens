@@ -1,7 +1,7 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
-import { setBrowserRelease } from "./browser-span.js";
+import { type RecordedRequest, type Recorder, setBrowserRelease } from "@wizeworks/lens-browser";
 import { Hud } from "./Hud.js";
-import { createRecorder, type RecordedRequest, type Recorder } from "./recorder.js";
+import { createRecorder } from "./react-capture.js";
 
 const WizeLensContext = createContext<Recorder | null>(null);
 

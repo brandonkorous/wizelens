@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { HUD_CSS } from "./hud-style.js";
-import { createPageMonitor, EMPTY_PAGE_STATS, type PageStats } from "./page.js";
+import { createPageMonitor, EMPTY_PAGE_STATS, type PageStats } from "@wizeworks/lens-browser";
 
 const STYLE_ID = "wizelens-hud-style";
 

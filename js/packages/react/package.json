@@ -46,6 +46,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@wizeworks/lens-browser": "workspace:^",
     "@wizeworks/lens-core": "workspace:^"
   },
   "peerDependencies": {

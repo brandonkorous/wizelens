@@ -1,4 +1,5 @@
-import type { Timing, Trace, TraceView } from "@wizeworks/lens-core";
+import type { Attributes, Timing, Trace, TraceView } from "@wizeworks/lens-core";
+import type { FrameworkHooks } from "./framework.js";
 
 export interface RecordedRequest {
   /** Browser span id. */
@@ -68,6 +69,10 @@ export interface RecorderOptions {
   version?: string;
   /** Read this page's source maps (dev servers serve them) so browser errors group by source. Default true. */
   resolveFrames?: boolean;
+  /** Trace `XMLHttpRequest` calls too (Angular's HttpClient, axios). Default true; the React package leaves it off. */
+  captureXhr?: boolean;
+  /** Render stats and timings from a UI framework. The React package sets this. Default none. */
+  framework?: FrameworkHooks;
 }
 
 export interface Recorder {
@@ -90,5 +95,9 @@ export interface Recorder {
   loadTrace(traceId: string): Promise<Trace | null>;
   /** Link to the dashboard page for one trace. `view` opens one part of it, for example "sql". */
   traceLink(traceId: string, view?: TraceView): string;
+  /** Start a route-change page view for `url` (default: the current location). Needs page capture and `install()`. */
+  pageView(url?: string): void;
+  /** Send an error in the current page view's trace. Needs page capture and `install()`. */
+  captureError(error: unknown, attributes?: Attributes): void;
   clear(): void;
 }

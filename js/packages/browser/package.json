@@ -1,0 +1,64 @@
+{
+  "name": "@wizeworks/lens-browser",
+  "version": "0.3.0-alpha.3",
+  "description": "WizeLens for any web page: links browser fetch and XHR calls to server traces, and sends page views, Web Vitals, errors, and console lines. No framework needed.",
+  "license": "MIT",
+  "author": "WizeWorks LLC",
+  "homepage": "https://github.com/brandonkorous/wizelens#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brandonkorous/wizelens.git",
+    "directory": "js/packages/browser"
+  },
+  "bugs": {
+    "url": "https://github.com/brandonkorous/wizelens/issues"
+  },
+  "keywords": [
+    "wizelens",
+    "browser",
+    "tracing",
+    "web-vitals",
+    "rum",
+    "profiler"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/wizelens.iife.js",
+  "jsdelivr": "./dist/wizelens.iife.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./script": {
+      "types": "./dist/script.d.ts",
+      "import": "./dist/wizelens.js"
+    },
+    "./wizelens.iife.js": "./dist/wizelens.iife.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "./dist/script.js",
+    "./dist/wizelens.js",
+    "./dist/wizelens.iife.js"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@wizeworks/lens-core": "workspace:^"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

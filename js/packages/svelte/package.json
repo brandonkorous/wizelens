@@ -1,0 +1,52 @@
+{
+  "name": "@wizeworks/lens-svelte",
+  "version": "0.3.0-alpha.3",
+  "description": "WizeLens for Svelte and SvelteKit apps: links browser calls to server traces, and sends page views and errors from hooks.client.ts and afterNavigate.",
+  "license": "MIT",
+  "author": "WizeWorks LLC",
+  "homepage": "https://github.com/brandonkorous/wizelens#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brandonkorous/wizelens.git",
+    "directory": "js/packages/svelte"
+  },
+  "bugs": {
+    "url": "https://github.com/brandonkorous/wizelens/issues"
+  },
+  "keywords": [
+    "wizelens",
+    "svelte",
+    "sveltekit",
+    "tracing",
+    "web-vitals",
+    "profiler"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@wizeworks/lens-browser": "workspace:^"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

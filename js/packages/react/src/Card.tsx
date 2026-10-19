@@ -1,9 +1,8 @@
 import { type ReactNode, useId } from "react";
 import type { TraceView } from "@wizeworks/lens-core";
-import { fmtMs, plural, type RequestView } from "./hud-model.js";
+import { fmtMs, plural, type RecordedRequest, type RequestView } from "@wizeworks/lens-browser";
 import { IconBolt, IconChevron, IconGear, IconMinimize } from "./icons.js";
 import { type Panel, StackBar, statusPill } from "./panel-parts.js";
-import type { RecordedRequest } from "./recorder-types.js";
 import { DbTip, RenderTip, ServerTip, TotalTip } from "./tips.js";
 
 export interface CardProps {

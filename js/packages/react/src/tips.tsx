@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
-import { fmtMs, pct, type RequestView } from "./hud-model.js";
+import { fmtMs, pct, type RecordedRequest, type RequestView } from "@wizeworks/lens-browser";
 import { DashLink } from "./panel-parts.js";
-import type { RecordedRequest } from "./recorder-types.js";
 
 type Parts = NonNullable<NonNullable<RecordedRequest["server"]>["parts"]>;
 

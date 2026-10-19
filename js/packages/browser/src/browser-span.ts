@@ -10,9 +10,16 @@ import {
   VERSION_ATTR,
 } from "@wizeworks/lens-core";
 
+// OTel name of the signed-in user. The add-ons put it on server spans too.
+const ATTR_ENDUSER = "enduser.id";
+
 /** The web app's version, put on every browser span as `service.version`. */
 let release: string | undefined;
 export const setBrowserRelease = (v: string | undefined): void => void (release = v?.trim().slice(0, 50) || undefined);
+
+/** The signed-in user, put on every browser span as `enduser.id`. */
+let user: string | undefined;
+export const setBrowserUser = (id: string | null | undefined): void => void (user = id?.trim().slice(0, 200) || undefined);
 
 /** The page view a browser span belongs to. */
 export interface ViewRef {
@@ -62,6 +69,7 @@ export function browserSpan(i: BrowserSpanInput): Span {
       [ATTR_BROWSER_SESSION]: i.sessionId,
       [ATTR_BROWSER_ROUTE]: i.route,
       ...(release ? { [VERSION_ATTR]: release } : {}),
+      ...(user ? { [ATTR_ENDUSER]: user } : {}),
     },
     events: i.events ?? [],
   };

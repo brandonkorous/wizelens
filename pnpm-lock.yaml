@@ -11,6 +11,35 @@ importers:
 
   .: {}
 
+  js/packages/angular:
+    dependencies:
+      '@wizeworks/lens-browser':
+        specifier: workspace:^
+        version: link:../browser
+    devDependencies:
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: ^5.0.5
+        version: 5.0.5(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(vite@8.3.4(@types/node@24.19.2))
+
+  js/packages/browser:
+    dependencies:
+      '@wizeworks/lens-core':
+        specifier: workspace:^
+        version: link:../core
+    devDependencies:
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+      vite:
+        specifier: ^8.3.4
+        version: 8.3.4(@types/node@24.19.2)
+      vitest:
+        specifier: ^5.0.5
+        version: 5.0.5(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(vite@8.3.4(@types/node@24.19.2))
+
   js/packages/cli:
     dependencies:
       '@wizeworks/lens-core':
@@ -296,6 +325,9 @@ importers:
 
   js/packages/react:
     dependencies:
+      '@wizeworks/lens-browser':
+        specifier: workspace:^
+        version: link:../browser
       '@wizeworks/lens-core':
         specifier: workspace:^
         version: link:../core
@@ -312,6 +344,19 @@ importers:
       react-dom:
         specifier: ^19.3.1
         version: 19.3.1(react@19.3.1)
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: ^5.0.5
+        version: 5.0.5(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(vite@8.3.4(@types/node@24.19.2))
+
+  js/packages/svelte:
+    dependencies:
+      '@wizeworks/lens-browser':
+        specifier: workspace:^
+        version: link:../browser
+    devDependencies:
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
@@ -366,6 +411,19 @@ importers:
       vite:
         specifier: ^8.3.4
         version: 8.3.4(@types/node@24.19.2)
+
+  js/packages/vue:
+    dependencies:
+      '@wizeworks/lens-browser':
+        specifier: workspace:^
+        version: link:../browser
+    devDependencies:
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: ^5.0.5
+        version: 5.0.5(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(vite@8.3.4(@types/node@24.19.2))
 
   samples/auto-node:
     dependencies:

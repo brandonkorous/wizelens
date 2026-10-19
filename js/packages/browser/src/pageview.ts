@@ -1,11 +1,13 @@
-import { type Attributes, ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_REMOTE, ATTR_PAGE, newSpanId, newTraceId, type Span } from "@wizeworks/lens-core";
-import { browserSpan, currentRoute, round1, type ViewRef } from "./browser-span.js";
+import { type Attributes, ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_REMOTE, ATTR_PAGE, newSpanId, newTraceId, pathShape, type Span } from "@wizeworks/lens-core";
+import { browserSpan, round1, type ViewRef } from "./browser-span.js";
 import type { ImageInfo } from "./images.js";
 import { clsFromShifts, type NavPoints, type Shift } from "./vitals.js";
 
 /** One page view: a full load or a client-side route change. Times are ms from navigation start. */
 export interface PageView extends ViewRef {
   navigation: "load" | "spa";
+  /** The path the view is for, "/products/42". A route change to the same path is not a new view. */
+  path: string;
   /** Epoch ms. */
   startMs: number;
   /** ms from navigation start. 0 for a full load. */
@@ -17,20 +19,38 @@ export interface PageView extends ViewRef {
   lcpMs: number | null;
   inpMs: number | null;
   hydrationMs: number | null;
-  /** Route change to the next paint after React rendered it. Spa views only. */
+  /** Route change to the next paint after the framework rendered it. Spa views only. */
   renderMs: number | null;
   /** The WizeLens endpoint of the server that rendered this page. Full loads only. */
   remote: string | null;
   sent: boolean;
 }
 
-export function newPageView(navigation: PageView["navigation"], startRel: number, bfcache = false): PageView {
+// `url` (default: the current location) resolved against the page. No page and no url: path "/" and an empty href.
+function resolveUrl(url?: string): { path: string; href: string } {
+  const page = typeof location !== "undefined" ? location.href : null;
+  if (url === undefined && page === null) return { path: "/", href: "" };
+  try {
+    const u = new URL(url ?? page!, page ?? "http://localhost/");
+    return { path: u.pathname, href: u.href };
+  } catch {
+    return { path: url ?? "/", href: url ?? "" };
+  }
+}
+
+/** The path of `url` (default: the current location), "/products/42". */
+export const pathOf = (url?: string): string => resolveUrl(url).path;
+
+/** A new view of `url` (default: the current location). A router in hash mode passes its own path here. */
+export function newPageView(navigation: PageView["navigation"], startRel: number, bfcache = false, url?: string): PageView {
+  const { path, href } = resolveUrl(url);
   return {
     traceId: newTraceId(),
     spanId: newSpanId(),
-    route: currentRoute(),
-    url: typeof location !== "undefined" ? location.href : "",
+    route: pathShape(path),
+    url: href,
     navigation,
+    path,
     startMs: (typeof performance !== "undefined" ? performance.timeOrigin : Date.now()) + startRel,
     startRel,
     bfcache,

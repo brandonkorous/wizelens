@@ -1,8 +1,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import type { Trace, TraceView } from "@wizeworks/lens-core";
-import type { RequestView } from "./hud-model.js";
+import type { RecordedRequest, Recorder, RequestView } from "@wizeworks/lens-browser";
 import { IconClose, IconExternal } from "./icons.js";
-import type { RecordedRequest, Recorder } from "./recorder-types.js";
 
 /** The HUD shows small panels only. The full detail is the dashboard, in a new tab. */
 export type Panel = "details" | "settings";

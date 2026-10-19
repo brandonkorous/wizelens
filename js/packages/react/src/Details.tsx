@@ -1,9 +1,7 @@
 import { type ReactNode, useMemo } from "react";
 import { analyzeTrace, type Finding, type FindingKind, type Trace, type TraceView, traceTiming } from "@wizeworks/lens-core";
-import { fmtMs, pct, type RequestView } from "./hud-model.js";
-import type { PageStats } from "./page.js";
+import { fmtMs, type PageStats, pct, type RecordedRequest, type Recorder, type RequestView } from "@wizeworks/lens-browser";
 import { DashLink, dashboardLink, NoServerData, PanelBar, StackBar, statusPill, useTrace } from "./panel-parts.js";
-import type { RecordedRequest, Recorder } from "./recorder-types.js";
 import { Waterfall, waterfallRows } from "./waterfall.js";
 
 const FINDING_LABEL: Record<FindingKind, string> = {
