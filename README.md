@@ -384,6 +384,7 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 | `redactKeys` | see above | Key fragments whose values are redacted. |
 | `tags` | none | `{ rules: [{ name, query, color? }], disableBuiltIns: ["bot"] }`: tag rules for the dashboard, and built-in tags to turn off. A bad rule throws at start. See Tags. |
 | `instrumentFetch` | `true` | Trace outgoing `fetch` / undici calls. |
+| `instrumentHttp` | `true` | Trace outgoing `node:http` / `node:https` calls (axios, got, node-fetch v2, AWS SDK). |
 | `traceQueriesOutsideRequests` | `false` | Database adapters also trace queries outside a request. |
 | `publicEndpoint` | auto | Override `X-WizeLens-Endpoint` (useful behind proxies). |
 | `audit` | `console.info` | Where MCP audit lines go. |

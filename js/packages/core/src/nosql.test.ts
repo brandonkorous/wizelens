@@ -27,6 +27,13 @@ describe("NoSQL calls in request analysis", () => {
     expect(kinds(sets)).toEqual(["n+1-db"]);
   });
 
+  it("never counts transaction or cursor commands as N+1, and never calls NoSQL calls with no values duplicates", () => {
+    expect(kinds(Array.from({ length: 5 }, (_, i) => call("redis", "MULTI", "MULTI", `m${i}`, 10 + i)))).toEqual([]);
+    expect(kinds(Array.from({ length: 5 }, (_, i) => call("mongodb", "getMore orders", "getMore", `g${i}`, 10 + i)))).toEqual([]);
+    const search = (t: number) => makeSpan({ category: "db", startMs: t, durationMs: 1, attributes: { "db.system.name": "elasticsearch", "db.query.text": "POST /orders/_search", "db.operation.name": "search" } });
+    expect(kinds([search(10), search(20)])).toEqual([]);
+  });
+
   it("keeps SQL with placeholders and no parameters out of the duplicate check", () => {
     const sql = (t: number) => makeSpan({ category: "db", startMs: t, durationMs: 1, attributes: { "db.query.text": "SELECT * FROM a WHERE id = ?" } });
     expect(kinds([sql(10), sql(20)])).toEqual([]);

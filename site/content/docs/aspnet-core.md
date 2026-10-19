@@ -27,6 +27,9 @@ with no code: see [Install with no code change](/docs/auto-install/).
 | EF Core | `dotnet add package WizeLens.EntityFrameworkCore --prerelease`, then `options.UseSqlServer(cs).UseWizeLens()` |
 | Npgsql, MySqlConnector, Microsoft.Data.SqlClient | Nothing. WizeLens listens to them. |
 | Dapper, or any other ADO.NET provider | Wrap the connection: `new ProfiledDbConnection(new SqliteConnection(cs))` |
+| Redis (StackExchange.Redis) | `dotnet add package WizeLens.Redis --prerelease`, then `ConnectionMultiplexer.Connect(cs).UseWizeLens()` |
+| MongoDB (MongoDB.Driver 3) | `dotnet add package WizeLens.MongoDB --prerelease`, then `new MongoClient(MongoClientSettings.FromConnectionString(cs).UseWizeLens())` |
+| Elasticsearch (Elastic.Clients.Elasticsearch 8.10+) | `dotnet add package WizeLens.Elasticsearch --prerelease`, then `builder.Services.AddWizeLensElasticsearch()` before `builder.Build()` |
 
 ```csharp
 using WizeLens.EntityFrameworkCore;
@@ -42,6 +45,13 @@ var rows = await db.QueryAsync<Order>("SELECT * FROM Orders WHERE CustomerId = @
 ```
 
 An ORM and the driver under it never count the same query twice.
+
+Redis, MongoDB, and Elasticsearch calls join the trace of the request that sent them, so they show on the **Database** page
+and in the N+1, duplicate, and slow query insights: `GET user:?`, `{"find":"orders","filter":{"customerId":?}}`, or
+`GET /orders/_doc/?`. WizeLens never stores Redis values, MongoDB filter values, or Elasticsearch bodies; two reads with the
+same values are found by a one-way fingerprint. Redis `MULTI`, `EXEC`, and `PING`, and MongoDB cursor batches (`getMore`), are
+never N+1. The Elasticsearch HTTP call under each request is not counted twice. `WizeLens.Redis` uses the multiplexer's
+profiler, so it replaces any other profiler on the same multiplexer. Calls outside a request are not recorded.
 
 ## gRPC and messaging
 

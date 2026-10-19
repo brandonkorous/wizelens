@@ -8,6 +8,19 @@ export const isNoSqlSpan = (s: Span): boolean => NOSQL_SYSTEMS.has(String(s.attr
 
 const words = (list: string): Set<string> => new Set(list.split(/\s+/).filter(Boolean));
 
+// Connection, transaction, and cursor commands: their repeats are by design, not N+1 (the same lists as the .NET add-on).
+const SESSION_COMMANDS: Record<string, Set<string>> = {
+  redis: words("multi exec discard watch unwatch select auth ping echo hello client quit reset readonly readwrite asking"),
+  valkey: words("multi exec discard watch unwatch select auth ping echo hello client quit reset readonly readwrite asking"),
+  mongodb: words("getmore killcursors endsessions committransaction aborttransaction"),
+};
+
+/** True for a NoSQL call that only manages the connection, a transaction, or a cursor. */
+export function isNoSqlSession(s: Span): boolean {
+  const set = SESSION_COMMANDS[String(s.attributes["db.system.name"] ?? "").toLowerCase()];
+  return !!set && set.has(String(s.attributes["db.operation.name"] ?? "").toLowerCase());
+}
+
 // Redis commands, MongoDB methods, and Elasticsearch APIs, lower case, by the SQL operation they are closest to.
 const READS = words(`find findone aggregate count countdocuments estimateddocumentcount distinct getmore search msearch get mget exists explain scroll
   search_template field_caps hget hmget hgetall hkeys hvals hlen hexists hstrlen smembers sismember smismember scard srandmember sinter sunion sdiff

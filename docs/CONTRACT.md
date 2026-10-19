@@ -453,6 +453,16 @@ The Errors model takes `status` (`unresolved` by default, `resolved`, `ignored`,
 range), and returns `issues` (status, first seen over all kept data, new, assignee) and `hasIssues`. The Insights model
 takes `status` the same way. The Overview model returns `freshErrors`, the newest new and regressed groups.
 
+## NoSQL calls
+
+Redis, MongoDB, and Elasticsearch calls are `db` spans with `db.system.name` redis, mongodb, or elasticsearch,
+`db.operation.name`, and `db.query.text` with ids and values as `?` (Redis `GET user:?`, Mongo `find orders {"status":?}` from
+Node or the command JSON from .NET, Elasticsearch `GET /orders/_doc/?`). Values are never stored. `wizelens.db.fingerprint`
+(Node) or `wizelens.db.parameters` = `{"fingerprint":…}` (.NET) is a per-process salted hash of the values: the duplicate check
+groups by parameters, then fingerprint. A NoSQL call with neither is never a duplicate. Redis connection and transaction commands
+(MULTI, EXEC, PING, SELECT…) and MongoDB cursor and session commands (getMore, killCursors, commitTransaction…) are session
+statements, never N+1; a Redis SET is not. On the Database page NoSQL operations map to SELECT, INSERT, UPDATE, DELETE, or OTHER.
+
 ## Project settings
 
 Hosts with the `settings` capability keep per project: `slowQueryMs`, `nPlusOneThreshold`, `redactKeys` (added to the

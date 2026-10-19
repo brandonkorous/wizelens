@@ -28,8 +28,33 @@ the same with no code: see [Install with no code change](/docs/auto-install/).
 | Hono (Node) | `app.use(wizelensHono(wizelens))` first |
 | Plain `node:http` | `if (await wizelens.handler(req, res)) return;` for the dashboard, and `traceDb()` for queries |
 | Next.js | `instrumentation.ts`, see [Next.js](/docs/nextjs/) |
+| NestJS | `instrumentNest(wizelens, app)` before `app.listen()` |
 
-Outgoing `fetch` calls (and undici) and Express routing time are traced by themselves. Open `http://localhost:<port>/_wizelens`.
+Outgoing calls are traced by themselves: `fetch` and undici, and everything built on `node:http` / `node:https` (axios, got,
+node-fetch v2, the AWS SDK). Each call inside a request becomes a client span with its method, URL, host, status, and timing,
+and gets a `traceparent` header so the called service joins the same trace. WizeLens's own calls are not traced. Turn either
+off with `instrumentFetch: false` or `instrumentHttp: false`. Express routing time is traced too. Open
+`http://localhost:<port>/_wizelens`.
+
+**NestJS.** `instrumentNest` adds the request capture for Express or Fastify, a global interceptor, and a hook on Nest's
+exception handlers. Requests are named by their route template with the global prefix and version (`GET /api/v1/orders/:id`)
+and carry `nest.controller`, `nest.handler`, and `nest.version`. Exceptions Nest's filters answer (from guards, pipes,
+handlers, or middleware) are recorded on the request. Already mounted the middleware? Pass `{ capture: false }`.
+
+## GraphQL
+
+```ts
+import * as graphql from "graphql";
+instrumentGraphql(wizelens, graphql); // before you create the server
+```
+
+Works with graphql-js 16 and up: Apollo Server, Mercurius, NestJS GraphQL, and GraphQL Yoga
+(`instrumentGraphql(wizelens, require("@graphql-tools/executor"))`). Each operation gets a span named like `query GetOrders`,
+with `graphql.operation.type`, `graphql.operation.name`, and `graphql.document` (literal values replaced by `*`; variable values
+are never stored). Errors in the result are recorded on the span. The request is named by its operation,
+`POST /graphql (GetOrders)`, so each operation is its own endpoint. Options: `resolvers` (`"slow"` by default: a span only for
+resolvers at or over `slowResolverMs`, 50 ms; `"all"`; `"none"`) and `document` (`true`). In an ES module app, or with
+Mercurius, use the [auto install](/docs/auto-install/), which hooks graphql as it loads. WebSocket subscriptions are not traced.
 
 ## Databases
 
@@ -42,10 +67,21 @@ Outgoing `fetch` calls (and undici) and Express routing time are traced by thems
 | Prisma | `const prisma = new PrismaClient().$extends(prismaExtension(wizelens, { system: "postgresql" }))` |
 | TypeORM | `instrumentTypeOrm(wizelens, dataSource)` |
 | Drizzle | `instrumentDrizzle(wizelens, db)` (on `pg`, `mysql2`, `better-sqlite3`, or `node:sqlite`) |
+| `ioredis` | `instrumentIoRedis(wizelens, Redis)` (Redis, Cluster, pipelines, MULTI) |
+| `redis` (node-redis v4+) | `instrumentRedis(wizelens, redis)` |
+| `mongodb` | `instrumentMongoDb(wizelens, mongodb)` (or a MongoClient, Db, or collection) |
+| `@elastic/elasticsearch` | `instrumentElasticsearch(wizelens, elastic)` (v8; v7 works too) |
 | Anything else | `wizelens.traceDb({ system: "postgresql" }, sql, params, () => run(sql, params))` |
 
 An ORM and the driver under it never count the same query twice. Queries outside a request (startup, jobs) are skipped
 unless you set `traceQueriesOutsideRequests: true`.
+
+Redis, MongoDB, and Elasticsearch calls show on the Database and Query pages and in the N+1 and duplicate insights, as
+`GET user:?`, `find orders {"status":?}`, or `POST /orders/_search`. Values are never stored: no Redis values or passwords, no
+Mongo filter values or documents, no Elasticsearch bodies. Ids in keys and paths become `?`, so `GET user:1` and `GET user:2`
+group as one query. To find repeats with the same values, each call carries a salted fingerprint of its values that only
+compares calls inside one process. A pipeline or MULTI is one span with its command count. The auto install hooks all four;
+`WIZELENS_AUTO_SKIP=ioredis,redis,mongodb,elasticsearch` leaves any of them off.
 
 ## gRPC and messaging
 
@@ -55,6 +91,19 @@ unless you set `traceQueriesOutsideRequests: true`.
 | `amqplib` (RabbitMQ) | `instrumentAmqplib(wizelens, amqplib)` |
 | `kafkajs` | `instrumentKafkaJs(wizelens, kafka)` |
 | `@azure/service-bus` | `instrumentServiceBus(wizelens, client)` |
+| BullMQ | `instrumentBullMq(wizelens, bullmq)` |
+| Amazon SQS (`@aws-sdk/client-sqs`) | `instrumentSqs(wizelens, sqs)`, then `processSqsMessage(wizelens, message, handle)` for each message |
+
+**BullMQ.** `Queue.add`, `addBulk`, and `FlowProducer.add` record a `send <queue>` span and put the trace in each job's
+`opts.telemetry.metadata` (the field BullMQ's own telemetry uses), so job data is never changed. Each job a `Worker` runs is a
+`process <queue>` span in the same trace, with the job id, name, attempt, and any error. Time a job waits in the queue never
+lengthens the request that added it. Delays, waiting for children, and rate limits are not failures.
+
+**SQS.** `SendMessage` and `SendMessageBatch` record a `send <queue>` span and add `traceparent` and `tracestate` message
+attributes while the message stays within SQS's limit of 10. `ReceiveMessage` asks for those attributes and records a
+`receive <queue>` span. `processSqsMessage` runs your handler as a `process <queue>` span in the sender's trace; it also takes
+a Lambda SQS record. Other commands show as outgoing HTTP calls. The auto install hooks both; skip them with
+`WIZELENS_AUTO_SKIP=bullmq,sqs`.
 
 ## Logs
 

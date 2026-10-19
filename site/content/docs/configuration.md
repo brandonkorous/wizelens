@@ -52,6 +52,7 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | `redactKeys` | see [Redaction](#redaction) | Key fragments whose values are redacted. |
 | `tags` | none | `{ rules: [{ name, query, color? }], disableBuiltIns: ["bot"] }`: tag rules for the dashboard, and built-in tags to turn off. A bad rule throws at start. See [Tags](/docs/tags/). |
 | `instrumentFetch` | `true` | Trace outgoing `fetch` and undici calls. |
+| `instrumentHttp` | `true` | Trace outgoing `node:http` and `node:https` calls (axios, got, node-fetch v2, AWS SDK). |
 | `captureConsole` | `true` | Copy `console.*` lines into the trace, or outside a request as loose lines. |
 | `traceQueriesOutsideRequests` | `false` | Database adapters also trace queries outside a request. |
 | `publicEndpoint` | auto | Override `X-WizeLens-Endpoint`, for example behind a proxy. |
