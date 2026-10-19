@@ -10,6 +10,7 @@ using WizeLens.Web;
 namespace WizeLens.Tests;
 
 /// <summary>samples/auto-dotnet has no WizeLens code. Started with DOTNET_STARTUP_HOOKS, it is traced.</summary>
+[Collection(TestApp.Collection)]
 public class StartupHookTests
 {
     // dotnet/tests/WizeLens.Tests/bin/{Configuration}/net10.0
