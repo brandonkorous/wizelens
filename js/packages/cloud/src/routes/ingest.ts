@@ -1,3 +1,4 @@
+import { annotateErrorFrames } from "@wizeworks/lens-core";
 import type { Ctx } from "../app.js";
 import { bearerOf, fail } from "../http/http.js";
 import type { RateLimiter } from "../http/limiter.js";
@@ -6,7 +7,7 @@ import { writeService } from "../repo/trace-write.js";
 import { handleOtlp, type HubWrite, type OtlpSignal, parseIngest, parseJson, readBody } from "@wizeworks/lens-hub/kit";
 
 /** The project an ingest key writes to. Add-ons send it as WIZELENS_HUB_TOKEN; OTLP apps as a bearer header. */
-async function ingestProject(ctx: Ctx, limiter: RateLimiter): Promise<string> {
+export async function ingestProject(ctx: Ctx, limiter: RateLimiter): Promise<string> {
   const token = bearerOf(ctx.req);
   if (!token?.startsWith("wl_ik_")) return fail(401, "Send an ingest key: Authorization: Bearer wl_ik_...");
   const key = await keyByToken(ctx.app.db, token, ctx.app.config.now());
@@ -32,6 +33,8 @@ export async function ingestBatch(ctx: Ctx, limiter: RateLimiter): Promise<void>
     return fail(400, "The body is not valid JSON.");
   }
   if (!w) fail(400, "sender.service is required.");
+  // Browser errors group by their original frame: add it with the project's uploaded maps before they are stored.
+  await annotateErrorFrames(w!.spans, ctx.app.maps(projectId));
   await save(ctx, projectId)(w!);
   ctx.res.writeHead(204).end();
 }

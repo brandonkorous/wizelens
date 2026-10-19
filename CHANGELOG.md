@@ -61,6 +61,15 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   40-developer company with its sources, and pricing questions. Linked from the top bar, the footer, and the Cloud page.
   The cloud docs have a new "Plans and billing" section: what a GB is, the Free cap's HTTP 429, the spend cap, history
   per plan, and that billing is off when you self-host.
+- **Browser source maps.** Minified browser stacks map back to your source: the Errors page, the error page, and the
+  trace page's Errors tab show each frame's original file, line, and function, with a few lines of code around the line
+  that threw, and the raw stack one click away. Errors
+  group by the first frame of your code, so one bug stays one error across builds (the stats rebuild once: facts
+  version 5). On your machine it needs no setup: the browser package, the Node add-on, and the hub read the maps your dev
+  server serves, and the hub (`--sourcemaps ./dist`) and the Node add-on (`sourceMaps: { dirs }`) read build folders. For
+  production, the new `@wizeworks/lens-cli` package uploads maps per release to the hub or the cloud (with a project's
+  ingest key): `npx @wizeworks/lens-cli sourcemaps upload ./dist`, or the Vite, webpack, and Next.js plugins at build time.
+  The React provider sends the release as `service.version` (the `version` prop, or what the build plugin sets).
 
 - **Connect Claude to WizeLens Cloud with a sign-in, not a key.** Add `https://mcp.wizelens.com` to Claude (Settings →
   Connectors), Claude Code, Cursor, or any MCP client. It opens the WizeLens sign-in, and you pick one organization and

@@ -19,6 +19,7 @@ import { SqlitePersister } from "./persist.js";
 import { createErrorMiddleware, recordException, setUser, tag } from "./request-api.js";
 import { TraceStore } from "./store.js";
 import { isEnabled, servesDashboard } from "./mode.js";
+import { localMapLoader } from "./sourcemaps.js";
 import { createTracing, installGlobals } from "./tracing.js";
 import type { WizeLens, WizeLensOptions } from "./types.js";
 import { resolveUiDir } from "./ui.js";
@@ -72,12 +73,13 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const startedMs = Date.now();
   const sqlite = () => !!persister?.active;
   const metrics = createMetricParts(options, redactKeys);
-  const info = () => buildInfo({ options, store, redactKeys, startedMs, sqlite, metrics: !!metrics });
+  const sourceMaps = localMapLoader(options.sourceMaps);
+  const info = () => buildInfo({ options, store, redactKeys, startedMs, sqlite, metrics: !!metrics, sourceMaps: !!sourceMaps });
   const mcp = mcpSource(options, store, getTrace, metrics?.store ?? null);
   const uiDir = resolveUiDir(options.uiDir);
   const hub = connectHub(options, store, info, dashboard ? selfEndpoints : null, metrics?.store ?? null);
   const enableMcp = dashboard && !!options.enableMcp;
-  const handler = createHandler({ basePath, store, redactKeys, uiDir, enableMcp, mcp, info, getTrace, metrics: metrics?.store ?? null, selfEndpoints, dashboard });
+  const handler = createHandler({ basePath, store, redactKeys, uiDir, enableMcp, mcp, info, getTrace, metrics: metrics?.store ?? null, selfEndpoints, dashboard, sourceMaps });
   const capture = {
     tracer: tracing.tracer,
     basePath,

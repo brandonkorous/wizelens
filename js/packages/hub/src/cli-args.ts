@@ -22,6 +22,9 @@ Usage: wizelens-hub [options]
   --no-uptime         Do not run uptime checks.                (WIZELENS_HUB_UPTIME=0)
   --import <file>     Copy an add-on's .wizelens/traces.db into
                       the hub at start. Can repeat.
+  --sourcemaps <dir>  Read browser source maps from this build
+                      folder. Can repeat. Dev servers on this
+                      machine need no option.                  (WIZELENS_HUB_SOURCEMAPS=a,b)
   --help              Show this help.
 `;
 
@@ -53,6 +56,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
       mcp: { type: "boolean" },
       "no-uptime": { type: "boolean" },
       import: { type: "string", multiple: true },
+      sourcemaps: { type: "string", multiple: true },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -68,5 +72,6 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
     enableMcp: a.mcp ?? env.WIZELENS_HUB_MCP === "1",
     uptime: !(a["no-uptime"] ?? env.WIZELENS_HUB_UPTIME === "0"),
     imports: a.import ?? [],
+    sourceMaps: { dirs: a.sourcemaps ?? (env.WIZELENS_HUB_SOURCEMAPS ?? "").split(",").map((d) => d.trim()).filter(Boolean) },
   };
 }

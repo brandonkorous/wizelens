@@ -3,6 +3,7 @@ import { FACTS_VERSION } from "@wizeworks/lens-core";
 import { upgradeFts } from "./schema-fts.js";
 import { HUB_SCHEMA, HUB_SCHEMA_VERSION } from "./schema.js";
 import { HUB_UPTIME_SCHEMA } from "./uptime/store.js";
+import { SOURCEMAPS_SCHEMA } from "./sourcemaps.js";
 
 // Stats tables (docs/CONTRACT.md, "Hub storage"): facts per trace, rollups per tier, and metric rollups. The tiers are identical.
 const TIERS = ["10s", "5m", "1h"];
@@ -111,6 +112,7 @@ export function upgradeHubSchema(db: DatabaseSync): void {
   if (!cols.has("contrib")) db.exec("ALTER TABLE traces ADD COLUMN contrib TEXT");
   db.exec(HUB_SCALE_SCHEMA);
   db.exec(HUB_UPTIME_SCHEMA);
+  db.exec(SOURCEMAPS_SCHEMA);
   upgradeFts(db);
   const facts = db.prepare("SELECT value FROM meta WHERE key = 'facts'").get() as { value: string } | undefined;
   if (facts?.value !== String(FACTS_VERSION)) rebuildStats(db);

@@ -58,6 +58,7 @@ Run it with `--host 0.0.0.0 --token <text>`. Then:
 | `--mcp` | `WIZELENS_HUB_MCP=1` | off |
 | `--no-uptime` | `WIZELENS_HUB_UPTIME=0` | checks on |
 | `--import <file>` | | Copy an add-on's `.wizelens/traces.db` in at start |
+| `--sourcemaps <dir>` | `WIZELENS_HUB_SOURCEMAPS=a,b` | Read browser [source maps](/docs/source-maps/) from a build folder. Can repeat |
 
 `wizelens-hub --help` lists every option.
 

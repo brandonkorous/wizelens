@@ -14,6 +14,10 @@ export const ATTR_BROWSER_ROUTE = "wizelens.browser.route";
 export const ATTR_BROWSER_NAVIGATION = "wizelens.browser.navigation";
 /** Browser span: the WizeLens endpoint of the server that answered, when it is not the one the browser sends to. */
 export const ATTR_BROWSER_REMOTE = "wizelens.browser.remote";
+/** Browser span: the app version (release) that sent it, so stacks find the right source maps. OTel resource name. */
+export const ATTR_SERVICE_VERSION = "service.version";
+/** Browser exception event: the first app frame after source maps, "src/cart/Checkout.tsx:applyCoupon". Errors group by it. */
+export const ATTR_ERROR_FRAME = "wizelens.error.frame";
 
 export type BrowserSpanType = "fetch" | "pageview" | "react" | "error";
 

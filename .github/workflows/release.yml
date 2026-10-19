@@ -61,6 +61,7 @@ jobs:
       - name: Install an npm that can publish with OIDC
         run: npm install -g npm@^11.5.1
 
+      # Every package under js/packages: lens-core, lens-node, lens-react, lens-ui, lens-hub, lens-cloud, and lens-cli.
       # No token once each package trusts this repo and release.yml on npmjs.com. NPM_TOKEN is only for the very first publish, before the packages exist.
       - name: Publish to npm
         run: pnpm -r --filter "./js/packages/*" publish --access public --no-git-checks

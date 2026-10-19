@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Tracer } from "@opentelemetry/api";
 import type { Trace } from "@wizeworks/lens-core";
 import type { SamplingOptions } from "./sampling.js";
+import type { SourceMapOptions } from "./sourcemaps.js";
 import type { TraceStore } from "./store.js";
 
 export interface WizeLensOptions {
@@ -59,6 +60,8 @@ export interface WizeLensOptions {
   hubToken?: string;
   /** Keep only part of the traces, for busy services. Default: all, or the WIZELENS_SAMPLE_RATE variable. */
   sampling?: SamplingOptions;
+  /** Where browser stacks find their source maps: build folders and dev servers on this machine (default). False turns it off. */
+  sourceMaps?: SourceMapOptions | false;
 }
 
 export interface DbCallInfo {

@@ -19,6 +19,10 @@ export interface WizeLensProviderProps {
   capturePages?: boolean;
   /** Copy `console.*` calls into the page view's trace. Default true. */
   captureConsole?: boolean;
+  /** Your app's version (release), so browser stacks find the right source maps. Default: what the build plugin set. */
+  version?: string;
+  /** Read this page's source maps (dev servers serve them) so errors group by source. Default true. */
+  resolveFrames?: boolean;
   children?: ReactNode;
 }
 
@@ -30,12 +34,14 @@ export function WizeLensProvider({
   slowMs,
   capturePages = true,
   captureConsole = true,
+  version,
+  resolveFrames = true,
   children,
 }: WizeLensProviderProps) {
   const recorder = useMemo(
-    () => (enabled ? createRecorder({ endpoint, propagateTo, capturePages, captureConsole, readServer: hud }) : null),
+    () => (enabled ? createRecorder({ endpoint, propagateTo, capturePages, captureConsole, readServer: hud, version, resolveFrames }) : null),
     // propagateTo is read once on purpose; pass a stable function.
-    [endpoint, enabled, capturePages, captureConsole, hud],
+    [endpoint, enabled, capturePages, captureConsole, hud, version, resolveFrames],
   );
 
   useEffect(() => recorder?.install(), [recorder]);

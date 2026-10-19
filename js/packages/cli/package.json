@@ -1,0 +1,72 @@
+{
+  "name": "@wizeworks/lens-cli",
+  "version": "0.3.0-alpha.3",
+  "description": "The WizeLens command line, and build plugins for Vite, webpack, and Next.js that upload browser source maps to a hub or the cloud.",
+  "license": "MIT",
+  "author": "WizeWorks LLC",
+  "homepage": "https://github.com/brandonkorous/wizelens#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brandonkorous/wizelens.git",
+    "directory": "js/packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/brandonkorous/wizelens/issues"
+  },
+  "keywords": [
+    "wizelens",
+    "sourcemaps",
+    "source maps",
+    "vite-plugin",
+    "webpack-plugin",
+    "nextjs",
+    "cli"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "lens-cli": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "import": "./dist/vite.js"
+    },
+    "./webpack": {
+      "types": "./dist/webpack.d.ts",
+      "import": "./dist/webpack.js"
+    },
+    "./next": {
+      "types": "./dist/next.d.ts",
+      "import": "./dist/next.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@wizeworks/lens-core": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@wizeworks/lens-hub": "workspace:^",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

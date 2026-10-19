@@ -15,6 +15,7 @@ import { projectRoutes } from "./projects.js";
 import { searchRoutes } from "./search.js";
 import { statusRoutes } from "./status.js";
 import { uptimeRoutes } from "./uptime.js";
+import { sourceMapRoutes } from "./sourcemaps.js";
 
 /** Every route below `/_wizelens/`, except ingest and OTLP (they use ingest keys and are matched first). */
 export function allRoutes(): Router<Ctx> {
@@ -34,5 +35,6 @@ export function allRoutes(): Router<Ctx> {
   statusRoutes(r);
   mcpRoutes(r);
   appRoutes(r);
+  sourceMapRoutes(r);
   return r;
 }

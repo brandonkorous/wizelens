@@ -28,6 +28,7 @@ export const DOC_GROUPS: DocGroup[] = [
       { slug: "kubernetes", title: "Hosts and Kubernetes" },
       { slug: "production", title: "Production" },
       { slug: "sampling", title: "Sampling" },
+      { slug: "source-maps", title: "Source maps" },
       { slug: "ai-access", title: "AI access (MCP)" },
     ],
   },

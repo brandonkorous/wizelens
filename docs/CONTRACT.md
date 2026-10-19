@@ -163,8 +163,8 @@ interface SamplingInfo {
 | messaging | Kind `producer` (send) or `consumer` (receive / process). `messaging.system` (`rabbitmq`, `kafka`, `servicebus`), `messaging.operation.type` (`send`, `receive`, `process`), `messaging.destination.name` (queue, topic, or exchange), `messaging.message.id`, `messaging.batch.message_count`, `messaging.message.body.size`. Name: `{operation} {destination}`. |
 | http.client | `http.request.method`, `url.full`, `server.address`, `server.port`, `http.response.status_code` |
 | db | A span is `db` when it has any of `db.system.name`, `db.system`, `db.query.text`, `db.operation.name`, `db.collection.name` (some libraries, such as Better Auth, send only the operation and the table). `db.system.name` (e.g. `sqlite`, `postgresql`, `microsoft.sql_server`), `db.query.text`, `db.operation.name`, `db.collection.name`, `db.namespace`, `db.response.returned_rows`, `wizelens.db.parameters` (JSON string, redacted), `wizelens.db.adapter` (`ado.net`, `efcore`, `pg`, `mysql2`, `better-sqlite3`, `node-sqlite`, `prisma`, `typeorm`, `drizzle`, ...). An ORM span (Prisma, TypeORM) hides the driver spans under it, so a query is counted once. |
-| exception event | `exception.type`, `exception.message`, `exception.stacktrace` |
-| browser (all) | `wizelens.browser.type` (`fetch` when absent, `pageview`, `react`, `error`), `wizelens.browser.session` (per-tab id, kept in sessionStorage key `wizelens.session`), `wizelens.browser.route` (path shape of the page), `url.full` |
+| exception event | `exception.type`, `exception.message`, `exception.stacktrace`; browser errors also `wizelens.error.frame` (see "Source maps") |
+| browser (all) | `wizelens.browser.type` (`fetch` when absent, `pageview`, `react`, `error`), `wizelens.browser.session` (per-tab id, kept in sessionStorage key `wizelens.session`), `wizelens.browser.route` (path shape of the page), `url.full`, `service.version` (the app release, when the app or its build plugin sets it) |
 | browser fetch | `http.request.method`, `http.response.status_code`, `wizelens.browser.page`, `wizelens.browser.render_ms` (ms from the response to the next paint; absent when not measured) |
 | browser pageview | Own trace per page view. Span start = navigation start (or route change), duration = render time. `wizelens.browser.navigation` (`load` / `spa`), `wizelens.page.ttfb_ms`, `.ssr_ms` (responseStart − requestStart), `.client_render_ms` (FCP − responseEnd), `.fcp_ms`, `.lcp_ms`, `.cls`, `.inp_ms`, `.load_ms`, `.hydration_ms` (first React commit), `.render_ms`, `.image_ms` (slowest image), `.images`, `.large_images` (images bigger than shown and not lazy) |
 | browser react | In the page view's trace. `wizelens.react.commits`, `wizelens.react.components` = JSON `{ name, renders, actualMs, selfMs, wasted, context }[]` since the last report |
@@ -205,14 +205,15 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `serverMetrics` | The host computes the Metrics page itself (`api/models/metrics`). Without it, the browser reads `api/metrics/points` | | ✅ | ✅ |
 | `search` | The host answers the search language (`api/search`, `api/search/suggest`); the Search page and Ctrl+K use it. Without it, the browser searches the loaded traces | ✅ | ✅ | ✅ |
 | `infra` | The host answers `api/models/hosts` and `api/models/kubernetes` from OpenTelemetry Collector metrics (see "Hosts and Kubernetes"); the Hosts and Kubernetes pages appear | | ✅ | ✅ |
+| `sourcemaps` | The host resolves browser stacks at `api/sourcemaps/resolve` (see "Source maps"). Without it, the dashboard resolves them in the browser from the maps the site serves | ✅ (Node) | ✅ | ✅ |
 | `changes` | The host streams `api/changes?project=` (server-sent events): an `event: data` line each time the project gets new stats, at most every 2 s (the hub: each settle round), and a comment every 25 s. The dashboard reloads the open page then, keeping the old numbers on screen until the new ones arrive | | ✅ | ✅ |
 | `issues` | The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. See "Issue states" below | | ✅ | ✅ |
 | `uptime` | The host runs uptime checks (`api/uptime` on the hub, `api/projects/{p}/uptime` in the cloud) and serves the `uptime` page model; the Uptime page appears. See "Uptime checks" | | ✅ (unless `--no-uptime`) | ✅ |
 | `statusPages` | A project can turn on a public status page (`api/status/{token}`) | | | ✅ |
 
-Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search"]`, plus `metrics` when metrics are on. The hub
+Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search"]`, plus `metrics` when metrics are on and `sourcemaps` (Node) unless `sourceMaps: false`. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes", "issues", "infra", "uptime"]` (`uptime` only while checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "issues", "infra", "sourcemaps", "uptime"]` (`uptime` only while checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -422,6 +423,63 @@ docs/search-vectors.json (the TS and .NET suites both run them). Hosts with the 
   per present attribute value (lowercased, cut at 512 characters, plus its number). Both come from the same document
   builders as the memory search, so all hosts return the same results.
 
+## Source maps (v0.10)
+
+Browser stacks from a production build are minified. Every host maps them back to the original source; the raw stack is
+always kept as sent (`exception.stacktrace`).
+
+**Release.** The browser package sends `service.version` on every browser span: the `version` prop (React), or
+`globalThis.__WIZELENS_RELEASE__` that the build plugins set. Uploaded maps are stored per project, release, and file, so a
+stack finds the maps of the build that threw it.
+
+**Upload.** `POST api/sourcemaps?release=<version>&file=<path>` with the map JSON as the body (`Content-Encoding: gzip`
+allowed), at most 64 MB after unzip. `file` is the minified file's path as served, for example `assets/index-abc.js` (no
+origin, query, `~/`, leading slash, or `..`; a trailing `.map` is dropped). Answers `201 { release, file, bytes }`; 400 when
+the body is not a v3 source map or `release`/`file` is missing. The same release and file replace the old map. Each project
+keeps its newest 20 releases; older ones are dropped on upload. `GET api/sourcemaps[?release=]` answers
+`{ maps: { release, file, bytes, uploadedMs }[] }`, newest first. The cloud authorizes both with an ingest key
+(`Authorization: Bearer wl_ik_...`) and stores into the key's project; the hub takes its token (when set) and an optional
+`project` (default `""`, which every project also reads). `@wizeworks/lens-cli` (`lens-cli sourcemaps upload <dir>`) and its
+Vite, webpack, and Next.js plugins send every `*.js.map` below a build folder this way, each keyed by the script whose
+`sourceMappingURL` names it (Turbopack names maps apart from their scripts), else by the map's own name without `.map`.
+
+**Matching.** A frame's script URL matches a stored file when its path, or a trailing part of it, equals the file:
+`https://shop.test/app/assets/index-abc.js` tries `app/assets/index-abc.js`, `assets/index-abc.js`, then `index-abc.js`; the
+longest match wins.
+
+**No upload (hub and in-app Node).** Maps are also read from build folders (hub `--sourcemaps <dir>`, Node
+`sourceMaps: { dirs }`) by the same path rule (the `.map` next to the file, or the one its `sourceMappingURL` names), and from
+dev servers on this machine: the host fetches the script (only `localhost`, `127.x`, `::1`, `*.localhost`, plus Node
+`sourceMaps.origins`), follows its `sourceMappingURL` (inline `data:` maps too), or tries `<script>.map`. The browser package
+does the same for scripts on the page's own origin (`resolveFrames`, default on). Hosts without the `sourcemaps` capability
+(.NET) get resolved stacks from the dashboard, which reads the maps the site serves.
+
+**Grouping.** When a browser error arrives (browser package, Node `api/client-spans`, hub and cloud `api/ingest`), the first
+frame that a map covers and that is app code (not `node_modules` or bundler runtime) is written to the exception event as
+`wizelens.error.frame` = `<source>:<function>` (the function holding the line, read from the map's `sourcesContent`; the
+line number when there is none), for example `src/cart/Checkout.tsx:applyCoupon`. A host never replaces a frame already
+set. The error group key is `service|type|message shape`, plus `|<frame>` for browser errors that have one, so the same
+message thrown in two places is two groups, and one error stays one group across builds. Errors whose map was not found keep
+the key without a frame. This changed the facts: `FACTS_VERSION` 5.
+
+**Resolve on read.** `POST api/sourcemaps/resolve` (`?project=` on the hub and cloud) with `{ stack, release }` (the stack
+cut at 64 KB) answers `{ frames: ResolvedFrame[] }`:
+
+```ts
+interface ResolvedFrame {
+  raw: { fn: string | null; url: string; line: number; column: number; raw: string }; // the frame as sent
+  source: string | null;   // original file for display; null when no map covers the frame
+  line: number | null;     // 1-based original line and column
+  column: number | null;
+  fn: string | null;       // the function holding the line, or the raw name
+  inApp: boolean;          // false for node_modules and bundler runtime
+  context: { start: number; lines: string[] } | null; // 3 lines before and after, from sourcesContent
+}
+```
+
+Stack lines in Chrome, Edge, and Node (`at fn (url:line:col)`), Firefox, and Safari (`fn@url:line:col`) formats are read;
+native and `eval` frames are skipped. Index maps (`sections`) and `sourceRoot` are supported.
+
 ## Storage (v0.2)
 
 Every add-on keeps a hot in-memory store (the read path) and, optionally, a SQLite file behind it.
@@ -515,7 +573,9 @@ interface IngestBatch {
 | GET | `/_wizelens/api/traces` | Like the add-on, plus filters `env`, `project`, `before`. `since` means *changed since* (hub clock), so late spans are found |
 | GET | `/_wizelens/api/traces/{id}` | With `federate=true`, also reads services that do not send to the hub |
 | GET | `/_wizelens/api/services` | `{ services: HubService[], environments, projects, traces, spans }` |
-| POST | `/_wizelens/api/ingest` | `IngestBatch` |
+| POST | `/_wizelens/api/ingest` | `IngestBatch`. Browser errors get `wizelens.error.frame` first (see "Source maps") |
+| POST / GET | `/_wizelens/api/sourcemaps` | Upload one map, or list them; `project` is optional (`""`). See "Source maps" |
+| POST | `/_wizelens/api/sourcemaps/resolve` | `{ stack, release }` → `{ frames }`, with `?project=` |
 | POST | `/v1/traces`, `/v1/logs`, `/v1/metrics` | OTLP/HTTP, JSON or protobuf, optional gzip. Also under `/_wizelens/v1/...` |
 | GET | `/_wizelens/api/models/metrics` | The Metrics page: `range`, `project`, `env`, `service`, `metric`, `group`, `stat`, `q`. Read from the metric rollups (see "Metrics"), with no point cap |
 | GET | `/_wizelens/api/models/hosts`, `/_wizelens/api/models/kubernetes` | The Hosts and Kubernetes pages (see "Hosts and Kubernetes"): `range`, `project`, `env`, `host`, `node`, `pod`, `cluster`, `ns`, `workload`, `service`, `q` |
@@ -571,6 +631,8 @@ CREATE TABLE remotes  (trace_id TEXT, endpoint TEXT, PRIMARY KEY (trace_id, endp
 CREATE TABLE services (project TEXT, service TEXT, environment TEXT, host TEXT, via TEXT, info TEXT, first_seen REAL, last_seen REAL,
                        PRIMARY KEY (project, service, environment, host));                               -- '' for unknown
 CREATE TABLE metrics  (time_ms REAL, project TEXT, env TEXT, service TEXT, name TEXT, series_key TEXT, json TEXT); -- series_key = sha1
+CREATE TABLE sourcemaps (project TEXT, release TEXT, file TEXT, map BLOB, bytes INTEGER, uploaded_ms REAL,
+                       PRIMARY KEY (project, release, file));                                            -- map gzipped
 ```
 
 Metric points older than the trace age limit are dropped, then the oldest past `--max-metric-points`
@@ -594,7 +656,7 @@ traces. Incidents that ended more than 90 days ago are dropped.
 
 `@wizeworks/lens-cloud` (command `wizelens-cloud`, default port **5970**) is the hosted service. It serves the same dashboard,
 answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats",
-"metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages"]`,
+"metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps"]`,
 and keeps data in Postgres (`DATABASE_URL=postgres://...`). PGlite (`pglite:<folder>` or `memory`) runs the same SQL in-process,
 for tests and trials.
 
@@ -705,6 +767,8 @@ retention, and the audit log.
 | GET / POST / PATCH / DELETE | `api/projects/{p}/status-page` | Read: viewer (`{ enabled, title?, createdMs?, views? }`); on or new link (`{ title }`, answers `{ url, title }` once), rename, off: member (audited `status.enable`, `status.disable`) |
 | GET | `api/status/{token}` | Anyone with the link: `StatusPageView` |
 | POST | `api/ingest`, `/v1/traces`, `/v1/logs`, `/v1/metrics` | Ingest key |
+| POST / GET | `api/sourcemaps?release=&file=` | Ingest key: upload one map to the key's project, or list them (see "Source maps") |
+| POST | `api/sourcemaps/resolve?project=` | Member or read key: `{ stack, release }` → `{ frames }` |
 | POST | `mcp?project=` | Read key or connected app (OAuth access token). Without `?project=`, a reader with one project reads it; one with several adds `list_projects` and a `project` argument (id or name) on every tool, and `get_overview` without it reports on all |
 | GET | `/.well-known/oauth-protected-resource[/_wizelens/mcp]`, `/.well-known/oauth-authorization-server/_wizelens/api/auth` | Anyone (CORS open). OAuth metadata for MCP clients |
 | * | `api/auth/oauth2/*` | Better Auth's OAuth provider: `authorize`, `token`, `register`, `revoke` (apps post without the dashboard header), `consent`, `continue`, `public-client` |
@@ -876,7 +940,7 @@ Data tables are keyed by `project_id`. Times are `double precision` epoch ms, ex
 secrets (keys, shares, status page links) are stored as SHA-256 hashes only; Better Auth stores reset and confirm tokens hashed. Migration 8 added
 `fact_search` and `fact_attrs` (see "Search"). Migration 10 added `issues` (see "Issue states"). Migration 11 added
 `uptime_checks`, `uptime_incidents`, and `status_pages` (see
-"Uptime checks").
+"Uptime checks"). Migration 12 added `sourcemaps` (see "Source maps").
 
 ### Telemetry stores (small mode and scale mode)
 

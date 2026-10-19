@@ -2,6 +2,7 @@ import { createCaptureHandle, startBrowserCapture } from "./capture.js";
 import { type FetchContext, patchFetch } from "./fetch-patch.js";
 import type { Recorder, RecorderOptions } from "./recorder-types.js";
 import { createInstaller, createRequestStore } from "./request-store.js";
+import { injectedRelease } from "./error-frames.js";
 import { createSender } from "./sender.js";
 import { ServerData } from "./server-data.js";
 import { documentTrace } from "./server-timing.js";
@@ -25,6 +26,8 @@ function resolveOptions(options: RecorderOptions) {
     capturePages: options.capturePages ?? true,
     captureConsole: options.captureConsole ?? true,
     readServer: options.readServer ?? true,
+    version: options.version ?? injectedRelease(),
+    resolveFrames: options.resolveFrames ?? true,
     sessionId: getSessionId(),
   };
 }
@@ -41,10 +44,10 @@ export function createRecorder(options: RecorderOptions = {}): Recorder {
   let original: typeof fetch | null = null;
   let timer: ReturnType<typeof setInterval> | null = null;
   const data = new ServerData({ ...cfg, store, getFetch: () => original ?? globalThis.fetch });
-  const sender = createSender(cfg.endpointUrl, () => original, (id) => data.endpointOf(id));
+  const sender = createSender(cfg.endpointUrl, () => original, (id) => data.endpointOf(id), cfg.version);
   const noteEndpoint = (id: string, endpoint: string) => data.noteEndpoint(id, endpoint);
   const ctx: FetchContext = { ...cfg, store, sender, noteEndpoint, loadServerStats: (id) => data.loadServerStats(id) };
-  const capture = createCaptureHandle(() => (cfg.capturePages ? startBrowserCapture({ sender, sessionId: cfg.sessionId, captureConsole: cfg.captureConsole }) : () => {}));
+  const capture = createCaptureHandle(() => (cfg.capturePages ? startBrowserCapture({ sender, sessionId: cfg.sessionId, captureConsole: cfg.captureConsole, resolveFrames: cfg.resolveFrames }) : () => {}));
   // Send queued spans before the page goes away, so a refresh does not lose them.
   const onPageHide = () => void sender.flush();
   const install = createInstaller({

@@ -202,7 +202,7 @@ Open any trace for the full detail: timeline, SQL, HTTP, logs, and errors. Searc
 | Request details | ✅ headers, client IP, user, request id, body sizes, tags | ✅ same; user and tags through `setUser()` / `tag()` |
 | Response bodies (opt-in) | ✅ `CaptureResponseBody` | ✅ `captureResponseBody` |
 | Routing and handler time | ✅ routing and handler | ✅ routing (Express) |
-| Browser | ✅ via `@wizeworks/lens-react`: fetch spans, render time, page views (TTFB, SSR, FCP, LCP, INP, CLS), hydration, slow images, React component renders, browser errors, browser `console` lines | |
+| Browser | ✅ via `@wizeworks/lens-react`: fetch spans, render time, page views (TTFB, SSR, FCP, LCP, INP, CLS), hydration, slow images, React component renders, browser errors (minified stacks mapped back with source maps), browser `console` lines | |
 
 ### Persistence
 
@@ -413,6 +413,7 @@ To try the hub, start it first with `pnpm dev:hub` (http://localhost:5960/_wizel
 | `@wizeworks/lens-ui` | npm | The dashboard (served by both add-ons and the hub) |
 | `@wizeworks/lens-hub` | npm, Docker | The local hub (`wizelens-hub`) |
 | `@wizeworks/lens-cloud` | npm, Docker | The cloud service (`wizelens-cloud`) |
+| `@wizeworks/lens-cli` | npm | Source map upload (`lens-cli`) and Vite, webpack, and Next.js plugins |
 
 <a id="roadmap"></a>
 
@@ -435,7 +436,7 @@ See **[docs/PLAN.md](docs/PLAN.md)** for the full plan.
 docs/                 PLAN.md, CONTRACT.md, images
 dotnet/               WizeLens.slnx — src/ (add-ons), tests/
 js/packages/          core · node · react · ui
-samples/              web (React) · gateway-api (.NET) · orders-api (Node)
+samples/              web (React) · gateway-api (.NET) · orders-api (Node) · next-web (Next.js)
 site/                 the marketing site (Next.js static export: pnpm dev:site, pnpm build:site → site/out)
 ```
 

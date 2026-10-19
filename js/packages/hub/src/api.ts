@@ -1,6 +1,6 @@
 import { hostname } from "node:os";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { HEADER_HOP, type ServiceInfo } from "@wizeworks/lens-core";
+import { annotateErrorFrames, HEADER_HOP, type ServiceInfo, SOURCEMAPS_PATH, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core";
 import { DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, firstHeader, sendJson, VERSION as NODE_VERSION } from "@wizeworks/lens-node/kit";
 import { parseJson, readBody } from "./body.js";
 import { handleIssues } from "./issues.js";
@@ -13,6 +13,7 @@ import { sendPageModel } from "./models-api.js";
 import { streamChanges } from "./changes-api.js";
 import { sendSearch, sendSuggest } from "./search-api.js";
 import { handleUptime } from "./uptime/api.js";
+import { type HubMaps, listMaps, resolveMaps, uploadSourceMap } from "./sourcemaps-api.js";
 import { countRows, distinctOf, listServices, type TraceQuery } from "./store-read.js";
 
 export interface ApiContext {
@@ -20,6 +21,8 @@ export interface ApiContext {
   o: ResolvedHubOptions;
   version: string;
   startedMs: number;
+  /** Source maps per project: uploads, build folders, and dev servers. */
+  maps: HubMaps;
 }
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -28,7 +31,7 @@ const num = (p: URLSearchParams, k: string) => (p.has(k) && Number.isFinite(Numb
 export function hubInfo(c: ApiContext): ServiceInfo {
   return {
     mode: "hub",
-    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes", "issues", "infra", ...(c.o.uptime ? (["uptime"] as const) : [])],
+    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes", "issues", "infra", "sourcemaps", ...(c.o.uptime ? (["uptime"] as const) : [])],
     service: c.o.name,
     version: c.version,
     runtime: `node ${process.version} · lens-node ${NODE_VERSION}`,
@@ -64,6 +67,7 @@ async function ingest(c: ApiContext, req: IncomingMessage, res: ServerResponse):
   try {
     const w = parseIngest(parseJson(await readBody(req)), c.o.redactKeys);
     if (!w) return sendJson(res, 400, { error: "sender.service is required" });
+    await annotateErrorFrames(w.spans, c.maps(w.sender.project ?? ""));
     c.data.write(w);
     res.writeHead(204).end();
   } catch {
@@ -89,6 +93,9 @@ export async function handleApi(c: ApiContext, sub: string, req: IncomingMessage
   if (sub === "api/info" && method === "GET") return sendJson(res, 200, hubInfo(c));
   if (sub === "api/services" && method === "GET") return sendJson(res, 200, services(c));
   if (sub === "api/ingest" && method === "POST") return ingest(c, req, res);
+  if (sub === SOURCEMAPS_PATH && method === "POST") return uploadSourceMap(c.data.store.db, c.o.now(), req, res, url);
+  if (sub === SOURCEMAPS_PATH && method === "GET") return listMaps(c.data.store.db, res, url);
+  if (sub === SOURCEMAPS_RESOLVE_PATH && method === "POST") return resolveMaps(c.maps, req, res, url);
   if (sub === "api/traces" && method === "GET") {
     const { q, full } = queryOf(url.searchParams);
     return sendJson(res, 200, full ? c.data.traces(q) : c.data.summaries(q));

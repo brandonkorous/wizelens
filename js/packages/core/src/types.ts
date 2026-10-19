@@ -92,7 +92,9 @@ export type Capability =
   /** The host runs uptime checks: `api/uptime` (hub) or `api/projects/<id>/uptime` (cloud), and the `uptime` page model. */
   | "uptime"
   /** Projects can turn on a public status page at `api/status/<token>`. */
-  | "statusPages";
+  | "statusPages"
+  /** The host resolves browser stacks at `api/sourcemaps/resolve` (uploaded maps, a build folder, or a dev server). */
+  | "sourcemaps";
 
 /** What an in-app add-on offers today. Also the default when a host does not say. */
 export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];
