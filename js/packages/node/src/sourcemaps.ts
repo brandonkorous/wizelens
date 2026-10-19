@@ -35,15 +35,16 @@ async function readSmall(path: string): Promise<string | null> {
   }
 }
 
-// One file of a build folder: its `.map` next to it, or the map its sourceMappingURL names.
+// One file of a build folder: the map its sourceMappingURL names (Turbopack names maps apart from scripts), else its `.map`.
 async function mapInDir(dir: string, file: string): Promise<SourceMap | null> {
   const path = resolve(dir, file);
   if (!inside(dir, path)) return null;
-  const next = await readSmall(`${path}.map`);
-  if (next) return parseSourceMap(next);
   const code = await readSmall(path);
   const ref = code ? mapUrlOf(code) : null;
-  if (!ref) return null;
+  if (!ref) {
+    const next = await readSmall(`${path}.map`);
+    return next ? parseSourceMap(next) : null;
+  }
   if (ref.startsWith("data:")) return parseSourceMap(decodeDataUrl(ref) ?? "");
   const mapPath = resolve(dirname(path), decodeURIComponent(ref.replace(/[?#].*$/, "")));
   const text = inside(dir, mapPath) ? await readSmall(mapPath) : null;

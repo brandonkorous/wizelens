@@ -1,4 +1,6 @@
-export { findSourceMaps, fileKeyOf, listUploadedMaps, uploadSourceMaps } from "./upload.js";
+export { listUploadedMaps, uploadSourceMaps } from "./upload.js";
+export { fileKeyOf, findSourceMaps } from "./find.js";
+export type { MapFile } from "./find.js";
 export type { UploadOptions, UploadResult } from "./upload.js";
 export { baseOf, resolveRelease, resolveTarget } from "./options.js";
 export type { Target, TargetOptions } from "./options.js";

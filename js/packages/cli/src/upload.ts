@@ -1,7 +1,7 @@
-import { readdir, readFile, rm } from "node:fs/promises";
-import { join, relative, sep } from "node:path";
+import { readFile, rm } from "node:fs/promises";
 import { gzipSync } from "node:zlib";
-import { normalizeMapFile, SOURCEMAPS_PATH, type SourceMapEntry } from "@wizeworks/lens-core";
+import { SOURCEMAPS_PATH, type SourceMapEntry } from "@wizeworks/lens-core";
+import { findSourceMaps } from "./find.js";
 import { resolveRelease, resolveTarget, type Target, type TargetOptions } from "./options.js";
 
 export interface UploadOptions extends TargetOptions {
@@ -24,26 +24,7 @@ export interface UploadResult {
   bytes: number;
 }
 
-const SKIP = new Set(["node_modules", ".git"]);
 const PARALLEL = 4;
-
-/** Every `.map` file below a folder, as absolute paths. */
-export async function findSourceMaps(dir: string): Promise<string[]> {
-  const out: string[] = [];
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
-    if (SKIP.has(entry.name)) continue;
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) out.push(...(await findSourceMaps(path)));
-    else if (entry.isFile() && /\.[mc]?js\.map$/.test(entry.name)) out.push(path);
-  }
-  return out.sort();
-}
-
-/** The file key of a map: the generated file's path in the folder, with the URL prefix. */
-export function fileKeyOf(dir: string, mapPath: string, urlPrefix = ""): string | null {
-  const rel = relative(dir, mapPath).split(sep).join("/");
-  return normalizeMapFile(`${urlPrefix.replace(/^\/+/, "")}${rel}`);
-}
 
 async function send(t: Target, f: typeof fetch, release: string, file: string, body: Buffer): Promise<void> {
   const q = new URLSearchParams({ release, file });
@@ -61,17 +42,15 @@ export async function uploadSourceMaps(o: UploadOptions): Promise<UploadResult> 
   const target = resolveTarget(o);
   const f = o.fetch ?? fetch;
   const log = o.log ?? ((line: string) => console.info(line));
-  const maps = await findSourceMaps(o.dir);
+  const maps = await findSourceMaps(o.dir, o.urlPrefix);
   const files: string[] = [];
   let bytes = 0;
   for (let i = 0; i < maps.length; i += PARALLEL) {
     await Promise.all(
-      maps.slice(i, i + PARALLEL).map(async (path) => {
-        const file = fileKeyOf(o.dir, path, o.urlPrefix);
-        if (!file) return;
-        const body = await readFile(path);
+      maps.slice(i, i + PARALLEL).map(async ({ map, file }) => {
+        const body = await readFile(map);
         await send(target, f, release, file, body);
-        if (o.deleteAfterUpload) await rm(path);
+        if (o.deleteAfterUpload) await rm(map);
         files.push(file);
         bytes += body.length;
       }),

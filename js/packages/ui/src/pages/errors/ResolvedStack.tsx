@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import type { ErrorEvent, ResolvedFrame, SourceContext } from "@wizeworks/lens-core";
-import { type ResolvedStack, useResolvedStack } from "../../data/sourcemaps";
+import type { ResolvedFrame, SourceContext } from "@wizeworks/lens-core";
+import { type ResolvedStack, type StackSource, useResolvedStack } from "../../data/sourcemaps";
 import { CopyButton } from "../../ui/Badges";
 import { StackTrace } from "./ErrorDetailTabs";
 
 type View = "original" | "raw";
 
 const locationOf = (f: ResolvedFrame) => (f.source ? `${f.source}:${f.line}:${f.column}` : `${f.raw.url}:${f.raw.line}:${f.raw.column}`);
-const originalText = (e: ErrorEvent, frames: ResolvedFrame[]) => [`${e.type}: ${e.message}`, ...frames.map((f) => `    at ${f.fn ?? "<anonymous>"} (${locationOf(f)})`)].join("\n");
+const originalText = (e: StackSource, frames: ResolvedFrame[]) => [`${e.type}: ${e.message}`, ...frames.map((f) => `    at ${f.fn ?? "<anonymous>"} (${locationOf(f)})`)].join("\n");
 
 function SourceLines({ context, line }: { context: SourceContext; line: number | null }) {
   return (
@@ -50,7 +50,7 @@ function statusOf(r: ResolvedStack, release: string | null, resolved: boolean): 
 }
 
 /** A browser error's stack after source maps, with a few lines of source per frame; the raw stack one click away. */
-export function ErrorStack({ event }: { event: ErrorEvent }) {
+export function ErrorStack({ event }: { event: StackSource }) {
   const r = useResolvedStack(event);
   const [view, setView] = useState<View>("original");
   if (!event.browser || !event.stack) return <StackTrace event={event} />;

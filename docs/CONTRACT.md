@@ -391,7 +391,8 @@ keeps its newest 20 releases; older ones are dropped on upload. `GET api/sourcem
 `{ maps: { release, file, bytes, uploadedMs }[] }`, newest first. The cloud authorizes both with an ingest key
 (`Authorization: Bearer wl_ik_...`) and stores into the key's project; the hub takes its token (when set) and an optional
 `project` (default `""`, which every project also reads). `@wizeworks/lens-cli` (`lens-cli sourcemaps upload <dir>`) and its
-Vite, webpack, and Next.js plugins send every `*.js.map` below a build folder this way.
+Vite, webpack, and Next.js plugins send every `*.js.map` below a build folder this way, each keyed by the script whose
+`sourceMappingURL` names it (Turbopack names maps apart from their scripts), else by the map's own name without `.map`.
 
 **Matching.** A frame's script URL matches a stored file when its path, or a trailing part of it, equals the file:
 `https://shop.test/app/assets/index-abc.js` tries `app/assets/index-abc.js`, `assets/index-abc.js`, then `index-abc.js`; the

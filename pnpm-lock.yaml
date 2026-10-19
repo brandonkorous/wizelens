@@ -358,6 +358,40 @@ importers:
         specifier: ^8.3.4
         version: 8.3.4(@types/node@24.19.2)
 
+  samples/next-web:
+    dependencies:
+      '@wizeworks/lens-node':
+        specifier: workspace:*
+        version: link:../../js/packages/node
+      '@wizeworks/lens-react':
+        specifier: workspace:*
+        version: link:../../js/packages/react
+      next:
+        specifier: ^16.4.2
+        version: 16.4.2(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      react:
+        specifier: ^19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: ^19.3.1
+        version: 19.3.1(react@19.3.1)
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.2
+        version: 24.19.2
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      '@wizeworks/lens-cli':
+        specifier: workspace:*
+        version: link:../../js/packages/cli
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
   samples/orders-api:
     dependencies:
       '@wizeworks/lens-node':

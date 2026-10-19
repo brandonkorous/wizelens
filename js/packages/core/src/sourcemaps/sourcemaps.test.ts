@@ -78,6 +78,7 @@ describe("names and paths", () => {
     expect(displaySource("../../src/cart.ts?v=2")).toBe("src/cart.ts");
     expect(displaySource("../../node_modules/react-dom/cjs/x.js")).toBe("node_modules/react-dom/cjs/x.js");
     expect(displaySource("C:/code/app/src/App.tsx")).toBe("src/App.tsx");
+    expect(displaySource("turbopack:///[project]/apps/web/lib/coupon.ts")).toBe("apps/web/lib/coupon.ts");
   });
 });
 

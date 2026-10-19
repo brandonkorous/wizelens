@@ -38,7 +38,7 @@ const LIBRARY = /(^|\/)node_modules\/|^webpack\/(bootstrap|runtime)|^\(webpack\)
 /** A source path for display: no bundler scheme, query, or leading "../"; library code from node_modules on. */
 export function displaySource(source: string): string {
   let s = source.replace(/\\/g, "/").replace(/[?#].*$/, "");
-  s = s.replace(/^webpack:\/\/[^/]*\//, "").replace(/^[a-z]+:\/\/\/?/i, "");
+  s = s.replace(/^webpack:\/\/[^/]*\//, "").replace(/^[a-z]+:\/\/\/?/i, "").replace(/^\[project\]\//, "");
   const lib = s.lastIndexOf("node_modules/");
   if (lib >= 0) return s.slice(lib);
   while (/^\.\.?\//.test(s)) s = s.replace(/^\.\.?\//, "");

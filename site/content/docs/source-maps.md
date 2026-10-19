@@ -52,7 +52,7 @@ export default withWizeLens({ reactStrictMode: true });
 ```
 
 Each plugin turns on hidden source maps (the files ship without a link to their map), puts the release in the page, and
-uploads every map after a production build. Next.js 15.4 and later upload after `next build` with webpack or Turbopack; the
+uploads every map after a production build. Next.js 15.4 and later upload after `next build` with webpack or Turbopack (older versions upload from webpack); the
 wrapper deletes the maps it turned on once they are uploaded, so they are not deployed.
 
 Or upload from CI with the command line:

@@ -5,7 +5,8 @@ import { afterAll, describe, expect, it } from "vitest";
 import { createHub } from "@wizeworks/lens-hub";
 import { commandOf } from "./cli-args.js";
 import { baseOf, resolveRelease, resolveTarget } from "./options.js";
-import { fileKeyOf, findSourceMaps, listUploadedMaps, uploadSourceMaps } from "./upload.js";
+import { findSourceMaps } from "./find.js";
+import { listUploadedMaps, uploadSourceMaps } from "./upload.js";
 
 const MAP = JSON.stringify({ version: 3, sources: ["../src/a.ts"], names: [], mappings: "AAAA" });
 
@@ -46,9 +47,17 @@ describe("options and arguments", () => {
 describe("upload", () => {
   it("finds JavaScript maps and keys them by the generated file", async () => {
     const dir = buildFolder();
-    const maps = await findSourceMaps(dir);
-    expect(maps.map((m) => fileKeyOf(dir, m))).toEqual(["assets/index-abc.js", "assets/vendor.mjs"]);
-    expect(fileKeyOf(dir, maps[0]!, "/_next/static/")).toBe("_next/static/assets/index-abc.js");
+    expect((await findSourceMaps(dir)).map((m) => m.file)).toEqual(["assets/index-abc.js", "assets/vendor.mjs"]);
+    expect((await findSourceMaps(dir, "/_next/static/"))[0]!.file).toBe("_next/static/assets/index-abc.js");
+  });
+
+  it("keys a map by the script that names it, as Turbopack names them apart", async () => {
+    const dir = buildFolder();
+    mkdirSync(join(dir, "chunks"));
+    writeFileSync(join(dir, "chunks", "1ycw.js"), "x()\n//# sourceMappingURL=0rk.js.map");
+    writeFileSync(join(dir, "chunks", "0rk.js.map"), MAP);
+    expect((await findSourceMaps(dir)).map((m) => m.file)).toContain("chunks/1ycw.js");
+    expect((await findSourceMaps(dir)).map((m) => m.file)).not.toContain("chunks/0rk.js");
   });
 
   it("uploads to a real hub, lists, and deletes maps when asked", async () => {

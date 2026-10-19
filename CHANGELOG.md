@@ -30,8 +30,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   40-developer company with its sources, and pricing questions. Linked from the top bar, the footer, and the Cloud page.
   The cloud docs have a new "Plans and billing" section: what a GB is, the Free cap's HTTP 429, the spend cap, history
   per plan, and that billing is off when you self-host.
-- **Browser source maps.** Minified browser stacks map back to your source: the Errors page shows each frame's original
-  file, line, and function, with a few lines of code around the line that threw, and the raw stack one click away. Errors
+- **Browser source maps.** Minified browser stacks map back to your source: the Errors page, the error page, and the
+  trace page's Errors tab show each frame's original file, line, and function, with a few lines of code around the line
+  that threw, and the raw stack one click away. Errors
   group by the first frame of your code, so one bug stays one error across builds (the stats rebuild once: facts
   version 5). On your machine it needs no setup: the browser package, the Node add-on, and the hub read the maps your dev
   server serves, and the hub (`--sourcemaps ./dist`) and the Node add-on (`sourceMaps: { dirs }`) read build folders. For

@@ -436,7 +436,7 @@ See **[docs/PLAN.md](docs/PLAN.md)** for the full plan.
 docs/                 PLAN.md, CONTRACT.md, images
 dotnet/               WizeLens.slnx — src/ (add-ons), tests/
 js/packages/          core · node · react · ui
-samples/              web (React) · gateway-api (.NET) · orders-api (Node)
+samples/              web (React) · gateway-api (.NET) · orders-api (Node) · next-web (Next.js)
 site/                 the marketing site (Next.js static export: pnpm dev:site, pnpm build:site → site/out)
 ```
 

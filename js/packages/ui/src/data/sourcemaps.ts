@@ -4,6 +4,9 @@ import { apiSend } from "./api";
 import { useHost } from "./host";
 import { getScope } from "./prefs";
 
+/** What a stack view needs from an error: an ErrorEvent, or one built from a trace span. */
+export type StackSource = Pick<ErrorEvent, "type" | "message" | "stack" | "browser" | "release">;
+
 export interface ResolvedStack {
   frames: ResolvedFrame[] | null;
   loading: boolean;
@@ -24,7 +27,7 @@ async function resolveOn(server: boolean, stack: string, release: string | null)
 }
 
 /** A browser error's stack after source maps, from the host when it resolves stacks, else in this browser. Null frames for server errors. */
-export function useResolvedStack(event: ErrorEvent): ResolvedStack {
+export function useResolvedStack(event: StackSource): ResolvedStack {
   const server = useHost().has("sourcemaps");
   const stack = event.browser ? event.stack : null;
   const [state, setState] = useState<ResolvedStack & { key: string | null }>({ key: null, frames: null, loading: false, error: null });
