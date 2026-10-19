@@ -4,7 +4,7 @@ import type { SettleOptions } from "../store.js";
 import type { ChClient } from "./http.js";
 import type { Dirty, SettleQueue } from "./queue.js";
 import { loadTraces } from "./read.js";
-import { factObjects, tombstones, writeDeltas } from "./settle-rows.js";
+import { factObjects, type Label, tombstones, writeDeltas } from "./settle-rows.js";
 import { byProject, nextVer, type RetentionCache } from "./util.js";
 
 const BATCH = 2_000;
@@ -55,10 +55,11 @@ async function projectWork(ch: ChClient, project: string, items: readonly Dirty[
 }
 
 /** Write one project's work: facts (with tombstones) and rollups at once, then the settle states, so a failed write settles again. */
-async function writeWork(ch: ChClient, project: string, w: ProjectWork, ver: number, retentionMs: number): Promise<void> {
+async function writeWork(ch: ChClient, project: string, w: ProjectWork, ver: number, retentionMs: number, label: Label): Promise<void> {
   const dead = await tombstones(ch, project, w.resettled, w.facts, ver);
-  await Promise.all([...FACT_TABLES.map((t) => ch.insert(`${t}_t`, [...dead[t], ...w.facts[t]])), writeDeltas(ch, mergeDeltas(w.deltas), () => retentionMs)]);
-  await ch.insert("settle_state", w.states);
+  const facts = FACT_TABLES.map((t) => ch.insert(`${t}_t`, [...dead[t], ...w.facts[t]], label(t)));
+  await Promise.all([...facts, writeDeltas(ch, mergeDeltas(w.deltas), () => retentionMs, label)]);
+  await ch.insert("settle_state", w.states, label("settle_state"));
 }
 
 /** Settle one batch of taken traces. A failure releases the ones not written yet. */
@@ -69,7 +70,8 @@ async function settleItems(ch: ChClient, queue: SettleQueue, retention: Retentio
     for (const [project, items] of byProject(due)) {
       const retentionMs = days.get(project)! * 86_400_000;
       const ver = nextVer(now);
-      await writeWork(ch, project, await projectWork(ch, project, items, now, retentionMs, ver), ver, retentionMs);
+      const label: Label = (table) => ({ insert_deduplication_token: `${ver}:${project}:${table}` });
+      await writeWork(ch, project, await projectWork(ch, project, items, now, retentionMs, ver), ver, retentionMs, label);
       for (const d of items) queue.settled(d, d.updatedMs);
       left = left.filter((d) => d.project !== project);
       o.onSettled?.(project);
@@ -92,6 +94,8 @@ export async function settleClickHouse(ch: ChClient, queue: SettleQueue, retenti
       const due = queue.take(now, batch);
       if (due.length) {
         const run = settleItems(ch, queue, retention, now, due, o);
+        // Handled now, awaited in turn: a batch that fails while another is awaited must not end the process.
+        run.catch(() => undefined);
         running.push(run);
         started.push(run);
       }

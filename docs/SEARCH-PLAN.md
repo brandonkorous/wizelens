@@ -18,8 +18,8 @@ One search language works the same in all three places.
 | 8. Docs | CONTRACT, CHANGELOG, deploy README |
 
 Done since: hub FTS5 trigram indexes, Postgres `pg_trgm` (best effort), MCP `list_traces` / `get_errors` /
-`find_slow_queries` on the store, and the load test (`scripts/load-test.mjs`). The load test misses its targets; the
-results and the open work are in section 10.
+`find_slow_queries` on the store, the load test (`scripts/load-test.mjs`) and the speed work it led to, and live reloads
+(`api/changes`). Results and the open work are in section 10.
 
 ## Why
 
@@ -184,28 +184,28 @@ lightweight `DELETE` for that org.
 
 ### Load test results (2026-10-19)
 
-One cloud process and ClickHouse 26.8 in Docker with the production limits (4 CPUs, 3 GiB, the production config), on
-228,400 traces (1.14 million spans, 457,000 log lines) spread over 30 days. Run: `node scripts/load-test.mjs <url> <setup
+One cloud process and ClickHouse 26.8 in Docker with the production limits (4 CPUs, 4 GiB, the production config), on
+about 192,000 traces (960,000 spans, 384,000 log lines) spread over 30 days. Run: `node scripts/load-test.mjs <url> <setup
 token> --rate 2000 --seconds 120 --workers 32` against a cloud started with `--ingest-per-minute 1000000`.
 
-| Measure | Target | Result |
-|---|---|---|
-| Ingest | 2,000 traces/s | 1,883 traces/s with 32 senders; 1,337 with 8 (each call waits for ClickHouse async inserts) |
-| Indexing (settle) | keep up with ingest | 946 traces/s (was 461 before this round); ClickHouse inserts are the limit |
-| Search, 30 days, p50 | under 300 ms | 228–732 ms; words and `@attr` fastest, log and text searches slowest |
-| Pages, p50 | under 100 ms | requests 91, logs 102, database 416, errors (7d) 594, overview 692 (24h) / 1,027 ms (7d) |
+| Measure | Target | First run | Now |
+|---|---|---|---|
+| Ingest | 2,000 traces/s | 1,883 traces/s | 1,545 traces/s (indexing now runs at the same time, in the same process) |
+| Indexing (settle) | keep up with ingest | 461 traces/s | about 935 traces/s on recent data |
+| Search, 30 days, p50 | under 300 ms | 155–732 ms | 42–186 ms; a rare phrase over 30 days 429–465 ms |
+| Pages, p50 | under 100 ms | 91–2,230 ms | requests 60, logs 60, errors (7d) 193, database 213, overview 237 (7d) / 295 ms (24h) |
 
-Open work, in order:
+What changed: time filters use ClickHouse's sort key (Float64 literals), rollup sums skip `FINAL`, searches fetch only the
+page's rows and look at the newest day first, the n-gram bloom became a text index, settle batches overlap and merge in
+place, column statistics are off, settle inserts carry deduplication tokens (a dropped connection is retried without
+counting twice), and an open dashboard reloads on `api/changes` instead of a timer.
 
-1. Pages: rollup reads go through `FINAL` views, which cost 5–6 times a plain read. Reads that only sum could skip
-   `FINAL` if the per-row `n > 0.5` filter moves to `HAVING` (it guards first and last seen of buckets netted to zero).
-2. Searches: each page of results joins `fact_search` to the kind's fact table (a `FINAL` view) for the whole project.
-   Join only the page's trace ids, and use the n-gram skip index on `text`.
-3. Settle: about 15 inserts per batch; ClickHouse spends most of the time parsing JSON rows. RowBinary inserts, or fewer
-   fact rows per trace, would raise the ceiling.
-4. Memory: the ClickHouse test suites hit `MEMORY_LIMIT_EXCEEDED` at 3 GiB next to the load data, and one read failed
-   once with `UNKNOWN_CODEC` while loading the automatic column statistics under load. Watch both in production.
-5. Not yet run: 100 million spans (about 3 hours of ingest at 2,000 traces/s).
+Open work:
+
+1. Indexing past about 1,000 traces/s needs a second core: settle in a worker thread, and the cloud pod at 2 CPUs.
+2. Pages still run about 30 small queries each; one query per page section would bring them under 100 ms.
+3. A phrase that shows up in most 8,192-row blocks cannot skip any; a search over 30 days then reads all 30 days.
+4. Not yet run: 100 million spans (about 3 hours of ingest at 2,000 traces/s).
 
 ## 11. Build order
 

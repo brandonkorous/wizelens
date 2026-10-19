@@ -48,10 +48,28 @@ function searchSqlText<K extends SearchKind>(src: SqlSource, query: SearchQuery<
   return { sql: `SELECT ${cols} FROM ${from} WHERE ${where.join(" AND ")} ORDER BY ${order} LIMIT ${lit(limit + 1)}`, params: q.params };
 }
 
+/** How far back the first step of a ClickHouse page looks: most pages fill from the newest day, so the rest is never read. */
+const STEPS_MS = [86_400_000];
+
+/** The page's fact_search rows, newest slice first; slices are disjoint in time, so their rows follow one another in result order. */
+async function chPage<K extends SearchKind>(src: SqlSource, query: SearchQuery<K>, limit: number): Promise<Row[]> {
+  const top = Math.min(query.window.to, query.cursor ? query.cursor.timeMs + 1 : Infinity);
+  const out: Row[] = [];
+  let to = query.window.to;
+  for (const step of [...STEPS_MS, Infinity]) {
+    const from = Math.max(query.window.from, top - step);
+    if (from >= to) continue;
+    const t = searchSqlText(src, { ...query, window: { from, to } }, limit - out.length, false);
+    out.push(...(await src.run.all(t.sql, t.params)));
+    if (out.length > limit || from <= query.window.from) return out;
+    to = from;
+  }
+  return out;
+}
+
 /** ClickHouse: the page from fact_search, then only its rows from the kind's table; a join would read the project's whole table. */
 async function chRows<K extends SearchKind>(src: SqlSource, query: SearchQuery<K>, limit: number): Promise<Row[]> {
-  const ids = searchSqlText(src, query, limit, false);
-  const page = await src.run.all(ids.sql, ids.params);
+  const page = await chPage(src, query, limit);
   const join = JOINS[query.kind];
   if (!join.table || !page.length) return page;
   const q = new SqlText(src.d);

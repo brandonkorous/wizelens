@@ -40,8 +40,14 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   older hub file fills them once on start). The cloud on Postgres adds `pg_trgm` GIN indexes after it starts, without
   blocking writes; a database without `pg_trgm` keeps scanning, with the same results.
 - **MCP `list_traces`, `get_errors`, and `find_slow_queries` read the whole store**, not the newest 500 traces, and take a
-  `range` (default 24h). `list_traces` also takes `q` in the search language. `find_slow_queries` returns the slowest
+  `range` (default 24h), on the add-ons too. `list_traces` also takes `q` in the search language. `find_slow_queries` returns the slowest
   queries, not the newest. The newest traces, which the store indexes once they go quiet, are merged in.
+
+### Live updates
+
+- **Open pages reload as soon as new data is in**, like Supabase's dashboard: the cloud and the hub stream `api/changes`
+  (server-sent events, capability `changes`) each time settling builds new stats for a project. The page keeps its numbers
+  on screen until the new ones arrive, so nothing flickers. One stream per tab; without it, pages still reload every 15 s.
 
 ### Cloud scale mode: telemetry in ClickHouse
 
@@ -52,10 +58,16 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - Everything that touches telemetry goes through one `TelemetryStore`. Retention is a TTL per row; deleting or clearing a project
   removes its rows there too.
 - **`wizelens-cloud copy-telemetry`** copies an existing database's telemetry into ClickHouse before switching.
-- **Faster on ClickHouse.** Time filters now use the sort key (the times were whole-number literals against Float64
-  columns, which ClickHouse cannot match to the key), so the overview page reads a fraction of the rows: 2.2 s to 0.7 s on
-  1.1 million spans in the load test. Settling writes its tables at once, in batches of 2,000, and keeps going while a
-  backlog lasts (461 to 946 traces/s on 4 CPUs).
+- **Faster on ClickHouse.** Time filters now use the sort key (whole-number literals against Float64 columns kept
+  ClickHouse from matching the key). Rollup sums read the raw rows instead of the merged `FINAL` views. Searches fetch only
+  the rows of the page instead of joining the project's whole table, and look at the newest day first. The search text has
+  a text index instead of an n-gram bloom filter that matched every block. In the load test on 960,000 spans: the
+  overview page 2.2 s to 0.3 s, searches 155–732 ms to 42–186 ms (a rare phrase over 30 days still takes about 450 ms).
+- **Settling keeps up better**: batches of 2,000 that overlap, written to all tables at once, merged in place, and run back
+  to back while a backlog lasts (461 to about 935 traces/s). Its inserts carry deduplication tokens, so one dropped
+  connection is retried without counting twice; reads are retried too. A failed batch no longer stops the cloud.
+- **Column statistics are off** on ClickHouse: one read failed with `UNKNOWN_CODEC` while loading them under load. The
+  hosted ClickHouse gets 4 GiB (was 3).
 - **`scripts/load-test.mjs`** sends synthetic traffic to a cloud and times ingest, indexing, searches, and pages against
   the plan's targets. `--ingest-per-minute` (`WIZELENS_CLOUD_INGEST_PER_MINUTE`) raises the per-key ingest limit for it.
 - `deploy/docker-compose.cloud.yml` has a `scale` profile with ClickHouse. The hosted cloud gets a ClickHouse StatefulSet with a

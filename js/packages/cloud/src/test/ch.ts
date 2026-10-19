@@ -12,6 +12,8 @@ export interface ChTest {
   store: TelemetryStore;
   projectId: string;
   retentionMs: number;
+  /** The test database's URL, for direct reads. */
+  url: string;
   drop(): Promise<void>;
 }
 
@@ -25,7 +27,7 @@ export async function chTest(days = 1000, now = SCENARIO_NOW): Promise<ChTest> {
     u.pathname = "/default";
     await chClient({ url: u.toString() }).command(`DROP DATABASE IF EXISTS ${name}`);
   };
-  return { store, projectId: "proj-ch", retentionMs: days * DAY, drop };
+  return { store, projectId: "proj-ch", retentionMs: days * DAY, url, drop };
 }
 
 /** Write traces through the store's normal write path, one batch per trace. */

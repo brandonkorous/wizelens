@@ -13,7 +13,7 @@ export interface ChClient {
   query<T = Record<string, unknown>>(sql: string, params?: readonly unknown[]): Promise<T[]>;
   /** A statement without rows (DDL, DELETE, INSERT ... SELECT). */
   command(sql: string, params?: readonly unknown[], settings?: Record<string, string>): Promise<void>;
-  /** Rows as JSON lines into `INSERT INTO <target> FORMAT JSONEachRow`; the target may be `t SELECT ... FROM input(...)`. */
+  /** Rows as JSON lines into `INSERT INTO <target> FORMAT JSONEachRow`; the target may be `t SELECT ... FROM input(...)`. With an `insert_deduplication_token`, a dropped call is sent again and ClickHouse keeps one copy. */
   insert(target: string, rows: readonly object[], settings?: Record<string, string>): Promise<void>;
   ping(): Promise<boolean>;
 }
@@ -46,7 +46,10 @@ const SETTINGS = {
   use_statistics: "0", use_statistics_for_part_pruning: "0", allow_statistics_optimize: "0",
 };
 
-const refused = (err: unknown) => (err as { cause?: { code?: string } }).cause?.code === "ECONNREFUSED";
+const codeOf = (err: unknown) => (err as { cause?: { code?: string } }).cause?.code;
+const refused = (err: unknown) => codeOf(err) === "ECONNREFUSED";
+/** The server closed a kept-alive connection as the call went out: the call may or may not have run. */
+const dropped = (err: unknown) => ["UND_ERR_SOCKET", "ECONNRESET", "EPIPE"].includes(codeOf(err) ?? "");
 
 /** One fetch with a timer that is always cleared, so no timer outlives the call. */
 async function fetchOnce(url: string, init: RequestInit, timeoutMs: number): Promise<{ status: number; ok: boolean; text: string }> {
@@ -60,21 +63,21 @@ async function fetchOnce(url: string, init: RequestInit, timeoutMs: number): Pro
   }
 }
 
-/** A refused connection never reached the server, so even an insert is safe to send again. */
-async function send(url: string, init: RequestInit, timeoutMs: number): Promise<{ status: number; ok: boolean; text: string }> {
+/** A refused connection never reached the server, so even an insert is safe to send again; a dropped one only when `again` (reads, and inserts with a deduplication token). */
+async function send(url: string, init: RequestInit, timeoutMs: number, again = false): Promise<{ status: number; ok: boolean; text: string }> {
   for (let attempt = 0; ; attempt++) {
     try {
       return await fetchOnce(url, init, timeoutMs);
     } catch (err) {
-      if (!refused(err) || attempt >= 3) throw err;
+      if (!(refused(err) || (again && dropped(err))) || attempt >= 3) throw err;
       await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
     }
   }
 }
 
-async function call(e: Endpoint, body: string, query: Record<string, string>, timeoutMs: number): Promise<string> {
+async function call(e: Endpoint, body: string, query: Record<string, string>, timeoutMs: number, again = false): Promise<string> {
   const qs = new URLSearchParams({ ...SETTINGS, ...query });
-  const res = await send(`${e.base}?${qs.toString()}`, { method: "POST", headers: e.headers, body }, timeoutMs);
+  const res = await send(`${e.base}?${qs.toString()}`, { method: "POST", headers: e.headers, body }, timeoutMs, again);
   if (!res.ok) throw new Error(`ClickHouse ${res.status}: ${res.text.slice(0, 500)}`);
   return res.text;
 }
@@ -88,7 +91,7 @@ export function chClient(o: ChOptions): ChClient {
   return {
     database: e.database,
     async query<T>(sql: string, params: readonly unknown[] = []) {
-      const text = await call(e, `${sql}\nFORMAT JSONEachRow`, paramsOf(params), timeout);
+      const text = await call(e, `${sql}\nFORMAT JSONEachRow`, paramsOf(params), timeout, true);
       return text.split("\n").filter(Boolean).map((line) => JSON.parse(line) as T);
     },
     async command(sql, params = [], settings = {}) {
@@ -97,7 +100,7 @@ export function chClient(o: ChOptions): ChClient {
     async insert(target, rows, settings = {}) {
       if (rows.length === 0) return;
       const body = rows.map((r) => JSON.stringify(r)).join("\n");
-      await call(e, body, { query: `INSERT INTO ${target} FORMAT JSONEachRow`, ...settings }, timeout);
+      await call(e, body, { query: `INSERT INTO ${target} FORMAT JSONEachRow`, ...settings }, timeout, !!settings.insert_deduplication_token);
     },
     async ping() {
       try {

@@ -9,8 +9,11 @@ const TABLES = [...RAW_TABLES, ...FACT_DDL, ...ROLLUP_DDL].map((s) => /^CREATE T
 /** New parts write no column statistics (see http.ts); old parts lose theirs as they merge. */
 const NO_STATISTICS = TABLES.map((t) => `ALTER TABLE ${t} MODIFY SETTING auto_statistics_types = ''`);
 
+/** Tables only settling writes, always with a token: a retried insert lands once (see settle-rows.ts, Label). */
+const DEDUPLICATED = TABLES.filter((t) => /^(fact_|rollup_|hist_)|^settle_state$/.test(t)).map((t) => `ALTER TABLE ${t} MODIFY SETTING non_replicated_deduplication_window = 1000`);
+
 /** Every statement, in order. A change to a shipped table needs an ALTER added here, never an edit to its CREATE. */
-export const CH_SCHEMA: readonly string[] = [...RAW_TABLES, ...FACT_DDL, ...FACT_ALTERS, ...ROLLUP_DDL, ...NO_STATISTICS];
+export const CH_SCHEMA: readonly string[] = [...RAW_TABLES, ...FACT_DDL, ...FACT_ALTERS, ...ROLLUP_DDL, ...NO_STATISTICS, ...DEDUPLICATED];
 
 /** Tables whose rows belong to one project, for clearing it. Views are left out. */
 export const PROJECT_TABLES: readonly string[] = TABLES.filter((t) => t !== "trace_updates");
