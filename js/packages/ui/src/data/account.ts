@@ -14,6 +14,8 @@ export interface Project {
   slug: string;
   /** Cloud: days log lines are kept, or null for the organization's retention. */
   logRetentionDays?: number | null;
+  /** Your role on this project: the organization role, or the one set for this project. */
+  role?: Role;
 }
 
 export interface OrgWithProjects {

@@ -3,6 +3,7 @@ import { requireUser } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { DEFAULT_DIGEST, DIGEST_PERIODS, type DigestPeriod, digestPrefsOf, type MailPrefs, prefsOf, saveDigestPref, savePrefs } from "../repo/mail-prefs.js";
+import { VISIBLE_TO_MEMBER } from "../repo/project-roles.js";
 
 const validZone = (tz: string) => {
   try {
@@ -16,7 +17,8 @@ const validZone = (tz: string) => {
 /** Projects this person can see, each with its digest choices. */
 async function projectsOf(ctx: Ctx, userId: string) {
   const rows = await ctx.app.db.query<{ id: string; name: string; org_id: string; org: string; role: string }>(
-    "SELECT p.id, p.name, p.org_id, o.name AS org, m.role FROM members m JOIN orgs o ON o.id = m.org_id JOIN projects p ON p.org_id = o.id WHERE m.user_id = $1 ORDER BY o.name, p.name",
+    `SELECT p.id, p.name, p.org_id, o.name AS org, m.role FROM members m JOIN orgs o ON o.id = m.org_id JOIN projects p ON p.org_id = o.id
+     WHERE m.user_id = $1 AND ${VISIBLE_TO_MEMBER} ORDER BY o.name, p.name`,
     [userId],
   );
   const prefs = await digestPrefsOf(ctx.app.db, userId);

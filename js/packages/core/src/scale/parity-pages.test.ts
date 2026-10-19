@@ -51,7 +51,11 @@ describe("parity: a live slow query threshold, as in-app hosts use", () => {
       const now = runPageSync("database", pageContext(range, SCENARIO_NOW, { size: "200" }, { slowQueryMs: 10 }), ex);
       const before = legacy.PAGE_MODELS.database(legacy.modelInput(scenarioTraces(), range, SCENARIO_NOW, { slowQueryMs: 10 }, {}));
       expect(now.summary.slow).not.toBe(newModel("database", range).summary.slow);
-      expect(differences(normalizeModel("database", now), normalizeModel("database", before))).toEqual([]);
+      // Slow query insights follow the threshold now; the old code kept 100 ms for them.
+      const { insights, ...rest } = normalizeModel("database", now) as { insights: unknown[] };
+      const { insights: oldInsights, ...oldRest } = normalizeModel("database", before) as { insights: unknown[] };
+      expect(differences(rest, oldRest)).toEqual([]);
+      expect(insights.length).toBeGreaterThan(oldInsights.length);
     }
   });
 });

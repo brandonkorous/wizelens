@@ -5,12 +5,13 @@ import { openClickHouse } from "./ch/store.js";
 import { logDaysOf } from "../repo/log-retention.js";
 import { pgTelemetry } from "./pg-store.js";
 import type { RetentionOf, TelemetryStore } from "./store.js";
+import { KEEP_DAYS, type SettingsCache } from "../repo/settings.js";
 
 export type { MetricQuery, SettleOptions, TelemetryStore, TraceQuery } from "./store.js";
 
 /** Retention days of the projects that still exist; deleted projects are left out. */
 export const pgRetentionOf = (db: Db): RetentionOf => async (ids) => {
-  const rows = await db.query<{ id: string; d: number }>("SELECT p.id, o.retention_days AS d FROM projects p JOIN orgs o ON o.id = p.org_id WHERE p.id = ANY($1)", [[...ids]]);
+  const rows = await db.query<{ id: string; d: number }>(`SELECT p.id, ${KEEP_DAYS} AS d FROM projects p JOIN orgs o ON o.id = p.org_id WHERE p.id = ANY($1)`, [[...ids]]);
   return new Map(rows.map((r) => [r.id, r.d]));
 };
 
@@ -18,9 +19,10 @@ export const pgRetentionOf = (db: Db): RetentionOf => async (ids) => {
 export const pgLogRetentionOf = (db: Db): RetentionOf => (ids) => logDaysOf(db, ids);
 
 /** The telemetry store for this cloud: ClickHouse (scale mode) when a URL is set, else the cloud's own database. */
-export async function openTelemetry(config: CloudConfig, db: Db): Promise<TelemetryStore> {
+export async function openTelemetry(config: CloudConfig, db: Db, settings?: SettingsCache): Promise<TelemetryStore> {
+  const settingsOf = settings && ((id: string) => settings.get(id));
   const store = config.clickhouseUrl
-    ? await openClickHouse({ url: config.clickhouseUrl, retentionOf: pgRetentionOf(db), logRetentionOf: pgLogRetentionOf(db), defaultRetentionDays: config.retentionDays, now: config.now, settleWorkers: config.settleWorkers })
+    ? await openClickHouse({ url: config.clickhouseUrl, retentionOf: pgRetentionOf(db), logRetentionOf: pgLogRetentionOf(db), settingsOf, defaultRetentionDays: config.retentionDays, now: config.now, settleWorkers: config.settleWorkers })
     : pgTelemetry(db);
   return withCachedCounts(store, Date.now);
 }

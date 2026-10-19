@@ -2,7 +2,8 @@ import { fromNodeHeaders } from "better-auth/node";
 import type { Ctx } from "../app.js";
 import { bearerOf, fail, HttpError } from "../http/http.js";
 import { membership } from "../repo/orgs.js";
-import { type ApiKey, keyByToken, type Project, projectInOrg } from "../repo/projects.js";
+import { effectiveRole, overridable, projectRoleOf } from "../repo/project-roles.js";
+import { type ApiKey, keyAllows, keyByToken, type Project, projectInOrg } from "../repo/projects.js";
 import type { User } from "../repo/users.js";
 import { can, type Permission, type Role } from "./roles.js";
 
@@ -31,7 +32,7 @@ export async function principalOf(ctx: Ctx): Promise<Principal | undefined> {
   const bearer = bearerOf(ctx.req);
   if (bearer?.startsWith("wl_rk_")) {
     const key = await keyByToken(ctx.app.db, bearer, ctx.app.config.now());
-    return key?.kind === "read" ? { kind: "key", key } : undefined;
+    return key?.kind === "read" && keyAllows(key, "api") ? { kind: "key", key } : undefined;
   }
   const s = await sessionOf(ctx);
   return s ? { kind: "user", ...s } : undefined;
@@ -71,10 +72,11 @@ export async function requireProject(ctx: Ctx, projectId: string, permission: Pe
   const [row] = await ctx.app.db.query<{ org_id: string }>("SELECT org_id FROM projects WHERE id = $1", [projectId]);
   const m = row ? await membership(ctx.app.db, p.user.id, row.org_id) : undefined;
   const project = m ? await projectInOrg(ctx.app.db, m.id, projectId) : undefined;
-  if (!m || !project) return fail(404, "Project not found.");
-  if (!can(m.role, permission)) fail(403, `Your role (${m.role}) cannot do this.`);
+  const role = m && project ? effectiveRole(m.role, overridable(m.role) ? await projectRoleOf(ctx.app.db, projectId, p.user.id) : undefined) : null;
+  if (!role || !project) return fail(404, "Project not found.");
+  if (!can(role, permission)) fail(403, `Your role (${role}) cannot do this.`);
   if (permission !== "read") await requireUser(ctx);
-  return { project, actor: `user:${p.user.id}`, role: m.role, principal: p };
+  return { project, actor: `user:${p.user.id}`, role, principal: p };
 }
 
 async function keyAccess(ctx: Ctx, p: Principal & { kind: "key" }, projectId: string, permission: Permission): Promise<ProjectAccess> {

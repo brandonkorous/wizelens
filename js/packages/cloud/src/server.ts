@@ -12,6 +12,7 @@ import { wireAuth } from "./auth/wire.js";
 import { createBilling } from "./billing/service.js";
 import { STRIPE_WEBHOOK_PATH, stripeWebhook } from "./billing/webhook.js";
 import { Changes } from "./changes.js";
+import { SettingsCache } from "./repo/settings.js";
 import { type CloudConfig, type CloudOptions, resolveConfig } from "./config.js";
 import { openDb } from "./db/db.js";
 import { migrate } from "./db/migrate.js";
@@ -100,11 +101,12 @@ function onError(err: unknown, res: ServerResponse): void {
 async function openStores(config: CloudConfig) {
   const db = await openDb(config.database);
   await migrate(db);
-  const telemetry = await openTelemetry(config, db);
+  const settings = new SettingsCache(db);
+  const telemetry = await openTelemetry(config, db, settings);
   await telemetry.checkFactsVersion();
   const changes = new Changes();
   changes.onAny(forgetModels);
-  return { db, telemetry, changes, maps: cloudMapLoaders(db) };
+  return { db, telemetry, changes, maps: cloudMapLoaders(db), settings };
 }
 
 /** Mail, plans and usage (Stripe with billing on), and the auth wiring. */

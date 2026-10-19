@@ -1,12 +1,13 @@
 import { hostname } from "node:os";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { annotateErrorFrames, HEADER_HOP, type ServiceInfo, SOURCEMAPS_PATH, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core";
-import { DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, firstHeader, sendJson, VERSION as NODE_VERSION } from "@wizeworks/lens-node/kit";
+import { firstHeader, sendJson, VERSION as NODE_VERSION } from "@wizeworks/lens-node/kit";
 import { parseJson, readBody } from "./body.js";
 import { handleAlerts } from "./alerts/api.js";
 import type { HubAlertDeps } from "./alerts/evaluate.js";
 import { handleIssues } from "./issues.js";
 import { handleSaved } from "./saved.js";
+import { handleSettings } from "./settings.js";
 import { handleApdex, handleSlos } from "./slos.js";
 import type { HubData } from "./data.js";
 import { parseIngest } from "./ingest.js";
@@ -38,7 +39,7 @@ const num = (p: URLSearchParams, k: string) => (p.has(k) && Number.isFinite(Numb
 export function hubInfo(c: ApiContext): ServiceInfo {
   return {
     mode: "hub",
-    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "savedSearches", "saved", "tags", ...(c.o.uptime ? (["uptime"] as const) : [])],
+    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "savedSearches", "saved", "tags", "settings", ...(c.o.uptime ? (["uptime"] as const) : [])],
     service: c.o.name,
     version: c.version,
     runtime: `node ${process.version} · lens-node ${NODE_VERSION}`,
@@ -46,7 +47,7 @@ export function hubInfo(c: ApiContext): ServiceInfo {
     host: hostname(),
     startedMs: c.startedMs,
     storage: { kind: "sqlite", maxTraces: c.o.maxTraces, maxAgeMs: c.o.maxAgeMs },
-    analysis: { slowQueryMs: DEFAULT_SLOW_QUERY_MS, nPlusOneThreshold: DEFAULT_N_PLUS_ONE },
+    analysis: { slowQueryMs: c.o.slowQueryMs, nPlusOneThreshold: c.o.nPlusOneThreshold },
     redactKeys: [...c.o.redactKeys],
   };
 }
@@ -114,6 +115,7 @@ export async function handleApi(c: ApiContext, sub: string, req: IncomingMessage
   if (sub === "api/uptime" || sub.startsWith("api/uptime/")) return handleUptime(c, sub, req, res, url);
   if (sub === "api/saved" || sub.startsWith("api/saved/")) return handleSaved(c.data.store.db, sub, req, res, url, c.o.now());
   if (sub === "api/slos" || sub.startsWith("api/slos/")) return handleSlos(c.data.store, sub, req, res, url, c.o.now());
+  if (sub === "api/settings") return handleSettings(c.data.store, method, url.searchParams.get("project") ?? "", req, res);
   if (sub === "api/apdex") return handleApdex(c.data.store.db, method, url.searchParams.get("project") ?? "", req, res);
   if (sub === "api/alerts" || sub.startsWith("api/alerts/")) return handleAlerts(c.alerts, c.o.now(), sub, req, res, url);
   if (await handleTags(c, sub, req, res, url)) return;

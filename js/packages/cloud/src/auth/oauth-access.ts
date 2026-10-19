@@ -1,6 +1,7 @@
 import type { Ctx } from "../app.js";
 import { grantById } from "../repo/grants.js";
 import { membership } from "../repo/orgs.js";
+import { hiddenProjects } from "../repo/project-roles.js";
 import { inOrg, orgProjectIds } from "../repo/trace-join.js";
 import { GRANT_CLAIM, MCP_SCOPE, mcpResources } from "./oauth.js";
 import type { AppPrincipal } from "./principal.js";
@@ -31,7 +32,8 @@ export async function appPrincipalOf(ctx: Ctx, token: string): Promise<{ orgId: 
   if (!grant || grant.userId !== claims.sub || grant.clientId !== claims.client_id) return undefined;
   const m = await membership(db, grant.userId, grant.orgId);
   if (!m || !can(m.role, "read")) return undefined;
-  const projectIds = grant.allProjects ? await orgProjectIds(db, grant.orgId) : await inOrg(db, grant.orgId, grant.projectIds);
+  const hidden = await hiddenProjects(db, grant.orgId, grant.userId);
+  const projectIds = (grant.allProjects ? await orgProjectIds(db, grant.orgId) : await inOrg(db, grant.orgId, grant.projectIds)).filter((id) => !hidden.has(id));
   const [client] = await db.query<{ name: string | null }>("SELECT name FROM oauth_clients WHERE client_id = $1", [grant.clientId]);
   return { orgId: grant.orgId, principal: { kind: "app", grantId: grant.id, userId: grant.userId, app: client?.name ?? grant.clientId, projectIds } };
 }

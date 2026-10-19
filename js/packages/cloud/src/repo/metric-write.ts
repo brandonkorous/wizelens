@@ -21,6 +21,7 @@ import {
   TIERS,
 } from "@wizeworks/lens-core";
 import type { Queryable } from "../db/db.js";
+import { KEEP_DAYS } from "./settings.js";
 
 // Metric rollups at ingest (docs/CONTRACT.md, "Cloud storage"): written with the raw points, in the same transaction.
 const CHUNK = 200;
@@ -70,6 +71,6 @@ export async function writeMetricRollups(q: Queryable, projectId: string, env: s
 export async function pruneMetricRollups(q: Queryable, now: number): Promise<void> {
   for (const t of TIERS.filter((x) => x.keepMs !== null)) await q.query(`DELETE FROM metric_${t.name} WHERE bucket_ms <= $1`, [tierCutoff(t, now, t.keepMs!)]);
   const scope = "USING projects p, orgs o WHERE p.id = m.project_id AND o.id = p.org_id";
-  await q.query(`DELETE FROM metric_1h m ${scope} AND m.bucket_ms <= $1 - o.retention_days * 86400000.0`, [now - 3_600_000]);
-  await q.query(`DELETE FROM metric_series m ${scope} AND m.last_ms < $1 - o.retention_days * 86400000.0`, [now]);
+  await q.query(`DELETE FROM metric_1h m ${scope} AND m.bucket_ms <= $1 - ${KEEP_DAYS} * 86400000.0`, [now - 3_600_000]);
+  await q.query(`DELETE FROM metric_series m ${scope} AND m.last_ms < $1 - ${KEEP_DAYS} * 86400000.0`, [now]);
 }

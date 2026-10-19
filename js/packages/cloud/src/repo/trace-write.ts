@@ -5,6 +5,7 @@ import type { Db, Queryable } from "../db/db.js";
 import { runStatements, stateOf, type TraceStateRow } from "../settle.js";
 import { LOG_DAYS_SQL } from "./log-retention.js";
 import { pruneMetricRollups, writeMetricRollups } from "./metric-write.js";
+import { KEEP_DAYS } from "./settings.js";
 
 const CHUNK = 200;
 
@@ -89,7 +90,7 @@ function dedupe<T>(items: readonly T[], key: (t: T) => string): T[] {
 export async function pruneMetricsByRetention(q: Queryable, now: number): Promise<void> {
   await q.query(
     `DELETE FROM metric_points m USING projects p, orgs o WHERE p.id = m.project_id AND o.id = p.org_id
-     AND m.time_ms < $1 - o.retention_days * 86400000.0`,
+     AND m.time_ms < $1 - ${KEEP_DAYS} * 86400000.0`,
     [now],
   );
   await pruneMetricRollups(q, now);
@@ -100,8 +101,8 @@ export async function pruneByRetention(q: Queryable, now: number): Promise<numbe
   const loose = `substr(t.trace_id, 1, 16) = '${LOOSE_TRACE_PREFIX}'`;
   const prune = async (x: Queryable) => {
     const doomed = await x.query<TraceStateRow>(
-      `SELECT t.project_id, t.trace_id, t.env, t.contrib, o.retention_days, p.log_retention_days FROM traces t JOIN projects p ON p.id = t.project_id JOIN orgs o ON o.id = p.org_id
-       WHERE (NOT ${loose} AND t.start_ms < $1 - o.retention_days * 86400000.0) OR (${loose} AND t.start_ms < $1 - ${LOG_DAYS_SQL} * 86400000.0) LIMIT 5000`,
+      `SELECT t.project_id, t.trace_id, t.env, t.contrib, ${KEEP_DAYS} AS retention_days, p.log_retention_days FROM traces t JOIN projects p ON p.id = t.project_id JOIN orgs o ON o.id = p.org_id
+       WHERE (NOT ${loose} AND t.start_ms < $1 - ${KEEP_DAYS} * 86400000.0) OR (${loose} AND t.start_ms < $1 - ${LOG_DAYS_SQL} * 86400000.0) LIMIT 5000`,
       [now],
     );
     // Take their contributions out of the rollups and drop their facts first.

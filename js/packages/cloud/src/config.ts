@@ -1,5 +1,5 @@
 import { availableParallelism } from "node:os";
-import { DEFAULT_REDACT_KEYS } from "@wizeworks/lens-core";
+import { DEFAULT_REDACT_KEYS, FACT_N_PLUS_ONE, FACT_SLOW_QUERY_MS } from "@wizeworks/lens-core";
 import { type BillingConfig, type BillingOptions, resolveBilling } from "./billing/options.js";
 import type { Mail } from "./mail/mailer.js";
 
@@ -53,6 +53,10 @@ export interface CloudOptions extends BillingOptions {
   /** Identity provider origins for OIDC single sign-on, for example https://acme.okta.com. The cloud fetches OIDC settings only from these. */
   ssoOrigins?: string[];
   redactKeys?: string[];
+  /** A database call this slow or slower counts as slow, in ms. Default 100. Projects can set their own. */
+  slowQueryMs?: number;
+  /** This many similar calls in one request is an N+1. Default 5. Projects can set their own. */
+  nPlusOneThreshold?: number;
   uiDir?: string;
   /** For tests: the clock, the HTTP client alerts use, and a mail sender in place of SMTP. */
   now?: () => number;
@@ -122,6 +126,8 @@ export function resolveConfig(o: CloudOptions = {}): CloudConfig {
     checkPwnedPasswords: o.checkPwnedPasswords,
     ssoOrigins: ssoOriginsOf(o.ssoOrigins ?? []),
     redactKeys: o.redactKeys ?? [...DEFAULT_REDACT_KEYS],
+    slowQueryMs: o.slowQueryMs ?? FACT_SLOW_QUERY_MS,
+    nPlusOneThreshold: o.nPlusOneThreshold ?? FACT_N_PLUS_ONE,
     uiDir: o.uiDir,
     now: o.now ?? Date.now,
     fetch: o.fetch ?? fetch,

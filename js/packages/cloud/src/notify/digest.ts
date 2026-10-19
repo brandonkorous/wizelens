@@ -4,6 +4,8 @@ import { renderMail } from "../mail/templates.js";
 import { stopUrl } from "../mail/unsubscribe.js";
 import { DEFAULT_DIGEST, type DigestPeriod, digestPrefsOf } from "../repo/mail-prefs.js";
 import { type DigestData, digestData } from "./digest-data.js";
+import { VISIBLE_TO_MEMBER } from "../repo/project-roles.js";
+import { KEEP_DAYS } from "../repo/settings.js";
 
 interface Local {
   date: string;
@@ -84,7 +86,8 @@ async function digestsFor(app: CloudApp, who: Person, cache: Cache): Promise<voi
   const due = dueKeys(localOf(app.config.now(), who.time_zone ?? "UTC"), who.digest_hour ?? 8);
   if (due.length === 0) return;
   const projects = await app.db.query<ProjectRow>(
-    "SELECT p.id, p.name, o.name AS org, o.retention_days FROM members m JOIN orgs o ON o.id = m.org_id JOIN projects p ON p.org_id = o.id WHERE m.user_id = $1 ORDER BY p.name",
+    `SELECT p.id, p.name, o.name AS org, ${KEEP_DAYS} AS retention_days FROM members m JOIN orgs o ON o.id = m.org_id JOIN projects p ON p.org_id = o.id
+     WHERE m.user_id = $1 AND ${VISIBLE_TO_MEMBER} ORDER BY p.name`,
     [who.id],
   );
   const prefs = await digestPrefsOf(app.db, who.id);

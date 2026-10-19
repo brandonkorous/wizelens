@@ -4,14 +4,25 @@ import { sessionOf } from "../auth/principal.js";
 import { fail, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { orgsOfUser } from "../repo/orgs.js";
+import { effectiveRole, listProjectRoles } from "../repo/project-roles.js";
 import { listProjects } from "../repo/projects.js";
 import { userCount } from "../repo/users.js";
 
-/** The signed-in person's organizations, each with its projects. */
+/** The signed-in person's organizations, each with the projects they may see and their role on each. */
 async function orgsWithProjects(ctx: Ctx, userId: string) {
-  const orgs = await orgsOfUser(ctx.app.db, userId);
+  const db = ctx.app.db;
+  const orgs = await orgsOfUser(db, userId);
   const plan = (p: string) => (ctx.app.billing.on ? p : "unlimited");
-  return Promise.all(orgs.map(async (o) => ({ ...o, plan: plan(o.plan), projects: await listProjects(ctx.app.db, o.id) })));
+  return Promise.all(
+    orgs.map(async (o) => {
+      const own = new Map((await listProjectRoles(db, o.id)).filter((r) => r.userId === userId).map((r) => [r.projectId, r.role]));
+      const projects = (await listProjects(db, o.id)).flatMap((p) => {
+        const role = effectiveRole(o.role, own.get(p.id));
+        return role ? [{ ...p, role }] : [];
+      });
+      return { ...o, plan: plan(o.plan), projects };
+    }),
+  );
 }
 
 /** True once any organization has an SSO provider with a proven domain, so the sign-in page offers single sign-on. */

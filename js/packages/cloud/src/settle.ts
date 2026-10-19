@@ -1,7 +1,8 @@
-import { FACT_TABLES, FACTS_VERSION, LOG_KINDS_SQL, PG_DIALECT, settleStatements, type Statement, tierPruneStatements, type TraceState, type Trace } from "@wizeworks/lens-core";
+import { type FactOptions, FACT_TABLES, FACTS_VERSION, factOptionsOf, LOG_KINDS_SQL, PG_DIALECT, settingsOf, settleStatements, type Statement, tierPruneStatements, type TraceState, type Trace } from "@wizeworks/lens-core";
 import type { Db, Queryable } from "./db/db.js";
 import { loadTraces } from "./repo/trace-read.js";
 import type { SettleOptions } from "./telemetry/store.js";
+import { KEEP_DAYS } from "./repo/settings.js";
 
 // Settling: traces quiet for a while get their facts and rollups rebuilt from the stored spans and logs (docs/CONTRACT.md).
 const BATCH = 500;
@@ -22,6 +23,8 @@ export interface TraceStateRow {
   contrib: string | null;
   retention_days: number | null;
   log_retention_days?: number | null;
+  /** The project's settings JSON, when the settle reads it. */
+  settings?: string | null;
 }
 
 /** Run statements one by one, in the caller's transaction. */
@@ -29,7 +32,7 @@ export async function runStatements(q: Queryable, statements: readonly Statement
   for (const s of statements) await q.query(s.sql, s.params);
 }
 
-export const stateOf = (r: TraceStateRow, defaultDays: number): TraceState => ({
+export const stateOf = (r: TraceStateRow, defaultDays: number, defaultFacts: Partial<FactOptions> = {}): TraceState => ({
   traceId: r.trace_id,
   project: r.project_id,
   env: r.env,
@@ -37,6 +40,7 @@ export const stateOf = (r: TraceStateRow, defaultDays: number): TraceState => ({
   contrib: r.contrib,
   retentionMs: (r.retention_days ?? defaultDays) * DAY_MS,
   logRetentionMs: (r.log_retention_days ?? r.retention_days ?? defaultDays) * DAY_MS,
+  facts: { ...defaultFacts, ...factOptionsOf(settingsOf(r.settings)) },
 });
 
 async function loadAll(q: Queryable, rows: readonly TraceStateRow[]): Promise<Map<string, Trace>> {
@@ -48,19 +52,19 @@ async function loadAll(q: Queryable, rows: readonly TraceStateRow[]): Promise<Ma
 }
 
 /** Settle one batch in one transaction. -1 when another instance holds the lock. */
-async function settleBatch(db: Db, now: number, batch: number, defaultDays: number): Promise<{ n: number; projects: string[] }> {
+async function settleBatch(db: Db, now: number, batch: number, defaultDays: number, defaultFacts?: Partial<FactOptions>): Promise<{ n: number; projects: string[] }> {
   return db.tx(async (q) => {
     const [lock] = await q.query<{ ok: boolean }>("SELECT pg_try_advisory_xact_lock($1) AS ok", [LOCK]);
     if (!lock?.ok) return { n: -1, projects: [] };
     const rows = await q.query<TraceStateRow>(
-      `SELECT t.project_id, t.trace_id, t.env, t.updated_ms, t.contrib, o.retention_days, p.log_retention_days FROM traces t
+      `SELECT t.project_id, t.trace_id, t.env, t.updated_ms, t.contrib, ${KEEP_DAYS} AS retention_days, p.log_retention_days, p.settings FROM traces t
        LEFT JOIN projects p ON p.id = t.project_id LEFT JOIN orgs o ON o.id = p.org_id
        WHERE t.settled_ms < t.updated_ms AND (t.updated_ms <= $1 OR t.settled_ms <= $2) ORDER BY t.start_ms DESC LIMIT $3`,
       [now - QUIET_MS, now - BUSY_MS, batch],
     );
     if (!rows.length) return { n: 0, projects: [] };
     const traces = await loadAll(q, rows);
-    const work = rows.map((r) => ({ state: stateOf(r, defaultDays), trace: traces.get(`${r.project_id} ${r.trace_id}`) }));
+    const work = rows.map((r) => ({ state: stateOf(r, defaultDays, defaultFacts), trace: traces.get(`${r.project_id} ${r.trace_id}`) }));
     await runStatements(q, settleStatements(PG_DIALECT, work, now, true));
     return { n: rows.length, projects: [...new Set(rows.map((r) => r.project_id))] };
   });
@@ -72,7 +76,7 @@ export async function settleCloud(db: Db, now: number, o: SettleOptions = {}): P
   const batch = o.batch ?? BATCH;
   let total = 0;
   for (;;) {
-    const { n, projects } = await settleBatch(db, now, batch, o.defaultRetentionDays ?? 30);
+    const { n, projects } = await settleBatch(db, now, batch, o.defaultRetentionDays ?? 30, o.defaultFacts);
     if (n > 0) total += n;
     for (const p of projects) o.onSettled?.(p);
     if (n < batch || Date.now() - start >= (o.budgetMs ?? BUDGET_MS)) return total;
@@ -84,7 +88,7 @@ export async function pruneRollups(q: Queryable, now: number, empties = false): 
   await runStatements(q, tierPruneStatements(now, empties));
   for (const t of ["rollup_1h", "hist_1h"]) {
     await q.query(
-      `DELETE FROM ${t} r USING projects p, orgs o WHERE p.id = r.project_id AND o.id = p.org_id AND r.bucket_ms <= $1 - o.retention_days * 86400000.0 AND r.kind NOT IN (${LOG_KINDS_SQL})`,
+      `DELETE FROM ${t} r USING projects p, orgs o WHERE p.id = r.project_id AND o.id = p.org_id AND r.bucket_ms <= $1 - ${KEEP_DAYS} * 86400000.0 AND r.kind NOT IN (${LOG_KINDS_SQL})`,
       [now - 3_600_000],
     );
   }

@@ -102,7 +102,9 @@ export type Capability =
   /** The host keeps saved views, saved searches, and dashboards (`api/saved`). */
   | "saved"
   /** The host answers `api/tags` and `api/tags/match` (docs/TAGS-PLAN.md); `editable` in `api/tags` says if rules can change there. */
-  | "tags";
+  | "tags"
+  /** The host keeps settings per project (thresholds, extra redacted keys, retention): `api/settings`. */
+  | "settings";
 
 /** What an in-app add-on offers today. Also the default when a host does not say. */
 export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];

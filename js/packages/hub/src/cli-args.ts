@@ -1,5 +1,5 @@
 import { parseArgs } from "node:util";
-import { HUB_TOKEN_ENV } from "@wizeworks/lens-core";
+import { DEFAULT_REDACT_KEYS, HUB_TOKEN_ENV } from "@wizeworks/lens-core";
 import type { HubOptions } from "./options.js";
 
 export const USAGE = `wizelens-hub: one place for the traces of every service.
@@ -22,6 +22,12 @@ Usage: wizelens-hub [options]
   --max-metric-points <n>
                       Keep at most this many metric points.
                       Default 2000000.                         (WIZELENS_HUB_MAX_METRIC_POINTS)
+  --slow-query-ms <n> A database call this slow (ms) is slow.
+                      Default 100. Projects can set their own. (WIZELENS_HUB_SLOW_QUERY_MS)
+  --n-plus-one <n>    This many similar calls in a request is
+                      an N+1. Default 5.                       (WIZELENS_HUB_N_PLUS_ONE)
+  --redact-keys <a,b> Hide values of keys that contain these,
+                      on top of the built-in list.             (WIZELENS_HUB_REDACT_KEYS)
   --mcp               Turn on the read-only MCP endpoint.      (WIZELENS_HUB_MCP=1)
   --no-uptime         Do not run uptime checks.                (WIZELENS_HUB_UPTIME=0)
   --import <file>     Copy an add-on's .wizelens/traces.db into
@@ -43,6 +49,12 @@ export function parseDuration(v: string | undefined): number | undefined {
 
 const int = (v: string | undefined) => (v && /^\d+$/.test(v) ? Number(v) : undefined);
 
+/** The built-in redacted keys plus a comma list; undefined when none are given. */
+function keyList(v: string | undefined): string[] | undefined {
+  const extra = (v ?? "").split(",").map((k) => k.trim().toLowerCase()).filter(Boolean);
+  return extra.length ? [...new Set([...DEFAULT_REDACT_KEYS, ...extra])] : undefined;
+}
+
 /** Options from the command line, then from the environment. */
 export type CliOptions = HubOptions & { imports: string[] };
 
@@ -58,6 +70,9 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
       "log-retention": { type: "string" },
       "max-traces": { type: "string" },
       "max-metric-points": { type: "string" },
+      "slow-query-ms": { type: "string" },
+      "n-plus-one": { type: "string" },
+      "redact-keys": { type: "string" },
       mcp: { type: "boolean" },
       "no-uptime": { type: "boolean" },
       import: { type: "string", multiple: true },
@@ -75,6 +90,9 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
     logMaxAgeMs: parseDuration(a["log-retention"] ?? env.WIZELENS_HUB_LOG_RETENTION),
     maxTraces: int(a["max-traces"] ?? env.WIZELENS_HUB_MAX_TRACES),
     maxMetricPoints: int(a["max-metric-points"] ?? env.WIZELENS_HUB_MAX_METRIC_POINTS),
+    slowQueryMs: int(a["slow-query-ms"] ?? env.WIZELENS_HUB_SLOW_QUERY_MS),
+    nPlusOneThreshold: int(a["n-plus-one"] ?? env.WIZELENS_HUB_N_PLUS_ONE),
+    redactKeys: keyList(a["redact-keys"] ?? env.WIZELENS_HUB_REDACT_KEYS),
     enableMcp: a.mcp ?? env.WIZELENS_HUB_MCP === "1",
     uptime: !(a["no-uptime"] ?? env.WIZELENS_HUB_UPTIME === "0"),
     imports: a.import ?? [],

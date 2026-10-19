@@ -20,10 +20,43 @@ export async function audit(q: Queryable, orgId: string, actor: string, action: 
   ]);
 }
 
-export async function listAudit(q: Queryable, orgId: string, limit: number, before?: number): Promise<AuditEntry[]> {
+export interface AuditFilter {
+  /** Older than this time. */
+  before?: number;
+  /** At or after this time. */
+  from?: number;
+  /** An action ("key.create") or a group ("key."). */
+  action?: string;
+  /** "user:<id>", "key:<id>", or "system". */
+  actor?: string;
+}
+
+const like = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
+
+/** Newest first, `limit` at most, with the filter. */
+export async function listAudit(q: Queryable, orgId: string, limit: number, f: AuditFilter = {}): Promise<AuditEntry[]> {
+  const where = ["org_id = $1", "time_ms < $2"];
+  const args: unknown[] = [orgId, f.before ?? Number.MAX_SAFE_INTEGER];
+  if (f.from !== undefined) where.push(`time_ms >= $${args.push(f.from)}`);
+  if (f.action) where.push(f.action.endsWith(".") ? `action LIKE $${args.push(`${like(f.action)}%`)}` : `action = $${args.push(f.action)}`);
+  if (f.actor) where.push(`actor = $${args.push(f.actor)}`);
   const rows = await q.query<{ actor: string; action: string; detail: string; time_ms: number }>(
-    `SELECT actor, action, detail, time_ms FROM audit WHERE org_id = $1 AND time_ms < $2 ORDER BY time_ms DESC LIMIT $3`,
-    [orgId, before ?? Number.MAX_SAFE_INTEGER, limit],
+    `SELECT actor, action, detail, time_ms FROM audit WHERE ${where.join(" AND ")} ORDER BY time_ms DESC LIMIT $${args.push(limit)}`,
+    args,
   );
   return rows.map((r) => ({ actor: r.actor, action: r.action, detail: JSON.parse(r.detail) as Record<string, unknown>, timeMs: r.time_ms }));
+}
+
+/** The actions and actors an organization's log has, for the filter menus. */
+export async function auditFacets(q: Queryable, orgId: string): Promise<{ actions: string[]; actors: string[] }> {
+  const actions = await q.query<{ v: string }>("SELECT DISTINCT action AS v FROM audit WHERE org_id = $1 ORDER BY v", [orgId]);
+  const actors = await q.query<{ v: string }>("SELECT DISTINCT actor AS v FROM audit WHERE org_id = $1 ORDER BY v", [orgId]);
+  return { actions: actions.map((r) => r.v), actors: actors.map((r) => r.v) };
+}
+
+/** The filter from `before`, `from`, `action` ("key." for a group), and `actor`. */
+export function auditFilterOf(p: URLSearchParams): AuditFilter {
+  const num = (k: string) => Number(p.get(k)) || undefined;
+  const text = (k: string) => p.get(k)?.trim().slice(0, 200) || undefined;
+  return { before: num("before"), from: num("from"), action: text("action"), actor: text("actor") };
 }

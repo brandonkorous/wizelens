@@ -60,12 +60,21 @@ Run it with `--host 0.0.0.0 --token <text>`. Then:
 | `--log-retention <time>` | `WIZELENS_HUB_LOG_RETENTION` | same as `--retention` (see [Logs](/docs/logs/)) |
 | `--max-traces <n>` | `WIZELENS_HUB_MAX_TRACES` | `50000` |
 | `--max-metric-points <n>` | `WIZELENS_HUB_MAX_METRIC_POINTS` | `2000000` raw points |
+| `--slow-query-ms <n>` | `WIZELENS_HUB_SLOW_QUERY_MS` | `100`: a database call this slow is slow |
+| `--n-plus-one <n>` | `WIZELENS_HUB_N_PLUS_ONE` | `5` similar calls in a request make an N+1 |
+| `--redact-keys <a,b>` | `WIZELENS_HUB_REDACT_KEYS` | none: hide keys that contain these, on top of the built-in list |
 | `--mcp` | `WIZELENS_HUB_MCP=1` | off |
 | `--no-uptime` | `WIZELENS_HUB_UPTIME=0` | checks on |
 | `--import <file>` | | Copy an add-on's `.wizelens/traces.db` in at start |
 | `--sourcemaps <dir>` | `WIZELENS_HUB_SOURCEMAPS=a,b` | Read browser [source maps](/docs/source-maps/) from a build folder. Can repeat |
 
 `wizelens-hub --help` lists every option.
+
+## Project settings
+
+Each project can set its own slow query and N+1 thresholds, more redacted keys, and a shorter retention, in
+**Settings → This project**. Thresholds and keys apply to data that arrives after you save. A shorter retention
+deletes older data at the next cleanup, within minutes.
 
 ## In code
 

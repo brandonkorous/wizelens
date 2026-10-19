@@ -7,6 +7,7 @@ import { useAsk } from "../../ui/Dialog";
 import { Field, FormRow } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
+import { ProjectAccess } from "./ProjectAccess";
 import type { OrgData } from "./teamTypes";
 import { LogRetentionSelect } from "./LogRetentionSelect";
 
@@ -34,6 +35,8 @@ export function NewProjectForm({ orgId, reload, onClose }: { orgId: string; relo
 /** Projects of the organization, with what keys send to each and how long logs are kept: clear a project's data, or delete it. */
 export function ProjectsPanel({ orgId, retentionDays, data, reload }: { orgId: string; retentionDays: number; data: OrgData; reload: () => void }) {
   const [error, setError] = useState<string | null>(null);
+  const [access, setAccess] = useState<Project | null>(null);
+  const limited = (p: Project) => data.projectRoles.filter((r) => r.projectId === p.id).length;
   const { dialog, confirm } = useAsk();
   const run = (fn: () => Promise<unknown>) => void act(fn, () => (reload(), void loadAccount())).then(setError);
   const keysOf = (p: Project) => data.keys.filter((k) => k.projectIds.includes(p.id)).length;
@@ -48,12 +51,14 @@ export function ProjectsPanel({ orgId, retentionDays, data, reload }: { orgId: s
     { key: "id", header: "Project id", cell: (p) => <span className="wl-id">{p.id.slice(0, 8)}… <CopyButton text={p.id} label="Copy project id" /></span> },
     { key: "keys", header: "Keys", num: true, cell: (p) => keysOf(p) },
     { key: "logs", header: "Logs kept", cell: (p) => <LogRetentionSelect value={p.logRetentionDays ?? null} traceDays={retentionDays} onChange={(days) => run(() => apiSend("PATCH", `./api/orgs/${orgId}/projects/${p.id}`, { logRetentionDays: days }))} /> },
+    { key: "access", header: "Access", cell: (p) => (limited(p) ? `${limited(p)} ${limited(p) === 1 ? "person has" : "people have"} their own role` : <span className="wl-muted">Organization roles</span>), className: "wl-nowrap" },
     {
       key: "x",
       header: "",
       className: "wl-cell-actions",
       cell: (p) => (
         <span className="wl-row-actions">
+          <button type="button" className="wl-link-btn" onClick={() => setAccess(p)}>Access</button>
           <button type="button" className="wl-link-btn" onClick={() => void clear(p)}>Clear data</button>
           <button type="button" className="wl-link-btn wl-text-error" onClick={() => void remove(p)}>Delete</button>
         </span>
@@ -61,10 +66,13 @@ export function ProjectsPanel({ orgId, retentionDays, data, reload }: { orgId: s
     },
   ];
   return (
-    <Panel flush>
-      {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
-      <Table columns={columns} rows={data.projects} rowKey={(p) => p.id} />
-      {dialog}
-    </Panel>
+    <>
+      {access && <ProjectAccess key={access.id} orgId={orgId} project={access} data={data} reload={reload} onClose={() => setAccess(null)} />}
+      <Panel flush>
+        {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
+        <Table columns={columns} rows={data.projects} rowKey={(p) => p.id} />
+        {dialog}
+      </Panel>
+    </>
   );
 }

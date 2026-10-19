@@ -1,5 +1,5 @@
 // Where the cloud keeps telemetry: spans, logs, metrics, and their stats. Accounts, keys, and settings always stay in Postgres.
-import type { Executor, MetricAlertData, MetricData, SearchPage, SearchQuery, Suggestion, SuggestRequest, TimeRange, TimeWindow, Trace } from "@wizeworks/lens-core";
+import type { Executor, FactOptions, MetricAlertData, MetricData, SearchPage, SearchQuery, Suggestion, SuggestRequest, TimeRange, TimeWindow, Trace } from "@wizeworks/lens-core";
 import type { HubWrite } from "@wizeworks/lens-hub/kit";
 
 export interface TraceQuery {
@@ -34,6 +34,8 @@ export interface SettlingScope {
 
 export interface SettleOptions {
   defaultRetentionDays?: number;
+  /** The cloud's thresholds; a project's own settings win. */
+  defaultFacts?: Partial<FactOptions>;
   batch?: number;
   budgetMs?: number;
   /** Called for each project whose stats a batch wrote. */

@@ -14,6 +14,7 @@ import { SLOS_MIGRATION } from "./schema-slos.js";
 import { SSO_MIGRATION } from "./schema-sso.js";
 import { UPTIME_MIGRATION } from "./schema-uptime.js";
 import { TAGS_MIGRATION } from "./schema-tags.js";
+import { TEAM_MIGRATION } from "./schema-team.js";
 
 // Cloud schema, one entry per version. Never edit a shipped entry: add a new one (docs/CONTRACT.md, "Cloud storage").
 export const MIGRATIONS: readonly string[] = [
@@ -232,6 +233,7 @@ CREATE INDEX ix_metric_1h_time ON metric_1h (project_id, bucket_ms);
   `
 ALTER TABLE alert_events ADD COLUMN problem TEXT NOT NULL DEFAULT '';
 `,
+  TEAM_MIGRATION,
 ];
 
 export const MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS wizelens_migrations (version INTEGER PRIMARY KEY, applied_ms DOUBLE PRECISION NOT NULL)`;

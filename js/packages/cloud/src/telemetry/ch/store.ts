@@ -1,7 +1,7 @@
 // Scale mode: telemetry in ClickHouse. Reads go through views with the Postgres names, so the shared SQL answers pages and searches.
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { alignNow, CH_DIALECT, infraSteps, metricAlertSteps, metricPageSteps, type MetricRows, runMetricAsync, searchSql, sqlExecutor, type SqlRunner, suggestSql } from "@wizeworks/lens-core";
+import { alignNow, CH_DIALECT, infraSteps, metricAlertSteps, metricPageSteps, type MetricRows, type ProjectSettings, runMetricAsync, searchSql, sqlExecutor, type SqlRunner, suggestSql } from "@wizeworks/lens-core";
 import type { RetentionOf, TelemetryStore } from "../store.js";
 import { checkFactsVersionCh, clearProjectCh, syncProjects } from "./admin.js";
 import { type ChClient, chClient } from "./http.js";
@@ -22,6 +22,8 @@ export interface ChStoreOptions {
   retentionOf: RetentionOf;
   /** Log retention days per project; the trace retention when absent. */
   logRetentionOf?: RetentionOf;
+  /** A project's own settings, for the thresholds its traces settle with. */
+  settingsOf?: (projectId: string) => Promise<ProjectSettings>;
   defaultRetentionDays: number;
   /** The clock for recovery on start. */
   now: () => number;
@@ -45,9 +47,10 @@ function settlerOf(ch: ChClient, o: ChStoreOptions, queue: SettleQueue, rebuild:
   const logRetention = new RetentionCache(o.logRetentionOf ?? o.retentionOf, o.defaultRetentionDays);
   const entry = o.worker?.entry ?? DEFAULT_WORKER;
   const size = existsSync(fileURLToPath(entry)) ? Math.max(0, o.settleWorkers ?? 0) : 0;
-  if (!size) return { settler: { queue, retention, logRetention, run: (t) => settleProject(ch, t), depth: DEPTH, refill }, pool: null, rebuild };
+  const settingsOf = o.settingsOf;
+  if (!size) return { settler: { queue, retention, logRetention, settingsOf, run: (t) => settleProject(ch, t), depth: DEPTH, refill }, pool: null, rebuild };
   const pool = new SettlePool({ url: o.url, size, ...o.worker });
-  return { settler: { queue, retention, logRetention, run: pool.run, depth: Math.max(DEPTH, size * 2), refill }, pool, rebuild };
+  return { settler: { queue, retention, logRetention, settingsOf, run: pool.run, depth: Math.max(DEPTH, size * 2), refill }, pool, rebuild };
 }
 
 export const chRunner = (ch: ChClient): SqlRunner => ({ all: (sql, params) => ch.query<Record<string, unknown>>(sql, params) });
