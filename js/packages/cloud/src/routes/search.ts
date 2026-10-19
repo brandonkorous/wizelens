@@ -1,4 +1,4 @@
-import { searchRequestOf, suggestRequestOf } from "@wizeworks/lens-core";
+import { searchRequestOf, SETTLE_BEHIND_MS, suggestRequestOf } from "@wizeworks/lens-core";
 import type { Ctx } from "../app.js";
 import { sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
@@ -19,7 +19,7 @@ async function search(ctx: Ctx): Promise<void> {
   if (!r.ok) return sendJson(ctx.res, 400, r);
   const t0 = performance.now();
   const page = await ctx.app.telemetry.search(projectId, r.query);
-  sendJson(ctx.res, 200, { ...page, tookMs: Math.round(performance.now() - t0), settling: await ctx.app.telemetry.settling(projectId, r.query.env) });
+  sendJson(ctx.res, 200, { ...page, tookMs: Math.round(performance.now() - t0), settling: await ctx.app.telemetry.settling(projectId, { env: r.query.env, before: ctx.app.config.now() - SETTLE_BEHIND_MS }) });
 }
 
 /** `GET api/search/suggest?project=&field=&prefix=&range=&limit=`. */

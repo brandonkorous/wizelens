@@ -17,6 +17,9 @@ describe("cloud stats over time", () => {
     await settleAll(s);
     await writeTraces(s, [late], SCENARIO_NOW + 20_000);
     expect(await cloudSettling(s.db, s.projectId)).toBe(1);
+    expect(await cloudSettling(s.db, s.projectId, { before: SCENARIO_NOW + 20_000 })).toBe(1);
+    expect(await cloudSettling(s.db, s.projectId, { before: SCENARIO_NOW + 19_999 })).toBeNull();
+    expect(await cloudSettling(s.db, s.projectId, { env: "nope" })).toBeNull();
     expect(await settleCloud(s.db, SCENARIO_NOW + 21_000)).toBe(0);
     expect(await settleAll(s, SCENARIO_NOW + 30_000)).toBe(1);
     expect(await parity(s, traces, ["15m", "1h", "24h", "7d"])).toEqual([]);

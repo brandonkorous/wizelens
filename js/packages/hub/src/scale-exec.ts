@@ -1,5 +1,5 @@
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
-import { type Executor, SQLITE_DIALECT, type SqlRunner, sqlExecutor, type SqlScope } from "@wizeworks/lens-core";
+import { type Executor, SETTLE_BEHIND_MS, SQLITE_DIALECT, type SqlRunner, sqlExecutor, type SqlScope } from "@wizeworks/lens-core";
 import { settlingCount } from "./settle.js";
 import type { HubStore } from "./store.js";
 import { getStoredTrace } from "./store-read.js";
@@ -20,7 +20,7 @@ export function hubExecutor(store: HubStore, scope: SqlScope = {}, keepRemote?: 
   });
 }
 
-/** Traces in the scope still waiting for their stats, for `pageContext(..., settling)`. Null when none. */
-export function hubSettling(store: HubStore, scope: SqlScope = {}): number | null {
-  return settlingCount(store.db, scope) || null;
+/** Traces in the scope whose stats run behind (written over `behindMs` ago, not settled), for `pageContext(..., settling)`. Null when none. */
+export function hubSettling(store: HubStore, scope: SqlScope = {}, behindMs = SETTLE_BEHIND_MS): number | null {
+  return settlingCount(store.db, scope, store.now() - behindMs) || null;
 }

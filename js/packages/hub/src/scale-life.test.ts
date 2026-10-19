@@ -68,7 +68,7 @@ describe("hub stats over time", () => {
     store.write({ sender: { service: "api", environment: "prod", project: "shop" }, via: "addon", spans: late.spans.slice(0, -2), logs: [], remotes: [] });
     settleAll(store, clock);
     writeTraces(store, [late]);
-    expect(hubSettling(store)).toBe(1);
+    expect(hubSettling(store, {}, 0)).toBe(1);
     expect(settleAll(store, clock)).toBe(1);
     expect(await parity(hubExecutor(store), traces)).toEqual([]);
   });
@@ -89,7 +89,7 @@ describe("hub stats over time", () => {
     writeV2(path, traces, 1);
     const { store, clock } = clockStore(path);
     expect(store.db.prepare("SELECT value FROM meta WHERE key = 'schema'").get()).toEqual({ value: "3" });
-    expect(hubSettling(store)).toBe(traces.length);
+    expect(hubSettling(store, {}, 0)).toBe(traces.length);
     settleAll(store, clock);
     expect(await parity(hubExecutor(store), traces)).toEqual([]);
     store.close();
@@ -103,7 +103,7 @@ describe("hub stats over time", () => {
     first.store.db.exec("UPDATE meta SET value = '0' WHERE key = 'facts'");
     first.store.close();
     const { store, clock } = clockStore(path);
-    expect([hubSettling(store), count(store.db, "rollup_1h"), count(store.db, "fact_requests")]).toEqual([traces.length, 0, 0]);
+    expect([hubSettling(store, {}, 0), count(store.db, "rollup_1h"), count(store.db, "fact_requests")]).toEqual([traces.length, 0, 0]);
     settleAll(store, clock);
     expect(await parity(hubExecutor(store), traces)).toEqual([]);
     store.close();

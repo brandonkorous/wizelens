@@ -1,4 +1,4 @@
-import { alignNow, FACT_SLOW_QUERY_MS, isPageName, isTimeRange, pageContext, runPage, TIME_RANGES } from "@wizeworks/lens-core";
+import { alignNow, FACT_SLOW_QUERY_MS, isPageName, isTimeRange, pageContext, runPage, SETTLE_BEHIND_MS, TIME_RANGES } from "@wizeworks/lens-core";
 import type { Ctx } from "../app.js";
 import { fail, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
@@ -66,7 +66,7 @@ async function model(ctx: Ctx): Promise<void> {
   const hit = cached(key, ctx.app.config.now());
   if (hit) return sendJson(ctx.res, 200, hit);
   const t = ctx.app.telemetry;
-  const pc = pageContext(range, now, params, { slowQueryMs: FACT_SLOW_QUERY_MS }, await t.settling(project.id, env));
+  const pc = pageContext(range, now, params, { slowQueryMs: FACT_SLOW_QUERY_MS }, await t.settling(project.id, { env, before: ctx.app.config.now() - SETTLE_BEHIND_MS }));
   const value = await runPage(page, pc, t.executor(project.id, days * DAY_MS, env));
   remember(key, value, ctx.app.config.now());
   sendJson(ctx.res, 200, value);

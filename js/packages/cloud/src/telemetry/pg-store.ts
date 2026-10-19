@@ -57,7 +57,7 @@ export function pgTelemetry(db: Db): TelemetryStore {
     activeHours: (projectId, from, to) => activeHours(db, projectId, from, to),
     lastTraceMs: () => lastTraceMs(db),
     executor: (projectId, retentionMs, env) => cloudExecutor(db, projectId, retentionMs, env),
-    settling: (projectId, env) => cloudSettling(db, projectId, env),
+    settling: (projectId, o) => cloudSettling(db, projectId, o),
     search: (projectId, q) => searchSql(src(projectId), q),
     suggest: (projectId, r) => suggestSql(src(projectId), r),
     slowestEndpoints: (projectId, w, minCount, limit) => slowestEndpoints(db, projectId, w, minCount, limit),

@@ -622,8 +622,9 @@ sort, page, selected item): rollup groups and series over the chosen window and 
 An executor answers those needs and the page builds a JSON object from the answers. In-app hosts answer them in the browser from
 the loaded traces; hosts with `serverStats` answer them on the server, so ranges reach `7d` and `30d`. Lists in a model are capped
 at 200 rows (Requests and Logs page through all rows). Request rows in models carry no `findings`. `meta.sampled` is always
-`null`; `meta.settling` is the number of traces whose stats are still being added up (null or 0 when complete), and the dashboard
-says "Preparing stats" while it is above 0. The cloud caches answers for 15 seconds; the hub until its stats change.
+`null`; `meta.settling` is the number of traces whose stats run behind: written over 60 seconds ago (`SETTLE_BEHIND_MS`) and
+not settled yet (null when none). Every new trace waits a few seconds on purpose, so those are not counted. The dashboard says
+"Stats are catching up" while it is above 0, and search's `settling` uses the same rule. The cloud caches answers for 15 seconds; the hub until its stats change.
 
 ### Stats tables (hub and cloud)
 
