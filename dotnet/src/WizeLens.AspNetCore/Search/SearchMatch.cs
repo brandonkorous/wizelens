@@ -81,6 +81,7 @@ public static class SearchMatch
 
     private static Func<SearchDoc, bool> FieldPredicate(FieldNode n)
     {
+        if (n.Field == "tag") return _ => false;
         var spec = SearchFields.All[n.Field];
         var key = n.Field == "status" && n.Value is SpanStatusValue ? "outcome" : n.Field;
         var test = AnyOf(Normalized(ValueTest(n.Value, n.Cmp, spec.Type == FieldType.Id)));
@@ -93,7 +94,7 @@ public static class SearchMatch
         return doc => doc.Attrs.Any(a => a.TryGetValue(n.Key, out var v) && test(v));
     }
 
-    /// <summary>A predicate for a search tree; null matches everything.</summary>
+    /// <summary>A predicate for a search tree; null matches everything. Expand <c>tag:</c> first (Tagging/TagExpand.cs): left as is, it matches nothing.</summary>
     public static Func<SearchDoc, bool> Compile(SearchNode? node)
     {
         switch (node)

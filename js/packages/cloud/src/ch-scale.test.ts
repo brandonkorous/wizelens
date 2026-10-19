@@ -3,6 +3,7 @@ import { windowOf } from "@wizeworks/lens-core";
 import { pageParity } from "../../core/src/testing/scale-pages.js";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { searchParity, suggestParity } from "../../core/src/testing/search-parity.js";
+import { tagParity } from "../../core/src/testing/tag-parity.js";
 import { CH_URL, type ChTest, chSettle, chTest, chWrite } from "./test/ch.js";
 import { parity, RANGES } from "./test/scale.js";
 
@@ -32,6 +33,7 @@ describe.skipIf(!CH_URL)("ClickHouse store", () => {
     const windows = [windowOf("30d", SCENARIO_NOW), windowOf("1h", SCENARIO_NOW)];
     expect(await searchParity((q) => t.store.search(t.projectId, q), traces, windows, "prod")).toEqual([]);
     expect(await suggestParity((r) => t.store.suggest(t.projectId, r), traces, windows[0]!)).toEqual([]);
+    expect(await tagParity((q) => t.store.search(t.projectId, q), traces, windows[0]!, "prod")).toEqual([]);
   }, 300_000);
 
   it("reads traces back whole, and lists them newest first", async () => {

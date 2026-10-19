@@ -1,5 +1,7 @@
 import { Clock, Database, Gauge, TriangleAlert } from "lucide-react";
-import { percentChange, type QueryPageModel, type QueryUse, type TraceItem } from "@wizeworks/lens-core";
+import { endpointDoc, percentChange, serviceDoc, type QueryPageModel, type QueryUse, type TraceItem } from "@wizeworks/lens-core";
+import { traceRow } from "../../data/tagMatch";
+import { GroupTaggedTable, TaggedTable } from "../../ui/TaggedTable";
 import { usePageModel } from "../../data/models";
 import { compareSeriesLabel, fmtCount, fmtMs, fmtTime } from "../../format";
 import { endpointHref, hrefTo, navigate, traceHref } from "../../routes";
@@ -8,7 +10,7 @@ import { DetailHead } from "../../ui/DetailHead";
 import { ModelState } from "../../ui/ModelState";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
-import { type Column, Table } from "../../ui/Table";
+import { type Column } from "../../ui/Table";
 import { TimeChart } from "../../ui/TimeChart";
 import { serviceHref } from "../services/serviceParts";
 import "../../styles/pages/database.css";
@@ -55,11 +57,11 @@ function Body({ m }: { m: QueryPageModel }) {
         </Panel>
       </div>
       <div className="wl-grid wl-grid-2-even">
-        <Panel title="Services" flush><Table columns={useColumns(false)} rows={m.services} rowKey={(u) => u.service} onRowClick={(u) => navigate(serviceHref(u.service))} empty={<Empty>No service ran it.</Empty>} /></Panel>
-        <Panel title="Endpoints" flush><Table columns={useColumns(true)} rows={m.endpoints} rowKey={(u) => `${u.service} ${u.endpoint}`} onRowClick={(u) => navigate(endpointHref(u.service, u.endpoint))} empty={<Empty>It ran outside requests (jobs, workers).</Empty>} /></Panel>
+        <Panel title="Services" flush><GroupTaggedTable group="services" docOf={(u) => serviceDoc(u.service)} tagged="name" columns={useColumns(false)} rows={m.services} rowKey={(u) => u.service} onRowClick={(u) => navigate(serviceHref(u.service))} empty={<Empty>No service ran it.</Empty>} /></Panel>
+        <Panel title="Endpoints" flush><GroupTaggedTable group="endpoints" docOf={(u) => endpointDoc(u.service, u.endpoint)} tagged="name" columns={useColumns(true)} rows={m.endpoints} rowKey={(u) => `${u.service} ${u.endpoint}`} onRowClick={(u) => navigate(endpointHref(u.service, u.endpoint))} empty={<Empty>It ran outside requests (jobs, workers).</Empty>} /></Panel>
       </div>
       <Panel title={`Newest Traces (${fmtCount(m.traces.length)})`} flush>
-        <Table columns={TRACE_COLUMNS} rows={m.traces} rowKey={(t) => t.traceId} onRowClick={(t) => navigate(traceHref(t.traceId, "sql"))} empty={<Empty>No trace in this range.</Empty>} />
+        <TaggedTable kind="traces" itemOf={traceRow} tagged="path" columns={TRACE_COLUMNS} rows={m.traces} rowKey={(t) => t.traceId} onRowClick={(t) => navigate(traceHref(t.traceId, "sql"))} empty={<Empty>No trace in this range.</Empty>} />
       </Panel>
     </>
   );

@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 import { Bell, Boxes, Bug, Users } from "lucide-react";
-import { countBy, type ErrorGroup, type ErrorPageModel, percentChange, type RequestItem } from "@wizeworks/lens-core";
+import { countBy, type ErrorGroup, errorGroupDoc, type ErrorPageModel, percentChange, type RequestItem } from "@wizeworks/lens-core";
+import { traceRow, useGroupTags } from "../../data/tagMatch";
+import { TagChips } from "../../ui/TagChips";
+import { TaggedTable } from "../../ui/TaggedTable";
+import { TagThis } from "../../ui/TagThis";
 import { usePageModel } from "../../data/models";
 import { compareSeriesLabel, fmtCount, fmtDateTime, fmtMs, fmtTime } from "../../format";
 import { hrefTo, navigate, traceHref, userHref } from "../../routes";
@@ -17,6 +21,7 @@ import { type Column, Table } from "../../ui/Table";
 import { TimeChart } from "../../ui/TimeChart";
 import { serviceHref } from "../services/serviceParts";
 import { StackTrace } from "./ErrorDetailTabs";
+import { errorScopes } from "./ErrorDetails";
 import "../../styles/pages/errors.css";
 
 const OCCURRENCE_COLUMNS: Column<RequestItem>[] = [
@@ -59,10 +64,11 @@ const alertFields = (g: ErrorGroup): Record<string, string> =>
 
 function Body({ m }: { m: ErrorPageModel }) {
   const g = m.group!;
+  const tags = useGroupTags()("errors", errorGroupDoc(g));
   const stats: [string, ReactNode][] = [["Service", <a key="s" href={serviceHref(g.service)}>{g.service}</a>], ["Type", g.type], ["First seen", fmtDateTime(m.issue?.firstSeenMs || g.firstSeenMs)], ["Last seen", fmtDateTime(g.lastSeenMs)]];
   const badge = (
     <>
-      <Badge tone="danger">{g.critical ? "Critical" : "Error"}</Badge> <IssueBadge info={m.issue ?? undefined} />
+      <Badge tone="danger">{g.critical ? "Critical" : "Error"}</Badge> <IssueBadge info={m.issue ?? undefined} /> <TagChips tags={tags} />
     </>
   );
   const bars = [
@@ -71,7 +77,7 @@ function Body({ m }: { m: ErrorPageModel }) {
   ];
   return (
     <>
-      <DetailHead back={[hrefTo("errors", [], { service: g.service }), "All errors"]} icon={Bug} title={`${g.type}: ${g.message}`} badge={badge} actions={<><IssueActions kind="error" issueKey={g.key} info={m.issue ?? undefined} /><AlertOnThis fields={alertFields(g)} /></>} stats={stats} />
+      <DetailHead back={[hrefTo("errors", [], { service: g.service }), "All errors"]} icon={Bug} title={`${g.type}: ${g.message}`} badge={badge} actions={<><IssueActions kind="error" issueKey={g.key} info={m.issue ?? undefined} /><AlertOnThis fields={alertFields(g)} /><TagThis scopes={errorScopes(g)} /></>} stats={stats} />
       <Cards m={m} />
       <Panel title="Occurrences Over Time">
         <TimeChart starts={m.starts} stackBars bars={bars} lines={[{ label: compareSeriesLabel(m.meta.compare), values: m.chart.prev, color: "var(--wl-slate)", dashed: true }]} />
@@ -81,7 +87,7 @@ function Body({ m }: { m: ErrorPageModel }) {
         <StackTrace event={g.latest} />
       </Panel>
       <Panel title={`Newest Occurrences (${fmtCount(m.requests.length || m.traces.length)})`} flush action={<ViewAll href={traceHref(g.latest.traceId)} label="Open latest trace" />}>
-        <Table columns={OCCURRENCE_COLUMNS} rows={m.requests} rowKey={(r) => r.traceId} onRowClick={(r) => navigate(traceHref(r.traceId, "errors"))} empty={<Empty>These occurrences were not requests (for example browser errors). Open the latest trace to see one.</Empty>} />
+        <TaggedTable kind="requests" itemOf={traceRow} tagged="path" columns={OCCURRENCE_COLUMNS} rows={m.requests} rowKey={(r) => r.traceId} onRowClick={(r) => navigate(traceHref(r.traceId, "errors"))} empty={<Empty>These occurrences were not requests (for example browser errors). Open the latest trace to see one.</Empty>} />
       </Panel>
     </>
   );

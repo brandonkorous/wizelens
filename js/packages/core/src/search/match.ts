@@ -74,6 +74,7 @@ function valueTest(value: SearchValue, cmp: Cmp, prefix: boolean): (v: Attribute
 const anyOf = (test: (v: AttributeValue) => boolean) => (v: DocValue) => (Array.isArray(v) ? v.some(test) : test(v as AttributeValue));
 
 function fieldPredicate(n: Extract<SearchNode, { type: "field" }>): SearchPredicate {
+  if (n.field === "tag") return () => false;
   const kinds = SEARCH_FIELDS[n.field].kinds as readonly SearchKind[];
   const key = n.field === "status" && n.value.type === "spanStatus" ? "outcome" : n.field;
   const test = anyOf(valueTest(n.value, n.cmp, SEARCH_FIELDS[n.field].type === "id"));
@@ -85,7 +86,7 @@ function attrPredicate(n: Extract<SearchNode, { type: "attr" }>): SearchPredicat
   return (doc) => doc.attrs.some((a) => Object.hasOwn(a, n.key) && test(a[n.key]!));
 }
 
-/** A predicate for a search tree; null matches everything. */
+/** A predicate for a search tree; null matches everything. Expand `tag:` first (tags/expand.ts): left as is, it matches nothing. */
 export function compileSearch(node: SearchNode | null): SearchPredicate {
   if (!node) return () => true;
   switch (node.type) {

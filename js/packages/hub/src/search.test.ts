@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { SQLITE_DIALECT, searchSql, suggestSql, windowOf } from "@wizeworks/lens-core";
 import { scenarioTraces, SCENARIO_NOW } from "../../core/src/testing/scenario.js";
 import { searchHits, searchParity, SEARCH_PARITY_QUERIES, suggestParity } from "../../core/src/testing/search-parity.js";
+import { tagParity } from "../../core/src/testing/tag-parity.js";
 import { sqliteRunner } from "./scale-exec.js";
 import { startHub } from "./test/helpers.js";
 import { clockStore, settleAll, writeTraces } from "./test/scale.js";
@@ -19,6 +20,7 @@ describe("hub search", () => {
     const t0 = performance.now();
     expect(await searchParity((q) => searchSql(src, q), traces, windows, "prod")).toEqual([]);
     expect(await suggestParity((r) => suggestSql(src, r), traces, windows[0]!)).toEqual([]);
+    expect(await tagParity((q) => searchSql(src, q), traces, windows[0]!, "prod")).toEqual([]);
     console.log(`hub search parity: ${(performance.now() - t0).toFixed(0)} ms`);
   });
 });

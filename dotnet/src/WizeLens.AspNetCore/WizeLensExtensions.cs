@@ -21,6 +21,7 @@ public static class WizeLensExtensions
     {
         var options = new WizeLensOptions();
         configure?.Invoke(options);
+        options.TagList = Tagging.TagRules.FromOptions(options.Tags);
         SetAzureSwitch(options);
         var install = WizeLensInstall.Find(services);
         if (install is null) return AddWizeLensCore(services, options, auto: false);

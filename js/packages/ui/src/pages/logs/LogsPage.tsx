@@ -7,6 +7,8 @@ import { LiveToggle } from "../../ui/LiveToggle";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
 import { Table } from "../../ui/Table";
+import { withTags } from "../../ui/TagChips";
+import { logRow, useRowTags } from "../../data/tagMatch";
 import { LOG_COLUMNS, LogDetail, LogFilters, LogVolumePanel } from "./LogParts";
 import type { LogsModel } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
@@ -31,9 +33,10 @@ function LogTable({ stats }: { stats: LogsModel }) {
   const { rows, page, pageSize, matching } = stats;
   const [open, setOpen] = useState<string | null>(null);
   const toggle = (key: string) => setOpen(open === key ? null : key);
+  const tagsOf = useRowTags("logs", rows, logRow);
   return (
     <Panel title={`Log Lines (${fmtCount(matching)})`} flush action={<ExportButton page="logs" disabled={matching === 0} />}>
-      <Table columns={LOG_COLUMNS} rows={rows} rowKey={(r) => r.key} selectedKey={open} onRowClick={(r) => toggle(r.key)} detail={(r) => <LogDetail row={r} />} empty={<Empty title="No matching log lines">Try a lower level, another service, or a wider time range.</Empty>} />
+      <Table columns={withTags(LOG_COLUMNS, "message", tagsOf)} rows={rows} rowKey={(r) => r.key} selectedKey={open} onRowClick={(r) => toggle(r.key)} detail={(r) => <LogDetail row={r} />} empty={<Empty title="No matching log lines">Try a lower level, another service, or a wider time range.</Empty>} />
       {matching > 0 && (
         <Pager page={page} pageSize={pageSize} total={matching} noun="lines" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />
       )}

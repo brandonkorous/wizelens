@@ -1,5 +1,7 @@
 import { Box, Cog, Database, Globe, Inbox, Monitor } from "lucide-react";
-import type { ServiceKind, ServiceRow, ServiceStatus, TimeRange } from "@wizeworks/lens-core";
+import { type ServiceKind, type ServiceRow, type ServiceStatus, serviceDoc, type TimeRange } from "@wizeworks/lens-core";
+import { useGroupTags } from "../../data/tagMatch";
+import { withTags } from "../../ui/TagChips";
 import { fmtCount, fmtMs } from "../../format";
 import { hrefTo, navigate } from "../../routes";
 import { DotText, type Tone } from "../../ui/Badges";
@@ -39,7 +41,8 @@ function columns(range: TimeRange | null): Column<ServiceRow>[] {
 
 /** The busiest services and databases with their health. */
 export function ServicesPanel({ rows, range }: { rows: readonly ServiceRow[]; range: TimeRange | null }) {
-  const cols = columns(range);
+  const groupTags = useGroupTags();
+  const cols = withTags(columns(range), "name", (s) => groupTags("services", serviceDoc(s.name)));
   return (
     <Panel title="Services" action={<ViewAll href={hrefTo("services")} />}>
       <Table

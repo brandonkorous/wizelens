@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, Database, ExternalLink, Monitor, Server } from "lucide-react";
-import type { ErrorGroup, IssueInfo } from "@wizeworks/lens-core";
+import { endpointScope, type ErrorGroup, errorGroupDoc, errorScope, type IssueInfo, serviceScope } from "@wizeworks/lens-core";
 import { fmtCount, fmtDateTime } from "../../format";
 import { errorHref, hrefTo, setQuery } from "../../routes";
 import { Badge } from "../../ui/Badges";
 import { IssueActions, IssueBadge } from "../../ui/IssueControls";
 import { Empty, KeyValues, Panel, TabBar } from "../../ui/Panel";
 import { ErrorTags, RequestContext, StackTrace } from "./ErrorDetailTabs";
+import { useGroupTags } from "../../data/tagMatch";
+import { TagChips } from "../../ui/TagChips";
+import { TagThis } from "../../ui/TagThis";
 
 type Tab = "stack" | "context" | "tags";
 
@@ -45,8 +48,12 @@ function Occurrences({ group }: { group: ErrorGroup }) {
   );
 }
 
+/** "Tag this" on an error: the error itself, its endpoint (for server errors), or its service. */
+export const errorScopes = (g: ErrorGroup) => [errorScope(g), ...(g.latest.method ? [endpointScope(g.service, g.endpoint)] : []), serviceScope(g.service)];
+
 function GroupDetails({ group, info }: { group: ErrorGroup; info: IssueInfo | undefined }) {
   const [tab, setTab] = useState<Tab>("stack");
+  const tags = useGroupTags()("errors", errorGroupDoc(group));
   return (
     <>
       <div className="wl-side-head">
@@ -55,6 +62,10 @@ function GroupDetails({ group, info }: { group: ErrorGroup; info: IssueInfo | un
         </h2>
         <Badge tone="danger">{group.critical ? "Critical" : "Error"}</Badge>
         <IssueBadge info={info} />
+      </div>
+      <div className="wl-err-tagline">
+        <TagChips tags={tags} />
+        <TagThis scopes={errorScopes(group)} />
       </div>
       <IssueActions kind="error" issueKey={group.key} info={info} />
       <a className="wl-btn wl-btn-primary-outline wl-err-full" href={errorHref(group.key)}>

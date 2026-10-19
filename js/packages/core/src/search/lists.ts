@@ -2,6 +2,8 @@
 import type { TimeWindow } from "../stats/common.js";
 import type { SearchKind, SearchNode } from "./ast.js";
 import { checkSearch } from "./check.js";
+import { expandTags } from "../tags/expand.js";
+import type { ActiveTag } from "../tags/types.js";
 import type { Trace } from "../types.js";
 import { decodeCursor, type SearchPage, type SearchQuery, searchMemory } from "./run.js";
 
@@ -20,14 +22,15 @@ export function isStructuredSearch(q: string | undefined): boolean {
 /** Pages a list searches: requests and traces by trace, logs by log line. */
 export const LIST_SEARCH_KIND: Readonly<Record<string, SearchKind>> = { requests: "requests", traces: "traces", logs: "logs" };
 
-/** Trace ids of everything matching `q` in the window, up to `max`, read page by page through a host's search. */
-export async function searchTraceIds(run: (q: SearchQuery) => Promise<SearchPage>, kind: SearchKind, q: string, window: TimeWindow, env?: string, max = LIST_SEARCH_MAX): Promise<string[]> {
+/** Trace ids of everything matching `q` in the window, up to `max`, read page by page through a host's search. `tag:` uses the host's `tags`. */
+export async function searchTraceIds(run: (q: SearchQuery) => Promise<SearchPage>, kind: SearchKind, q: string, window: TimeWindow, env?: string, tags: readonly ActiveTag[] = [], max = LIST_SEARCH_MAX): Promise<string[]> {
   const p = checkSearch(q);
   if (!p.ok) return [];
+  const node = expandTags(p.node, tags).node;
   const ids = new Set<string>();
   let cursor: string | null = null;
   do {
-    const page: SearchPage = await run({ kind, node: p.node, window, limit: 200, cursor: decodeCursor(cursor), env });
+    const page: SearchPage = await run({ kind, node, window, limit: 200, cursor: decodeCursor(cursor), env });
     for (const item of page.items as { traceId: string }[]) ids.add(item.traceId);
     cursor = page.next;
   } while (cursor && ids.size < max);
@@ -35,13 +38,14 @@ export async function searchTraceIds(run: (q: SearchQuery) => Promise<SearchPage
 }
 
 /** The same over traces in memory (in-app hosts, in the browser). */
-export function memorySearchIds(traces: readonly Trace[], kind: SearchKind, q: string, window: TimeWindow, max = LIST_SEARCH_MAX): string[] {
+export function memorySearchIds(traces: readonly Trace[], kind: SearchKind, q: string, window: TimeWindow, tags: readonly ActiveTag[] = [], max = LIST_SEARCH_MAX): string[] {
   const p = checkSearch(q);
   if (!p.ok) return [];
+  const node = expandTags(p.node, tags).node;
   const ids = new Set<string>();
   let cursor: string | null = null;
   do {
-    const page: SearchPage = searchMemory(traces, { kind, node: p.node, window, limit: 200, cursor: decodeCursor(cursor) });
+    const page: SearchPage = searchMemory(traces, { kind, node, window, limit: 200, cursor: decodeCursor(cursor) });
     for (const item of page.items as { traceId: string }[]) ids.add(item.traceId);
     cursor = page.next;
   } while (cursor && ids.size < max);

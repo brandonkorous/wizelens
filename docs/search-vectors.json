@@ -1736,5 +1736,155 @@
    "doc": "span",
    "expect": false
   }
- ]
+ ],
+ "tags": {
+  "builtIns": [
+   {
+    "name": "stream",
+    "color": "violet",
+    "query": "@http.response.header.content-type:text/event-stream*"
+   },
+   {
+    "name": "probe",
+    "color": "slate",
+    "query": "@user_agent.original:kube-probe/* OR @user_agent.original:GoogleHC/* OR @user_agent.original:ELB-HealthChecker/* OR @user_agent.original:GoogleStackdriverMonitoring-UptimeChecks*"
+   },
+   {
+    "name": "bot",
+    "color": "amber",
+    "query": "@user_agent.original:*bot* OR @user_agent.original:*crawler* OR @user_agent.original:*spider*"
+   }
+  ],
+  "rules": [
+   {
+    "name": "slow",
+    "query": "duration:>100ms"
+   },
+   {
+    "name": "pay",
+    "query": "path:/api/pay"
+   }
+  ],
+  "expand": [
+   {
+    "q": "tag:slow",
+    "text": "duration:>100ms OR @wizelens.tag.slow:*",
+    "unknown": []
+   },
+   {
+    "q": "tag:cache",
+    "text": "@wizelens.tag.cache:*",
+    "unknown": [
+     "cache"
+    ]
+   },
+   {
+    "q": "tag:cache:hit",
+    "text": "@wizelens.tag.cache:hit",
+    "unknown": []
+   },
+   {
+    "q": "tag:s* -tag:pay",
+    "text": "(@http.response.header.content-type:text/event-stream* OR duration:>100ms) NOT (path:/api/pay OR @wizelens.tag.pay:*)",
+    "unknown": []
+   },
+   {
+    "q": "tag:zz*",
+    "text": "NOT *",
+    "unknown": []
+   },
+   {
+    "q": "tag:*",
+    "text": "@http.response.header.content-type:text/event-stream* OR (@user_agent.original:kube-probe/* OR @user_agent.original:GoogleHC/* OR @user_agent.original:ELB-HealthChecker/* OR @user_agent.original:GoogleStackdriverMonitoring-UptimeChecks*) OR (@user_agent.original:*bot* OR @user_agent.original:*crawler* OR @user_agent.original:*spider*) OR path:/api/pay OR duration:>100ms",
+    "unknown": []
+   },
+   {
+    "q": "tag:nope OR tag:Slow OR tag:nope",
+    "text": "@wizelens.tag.nope:* OR (duration:>100ms OR @wizelens.tag.Slow:*) OR @wizelens.tag.nope:*",
+    "unknown": [
+     "nope"
+    ]
+   },
+   {
+    "q": "service:api tag:stream",
+    "text": "service:api (@http.response.header.content-type:text/event-stream* OR @wizelens.tag.stream:*)",
+    "unknown": []
+   },
+   {
+    "q": "-tag:probe",
+    "text": "NOT ((@user_agent.original:kube-probe/* OR @user_agent.original:GoogleHC/* OR @user_agent.original:ELB-HealthChecker/* OR @user_agent.original:GoogleStackdriverMonitoring-UptimeChecks*) OR @wizelens.tag.probe:*)",
+    "unknown": []
+   }
+  ],
+  "names": [
+   {
+    "input": " Checkout ",
+    "name": "checkout"
+   },
+   {
+    "input": "-x",
+    "name": null
+   },
+   {
+    "input": "stream",
+    "name": null
+   },
+   {
+    "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "name": null
+   },
+   {
+    "input": "ok_name-1",
+    "name": "ok_name-1"
+   },
+   {
+    "input": "pay",
+    "name": null
+   },
+   {
+    "input": "UPPER",
+    "name": "upper"
+   }
+  ],
+  "queries": [
+   {
+    "query": "status:abc",
+    "ok": false
+   },
+   {
+    "query": "*",
+    "ok": false
+   },
+   {
+    "query": "-tag:x",
+    "ok": false
+   },
+   {
+    "query": "a",
+    "ok": true
+   },
+   {
+    "query": "  route:/x*  ",
+    "ok": true
+   },
+   {
+    "query": "",
+    "ok": false
+   }
+  ],
+  "colors": [
+   {
+    "color": "green",
+    "ok": true
+   },
+   {
+    "color": "pink",
+    "ok": false
+   },
+   {
+    "color": "slate",
+    "ok": true
+   }
+  ]
+ }
 }

@@ -1,4 +1,4 @@
-import { BookOpen, Plug, Server, SlidersHorizontal } from "lucide-react";
+import { BookOpen, Plug, Server, SlidersHorizontal, Tag } from "lucide-react";
 import { TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import { useData } from "../../data/hooks";
 import { useHost, useRange } from "../../data/host";
@@ -11,6 +11,7 @@ import { type Section, SectionHead, SectionLayout } from "../../ui/Sections";
 import { HubConnect } from "./HubConnect";
 import { OptionsReference } from "./OptionsReference";
 import { SourceSettings } from "./SourceSettings";
+import { TagsSettings } from "./TagsSettings";
 import "../../styles/pages/settings.css";
 
 const THEMES: [Theme, string][] = [
@@ -58,6 +59,7 @@ export function SettingsPage() {
   const { params } = useRoute();
   const mode = data.info?.mode;
   const services = servicesText(mode);
+  const tagsOn = useHost().has("tags");
   const sections: Section[] = [
     { id: "dashboard", label: "Dashboard", icon: SlidersHorizontal, render: () => <Preferences /> },
     ...(mode === "hub" || mode === "cloud" || data.info?.hub ? [{ id: "connect", label: mode === "in-app" ? "Sends to" : "Connect a service", icon: Plug, render: () => <HubConnect info={data.info} /> }] : []),
@@ -72,6 +74,7 @@ export function SettingsPage() {
         </>
       ),
     },
+    ...(tagsOn ? [{ id: "tags", label: "Tags", icon: Tag, render: () => <TagsSettings /> }] : []),
     { id: "options", label: "Add-on options", icon: BookOpen, render: () => <><SectionHead title="Add-on options" description="Every option of the .NET and Node add-ons, and the environment variable that sets it without a code change." /><OptionsReference /></> },
   ];
   return (

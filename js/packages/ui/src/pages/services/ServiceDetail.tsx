@@ -1,12 +1,17 @@
 import { ExternalLink, X } from "lucide-react";
-import type { EndpointStat, ServiceDetailModel, ServiceEdge, ServiceRow } from "@wizeworks/lens-core";
+import { endpointDoc, type EndpointStat, type ServiceDetailModel, type ServiceEdge, type ServiceRow } from "@wizeworks/lens-core";
+import { useGroupTags } from "../../data/tagMatch";
+import { TagChips } from "../../ui/TagChips";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
 import { setQuery } from "../../routes";
 import { Empty, KeyValues, Panel } from "../../ui/Panel";
 import { TimeChart } from "../../ui/TimeChart";
 import { KIND_LABEL, KindName, serviceHref, StatusText } from "./serviceParts";
 
-function EndpointList({ items, kind }: { items: EndpointStat[]; kind: ServiceRow["kind"] }) {
+function EndpointList({ items, row }: { items: EndpointStat[]; row: ServiceRow }) {
+  const kind = row.kind;
+  const groupTags = useGroupTags();
+  const tagsOf = (e: EndpointStat) => (kind === "api" || kind === "worker" ? groupTags("endpoints", endpointDoc(row.name, e.name)) : []);
   if (items.length === 0) return <Empty>Nothing recorded in this range.</Empty>;
   return (
     <table className="wl-table wl-svc-endpoints">
@@ -23,6 +28,7 @@ function EndpointList({ items, kind }: { items: EndpointStat[]; kind: ServiceRow
             <td className="wl-mono wl-small wl-wrap">
               {e.name}
               {e.errors > 0 && <span className="wl-text-error"> · {e.errors} failed</span>}
+              <TagChips tags={tagsOf(e)} />
             </td>
             <td className="wl-num">{fmtCount(e.count)}</td>
             <td className="wl-num">{fmtMs(e.avgMs)}</td>
@@ -73,7 +79,7 @@ export function ServiceDetail({ detail }: { detail: ServiceDetailModel }) {
       <div className="wl-section-title">Traffic</div>
       <TimeChart starts={detail.starts} bars={[{ label: "Requests", values: detail.traffic, color: "var(--wl-blue)" }]} height={140} />
       <div className="wl-section-title">{row.kind === "database" ? "Busiest queries" : "Busiest endpoints"}</div>
-      <EndpointList items={items} kind={row.kind} />
+      <EndpointList items={items} row={row} />
       <EdgeList title="Called by" edges={incoming} side="from" />
       <EdgeList title="Calls" edges={outgoing} side="to" />
     </Panel>

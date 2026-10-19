@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, Box, Monitor } from "lucide-react";
-import { type ErrorGroup, type ErrorsModel, type IssueInfo, isErrorFiltered, percentChange, type ServiceErrorRow } from "@wizeworks/lens-core";
+import { type ErrorGroup, errorGroupDoc, type ErrorsModel, type IssueInfo, isErrorFiltered, percentChange, type ServiceErrorRow } from "@wizeworks/lens-core";
 import { fmtCount, fmtPct, fmtTime } from "../../format";
 import { setQuery } from "../../routes";
 import { DotText } from "../../ui/Badges";
@@ -10,6 +10,8 @@ import { IssueBadge } from "../../ui/IssueControls";
 import { useSetService } from "../../ui/ServiceSelect";
 import { type Column, Table } from "../../ui/Table";
 import { ExportButton } from "../../ui/ExportButton";
+import { withTags } from "../../ui/TagChips";
+import { useGroupTags } from "../../data/tagMatch";
 
 const pathOf = (endpoint: string) => endpoint.replace(/^[A-Z]+ /, "");
 
@@ -35,10 +37,11 @@ const groupColumns = (issues: Record<string, IssueInfo>): Column<ErrorGroup>[] =
 export function RecentExceptionsPanel({ stats, selected }: { stats: ErrorsModel; selected: string | null }) {
   const filtered = isErrorFiltered(stats.filter);
   const title = stats.filter.sort === "count" ? "Most Frequent Exceptions" : "Recent Exceptions";
+  const groupTags = useGroupTags();
   return (
     <Panel title={`${title} (${fmtCount(stats.groupCount)})`} flush className="wl-err-list" action={<ExportButton page="errors" disabled={stats.groupCount === 0} />}>
       <Table
-        columns={groupColumns(stats.issues)}
+        columns={withTags(groupColumns(stats.issues), "error", (g) => groupTags("errors", errorGroupDoc(g)))}
         rows={stats.groups}
         rowKey={(g) => g.key}
         selectedKey={selected}
