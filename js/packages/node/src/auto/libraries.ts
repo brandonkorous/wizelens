@@ -6,8 +6,10 @@ import { instrumentBunyan } from "../logs/bunyan.js";
 import { instrumentPino } from "../logs/pino.js";
 import { instrumentWinston } from "../logs/winston.js";
 import { instrumentAmqplib } from "../messaging/amqplib.js";
+import { instrumentBullMq } from "../messaging/bullmq.js";
 import { instrumentKafkaJs } from "../messaging/kafkajs.js";
 import { instrumentServiceBus } from "../messaging/servicebus.js";
+import { instrumentSqs } from "../messaging/sqs.js";
 import { skipped } from "./config.js";
 import { esmPatch } from "./esm-source.js";
 import { autoHandle } from "./handle.js";
@@ -49,6 +51,9 @@ const DATABASES: [string, () => void][] = [
   ["prisma", hookPrisma],
 ];
 
+/** BullMQ's ES build keeps each class in its own file. */
+const BULLMQ_ESM = [["queue", "Queue"], ["worker", "Worker"], ["flow-producer", "FlowProducer"]] as const;
+
 const MESSAGING: [string, () => void][] = [
   ["amqplib", () => onLoad(nm("amqplib/channel_api.js"), (mod) => void instrumentAmqplib(autoHandle, mod))],
   ["kafkajs", () => onLoad(nm("kafkajs/index.js"), (mod) => void instrumentKafkaJs(autoHandle, mod))],
@@ -56,6 +61,18 @@ const MESSAGING: [string, () => void][] = [
     onLoad(nm("@azure/service-bus/dist/commonjs/index.js"), (mod) => void instrumentServiceBus(autoHandle, mod));
     onEsm(esmPatch(nm("@azure/service-bus/dist/esm/serviceBusClient.js"), "servicebus", "ServiceBusClient"));
     onEsmBinding("servicebus", (ServiceBusClient) => void instrumentServiceBus(autoHandle, { ServiceBusClient }));
+  }],
+  ["bullmq", () => {
+    onLoad(nm("bullmq/dist/cjs/index.js"), (mod) => void instrumentBullMq(autoHandle, mod));
+    for (const [file, binding] of BULLMQ_ESM) {
+      onEsm(esmPatch(nm(`bullmq/dist/esm/classes/${file}.js`), `bullmq-${file}`, binding));
+      onEsmBinding(`bullmq-${file}`, (value) => void instrumentBullMq(autoHandle, { [binding]: value }));
+    }
+  }],
+  ["sqs", () => {
+    onLoad(nm("@aws-sdk/client-sqs/dist-cjs/index.js"), (mod) => void instrumentSqs(autoHandle, mod));
+    onEsm(esmPatch(nm("@aws-sdk/client-sqs/dist-es/SQSClient.js"), "sqs", "SQSClient"));
+    onEsmBinding("sqs", (SQSClient) => void instrumentSqs(autoHandle, { SQSClient }));
   }],
   ["grpc", () => onLoad(nm("@grpc/grpc-js/build/src/index.js"), (grpc) => void instrumentGrpc(autoHandle, grpc))],
 ];
