@@ -6,6 +6,13 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Fixed
 
+- **Old pods no longer pile up in the service list.** The registry has one row per host, so every Kubernetes pod made a
+  new row, and the cloud never dropped them. The cloud now drops rows not heard from within the organization's retention
+  (the hub already did). The dashboard shows one row per service with "2 of 3 online"; a click shows its hosts, and hosts
+  offline for more than a day hide behind "Show old hosts". The top menu counts services, not pods.
+- **Admins can forget offline hosts** in the cloud (`POST api/projects/{p}/services/forget`). Each service keeps its newest
+  host, traces stay, and the audit log records it.
+
 - **Pages no longer time out when counting is slow.** Every page asked for the project's trace and span counts and
   environments; on a busy database those scans filled all 10 Postgres connections. They are now shared for a minute
   (one scan per project at a time), and every query stops after 2 minutes.

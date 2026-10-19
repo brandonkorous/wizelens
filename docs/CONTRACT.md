@@ -454,6 +454,10 @@ interface IngestBatch {
 `HubService` is the sender plus `via` (`"addon"` or `"otlp"`), `firstSeenMs`, `lastSeenMs`, and `online` (heard from in the
 last 30 seconds). OTLP apps send only when they have data, so the dashboard shows a quiet OTLP app as "Idle", not "Offline".
 
+There is one row per service, environment, and host, so each Kubernetes pod is its own row. The dashboard groups them into
+one row per service; a click shows the hosts, and hosts offline for more than a day hide until asked for. The hub drops rows
+not heard from within its retention; the cloud does the same with each organization's retention.
+
 Trace `remotes` that point at a service which sends to the hub are hidden, so the dashboard does not read that service twice.
 
 ### OTLP mapping
@@ -586,6 +590,7 @@ retention, and the audit log.
 | POST / DELETE | `api/orgs/{org}/keys[/{id}]` | Admin. The secret is in the answer once |
 | GET | `api/orgs/{org}/audit?before=` | Admin |
 | GET | `api/info`, `api/traces`, `api/traces/{id}`, `api/services` — all with `?project=` | Member or read key. `api/traces/{id}` joins other projects (see "Traces across projects") |
+| POST | `api/projects/{p}/services/forget` | Admin. Forgets offline hosts; each service keeps its newest host. Answers `{ removed }` and writes `service.forget` to the audit log |
 | GET | `api/models/{page}?project=&range=&env=&…` | Member or read key. See "Page models". `metrics` is a page too |
 | GET / POST / PATCH / DELETE | `api/projects/{p}/alerts[/{id}]`, `…/{id}/test` | Read: viewer; change: member |
 | POST / GET / DELETE | `api/projects/{p}/shares[/{id}]` | Read: viewer; change: member |

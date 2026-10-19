@@ -4,6 +4,8 @@ import { joinScope } from "../auth/join-scope.js";
 import { principalOf, type ProjectAccess, requireProject } from "../auth/principal.js";
 import { fail, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
+import { audit } from "../repo/audit.js";
+import { forgetOfflineServices } from "../repo/services.js";
 import { environmentsOf, listServices, type TraceQuery } from "../repo/trace-read.js";
 
 const DAY_MS = 86_400_000;
@@ -76,9 +78,19 @@ async function services(ctx: Ctx): Promise<void> {
   });
 }
 
+/** Forget the project's offline hosts (old pods), for admins. Their traces stay. */
+async function forgetOffline(ctx: Ctx): Promise<void> {
+  const { project, actor } = await requireProject(ctx, ctx.params.project!, "manage");
+  const now = ctx.app.config.now();
+  const removed = await forgetOfflineServices(ctx.app.db, project.id, now);
+  await audit(ctx.app.db, project.orgId, actor, "service.forget", { projectId: project.id, name: project.name, removed }, now);
+  sendJson(ctx.res, 200, { removed });
+}
+
 export function dataRoutes(r: Router<Ctx>): void {
   r.on("GET", "api/info", info)
     .on("GET", "api/traces", traces)
     .on("GET", "api/traces/:id", trace)
-    .on("GET", "api/services", services);
+    .on("GET", "api/services", services)
+    .on("POST", "api/projects/:project/services/forget", forgetOffline);
 }
