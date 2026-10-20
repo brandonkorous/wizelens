@@ -345,6 +345,16 @@ Before storing, replace values with `"[redacted]"` when the key (case-insensitiv
 `authorization`, `cookie`, `password`, `passwd`, `secret`, `token`, `apikey`, `api_key`, `connectionstring`.
 Applies to attributes, DB parameter names, and header names. List is configurable.
 
+Redaction keeps the evidence the security rules need (`docs/redact-vectors.json`, run by the TS and .NET tests):
+
+- **`set-cookie`** keeps each cookie's name and flags: `sid=[redacted]; Path=/; Secure; HttpOnly`.
+- **`url.query` and `url.full`** keep every key and lose the values of sensitive keys: `token=[redacted]`.
+- **Values by pattern.** Every string value (attributes, event attributes, log messages and attributes) has these
+  replaced with a typed marker: `[redacted:jwt]`, `[redacted:aws-key]`, `[redacted:private-key]`,
+  `[redacted:stripe-key]`, `[redacted:github-token]`, `[redacted:slack-token]`, `[redacted:google-key]`, and
+  `[redacted:card]` (13 to 19 digits, spaces or dashes allowed, first digit 3 to 6, Luhn valid). The patterns are
+  `VALUE_PATTERNS` in `core/src/redact-values.ts`.
+
 ## Analysis (shared logic, same results in .NET and JS)
 
 - **Duplicate query**: ≥ 2 `db` spans in one trace with identical `db.query.text` AND identical `wizelens.db.parameters`.
@@ -359,6 +369,57 @@ Applies to attributes, DB parameter names, and header names. List is configurabl
 - **Database wait** (dashboard and HUD): 3 or more slow queries in one trace that overlap in time are one `db-wait` finding,
   not 3 slow queries. So is a slow session statement on its own (a `SET` does almost no work, so it waited).
   Its time is wall time: queries that waited together waited once. The MCP `find_slow_queries` tool still lists each query.
+
+## Security analysis
+
+Security findings are `Finding`s with the kinds below (`docs/SECURITY-PLAN.md`). `analyzeTrace` returns them; `insightsOf`
+leaves them out, so request health and insight counts do not change. Shared vectors: `docs/security-vectors.json`.
+Each kind has one OWASP Top 10:2025 category (`OWASP_OF`). Findings name what was found, never a secret value.
+
+- **The request** is the entry server span (`entryServerSpan`). Its response headers are known when it has any
+  `http.response.header.*` attribute; rules that read them skip a request without. It is **HTTPS** when `url.scheme` is
+  `https` or the first `x-forwarded-proto` value is `https`.
+- **Inputs** of the request: `url.query` values (decoded), path values (each `{name}` or `:name` segment of
+  `http.route` against the same segment of `url.path`, decoded), and the string and number leaves of
+  `wizelens.request.body` when it is complete JSON (depth 5, 100 values). A value counts when it is 3 to 200 characters,
+  or 2 or more digits, and is not a redaction marker.
+- **`sql-injection`** (error): a SQL `db` span (not NoSQL) whose `db.query.text` has a literal equal to an input.
+  Literals: `'...'` strings (`''` is a quote; leading and trailing `%` trimmed), and numbers after `=`, `<>`, `!=`, `<=`,
+  `>=`, `<`, `>`, or `IN (`. One finding per query text; shape the query text.
+- **`missing-headers`** (warning): a 2xx answer with headers known that lacks `x-content-type-options`; with a
+  `text/html` content type, also `content-security-policy` and `x-frame-options` (unless the CSP has
+  `frame-ancestors`); over HTTPS, also `strict-transport-security`. Shape: the missing names, sorted, joined by `, `.
+- **`version-header`** (info): `x-powered-by`, `x-aspnet-version`, or `x-aspnetmvc-version` present, or `server` with
+  `\d+\.\d+`. Shape `name: value` (value cut to 80), one per header.
+- **`cors`** (warning): `access-control-allow-origin` is `*` and `access-control-allow-credentials` is `true`, or it is
+  `null`. Shape `access-control-allow-origin: *, with credentials` or `access-control-allow-origin: null`.
+- **`cookie-flags`** (warning): each cookie in `http.response.header.set-cookie` (split at `, ` before `name=`), unless it
+  is redacted whole or has `Max-Age=0`. Missing `Secure` over HTTPS or with `SameSite=None`; missing `HttpOnly` when the
+  name matches `sess|sid|auth|token|jwt|login|remember|identity|\.aspnetcore\.`. Shape `cookie {name}: missing HttpOnly, Secure`.
+- **`secret-in-url`** (warning): the request's `url.query`, or an `http.client` span's `url.full` query, has a key that is
+  a default redact key. Shape: `{endpoint}?{key}={}` for the request, `httpShape` for a call.
+- **`plain-http`** (warning): an `http.client` span to `http://` (`url.full`, else `url.scheme`) whose host is public:
+  not `localhost`, a loopback, private, or link-local address, a name without a dot, or a name ending in `.local`,
+  `.internal`, `.svc`, or `.cluster.local`. Shape `httpShape`.
+- **`ssrf`** (error): an `http.client` span whose host equals an input, or whose `url.full` starts with an input, or
+  whose host equals the host of an input that is a URL. Only inputs with a `.`, `:`, or `/` count. Shape `httpShape`.
+- **`stack-exposed`** (warning): a 4xx or 5xx answer whose `wizelens.response.body` holds a stack trace
+  (`STACK_RE`: Python "Traceback (most recent call last)", Go "goroutine N [", Java `.java:N)`, .NET `:line N` or
+  `at Name(`, Node `at name (file:N:N)`, PHP "Stack trace:" + "#0"). Shape: the endpoint.
+- **`exposed-path`** (error): a 2xx answer to a sensitive path (`EXPOSED_PATHS`: `.env`, `.git/`, `.svn/`, `.aws/`,
+  `.ds_store`, `web.config`, `phpinfo.php`, `server-status`, `elmah.axd`, `trace.axd`, `debug/pprof`, and the
+  `actuator` endpoints `env`, `heapdump`, `threaddump`, `configprops`, `mappings`, `beans`, `loggers`, `shutdown`,
+  `jolokia`). Shape: the path, lower case.
+- **`open-admin`** (warning): a 2xx answer to a path with an `admin`, `internal`, or `management` segment (not a
+  sign-in path) that is not an HTML GET, and has no `enduser.id` in the trace and no `authorization`, `cookie`,
+  `x-api-key`, or `api-key` request header. Shape: the endpoint.
+- **`secret-leak`**: redaction markers (see "Redaction") in log lines (`in logs`), span attributes and events
+  (`in span data`), or `wizelens.response.body` (`in a response`; not `jwt`, which login answers send). Error, except
+  `jwt` (warning). Shape `{label} {where}`, for example `Card number in logs`; count the markers.
+- **`auth-guessing`** (rollups, not one trace): `sec.auth` rows (`service|endpoint|address`) with 10 or more 401 or 403
+  answers in the window. Requests count there when they answer 401, 403, or 429, or their path matches
+  `login|signin|sign-in|logon|auth|token|session|password|otp|2fa|mfa|verify`. One group per endpoint; high at 100.
+  With no 429 at that endpoint, it says there may be no rate limit.
 
 ## Timing
 
