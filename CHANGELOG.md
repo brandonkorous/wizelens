@@ -240,6 +240,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   answers, and errors on spans with no HTTP status, still count. It follows the OpenTelemetry rule for server spans, and
   applies to client spans as well, because WizeLens sees the other side of the call. Stats are rebuilt once
   (`FACTS_VERSION` 8). Sampling in every SDK (Node, .NET, Go, Java, Python) no longer keeps a trace only for a 4xx.
+  The Node framework add-ons (Fastify, Express, Koa, Hono) and `recordException` still record a thrown 4xx error (one
+  with a 4xx `statusCode` or `status`) as an exception, but no longer mark the span as failed. .NET does the same for a
+  server span that answered 4xx.
 - Stats are rebuilt once after this update (`FACTS_VERSION` 4), so each count can be read per service and per endpoint.
 - **Duplicate queries need known parameters.** A statement with placeholders but no captured parameters is no longer a
   duplicate query (the agents sanitize SQL, so two runs may have had different values). Node and .NET always capture

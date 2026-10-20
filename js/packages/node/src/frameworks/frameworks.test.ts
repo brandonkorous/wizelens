@@ -55,9 +55,17 @@ describe("fastify", () => {
     app.get("/boom", async () => {
       throw new Error("boom");
     });
+    app.get("/missing", async () => {
+      throw Object.assign(new Error("Builder page not found"), { statusCode: 404 });
+    });
     await app.listen({ port: 0, host: "127.0.0.1" });
     closers.push(() => app.close());
     await check(wl, baseOf(app.server), true);
+    // A thrown 404 keeps its exception but is not a failure.
+    const missing = (await traceOf(wl, await fetch(`${baseOf(app.server)}/missing`))).spans.find((s) => s.category === "http.server")!;
+    expect(missing.status).toBe("unset");
+    expect(missing.attributes["http.response.status_code"]).toBe(404);
+    expect(missing.events.map((e) => e.name)).toContain("exception");
   });
 });
 
