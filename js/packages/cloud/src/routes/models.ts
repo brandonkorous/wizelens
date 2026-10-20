@@ -6,7 +6,7 @@ import { listServices } from "../repo/trace-read.js";
 import { metricParamsOf, metricRange, projectMetrics } from "./metrics.js";
 import { projectScope, type TenantScope } from "../telemetry/store.js";
 import { type ProjectRef, type ReadScope, readScopeOf, scopeFacts, scopeRetentionMs } from "./scope.js";
-import { scopeApdex, scopeIssues, scopeTags } from "./scope-state.js";
+import { scopeApdex, scopeIssues, scopePackages, scopeTags } from "./scope-state.js";
 
 const CACHE_MS = 15_000;
 const CACHE_MAX = 500;
@@ -49,7 +49,8 @@ async function pageExtras(app: CloudApp, r: PageScope, page: PageName, params: R
   const kind = LIST_SEARCH_KIND[page];
   const run = (q: SearchQuery) => app.telemetry.search(r.scope, q);
   const search = kind && isStructuredSearch(params.q) ? { searchIds: await searchTraceIds(run, kind, params.q!, w, env, activeTags(await scopeTags(app, r.projects))) } : {};
-  return { ...issues, ...apdex, ...search };
+  const packages = page === "security" ? await scopePackages(app, r.projects) : {};
+  return { ...issues, ...apdex, ...search, ...packages };
 }
 
 /** One page's numbers for the projects of a read, from their stats tables. Cached for 15 seconds, like the dashboard's. */

@@ -22,6 +22,7 @@ public class MetricsAppTests
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken)).RootElement.Clone();
+            if (request.RequestUri!.AbsolutePath.EndsWith("/api/packages", StringComparison.Ordinal)) return new HttpResponseMessage(HttpStatusCode.NoContent);
             lock (Bodies) Bodies.Add(body);
             return new HttpResponseMessage(HttpStatusCode.NoContent);
         }

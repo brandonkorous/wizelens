@@ -1,3 +1,4 @@
+import { redactText } from "./redact-values.js";
 import type { AttributeValue, Attributes } from "./types.js";
 
 export const REDACTED = "[redacted]";
@@ -20,9 +21,61 @@ export function isSensitiveKey(key: string, keys: readonly string[] = DEFAULT_RE
   return keys.some((s) => k.includes(s));
 }
 
+const decode = (s: string): string => {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+};
+
+/** A query string with the values of sensitive keys replaced: `token=[redacted]`. Keys and other values stay. */
+export function redactQueryString(query: string, keys: readonly string[] = DEFAULT_REDACT_KEYS): string {
+  return query
+    .split("&")
+    .map((pair) => {
+      const eq = pair.indexOf("=");
+      return eq >= 0 && isSensitiveKey(decode(pair.slice(0, eq)), keys) ? `${pair.slice(0, eq + 1)}${REDACTED}` : pair;
+    })
+    .join("&");
+}
+
+/** A URL with its query redacted as `redactQueryString` does. */
+export function redactUrl(url: string, keys: readonly string[] = DEFAULT_REDACT_KEYS): string {
+  const q = url.indexOf("?");
+  return q < 0 ? url : url.slice(0, q + 1) + redactQueryString(url.slice(q + 1), keys);
+}
+
+/** Cookies in one `set-cookie` value: split at ", " before the next `name=`, so an Expires date stays whole. */
+export const splitSetCookie = (value: string): string[] => value.split(/,\s*(?=[^;,\s=]+=)/);
+
+/** A `set-cookie` value with each cookie's value hidden and its name and flags kept: `sid=[redacted]; Path=/; HttpOnly`. */
+export function redactSetCookie(value: string): string {
+  return splitSetCookie(value)
+    .map((cookie) => {
+      const semi = cookie.indexOf(";");
+      const head = semi < 0 ? cookie : cookie.slice(0, semi);
+      const eq = head.indexOf("=");
+      return `${(eq < 0 ? head : head.slice(0, eq)).trim()}=${REDACTED}${semi < 0 ? "" : cookie.slice(semi)}`;
+    })
+    .join(", ");
+}
+
+/** One attribute value as stored: by its key first, then secrets found inside the text. */
+export function redactValue(key: string, value: AttributeValue, keys: readonly string[] = DEFAULT_REDACT_KEYS): AttributeValue {
+  if (value === null) return null;
+  const k = key.toLowerCase();
+  if (typeof value !== "string") return isSensitiveKey(k, keys) ? REDACTED : value;
+  if (k === "set-cookie" || k.endsWith(".set-cookie")) return value === REDACTED ? value : redactSetCookie(value);
+  if (isSensitiveKey(k, keys)) return REDACTED;
+  if (k === "url.query") return redactText(redactQueryString(value, keys));
+  if (k === "url.full") return redactText(redactUrl(value, keys));
+  return redactText(value);
+}
+
 export function redactAttributes(attrs: Attributes, keys: readonly string[] = DEFAULT_REDACT_KEYS): Attributes {
   const out: Attributes = {};
-  for (const [k, v] of Object.entries(attrs)) out[k] = v !== null && isSensitiveKey(k, keys) ? REDACTED : v;
+  for (const [k, v] of Object.entries(attrs)) out[k] = redactValue(k, v, keys);
   return out;
 }
 

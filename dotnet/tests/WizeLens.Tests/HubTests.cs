@@ -15,10 +15,14 @@ public class HubTests
     {
         public List<(string Url, string? Auth, JsonElement Body)> Calls { get; } = [];
 
+        /// <summary>Package reports, which are not ingest batches.</summary>
+        public List<(string Url, string? Auth, JsonElement Body)> Packages { get; } = [];
+
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken)).RootElement.Clone();
-            lock (Calls) Calls.Add((request.RequestUri!.ToString(), request.Headers.Authorization?.ToString(), body));
+            var list = request.RequestUri!.AbsolutePath.EndsWith("/api/packages", StringComparison.Ordinal) ? Packages : Calls;
+            lock (list) list.Add((request.RequestUri!.ToString(), request.Headers.Authorization?.ToString(), body));
             return new HttpResponseMessage(status);
         }
     }
@@ -68,6 +72,19 @@ public class HubTests
         Assert.Equal("4.2.0", server.GetProperty("attributes").GetProperty("service.version").GetString());
         // The calls to the hub are not traced by the app itself.
         Assert.Single(app.Store.All());
+    }
+
+    [Fact]
+    public async Task Reports_the_app_s_packages_to_the_hub_once_at_start()
+    {
+        var hub = new FakeHub(HttpStatusCode.NoContent);
+        await using var app = await StartAsync(hub);
+        for (var i = 0; i < 50 && hub.Packages.Count == 0; i++) await Task.Delay(100);
+        var call = Assert.Single(hub.Packages);
+        Assert.Equal("http://hub.test:5960/_wizelens/api/packages", call.Url);
+        Assert.Equal("Bearer s3cret", call.Auth);
+        Assert.Equal("test-api", call.Body.GetProperty("sender").GetProperty("service").GetString());
+        Assert.Contains(call.Body.GetProperty("packages").EnumerateArray(), p => p.GetProperty("ecosystem").GetString() == "NuGet" && p.GetProperty("name").GetString()!.StartsWith("xunit", StringComparison.Ordinal));
     }
 
     [Fact]

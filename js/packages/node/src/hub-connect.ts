@@ -1,5 +1,6 @@
 import { HUB_ENV, HUB_TOKEN_ENV, type HubSender, normalizeHubUrl, type ServiceInfo } from "@wizeworks/lens-core";
 import { HubExporter } from "./hub-export.js";
+import { reportPackages } from "./packages.js";
 import type { MetricStore } from "./metrics/store.js";
 import type { TraceStore } from "./store.js";
 import type { WizeLensOptions } from "./types.js";
@@ -29,5 +30,6 @@ export function connectHub(
   exporter.attach(store);
   if (metrics) exporter.attachMetrics(metrics);
   exporter.start();
+  if (o.reportPackages !== false && process.env.WIZELENS_PACKAGES !== "false") reportPackages(url, o.hubToken ?? process.env[HUB_TOKEN_ENV], sender);
   return exporter;
 }

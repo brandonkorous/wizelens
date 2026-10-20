@@ -2,6 +2,7 @@
 import type { ModelParams } from "../models/input.js";
 import type { TimeRange, TimeWindow } from "../stats/common.js";
 import type { IssueStates } from "../issues.js";
+import type { PackageRisk, PackageScan } from "../packages.js";
 import type { Compare } from "../stats/period.js";
 import type { LogLevel, Trace } from "../types.js";
 import { type Agg, avgOfAgg } from "./agg.js";
@@ -153,6 +154,10 @@ export interface PageContext {
   searchIds?: readonly string[];
   /** Apdex targets per service, in ms, on hosts that keep them; services without one use 500 ms. */
   apdex?: Readonly<Record<string, number>>;
+  /** Package versions with known advisories, on hosts with the `packages` capability (the Security page). */
+  packages?: readonly PackageRisk[];
+  /** What the host checked against OSV; absent where packages are not checked. */
+  packageScan?: PackageScan;
 }
 
 export interface NeedResults {

@@ -37,4 +37,23 @@ public class McpHttpTests
         Assert.Contains("Unknown range", await Text(new() { ["range"] = "2y" }));
         Assert.Contains("start", await Text(new() { ["q"] = "status:abc" }));
     }
+
+    [Fact]
+    public async Task Find_security_issues_names_risks_from_real_requests()
+    {
+        await using var app = await TestApp.StartAsync(a =>
+        {
+            a.MapGet("/.env", () => "SECRET=1");
+            a.MapGet("/api/admin/stats", () => Results.Json(new { users = 3 }));
+        }, o => o.EnableMcp = true);
+        await app.Client.GetAsync("/.env");
+        await app.Client.GetAsync("/api/admin/stats");
+        var options = new HttpClientTransportOptions { Endpoint = new Uri(app.Client.BaseAddress!, "/_wizelens/mcp"), TransportMode = HttpTransportMode.StreamableHttp };
+        await using var client = await McpClient.CreateAsync(new HttpClientTransport(options, app.Client, ownsHttpClient: false));
+        var text = string.Concat((await client.CallToolAsync("find_security_issues", new Dictionary<string, object?>())).Content.OfType<TextContentBlock>().Select(c => c.Text));
+        Assert.Contains("\"exposed-path\"", text);
+        Assert.Contains("\"open-admin\"", text);
+        Assert.Contains("x-content-type-options", text);
+        Assert.Contains("\"A01\"", text);
+    }
 }

@@ -243,6 +243,15 @@ read (OAuth; remove it any time under Account, Connected apps). For scripts, mak
 it as `Authorization: Bearer wl_rk_...`. With several projects, the agent calls `list_projects` and names a project on each
 tool call, or `get_overview` with no project for a report on all of them. Every call is in the audit log.
 
+## 10. Security (on by default)
+
+Nothing to set up. Open **Security** in the dashboard: WizeLens checks every request for OWASP Top 10 risks (SQL built
+from input, missing headers, weak cookies, secrets in URLs and logs, open admin routes, sign-in guessing) and lists them
+with the evidence and how to fix them. Pick a service and a release to see what a release brought in. Stack traces in
+answers need response body capture. With the hub or the cloud, each SDK also sends its package names and versions at
+start, and the hub checks them against OSV for known vulnerabilities (`--no-osv` turns that off; `WIZELENS_PACKAGES=false`
+stops an app from sending). Details: `docs/SECURITY-PLAN.md` and the "Security analysis" part of `docs/CONTRACT.md`.
+
 ## Checks when something is missing
 
 | You see | Check |

@@ -1,6 +1,7 @@
 import type { Finding } from "./analysis.js";
 import { busyMs, busyWithin, totalMs } from "./busy.js";
 import { ATTR_BROWSER_RENDER_MS, browserTypeOf } from "./attributes.js";
+import { isSecurityKind } from "./security/kinds.js";
 import { entryServerSpan } from "./trace.js";
 import { type Span, type Trace } from "./types.js";
 
@@ -32,7 +33,7 @@ export function healthOf(input: HealthInput | null, slowMs = DEFAULT_SLOW_MS): H
 }
 
 /** Findings that are hints, not errors. */
-export const insightsOf = (findings: readonly Finding[]): Finding[] => findings.filter((f) => f.kind !== "error");
+export const insightsOf = (findings: readonly Finding[]): Finding[] => findings.filter((f) => f.kind !== "error" && !isSecurityKind(f.kind));
 
 export interface Timing {
   /** Request start to the next paint. Without browser data: the trace duration. */

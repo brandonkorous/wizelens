@@ -11,7 +11,7 @@ import { Menu } from "./Menu";
 import { isAllProjects } from "../data/projectScope";
 
 const DAYS: [string, string][] = [["1", "For 1 day"], ["7", "For 7 days"], ["30", "For 30 days"]];
-const LISTS = new Set(["overview", "requests", "errors", "database", "logs", "insights", "rendering", "services", "traces"]);
+const LISTS = new Set(["overview", "requests", "errors", "database", "logs", "insights", "security", "rendering", "services", "traces"]);
 
 /** The page model behind a route, and the parameters that pick its item (an error group, a service, an endpoint, a query, a route). */
 export function sharedPageOf(r: Route): { page: string; params: Record<string, string> } | null {

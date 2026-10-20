@@ -4,6 +4,7 @@ import { badgesPage } from "./badges.js";
 import { databasePage } from "./database.js";
 import { errorsPage } from "./errors.js";
 import { insightsPage } from "./insights.js";
+import { securityPage } from "./security.js";
 import { logChartPage } from "./log-chart.js";
 import { logPatternsPage } from "./log-patterns.js";
 import { logsPage } from "./logs.js";
@@ -70,6 +71,9 @@ export * from "./saved.js";
 export * from "./log-search.js";
 export * from "./user-rows.js";
 export * from "./users.js";
+export * from "./security.js";
+export * from "./security-groups.js";
+export * from "./security-text.js";
 
 /** Every page by name: what it needs and how its model is built. Hosts serve them at `api/models/<name>`; in-app runs them in the browser. */
 export const PAGES = {
@@ -89,6 +93,7 @@ export const PAGES = {
   query: queryPage,
   route: routePage,
   insights: insightsPage,
+  security: securityPage,
   badges: badgesPage,
   uptime: uptimePage,
   problems: problemsPage,
@@ -108,3 +113,4 @@ export const runPage = <P extends PageName>(page: P, ctx: PageContext, ex: Execu
 
 /** One page's model with the memory executor. */
 export const runPageSync = <P extends PageName>(page: P, ctx: PageContext, ex: SyncExecutor): ModelOf<P> => computePageSync(defOf(page), ctx, ex);
+export * from "./security-packages.js";

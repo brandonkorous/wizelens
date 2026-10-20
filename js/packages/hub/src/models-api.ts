@@ -8,6 +8,15 @@ import { apdexTargets, apdexVersion } from "./slos.js";
 import { listSearch } from "./list-search.js";
 import { factsOf, keepMsOf } from "./settings.js";
 import { hubExecutor, hubSettling } from "./scale-exec.js";
+import { packageRisks } from "./packages/check.js";
+import { packagesVersion } from "./packages/loop.js";
+import { sqlitePackages } from "./packages/sqlite.js";
+
+/** The Security page's package risks and scan, for one project. */
+async function packageContext(db: Parameters<typeof sqlitePackages>[0], project: string) {
+  const { risks, scan } = await packageRisks(sqlitePackages(db), project);
+  return { packages: risks, packageScan: scan };
+}
 
 const CACHE_MAX = 200;
 /** A custom window may start this much before the kept age (snapping, clock skew). */
@@ -34,14 +43,15 @@ export async function hubPage<P extends PageName>(data: HubData, page: P, range:
   const now = alignNow(store.now());
   // Stats only change when traces settle or leave, so the settle counter keys the cache.
   const slowQueryMs = factsOf(store, scope.project ?? "").slowQueryMs!;
-  const key = JSON.stringify([page, range, scope, params, now, store.settleGen, issuesVersion(), apdexVersion(), slowQueryMs, keepMs]);
+  const key = JSON.stringify([page, range, scope, params, now, store.settleGen, issuesVersion(), apdexVersion(), packagesVersion(), slowQueryMs, keepMs]);
   if (cache.has(key)) return cache.get(key) as ModelOf<P>;
   const ctx = pageContext(range, now, params, { slowQueryMs }, hubSettling(store, scope));
   if (now - ctx.window.from > keepMs + WINDOW_SLACK_MS) throw new PageRangeError("This time window starts before the hub keeps data.");
   const issues = ISSUE_PAGES.has(page) ? { issues: issueStates(store.db, scope.project ?? "") } : {};
   const apdex = APDEX_PAGES.has(page) ? { apdex: apdexTargets(store.db, scope.project ?? "") } : {};
   const search = await listSearch(store, page, params, ctx.window, scope);
-  const value = await runPage(page, { ...ctx, ...issues, ...apdex, ...search }, hubExecutor(store, scope, data.keepRemote));
+  const packages = page === "security" ? await packageContext(store.db, scope.project ?? "") : {};
+  const value = await runPage(page, { ...ctx, ...issues, ...apdex, ...search, ...packages }, hubExecutor(store, scope, data.keepRemote));
   remember(key, value);
   return value;
 }

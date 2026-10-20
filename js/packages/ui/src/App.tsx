@@ -17,6 +17,7 @@ import { setTimeFormat } from "./format";
 import { DatabasePage } from "./pages/database/DatabasePage";
 import { ErrorsPage } from "./pages/errors/ErrorsPage";
 import { InsightsPage } from "./pages/insights/InsightsPage";
+import { SecurityPage } from "./pages/security/SecurityPage";
 import { LogsPage } from "./pages/logs/LogsPage";
 import { MetricsPage } from "./pages/metrics/MetricsPage";
 import { HostsPage } from "./pages/infra/HostsPage";
@@ -61,6 +62,7 @@ const PAGES: Record<Exclude<PageId, "trace" | "shared" | "status" | AuthPageId>,
   kubernetes: KubernetesPage,
   services: ServicesPage,
   insights: InsightsPage,
+  security: SecurityPage,
   settings: SettingsPage,
   alerts: AlertsPage,
   uptime: UptimePage,

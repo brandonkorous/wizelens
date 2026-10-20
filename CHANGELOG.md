@@ -2,6 +2,34 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — Security from real traffic
+
+A Security page finds the risks that slip past pull requests and tests, from the traffic your app really serves, and
+maps each one to the OWASP Top 10:2025 (docs/SECURITY-PLAN.md).
+
+### Added
+
+- **The Security page.** SQL built from request input, missing security headers, version headers, loose CORS, cookies
+  without `Secure` or `HttpOnly`, secrets in URLs, plain HTTP calls, SSRF, open admin routes, open `.env` and debug pages,
+  stack traces in error answers, secrets in logs and answers, and repeated failed sign-ins. Each risk has its evidence,
+  endpoints, users, how to fix it, an example trace, issue states, and "New in" a release. The OWASP grid filters by
+  category. CSV export, Ctrl+K hits, and a **Security risks** list on every trace.
+- **Known-vulnerable packages.** Every SDK (Node, .NET, Python, Java, Go) sends the names and versions of its packages
+  once at start; the hub and the cloud check them against OSV and list each version with advisories, its CVEs, and the
+  version that fixes it. Only names and versions leave your machine. `WIZELENS_PACKAGES=false` and `--no-osv` turn it off.
+- **MCP `find_security_issues`** on the Node add-on, the hub, the cloud, and the .NET add-on.
+- **Alert metric "New security risks".**
+- **The same rules in .NET and Node,** on shared test cases (`docs/security-vectors.json`).
+
+### Changed
+
+- **Redaction keeps the evidence and hides more.** `Set-Cookie` keeps each cookie's name and flags, URL queries keep their
+  keys (`token=[redacted]`; Node, the browser, Python, Java, and Go now redact query values too), and JWTs, cloud and API
+  keys, private keys, and card numbers inside any value or log line become a typed marker such as `[redacted:jwt]`
+  (`docs/redact-vectors.json`).
+- **More headers.** The Go SDK captures response headers, and the Java SDK captures the security headers.
+- `FACTS_VERSION` 10: hosts rebuild their stats once.
+
 ## [0.3.0-alpha.6] — Who your users are
 
 The Users page shows names, and front ends that call an API in another project now see their own users.

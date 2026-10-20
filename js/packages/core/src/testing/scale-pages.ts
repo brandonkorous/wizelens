@@ -32,6 +32,7 @@ const STATIC: Partial<Record<PageName, Record<string, string>[]>> = {
   logs: [{ level: "warn" }, { level: "error", service: "api" }, { q: "order" }, { page: "2", size: "5" }, { service: "orders" }, { level: "warn", exact: "1" }, { category: "api.app" }, { trace: "f".repeat(32) }, { origin: "outside" }, { origin: "request", level: "info" }, { user: "user-0" }, { user: "user-0", level: "warn" }],
   "log-patterns": [{ level: "warn" }, { service: "worker-svc" }, { level: "error", exact: "1" }, { pattern: "nope" }, { origin: "outside" }, { origin: "request", service: "orders" }],
   "log-chart": [{ level: "error" }, { q: "retrying" }, { origin: "outside" }, { service: "orders", level: "info" }],
+  security: [{ category: "A05" }, { category: "A07" }, { severity: "error" }, { q: "login" }, { service: "api" }, { service: "Web App" }, { endpoint: "POST /login" }, { service: "api", release: "1.0.0" }, { service: "api", release: "1.2.0" }, { status: "all" }],
   insights: [{ area: "database" }, { impact: "high" }, { q: "orders" }, { service: "api" }, { service: "Web App" }, { endpoint: "GET /api/orders/{id}" }, { service: "api", release: "1.0.0" }, { service: "api", release: "1.1.0" }],
   rendering: [{ q: "checkout" }, { q: "nothing" }],
   errors: [{ q: "pay" }, { q: "TIMEOUT" }, { service: "api" }, { service: "Web App" }, { type: "TimeoutError" }, { critical: "1" }, { sort: "count" }, { page: "2", size: "2" }, { endpoint: "POST /api/pay" }, { endpoint: "nope" }, { service: "api", critical: "1", sort: "count" }, { service: "api", release: "1.0.0" }, { service: "api", release: "1.2.0", new: "1" }, { service: "api", release: "9.9" }, { user: "user-9" }, { user: "user-9", endpoint: "POST /api/pay" }],
@@ -55,7 +56,8 @@ function paramsOf(page: PageName, range: TimeRange, mem: SyncExecutor): Record<s
   if (page === "query") extra.push(...runPageSync("database", pageContext(range, SCENARIO_NOW, { size: "200" }), mem).queries.slice(0, 3).map((q) => ({ q: q.query })), { q: "nope" });
   if (page === "route") extra.push(...runPageSync("rendering", ctx, mem).routes.slice(0, 2).map((r) => ({ route: r.route })), { route: "nope" });
   if (page === "errors") extra.push(...runPageSync("errors", ctx, mem).groups.slice(0, 2).map((g) => ({ group: g.key })), { group: "nope" }, { _issues: "1" }, { _issues: "1", status: "resolved" }, { _issues: "1", status: "ignored" }, { new: "1" });
-  if (page === "insights" || page === "overview") extra.push({ _issues: "1" });
+  if (page === "insights" || page === "overview" || page === "security") extra.push({ _issues: "1" });
+  if (page === "security") extra.push(...runPageSync("security", ctx, mem).groups.slice(0, 3).map((g) => ({ key: g.key })), { key: "nope" });
   if (page === "insights") extra.push(...runPageSync("insights", ctx, mem).groups.slice(0, 2).map((g) => ({ key: g.key })));
   if (page === "logs" || page === "log-chart" || page === "log-patterns") extra.push(...runPageSync("log-patterns", ctx, mem).rows.slice(0, 2).map((r) => ({ pattern: r.id })));
   return [{}, ...(STATIC[page] ?? []), ...extra];

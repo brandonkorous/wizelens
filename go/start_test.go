@@ -100,6 +100,8 @@ func TestHandlerPutsHeadersAndBodiesOnTheServerSpan(t *testing.T) {
 	mux.HandleFunc("POST /orders", func(w http.ResponseWriter, r *http.Request) {
 		in, _ := io.ReadAll(r.Body)
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Add("Set-Cookie", "sid=abc; Path=/; HttpOnly")
+		w.Header().Add("Set-Cookie", "theme=dark; Expires=Wed, 21 Oct 2026 07:28:00 GMT")
 		_, _ = w.Write([]byte(`{"ok":true,"token":"t","got":` + string(rune('0'+len(in)%10)) + `}`))
 	})
 	srv := httptest.NewServer(Handler(mux, "orders"))
@@ -127,6 +129,10 @@ func TestHandlerPutsHeadersAndBodiesOnTheServerSpan(t *testing.T) {
 	}
 	if !strings.Contains(attrs[AttrResponseBody], `"token":"[redacted]"`) || attrs["http.request.header.authorization"] != Redacted {
 		t.Fatalf("attributes %v", attrs)
+	}
+	cookies := "sid=[redacted]; Path=/; HttpOnly, theme=[redacted]; Expires=Wed, 21 Oct 2026 07:28:00 GMT"
+	if attrs["http.response.header.set-cookie"] != cookies || attrs["http.response.header.content-type"] != "application/json" {
+		t.Fatalf("response headers %v", attrs)
 	}
 }
 

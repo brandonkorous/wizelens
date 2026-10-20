@@ -1,0 +1,204 @@
+{
+  "about": "Security rule vectors (docs/CONTRACT.md, Security analysis). The TS and .NET suites run them. A span lists only what it sets: spanId, category, and attributes; tests fill the rest (no parent, 10 ms, service api). Data is as stored, after redaction. Findings compare sorted by kind, then shape.",
+  "cases": [
+    {
+      "name": "query input in a LIKE literal",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "GET", "url.path": "/search", "url.query": "q=shoes&page=1", "http.route": "/search", "http.response.status_code": 200 } },
+        { "spanId": "d1", "parentSpanId": "s1", "category": "db", "attributes": { "db.system.name": "postgresql", "db.query.text": "SELECT * FROM products WHERE name LIKE '%shoes%' LIMIT 20" } },
+        { "spanId": "d2", "parentSpanId": "s1", "category": "db", "attributes": { "db.system.name": "postgresql", "db.query.text": "SELECT * FROM products WHERE name LIKE $1", "wizelens.db.parameters": "[\"%shoes%\"]" } }
+      ],
+      "findings": [{ "kind": "sql-injection", "severity": "error", "shape": "SELECT * FROM products WHERE name LIKE '%shoes%' LIMIT 20", "count": 1, "spanIds": ["d1"] }]
+    },
+    {
+      "name": "path value as a compared number, twice",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "GET", "url.path": "/orders/42", "http.route": "/orders/{id}", "http.response.status_code": 200 } },
+        { "spanId": "d1", "parentSpanId": "s1", "category": "db", "attributes": { "db.system.name": "mysql", "db.query.text": "SELECT * FROM orders WHERE id = 42" } },
+        { "spanId": "d2", "parentSpanId": "s1", "category": "db", "attributes": { "db.system.name": "mysql", "db.query.text": "SELECT * FROM orders WHERE id = 42" } },
+        { "spanId": "d3", "parentSpanId": "s1", "category": "db", "attributes": { "db.system.name": "mysql", "db.query.text": "SELECT * FROM items WHERE qty > 420" } }
+      ],
+      "findings": [{ "kind": "sql-injection", "severity": "error", "shape": "SELECT * FROM orders WHERE id = 42", "count": 2, "spanIds": ["d1", "d2"] }]
+    },
+    {
+      "name": "JSON body value in a quoted literal; short and NoSQL values do not count",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "POST", "url.path": "/login", "url.query": "x=a", "http.route": "/login", "http.response.status_code": 200, "wizelens.request.body": "{\"email\":\"bob@example.com\",\"remember\":true}" } },
+        { "spanId": "d1", "parentSpanId": "s1", "category": "db", "attributes": { "db.system.name": "microsoft.sql_server", "db.query.text": "SELECT id FROM users WHERE email = 'bob@example.com' AND flag = 'a'" } },
+        { "spanId": "d2", "parentSpanId": "s1", "category": "db", "attributes": { "db.system.name": "redis", "db.query.text": "GET 'bob@example.com'" } }
+      ],
+      "findings": [{ "kind": "sql-injection", "severity": "error", "shape": "SELECT id FROM users WHERE email = 'bob@example.com' AND flag = 'a'", "count": 1, "spanIds": ["d1"] }]
+    },
+    {
+      "name": "HTML over HTTPS: missing headers, version headers, and cookie flags",
+      "spans": [
+        {
+          "spanId": "s1",
+          "category": "http.server",
+          "attributes": {
+            "http.request.method": "GET", "url.path": "/", "http.route": "/", "http.response.status_code": 200,
+            "http.request.header.x-forwarded-proto": "https",
+            "http.response.header.content-type": "text/html; charset=utf-8",
+            "http.response.header.server": "nginx/1.25.3",
+            "http.response.header.x-powered-by": "Express",
+            "http.response.header.set-cookie": "sid=[redacted]; Path=/, theme=[redacted]; Path=/; HttpOnly, gone=[redacted]; Max-Age=0"
+          }
+        }
+      ],
+      "findings": [
+        { "kind": "cookie-flags", "severity": "warning", "shape": "cookie sid: missing HttpOnly, Secure", "count": 1, "spanIds": ["s1"] },
+        { "kind": "cookie-flags", "severity": "warning", "shape": "cookie theme: missing Secure", "count": 1, "spanIds": ["s1"] },
+        { "kind": "missing-headers", "severity": "warning", "shape": "content-security-policy, strict-transport-security, x-content-type-options, x-frame-options", "count": 1, "spanIds": ["s1"] },
+        { "kind": "version-header", "severity": "info", "shape": "server: nginx/1.25.3", "count": 1, "spanIds": ["s1"] },
+        { "kind": "version-header", "severity": "info", "shape": "x-powered-by: Express", "count": 1, "spanIds": ["s1"] }
+      ]
+    },
+    {
+      "name": "well set headers give nothing; SameSite=None needs Secure even over HTTP",
+      "spans": [
+        {
+          "spanId": "s1",
+          "category": "http.server",
+          "attributes": {
+            "http.request.method": "GET", "url.path": "/app", "http.route": "/app", "http.response.status_code": 200,
+            "http.response.header.content-type": "text/html",
+            "http.response.header.x-content-type-options": "nosniff",
+            "http.response.header.content-security-policy": "default-src 'self'; frame-ancestors 'none'",
+            "http.response.header.server": "Kestrel",
+            "http.response.header.set-cookie": "pref=[redacted]; SameSite=None"
+          }
+        }
+      ],
+      "findings": [{ "kind": "cookie-flags", "severity": "warning", "shape": "cookie pref: missing Secure", "count": 1, "spanIds": ["s1"] }]
+    },
+    {
+      "name": "headers not captured: no header rules; a cookie redacted whole is unknown",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "GET", "url.path": "/x", "http.response.status_code": 200, "url.scheme": "https" } }
+      ],
+      "findings": []
+    },
+    {
+      "name": "CORS: any origin with credentials",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "GET", "url.path": "/api", "http.route": "/api", "http.response.status_code": 200, "http.response.header.x-content-type-options": "nosniff", "http.response.header.access-control-allow-origin": "*", "http.response.header.access-control-allow-credentials": "true" } }
+      ],
+      "findings": [{ "kind": "cors", "severity": "warning", "shape": "access-control-allow-origin: *, with credentials", "count": 1, "spanIds": ["s1"] }]
+    },
+    {
+      "name": "CORS: the null origin",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "GET", "url.path": "/api", "http.response.status_code": 204, "http.response.header.x-content-type-options": "nosniff", "http.response.header.access-control-allow-origin": "null" } }
+      ],
+      "findings": [{ "kind": "cors", "severity": "warning", "shape": "access-control-allow-origin: null", "count": 1, "spanIds": ["s1"] }]
+    },
+    {
+      "name": "secrets in the request URL and in a call URL",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "GET", "url.path": "/reset", "url.query": "token=[redacted]&id=5", "http.route": "/reset", "http.response.status_code": 302 } },
+        { "spanId": "c1", "parentSpanId": "s1", "category": "http.client", "attributes": { "http.request.method": "GET", "url.full": "https://api.example.com/v1/rates?api_key=[redacted]&base=usd" } }
+      ],
+      "findings": [
+        { "kind": "secret-in-url", "severity": "warning", "shape": "GET /reset?token={}", "count": 1, "spanIds": ["s1"] },
+        { "kind": "secret-in-url", "severity": "warning", "shape": "GET api.example.com/v1/rates?api_key={}&base={}", "count": 1, "spanIds": ["c1"] }
+      ]
+    },
+    {
+      "name": "plain HTTP to a public host only",
+      "spans": [
+        { "spanId": "c1", "category": "http.client", "attributes": { "http.request.method": "POST", "url.full": "http://api.partner.com/charge" } },
+        { "spanId": "c2", "category": "http.client", "attributes": { "http.request.method": "GET", "url.full": "http://orders.default.svc.cluster.local/x" } },
+        { "spanId": "c3", "category": "http.client", "attributes": { "http.request.method": "GET", "url.full": "http://10.0.0.5:8080/x" } },
+        { "spanId": "c4", "category": "http.client", "attributes": { "http.request.method": "GET", "url.full": "http://orders:8080/x" } },
+        { "spanId": "c5", "category": "http.client", "attributes": { "http.request.method": "GET", "url.scheme": "http", "server.address": "cdn.example.org", "url.path": "/a" } },
+        { "spanId": "c6", "category": "http.client", "attributes": { "http.request.method": "GET", "url.full": "http://[::1]:5000/x" } }
+      ],
+      "findings": [
+        { "kind": "plain-http", "severity": "warning", "shape": "GET cdn.example.org/a", "count": 1, "spanIds": ["c5"] },
+        { "kind": "plain-http", "severity": "warning", "shape": "POST api.partner.com/charge", "count": 1, "spanIds": ["c1"] }
+      ]
+    },
+    {
+      "name": "SSRF: the query names the URL the server calls",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "GET", "url.path": "/preview", "url.query": "url=https%3A%2F%2Fevil.example.com%2Fa", "http.route": "/preview", "http.response.status_code": 200 } },
+        { "spanId": "c1", "parentSpanId": "s1", "category": "http.client", "attributes": { "http.request.method": "GET", "url.full": "https://evil.example.com/a" } },
+        { "spanId": "c2", "parentSpanId": "s1", "category": "http.client", "attributes": { "http.request.method": "GET", "url.full": "https://api.example.com/log" } }
+      ],
+      "findings": [{ "kind": "ssrf", "severity": "error", "shape": "GET evil.example.com/a", "count": 1, "spanIds": ["c1"] }]
+    },
+    {
+      "name": "SSRF: the body names the host",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "POST", "url.path": "/hooks", "http.route": "/hooks", "http.response.status_code": 200, "wizelens.request.body": "{\"target\":\"hooks.example.net\"}" } },
+        { "spanId": "c1", "parentSpanId": "s1", "category": "http.client", "attributes": { "http.request.method": "POST", "url.full": "https://hooks.example.net/in" } }
+      ],
+      "findings": [{ "kind": "ssrf", "severity": "error", "shape": "POST hooks.example.net/in", "count": 1, "spanIds": ["c1"] }]
+    },
+    {
+      "name": "a Node stack trace in a 500 answer",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "GET", "url.path": "/boom", "http.route": "/boom", "http.response.status_code": 500, "wizelens.response.body": "Error: boom\n    at handler (/app/src/routes.js:10:5)\n    at next (/app/node_modules/express/lib/router.js:1:1)" } }
+      ],
+      "findings": [{ "kind": "stack-exposed", "severity": "warning", "shape": "GET /boom", "count": 1, "spanIds": ["s1"] }]
+    },
+    {
+      "name": "a .NET stack trace inside a JSON 400 answer; a 200 with one is not checked",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "POST", "url.path": "/pay", "http.route": "/pay", "http.response.status_code": 400, "wizelens.response.body": "{\"error\":\"System.InvalidOperationException: bad\\n   at Shop.Pay.Run() in /src/Pay.cs:line 42\"}" } }
+      ],
+      "findings": [{ "kind": "stack-exposed", "severity": "warning", "shape": "POST /pay", "count": 1, "spanIds": ["s1"] }]
+    },
+    {
+      "name": "a Node stack trace inside a JSON 500 answer",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "GET", "url.path": "/api/x", "http.route": "/api/x", "http.response.status_code": 500, "wizelens.response.body": "{\"error\":\"Error: boom\\n    at handler (/app/src/x.js:1:2)\"}" } }
+      ],
+      "findings": [{ "kind": "stack-exposed", "severity": "warning", "shape": "GET /api/x", "count": 1, "spanIds": ["s1"] }]
+    },
+    {
+      "name": "an open .env file",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "GET", "url.path": "/.ENV", "http.response.status_code": 200 } }
+      ],
+      "findings": [{ "kind": "exposed-path", "severity": "error", "shape": "/.env", "count": 1, "spanIds": ["s1"] }]
+    },
+    {
+      "name": "actuator health is fine",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "GET", "url.path": "/actuator/health", "http.response.status_code": 200 } }
+      ],
+      "findings": []
+    },
+    {
+      "name": "an admin API that answered with no credentials",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "POST", "url.path": "/api/admin/users", "http.route": "/api/admin/users", "http.response.status_code": 201 } }
+      ],
+      "findings": [{ "kind": "open-admin", "severity": "warning", "shape": "POST /api/admin/users", "count": 1, "spanIds": ["s1"] }]
+    },
+    {
+      "name": "an admin call with a token gives nothing",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "DELETE", "url.path": "/admin/users/7", "http.route": "/admin/users/{id}", "http.response.status_code": 204, "http.request.header.authorization": "[redacted]" } }
+      ],
+      "findings": []
+    },
+    {
+      "name": "secrets left as markers in logs, span data, and a response",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "POST", "url.path": "/session", "http.route": "/session", "http.response.status_code": 200, "wizelens.response.body": "{\"token\":\"[redacted:jwt]\",\"aws\":\"[redacted:aws-key]\"}" } },
+        { "spanId": "d1", "parentSpanId": "s1", "category": "db", "attributes": { "db.system.name": "postgresql", "db.query.text": "INSERT INTO cards VALUES ($1)", "wizelens.db.parameters": "[\"[redacted:card]\"]" } }
+      ],
+      "logs": [
+        { "spanId": "s1", "message": "signed in with [redacted:jwt]", "attributes": {} },
+        { "spanId": null, "message": "retry", "attributes": { "header": "[redacted:jwt] and [redacted:jwt]" } }
+      ],
+      "findings": [
+        { "kind": "secret-leak", "severity": "error", "shape": "AWS key in a response", "count": 1, "spanIds": ["s1"] },
+        { "kind": "secret-leak", "severity": "error", "shape": "Card number in span data", "count": 1, "spanIds": ["d1"] },
+        { "kind": "secret-leak", "severity": "warning", "shape": "JWT in logs", "count": 3, "spanIds": ["s1"] }
+      ]
+    }
+  ]
+}

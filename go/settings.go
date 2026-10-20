@@ -28,6 +28,7 @@ type Settings struct {
 	CaptureBody          bool
 	CaptureSQLParameters bool
 	CaptureHeaders       bool
+	ReportPackages       bool
 	RedactKeys           []string
 }
 
@@ -59,6 +60,7 @@ func SettingsFrom(env func(string) string) Settings {
 		CaptureBody:          flag(env("WIZELENS_CAPTURE_BODY"), false),
 		CaptureSQLParameters: flag(env("WIZELENS_CAPTURE_SQL_PARAMETERS"), true),
 		CaptureHeaders:       flag(env("WIZELENS_CAPTURE_HEADERS"), true),
+		ReportPackages:       flag(env("WIZELENS_PACKAGES"), true),
 		RedactKeys:           redact,
 	}
 }

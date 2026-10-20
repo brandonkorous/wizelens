@@ -7,7 +7,7 @@ import { Check, Field } from "../ui/Field";
 import { Menu } from "./Menu";
 
 /** Pages a view can be saved for: list pages with filters, not account screens. */
-const SAVABLE = /^#\/(|overview|search|requests|traces|database|rendering|errors|logs|metrics|services|insights|slos|dashboards|users)(\/|\?|$)/;
+const SAVABLE = /^#\/(|overview|search|requests|traces|database|rendering|errors|logs|metrics|services|insights|security|slos|dashboards|users)(\/|\?|$)/;
 
 function SaveForm({ close }: { close: () => void }) {
   const api = useSavedApi();

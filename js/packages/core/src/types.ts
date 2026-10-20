@@ -93,6 +93,8 @@ export type Capability =
   | "uptime"
   /** Projects can turn on a public status page at `api/status/<token>`. */
   | "statusPages"
+  /** The host checks the packages services report against OSV; the Security page lists known-vulnerable ones. */
+  | "packages"
   /** The host resolves browser stacks at `api/sourcemaps/resolve` (uploaded maps, a build folder, or a dev server). */
   | "sourcemaps"
   /** The host keeps SLOs and Apdex targets (`api/slos`, `api/apdex`). */
@@ -153,6 +155,6 @@ export const DEFAULT_BASE_PATH = "/_wizelens";
 export const SESSION_STORAGE_KEY = "wizelens.session";
 
 /** Parts of the dashboard trace page a link can open: `#/traces/<id>/<view>`. */
-export const TRACE_VIEWS = ["timeline", "sql", "http", "messages", "logs", "errors", "insights"] as const;
+export const TRACE_VIEWS = ["timeline", "sql", "http", "messages", "logs", "errors", "insights", "security"] as const;
 export type TraceView = (typeof TRACE_VIEWS)[number];
 export const isTraceView = (v: string | undefined): v is TraceView => (TRACE_VIEWS as readonly string[]).includes(v ?? "");

@@ -29,7 +29,7 @@ export const issueId = (kind: IssueKind, key: string): string => `${kind}:${key}
 export const issueStatesOf = (list: readonly IssueState[]): IssueStates => Object.fromEntries(list.map((s) => [issueId(s.kind, s.key), s]));
 
 /** Pages whose models read issue states; hosts load them only for these. */
-export const ISSUE_PAGES: ReadonlySet<string> = new Set(["errors", "error", "insights", "overview"]);
+export const ISSUE_PAGES: ReadonlySet<string> = new Set(["errors", "error", "insights", "overview", "security"]);
 
 /** The status of an issue last seen at `lastMs`: a resolved one that happened again is regressed; an ignore that ran out is unresolved. */
 export function issueStatusOf(state: IssueState | undefined, lastMs: number, now: number): IssueStatus {

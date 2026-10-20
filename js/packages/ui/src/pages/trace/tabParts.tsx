@@ -1,4 +1,4 @@
-import { isErrorSpan, type Finding, type Span, type Trace } from "@wizeworks/lens-core";
+import { isErrorSpan, isSecurityKind, type Finding, type Span, type Trace } from "@wizeworks/lens-core";
 import { serviceSlot } from "../../format";
 
 /** What every span tab gets: the trace, its findings, and the selection. */
@@ -29,6 +29,11 @@ const BADGE: Partial<Record<Finding["kind"], string>> = {
   "n+1-http": "N+1",
   "slow-query": "SLOW",
   "db-wait": "WAIT",
+  "sql-injection": "SQLI",
+  ssrf: "SSRF",
+  "plain-http": "HTTP",
+  "secret-in-url": "SECRET",
+  "secret-leak": "SECRET",
 };
 
 export function FindingBadges({ kinds }: { kinds: Set<Finding["kind"]> | undefined }) {
@@ -38,7 +43,7 @@ export function FindingBadges({ kinds }: { kinds: Set<Finding["kind"]> | undefin
       {[...kinds]
         .filter((k) => BADGE[k])
         .map((k) => (
-          <span key={k} className={`wl-fbadge wl-fbadge-${k.replace("+", "p")}`}>
+          <span key={k} className={`wl-fbadge ${isSecurityKind(k) ? "wl-fbadge-security" : `wl-fbadge-${k.replace("+", "p")}`}`}>
             {BADGE[k]}
           </span>
         ))}

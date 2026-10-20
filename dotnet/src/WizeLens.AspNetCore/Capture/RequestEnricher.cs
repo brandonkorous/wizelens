@@ -53,7 +53,7 @@ internal static class RequestEnricher
         foreach (var (name, values) in headers.Take(MaxHeaders))
         {
             var key = name.ToLowerInvariant();
-            var value = redactor.IsSensitive(key) ? Redactor.Redacted : string.Join(", ", values.ToArray());
+            var value = (string)redactor.RedactValue(prefix + key, string.Join(", ", values.ToArray()))!;
             activity.SetTag(prefix + key, value.Length > MaxHeaderValue ? value[..MaxHeaderValue] : value);
         }
     }

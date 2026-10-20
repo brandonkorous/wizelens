@@ -63,23 +63,9 @@ internal static class ActivityMapper
     public static double ToUnixMs(DateTime utc) => (utc - DateTime.UnixEpoch).TotalMilliseconds;
 
     /// <summary>Replaces values of sensitive query keys (token, password, ...) with "[redacted]".</summary>
-    internal static string RedactQuery(string url)
-    {
-        var index = url.IndexOf('?');
-        return index < 0 ? url : url[..(index + 1)] + RedactQueryString(url[(index + 1)..]);
-    }
+    internal static string RedactQuery(string url) => WizeLensRuntime.Redactor.RedactUrl(url);
 
-    internal static string RedactQueryString(string query)
-    {
-        var pairs = query.Split('&');
-        for (var i = 0; i < pairs.Length; i++)
-        {
-            var eq = pairs[i].IndexOf('=');
-            var key = Uri.UnescapeDataString(eq < 0 ? pairs[i] : pairs[i][..eq]);
-            if (eq >= 0 && WizeLensRuntime.Redactor.IsSensitive(key)) pairs[i] = pairs[i][..(eq + 1)] + Storage.Redactor.Redacted;
-        }
-        return string.Join('&', pairs);
-    }
+    internal static string RedactQueryString(string query) => WizeLensRuntime.Redactor.RedactQueryString(query);
 
     private static string MapKind(ActivityKind kind) => kind switch
     {

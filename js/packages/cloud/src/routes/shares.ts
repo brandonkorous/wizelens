@@ -13,7 +13,7 @@ import type { Queryable } from "../db/db.js";
 const DAY_MS = 86_400_000;
 
 /** Pages a link can share: their numbers are kept as they were when the link was made. */
-const SHAREABLE = new Set(["overview", "requests", "errors", "error", "database", "query", "logs", "insights", "rendering", "route", "services", "service", "endpoint", "traces"]);
+const SHAREABLE = new Set(["overview", "requests", "errors", "error", "database", "query", "logs", "insights", "security", "rendering", "route", "services", "service", "endpoint", "traces"]);
 const SNAPSHOT_MAX = 2_000_000;
 
 export interface Share {

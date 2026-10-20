@@ -3,6 +3,9 @@ import { dbCalls } from "../../stats/database.js";
 import { errorEvents, errorGroups, errorRateOf } from "../../stats/errors.js";
 import { requestRows } from "../../stats/requests.js";
 import type { Trace } from "../../types.js";
+import { isLooseTraceId } from "../../loose.js";
+import { securityKeyOf } from "../../scale/facts-security.js";
+import { findSecurity } from "../../security/index.js";
 
 /** What an alert rule watches. */
 export const ALERT_METRICS = {
@@ -12,7 +15,10 @@ export const ALERT_METRICS = {
   requests: { label: "Requests", unit: "" },
   new_errors: { label: "New error types", unit: "" },
   slow_queries: { label: "Slow queries", unit: "" },
+  new_security_risks: { label: "New security risks", unit: "" },
 } as const;
+
+const riskKeys = (traces: readonly Trace[]): Set<string> => new Set(traces.filter((t) => !isLooseTraceId(t.traceId)).flatMap((t) => findSecurity(t).map(securityKeyOf)));
 
 export type AlertMetric = keyof typeof ALERT_METRICS;
 export type AlertOp = ">" | "<";
@@ -38,6 +44,10 @@ export function alertValue(metric: AlertMetric, traces: readonly Trace[], prevTr
     }
     case "slow_queries":
       return dbCalls(traces).filter((c) => c.durationMs >= slowQueryMs).length;
+    case "new_security_risks": {
+      const before = riskKeys(prevTraces);
+      return [...riskKeys(traces)].filter((k) => !before.has(k)).length;
+    }
   }
 }
 

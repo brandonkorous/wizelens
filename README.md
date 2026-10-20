@@ -41,6 +41,7 @@ WizeLens brings back the "open the hood on this request" experience and makes it
 - **Drop-in.** Two lines in .NET, one middleware in Node, one provider in React.
 - **End to end.** The browser, every service, and every database call land in **one** timeline.
 - **Opinionated insights.** N+1 queries, N+1 HTTP calls, duplicate queries, slow queries, and errors are flagged automatically.
+- **Security from real traffic.** SQL built from input, missing headers, weak cookies, secrets in URLs and logs, open admin routes, and known-vulnerable packages, mapped to the OWASP Top 10.
 - **Built on open standards.** W3C `traceparent` and OpenTelemetry semantic conventions — no proprietary agent.
 - **AI-ready, not AI-bundled.** No built-in AI. Agents get a read-only, redacted MCP endpoint — only if you turn it on.
 - **Safe by default.** On in Development only. Secrets are redacted before anything is stored.
@@ -194,6 +195,7 @@ Ten pages, one look. Pick a time range in the top bar; every number compares its
 | **Metrics** | CPU, memory, GC, request times, and your own counters per service, as charts; split by any attribute |
 | **Services** | Health of each service, database, and outside host, and a map of who calls whom |
 | **Insights** | Every N+1, duplicate query, slow query, and render problem, ranked, with how to fix it |
+| **Security** | OWASP Top 10 risks found in real requests and known-vulnerable packages, ranked, with the evidence and how to fix it |
 | **Settings** | How each connected service is set up, and your dashboard preferences |
 
 Open any trace for the full detail: timeline, SQL, HTTP, logs, and errors. Search everything with **Ctrl K** (**⌘ K**). Light and dark themes are built in.

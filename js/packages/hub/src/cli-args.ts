@@ -30,6 +30,7 @@ Usage: wizelens-hub [options]
                       on top of the built-in list.             (WIZELENS_HUB_REDACT_KEYS)
   --mcp               Turn on the read-only MCP endpoint.      (WIZELENS_HUB_MCP=1)
   --no-uptime         Do not run uptime checks.                (WIZELENS_HUB_UPTIME=0)
+  --no-osv            Do not check packages against OSV.       (WIZELENS_HUB_OSV=0)
   --import <file>     Copy an add-on's .wizelens/traces.db into
                       the hub at start. Can repeat.
   --sourcemaps <dir>  Read browser source maps from this build
@@ -75,6 +76,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
       "redact-keys": { type: "string" },
       mcp: { type: "boolean" },
       "no-uptime": { type: "boolean" },
+      "no-osv": { type: "boolean" },
       import: { type: "string", multiple: true },
       sourcemaps: { type: "string", multiple: true },
       help: { type: "boolean", short: "h" },
@@ -95,6 +97,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
     redactKeys: keyList(a["redact-keys"] ?? env.WIZELENS_HUB_REDACT_KEYS),
     enableMcp: a.mcp ?? env.WIZELENS_HUB_MCP === "1",
     uptime: !(a["no-uptime"] ?? env.WIZELENS_HUB_UPTIME === "0"),
+    osv: !(a["no-osv"] ?? env.WIZELENS_HUB_OSV === "0"),
     imports: a.import ?? [],
     sourceMaps: { dirs: a.sourcemaps ?? (env.WIZELENS_HUB_SOURCEMAPS ?? "").split(",").map((d) => d.trim()).filter(Boolean) },
   };

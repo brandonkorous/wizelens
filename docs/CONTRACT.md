@@ -45,7 +45,7 @@ All `api/*` endpoints return JSON (camelCase) and send `Access-Control-Allow-Ori
 
 | Method + path | Returns |
 |---|---|
-| `GET /` and static files | Dashboard UI (from `@wizeworks/lens-ui` build). Hash routing: `#/`, `#/requests`, `#/traces`, `#/traces/{traceId}[/{view}]`, `#/database`, `#/rendering`, `#/errors`, `#/logs`, `#/services`, `#/insights`, `#/settings[/{section}]` (`tags` is one section). `{view}` is one of `timeline`, `sql`, `http`, `logs`, `errors`, `insights`. |
+| `GET /` and static files | Dashboard UI (from `@wizeworks/lens-ui` build). Hash routing: `#/`, `#/requests`, `#/traces`, `#/traces/{traceId}[/{view}]`, `#/database`, `#/rendering`, `#/errors`, `#/logs`, `#/services`, `#/insights`, `#/settings[/{section}]` (`tags` is one section). `{view}` is one of `timeline`, `sql`, `http`, `messages`, `logs`, `errors`, `insights`, `security`. |
 | `GET api/info` | `ServiceInfo` (see Types) |
 | `GET api/traces?limit=50&session={id}` | `TraceSummary[]`, newest first. With `session`, only traces that have a span whose `wizelens.browser.session` equals `{id}`. Loose batches (lines outside a request) are left out of summaries on every host; `full=true` includes them. |
 | `GET api/traces?full=true&limit=1000&since={ms}` | `Trace[]` from this service only (no federation), newest first. `limit` max 5000. With `since`, only traces whose last activity (`startMs + durationMs`) is at or after `{ms}`. The dashboard uses this for its charts and merges the results of every service it knows. |
@@ -345,6 +345,49 @@ Before storing, replace values with `"[redacted]"` when the key (case-insensitiv
 `authorization`, `cookie`, `password`, `passwd`, `secret`, `token`, `apikey`, `api_key`, `connectionstring`.
 Applies to attributes, DB parameter names, and header names. List is configurable.
 
+Redaction keeps the evidence the security rules need (`docs/redact-vectors.json`, run by the TS and .NET tests):
+
+- **`set-cookie`** keeps each cookie's name and flags: `sid=[redacted]; Path=/; Secure; HttpOnly`.
+- **`url.query` and `url.full`** keep every key and lose the values of sensitive keys: `token=[redacted]`.
+- **Values by pattern.** Every string value (attributes, event attributes, log messages and attributes) has these
+  replaced with a typed marker: `[redacted:jwt]`, `[redacted:aws-key]`, `[redacted:private-key]`,
+  `[redacted:stripe-key]`, `[redacted:github-token]`, `[redacted:slack-token]`, `[redacted:google-key]`, and
+  `[redacted:card]` (13 to 19 digits, spaces or dashes allowed, first digit 3 to 6, Luhn valid). The patterns are
+  `VALUE_PATTERNS` in `core/src/redact-values.ts`.
+
+## Packages
+
+Every SDK sends the packages it runs once at start: `POST {hub}/_wizelens/api/packages` with the hub token or ingest key
+as `Authorization: Bearer`, body `PackagesReport` (`core/src/packages.ts`): `{ sender: HubSender, packages: { ecosystem,
+name, version }[] }`, at most 5000. The set replaces the service's last one; a package it still runs keeps its first seen
+time. Answers 204, or 400 with what is wrong. A failed send retries up to 5 times, a minute apart. `WIZELENS_PACKAGES=false`
+(or `reportPackages: false`, `ReportPackages = false`) turns it off. Sources, with OSV ecosystem names:
+
+| SDK | Ecosystem | Read from |
+|---|---|---|
+| Node | `npm` | `node_modules` (npm, yarn, and pnpm `.pnpm` layouts, nested to 4 levels) |
+| .NET | `NuGet` | the app's `deps.json`, `package` libraries |
+| Python | `PyPI` | `importlib.metadata.distributions()` |
+| Java | `Maven` (`groupId:artifactId`) | `META-INF/maven/**/pom.properties` in class path jars, and in `BOOT-INF/lib` and `WEB-INF/lib` jars inside them |
+| Go | `Go` | `debug.ReadBuildInfo()` dependencies, with replacements |
+
+Hubs keep them in SQLite (`service_packages`), the cloud in Postgres (migration `PACKAGES_MIGRATION`).
+
+**The check.** Hosts with the `packages` capability (hub unless `--no-osv` / `WIZELENS_HUB_OSV=0`, cloud unless
+`--no-osv` / `WIZELENS_CLOUD_OSV=0`) send OSV (`POST https://api.osv.dev/v1/querybatch`, up to 1000 package versions
+a round) every package version not checked for a day, every 5 minutes, and fetch each new advisory once
+(`GET /v1/vulns/{id}`, up to 200 a round). Only ecosystems, names, and versions leave the host. The cache is shared by
+every project (`package_checks`, `advisories`). OSV `database_specific.severity` maps CRITICAL and HIGH to `error`,
+LOW to `info`, and the rest (MODERATE, none) to `warning`.
+
+**On the Security page.** Each package version with advisories is a `vulnerable-package` group (A03): key
+`vulnerable-package|ecosystem|name|version`, shape `ecosystem name@version`, the worst advisory's severity, the services
+that run it as `endpoints`, `count` the advisories, `exampleTraceId` null, and `advisories` (`{ id, summary, severity,
+aliases, fixed, url }[]`, `fixed` the versions that fix it for this package). The description names the highest fixed
+version. `scan` is `{ packages, services, checkedMs }` (null without the capability). Hosts pass `packages` and
+`packageScan` in the page context; under "All projects" each project's services carry its label and one version's
+entries merge. `find_security_issues` adds `advisories` (`{ id, severity, fixed }[]`) to a package's row.
+
 ## Analysis (shared logic, same results in .NET and JS)
 
 - **Duplicate query**: ≥ 2 `db` spans in one trace with identical `db.query.text` AND identical `wizelens.db.parameters`.
@@ -359,6 +402,68 @@ Applies to attributes, DB parameter names, and header names. List is configurabl
 - **Database wait** (dashboard and HUD): 3 or more slow queries in one trace that overlap in time are one `db-wait` finding,
   not 3 slow queries. So is a slow session statement on its own (a `SET` does almost no work, so it waited).
   Its time is wall time: queries that waited together waited once. The MCP `find_slow_queries` tool still lists each query.
+
+## Security analysis
+
+Security findings are `Finding`s with the kinds below (`docs/SECURITY-PLAN.md`). `analyzeTrace` returns them; `insightsOf`
+leaves them out, so request health and insight counts do not change. Shared vectors: `docs/security-vectors.json`.
+Each kind has one OWASP Top 10:2025 category (`OWASP_OF`). Findings name what was found, never a secret value.
+
+- **The request** is the entry server span (`entryServerSpan`). Its response headers are known when it has any
+  `http.response.header.*` attribute; rules that read them skip a request without. It is **HTTPS** when `url.scheme` is
+  `https` or the first `x-forwarded-proto` value is `https`.
+- **Inputs** of the request: `url.query` values (decoded, `+` is a space), path values (each `{name}` or `:name` segment of
+  `http.route` against the same segment of `url.path`, decoded), and the string and number leaves of
+  `wizelens.request.body` when it is complete JSON (depth 5, 100 values). A value counts when it is 3 to 200 characters,
+  or 2 or more digits, and is not a redaction marker.
+- **`sql-injection`** (error): a SQL `db` span (not NoSQL) whose `db.query.text` has a literal equal to an input.
+  Literals: `'...'` strings (`''` is a quote; leading and trailing `%` trimmed), and numbers after `=`, `<>`, `!=`, `<=`,
+  `>=`, `<`, `>`, or `IN (`. One finding per query text; shape the query text.
+- **`missing-headers`** (warning): a 2xx answer with headers known that lacks `x-content-type-options`; with a
+  `text/html` content type, also `content-security-policy` and `x-frame-options` (unless the CSP has
+  `frame-ancestors`); over HTTPS, also `strict-transport-security`. Shape: the missing names, sorted, joined by `, `.
+- **`version-header`** (info): `x-powered-by`, `x-aspnet-version`, or `x-aspnetmvc-version` present, or `server` with
+  `\d+\.\d+`. Shape `name: value` (value cut to 80), one per header.
+- **`cors`** (warning): `access-control-allow-origin` is `*` and `access-control-allow-credentials` is `true`, or it is
+  `null`. Shape `access-control-allow-origin: *, with credentials` or `access-control-allow-origin: null`.
+- **`cookie-flags`** (warning): each cookie in `http.response.header.set-cookie` (split at `, ` before `name=`), unless it
+  is redacted whole or has `Max-Age=0`. Missing `Secure` over HTTPS or with `SameSite=None`; missing `HttpOnly` when the
+  name matches `sess|sid|auth|token|jwt|login|remember|identity|\.aspnetcore\.`. Shape `cookie {name}: missing HttpOnly, Secure`.
+- **`secret-in-url`** (warning): the request's `url.query`, or an `http.client` span's `url.full` query, has a key that is
+  a default redact key. Shape: `{method} {route or path}?{key}={}` with only those keys for the request, `httpShape` for a call.
+- **`plain-http`** (warning): an `http.client` span to `http://` (`url.full`, else `url.scheme`) whose host is public:
+  not `localhost`, `::1`, an IPv4 in `0.`, `10.`, `127.`, `169.254.`, `172.16-31.`, or `192.168.`, an IPv6 in `fc`, `fd`,
+  or `fe80:`, a name without a dot, or a name ending in `.local`, `.internal`, `.svc`, `.cluster.local`, or `.localhost`.
+  Shape `httpShape`.
+- **`ssrf`** (error): an `http.client` span whose host equals an input, or whose `url.full` starts with an input, or
+  whose host equals the host of an input that is a URL. Only inputs with a `.`, `:`, or `/` count. Shape `httpShape`.
+- **`stack-exposed`** (warning): a 4xx or 5xx answer whose `wizelens.response.body` holds a stack trace
+  (`STACK_RE`: Python "Traceback (most recent call last)", Go "goroutine N [", Java `.java:N)`, .NET `:line N` or
+  `at Name(`, Node `at name (file:N:N)`, PHP "Stack trace:" + "#0"). Shape: the endpoint.
+- **`exposed-path`** (error): a 2xx answer to a sensitive path (`EXPOSED_PATHS`: `.env` and `.env.*`, `.git/`, `.svn/`, `.aws/`,
+  `.ds_store`, `web.config`, `phpinfo.php`, `server-status`, `elmah.axd`, `trace.axd`, `debug/pprof`, and the
+  `actuator` endpoints `env`, `heapdump`, `threaddump`, `configprops`, `mappings`, `beans`, `loggers`, `shutdown`,
+  `jolokia`). Shape: the path, lower case.
+- **`open-admin`** (warning): a 2xx answer to a path with an `admin`, `internal`, or `management` segment (not a
+  sign-in path: `login`, `signin`, `sign-in`, `logon`), with no `enduser.id` in the trace and no `authorization`,
+  `cookie`, `x-api-key`, or `api-key` request header. A GET counts only when its headers are known and it did not answer
+  `text/html` (an app shell). Shape: the endpoint.
+- **`secret-leak`**: redaction markers (see "Redaction") in log lines (`in logs`), span attributes and events
+  (`in span data`), or `wizelens.response.body` (`in a response`; not `jwt`, which login answers send). Error, except
+  `jwt` (warning). Shape `{label} {where}`, for example `Card number in logs`; count the markers.
+- **`auth-guessing`** (rollups, not one trace): `sec.auth` rows (`service|endpoint|address`) with 10 or more 401 or 403
+  answers in the window. Requests count there when they answer 401, 403, or 429, or their path matches
+  `login|signin|sign-in|logon|auth|token|session|password|otp|2fa|mfa|verify`. One group per endpoint; high at 100.
+  With no 429 at that endpoint, it says there may be no rate limit.
+- **Facts** (`FACTS_VERSION` 10): `sec` (`kind|shape`, with SQL as `normalizeQuery` text; count, newest top), `sec.ep`,
+  `sec.u`, per service `sec@svc` and `sec.ep@svc`, and `sec.auth`. A request's risks come from its row, a job's from
+  the trace; loose traces add none. A risk found in log lines stays counted after the lines are pruned.
+- **The `security` page model** (`api/models/security`): `totals` (count, high, endpoints), `prevTotals`, `found`, the 10
+  `categories` with counts, `groups`, `matching`, `selected`, `issues`, `releases`, and `selectedUsers`. Params:
+  `service`, `status` (as Insights), `release` (with `service`), `category` (`A01`..`A10`), `severity` (`error`,
+  `warning`, `info`), `endpoint`, `q`, and `key`. Each group has `kind`, `owasp`, `severity`, `impact`, `title`,
+  `description`, `shape`, `occurrences`, `count`, `endpoints`, `firstSeenMs`, `lastSeenMs`, `exampleTraceId`, and
+  `addresses` (sign-in guessing only). Issue states are kept as `insight` issues with the group key.
 
 ## Timing
 
@@ -426,6 +531,7 @@ Server name `wizelens`. Disabled by default. Every call is written to the app lo
 | `list_traces` | `limit?=20`, `minDurationMs?`, `status?`, `q?`, `range?=24h` | Node hosts: TraceItem[] (`{ traceId, path, durationMs, health, status, services, startMs, spanCount, slow }`); .NET: TraceSummary[] |
 | `get_trace` | `traceId`, `federate?=true` | Trace (spans + logs, redacted) |
 | `find_slow_queries` | `thresholdMs?=100`, `limit?=20`, `range?=24h` (Node hosts) | `{ traceId, spanId, durationMs, query, service }[]`, slowest first |
+| `find_security_issues` | `severity?=info` (lowest: error, warning, info), `limit?=50`, `range?=24h` | `{ kind, owasp, severity, title, shape, endpoints, requests, count, lastSeen, exampleTraceId }[]`, most severe first, then most requests. Node hosts read the `security` page (status all), else the traces in memory; .NET reads its traces |
 | `find_n_plus_one` | `minRepeats?` (the project's threshold), `limit?=20`, `range?=24h` | Node hosts: groups `{ kind: "db"\|"http", shape, endpoints, requests, repeats, totalMs, lastSeen, exampleTraceId }[]`, most time first: from the insight stats at the project's threshold, else from the requests with that many calls (up to 200 read whole). .NET: `{ traceId, kind, shape, count, totalMs }[]` |
 | `get_errors` | `limit?=20`, `range?=24h` (Node hosts) | `{ traceId, spanId, service, name, message, type, stack }[]` |
 | `search` | `q`, `kind?=requests`, `range?=24h`, `limit?=20`, `cursor?` | SearchPage (below) plus `tags` (tag names per row, as `api/tags/match` answers) and `unknownTags`; a bad `q` is an error with `start`/`end` |
@@ -1068,7 +1174,8 @@ Pages read small tables built from the stored traces, never the traces themselve
 The hub and the cloud both run alert rules (the hub sends no email). A rule watches one metric over a window (5 min to 24 h),
 optionally in one environment, and for trace metrics optionally one `service` (display name) or one `endpoint` of it
 (`"GET /api/orders/{id}"`; `slow_queries` is per service only): `error_rate` (%), `p95_ms`, `avg_ms`, `requests`, `new_errors`
-(error groups not seen in the window before), `slow_queries`, and `log_count` (lines that match the rule's `logSearch`, the Logs
+(error groups not seen in the window before), `slow_queries`, `new_security_risks` (security risks, `sec` keys, not seen in
+the window before; per service only), and `log_count` (lines that match the rule's `logSearch`, the Logs
 page filters, for example `{ "level": "error", "q": "timed out" }`; no `service` or `endpoint`, the search names its service). It
 fires when the value is above (`>`), at or above (`>=`), below
 (`<`), or at or below (`<=`) the threshold. No data never fires, except `requests` below (traffic stopped). Rules run every minute.

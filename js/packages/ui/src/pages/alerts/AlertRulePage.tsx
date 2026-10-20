@@ -35,6 +35,7 @@ function tracesHref(rule: AlertRule, from: number, to: number): string | null {
   const scope = { ...(rule.service ? { service: rule.service } : {}), ...(rule.endpoint ? { endpoint: rule.endpoint } : {}), from: String(from), to: String(to) };
   if (rule.metric === "new_errors") return hrefTo("errors", [], { ...scope, new: "1" });
   if (rule.metric === "slow_queries") return hrefTo("database", [], { ...scope, sort: "total" });
+  if (rule.metric === "new_security_risks") return hrefTo("security", [], scope);
   if (rule.metric === "error_rate") return hrefTo("requests", [], { ...scope, status: "failed" });
   return hrefTo("requests", [], { ...scope, sort: "duration" });
 }

@@ -8,6 +8,7 @@ import {
   type SpanKind as ContractKind,
   isDbCall,
   redactAttributes,
+  redactText,
   toAttributeValue,
   VERSION_ATTR,
 } from "@wizeworks/lens-core";
@@ -75,7 +76,7 @@ export function toContractSpan(span: ReadableSpan, service: string, redactKeys: 
     startMs: hrTimeToMilliseconds(span.startTime),
     durationMs: hrTimeToMilliseconds(span.duration),
     status,
-    statusMessage: span.status.message ?? null,
+    statusMessage: span.status.message ? redactText(span.status.message) : null,
     attributes,
     events: span.events.map((e) => ({
       name: e.name,

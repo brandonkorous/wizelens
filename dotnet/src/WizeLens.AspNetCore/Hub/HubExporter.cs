@@ -59,6 +59,7 @@ internal sealed class HubExporter : IHostedService, IDisposable
         if (!string.IsNullOrEmpty(_options.HubToken)) _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.HubToken);
         _stopping = new CancellationTokenSource();
         _loop = Task.Run(() => LoopAsync(_stopping.Token), CancellationToken.None);
+        if (_options.ReportPackages) _ = Task.Run(() => PackageReport.SendAsync(_client, _url, HubSenderInfo.Of(_options, _environment, null), _stopping.Token), CancellationToken.None);
         return Task.CompletedTask;
     }
 

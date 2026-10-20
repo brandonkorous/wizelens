@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { DEFAULT_REDACT_KEYS, FACT_N_PLUS_ONE, FACT_SLOW_QUERY_MS, HUB_DEFAULT_PORT } from "@wizeworks/lens-core";
 import type { SourceMapOptions } from "@wizeworks/lens-node/kit";
+import { OSV_URL } from "./packages/osv.js";
 
 export interface HubOptions {
   /** Port to listen on. Default 5960. 0 picks a free port. */
@@ -22,6 +23,10 @@ export interface HubOptions {
   maxMetricPoints?: number;
   /** Run uptime checks (they can reach any address this machine can). Default true. */
   uptime?: boolean;
+  /** Check the packages services report against OSV (only names and versions leave the machine). Default true. */
+  osv?: boolean;
+  /** The OSV API; tests point it at a local server. Default https://api.osv.dev. */
+  osvUrl?: string;
   /** Expose the read-only MCP endpoint at `/_wizelens/mcp`. Default false. */
   enableMcp?: boolean;
   /** Key fragments to redact. Default: the contract list. Projects can add their own in settings. */
@@ -72,6 +77,8 @@ export function resolveHubOptions(o: HubOptions = {}): ResolvedHubOptions {
     maxMetricPoints: o.maxMetricPoints ?? 2_000_000,
     enableMcp: o.enableMcp ?? false,
     uptime: o.uptime ?? true,
+    osv: o.osv ?? true,
+    osvUrl: o.osvUrl ?? OSV_URL,
     redactKeys: o.redactKeys ?? [...DEFAULT_REDACT_KEYS],
     slowQueryMs: o.slowQueryMs ?? FACT_SLOW_QUERY_MS,
     nPlusOneThreshold: o.nPlusOneThreshold ?? FACT_N_PLUS_ONE,

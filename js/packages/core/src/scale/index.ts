@@ -9,6 +9,7 @@ export * from "./facts-requests.js";
 export * from "./facts-services.js";
 export * from "./facts-db.js";
 export * from "./facts-errors.js";
+export * from "./facts-security.js";
 export * from "./facts-render.js";
 export * from "./compact.js";
 export * from "./delta.js";

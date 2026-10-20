@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { Bell, BellRing, Lightbulb, TriangleAlert } from "lucide-react";
-import { errorInfo, isErrorSpan, requestRows, type Trace } from "@wizeworks/lens-core";
+import { Bell, BellRing, Lightbulb, ShieldAlert, TriangleAlert } from "lucide-react";
+import { errorInfo, insightsOf, isErrorSpan, requestRows, securityOf, type Trace } from "@wizeworks/lens-core";
 import { useHost } from "../data/host";
 import { useSeenPref } from "../data/prefs";
 import { useApi } from "../data/useApi";
@@ -12,7 +12,7 @@ import { Menu } from "./Menu";
 
 interface Note {
   key: string;
-  kind: "error" | "insight" | "alert";
+  kind: "error" | "insight" | "security" | "alert";
   title: string;
   detail: string;
   timeMs: number;
@@ -45,8 +45,11 @@ function notesOf(traces: readonly Trace[], now: number): Note[] {
       const msg = errorMessage(byId.get(r.traceId)!);
       add(map, { key: `e|${r.endpoint}|${msg}`, kind: "error", title: `Error in ${r.endpoint}`, detail: msg, timeMs: r.startMs, count: 1, href });
     }
-    for (const f of r.findings.filter((x) => x.kind !== "error")) {
+    for (const f of insightsOf(r.findings)) {
       add(map, { key: `i|${r.endpoint}|${f.kind}`, kind: "insight", title: f.title, detail: r.endpoint, timeMs: r.startMs, count: 1, href: traceHref(r.traceId, "insights") });
+    }
+    for (const f of securityOf(r.findings).filter((x) => x.severity === "error")) {
+      add(map, { key: `s|${r.endpoint}|${f.kind}`, kind: "security", title: f.title, detail: r.endpoint, timeMs: r.startMs, count: 1, href: traceHref(r.traceId, "security") });
     }
   }
   return [...map.values()].sort((a, b) => b.timeMs - a.timeMs).slice(0, MAX_NOTES);
@@ -66,7 +69,7 @@ function useAlertNotes(now: number): Note[] {
   );
 }
 
-const ICON = { error: TriangleAlert, insight: Lightbulb, alert: BellRing };
+const ICON = { error: TriangleAlert, insight: Lightbulb, security: ShieldAlert, alert: BellRing };
 
 function NoteItem({ note, unread, now }: { note: Note; unread: boolean; now: number }) {
   const Icon = ICON[note.kind];

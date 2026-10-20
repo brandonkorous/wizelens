@@ -101,3 +101,16 @@
 @media (prefers-reduced-motion: reduce) {
   .wl-lg-run, .wl-sv-run .wl-sv-edge { animation: none; }
 }
+
+.wl-sc { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr); }
+.wl-sc-row { display: grid; grid-template-columns: 44px 64px minmax(0, 1fr) minmax(0, 1.1fr); align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; background: var(--wl-night-2); border: 1px solid var(--wl-night-line); font-size: 13px; }
+.wl-sc-owasp { font-family: var(--wl-mono); font-weight: 700; color: var(--wl-night-muted); }
+.wl-sc-sev { justify-self: start; padding: 1px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; }
+.wl-sc-high { background: var(--wl-night-3); color: var(--wl-red); }
+.wl-sc-medium { background: var(--wl-night-3); color: var(--wl-amber); }
+.wl-sc-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.wl-sc-evidence { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--wl-night-muted); }
+@media (max-width: 680px) {
+  .wl-sc-row { grid-template-columns: 44px minmax(0, 1fr); }
+  .wl-sc-title, .wl-sc-evidence { grid-column: 1 / -1; }
+}

@@ -1,11 +1,12 @@
-import type { FindingKind } from "../analysis.js";
+import type { InsightFindingKind } from "../analysis.js";
+import { isSecurityKind } from "../security/kinds.js";
 import type { Trace } from "../types.js";
 import { groupBy, type Impact, normalizeQuery, percentChange, series, type TimeWindow } from "./common.js";
 import { type Headline, SPARK_BUCKETS } from "./overview.js";
 import { renderInsightGroups } from "./rendering.js";
 import { type RequestRow, requestRows } from "./requests.js";
 
-export type InsightKind = Exclude<FindingKind, "error"> | "render";
+export type InsightKind = InsightFindingKind | "render";
 export type InsightArea = "database" | "http" | "render";
 
 /** One problem seen in one or more requests, grouped by kind and shape. */
@@ -31,7 +32,7 @@ export interface InsightGroup {
 
 /** One insight finding of one request. */
 export interface InsightHit {
-  kind: Exclude<FindingKind, "error">;
+  kind: InsightFindingKind;
   shape: string;
   count: number;
   totalMs: number;
@@ -75,9 +76,9 @@ function impactOf(kind: Hit["kind"], occurrences: number, totalMs: number, avgMs
 export function insightHits(r: RequestRow): InsightHit[] {
   const hits: InsightHit[] = [];
   for (const f of r.findings) {
-    if (f.kind === "error") continue;
+    if (f.kind === "error" || isSecurityKind(f.kind)) continue;
     const shape = f.kind === "n+1-http" ? f.shape : normalizeQuery(f.shape);
-    hits.push({ kind: f.kind, shape, count: f.count, totalMs: f.totalMs, endpoint: r.endpoint, startMs: r.startMs, traceId: r.traceId });
+    hits.push({ kind: f.kind as InsightFindingKind, shape, count: f.count, totalMs: f.totalMs, endpoint: r.endpoint, startMs: r.startMs, traceId: r.traceId });
   }
   return hits;
 }
