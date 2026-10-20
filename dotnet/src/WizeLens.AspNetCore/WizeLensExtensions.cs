@@ -91,6 +91,7 @@ public static class WizeLensExtensions
             .WithHttpTransport(o => o.Stateless = true)
             .WithTools<WizeLensMcpTools>()
             .WithTools<WizeLensMetricTools>()
+            .WithTools<WizeLensSecurityTools>()
             .WithTools<WizeLensSearchTools>();
     }
 

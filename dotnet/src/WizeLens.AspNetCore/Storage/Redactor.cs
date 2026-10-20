@@ -8,6 +8,9 @@ internal sealed partial class Redactor(IEnumerable<string> keys)
 {
     public const string Redacted = "[redacted]";
 
+    /// <summary>The default keys, for rules that judge a key by them (docs/CONTRACT.md "Security analysis").</summary>
+    public static readonly Redactor Defaults = new(WizeLensOptions.DefaultRedactKeys);
+
     private readonly string[] _keys = [.. keys.Where(k => !string.IsNullOrWhiteSpace(k)).Select(k => k.ToLowerInvariant())];
 
     public bool IsSensitive(string key)

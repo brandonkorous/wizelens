@@ -14,8 +14,8 @@ The rules of `GAPS-PLAN.md` ("Rules for every phase") still hold. One commit per
 | Phase | What | Size | State |
 |---|---|---|---|
 | 1 | Redaction that keeps the evidence | M | Done |
-| 2 | Trace rules (JS) and the trace view | L | |
-| 3 | Trace rules in .NET, shared vectors, .NET MCP tool | M | |
+| 2 | Trace rules (JS) and the trace view | L | Done |
+| 3 | Trace rules in .NET, shared vectors, .NET MCP tool | M | Done |
 | 4 | Rollups and the `security` page model | L | |
 | 5 | The Security page | L | |
 | 6 | MCP tool, alerts, and search hits | M | |
