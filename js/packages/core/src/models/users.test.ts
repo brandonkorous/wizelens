@@ -11,7 +11,8 @@ describe("users", () => {
   it("lists signed-in users by requests, and pages through them", () => {
     const m = page("users");
     expect(m.users.map((u) => u.user).sort()).toEqual(["user-0", "user-1", "user-2", "user-9"]);
-    expect(m.users.find((u) => u.user === "user-9")!.errorRate).toBe(100);
+    // Half of user-9's payments time out (500); the other half are rejected cards (400), which are not failures.
+    expect(m.users.find((u) => u.user === "user-9")!.errorRate).toBe(50);
     expect(page("users", { q: "user-1" }).users.map((u) => u.user)).toEqual(["user-1"]);
   });
 

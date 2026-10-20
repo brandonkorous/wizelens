@@ -1,3 +1,4 @@
+using WizeLens.Analysis;
 using WizeLens.Model;
 
 namespace WizeLens.Storage;
@@ -30,7 +31,7 @@ internal static class TraceBuilder
             SpanCount = spanList.Count,
             DbCount = spanList.Count(s => s.Category == SpanCategories.Db),
             HttpClientCount = spanList.Count(s => s.Category == SpanCategories.HttpClient),
-            ErrorCount = spanList.Count(s => s.Status == SpanStatuses.Error),
+            ErrorCount = spanList.Count(RequestParts.IsErrorStatus),
             Services = [.. spanList.Select(s => s.Service).Concat(logList.Select(l => l.Service))
                 .Where(s => s.Length > 0).Distinct().Order(StringComparer.Ordinal)],
         };
@@ -46,7 +47,8 @@ internal static class TraceBuilder
             trace.DurationMs = logList[^1].TimeMs - logList[0].TimeMs;
         }
 
-        trace.Status = trace.ErrorCount > 0 ? SpanStatuses.Error : root?.Status ?? SpanStatuses.Unset;
+        // A root that answered 4xx keeps no error status: it is not a failure.
+        trace.Status = trace.ErrorCount > 0 ? SpanStatuses.Error : root is { } r && r.Status != SpanStatuses.Error ? r.Status : SpanStatuses.Unset;
         return trace;
     }
 

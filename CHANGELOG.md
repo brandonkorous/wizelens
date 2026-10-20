@@ -234,6 +234,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Changed
 
+- **A 4xx answer is not a failure.** A span that answered 400–499 is "not found" or "bad request", not "failed", even when
+  the app marks it as an error or records an exception on it. So a page that answers 200 after an internal 404 lookup, and
+  a bot asking for files that do not exist, no longer push up error rates, failed requests, error groups, or alerts. 5xx
+  answers, and errors on spans with no HTTP status, still count. It follows the OpenTelemetry rule for server spans, and
+  applies to client spans as well, because WizeLens sees the other side of the call. Stats are rebuilt once
+  (`FACTS_VERSION` 8). Sampling in every SDK (Node, .NET, Go, Java, Python) no longer keeps a trace only for a 4xx.
 - Stats are rebuilt once after this update (`FACTS_VERSION` 4), so each count can be read per service and per endpoint.
 - **Duplicate queries need known parameters.** A statement with placeholders but no captured parameters is no longer a
   duplicate query (the agents sanitize SQL, so two runs may have had different values). Node and .NET always capture

@@ -46,7 +46,7 @@ export function reportSlow(id: string, at: number, i: number): Trace {
   return finish(d);
 }
 
-/** A failed payment: a 500 with a critical log, or a 400 with a validation error. */
+/** A payment that did not go through: a 500 with a critical log (a failure), or a 400 with a validation error (not a failure). */
 export function payFail(id: string, at: number, i: number): Trace {
   const d = draft(id);
   const timeout = i % 2 === 0;

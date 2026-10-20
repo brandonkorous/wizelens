@@ -42,6 +42,14 @@ def test_rate_zero_keeps_a_trace_with_an_error():
     assert _names(exporter) == ["GET /orders", "SELECT orders", "charge"]
 
 
+def test_rate_zero_drops_a_trace_that_only_answered_4xx():
+    tracer, exporter = _tracer(TraceSampler(0))
+    with tracer.start_as_current_span("GET /firebase-key.json") as span:
+        span.set_attribute("http.response.status_code", 404)
+        span.set_status(Status(StatusCode.ERROR))
+    assert _names(exporter) == []
+
+
 def test_rate_zero_keeps_a_slow_trace():
     tracer, exporter = _tracer(TraceSampler(0), keep_slow_ms=20.0)
     with tracer.start_as_current_span("GET /report"):

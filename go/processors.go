@@ -30,11 +30,22 @@ func (p *SamplingSpanProcessor) OnEnd(s sdktrace.ReadOnlySpan) {
 }
 
 func (p *SamplingSpanProcessor) important(s sdktrace.ReadOnlySpan) bool {
-	if p.KeepErrors && s.Status().Code == codes.Error {
+	if p.KeepErrors && s.Status().Code == codes.Error && !answered4xx(s) {
 		return true
 	}
 	ms := float64(s.EndTime().Sub(s.StartTime()).Microseconds()) / 1000
 	return p.KeepSlowMs != nil && ms >= *p.KeepSlowMs
+}
+
+// answered4xx: a 4xx answer is not a failure, even with an error status.
+func answered4xx(s sdktrace.ReadOnlySpan) bool {
+	for _, a := range s.Attributes() {
+		if a.Key == "http.response.status_code" || a.Key == "http.status_code" {
+			c := a.Value.AsInt64()
+			return c >= 400 && c < 500
+		}
+	}
+	return false
 }
 
 // Shutdown shuts the inner processor down.

@@ -62,10 +62,10 @@ public static partial class TraceAnalysis
             .Where(s => s.Category == SpanCategories.Db && s.DurationMs >= thresholdMs)
             .Select(s => new SlowQuery(trace.TraceId, s.SpanId, s.DurationMs, s.Attr("db.query.text") ?? s.Name, s.Service));
 
-    /// <summary>Spans with an error status or an exception event.</summary>
+    /// <summary>Spans with an error status, leaving out 4xx answers.</summary>
     public static IEnumerable<ErrorInfo> Errors(Trace trace) =>
         trace.Spans
-            .Where(s => s.Status == SpanStatuses.Error)
+            .Where(RequestParts.IsErrorStatus)
             .Select(s =>
             {
                 var ex = s.Events.FirstOrDefault(e => e.Name == "exception");

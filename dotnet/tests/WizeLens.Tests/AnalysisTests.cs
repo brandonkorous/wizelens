@@ -92,6 +92,28 @@ public class AnalysisTests
         Assert.Equal(root.SpanId, trace.Spans[0].SpanId);
     }
 
+    [Fact]
+    public void A_4xx_answer_is_not_a_failure_but_a_5xx_is()
+    {
+        Span Answered(int code) => new()
+        {
+            TraceId = TraceId, SpanId = $"{code:x16}", Name = "GET /x", Category = SpanCategories.HttpServer, Service = "api", StartMs = 1000, DurationMs = 5,
+            Status = SpanStatuses.Error, Attributes = new() { ["http.response.status_code"] = code },
+            Events = [new SpanEvent { Name = "exception", Attributes = new() { ["exception.message"] = "Builder page not found" } }],
+        };
+
+        var notFound = Build(Answered(404));
+        Assert.False(RequestParts.IsErrorSpan(notFound.Spans[0]));
+        Assert.Equal(0, notFound.ErrorCount);
+        Assert.NotEqual(SpanStatuses.Error, notFound.Status);
+        Assert.Empty(TraceAnalysis.Errors(notFound));
+
+        var down = Build(Answered(503));
+        Assert.True(RequestParts.IsErrorSpan(down.Spans[0]));
+        Assert.Equal(SpanStatuses.Error, down.Status);
+        Assert.Single(TraceAnalysis.Errors(down));
+    }
+
     private static Trace Build(params Span[] spans) => TraceBuilder.Build(TraceId, spans, [], []);
 
     private static int _next;
