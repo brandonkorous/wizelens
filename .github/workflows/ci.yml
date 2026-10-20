@@ -49,18 +49,9 @@ jobs:
       - name: Check the marketing site (titles, descriptions, canonical links, share images, structured data, sitemap)
         run: pnpm --filter wizelens-site check:seo
 
-      - name: Start ClickHouse (cloud scale-mode tests, Linux only)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          docker run -d --name clickhouse -p 8123:8123 -e CLICKHOUSE_USER=wizelens -e CLICKHOUSE_PASSWORD=ci \
-            -e CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1 --ulimit nofile=262144:262144 clickhouse/clickhouse-server:26.8.30.8
-          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8123/ping && break; sleep 1; done
-
+      # The ClickHouse tests skip here; the Cloud on ClickHouse job runs them on a runner of their own.
       - name: Test JS packages
         run: pnpm test
-        env:
-          # The ClickHouse store's parity tests run where the server above runs; elsewhere they are skipped.
-          WIZELENS_TEST_CLICKHOUSE: ${{ matrix.os == 'ubuntu-latest' && 'http://wizelens:ci@127.0.0.1:8123' || '' }}
 
       - name: Build .NET (embeds the dashboard)
         run: dotnet build dotnet/WizeLens.slnx -c Release
@@ -80,6 +71,38 @@ jobs:
         with:
           name: packages
           path: artifacts/
+
+  cloud-clickhouse:
+    name: Cloud on ClickHouse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the cloud package and what it uses
+        run: pnpm --filter "@wizeworks/lens-cloud..." build
+
+      - name: Start ClickHouse
+        run: |
+          docker run -d --name clickhouse -p 8123:8123 -e CLICKHOUSE_USER=wizelens -e CLICKHOUSE_PASSWORD=ci \
+            -e CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1 --ulimit nofile=262144:262144 clickhouse/clickhouse-server:26.8.30.8
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8123/ping && break; sleep 1; done
+
+      # Every test file that reads CH_URL, so a new ClickHouse test runs here with no change to this file.
+      - name: Test the ClickHouse store
+        working-directory: js/packages/cloud
+        env:
+          WIZELENS_TEST_CLICKHOUSE: http://wizelens:ci@127.0.0.1:8123
+        run: pnpm exec vitest run $(grep -rl --include='*.test.ts' 'CH_URL' src)
 
   hub-image:
     name: Hub Docker image
