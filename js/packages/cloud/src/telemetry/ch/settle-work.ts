@@ -1,5 +1,5 @@
 // The heavy part of a settle batch for one project: read its traces, build facts and deltas, and write them. Runs in a worker thread or in the main thread.
-import { compact, factRows, FACT_TABLES, type FactTable, isLooseTraceId, mergeDeltas, type SettleDelta, settleDelta, storedOf, type Trace, traceFacts, withoutTop } from "@wizeworks/lens-core";
+import { compact, type FactOptions, factRows, FACT_TABLES, type FactTable, isLooseTraceId, mergeDeltas, type SettleDelta, settleDelta, storedOf, type Trace, traceFacts, withoutTop } from "@wizeworks/lens-core";
 import type { ChClient } from "./http.js";
 import type { Dirty } from "./queue.js";
 import { loadTraces } from "./read.js";
@@ -15,6 +15,8 @@ export interface ProjectTask {
   retentionMs: number;
   /** How long log rows are kept for this project. */
   logRetentionMs: number;
+  /** The project's thresholds. */
+  facts?: Partial<FactOptions>;
   /** The row version, from the main thread, so versions only grow. */
   ver: number;
 }
@@ -51,7 +53,7 @@ async function projectWork(ch: ChClient, t: ProjectTask): Promise<ProjectWork> {
   items.forEach((d, i) => {
     const trace = traces[i];
     const scope = { project, env: d.env };
-    const facts = hasData(trace) ? traceFacts(trace) : null;
+    const facts = hasData(trace) ? traceFacts(trace, t.facts) : null;
     const next = facts ? compact(facts, scope) : null;
     const old = stored.get(d.traceId);
     if (old !== undefined) work.resettled.push(d.traceId);

@@ -7,6 +7,8 @@ import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
 import { forgetOfflineServices } from "../repo/services.js";
 import { environmentsOf, listServices, type TraceQuery } from "../repo/trace-read.js";
+import { factsWith } from "../repo/settings.js";
+import { projectRetentionMs } from "../scale-exec.js";
 
 const DAY_MS = 86_400_000;
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -19,27 +21,37 @@ export async function projectOf(ctx: Ctx): Promise<ProjectAccess> {
   return requireProject(ctx, id);
 }
 
-async function retentionMs(ctx: Ctx): Promise<number> {
+/** How long the asked project keeps data, and the thresholds it uses; the cloud's own when no project is asked or allowed. */
+async function projectInfo(ctx: Ctx): Promise<{ maxAgeMs: number; analysis: { slowQueryMs: number; nPlusOneThreshold: number } }> {
+  const c = ctx.app.config;
+  const fallback = { maxAgeMs: c.retentionDays * DAY_MS, analysis: { slowQueryMs: c.slowQueryMs, nPlusOneThreshold: c.nPlusOneThreshold } };
   const id = ctx.url.searchParams.get("project");
   const p = id ? await principalOf(ctx) : undefined;
-  if (!id || !p) return ctx.app.config.retentionDays * DAY_MS;
+  if (!id || !p) return fallback;
   const access = await requireProject(ctx, id).catch(() => undefined);
-  if (!access) return ctx.app.config.retentionDays * DAY_MS;
-  const [row] = await ctx.app.db.query<{ d: number }>("SELECT retention_days AS d FROM orgs WHERE id = $1", [access.project.orgId]);
-  return (row?.d ?? ctx.app.config.retentionDays) * DAY_MS;
+  if (!access) return fallback;
+  const facts = factsWith(c, await ctx.app.settings.get(id));
+  const maxAgeMs = await projectRetentionMs(ctx.app.db, id, c.retentionDays);
+  return { maxAgeMs, analysis: { slowQueryMs: facts.slowQueryMs!, nPlusOneThreshold: facts.nPlusOneThreshold! } };
 }
 
 async function info(ctx: Ctx): Promise<void> {
+  const project = await projectInfo(ctx);
   const value: ServiceInfo = {
     mode: "cloud",
+<<<<<<< HEAD
     capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats", "metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "slos", "saved", "tags"],
+=======
+    capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats", "metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "slos", "saved", "tags", "settings"],
+>>>>>>> origin/main
     service: "WizeLens Cloud",
     version: ctx.app.version,
     runtime: `node ${process.version}`,
     mcp: true,
     startedMs: ctx.app.startedMs,
     // PGlite is Postgres in-process: both keep data across restarts.
-    storage: { kind: "postgres", maxAgeMs: await retentionMs(ctx) },
+    storage: { kind: "postgres", maxAgeMs: project.maxAgeMs },
+    analysis: project.analysis,
     redactKeys: [...ctx.app.config.redactKeys],
   };
   sendJson(ctx.res, 200, value);

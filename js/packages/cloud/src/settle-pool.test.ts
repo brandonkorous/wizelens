@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { pageParity } from "../../core/src/testing/scale-pages.js";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { SettlePool } from "./telemetry/ch/settle-pool.js";
-import { CH_URL, type ChTest, chTest, chWrite } from "./test/ch.js";
+import { CH_LIMIT, CH_URL, type ChTest, chTest, chWrite } from "./test/ch.js";
 import { RANGES } from "./test/scale.js";
 import { TS_WORKER } from "./test/workers.js";
 
@@ -39,5 +39,5 @@ describe.skipIf(!CH_URL)("ClickHouse settle in worker threads", () => {
     // Workers write in any order, so between equally slow calls either trace may be the example; ch-scale checks it in order.
     const diffs = await pageParity(t.store.executor(t.projectId, t.retentionMs), traces, RANGES, t.retentionMs);
     expect(diffs.filter((d) => !d.includes(".exampleTraceId:"))).toEqual([]);
-  }, 180_000);
+  }, CH_LIMIT);
 });

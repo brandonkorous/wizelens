@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { INFRA_SERVICE, infraDataOf, type MetricPoint, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import { INFRA_PARAM_SETS, infraModels, infraScenario } from "../../core/src/testing/infra-scenario.js";
 import { diffClose, METRIC_NOW } from "../../core/src/testing/metric-scenario.js";
-import { CH_URL, type ChTest, chTest } from "./test/ch.js";
+import { CH_LIMIT, CH_URL, type ChTest, chTest } from "./test/ch.js";
 
 const RANGES = Object.keys(TIME_RANGES) as TimeRange[];
 let t: ChTest;
@@ -20,7 +20,7 @@ async function projectWith(points: readonly MetricPoint[]): Promise<string> {
 }
 
 describe.skipIf(!CH_URL)("ClickHouse infrastructure pages", () => {
-  beforeAll(async () => (t = await chTest(1000, METRIC_NOW)), 60_000);
+  beforeAll(async () => (t = await chTest(1000, METRIC_NOW)), CH_LIMIT);
   afterAll(async () => t && (await t.drop()));
 
   for (const range of RANGES) {
@@ -33,6 +33,6 @@ describe.skipIf(!CH_URL)("ClickHouse infrastructure pages", () => {
         expect(diffClose(got, memory), `${range} ${JSON.stringify(params)}`).toEqual([]);
         if (params.host) expect(got.hosts.selected?.cpu.some((v) => v !== null), range).toBe(true);
       }
-    }, 300_000);
+    }, CH_LIMIT);
   }
 });

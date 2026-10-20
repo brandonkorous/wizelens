@@ -5,7 +5,7 @@ import { isPaidPlan } from "../billing/plans.js";
 import { usageSummary } from "../billing/summary.js";
 import { fail, readJsonBody, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
-import { audit, listAudit } from "../repo/audit.js";
+import { audit, auditFilterOf, listAudit } from "../repo/audit.js";
 import { orgBilling, setSpendCap } from "../repo/billing.js";
 
 /** Everyone in the organization sees its usage (the banner); owners and admins also see the Billing page. */
@@ -32,13 +32,14 @@ async function changeBilling(ctx: Ctx): Promise<void> {
 
 const csvCell = (v: string) => (/[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
 
-/** The whole audit log as CSV or JSON (Business and Enterprise). The export itself goes in the log too. */
+/** The audit log as CSV or JSON (Business and Enterprise), with the log's filter (`action`, `actor`, `before`, `from`). The export itself goes in the log too. */
 async function auditExport(ctx: Ctx): Promise<void> {
   const { user } = await requireOrg(ctx, ctx.params.org!, "manage");
   await requireFeature(ctx.app, ctx.params.org!, "auditExport");
   const format = ctx.url.searchParams.get("format") === "json" ? "json" : "csv";
-  await audit(ctx.app.db, ctx.params.org!, `user:${user.id}`, "audit.export", { format }, ctx.app.config.now());
-  const rows = await listAudit(ctx.app.db, ctx.params.org!, 100_000);
+  const filter = auditFilterOf(ctx.url.searchParams);
+  await audit(ctx.app.db, ctx.params.org!, `user:${user.id}`, "audit.export", { format, ...filter }, ctx.app.config.now());
+  const rows = await listAudit(ctx.app.db, ctx.params.org!, 100_000, filter);
   const name = `wizelens-audit-${new Date(ctx.app.config.now()).toISOString().slice(0, 10)}.${format}`;
   const body =
     format === "json"

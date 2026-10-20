@@ -8,6 +8,7 @@ import type { CloudConfig } from "./config.js";
 import type { Db } from "./db/db.js";
 import type { RouteCtx } from "./http/router.js";
 import type { Mailer } from "./mail/mailer.js";
+import type { SettingsCache } from "./repo/settings.js";
 import type { TelemetryStore } from "./telemetry/store.js";
 
 /** Everything a request handler needs. */
@@ -29,6 +30,8 @@ export interface CloudApp {
   changes: Changes;
   /** Uploaded source maps of one project, cached. */
   maps(projectId: string): MapLoader;
+  /** Project settings, cached for ingest and settle. */
+  settings: SettingsCache;
   /** The address for links: the public URL, or the address the cloud listens on. */
   baseUrl(req?: IncomingMessage): string;
 }

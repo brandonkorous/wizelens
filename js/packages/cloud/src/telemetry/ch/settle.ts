@@ -1,4 +1,5 @@
 // Settling on ClickHouse: the same facts and deltas as Postgres, written as inserts. One process settles, so no lock is needed.
+import { factOptionsOf, type ProjectSettings } from "@wizeworks/lens-core";
 import type { SettleOptions } from "../store.js";
 import type { Dirty, SettleQueue } from "./queue.js";
 import type { ProjectRunner } from "./settle-work.js";
@@ -11,6 +12,8 @@ export interface Settler {
   queue: SettleQueue;
   retention: RetentionCache;
   logRetention: RetentionCache;
+  /** A project's own settings, for its thresholds. */
+  settingsOf?: (projectId: string) => Promise<ProjectSettings>;
   /** Settles one project task: in a worker thread, or in this thread. */
   run: ProjectRunner;
   /** Batches at once: one reads and computes while others wait on their writes. */
@@ -26,7 +29,8 @@ async function settleItems(s: Settler, now: number, due: readonly Dirty[], o: Se
     const days = await s.retention.daysOf(due.map((d) => d.project));
     const logDays = await s.logRetention.daysOf(due.map((d) => d.project));
     for (const [project, items] of byProject(due)) {
-      await s.run({ project, items: [...items], now, retentionMs: days.get(project)! * 86_400_000, logRetentionMs: logDays.get(project)! * 86_400_000, ver: nextVer(now) });
+      const facts = { ...o.defaultFacts, ...factOptionsOf(await s.settingsOf?.(project)) };
+      await s.run({ project, items: [...items], now, retentionMs: days.get(project)! * 86_400_000, logRetentionMs: logDays.get(project)! * 86_400_000, facts, ver: nextVer(now) });
       for (const d of items) s.queue.settled(d, d.updatedMs);
       left = left.filter((d) => d.project !== project);
       o.onSettled?.(project);

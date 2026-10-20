@@ -1,6 +1,7 @@
 import type { DatabaseSync, SQLInputValue, StatementSync } from "node:sqlite";
 import { LOG_KINDS_SQL, logPruneStatements, pruneStatements, SQLITE_DIALECT, settleStatements, type Statement, tierByName, tierCutoff, tierPruneStatements, type TraceState } from "@wizeworks/lens-core";
 import { loadTraces } from "./store-read.js";
+import { factsOf, keepMsOf, logKeepMsOf } from "./settings.js";
 import type { HubStore } from "./store.js";
 
 // Settling: traces quiet for a while get their facts and rollups rebuilt from the stored spans and logs (docs/CONTRACT.md).
@@ -52,8 +53,9 @@ const stateOf = (store: HubStore, r: TraceStateRow): TraceState => ({
   env: r.env,
   updatedMs: r.updated_ms ?? 0,
   contrib: r.contrib,
-  retentionMs: store.maxAgeMs,
-  logRetentionMs: store.logMaxAgeMs,
+  retentionMs: keepMsOf(store, r.project),
+  logRetentionMs: logKeepMsOf(store, r.project),
+  facts: factsOf(store, r.project),
 });
 
 /** Settle one batch of dirty traces, newest first. Returns how many. */

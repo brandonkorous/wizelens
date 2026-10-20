@@ -1,11 +1,12 @@
 import { logPruneStatements, PG_DIALECT } from "@wizeworks/lens-core";
 import type { Queryable } from "../db/db.js";
 import { runStatements } from "../settle.js";
+import { KEEP_DAYS } from "./settings.js";
 
 const DAY_MS = 86_400_000;
 
-/** How long each project keeps log lines, in days: its own log retention, else its organization's retention. */
-export const LOG_DAYS_SQL = "COALESCE(p.log_retention_days, o.retention_days)";
+/** How long each project keeps log lines, in days: its own log retention, else what the project keeps traces for. */
+export const LOG_DAYS_SQL = `COALESCE(p.log_retention_days, ${KEEP_DAYS})`;
 
 /** Log retention days per project; projects that no longer exist are left out. */
 export async function logDaysOf(q: Queryable, projectIds?: readonly string[]): Promise<Map<string, number>> {

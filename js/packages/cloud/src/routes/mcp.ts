@@ -1,6 +1,6 @@
 import type { Trace } from "@wizeworks/lens-core";
 import { parseJson, readBody } from "@wizeworks/lens-hub/kit";
-import { DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, handleMcp, type McpDataSource, type McpProjects } from "@wizeworks/lens-node/kit";
+import { handleMcp, type McpDataSource, type McpProjects } from "@wizeworks/lens-node/kit";
 import type { Ctx } from "../app.js";
 import { joinScope } from "../auth/join-scope.js";
 import { OAUTH_SCOPES } from "../auth/oauth.js";
@@ -9,11 +9,12 @@ import type { AppPrincipal, Principal, ProjectAccess } from "../auth/principal.j
 import { bearerOf, fail, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
-import { keyByToken, projectInOrg } from "../repo/projects.js";
+import { keyAllows, keyByToken, projectInOrg } from "../repo/projects.js";
 import { projectTags } from "../repo/tags.js";
 import { projectMetrics } from "./metrics.js";
 import { projectPage } from "./models.js";
 import { resourceMetadataUrl } from "./oauth-meta.js";
+import { thresholdsOf } from "../repo/settings.js";
 
 /** Traces the MCP tools search through, newest first. */
 const MCP_RECENT = 500;
@@ -40,8 +41,7 @@ async function projectSource(ctx: Ctx, access: ProjectAccess, r: Reader, writes:
   return {
     service: project.name,
     version: ctx.app.version,
-    slowQueryMs: DEFAULT_SLOW_QUERY_MS,
-    nPlusOneThreshold: DEFAULT_N_PLUS_ONE,
+    ...thresholdsOf(ctx.app.config, await ctx.app.settings.get(project.id)),
     all: traces,
     get: (traceId, federate) => telemetry.joinedTrace(project.id, federate ? scope : [project.id], traceId),
     metrics: (range, params) => projectMetrics(telemetry, project.id, range, params, { now: ctx.app.config.now() }),
@@ -69,8 +69,8 @@ async function projectsSource(ctx: Ctx, r: Reader, writes: Writes): Promise<McpP
   return {
     service: "wizelens-cloud",
     version: ctx.app.version,
-    slowQueryMs: DEFAULT_SLOW_QUERY_MS,
-    nPlusOneThreshold: DEFAULT_N_PLUS_ONE,
+    slowQueryMs: ctx.app.config.slowQueryMs,
+    nPlusOneThreshold: ctx.app.config.nPlusOneThreshold,
     metrics: true,
     overview: true,
     projects,
@@ -96,7 +96,7 @@ function unauthorized(ctx: Ctx, invalid: boolean): void {
 async function readerOf(ctx: Ctx, bearer: string): Promise<Reader | undefined> {
   if (bearer.startsWith("wl_rk_")) {
     const key = await keyByToken(ctx.app.db, bearer, ctx.app.config.now());
-    return key?.kind === "read" ? { orgId: key.orgId, projectIds: key.projectIds, actor: `key:${key.id}`, principal: { kind: "key", key } } : undefined;
+    return key?.kind === "read" && keyAllows(key, "mcp") ? { orgId: key.orgId, projectIds: key.projectIds, actor: `key:${key.id}`, principal: { kind: "key", key } } : undefined;
   }
   const app = await appPrincipalOf(ctx, bearer);
   return app && { orgId: app.orgId, projectIds: app.principal.projectIds, actor: `user:${app.principal.userId}`, via: app.principal.app, principal: app.principal };

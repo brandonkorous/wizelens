@@ -1,14 +1,11 @@
 import { apiSend } from "../../data/api";
 import { act, useApi } from "../../data/useApi";
-import { fmtAgo, fmtDate, fmtDateTime, shortId } from "../../format";
+import { fmtAgo, fmtDate, shortId } from "../../format";
 import { traceHref } from "../../routes";
 import { useAsk } from "../../ui/Dialog";
 import { Empty, Panel } from "../../ui/Panel";
 import { SectionHead } from "../../ui/Sections";
 import { type Column, Table } from "../../ui/Table";
-import { actionText, actorText, type AuditEntry, detailText, namesOf } from "./auditText";
-import { PlanPrompt, useFeature } from "./PlanPrompt";
-import type { OrgData } from "./teamTypes";
 
 interface Share {
   id: string;
@@ -39,34 +36,6 @@ export function SharesSection({ projectId, projectName }: { projectId: string; p
         <Table columns={columns} rows={data ?? []} rowKey={(s) => s.id} empty={<Empty title="No shared links">Open a trace and use Share to make one.</Empty>} />
       </Panel>
       {dialog}
-    </>
-  );
-}
-
-/** Who did what: members, keys, projects, shares, single sign-on, and every MCP call. */
-export function AuditSection({ orgId, org }: { orgId: string; org: OrgData | null }) {
-  const { data } = useApi<AuditEntry[]>(`./api/orgs/${orgId}/audit`);
-  const names = namesOf(org);
-  const gate = useFeature(orgId, "auditExport");
-  const exportLinks = gate.allowed && (
-    <span className="wl-row-actions">
-      <a className="wl-btn" href={`./api/orgs/${orgId}/audit/export?format=csv`} download>Export CSV</a>
-      <a className="wl-btn" href={`./api/orgs/${orgId}/audit/export?format=json`} download>Export JSON</a>
-    </span>
-  );
-  const columns: Column<AuditEntry>[] = [
-    { key: "time", header: "When", cell: (a) => <span title={fmtDateTime(a.timeMs)}>{fmtAgo(a.timeMs)}</span>, className: "wl-nowrap" },
-    { key: "who", header: "Who", cell: (a) => actorText(a.actor, names), className: "wl-nowrap" },
-    { key: "what", header: "What", cell: (a) => <strong>{actionText(a.action)}</strong>, className: "wl-nowrap" },
-    { key: "detail", header: "Detail", cell: (a) => <span className="wl-muted">{detailText(a.detail, names)}</span>, className: "wl-wrap" },
-  ];
-  return (
-    <>
-      <SectionHead title="Audit log" description="Every change to the organization, its members, projects, keys, links, and plan, and every AI agent call. Newest first." action={exportLinks} />
-      {gate.loaded && !gate.allowed && <PlanPrompt feature="auditExport" plan={gate.plan} />}
-      <Panel flush>
-        <Table columns={columns} rows={data ?? []} rowKey={(a) => `${a.timeMs}:${a.action}:${a.actor}`} empty={<Empty>Nothing yet.</Empty>} />
-      </Panel>
     </>
   );
 }

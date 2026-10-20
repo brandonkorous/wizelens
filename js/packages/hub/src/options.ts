@@ -1,6 +1,6 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { DEFAULT_REDACT_KEYS, HUB_DEFAULT_PORT } from "@wizeworks/lens-core";
+import { DEFAULT_REDACT_KEYS, FACT_N_PLUS_ONE, FACT_SLOW_QUERY_MS, HUB_DEFAULT_PORT } from "@wizeworks/lens-core";
 import type { SourceMapOptions } from "@wizeworks/lens-node/kit";
 
 export interface HubOptions {
@@ -24,8 +24,12 @@ export interface HubOptions {
   uptime?: boolean;
   /** Expose the read-only MCP endpoint at `/_wizelens/mcp`. Default false. */
   enableMcp?: boolean;
-  /** Key fragments to redact. Default: the contract list. */
+  /** Key fragments to redact. Default: the contract list. Projects can add their own in settings. */
   redactKeys?: string[];
+  /** A database call this slow or slower counts as slow, in ms. Default 100. Projects can set their own. */
+  slowQueryMs?: number;
+  /** This many similar calls in one request is an N+1. Default 5. Projects can set their own. */
+  nPlusOneThreshold?: number;
   /** Override where the dashboard build lives. */
   uiDir?: string;
   /** Name shown in the dashboard. Default "wizelens-hub". */
@@ -69,6 +73,8 @@ export function resolveHubOptions(o: HubOptions = {}): ResolvedHubOptions {
     enableMcp: o.enableMcp ?? false,
     uptime: o.uptime ?? true,
     redactKeys: o.redactKeys ?? [...DEFAULT_REDACT_KEYS],
+    slowQueryMs: o.slowQueryMs ?? FACT_SLOW_QUERY_MS,
+    nPlusOneThreshold: o.nPlusOneThreshold ?? FACT_N_PLUS_ONE,
     uiDir: o.uiDir,
     name: o.name ?? "wizelens-hub",
     audit: o.audit ?? ((line) => console.info(line)),

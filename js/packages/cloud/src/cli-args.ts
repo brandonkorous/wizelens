@@ -22,6 +22,10 @@ Usage: wizelens-cloud [options]
   --retention-days <n>      Default for new organizations. Default 30.  (WIZELENS_CLOUD_RETENTION_DAYS)
   --ingest-per-minute <n>   Ingest calls per key per minute. Default    (WIZELENS_CLOUD_INGEST_PER_MINUTE)
                             1200.
+  --slow-query-ms <n>       A database call this slow is slow. Default  (WIZELENS_CLOUD_SLOW_QUERY_MS)
+                            100. Projects can set their own.
+  --n-plus-one <n>          Similar calls in a request that make an     (WIZELENS_CLOUD_N_PLUS_ONE)
+                            N+1. Default 5.
   --allow-private-webhooks  Let alert webhooks and uptime checks reach (WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1)
                             private addresses.
   --auth-secret <text>      Signs sessions, encrypts 2FA secrets. 32+   (WIZELENS_CLOUD_AUTH_SECRET)
@@ -71,6 +75,8 @@ const OPTIONS = {
   signup: { type: "string" },
   "retention-days": { type: "string" },
   "ingest-per-minute": { type: "string" },
+  "slow-query-ms": { type: "string" },
+  "n-plus-one": { type: "string" },
   "allow-private-webhooks": { type: "boolean" },
   "auth-secret": { type: "string" },
   "smtp-url": { type: "string" },
@@ -107,6 +113,8 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CloudOp
     signup: signupOf(a.signup ?? env.WIZELENS_CLOUD_SIGNUP),
     retentionDays: int(a["retention-days"] ?? env.WIZELENS_CLOUD_RETENTION_DAYS),
     ingestPerMinute: int(a["ingest-per-minute"] ?? env.WIZELENS_CLOUD_INGEST_PER_MINUTE),
+    slowQueryMs: int(a["slow-query-ms"] ?? env.WIZELENS_CLOUD_SLOW_QUERY_MS),
+    nPlusOneThreshold: int(a["n-plus-one"] ?? env.WIZELENS_CLOUD_N_PLUS_ONE),
     allowPrivateWebhooks: a["allow-private-webhooks"] ?? env.WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS === "1",
     authSecret: text(a["auth-secret"], env.WIZELENS_CLOUD_AUTH_SECRET),
     smtpUrl: text(a["smtp-url"], env.WIZELENS_CLOUD_SMTP_URL),

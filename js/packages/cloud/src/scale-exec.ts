@@ -2,6 +2,7 @@ import { type Executor, PG_DIALECT, type SqlRunner, sqlExecutor } from "@wizewor
 import type { Queryable } from "./db/db.js";
 import { getTrace } from "./repo/trace-read.js";
 import type { SettlingScope } from "./telemetry/store.js";
+import { KEEP_DAYS } from "./repo/settings.js";
 
 const DAY_MS = 86_400_000;
 
@@ -10,7 +11,7 @@ export const pgRunner = (q: Queryable): SqlRunner => ({ all: (sql, params) => q.
 
 /** How long a project's organization keeps data, in ms; `fallbackDays` when the project has no organization. */
 export async function projectRetentionMs(q: Queryable, projectId: string, fallbackDays: number): Promise<number> {
-  const [row] = await q.query<{ d: number }>("SELECT o.retention_days AS d FROM projects p JOIN orgs o ON o.id = p.org_id WHERE p.id = $1", [projectId]);
+  const [row] = await q.query<{ d: number }>(`SELECT ${KEEP_DAYS} AS d FROM projects p JOIN orgs o ON o.id = p.org_id WHERE p.id = $1`, [projectId]);
   return (row?.d ?? fallbackDays) * DAY_MS;
 }
 

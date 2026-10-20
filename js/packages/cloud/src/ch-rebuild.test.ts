@@ -1,6 +1,6 @@
 import { afterAll, expect, it } from "vitest";
 import { scenarioTraces } from "../../core/src/testing/scenario.js";
-import { CH_URL, type ChTest, chSettle, chTest, chWrite } from "./test/ch.js";
+import { CH_LIMIT, CH_URL, type ChTest, chSettle, chTest, chWrite } from "./test/ch.js";
 import { parity } from "./test/scale.js";
 import { chClient } from "./telemetry/ch/http.js";
 import { openClickHouse } from "./telemetry/ch/store.js";
@@ -35,7 +35,7 @@ it.skipIf(!CH_URL)("rebuilds stats a page of traces at a time after the facts ve
   const t = await changedVersion();
   expect(await settleAll(t)).toBeGreaterThan(traces.length / PAGE);
   expect(await sameAsFresh(t)).toEqual([]);
-}, 600_000);
+}, CH_LIMIT);
 
 it.skipIf(!CH_URL)("goes on from its last page after a restart", async () => {
   const t = await changedVersion();
@@ -45,4 +45,4 @@ it.skipIf(!CH_URL)("goes on from its last page after a restart", async () => {
   expect(await store.checkFactsVersion()).toBe(false);
   await settleAll(again);
   expect(await sameAsFresh(again)).toEqual([]);
-}, 600_000);
+}, CH_LIMIT);

@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { buildTrace, type Trace, windowOf } from "@wizeworks/lens-core";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { searchParity } from "../../core/src/testing/search-parity.js";
-import { CH_URL, type ChTest, chSettle, chTest, chWrite } from "./test/ch.js";
+import { CH_LIMIT, CH_URL, type ChTest, chSettle, chTest, chWrite } from "./test/ch.js";
 import { parity } from "./test/scale.js";
 import { chClient } from "./telemetry/ch/http.js";
 import { openClickHouse } from "./telemetry/ch/store.js";
@@ -38,7 +38,7 @@ describe.skipIf(!CH_URL)("ClickHouse store over time", () => {
     expect(await parity({ ex: t.store.executor(t.projectId, t.retentionMs), retentionMs: t.retentionMs } as never, traces)).toEqual([]);
     const windows = [windowOf("30d", SCENARIO_NOW + 40_000)];
     expect(await searchParity((q) => t.store.search(t.projectId, q), traces, windows, "prod")).toEqual([]);
-  }, 600_000);
+  }, CH_LIMIT);
 
   it("clears a project's telemetry", async () => {
     const t = await chTest();
@@ -50,7 +50,7 @@ describe.skipIf(!CH_URL)("ClickHouse store over time", () => {
     const page = await t.store.search(t.projectId, { kind: "spans", node: null, window: windowOf("30d", SCENARIO_NOW), limit: 10 });
     await until(async () => (await t.store.search(t.projectId, { kind: "spans", node: null, window: windowOf("30d", SCENARIO_NOW), limit: 10 })).items.length === 0);
     expect(page.kind).toBe("spans");
-  }, 120_000);
+  }, CH_LIMIT);
 
   it("drops rows past retention on insert, by TTL", async () => {
     const name = `wl_test_ttl_${Date.now().toString(36)}`;
@@ -62,5 +62,5 @@ describe.skipIf(!CH_URL)("ClickHouse store over time", () => {
     for (const tr of [old, fresh]) await store.write("p", { sender: { service: "api" }, via: "addon", spans: tr.spans, logs: [], remotes: [] }, Date.now());
     expect(await store.trace("p", old.traceId)).toBeUndefined();
     expect((await store.trace("p", fresh.traceId))?.spanCount).toBe(fresh.spanCount);
-  }, 60_000);
+  }, CH_LIMIT);
 });

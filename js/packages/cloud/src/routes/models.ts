@@ -1,4 +1,4 @@
-import { activeTags, alignNow, APDEX_PAGES, FACT_SLOW_QUERY_MS, hostsModelOf, INFRA_PARAMS, ISSUE_PAGES, isPageName, isStructuredSearch, isTimeRange, issueStatesOf, kubeModelOf, LIST_SEARCH_KIND, type ModelOf, type PageName, pageContext, runPage, searchTraceIds, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { activeTags, alignNow, APDEX_PAGES, hostsModelOf, INFRA_PARAMS, ISSUE_PAGES, isPageName, isStructuredSearch, isTimeRange, issueStatesOf, kubeModelOf, LIST_SEARCH_KIND, type ModelOf, type PageName, pageContext, runPage, searchTraceIds, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import type { CloudApp, Ctx } from "../app.js";
 import { fail, sendJson } from "../http/http.js";
 import { listIssues } from "../repo/issues.js";
@@ -8,6 +8,8 @@ import type { Router } from "../http/router.js";
 import { listServices } from "../repo/trace-read.js";
 import { projectOf } from "./data.js";
 import { metricParamsOf, metricRange, projectMetrics } from "./metrics.js";
+import { factsWith } from "../repo/settings.js";
+import { projectRetentionMs } from "../scale-exec.js";
 
 const CACHE_MS = 15_000;
 const CACHE_MAX = 500;
@@ -33,23 +35,24 @@ export function forgetModels(projectId: string): void {
 /** Model parameters: every query value except the ones that pick the data. */
 const paramsOf = (url: URL): Record<string, string> => Object.fromEntries([...url.searchParams].filter(([k]) => !RESERVED.has(k)).sort());
 
-async function retentionDays(app: CloudApp, orgId: string): Promise<number> {
-  const [row] = await app.db.query<{ d: number }>("SELECT retention_days AS d FROM orgs WHERE id = $1", [orgId]);
-  return row?.d ?? app.config.retentionDays;
+/** Days a project keeps data: its own retention, never past its organization's. */
+async function retentionDays(app: CloudApp, projectId: string): Promise<number> {
+  return (await projectRetentionMs(app.db, projectId, app.config.retentionDays)) / DAY_MS;
 }
 
 /** One page's numbers for a project, from its stats tables. Cached for 15 seconds, like the dashboard's. */
 export async function projectPage<P extends PageName>(app: CloudApp, project: { id: string; orgId: string }, page: P, range: TimeRange, params: Record<string, string> = {}, env?: string): Promise<ModelOf<P>> {
-  const days = await retentionDays(app, project.orgId);
-  if (TIME_RANGES[range].ms > days * DAY_MS) fail(400, "This range is longer than the organization keeps data.");
+  const days = await retentionDays(app, project.id);
+  if (TIME_RANGES[range].ms > days * DAY_MS) fail(400, "This range is longer than this project keeps data.");
   const now = alignNow(app.config.now());
-  const key = JSON.stringify([project.id, page, range, env, params, now]);
+  const slowQueryMs = factsWith(app.config, await app.settings.get(project.id)).slowQueryMs!;
+  const key = JSON.stringify([project.id, page, range, env, params, now, slowQueryMs]);
   const hit = cached(key, app.config.now());
   if (hit) return hit as ModelOf<P>;
   const t = app.telemetry;
-  const pc = pageContext(range, now, params, { slowQueryMs: FACT_SLOW_QUERY_MS }, await t.settling(project.id, { env, before: app.config.now() - SETTLE_BEHIND_MS }));
+  const pc = pageContext(range, now, params, { slowQueryMs }, await t.settling(project.id, { env, before: app.config.now() - SETTLE_BEHIND_MS }));
   // A custom window (`from`, `to`) may start before what the organization keeps; a little slack covers snapping.
-  if (now - pc.window.from > days * DAY_MS + 15 * 60_000) fail(400, "This time window starts before the organization keeps data.");
+  if (now - pc.window.from > days * DAY_MS + 15 * 60_000) fail(400, "This time window starts before this project keeps data.");
   const issues = ISSUE_PAGES.has(page) ? { issues: issueStatesOf(await listIssues(app.db, project.id)) } : {};
   const apdex = APDEX_PAGES.has(page) ? { apdex: await apdexTargets(app.db, project.id) } : {};
   const kind = LIST_SEARCH_KIND[page];
@@ -62,7 +65,7 @@ export async function projectPage<P extends PageName>(app: CloudApp, project: { 
 /** `GET api/models/metrics?project=&range=&env=&metric=&service=&group=&stat=&q=`: the metrics page, from the newest points. */
 async function metrics(ctx: Ctx): Promise<void> {
   const { project } = await projectOf(ctx);
-  const range = metricRange(ctx, await retentionDays(ctx.app, project.orgId));
+  const range = metricRange(ctx, await retentionDays(ctx.app, project.id));
   const now = alignNow(ctx.app.config.now());
   const env = ctx.url.searchParams.get("env") || undefined;
   const params = metricParamsOf(ctx.url.searchParams);

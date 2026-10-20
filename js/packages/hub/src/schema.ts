@@ -33,6 +33,7 @@ CREATE INDEX IF NOT EXISTS ix_alert_events_project ON alert_events(project, time
 CREATE TABLE IF NOT EXISTS alert_values (rule_id TEXT NOT NULL, time_ms REAL NOT NULL, value REAL, PRIMARY KEY (rule_id, time_ms));
 CREATE TABLE IF NOT EXISTS slos (id TEXT PRIMARY KEY, project TEXT NOT NULL, json TEXT NOT NULL, created_ms REAL NOT NULL);
 CREATE TABLE IF NOT EXISTS apdex_targets (project TEXT PRIMARY KEY, json TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS project_settings (project TEXT PRIMARY KEY, json TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS saved (id TEXT PRIMARY KEY, project TEXT NOT NULL, kind TEXT NOT NULL, json TEXT NOT NULL, created_ms REAL NOT NULL);
 CREATE TABLE IF NOT EXISTS issues (
   project TEXT NOT NULL, kind TEXT NOT NULL, key TEXT NOT NULL, status TEXT NOT NULL, until_ms REAL, resolved_ms REAL,

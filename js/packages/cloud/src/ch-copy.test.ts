@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { copyTelemetry } from "./telemetry/copy.js";
-import { CH_URL, type ChTest, chSettle, chTest } from "./test/ch.js";
+import { CH_LIMIT, CH_URL, type ChTest, chSettle, chTest } from "./test/ch.js";
 import { parity, scaleDb, writeTraces } from "./test/scale.js";
 
 const traces = scenarioTraces();
@@ -23,5 +23,5 @@ describe.skipIf(!CH_URL)("copying telemetry into ClickHouse", () => {
     expect(again.traces).toBe(0);
     expect(lines.at(-1)).toContain("already copied");
     await pg.db.close();
-  }, 300_000);
+  }, CH_LIMIT);
 });

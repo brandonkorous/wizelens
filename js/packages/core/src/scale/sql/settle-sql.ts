@@ -2,7 +2,7 @@
 import type { Trace } from "../../types.js";
 import { compact, type StoredContributions, withoutTop } from "../compact.js";
 import { mergeDeltas, type SettleDelta, settleDelta } from "../delta.js";
-import { FACTS_VERSION, traceFacts } from "../facts.js";
+import { type FactOptions, FACTS_VERSION, traceFacts } from "../facts.js";
 import { tierCutoff, TIERS } from "../window.js";
 import { type Dialect, lit, paramOf, type Statement } from "./dialect.js";
 import { deltaStatements, factDeletes, factInserts, factRows, FACT_TABLES, type FactTable } from "./write-sql.js";
@@ -20,6 +20,8 @@ export interface TraceState {
   retentionMs: number;
   /** How long the 1 h tier keeps log buckets for its project; the trace retention when absent. */
   logRetentionMs?: number;
+  /** The project's thresholds; the defaults when missing. */
+  facts?: Partial<FactOptions>;
 }
 
 /** Stored contributions from a trace row, or null when missing, broken, or of another facts version. */
@@ -57,7 +59,7 @@ export function settleStatements(d: Dialect, batch: readonly { state: TraceState
   const updates: Statement[] = [];
   for (const { state, trace } of batch) {
     const scope = { project: state.project, env: state.env };
-    const facts = hasData(trace) ? traceFacts(trace) : null;
+    const facts = hasData(trace) ? traceFacts(trace, state.facts) : null;
     const next = facts ? compact(facts, scope) : null;
     deltas.push(settleDelta(storedOf(state.contrib), next, now, state.retentionMs, state.logRetentionMs));
     if (facts) {

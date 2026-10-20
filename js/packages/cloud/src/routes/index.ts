@@ -7,6 +7,8 @@ import { changeRoutes } from "./changes.js";
 import { issueRoutes } from "./issues.js";
 import { savedRoutes } from "./saved.js";
 import { sloRoutes } from "./slos.js";
+import { keyRoutes } from "./keys.js";
+import { settingsRoutes } from "./settings.js";
 import { meRoutes } from "./me.js";
 import { mcpRoutes } from "./mcp.js";
 import { shareRoutes } from "./shares.js";
@@ -29,6 +31,8 @@ export function allRoutes(): Router<Ctx> {
   notifyRoutes(r);
   orgRoutes(r);
   projectRoutes(r);
+  keyRoutes(r);
+  settingsRoutes(r);
   dataRoutes(r);
   modelRoutes(r);
   changeRoutes(r);

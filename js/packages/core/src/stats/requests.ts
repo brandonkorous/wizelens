@@ -1,4 +1,4 @@
-import { pathShape, analyzeTrace, type Finding } from "../analysis.js";
+import { ANALYSIS_DEFAULTS, pathShape, analyzeTrace, type AnalysisOptions, type Finding } from "../analysis.js";
 import { ATTR_REQUEST_ABORTED, ATTR_REQUEST_ID, ATTR_RPC, browserTypeOf, TAG_PREFIX } from "../attributes.js";
 import { busyMs } from "../busy.js";
 import { type Health, healthOf, insightsOf, traceTiming } from "../health.js";
@@ -89,13 +89,13 @@ function identityOf(server: Span | undefined, fetch: Span | undefined): { method
   return { method, path, endpoint: endpointOf(method, server, path) };
 }
 
-function buildRow(trace: Trace): RequestRow | null {
+function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | null {
   const server = entryServerSpan(trace.spans);
   const fetch = trace.spans.filter((s) => browserTypeOf(s) === "fetch").sort(byStart)[0];
   if (!server && !fetch) return null;
   const timing = traceTiming(trace);
   const clients = trace.spans.filter((s) => s.category === "http.client");
-  const findings = analyzeTrace(trace);
+  const findings = analyzeTrace(trace, analysis);
   const errors = trace.spans.filter(isErrorSpan).length;
   const insights = insightsOf(findings).length;
   const { method, path, endpoint } = identityOf(server, fetch);
@@ -132,7 +132,19 @@ function buildRow(trace: Trace): RequestRow | null {
 }
 
 /** The request row of a trace, or null when the trace is not a request (a page view, a job). Cached per trace. */
-export const requestOf: (trace: Trace) => RequestRow | null = memoByObject(buildRow);
+export const requestOf: (trace: Trace) => RequestRow | null = memoByObject((t: Trace) => buildRow(t));
+
+const withOptions = new WeakMap<Trace, Map<string, RequestRow | null>>();
+
+/** The request row with a project's thresholds; the cached default row when they are the defaults. */
+export function requestWith(trace: Trace, o: { slowQueryMs: number; nPlusOneThreshold: number }): RequestRow | null {
+  if (o.slowQueryMs === ANALYSIS_DEFAULTS.slowQueryMs && o.nPlusOneThreshold === ANALYSIS_DEFAULTS.nPlusOneThreshold) return requestOf(trace);
+  const key = `${o.slowQueryMs}|${o.nPlusOneThreshold}`;
+  let byKey = withOptions.get(trace);
+  if (!byKey) withOptions.set(trace, (byKey = new Map()));
+  if (!byKey.has(key)) byKey.set(key, buildRow(trace, o));
+  return byKey.get(key)!;
+}
 
 /** Request rows of many traces, newest first. */
 export function requestRows(traces: readonly Trace[]): RequestRow[] {

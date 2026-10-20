@@ -2,9 +2,9 @@ import type { CloudOptions } from "../config.js";
 import type { Mail } from "../mail/mailer.js";
 import { type Cloud, createCloud } from "../server.js";
 
-/** A cloud on a free port with an in-memory database. */
+/** A cloud on a free port with an in-memory database. Background jobs stay off unless a test asks: tests run settle, alerts, and the rest themselves, and a job firing in between adds work the test did not ask for. */
 export async function startCloud(options: CloudOptions = {}): Promise<{ cloud: Cloud; url: string }> {
-  const cloud = await createCloud({ database: "memory", port: 0, host: "127.0.0.1", ...options });
+  const cloud = await createCloud({ database: "memory", port: 0, host: "127.0.0.1", jobs: false, ...options });
   return { cloud, url: await cloud.listen() };
 }
 

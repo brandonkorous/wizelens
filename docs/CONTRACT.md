@@ -451,6 +451,25 @@ The Errors model takes `status` (`unresolved` by default, `resolved`, `ignored`,
 range), and returns `issues` (status, first seen over all kept data, new, assignee) and `hasIssues`. The Insights model
 takes `status` the same way. The Overview model returns `freshErrors`, the newest new and regressed groups.
 
+## Project settings
+
+Hosts with the `settings` capability keep per project: `slowQueryMs`, `nPlusOneThreshold`, `redactKeys` (added to the
+host's list), and `retentionDays` (never longer than the host or organization keeps). Hub: `GET/PUT api/settings?project=`.
+Cloud: `GET/PUT api/projects/:project/settings` (PUT needs manage). Both answer `{ defaults, settings, effective }`. Traces
+settle with the project's thresholds (`TraceState.facts`, `FactOptions.nPlusOneThreshold`); writes hide the project's
+keys too (`redactSignals`). Thresholds and keys apply to new data. Prunes and page ranges use the project's retention.
+Hub start options: `--slow-query-ms`, `--n-plus-one`, `--redact-keys`; cloud: `--slow-query-ms`, `--n-plus-one`.
+
+## Team (cloud)
+
+- **Project roles:** `PUT api/orgs/:org/projects/:project/roles/:user` with `role` none, viewer, member, admin, or null.
+  Only members and viewers; owners and admins keep their org role. `none` hides the project from lists, joins, apps,
+  digests, and MCP. `GET api/orgs/:org` adds `projectRoles` for managers; `api/me` gives each project's `role`.
+- **Keys:** `expiresInDays` (1 to 3650) and `scopes` (ingest: traces, logs, metrics; read: api, mcp) on create;
+  `POST api/orgs/:org/keys/:key/rotate` with `graceHours` (0 to 168, default 24) returns the new secret and `oldExpiresMs`.
+- **Audit:** `GET api/orgs/:org/audit?limit=&before=&from=&action=&actor=` (`action` ending in "." is a group),
+  `GET api/orgs/:org/audit/facets`, and `GET api/orgs/:org/audit/export?format=csv|json` with the same filter (plan gated).
+
 ## Users
 
 Requests carry the signed-in user (`enduser.id`). Facts keep `usr` (per user: requests, failures, durations), and one key per item
