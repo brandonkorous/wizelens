@@ -58,6 +58,8 @@ Calls answered by another WizeLens server on the page's origin work the same way
 | `capturePages` | `true` | Send page views, React render stats, and browser errors. |
 | `captureConsole` | `true` | Copy browser `console` calls into the page view's trace. |
 | `resolveFrames` | `true` | Read the page's own source maps (dev servers serve them) so errors group by your source. |
+| `user` | none | The signed-in user, sent as `enduser.id` on every browser span. The Users page then counts the requests this page makes, also to an API in another project. |
+| `userName` | none | The signed-in user's display name, sent as `user.full_name`. |
 
 ## Hooks
 
