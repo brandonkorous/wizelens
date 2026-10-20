@@ -16,3 +16,5 @@ export type { Notice, NoticeProblem, Outbox } from "./alerts/deliver.js";
 export { checkTarget } from "./alerts/target.js";
 export { receivePackages } from "./packages/api.js";
 export type { Advisory, PackageDb, ServicePackage } from "./packages/store.js";
+export { CHECK_EVERY_MS, checkPackages, packageRisks } from "./packages/check.js";
+export type { Fetch } from "./packages/osv.js";

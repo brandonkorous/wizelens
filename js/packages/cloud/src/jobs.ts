@@ -9,6 +9,8 @@ import { checkHealth } from "./notify/health.js";
 import { sendTeamNotices } from "./notify/team.js";
 import { pruneIncidents } from "./repo/uptime.js";
 import { runUptime } from "./uptime/run.js";
+import { checkPackages } from "@wizeworks/lens-hub/kit";
+import { pgPackages } from "./repo/packages.js";
 
 const HOUSEKEEPING_MS = 10 * 60_000;
 const SETTLE_MS = 3_000;
@@ -20,6 +22,7 @@ const DIGEST_MS = 10 * 60_000;
 const UPTIME_MS = 15_000;
 const USAGE_MS = 60_000;
 const REPORT_MS = 10 * 60_000;
+const PACKAGES_MS = 5 * 60_000;
 
 /** Run `job` now and then every `everyMs`. A failed run logs and waits for the next one. */
 function every(name: string, everyMs: number, job: () => Promise<unknown>): () => void {
@@ -62,6 +65,7 @@ export function startJobs(app: CloudApp): () => void {
     every("uptime incidents", HOUSEKEEPING_MS, () => pruneIncidents(app.db, now())),
     every("usage", USAGE_MS, async () => (await app.billing.usage.flush(), await sendUsageNotices(app))),
     ...(app.billing.report ? [every("billing report", REPORT_MS, app.billing.report)] : []),
+    ...(app.config.osv ? [every("packages", PACKAGES_MS, () => checkPackages(pgPackages(app.db), app.config.fetch, now(), app.config.osvUrl))] : []),
   ];
   return () => stops.forEach((stop) => stop());
 }

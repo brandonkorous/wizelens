@@ -2,7 +2,7 @@ import { Globe, ShieldAlert, TriangleAlert } from "lucide-react";
 import { OWASP_CATEGORIES, percentChange, type SecurityModel } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
 import { useServiceScope } from "../../data/prefs";
-import { fmtCount } from "../../format";
+import { fmtAgo, fmtCount } from "../../format";
 import { setQuery, useRoute } from "../../routes";
 import { SearchInput, Select } from "../../ui/Controls";
 import { ExportButton } from "../../ui/ExportButton";
@@ -59,6 +59,11 @@ function SecurityBody({ m, wanted }: { m: SecurityModel; wanted: string | null }
     <>
       <Cards m={m} />
       <OwaspGrid categories={m.categories} selected={category} />
+      {m.scan && (
+        <p className="wl-muted wl-small wl-scan-note">
+          {m.scan.packages ? `${fmtCount(m.scan.packages)} package versions from ${fmtCount(m.scan.services)} services are checked against OSV${m.scan.checkedMs ? `, last ${fmtAgo(m.scan.checkedMs, now)}` : ""}.` : "No service has reported its packages yet. WizeLens SDKs send them at start."}
+        </p>
+      )}
       <Filters issues={m.hasIssues} releases={m.releases.map((r) => r.version)} />
       <div className={`wl-grid${wanted ? " wl-grid-side" : ""}`}>
         <Panel flush title={`Risks (${fmtCount(m.matching)})`} action={<ExportButton page="security" disabled={m.matching === 0} />}>

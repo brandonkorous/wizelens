@@ -66,6 +66,10 @@ export function pgPackages(db: Db): PackageDb {
       const rows = await db.query<{ id: string; json: string }>("SELECT id, json FROM advisories WHERE id = ANY($1)", [[...ids]]);
       return new Map(rows.map((r) => [r.id, JSON.parse(r.json) as Advisory]));
     },
+    lastCheck: async () => {
+      const [row] = await db.query<{ m: number | null }>("SELECT max(checked_ms) AS m FROM package_checks");
+      return row?.m == null ? null : Number(row.m);
+    },
     saveAdvisories: async (list, now) => {
       for (const a of list) {
         await db.query("INSERT INTO advisories (id, json, fetched_ms) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET json = EXCLUDED.json, fetched_ms = EXCLUDED.fetched_ms", [a.id, JSON.stringify(a), now]);

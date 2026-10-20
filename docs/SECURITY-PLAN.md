@@ -20,7 +20,7 @@ The rules of `GAPS-PLAN.md` ("Rules for every phase") still hold. One commit per
 | 5 | The Security page | L | Done |
 | 6 | MCP tool, alerts, and search hits | M | Done |
 | 7 | SDKs report their packages | M | Done |
-| 8 | Known-vulnerable packages (OSV) on hub and cloud | L | |
+| 8 | Known-vulnerable packages (OSV) on hub and cloud | L | Done |
 | 9 | Docs, site, and changelog | S | |
 
 ## OWASP Top 10:2025 and the rules

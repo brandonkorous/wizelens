@@ -14,7 +14,8 @@ export function securityLogin(id: string, at: number, i: number): Trace {
     "http.response.header.set-cookie": "sid=[redacted]; Path=/",
     ...(i % 3 === 0 ? { "http.response.header.x-powered-by": "Express" } : {}),
   };
-  const srv = server(d, { at, ms: 30 + i, method: "POST", path: "/login", route: "/login", status: i % 5 === 0 ? 429 : 401, extra: headers });
+  // Slower than the cart calls, so a cart call settled again never leaves its "last seen" time in this row.
+  const srv = server(d, { at, ms: 150 + i, method: "POST", path: "/login", route: "/login", status: i % 5 === 0 ? 429 : 401, extra: headers });
   client(d, srv, at + 5, 12, "http://rates.partner.com/v1/rates?api_key=[redacted]");
   // Only in the last 3 days, so the log retention tests (4 days) never prune a line a risk was found in.
   if (i % 2 === 1 && i <= 16) log(d, at + 8, "warn", "bad token [redacted:jwt]", "api", srv.spanId);

@@ -14,6 +14,8 @@ import { settleQuietly } from "./settle.js";
 import { hubMaps } from "./sourcemaps-api.js";
 import { HubStore } from "./store.js";
 import { runDueChecks } from "./uptime/schedule.js";
+import { startPackageChecks } from "./packages/loop.js";
+import { sqlitePackages } from "./packages/sqlite.js";
 
 const require = createRequire(import.meta.url);
 export const HUB_VERSION: string = (require("../package.json") as { version: string }).version;
@@ -82,6 +84,7 @@ export function createHub(options: HubOptions = {}): Hub {
   const uptime = setInterval(() => o.uptime && void runDueChecks(data, { allowPrivate: true, now: o.now }).catch(() => undefined), UPTIME_MS);
   uptime.unref();
   const stopAlerts = startAlertLoop(alerts, o);
+  const stopPackages = o.osv ? startPackageChecks(sqlitePackages(store.db), { fetch: o.fetch, osvUrl: o.osvUrl, now: o.now }) : () => undefined;
   return {
     server,
     data,
@@ -101,6 +104,7 @@ export function createHub(options: HubOptions = {}): Hub {
         clearInterval(settler);
         clearInterval(uptime);
         stopAlerts();
+        stopPackages();
         server.closeAllConnections?.();
         server.close(() => (store.close(), resolve()));
       }),

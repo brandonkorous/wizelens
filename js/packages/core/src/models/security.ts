@@ -8,7 +8,9 @@ import { type IssueInfo, isIssueFilter } from "./error-issues.js";
 import { META_NEEDS, type ModelMeta, type ModelParams, metaOf, serviceParam } from "./input.js";
 import { groupNeed, rowsOf, uniqueNeeds } from "./read.js";
 import { firstSeenBounds, inBounds, releasesNeed, releasesOf } from "./release-rows.js";
-import { type SecurityGroup, securityGroupsOf, securityNeeds } from "./security-groups.js";
+import type { PackageScan } from "../packages.js";
+import { compareSecurity, type SecurityGroup, securityGroupsOf, securityNeeds } from "./security-groups.js";
+import { packageGroupsOf } from "./security-packages.js";
 import { type UsersAffected, usersNeed, usersOf } from "./user-rows.js";
 
 export interface SecurityTotals {
@@ -41,6 +43,8 @@ export interface SecurityModel {
   hasIssues: boolean;
   releases: { version: string; firstMs: number }[];
   selectedUsers: UsersAffected | null;
+  /** What the host checked against OSV; null where packages are not checked. */
+  scan: PackageScan | null;
 }
 
 const totalsOf = (groups: readonly SecurityGroup[]): SecurityTotals => ({
@@ -94,7 +98,7 @@ export const securityPage: PageDef<SecurityModel> = {
   },
   model(d) {
     const service = serviceParam(d.params);
-    const groups = securityGroupsOf(d, "cur", service);
+    const groups = [...securityGroupsOf(d, "cur", service), ...packageGroupsOf(d.packages, service)].sort(compareSecurity);
     const prev = securityGroupsOf(d, "prev", service);
     const status = isIssueFilter(d.params.status) ? d.params.status : "unresolved";
     const all = securityIssues(d, groups);
@@ -115,6 +119,7 @@ export const securityPage: PageDef<SecurityModel> = {
       hasIssues: !!d.issues,
       releases: releasesOf(d, "rel.svc").map((r) => ({ version: r.version, firstMs: r.firstMs })),
       selectedUsers: d.params.key ? usersOf(d, "users") : null,
+      scan: d.packageScan ?? null,
     };
   },
 };

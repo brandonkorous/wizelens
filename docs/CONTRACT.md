@@ -373,6 +373,21 @@ time. Answers 204, or 400 with what is wrong. A failed send retries up to 5 time
 
 Hubs keep them in SQLite (`service_packages`), the cloud in Postgres (migration `PACKAGES_MIGRATION`).
 
+**The check.** Hosts with the `packages` capability (hub unless `--no-osv` / `WIZELENS_HUB_OSV=0`, cloud unless
+`--no-osv` / `WIZELENS_CLOUD_OSV=0`) send OSV (`POST https://api.osv.dev/v1/querybatch`, up to 1000 package versions
+a round) every package version not checked for a day, every 5 minutes, and fetch each new advisory once
+(`GET /v1/vulns/{id}`, up to 200 a round). Only ecosystems, names, and versions leave the host. The cache is shared by
+every project (`package_checks`, `advisories`). OSV `database_specific.severity` maps CRITICAL and HIGH to `error`,
+LOW to `info`, and the rest (MODERATE, none) to `warning`.
+
+**On the Security page.** Each package version with advisories is a `vulnerable-package` group (A03): key
+`vulnerable-package|ecosystem|name|version`, shape `ecosystem name@version`, the worst advisory's severity, the services
+that run it as `endpoints`, `count` the advisories, `exampleTraceId` null, and `advisories` (`{ id, summary, severity,
+aliases, fixed, url }[]`, `fixed` the versions that fix it for this package). The description names the highest fixed
+version. `scan` is `{ packages, services, checkedMs }` (null without the capability). Hosts pass `packages` and
+`packageScan` in the page context; under "All projects" each project's services carry its label and one version's
+entries merge. `find_security_issues` adds `advisories` (`{ id, severity, fixed }[]`) to a package's row.
+
 ## Analysis (shared logic, same results in .NET and JS)
 
 - **Duplicate query**: ≥ 2 `db` spans in one trace with identical `db.query.text` AND identical `wizelens.db.parameters`.

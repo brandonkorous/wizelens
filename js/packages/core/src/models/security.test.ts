@@ -38,6 +38,26 @@ describe("security page", () => {
     expect(run({ key }).selected?.key).toBe(key);
   });
 
+});
+
+describe("security page: packages and issues", () => {
+  it("lists known-vulnerable packages under A03, by the services that run them", () => {
+    const advisory = { id: "GHSA-aaaa-bbbb-cccc", summary: "Prototype pollution", severity: "error" as const, aliases: ["CVE-2026-0001"], fixed: ["4.17.21"], url: "https://osv.dev/vulnerability/GHSA-aaaa-bbbb-cccc" };
+    const packages = [
+      { ecosystem: "npm" as const, name: "lodash", version: "4.17.20", services: ["api"], advisories: [advisory], firstSeenMs: SCENARIO_NOW - 1000, lastSeenMs: SCENARIO_NOW },
+      { ecosystem: "npm" as const, name: "safe", version: "1.0.0", services: ["api"], advisories: [], firstSeenMs: SCENARIO_NOW, lastSeenMs: SCENARIO_NOW },
+    ];
+    const scan = { packages: 2, services: 1, checkedMs: SCENARIO_NOW };
+    const m = run({}, "24h", { packages, packageScan: scan });
+    const g = m.groups.find((x) => x.kind === "vulnerable-package")!;
+    expect(g).toMatchObject({ owasp: "A03", severity: "error", shape: "npm lodash@4.17.20", endpoints: ["api"], count: 1 });
+    expect(g.description).toBe("lodash 4.17.20 has 1 known advisory (CVE-2026-0001). Update to 4.17.21 or later.");
+    expect(m.categories.find((c) => c.id === "A03")!.count).toBe(1);
+    expect(m.scan).toEqual(scan);
+    expect(m.groups.some((x) => x.shape.includes("safe@"))).toBe(false);
+    expect(run({ service: "orders" }, "24h", { packages }).groups.some((x) => x.kind === "vulnerable-package")).toBe(false);
+  });
+
   it("hides resolved risks until they come back", () => {
     const key = run().groups.find((g) => g.kind === "exposed-path")!.key;
     const issues = { [issueId("insight", key)]: { kind: "insight" as const, key, status: "resolved" as const, untilMs: null, resolvedMs: SCENARIO_NOW, assignee: null, updatedMs: SCENARIO_NOW } };

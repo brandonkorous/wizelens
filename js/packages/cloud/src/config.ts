@@ -32,6 +32,10 @@ export interface CloudOptions extends BillingOptions {
   allowPrivateWebhooks?: boolean;
   /** PagerDuty's Events API URL; tests point it at a local server. */
   pagerDutyUrl?: string;
+  /** Check the packages services report against OSV (only names and versions are sent). Default true. */
+  osv?: boolean;
+  /** The OSV API; tests point it at a local server. Default https://api.osv.dev. */
+  osvUrl?: string;
   /** Outgoing mail: "smtp://user:pass@host:587" (STARTTLS) or "smtps://user:pass@host:465". Without it, mail is written to the log. */
   smtpUrl?: string;
   /** Outgoing mail through the Resend API (a `re_` key). Used in place of `smtpUrl`. */
@@ -131,6 +135,8 @@ export function resolveConfig(o: CloudOptions = {}): CloudConfig {
     uiDir: o.uiDir,
     now: o.now ?? Date.now,
     fetch: o.fetch ?? fetch,
+    osv: o.osv ?? true,
+    osvUrl: o.osvUrl ?? "https://api.osv.dev",
     secureCookies: !!o.publicUrl?.startsWith("https://"),
     billing: resolveBilling(o),
   };

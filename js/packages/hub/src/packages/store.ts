@@ -31,4 +31,6 @@ export interface PackageDb {
   checks(pkgs: readonly PackageRef[]): Promise<Map<string, string[]>>;
   advisories(ids: readonly string[]): Promise<Map<string, Advisory>>;
   saveAdvisories(list: readonly Advisory[], now: number): Promise<void>;
+  /** When the newest check ran, or null before the first. */
+  lastCheck(): Promise<number | null>;
 }

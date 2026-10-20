@@ -28,6 +28,8 @@ Usage: wizelens-cloud [options]
                             N+1. Default 5.
   --allow-private-webhooks  Let alert webhooks and uptime checks reach (WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1)
                             private addresses.
+  --no-osv                  Do not check reported packages against    (WIZELENS_CLOUD_OSV=0)
+                            OSV.
   --auth-secret <text>      Signs sessions, encrypts 2FA secrets. 32+   (WIZELENS_CLOUD_AUTH_SECRET)
                             characters; "2:new,1:old" rotates.
                             Required with Postgres.
@@ -78,6 +80,7 @@ const OPTIONS = {
   "slow-query-ms": { type: "string" },
   "n-plus-one": { type: "string" },
   "allow-private-webhooks": { type: "boolean" },
+  "no-osv": { type: "boolean" },
   "auth-secret": { type: "string" },
   "smtp-url": { type: "string" },
   "resend-api-key": { type: "string" },
@@ -116,6 +119,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CloudOp
     slowQueryMs: int(a["slow-query-ms"] ?? env.WIZELENS_CLOUD_SLOW_QUERY_MS),
     nPlusOneThreshold: int(a["n-plus-one"] ?? env.WIZELENS_CLOUD_N_PLUS_ONE),
     allowPrivateWebhooks: a["allow-private-webhooks"] ?? env.WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS === "1",
+    osv: !(a["no-osv"] ?? env.WIZELENS_CLOUD_OSV === "0"),
     authSecret: text(a["auth-secret"], env.WIZELENS_CLOUD_AUTH_SECRET),
     smtpUrl: text(a["smtp-url"], env.WIZELENS_CLOUD_SMTP_URL),
     resendApiKey: text(a["resend-api-key"], env.WIZELENS_CLOUD_RESEND_API_KEY),

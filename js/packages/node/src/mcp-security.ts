@@ -16,12 +16,17 @@ interface Risk {
   count: number;
   lastSeen: string;
   exampleTraceId: string | null;
+  /** Vulnerable packages only: the advisories, with the versions that fix them. */
+  advisories?: { id: string; severity: string; fixed: string[] }[];
 }
 
 const RANK: Record<string, number> = { error: 0, warning: 1, info: 2 };
 const iso = (ms: number) => new Date(ms).toISOString();
 
-const fromGroup = (g: SecurityGroup): Risk => ({ kind: g.kind, owasp: g.owasp, severity: g.severity, title: g.title, shape: g.shape, endpoints: g.endpoints.slice(0, 5), requests: g.occurrences, count: g.count, lastSeen: iso(g.lastSeenMs), exampleTraceId: g.exampleTraceId });
+const fromGroup = (g: SecurityGroup): Risk => ({
+  kind: g.kind, owasp: g.owasp, severity: g.severity, title: g.title, shape: g.shape, endpoints: g.endpoints.slice(0, 5), requests: g.occurrences, count: g.count, lastSeen: iso(g.lastSeenMs), exampleTraceId: g.exampleTraceId,
+  ...(g.advisories ? { advisories: g.advisories.map((a) => ({ id: a.id, severity: a.severity, fixed: a.fixed })) } : {}),
+});
 
 /** Without stats: every trace in the range, analyzed in memory and grouped by kind and shape. */
 function fromTraces(traces: readonly Trace[]): Risk[] {

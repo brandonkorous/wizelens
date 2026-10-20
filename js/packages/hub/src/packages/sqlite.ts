@@ -68,6 +68,7 @@ export function sqlitePackages(db: DatabaseSync): PackageDb {
         return row ? [[id, JSON.parse(row.json) as Advisory] as const] : [];
       }));
     },
+    lastCheck: async () => (db.prepare("SELECT max(checked_ms) AS m FROM package_checks").get() as { m: number | null }).m,
     saveAdvisories: async (list, now) => {
       const put = db.prepare("INSERT OR REPLACE INTO advisories (id, json, fetched_ms) VALUES (?, ?, ?)");
       for (const a of list) put.run(a.id, JSON.stringify(a), now);

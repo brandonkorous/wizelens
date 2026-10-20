@@ -33,16 +33,36 @@ function facts(group: SecurityGroup, users: UsersAffected | null, now: number): 
   return rows;
 }
 
+/** Endpoints, or for a package the services that run it. */
 function Endpoints({ group }: { group: SecurityGroup }) {
   if (!group.endpoints.length) return <p className="wl-muted">None recorded.</p>;
+  const href = (e: string) => (group.kind === "vulnerable-package" ? hrefTo("services", [encodeURIComponent(e)]) : hrefTo("requests", [], { endpoint: e }));
   return (
     <ul className="wl-insight-endpoints">
       {group.endpoints.map((e) => (
         <li key={e}>
-          <a className="wl-mono" href={hrefTo("requests", [], { endpoint: e })}>{e}</a>
+          <a className="wl-mono" href={href(e)}>{e}</a>
         </li>
       ))}
     </ul>
+  );
+}
+
+/** A package's advisories, each with its fixed versions and a link to OSV. */
+function Advisories({ group }: { group: SecurityGroup }) {
+  if (!group.advisories?.length) return null;
+  return (
+    <>
+      <div className="wl-section-title">Advisories</div>
+      <ul className="wl-insight-endpoints">
+        {group.advisories.map((a) => (
+          <li key={a.id}>
+            <a href={a.url} target="_blank" rel="noreferrer" className="wl-mono">{a.id}</a> {a.aliases.filter((x) => x.startsWith("CVE-")).join(", ")}
+            <div className="wl-muted wl-small">{a.summary}{a.fixed.length ? ` Fixed in ${a.fixed.join(", ")}.` : ""}</div>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
@@ -78,9 +98,10 @@ export function SecurityDetail({ group, info, users, now }: { group: SecurityGro
           <li key={f}>{f}</li>
         ))}
       </ol>
-      <div className="wl-section-title">Affected endpoints</div>
+      <Advisories group={group} />
+      <div className="wl-section-title">{group.kind === "vulnerable-package" ? "Services" : "Affected endpoints"}</div>
       <Endpoints group={group} />
-      <p className="wl-muted wl-small">WizeLens found this in real traffic. It is a strong hint, not proof: check the example trace.</p>
+      {group.exampleTraceId && <p className="wl-muted wl-small">WizeLens found this in real traffic. It is a strong hint, not proof: check the example trace.</p>}
       {group.exampleTraceId && (
         <a className="wl-btn wl-btn-primary-outline" href={traceHref(group.exampleTraceId, "security")}>
           View example trace

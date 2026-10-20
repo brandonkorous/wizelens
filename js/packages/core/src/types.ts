@@ -93,6 +93,8 @@ export type Capability =
   | "uptime"
   /** Projects can turn on a public status page at `api/status/<token>`. */
   | "statusPages"
+  /** The host checks the packages services report against OSV; the Security page lists known-vulnerable ones. */
+  | "packages"
   /** The host resolves browser stacks at `api/sourcemaps/resolve` (uploaded maps, a build folder, or a dev server). */
   | "sourcemaps"
   /** The host keeps SLOs and Apdex targets (`api/slos`, `api/apdex`). */

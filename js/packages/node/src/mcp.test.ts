@@ -33,7 +33,9 @@ describe("MCP", () => {
     const body = await rpc<{ result: { tools: { name: string }[] } }>(1, "tools/list", {});
     expect(body.result.tools.map((t) => t.name).sort()).toEqual(["find_n_plus_one", "find_security_issues", "find_slow_queries", "get_errors", "get_metric", "get_overview", "get_page", "get_timeseries", "get_trace", "group_requests", "list_metrics", "list_problems", "list_tags", "list_traces", "search", "search_fields"]);
   });
+});
 
+describe("MCP security", () => {
   it("finds security risks in the app's own requests", async () => {
     await fetch(`${app.base}/.env`);
     await new Promise((r) => setTimeout(r, 20));
@@ -42,7 +44,9 @@ describe("MCP", () => {
     expect(risks).toContainEqual(expect.objectContaining({ kind: "exposed-path", owasp: "A02", shape: "/.env" }));
     expect(risks.every((r) => r.kind !== "missing-headers")).toBe(true);
   });
+});
 
+describe("MCP calls", () => {
   it("calls a tool and writes an audit line", async () => {
     await fetch(`${app.base}/boom`);
     await new Promise((r) => setTimeout(r, 20));

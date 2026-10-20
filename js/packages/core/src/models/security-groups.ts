@@ -5,6 +5,7 @@ import { splitKey } from "../scale/kinds.js";
 import type { Need, NeedResults, WindowRef } from "../scale/needs.js";
 import { OWASP_OF, type OwaspId, type SecurityKind } from "../security/kinds.js";
 import type { Impact } from "../stats/common.js";
+import type { PackageAdvisory } from "../packages.js";
 import { byDesc, groupNeed, rowsOf } from "./read.js";
 import { describeSecurity } from "./security-text.js";
 
@@ -32,6 +33,8 @@ export interface SecurityGroup {
   exampleTraceId: string | null;
   /** Failed sign-ins only: addresses that failed 10 or more times. */
   addresses: number | null;
+  /** Vulnerable packages only: the advisories, and the services that run it are its endpoints. */
+  advisories?: PackageAdvisory[];
 }
 
 /** Failures from one address in the window that make a sign-in endpoint a risk, and the count that makes it high. */

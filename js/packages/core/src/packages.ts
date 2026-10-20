@@ -50,3 +50,38 @@ export function parsePackagesReport(body: unknown): PackagesReport | string {
 
 /** `ecosystem|name|version`, one package version anywhere. */
 export const packageKey = (p: PackageRef): string => `${p.ecosystem}|${p.name}|${p.version}`;
+
+/** One published advisory about a package version, as the Security page shows it. */
+export interface PackageAdvisory {
+  /** OSV id, for example `GHSA-xxxx-xxxx-xxxx`. */
+  id: string;
+  summary: string;
+  severity: "error" | "warning" | "info";
+  /** CVE and other ids. */
+  aliases: string[];
+  /** Versions that fix it, for this package. */
+  fixed: string[];
+  url: string;
+}
+
+/** A package version some services run, with its advisories. Hosts with the `packages` capability hand these to the security page. */
+export interface PackageRisk extends PackageRef {
+  services: string[];
+  advisories: PackageAdvisory[];
+  firstSeenMs: number;
+  lastSeenMs: number;
+}
+
+/** What the hosts checked: how many package versions, from how many services, and when last. */
+export interface PackageScan {
+  packages: number;
+  services: number;
+  checkedMs: number | null;
+}
+
+/** OSV `database_specific.severity` (GitHub: LOW, MODERATE, HIGH, CRITICAL) as a finding severity; none counts as warning. */
+export function advisorySeverity(osv: string): PackageAdvisory["severity"] {
+  const s = osv.toUpperCase();
+  if (s === "CRITICAL" || s === "HIGH") return "error";
+  return s === "LOW" ? "info" : "warning";
+}
