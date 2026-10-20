@@ -44,7 +44,8 @@ public class MongoTests
         Assert.Equal("""{"find":"orders","filter":{"customerId":?,"status":{"$in":?}},"sort":{"createdAt":?},"limit":?}""", span.Attr("db.query.text"));
         Assert.Equal("2", span.Attr("db.response.returned_rows"));
         Assert.Equal("mongo.local", span.Attr("server.address"));
-        Assert.DoesNotContain("42", span.Attr("wizelens.db.parameters"));
+        // Only a fingerprint, never the value 42 (a random hex fingerprint may contain "42" by chance).
+        Assert.Matches("""^({}|{"fingerprint":"[0-9a-f]{16}"})$""", span.Attr("wizelens.db.parameters"));
         Assert.Contains(trace.Spans, s => s.SpanId == span.ParentSpanId);
     }
 

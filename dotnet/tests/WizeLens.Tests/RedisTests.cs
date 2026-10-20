@@ -39,7 +39,8 @@ public class RedisTests
         Assert.Equal("cache.local", get.Attr("server.address"));
         Assert.Equal("6379", get.Attr("server.port"));
         Assert.Equal(RedisSpan.AdapterName, get.Attr("wizelens.db.adapter"));
-        Assert.DoesNotContain("42", get.Attr("wizelens.db.parameters"));
+        // Only a fingerprint, never the value 42 (a random hex fingerprint may contain "42" by chance).
+        Assert.Matches("""^({}|{"fingerprint":"[0-9a-f]{16}"})$""", get.Attr("wizelens.db.parameters"));
         Assert.Contains(trace.Spans, s => s.SpanId == get.ParentSpanId);
         Assert.Contains(trace.Spans, s => s.Attr("db.query.text") == "HSET cart:?");
         Assert.Equal(0, profiler.OpenCount);

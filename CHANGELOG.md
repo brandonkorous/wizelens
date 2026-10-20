@@ -2,7 +2,11 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.0-alpha.4] — Teams, problems, and every stack
+
+Teams, roles, and billing on the cloud; SLOs, alerts, uptime checks, and status pages; Problems that find what is above
+normal and why; logs outside requests; Java, Python, Go, and browser frameworks as first-class SDKs; exact traffic and more
+tools for AI agents; and a 4xx answer is no longer a failure.
 
 ### Added
 

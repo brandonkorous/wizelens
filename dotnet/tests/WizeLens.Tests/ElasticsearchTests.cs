@@ -41,7 +41,8 @@ public class ElasticsearchTests
         Assert.Null(searchSpan.Attr("url.full"));
         Assert.Contains(trace.Spans, s => s.SpanId == searchSpan.ParentSpanId);
         var getSpan = Assert.Single(db, s => s.Attr("db.query.text") == "GET /orders/_doc/?");
-        Assert.DoesNotContain("42", getSpan.Attr("wizelens.db.parameters"));
+        // Only a fingerprint, never the value 42 (a random hex fingerprint may contain "42" by chance).
+        Assert.Matches("""^({}|{"fingerprint":"[0-9a-f]{16}"})$""", getSpan.Attr("wizelens.db.parameters"));
         Assert.Null(getSpan.Attr("db.elasticsearch.path_parts.id"));
         Assert.DoesNotContain(trace.Spans, s => s.Category == SpanCategories.HttpClient);
     }
