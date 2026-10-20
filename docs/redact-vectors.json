@@ -1,0 +1,36 @@
+{
+  "about": "Redaction vectors (docs/CONTRACT.md, Redaction). The TS and .NET suites run them. A value given as a list of parts is the parts joined, so no real-looking secret sits in the repo.",
+  "attributes": [
+    { "key": "http.response.header.set-cookie", "value": "sid=abc123; Path=/; Secure; HttpOnly", "want": "sid=[redacted]; Path=/; Secure; HttpOnly" },
+    { "key": "http.response.header.set-cookie", "value": "a=1; Expires=Wed, 21 Oct 2026 07:28:00 GMT; Path=/, b=2; SameSite=None", "want": "a=[redacted]; Expires=Wed, 21 Oct 2026 07:28:00 GMT; Path=/, b=[redacted]; SameSite=None" },
+    { "key": "http.response.header.set-cookie", "value": "theme", "want": "theme=[redacted]" },
+    { "key": "http.response.header.set-cookie", "value": "[redacted]", "want": "[redacted]" },
+    { "key": "http.request.header.cookie", "value": "sid=abc", "want": "[redacted]" },
+    { "key": "http.request.header.authorization", "value": "Bearer x", "want": "[redacted]" },
+    { "key": "url.query", "value": "page=2&token=abc&Api_Key=z&flag", "want": "page=2&token=[redacted]&Api_Key=[redacted]&flag" },
+    { "key": "url.query", "value": "access%5Ftoken=abc&q=shoes", "want": "access%5Ftoken=[redacted]&q=shoes" },
+    { "key": "url.full", "value": "https://api.example.com/v1/items?password=hunter2&id=7", "want": "https://api.example.com/v1/items?password=[redacted]&id=7" },
+    { "key": "url.full", "value": "https://api.example.com/v1/items", "want": "https://api.example.com/v1/items" },
+    { "key": "db.query.text", "value": "SELECT * FROM cards WHERE pan = '4111 1111 1111 1111'", "want": "SELECT * FROM cards WHERE pan = '[redacted:card]'" },
+    { "key": "app.count", "value": 4111111111111111, "want": 4111111111111111 },
+    { "key": "user.password", "value": 1234, "want": "[redacted]" },
+    { "key": "note", "value": null, "want": null }
+  ],
+  "text": [
+    { "in": "nothing secret here", "out": "nothing secret here" },
+    { "in": ["auth ok for ", "eyJhbGciOiJIUzI1NiJ9", ".", "eyJzdWIiOiIxMjM0NTY3ODkwIn0", ".", "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c", " done"], "out": "auth ok for [redacted:jwt] done" },
+    { "in": ["key=", "AKIA", "QWERTYUIOPASDFGH", " region=us-east-1"], "out": "key=[redacted:aws-key] region=us-east-1" },
+    { "in": ["using ", "sk_", "live_", "abcdefghijklmnop1234", " now"], "out": "using [redacted:stripe-key] now" },
+    { "in": ["hook ", "whsec_", "abcdefghijklmnopqrstuv"], "out": "hook [redacted:stripe-key]" },
+    { "in": ["token ", "ghp_", "abcdefghijklmnopqrstuvwxyz0123456789"], "out": "token [redacted:github-token]" },
+    { "in": ["slack ", "xoxb", "-1234567890-abcdefghij"], "out": "slack [redacted:slack-token]" },
+    { "in": ["maps ", "AIza", "SyA1234567890abcdefghijklmnopqrstuv"], "out": "maps [redacted:google-key]" },
+    { "in": ["-----BEGIN ", "RSA PRIVATE KEY-----\nMIIBOgIBAAJBAKj34GkxFhD90vcNLYLInFEX6Ppy1tPf9Cnzj4p4WGeKLs1Pt8Qu\n-----END RSA ", "PRIVATE KEY-----", " after"], "out": "[redacted:private-key] after" },
+    { "in": "paid with 4111-1111-1111-1111 today", "out": "paid with [redacted:card] today" },
+    { "in": "card 378282246310005 on file", "out": "card [redacted:card] on file" },
+    { "in": "order 4111111111111112 is not a card", "out": "order 4111111111111112 is not a card" },
+    { "in": "at 1729400000000 ms", "out": "at 1729400000000 ms" },
+    { "in": "id 12345678901234567890123 is too long", "out": "id 12345678901234567890123 is too long" },
+    { "in": "phone 555-123-4567", "out": "phone 555-123-4567" }
+  ]
+}

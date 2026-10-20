@@ -1,4 +1,4 @@
-import { type Attributes, isDbCall, redactAttributes, SPAN_RESOURCE_KEYS, type Span, stampVersion, type SpanCategory, type SpanKind } from "@wizeworks/lens-core";
+import { type Attributes, isDbCall, redactAttributes, redactText, SPAN_RESOURCE_KEYS, type Span, stampVersion, type SpanCategory, type SpanKind } from "@wizeworks/lens-core";
 import type { HubWrite } from "../store.js";
 import { foldDbParams } from "./db-params.js";
 import { hideNestedDb } from "./nested.js";
@@ -82,7 +82,7 @@ export function toSpan(s: OtlpSpan, service: string, redactKeys: readonly string
     startMs,
     durationMs: Math.max(0, nanosToMs(s.endTimeUnixNano) - startMs),
     status: statusOf(s.status?.code),
-    statusMessage: s.status?.message || null,
+    statusMessage: s.status?.message ? redactText(s.status.message) : null,
     attributes,
     events: (s.events ?? []).slice(0, 50).map((e) => ({
       name: String(e.name ?? "event"),

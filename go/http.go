@@ -38,6 +38,7 @@ func Capture(next http.Handler) http.Handler {
 		}
 		if s.CaptureHeaders {
 			span.SetAttributes(headerAttributes("http.request.header.", r.Header, s)...)
+			defer func() { span.SetAttributes(headerAttributes("http.response.header.", w.Header(), s)...) }()
 		}
 		if !s.CaptureBody {
 			next.ServeHTTP(w, r)
@@ -65,7 +66,9 @@ func headerAttributes(prefix string, h http.Header, s Settings) []attribute.KeyV
 	out := make([]attribute.KeyValue, 0, min(len(names), maxHeaders))
 	for _, name := range names[:min(len(names), maxHeaders)] {
 		value := strings.Join(h.Values(name), ", ")
-		if s.IsSensitive(name) {
+		if strings.EqualFold(name, "set-cookie") {
+			value = redactSetCookie(value)
+		} else if s.IsSensitive(name) {
 			value = Redacted
 		}
 		if len(value) > maxHeaderBytes {

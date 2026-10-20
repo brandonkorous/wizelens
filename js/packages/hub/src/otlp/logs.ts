@@ -1,4 +1,4 @@
-import { type HubLog, type LogLevel, looseTraceIdOf, redactAttributes } from "@wizeworks/lens-core";
+import { type HubLog, type LogLevel, looseTraceIdOf, redactAttributes, redactText } from "@wizeworks/lens-core";
 import type { HubWrite } from "../store.js";
 import { attributesOf, hexId, nanosToMs, type OtlpAnyValue, type OtlpKeyValue, type OtlpResource, senderOf, valueOf } from "./values.js";
 
@@ -48,7 +48,7 @@ export function writesFromLogs(list: readonly OtlpResourceLogs[], redactKeys: re
             timeMs,
             level: levelOf(r),
             category: sl.scope?.name || "otlp",
-            message: body === null ? "" : String(body).slice(0, 10_000),
+            message: body === null ? "" : redactText(String(body).slice(0, 10_000)),
             service: sender.service,
             spanId: traced ? (hexId(r.spanId, 16) ?? null) : null,
             attributes: redactAttributes(attributesOf(r.attributes), redactKeys),

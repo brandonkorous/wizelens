@@ -8,8 +8,13 @@ from typing import Dict, MutableMapping, Optional
 from .settings import Settings
 
 
+def _sanitize_field(key: str) -> str:
+    # Set-Cookie leaves the app whole: the hub hides each cookie's value and keeps its flags (Secure, HttpOnly).
+    return ".*(?<!set-)cookie.*" if key.lower() == "cookie" else f".*{key}.*"
+
+
 def _sanitize_fields(settings: Settings) -> str:
-    return ",".join(f".*{k}.*" for k in settings.redact_keys)
+    return ",".join(_sanitize_field(k) for k in settings.redact_keys)
 
 
 def otel_defaults(settings: Settings) -> Dict[str, str]:

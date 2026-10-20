@@ -8,8 +8,11 @@ public final class WizeLensDefaults {
   private WizeLensDefaults() {}
 
   static final String REQUEST_HEADERS = "accept,accept-encoding,accept-language,authorization,content-type,content-length,"
-      + "cookie,host,origin,referer,user-agent,x-forwarded-for,x-request-id";
-  static final String RESPONSE_HEADERS = "cache-control,content-type,content-length,etag,location,set-cookie";
+      + "cookie,host,origin,referer,user-agent,x-forwarded-for,x-forwarded-proto,x-request-id,x-api-key,api-key";
+  // The security headers too, so the hub can check them (docs/SECURITY-PLAN.md).
+  static final String RESPONSE_HEADERS = "cache-control,content-type,content-length,etag,location,set-cookie,"
+      + "content-security-policy,x-content-type-options,x-frame-options,strict-transport-security,server,x-powered-by,"
+      + "access-control-allow-origin,access-control-allow-credentials";
 
   /** Properties for the agent's autoconfigure step. */
   public static Map<String, String> properties(WizeLensSettings s) {

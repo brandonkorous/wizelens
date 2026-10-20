@@ -1,4 +1,4 @@
-import { DEFAULT_LOOSE_LOGS, keepLooseLine, type LogLevel, type LooseLogOptions, redactAttributes, toAttributeValue } from "@wizeworks/lens-core";
+import { DEFAULT_LOOSE_LOGS, keepLooseLine, type LogLevel, type LooseLogOptions, redactAttributes, redactText, toAttributeValue } from "@wizeworks/lens-core";
 import { activeSpan } from "./spans.js";
 import type { TraceStore } from "./store.js";
 import type { LogFn, WizeLensLogger } from "./types.js";
@@ -58,7 +58,7 @@ export function createLogSink(store: TraceStore, service: string, redactKeys: re
         timeMs: e.timeMs ?? now(),
         level: e.level,
         category: e.category,
-        message: cap(e.message, MAX_MESSAGE),
+        message: cap(redactText(e.message), MAX_MESSAGE),
         service,
         spanId: sc?.spanId ?? null,
         attributes: redactAttributes(toAttributes(e.attributes), redactKeys),

@@ -1,3 +1,5 @@
+import re
+
 from wizelens import Settings
 from wizelens.env import apply_otel_defaults, otel_defaults
 
@@ -35,6 +37,9 @@ def test_otel_defaults_point_at_the_hub():
     assert d["OTEL_EXPORTER_OTLP_HEADERS"] == "Authorization=Bearer t"
     assert d["OTEL_TRACES_SAMPLER"] == "parentbased_always_on"
     assert ".*password.*" in d["OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SANITIZE_FIELDS"]
+    fields = d["OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SANITIZE_FIELDS"].split(",")
+    cookie = next(f for f in fields if "cookie" in f)
+    assert re.search(cookie, "cookie") and not re.search(cookie, "set-cookie")
 
 
 def test_your_own_values_win_and_the_project_is_added():
