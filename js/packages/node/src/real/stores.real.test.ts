@@ -19,7 +19,7 @@ afterAll(async () => {
 
 const text = (s: { attributes: Record<string, unknown> }) => String(s.attributes["db.query.text"]);
 
-describe.skipIf(!REAL)("real data stores", () => {
+describe.skipIf(!REAL)("real data stores", { timeout: 30_000 }, () => {
   it("ioredis: commands, a pipeline, and a MULTI, with keys normalized and no values", async () => {
     expect(instrumentIoRedis(wizelens, IoRedis)).toBe(true);
     const client = new IoRedis(REAL_URLS.redis);
@@ -58,7 +58,7 @@ describe.skipIf(!REAL)("real data stores", () => {
   });
 });
 
-describe.skipIf(!REAL)("real MongoDB and Elasticsearch", () => {
+describe.skipIf(!REAL)("real MongoDB and Elasticsearch", { timeout: 30_000 }, () => {
   it("mongodb: inserts, finds, updates, and aggregates, with filter values hidden", async () => {
     expect(instrumentMongoDb(wizelens, await import("mongodb"))).toBe(true);
     const client = await new MongoClient(REAL_URLS.mongo).connect();

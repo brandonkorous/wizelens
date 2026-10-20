@@ -42,7 +42,7 @@ function nestModule() {
   return AppModule;
 }
 
-describe.skipIf(!REAL)("real frameworks", () => {
+describe.skipIf(!REAL)("real frameworks", { timeout: 30_000 }, () => {
   it("nest: endpoints use the route template with the prefix, and guard and handler errors are recorded", async () => {
     const app = await NestFactory.create(nestModule(), { logger: false });
     app.setGlobalPrefix("api");

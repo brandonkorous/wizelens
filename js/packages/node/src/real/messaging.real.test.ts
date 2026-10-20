@@ -20,7 +20,7 @@ const redisConnection = () => {
   return { host: u.hostname, port: Number(u.port || 6379), maxRetriesPerRequest: null };
 };
 
-describe.skipIf(!REAL)("real messaging", () => {
+describe.skipIf(!REAL)("real messaging", { timeout: 30_000 }, () => {
   it("bullmq: a job added in a request runs in a worker as part of the same trace", async () => {
     expect(instrumentBullMq(wizelens, bullmq)).toBe(true);
     const name = unique("emails-");
