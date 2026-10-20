@@ -2,11 +2,13 @@ import { isPageName, isTimeRange } from "@wizeworks/lens-core";
 import { hashToken, newId, newToken } from "../auth/crypto.js";
 import type { Ctx } from "../app.js";
 import { makerScope } from "../auth/join-scope.js";
+import { projectScope } from "../telemetry/store.js";
 import { requireProject } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson, str } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
 import { projectPage } from "./models.js";
+import type { Queryable } from "../db/db.js";
 
 const DAY_MS = 86_400_000;
 
@@ -44,7 +46,7 @@ async function create(ctx: Ctx): Promise<void> {
   const days = Number(body.days ?? 7);
   if (!Number.isInteger(days) || days < 1 || days > 30) fail(400, "A link lasts 1 to 30 days.");
   const traceId = body.page ? "" : str(body, "traceId");
-  if (traceId && !(await ctx.app.telemetry.trace(project.id, traceId))) fail(404, "Trace not found.");
+  if (traceId && !(await ctx.app.telemetry.trace(projectScope(project), traceId))) fail(404, "Trace not found.");
   const shot = body.page ? await snapshotOf(ctx, project, body) : { page: "", title: "", snapshot: null, params: "{}" };
   const now = ctx.app.config.now();
   const token = newToken("share");
@@ -56,14 +58,17 @@ async function create(ctx: Ctx): Promise<void> {
   sendJson(ctx.res, 201, { url: `${ctx.app.baseUrl(ctx.req)}/_wizelens/#/shared/${token}`, expiresMs: now + days * DAY_MS });
 }
 
-async function list(ctx: Ctx): Promise<void> {
-  const { project } = await requireProject(ctx, ctx.params.project!);
-  const rows = await ctx.app.db.query<Share>(
+/** A project's links that still open, newest first. */
+export const liveShares = (q: Queryable, projectId: string, now: number): Promise<Share[]> =>
+  q.query<Share>(
     `SELECT id, trace_id AS "traceId", page, title, created_ms AS "createdMs", expires_ms AS "expiresMs", views FROM shares
      WHERE project_id = $1 AND revoked_ms IS NULL AND expires_ms > $2 ORDER BY created_ms DESC`,
-    [project.id, ctx.app.config.now()],
+    [projectId, now],
   );
-  sendJson(ctx.res, 200, rows);
+
+async function list(ctx: Ctx): Promise<void> {
+  const { project } = await requireProject(ctx, ctx.params.project!);
+  sendJson(ctx.res, 200, await liveShares(ctx.app.db, project.id, ctx.app.config.now()));
 }
 
 async function revoke(ctx: Ctx): Promise<void> {
@@ -85,8 +90,8 @@ async function open(ctx: Ctx): Promise<void> {
     [hashToken(ctx.params.token!), now],
   );
   if (row?.page && row.snapshot) return sendJson(ctx.res, 200, { page: row.page, title: row.title, params: JSON.parse(row.params), model: JSON.parse(row.snapshot), createdMs: Number(row.created_ms), expiresMs: row.expires_ms });
-  const scope = row ? await makerScope(db, row.created_by, row.org_id, row.project_id) : [];
-  const trace = row ? await ctx.app.telemetry.joinedTrace(row.project_id, scope, row.trace_id) : undefined;
+  const scope = row && (await makerScope(db, row.created_by, row.org_id, row.project_id));
+  const trace = row && scope ? await ctx.app.telemetry.joinedTrace(row.project_id, scope, row.trace_id) : undefined;
   if (!row || !trace) return fail(404, "This link is not valid any more.");
   sendJson(ctx.res, 200, { trace, expiresMs: row.expires_ms });
 }

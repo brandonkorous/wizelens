@@ -6,19 +6,20 @@ import { apiSend } from "./api";
 import { useHost } from "./host";
 import { getScope } from "./prefs";
 import { useApi } from "./useApi";
+import { cloudResource, isAllProjects } from "./projectScope";
 
 const listeners = new Set<() => void>();
 let tick = 0;
 const bump = () => (tick++, listeners.forEach((l) => l()));
 const useTick = () => useSyncExternalStore((l) => (listeners.add(l), () => listeners.delete(l)), () => tick);
 
-/** The host's saved items: the cloud by project id, the hub by `?project=`. */
-export function useSavedApi(): { url: (path?: string) => string; on: boolean; ready: boolean; canWrite: boolean; cloud: boolean } {
+/** The host's saved items: the cloud by project id, or the organization's under "All projects" (an item of one project keeps its own); the hub by `?project=`. */
+export function useSavedApi(): { url: (path?: string, projectId?: string) => string; on: boolean; ready: boolean; canWrite: boolean; cloud: boolean } {
   const host = useHost();
   const cloud = host.has("accounts");
   const role = currentProject(useAccount())?.org.role;
   const project = getScope().project;
-  const url = (path = "") => (cloud ? `./api/projects/${encodeURIComponent(project)}/saved${path}` : `./api/saved${path}?project=${encodeURIComponent(project)}`);
+  const url = (path = "", projectId?: string) => (cloud ? cloudResource("saved", path, projectId) : `./api/saved${path}?project=${encodeURIComponent(project)}`);
   return { url, on: host.has("saved"), ready: !cloud || !!project, canWrite: !cloud || (role !== undefined && role !== "viewer"), cloud };
 }
 
@@ -36,4 +37,13 @@ export async function changeSaved(url: string, method: "POST" | "PATCH" | "DELET
   const out = await apiSend<SavedItem | { ok: true }>(method, url, body);
   bump();
   return "id" in out ? out : null;
+}
+
+/** Where an item opens: under "All projects", an item of one project opens in that project. */
+export function savedHref(i: SavedItem): string {
+  if (!i.projectId || !isAllProjects()) return i.href;
+  const [path, query = ""] = i.href.split("?");
+  const q = new URLSearchParams(query);
+  q.set("project", i.projectId);
+  return `${path}?${q.toString()}`;
 }

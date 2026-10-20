@@ -78,6 +78,8 @@ export interface McpProjects {
   projects: readonly McpProject[];
   /** The data of one project from `projects`. */
   open(projectId: string): Promise<McpDataSource>;
+  /** Every project of `projects` read together (the cloud's "All projects"), for a call that names none. Without it, such a call must name one. */
+  all?(): Promise<McpDataSource>;
   /** Audit for calls that read no project (list_projects). */
   audit(line: string): void;
 }

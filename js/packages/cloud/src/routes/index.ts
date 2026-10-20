@@ -7,6 +7,8 @@ import { changeRoutes } from "./changes.js";
 import { issueRoutes } from "./issues.js";
 import { savedRoutes } from "./saved.js";
 import { sloRoutes } from "./slos.js";
+import { orgListRoutes } from "./org-lists.js";
+import { orgSavedRoutes } from "./saved-org.js";
 import { keyRoutes } from "./keys.js";
 import { settingsRoutes } from "./settings.js";
 import { meRoutes } from "./me.js";
@@ -41,6 +43,8 @@ export function allRoutes(): Router<Ctx> {
   alertRoutes(r);
   issueRoutes(r);
   sloRoutes(r);
+  orgListRoutes(r);
+  orgSavedRoutes(r);
   savedRoutes(r);
   shareRoutes(r);
   uptimeRoutes(r);

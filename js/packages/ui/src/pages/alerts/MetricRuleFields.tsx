@@ -4,14 +4,15 @@ import { useApi } from "../../data/useApi";
 import { Select } from "../../ui/Controls";
 import { Field, FormRow } from "../../ui/Field";
 import type { RuleDraft } from "./AlertForm";
+import { projectQuery } from "../../data/projectScope";
 
 const STATS = Object.entries(METRIC_ALERT_STATS) as [MetricAlertStat, string][];
 const LIST_ID = "wl-alert-metric-names";
 
 /** The metric, the statistic, and the service of a metric rule. Names come from the last day of the project's metrics. */
 export function MetricRuleFields({ r, set }: { r: RuleDraft; set: <K extends keyof RuleDraft>(k: K) => (v: RuleDraft[K]) => void }) {
-  const project = getScope().project;
-  const { data } = useApi<MetricsModel>(project ? `./api/models/metrics?range=24h&project=${encodeURIComponent(project)}` : null);
+  const project = projectQuery();
+  const { data } = useApi<MetricsModel>(project ? `./api/models/metrics?range=24h&${project}` : null);
   const chosen = data?.catalog.find((m) => m.name === r.metricName);
   return (
     <>

@@ -92,7 +92,23 @@ apps**; admins see everyone's under **Team → Connected apps**. See [AI access]
 
 Many front ends often share one API. Put each app in the project of the team that owns it: a trace that goes from a front
 end in one project to the API in another still opens as one trace. The cloud adds the parts from the other projects you
-may read, in the same organization only. A read key or a connected app gets only its own projects. Lists, stats, and alerts stay per project.
+may read, in the same organization only. A read key or a connected app gets only its own projects.
+
+## All projects
+
+Pick **All projects** in the project menu to see every project of the organization on one screen: requests, errors,
+logs, services, search, alerts, SLOs, uptime checks, and saved views. With more than one organization, the same menu
+picks the organization first.
+
+- **Totals add up.** Charts and counts are the sum of your projects.
+- **Same names stay apart.** Two projects with a service called `api` show it twice, as **api · Shop** and
+  **api · Admin**. Open one and you see that project's service only.
+- **Only what you may read.** A project hidden from you stays hidden, and nothing from another organization ever
+  shows. Each row of data carries its organization, and the database itself refuses a read that does not name one.
+- **Changes go to one project.** A new alert, SLO, or uptime check asks which project it belongs to. Settings, Apdex
+  targets, status pages, and share links belong to one project: pick it in the menu, or from the list on the page.
+- **Saved views** made under All projects belong to the whole organization and open there.
+- **AI agents** that read more than one project read all of them together when a call names none.
 
 ## History
 

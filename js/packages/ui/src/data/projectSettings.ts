@@ -25,8 +25,8 @@ export function useProjectSettingsApi(): ProjectSettingsApi {
   const cloud = host.has("accounts");
   const here = currentProject(useAccount());
   const project = getScope().project;
-  const role = here?.project.role ?? here?.org.role;
+  const role = here?.project?.role ?? here?.org.role;
   if (!host.has("settings")) return { url: null, canEdit: false, label: "" };
-  if (cloud) return { url: project ? `./api/projects/${encodeURIComponent(project)}/settings` : null, canEdit: role === "owner" || role === "admin", label: here?.project.name ?? "" };
+  if (cloud) return { url: here?.project ? `./api/projects/${encodeURIComponent(project)}/settings` : null, canEdit: role === "owner" || role === "admin", label: here?.project?.name ?? "" };
   return { url: `./api/settings?project=${encodeURIComponent(project)}`, canEdit: true, label: project || "the default project" };
 }

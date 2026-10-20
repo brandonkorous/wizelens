@@ -10,7 +10,7 @@ function fact(name: string, cols: string, order: string, time: string, indexes =
   return [
     `CREATE TABLE IF NOT EXISTS ${name}_t (${P}, ${cols}, ${VERSIONED}${indexes ? `, ${indexes}` : ""})
      ENGINE = ReplacingMergeTree(ver, is_deleted) PARTITION BY ${monthOf(time)} ORDER BY (${order}) ${EXPIRE}`,
-    `CREATE OR REPLACE VIEW ${name} AS SELECT project_id, trace_id, ${names.join(", ")} FROM ${name}_t FINAL`,
+    `CREATE OR REPLACE VIEW ${name} AS SELECT project_id, org_id, trace_id, ${names.join(", ")} FROM ${name}_t FINAL`,
   ];
 }
 
@@ -50,7 +50,7 @@ export const FACT_ALTERS: readonly string[] = [
   "ALTER TABLE fact_search_t DROP INDEX IF EXISTS ix_text",
   "ALTER TABLE fact_logs_t ADD COLUMN IF NOT EXISTS pattern String DEFAULT ''",
   "ALTER TABLE fact_logs_t ADD INDEX IF NOT EXISTS ix_pattern pattern TYPE bloom_filter GRANULARITY 1",
-  `CREATE OR REPLACE VIEW fact_logs AS SELECT project_id, trace_id, ${LOG_NAMES}, pattern FROM fact_logs_t FINAL`,
+  `CREATE OR REPLACE VIEW fact_logs AS SELECT project_id, org_id, trace_id, ${LOG_NAMES}, pattern FROM fact_logs_t FINAL`,
 ];
 
 /** Fact tables (storage names) and the columns that identify a row within a trace, for tombstones. */

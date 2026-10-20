@@ -1,10 +1,10 @@
-// ClickHouse upkeep: the facts version, clearing projects, retention changes, and projects that no longer exist.
+// ClickHouse upkeep: the facts version, clearing projects, retention changes, projects that no longer exist, and rows without their organization.
 import { FACTS_VERSION, LOG_KINDS_SQL, LOOSE_TRACE_PREFIX, TIERS } from "@wizeworks/lens-core";
-import type { RetentionOf } from "../store.js";
+import type { OrgOf, RetentionOf } from "../store.js";
 import type { ChClient } from "./http.js";
 import type { SettleQueue } from "./queue.js";
 import { ensureMeta, type Rebuild } from "./rebuild.js";
-import { PROJECT_TABLES } from "./schema.js";
+import { ORG_TABLES, PROJECT_TABLES } from "./schema.js";
 import { DAY_MS, nextVer } from "./util.js";
 
 /** Tables built by settling: emptied when the facts version changes. */
@@ -81,5 +81,17 @@ export async function syncProjects(ch: ChClient, queue: SettleQueue, retentionOf
       if (had) await moveExpiry(ch, id, k);
       await ch.insert("project_retention", [{ project_id: id, days: k.days, log_days: k.logDays, ver: nextVer(now) }]);
     }
+  }
+}
+
+/** Rows written before `org_id` existed, or by an older process during a deploy, get their project's organization. One mutation per table, waited for. */
+export async function stampOrgs(ch: ChClient, orgOf: OrgOf): Promise<void> {
+  for (const t of ORG_TABLES) {
+    const ids = (await ch.query<{ project_id: string }>(`SELECT DISTINCT project_id FROM ${t} WHERE org_id = ''`)).map((r) => r.project_id);
+    const orgs = ids.length ? await orgOf(ids) : new Map<string, string>();
+    const known = ids.filter((id) => orgs.has(id));
+    if (!known.length) continue;
+    const sql = `ALTER TABLE ${t} UPDATE org_id = transform(project_id, {p1:Array(String)}, {p2:Array(String)}, '') WHERE org_id = '' AND has({p1:Array(String)}, project_id)`;
+    await ch.command(sql, [known, known.map((id) => orgs.get(id)!)], { mutations_sync: "1" });
   }
 }

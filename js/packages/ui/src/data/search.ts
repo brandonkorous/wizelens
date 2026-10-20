@@ -5,6 +5,7 @@ import { apiFetch, ApiError } from "./api";
 import { getScope } from "./prefs";
 import { provider } from "./provider";
 import { currentTags } from "./tags";
+import { setProjectParams } from "./projectScope";
 
 export interface SearchArgs {
   q: string;
@@ -25,7 +26,7 @@ export type SearchFailure = { type: "invalid"; message: string; start: number; e
 
 const scopeParams = (q: URLSearchParams) => {
   const scope = getScope();
-  if (scope.project) q.set("project", scope.project);
+  setProjectParams(q, scope);
   if (scope.env) q.set("env", scope.env);
   return q;
 };

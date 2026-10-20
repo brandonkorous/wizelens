@@ -3,6 +3,7 @@ import type { HostsModel, KubeModel } from "@wizeworks/lens-core";
 import { apiFetch } from "./api";
 import { useHost, useRange } from "./host";
 import { getScope } from "./prefs";
+import { setProjectParams } from "./projectScope";
 
 export type InfraPage = "hosts" | "kubernetes";
 type ModelOfPage<P extends InfraPage> = P extends "hosts" ? HostsModel : KubeModel;
@@ -20,7 +21,7 @@ const REFRESH_MS = 30_000;
 function urlOf(page: InfraPage, params: Record<string, string>, range: string): string {
   const scope = getScope();
   const q = new URLSearchParams({ ...params, range });
-  if (scope.project) q.set("project", scope.project);
+  setProjectParams(q, scope);
   if (scope.env) q.set("env", scope.env);
   return `./api/models/${page}?${q.toString()}`;
 }

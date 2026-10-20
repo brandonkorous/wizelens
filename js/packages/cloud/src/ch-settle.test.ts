@@ -17,7 +17,7 @@ describe.skipIf(!CH_URL)("ClickHouse settle", () => {
     await chWrite(t, traces);
     const other = chSettle(t);
     await chSettle(t);
-    const page = await t.store.search(t.projectId, { kind: "traces", node: null, window: { from: 0, to: SCENARIO_NOW + 60_000 }, limit: 200, cursor: null });
+    const page = await t.store.search(t.scope, { kind: "traces", node: null, window: { from: 0, to: SCENARIO_NOW + 60_000 }, limit: 200, cursor: null });
     // Log-only traces have no trace row; every trace with spans must be there.
     const withSpans = traces.filter((tr) => tr.spans.length).map((tr) => tr.traceId);
     expect(new Set(page.items.map((i) => (i as { traceId: string }).traceId))).toEqual(new Set(withSpans));

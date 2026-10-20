@@ -14,12 +14,16 @@ import { AlertRulePage } from "./AlertRulePage";
 import { type AlertEvent, type AlertRule, type AlertsData, channelLabel, fmtValue, ruleText, useAlertsApi } from "./alertTypes";
 import { RuleActions, RuleState } from "./RuleActions";
 import "../../styles/pages/alerts.css";
+import { type InProject } from "../../data/projectScope";
+import { projectColumn } from "../../ui/ProjectColumn";
+import { useTargetProject } from "../../ui/ProjectSelect";
 
 type Url = (path?: string) => string;
 
 function ruleColumns(canWrite: boolean, url: Url, onDone: (note?: string) => void, onEdit: (r: AlertRule) => void, onDelete: (r: AlertRule) => void): Column<AlertRule>[] {
   return [
     { key: "name", header: "Alert", cell: (r) => <strong>{r.name}</strong> },
+    ...projectColumn<AlertRule>(),
     { key: "rule", header: "Rule", className: "wl-wrap", cell: (r) => ruleText(r) },
     { key: "state", header: "State", cell: (r) => <RuleState rule={r} /> },
     { key: "value", header: "Last value", num: true, cell: (r) => fmtValue(r, r.lastValue) },
@@ -79,21 +83,25 @@ export function AlertsPage() {
   return id ? <AlertRulePage key={id} id={decodeParam(id)} /> : <AlertRules />;
 }
 
+/** A row's own project under "All projects". */
+const owner = (r: AlertRule) => (r as InProject<AlertRule>).projectId;
+
 function AlertRules() {
   const api = useAlertsApi();
   const query = useRoute().query;
   const { data, error, reload } = useApi<AlertsData>(api.ready ? api.url() : null);
   const [editing, setEditing] = useState<AlertRule | null>(null);
+  const target = useTargetProject();
   const [note, setNote] = useState<string | null>(null);
   const creating = query.get("new") === "1";
   const close = () => (setEditing(null), creating && setQuery({ new: null, log: null, ...Object.fromEntries(DRAFT_PARAMS.map((k) => [k, null])) }));
   const save = async (r: RuleDraft) => {
-    const err = await act(() => (editing ? apiSend("PATCH", api.url(`/${encodeURIComponent(editing.id)}`), r) : apiSend("POST", api.url(), r)), reload);
+    const err = await act(() => (editing ? apiSend("PATCH", api.url(`/${encodeURIComponent(editing.id)}`, owner(editing)), r) : apiSend("POST", api.url("", target.id ?? undefined), r)), reload);
     if (!err) close();
     return err;
   };
   const done = (n?: string) => (setNote(n ?? null), reload());
-  const remove = (r: AlertRule) => void act(() => apiSend("DELETE", api.url(`/${encodeURIComponent(r.id)}`)), reload);
+  const remove = (r: AlertRule) => void act(() => apiSend("DELETE", api.url(`/${encodeURIComponent(r.id)}`, owner(r))), reload);
   const add = api.canWrite && !editing && !creating && <a className="wl-btn wl-btn-primary" href="#/alerts?new=1"><Plus aria-hidden="true" /> New alert</a>;
   const form = editing ? <AlertForm key={editing.id} title={`Edit "${editing.name}"`} initial={draftOf(editing)} onSave={save} onCancel={close} /> : creating && api.canWrite ? <AlertForm title="New alert" initial={draftFromQuery(query)} onSave={save} onCancel={close} /> : null;
   return (
@@ -101,12 +109,13 @@ function AlertRules() {
       <PageHeader title="Alerts" subtitle="Get told when error rates, latency, traffic, or any metric cross a line. Checked every minute.">{add}</PageHeader>
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
       {note && <div className="wl-banner wl-banner-info">{note}</div>}
+      {form && creating && target.field}
       {form}
       <Panel title="Rules" flush>
-        <Table columns={ruleColumns(api.canWrite, api.url, done, setEditing, remove)} rows={data?.rules ?? []} rowKey={(r) => r.id} onRowClick={(r) => navigate(alertHref(r.id))} empty={<Empty title="No alerts yet"><BellRing aria-hidden="true" /> Add one to hear about problems before your users do.</Empty>} />
+        <Table columns={ruleColumns(api.canWrite, api.url, done, setEditing, remove)} rows={data?.rules ?? []} rowKey={(r) => r.id} onRowClick={(r) => navigate(alertHref(r.id, r.projectId))} empty={<Empty title="No alerts yet"><BellRing aria-hidden="true" /> Add one to hear about problems before your users do.</Empty>} />
       </Panel>
       <Panel title="Recent notices" flush>
-        <Table columns={eventColumns(true)} rows={data?.events ?? []} rowKey={(e) => e.id} onRowClick={(e) => navigate(alertHref(e.ruleId))} empty={<Empty>Nothing fired yet.</Empty>} />
+        <Table columns={eventColumns(true)} rows={data?.events ?? []} rowKey={(e) => e.id} onRowClick={(e) => navigate(alertHref(e.ruleId, e.projectId))} empty={<Empty>Nothing fired yet.</Empty>} />
       </Panel>
     </>
   );

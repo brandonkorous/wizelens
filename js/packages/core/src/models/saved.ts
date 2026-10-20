@@ -21,7 +21,10 @@ export interface DashPanel {
 
 export interface SavedItem {
   id: string;
+  /** Its project; "" for an item of the whole organization (saved under "All projects", cloud). */
   projectId: string;
+  /** Its project's label in a list of many projects. */
+  project?: string;
   kind: SavedKind;
   name: string;
   /** Views and searches: the address to open ("#/errors?service=api"). */

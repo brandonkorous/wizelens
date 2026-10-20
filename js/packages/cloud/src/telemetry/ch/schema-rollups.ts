@@ -20,7 +20,7 @@ function rollupDdl(tier: (typeof TIERS)[number]): string[] {
     `top AggregateFunction(argMax, Nullable(String), Float64), ids AggregateFunction(groupArraySorted(${IDS_MAX}), Tuple(Float64, String))`,
     "expire_ms SimpleAggregateFunction(max, Float64)",
   ].join(", ");
-  const read = ["project_id", "env", "kind", "key", "bucket_ms", "n", "err", "sum_v", ...COUNTERS, "first_ms", "last_ms", "top_rank"].join(", ");
+  const read = ["project_id", "org_id", "env", "kind", "key", "bucket_ms", "n", "err", "sum_v", ...COUNTERS, "first_ms", "last_ms", "top_rank"].join(", ");
   const finals = "finalizeAggregation(top) AS top, arrayStringConcat(arrayMap(x -> x.2, finalizeAggregation(ids)), ' ') AS ids";
   return [
     `CREATE TABLE IF NOT EXISTS ${t}_t (${cols}) ENGINE = AggregatingMergeTree ORDER BY (project_id, kind, bucket_ms, env, key) ${tierTail(tier)}`,
@@ -29,7 +29,7 @@ function rollupDdl(tier: (typeof TIERS)[number]): string[] {
       project_id LowCardinality(String), env LowCardinality(String), kind LowCardinality(String), key String, bucket_ms Float64, bin Int32,
       cnt SimpleAggregateFunction(sum, Float64), expire_ms SimpleAggregateFunction(max, Float64)
     ) ENGINE = AggregatingMergeTree ORDER BY (project_id, kind, bucket_ms, env, key, bin) ${tierTail(tier)}`,
-    `CREATE OR REPLACE VIEW ${tier.hist} AS SELECT project_id, env, kind, key, bucket_ms, bin, cnt FROM ${tier.hist}_t FINAL`,
+    `CREATE OR REPLACE VIEW ${tier.hist} AS SELECT project_id, org_id, env, kind, key, bucket_ms, bin, cnt FROM ${tier.hist}_t FINAL`,
   ];
 }
 
@@ -45,7 +45,7 @@ function metricDdl(tier: (typeof TIERS)[number]): string[] {
     "h_bounds AggregateFunction(argMax, Nullable(String), UInt64), h_counts AggregateFunction(argMax, Nullable(String), UInt64)",
     "expire_ms SimpleAggregateFunction(max, Float64)",
   ].join(", ");
-  const read = "project_id, env, series_key, name, bucket_ms, cnt, vsum, vmin, vmax, first_ms, last_ms, rate_delta, rate_ms, h_count, h_sum, h_min, h_max";
+  const read = "project_id, org_id, env, series_key, name, bucket_ms, cnt, vsum, vmin, vmax, first_ms, last_ms, rate_delta, rate_ms, h_count, h_sum, h_min, h_max";
   const finals = ["first_v", "last_v", "h_bounds", "h_counts"].map((c) => `finalizeAggregation(${c}) AS ${c}`).join(", ");
   return [
     `CREATE TABLE IF NOT EXISTS ${t}_t (${cols}) ENGINE = AggregatingMergeTree ORDER BY (project_id, name, bucket_ms, env, series_key) ${tierTail(tier)}`,
@@ -59,7 +59,7 @@ const SERIES_DDL = [
     kind LowCardinality(String), unit String, description String, monotonic Bool, temporality String, attributes String, last_ms Float64,
     last_value Nullable(Float64), last_hist Nullable(String), ver UInt64, expire_ms Float64
   ) ENGINE = ReplacingMergeTree(ver) ORDER BY (project_id, env, series_key) ${EXPIRE}`,
-  `CREATE OR REPLACE VIEW metric_series AS SELECT project_id, env, series_key, name, service, kind, unit, description, monotonic, temporality,
+  `CREATE OR REPLACE VIEW metric_series AS SELECT project_id, org_id, env, series_key, name, service, kind, unit, description, monotonic, temporality,
     attributes, last_ms, last_value, last_hist FROM metric_series_t FINAL`,
 ];
 

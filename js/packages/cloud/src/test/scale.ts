@@ -7,6 +7,7 @@ import { createProject } from "../repo/projects.js";
 import { writeBatch } from "../repo/trace-write.js";
 import { cloudExecutor } from "../scale-exec.js";
 import { settleCloud } from "../settle.js";
+import { tenantScope } from "../telemetry/store.js";
 import { seedOrg, testDb } from "./db.js";
 
 export const DAY = 86_400_000;
@@ -15,6 +16,7 @@ export const RANGES: TimeRange[] = ["15m", "1h", "6h", "24h", "7d", "30d"];
 export interface ScaleDb {
   db: Db;
   projectId: string;
+  orgId: string;
   retentionMs: number;
   ex: Executor;
 }
@@ -24,7 +26,7 @@ export async function scaleDb(retentionDays = 90): Promise<ScaleDb> {
   const db = await testDb();
   const { orgId } = await seedOrg(db, "Scale", retentionDays);
   const projectId = (await createProject(db, orgId, "Shop", 1)).id;
-  return { db, projectId, retentionMs: retentionDays * DAY, ex: cloudExecutor(db, projectId, retentionDays * DAY) };
+  return { db, projectId, orgId, retentionMs: retentionDays * DAY, ex: cloudExecutor(db, tenantScope(orgId, [projectId]), retentionDays * DAY) };
 }
 
 /** Write traces through the cloud's normal write path, one batch per trace. */

@@ -1,6 +1,6 @@
 // Trace reads on ClickHouse: lists from the bounds table, whole traces from the raw spans and logs.
 import { buildTrace, type LogRecord, LOOSE_TRACE_PREFIX, type Span, type Trace } from "@wizeworks/lens-core";
-import type { TraceQuery } from "../store.js";
+import { type TenantScope, tenantScope, type TraceQuery } from "../store.js";
 import type { ChClient } from "./http.js";
 
 const CHUNK = 500;
@@ -9,13 +9,13 @@ const LOOKBACKS_MS = [3_600_000, 86_400_000, 7 * 86_400_000, Number.POSITIVE_INF
 
 /** Trace ids, newest start first, for one lookback. Row filters narrow before grouping; HAVING checks the merged bounds. */
 async function idsWithin(ch: ChClient, t: TraceQuery, now: number, backMs: number): Promise<string[]> {
-  const params: unknown[] = [t.projectId];
+  const params: unknown[] = [t.scope.org, t.scope.projects];
   const p = (v: unknown, type: string) => (params.push(v), `{p${params.length}:${type}}`);
-  const rows = ["project_id = {p1:String}"];
+  const rows = ["org_id = {p1:String}", "has({p2:Array(String)}, project_id)"];
   if (Number.isFinite(backMs)) rows.push(`start_ms >= ${p(now - backMs, "Float64")}`);
   if (t.since !== undefined) rows.push(`updated_ms >= ${p(t.since, "Float64")}`);
   if (t.before !== undefined) rows.push(`start_ms < ${p(t.before, "Float64")}`);
-  if (t.session) rows.push(`trace_id IN (SELECT trace_id FROM spans_raw WHERE project_id = {p1:String} AND session = ${p(t.session, "String")})`);
+  if (t.session) rows.push(`trace_id IN (SELECT trace_id FROM spans_raw WHERE org_id = {p1:String} AND has({p2:Array(String)}, project_id) AND session = ${p(t.session, "String")})`);
   if (t.noLoose) rows.push(`NOT startsWith(trace_id, ${p(LOOSE_TRACE_PREFIX, "String")})`);
   const having = ["1"];
   if (t.from !== undefined) having.push(`s >= ${p(t.from, "Float64")}`);
@@ -35,19 +35,19 @@ export async function findTraceIds(ch: ChClient, t: TraceQuery, now: number): Pr
   return [];
 }
 
-async function jsonOf(ch: ChClient, table: "spans_raw" | "logs_raw", projects: readonly string[], ids: readonly string[]): Promise<Map<string, string[]>> {
+async function jsonOf(ch: ChClient, table: "spans_raw" | "logs_raw", s: TenantScope, ids: readonly string[]): Promise<Map<string, string[]>> {
   const out = new Map<string, string[]>();
   for (let i = 0; i < ids.length; i += CHUNK) {
-    const sql = `SELECT trace_id, json FROM ${table} FINAL WHERE has({p1:Array(String)}, project_id) AND has({p2:Array(String)}, trace_id)`;
-    for (const r of await ch.query<{ trace_id: string; json: string }>(sql, [projects, ids.slice(i, i + CHUNK)])) out.set(r.trace_id, [...(out.get(r.trace_id) ?? []), r.json]);
+    const sql = `SELECT trace_id, json FROM ${table} FINAL WHERE org_id = {p1:String} AND has({p2:Array(String)}, project_id) AND has({p3:Array(String)}, trace_id)`;
+    for (const r of await ch.query<{ trace_id: string; json: string }>(sql, [s.org, s.projects, ids.slice(i, i + CHUNK)])) out.set(r.trace_id, [...(out.get(r.trace_id) ?? []), r.json]);
   }
   return out;
 }
 
-/** Whole traces of some projects, in the order of `ids`. Spans that two projects both sent count once. */
-export async function loadTraces(ch: ChClient, projects: readonly string[], ids: readonly string[]): Promise<Trace[]> {
+/** Whole traces of a scope, in the order of `ids`. Spans that two projects both sent count once. */
+export async function loadTraces(ch: ChClient, scope: TenantScope, ids: readonly string[]): Promise<Trace[]> {
   if (ids.length === 0) return [];
-  const [spans, logs] = await Promise.all([jsonOf(ch, "spans_raw", projects, ids), jsonOf(ch, "logs_raw", projects, ids)]);
+  const [spans, logs] = await Promise.all([jsonOf(ch, "spans_raw", scope, ids), jsonOf(ch, "logs_raw", scope, ids)]);
   return ids.map((id) => {
     const seen = new Set<string>();
     const s = (spans.get(id) ?? []).map((j) => JSON.parse(j) as Span).filter((x) => !seen.has(x.spanId) && seen.add(x.spanId));
@@ -57,14 +57,14 @@ export async function loadTraces(ch: ChClient, projects: readonly string[], ids:
 }
 
 /** One trace, or undefined when nothing of it is stored. */
-export async function getTrace(ch: ChClient, projects: readonly string[], traceId: string): Promise<Trace | undefined> {
-  const [t] = await loadTraces(ch, projects, [traceId]);
+export async function getTrace(ch: ChClient, scope: TenantScope, traceId: string): Promise<Trace | undefined> {
+  const [t] = await loadTraces(ch, scope, [traceId]);
   return t && t.spanCount + t.logs.length > 0 ? t : undefined;
 }
 
 /** The primary project's trace joined with its parts from `scope`; undefined when the primary project has none. */
-export async function joinedTrace(ch: ChClient, primaryId: string, scope: readonly string[], traceId: string): Promise<Trace | undefined> {
-  const own = await getTrace(ch, [primaryId], traceId);
-  if (!own || scope.every((id) => id === primaryId)) return own;
-  return getTrace(ch, [...new Set([primaryId, ...scope])], traceId);
+export async function joinedTrace(ch: ChClient, primaryId: string, scope: TenantScope, traceId: string): Promise<Trace | undefined> {
+  const own = await getTrace(ch, tenantScope(scope.org, [primaryId]), traceId);
+  if (!own || scope.projects.every((id) => id === primaryId)) return own;
+  return getTrace(ch, tenantScope(scope.org, [primaryId, ...scope.projects]), traceId);
 }

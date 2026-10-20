@@ -150,6 +150,8 @@ export function bottlenecks(traces: readonly Trace[], by: "layer" | "service" = 
 
 export interface CriticalSpan {
   traceId: string;
+  /** The project's label, when one read covers many projects (the cloud's "All projects"). */
+  project?: string;
   spanId: string;
   name: string;
   service: string;

@@ -10,6 +10,7 @@ import type { Cloud } from "./server.js";
 import { seedOrg, testDb } from "./test/db.js";
 import { setupOwner, startCloud } from "./test/cloud.js";
 import { pgTelemetry } from "./telemetry/pg-store.js";
+import { tenantScope } from "./telemetry/store.js";
 
 const RANGES = Object.keys(TIME_RANGES) as TimeRange[];
 let db: Db;
@@ -38,7 +39,7 @@ describe("cloud infrastructure pages in Postgres", () => {
       const points = infraScenario(range, METRIC_NOW, 3);
       const id = await projectWith(points);
       for (const params of INFRA_PARAM_SETS) {
-        const sql = infraModels(await pgTelemetry(db).infraData({ projectId: id, env: "prod" }, range, params, METRIC_NOW + 4_000));
+        const sql = infraModels(await pgTelemetry(db).infraData({ scope: tenantScope(org, [id]), env: "prod" }, range, params, METRIC_NOW + 4_000));
         const memory = infraModels(infraDataOf(points, range, METRIC_NOW, params, { tiers: true }));
         expect(diffClose(sql, memory), `${range} ${JSON.stringify(params)}`).toEqual([]);
         if (params.pod) expect(sql.kube.pod?.memory.some((v) => v !== null), range).toBe(true);

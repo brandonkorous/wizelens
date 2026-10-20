@@ -24,7 +24,7 @@ function sectionsOf(ctx: TeamCtx | null, current: NonNullable<ReturnType<typeof 
     manage && { id: "apps", label: "Connected apps", icon: Plug, render: () => <><SectionHead title="Connected apps" description="AI apps people here connected with their own sign-in. Each reads only the projects its person picked." /><AppsPanel key={org.id} list={`./api/orgs/${org.id}/apps`} team /></> },
     manage && { id: "sso", label: "Single sign-on", icon: ShieldCheck, render: () => <SsoSection key={org.id} orgId={org.id} /> },
     manage && { id: "scim", label: "SCIM", icon: IdCard, render: () => <ScimSection key={org.id} orgId={org.id} plan={org.plan ?? ""} /> },
-    { id: "links", label: "Shared links", icon: Link2, render: () => <SharesSection projectId={project.id} projectName={project.name} /> },
+    { id: "links", label: "Shared links", icon: Link2, render: () => <SharesSection orgId={org.id} project={project} /> },
     manage && { id: "audit", label: "Audit log", icon: FileClock, render: () => <AuditSection orgId={org.id} org={ctx?.data ?? null} /> },
     billing && manage && { id: "billing", label: "Billing", icon: CreditCard, render: () => <BillingSection key={org.id} org={org} /> },
     { id: "organization", label: "Organization", icon: Building2, render: () => <OrgSection org={org} /> },

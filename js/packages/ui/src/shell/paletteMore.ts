@@ -9,6 +9,8 @@ import { useAlertsApi, type AlertsData } from "../pages/alerts/alertTypes";
 import { useSlosApi } from "../pages/slos/sloTypes";
 import { alertHref, errorHref, hrefTo, queryHref, sloHref } from "../routes";
 import type { SearchHit } from "./searchIndex";
+import { savedHref } from "../data/saved";
+import { dashboardHref } from "../routes";
 
 const DELAY_MS = 220;
 const EACH = 3;
@@ -36,7 +38,7 @@ async function hitsFor(q: string, range: TimeRange, server: boolean, u: Urls): P
     ...(metrics?.catalog ?? []).slice(0, EACH).map((m): SearchHit => ({ key: `m${m.name}`, kind: "metric", title: m.name, detail: `Metric · ${m.lastText}`, href: hrefTo("metrics", [], { metric: m.name }) })),
     ...(alerts?.rules ?? []).filter((r) => has(r.name, q)).slice(0, EACH).map((r): SearchHit => ({ key: `a${r.id}`, kind: "alert", title: r.name, detail: `Alert · ${r.state === "firing" ? "Firing" : "OK"}`, href: alertHref(r.id) })),
     ...(slos?.slos ?? []).filter((s) => has(s.slo.name, q)).slice(0, EACH).map((s): SearchHit => ({ key: `o${s.slo.id}`, kind: "slo", title: s.slo.name, detail: "SLO", href: sloHref(s.slo.id) })),
-    ...(saved?.items ?? []).filter((i) => has(i.name, q)).slice(0, EACH).map((i): SearchHit => ({ key: `v${i.id}`, kind: "saved", title: i.name, detail: i.kind === "dashboard" ? "Dashboard" : i.kind === "search" ? "Saved search" : "Saved view", href: i.kind === "dashboard" ? hrefTo("dashboards", [encodeURIComponent(i.id)]) : i.href })),
+    ...(saved?.items ?? []).filter((i) => has(i.name, q)).slice(0, EACH).map((i): SearchHit => ({ key: `v${i.id}`, kind: "saved", title: i.name, detail: i.kind === "dashboard" ? "Dashboard" : i.kind === "search" ? "Saved search" : "Saved view", href: i.kind === "dashboard" ? dashboardHref(i.id, i.projectId) : savedHref(i) })),
   ];
 }
 

@@ -1,10 +1,11 @@
 import { useCallback, useState } from "react";
 import { Search } from "lucide-react";
 import type { DataSnapshot } from "../data/store";
-import { useAccount } from "../data/account";
+import { currentProject, useAccount } from "../data/account";
+import { ALL_PROJECTS } from "../data/projectScope";
 import { useHost } from "../data/host";
 import { ServiceChip } from "../ui/ServiceSelect";
-import { HubMenu } from "./HubMenu";
+import { type CloudChoices, HubMenu } from "./HubMenu";
 import { UserMenu } from "./UserMenu";
 import { Notifications } from "./Notifications";
 import { SearchPalette, useSearchShortcut } from "./SearchPalette";
@@ -15,12 +16,15 @@ import { EnvMenu, ModeBadge, ThemeToggle } from "./TopMenus";
 
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 
-/** Cloud: projects come from the signed-in person's organizations, labeled "Org / Project". */
-function useProjectChoices(): [string, string][] | undefined {
+/** Cloud: the shown organization's projects, "All projects" first when it has more than one; and the person's organizations. */
+function useProjectChoices(): CloudChoices | undefined {
   const account = useAccount();
   const cloud = useHost().has("accounts");
+  const current = currentProject(account);
   if (!cloud) return undefined;
-  return (account?.orgs ?? []).flatMap((o) => o.projects.map((p): [string, string] => [p.id, `${o.name} / ${p.name}`]));
+  const own = (current?.org.projects ?? []).map((p): [string, string] => [p.id, p.name]);
+  const projects: [string, string][] = own.length > 1 ? [[ALL_PROJECTS, "All projects"], ...own] : own;
+  return { projects, orgs: account?.orgs ?? [], org: current?.org ?? null };
 }
 
 export function TopBar({ data }: { data: DataSnapshot }) {
@@ -38,7 +42,7 @@ export function TopBar({ data }: { data: DataSnapshot }) {
       <span className="wl-spacer" />
       <ModeBadge />
       <ServiceChip />
-      {data.registry ? <HubMenu registry={data.registry} projects={projects} /> : <EnvMenu sources={data.sources} />}
+      {data.registry ? <HubMenu registry={data.registry} cloud={projects} /> : <EnvMenu sources={data.sources} />}
       <RangeMenu />
       <SaveView />
       <SharePage />

@@ -6,6 +6,7 @@ import { useApi } from "../../data/useApi";
 import { Field, FormRow } from "../../ui/Field";
 import { Empty, Panel } from "../../ui/Panel";
 import { SectionHead } from "../../ui/Sections";
+import { PickProject } from "../../ui/PickProject";
 
 interface Draft {
   slowQueryMs: string;
@@ -89,7 +90,7 @@ export function ProjectSettings() {
     <>
       <SectionHead title="This project" description={`Settings for ${api.label || "this project"}. Thresholds and redacted keys apply to data that arrives after you save.${who}`} />
       <Panel>
-        {!api.url && <Empty title="Pick a project first">Choose a project at the top of the page.</Empty>}
+        {!api.url && <PickProject what="Settings" />}
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
         {api.url && reply && <SettingsForm url={api.url} reply={reply} canEdit={api.canEdit} onSaved={(r) => (setSaved(r), reload())} />}
       </Panel>

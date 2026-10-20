@@ -8,6 +8,7 @@ import { decodeParam, type Route, useRoute } from "../routes";
 import { CopyButton } from "../ui/Badges";
 import { Select } from "../ui/Controls";
 import { Menu } from "./Menu";
+import { isAllProjects } from "../data/projectScope";
 
 const DAYS: [string, string][] = [["1", "For 1 day"], ["7", "For 7 days"], ["30", "For 30 days"]];
 const LISTS = new Set(["overview", "requests", "errors", "database", "logs", "insights", "rendering", "services", "traces"]);
@@ -54,6 +55,7 @@ export function SharePage() {
   const route = useRoute();
   const host = useHost();
   const target = sharedPageOf(route);
-  if (!host.has("sharing") || !getScope().project || !target) return null;
+  // A link belongs to one project: none under "All projects".
+  if (!host.has("sharing") || !getScope().project || isAllProjects() || !target) return null;
   return <Menu label={<Link2 size={18} aria-hidden="true" />} title="Share this page">{() => <ShareForm target={target} />}</Menu>;
 }

@@ -2,7 +2,7 @@
 import { type Cmp, type Piece, SEARCH_FIELDS, type SearchField, type SearchKind, type SearchNode, type SearchValue } from "../../search/ast.js";
 import { levelRank } from "../../stats/logs.js";
 import { KEY_SEP } from "../kinds.js";
-import { type Dialect, likeEscape, lit, lowerOf, SqlText } from "./dialect.js";
+import { type Dialect, likeEscape, lit, lowerOf, type SqlScope, SqlText, scopeWhere } from "./dialect.js";
 
 interface Column {
   col: string;
@@ -66,17 +66,17 @@ function ownerCond(kind: SearchKind): string {
   return "a.src = 's'";
 }
 
-/** ClickHouse: one uncorrelated lookup, which its attribute table (sorted by key and value) answers fast. */
-function attrIn(q: SqlText, kind: SearchKind, project: string, head: string, cond: string): string {
+/** ClickHouse: one uncorrelated lookup, which its attribute table (sorted by key and value) answers fast. The project is part of the match, as one trace id can be in several projects. */
+function attrIn(q: SqlText, kind: SearchKind, scope: SqlScope, head: string, cond: string): string {
   const own = kind === "spans" || kind === "logs";
   const src = kind === "logs" ? "l" : "s";
-  const pick = own ? "trace_id, owner" : "trace_id";
-  const where = `a.project_id = ${q.p(project)} AND a.src = '${src}' AND ${head} AND ${cond}`;
-  return `${own ? "(s.trace_id, s.owner)" : "s.trace_id"} IN (SELECT ${pick} FROM fact_attrs a WHERE ${where})`;
+  const pick = own ? "project_id, trace_id, owner" : "project_id, trace_id";
+  const where = [...scopeWhere(q, { org: scope.org, projects: scope.projects }, "a."), `a.src = '${src}'`, head, cond].join(" AND ");
+  return `${own ? "(s.project_id, s.trace_id, s.owner)" : "(s.project_id, s.trace_id)"} IN (SELECT ${pick} FROM fact_attrs a WHERE ${where})`;
 }
 
 /** Parameters are taken in text order, so the key comes before the value. */
-function attrCond(q: SqlText, kind: SearchKind, n: Extract<SearchNode, { type: "attr" }>, project?: string): string {
+function attrCond(q: SqlText, kind: SearchKind, n: Extract<SearchNode, { type: "attr" }>, scope?: SqlScope): string {
   const v = n.value;
   const head = `a.key = ${q.p(n.key)}`;
   let cond: string;
@@ -85,26 +85,26 @@ function attrCond(q: SqlText, kind: SearchKind, n: Extract<SearchNode, { type: "
   else if (v.type === "pattern") cond = like(q, "a.value", likeOf(v.pieces));
   else if (v.type === "number") cond = `a.num ${n.cmp} ${q.p(v.value)}`;
   else cond = FALSE;
-  if (q.d.name === "ch" && project !== undefined) return attrIn(q, kind, project, head, cond);
-  const scope = `a.${q.d.project} = s.${q.d.project}`;
-  return `EXISTS (SELECT 1 FROM fact_attrs a WHERE ${scope} AND a.trace_id = s.trace_id AND ${ownerCond(kind)} AND ${head} AND ${cond})`;
+  if (q.d.name === "ch" && scope?.projects) return attrIn(q, kind, scope, head, cond);
+  const same = `a.${q.d.project} = s.${q.d.project}`;
+  return `EXISTS (SELECT 1 FROM fact_attrs a WHERE ${same} AND a.trace_id = s.trace_id AND ${ownerCond(kind)} AND ${head} AND ${cond})`;
 }
 
-/** The condition for a search tree on documents of `kind`; null matches everything. Parameters go to `q` in text order. `project` lets ClickHouse look attributes up without correlation. Expand `tag:` first. */
-export function searchCond(q: SqlText, kind: SearchKind, node: SearchNode | null, project?: string): string {
+/** The condition for a search tree on documents of `kind`; null matches everything. Parameters go to `q` in text order. The scope's projects let ClickHouse look attributes up without correlation. Expand `tag:` first. */
+export function searchCond(q: SqlText, kind: SearchKind, node: SearchNode | null, scope?: SqlScope): string {
   if (!node) return TRUE;
   switch (node.type) {
     case "and":
-      return node.items.length ? `(${node.items.map((i) => searchCond(q, kind, i, project)).join(" AND ")})` : TRUE;
+      return node.items.length ? `(${node.items.map((i) => searchCond(q, kind, i, scope)).join(" AND ")})` : TRUE;
     case "or":
-      return `(${node.items.map((i) => searchCond(q, kind, i, project)).join(" OR ")})`;
+      return `(${node.items.map((i) => searchCond(q, kind, i, scope)).join(" OR ")})`;
     case "not":
-      return `NOT (${searchCond(q, kind, node.item, project)})`;
+      return `NOT (${searchCond(q, kind, node.item, scope)})`;
     case "text":
       return q.textHas("fact_search", "text", node.value.toLowerCase(), "s.");
     case "field":
       return safe(q.d, fieldCond(q, kind, node));
     default:
-      return attrCond(q, kind, node, project);
+      return attrCond(q, kind, node, scope);
   }
 }

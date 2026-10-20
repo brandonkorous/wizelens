@@ -9,18 +9,27 @@ export const sqliteRunner = (db: DatabaseSync): SqlRunner => ({
   all: async (sql, params) => db.prepare(sql).all(...(params as SQLInputValue[])) as Record<string, unknown>[],
 });
 
+/** The hub's filters: one project and one environment, each optional ("" or missing means all). */
+export interface HubScope {
+  project?: string;
+  env?: string;
+}
+
+/** The SQL scope of the hub's filters: one project, or all. */
+export const sqlScopeOf = (s: HubScope): SqlScope => ({ projects: s.project ? [s.project] : undefined, env: s.env || undefined });
+
 /** Page needs from the hub's stats tables. Scope: an optional project and environment; the 1 h tier keeps `maxAgeMs`. */
-export function hubExecutor(store: HubStore, scope: SqlScope = {}, keepRemote?: (endpoint: string) => boolean): Executor {
+export function hubExecutor(store: HubStore, scope: HubScope = {}, keepRemote?: (endpoint: string) => boolean): Executor {
   return sqlExecutor({
     d: SQLITE_DIALECT,
     run: sqliteRunner(store.db),
-    scope,
+    scope: sqlScopeOf(scope),
     retentionMs: store.maxAgeMs,
     loadTrace: (id) => getStoredTrace(store.db, id, keepRemote) ?? null,
   });
 }
 
 /** Traces in the scope whose stats run behind (written over `behindMs` ago, not settled), for `pageContext(..., settling)`. Null when none. */
-export function hubSettling(store: HubStore, scope: SqlScope = {}, behindMs = SETTLE_BEHIND_MS): number | null {
+export function hubSettling(store: HubStore, scope: HubScope = {}, behindMs = SETTLE_BEHIND_MS): number | null {
   return settlingCount(store.db, scope, store.now() - behindMs) || null;
 }

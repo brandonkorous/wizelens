@@ -1,9 +1,33 @@
 // Where the cloud keeps telemetry: spans, logs, metrics, and their stats. Accounts, keys, and settings always stay in Postgres.
-import type { Executor, FactOptions, MetricAlertData, MetricData, SearchPage, SearchQuery, Suggestion, SuggestRequest, TimeRange, TimeWindow, Trace } from "@wizeworks/lens-core";
+import type { Executor, FactOptions, MetricAlertData, MetricData, MetricSqlScope, SearchPage, SearchQuery, SqlScope, Suggestion, SuggestRequest, TimeRange, TimeWindow, Trace } from "@wizeworks/lens-core";
 import type { HubWrite } from "@wizeworks/lens-hub/kit";
 
+declare const TENANT: unique symbol;
+
+/** What one read may see: one organization and some of its projects. Only `tenantScope` builds one, so no read goes out without both. */
+export interface TenantScope {
+  readonly org: string;
+  readonly projects: readonly string[];
+  /** Each project's label, for a read of many projects: rows named by a service stay apart ("api · Shop"). */
+  readonly labels?: Readonly<Record<string, string>>;
+  readonly [TENANT]: true;
+}
+
+/** A read scope. Throws on an empty organization or project list: a read never widens to "everything". */
+export function tenantScope(org: string, projects: readonly string[], labels?: Readonly<Record<string, string>>): TenantScope {
+  if (!org) throw new Error("A telemetry read needs its organization.");
+  if (!projects.length || projects.some((p) => !p)) throw new Error("A telemetry read needs at least one project.");
+  return { org, projects: [...new Set(projects)], ...(labels ? { labels } : {}) } as unknown as TenantScope;
+}
+
+/** One project's own scope. */
+export const projectScope = (p: { id: string; orgId: string }): TenantScope => tenantScope(p.orgId, [p.id]);
+
+/** The shared SQL's scope for a read. */
+export const sqlScope = (s: TenantScope, env?: string): SqlScope => ({ org: s.org, projects: s.projects, labels: s.labels, env });
+
 export interface TraceQuery {
-  projectId: string;
+  scope: TenantScope;
   /** Changed at or after (server clock). */
   since?: number;
   /** Started before. For paging back. */
@@ -18,13 +42,19 @@ export interface TraceQuery {
 }
 
 export interface MetricQuery {
-  projectId: string;
+  scope: TenantScope;
   env?: string;
   service?: string;
 }
 
+/** The shared metric SQL's scope for a metric read. */
+export const metricScope = (m: MetricQuery): MetricSqlScope => ({ org: m.scope.org, projects: m.scope.projects, env: m.env, service: m.service });
+
 /** How long each project's organization keeps data, in days; the default when a project has none. */
 export type RetentionOf = (projectIds: readonly string[]) => Promise<Map<string, number>>;
+
+/** The organization of each project; deleted projects are left out. A project never moves, so the answer can be kept. */
+export type OrgOf = (projectIds: readonly string[]) => Promise<Map<string, string>>;
 
 /** Which waiting traces `settling` counts: one environment, and only those last written at or before `before`. */
 export interface SettlingScope {
@@ -47,25 +77,27 @@ export interface TelemetryStore {
   readonly kind: "postgres" | "clickhouse";
   /** Spans, logs, trace bounds, and metric points of one batch. */
   write(projectId: string, w: HubWrite, now: number): Promise<void>;
+  /** Newest traces of the scope; a trace in several of its projects lists once, with every part. */
   traces(t: TraceQuery): Promise<Trace[]>;
-  trace(projectId: string, traceId: string): Promise<Trace | undefined>;
-  /** One trace with its parts from the other projects in `scope` (already checked by the caller). */
-  joinedTrace(primaryId: string, scope: readonly string[], traceId: string): Promise<Trace | undefined>;
-  counts(projectId: string): Promise<{ traces: number; spans: number }>;
+  /** One trace's parts in the scope's projects. */
+  trace(scope: TenantScope, traceId: string): Promise<Trace | undefined>;
+  /** One trace with its parts from the other projects in `scope` (already checked by the caller); undefined when the primary project has none. */
+  joinedTrace(primaryId: string, scope: TenantScope, traceId: string): Promise<Trace | undefined>;
+  counts(scope: TenantScope): Promise<{ traces: number; spans: number }>;
   /** Environments seen on traces. */
-  traceEnvs(projectId: string): Promise<string[]>;
+  traceEnvs(scope: TenantScope): Promise<string[]>;
   /** Distinct hours with a trace in (from, to]. */
-  activeHours(projectId: string, from: number, to: number): Promise<number>;
+  activeHours(scope: TenantScope, from: number, to: number): Promise<number>;
   /** The newest trace start per project; projects without traces are left out. */
   lastTraceMs(): Promise<Map<string, number>>;
-  /** Page needs from the project's stats. */
-  executor(projectId: string, retentionMs: number, env?: string): Executor;
+  /** Page needs from the scope's stats. */
+  executor(scope: TenantScope, retentionMs: number, env?: string): Executor;
   /** Traces still waiting for their stats, or null when none. */
-  settling(projectId: string, o?: SettlingScope): Promise<number | null>;
-  search(projectId: string, q: SearchQuery): Promise<SearchPage>;
-  suggest(projectId: string, r: SuggestRequest): Promise<Suggestion[]>;
+  settling(scope: TenantScope, o?: SettlingScope): Promise<number | null>;
+  search(scope: TenantScope, q: SearchQuery): Promise<SearchPage>;
+  suggest(scope: TenantScope, r: SuggestRequest): Promise<Suggestion[]>;
   /** The slowest endpoints by p95 in a window, with at least `minCount` requests. */
-  slowestEndpoints(projectId: string, w: TimeWindow, minCount: number, limit: number): Promise<{ endpoint: string; p95Ms: number; count: number }[]>;
+  slowestEndpoints(scope: TenantScope, w: TimeWindow, minCount: number, limit: number): Promise<{ endpoint: string; p95Ms: number; count: number }[]>;
   metricData(m: MetricQuery, range: TimeRange, params: Readonly<Record<string, string>>, now: number): Promise<MetricData>;
   metricAlertData(m: MetricQuery, name: string, w: TimeWindow, now: number): Promise<MetricAlertData>;
   /** Host and Kubernetes metric series for the Hosts and Kubernetes pages. */

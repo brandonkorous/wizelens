@@ -4,7 +4,7 @@ import { listEvents, listRules } from "./alerts/store.js";
 import type { HubData } from "./data.js";
 import { metricsPage } from "./metrics-read.js";
 import { hubPage } from "./models-api.js";
-import { sqliteRunner } from "./scale-exec.js";
+import { sqliteRunner, sqlScopeOf } from "./scale-exec.js";
 import { factsOf } from "./settings.js";
 import { distinctOf, loadTraces } from "./store-read.js";
 import { hubTags } from "./tags.js";
@@ -32,7 +32,7 @@ function unsettled(data: HubData, project: string | undefined): Trace[] {
 function scopedSource(data: HubData, project: string | undefined, info: HubMcpInfo): McpDataSource {
   const store = data.store;
   const scope = project === undefined ? {} : { project };
-  const src = { d: SQLITE_DIALECT, run: sqliteRunner(store.db), scope };
+  const src = { d: SQLITE_DIALECT, run: sqliteRunner(store.db), scope: sqlScopeOf(scope) };
   const facts = factsOf(store, project ?? "");
   return {
     service: project ? `${info.name} · ${project}` : info.name,

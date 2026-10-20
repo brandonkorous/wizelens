@@ -20,11 +20,12 @@ function urlValuesOf(page: PageId, key: string, value: string): ViewValues {
   if (key === KEYS.range) return { range: value || null };
   if (key === SCOPE.env) return { env: value || null };
   if (key === SCOPE.project) return { project: value || null };
+  if (key === SCOPE.org) return { org: value || null };
   if (key === SCOPE.service && page !== "services") return { service: value || null };
   return {};
 }
 
-const VIEW_KEYS = [KEYS.range, PERIOD_KEYS.window, PERIOD_KEYS.compare, SCOPE.env, SCOPE.project, SCOPE.service];
+const VIEW_KEYS = [KEYS.range, PERIOD_KEYS.window, PERIOD_KEYS.compare, SCOPE.env, SCOPE.org, SCOPE.project, SCOPE.service];
 
 /** Write a choice into the address bar, when it differs and the page follows choices. */
 function pushChoice(key: string, value: string): void {
@@ -41,7 +42,7 @@ function linkValueOf(page: PageId, key: string, q: URLSearchParams): string | un
   if (key === PERIOD_KEYS.window) return q.has("from") && q.has("to") ? windowText(parseWindow(`${q.get("from")}-${q.get("to")}`)) : q.has("range") ? "" : undefined;
   if (key === PERIOD_KEYS.compare) return q.has("compare") ? (q.get("compare") === "week" ? "week" : "previous") : undefined;
   if (key === KEYS.range) return isTimeRange(q.get("range") ?? "") ? q.get("range")! : undefined;
-  const name = key === SCOPE.env ? "env" : key === SCOPE.project ? "project" : page === "services" ? null : "service";
+  const name = key === SCOPE.env ? "env" : key === SCOPE.project ? "project" : key === SCOPE.org ? "org" : page === "services" ? null : "service";
   return name && q.has(name) ? q.get(name)! : undefined;
 }
 
@@ -51,7 +52,9 @@ export function useViewInUrl(): void {
   const hash = `${route.page}?${route.query.toString()}`;
   useEffect(() => onViewWrite(pushChoice), []);
   useEffect(() => {
-    if (!VIEW_PAGES.has(route.page)) return;
+    // Elsewhere a link may still name a project (a row under "All projects"): it shows that one.
+    const project = route.query.get("project");
+    if (!VIEW_PAGES.has(route.page)) return void (project && project !== readPref(SCOPE.project) && writePref(SCOPE.project, project));
     for (const key of VIEW_KEYS) {
       const fromLink = linkValueOf(route.page, key, route.query);
       if (fromLink !== undefined && fromLink !== (readPref(key) ?? "")) writePref(key, fromLink);

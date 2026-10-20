@@ -6,7 +6,7 @@ import { CH_LIMIT, CH_URL, type ChTest, chTest, chWrite } from "./test/ch.js";
 import { RANGES } from "./test/scale.js";
 import { TS_WORKER } from "./test/workers.js";
 
-const task = { project: "p", items: [], now: 0, retentionMs: 0, ver: 1 };
+const task = { project: "p", org: "o", logRetentionMs: 1, items: [], now: 0, retentionMs: 0, ver: 1 };
 
 describe("Settle worker pool", () => {
   it("fails the task of a worker that dies, and starts a new worker", async () => {
@@ -35,9 +35,9 @@ describe.skipIf(!CH_URL)("ClickHouse settle in worker threads", () => {
     opened.push(t);
     await chWrite(t, traces);
     expect(await t.store.settle(SCENARIO_NOW + 10_000, { batch: 7, budgetMs: Number.POSITIVE_INFINITY })).toBe(traces.length);
-    expect(await t.store.settling(t.projectId)).toBeNull();
+    expect(await t.store.settling(t.scope)).toBeNull();
     // Workers write in any order, so between equally slow calls either trace may be the example; ch-scale checks it in order.
-    const diffs = await pageParity(t.store.executor(t.projectId, t.retentionMs), traces, RANGES, t.retentionMs);
+    const diffs = await pageParity(t.store.executor(t.scope, t.retentionMs), traces, RANGES, t.retentionMs);
     expect(diffs.filter((d) => !d.includes(".exampleTraceId:"))).toEqual([]);
   }, CH_LIMIT);
 });

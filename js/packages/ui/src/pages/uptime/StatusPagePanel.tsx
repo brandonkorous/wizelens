@@ -8,6 +8,8 @@ import { fmtCount, fmtDate } from "../../format";
 import { CopyButton } from "../../ui/Badges";
 import { Field, FormRow } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
+import { isAllProjects } from "../../data/projectScope";
+import { PickProject } from "../../ui/PickProject";
 
 interface Settings {
   enabled: boolean;
@@ -22,10 +24,11 @@ export function StatusPagePanel() {
   const project = getScope().project;
   const role = currentProject(useAccount())?.org.role;
   const base = `./api/projects/${project}/status-page`;
-  const { data, error, reload } = useApi<Settings>(host.has("statusPages") && project ? base : null);
+  const { data, error, reload } = useApi<Settings>(host.has("statusPages") && project && !isAllProjects() ? base : null);
   const [title, setTitle] = useState("");
   const [link, setLink] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  if (host.has("statusPages") && isAllProjects()) return <Panel title="Public Status Page"><PickProject what="Status pages" /></Panel>;
   if (!host.has("statusPages") || !data) return null;
   const canWrite = role !== undefined && role !== "viewer";
   const make = () => void act(() => apiSend<{ url: string }>("POST", base, { title: title || data.title }).then((r) => setLink(r.url)), reload).then(setProblem);

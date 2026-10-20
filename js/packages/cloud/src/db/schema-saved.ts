@@ -10,3 +10,12 @@ ALTER TABLE shares ADD COLUMN title TEXT NOT NULL DEFAULT '';
 ALTER TABLE shares ADD COLUMN snapshot TEXT;
 ALTER TABLE shares ADD COLUMN params TEXT NOT NULL DEFAULT '{}';
 `;
+
+/** Migration 25: an item may belong to the whole organization (saved under "All projects"), with no project. */
+export const SAVED_ORG_MIGRATION = `
+ALTER TABLE saved_items ADD COLUMN org_id TEXT REFERENCES orgs (id) ON DELETE CASCADE;
+UPDATE saved_items s SET org_id = p.org_id FROM projects p WHERE p.id = s.project_id;
+ALTER TABLE saved_items ALTER COLUMN org_id SET NOT NULL;
+ALTER TABLE saved_items ALTER COLUMN project_id DROP NOT NULL;
+CREATE INDEX ix_saved_items_org ON saved_items (org_id);
+`;

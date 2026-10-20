@@ -1,6 +1,7 @@
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
 import { alignNow, type HostsModel, hostsModelOf, INFRA_PARAMS, infraSteps, type KubeModel, kubeModelOf, type MetricData, type MetricRows, runMetricSync, type TimeRange } from "@wizeworks/lens-core";
 import { type MetricScope, rangeOf } from "./metrics-read.js";
+import { sqlScopeOf } from "./scale-exec.js";
 import { listServices } from "./store-read.js";
 
 export type InfraPage = "hosts" | "kubernetes";
@@ -17,7 +18,7 @@ export function infraParams(p: URLSearchParams): Record<string, string> {
 
 /** Host and Kubernetes series for a scope and range, from the metric rollup tiers. */
 export function infraData(db: DatabaseSync, range: TimeRange, scope: MetricScope, params: Record<string, string>, now: number): MetricData {
-  const steps = infraSteps("sqlite", { project: scope.project || undefined, env: scope.env || undefined }, range, alignNow(now), params);
+  const steps = infraSteps("sqlite", sqlScopeOf(scope), range, alignNow(now), params);
   return runMetricSync(steps, (q) => db.prepare(q.sql).all(...(q.args as SQLInputValue[])) as MetricRows);
 }
 

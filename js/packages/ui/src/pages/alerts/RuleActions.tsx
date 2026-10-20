@@ -5,6 +5,7 @@ import { fmtDateTime } from "../../format";
 import { Badge, DotText } from "../../ui/Badges";
 import { Select } from "../../ui/Controls";
 import type { AlertRule } from "./alertTypes";
+import type { InProject } from "../../data/projectScope";
 
 const HOUR = 3_600_000;
 const MUTES: [string, string][] = [["", "Mute…"], [String(HOUR), "For 1 hour"], [String(4 * HOUR), "For 4 hours"], [String(24 * HOUR), "For 1 day"], ["-1", "Until I unmute"]];
@@ -28,8 +29,8 @@ export function RuleState({ rule }: { rule: AlertRule }) {
 
 export interface RuleActionsProps {
   rule: AlertRule;
-  /** The rule's API address: `url("/<id>/mute")`. */
-  url: (path?: string) => string;
+  /** The rule's API address: `url("/<id>/mute")`, in its own project under "All projects". */
+  url: (path?: string, projectId?: string) => string;
   onDone: (note?: string) => void;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -40,7 +41,7 @@ export function RuleActions({ rule, url, onDone, onEdit, onDelete }: RuleActions
   const [busy, setBusy] = useState(false);
   const run = (method: "POST" | "PATCH", path: string, body?: unknown, note?: (x: unknown) => string) => {
     setBusy(true);
-    void apiSend(method, url(path), body).then(
+    void apiSend(method, url(path, (rule as InProject<AlertRule>).projectId), body).then(
       (x) => (setBusy(false), onDone(note?.(x))),
       (e: unknown) => (setBusy(false), onDone(e instanceof Error ? e.message : String(e))),
     );

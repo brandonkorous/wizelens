@@ -1,4 +1,4 @@
-// Saved views, searches, and dashboards per project. A person sees their own items and the shared ones.
+// Saved views, searches, and dashboards per project, or for the whole organization. A person sees their own items and the shared ones.
 import type { SavedInput, SavedItem } from "@wizeworks/lens-core";
 import { newId } from "../auth/crypto.js";
 import type { Queryable } from "../db/db.js";
@@ -16,7 +16,7 @@ interface Row {
   updatedMs: number;
 }
 
-const SELECT = `SELECT s.id, s.project_id AS "projectId", s.kind, s.name, s.shared, s.body, s.owner_id AS "owner", u.name AS "ownerName",
+const SELECT = `SELECT s.id, COALESCE(s.project_id, '') AS "projectId", s.kind, s.name, s.shared, s.body, s.owner_id AS "owner", u.name AS "ownerName",
   s.created_ms AS "createdMs", s.updated_ms AS "updatedMs" FROM saved_items s LEFT JOIN users u ON u.id = s.owner_id`;
 
 const itemOf = ({ body, ...r }: Row): SavedItem => {
@@ -40,8 +40,30 @@ export async function savedById(q: Queryable, projectId: string, id: string): Pr
 export async function createSaved(q: Queryable, projectId: string, ownerId: string, i: SavedInput, now: number): Promise<string> {
   const id = newId();
   await q.query(
-    "INSERT INTO saved_items (id, project_id, owner_id, kind, name, shared, body, created_ms, updated_ms) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)",
+    `INSERT INTO saved_items (id, project_id, org_id, owner_id, kind, name, shared, body, created_ms, updated_ms)
+     SELECT $1, $2, p.org_id, $3, $4, $5, $6, $7, $8, $8 FROM projects p WHERE p.id = $2`,
     [id, projectId, ownerId, i.kind, i.name, i.shared, bodyOf(i), now],
+  );
+  return id;
+}
+
+/** Items a viewer sees under "All projects": the organization's own and those of `projectIds` (the ones they may read). */
+export async function listOrgSaved(q: Queryable, orgId: string, projectIds: readonly string[], userId: string | null): Promise<SavedItem[]> {
+  const where = "s.org_id = $1 AND (s.project_id IS NULL OR s.project_id = ANY($2)) AND (s.shared OR s.owner_id = $3)";
+  return (await q.query<Row>(`${SELECT} WHERE ${where} ORDER BY s.created_ms`, [orgId, [...projectIds], userId ?? ""])).map(itemOf);
+}
+
+/** One item of the whole organization (no project). */
+export async function orgSavedById(q: Queryable, orgId: string, id: string): Promise<SavedItem | undefined> {
+  const [row] = await q.query<Row>(`${SELECT} WHERE s.org_id = $1 AND s.project_id IS NULL AND s.id = $2`, [orgId, id]);
+  return row && itemOf(row);
+}
+
+export async function createOrgSaved(q: Queryable, orgId: string, ownerId: string, i: SavedInput, now: number): Promise<string> {
+  const id = newId();
+  await q.query(
+    "INSERT INTO saved_items (id, org_id, owner_id, kind, name, shared, body, created_ms, updated_ms) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)",
+    [id, orgId, ownerId, i.kind, i.name, i.shared, bodyOf(i), now],
   );
   return id;
 }

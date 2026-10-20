@@ -4,6 +4,7 @@ import { projectBack, projectQuiet } from "../mail/emails-health.js";
 import { renderMail } from "../mail/templates.js";
 import { stopUrl } from "../mail/unsubscribe.js";
 import { managersOf } from "../repo/mail-prefs.js";
+import { tenantScope } from "../telemetry/store.js";
 
 const HOUR = 3_600_000;
 /** Silence this long counts as quiet, for a project that sends around the clock. */
@@ -21,8 +22,8 @@ interface ProjectRow {
   changed_ms: number | null;
 }
 
-async function busy(app: CloudApp, projectId: string, lastMs: number): Promise<boolean> {
-  return (await app.telemetry.activeHours(projectId, lastMs - 72 * HOUR, lastMs)) >= BUSY_HOURS;
+async function busy(app: CloudApp, p: ProjectRow, lastMs: number): Promise<boolean> {
+  return (await app.telemetry.activeHours(tenantScope(p.org_id, [p.id]), lastMs - 72 * HOUR, lastMs)) >= BUSY_HOURS;
 }
 
 async function tell(app: CloudApp, p: ProjectRow, make: (stop: string) => EmailContent): Promise<void> {
@@ -32,7 +33,7 @@ async function tell(app: CloudApp, p: ProjectRow, make: (stop: string) => EmailC
 /** Check one project. The first look only records its state, so an upgrade sends nothing for projects already quiet. */
 async function checkProject(app: CloudApp, p: ProjectRow, now: number): Promise<void> {
   if (p.last_ms === null) return;
-  const quiet = now - p.last_ms > QUIET_MS && (await busy(app, p.id, p.last_ms));
+  const quiet = now - p.last_ms > QUIET_MS && (await busy(app, p, p.last_ms));
   if (p.quiet === quiet) return;
   const saved = await app.db.query(
     `INSERT INTO project_health (project_id, quiet, changed_ms) VALUES ($1, $2, $3)

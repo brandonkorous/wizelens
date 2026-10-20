@@ -5,12 +5,12 @@ import { fail, readJsonBody, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
 import { apdexTargets, createSlo, deleteSlo, listSlos, saveApdexTargets, sloById, updateSlo } from "../repo/slos.js";
-import { projectRetentionMs } from "../scale-exec.js";
+import { projectRetentionMs, projectScopeOf } from "../scale-exec.js";
 import { forgetModels } from "./models.js";
 
 /** The stats of a project, read as far back as its organization keeps data. */
 async function executorOf(ctx: Ctx, projectId: string) {
-  return ctx.app.telemetry.executor(projectId, await projectRetentionMs(ctx.app.db, projectId, ctx.app.config.retentionDays));
+  return ctx.app.telemetry.executor(await projectScopeOf(ctx.app.db, projectId), await projectRetentionMs(ctx.app.db, projectId, ctx.app.config.retentionDays));
 }
 
 async function list(ctx: Ctx): Promise<void> {

@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { METRIC_ALERT_STATS, type MetricAlertStat, metricAlertDataOf, metricAlertValueOf, metricDataOf, type MetricPoint, metricsModelOf, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
 import { diffClose, METRIC_NOW, metricScenario } from "../../core/src/testing/metric-scenario.js";
 import { projectMetrics } from "./routes/metrics.js";
-import { CH_LIMIT, CH_URL, type ChTest, chTest } from "./test/ch.js";
+import { CH_LIMIT, CH_URL, type ChTest, chScope, chTest } from "./test/ch.js";
 
 const RANGES = Object.keys(TIME_RANGES) as TimeRange[];
 let t: ChTest;
@@ -38,7 +38,7 @@ describe.skipIf(!CH_URL)("ClickHouse metric rollups", () => {
       const points = metricScenario(range, METRIC_NOW, 3);
       const id = await projectWith(points);
       for (const params of paramSets(points)) {
-        const got = await projectMetrics(t.store, id, range, params, { now: METRIC_NOW + 4_000, env: "prod" });
+        const got = await projectMetrics(t.store, chScope(id), range, params, { now: METRIC_NOW + 4_000, env: "prod" });
         const memory = metricsModelOf(metricDataOf(points, range, METRIC_NOW, params, { tiers: true }));
         expect(diffClose(got, memory), `${range} ${JSON.stringify(params)}`).toEqual([]);
       }
@@ -51,7 +51,7 @@ describe.skipIf(!CH_URL)("ClickHouse metric rollups", () => {
     for (const ms of [300_000, 3_600_000, 6 * 3_600_000, 24 * 3_600_000]) {
       const w = { from: METRIC_NOW - ms, to: METRIC_NOW };
       for (const name of new Set(points.map((p) => p.name))) {
-        const data = await t.store.metricAlertData({ projectId: id }, name, w, METRIC_NOW);
+        const data = await t.store.metricAlertData({ scope: chScope(id) }, name, w, METRIC_NOW);
         const memory = metricAlertDataOf(points.filter((p) => p.name === name), w, METRIC_NOW, { tiers: true });
         for (const stat of Object.keys(METRIC_ALERT_STATS) as MetricAlertStat[]) {
           expect(diffClose(metricAlertValueOf(data, stat), metricAlertValueOf(memory, stat)), `${name} ${stat} ${ms}`).toEqual([]);

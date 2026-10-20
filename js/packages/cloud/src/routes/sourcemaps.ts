@@ -2,6 +2,7 @@ import { answerResolve, checkUpload, MAX_SOURCEMAP_BYTES, normalizeRelease, pars
 import { readBody } from "@wizeworks/lens-hub/kit";
 import type { Ctx } from "../app.js";
 import { joinScope } from "../auth/join-scope.js";
+import { tenantScope } from "../telemetry/store.js";
 import type { ProjectAccess } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson } from "../http/http.js";
 import type { RateLimiter } from "../http/limiter.js";
@@ -9,6 +10,7 @@ import type { Router } from "../http/router.js";
 import { listSourceMaps, saveSourceMap } from "../repo/sourcemaps.js";
 import { projectOf } from "./data.js";
 import { ingestProject } from "./ingest.js";
+import { type ReadScope, readScopeOf } from "./scope.js";
 
 /** `POST api/sourcemaps?release=&file=` with an ingest key: one map for the key's project (body the map JSON, gzip allowed). */
 export async function uploadSourceMap(ctx: Ctx, limiter: RateLimiter): Promise<void> {
@@ -33,22 +35,24 @@ export async function listProjectMaps(ctx: Ctx, limiter: RateLimiter): Promise<v
   sendJson(ctx.res, 200, { maps: await listSourceMaps(ctx.app.db, projectId, release) });
 }
 
-/** The project whose maps a resolve call reads: the one the error's span was sent to, among those the caller may join; else `?project=`. */
-async function mapsProject(ctx: Ctx, access: ProjectAccess, body: unknown): Promise<string> {
+/** The project whose maps a resolve call reads: the one the error's span was sent to, among those the caller may read; else `?project=` (or the first of all). */
+async function mapsProject(ctx: Ctx, r: ReadScope, body: unknown): Promise<string> {
+  const fallback = r.project?.id ?? r.projects[0]!.id;
   const target = resolveTargetOf(body);
-  if (!target?.spanId) return access.project.id;
-  for (const id of await joinScope(ctx.app.db, access)) {
-    const part = await ctx.app.telemetry.joinedTrace(id, [id], target.traceId);
+  if (!target?.spanId) return fallback;
+  const scope = r.access ? await joinScope(ctx.app.db, r.access) : r.scope;
+  for (const id of scope.projects) {
+    const part = await ctx.app.telemetry.trace(tenantScope(scope.org, [id]), target.traceId);
     if (part?.spans.some((s) => s.spanId === target.spanId)) return id;
   }
-  return access.project.id;
+  return fallback;
 }
 
 /** `POST api/sourcemaps/resolve?project=` from the dashboard: a browser stack after the uploaded maps of the error's project. */
 async function resolve(ctx: Ctx): Promise<void> {
-  const access = await projectOf(ctx);
+  const r = await readScopeOf(ctx);
   const body = await readJsonBody(ctx.req);
-  const answer = await answerResolve(body, ctx.app.maps(await mapsProject(ctx, access, body)));
+  const answer = await answerResolve(body, ctx.app.maps(await mapsProject(ctx, r, body)));
   sendJson(ctx.res, answer.status, answer.body);
 }
 

@@ -2,7 +2,8 @@ import { useSyncExternalStore } from "react";
 import type { OrgRole } from "@wizeworks/lens-core";
 import { apiFetch } from "./api";
 import type { AuthClient } from "./auth-client";
-import { getScope, setProjectScope } from "./prefs";
+import { getScope, setOrgScope, setProjectScope } from "./prefs";
+import { ALL_PROJECTS } from "./projectScope";
 import { provider } from "./provider";
 
 export type Role = OrgRole;
@@ -59,10 +60,27 @@ let state: AccountState | null = null;
 
 const emit = () => listeners.forEach((l) => l());
 
-/** Keep the chosen project when it is still ours; else pick the first one. */
+/** The organization shown: the chosen one while we are in it, else the chosen project's, else the first. */
+function orgOf(s: AccountState): OrgWithProjects | undefined {
+  const { org, project } = getScope();
+  const orgs = s.orgs ?? [];
+  return orgs.find((o) => o.id === org) ?? orgs.find((o) => o.projects.some((p) => p.id === project)) ?? orgs[0];
+}
+
+/** Keep the chosen project when it is still ours and in the shown organization; else all of its projects (one: that one). */
 function pickProject(s: AccountState): void {
-  const all = (s.orgs ?? []).flatMap((o) => o.projects);
-  if (all.length && !all.some((p) => p.id === getScope().project)) setProjectScope(all[0]!.id);
+  const org = orgOf(s);
+  if (!org) return;
+  if (getScope().org !== org.id) setOrgScope(org.id);
+  const project = getScope().project;
+  if (project === ALL_PROJECTS ? org.projects.length > 0 : org.projects.some((p) => p.id === project)) return;
+  setProjectScope(org.projects.length === 1 ? org.projects[0]!.id : ALL_PROJECTS);
+}
+
+/** Show another organization: all of its projects (one: that one). */
+export function pickOrg(org: OrgWithProjects): void {
+  setOrgScope(org.id);
+  setProjectScope(org.projects.length === 1 ? org.projects[0]!.id : ALL_PROJECTS);
 }
 
 /** Load who is signed in, then reload the data with the right project. */
@@ -142,12 +160,9 @@ export function useAccount(): AccountState | null {
   );
 }
 
-/** The organization and project the dashboard shows now. */
-export function currentProject(s: AccountState | null): { org: OrgWithProjects; project: Project } | null {
-  const id = getScope().project;
-  for (const org of s?.orgs ?? []) {
-    const project = org.projects.find((p) => p.id === id);
-    if (project) return { org, project };
-  }
-  return null;
+/** The organization the dashboard shows now, and its one project; `project` is null under "All projects". */
+export function currentProject(s: AccountState | null): { org: OrgWithProjects; project: Project | null } | null {
+  const org = s ? orgOf(s) : undefined;
+  if (!org) return null;
+  return { org, project: org.projects.find((p) => p.id === getScope().project) ?? null };
 }

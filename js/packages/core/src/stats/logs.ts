@@ -10,6 +10,8 @@ export const LOG_LEVELS: readonly LogLevel[] = ["trace", "debug", "info", "warn"
 export interface LogRow {
   key: string;
   traceId: string;
+  /** The project's label, when one read covers many projects (the cloud's "All projects"). */
+  project?: string;
   traceName: string;
   spanId: string | null;
   timeMs: number;

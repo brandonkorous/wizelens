@@ -13,6 +13,7 @@ import { StatusPagePanel } from "./StatusPagePanel";
 import { CertWarnings, UptimeCards } from "./UptimeCards";
 import { ChecksTable } from "./UptimeTable";
 import "../../styles/pages/uptime.css";
+import { useTargetProject } from "../../ui/ProjectSelect";
 
 const SUBTITLE = "Checks that call your sites and APIs on a schedule, from this host. Results are requests of the wizelens-uptime service.";
 
@@ -49,13 +50,14 @@ function actionsOf(api: UptimeApi, onEdit: (c: UptimeCheckView) => void, setNote
 
 function UptimeList() {
   const api = useUptime();
+  const target = useTargetProject();
   const { model } = usePageModel("uptime");
   const [editing, setEditing] = useState<UptimeCheckView | "new" | null>(null);
   const [note, setNote] = useNote();
   const checks = api.data?.checks ?? [];
   const actions = actionsOf(api, setEditing, setNote);
   const save = async (draft: Parameters<UptimeApi["save"]>[0]) => {
-    const err = await api.save(draft, editing === "new" || !editing ? undefined : editing.id);
+    const err = await api.save(draft, editing === "new" || !editing ? undefined : editing.id, target.id ?? undefined);
     if (!err) setEditing(null);
     return err;
   };
@@ -66,6 +68,7 @@ function UptimeList() {
       {api.error && <div className="wl-banner wl-banner-error">{api.error}</div>}
       {note && <div className="wl-banner wl-banner-info">{note}</div>}
       <CertWarnings checks={checks} nowMs={api.data?.nowMs ?? Date.now()} />
+      {editing === "new" && target.field}
       {editing && <CheckForm initial={editing === "new" ? null : editing} onSave={save} onCancel={() => setEditing(null)} />}
       <UptimeCards checks={checks} model={model} />
       <Panel title="Checks" flush>

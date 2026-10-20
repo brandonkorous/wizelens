@@ -8,6 +8,7 @@ import { Tile } from "@/sections/bento/Tile";
 import { Compare } from "./Compare";
 import { TeamDemo } from "./TeamDemo";
 import { HistoryArt, KeysArt, RetentionArt, ScaleArt } from "./tiles/DataTiles";
+import { ProjectsArt } from "./tiles/ProjectsArt";
 import { AlertsArt, AuditArt, RolesArt, ShareArt } from "./tiles/TeamTiles";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -54,6 +55,7 @@ function Features() {
         </div>
         <div className="wl-bento wl-cloud-bento">
           <Tile area="ro" title="Roles that make sense." body="Organizations hold projects. Viewers read, members alert and share, admins run projects and keys, owners run owners.">{(s) => <RolesArt seen={s} />}</Tile>
+          <Tile area="pa" title="Every project, one screen." body="Pick All projects and see your whole organization at once. Totals add up, and two services with the same name stay apart.">{(s) => <ProjectsArt seen={s} />}</Tile>
           <Tile area="hi" title="30 days of history." body="Every page is computed on the server, from stats tables, never from a sample.">{(s) => <HistoryArt seen={s} />}</Tile>
           <Tile area="al" title="Alerts that say what happened." body="Error rate, latency, traffic, new errors, slow queries, or any metric. To webhooks and Slack, when it fires and when it clears.">{(s) => <AlertsArt seen={s} />}</Tile>
           <Tile area="sh" title="Share one trace." body="A read-only link to one trace, for 1 to 30 days. Revoke it any time.">{(s) => <ShareArt seen={s} />}</Tile>

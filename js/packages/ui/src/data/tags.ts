@@ -4,6 +4,7 @@ import { activeTags, type ActiveTag, TAG_LIMITS, type TagInput, type TagList, ty
 import { apiFetch, apiSend } from "./api";
 import { useHost } from "./host";
 import { getScope, onPrefChange } from "./prefs";
+import { projectQuery } from "./projectScope";
 
 /** What a host without tags (or an older one) shows: nothing to tag with, nothing to change. */
 export const NO_TAGS: TagList = { tags: [], editable: false, max: TAG_LIMITS.rules };
@@ -18,12 +19,12 @@ let loaded: Loaded | null = null;
 let pending: string | null = null;
 const listeners = new Set<() => void>();
 
-const scopeKey = () => getScope().project;
+const scopeKey = () => projectQuery();
 
-/** `?project=` for the tags API: rules belong to a project on the cloud, to the whole hub elsewhere. */
+/** `?project=` for the tags API: rules belong to a project on the cloud (all of an organization's to read), to the whole hub elsewhere. */
 export const tagScopeQuery = (): string => {
-  const project = getScope().project;
-  return project ? `?project=${encodeURIComponent(project)}` : "";
+  const project = projectQuery();
+  return project ? `?${project}` : "";
 };
 
 function set(next: Loaded): void {

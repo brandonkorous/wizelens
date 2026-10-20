@@ -30,9 +30,19 @@
 
 .wl-cloud-bento { grid-template-areas:
   "ro ro ro ro ro hi hi hi hi hi hi hi"
-  "al al al al al al al sh sh sh sh sh"
-  "sc sc sc sc ke ke ke ke au au au au"
-  "re re re re re re re re au au au au"; grid-auto-rows: minmax(280px, auto); }
+  "pa pa pa pa pa pa pa sh sh sh sh sh"
+  "al al al al al al al sc sc sc sc sc"
+  "ke ke ke ke ke ke au au au au au au"
+  "re re re re re re au au au au au au"; grid-auto-rows: minmax(280px, auto); }
+
+.wl-ct-projects { display: grid; gap: 10px; font-size: 14px; }
+.wl-ct-projects-bar { display: flex; align-items: center; gap: 6px; }
+.wl-ct-projects-bar span { padding: 4px 10px; border-radius: 999px; color: var(--wl-muted); font-size: 13px; }
+.wl-ct-projects-bar span.wl-on { background: var(--wl-blue); color: var(--wl-white); }
+.wl-ct-projects-bar b { margin-left: auto; font-weight: 600; }
+.wl-ct-projects ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.wl-ct-projects li { display: flex; justify-content: space-between; padding: 8px 12px; border-radius: 8px; background: var(--wl-white); }
+.wl-ct-projects li i { font-style: normal; color: var(--wl-blue); }
 
 .wl-ct-roles { display: grid; gap: 4px; font-size: 13.5px; }
 .wl-ct-roles-row { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 0.6fr)); align-items: center; gap: 6px; padding: 7px 10px; border-radius: 8px; background: var(--wl-white); }
@@ -101,7 +111,7 @@
 .wl-cloud-safe li::before { content: ""; position: absolute; left: 2px; top: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--wl-green); }
 
 @media (max-width: 1080px) {
-  .wl-cloud-bento { grid-template-areas: "ro hi" "al sh" "sc ke" "au re"; }
+  .wl-cloud-bento { grid-template-areas: "ro hi" "pa pa" "al sh" "sc ke" "au re"; }
 }
 @media (max-width: 960px) {
   .wl-cloud-hero-grid, .wl-cloud-self { grid-template-columns: minmax(0, 1fr); gap: 40px; }
@@ -111,5 +121,5 @@
   .wl-compare-head { display: none; }
 }
 @media (max-width: 680px) {
-  .wl-cloud-bento { grid-template-areas: "ro" "hi" "al" "sh" "sc" "ke" "au" "re"; }
+  .wl-cloud-bento { grid-template-areas: "ro" "hi" "pa" "al" "sh" "sc" "ke" "au" "re"; }
 }

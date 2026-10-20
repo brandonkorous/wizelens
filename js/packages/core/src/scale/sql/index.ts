@@ -11,3 +11,5 @@ export { searchSql } from "./search-run.js";
 export { likeOf, searchCond } from "./search-sql.js";
 export { ATTR_VALUE_MAX, SEARCH_COLUMNS, searchRows } from "./search-write.js";
 export { suggestSql } from "./suggest-sql.js";
+export { labelKey, labelPart, labelRow, labelTop, PROJECT_MARK, servicePartsOf, unlabelKey, unlabelPart } from "./project-keys.js";
+export type { LabeledRow, ProjectLabels } from "./project-keys.js";

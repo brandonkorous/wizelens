@@ -1,10 +1,19 @@
 import { Check, ChevronDown, Layers } from "lucide-react";
 import { displayService, groupServices, type ServiceGroup } from "@wizeworks/lens-core";
+import { type OrgWithProjects, pickOrg } from "../data/account";
 import { useEnvScope, useProjectScope, useServiceScope } from "../data/prefs";
+import { ALL_PROJECTS } from "../data/projectScope";
 import { useSetService } from "../ui/ServiceSelect";
 import { type HubRegistry, inScope, presenceOf } from "../data/sources";
 import { fmtAgo, fmtCount } from "../format";
 import { Menu } from "./Menu";
+
+/** The cloud's choices: the shown organization's projects ("All projects" first with more than one), and every organization of the person. */
+export interface CloudChoices {
+  projects: [string, string][];
+  orgs: OrgWithProjects[];
+  org: OrgWithProjects | null;
+}
 
 interface ChoicesProps {
   title: string;
@@ -12,7 +21,7 @@ interface ChoicesProps {
   values: [string, string][];
   value: string;
   onPick: (v: string) => void;
-  /** Offer "All" first. The cloud always shows one project, so it has no "All". */
+  /** Offer "All" first. The cloud brings its own "All projects" choice. */
   all?: boolean;
 }
 
@@ -51,21 +60,28 @@ function ServiceLine({ g, active, onPick }: { g: ServiceGroup; active: boolean; 
   );
 }
 
-/** Hub filters (environment and project) and the services the hub hears from. */
-export function HubMenu({ registry, projects }: { registry: HubRegistry | null; projects?: [string, string][] }) {
+/** The button's text: the project (or All projects) and environment; the organization too when the person has several. */
+function labelOf(cloud: CloudChoices | undefined, project: string, env: string): string {
+  if (!cloud) return [project, env].filter(Boolean).join(" · ") || "All projects";
+  const name = cloud.projects.find(([id]) => id === project)?.[1] ?? (project === ALL_PROJECTS ? "All projects" : "");
+  const org = cloud.orgs.length > 1 ? cloud.org?.name : undefined;
+  return [org, name, env].filter(Boolean).join(" · ") || "All projects";
+}
+
+/** Filters (organization, project, environment) and the services sending data. */
+export function HubMenu({ registry, cloud }: { registry: HubRegistry | null; cloud?: CloudChoices }) {
   const [env, setEnv] = useEnvScope();
   const [project, setProject] = useProjectScope();
   const [service] = useServiceScope();
   const pick = useSetService();
-  const services = groupServices((registry?.services ?? []).filter((s) => inScope(s, { env, project }, !projects)));
+  const services = groupServices((registry?.services ?? []).filter((s) => inScope(s, { env, project }, !cloud)));
   const online = services.filter((g) => g.online > 0).length;
-  const projectName = projects ? projects.find(([id]) => id === project)?.[1] : project;
-  const text = [projectName, env].filter(Boolean).join(" · ") || "All projects";
   const pairs = (list: string[]) => list.map((v): [string, string] => [v, v]);
+  const orgs = cloud && cloud.orgs.length > 1 ? cloud.orgs : [];
   const label = (
     <>
       <Layers aria-hidden="true" />
-      <span className="wl-label">{text}</span>
+      <span className="wl-label">{labelOf(cloud, project, env)}</span>
       <span className="wl-chip-count" title={`${online} of ${services.length} services online`}>
         {online}/{services.length}
       </span>
@@ -73,10 +89,11 @@ export function HubMenu({ registry, projects }: { registry: HubRegistry | null; 
     </>
   );
   return (
-    <Menu label={label} title="Project, environment, and connected services">
+    <Menu label={label} title="Organization, project, environment, and connected services">
       {(close) => (
         <>
-          <Choices title="Project" values={projects ?? pairs(registry?.projects ?? [])} value={project} all={!projects} onPick={(v) => (setProject(v), close())} />
+          <Choices title="Organization" values={orgs.map((o): [string, string] => [o.id, o.name])} value={cloud?.org?.id ?? ""} all={false} onPick={(v) => (pickOrg(orgs.find((o) => o.id === v)!), close())} />
+          <Choices title="Project" values={cloud?.projects ?? pairs(registry?.projects ?? [])} value={project} all={!cloud} onPick={(v) => (setProject(v), close())} />
           <Choices title="Environment" values={pairs(registry?.environments ?? [])} value={env} onPick={(v) => (setEnv(v), close())} />
           <div className="wl-menu-head">Services</div>
           {services.length > 0 && (

@@ -3,6 +3,7 @@ import { parseJson, readBody } from "@wizeworks/lens-hub/kit";
 import { handleMcp, type McpDataSource, type McpProjects } from "@wizeworks/lens-node/kit";
 import type { Ctx } from "../app.js";
 import { joinScope } from "../auth/join-scope.js";
+import { projectScope } from "../telemetry/store.js";
 import { OAUTH_SCOPES } from "../auth/oauth.js";
 import { appPrincipalOf } from "../auth/oauth-access.js";
 import type { AppPrincipal, Principal, ProjectAccess } from "../auth/principal.js";
@@ -11,7 +12,8 @@ import type { Router } from "../http/router.js";
 import { listEvents } from "../repo/alert-events.js";
 import { listRules } from "../repo/alerts.js";
 import { audit } from "../repo/audit.js";
-import { keyAllows, keyByToken, projectInOrg } from "../repo/projects.js";
+import { keyAllows, keyByToken, listProjects, projectInOrg } from "../repo/projects.js";
+import { allSource } from "./mcp-all.js";
 import { projectTags } from "../repo/tags.js";
 import { projectMetrics } from "./metrics.js";
 import { projectPage } from "./models.js";
@@ -41,16 +43,17 @@ async function projectSource(ctx: Ctx, access: ProjectAccess, r: Reader, writes:
   const { db, telemetry } = ctx.app;
   const scope = await joinScope(db, access);
   let recent: Promise<Trace[]> | undefined;
-  const traces = () => (recent ??= telemetry.traces({ projectId: project.id, limit: MCP_RECENT }));
+  const own = projectScope(project);
+  const traces = () => (recent ??= telemetry.traces({ scope: own, limit: MCP_RECENT }));
   return {
     service: project.name,
     version: ctx.app.version,
     ...thresholdsOf(ctx.app.config, await ctx.app.settings.get(project.id)),
     all: traces,
-    get: (traceId, federate) => telemetry.joinedTrace(project.id, federate ? scope : [project.id], traceId),
-    metrics: (range, params) => projectMetrics(telemetry, project.id, range, params, { now: ctx.app.config.now() }),
-    search: (q) => telemetry.search(project.id, q),
-    suggest: (r) => telemetry.suggest(project.id, r),
+    get: (traceId, federate) => telemetry.joinedTrace(project.id, federate ? scope : own, traceId),
+    metrics: (range, params) => projectMetrics(telemetry, own, range, params, { now: ctx.app.config.now() }),
+    search: (q) => telemetry.search(own, q),
+    suggest: (r) => telemetry.suggest(own, r),
     page: (page, range, params) => projectPage(ctx.app, project, page, range, params),
     alerts: async () => ({ rules: await listRules(db, project.id), events: await listEvents(db, project.id, ALERT_EVENTS) }),
     now: () => ctx.app.config.now(),
@@ -70,7 +73,7 @@ async function accessOf(ctx: Ctx, r: Reader, projectId: string): Promise<Project
 /** Several projects: the tools take a `project` argument, and list_projects names them. */
 async function projectsSource(ctx: Ctx, r: Reader, writes: Writes): Promise<McpProjects> {
   const { db } = ctx.app;
-  const projects = await db.query<{ id: string; name: string }>("SELECT id, name FROM projects WHERE org_id = $1 AND id = ANY($2) ORDER BY name", [r.orgId, [...r.projectIds]]);
+  const projects = (await listProjects(db, r.orgId)).filter((p) => r.projectIds.includes(p.id));
   return {
     service: "wizelens-cloud",
     version: ctx.app.version,
@@ -81,6 +84,7 @@ async function projectsSource(ctx: Ctx, r: Reader, writes: Writes): Promise<McpP
     alerts: true,
     projects,
     open: async (id) => projectSource(ctx, await accessOf(ctx, r, id), r, writes),
+    all: () => allSource(ctx, r, projects, writes),
     audit: (line) => void writes.push(audit(db, r.orgId, r.actor, "mcp.call", { line, ...(r.via ? { app: r.via } : {}) }, ctx.app.config.now())),
   };
 }

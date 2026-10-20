@@ -3,7 +3,7 @@ import { factOptionsOf, type ProjectSettings } from "@wizeworks/lens-core";
 import type { SettleOptions } from "../store.js";
 import type { Dirty, SettleQueue } from "./queue.js";
 import type { ProjectRunner } from "./settle-work.js";
-import { byProject, nextVer, type RetentionCache } from "./util.js";
+import { byProject, nextVer, type OrgCache, type RetentionCache } from "./util.js";
 
 const BATCH = 2_000;
 const BUDGET_MS = 2_000;
@@ -12,6 +12,8 @@ export interface Settler {
   queue: SettleQueue;
   retention: RetentionCache;
   logRetention: RetentionCache;
+  /** Each project's organization, stamped on every row. */
+  orgs: OrgCache;
   /** A project's own settings, for its thresholds. */
   settingsOf?: (projectId: string) => Promise<ProjectSettings>;
   /** Settles one project task: in a worker thread, or in this thread. */
@@ -28,12 +30,17 @@ async function settleItems(s: Settler, now: number, due: readonly Dirty[], o: Se
   try {
     const days = await s.retention.daysOf(due.map((d) => d.project));
     const logDays = await s.logRetention.daysOf(due.map((d) => d.project));
+    const orgs = await s.orgs.of(due.map((d) => d.project));
     for (const [project, items] of byProject(due)) {
-      const facts = { ...o.defaultFacts, ...factOptionsOf(await s.settingsOf?.(project)) };
-      await s.run({ project, items: [...items], now, retentionMs: days.get(project)! * 86_400_000, logRetentionMs: logDays.get(project)! * 86_400_000, facts, ver: nextVer(now) });
+      // A deleted project has no organization: its traces leave the queue unwritten.
+      const org = orgs.get(project);
+      if (org) {
+        const facts = { ...o.defaultFacts, ...factOptionsOf(await s.settingsOf?.(project)) };
+        await s.run({ project, org, items: [...items], now, retentionMs: days.get(project)! * 86_400_000, logRetentionMs: logDays.get(project)! * 86_400_000, facts, ver: nextVer(now) });
+      }
       for (const d of items) s.queue.settled(d, d.updatedMs);
       left = left.filter((d) => d.project !== project);
-      o.onSettled?.(project);
+      if (org) o.onSettled?.(project);
     }
     return due.length;
   } finally {

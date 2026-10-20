@@ -10,6 +10,7 @@ import { aggregateSql } from "./list-agg-sql.js";
 import type { RequestItem, TraceItem } from "../facts-lists.js";
 import type { ListFilter, ListNeed, ListRows } from "../needs.js";
 import { boolOf, collate, lit, msLit, num, numOrNull, type SqlSource, SqlText, scopeWhere, strOrNull, whereOf } from "./dialect.js";
+import { labelRow, type LabeledRow, unlabelPart } from "./project-keys.js";
 import { servicesOf } from "./write-sql.js";
 
 type Row = Record<string, unknown>;
@@ -150,12 +151,29 @@ function criticalOfRow(r: Row): CriticalSpan {
   return { traceId: String(r.trace_id), spanId: String(r.span_id), name: String(r.name), service: String(r.service), layer: String(r.layer), durationMs: num(r.duration_ms), startMs: num(r.start_ms) };
 }
 
-function whereFor(q: SqlText, src: SqlSource, t: TableSql, f: ListFilter, w: TimeWindow): string {
+/** The read's project labels when it covers many projects. */
+const labelsOf = (src: SqlSource) => ((src.scope.projects?.length ?? 0) > 1 ? (src.scope.labels ?? null) : null);
+
+/** A service filter that names a labeled service reads that project's rows of the service. */
+function unlabeled(q: SqlText, src: SqlSource, f: ListFilter): { f: ListFilter; where: string[] } {
+  const labels = labelsOf(src);
+  if (!labels) return { f, where: [] };
+  const service = f.service ? unlabelPart(f.service, labels) : null;
+  const logService = f.logService ? unlabelPart(f.logService, labels) : null;
+  const projects = [...new Set([service?.project, logService?.project].filter((p): p is string => !!p))];
+  const out = { ...f, ...(service ? { service: service.key } : {}), ...(logService ? { logService: logService.key } : {}) };
+  return { f: out, where: projects.map((p) => `${src.d.project} = ${q.p(p)}`) };
+}
+
+function whereFor(q: SqlText, src: SqlSource, t: TableSql, filter: ListFilter, w: TimeWindow): string {
   const conds = [...scopeWhere(q, src.scope), `${t.time} >= ${msLit(q.d, w.from)}`, `${t.time} < ${msLit(q.d, w.to)}`];
+  const { f, where } = unlabeled(q, src, filter);
+  conds.push(...where);
   if (f.traceId) conds.push(`trace_id = ${q.p(f.traceId)}`);
   if (f.traceIds) conds.push(q.in("trace_id", f.traceIds));
   return whereOf([...conds, ...t.where(q, f)]);
 }
+
 
 async function countOf(src: SqlSource, t: TableSql, f: ListFilter, w: TimeWindow): Promise<number> {
   const q = new SqlText(src.d);
@@ -167,7 +185,9 @@ async function itemsOf(src: SqlSource, t: TableSql, need: ListNeed, w: TimeWindo
   const q = new SqlText(src.d);
   const page = limit === null ? "" : ` LIMIT ${lit(limit)} OFFSET ${lit(offset)}`;
   const sql = `SELECT * FROM ${t.table} ${whereFor(q, src, t, need.filter, w)} ORDER BY ${t.order(src.d, need)}${page}`;
-  return (await src.run.all(sql, q.params)).map(t.item);
+  const labels = labelsOf(src);
+  const rows = await src.run.all(sql, q.params);
+  return labels ? rows.map((r) => labelRow(t.item(r) as LabeledRow, labels[String(r[src.d.project])] ?? "")) : rows.map(t.item);
 }
 
 /** Answer one list need: count first when paging, then the page; or the first `limit` rows. */
