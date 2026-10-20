@@ -2,6 +2,7 @@ import { ALERT_METRICS, type AlertChannel, type AlertRule, logSearchText, METRIC
 import { currentProject, useAccount } from "../../data/account";
 import { useHost } from "../../data/host";
 import { getScope } from "../../data/prefs";
+import { cloudResource, type InProject } from "../../data/projectScope";
 
 export type { AlertChannel as Channel, AlertRule } from "@wizeworks/lens-core";
 
@@ -20,8 +21,8 @@ export interface AlertEvent {
 }
 
 export interface AlertsData {
-  rules: AlertRule[];
-  events: AlertEvent[];
+  rules: InProject<AlertRule>[];
+  events: InProject<AlertEvent>[];
 }
 
 /** One rule's page: the rule, its events, and its evaluated values. */
@@ -72,13 +73,13 @@ const lineText = (r: AlertRule) => (r.op === "above_normal" ? `above normal (${S
 /** "Error rate > 5% over 5 minutes · Production". */
 export const ruleText = (r: AlertRule) => `${ruleLabel(r)} ${lineText(r)} over ${windowLabel(r.windowMs)}${r.env ? ` · ${r.env}` : ""}`;
 
-/** Where a host keeps alert rules: the cloud by project id, the hub by `?project=` (empty for all). */
-export function useAlertsApi(): { url: (path?: string) => string; ready: boolean; canWrite: boolean } {
+/** Where a host keeps alert rules: the cloud by project id (a rule's own under "All projects"), the hub by `?project=` (empty for all). */
+export function useAlertsApi(): { url: (path?: string, projectId?: string) => string; ready: boolean; canWrite: boolean } {
   const host = useHost();
   const cloud = host.has("accounts");
   const role = currentProject(useAccount())?.org.role;
   const project = getScope().project;
-  const url = (path = "") => (cloud ? `./api/projects/${encodeURIComponent(project)}/alerts${path}` : `./api/alerts${path}?project=${encodeURIComponent(project)}`);
+  const url = (path = "", projectId?: string) => (cloud ? cloudResource("alerts", path, projectId) : `./api/alerts${path}?project=${encodeURIComponent(project)}`);
   return { url, ready: !cloud || !!project, canWrite: !cloud || (role !== undefined && role !== "viewer") };
 }
 

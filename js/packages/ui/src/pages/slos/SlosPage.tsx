@@ -13,6 +13,10 @@ import { EMPTY_SLO, SloForm } from "./SloForm";
 import { SloPage } from "./SloPage";
 import { budgetTone, fmtBudget, fmtBurn, fmtSli, sloGoal, type SlosData, useSlosApi } from "./sloTypes";
 import "../../styles/pages/slos.css";
+import { type InProject } from "../../data/projectScope";
+import { PickProject } from "../../ui/PickProject";
+import { useTargetProject } from "../../ui/ProjectSelect";
+import { projectColumn } from "../../ui/ProjectColumn";
 
 const COLUMNS: Column<SloReport>[] = [
   { key: "name", header: "SLO", cell: (r) => <strong>{r.slo.name}</strong> },
@@ -41,8 +45,9 @@ function SloList() {
   const api = useSlosApi();
   const { data, error, reload } = useApi<SlosData>(api.ready ? api.url() : null);
   const [adding, setAdding] = useState(false);
+  const target = useTargetProject();
   const save = async (s: SloInput) => {
-    const err = await act(() => apiSend("POST", api.url(), s), reload);
+    const err = await act(() => apiSend("POST", api.url("", target.id ?? undefined), s), reload);
     if (!err) setAdding(false);
     return err;
   };
@@ -51,11 +56,13 @@ function SloList() {
     <>
       <PageHeader title="SLOs" subtitle="How much of your traffic must succeed, or be fast enough, and how much error budget is left.">{add}</PageHeader>
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
+      {adding && target.field}
       {adding && <SloForm title="New SLO" initial={EMPTY_SLO} onSave={save} onCancel={() => setAdding(false)} />}
       <Panel title="Objectives" flush>
-        <Table columns={COLUMNS} rows={data?.slos ?? []} rowKey={(r) => r.slo.id} onRowClick={(r) => navigate(sloHref(r.slo.id))} empty={<Empty title="No SLOs yet"><Target aria-hidden="true" /> Add one to track an error budget for a service or an endpoint.</Empty>} />
+        <Table columns={[COLUMNS[0]!, ...projectColumn<SloReport>(), ...COLUMNS.slice(1)]} rows={data?.slos ?? []} rowKey={(r) => r.slo.id} onRowClick={(r) => navigate(sloHref(r.slo.id, (r as InProject<typeof r>).projectId))} empty={<Empty title="No SLOs yet"><Target aria-hidden="true" /> Add one to track an error budget for a service or an endpoint.</Empty>} />
       </Panel>
-      {data && <ApdexTargets targets={data.apdex} url={api.apdexUrl} canWrite={api.canWrite} onSaved={reload} />}
+      {data && api.apdexUrl && <ApdexTargets targets={data.apdex} url={api.apdexUrl} canWrite={api.canWrite} onSaved={reload} />}
+      {data && !api.apdexUrl && <Panel title="Apdex targets"><PickProject what="Apdex targets" /></Panel>}
     </>
   );
 }

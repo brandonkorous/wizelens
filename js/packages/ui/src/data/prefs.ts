@@ -66,12 +66,14 @@ export const useRangePref = () => usePref<TimeRange>(KEYS.range, "24h", isTimeRa
 /** When the user last opened the notifications (epoch ms as a string). */
 export const useSeenPref = () => usePref<string>(KEYS.seen, "0", isEpoch);
 
-export const SCOPE = { env: "wizelens.ui.env", project: "wizelens.ui.project", service: "wizelens.ui.service" } as const;
+export const SCOPE = { env: "wizelens.ui.env", project: "wizelens.ui.project", service: "wizelens.ui.service", org: "wizelens.ui.org" } as const;
 const isShortText = (v: string): v is string => v.length <= 100;
 
-/** Hub filters: one environment and one project. "" means all. */
+/** Filters: one environment and one project. "" means all (hub); the cloud's "all" is every project of the current organization. */
 export const useEnvScope = () => usePref<string>(SCOPE.env, "", isShortText);
 export const useProjectScope = () => usePref<string>(SCOPE.project, "", isShortText);
+/** Cloud: the organization the dashboard shows. */
+export const useOrgScope = () => usePref<string>(SCOPE.org, "", isShortText);
 /** The service every page filters by (a display name, for example "Web App"); "" means all. */
 export const useServiceScope = () => usePref<string>(SCOPE.service, "", isShortText);
 
@@ -79,19 +81,28 @@ export interface Scope {
   env: string;
   project: string;
   service: string;
+  /** Cloud: the current organization. */
+  org: string;
 }
 
-/** The hub filters, for code outside React. */
+/** The filters, for code outside React. */
 export const getScope = (): Scope => ({
   env: memory.get(SCOPE.env) ?? read(SCOPE.env) ?? "",
   project: memory.get(SCOPE.project) ?? read(SCOPE.project) ?? "",
   service: memory.get(SCOPE.service) ?? read(SCOPE.service) ?? "",
+  org: memory.get(SCOPE.org) ?? read(SCOPE.org) ?? "",
 });
 
 /** Pick the project outside React, for example after sign-in. */
 export function setProjectScope(id: string): void {
   memory.set(SCOPE.project, id);
   write(SCOPE.project, id);
+}
+
+/** Pick the organization outside React. */
+export function setOrgScope(id: string): void {
+  memory.set(SCOPE.org, id);
+  write(SCOPE.org, id);
 }
 
 /** Hear any preference change. */

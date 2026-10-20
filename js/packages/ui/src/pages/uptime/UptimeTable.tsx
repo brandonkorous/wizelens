@@ -6,6 +6,7 @@ import { Badge, DotText, type Tone } from "../../ui/Badges";
 import { Sparkline } from "../../ui/Sparkline";
 import { type Column, Table } from "../../ui/Table";
 import { fmtUptime, statsOf, stateOf } from "./uptimeParts";
+import { projectColumn } from "../../ui/ProjectColumn";
 
 /** Days left on the certificate: a warning under 14 days, red once it has ended. */
 export function CertBadge({ c, nowMs }: { c: UptimeCheckView; nowMs: number }) {
@@ -47,6 +48,7 @@ function columns(p: TableProps): Column<UptimeCheckView>[] {
   const pct = (w: "24h" | "7d" | "30d") => ({ key: w, header: w, num: true, sort: (c: UptimeCheckView) => c.uptime[w] ?? -1, cell: (c: UptimeCheckView) => fmtUptime(c.uptime[w]) });
   return [
     { key: "state", header: "Status", sort: (c) => stateOf(c).rank, cell: (c) => <StateText c={c} /> },
+    ...projectColumn<UptimeCheckView>(),
     { key: "name", header: "Check", sort: (c) => c.name.toLowerCase(), className: "wl-uptime-name", cell: (c) => <a href={hrefTo("uptime", [c.id])}><strong>{c.name}</strong><span className="wl-muted wl-small">{c.method} {c.url}</span></a> },
     pct("24h"),
     pct("7d"),

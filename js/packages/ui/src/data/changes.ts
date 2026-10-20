@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { useHost } from "./host";
 import { getScope } from "./prefs";
 import { checkRelease } from "./release";
+import { projectQuery } from "./projectScope";
 
 // Live reloads on hosts with the "changes" capability: one event stream per tab, shared by every page, and a counter that moves when the project gets new data.
 const shared = { url: "", stream: null as EventSource | null, users: 0, tick: 0, subs: new Set<() => void>() };
@@ -31,8 +32,8 @@ const subscribe = (fn: () => void) => (shared.subs.add(fn), () => void shared.su
 /** A number that grows each time the host says the project has new data; 0 on hosts without the stream. */
 export function useChangeTick(): number {
   const live = useHost().has("changes") && typeof EventSource !== "undefined";
-  const project = getScope().project;
-  const url = live ? `./api/changes${project ? `?project=${encodeURIComponent(project)}` : ""}` : null;
+  const project = projectQuery();
+  const url = live ? `./api/changes${project ? `?${project}` : ""}` : null;
   useEffect(() => {
     if (!url) return;
     acquire(url);

@@ -15,6 +15,7 @@ import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 import { canManage } from "../team/teamTypes";
 import { RegistryHosts } from "./RegistryHosts";
+import { ALL_PROJECTS } from "../../data/projectScope";
 
 const statusOf = (g: ServiceGroup) => (g.online > 0 ? "Online" : presenceOf(g.newest));
 const hostsText = (g: ServiceGroup) => (g.instances.length === 1 ? "1" : `${fmtCount(g.online)} of ${fmtCount(g.instances.length)} online`);
@@ -46,7 +47,7 @@ function useForget(offline: number) {
     const err = await act(async () => (removed = (await apiSend<{ removed: number }>("POST", `./api/projects/${project}/services/forget`)).removed), () => provider.refresh());
     setNote(err ?? `Forgot ${fmtCount(removed)} offline ${removed === 1 ? "host" : "hosts"}.`);
   };
-  const button = cloud && project && canManage(role) && offline > 0 ? <button type="button" className="wl-link-btn" onClick={() => void run()}>Forget offline hosts</button> : null;
+  const button = cloud && project && project !== ALL_PROJECTS && canManage(role) && offline > 0 ? <button type="button" className="wl-link-btn" onClick={() => void run()}>Forget offline hosts</button> : null;
   return { button, dialog, note };
 }
 
@@ -63,7 +64,8 @@ export function RegistryPanel() {
   if (!registry) return null;
   const selected = groups.find((g) => g.key === open);
   const online = groups.filter((g) => g.online > 0).length;
-  const title = `Sending to this ${cloud ? "project" : "hub"} (${online} of ${groups.length} online)`;
+  const where = !cloud ? "this hub" : project === ALL_PROJECTS ? "these projects" : "this project";
+  const title = `Sending to ${where} (${online} of ${groups.length} online)`;
   const action = (
     <span className="wl-row-actions">
       {forget.button}

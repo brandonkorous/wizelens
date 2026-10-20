@@ -11,6 +11,7 @@ import { getScope, useServiceScope } from "./prefs";
 import { provider, useData } from "./provider";
 import { apiFetch } from "./api";
 import { currentTags, useTags } from "./tags";
+import { setProjectParams } from "./projectScope";
 
 export interface PageModel<P extends PageName> {
   model: ModelOf<P> | null;
@@ -84,7 +85,7 @@ function useLocalModel<P extends PageName>(page: P, params: Record<string, strin
 function modelUrl(page: PageName, params: Record<string, string>, range: string): string {
   const scope = getScope();
   const q = new URLSearchParams({ ...params, range });
-  if (scope.project) q.set("project", scope.project);
+  setProjectParams(q, scope);
   if (scope.env) q.set("env", scope.env);
   return `./api/models/${page}?${q.toString()}`;
 }

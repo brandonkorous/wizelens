@@ -3,6 +3,7 @@ import { cachedLoader, type ErrorEvent, fetchMapLoader, type ResolvedFrame, reso
 import { apiSend } from "./api";
 import { useHost } from "./host";
 import { getScope } from "./prefs";
+import { projectQuery } from "./projectScope";
 
 /** What a stack view needs from an error: an ErrorEvent, or one built from a trace span. Its trace and span pick the project whose maps apply. */
 export type StackSource = Pick<ErrorEvent, "type" | "message" | "stack" | "browser" | "release"> & Partial<Pick<ErrorEvent, "traceId" | "spanId">>;
@@ -17,8 +18,8 @@ export interface ResolvedStack {
 const browserLoader = cachedLoader(fetchMapLoader({ allow: (u) => /^https?:$/.test(u.protocol), timeoutMs: 8000 }), { max: 10, hitMs: 30_000 });
 
 function resolveUrl(): string {
-  const project = getScope().project;
-  return `./${SOURCEMAPS_RESOLVE_PATH}${project ? `?project=${encodeURIComponent(project)}` : ""}`;
+  const project = projectQuery();
+  return `./${SOURCEMAPS_RESOLVE_PATH}${project ? `?${project}` : ""}`;
 }
 
 // The host reads the maps of the project the error's trace and span belong to, so "All projects" and joined traces resolve too.

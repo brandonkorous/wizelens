@@ -5,6 +5,7 @@ import { apiSend } from "./api";
 import { useHost } from "./host";
 import { getScope, useProjectScope } from "./prefs";
 import { useApi } from "./useApi";
+import { cloudResource } from "./projectScope";
 
 export interface Member {
   id: string;
@@ -18,9 +19,9 @@ let tick = 0;
 /** Goes up after every change, so page models that show states load again. */
 export const useIssueTick = (): number => useSyncExternalStore((l) => (listeners.add(l), () => listeners.delete(l)), () => tick);
 
-/** The host's issues endpoint for the chosen project (the cloud keys it by project id). */
+/** The host's issues endpoint for the chosen project: the cloud keys it by project id, or by organization under "All projects" (labeled keys find their project). */
 function issuesUrl(cloud: boolean, project: string): string {
-  return cloud ? `./api/projects/${encodeURIComponent(project)}/issues` : `./api/issues?project=${encodeURIComponent(project)}`;
+  return cloud ? cloudResource("issues") : `./api/issues?project=${encodeURIComponent(project)}`;
 }
 
 /** Members issues can be assigned to (cloud), and whether this host keeps issues at all. */

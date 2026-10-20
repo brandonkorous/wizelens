@@ -25,7 +25,7 @@ The rules of `GAPS-PLAN.md` ("Rules for every phase") still hold.
 | C | The database enforces the org | M | Done |
 | E | Data routes read many projects | L | Done |
 | F | Per-project features, read across | M | Done |
-| G | The dashboard: org picker and "All projects" | L | |
+| G | The dashboard: org picker and "All projects" | L | Done |
 | H | MCP, docs, and the site | S | |
 
 ## Three locks against a cross-org read
@@ -129,17 +129,20 @@ fixed per project and safe to stamp at ingest.
 
 ## Phase G — The dashboard: org picker and "All projects"
 
-1. **Current org.** `useOrgScope()` (pref `wizelens.ui.org`, in the URL as `org`). `currentProject()`
-   (`data/account.ts:146-153`) becomes `currentOrg()` for Team, UserMenu, and UsageBanner.
-2. **Org picker** in the top bar when the person has more than one org. The project menu lists only that org.
-3. **"All projects"** first in `HubMenu` on the cloud too (`all` no longer `!projects`, `shell/HubMenu.tsx:79`).
-   `pickProject()` (`data/account.ts:63-66`) no longer forces the first project. A new session starts on All.
-4. **Requests.** One place builds the scope query (`project=all&org=…` or `project=<id>`), and every data hook uses it.
-   Hooks gated on `!!project` (`saved`, `issues`, `uptime`, alerts, SLOs, shares) read the org list routes under All.
-5. **Project on rows** under All: services ("api · Project X"), traces, errors, logs, search, alerts, issues, uptime.
-   A click on a project chip narrows to that project.
-6. **Create forms** (alert, SLO, uptime check, share) get a project field under All.
-7. **Settings pages** under All show "Pick a project" with the org's projects.
+1. **Current org.** `useOrgScope()` (pref `wizelens.ui.org`, in the URL as `org`). `currentProject()` returns the shown
+   organization and its one project (null under All); Team, the user menu, and the usage banner read the org.
+2. **The menu** (`shell/HubMenu.tsx`): Organization (with more than one), then the shown organization's projects with
+   "All projects" first (with more than one). A new session, or a project that is gone, starts on All.
+3. **Requests.** `data/projectScope.ts` builds the scope query (`project=all&org=…` or `project=<id>`) for every data
+   hook, and `cloudResource()` the address of a per-project resource: the item's own project, else the org list.
+4. **Per-project features under All.** Alerts, SLOs, uptime, issues, shares, and saved items list across projects
+   with a Project column; a row's link (`alertHref`, `sloHref`, `dashboardHref`, saved items) opens its project;
+   actions go to the row's project; new alerts, SLOs, and checks get a Project field (`useTargetProject`).
+5. **One project only:** settings, Apdex targets, and the status page show "Pick a project" (`ui/PickProject.tsx`);
+   share buttons and "Forget offline hosts" hide.
+6. **Checked in a browser** on a local cloud with ClickHouse: two projects with an `api` service each show as
+   "api · Admin" and "api · My app", totals add up, a service page reads its project only, a new alert lands in the
+   picked project, and one project still reads as before.
 
 ## Phase H — MCP, docs, and the site
 

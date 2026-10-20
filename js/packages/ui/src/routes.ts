@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getScope } from "./data/prefs";
 
 export type PageId =
   | "overview"
@@ -82,9 +83,11 @@ export const errorHref = (groupKey: string) => hrefTo("errors", [enc(groupKey)])
 export const endpointHref = (service: string, endpoint: string) => hrefTo("services", [enc(service), "endpoints", enc(endpoint)]);
 export const queryHref = (query: string) => hrefTo("database", ["queries", enc(query)]);
 export const routeHref = (route: string) => hrefTo("rendering", ["routes", enc(route)]);
-export const alertHref = (id: string) => hrefTo("alerts", [enc(id)]);
-export const sloHref = (id: string) => hrefTo("slos", [enc(id)]);
-export const dashboardHref = (id: string) => hrefTo("dashboards", [enc(id)]);
+/** A rule or SLO; with its project (a row under "All projects"), the link shows that project. */
+export const alertHref = (id: string, project?: string) => hrefTo("alerts", [enc(id)], project ? { project } : {});
+export const sloHref = (id: string, project?: string) => hrefTo("slos", [enc(id)], project ? { project } : {});
+/** A dashboard; one of a project, opened under "All projects", shows in that project. */
+export const dashboardHref = (id: string, project?: string) => hrefTo("dashboards", [enc(id)], project && getScope().project === "all" ? { project } : {});
 export const userHref = (user: string) => hrefTo("users", [enc(user)]);
 /** The Alerts page with a new rule open, filled from what the person was looking at. */
 export const newAlertHref = (fields: Record<string, string>) => hrefTo("alerts", [], { new: "1", ...fields });

@@ -61,7 +61,7 @@ function useAlertNotes(now: number): Note[] {
     () =>
       (data?.events ?? [])
         .filter((e) => (e.kind === "fired" || e.kind === "remind") && e.timeMs >= now - DAY_MS)
-        .map((e): Note => ({ key: `a|${e.id}`, kind: "alert", title: `${e.kind === "remind" ? "Still firing" : "Alert"}: ${e.ruleName}`, detail: e.message, timeMs: e.timeMs, count: 1, href: alertHref(e.ruleId) })),
+        .map((e): Note => ({ key: `a|${e.id}`, kind: "alert", title: `${e.kind === "remind" ? "Still firing" : "Alert"}: ${e.ruleName}`, detail: e.message, timeMs: e.timeMs, count: 1, href: alertHref(e.ruleId, e.projectId) })),
     [data, now],
   );
 }

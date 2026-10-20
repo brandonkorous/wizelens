@@ -25,6 +25,7 @@ const isHub = (info: ServiceInfo | null) => !!info?.capabilities?.includes("regi
 const RECENT_LIMIT = 300;
 const limitFor = (info: ServiceInfo | null) => (info?.capabilities?.includes("serverStats") ? RECENT_LIMIT : undefined);
 const scopeKey = (s: Scope) => `${s.env}
+${s.org}
 ${s.project}`;
 
 /** A service outside the hub is read only when it fits the chosen environment and project. */

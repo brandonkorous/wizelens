@@ -11,6 +11,7 @@ import { KIND_ICON, KIND_LABEL, StatusText } from "./serviceParts";
 import { useGroupTags } from "../../data/tagMatch";
 import { TagChips } from "../../ui/TagChips";
 import { TagThis } from "../../ui/TagThis";
+import { PROJECT_MARK } from "@wizeworks/lens-core";
 
 const DETAIL_LABEL: Partial<Record<ServiceRow["kind"], string>> = { database: "System", external: "Host", queue: "Queue", web: "Source" };
 
@@ -21,7 +22,9 @@ export function useHostGroups(name: string, owned: boolean): ServiceGroup[] {
   const [project] = useProjectScope();
   const cloud = useHost().has("accounts");
   if (!owned || !registry) return [];
-  return groupServices(registry.services.filter((s) => s.service === name && inScope(s, { env, project }, !cloud)));
+  // Under "All projects" a row names its service with its project's label ("api · Shop").
+  const named = (s: (typeof registry.services)[number]) => s.service === name || (!!s.project && `${s.service}${PROJECT_MARK}${s.project}` === name);
+  return groupServices(registry.services.filter((s) => named(s) && inScope(s, { env, project }, !cloud)));
 }
 
 function statsOf(row: ServiceRow, groups: readonly ServiceGroup[], now: number): [string, string][] {

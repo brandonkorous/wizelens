@@ -1,6 +1,7 @@
 import { type HubService, mergeTraces, type ServiceInfo, type Trace } from "@wizeworks/lens-core";
 import { ApiError } from "./api";
 import { getScope, type Scope } from "./prefs";
+import { projectQuery } from "./projectScope";
 
 /** One WizeLens service the dashboard reads from: this one, or a downstream one found in trace remotes. */
 export interface Source {
@@ -56,8 +57,11 @@ export const VIA_LABEL: Record<HubService["via"], string> = { addon: "WizeLens",
 export const loadRegistry = (endpoint: string, scope: Scope | null = null): Promise<HubRegistry> =>
   getJson<HubRegistry>(`${endpoint}/api/services?${scopeQuery(scope).slice(1)}`);
 
-const scopeQuery = (s: Scope | null) =>
-  s ? `${s.env ? `&env=${encodeURIComponent(s.env)}` : ""}${s.project ? `&project=${encodeURIComponent(s.project)}` : ""}` : "";
+const scopeQuery = (s: Scope | null) => {
+  if (!s) return "";
+  const project = projectQuery(s);
+  return `${s.env ? `&env=${encodeURIComponent(s.env)}` : ""}${project ? `&${project}` : ""}`;
+};
 
 /** Full traces of one service. With `since`, only traces active since then. With `scope`, only that environment and project (hubs). */
 export async function loadTraces(endpoint: string, since: number | null, scope: Scope | null = null, limit = INITIAL_LIMIT): Promise<Trace[]> {
@@ -69,8 +73,8 @@ export async function loadTraces(endpoint: string, since: number | null, scope: 
 
 /** One trace, merged across services by the add-on, then rebuilt here so clock skew is removed the same way everywhere. */
 export const loadTrace = async (traceId: string): Promise<Trace> => {
-  const project = getScope().project;
-  const t = await getJson<Trace>(`./api/traces/${traceId}?federate=true${project ? `&project=${encodeURIComponent(project)}` : ""}`);
+  const project = projectQuery();
+  const t = await getJson<Trace>(`./api/traces/${traceId}?federate=true${project ? `&${project}` : ""}`);
   return mergeTraces(traceId, [t]);
 };
 

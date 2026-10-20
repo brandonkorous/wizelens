@@ -84,6 +84,7 @@ export function useLogCharts(): LogCharts {
         ? changeSaved(api.url(), "POST", { kind: "search", name: name.trim(), href: logSearchHref(params), chart: true, shared: !api.cloud || shared })
         : keepLocal([...readLocal(), itemOf({ name: name.trim(), params })]),
     );
-  const remove = (id: string) => run(() => (api.on ? changeSaved(api.url(`/${encodeURIComponent(id)}`), "DELETE") : keepLocal(readLocal().filter((s) => s.id !== id))));
+  const owner = (id: string) => items.find((i) => i.id === id)?.projectId || undefined;
+  const remove = (id: string) => run(() => (api.on ? changeSaved(api.url(`/${encodeURIComponent(id)}`, owner(id)), "DELETE") : keepLocal(readLocal().filter((s) => s.id !== id))));
   return { charts: chartsOf(api.on ? items : local), error: api.on ? error : null, server: api.on, canWrite: !api.on || api.canWrite, save, remove };
 }

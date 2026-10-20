@@ -6,6 +6,7 @@ import { fmtDate } from "../../format";
 import { CopyButton } from "../../ui/Badges";
 import { Select } from "../../ui/Controls";
 import { Menu } from "../../shell/Menu";
+import { isAllProjects } from "../../data/projectScope";
 
 const DAYS: [string, string][] = [
   ["1", "1 day"],
@@ -15,6 +16,11 @@ const DAYS: [string, string][] = [
 
 /** Make a read-only link to this trace. Anyone with the link can open it until it expires or is revoked. */
 export function ShareButton({ traceId }: { traceId: string }) {
+  // A link belongs to one project: under "All projects", pick the project first.
+  return isAllProjects() ? null : <ShareMenu traceId={traceId} />;
+}
+
+function ShareMenu({ traceId }: { traceId: string }) {
   const [days, setDays] = useState("7");
   const [link, setLink] = useState<{ url: string; expiresMs: number } | null>(null);
   const [error, setError] = useState<string | null>(null);

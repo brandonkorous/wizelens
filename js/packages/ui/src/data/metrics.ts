@@ -5,6 +5,7 @@ import { apiFetch } from "./api";
 import { useHost, useRange } from "./host";
 import { usePeriodParams } from "./models";
 import { getScope, useServiceScope } from "./prefs";
+import { setProjectParams } from "./projectScope";
 
 /** Where the metrics page gets its numbers: the server computes them, the browser does from raw points, or the host has none. */
 export type MetricsSource = "server" | "points" | "none";
@@ -57,7 +58,7 @@ function useLoad<T>(url: string | null, tick: number): { data: T | null; url: st
 function serverUrl(params: Record<string, string>, range: TimeRange): string {
   const scope = getScope();
   const q = new URLSearchParams({ ...params, range });
-  if (scope.project) q.set("project", scope.project);
+  setProjectParams(q, scope);
   if (scope.env) q.set("env", scope.env);
   return `./api/models/metrics?${q.toString()}`;
 }

@@ -2,6 +2,7 @@ import type { ApdexTargets, SloReport } from "@wizeworks/lens-core";
 import { currentProject, useAccount } from "../../data/account";
 import { useHost } from "../../data/host";
 import { getScope } from "../../data/prefs";
+import { cloudResource, isAllProjects } from "../../data/projectScope";
 
 export interface SlosData {
   slos: SloReport[];
@@ -9,13 +10,14 @@ export interface SlosData {
 }
 
 /** Where a host keeps SLOs and Apdex targets: the cloud by project id, the hub by `?project=`. */
-export function useSlosApi(): { url: (path?: string) => string; apdexUrl: string; ready: boolean; canWrite: boolean } {
+export function useSlosApi(): { url: (path?: string, projectId?: string) => string; apdexUrl: string | null; ready: boolean; canWrite: boolean } {
   const cloud = useHost().has("accounts");
   const role = currentProject(useAccount())?.org.role;
   const project = getScope().project;
   const q = `?project=${encodeURIComponent(project)}`;
-  const url = (path = "") => (cloud ? `./api/projects/${encodeURIComponent(project)}/slos${path}` : `./api/slos${path}${q}`);
-  const apdexUrl = cloud ? `./api/projects/${encodeURIComponent(project)}/apdex` : `./api/apdex${q}`;
+  const url = (path = "", projectId?: string) => (cloud ? cloudResource("slos", path, projectId) : `./api/slos${path}${q}`);
+  // Apdex targets belong to one project: none under "All projects".
+  const apdexUrl = cloud ? (isAllProjects() ? null : `./api/projects/${encodeURIComponent(project)}/apdex`) : `./api/apdex${q}`;
   return { url, apdexUrl, ready: !cloud || !!project, canWrite: !cloud || (role !== undefined && role !== "viewer") };
 }
 
