@@ -19,7 +19,7 @@ The rules of `GAPS-PLAN.md` ("Rules for every phase") still hold. One commit per
 | 4 | Rollups and the `security` page model | L | Done |
 | 5 | The Security page | L | Done |
 | 6 | MCP tool, alerts, and search hits | M | Done |
-| 7 | SDKs report their packages | M | |
+| 7 | SDKs report their packages | M | Done |
 | 8 | Known-vulnerable packages (OSV) on hub and cloud | L | |
 | 9 | Docs, site, and changelog | S | |
 

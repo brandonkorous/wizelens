@@ -150,6 +150,13 @@
       "findings": [{ "kind": "stack-exposed", "severity": "warning", "shape": "POST /pay", "count": 1, "spanIds": ["s1"] }]
     },
     {
+      "name": "a Node stack trace inside a JSON 500 answer",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "GET", "url.path": "/api/x", "http.route": "/api/x", "http.response.status_code": 500, "wizelens.response.body": "{\"error\":\"Error: boom\\n    at handler (/app/src/x.js:1:2)\"}" } }
+      ],
+      "findings": [{ "kind": "stack-exposed", "severity": "warning", "shape": "GET /api/x", "count": 1, "spanIds": ["s1"] }]
+    },
+    {
       "name": "an open .env file",
       "spans": [
         { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "GET", "url.path": "/.ENV", "http.response.status_code": 200 } }

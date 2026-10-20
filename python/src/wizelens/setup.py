@@ -12,6 +12,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from .env import apply_otel_defaults
+from .packages import report_packages
 from .processors import SamplingLogProcessor, SamplingSpanProcessor
 from .sampling import TraceSampler
 from .settings import Settings
@@ -132,4 +133,6 @@ def configure(settings: Optional[Settings] = None, service_name: Optional[str] =
     if s.capture_sql_parameters:
         capture_dbapi_parameters(s)
         capture_sqlalchemy_parameters(s)
+    if s.report_packages and span_exporter is None:
+        report_packages(s, resource.attributes)
     return WizeLens(s, sampler, providers)

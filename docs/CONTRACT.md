@@ -355,6 +355,24 @@ Redaction keeps the evidence the security rules need (`docs/redact-vectors.json`
   `[redacted:card]` (13 to 19 digits, spaces or dashes allowed, first digit 3 to 6, Luhn valid). The patterns are
   `VALUE_PATTERNS` in `core/src/redact-values.ts`.
 
+## Packages
+
+Every SDK sends the packages it runs once at start: `POST {hub}/_wizelens/api/packages` with the hub token or ingest key
+as `Authorization: Bearer`, body `PackagesReport` (`core/src/packages.ts`): `{ sender: HubSender, packages: { ecosystem,
+name, version }[] }`, at most 5000. The set replaces the service's last one; a package it still runs keeps its first seen
+time. Answers 204, or 400 with what is wrong. A failed send retries up to 5 times, a minute apart. `WIZELENS_PACKAGES=false`
+(or `reportPackages: false`, `ReportPackages = false`) turns it off. Sources, with OSV ecosystem names:
+
+| SDK | Ecosystem | Read from |
+|---|---|---|
+| Node | `npm` | `node_modules` (npm, yarn, and pnpm `.pnpm` layouts, nested to 4 levels) |
+| .NET | `NuGet` | the app's `deps.json`, `package` libraries |
+| Python | `PyPI` | `importlib.metadata.distributions()` |
+| Java | `Maven` (`groupId:artifactId`) | `META-INF/maven/**/pom.properties` in class path jars, and in `BOOT-INF/lib` and `WEB-INF/lib` jars inside them |
+| Go | `Go` | `debug.ReadBuildInfo()` dependencies, with replacements |
+
+Hubs keep them in SQLite (`service_packages`), the cloud in Postgres (migration `PACKAGES_MIGRATION`).
+
 ## Analysis (shared logic, same results in .NET and JS)
 
 - **Duplicate query**: ≥ 2 `db` spans in one trace with identical `db.query.text` AND identical `wizelens.db.parameters`.

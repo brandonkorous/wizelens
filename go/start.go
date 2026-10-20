@@ -65,6 +65,9 @@ func Start(ctx context.Context, opts ...Option) (func(context.Context) error, er
 	global.SetLoggerProvider(lp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 	setActive(o.settings)
+	if o.settings.ReportPackages {
+		go reportPackages(o.settings, res)
+	}
 	return func(ctx context.Context) error { return errors.Join(tp.Shutdown(ctx), lp.Shutdown(ctx)) }, nil
 }
 

@@ -33,7 +33,7 @@ public static partial class SecurityPaths
     [GeneratedRegex(@"(?:^|/)(?:\.env(?:\.[\w-]+)?$|\.git/|\.svn/|\.aws/|\.ds_store$|web\.config$|phpinfo\.php$|server-status$|elmah\.axd|trace\.axd|debug/pprof|actuator/(?:env|heapdump|threaddump|configprops|mappings|beans|loggers|shutdown|jolokia)(?:/|$))", RegexOptions.ECMAScript)]
     private static partial Regex Exposed();
 
-    [GeneratedRegex(@"Traceback \(most recent call last\)|goroutine \d+ \[|\.java:\d+\)|:line \d+|(?:\n|\n)\s*at [\w.$<>`[\]]+ ?\(|(?:\n|\n)\s*at .+ \(.+:\d+:\d+\)|Stack trace:(?:\s|\n)*#0", RegexOptions.ECMAScript)]
+    [GeneratedRegex(@"Traceback \(most recent call last\)|goroutine \d+ \[|\.java:\d+\)|:line \d+|(?:\n|\\n)\s*at [\w.$<>`[\]]+ ?\(|(?:\n|\\n)\s*at .+ \(.+:\d+:\d+\)|Stack trace:(?:\s|\\n)*#0", RegexOptions.ECMAScript)]
     private static partial Regex Stack();
 
     [GeneratedRegex(@"(?:^|/)(?:admin|internal|management)(?:/|$)", RegexOptions.ECMAScript)]

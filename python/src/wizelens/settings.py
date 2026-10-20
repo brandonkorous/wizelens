@@ -60,6 +60,7 @@ class Settings:
     capture_body: bool = False
     capture_sql_parameters: bool = True
     capture_logs: bool = True
+    report_packages: bool = True
     redact_keys: Tuple[str, ...] = field(default=DEFAULT_REDACT_KEYS)
 
     @staticmethod
@@ -77,6 +78,7 @@ class Settings:
             capture_body=_flag(e.get("WIZELENS_CAPTURE_BODY"), False),
             capture_sql_parameters=_flag(e.get("WIZELENS_CAPTURE_SQL_PARAMETERS"), True),
             capture_logs=_flag(e.get("WIZELENS_CAPTURE_LOGS"), True),
+            report_packages=_flag(e.get("WIZELENS_PACKAGES"), True),
             redact_keys=DEFAULT_REDACT_KEYS + extra,
         )
 

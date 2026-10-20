@@ -1,6 +1,6 @@
 import { hostname } from "node:os";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { annotateErrorFrames, HEADER_HOP, type ServiceInfo, SOURCEMAPS_PATH, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core";
+import { annotateErrorFrames, HEADER_HOP, PACKAGES_PATH, type ServiceInfo, SOURCEMAPS_PATH, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core";
 import { firstHeader, sendJson, VERSION as NODE_VERSION } from "@wizeworks/lens-node/kit";
 import { parseJson, readBody } from "./body.js";
 import { handleAlerts } from "./alerts/api.js";
@@ -20,6 +20,8 @@ import { sendSearch, sendSuggest } from "./search-api.js";
 import { handleUptime } from "./uptime/api.js";
 import { type HubMaps, listMaps, resolveMaps, uploadSourceMap } from "./sourcemaps-api.js";
 import { handleTags } from "./tags-api.js";
+import { receivePackages } from "./packages/api.js";
+import { sqlitePackages } from "./packages/sqlite.js";
 import { countRows, distinctOf, listServices, type TraceQuery } from "./store-read.js";
 
 export interface ApiContext {
@@ -100,6 +102,7 @@ export async function handleApi(c: ApiContext, sub: string, req: IncomingMessage
   if (sub === "api/info" && method === "GET") return sendJson(res, 200, hubInfo(c));
   if (sub === "api/services" && method === "GET") return sendJson(res, 200, services(c));
   if (sub === "api/ingest" && method === "POST") return ingest(c, req, res);
+  if (sub === PACKAGES_PATH && method === "POST") return receivePackages(sqlitePackages(c.data.store.db), req, res, c.o.now());
   if (sub === SOURCEMAPS_PATH && method === "POST") return uploadSourceMap(c.data.store.db, c.o.now(), req, res, url);
   if (sub === SOURCEMAPS_PATH && method === "GET") return listMaps(c.data.store.db, res, url);
   if (sub === SOURCEMAPS_RESOLVE_PATH && method === "POST") return resolveMaps(c.maps, c.data.store.db, req, res, url);

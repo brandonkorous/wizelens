@@ -29,6 +29,10 @@ public final class WizeLensCustomizer implements AutoConfigurationCustomizerProv
       Resource project = Resource.create(Attributes.of(AttributeKey.stringKey("wizelens.project"), settings.project()));
       customizer.addResourceCustomizer((resource, config) -> project.merge(resource));
     }
+    customizer.addResourceCustomizer((resource, config) -> {
+      PackageReport.start(settings, resource);
+      return resource;
+    });
     TraceSampler sampler = new TraceSampler(settings.sampleRate());
     customizer.addSpanProcessorCustomizer(
         (processor, config) -> new SamplingSpanProcessor(processor, sampler, settings.keepErrors(), settings.keepSlowMs()));

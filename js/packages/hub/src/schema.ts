@@ -35,6 +35,14 @@ CREATE TABLE IF NOT EXISTS slos (id TEXT PRIMARY KEY, project TEXT NOT NULL, jso
 CREATE TABLE IF NOT EXISTS apdex_targets (project TEXT PRIMARY KEY, json TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS project_settings (project TEXT PRIMARY KEY, json TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS saved (id TEXT PRIMARY KEY, project TEXT NOT NULL, kind TEXT NOT NULL, json TEXT NOT NULL, created_ms REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS service_packages (
+  project TEXT NOT NULL, service TEXT NOT NULL, ecosystem TEXT NOT NULL, name TEXT NOT NULL, version TEXT NOT NULL,
+  first_ms REAL NOT NULL, seen_ms REAL NOT NULL, PRIMARY KEY (project, service, ecosystem, name, version)
+);
+CREATE TABLE IF NOT EXISTS package_checks (
+  ecosystem TEXT NOT NULL, name TEXT NOT NULL, version TEXT NOT NULL, vulns TEXT NOT NULL, checked_ms REAL NOT NULL, PRIMARY KEY (ecosystem, name, version)
+);
+CREATE TABLE IF NOT EXISTS advisories (id TEXT PRIMARY KEY, json TEXT NOT NULL, fetched_ms REAL NOT NULL);
 CREATE TABLE IF NOT EXISTS issues (
   project TEXT NOT NULL, kind TEXT NOT NULL, key TEXT NOT NULL, status TEXT NOT NULL, until_ms REAL, resolved_ms REAL,
   assignee TEXT, updated_ms REAL NOT NULL, PRIMARY KEY (project, kind, key)

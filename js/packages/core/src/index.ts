@@ -9,6 +9,7 @@ export * from "./ids.js";
 export * from "./loose.js";
 export * from "./redact.js";
 export * from "./redact-values.js";
+export * from "./packages.js";
 export * from "./settings.js";
 export * from "./trace.js";
 export * from "./span-time.js";

@@ -58,6 +58,9 @@ public sealed class WizeLensOptions
     /// <summary>Keeps the first 16 KB of text and JSON response bodies on the request span. Off by default.</summary>
     public bool CaptureResponseBody { get; set; }
 
+    /// <summary>Sends the hub the app's NuGet packages once at start, for the known-vulnerability check. On by default; WIZELENS_PACKAGES=false turns it off.</summary>
+    public bool ReportPackages { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_PACKAGES") != "false";
+
     /// <summary>Also sends everything to this local hub, for example <c>http://localhost:5960</c>. Default: the WIZELENS_HUB variable.</summary>
     public string? HubUrl { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_HUB");
 
