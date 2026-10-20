@@ -23,11 +23,21 @@ CREATE TRIGGER ${t}_org BEFORE INSERT ON ${t} FOR EACH ROW EXECUTE FUNCTION wl_o
 export const ORGS_MIGRATION = [STAMP, ...ORG_TABLES.map(perTable)].join("\n");
 
 /** Migration 24: scoped reads run as `wl_reader`, which row level security holds to the organization in `wl.org`. The owner (every writer) is not subject to it. */
+// A managed server's app user may not create roles: the admin makes it first (deploy/k8s/jobs/db-role.sql).
 const READER = `
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'wl_reader') THEN CREATE ROLE wl_reader NOLOGIN; END IF;
-END $$;
-GRANT wl_reader TO CURRENT_USER;`;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'wl_reader') THEN
+    BEGIN
+      CREATE ROLE wl_reader NOLOGIN;
+    EXCEPTION WHEN insufficient_privilege THEN
+      RAISE EXCEPTION 'Make the role wl_reader as the database admin first (deploy/k8s/jobs/db-role.sql), or let this user create roles.';
+    END;
+  END IF;
+  IF NOT pg_has_role(current_user, 'wl_reader', 'MEMBER') THEN
+    EXECUTE format('GRANT wl_reader TO %I', current_user);
+  END IF;
+END $$;`;
 
 const policy = (t: string) => `
 GRANT SELECT ON ${t} TO wl_reader;
