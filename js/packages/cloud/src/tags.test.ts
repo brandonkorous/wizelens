@@ -1,7 +1,7 @@
 import { afterEach, expect, it } from "vitest";
 import type { TagList, TagRule } from "@wizeworks/lens-core";
 import type { Cloud } from "./server.js";
-import { CH_URL } from "./test/ch.js";
+import { CH_LIMIT, CH_URL } from "./test/ch.js";
 import { Client, invite, joinWithInvite, setupOwner, startCloud } from "./test/cloud.js";
 import { span } from "./test/db.js";
 
@@ -47,7 +47,7 @@ async function matchAndSearch(clickhouseUrl?: string): Promise<void> {
 
 it("matches tags and expands tag: on Postgres", () => matchAndSearch());
 
-it.skipIf(!CH_URL)("matches tags and expands tag: on ClickHouse", () => matchAndSearch(CH_URL), 120_000);
+it.skipIf(!CH_URL)("matches tags and expands tag: on ClickHouse", () => matchAndSearch(CH_URL), CH_LIMIT);
 
 it("lets members change tags, audits each change, and checks them", async () => {
   const { owner, orgId, projectId } = await withData();

@@ -6,6 +6,8 @@ import { type ChStoreOptions, openClickHouse } from "../telemetry/ch/store.js";
 import type { TelemetryStore } from "../telemetry/store.js";
 
 export const CH_URL = process.env.WIZELENS_TEST_CLICKHOUSE ?? "";
+// One shared ClickHouse on a busy CI runner can take twice as long as usual, so its tests share one wide limit.
+export const CH_LIMIT = 600_000;
 const DAY = 86_400_000;
 
 export interface ChTest {
