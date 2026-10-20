@@ -17,7 +17,7 @@ The rules of `GAPS-PLAN.md` ("Rules for every phase") still hold. One commit per
 | 2 | Trace rules (JS) and the trace view | L | Done |
 | 3 | Trace rules in .NET, shared vectors, .NET MCP tool | M | Done |
 | 4 | Rollups and the `security` page model | L | Done |
-| 5 | The Security page | L | |
+| 5 | The Security page | L | Done |
 | 6 | MCP tool, alerts, and search hits | M | |
 | 7 | SDKs report their packages | M | |
 | 8 | Known-vulnerable packages (OSV) on hub and cloud | L | |

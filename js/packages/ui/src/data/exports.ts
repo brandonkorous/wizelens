@@ -1,5 +1,5 @@
 // What each list page exports as CSV: its rows and columns, from the page model loaded with up to 5000 rows.
-import type { ErrorGroup, InsightGroup, LogRow, ModelOf, QueryRow, TraceListItem } from "@wizeworks/lens-core";
+import type { ErrorGroup, InsightGroup, LogRow, ModelOf, QueryRow, SecurityGroup, TraceListItem } from "@wizeworks/lens-core";
 import { type CsvColumns, isoTime, round2, toCsv } from "./csv";
 
 const ERRORS: CsvColumns<ErrorGroup> = [
@@ -61,6 +61,20 @@ const INSIGHTS: CsvColumns<InsightGroup> = [
   ["example_trace_id", (g) => g.exampleTraceId],
 ];
 
+const SECURITY: CsvColumns<SecurityGroup> = [
+  ["severity", (g) => g.severity],
+  ["owasp", (g) => g.owasp],
+  ["kind", (g) => g.kind],
+  ["title", (g) => g.title],
+  ["evidence", (g) => g.shape],
+  ["seen_in", (g) => g.occurrences],
+  ["found", (g) => g.count],
+  ["endpoints", (g) => g.endpoints.join(" ")],
+  ["first_seen", (g) => isoTime(g.firstSeenMs)],
+  ["last_seen", (g) => isoTime(g.lastSeenMs)],
+  ["example_trace_id", (g) => g.exampleTraceId ?? ""],
+];
+
 /** Pages with an Export button, and how each turns its model into CSV. */
 export const EXPORTS = {
   errors: (m: ModelOf<"errors">) => toCsv(ERRORS, m.groups),
@@ -68,6 +82,7 @@ export const EXPORTS = {
   database: (m: ModelOf<"database">) => toCsv(QUERIES, m.queries),
   traces: (m: ModelOf<"traces">) => toCsv(TRACES, m.recent),
   insights: (m: ModelOf<"insights">) => toCsv(INSIGHTS, m.groups),
+  security: (m: ModelOf<"security">) => toCsv(SECURITY, m.groups),
 } as const;
 
 export type ExportPage = keyof typeof EXPORTS;

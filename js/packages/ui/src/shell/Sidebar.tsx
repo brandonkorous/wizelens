@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { Activity, BellRing, Box, Boxes, Database, FileText, HeartPulse, House, LayoutDashboard, Lightbulb, List, Monitor, Search, Server, Settings, Share2, Siren, Target, TriangleAlert, UserRound, Users } from "lucide-react";
+import { Activity, BellRing, Box, Boxes, Database, FileText, HeartPulse, House, LayoutDashboard, Lightbulb, List, Monitor, Search, Server, Settings, Share2, ShieldAlert, Siren, Target, TriangleAlert, UserRound, Users } from "lucide-react";
 import { SavedNav } from "./SavedNav";
 import type { Capability } from "@wizeworks/lens-core";
 import { useHost } from "../data/host";
@@ -29,6 +29,7 @@ export const NAV: NavItem[] = [
   { page: "kubernetes", label: "Kubernetes", icon: Boxes, needs: "infra" },
   { page: "services", label: "Services", icon: Box },
   { page: "insights", label: "Insights", icon: Lightbulb },
+  { page: "security", label: "Security", icon: ShieldAlert },
   { page: "uptime", label: "Uptime", icon: HeartPulse, needs: "uptime" },
   { page: "users", label: "Users", icon: UserRound },
   { page: "alerts", label: "Alerts", icon: BellRing, needs: "alerts" },

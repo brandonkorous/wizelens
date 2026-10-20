@@ -1,0 +1,17 @@
+/* Security page: the OWASP Top 10 grid. List and detail share the Insights page styles. */
+.wl-owasp-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.wl-owasp-tile {
+  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; gap: 2px 8px; align-items: center; text-align: left;
+  padding: 10px 12px; border-radius: 10px; border: 1px solid var(--wl-line); background: var(--wl-surface); color: var(--wl-muted); cursor: pointer; font: inherit;
+}
+.wl-owasp-tile:hover { border-color: var(--wl-line-strong); background: var(--wl-surface-2); }
+.wl-owasp-tile.wl-active { border-color: var(--wl-accent); box-shadow: 0 0 0 1px var(--wl-accent); }
+.wl-owasp-tile .wl-owasp { grid-row: 1; }
+.wl-owasp-name { grid-column: 1 / -1; grid-row: 2; font-size: 12.5px; line-height: 1.3; }
+.wl-owasp-count { grid-column: 2; grid-row: 1; justify-self: end; font-size: 18px; font-variant-numeric: tabular-nums; color: var(--wl-fg-2); }
+.wl-owasp-some { color: var(--wl-fg-2); }
+.wl-owasp-some .wl-owasp-count { color: var(--wl-amber-text); }
+.wl-owasp-high { color: var(--wl-fg); border-color: var(--wl-error-soft); }
+.wl-owasp-high .wl-owasp-count { color: var(--wl-error); }
+@media (max-width: 1200px) { .wl-owasp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .wl-owasp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
