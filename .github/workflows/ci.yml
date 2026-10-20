@@ -115,7 +115,7 @@ jobs:
       mongo:
         image: mongo:8.0
         ports: ["27017:27017"]
-        options: --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'" --health-interval 2s --health-timeout 5s --health-retries 30
+        options: --health-cmd "mongosh --quiet --eval db.version()" --health-interval 2s --health-timeout 5s --health-retries 30
       sqs:
         image: softwaremill/elasticmq-native:1.6.9
         ports: ["9324:9324"]
