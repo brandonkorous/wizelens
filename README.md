@@ -222,6 +222,7 @@ Open any trace for the full detail: timeline, SQL, HTTP, logs, and errors. Searc
 | Exceptions | ✅ | ✅ |
 | Metrics | ✅ every `Meter`: .NET runtime, ASP.NET Core, `HttpClient`, your own | ✅ CPU, memory, heap, event loop, GC, and OpenTelemetry metrics (`wizelensMetricExporter`) |
 | Databases with no code change | ✅ Npgsql, MySqlConnector, Microsoft.Data.SqlClient | |
+| Redis, MongoDB, Elasticsearch | ✅ `WizeLens.Redis` (StackExchange.Redis), `WizeLens.MongoDB` (MongoDB.Driver), `WizeLens.Elasticsearch` (Elastic.Clients.Elasticsearch 8+) | |
 | gRPC | ✅ Grpc.AspNetCore, Grpc.Net.Client | ✅ `instrumentGrpc` (`@grpc/grpc-js`) |
 | Message queues | ✅ RabbitMQ.Client, Azure Service Bus, MassTransit, Kafka (`WizeLens.Kafka`) | ✅ `instrumentAmqplib`, `instrumentKafkaJs`, `instrumentServiceBus` |
 | Request details | ✅ headers, client IP, user, request id, body sizes, tags | ✅ same; user and tags through `setUser()` / `tag()` |
@@ -383,6 +384,7 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 | `redactKeys` | see above | Key fragments whose values are redacted. |
 | `tags` | none | `{ rules: [{ name, query, color? }], disableBuiltIns: ["bot"] }`: tag rules for the dashboard, and built-in tags to turn off. A bad rule throws at start. See Tags. |
 | `instrumentFetch` | `true` | Trace outgoing `fetch` / undici calls. |
+| `instrumentHttp` | `true` | Trace outgoing `node:http` / `node:https` calls (axios, got, node-fetch v2, AWS SDK). |
 | `traceQueriesOutsideRequests` | `false` | Database adapters also trace queries outside a request. |
 | `publicEndpoint` | auto | Override `X-WizeLens-Endpoint` (useful behind proxies). |
 | `audit` | `console.info` | Where MCP audit lines go. |

@@ -34,7 +34,7 @@ function dbAttributes(info: DbCallInfo, sql: string, params: unknown, redactKeys
   if (info.namespace) attributes["db.namespace"] = info.namespace;
   const p = redactParams(params, redactKeys);
   if (p !== null) attributes["wizelens.db.parameters"] = p;
-  return attributes;
+  return info.attributes ? { ...info.attributes, ...attributes } : attributes;
 }
 
 function spanName(attributes: OtelAttributes): string {

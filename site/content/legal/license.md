@@ -8,7 +8,7 @@ Every WizeLens package in the repository is released under the MIT License:
 
 | Package | Platform |
 |---|---|
-| `WizeLens.AspNetCore`, `WizeLens.EntityFrameworkCore`, `WizeLens.Serilog`, `WizeLens.NLog`, `WizeLens.Kafka` | NuGet |
+| `WizeLens.AspNetCore`, `WizeLens.EntityFrameworkCore`, `WizeLens.Serilog`, `WizeLens.NLog`, `WizeLens.Kafka`, `WizeLens.Redis`, `WizeLens.MongoDB`, `WizeLens.Elasticsearch` | NuGet |
 | `@wizeworks/lens-node`, `@wizeworks/lens-react`, `@wizeworks/lens-core`, `@wizeworks/lens-ui` | npm |
 | `@wizeworks/lens-hub` | npm, Docker |
 | `@wizeworks/lens-cloud` | npm, Docker |

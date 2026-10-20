@@ -23,7 +23,7 @@ APM buyers expect and that phases 0 to 13 do not cover.
 | 10 | Users: users affected, user filter, user page | M | Done |
 | 11 | Settings and Team | M | Done |
 | 12 | AI tools (MCP) see what the UI shows | S | Done |
-| 13 | SDK coverage | L | Not started |
+| 13 | SDK coverage | L | Done |
 | 14 | Browser source maps | M | Done |
 | 15 | Uptime checks | M | Done |
 | 16 | Logs as a product: all logs, patterns, log alerts | L | Done |

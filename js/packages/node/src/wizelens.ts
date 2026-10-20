@@ -72,7 +72,8 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const persister = openPersister(store, options, dashboard);
   const selfEndpoints = new Set<string>(options.publicEndpoint ? [options.publicEndpoint] : []);
   const fetch = options.instrumentFetch ?? true;
-  const tracing = createTracing(store, { service, version: VERSION, release: releaseOf(options), redactKeys, fetch }, selfEndpoints);
+  const http = options.instrumentHttp ?? true;
+  const tracing = createTracing(store, { service, version: VERSION, release: releaseOf(options), redactKeys, fetch, http }, selfEndpoints);
   const logs = createLogSink(store, service, redactKeys, looseLogsOf(options.logs));
   const write = createLogWriter(logs, !!options.logToConsole);
   const getTrace = createGetTrace(store, selfEndpoints);
@@ -133,6 +134,7 @@ export function buildWizeLens(options: WizeLensOptions): WizeLens {
       runCleanups(wizelens);
       await p.hub?.stop();
       p.tracing.undici?.disable();
+      p.tracing.stopHttp?.();
       await p.tracing.provider.shutdown();
       p.persister?.close();
     },

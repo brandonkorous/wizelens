@@ -4,11 +4,9 @@ import { Card } from "./Card.js";
 import { Details } from "./Details.js";
 import { useEscape, useInjectedStyle, usePageStats } from "./hud-hooks.js";
 import { useFlag, useStored } from "./hud-storage.js";
-import { currentRequest, endOf, ERROR_HOLD_MS, fmtMs, heldError, type RequestView, requestView } from "./hud-model.js";
+import { currentRequest, endOf, ERROR_HOLD_MS, fmtMs, heldError, now, type RecordedRequest, type Recorder, type RequestView, requestView } from "@wizeworks/lens-browser";
 import { ApertureMark } from "./icons.js";
 import { dashboardLink, isPanel, type Panel } from "./panel-parts.js";
-import type { RecordedRequest, Recorder } from "./recorder-types.js";
-import { now } from "./session.js";
 import { Settings } from "./Settings.js";
 
 const KEYS = { panel: "wizelens.hud.panel", live: "wizelens.hud.live", min: "wizelens.hud.min" };

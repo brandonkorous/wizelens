@@ -1,5 +1,7 @@
 import type { Finding } from "./analysis.js";
+import { ATTR_DB_FINGERPRINT } from "./attributes.js";
 import { busyMs } from "./busy.js";
+import { isNoSqlSession, isNoSqlSpan } from "./nosql.js";
 import type { Span, Trace } from "./types.js";
 
 export const queryText = (s: Span): string => String(s.attributes["db.query.text"] ?? s.name);
@@ -7,8 +9,8 @@ export const dbSpans = (t: Trace): Span[] => t.spans.filter((s) => s.category ==
 
 const SESSION_RE = /^\s*(SET|RESET|BEGIN|START\s+TRANSACTION|COMMIT|END|ROLLBACK|SAVEPOINT|RELEASE|DISCARD|USE)\b/i;
 
-/** Session and transaction statements (SET LOCAL, BEGIN, COMMIT). Their repeats are by design, not N+1. */
-export const isSessionStatement = (s: Span): boolean => SESSION_RE.test(queryText(s));
+/** Session and transaction statements (SET LOCAL, BEGIN, COMMIT, Redis MULTI, MongoDB getMore). Their repeats are by design, not N+1. A Redis SET is not one. */
+export const isSessionStatement = (s: Span): boolean => (isNoSqlSpan(s) ? isNoSqlSession(s) : SESSION_RE.test(queryText(s)));
 
 /** The queries that the N+1 and duplicate checks look at. */
 export const repeatableQueries = (t: Trace): Span[] => dbSpans(t).filter((s) => !isSessionStatement(s));
@@ -16,8 +18,12 @@ export const repeatableQueries = (t: Trace): Span[] => dbSpans(t).filter((s) => 
 // Placeholders: ? (JDBC, sanitized text), $1 (Postgres), %s and %(name)s (Python), :name, @name.
 const PLACEHOLDER_RE = /\?|\$\d+|%s|%\(\w+\)s|(?<![:\w]):[A-Za-z_]\w*|@[A-Za-z_]\w*/;
 
-/** A query with placeholders but no captured parameters: two of them may differ, so they are never duplicates. */
-export const hasUnknownParams = (s: Span): boolean => s.attributes["wizelens.db.parameters"] == null && PLACEHOLDER_RE.test(queryText(s));
+/** What tells two runs of the same query apart: the captured parameters, else the values fingerprint, else nothing. */
+export const valuesOf = (s: Span): string => String(s.attributes["wizelens.db.parameters"] ?? s.attributes[ATTR_DB_FINGERPRINT] ?? "");
+
+/** No captured parameters or fingerprint, and placeholders or a NoSQL call (its text never has values): two may differ, so never duplicates. */
+export const hasUnknownParams = (s: Span): boolean =>
+  s.attributes["wizelens.db.parameters"] == null && s.attributes[ATTR_DB_FINGERPRINT] == null && (isNoSqlSpan(s) || PLACEHOLDER_RE.test(queryText(s)));
 
 /** Slow queries that run at the same time, at least this many, are one wait, not many slow queries. */
 export const WAIT_MIN_QUERIES = 3;

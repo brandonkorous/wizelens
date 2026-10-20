@@ -1,4 +1,5 @@
 import { queryText } from "../analysis.js";
+import { isNoSqlSpan, noSqlOperation } from "../nosql.js";
 import { isErrorSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { avgOf, groupBy, memoByObject, normalizeQuery, sumOf } from "./common.js";
@@ -25,9 +26,10 @@ export type Operation = (typeof OPERATIONS)[number];
 
 const TABLE_RE = /\b(?:FROM|INTO|UPDATE|JOIN)\s+["`[]?([\w.]+)/i;
 
-/** SELECT, INSERT, UPDATE, DELETE, or OTHER, from db.operation.name or the first SQL word. */
+/** SELECT, INSERT, UPDATE, DELETE, or OTHER, from db.operation.name or the first SQL word. NoSQL commands map to the closest one. */
 export function operationOf(span: Span): Operation {
   const raw = span.attributes["db.operation.name"] ?? /^\s*(\w+)/.exec(queryText(span))?.[1] ?? "";
+  if (isNoSqlSpan(span)) return noSqlOperation(String(raw));
   const op = String(raw).toUpperCase();
   return (OPERATIONS as readonly string[]).includes(op) ? (op as Operation) : "OTHER";
 }

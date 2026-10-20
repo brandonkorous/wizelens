@@ -1,6 +1,7 @@
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using WizeLens.Capture;
@@ -47,6 +48,20 @@ public static partial class DbActivity
             activity.SetStatus(ActivityStatusCode.Error, error.Message);
         }
         activity.Stop();
+    }
+
+    /// <summary>Sets <c>server.address</c> and <c>server.port</c> from a client's endpoint.</summary>
+    public static void SetServer(Activity activity, EndPoint? endpoint)
+    {
+        var (host, port) = endpoint switch
+        {
+            DnsEndPoint dns => (dns.Host, dns.Port),
+            IPEndPoint ip => (ip.Address.ToString(), ip.Port),
+            _ => (null, 0),
+        };
+        if (host is null) return;
+        activity.SetTag("server.address", host);
+        if (port > 0) activity.SetTag("server.port", port);
     }
 
     /// <summary>Maps a connection type to an OTel <c>db.system.name</c> value.</summary>

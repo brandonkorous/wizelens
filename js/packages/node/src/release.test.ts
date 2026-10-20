@@ -9,7 +9,7 @@ afterEach(() => vi.unstubAllEnvs());
 describe("release", () => {
   it("puts the app's version on every span", async () => {
     const store = new TraceStore({ maxTraces: 10 });
-    const { tracer, provider } = createTracing(store, { service: "api", version: "0.3.0", release: "5.1.0", redactKeys: [], fetch: false }, new Set());
+    const { tracer, provider } = createTracing(store, { service: "api", version: "0.3.0", release: "5.1.0", redactKeys: [], fetch: false, http: false }, new Set());
     tracer.startSpan("work").end();
     await provider.forceFlush();
     expect(store.all()[0]!.spans[0]!.attributes[VERSION_ATTR]).toBe("5.1.0");

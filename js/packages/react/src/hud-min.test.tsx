@@ -2,13 +2,13 @@ import { renderToString } from "react-dom/server";
 import { beforeEach, expect, it, vi } from "vitest";
 import { Hud } from "./Hud.js";
 import { readStored, resetStoredMemory, writeStored } from "./hud-storage.js";
-import { createRecorder } from "./recorder.js";
-import { stubPage } from "./test-env.js";
+import { createRecorder } from "./react-capture.js";
 
 const local = new Map<string, string>();
 
 beforeEach(() => {
-  stubPage();
+  vi.stubGlobal("location", new URL("http://app.test/page"));
+  vi.stubGlobal("sessionStorage", { getItem: () => null, setItem: () => {} });
   local.clear();
   resetStoredMemory();
   vi.stubGlobal("localStorage", {

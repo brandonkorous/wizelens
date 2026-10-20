@@ -83,8 +83,8 @@ internal static partial class RequestParts
     public static int InsightCount(Trace t, int nPlusOne = 5, double slowQueryMs = 100)
     {
         var db = t.Spans.Where(s => s.Category == SpanCategories.Db).ToList();
-        var repeatable = db.Where(s => !TraceAnalysis.IsSessionStatement(QueryText(s))).ToList();
-        var known = repeatable.Where(s => !TraceAnalysis.HasUnknownParams(QueryText(s), Value(s.Attributes, "wizelens.db.parameters")));
+        var repeatable = db.Where(s => !TraceAnalysis.IsSessionStatement(s)).ToList();
+        var known = repeatable.Where(s => !TraceAnalysis.HasUnknownParams(s));
         var duplicates = known.GroupBy(s => $"{QueryText(s)}\0{(Value(s.Attributes, "wizelens.db.parameters") is { } p ? JsText.Of(p) : "")}").Count(g => g.Count() >= 2);
         var nPlusOneDb = repeatable.GroupBy(QueryText).Count(g => g.Count() >= nPlusOne);
         var nPlusOneHttp = t.Spans.Where(s => s.Category == SpanCategories.HttpClient).GroupBy(HttpShape).Count(g => g.Count() >= nPlusOne);
@@ -102,7 +102,7 @@ internal static partial class RequestParts
             else groups.Add([s]);
             end = Math.Max(end, s.StartMs + s.DurationMs);
         }
-        return groups.Sum(g => g.Count >= 3 || g.All(s => TraceAnalysis.IsSessionStatement(QueryText(s))) ? 1 : g.Count);
+        return groups.Sum(g => g.Count >= 3 || g.All(TraceAnalysis.IsSessionStatement) ? 1 : g.Count);
     }
 
     /// <summary>The health color of a request: critical, warning, opportunity, or success.</summary>

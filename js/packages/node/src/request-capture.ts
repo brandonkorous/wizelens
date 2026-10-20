@@ -16,6 +16,7 @@ import { type ResponseTap, tapResponse } from "./body-capture.js";
 import { keepExposeHeaders } from "./expose-headers.js";
 import { firstHeader, sendJson } from "./http-util.js";
 import { headerAttributes, requestAttributes } from "./request-attributes.js";
+import { namedRoute } from "./request-naming.js";
 import { SERVER_SPAN } from "./spans.js";
 
 const REQ_SPAN = Symbol.for("wizeworks.wizelens.span");
@@ -130,7 +131,7 @@ export function captureRequest(d: CaptureDeps, req: IncomingMessage, res: Server
   const finish = () => {
     if (ended) return;
     ended = true;
-    finishSpan(span, res, tap, method, routeOf);
+    finishSpan(span, res, tap, method, () => namedRoute(span, routeOf(), pathOf(rawUrl)));
   };
   res.once("finish", finish);
   res.once("close", finish);

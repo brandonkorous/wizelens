@@ -48,6 +48,7 @@ internal static class ActivityMapper
         span.Status = MapStatus(activity, span);
         GrpcAttributes.Apply(span);
         DriverActivities.Apply(span, activity.Source.Name);
+        ExternalSources.ApplyMapped(span, activity.Source.Name);
         MessagingActivities.Apply(span, activity);
         if (span.Status == SpanStatuses.Error && span.StatusMessage is null)
         {

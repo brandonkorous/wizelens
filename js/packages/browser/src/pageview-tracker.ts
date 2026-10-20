@@ -1,16 +1,18 @@
 import type { Span } from "@wizeworks/lens-core";
+import type { FrameworkHooks } from "./framework.js";
 import { imageStats, watchImages } from "./images.js";
 import { afterNextPaint } from "./paint.js";
-import { newPageView, type PageView, pageViewSpan } from "./pageview.js";
-import { firstCommitMs, waitForCommit } from "./react-hook.js";
+import { newPageView, type PageView, pageViewSpan, pathOf } from "./pageview.js";
 import { documentTrace } from "./server-timing.js";
 import { now } from "./session.js";
 import { readNavigation, watchVitals } from "./vitals.js";
 
 export interface PageViewTracker {
   current(): PageView;
-  /** The path changed: send the current view and start a route-change view. */
-  navigate(): void;
+  /** True when `url` (default: the current location) has another path than the current view. */
+  willNavigate(url?: string): boolean;
+  /** The path changed: send the current view and start a route-change view for `url` (default: the current location). */
+  navigate(url?: string): void;
   /** Send the current view (once). */
   finish(): void;
   /** The page came back from the back-forward cache. */
@@ -37,17 +39,17 @@ export function loadView(): PageView {
   return view;
 }
 
-// A route change waits at most this long for React to render the new page.
+// A route change waits at most this long for the framework to render the new page.
 const COMMIT_WAIT_MS = 1000;
 
-async function measureRouteRender(view: PageView): Promise<void> {
-  await waitForCommit(COMMIT_WAIT_MS);
+async function measureRouteRender(view: PageView, framework: FrameworkHooks | undefined): Promise<void> {
+  await framework?.waitForRender?.(COMMIT_WAIT_MS);
   const paintedAt = await afterNextPaint();
   if (paintedAt !== null && !view.sent) view.renderMs = paintedAt - view.startMs;
 }
 
 /** Tracks page views and their timings, and sends one pageview span per view. */
-export function createPageViewTracker(o: { push(span: Span): void; sessionId: string }): PageViewTracker {
+export function createPageViewTracker(o: { push(span: Span): void; sessionId: string; framework?: FrameworkHooks }): PageViewTracker {
   let view = loadView();
   const images = watchImages();
   const stopVitals = watchVitals({
@@ -59,19 +61,20 @@ export function createPageViewTracker(o: { push(span: Span): void; sessionId: st
   const finish = () => {
     if (view.sent) return;
     view.sent = true;
-    if (view.navigation === "load") view.hydrationMs ??= firstCommitMs();
+    if (view.navigation === "load") view.hydrationMs ??= o.framework?.firstRenderMs?.() ?? null;
     const nav = view.navigation === "load" && !view.bfcache ? readNavigation() : null;
     o.push(pageViewSpan(view, nav, imageStats(view.startRel, images.downloads()), o.sessionId));
   };
   const begin = (next: PageView) => {
     finish();
     view = next;
-    if (next.navigation === "spa") void measureRouteRender(next);
+    if (next.navigation === "spa") void measureRouteRender(next, o.framework);
   };
   const rel = () => now() - performance.timeOrigin;
   return {
     current: () => view,
-    navigate: () => begin(newPageView("spa", rel())),
+    willNavigate: (url) => pathOf(url) !== view.path,
+    navigate: (url) => begin(newPageView("spa", rel(), false, url)),
     finish,
     restart: () => begin(newPageView("load", rel(), true)),
     stop() {

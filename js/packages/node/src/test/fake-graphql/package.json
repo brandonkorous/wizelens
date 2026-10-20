@@ -1,0 +1,6 @@
+{
+  "name": "graphql",
+  "version": "16.0.0-fake",
+  "private": true,
+  "main": "index.js"
+}

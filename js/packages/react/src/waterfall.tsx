@@ -1,8 +1,7 @@
 import { Fragment } from "react";
 import { browserTypeOf, isErrorSpan, type Span, type Trace } from "@wizeworks/lens-core";
-import { fmtMs } from "./hud-model.js";
+import { fmtMs, type RecordedRequest } from "@wizeworks/lens-browser";
 import { Empty } from "./panel-parts.js";
-import type { RecordedRequest } from "./recorder-types.js";
 
 type RowKind = "server" | "internal" | "db" | "client" | "messaging" | "browser" | "render" | "error";
 

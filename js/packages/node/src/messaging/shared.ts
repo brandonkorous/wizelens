@@ -5,7 +5,10 @@ import { isThenable } from "../db.js";
 import { CATEGORY_ATTR } from "../processor.js";
 import { recordOn, SERVER_SPAN } from "../spans.js";
 
-export type MessagingSystem = "rabbitmq" | "kafka" | "servicebus";
+export type MessagingSystem = "rabbitmq" | "kafka" | "servicebus" | "bullmq" | "aws_sqs";
+
+/** OTel `messaging.operation.name`: the library's own name for the call ("add", "SendMessage"). */
+export const OPERATION_NAME = "messaging.operation.name";
 
 export interface MessageFacts {
   system: MessagingSystem;
@@ -13,6 +16,8 @@ export interface MessageFacts {
   messageId?: string;
   batchSize?: number;
   bodySize?: number;
+  /** Library attributes for the span, for example the BullMQ job name. */
+  extra?: Attributes;
 }
 
 const w3c = new W3CTraceContextPropagator();
@@ -29,7 +34,7 @@ function attributesOf(op: MessagingOperation, m: MessageFacts): Attributes {
   if (m.messageId !== undefined) a[ATTR_MESSAGING.messageId] = m.messageId;
   if (m.batchSize !== undefined) a[ATTR_MESSAGING.batchSize] = m.batchSize;
   if (m.bodySize !== undefined) a[ATTR_MESSAGING.bodySize] = m.bodySize;
-  return a;
+  return m.extra ? { ...m.extra, ...a } : a;
 }
 
 /** Start a send span inside the current request, or null when there is no request or a send is already open. */
@@ -66,10 +71,10 @@ export function recordReceive(tracer: Tracer, m: MessageFacts, headers: Record<s
   tracer.startSpan(`receive ${m.destination}`, { kind: SpanKind.CONSUMER, attributes: attributesOf("receive", m), startTime: startedMs }, parent).end();
 }
 
-/** Run `fn` in the span's context and end the span when it settles (sync or promise). Returns what `fn` returns. */
-export function runInSpan<T>(span: OtelSpan, ctx: Context, fn: () => T): T {
+/** Run `fn` in the span's context and end the span when it settles (sync or promise). Errors `expected` accepts are not failures. */
+export function runInSpan<T>(span: OtelSpan, ctx: Context, fn: () => T, expected?: (err: unknown) => boolean): T {
   const fail = (err: unknown) => {
-    recordOn(span, err);
+    if (!expected?.(err)) recordOn(span, err);
     span.end();
   };
   try {
@@ -81,6 +86,12 @@ export function runInSpan<T>(span: OtelSpan, ctx: Context, fn: () => T): T {
     fail(err);
     throw err;
   }
+}
+
+/** Hand the result to `fn` once it is ready (sync or promise), then pass it on unchanged. */
+export function tap<T>(out: T, fn: (value: unknown) => void): T {
+  if (!isThenable(out)) return (fn(out), out);
+  return out.then((value) => (fn(value), value)) as T;
 }
 
 /** Byte length of a message body, when it is a string or bytes. */

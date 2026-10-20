@@ -1,6 +1,6 @@
-import { ATTR_BROWSER_REMOTE, ATTR_BROWSER_RENDER_MS, formatTraceparent, HEADER_ENDPOINT, HEADER_TRACE, newSpanId, newTraceId, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_REMOTE, ATTR_BROWSER_RENDER_MS, HEADER_ENDPOINT, HEADER_TRACE, newSpanId, newTraceId, type Span } from "@wizeworks/lens-core";
 import { browserSpan, currentRoute } from "./browser-span.js";
-import { afterNextPaint, watchBody } from "./paint.js";
+import { afterNextPaint } from "./paint.js";
 import type { RecordedRequest } from "./recorder-types.js";
 import type { RequestStore } from "./request-store.js";
 import type { Sender } from "./sender.js";
@@ -22,7 +22,9 @@ export interface FetchContext {
   noteEndpoint(traceId: string, endpoint: string): void;
 }
 
-interface Call {
+/** One outgoing request, from `fetch` or `XMLHttpRequest`. */
+export interface Call {
+  kind: "fetch" | "xhr";
   url: URL;
   method: string;
   traceId: string;
@@ -31,50 +33,46 @@ interface Call {
   record: RecordedRequest;
 }
 
-function requestUrl(input: RequestInfo | URL, base: string): URL {
-  if (typeof input === "string") return new URL(input, base);
-  if (input instanceof URL) return input;
-  return new URL(input.url, base);
+/** What a request span reads from the response. */
+export interface Answer {
+  status: number;
+  header(name: string): string | null;
+  /** Call back once the app has read the body. */
+  whenRead(onRead: () => void): void;
 }
 
 // Any server's WizeLens API, not only this page's endpoint: the HUD and dashboards read other services too.
-function isWizeLensCall(url: URL, endpoint: URL): boolean {
+export function isWizeLensCall(url: URL, endpoint: URL): boolean {
   return (url.pathname + "/").startsWith(endpoint.pathname.replace(/\/*$/, "/"));
 }
 
-function startCall(ctx: FetchContext, url: URL, input: RequestInfo | URL, init?: RequestInit): { call: Call; nextInit?: RequestInit } {
-  const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
+/** Start a request: give it a trace and a span id, and add its row to the HUD's list. */
+export function startCall(ctx: FetchContext, kind: Call["kind"], url: URL, method: string): Call {
   const traceId = newTraceId();
   const spanId = newSpanId();
-  let nextInit = init;
-  if (ctx.propagateTo(url)) {
-    const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
-    headers.set("traceparent", formatTraceparent(traceId, spanId, true));
-    nextInit = { ...init, headers };
-  }
   const path = url.origin === new URL(ctx.base).origin ? url.pathname + url.search : url.href;
   const record: RecordedRequest = {
     id: spanId, method, url: url.href, path, status: null, durationMs: null, renderMs: null,
     traceId, profiled: false, startMs: now(), error: null,
   };
   ctx.store.upsert(record);
-  return { call: { url, method, traceId, spanId, startMs: record.startMs, record }, nextInit };
+  return { kind, url, method, traceId, spanId, startMs: record.startMs, record };
 }
 
 /** The answering server's WizeLens endpoint, when it is not the one this page sends to. */
-function remoteOf(ctx: FetchContext, response: Response | null): string | null {
-  const endpoint = response?.headers.get(HEADER_ENDPOINT)?.replace(/\/+$/, "");
+function remoteOf(ctx: FetchContext, answer: Answer | null): string | null {
+  const endpoint = answer?.header(HEADER_ENDPOINT)?.replace(/\/+$/, "");
   return endpoint && endpoint !== ctx.endpoint.href.replace(/\/+$/, "") ? endpoint : null;
 }
 
-function fetchSpan(ctx: FetchContext, call: Call, traceId: string, durationMs: number, status: number | null, error: string | null): Span {
+function requestSpan(ctx: FetchContext, call: Call, traceId: string, durationMs: number, status: number | null, error: string | null): Span {
   const failed = error ?? (status !== null && status >= 500 ? `HTTP ${status}` : null);
   return browserSpan({
     type: "fetch",
     traceId,
     spanId: call.spanId,
     parentSpanId: null,
-    name: `fetch ${call.url.pathname}`,
+    name: `${call.kind} ${call.url.pathname}`,
     startMs: call.startMs,
     durationMs,
     sessionId: ctx.sessionId,
@@ -91,11 +89,11 @@ function fetchSpan(ctx: FetchContext, call: Call, traceId: string, durationMs: n
 }
 
 // Holds the span until the app has read the body and the page has painted.
-function holdForRender(ctx: FetchContext, span: Span, response: Response, headersAt: number): void {
+function holdForRender(ctx: FetchContext, span: Span, answer: Answer, headersAt: number): void {
   ctx.sender.hold(span.spanId, span);
   const send = () => void ctx.sender.release(span.spanId);
   const giveUp = setTimeout(send, RENDER_WAIT_MS);
-  watchBody(response, () =>
+  answer.whenRead(() =>
     void afterNextPaint().then((paintedAt) => {
       if (paintedAt !== null) {
         const renderMs = paintedAt - headersAt;
@@ -108,42 +106,19 @@ function holdForRender(ctx: FetchContext, span: Span, response: Response, header
   );
 }
 
-function finishCall(ctx: FetchContext, call: Call, response: Response | null, error: string | null): void {
-  const serverTrace = response?.headers.get(HEADER_TRACE) ?? null;
-  const status = response?.status ?? null;
-  const headersAt = now();
+/** End a request: update its HUD row, load its server stats, and send its browser span. `headersAt` defaults to now. */
+export function finishCall(ctx: FetchContext, call: Call, answer: Answer | null, error: string | null, headersAt = now()): void {
+  const serverTrace = answer?.header(HEADER_TRACE) ?? null;
+  const status = answer?.status ?? null;
   const durationMs = headersAt - call.startMs;
   const traceId = serverTrace ?? call.traceId;
-  const remote = remoteOf(ctx, response);
+  const remote = remoteOf(ctx, answer);
   if (serverTrace && remote) ctx.noteEndpoint(serverTrace, remote);
   ctx.store.upsert({ ...call.record, status, durationMs, renderMs: null, traceId, profiled: !!serverTrace, error });
   // The server ends its span after it sends the response, so wait a moment.
   if (serverTrace) setTimeout(() => void ctx.loadServerStats(serverTrace), ctx.statsDelayMs);
-  const span = fetchSpan(ctx, call, traceId, durationMs, status, error);
+  const span = requestSpan(ctx, call, traceId, durationMs, status, error);
   if (remote) span.attributes[ATTR_BROWSER_REMOTE] = remote;
-  if (response) holdForRender(ctx, span, response, headersAt);
+  if (answer) holdForRender(ctx, span, answer, headersAt);
   else ctx.sender.push(span);
-}
-
-/** A fetch that adds traceparent, records the request for the HUD, and sends a browser span. */
-export function patchFetch(orig: typeof fetch, ctx: FetchContext): typeof fetch {
-  return async function profiledFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-    let url: URL;
-    try {
-      url = requestUrl(input, ctx.base);
-    } catch {
-      return orig(input, init);
-    }
-    if (isWizeLensCall(url, ctx.endpoint)) return orig(input, init);
-    const { call, nextInit } = startCall(ctx, url, input, init);
-    try {
-      const rewrap = input instanceof Request && nextInit !== init;
-      const response = rewrap ? await orig(new Request(input, nextInit)) : await orig(input, nextInit);
-      finishCall(ctx, call, response, null);
-      return response;
-    } catch (err) {
-      finishCall(ctx, call, null, err instanceof Error ? err.message : String(err));
-      throw err;
-    }
-  };
 }

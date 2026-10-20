@@ -9,6 +9,7 @@ import { requestSpan } from "../request-capture.js";
 import { markRouted, watchRoute } from "../route-timing.js";
 import { skipped } from "./config.js";
 import { hookHono } from "./hono.js";
+import { hookNest } from "./nest.js";
 import { beforeFirstRequest, ignorePaths, recordRequestError, setRouteOf, startedAtOf, watchExpressRoutes } from "./http.js";
 import { onLoad } from "./module-hooks.js";
 import { currentOwner } from "./owner.js";
@@ -123,6 +124,7 @@ const FRAMEWORKS: [string, () => void][] = [
   ["fastify", hookFastify],
   ["hono", hookHono],
   ["next", hookNext],
+  ["nest", hookNest],
 ];
 
 /** Hook every framework the add-on supports, except the ones listed in WIZELENS_AUTO_SKIP. */

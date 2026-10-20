@@ -17,6 +17,7 @@ export const DOC_GROUPS: DocGroup[] = [
       { slug: "node", title: "Node" },
       { slug: "nextjs", title: "Next.js" },
       { slug: "react", title: "React" },
+      { slug: "browser", title: "Vue, Angular, Svelte, JS" },
     ],
   },
   {

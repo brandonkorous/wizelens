@@ -1,12 +1,13 @@
-import { createCaptureHandle, startBrowserCapture } from "./capture.js";
+import { type BrowserCapture, createBrowserCapture, createCaptureHandle } from "./capture.js";
 import { type FetchContext, patchFetch } from "./fetch-patch.js";
 import type { Recorder, RecorderOptions } from "./recorder-types.js";
 import { createInstaller, createRequestStore } from "./request-store.js";
 import { injectedRelease } from "./error-frames.js";
-import { createSender } from "./sender.js";
+import { createSender, type Sender } from "./sender.js";
 import { ServerData } from "./server-data.js";
 import { documentTrace } from "./server-timing.js";
 import { getSessionId } from "./session.js";
+import { patchXhr } from "./xhr-patch.js";
 
 export type { RecordedRequest, Recorder, RecorderOptions, ServerStats } from "./recorder-types.js";
 export { mergeRequests, serverStatsFromTrace, summaryToRequest } from "./requests.js";
@@ -25,12 +26,16 @@ function resolveOptions(options: RecorderOptions) {
     propagateTo: options.propagateTo ?? ((u: URL) => u.origin === new URL(base).origin),
     capturePages: options.capturePages ?? true,
     captureConsole: options.captureConsole ?? true,
+    captureXhr: options.captureXhr ?? true,
     readServer: options.readServer ?? true,
     version: options.version ?? injectedRelease(),
     resolveFrames: options.resolveFrames ?? true,
+    framework: options.framework,
     sessionId: getSessionId(),
   };
 }
+
+type Config = ReturnType<typeof resolveOptions>;
 
 // The server that rendered this page holds the page-load trace: its spans go there.
 function noteDocument(data: ServerData, endpointUrl: string): void {
@@ -38,25 +43,46 @@ function noteDocument(data: ServerData, endpointUrl: string): void {
   if (doc?.endpoint && doc.endpoint !== endpointUrl) data.noteEndpoint(doc.traceId, doc.endpoint);
 }
 
+// Send queued spans before the page goes away, so a refresh does not lose them.
+function flushOnHide(sender: Sender): () => void {
+  if (typeof addEventListener !== "function") return () => {};
+  const onPageHide = () => void sender.flush();
+  addEventListener("pagehide", onPageHide);
+  return () => removeEventListener("pagehide", onPageHide);
+}
+
+/** Page capture that the recorder can reach while it runs, for `pageView` and `captureError`. */
+function pageCapture(cfg: Config, sender: Sender) {
+  let live: BrowserCapture | null = null;
+  const handle = createCaptureHandle(() => {
+    if (!cfg.capturePages) return () => {};
+    const capture = createBrowserCapture({ sender, sessionId: cfg.sessionId, captureConsole: cfg.captureConsole, resolveFrames: cfg.resolveFrames, framework: cfg.framework });
+    live = capture;
+    return () => {
+      capture.stop();
+      if (live === capture) live = null;
+    };
+  });
+  return { ...handle, current: () => live };
+}
+
 export function createRecorder(options: RecorderOptions = {}): Recorder {
   const cfg = resolveOptions(options);
   const store = createRequestStore(cfg.maxRecent);
   let original: typeof fetch | null = null;
-  let timer: ReturnType<typeof setInterval> | null = null;
+  let undo: (() => void)[] = [];
   const data = new ServerData({ ...cfg, store, getFetch: () => original ?? globalThis.fetch });
   const sender = createSender(cfg.endpointUrl, () => original, (id) => data.endpointOf(id), cfg.version);
   const noteEndpoint = (id: string, endpoint: string) => data.noteEndpoint(id, endpoint);
   const ctx: FetchContext = { ...cfg, store, sender, noteEndpoint, loadServerStats: (id) => data.loadServerStats(id) };
-  const capture = createCaptureHandle(() => (cfg.capturePages ? startBrowserCapture({ sender, sessionId: cfg.sessionId, captureConsole: cfg.captureConsole, resolveFrames: cfg.resolveFrames }) : () => {}));
-  // Send queued spans before the page goes away, so a refresh does not lose them.
-  const onPageHide = () => void sender.flush();
+  const capture = pageCapture(cfg, sender);
   const install = createInstaller({
     start() {
       noteDocument(data, cfg.endpointUrl);
       original = globalThis.fetch;
       globalThis.fetch = patchFetch(original, ctx);
-      timer = setInterval(() => void sender.flush(false), cfg.flushIntervalMs);
-      if (typeof addEventListener === "function") addEventListener("pagehide", onPageHide);
+      const timer = setInterval(() => void sender.flush(false), cfg.flushIntervalMs);
+      undo = [cfg.captureXhr ? patchXhr(ctx) : () => {}, () => clearInterval(timer), flushOnHide(sender)];
       capture.acquire();
       void data.restore();
     },
@@ -64,9 +90,8 @@ export function createRecorder(options: RecorderOptions = {}): Recorder {
       capture.release();
       void sender.flush();
       if (original) globalThis.fetch = original;
-      if (timer) clearInterval(timer);
-      timer = null;
-      if (typeof removeEventListener === "function") removeEventListener("pagehide", onPageHide);
+      undo.forEach((u) => u());
+      undo = [];
     },
   });
   return {
@@ -81,6 +106,8 @@ export function createRecorder(options: RecorderOptions = {}): Recorder {
     getTrace: (traceId) => data.getTrace(traceId),
     loadTrace: (traceId) => data.loadTrace(traceId),
     traceLink: (id, view) => `${data.endpointOf(id)}/#/traces/${id}${view ? `/${view}` : ""}`,
+    pageView: (url) => capture.current()?.pageView(url),
+    captureError: (error, attributes) => capture.current()?.captureError(error, attributes),
     clear: store.clear,
   };
 }

@@ -1,5 +1,5 @@
 import { DashLink, PanelBar } from "./panel-parts.js";
-import type { Recorder } from "./recorder-types.js";
+import type { Recorder } from "@wizeworks/lens-browser";
 
 export interface SettingsProps {
   recorder: Recorder;

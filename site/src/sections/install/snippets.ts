@@ -57,6 +57,51 @@ root.render(
 }`,
   },
   {
+    id: "vue",
+    label: "Vue",
+    file: "main.ts",
+    note: "One plugin. Route changes are page views, and component errors name the component.",
+    code: `import { WizeLens } from "@wizeworks/lens-vue";
+
+createApp(App)
+  .use(router)
+  .use(WizeLens, { endpoint: "/_wizelens", router })
+  .mount("#app");`,
+  },
+  {
+    id: "angular",
+    label: "Angular",
+    file: "app.config.ts",
+    note: "An ErrorHandler and a router tracker. HttpClient calls link to their server traces.",
+    code: `const lens = initWizeLens({ endpoint: "/_wizelens" });
+
+providers: [
+  { provide: ErrorHandler, useValue: createWizeLensErrorHandler(lens) },
+  provideAppInitializer(() => trackAngularRouter(inject(Router), lens)),
+]`,
+  },
+  {
+    id: "svelte",
+    label: "Svelte",
+    file: "hooks.client.ts",
+    note: "SvelteKit or plain Svelte. Client errors carry their route.",
+    code: `import { dev } from "$app/environment";
+import { createHandleError, initWizeLens } from "@wizeworks/lens-svelte";
+
+initWizeLens({ endpoint: "/_wizelens", enabled: dev });
+export const handleError = createHandleError();`,
+  },
+  {
+    id: "js",
+    label: "Plain JS",
+    file: "index.html",
+    note: "Any page, no build step. Every fetch and XHR call links to its server trace.",
+    code: `<script
+  src="https://cdn.jsdelivr.net/npm/@wizeworks/lens-browser/dist/wizelens.iife.js"
+  data-endpoint="/_wizelens">
+</script>`,
+  },
+  {
     id: "hub",
     label: "Local hub",
     file: "terminal",

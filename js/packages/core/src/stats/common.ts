@@ -123,10 +123,14 @@ export function memoByObject<K extends object, V>(compute: (k: K) => V): (k: K) 
   };
 }
 
-/** SQL text with literals replaced by `?`, so the same query with other values groups together. */
+// A bare GUID, or a long hex id with a digit (a Mongo ObjectId, a hash), as in the Redis key "session:3f2a...".
+const BARE_ID_RE = /\b(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|(?=[0-9a-f]*\d)[0-9a-f]{16,})\b/gi;
+
+/** SQL text (or a command such as `GET user:123`) with literals and ids replaced by `?`, so the same query with other values groups together. */
 export function normalizeQuery(sql: string): string {
   return sql
     .replace(/'(?:[^']|'')*'/g, "?")
+    .replace(BARE_ID_RE, "?")
     .replace(/\b\d+(?:\.\d+)?\b/g, "?")
     .replace(/\s+/g, " ")
     .trim();

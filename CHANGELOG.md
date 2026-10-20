@@ -6,6 +6,14 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **More libraries and frameworks (SDK coverage).** Node: Redis (ioredis and node-redis), MongoDB, and Elasticsearch on the
+  Database page and in N+1 and duplicate insights, with no values stored; BullMQ and Amazon SQS spans that carry the trace
+  from sender to worker; outgoing `node:http` / `node:https` calls (axios, got, the AWS SDK) like `fetch` (`instrumentHttp`);
+  NestJS requests named by route template with controller and handler, and exceptions from guards and pipes; GraphQL
+  operation spans, and each operation as its own endpoint (`POST /graphql (GetOrders)`). .NET: `WizeLens.Redis`,
+  `WizeLens.MongoDB`, and `WizeLens.Elasticsearch`. Browser: `@wizeworks/lens-browser` (plain JS, one script tag),
+  `@wizeworks/lens-vue`, `@wizeworks/lens-angular`, and `@wizeworks/lens-svelte`, with XHR tracing; the React package now
+  builds on lens-browser with the same API.
 - **AI tools (MCP):** `get_page` reads any dashboard page (services, endpoints, error groups, database, insights, users,
   and more) with its filters, `get_alerts` lists alert rules and events (channel secrets left out), and
   `find_n_plus_one` groups N+1 patterns over the whole store. The hub answers `list_projects` and a `project` argument

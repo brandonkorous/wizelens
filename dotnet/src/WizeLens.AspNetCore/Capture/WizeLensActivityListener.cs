@@ -47,7 +47,8 @@ internal sealed class WizeLensActivityListener(TraceStore store, WizeLensOptions
     private static ActivitySamplingResult Sample(ref ActivityCreationOptions<ActivityContext> creation)
     {
         var source = creation.Source.Name;
-        if (WizeLensContext.Suppressed || ExternalSources.IsDuplicateDriverCall(source) || ExternalSources.IsOutsideRequest(source, creation))
+        if (WizeLensContext.Suppressed || ExternalSources.IsDuplicateDriverCall(source) || ExternalSources.IsWrappedHttpCall(source)
+            || ExternalSources.IsOutsideRequest(source, creation))
         {
             return ActivitySamplingResult.None;
         }

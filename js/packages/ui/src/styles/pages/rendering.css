@@ -2,5 +2,6 @@
 .wl-render-setup { max-width: 620px; text-align: left; color: var(--wl-fg-2); }
 .wl-render-setup p { margin: 6px 0 10px; }
 .wl-render-setup .wl-code { text-align: left; }
+.wl-render-setup .wl-tabbar { margin: 4px 0 12px; }
 .wl-phases { display: flex; flex-direction: column; gap: 14px; }
 .wl-phases p { margin: 0; }
