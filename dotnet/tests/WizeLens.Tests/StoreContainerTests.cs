@@ -27,7 +27,8 @@ public sealed class StoreContainers : IAsyncLifetime
     {
         if (!DockerCheck.Available) return;
         Redis = new RedisBuilder("redis:7.4-alpine").Build();
-        Mongo = new MongoDbBuilder("mongo:8.0").Build();
+        // MongoDB 8 will not start on Linux 6.19+ (SERVER-121912); 7.0 does.
+        Mongo = new MongoDbBuilder("mongo:7.0").Build();
         Elastic = new ContainerBuilder("docker.elastic.co/elasticsearch/elasticsearch:8.15.3")
             .WithEnvironment("discovery.type", "single-node").WithEnvironment("xpack.security.enabled", "false")
             .WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m").WithPortBinding(9200, true)
