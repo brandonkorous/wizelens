@@ -6,7 +6,7 @@ import { CH_LIMIT, CH_URL, type ChTest, chTest, chWrite } from "./test/ch.js";
 import { RANGES } from "./test/scale.js";
 import { TS_WORKER } from "./test/workers.js";
 
-const task = { project: "p", items: [], now: 0, retentionMs: 0, ver: 1 };
+const task = { project: "p", org: "o", logRetentionMs: 1, items: [], now: 0, retentionMs: 0, ver: 1 };
 
 describe("Settle worker pool", () => {
   it("fails the task of a worker that dies, and starts a new worker", async () => {

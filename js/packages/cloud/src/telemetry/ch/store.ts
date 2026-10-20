@@ -2,8 +2,8 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { alignNow, CH_DIALECT, infraSteps, metricAlertSteps, metricPageSteps, type MetricRows, type ProjectSettings, runMetricAsync, searchSql, sqlExecutor, type SqlRunner, suggestSql } from "@wizeworks/lens-core";
-import type { RetentionOf, TelemetryStore } from "../store.js";
-import { checkFactsVersionCh, clearProjectCh, syncProjects } from "./admin.js";
+import type { OrgOf, RetentionOf, TelemetryStore } from "../store.js";
+import { checkFactsVersionCh, clearProjectCh, stampOrgs, syncProjects } from "./admin.js";
 import { type ChClient, chClient } from "./http.js";
 import { MetricWriter } from "./metrics.js";
 import { activeHours, counts, lastTraceMs, slowestEndpoints, traceEnvs } from "./queries.js";
@@ -14,12 +14,14 @@ import { migrateClickHouse } from "./schema.js";
 import { settleClickHouse, type Settler } from "./settle.js";
 import { SettlePool, type SettlePoolOptions } from "./settle-pool.js";
 import { settleProject } from "./settle-work.js";
-import { RetentionCache } from "./util.js";
+import { OrgCache, RetentionCache } from "./util.js";
 import { writeRaw } from "./write.js";
 
 export interface ChStoreOptions {
   url: string;
   retentionOf: RetentionOf;
+  /** Each project's organization, written on every row. */
+  orgOf: OrgOf;
   /** Log retention days per project; the trace retention when absent. */
   logRetentionOf?: RetentionOf;
   /** A project's own settings, for the thresholds its traces settle with. */
@@ -48,9 +50,10 @@ function settlerOf(ch: ChClient, o: ChStoreOptions, queue: SettleQueue, rebuild:
   const entry = o.worker?.entry ?? DEFAULT_WORKER;
   const size = existsSync(fileURLToPath(entry)) ? Math.max(0, o.settleWorkers ?? 0) : 0;
   const settingsOf = o.settingsOf;
-  if (!size) return { settler: { queue, retention, logRetention, settingsOf, run: (t) => settleProject(ch, t), depth: DEPTH, refill }, pool: null, rebuild };
+  const orgs = new OrgCache(o.orgOf);
+  if (!size) return { settler: { queue, retention, logRetention, orgs, settingsOf, run: (t) => settleProject(ch, t), depth: DEPTH, refill }, pool: null, rebuild };
   const pool = new SettlePool({ url: o.url, size, ...o.worker });
-  return { settler: { queue, retention, logRetention, settingsOf, run: pool.run, depth: Math.max(DEPTH, size * 2), refill }, pool, rebuild };
+  return { settler: { queue, retention, logRetention, orgs, settingsOf, run: pool.run, depth: Math.max(DEPTH, size * 2), refill }, pool, rebuild };
 }
 
 export const chRunner = (ch: ChClient): SqlRunner => ({ all: (sql, params) => ch.query<Record<string, unknown>>(sql, params) });
@@ -72,11 +75,12 @@ export async function openClickHouse(o: ChStoreOptions): Promise<TelemetryStore>
   const queue = new SettleQueue();
   await queue.recover(ch, o.now());
   const rebuild = await Rebuild.open(ch, queue, o.rebuildPage);
-  return chTelemetry(ch, settlerOf(ch, o, queue, rebuild), { days: o.retentionOf, logDays: o.logRetentionOf ?? o.retentionOf });
+  await stampOrgs(ch, o.orgOf);
+  return chTelemetry(ch, settlerOf(ch, o, queue, rebuild), { days: o.retentionOf, logDays: o.logRetentionOf ?? o.retentionOf, orgOf: o.orgOf });
 }
 
-function chTelemetry(ch: ChClient, { settler, pool, rebuild }: ReturnType<typeof settlerOf>, retentionOf: { days: RetentionOf; logDays: RetentionOf }): TelemetryStore {
-  const { queue, retention, logRetention } = settler;
+function chTelemetry(ch: ChClient, { settler, pool, rebuild }: ReturnType<typeof settlerOf>, upkeep: { days: RetentionOf; logDays: RetentionOf; orgOf: OrgOf }): TelemetryStore {
+  const { queue, retention, logRetention, orgs } = settler;
   const src = (projectId: string) => ({ d: CH_DIALECT, run: chRunner(ch), scope: { project: projectId } });
   const metrics = new MetricWriter(ch);
   const runMetric = (s: { sql: string; args: unknown[] }) => ch.query(s.sql, s.args) as Promise<MetricRows>;
@@ -86,8 +90,9 @@ function chTelemetry(ch: ChClient, { settler, pool, rebuild }: ReturnType<typeof
     kind: "clickhouse",
     async write(projectId, w, now) {
       const retentionMs = await retention.msOf(projectId);
-      await writeRaw(ch, queue, projectId, w, now, { ms: retentionMs, logMs: await logRetention.msOf(projectId) });
-      await metrics.write(projectId, w.sender.environment ?? "", w.metrics ?? [], now, retentionMs);
+      const project = { id: projectId, org: await orgs.one(projectId) };
+      await writeRaw(ch, queue, project, w, now, { ms: retentionMs, logMs: await logRetention.msOf(projectId) });
+      await metrics.write(project, w.sender.environment ?? "", w.metrics ?? [], now, retentionMs);
     },
     traces: async (t) => loadTraces(ch, [t.projectId], await findTraceIds(ch, t, Date.now())),
     trace: (projectId, traceId) => getTrace(ch, [projectId], traceId),
@@ -110,7 +115,10 @@ function chTelemetry(ch: ChClient, { settler, pool, rebuild }: ReturnType<typeof
       settled = run.catch(() => undefined);
       return run;
     },
-    prune: (now) => syncProjects(ch, queue, retentionOf, now),
+    prune: async (now) => {
+      await syncProjects(ch, queue, upkeep, now);
+      await stampOrgs(ch, upkeep.orgOf);
+    },
     pruneRollups: async () => undefined,
     checkFactsVersion: () => checkFactsVersionCh(ch, rebuild),
     clearProject: (projectId) => clearProjectCh(ch, queue, projectId),

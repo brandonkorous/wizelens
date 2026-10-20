@@ -10,6 +10,8 @@ type Row = Record<string, unknown>;
 /** One project's part of a batch. Plain data, so it can go to a worker thread. */
 export interface ProjectTask {
   project: string;
+  /** The project's organization, written on every row. */
+  org: string;
   items: Dirty[];
   now: number;
   retentionMs: number;
@@ -61,10 +63,10 @@ async function projectWork(ch: ChClient, t: ProjectTask): Promise<ProjectWork> {
     if (facts) for (const [t, rows] of Object.entries(factRows(facts, scope, trace)) as [FactTable, unknown[][]][]) raw[t].push(...rows);
     const start = trace?.startMs ?? now;
     const stateKeep = isLooseTraceId(d.traceId) ? logRetentionMs : retentionMs;
-    work.states.push({ project_id: project, trace_id: d.traceId, settled_ms: d.updatedMs, contrib: next ? JSON.stringify(withoutTop(next)) : "", ver, expire_ms: start + stateKeep });
+    work.states.push({ project_id: project, org_id: t.org, trace_id: d.traceId, settled_ms: d.updatedMs, contrib: next ? JSON.stringify(withoutTop(next)) : "", ver, expire_ms: start + stateKeep });
   });
   const timeOf = (r: Row) => Number(r.start_ms ?? r.time_ms ?? now);
-  work.facts = factObjects(raw, ver, (r, table) => timeOf(r) + factKeepOf(table, r, keep));
+  work.facts = factObjects(raw, t.org, ver, (r, table) => timeOf(r) + factKeepOf(table, r, keep));
   return work;
 }
 
@@ -72,9 +74,9 @@ async function projectWork(ch: ChClient, t: ProjectTask): Promise<ProjectWork> {
 async function writeWork(ch: ChClient, t: ProjectTask, w: ProjectWork): Promise<void> {
   // The same token on a retry lets ClickHouse keep one copy.
   const label: Label = (table) => ({ insert_deduplication_token: `${t.ver}:${t.project}:${table}` });
-  const dead = await tombstones(ch, t.project, w.resettled, w.facts, t.ver);
+  const dead = await tombstones(ch, { id: t.project, org: t.org }, w.resettled, w.facts, t.ver);
   const facts = FACT_TABLES.map((f) => ch.insert(`${f}_t`, [...dead[f], ...w.facts[f]], label(f)));
-  await Promise.all([...facts, writeDeltas(ch, mergeDeltas(w.deltas), () => ({ ms: t.retentionMs, logMs: t.logRetentionMs }), label)]);
+  await Promise.all([...facts, writeDeltas(ch, mergeDeltas(w.deltas), () => ({ ms: t.retentionMs, logMs: t.logRetentionMs }), label, t.org)]);
   await ch.insert("settle_state", w.states, label("settle_state"));
 }
 

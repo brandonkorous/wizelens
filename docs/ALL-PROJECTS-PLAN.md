@@ -53,18 +53,19 @@ fixed per project and safe to stamp at ingest.
 
 ## Phase B — `org_id` on every telemetry row
 
-1. **ClickHouse.** Add `org_id LowCardinality(String) DEFAULT ''` to every table in `PROJECT_TABLES`
-   (`telemetry/ch/schema.ts`), as ALTERs in `RAW_ALTERS` / `FACT_ALTERS` and the rollup DDL (never an edit to a shipped
-   CREATE). Every view selects `org_id`. The sort keys stay: `project_id` already leads them and implies the org.
-2. **Writes.** The ingest key's org reaches `writeRaw` (`ch/write.ts:53`), and each raw row gets `org_id`. Settling
-   copies `org_id` from the raw rows into facts, rollups, histograms, metric series, and `settle_state`.
-3. **Backfill.** A one-time job runs `ALTER TABLE … UPDATE org_id = {org} WHERE project_id = {p} AND org_id = ''` on
-   the raw tables, project by project, from Postgres `projects`. Then bump `FACTS_VERSION` (`core/src/scale/facts.ts:20`)
-   so the rebuild re-settles facts and rollups with `org_id`. Data is two days old (ClickHouse live 2026-10-18), so this
-   is small.
-4. **Postgres telemetry** (`pg-store.ts`, the cloud without ClickHouse). A migration adds `org_id TEXT`, fills it from
-   `projects`, then sets `NOT NULL`. Writes set it.
-5. **Tests.** A row written through ingest has the key's org in every table. The backfill leaves no `org_id = ''`.
+1. **ClickHouse.** `org_id LowCardinality(String) DEFAULT ''` on every table in `ORG_TABLES` (`telemetry/ch/schema.ts`),
+   added by ALTER (never an edit to a shipped CREATE). Views now run after every ALTER and select `org_id`. The sort
+   keys stay: `project_id` already leads them and implies the org.
+2. **Writes.** The store looks each project's org up in Postgres (`orgOf`, kept for good in `OrgCache`). Raw rows,
+   metric tiers and series, facts, tombstones, rollups, histograms, and `settle_state` all carry it. A deleted
+   project's queued traces leave the queue unwritten.
+3. **Backfill.** `stampOrgs` (`ch/admin.ts`) runs on start and with each prune: one waited mutation per table sets
+   `org_id` on rows that have none, for projects that still exist. No `FACTS_VERSION` bump, so the hub does not rebuild.
+4. **Postgres telemetry** (`pg-store.ts`, the cloud without ClickHouse). Migration 23 (`db/schema-orgs.ts`) adds
+   `org_id TEXT NOT NULL DEFAULT ''`, fills it from `projects`, and a `BEFORE INSERT` trigger stamps every new row, so
+   the shared writers stay unchanged.
+5. **Tests** (`org-stamp.test.ts`). Every row of every telemetry table has the project's org, on Postgres and
+   ClickHouse. The stamp fills rows without one and leaves a deleted project's rows empty.
 
 ## Phase C — The database enforces the org
 

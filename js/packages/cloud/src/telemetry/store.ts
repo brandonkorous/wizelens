@@ -26,6 +26,9 @@ export interface MetricQuery {
 /** How long each project's organization keeps data, in days; the default when a project has none. */
 export type RetentionOf = (projectIds: readonly string[]) => Promise<Map<string, number>>;
 
+/** The organization of each project; deleted projects are left out. A project never moves, so the answer can be kept. */
+export type OrgOf = (projectIds: readonly string[]) => Promise<Map<string, string>>;
+
 /** Which waiting traces `settling` counts: one environment, and only those last written at or before `before`. */
 export interface SettlingScope {
   env?: string;

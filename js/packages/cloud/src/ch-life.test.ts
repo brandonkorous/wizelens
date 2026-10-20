@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { buildTrace, type Trace, windowOf } from "@wizeworks/lens-core";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { searchParity } from "../../core/src/testing/search-parity.js";
-import { CH_LIMIT, CH_URL, type ChTest, chSettle, chTest, chWrite } from "./test/ch.js";
+import { CH_LIMIT, CH_URL, type ChTest, chSettle, chTest, chWrite, testOrgOf } from "./test/ch.js";
 import { parity } from "./test/scale.js";
 import { chClient } from "./telemetry/ch/http.js";
 import { openClickHouse } from "./telemetry/ch/store.js";
@@ -55,7 +55,7 @@ describe.skipIf(!CH_URL)("ClickHouse store over time", () => {
   it("drops rows past retention on insert, by TTL", async () => {
     const name = `wl_test_ttl_${Date.now().toString(36)}`;
     const url = `${CH_URL.replace(/\/$/, "")}/${name}`;
-    const store = await openClickHouse({ url, retentionOf: async (ids) => new Map(ids.map((id) => [id, 1])), defaultRetentionDays: 1, now: Date.now });
+    const store = await openClickHouse({ url, retentionOf: async (ids) => new Map(ids.map((id) => [id, 1])), orgOf: testOrgOf, defaultRetentionDays: 1, now: Date.now });
     opened.push({ store, projectId: "p", retentionMs: 0, url, drop: () => chClient({ url: url.replace(name, "default") }).command(`DROP DATABASE IF EXISTS ${name}`) });
     const shift = (t: Trace, by: number) => buildTrace(t.traceId, t.spans.map((s) => ({ ...s, startMs: s.startMs + by })), [], []);
     const [old, fresh] = [shift(traces[0]!, Date.now() - 3 * 86_400_000 - SCENARIO_NOW), shift(traces[1]!, Date.now() - SCENARIO_NOW)];

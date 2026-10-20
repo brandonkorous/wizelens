@@ -10,6 +10,10 @@ export const CH_URL = process.env.WIZELENS_TEST_CLICKHOUSE ?? "";
 export const CH_LIMIT = 600_000;
 const DAY = 86_400_000;
 
+/** Tests' projects all belong to one organization. */
+export const TEST_ORG = "org-ch";
+export const testOrgOf = async (ids: readonly string[]) => new Map(ids.map((id) => [id, TEST_ORG]));
+
 export interface ChTest {
   store: TelemetryStore;
   projectId: string;
@@ -23,7 +27,7 @@ export interface ChTest {
 export async function chTest(days = 1000, now = SCENARIO_NOW, extra: Partial<ChStoreOptions> = {}): Promise<ChTest> {
   const name = `wl_test_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
   const url = `${CH_URL.replace(/\/$/, "")}/${name}`;
-  const store = await openClickHouse({ url, retentionOf: async (ids) => new Map(ids.map((id) => [id, days])), defaultRetentionDays: days, now: () => now, ttl: false, ...extra });
+  const store = await openClickHouse({ url, retentionOf: async (ids) => new Map(ids.map((id) => [id, days])), orgOf: testOrgOf, defaultRetentionDays: days, now: () => now, ttl: false, ...extra });
   const drop = async () => {
     const u = new URL(url);
     u.pathname = "/default";

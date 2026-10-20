@@ -1,6 +1,6 @@
 // Shared bits of the ClickHouse store: row versions, retention lookups, and row objects from column lists.
 import { isLooseTraceId } from "@wizeworks/lens-core";
-import type { RetentionOf } from "../store.js";
+import type { OrgOf, RetentionOf } from "../store.js";
 
 const DAY_MS = 86_400_000;
 const RETENTION_CACHE_MS = 60_000;
@@ -34,6 +34,27 @@ export class RetentionCache {
 
   async msOf(projectId: string): Promise<number> {
     return (await this.daysOf([projectId])).get(projectId)! * DAY_MS;
+  }
+}
+
+/** The organization of each project, from Postgres. Kept for good: a project never moves to another organization. */
+export class OrgCache {
+  private readonly cache = new Map<string, string>();
+
+  constructor(private readonly lookup: OrgOf) {}
+
+  /** The organization of each project that still exists; deleted ones are left out. */
+  async of(projectIds: readonly string[]): Promise<Map<string, string>> {
+    const missing = [...new Set(projectIds)].filter((id) => !this.cache.has(id));
+    if (missing.length) for (const [id, org] of await this.lookup(missing)) if (org) this.cache.set(id, org);
+    return new Map(projectIds.flatMap((id) => (this.cache.has(id) ? [[id, this.cache.get(id)!] as const] : [])));
+  }
+
+  /** One project's organization. Throws for a deleted project, so no row is written without one. */
+  async one(projectId: string): Promise<string> {
+    const org = (await this.of([projectId])).get(projectId);
+    if (!org) throw new Error(`Project ${projectId} does not exist.`);
+    return org;
   }
 }
 

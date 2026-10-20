@@ -18,20 +18,20 @@ export function factKeepOf(table: FactTable, r: Row, keep: Keep): number {
 }
 
 /** Fact rows as objects, with their version and expiry. */
-export function factObjects(rows: Record<FactTable, unknown[][]>, ver: number, expireOf: (r: Row, table: FactTable) => number): Record<FactTable, Row[]> {
+export function factObjects(rows: Record<FactTable, unknown[][]>, org: string, ver: number, expireOf: (r: Row, table: FactTable) => number): Record<FactTable, Row[]> {
   const out = {} as Record<FactTable, Row[]>;
   for (const t of FACT_TABLES) {
     const cols = ["project_id", ...FACT_COLUMNS[t]];
     out[t] = rows[t].map((values) => {
       const r = rowOf(cols, values);
-      return { ...r, ver, is_deleted: 0, expire_ms: expireOf(r, t) };
+      return { ...r, org_id: org, ver, is_deleted: 0, expire_ms: expireOf(r, t) };
     });
   }
   return out;
 }
 
 /** Rows the re-settled traces had before and no longer have, as tombstones. Only traces settled before can have any. */
-export async function tombstones(ch: ChClient, project: string, traceIds: readonly string[], fresh: Record<FactTable, Row[]>, ver: number): Promise<Record<FactTable, Row[]>> {
+export async function tombstones(ch: ChClient, project: { id: string; org: string }, traceIds: readonly string[], fresh: Record<FactTable, Row[]>, ver: number): Promise<Record<FactTable, Row[]>> {
   const out = {} as Record<FactTable, Row[]>;
   for (const t of FACT_TABLES) {
     out[t] = [];
@@ -39,46 +39,46 @@ export async function tombstones(ch: ChClient, project: string, traceIds: readon
     const cols = ["trace_id", ...keyCols(t)];
     const sql = `SELECT ${cols.join(", ")} FROM ${t}_t FINAL WHERE project_id = {p1:String} AND has({p2:Array(String)}, trace_id)`;
     const keep = new Set(fresh[t].map((r) => keyOf(t, r)));
-    for (const old of await ch.query<Row>(sql, [project, traceIds])) {
-      if (!keep.has(keyOf(t, old))) out[t].push({ project_id: project, ...old, ver, is_deleted: 1, expire_ms: NONE_HIGH });
+    for (const old of await ch.query<Row>(sql, [project.id, traceIds])) {
+      if (!keep.has(keyOf(t, old))) out[t].push({ project_id: project.id, org_id: project.org, ...old, ver, is_deleted: 1, expire_ms: NONE_HIGH });
     }
   }
   return out;
 }
 
 const ROLLUP_INPUT = [
-  "project_id String, env String, kind String, key String, bucket_ms Float64, n Float64, err Float64, sum_v Float64",
+  "project_id String, org_id String, env String, kind String, key String, bucket_ms Float64, n Float64, err Float64, sum_v Float64",
   ...COUNTERS.map((c) => `${c} Float64`),
   "first_ms Float64, last_ms Float64, top_rank Float64, top Nullable(String), ids String, expire_ms Float64",
 ].join(", ");
 
-/** Deltas add into the merge tables; a batch's deltas for one bucket and key become one row. */
+/** Deltas add into the merge tables; a batch's deltas for one bucket and key become one row. `org_id` is the table's last column. */
 function rollupInsert(table: string): string {
   const sums = ["n", "err", "sum_v", ...COUNTERS].map((c) => `sum(${c})`).join(", ");
   const ids = `groupArraySortedArrayState(${IDS_MAX})(arrayMap(x -> (-last_ms, x), arrayFilter(x -> x != '', splitByChar(' ', ids))))`;
-  return `${table}_t SELECT project_id, env, kind, key, bucket_ms, ${sums}, min(first_ms), max(last_ms), max(top_rank), argMaxState(top, top_rank), ${ids}, max(expire_ms)
+  return `${table}_t SELECT project_id, env, kind, key, bucket_ms, ${sums}, min(first_ms), max(last_ms), max(top_rank), argMaxState(top, top_rank), ${ids}, max(expire_ms), any(org_id)
     FROM input('${ROLLUP_INPUT}') GROUP BY project_id, env, kind, key, bucket_ms`;
 }
 
-const HIST_INPUT = "project_id String, env String, kind String, key String, bucket_ms Float64, bin Int32, cnt Float64, expire_ms Float64";
+const HIST_INPUT = "project_id String, org_id String, env String, kind String, key String, bucket_ms Float64, bin Int32, cnt Float64, expire_ms Float64";
 const histInsert = (table: string) =>
-  `${table}_t SELECT project_id, env, kind, key, bucket_ms, bin, sum(cnt), max(expire_ms) FROM input('${HIST_INPUT}') GROUP BY project_id, env, kind, key, bucket_ms, bin`;
+  `${table}_t SELECT project_id, env, kind, key, bucket_ms, bin, sum(cnt), max(expire_ms), any(org_id) FROM input('${HIST_INPUT}') GROUP BY project_id, env, kind, key, bucket_ms, bin`;
 
 /** Settings that make one batch's insert into a table safe to send again: ClickHouse keeps the first copy of a token. */
 export type Label = (table: string) => Record<string, string>;
 
 /** Write a merged settle delta into every tier. Rows expire by their project's retention; log kinds by its log retention. */
-export async function writeDeltas(ch: ChClient, delta: SettleDelta, keepOf: (project: string) => Keep, label: Label): Promise<void> {
+export async function writeDeltas(ch: ChClient, delta: SettleDelta, keepOf: (project: string) => Keep, label: Label, org: string): Promise<void> {
   const ms = (project: string, kind: RollupKind) => (LOG_KINDS.has(kind) ? keepOf(project).logMs : keepOf(project).ms);
   const writes: Promise<void>[] = [];
   for (const tier of TIERS) {
     const rollups = delta.rollup.filter((r) => r.tier === tier.name).map((r) => ({
-      project_id: r.project, env: r.env, kind: r.kind, key: r.key, bucket_ms: r.bucket, n: r.n, err: r.err, sum_v: r.sum,
+      project_id: r.project, org_id: org, env: r.env, kind: r.kind, key: r.key, bucket_ms: r.bucket, n: r.n, err: r.err, sum_v: r.sum,
       ...Object.fromEntries(COUNTERS.map((c, i) => [c, r.c[i] ?? 0])), first_ms: r.firstMs ?? NONE_HIGH, last_ms: r.lastMs ?? NONE_LOW,
       top_rank: r.topRank ?? NONE_LOW, top: r.topRank === null ? null : JSON.stringify(r.top ?? null), ids: r.ids, expire_ms: r.bucket + ms(r.project, r.kind),
     }));
     const hists = delta.hist.filter((h) => h.tier === tier.name).map((h) => ({
-      project_id: h.project, env: h.env, kind: h.kind, key: h.key, bucket_ms: h.bucket, bin: h.bin, cnt: h.cnt, expire_ms: h.bucket + ms(h.project, h.kind),
+      project_id: h.project, org_id: org, env: h.env, kind: h.kind, key: h.key, bucket_ms: h.bucket, bin: h.bin, cnt: h.cnt, expire_ms: h.bucket + ms(h.project, h.kind),
     }));
     writes.push(ch.insert(rollupInsert(tier.table), rollups, label(tier.table)), ch.insert(histInsert(tier.hist), hists, label(tier.hist)));
   }

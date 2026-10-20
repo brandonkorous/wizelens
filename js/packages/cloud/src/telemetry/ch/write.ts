@@ -49,18 +49,22 @@ function pointRows(w: HubWrite, projectId: string, expire: (ms: number) => numbe
   }));
 }
 
+/** Every row with its organization. */
+const withOrg = <R extends object>(rows: R[], org: string) => rows.map((r) => ({ ...r, org_id: org }));
+
 /** Save one batch's raw telemetry and queue its traces for settling. Metric rollups are written by the caller. */
-export async function writeRaw(ch: ChClient, queue: SettleQueue, projectId: string, w: HubWrite, now: number, keep: Keep): Promise<void> {
+export async function writeRaw(ch: ChClient, queue: SettleQueue, project: { id: string; org: string }, w: HubWrite, now: number, keep: Keep): Promise<void> {
+  const { id: projectId, org } = project;
   const expire = (ms: number) => ms + keep.ms;
   const ver = nextVer(now);
   const heads = headRows(w, projectId, now, keep);
   await Promise.all([
-    ch.insert("spans_raw", spanRows(w, projectId, ver, expire), ASYNC),
-    ch.insert("logs_raw", logRows(w, projectId, ver, keep), ASYNC),
-    ch.insert("metric_points_raw", pointRows(w, projectId, expire), ASYNC),
+    ch.insert("spans_raw", withOrg(spanRows(w, projectId, ver, expire), org), ASYNC),
+    ch.insert("logs_raw", withOrg(logRows(w, projectId, ver, keep), org), ASYNC),
+    ch.insert("metric_points_raw", withOrg(pointRows(w, projectId, expire), org), ASYNC),
   ]);
   // Bounds and the update log go last, so a settle never sees a trace before its parts.
   const updates = heads.map((h) => ({ project_id: h.project_id, trace_id: h.trace_id, updated_ms: now, env: h.env }));
-  await Promise.all([ch.insert("trace_heads", heads, ASYNC), ch.insert("trace_updates", updates, ASYNC)]);
+  await Promise.all([ch.insert("trace_heads", withOrg(heads, org), ASYNC), ch.insert("trace_updates", updates, ASYNC)]);
   for (const h of heads) queue.touch(projectId, h.trace_id, h.env, now);
 }

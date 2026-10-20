@@ -1,6 +1,6 @@
 import { afterAll, expect, it } from "vitest";
 import { scenarioTraces } from "../../core/src/testing/scenario.js";
-import { CH_LIMIT, CH_URL, type ChTest, chSettle, chTest, chWrite } from "./test/ch.js";
+import { CH_LIMIT, CH_URL, type ChTest, chSettle, chTest, chWrite, testOrgOf } from "./test/ch.js";
 import { parity } from "./test/scale.js";
 import { chClient } from "./telemetry/ch/http.js";
 import { openClickHouse } from "./telemetry/ch/store.js";
@@ -40,7 +40,7 @@ it.skipIf(!CH_URL)("rebuilds stats a page of traces at a time after the facts ve
 it.skipIf(!CH_URL)("goes on from its last page after a restart", async () => {
   const t = await changedVersion();
   for (let i = 0; i < 3; i++) await chSettle(t);
-  const store = await openClickHouse({ url: t.url, retentionOf: async (ids) => new Map(ids.map((id) => [id, 1000])), defaultRetentionDays: 1000, now: Date.now, ttl: false, rebuildPage: PAGE });
+  const store = await openClickHouse({ url: t.url, retentionOf: async (ids) => new Map(ids.map((id) => [id, 1000])), orgOf: testOrgOf, defaultRetentionDays: 1000, now: Date.now, ttl: false, rebuildPage: PAGE });
   const again = { ...t, store };
   expect(await store.checkFactsVersion()).toBe(false);
   await settleAll(again);
