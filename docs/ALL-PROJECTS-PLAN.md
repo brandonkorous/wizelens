@@ -24,7 +24,7 @@ The rules of `GAPS-PLAN.md` ("Rules for every phase") still hold.
 | D | One scope type: one org, a list of projects | L | Done |
 | C | The database enforces the org | M | Done |
 | E | Data routes read many projects | L | Done |
-| F | Per-project features, read across | M | |
+| F | Per-project features, read across | M | Done |
 | G | The dashboard: org picker and "All projects" | L | |
 | H | MCP, docs, and the site | S | |
 
@@ -115,12 +115,17 @@ fixed per project and safe to stamp at ingest.
 
 ## Phase F — Per-project features, read across
 
-1. **Org list routes.** `GET api/orgs/:org/alerts`, `/issues`, `/slos`, `/uptime`, `/saved`, `/shares`, each held to
-   `joinScope` and each row with its project. Create, edit, and delete stay on `api/projects/:project/…`.
-2. **Issue actions** (resolve, ignore, assign) act on the row's project.
-3. **Saved views** may save the All scope: `saved_items` gets `org_id`, and `project_id` may be null for an org view.
-4. **Stay per project:** settings, tag rules, source map uploads, the status page. Under All they show a project list
-   to pick from.
+1. **Org list routes** (`routes/org-lists.ts`): `GET api/orgs/:org/alerts`, `/issues`, `/slos`, `/uptime`, `/shares`,
+   each held to `requireOrgRead`, each row with `projectId` and its project's label. Create, edit, and delete stay on
+   `api/projects/:project/…`.
+2. **Issue actions** (`POST api/orgs/:org/issues`): a labeled error group changes in its project; an insight (counted
+   across projects) changes in every project the caller may write.
+3. **Saved items of the whole organization** (migration 25, `routes/saved-org.ts`): `saved_items.org_id`, and
+   `project_id` may be null. `api/orgs/:org/saved` lists them beside each readable project's, and changes only them.
+4. **Stay per project:** settings, tag rules, source map uploads, the status page. Under All the dashboard shows a
+   project list to pick from (phase G).
+5. **Tests** (`org-lists.test.ts`): rows with their project, hidden projects left out, other organizations 404,
+   organization saved items, and an insight change across projects.
 
 ## Phase G — The dashboard: org picker and "All projects"
 

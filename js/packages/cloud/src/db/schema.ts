@@ -6,7 +6,7 @@ import { MAIL_MIGRATION } from "./schema-mail.js";
 import { NOTIFY_MIGRATION } from "./schema-notify.js";
 import { ISSUES_MIGRATION } from "./schema-issues.js";
 import { OAUTH_MIGRATION } from "./schema-oauth.js";
-import { SAVED_MIGRATION } from "./schema-saved.js";
+import { SAVED_MIGRATION, SAVED_ORG_MIGRATION } from "./schema-saved.js";
 import { SCIM_MIGRATION } from "./schema-scim.js";
 import { SEARCH_MIGRATION } from "./schema-search.js";
 import { SOURCEMAPS_MIGRATION } from "./schema-sourcemaps.js";
@@ -239,6 +239,7 @@ ALTER TABLE alert_events ADD COLUMN problem TEXT NOT NULL DEFAULT '';
   SAVED_MOVE_MIGRATION,
   ORGS_MIGRATION,
   READER_MIGRATION,
+  SAVED_ORG_MIGRATION,
 ];
 
 export const MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS wizelens_migrations (version INTEGER PRIMARY KEY, applied_ms DOUBLE PRECISION NOT NULL)`;

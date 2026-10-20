@@ -8,6 +8,7 @@ import { fail, readJsonBody, sendJson, str } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
 import { projectPage } from "./models.js";
+import type { Queryable } from "../db/db.js";
 
 const DAY_MS = 86_400_000;
 
@@ -57,14 +58,17 @@ async function create(ctx: Ctx): Promise<void> {
   sendJson(ctx.res, 201, { url: `${ctx.app.baseUrl(ctx.req)}/_wizelens/#/shared/${token}`, expiresMs: now + days * DAY_MS });
 }
 
-async function list(ctx: Ctx): Promise<void> {
-  const { project } = await requireProject(ctx, ctx.params.project!);
-  const rows = await ctx.app.db.query<Share>(
+/** A project's links that still open, newest first. */
+export const liveShares = (q: Queryable, projectId: string, now: number): Promise<Share[]> =>
+  q.query<Share>(
     `SELECT id, trace_id AS "traceId", page, title, created_ms AS "createdMs", expires_ms AS "expiresMs", views FROM shares
      WHERE project_id = $1 AND revoked_ms IS NULL AND expires_ms > $2 ORDER BY created_ms DESC`,
-    [project.id, ctx.app.config.now()],
+    [projectId, now],
   );
-  sendJson(ctx.res, 200, rows);
+
+async function list(ctx: Ctx): Promise<void> {
+  const { project } = await requireProject(ctx, ctx.params.project!);
+  sendJson(ctx.res, 200, await liveShares(ctx.app.db, project.id, ctx.app.config.now()));
 }
 
 async function revoke(ctx: Ctx): Promise<void> {
