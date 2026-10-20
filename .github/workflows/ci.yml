@@ -116,7 +116,7 @@ jobs:
         # MongoDB 8 will not start on Linux 6.19+ (SERVER-121912); 7.0 does.
         image: mongo:7.0
         ports: ["27017:27017"]
-        options: --health-cmd "mongosh --quiet --eval db.version()" --health-interval 2s --health-timeout 5s --health-retries 30
+        options: --health-cmd "mongosh --quiet --eval 1" --health-interval 2s --health-timeout 5s --health-retries 30
       sqs:
         image: softwaremill/elasticmq-native:1.6.9
         ports: ["9324:9324"]
