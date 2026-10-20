@@ -6,8 +6,8 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
-- **User names on the Users page.** `setUser(id, { name })` in the Node add-on and the browser, and the `user` and
-  `userName` props of `WizeLensProvider` in React, send `user.full_name`
+- **User names on the Users page.** `setUser(id, { name })` in the Node add-on and the browser, and `<WizeLensUser id name />`
+  (or the `user` and `userName` props of `WizeLensProvider`) in React, send `user.full_name`
   next to `enduser.id`; the Users list and a user's page show the name, with the id under it. Other SDKs can set
   `user.full_name` (or `user.name`) on the span. A project that lists `user.full_name` in its Redacted keys keeps ids only.
 - **The user from the browser.** A request whose server span has no user takes it from a browser span of the same trace,
