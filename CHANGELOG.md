@@ -2,7 +2,10 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.0-alpha.5] — Tested on the real libraries
+
+The add-ons now run against real Redis, MongoDB, Elasticsearch, SQS, BullMQ, NestJS, GraphQL, axios, and Vue in CI,
+and three bugs that this found are fixed.
 
 ### Fixed
 
