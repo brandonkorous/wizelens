@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { pageContext, runPage, type Trace } from "@wizeworks/lens-core";
 import { ANOMALY_NOW, anomalyTraces } from "../../core/src/testing/anomaly-scenario.js";
 import { problemsParity } from "../../core/src/testing/scale-pages.js";
-import { CH_URL, type ChTest, chTest } from "./test/ch.js";
+import { CH_LIMIT, CH_URL, type ChTest, chTest } from "./test/ch.js";
 import { type ScaleDb, scaleDb, settleAll, writeChunked } from "./test/scale.js";
 
 const traces = anomalyTraces();
@@ -43,5 +43,5 @@ describe.skipIf(!CH_URL)("Problems page on ClickHouse", () => {
     expect(await problemsParity(ex, traces, ANOMALY_NOW, RANGES, t.retentionMs)).toEqual([]);
     const m = await runPage("problems", pageContext("1h", ANOMALY_NOW, {}), ex);
     expect(m.problems.map((p) => p.cause?.kind)).toEqual(["release"]);
-  }, 300_000);
+  }, CH_LIMIT);
 });

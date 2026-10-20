@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
-import { CH_URL, type ChTest, chSettle, chTest, chWrite } from "./test/ch.js";
+import { CH_LIMIT, CH_URL, type ChTest, chSettle, chTest, chWrite } from "./test/ch.js";
 
 const opened: ChTest[] = [];
 afterAll(async () => {
@@ -22,5 +22,5 @@ describe.skipIf(!CH_URL)("ClickHouse settle", () => {
     const withSpans = traces.filter((tr) => tr.spans.length).map((tr) => tr.traceId);
     expect(new Set(page.items.map((i) => (i as { traceId: string }).traceId))).toEqual(new Set(withSpans));
     await other;
-  }, 120_000);
+  }, CH_LIMIT);
 });

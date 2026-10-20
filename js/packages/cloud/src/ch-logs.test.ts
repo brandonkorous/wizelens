@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { isLooseTraceId, type Trace } from "@wizeworks/lens-core";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
-import { CH_URL, type ChTest, chSettle, chTest, chWrite } from "./test/ch.js";
+import { CH_LIMIT, CH_URL, type ChTest, chSettle, chTest, chWrite } from "./test/ch.js";
 import { chClient } from "./telemetry/ch/http.js";
 
 const DAY = 86_400_000;
@@ -49,5 +49,5 @@ describe.skipIf(!CH_URL)("ClickHouse log retention", () => {
     await until(async () => (await keptDays(t, "rollup_1h_t WHERE kind = 'log'", "bucket_ms")).join() === "60");
     expect(await keptDays(t, `logs_raw WHERE ${of(traced)}`, "time_ms")).toEqual([30]);
     expect(await keptDays(t, "rollup_1h_t WHERE kind = 'trace'", "bucket_ms")).toEqual([30]);
-  }, 300_000);
+  }, CH_LIMIT);
 });
