@@ -21,8 +21,8 @@ The rules of `GAPS-PLAN.md` ("Rules for every phase") still hold.
 |---|---|---|---|
 | A | Loose ends | S | Done |
 | B | `org_id` on every telemetry row | M | Done |
-| D | One scope type: one org, a list of projects | L | |
-| C | The database enforces the org | M | |
+| D | One scope type: one org, a list of projects | L | Done |
+| C | The database enforces the org | M | Done |
 | E | Data routes read many projects | L | |
 | F | Per-project features, read across | M | |
 | G | The dashboard: org picker and "All projects" | L | |

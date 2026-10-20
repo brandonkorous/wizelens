@@ -21,3 +21,17 @@ UPDATE ${t} SET org_id = p.org_id FROM projects p WHERE p.id = ${t}.project_id;
 CREATE TRIGGER ${t}_org BEFORE INSERT ON ${t} FOR EACH ROW EXECUTE FUNCTION wl_org_of_project();`;
 
 export const ORGS_MIGRATION = [STAMP, ...ORG_TABLES.map(perTable)].join("\n");
+
+/** Migration 24: scoped reads run as `wl_reader`, which row level security holds to the organization in `wl.org`. The owner (every writer) is not subject to it. */
+const READER = `
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'wl_reader') THEN CREATE ROLE wl_reader NOLOGIN; END IF;
+END $$;
+GRANT wl_reader TO CURRENT_USER;`;
+
+const policy = (t: string) => `
+GRANT SELECT ON ${t} TO wl_reader;
+ALTER TABLE ${t} ENABLE ROW LEVEL SECURITY;
+CREATE POLICY wl_org ON ${t} FOR SELECT TO wl_reader USING (org_id = current_setting('wl.org'));`;
+
+export const READER_MIGRATION = [READER, ...ORG_TABLES.map(policy)].join("\n");

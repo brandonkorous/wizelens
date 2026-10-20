@@ -1,19 +1,20 @@
 // Scale mode: telemetry in ClickHouse. Reads go through views with the Postgres names, so the shared SQL answers pages and searches.
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { alignNow, CH_DIALECT, infraSteps, metricAlertSteps, metricPageSteps, type MetricRows, type ProjectSettings, runMetricAsync, searchSql, sqlExecutor, type SqlRunner, suggestSql } from "@wizeworks/lens-core";
-import { metricScope, type OrgOf, type RetentionOf, sqlScope, type TelemetryStore, type TenantScope } from "../store.js";
+import type { ProjectSettings } from "@wizeworks/lens-core";
+import type { OrgOf, RetentionOf, TelemetryStore } from "../store.js";
 import { checkFactsVersionCh, clearProjectCh, stampOrgs, syncProjects } from "./admin.js";
 import { type ChClient, chClient } from "./http.js";
 import { MetricWriter } from "./metrics.js";
-import { activeHours, counts, lastTraceMs, slowestEndpoints, traceEnvs } from "./queries.js";
+import { lastTraceMs } from "./queries.js";
 import { SettleQueue } from "./queue.js";
 import { Rebuild } from "./rebuild.js";
-import { findTraceIds, getTrace, joinedTrace, loadTraces } from "./read.js";
+import { ensureReader, type Reader, readerClient, readerOf } from "./reader.js";
 import { migrateClickHouse } from "./schema.js";
 import { settleClickHouse, type Settler } from "./settle.js";
 import { SettlePool, type SettlePoolOptions } from "./settle-pool.js";
 import { settleProject } from "./settle-work.js";
+import { chReads } from "./store-reads.js";
 import { OrgCache, RetentionCache } from "./util.js";
 import { writeRaw } from "./write.js";
 
@@ -56,7 +57,13 @@ function settlerOf(ch: ChClient, o: ChStoreOptions, queue: SettleQueue, rebuild:
   return { settler: { queue, retention, logRetention, orgs, settingsOf, run: pool.run, depth: Math.max(DEPTH, size * 2), refill }, pool, rebuild };
 }
 
-export const chRunner = (ch: ChClient): SqlRunner => ({ all: (sql, params) => ch.query<Record<string, unknown>>(sql, params) });
+/** What the store's upkeep needs besides the client: retention, organizations, and the reader for scoped reads. */
+interface Upkeep {
+  days: RetentionOf;
+  logDays: RetentionOf;
+  orgOf: OrgOf;
+  reader: Reader;
+}
 
 /** ClickHouse may still be starting (a deploy starts both at once): wait up to two minutes. */
 async function waitReady(ch: ChClient): Promise<void> {
@@ -76,39 +83,26 @@ export async function openClickHouse(o: ChStoreOptions): Promise<TelemetryStore>
   await queue.recover(ch, o.now());
   const rebuild = await Rebuild.open(ch, queue, o.rebuildPage);
   await stampOrgs(ch, o.orgOf);
-  return chTelemetry(ch, settlerOf(ch, o, queue, rebuild), { days: o.retentionOf, logDays: o.logRetentionOf ?? o.retentionOf, orgOf: o.orgOf });
+  const reader = readerOf(o.url);
+  await ensureReader(ch, reader);
+  return chTelemetry(ch, settlerOf(ch, o, queue, rebuild), { days: o.retentionOf, logDays: o.logRetentionOf ?? o.retentionOf, orgOf: o.orgOf, reader });
 }
 
-function chTelemetry(ch: ChClient, { settler, pool, rebuild }: ReturnType<typeof settlerOf>, upkeep: { days: RetentionOf; logDays: RetentionOf; orgOf: OrgOf }): TelemetryStore {
+function chTelemetry(ch: ChClient, { settler, pool, rebuild }: ReturnType<typeof settlerOf>, upkeep: Upkeep): TelemetryStore {
   const { queue, retention, logRetention, orgs } = settler;
-  const src = (s: TenantScope, env?: string) => ({ d: CH_DIALECT, run: chRunner(ch), scope: sqlScope(s, env) });
   const metrics = new MetricWriter(ch);
-  const runMetric = (s: { sql: string; args: unknown[] }) => ch.query(s.sql, s.args) as Promise<MetricRows>;
   // One settle at a time: the queue hands each trace to one run, so a second call waits for the first rather than return before its traces are written.
   let settled: Promise<unknown> = Promise.resolve();
   return {
     kind: "clickhouse",
+    ...chReads((org) => readerClient(upkeep.reader, org), queue),
     async write(projectId, w, now) {
       const retentionMs = await retention.msOf(projectId);
       const project = { id: projectId, org: await orgs.one(projectId) };
       await writeRaw(ch, queue, project, w, now, { ms: retentionMs, logMs: await logRetention.msOf(projectId) });
       await metrics.write(project, w.sender.environment ?? "", w.metrics ?? [], now, retentionMs);
     },
-    traces: async (t) => loadTraces(ch, t.scope, await findTraceIds(ch, t, Date.now())),
-    trace: (s, traceId) => getTrace(ch, s, traceId),
-    joinedTrace: (primaryId, s, traceId) => joinedTrace(ch, primaryId, s, traceId),
-    counts: (s) => counts(ch, s),
-    traceEnvs: (s) => traceEnvs(ch, s),
-    activeHours: (s, from, to) => activeHours(ch, s, from, to),
     lastTraceMs: () => lastTraceMs(ch, Date.now()),
-    executor: (s, retentionMs, env) => sqlExecutor({ ...src(s, env), retentionMs, loadTrace: (id) => getTrace(ch, s, id).then((t) => t ?? null) }),
-    settling: async (s, o = {}) => s.projects.reduce((n, p) => n + queue.count(p, o.env, o.before), 0) || null,
-    search: (s, q) => searchSql(src(s), q),
-    suggest: (s, r) => suggestSql(src(s), r),
-    slowestEndpoints: (s, w, minCount, limit) => slowestEndpoints(ch, s, w, minCount, limit),
-    metricData: (m, range, params, now) => runMetricAsync(metricPageSteps("ch", metricScope(m), range, alignNow(now), params), runMetric),
-    metricAlertData: (m, name, w, now) => runMetricAsync(metricAlertSteps("ch", metricScope(m), name, w, now), runMetric),
-    infraData: (m, range, params, now) => runMetricAsync(infraSteps("ch", metricScope(m), range, alignNow(now), params), runMetric),
     settle(now, o) {
       const run = settled.then(() => settleClickHouse(settler, now, o));
       settled = run.catch(() => undefined);

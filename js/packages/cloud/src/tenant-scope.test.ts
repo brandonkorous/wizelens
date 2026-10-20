@@ -2,8 +2,10 @@ import { afterAll, describe, expect, it } from "vitest";
 import { pageContext, runPage, type Trace, windowOf } from "@wizeworks/lens-core";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { createProject } from "./repo/projects.js";
-import { pgTelemetry } from "./telemetry/pg-store.js";
+import { pgReader, pgTelemetry } from "./telemetry/pg-store.js";
 import { type TelemetryStore, type TenantScope, tenantScope } from "./telemetry/store.js";
+import { chClient } from "./telemetry/ch/http.js";
+import { readerClient, readerOf } from "./telemetry/ch/reader.js";
 import { CH_LIMIT, type ChTest, CH_URL, chTest } from "./test/ch.js";
 import { seedOrg, testDb } from "./test/db.js";
 
@@ -21,7 +23,7 @@ async function write(store: TelemetryStore, projectId: string, list: readonly Tr
 async function seen(store: TelemetryStore, scope: TenantScope) {
   const overview = await runPage("overview", pageContext("30d", SCENARIO_NOW, {}), store.executor(scope, 1000 * DAY));
   const spans = await store.search(scope, { kind: "spans", node: null, window: windowOf("30d", SCENARIO_NOW), limit: 1000 });
-  return { requests: overview.headlines.total.value, spans: spans.items.length, traces: (await store.counts(scope)).traces };
+  return { requests: overview.headlines.total.value ?? 0, spans: spans.items.length, traces: (await store.counts(scope)).traces };
 }
 
 /** Org A has projects a1 (all traces) and a2 (half); org B has b1 (all traces again). */
@@ -55,6 +57,12 @@ describe("Read scopes", () => {
     await write(store, b1, traces);
     await store.settle(SCENARIO_NOW + 60_000, { budgetMs: Number.POSITIVE_INFINITY });
     await checkScopes(store, { orgA, orgB, a1, a2, b1 });
+    // The database holds the reader to its organization even when the SQL names none.
+    const count = async (org: string) => (await pgReader(db, org).query<{ n: number }>("SELECT count(*)::int AS n FROM spans"))[0]!.n;
+    const [all] = await db.query<{ n: number }>("SELECT count(*)::int AS n FROM spans");
+    expect((await count(orgA)) + (await count(orgB))).toBe(all!.n);
+    expect(await count(orgB)).toBeGreaterThan(0);
+    expect(await count("nobody")).toBe(0);
   }, 60_000);
 });
 
@@ -74,5 +82,14 @@ describe.skipIf(!CH_URL)("Read scopes on ClickHouse", () => {
     await write(t.store, "b1", traces);
     await t.store.settle(SCENARIO_NOW + 60_000, { budgetMs: Number.POSITIVE_INFINITY });
     await checkScopes(t.store, { orgA: "org-a", orgB: "org-b", a1: "a1", a2: "a2", b1: "b1" });
+    // The database holds the reader to its organization even when the SQL names none.
+    const reader = readerOf(t.url);
+    const count = (org: string) => readerClient(reader, org).query<{ n: string }>("SELECT count() AS n FROM spans_raw WHERE has(['a1', 'b1'], project_id)");
+    const [a, b] = [Number((await count("org-a"))[0]!.n), Number((await count("org-b"))[0]!.n)];
+    expect(a).toBe(b);
+    expect(a).toBeGreaterThan(0);
+    expect(Number((await count("org-none"))[0]!.n)).toBe(0);
+    await expect(chClient({ url: reader.url }).query("SELECT count() FROM fact_requests")).rejects.toThrow();
+    await expect(chClient({ url: reader.url }).query("SELECT count() FROM trace_updates")).rejects.toThrow();
   }, CH_LIMIT);
 });

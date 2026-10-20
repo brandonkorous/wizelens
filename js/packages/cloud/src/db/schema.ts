@@ -16,7 +16,7 @@ import { UPTIME_MIGRATION } from "./schema-uptime.js";
 import { TAGS_MIGRATION } from "./schema-tags.js";
 import { TEAM_MIGRATION } from "./schema-team.js";
 import { SAVED_MOVE_MIGRATION } from "./schema-saved-move.js";
-import { ORGS_MIGRATION } from "./schema-orgs.js";
+import { ORGS_MIGRATION, READER_MIGRATION } from "./schema-orgs.js";
 
 // Cloud schema, one entry per version. Never edit a shipped entry: add a new one (docs/CONTRACT.md, "Cloud storage").
 export const MIGRATIONS: readonly string[] = [
@@ -238,6 +238,7 @@ ALTER TABLE alert_events ADD COLUMN problem TEXT NOT NULL DEFAULT '';
   TEAM_MIGRATION,
   SAVED_MOVE_MIGRATION,
   ORGS_MIGRATION,
+  READER_MIGRATION,
 ];
 
 export const MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS wizelens_migrations (version INTEGER PRIMARY KEY, applied_ms DOUBLE PRECISION NOT NULL)`;

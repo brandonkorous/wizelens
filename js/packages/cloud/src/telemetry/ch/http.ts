@@ -5,6 +5,8 @@ export interface ChOptions {
   url: string;
   /** Per call. Default 30 s. */
   timeoutMs?: number;
+  /** Settings sent with every call, for example the organization a reader's row policies read. */
+  settings?: Record<string, string>;
 }
 
 export interface ChClient {
@@ -30,6 +32,7 @@ interface Endpoint {
   base: string;
   headers: Record<string, string>;
   database: string;
+  settings?: Record<string, string>;
 }
 
 function endpointOf(url: string): Endpoint {
@@ -76,7 +79,7 @@ async function send(url: string, init: RequestInit, timeoutMs: number, again = f
 }
 
 async function call(e: Endpoint, body: string, query: Record<string, string>, timeoutMs: number, again = false): Promise<string> {
-  const qs = new URLSearchParams({ ...SETTINGS, ...query });
+  const qs = new URLSearchParams({ ...SETTINGS, ...e.settings, ...query });
   const res = await send(`${e.base}?${qs.toString()}`, { method: "POST", headers: e.headers, body }, timeoutMs, again);
   if (!res.ok) throw new Error(`ClickHouse ${res.status}: ${res.text.slice(0, 500)}`);
   return res.text;
@@ -86,7 +89,7 @@ const paramsOf = (params: readonly unknown[]) => Object.fromEntries(params.map((
 
 /** A client for one database. Nothing connects until the first call. */
 export function chClient(o: ChOptions): ChClient {
-  const e = endpointOf(o.url);
+  const e = { ...endpointOf(o.url), settings: o.settings };
   const timeout = o.timeoutMs ?? 30_000;
   return {
     database: e.database,
