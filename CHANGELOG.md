@@ -2,6 +2,17 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- **Tested against the real libraries and servers.** A new CI job runs the Node add-on against real Redis, MongoDB,
+  Elasticsearch, an SQS server, BullMQ, NestJS 12, GraphQL 17, and axios, in code and with the auto install; the .NET add-on
+  against real Redis, MongoDB, and Elasticsearch; the Vue plugin against real Vue and Vue Router. Fixes found that way:
+  `instrumentNest` failed on Nest's app (a Proxy that refuses new properties); graphql 17 operations were not traced (they now
+  come from graphql's own tracing channels, which also covers ES module apps); the auto install missed the Elasticsearch 9
+  client in ES module apps.
+
 ## [0.3.0-alpha.4] — Teams, problems, and every stack
 
 Teams, roles, and billing on the cloud; SLOs, alerts, uptime checks, and status pages; Problems that find what is above

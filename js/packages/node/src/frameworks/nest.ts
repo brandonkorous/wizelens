@@ -28,7 +28,8 @@ export interface NestOptions {
   capture?: boolean;
 }
 
-const INSTALLED = Symbol.for("wizeworks.wizelens.nest");
+// Apps already hooked. A set, not a mark on the app: NestFactory returns a Proxy that refuses new properties.
+const installed = new WeakSet<object>();
 
 /** Controller, handler, version, and the metadata route of the handler that answers this request. */
 function describeHandler(span: OtelSpan, ctx: ExecutionContextLike, app: NestAppLike | undefined, path: string): void {
@@ -63,10 +64,10 @@ export class WizeLensNestInterceptor {
 
 /** Add the global interceptor and the exception filter hook to a Nest app, once. */
 export function addNestHooks(app: unknown): boolean {
-  const a = app as (NestAppLike & Record<symbol, unknown>) | null | undefined;
+  const a = app as NestAppLike | null | undefined;
   if (!a || typeof a.useGlobalInterceptors !== "function") return false;
-  if (a[INSTALLED]) return true;
-  a[INSTALLED] = true;
+  if (installed.has(a)) return true;
+  installed.add(a);
   a.useGlobalInterceptors(new WizeLensNestInterceptor(a));
   const filters = a.routesResolver?.routerExceptionsFilter;
   if (filters) hookExceptionFilters(Object.getPrototypeOf(filters) as object);
@@ -84,7 +85,7 @@ function addCapture(wizelens: WizeLens, app: NestAppLike): void {
 export function instrumentNest(wizelens: WizeLens, app: unknown, options: NestOptions = {}): boolean {
   const a = app as NestAppLike | null | undefined;
   if (!captureOf(wizelens) || !a || typeof a.useGlobalInterceptors !== "function") return false;
-  if ((a as Record<symbol, unknown>)[INSTALLED]) return true;
+  if (installed.has(a)) return true;
   if (options.capture !== false) addCapture(wizelens, a);
   return addNestHooks(a);
 }

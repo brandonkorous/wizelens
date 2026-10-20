@@ -53,8 +53,9 @@ Works with graphql-js 16 and up: Apollo Server, Mercurius, NestJS GraphQL, and G
 with `graphql.operation.type`, `graphql.operation.name`, and `graphql.document` (literal values replaced by `*`; variable values
 are never stored). Errors in the result are recorded on the span. The request is named by its operation,
 `POST /graphql (GetOrders)`, so each operation is its own endpoint. Options: `resolvers` (`"slow"` by default: a span only for
-resolvers at or over `slowResolverMs`, 50 ms; `"all"`; `"none"`) and `document` (`true`). In an ES module app, or with
-Mercurius, use the [auto install](/docs/auto-install/), which hooks graphql as it loads. WebSocket subscriptions are not traced.
+resolvers at or over `slowResolverMs`, 50 ms; `"all"`; `"none"`) and `document` (`true`). graphql 17 and later announce each operation on Node's tracing channels, so any app works, ES module or CommonJS, with or
+without the auto install. For graphql 16 in an ES module app, or with Mercurius, use the [auto install](/docs/auto-install/),
+which hooks graphql as it loads. WebSocket subscriptions are not traced.
 
 ## Databases
 

@@ -6,6 +6,7 @@ import { addOperation } from "../request-naming.js";
 import { currentServerSpan, recordOn } from "../spans.js";
 import type { WizeLens } from "../types.js";
 import { callOf, endpointPartOf, operationAttributes, operationOf, recordResultErrors, spanNameOf } from "./operation.js";
+import { subscribeGraphqlChannels } from "./channels.js";
 import { hookResolvers } from "./resolvers.js";
 import { afterCall, type GraphqlOptions, IN_OPERATION, type Method } from "./shared.js";
 
@@ -58,13 +59,17 @@ function holderOf(target: Record<string, unknown>, name: string): Record<string,
   return null;
 }
 
+/** graphql 17 and later publish "graphql:execute". */
+const isChannelVersion = (graphql: object): boolean => Number(String((graphql as { version?: unknown }).version ?? "").split(".")[0]) >= 17;
+
 const isWrapped = (fn: unknown): boolean => typeof fn === "function" && (fn as unknown as Record<symbol, unknown>)[Symbol.for(`wizeworks.wizelens.${KIND}`)] === true;
 
 /** Trace graphql-js 16+ operations (Apollo, Yoga, Mercurius, Nest): `instrumentGraphql(wizelens, graphql)` before the server is made. False when nothing was patched. */
 export function instrumentGraphql(wizelens: WizeLens, graphql: unknown, options: GraphqlOptions = {}): boolean {
   const d = captureOf(wizelens);
   if (!d || !graphql || typeof graphql !== "object") return false;
-  let done = false;
+  // graphql 17 and later announce operations on tracing channels; the patch below then finds nothing to do, or is skipped inside.
+  let done = isChannelVersion(graphql) && subscribeGraphqlChannels(d, options);
   for (const name of ENTRY_POINTS) {
     const holder = holderOf(graphql as Record<string, unknown>, name);
     if (!holder) continue;
@@ -72,6 +77,12 @@ export function instrumentGraphql(wizelens: WizeLens, graphql: unknown, options:
     else done = patchMethod(holder, name, (original) => traceOperation(d, options, original as Method), KIND) || done;
   }
   return done;
+}
+
+/** Trace graphql 17+ through its tracing channels only: for the auto install, before graphql loads. False when tracing is off. */
+export function traceGraphqlChannels(wizelens: WizeLens, options: GraphqlOptions = {}): boolean {
+  const d = captureOf(wizelens);
+  return !!d && subscribeGraphqlChannels(d, options);
 }
 
 /** One graphql-js function, traced. For an ES module build, whose bindings cannot be patched from outside. */
