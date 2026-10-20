@@ -1,5 +1,6 @@
 package com.wizelens;
 
+import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
@@ -10,6 +11,8 @@ import io.opentelemetry.sdk.trace.SpanProcessor;
 
 /** Runs the WizeLens sampler in front of an exporting processor: spans of a trace outside the rate wait for its local root. */
 public final class SamplingSpanProcessor implements SpanProcessor {
+  private static final AttributeKey<Long> HTTP_STATUS = AttributeKey.longKey("http.response.status_code");
+  private static final AttributeKey<Long> OLD_HTTP_STATUS = AttributeKey.longKey("http.status_code");
   private final SpanProcessor inner;
   private final TraceSampler sampler;
   private final boolean keepErrors;
@@ -40,8 +43,15 @@ public final class SamplingSpanProcessor implements SpanProcessor {
   }
 
   private boolean important(ReadableSpan span) {
-    if (keepErrors && span.toSpanData().getStatus().getStatusCode() == StatusCode.ERROR) return true;
+    if (keepErrors && span.toSpanData().getStatus().getStatusCode() == StatusCode.ERROR && !answered4xx(span)) return true;
     return keepSlowMs != null && span.getLatencyNanos() / 1e6 >= keepSlowMs;
+  }
+
+  /** A 4xx answer is not a failure, even with an error status. */
+  private static boolean answered4xx(ReadableSpan span) {
+    Long code = span.getAttribute(HTTP_STATUS);
+    if (code == null) code = span.getAttribute(OLD_HTTP_STATUS);
+    return code != null && code >= 400 && code < 500;
   }
 
   @Override

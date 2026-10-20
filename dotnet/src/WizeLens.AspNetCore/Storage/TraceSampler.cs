@@ -1,3 +1,4 @@
+using WizeLens.Analysis;
 using WizeLens.Model;
 
 namespace WizeLens.Storage;
@@ -96,7 +97,7 @@ internal sealed class TraceSampler(WizeLensSampling settings, Func<long>? now = 
 
     // A browser span's length is a page or render window, not a wait: it never counts as slow.
     private bool MustKeep(Span span) =>
-        (Settings.KeepErrors && span.Status == SpanStatuses.Error)
+        (Settings.KeepErrors && RequestParts.IsErrorStatus(span))
         || (Settings.KeepSlowMs is { } slow && span.Category != SpanCategories.Browser && span.DurationMs >= slow);
 
     private SampleVerdict KeepHeld(string traceId, HeldTrace held)

@@ -112,6 +112,22 @@ public sealed class LibraryMappingTests : IDisposable
     }
 
     [Fact]
+    public void A_server_span_that_answered_4xx_is_not_an_error_even_with_an_exception()
+    {
+        using var source = new ActivitySource(ActivityMapper.AspNetCoreSource);
+        var activity = source.StartActivity("GET /pages/{slug}", ActivityKind.Server)!;
+        activity.SetTag("http.response.status_code", 404);
+        activity.AddEvent(new ActivityEvent("exception", tags: new ActivityTagsCollection { ["exception.message"] = "Page not found" }));
+        activity.SetStatus(ActivityStatusCode.Error);
+        activity.Stop();
+
+        var span = ActivityMapper.ToSpan(activity, "svc");
+
+        Assert.Equal(SpanStatuses.Unset, span.Status);
+        Assert.Contains(span.Events, e => e.Name == "exception");
+    }
+
+    [Fact]
     public void Grpc_client_call_keeps_the_http_span_id_and_gets_the_call_status()
     {
         using var grpcSource = new ActivitySource(ExternalSources.GrpcClient);

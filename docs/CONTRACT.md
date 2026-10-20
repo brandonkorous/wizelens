@@ -109,7 +109,7 @@ interface TraceSummary {
   service: string;
   startMs: number;
   durationMs: number;       // max(end) - min(start) over spans
-  status: SpanStatus;       // "error" if any span is error
+  status: SpanStatus;       // "error" if any span is error, leaving out 4xx answers
   spanCount: number;
   dbCount: number;
   httpClientCount: number;
@@ -119,6 +119,12 @@ interface TraceSummary {
   rootUrl: string | null;        // url.path, else url.full, of the root span
   rootStatusCode: number | null; // http.response.status_code of the root span
 }
+
+**Failures.** A span is an error when its status is `error` or it has an `exception` event, unless its
+`http.response.status_code` is 400–499: a 4xx answer is never a failure, on server and client spans alike. `errorCount`,
+the trace `status`, request `errors` (failed: `errors > 0` or status 500 and above), error groups, service and endpoint
+error counts, the search `error` field, and `keepErrors` sampling all use this rule, in Node and .NET; the Go, Java, and Python
+samplers use it too.
 
 interface Trace extends TraceSummary {
   spans: Span[];            // sorted by startMs

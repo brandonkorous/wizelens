@@ -43,7 +43,7 @@ public static partial class SearchDocs
             ["service"] = s.Service, ["env"] = env, ["trace"] = s.TraceId, ["span"] = s.SpanId, ["name"] = s.Name,
             ["method"] = Str(a, "http.request.method"), ["path"] = PathOnly(url), ["route"] = Str(a, "http.route"),
             ["status"] = Num(a.GetValueOrDefault("http.response.status_code")), ["outcome"] = s.Status, ["duration"] = s.DurationMs,
-            ["category"] = s.Category, ["kind"] = s.Kind, ["user"] = Str(a, "enduser.id"), ["error"] = s.Status == SpanStatuses.Error,
+            ["category"] = s.Category, ["kind"] = s.Kind, ["user"] = Str(a, "enduser.id"), ["error"] = RequestParts.IsErrorStatus(s),
         }, [a]);
     }
 

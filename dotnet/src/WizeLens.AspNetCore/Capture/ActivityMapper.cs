@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using WizeLens.Analysis;
 using WizeLens.Model;
 
 namespace WizeLens.Capture;
@@ -123,6 +124,8 @@ internal static class ActivityMapper
 
     private static string MapStatus(Activity activity, Span span)
     {
+        // A server span that answered 4xx is not a failure, even with an exception (OpenTelemetry's rule).
+        if (span.Category == SpanCategories.HttpServer && RequestParts.IsClientErrorStatus(span)) return SpanStatuses.Unset;
         if (activity.Status == ActivityStatusCode.Error) return SpanStatuses.Error;
         if (span.Events.Any(e => e.Name == "exception")) return SpanStatuses.Error;
 

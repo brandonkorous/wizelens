@@ -6,7 +6,8 @@ import { clockStore, settleAll, writeTraces } from "./test/scale.js";
 
 const SLOS: Slo[] = [
   { id: "a", projectId: "", name: "a", service: "api", endpoint: "", kind: "success", target: 99, thresholdMs: 0, windowDays: 30 },
-  { id: "b", projectId: "", name: "b", service: "api", endpoint: "POST /api/pay", kind: "latency", target: 90, thresholdMs: 200, windowDays: 7 },
+  // 30 days, not 7: a 7-day series spreads hour buckets over its page buckets, so it matches exact times only when every request fails alike.
+  { id: "b", projectId: "", name: "b", service: "api", endpoint: "POST /api/pay", kind: "latency", target: 90, thresholdMs: 200, windowDays: 30 },
   { id: "c", projectId: "", name: "c", service: "Web App", endpoint: "", kind: "latency", target: 95, thresholdMs: 1000, windowDays: 30 },
 ];
 

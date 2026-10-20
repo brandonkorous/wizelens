@@ -26,7 +26,13 @@ internal static partial class RequestParts
         return servers.FirstOrDefault(IsEntry) ?? servers.FirstOrDefault();
     }
 
-    public static bool IsErrorSpan(Span s) => s.Status == SpanStatuses.Error || s.Events.Any(e => e.Name == "exception");
+    /// <summary>A 4xx answer: the caller asked for something missing or wrong. It is not a failure, even when the app marks the span as an error.</summary>
+    public static bool IsClientErrorStatus(Span s) => AttributeValue.AsDouble(s.Attributes.GetValueOrDefault("http.response.status_code")) is >= 400 and < 500;
+
+    /// <summary>The span's status is error, and it did not answer 4xx.</summary>
+    public static bool IsErrorStatus(Span s) => s.Status == SpanStatuses.Error && !IsClientErrorStatus(s);
+
+    public static bool IsErrorSpan(Span s) => !IsClientErrorStatus(s) && (s.Status == SpanStatuses.Error || s.Events.Any(e => e.Name == "exception"));
 
     /// <summary>pageview, react, error, or fetch for a browser span; null for others.</summary>
     public static string? BrowserTypeOf(Span s)

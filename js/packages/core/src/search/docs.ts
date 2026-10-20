@@ -2,6 +2,7 @@
 import type { RequestItem } from "../scale/facts-lists.js";
 import { displayService } from "../stats/errors.js";
 import { LOG_LEVELS, type LogRow } from "../stats/logs.js";
+import { isErrorStatus } from "../trace.js";
 import type { AttributeValue, Attributes, Span, Trace } from "../types.js";
 import { numberOf, type SearchDoc } from "./match.js";
 
@@ -36,7 +37,7 @@ export function spanDoc(s: Span, env?: string): SearchDoc {
     fields: {
       service: s.service, env, trace: s.traceId, span: s.spanId, name: s.name, method: str(a, "http.request.method"), path, route: str(a, "http.route"),
       status: num(a["http.response.status_code"]), outcome: s.status, duration: s.durationMs, category: s.category, kind: s.kind,
-      user: str(a, "enduser.id"), error: s.status === "error",
+      user: str(a, "enduser.id"), error: isErrorStatus(s),
     },
     attrs: [a],
   };

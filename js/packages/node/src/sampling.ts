@@ -1,4 +1,4 @@
-import { keepByRate, type LogRecord, type SamplingInfo, type Span } from "@wizeworks/lens-core";
+import { isErrorStatus, keepByRate, type LogRecord, type SamplingInfo, type Span } from "@wizeworks/lens-core";
 
 export interface SamplingOptions {
   /** Share of traces kept, 0 to 1. Default 1 (all), or the WIZELENS_SAMPLE_RATE variable. */
@@ -94,7 +94,7 @@ export class TraceSampler {
   }
 
   #mustKeep(span: Span): boolean {
-    if (this.info.keepErrors && span.status === "error") return true;
+    if (this.info.keepErrors && isErrorStatus(span)) return true;
     // A browser span's length is a page or render window, not a wait: it never counts as slow.
     return this.info.keepSlowMs !== null && span.category !== "browser" && span.durationMs >= this.info.keepSlowMs;
   }

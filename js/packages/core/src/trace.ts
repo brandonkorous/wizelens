@@ -34,7 +34,17 @@ export function entryServerSpan(spans: readonly Span[]): Span | undefined {
   return servers.find(isEntry) ?? servers[0];
 }
 
+/** A 4xx answer: the caller asked for something missing or wrong. It is not a failure, even when the app marks the span as an error. */
+export function isClientErrorStatus(span: Span): boolean {
+  const code = attrNumber(span, "http.response.status_code");
+  return code !== null && code >= 400 && code < 500;
+}
+
+/** The span's status is error, and it did not answer 4xx. */
+export const isErrorStatus = (span: Span): boolean => span.status === "error" && !isClientErrorStatus(span);
+
 export function isErrorSpan(span: Span): boolean {
+  if (isClientErrorStatus(span)) return false;
   return span.status === "error" || span.events.some((e) => e.name === "exception");
 }
 
@@ -55,7 +65,7 @@ function timeBounds(spans: readonly Span[], logs: readonly LogRecord[]): { start
 }
 
 function statusOf(spans: readonly Span[]): SpanStatus {
-  if (spans.some((s) => s.status === "error")) return "error";
+  if (spans.some(isErrorStatus)) return "error";
   return spans.some((s) => s.status === "ok") ? "ok" : "unset";
 }
 

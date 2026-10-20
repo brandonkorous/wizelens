@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
@@ -64,6 +65,10 @@ func TestRateZeroKeepsOnlyErrorsAndSlowTraces(t *testing.T) {
 	failed.SetStatus(codes.Error, "boom")
 	failed.End()
 	loud.End()
+	_, missing := tr.Start(context.Background(), "missing")
+	missing.SetAttributes(attribute.Int("http.response.status_code", 404))
+	missing.SetStatus(codes.Error, "not found")
+	missing.End()
 	_, slow := tr.Start(context.Background(), "slow")
 	time.Sleep(30 * time.Millisecond)
 	slow.End()

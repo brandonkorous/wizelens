@@ -247,6 +247,15 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Changed
 
+- **A 4xx answer is not a failure.** A span that answered 400–499 is "not found" or "bad request", not "failed", even when
+  the app marks it as an error or records an exception on it. So a page that answers 200 after an internal 404 lookup, and
+  a bot asking for files that do not exist, no longer push up error rates, failed requests, error groups, or alerts. 5xx
+  answers, and errors on spans with no HTTP status, still count. It follows the OpenTelemetry rule for server spans, and
+  applies to client spans as well, because WizeLens sees the other side of the call. Stats are rebuilt once
+  (`FACTS_VERSION` 9). Sampling in every SDK (Node, .NET, Go, Java, Python) no longer keeps a trace only for a 4xx.
+  The Node framework add-ons (Fastify, Express, Koa, Hono) and `recordException` still record a thrown 4xx error (one
+  with a 4xx `statusCode` or `status`) as an exception, but no longer mark the span as failed. .NET does the same for a
+  server span that answered 4xx.
 - **One store for saved things.** The Logs page's charts are saved searches now (the store of saved views and
   dashboards), so they also show under Saved in the sidebar, on the Search page, and in Ctrl+K, and can be shared or kept
   to yourself on the cloud. Existing charts move over by themselves (cloud migration 22; hub schema 5). The

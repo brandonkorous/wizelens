@@ -32,6 +32,12 @@ Pick a time range in the top bar. Every number compares itself with the range be
 
 Open any trace for the full detail: the timeline, SQL, HTTP calls, logs, and errors, across every service it touched.
 
+## What counts as an error
+
+A request fails when it answers 500 or more, or when a step inside it throws or ends with an error. A 4xx answer, like
+404 Not Found, is not a failure, even when your app marks it as an error. So bots that ask for files you do not have, and
+pages that look something up and fall back, do not push up your error rate.
+
 ## Time
 
 Database and outgoing times are wall time: spans that overlap count once, so a request never shows more database time than

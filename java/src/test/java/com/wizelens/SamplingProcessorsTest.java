@@ -51,6 +51,13 @@ class SamplingProcessorsTest {
   }
 
   @Test
+  void rateZeroDropsATraceThatOnlyAnswered4xx() {
+    Tracer t = tracer(new TraceSampler(0), 1000.0);
+    t.spanBuilder("GET /firebase-key.json").startSpan().setAttribute("http.response.status_code", 404L).setStatus(StatusCode.ERROR).end();
+    assertEquals(List.of(), names());
+  }
+
+  @Test
   void rateZeroKeepsASlowTrace() {
     trace(tracer(new TraceSampler(0), 1000.0), "GET /report", StatusCode.UNSET, 1500);
     assertEquals(List.of("GET /report", "SELECT orders"), names());

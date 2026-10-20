@@ -12,6 +12,13 @@ from .sampling import TraceSampler, is_slow
 _ERROR_SEVERITY = 17
 
 
+def _answered_4xx(span: ReadableSpan) -> bool:
+    """A 4xx answer is not a failure, even with an error status."""
+    attrs = span.attributes or {}
+    code = attrs.get("http.response.status_code", attrs.get("http.status_code"))
+    return isinstance(code, int) and 400 <= code < 500
+
+
 class SamplingSpanProcessor(SpanProcessor):
     """Holds the spans of a trace outside the rate until its local root ends; sends them on when the trace is kept."""
 
@@ -33,7 +40,7 @@ class SamplingSpanProcessor(SpanProcessor):
         self._sampler.offer(format(ctx.trace_id, "032x"), self._important(span), root, lambda: self._inner.on_end(span))
 
     def _important(self, span: ReadableSpan) -> bool:
-        if self._keep_errors and span.status.status_code is StatusCode.ERROR:
+        if self._keep_errors and span.status.status_code is StatusCode.ERROR and not _answered_4xx(span):
             return True
         if span.start_time is None or span.end_time is None:
             return False
