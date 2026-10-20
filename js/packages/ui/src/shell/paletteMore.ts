@@ -22,10 +22,11 @@ type Urls = { alerts: string | null; slos: string | null; saved: string | null; 
 /** Every source for the text, each one allowed to fail on its own. */
 async function hitsFor(q: string, range: TimeRange, server: boolean, u: Urls): Promise<SearchHit[]> {
   const page = { q, size: "5", page: "1" };
-  const [errors, db, insights, metrics, alerts, slos, saved] = await Promise.all([
+  const [errors, db, insights, security, metrics, alerts, slos, saved] = await Promise.all([
     quiet(loadPageModel("errors", { ...page, status: "all" }, range, server)),
     quiet(loadPageModel("database", page, range, server)),
     quiet(loadPageModel("insights", { q }, range, server)),
+    quiet(loadPageModel("security", { q }, range, server)),
     u.metrics ? quiet(apiFetch<MetricsModel>(`./api/models/metrics?range=${range}&q=${encodeURIComponent(q)}`)) : null,
     u.alerts ? quiet(apiFetch<AlertsData>(u.alerts)) : null,
     u.slos ? quiet(apiFetch<{ slos: SloReport[] }>(u.slos)) : null,
@@ -35,6 +36,7 @@ async function hitsFor(q: string, range: TimeRange, server: boolean, u: Urls): P
     ...(errors?.groups ?? []).slice(0, EACH).map((g): SearchHit => ({ key: `eg${g.key}`, kind: "error", title: `${g.type}: ${g.message}`, detail: `Error group · ${g.service}`, href: errorHref(g.key) })),
     ...(db?.queries ?? []).slice(0, EACH).map((x): SearchHit => ({ key: `q${x.key}`, kind: "query", title: x.query, detail: `Query · ${x.count} runs`, href: queryHref(x.query) })),
     ...(insights?.groups ?? []).slice(0, EACH).map((g): SearchHit => ({ key: `i${g.key}`, kind: "insight", title: g.title, detail: g.shape, href: hrefTo("insights", [], { key: g.key }) })),
+    ...(security?.groups ?? []).slice(0, EACH).map((g): SearchHit => ({ key: `s${g.key}`, kind: "security", title: g.title, detail: `${g.owasp} · ${g.shape}`, href: hrefTo("security", [], { key: g.key }) })),
     ...(metrics?.catalog ?? []).slice(0, EACH).map((m): SearchHit => ({ key: `m${m.name}`, kind: "metric", title: m.name, detail: `Metric · ${m.lastText}`, href: hrefTo("metrics", [], { metric: m.name }) })),
     ...(alerts?.rules ?? []).filter((r) => has(r.name, q)).slice(0, EACH).map((r): SearchHit => ({ key: `a${r.id}`, kind: "alert", title: r.name, detail: `Alert · ${r.state === "firing" ? "Firing" : "OK"}`, href: alertHref(r.id) })),
     ...(slos?.slos ?? []).filter((s) => has(s.slo.name, q)).slice(0, EACH).map((s): SearchHit => ({ key: `o${s.slo.id}`, kind: "slo", title: s.slo.name, detail: "SLO", href: sloHref(s.slo.id) })),

@@ -498,6 +498,7 @@ Server name `wizelens`. Disabled by default. Every call is written to the app lo
 | `list_traces` | `limit?=20`, `minDurationMs?`, `status?`, `q?`, `range?=24h` | Node hosts: TraceItem[] (`{ traceId, path, durationMs, health, status, services, startMs, spanCount, slow }`); .NET: TraceSummary[] |
 | `get_trace` | `traceId`, `federate?=true` | Trace (spans + logs, redacted) |
 | `find_slow_queries` | `thresholdMs?=100`, `limit?=20`, `range?=24h` (Node hosts) | `{ traceId, spanId, durationMs, query, service }[]`, slowest first |
+| `find_security_issues` | `severity?=info` (lowest: error, warning, info), `limit?=50`, `range?=24h` | `{ kind, owasp, severity, title, shape, endpoints, requests, count, lastSeen, exampleTraceId }[]`, most severe first, then most requests. Node hosts read the `security` page (status all), else the traces in memory; .NET reads its traces |
 | `find_n_plus_one` | `minRepeats?` (the project's threshold), `limit?=20`, `range?=24h` | Node hosts: groups `{ kind: "db"\|"http", shape, endpoints, requests, repeats, totalMs, lastSeen, exampleTraceId }[]`, most time first: from the insight stats at the project's threshold, else from the requests with that many calls (up to 200 read whole). .NET: `{ traceId, kind, shape, count, totalMs }[]` |
 | `get_errors` | `limit?=20`, `range?=24h` (Node hosts) | `{ traceId, spanId, service, name, message, type, stack }[]` |
 | `search` | `q`, `kind?=requests`, `range?=24h`, `limit?=20`, `cursor?` | SearchPage (below) plus `tags` (tag names per row, as `api/tags/match` answers) and `unknownTags`; a bad `q` is an error with `start`/`end` |
@@ -1140,7 +1141,8 @@ Pages read small tables built from the stored traces, never the traces themselve
 The hub and the cloud both run alert rules (the hub sends no email). A rule watches one metric over a window (5 min to 24 h),
 optionally in one environment, and for trace metrics optionally one `service` (display name) or one `endpoint` of it
 (`"GET /api/orders/{id}"`; `slow_queries` is per service only): `error_rate` (%), `p95_ms`, `avg_ms`, `requests`, `new_errors`
-(error groups not seen in the window before), `slow_queries`, and `log_count` (lines that match the rule's `logSearch`, the Logs
+(error groups not seen in the window before), `slow_queries`, `new_security_risks` (security risks, `sec` keys, not seen in
+the window before; per service only), and `log_count` (lines that match the rule's `logSearch`, the Logs
 page filters, for example `{ "level": "error", "q": "timed out" }`; no `service` or `endpoint`, the search names its service). It
 fires when the value is above (`>`), at or above (`>=`), below
 (`<`), or at or below (`<=`) the threshold. No data never fires, except `requests` below (traffic stopped). Rules run every minute.

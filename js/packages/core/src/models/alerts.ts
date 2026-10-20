@@ -18,6 +18,7 @@ export const ALERT_METRICS = {
   new_errors: { label: "New error types", unit: "" },
   slow_queries: { label: "Slow queries", unit: "" },
   log_count: { label: "Log lines", unit: "" },
+  new_security_risks: { label: "New security risks", unit: "" },
 } as const;
 
 export type AlertMetric = keyof typeof ALERT_METRICS;
@@ -47,6 +48,7 @@ export interface AlertScope {
 export function alertScopeProblem(metric: AlertMetric, scope: AlertScope): string | null {
   if (scope.endpoint && !scope.service) return "An endpoint needs its service.";
   if (scope.endpoint && metric === "slow_queries") return "Slow queries are counted per service, not per endpoint.";
+  if (scope.endpoint && metric === "new_security_risks") return "Security risks are counted per service, not per endpoint.";
   if ((scope.service || scope.endpoint) && metric === "log_count") return "A log alert picks its service in the log search.";
   return null;
 }
@@ -57,7 +59,7 @@ function endpointNeeds(metric: AlertMetric, service: string, endpoint: string): 
     const f = { filter: { prefix: `${service}|`, parts: [null, endpoint] } };
     return [groupNeed("err.cur", "err.ge", "cur", f), groupNeed("err.prev", "err.ge", "prev", f)];
   }
-  if (metric === "slow_queries") return [];
+  if (metric === "slow_queries" || metric === "new_security_risks") return [];
   return [groupNeed("req", "svc.ep", "cur", { filter: { keys: [joinKey(`api:${rawService(service)}`, endpoint)] }, hist: metric === "p95_ms" })];
 }
 
@@ -74,6 +76,8 @@ export function alertNeeds(metric: AlertMetric, scope: AlertScope = {}, search: 
     }
     case "slow_queries":
       return [groupNeed("db", "db", "cur", one)];
+    case "new_security_risks":
+      return [groupNeed("sec.cur", "sec", "cur", one), groupNeed("sec.prev", "sec", "prev", one)];
     default:
       return [groupNeed("req", "req", "cur", { ...one, ...(metric === "p95_ms" ? { hist: true } : {}) })];
   }
@@ -99,6 +103,10 @@ export function alertValueOf(metric: AlertMetric, d: NeedResults): number | null
       return listOf(d, "logs").total ?? 0;
     case "slow_queries":
       return totalOf(d, "db").c[0] ?? 0;
+    case "new_security_risks": {
+      const before = new Set(rowsOf(d, "sec.prev").map((r) => r.key));
+      return rowsOf(d, "sec.cur").filter((r) => !before.has(r.key)).length;
+    }
   }
 }
 

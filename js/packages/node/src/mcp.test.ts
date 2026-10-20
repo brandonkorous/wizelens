@@ -10,11 +10,12 @@ const headers = { "Content-Type": "application/json", Accept: "application/json,
 let app: Running;
 
 beforeAll(async () => {
-  app = await startApp(wizelens, (a) =>
+  app = await startApp(wizelens, (a) => {
     a.get("/boom", () => {
       throw new Error("kaboom");
-    }),
-  );
+    });
+    a.get("/.env", (_req, res) => void res.send("SECRET=1"));
+  });
 });
 
 afterAll(async () => {
@@ -30,7 +31,16 @@ const rpc = async <T>(id: number, method: string, params: unknown): Promise<T> =
 describe("MCP", () => {
   it("lists the read-only tools", async () => {
     const body = await rpc<{ result: { tools: { name: string }[] } }>(1, "tools/list", {});
-    expect(body.result.tools.map((t) => t.name).sort()).toEqual(["find_n_plus_one", "find_slow_queries", "get_errors", "get_metric", "get_overview", "get_page", "get_timeseries", "get_trace", "group_requests", "list_metrics", "list_problems", "list_tags", "list_traces", "search", "search_fields"]);
+    expect(body.result.tools.map((t) => t.name).sort()).toEqual(["find_n_plus_one", "find_security_issues", "find_slow_queries", "get_errors", "get_metric", "get_overview", "get_page", "get_timeseries", "get_trace", "group_requests", "list_metrics", "list_problems", "list_tags", "list_traces", "search", "search_fields"]);
+  });
+
+  it("finds security risks in the app's own requests", async () => {
+    await fetch(`${app.base}/.env`);
+    await new Promise((r) => setTimeout(r, 20));
+    const body = await rpc<{ result: { content: { text: string }[] } }>(9, "tools/call", { name: "find_security_issues", arguments: { severity: "error" } });
+    const risks = JSON.parse(body.result.content[0]!.text) as { kind: string; owasp: string; shape: string }[];
+    expect(risks).toContainEqual(expect.objectContaining({ kind: "exposed-path", owasp: "A02", shape: "/.env" }));
+    expect(risks.every((r) => r.kind !== "missing-headers")).toBe(true);
   });
 
   it("calls a tool and writes an audit line", async () => {

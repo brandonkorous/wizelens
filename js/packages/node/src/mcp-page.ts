@@ -17,6 +17,7 @@ export const MCP_PAGES = {
   database: "Queries by shape, slowest and most called, N+1 and slow query counts. service, q, table, operation, database, sort, page, size.",
   query: "One query shape: calls, latency, endpoints. q (required): the shape from database.",
   insights: "Performance insights (N+1, slow queries, duplicates). area, impact, status, service, endpoint, q, key.",
+  security: "Security risks (OWASP Top 10:2025) with categories. category (A01..A10), severity (error, warning, info), status, release, service, endpoint, q, key.",
   logs: "Log lines with level counts. level, exact=1, service, category, trace, user, q, page, size.",
   rendering: "Browser page views and components. q.",
   route: "One browser route. route (required).",
