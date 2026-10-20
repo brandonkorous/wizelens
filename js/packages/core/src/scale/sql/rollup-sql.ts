@@ -5,6 +5,7 @@ import { KEY_SEP, KIND_SPEC, type KindSpec, type RollupKind } from "../kinds.js"
 import { type AggOrder, type GroupNeed, type GroupRows, type KeyFilter, lowerAscii, type SeriesNeed, type SeriesRows } from "../needs.js";
 import { planSeries, planTotals, type Segment, spreadBucket, type Tier } from "../window.js";
 import { collate, floorOf, lit, msLit, num, type SqlSource, SqlText, scopeWhere } from "./dialect.js";
+import { keyCols, keyIn, shownKey, shownTop, unlabeledFilter } from "./rollup-keys.js";
 import { idsOfText } from "./write-sql.js";
 
 const COUNTERS = ["c0", "c1", "c2", "c3", "c4", "c5"];
@@ -18,12 +19,14 @@ const sumTable = (src: SqlSource, name: string): string => (src.d.name === "ch" 
 const liveRow = (src: SqlSource): string[] => (src.d.name === "ch" ? [] : ["n > 0.5"]);
 
 /** Conditions on a rollup or hist table for the scope, the kind, and the key filter. */
-function kindWhere(q: SqlText, src: SqlSource, kind: RollupKind, f: KeyFilter | undefined): string[] {
+function kindWhere(q: SqlText, src: SqlSource, kind: RollupKind, filter: KeyFilter | undefined): string[] {
   const out = [...scopeWhere(q, src.scope), `kind = ${q.p(kind)}`];
+  const { f, where } = unlabeledFilter(q, src, kind, filter);
+  out.push(...where);
   if (f?.prefix !== undefined) out.push(q.startsWith("key", f.prefix));
-  if (f?.keys) out.push(q.in("key", f.keys));
+  if (f?.keys) out.push(keyIn(q, src, kind, f.keys));
   for (const t of f?.contains ?? []) out.push(q.contains("lower(key)", lowerAscii(t)));
-  if (f?.exclude?.length) out.push(`NOT (${q.in("key", f.exclude)})`);
+  if (f?.exclude?.length) out.push(`NOT ${keyIn(q, src, kind, f.exclude)}`);
   if (f?.parts) {
     const pieces = f.parts.flatMap((p, i) => (i ? [KEY_SEP, p] : [p]));
     out.push(q.matches("key", pieces), `length(key) - length(replace(key, ${q.p(KEY_SEP)}, '')) = ${lit(f.parts.length - 1)}`);
@@ -59,14 +62,16 @@ function orderExpr(by: AggOrder): string {
 }
 
 function totalsSql(q: SqlText, src: SqlSource, need: GroupNeed, segs: readonly Segment[], ordered: boolean): string {
-  const inner = branches(q, src, need, { segs, table: (t) => sumTable(src, t.table), cols: (w) => `key, ${weighted(VALUES, w)}, first_ms, last_ms`, extra: () => liveRow(src) });
+  const k = keyCols(src, need.kind);
+  const inner = branches(q, src, need, { segs, table: (t) => sumTable(src, t.table), cols: (w) => `${k}, ${weighted(VALUES, w)}, first_ms, last_ms`, extra: () => liveRow(src) });
   const sums = VALUES.map((c) => `SUM(${c}) AS ${c}`).join(", ");
   const o = ordered ? need.order : undefined;
   const offset = o?.offset ? ` OFFSET ${lit(Math.max(0, Math.floor(o.offset)))}` : "";
   const limit = o && Number.isFinite(o.limit) ? ` LIMIT ${lit(Math.max(0, Math.floor(o.limit)))}${offset}` : "";
-  const order = o ? ` ORDER BY ${orderExpr(o.by)} ${o.desc ? "DESC" : "ASC"}, ${collate(src.d, "key")}${limit}` : "";
+  const tie = k === "key" ? collate(src.d, "key") : `${collate(src.d, "key")}, ${src.d.project}`;
+  const order = o ? ` ORDER BY ${orderExpr(o.by)} ${o.desc ? "DESC" : "ASC"}, ${tie}${limit}` : "";
   const having = need.having ? ` AND ${orderExpr(need.having.by)} >= ${lit(need.having.min)}` : "";
-  return `SELECT key, ${sums}, MIN(first_ms) AS first_ms, MAX(last_ms) AS last_ms, COUNT(*) OVER () AS total FROM (${inner}) s GROUP BY key HAVING SUM(n) > 0.5${having}${order}`;
+  return `SELECT ${k}, ${sums}, MIN(first_ms) AS first_ms, MAX(last_ms) AS last_ms, COUNT(*) OVER () AS total FROM (${inner}) s GROUP BY ${k} HAVING SUM(n) > 0.5${having}${order}`;
 }
 
 /** A group row as the memory executor trims it: extras only when asked for. */
@@ -84,11 +89,12 @@ function groupAgg(r: Row, spec: KindSpec, need: GroupNeed, rounded: boolean): Ag
 
 async function addHists(src: SqlSource, need: GroupNeed, segs: readonly Segment[], rows: GroupRows["rows"], keys: string[] | null): Promise<void> {
   const q = new SqlText(src.d);
-  const extra = (x: SqlText) => (keys ? [x.in("key", keys)] : []);
-  const inner = branches(q, src, need, { segs, table: (t) => sumTable(src, t.hist), cols: (w) => `key, bin, ${weighted(["cnt"], w)}`, extra });
+  const k = keyCols(src, need.kind);
+  const extra = (x: SqlText) => (keys ? [keyIn(x, src, need.kind, keys)] : []);
+  const inner = branches(q, src, need, { segs, table: (t) => sumTable(src, t.hist), cols: (w) => `${k}, bin, ${weighted(["cnt"], w)}`, extra });
   const byKey = new Map(rows.map((r) => [r.key, r.agg]));
-  for (const h of await src.run.all(`SELECT key, bin, SUM(cnt) AS cnt FROM (${inner}) s GROUP BY key, bin`, q.params)) {
-    const a = byKey.get(String(h.key));
+  for (const h of await src.run.all(`SELECT ${k}, bin, SUM(cnt) AS cnt FROM (${inner}) s GROUP BY ${k}, bin`, q.params)) {
+    const a = byKey.get(shownKey(src, need.kind, h));
     const cnt = num(h.cnt);
     if (a?.hist && Math.abs(cnt) > 1e-9) a.hist[num(h.bin)] = cnt;
   }
@@ -97,22 +103,23 @@ async function addHists(src: SqlSource, need: GroupNeed, segs: readonly Segment[
 /** Ranked rows per key over the segments: the best top, or the newest buckets' ids. */
 async function rankedRows(src: SqlSource, need: GroupNeed, segs: readonly Segment[], keys: string[] | null, what: "top" | "ids"): Promise<Row[]> {
   const q = new SqlText(src.d);
-  const cols = what === "top" ? "key, top, top_rank, last_ms" : "key, ids, last_ms";
+  const k = keyCols(src, need.kind);
+  const cols = what === "top" ? `${k}, top, top_rank, last_ms` : `${k}, ids, last_ms`;
   const has = what === "top" ? "top IS NOT NULL" : "ids <> ''";
-  const extra = (x: SqlText) => ["n > 0.5", has, ...(keys ? [x.in("key", keys)] : [])];
+  const extra = (x: SqlText) => ["n > 0.5", has, ...(keys ? [keyIn(x, src, need.kind, keys)] : [])];
   const inner = branches(q, src, need, { segs, table: (t) => t.table, cols: () => cols, extra });
   const rank = what === "top" ? "top_rank DESC, last_ms DESC" : "last_ms DESC";
   const keep = what === "top" ? "rn = 1" : `rn <= ${IDS_BUCKETS}`;
-  const sql = `SELECT * FROM (SELECT ${cols}, ROW_NUMBER() OVER (PARTITION BY key ORDER BY ${rank}) AS rn FROM (${inner}) s) t WHERE ${keep}`;
+  const sql = `SELECT * FROM (SELECT ${cols}, ROW_NUMBER() OVER (PARTITION BY ${k} ORDER BY ${rank}) AS rn FROM (${inner}) s) t WHERE ${keep}`;
   return src.run.all(sql, q.params);
 }
 
 async function addTops(src: SqlSource, need: GroupNeed, segs: readonly Segment[], rows: GroupRows["rows"], keys: string[] | null): Promise<void> {
   const byKey = new Map(rows.map((r) => [r.key, r.agg]));
   for (const t of await rankedRows(src, need, segs, keys, "top")) {
-    const a = byKey.get(String(t.key));
+    const a = byKey.get(shownKey(src, need.kind, t));
     if (!a) continue;
-    a.top = parseTop(t.top);
+    a.top = shownTop(src, need.kind, t, parseTop(t.top));
     a.topRank = a.top === null ? 0 : num(t.top_rank);
   }
 }
@@ -122,7 +129,7 @@ async function addIds(src: SqlSource, need: GroupNeed, segs: readonly Segment[],
   const cap = KIND_SPEC[need.kind].ids;
   const byKey = new Map(rows.map((r) => [r.key, r.agg]));
   for (const r of ranked) {
-    const a = byKey.get(String(r.key));
+    const a = byKey.get(shownKey(src, need.kind, r));
     if (a) a.ids = [...new Set([...a.ids, ...idsOfText(String(r.ids))])].slice(0, cap);
   }
 }
@@ -153,7 +160,7 @@ export async function groupsSql(src: SqlSource, need: GroupNeed, w: TimeWindow, 
   const q = new SqlText(src.d);
   const found = await src.run.all(totalsSql(q, src, need, segs, need.order?.limit !== 0), q.params);
   const rounded = segs.some((s) => s.weight < 1);
-  const all = found.map((r) => ({ key: String(r.key), agg: groupAgg(r, spec, need, rounded) }));
+  const all = found.map((r) => ({ key: shownKey(src, need.kind, r), agg: groupAgg(r, spec, need, rounded) }));
   const total = found.length ? num(found[0]!.total) : need.order?.offset ? await countGroups(src, need, segs) : 0;
   const rows = need.order ? (need.order.limit === 0 ? [] : all) : all.sort(byKeyOrder);
   const keys = rows.length < total ? rows.map((r) => r.key) : null;
@@ -172,7 +179,7 @@ interface SeriesPlan {
 function seriesSql(q: SqlText, src: SqlSource, need: SeriesNeed, w: TimeWindow, plan: SeriesPlan, hist: boolean): string {
   const t = plan.tier;
   const half = t.ms / 2;
-  const key = need.split ? "key, " : "";
+  const key = need.split ? `${keyCols(src, need.kind)}, ` : "";
   const b = plan.mode === "sql" ? floorOf(src.d, `((bucket_ms + ${lit(half)} - ${lit(w.from)}) / ${lit(w.to - w.from)}) * ${lit(need.buckets)}`) : "bucket_ms";
   // The bucket's middle is in the window; written on the column alone so the sort key can answer it.
   const range = plan.mode === "sql"
@@ -210,7 +217,7 @@ export async function seriesSqlRows(src: SqlSource, need: SeriesNeed, w: TimeWin
   for (const r of await src.run.all(seriesSql(q, src, need, w, plan, false), q.params)) {
     const targets = targetsOf(r, plan, w, need.buckets);
     if (!targets.length) continue;
-    const list = (byKey[need.split ? String(r.key) : ""] ??= fresh());
+    const list = (byKey[need.split ? shownKey(src, need.kind, r) : ""] ??= fresh());
     for (const t of targets) addRow(list[t.index]!, r, t.share);
   }
   if (need.hist && spec.hist) await addSeriesHists(src, need, w, plan, byKey);
@@ -220,7 +227,7 @@ export async function seriesSqlRows(src: SqlSource, need: SeriesNeed, w: TimeWin
 async function addSeriesHists(src: SqlSource, need: SeriesNeed, w: TimeWindow, plan: SeriesPlan, byKey: Record<string, Agg[]>): Promise<void> {
   const q = new SqlText(src.d);
   for (const r of await src.run.all(seriesSql(q, src, need, w, plan, true), q.params)) {
-    const list = byKey[need.split ? String(r.key) : ""];
+    const list = byKey[need.split ? shownKey(src, need.kind, r) : ""];
     for (const t of list ? targetsOf(r, plan, w, need.buckets) : []) {
       const h = list![t.index]!.hist!;
       const bin = num(r.bin);

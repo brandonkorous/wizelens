@@ -8,8 +8,8 @@ import { audit } from "../repo/audit.js";
 import { forgetOfflineServices } from "../repo/services.js";
 import { environmentsOf, listServices, type TraceQuery } from "../repo/trace-read.js";
 import { factsWith } from "../repo/settings.js";
-import { projectRetentionMs } from "../scale-exec.js";
-import { projectScope } from "../telemetry/store.js";
+import { projectScope, type TenantScope } from "../telemetry/store.js";
+import { projectLabels, readScopeOf, scopeFacts, scopeRetentionMs } from "./scope.js";
 
 const DAY_MS = 86_400_000;
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -22,18 +22,15 @@ export async function projectOf(ctx: Ctx): Promise<ProjectAccess> {
   return requireProject(ctx, id);
 }
 
-/** How long the asked project keeps data, and the thresholds it uses; the cloud's own when no project is asked or allowed. */
+/** How long the asked projects keep data, and the thresholds they use; the cloud's own when none is asked or allowed. */
 async function projectInfo(ctx: Ctx): Promise<{ maxAgeMs: number; analysis: { slowQueryMs: number; nPlusOneThreshold: number } }> {
   const c = ctx.app.config;
   const fallback = { maxAgeMs: c.retentionDays * DAY_MS, analysis: { slowQueryMs: c.slowQueryMs, nPlusOneThreshold: c.nPlusOneThreshold } };
-  const id = ctx.url.searchParams.get("project");
-  const p = id ? await principalOf(ctx) : undefined;
-  if (!id || !p) return fallback;
-  const access = await requireProject(ctx, id).catch(() => undefined);
-  if (!access) return fallback;
-  const facts = factsWith(c, await ctx.app.settings.get(id));
-  const maxAgeMs = await projectRetentionMs(ctx.app.db, id, c.retentionDays);
-  return { maxAgeMs, analysis: { slowQueryMs: facts.slowQueryMs!, nPlusOneThreshold: facts.nPlusOneThreshold! } };
+  const p = ctx.url.searchParams.get("project") ? await principalOf(ctx) : undefined;
+  if (!p) return fallback;
+  const r = await readScopeOf(ctx).catch(() => undefined);
+  if (!r) return fallback;
+  return { maxAgeMs: await scopeRetentionMs(ctx.app, r.projects), analysis: await scopeFacts(ctx.app, r.projects) };
 }
 
 async function info(ctx: Ctx): Promise<void> {
@@ -55,10 +52,10 @@ async function info(ctx: Ctx): Promise<void> {
 }
 
 async function traces(ctx: Ctx): Promise<void> {
-  const { project } = await projectOf(ctx);
+  const { scope } = await readScopeOf(ctx);
   const p = ctx.url.searchParams;
   const full = p.get("full") === "true";
-  const q: TraceQuery = { scope: projectScope(project), limit: clamp(num(p, "limit") ?? (full ? 1000 : 50), 1, full ? 5000 : 1000) };
+  const q: TraceQuery = { scope, limit: clamp(num(p, "limit") ?? (full ? 1000 : 50), 1, full ? 5000 : 1000) };
   q.since = num(p, "since");
   q.before = num(p, "before");
   q.env = p.get("env") || undefined;
@@ -68,23 +65,32 @@ async function traces(ctx: Ctx): Promise<void> {
   sendJson(ctx.res, 200, full ? list : list.map(({ spans: _s, logs: _l, remotes: _r, ...summary }) => summary));
 }
 
-// One trace, with its parts from the other projects the caller may read in the same organization (`join=false`: this project only).
+// One trace, with its parts from the other projects the caller may read in the same organization (`join=false`: this project only). All projects: every part.
 async function trace(ctx: Ctx): Promise<void> {
-  const access = await projectOf(ctx);
-  const scope = ctx.url.searchParams.get("join") === "false" ? projectScope(access.project) : await joinScope(ctx.app.db, access);
-  const t = await ctx.app.telemetry.joinedTrace(access.project.id, scope, ctx.params.id!);
+  const r = await readScopeOf(ctx);
+  const t = await traceOf(ctx, r.access, r.scope, ctx.params.id!);
   if (!t) fail(404, "Trace not found.");
   sendJson(ctx.res, 200, t);
 }
 
+async function traceOf(ctx: Ctx, access: ProjectAccess | null, scope: TenantScope, id: string) {
+  if (!access) return ctx.app.telemetry.trace(scope, id);
+  const join = ctx.url.searchParams.get("join") === "false" ? projectScope(access.project) : await joinScope(ctx.app.db, access);
+  return ctx.app.telemetry.joinedTrace(access.project.id, join, id);
+}
+
+/** Services of every project read; with many, each says its project's label. */
 async function services(ctx: Ctx): Promise<void> {
-  const { project } = await projectOf(ctx);
+  const r = await readScopeOf(ctx);
   const db = ctx.app.db;
+  const labels = r.project ? null : projectLabels(r.projects);
+  const lists = await Promise.all(r.projects.map(async (p) => (await listServices(db, p.id, ctx.app.config.now())).map((s) => (labels ? { ...s, project: labels[p.id] } : s))));
+  const envs = await Promise.all(r.projects.map((p) => environmentsOf(db, p.id, [])));
   sendJson(ctx.res, 200, {
-    services: await listServices(db, project.id, ctx.app.config.now()),
-    environments: await environmentsOf(db, project.id, await ctx.app.telemetry.traceEnvs(projectScope(project))),
+    services: lists.flat(),
+    environments: [...new Set([...envs.flat(), ...(await ctx.app.telemetry.traceEnvs(r.scope))])].filter(Boolean).sort(),
     projects: [],
-    ...(await ctx.app.telemetry.counts(projectScope(project))),
+    ...(await ctx.app.telemetry.counts(r.scope)),
   });
 }
 

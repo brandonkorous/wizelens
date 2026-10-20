@@ -34,6 +34,8 @@ export interface SqlScope {
   org?: string;
   /** The projects read; an empty list reads nothing. */
   projects?: readonly string[];
+  /** With more than one project: each one's label, so rows named by a service stay apart ("api · Shop"). */
+  labels?: Readonly<Record<string, string>>;
   env?: string;
 }
 

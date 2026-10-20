@@ -10,6 +10,8 @@ import { memoByObject } from "./common.js";
 /** One request (a trace with a server span or a browser fetch), ready for tables and charts. */
 export interface RequestRow {
   traceId: string;
+  /** The project's label, when one read covers many projects (the cloud's "All projects"). */
+  project?: string;
   startMs: number;
   method: string;
   /** Path with the query, as called. */

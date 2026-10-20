@@ -1,112 +1,120 @@
-import { activeTags, alignNow, APDEX_PAGES, hostsModelOf, INFRA_PARAMS, ISSUE_PAGES, isPageName, isStructuredSearch, isTimeRange, issueStatesOf, kubeModelOf, LIST_SEARCH_KIND, type ModelOf, type PageName, pageContext, runPage, searchTraceIds, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { activeTags, alignNow, APDEX_PAGES, hostsModelOf, INFRA_PARAMS, ISSUE_PAGES, isPageName, isStructuredSearch, isTimeRange, kubeModelOf, LIST_SEARCH_KIND, type ModelOf, type PageName, pageContext, runPage, type SearchQuery, searchTraceIds, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange, type TimeWindow } from "@wizeworks/lens-core";
 import type { CloudApp, Ctx } from "../app.js";
 import { fail, sendJson } from "../http/http.js";
-import { listIssues } from "../repo/issues.js";
-import { apdexTargets } from "../repo/slos.js";
-import { projectTags } from "../repo/tags.js";
 import type { Router } from "../http/router.js";
 import { listServices } from "../repo/trace-read.js";
-import { projectOf } from "./data.js";
 import { metricParamsOf, metricRange, projectMetrics } from "./metrics.js";
-import { factsWith } from "../repo/settings.js";
-import { projectRetentionMs } from "../scale-exec.js";
-import { projectScope } from "../telemetry/store.js";
+import { projectScope, type TenantScope } from "../telemetry/store.js";
+import { type ProjectRef, type ReadScope, readScopeOf, scopeFacts, scopeRetentionMs } from "./scope.js";
+import { scopeApdex, scopeIssues, scopeTags } from "./scope-state.js";
 
 const CACHE_MS = 15_000;
 const CACHE_MAX = 500;
 const DAY_MS = 86_400_000;
-const RESERVED = new Set(["project", "range", "env"]);
-const cache = new Map<string, { atMs: number; value: unknown }>();
+const RESERVED = new Set(["project", "org", "range", "env"]);
+const cache = new Map<string, { atMs: number; value: unknown; projects: readonly string[] }>();
 
 function cached(key: string, now: number): unknown {
   const hit = cache.get(key);
   return hit && now - hit.atMs < CACHE_MS ? hit.value : undefined;
 }
 
-function remember(key: string, value: unknown, now: number): void {
+function remember(key: string, value: unknown, now: number, projects: readonly string[]): void {
   if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value!);
-  cache.set(key, { atMs: now, value });
+  cache.set(key, { atMs: now, value, projects });
 }
 
-/** Drop a project's cached pages when it gets new data, so the dashboard's reload sees it. */
+/** Drop the cached pages of every read with this project when it gets new data, so the dashboard's reload sees it. */
 export function forgetModels(projectId: string): void {
-  for (const key of cache.keys()) if (key.startsWith(`["${projectId}",`)) cache.delete(key);
+  for (const [key, hit] of cache) if (hit.projects.includes(projectId)) cache.delete(key);
 }
 
 /** Model parameters: every query value except the ones that pick the data. */
 const paramsOf = (url: URL): Record<string, string> => Object.fromEntries([...url.searchParams].filter(([k]) => !RESERVED.has(k)).sort());
 
-/** Days a project keeps data: its own retention, never past its organization's. */
-async function retentionDays(app: CloudApp, projectId: string): Promise<number> {
-  return (await projectRetentionMs(app.db, projectId, app.config.retentionDays)) / DAY_MS;
+/** The projects a page reads, and its telemetry scope. */
+export interface PageScope {
+  projects: readonly ProjectRef[];
+  scope: TenantScope;
 }
 
-/** One page's numbers for a project, from its stats tables. Cached for 15 seconds, like the dashboard's. */
-export async function projectPage<P extends PageName>(app: CloudApp, project: { id: string; orgId: string }, page: P, range: TimeRange, params: Record<string, string> = {}, env?: string): Promise<ModelOf<P>> {
-  const days = await retentionDays(app, project.id);
-  if (TIME_RANGES[range].ms > days * DAY_MS) fail(400, "This range is longer than this project keeps data.");
+/** One page's numbers for one project (alerts, MCP, shares). */
+export const projectPage = <P extends PageName>(app: CloudApp, project: { id: string; orgId: string }, page: P, range: TimeRange, params: Record<string, string> = {}, env?: string) =>
+  scopePage(app, { projects: [project], scope: projectScope(project) }, page, range, params, env);
+
+/** What a page reads besides telemetry: issue states, Apdex targets, and trace ids of a structured search. */
+async function pageExtras(app: CloudApp, r: PageScope, page: PageName, params: Record<string, string>, w: TimeWindow, env?: string) {
+  const issues = ISSUE_PAGES.has(page) ? { issues: await scopeIssues(app, r.projects) } : {};
+  const apdex = APDEX_PAGES.has(page) ? { apdex: await scopeApdex(app, r.projects) } : {};
+  const kind = LIST_SEARCH_KIND[page];
+  const run = (q: SearchQuery) => app.telemetry.search(r.scope, q);
+  const search = kind && isStructuredSearch(params.q) ? { searchIds: await searchTraceIds(run, kind, params.q!, w, env, activeTags(await scopeTags(app, r.projects))) } : {};
+  return { ...issues, ...apdex, ...search };
+}
+
+/** One page's numbers for the projects of a read, from their stats tables. Cached for 15 seconds, like the dashboard's. */
+export async function scopePage<P extends PageName>(app: CloudApp, r: PageScope, page: P, range: TimeRange, params: Record<string, string> = {}, env?: string): Promise<ModelOf<P>> {
+  const keepMs = await scopeRetentionMs(app, r.projects);
+  if (TIME_RANGES[range].ms > keepMs) fail(400, "This range is longer than these projects keep data.");
   const now = alignNow(app.config.now());
-  const slowQueryMs = factsWith(app.config, await app.settings.get(project.id)).slowQueryMs!;
-  const key = JSON.stringify([project.id, page, range, env, params, now, slowQueryMs]);
+  const { slowQueryMs } = await scopeFacts(app, r.projects);
+  const ids = [...r.scope.projects].sort();
+  const key = JSON.stringify([ids, page, range, env, params, now, slowQueryMs]);
   const hit = cached(key, app.config.now());
   if (hit) return hit as ModelOf<P>;
   const t = app.telemetry;
-  const scope = projectScope(project);
-  const pc = pageContext(range, now, params, { slowQueryMs }, await t.settling(scope, { env, before: app.config.now() - SETTLE_BEHIND_MS }));
+  const pc = pageContext(range, now, params, { slowQueryMs }, await t.settling(r.scope, { env, before: app.config.now() - SETTLE_BEHIND_MS }));
   // A custom window (`from`, `to`) may start before what the organization keeps; a little slack covers snapping.
-  if (now - pc.window.from > days * DAY_MS + 15 * 60_000) fail(400, "This time window starts before this project keeps data.");
-  const issues = ISSUE_PAGES.has(page) ? { issues: issueStatesOf(await listIssues(app.db, project.id)) } : {};
-  const apdex = APDEX_PAGES.has(page) ? { apdex: await apdexTargets(app.db, project.id) } : {};
-  const kind = LIST_SEARCH_KIND[page];
-  const search = kind && isStructuredSearch(params.q) ? { searchIds: await searchTraceIds((q) => t.search(scope, q), kind, params.q!, pc.window, env, activeTags(await projectTags(app.db, project.id))) } : {};
-  const value = await runPage(page, { ...pc, ...issues, ...apdex, ...search }, t.executor(scope, days * DAY_MS, env));
-  remember(key, value, app.config.now());
+  if (now - pc.window.from > keepMs + 15 * 60_000) fail(400, "This time window starts before these projects keep data.");
+  const value = await runPage(page, { ...pc, ...(await pageExtras(app, r, page, params, pc.window, env)) }, t.executor(r.scope, keepMs, env));
+  remember(key, value, app.config.now(), ids);
   return value;
 }
 
 /** `GET api/models/metrics?project=&range=&env=&metric=&service=&group=&stat=&q=`: the metrics page, from the newest points. */
-async function metrics(ctx: Ctx): Promise<void> {
-  const { project } = await projectOf(ctx);
-  const range = metricRange(ctx, await retentionDays(ctx.app, project.id));
+async function metrics(ctx: Ctx, r: ReadScope): Promise<void> {
+  const range = metricRange(ctx, (await scopeRetentionMs(ctx.app, r.projects)) / DAY_MS);
   const now = alignNow(ctx.app.config.now());
   const env = ctx.url.searchParams.get("env") || undefined;
   const params = metricParamsOf(ctx.url.searchParams);
-  const key = JSON.stringify([project.id, "metrics", range, env, params, now]);
+  const ids = [...r.scope.projects].sort();
+  const key = JSON.stringify([ids, "metrics", range, env, params, now]);
   const hit = cached(key, ctx.app.config.now());
   if (hit) return sendJson(ctx.res, 200, hit);
-  const value = await projectMetrics(ctx.app.telemetry, projectScope(project), range, params, { now, env });
-  remember(key, value, ctx.app.config.now());
+  const value = await projectMetrics(ctx.app.telemetry, r.scope, range, params, { now, env });
+  remember(key, value, ctx.app.config.now(), ids);
   sendJson(ctx.res, 200, value);
 }
 
 /** `GET api/models/hosts` and `api/models/kubernetes`: host and Kubernetes metrics with the services on them. */
-async function infra(ctx: Ctx, page: "hosts" | "kubernetes"): Promise<void> {
-  const { project } = await projectOf(ctx);
-  const range = metricRange(ctx, await retentionDays(ctx.app, project.id));
+async function infra(ctx: Ctx, r: ReadScope, page: "hosts" | "kubernetes"): Promise<void> {
+  const range = metricRange(ctx, (await scopeRetentionMs(ctx.app, r.projects)) / DAY_MS);
   const now = alignNow(ctx.app.config.now());
   const env = ctx.url.searchParams.get("env") || undefined;
   const params = Object.fromEntries(INFRA_PARAMS.flatMap((k) => (ctx.url.searchParams.get(k) ? [[k, ctx.url.searchParams.get(k)!.slice(0, 300)]] : [])));
-  const key = JSON.stringify([project.id, page, range, env, params, now]);
+  const ids = [...r.scope.projects].sort();
+  const key = JSON.stringify([ids, page, range, env, params, now]);
   const hit = cached(key, ctx.app.config.now());
   if (hit) return sendJson(ctx.res, 200, hit);
-  const data = await ctx.app.telemetry.infraData({ scope: projectScope(project), env }, range, params, now);
-  const registry = (await listServices(ctx.app.db, project.id, ctx.app.config.now())).filter((s) => !env || (s.environment ?? "") === env);
+  const data = await ctx.app.telemetry.infraData({ scope: r.scope, env }, range, params, now);
+  const lists = await Promise.all(r.projects.map((p) => listServices(ctx.app.db, p.id, ctx.app.config.now())));
+  const registry = lists.flat().filter((s) => !env || (s.environment ?? "") === env);
   const value = page === "hosts" ? hostsModelOf(data, registry) : kubeModelOf(data, registry);
-  remember(key, value, ctx.app.config.now());
+  remember(key, value, ctx.app.config.now(), ids);
   sendJson(ctx.res, 200, value);
 }
 
-/** `GET api/models/<page>?project=&range=&env=&...`: one page's numbers, from the project's stats tables. */
+/** `GET api/models/<page>?project=&range=&env=&...`: one page's numbers, from the stats tables of one project or all of an organization's. */
 async function model(ctx: Ctx): Promise<void> {
   const page = ctx.params.page!;
-  if (page === "metrics") return metrics(ctx);
-  if (page === "hosts" || page === "kubernetes") return infra(ctx, page);
-  if (!isPageName(page)) return fail(404, `No model named "${page}".`);
-  const { project } = await projectOf(ctx);
+  if (page !== "metrics" && page !== "hosts" && page !== "kubernetes" && !isPageName(page)) return fail(404, `No model named "${page}".`);
+  const r = await readScopeOf(ctx);
+  if (page === "metrics") return metrics(ctx, r);
+  if (page === "hosts" || page === "kubernetes") return infra(ctx, r, page);
   const range = ctx.url.searchParams.get("range") ?? "24h";
   if (!isTimeRange(range)) return fail(400, `Unknown range "${range}".`);
   const env = ctx.url.searchParams.get("env") || undefined;
-  sendJson(ctx.res, 200, await projectPage(ctx.app, project, page, range, paramsOf(ctx.url), env));
+  sendJson(ctx.res, 200, await scopePage(ctx.app, r, page, range, paramsOf(ctx.url), env));
 }
 
 export function modelRoutes(r: Router<Ctx>): void {

@@ -12,6 +12,8 @@ export type RequestItem = Omit<RequestRow, "findings">;
 /** A Traces list row, with what list queries filter and sort on. */
 export interface TraceItem extends TraceListItem {
   startMs: number;
+  /** The project's label, when one read covers many projects (the cloud's "All projects"). */
+  project?: string;
   spanCount: number;
   /** Duration at or over DEFAULT_SLOW_MS, as the Traces cards count it. */
   slow: boolean;

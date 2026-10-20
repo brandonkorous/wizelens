@@ -38,6 +38,14 @@ async function checkScopes(store: TelemetryStore, ids: { orgA: string; orgB: str
   // Org B's project named under org A reads nothing, though it holds the same traces.
   expect(await seen(store, tenantScope(ids.orgA, [ids.b1]))).toEqual({ requests: 0, spans: 0, traces: 0 });
   expect(await seen(store, tenantScope(ids.orgB, [ids.b1]))).toEqual(one);
+  // With labels, services of the same name stay apart, each with its project's label; totals still add up.
+  const labeled = tenantScope(ids.orgA, [ids.a1, ids.a2], { [ids.a1]: "One", [ids.a2]: "Two" });
+  const services = await runPage("services", pageContext("30d", SCENARIO_NOW, {}), store.executor(labeled, 1000 * DAY));
+  const names = new Set(services.rows.map((r) => r.name));
+  expect([...names].filter((n) => n.endsWith(" · One")).length).toBeGreaterThan(0);
+  expect([...names].filter((n) => n.endsWith(" · Two")).length).toBeGreaterThan(0);
+  expect([...names].every((n) => / · (One|Two)$/.test(n))).toBe(true);
+  expect((await seen(store, labeled)).requests).toBe(both.requests);
 }
 
 describe("Read scopes", () => {

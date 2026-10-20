@@ -23,7 +23,7 @@ The rules of `GAPS-PLAN.md` ("Rules for every phase") still hold.
 | B | `org_id` on every telemetry row | M | Done |
 | D | One scope type: one org, a list of projects | L | Done |
 | C | The database enforces the org | M | Done |
-| E | Data routes read many projects | L | |
+| E | Data routes read many projects | L | Done |
 | F | Per-project features, read across | M | |
 | G | The dashboard: org picker and "All projects" | L | |
 | H | MCP, docs, and the site | S | |
@@ -95,21 +95,23 @@ fixed per project and safe to stamp at ingest.
 
 ## Phase E — Data routes read many projects
 
-1. **Resolve once.** `scopeOf(ctx)` replaces `projectOf` (`routes/data.ts:18-22`). `?project=<id>` gives that project
-   and its org. `?project=all&org=<id>` gives `joinScope` of that org (`auth/join-scope.ts:11-17`): hidden projects
-   left out, keys and apps held to their own projects. Every data route uses it: traces, services, models, metrics,
-   hosts, Kubernetes, search, suggest, tags, changes.
-2. **Rows say their project.** List rows, services, rollup rows, and search hits carry `project`. Rollups group by
-   `project_id, key` when the scope has more than one project, so same-named services and endpoints stay apart.
-   Totals and charts still sum.
-3. **Per-project rules, applied per row.** Apdex targets and issue states key on `project|key`. Tag rules: `tag:x`
-   matches in the projects that define `x`. The range check uses the longest retention of the scope; older rows are
-   gone by TTL. `slowQueryMs` is already in the facts; read-time uses stay per row.
-4. **Traces.** A trace id in two projects lists once, under the project of its root span. The trace page opens with
-   `joinedTrace` over the scope (`repo/trace-join.ts`).
-5. **Live updates.** `api/changes` subscribes to every project of the scope.
-6. **Leak suite.** Two orgs with the same service names, endpoints, and trace ids. Every data route under All for
-   org A returns no org B row, on Postgres and ClickHouse. A hidden project never shows.
+1. **Resolve once.** `readScopeOf(ctx)` (`routes/scope.ts`): `?project=<id>` is one project; `?project=all&org=<id>`
+   is every project the caller may read there (`requireOrgRead`, `auth/org-access.ts`): a person's minus hidden ones,
+   a key's own; 404 when none. Traces, one trace, services, page models, metrics, hosts, Kubernetes, search, suggest,
+   tags, changes, and source map resolve all use it.
+2. **Same-named services stay apart** (`core/src/scale/sql/project-keys.ts`, `rollup-keys.ts`). With more than one
+   project the scope carries each one's label (its name, or "name (slug)" when two share one). Rollup kinds whose key
+   names a service (`svc`, `svc.ep`, `edge`, error groups, `log.s`, `log.p`, `rel`, `ep.u`, `req.svc`, every `@svc`
+   kind) group by project too and come back as "api · Shop", their tops as well. Other kinds (levels, layers, routes,
+   queries) add up across projects, as environments do. A labeled key, prefix, or service in a filter reads its
+   project only. List and search rows say their `project` and label their services.
+3. **Per-project state, merged** (`routes/scope-state.ts`): issue states and Apdex targets keyed with the labels;
+   tag rules of every project (a name two use keeps the first). Retention is the longest of the projects; thresholds
+   are theirs when they agree, else the cloud's.
+4. **Live updates.** `api/changes` subscribes to every project of the read; cached pages drop when any of theirs
+   gets data.
+5. **Tests.** `all-projects.test.ts`: labeled services, totals that add up, a labeled filter, hidden projects, read
+   keys, and other organizations. `tenant-scope.test.ts`: labels on Postgres and ClickHouse.
 
 ## Phase F — Per-project features, read across
 

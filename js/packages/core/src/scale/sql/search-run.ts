@@ -7,6 +7,7 @@ import { collate, type Dialect, lit, msLit, num, numOrNull, type SqlSource, SqlT
 import { logRowOfRow, requestItemOfRow, traceItemOfRow } from "./list-sql.js";
 import { searchCond } from "./search-sql.js";
 import { servicesOf } from "./write-sql.js";
+import { labelRow, type LabeledRow } from "./project-keys.js";
 
 type Row = Record<string, unknown>;
 
@@ -92,5 +93,7 @@ export async function searchSql<K extends SearchKind>(src: SqlSource, query: Sea
   const rows = src.d.name === "ch" ? await chRows(src, query, limit) : await run(searchSqlText(src, query, limit));
   const keyOf = (r: Row) => ({ timeMs: num(r.s_time), traceId: String(r.trace_id), owner: String(r.s_owner) });
   const page = pageOf(rows, limit, keyOf);
-  return { kind: query.kind, items: page.rows.map(JOINS[query.kind].item) as SearchItems[K][], next: page.next };
+  const labels = (src.scope.projects?.length ?? 0) > 1 ? src.scope.labels : undefined;
+  const item = (r: Row) => (labels ? labelRow(JOINS[query.kind].item(r) as LabeledRow, labels[String(r[src.d.project])] ?? "") : JOINS[query.kind].item(r));
+  return { kind: query.kind, items: page.rows.map(item) as SearchItems[K][], next: page.next };
 }

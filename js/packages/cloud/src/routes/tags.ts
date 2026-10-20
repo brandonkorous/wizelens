@@ -7,6 +7,8 @@ import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
 import { createTag, deleteTag, projectTags, setBuiltIn, updateTag } from "../repo/tags.js";
 import { projectScope } from "../telemetry/store.js";
+import { ALL_PROJECTS, readScopeOf } from "./scope.js";
+import { scopeTags } from "./scope-state.js";
 
 // Tag rules for one project (docs/TAGS-PLAN.md): anyone who reads the project reads them; the `tag` permission changes them.
 
@@ -22,9 +24,16 @@ async function note(ctx: Ctx, a: ProjectAccess, action: string, tag: Pick<TagRul
 }
 
 async function list(ctx: Ctx): Promise<void> {
+  if (projectId(ctx) === ALL_PROJECTS) return listAll(ctx);
   const a = await requireProject(ctx, projectId(ctx));
   const editable = a.principal.kind === "user" && can(a.role, "tag");
   sendJson(ctx.res, 200, { tags: await projectTags(ctx.app.db, a.project.id), editable, max: TAG_LIMITS.rules });
+}
+
+/** All projects: every project's active tags, to read; tags change per project. */
+async function listAll(ctx: Ctx): Promise<void> {
+  const r = await readScopeOf(ctx);
+  sendJson(ctx.res, 200, { tags: await scopeTags(ctx.app, r.projects), editable: false, max: TAG_LIMITS.rules });
 }
 
 async function create(ctx: Ctx): Promise<void> {

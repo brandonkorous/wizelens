@@ -8,21 +8,23 @@ declare const TENANT: unique symbol;
 export interface TenantScope {
   readonly org: string;
   readonly projects: readonly string[];
+  /** Each project's label, for a read of many projects: rows named by a service stay apart ("api · Shop"). */
+  readonly labels?: Readonly<Record<string, string>>;
   readonly [TENANT]: true;
 }
 
 /** A read scope. Throws on an empty organization or project list: a read never widens to "everything". */
-export function tenantScope(org: string, projects: readonly string[]): TenantScope {
+export function tenantScope(org: string, projects: readonly string[], labels?: Readonly<Record<string, string>>): TenantScope {
   if (!org) throw new Error("A telemetry read needs its organization.");
   if (!projects.length || projects.some((p) => !p)) throw new Error("A telemetry read needs at least one project.");
-  return { org, projects: [...new Set(projects)] } as unknown as TenantScope;
+  return { org, projects: [...new Set(projects)], ...(labels ? { labels } : {}) } as unknown as TenantScope;
 }
 
 /** One project's own scope. */
 export const projectScope = (p: { id: string; orgId: string }): TenantScope => tenantScope(p.orgId, [p.id]);
 
 /** The shared SQL's scope for a read. */
-export const sqlScope = (s: TenantScope, env?: string): SqlScope => ({ org: s.org, projects: s.projects, env });
+export const sqlScope = (s: TenantScope, env?: string): SqlScope => ({ org: s.org, projects: s.projects, labels: s.labels, env });
 
 export interface TraceQuery {
   scope: TenantScope;
