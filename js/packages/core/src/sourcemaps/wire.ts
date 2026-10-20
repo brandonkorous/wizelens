@@ -4,7 +4,7 @@ import { pathSuffixes, scriptPath } from "./stack.js";
 
 /** `POST` uploads one map (`?release=&file=`, body: the map JSON, gzip allowed); `GET` lists a release's maps. */
 export const SOURCEMAPS_PATH = "api/sourcemaps";
-/** `POST {stack, release}` answers `{frames}`: the stack after source maps, with a few lines of source per frame. */
+/** `POST {stack, release, traceId?, spanId?}` answers `{frames}`: the stack after source maps, with a few lines of source per frame. */
 export const SOURCEMAPS_RESOLVE_PATH = "api/sourcemaps/resolve";
 /** Largest map one upload may hold, after unzip. */
 export const MAX_SOURCEMAP_BYTES = 64 * 1024 * 1024;
@@ -60,4 +60,12 @@ export function checkResolve(body: unknown): { stack: string; release: string | 
   const b = body as { stack?: unknown; release?: unknown } | null;
   if (!b || typeof b.stack !== "string" || !b.stack) return null;
   return { stack: b.stack.slice(0, MAX_RESOLVE_STACK), release: normalizeRelease(b.release) };
+}
+
+/** The error a resolve call is for, when sent: hosts read the maps of the project its trace (and span) belongs to. */
+export function resolveTargetOf(body: unknown): { traceId: string; spanId: string | null } | null {
+  const b = body as { traceId?: unknown; spanId?: unknown } | null;
+  const id = (v: unknown, n: number) => (typeof v === "string" && v.length <= n && /^[0-9a-zA-Z_-]+$/.test(v) ? v : null);
+  const traceId = id(b?.traceId, 64);
+  return traceId ? { traceId, spanId: id(b?.spanId, 32) } : null;
 }

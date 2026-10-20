@@ -5,6 +5,8 @@ import { runPageSync } from "../models/index.js";
 import { memoryExecutor } from "../scale/memory.js";
 import { computePageSync, pageContext } from "../scale/run.js";
 import { emptyAgg } from "../scale/agg.js";
+import { traceFacts } from "../scale/facts.js";
+import { KIND_SPEC } from "../scale/kinds.js";
 import { ANOMALY_NOW, anomalyTraces, SPIKE_MS } from "../testing/anomaly-scenario.js";
 import { judge, metricValue } from "./baseline.js";
 
@@ -22,6 +24,15 @@ describe("baselines", () => {
     expect(judge("error_rate", agg(100, 9), flat)?.above).toBe(true);
     expect(judge("requests", agg(9), [agg(1), agg(1)])?.above).toBe(false);
     expect(metricValue("p95_ms", agg(0))).toBeNull();
+  });
+});
+
+describe("problem causes", () => {
+  it("names the release from the release facts (rel), the only version facts kept", () => {
+    const kinds = new Set(anomalyTraces().flatMap((t) => traceFacts(t).contributions.map((c) => c.kind)));
+    expect([kinds.has("rel"), kinds.has("svc.v" as never)]).toEqual([true, false]);
+    expect(Object.keys(KIND_SPEC)).not.toContain("svc.v");
+    expect(problems().problems[0]!.causes.find((c) => c.kind === "release")).toMatchObject({ service: "pay", version: "2.0.0" });
   });
 });
 

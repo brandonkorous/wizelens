@@ -102,7 +102,7 @@ export async function handleApi(c: ApiContext, sub: string, req: IncomingMessage
   if (sub === "api/ingest" && method === "POST") return ingest(c, req, res);
   if (sub === SOURCEMAPS_PATH && method === "POST") return uploadSourceMap(c.data.store.db, c.o.now(), req, res, url);
   if (sub === SOURCEMAPS_PATH && method === "GET") return listMaps(c.data.store.db, res, url);
-  if (sub === SOURCEMAPS_RESOLVE_PATH && method === "POST") return resolveMaps(c.maps, req, res, url);
+  if (sub === SOURCEMAPS_RESOLVE_PATH && method === "POST") return resolveMaps(c.maps, c.data.store.db, req, res, url);
   if (sub === "api/traces" && method === "GET") {
     const { q, full } = queryOf(url.searchParams);
     return sendJson(res, 200, full ? c.data.traces(q) : c.data.summaries(q));

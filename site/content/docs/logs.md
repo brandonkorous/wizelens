@@ -43,7 +43,10 @@ them all. Patterns follow the level, service, and "written" filters.
 
 Filter the lines, then **Save this search**. Each saved search becomes a chart of its matching lines over the time range,
 with errors on top and its total against the time before. **Show lines** puts its filters back. The hub and the cloud keep
-saved searches for everyone on the project; an app's own dashboard keeps them in your browser.
+these charts as saved searches, next to your saved views: they show under **Saved** in the sidebar, on the Search page, and
+in Ctrl+K. The hub shares them with everyone; on the cloud they are shared with the project unless you clear **Share with
+the team**, and only the person who saved one (or an admin) deletes it. Saving a Logs page from the star in the top bar can
+chart it too (**Chart it on the Logs page**). An app's own dashboard keeps them in your browser.
 
 ## Log alerts
 

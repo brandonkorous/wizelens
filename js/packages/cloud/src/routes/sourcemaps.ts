@@ -1,6 +1,8 @@
-import { answerResolve, checkUpload, MAX_SOURCEMAP_BYTES, normalizeRelease, parseSourceMap, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core";
+import { answerResolve, checkUpload, MAX_SOURCEMAP_BYTES, normalizeRelease, parseSourceMap, resolveTargetOf, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core";
 import { readBody } from "@wizeworks/lens-hub/kit";
 import type { Ctx } from "../app.js";
+import { joinScope } from "../auth/join-scope.js";
+import type { ProjectAccess } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson } from "../http/http.js";
 import type { RateLimiter } from "../http/limiter.js";
 import type { Router } from "../http/router.js";
@@ -31,10 +33,22 @@ export async function listProjectMaps(ctx: Ctx, limiter: RateLimiter): Promise<v
   sendJson(ctx.res, 200, { maps: await listSourceMaps(ctx.app.db, projectId, release) });
 }
 
-/** `POST api/sourcemaps/resolve?project=` from the dashboard: a browser stack after the project's uploaded maps. */
+/** The project whose maps a resolve call reads: the one the error's span was sent to, among those the caller may join; else `?project=`. */
+async function mapsProject(ctx: Ctx, access: ProjectAccess, body: unknown): Promise<string> {
+  const target = resolveTargetOf(body);
+  if (!target?.spanId) return access.project.id;
+  for (const id of await joinScope(ctx.app.db, access)) {
+    const part = await ctx.app.telemetry.joinedTrace(id, [id], target.traceId);
+    if (part?.spans.some((s) => s.spanId === target.spanId)) return id;
+  }
+  return access.project.id;
+}
+
+/** `POST api/sourcemaps/resolve?project=` from the dashboard: a browser stack after the uploaded maps of the error's project. */
 async function resolve(ctx: Ctx): Promise<void> {
-  const { project } = await projectOf(ctx);
-  const answer = await answerResolve(await readJsonBody(ctx.req), ctx.app.maps(project.id));
+  const access = await projectOf(ctx);
+  const body = await readJsonBody(ctx.req);
+  const answer = await answerResolve(body, ctx.app.maps(await mapsProject(ctx, access, body)));
   sendJson(ctx.res, answer.status, answer.body);
 }
 

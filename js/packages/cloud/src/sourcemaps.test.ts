@@ -65,3 +65,21 @@ it("keeps only the newest releases of a project", async () => {
   expect(rows).toHaveLength(SOURCEMAP_RELEASES_KEPT);
   expect(rows.some((r) => r.release === "r00")).toBe(false);
 });
+
+it("resolves a browser error on another project's trace page by the project the error's span was sent to", async () => {
+  let url: string;
+  ({ cloud, url } = await startCloud({ now: () => NOW }));
+  const { owner, orgId, projectId: web } = await setupOwner(cloud, url);
+  const api = (await owner.call<{ id: string }>("POST", `api/orgs/${orgId}/projects`, { name: "API" })).body.id;
+  const keyOf = async (id: string) => ({ Authorization: `Bearer ${(await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", projectIds: [id] })).body.token}` });
+  const [webAuth, apiAuth] = [await keyOf(web), await keyOf(api)];
+  await fetch(`${url}/_wizelens/api/sourcemaps?release=2.0.0&file=${CART_FILE}`, { method: "POST", headers: webAuth, body: CART_MAP });
+  const send = (headers: Record<string, string>, service: string, spans: unknown[]) => fetch(`${url}/_wizelens/api/ingest`, { method: "POST", headers, body: JSON.stringify({ sender: { service }, spans }) });
+  await send(webAuth, "browser", [browserError("1".repeat(16))]);
+  await send(apiAuth, "api", [span("e".repeat(32), "2".repeat(16), { service: "api", parentSpanId: "1".repeat(16), startMs: NOW - 59_000 })]);
+  const resolve = async (body: Record<string, unknown>) =>
+    (await owner.call<{ frames: ResolvedFrame[] }>("POST", `api/sourcemaps/resolve?project=${api}`, { stack: CART_STACK, release: "2.0.0", ...body })).body.frames[0]!;
+  expect((await resolve({})).source).toBeNull();
+  expect(await resolve({ traceId: "e".repeat(32), spanId: "1".repeat(16) })).toMatchObject({ source: "src/cart.ts", fn: "applyCoupon" });
+  expect((await resolve({ traceId: "e".repeat(32), spanId: "2".repeat(16) })).source).toBeNull();
+});
