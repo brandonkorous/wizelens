@@ -21,7 +21,7 @@ The rules of `GAPS-PLAN.md` ("Rules for every phase") still hold. One commit per
 | 6 | MCP tool, alerts, and search hits | M | Done |
 | 7 | SDKs report their packages | M | Done |
 | 8 | Known-vulnerable packages (OSV) on hub and cloud | L | Done |
-| 9 | Docs, site, and changelog | S | |
+| 9 | Docs, site, and changelog | S | Done |
 
 ## OWASP Top 10:2025 and the rules
 
@@ -39,7 +39,7 @@ The rules of `GAPS-PLAN.md` ("Rules for every phase") still hold. One commit per
 | A04 Cryptographic Failures | `secret-in-url` | A sensitive key (`token`, `password`, `apikey`...) in a URL query | warning |
 | A05 Injection | `sql-injection` | A request input value appears as a literal inside the SQL text | error |
 | A07 Authentication Failures | `auth-guessing` | 10 or more failed sign-ins (401, 403) from one address on one endpoint; worse with no 429 | warning |
-| A09 Logging and Alerting Failures | `secret-leak` | A JWT, cloud key, private key, or card number in logs, span data, or a response | error |
+| A09 Security Logging and Alerting Failures | `secret-leak` | A JWT, cloud key, private key, or card number in logs, span data, or a response | error |
 | A10 Mishandling of Exceptional Conditions | `stack-exposed` | A 4xx or 5xx answer whose body holds a stack trace | warning |
 
 Left out, on purpose: A06 Insecure Design and A08 Integrity Failures need design review, not traffic. An IDOR rule (one user

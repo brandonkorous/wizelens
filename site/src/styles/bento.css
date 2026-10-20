@@ -9,7 +9,8 @@
     "db db db db db db db er er er er er"
     "lg lg lg lg lg mt mt mt mt mt mt mt"
     "lg lg lg lg lg sv sv sv sv ck ck ck"
-    "sm sm sm sm sm sm rx rx rx rx rx rx";
+    "sm sm sm sm sm sm rx rx rx rx rx rx"
+    "sc sc sc sc sc sc sc sc sc sc sc sc";
 }
 .wl-tile { position: relative; display: flex; flex-direction: column; gap: 22px; padding: 28px; border-radius: var(--wl-radius); background: var(--wl-paper); border: 1px solid var(--wl-line); overflow: hidden; min-width: 0; }
 .wl-tile-text { display: grid; gap: 8px; max-width: 34em; }
@@ -27,10 +28,11 @@
       "lg mt"
       "lg sv"
       "ck sm"
-      "rx rx";
+      "rx rx"
+      "sc sc";
   }
 }
 @media (max-width: 680px) {
-  .wl-bento { grid-template-columns: minmax(0, 1fr); grid-template-areas: "db" "rd" "er" "lg" "mt" "sv" "ck" "sm" "rx"; grid-auto-rows: auto; }
+  .wl-bento { grid-template-columns: minmax(0, 1fr); grid-template-areas: "db" "rd" "er" "lg" "mt" "sv" "ck" "sm" "rx" "sc"; grid-auto-rows: auto; }
   .wl-tile { padding: 22px; }
 }

@@ -10,6 +10,7 @@ import { ServicesArt } from "./tiles/ServicesArt";
 import { SearchArt } from "./tiles/SearchArt";
 import { SamplingArt } from "./tiles/SamplingArt";
 import { RedactArt } from "./tiles/RedactArt";
+import { SecurityArt } from "./tiles/SecurityArt";
 
 export function Bento() {
   return (
@@ -18,8 +19,8 @@ export function Bento() {
         <div className="wl-head wl-head-split">
           <h2 className="wl-h2">Everything a request touched.</h2>
           <p className="wl-lede">
-            Ten dashboard pages, one look. Requests, traces, database, rendering, errors, logs, metrics, services, and
-            insights, for one service or all of them.
+            Eleven dashboard pages, one look. Requests, traces, database, rendering, errors, logs, metrics, services,
+            insights, and security risks, for one service or all of them.
           </p>
         </div>
         <div className="wl-bento">
@@ -49,6 +50,9 @@ export function Bento() {
           </Tile>
           <Tile area="rx" title="Secrets never get stored." body="Passwords, tokens, cookies, and connection strings are redacted before anything is written.">
             {(seen) => <RedactArt seen={seen} />}
+          </Tile>
+          <Tile area="sc" title="Security risks, from real traffic." body="SQL built from input, missing headers, cookies without flags, secrets in URLs and logs, open admin routes, sign-in guessing, and known-vulnerable packages. Mapped to the OWASP Top 10, with the release that brought each one in." night>
+            {(seen) => <SecurityArt seen={seen} />}
           </Tile>
         </div>
       </div>
