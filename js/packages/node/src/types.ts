@@ -109,6 +109,12 @@ export interface WizeLensLogger {
 
 export type Next = (err?: unknown) => void;
 
+/** More about a user for `setUser`. */
+export interface UserOptions {
+  /** A display name for the Users page (`user.full_name`). Leave it out to keep only the id; a project can also redact `user.full_name`. */
+  name?: string;
+}
+
 export type Req = IncomingMessage & { originalUrl?: string; body?: unknown; route?: { path?: unknown }; baseUrl?: string };
 
 export interface WizeLens {
@@ -132,8 +138,8 @@ export interface WizeLens {
   recordException(err: unknown): void;
   /** Tag the current request, e.g. tag("cache", "hit") shows as "cache:hit". No-op outside a request. */
   tag(key: string, value?: string): void;
-  /** Set the user of the current request (`enduser.id`). No-op outside a request. */
-  setUser(id: string): void;
+  /** Set the user of the current request (`enduser.id`), with a display name for the Users page. No-op outside a request. */
+  setUser(id: string, options?: UserOptions): void;
   /** Get one trace, optionally federated across downstream services. */
   getTrace(traceId: string, federate?: boolean, hop?: number): Promise<Trace | undefined>;
   shutdown(): Promise<void>;

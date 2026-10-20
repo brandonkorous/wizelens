@@ -3,6 +3,8 @@ import {
   ATTR_BROWSER_ROUTE,
   ATTR_BROWSER_SESSION,
   ATTR_BROWSER_TYPE,
+  ATTR_ENDUSER,
+  ATTR_USER_NAME,
   type BrowserSpanType,
   pathShape,
   type Span,
@@ -10,16 +12,18 @@ import {
   VERSION_ATTR,
 } from "@wizeworks/lens-core";
 
-// OTel name of the signed-in user. The add-ons put it on server spans too.
-const ATTR_ENDUSER = "enduser.id";
 
 /** The web app's version, put on every browser span as `service.version`. */
 let release: string | undefined;
 export const setBrowserRelease = (v: string | undefined): void => void (release = v?.trim().slice(0, 50) || undefined);
 
-/** The signed-in user, put on every browser span as `enduser.id`. */
+/** The signed-in user, put on every browser span as `enduser.id`, and their display name as `user.full_name`. */
 let user: string | undefined;
-export const setBrowserUser = (id: string | null | undefined): void => void (user = id?.trim().slice(0, 200) || undefined);
+let userName: string | undefined;
+export function setBrowserUser(id: string | null | undefined, name?: string | null): void {
+  user = id?.trim().slice(0, 200) || undefined;
+  userName = user ? name?.trim().slice(0, 200) || undefined : undefined;
+}
 
 /** The page view a browser span belongs to. */
 export interface ViewRef {
@@ -70,6 +74,7 @@ export function browserSpan(i: BrowserSpanInput): Span {
       [ATTR_BROWSER_ROUTE]: i.route,
       ...(release ? { [VERSION_ATTR]: release } : {}),
       ...(user ? { [ATTR_ENDUSER]: user } : {}),
+      ...(userName ? { [ATTR_USER_NAME]: userName } : {}),
     },
     events: i.events ?? [],
   };

@@ -3,7 +3,7 @@ import { ANALYSIS_DEFAULTS } from "../analysis.js";
 import { DEFAULT_SLOW_MS } from "../health.js";
 import { isLooseTraceId } from "../loose.js";
 import type { LogRow } from "../stats/logs.js";
-import { requestWith } from "../stats/requests.js";
+import { requestUserName, requestWith } from "../stats/requests.js";
 import { type CriticalSpan, traceDurationOf } from "../stats/traces.js";
 import type { Trace } from "../types.js";
 import { type Contribution, contribution, withServices } from "./agg.js";
@@ -59,7 +59,7 @@ function buildFacts(trace: Trace, o: FactOptions): TraceFacts {
   const loose = isLooseTraceId(trace.traceId);
   const contributions = [
     ...(loose ? [] : traceContributions(trace)),
-    ...(row ? requestContributions(row) : []),
+    ...(row ? requestContributions(row, requestUserName(trace)) : []),
     ...serviceFacts(trace),
     ...endpointFacts(trace),
     ...dbFacts(trace, o.slowQueryMs),

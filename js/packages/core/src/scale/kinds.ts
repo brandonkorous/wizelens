@@ -90,8 +90,8 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   "rc.route": spec(),
   /** Per service version (`service|version`): its requests and jobs, failures, and durations. */
   rel: spec([], { hist: true }),
-  /** Per signed-in user (`enduser.id`): their requests, failures, and durations. */
-  usr: spec([], { hist: true }),
+  /** Per signed-in user (`enduser.id`): their requests, failures, and durations; the top is their newest display name. */
+  usr: spec([], { hist: true, top: "newest" }),
   /** Who an error group, an insight, or an endpoint (`service|endpoint`) touched: one key per item and user. */
   "err.u": spec(),
   "ins.u": spec(),

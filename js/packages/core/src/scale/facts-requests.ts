@@ -54,14 +54,15 @@ function partContributions(r: RequestRow): Contribution[] {
   });
 }
 
-/** A signed-in user's request: their totals (`usr`) and the endpoint they used (`ep.u`, `service|endpoint|user`). */
-function userContributions(r: RequestRow, base: Pick<Contribution, "err" | "sum">): Contribution[] {
+/** A signed-in user's request: their totals and name (`usr`), and the endpoint they used (`ep.u`, `service|endpoint|user`). */
+function userContributions(r: RequestRow, base: Pick<Contribution, "err" | "sum">, name: string | null): Contribution[] {
   if (!r.user) return [];
-  return [contribution("usr", r.user, r.startMs, { ...base, values: [r.durationMs] }), contribution("ep.u", joinKey(displayService(r.service), r.endpoint, r.user), r.startMs)];
+  const top = name ? { top: { rank: r.startMs, data: { name } } } : {};
+  return [contribution("usr", r.user, r.startMs, { ...base, values: [r.durationMs], ...top }), contribution("ep.u", joinKey(displayService(r.service), r.endpoint, r.user), r.startMs)];
 }
 
-/** Everything one request adds to the rollups. */
-export function requestContributions(r: RequestRow): Contribution[] {
+/** Everything one request adds to the rollups; `userName` is the user's display name, kept on their `usr` row. */
+export function requestContributions(r: RequestRow, userName: string | null = null): Contribution[] {
   const at = r.startMs;
   const dims = requestDims(r);
   const base = { err: isFailed(r) ? 1 : 0, sum: r.durationMs };
@@ -74,5 +75,5 @@ export function requestContributions(r: RequestRow): Contribution[] {
     out.push(contribution("req.svc", joinKey(s, ...dims), at, { ...base, c: [r.dbCount, withInsights, s === r.service ? 1 : 0] }));
   }
   const services = [r.service, ...r.services].map(displayService);
-  return [...out, ...partContributions(r), ...insightContributions(r), ...userContributions(r, base)].flatMap((c) => withServices(c, services));
+  return [...out, ...partContributions(r), ...insightContributions(r), ...userContributions(r, base, userName)].flatMap((c) => withServices(c, services));
 }

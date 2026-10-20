@@ -79,6 +79,7 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-table .wl-nowrap { white-space: nowrap; }
 .wl-cell-icon { display: inline-flex; align-items: center; gap: 10px; }
 .wl-cell-icon svg { width: 18px; height: 18px; color: var(--wl-fg-2); }
+.wl-user-id { font-size: 12px; }
 
 .wl-badge { display: inline-flex; align-items: center; justify-content: center; padding: 1px 9px; border-radius: 6px; font-size: 12.5px; font-weight: 600; line-height: 20px; white-space: nowrap; }
 .wl-badge-high, .wl-badge-danger { background: var(--wl-error-soft); color: var(--wl-error); }
@@ -146,6 +147,7 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 
 .wl-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 36px 16px; color: var(--wl-muted); text-align: center; }
 .wl-empty strong { color: var(--wl-fg); }
+.wl-empty-body { max-width: 72ch; line-height: 1.6; }
 .wl-banner { padding: 10px 14px; border-radius: 10px; margin-bottom: 16px; }
 .wl-banner-error { background: var(--wl-error-soft); color: var(--wl-error); }
 .wl-banner-info { background: var(--wl-accent-soft); color: var(--wl-accent-text); }

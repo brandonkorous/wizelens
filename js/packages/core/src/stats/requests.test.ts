@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { makeRequest, makeSpan } from "../testing/fixtures.js";
 import { buildTrace } from "../trace.js";
 import { bucketIndex, normalizeQuery, percentChange, percentileOf, previousWindow, series } from "./common.js";
-import { requestOf, requestRows } from "./requests.js";
+import { requestOf, requestRows, requestUserName } from "./requests.js";
 
 describe("common stats", () => {
   it("buckets times and builds series", () => {
@@ -40,6 +40,18 @@ describe("request rows", () => {
     const downstream = makeSpan({ traceId: t.traceId, category: "http.server", service: "orders", parentSpanId: client.spanId, startMs: gateway.startMs - 5, attributes: { "url.path": "/orders" } });
     const row = requestOf(buildTrace(t.traceId, [...t.spans, client, downstream], [], []))!;
     expect(row).toMatchObject({ path: "/api/gateway", service: "gateway" });
+  });
+
+  it("takes the user's display name, and the user from a browser span when the server span has none", () => {
+    expect(requestUserName(makeRequest({ attributes: { "enduser.id": "u1", "user.full_name": "Ada Lovelace" } }))).toBe("Ada Lovelace");
+    expect(requestUserName(makeRequest({ attributes: { "enduser.id": "u1", "user.full_name": "[redacted]" } }))).toBeNull();
+    const t = makeRequest({ fetchMs: 50 });
+    const browser = t.spans.find((s) => s.category === "browser")!;
+    browser.attributes["enduser.id"] = "u2";
+    browser.attributes["user.full_name"] = "Grace Hopper";
+    const trace = buildTrace(t.traceId, t.spans, [], []);
+    expect(requestOf(trace)!.user).toBe("u2");
+    expect(requestUserName(trace)).toBe("Grace Hopper");
   });
 
   it("marks failures and sorts newest first", () => {

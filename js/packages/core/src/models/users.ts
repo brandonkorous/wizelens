@@ -13,6 +13,8 @@ import { avgs, byDesc, groupCount, groupNeed, listNeed, listOf, rowsOf, type Ser
 
 export interface UserRow {
   user: string;
+  /** The newest display name the app sent for this user, or null. */
+  name: string | null;
   requests: number;
   errors: number;
   errorRate: number | null;
@@ -21,8 +23,15 @@ export interface UserRow {
   lastSeenMs: number;
 }
 
+/** The name kept as the row's top item. */
+const nameOf = (top: unknown): string | null => {
+  const name = (top as { name?: unknown } | null)?.name;
+  return typeof name === "string" && name ? name : null;
+};
+
 const rowOf = (user: string, a: Agg): UserRow => ({
   user,
+  name: nameOf(a.top),
   requests: a.n,
   errors: a.err,
   errorRate: a.n ? percentOf(a.err, a.n) : null,
@@ -48,7 +57,7 @@ export const usersPage: PageDef<UsersModel> = {
     const { page, size } = pageParams(ctx.params, USERS_PAGE);
     const q = ctx.params.q?.trim();
     const filter = q ? { filter: { contains: [q] } } : {};
-    return uniqueNeeds([...META_NEEDS, groupNeed("usr", "usr", "cur", { hist: true, ...filter, order: { by: "n", desc: true, limit: size, offset: (page - 1) * size } })]);
+    return uniqueNeeds([...META_NEEDS, groupNeed("usr", "usr", "cur", { hist: true, top: true, ...filter, order: { by: "n", desc: true, limit: size, offset: (page - 1) * size } })]);
   },
   model: (d) => ({
     meta: metaOf(d),
@@ -77,7 +86,7 @@ export const userPage: PageDef<UserModel> = {
     const user = ctx.params.user ?? "";
     return uniqueNeeds([
       ...META_NEEDS,
-      groupNeed("usr", "usr", "cur", { hist: true, filter: { keys: [user] } }),
+      groupNeed("usr", "usr", "cur", { hist: true, top: true, filter: { keys: [user] } }),
       listNeed("recent", "requests", "cur", { filter: { user }, sort: { key: "time", desc: true }, limit: 25, aggregate: { buckets: CHART_BUCKETS } }),
       listNeed("slowest", "requests", "cur", { filter: { user }, sort: { key: "duration", desc: true }, limit: 10 }),
       groupNeed("u.groups", "err.u", "cur", { filter: { parts: [null, user] }, order: { by: "n", desc: true, limit: 50 } }),

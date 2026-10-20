@@ -37,7 +37,7 @@ import { initWizeLens } from "@wizeworks/lens-browser";
 
 const lens = initWizeLens({ endpoint: "/_wizelens", enabled: import.meta.env.DEV });
 
-lens.setUser(user.id);           // enduser.id on every browser span
+lens.setUser(user.id, { name: user.name }); // enduser.id and user.full_name on every browser span
 lens.captureError(err);          // an error you caught
 lens.pageView("/orders/7");      // a route change your router makes without the History API
 ```
@@ -129,6 +129,7 @@ svelte-spa-router.
 | `propagateTo` | same origin | Which requests get a `traceparent` header. |
 | `release` | from the build plugin | Your app's version, kept on browser spans for release markers and [source maps](/docs/source-maps/). |
 | `user` | none | The signed-in user, sent as `enduser.id`. |
+| `userName` | none | The signed-in user's display name, sent as `user.full_name` for the Users page. |
 | `capturePages` | `true` | Send page views and browser errors. |
 | `captureConsole` | `true` | Copy browser `console` calls into the page view's trace. |
 | `captureXhr` | `true` | Trace `XMLHttpRequest` calls too. |

@@ -13,7 +13,7 @@ function routes(wizelens: WizeLens) {
     a.get("/items/:id", (req, res) => {
       wizelens.tag("cache", "hit");
       wizelens.tag("catalog");
-      wizelens.setUser("user-42");
+      wizelens.setUser("user-42", { name: " Ada Lovelace " });
       res.setHeader("X-Custom", "yes");
       res.json({ id: req.params.id, name: "Keyboard" });
     });
@@ -60,6 +60,7 @@ async function tagsAndUser(): Promise<void> {
   expect(a["wizelens.tag.cache"]).toBe("hit");
   expect(a["wizelens.tag.catalog"]).toBe(true);
   expect(a["enduser.id"]).toBe("user-42");
+  expect(a["user.full_name"]).toBe("Ada Lovelace");
   expect(typeof a["wizelens.request.id"]).toBe("string");
 }
 

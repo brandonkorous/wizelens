@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Clock, Gauge, Timer, TriangleAlert, UserRound } from "lucide-react";
 import { errorGroupDoc, type RequestItem, type UserModel, userDoc, userScope } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
@@ -38,7 +39,9 @@ function Cards({ m }: { m: UserModel }) {
 function Body({ m }: { m: UserModel }) {
   const links = { user: m.user };
   const tags = useGroupTags()("users", userDoc(m.user));
-  const stats: [string, string][] = [["Requests", fmtCount(m.totals!.requests)], ["Failed", fmtCount(m.totals!.errors)], ["Error groups", fmtCount(m.errors.length)]];
+  const t = m.totals!;
+  const named: [string, ReactNode][] = t.name ? [["User id", <span className="wl-mono">{m.user}</span>]] : [];
+  const stats: [string, ReactNode][] = [...named, ["Requests", fmtCount(t.requests)], ["Failed", fmtCount(t.errors)], ["Error groups", fmtCount(m.errors.length)]];
   const actions = (
     <span className="wl-row-actions">
       <ViewAll href={hrefTo("requests", [], links)} label="Requests" />
@@ -49,7 +52,7 @@ function Body({ m }: { m: UserModel }) {
   );
   return (
     <>
-      <DetailHead back={["#/users", "All users"]} icon={UserRound} title={m.user} mono badge={<TagChips tags={tags} />} actions={actions} stats={stats} />
+      <DetailHead back={["#/users", "All users"]} icon={UserRound} title={t.name ?? m.user} mono={!t.name} badge={<TagChips tags={tags} />} actions={actions} stats={stats} />
       <Cards m={m} />
       <Panel title="Requests Over Time">
         <TimeChart starts={m.starts} lines={[{ label: "Requests", values: m.chart.requests, color: "var(--wl-blue)" }]} bars={[{ label: "Failed", values: m.chart.errors, color: "var(--wl-red)" }]} separateBarScale height={200} />

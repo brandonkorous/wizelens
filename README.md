@@ -397,7 +397,7 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 
 Next.js: `registerWizeLens(options)` takes the same options plus `ignore(path)`, and `onRequestError` records server errors.
 
-Tag a request and name its user from your handlers: `wizelens.tag("cache", "hit")`, `wizelens.setUser(id)`.
+Tag a request and name its user from your handlers: `wizelens.tag("cache", "hit")`, `wizelens.setUser(id, { name })`.
 
 ### React — `<WizeLensProvider>`
 

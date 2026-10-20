@@ -12,7 +12,7 @@ import { GroupTaggedTable } from "../../ui/TaggedTable";
 import { UserPage } from "./UserPage";
 
 export const USER_COLUMNS: Column<UserRow>[] = [
-  { key: "user", header: "User", cell: (u) => <span className="wl-cell-icon"><UserRound aria-hidden="true" />{u.user}</span> },
+  { key: "user", header: "User", cell: (u) => <span className="wl-cell-icon"><UserRound aria-hidden="true" />{u.name ?? u.user}{u.name && <span className="wl-muted wl-mono wl-user-id">{u.user}</span>}</span> },
   { key: "requests", header: "Requests", num: true, cell: (u) => fmtCount(u.requests) },
   { key: "errors", header: "Failed", num: true, cell: (u) => (u.errors ? <span className="wl-text-error">{fmtCount(u.errors)}</span> : "0") },
   { key: "rate", header: "Error Rate", num: true, cell: (u) => (u.errorRate === null ? "–" : fmtPct(u.errorRate)) },
@@ -33,7 +33,7 @@ function AllUsers() {
       <ModelState model={m} loading={loading} error={error} what="users" />
       {m && (
         <Panel title={`Users (${fmtCount(m.total)})`} flush>
-          <GroupTaggedTable group="users" docOf={(u) => userDoc(u.user)} tagged="user" columns={USER_COLUMNS} rows={m.users} rowKey={(u) => u.user} onRowClick={(u) => navigate(userHref(u.user))} empty={<Empty title={q ? "No user matches" : "No signed-in users in this range"}>Send the user's id as <code>enduser.id</code> (the add-ons do it from the signed-in user) to see them here.</Empty>} />
+          <GroupTaggedTable group="users" docOf={(u) => userDoc(u.user)} tagged="user" columns={USER_COLUMNS} rows={m.users} rowKey={(u) => u.user} onRowClick={(u) => navigate(userHref(u.user))} empty={<Empty title={q ? "No user matches" : "No signed-in users in this range"}>Send the user's id as <code>enduser.id</code>, and a name as <code>user.full_name</code> if you like, to see them here.</Empty>} />
           {m.total > 0 && <Pager page={m.page} pageSize={m.size} total={m.total} noun="users" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />}
         </Panel>
       )}
