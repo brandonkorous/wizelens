@@ -10,6 +10,8 @@ export interface WizeLensOptions extends RecorderOptions {
   release?: string;
   /** The signed-in user, sent as `enduser.id` on every browser span. Change it later with `setUser`. */
   user?: string | null;
+  /** The signed-in user's display name, sent as `user.full_name` for the Users page. */
+  userName?: string | null;
 }
 
 /** A running WizeLens in the browser. */
@@ -24,8 +26,8 @@ export interface WizeLens {
   pageView(url?: string): void;
   /** Send an error in the current page view's trace. `attributes` go on its span, for example the component that threw. */
   captureError(error: unknown, attributes?: Attributes): void;
-  /** Put this user (`enduser.id`) on every browser span from now on. Null clears it. */
-  setUser(id: string | null): void;
+  /** Put this user (`enduser.id`, and `user.full_name` when a name is given) on every browser span from now on. Null clears it. */
+  setUser(id: string | null, options?: { name?: string | null }): void;
   /** Send queued spans now. */
   flush(): Promise<void>;
   /** Stop capture, send what is queued, and restore `fetch`. A later `initWizeLens` starts again. */
@@ -48,9 +50,9 @@ function disabled(): WizeLens {
 }
 
 function start(options: WizeLensOptions): WizeLens {
-  const { enabled: _on, release, user, ...rest } = options;
+  const { enabled: _on, release, user, userName, ...rest } = options;
   setBrowserRelease(release ?? rest.version);
-  setBrowserUser(user);
+  setBrowserUser(user, userName);
   // No HUD here, so traces are not read back unless asked: send-only servers work as they are.
   const recorder = createRecorder({ readServer: false, ...rest, version: release ?? rest.version });
   const uninstall = recorder.install();
@@ -60,7 +62,7 @@ function start(options: WizeLensOptions): WizeLens {
     sessionId: recorder.sessionId,
     pageView: (url) => recorder.pageView(url),
     captureError: (error, attributes) => recorder.captureError(error, attributes),
-    setUser: (id) => setBrowserUser(id),
+    setUser: (id, o) => setBrowserUser(id, o?.name),
     flush: () => recorder.flush(),
     async shutdown() {
       if (active === lens) active = null;

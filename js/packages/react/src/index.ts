@@ -1,5 +1,7 @@
 export { WizeLensProvider, useWizeLens, useWizeLensRequests } from "./WizeLensProvider.js";
 export type { WizeLensProviderProps } from "./WizeLensProvider.js";
+export { WizeLensUser } from "./WizeLensUser.js";
+export type { WizeLensUserProps } from "./WizeLensUser.js";
 export { Hud } from "./Hud.js";
 export type { HudProps } from "./Hud.js";
 export { currentRequest, requestView } from "@wizeworks/lens-browser";

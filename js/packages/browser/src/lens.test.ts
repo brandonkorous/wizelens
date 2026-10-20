@@ -62,7 +62,7 @@ it("sends one page view per path, from the History API or from pageView", async 
 
 it("sends caught and uncaught errors in the page view's trace, with the user", async () => {
   const lens = initWizeLens({ ...OPTIONS, user: "u-1" });
-  lens.setUser("u-7");
+  lens.setUser("u-7", { name: "Grace Hopper" });
   lens.captureError(new TypeError("boom"), { "vue.component": "Cart" });
   dispatchEvent(Object.assign(new Event("error"), { error: new RangeError("uncaught") }));
   await lens.shutdown();
@@ -71,7 +71,7 @@ it("sends caught and uncaught errors in the page view's trace, with the user", a
   const errors = spansOf(spans, "error");
   expect(errors.map((s) => s.name)).toEqual(["TypeError: boom", "RangeError: uncaught"]);
   expect(errors[0]).toMatchObject({ traceId: view!.traceId, parentSpanId: view!.spanId, status: "error" });
-  expect(errors[0]!.attributes).toMatchObject({ "vue.component": "Cart", "enduser.id": "u-7" });
+  expect(errors[0]!.attributes).toMatchObject({ "vue.component": "Cart", "enduser.id": "u-7", "user.full_name": "Grace Hopper" });
 });
 
 it("copies console lines into the page view's trace", async () => {

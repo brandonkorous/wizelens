@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
-import { type RecordedRequest, type Recorder, setBrowserRelease } from "@wizeworks/lens-browser";
+import { type RecordedRequest, type Recorder, setBrowserRelease, setBrowserUser } from "@wizeworks/lens-browser";
 import { Hud } from "./Hud.js";
 import { createRecorder } from "./react-capture.js";
 
@@ -24,6 +24,10 @@ export interface WizeLensProviderProps {
   release?: string;
   /** Read this page's source maps (dev servers serve them) so errors group by source. Default true. */
   resolveFrames?: boolean;
+  /** The signed-in user, sent as `enduser.id` on every browser span, so the Users page counts their requests. */
+  user?: string | null;
+  /** The signed-in user's display name, sent as `user.full_name`. */
+  userName?: string | null;
   children?: ReactNode;
 }
 
@@ -37,6 +41,8 @@ export function WizeLensProvider({
   captureConsole = true,
   release,
   resolveFrames = true,
+  user,
+  userName,
   children,
 }: WizeLensProviderProps) {
   const recorder = useMemo(
@@ -47,6 +53,7 @@ export function WizeLensProvider({
 
   // Before install, so the first page load already carries the release.
   useEffect(() => setBrowserRelease(release), [release]);
+  useEffect(() => setBrowserUser(user, userName), [user, userName]);
   useEffect(() => recorder?.install(), [recorder]);
 
   return (

@@ -51,7 +51,7 @@ export function payFail(id: string, at: number, i: number): Trace {
   const d = draft(id);
   const timeout = i % 2 === 0;
   const error = timeout ? { type: "TimeoutError", message: `bank did not answer after ${3000 + i} ms` } : { type: "ValidationError", message: `card ${4000 + i} expired` };
-  const srv = server(d, { at, ms: 120 + i, method: "POST", path: "/api/pay", route: "/api/pay", status: timeout ? 500 : 400, error, user: "user-9" });
+  const srv = server(d, { at, ms: 120 + i, method: "POST", path: "/api/pay", route: "/api/pay", status: timeout ? 500 : 400, error, user: "user-9", extra: { "user.full_name": "Ada Lovelace" } });
   query(d, srv, at + 4, 6, "SELECT * FROM payments WHERE order_id = @p0", { ns: "shop", params: `${i}`, rows: 0, table: "payments" });
   if (timeout) {
     log(d, at + 100, "error", `Payment failed for order ${77 + i}`, "api", srv.spanId);

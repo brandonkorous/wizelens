@@ -50,7 +50,8 @@ export function Empty({ title, children }: { title?: string; children?: ReactNod
   return (
     <div className="wl-empty">
       {title && <strong>{title}</strong>}
-      {children}
+      {/* One block, so text, code, and links in the body flow as one paragraph. */}
+      {children && <div className="wl-empty-body">{children}</div>}
     </div>
   );
 }

@@ -242,7 +242,7 @@ answers `mode: "hub"` and `capabilities: ["federation", "environments", "registr
 | Tag the current request | `WizeLensRequest.Tag(key, value?)` | `wizelens.tag(key, value?)` | — |
 | Tag rules (see "Tags") | `Tags.Rules.Add(new(name, query, color))` | `tags.rules: [{ name, query, color? }]` | none; a bad rule throws at startup |
 | Turn off built-in tags | `Tags.DisableBuiltIns.Add("bot")` | `tags.disableBuiltIns: ["bot"]` | all on |
-| Set the current user | automatic from `HttpContext.User` | `wizelens.setUser(id)` | — |
+| Set the current user | automatic from `HttpContext.User` | `wizelens.setUser(id, { name })` | — |
 | The app's version (`service.version` on every span) | `Release` | `release` (React: `release` prop) | `WIZELENS_RELEASE`, else the entry assembly's informational version (.NET) or `npm_package_version` (Node) |
 
 ## Metrics (v0.8)
@@ -489,11 +489,13 @@ Hub start options: `--slow-query-ms`, `--n-plus-one`, `--redact-keys`; cloud: `-
 
 ## Users
 
-Requests carry the signed-in user (`enduser.id`). Facts keep `usr` (per user: requests, failures, durations), and one key per item
+Requests carry the signed-in user (`enduser.id`), from the entry server span, else from any span of the trace that has one (a
+browser span). Facts keep `usr` (per user: requests, failures, durations; the top is the newest display name, `user.full_name`
+else `user.name`, not `[redacted]`), and one key per item
 and user for error groups (`err.u`), insights (`ins.u`), and endpoints (`ep.u`, `service|endpoint|user`), so pages count distinct
 users. The Error and Endpoint pages return `users` (`{ count, top }`), Insights `selectedUsers` for its `key`. Errors and Logs
 take `user` (Requests already did). The `users` page lists users by requests (`q`, `page`, `size`); the `user` page (`user`) has
-their totals, requests over time, newest and slowest requests, and the error groups they hit. `FACTS_VERSION` 6.
+their totals, requests over time, newest and slowest requests, and the error groups they hit. User rows carry `name`. `FACTS_VERSION` 6.
 
 ## Saved views and dashboards
 

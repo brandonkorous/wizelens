@@ -144,7 +144,11 @@ Metrics are kept in memory for 1 hour (`metricsMaxAgeMs`). `captureMetrics: fals
 
 ```ts
 wizelens.tag("cache", "hit");
-wizelens.setUser(user.id);
+wizelens.setUser(user.id, { name: user.name });
 ```
+
+`setUser` puts `enduser.id` on the request, and the name as `user.full_name`. The Users page shows the name, with the id
+under it. Leave the name out to keep only the id, or add `user.full_name` to the project's Redacted keys to drop names
+on the server. When only the browser names the user, its spans name the request's user too.
 
 The full option list is on [Configuration](/docs/configuration/#node).

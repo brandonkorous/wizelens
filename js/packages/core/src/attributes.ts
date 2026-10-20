@@ -68,6 +68,9 @@ export interface ReactComponentStat {
 export const ATTR_REQUEST_ID = "wizelens.request.id";
 /** Server span: true when the client left before the response was sent. Work after that is not in the span. */
 export const ATTR_REQUEST_ABORTED = "wizelens.request.aborted";
+/** The signed-in user (OpenTelemetry names): their id, and a display name when the app sends one. */
+export const ATTR_ENDUSER = "enduser.id";
+export const ATTR_USER_NAME = "user.full_name";
 /** Server span: ms from the request start to the matched endpoint (routing and middleware). */
 export const ATTR_ROUTED_MS = "wizelens.server.routed_ms";
 /** Server span: first part of the response body. Only when body capture is on. */

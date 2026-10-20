@@ -14,12 +14,15 @@ describe("users", () => {
     // Half of user-9's payments time out (500); the other half are rejected cards (400), which are not failures.
     expect(m.users.find((u) => u.user === "user-9")!.errorRate).toBe(50);
     expect(page("users", { q: "user-1" }).users.map((u) => u.user)).toEqual(["user-1"]);
+    // Only user-9's requests carry a display name.
+    expect(m.users.map((u) => [u.user, u.name]).sort()).toEqual([["user-0", null], ["user-1", null], ["user-2", null], ["user-9", "Ada Lovelace"]]);
   });
 
   it("shows one user's requests, slowest requests, and the errors they hit", () => {
     const m = page("user", { user: "user-9" });
     expect(m.totals!.requests).toBe(m.chart.requests.reduce<number>((t, n) => t + (n ?? 0), 0));
     expect(m.errors.length).toBeGreaterThan(0);
+    expect(m.totals!.name).toBe("Ada Lovelace");
     expect(m.recent.every((r) => r.user === "user-9")).toBe(true);
     expect(page("user", { user: "nobody" }).totals).toBeNull();
   });

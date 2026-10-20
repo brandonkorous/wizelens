@@ -1,6 +1,7 @@
 import { ANALYSIS_DEFAULTS, pathShape, analyzeTrace, type AnalysisOptions, type Finding } from "../analysis.js";
-import { ATTR_REQUEST_ABORTED, ATTR_REQUEST_ID, ATTR_RPC, browserTypeOf, TAG_PREFIX } from "../attributes.js";
+import { ATTR_ENDUSER, ATTR_REQUEST_ABORTED, ATTR_REQUEST_ID, ATTR_USER_NAME, ATTR_RPC, browserTypeOf, TAG_PREFIX } from "../attributes.js";
 import { busyMs } from "../busy.js";
+import { REDACTED } from "../redact.js";
 import { type Health, healthOf, insightsOf, traceTiming } from "../health.js";
 import { entryServerSpan, isErrorSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
@@ -46,6 +47,17 @@ const str = (span: Span | undefined, key: string): string | null => {
   const v = span?.attributes[key];
   return v === undefined || v === null || v === "" ? null : String(v);
 };
+
+/** The span that names the user: the server span, else any span of the trace that has one (a browser span). */
+const userSpan = (trace: Trace, server: Span | undefined): Span | undefined =>
+  server?.attributes[ATTR_ENDUSER] != null ? server : trace.spans.find((s) => s.attributes[ATTR_ENDUSER] != null);
+
+/** The user's display name (`user.full_name`, else `user.name`), from the span that names the user; null when missing or redacted. Only the Users page keeps it. */
+export function requestUserName(trace: Trace): string | null {
+  const span = userSpan(trace, entryServerSpan(trace.spans));
+  const name = str(span, ATTR_USER_NAME) ?? str(span, "user.name");
+  return name === null || name === REDACTED ? null : name.slice(0, 200);
+}
 
 const byStart = (a: Span, b: Span) => a.startMs - b.startMs;
 
@@ -99,6 +111,7 @@ function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | nu
   const errors = trace.spans.filter(isErrorSpan).length;
   const insights = insightsOf(findings).length;
   const { method, path, endpoint } = identityOf(server, fetch);
+  const who = userSpan(trace, server);
   const statusRaw = server?.attributes["http.response.status_code"] ?? fetch?.attributes["http.response.status_code"];
   const status = typeof statusRaw === "number" ? statusRaw : statusRaw == null ? null : Number(statusRaw) || null;
   return {
@@ -125,7 +138,7 @@ function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | nu
     health: healthOf({ status, error: errors > 0, totalMs: timing.totalMs, insights }),
     userAgent: str(server, "user_agent.original"),
     clientAddress: str(server, "client.address"),
-    user: str(server, "enduser.id"),
+    user: str(who, ATTR_ENDUSER),
     requestId: str(server, ATTR_REQUEST_ID),
     tags: tagsOf(server),
   };

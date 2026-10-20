@@ -58,6 +58,23 @@ Calls answered by another WizeLens server on the page's origin work the same way
 | `capturePages` | `true` | Send page views, React render stats, and browser errors. |
 | `captureConsole` | `true` | Copy browser `console` calls into the page view's trace. |
 | `resolveFrames` | `true` | Read the page's own source maps (dev servers serve them) so errors group by your source. |
+| `user` | none | The signed-in user, sent as `enduser.id` on every browser span. The Users page then counts the requests this page makes, also to an API in another project. |
+| `userName` | none | The signed-in user's display name, sent as `user.full_name`. |
+
+## The signed-in user
+
+Render `WizeLensUser` where the page knows who is signed in. It can sit anywhere under the root, not only next to the
+provider, so a server component can hand it the session's user:
+
+```tsx
+import { WizeLensUser } from "@wizeworks/lens-react";
+
+<WizeLensUser id={session.user.id} name={session.user.name} />
+```
+
+Every browser span then carries `enduser.id` and `user.full_name`, and the Users page counts the requests the page makes,
+also the ones that go to an API in another project. It clears the user when it unmounts. The provider's `user` and
+`userName` props do the same from the root.
 
 ## Hooks
 
