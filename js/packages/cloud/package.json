@@ -1,6 +1,6 @@
 {
   "name": "@wizeworks/lens-cloud",
-  "version": "0.3.0-alpha.4",
+  "version": "0.3.0-alpha.5",
   "description": "The WizeLens cloud service: many organizations, accounts and teams, server-side stats, alerts, sharing, and scoped AI access, on Postgres.",
   "license": "MIT",
   "author": "WizeWorks LLC",
