@@ -2,7 +2,9 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.0-alpha.6] — Who your users are
+
+The Users page shows names, and front ends that call an API in another project now see their own users.
 
 ### Added
 

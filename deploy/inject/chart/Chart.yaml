@@ -2,8 +2,8 @@ apiVersion: v2
 name: wizelens-inject
 description: Adds WizeLens to Node and .NET pods labeled wizelens.dev/inject, with no code change, through a mutating admission webhook.
 type: application
-version: 0.3.0-alpha.5
-appVersion: "0.3.0-alpha.5"
+version: 0.3.0-alpha.6
+appVersion: "0.3.0-alpha.6"
 home: https://wizelens.com/docs/auto-install
 sources:
   - https://github.com/brandonkorous/wizelens
