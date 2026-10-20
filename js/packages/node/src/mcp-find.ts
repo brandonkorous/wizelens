@@ -21,11 +21,49 @@ async function slowQueries(data: McpDataSource, threshold: number, range: TimeRa
   return rows;
 }
 
-function nPlusOne(traces: Trace[], n: number) {
-  return traces.flatMap((t) => [
-    ...findNPlusOneDb(t, n).map((f) => ({ traceId: t.traceId, kind: "db" as const, shape: f.shape, count: f.count, totalMs: f.totalMs })),
-    ...findNPlusOneHttp(t, n).map((f) => ({ traceId: t.traceId, kind: "http" as const, shape: f.shape, count: f.count, totalMs: f.totalMs })),
-  ]);
+/** Requests read to find N+1 candidates with another repeat count, and traces of them loaded. */
+const N1_SCAN = 5_000;
+const N1_LOAD = 200;
+
+interface N1Group {
+  kind: "db" | "http";
+  shape: string;
+  endpoints: string[];
+  /** Requests that had it. */
+  requests: number;
+  /** Repeats over all of them. */
+  repeats: number;
+  totalMs: number;
+  lastSeen: string;
+  exampleTraceId: string;
+}
+
+const iso = (ms: number) => new Date(ms).toISOString();
+
+/** From the stats: the N+1 insights of the whole range, at the host's threshold. */
+async function fromStats(data: McpDataSource, range: TimeRange): Promise<N1Group[]> {
+  const m = await data.page!("insights", range, { status: "all" });
+  return m.groups
+    .filter((g) => g.kind === "n+1-db" || g.kind === "n+1-http")
+    .map((g) => ({ kind: g.kind === "n+1-db" ? "db" : "http", shape: g.shape, endpoints: g.endpoints.slice(0, 5), requests: g.occurrences, repeats: g.count, totalMs: Math.round(g.totalMs), lastSeen: iso(g.lastSeenMs), exampleTraceId: g.exampleTraceId }));
+}
+
+/** With another threshold: the requests with that many database or HTTP calls, most first, read whole and grouped by shape. */
+async function fromTraces(data: McpDataSource, n: number, range: TimeRange): Promise<N1Group[]> {
+  const requests = await findAll(data, "requests", null, range, N1_SCAN);
+  const busy = requests.filter((r) => r.dbCount >= n || r.fetchCount >= n).sort((a, b) => Math.max(b.dbCount, b.fetchCount) - Math.max(a.dbCount, a.fetchCount)).slice(0, N1_LOAD);
+  const groups = new Map<string, N1Group>();
+  for (const r of busy) {
+    const t = await data.get(r.traceId, false);
+    if (!t) continue;
+    const found = [...findNPlusOneDb(t, n).map((f) => ({ kind: "db" as const, f })), ...findNPlusOneHttp(t, n).map((f) => ({ kind: "http" as const, f }))];
+    for (const { kind, f } of found) {
+      const g = groups.get(`${kind}|${f.shape}`) ?? { kind, shape: f.shape, endpoints: [], requests: 0, repeats: 0, totalMs: 0, lastSeen: iso(t.startMs), exampleTraceId: t.traceId };
+      if (!g.endpoints.includes(r.endpoint) && g.endpoints.length < 5) g.endpoints.push(r.endpoint);
+      groups.set(`${kind}|${f.shape}`, { ...g, requests: g.requests + 1, repeats: g.repeats + f.count, totalMs: Math.round(g.totalMs + f.totalMs) });
+    }
+  }
+  return [...groups.values()];
 }
 
 function registerSlowQueries(server: McpServer, src: Source): void {
@@ -43,11 +81,19 @@ function registerSlowQueries(server: McpServer, src: Source): void {
 }
 
 function registerNPlusOne(server: McpServer, src: Source): void {
-  const inputSchema = { ...src.arg, minRepeats: z.number().int().min(2).optional().describe(`Default ${src.defaults.nPlusOneThreshold}.`) };
-  const description = "Find N+1 patterns (same SQL or same HTTP call shape repeated in one trace).";
+  const inputSchema = {
+    ...src.arg,
+    minRepeats: z.number().int().min(2).optional().describe(`Default ${src.defaults.nPlusOneThreshold}, the project's threshold.`),
+    limit: z.number().int().min(1).max(200).optional().describe("Default 20."),
+    range: rangeArg("to look"),
+  };
+  const description = "Find N+1 patterns (the same SQL or HTTP call shape repeated in one request), grouped by shape, the most time first, from the whole store.";
   server.registerTool("find_n_plus_one", { description, inputSchema, annotations: READ_ONLY }, async (args) => {
     const data = await src.open("find_n_plus_one", args);
-    return json(nPlusOne(await data.all(), args.minRepeats ?? data.nPlusOneThreshold));
+    const n = args.minRepeats ?? data.nPlusOneThreshold;
+    const range = args.range ?? "24h";
+    const groups = data.page && n === data.nPlusOneThreshold ? await fromStats(data, range) : await fromTraces(data, n, range);
+    return json(groups.sort((a, b) => b.totalMs - a.totalMs).slice(0, args.limit ?? 20));
   });
 }
 

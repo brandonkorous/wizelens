@@ -106,10 +106,12 @@ When the hub runs with `--token`, send that token as `Authorization: Bearer <tok
 | `get_trace` | "Show me everything that happened in this request, across services." |
 | `get_errors` | "What broke, and where?" |
 | `find_slow_queries` | "Which queries are slow?" |
-| `find_n_plus_one` | "Where are my N+1 queries and N+1 HTTP calls?" |
+| `find_n_plus_one` | "Where are my N+1 queries and N+1 HTTP calls?" Grouped by query, over the whole store. |
+| `get_page` | "Show me the Database page", "What did user 42 run into?" Any dashboard page, with its filters. |
+| `get_alerts` | "Which alerts are firing?" Rules, their state, and the newest events. Hub and cloud. |
 | `search`, `search_fields` | "Find requests, traces, spans, or logs that match this." Same search language as the dashboard. |
 | `list_metrics`, `get_metric` | "How is CPU, memory, or my own counter doing?" |
-| `list_projects` | "Which projects can I read?" Cloud, when you may read more than one. |
+| `list_projects` | "Which projects can I read?" Cloud, when you may read more than one; the hub, when it holds more than one. |
 
 ## Guardrails
 

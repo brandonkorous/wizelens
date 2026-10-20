@@ -22,7 +22,7 @@ APM buyers expect and that phases 0 to 13 do not cover.
 | 9 | Search everywhere: query bar on list pages, more kinds | M | Done |
 | 10 | Users: users affected, user filter, user page | M | Done |
 | 11 | Settings and Team | M | Done |
-| 12 | AI tools (MCP) see what the UI shows | S | Not started |
+| 12 | AI tools (MCP) see what the UI shows | S | Done |
 | 13 | SDK coverage | L | Not started |
 | 14 | Browser source maps | M | Done |
 | 15 | Uptime checks | M | Done |
@@ -183,7 +183,8 @@ take no params besides a selection.
 - Tools that return page models: services, the service page, endpoints, error groups, database, insights, and
   alerts. One `get_page` tool over `PAGES` covers most of them.
 - The hub's `find_*` tools read the store, not the newest 2000 traces in memory (`hub/src/mcp.ts:8`).
-- .NET gets `list_projects` where it applies.
+- .NET gets `list_projects` where it applies. (Done as: the hub, which holds several projects, answers it; the .NET
+  add-on serves one app, so it does not apply there.)
 
 ## Phase 13 — SDK coverage
 

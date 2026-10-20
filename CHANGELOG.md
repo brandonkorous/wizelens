@@ -6,6 +6,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **AI tools (MCP):** `get_page` reads any dashboard page (services, endpoints, error groups, database, insights, users,
+  and more) with its filters, `get_alerts` lists alert rules and events (channel secrets left out), and
+  `find_n_plus_one` groups N+1 patterns over the whole store. The hub answers `list_projects` and a `project` argument
+  when it holds several projects, like the cloud, and its store searches add only traces not indexed yet instead of
+  the newest 2000. The in-app Node add-on gets `get_overview` and `get_page` from its own traces.
 - **Project settings.** Each project sets its own slow query and N+1 thresholds, more redacted keys, and a shorter
   retention, in Settings → This project (hub and cloud). New hub start options `--slow-query-ms`, `--n-plus-one`, and
   `--redact-keys`; cloud `--slow-query-ms` and `--n-plus-one`.
