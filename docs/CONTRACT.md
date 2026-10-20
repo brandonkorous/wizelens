@@ -422,6 +422,15 @@ Each kind has one OWASP Top 10:2025 category (`OWASP_OF`). Findings name what wa
   answers in the window. Requests count there when they answer 401, 403, or 429, or their path matches
   `login|signin|sign-in|logon|auth|token|session|password|otp|2fa|mfa|verify`. One group per endpoint; high at 100.
   With no 429 at that endpoint, it says there may be no rate limit.
+- **Facts** (`FACTS_VERSION` 10): `sec` (`kind|shape`, with SQL as `normalizeQuery` text; count, newest top), `sec.ep`,
+  `sec.u`, per service `sec@svc` and `sec.ep@svc`, and `sec.auth`. A request's risks come from its row, a job's from
+  the trace; loose traces add none. A risk found in log lines stays counted after the lines are pruned.
+- **The `security` page model** (`api/models/security`): `totals` (count, high, endpoints), `prevTotals`, `found`, the 10
+  `categories` with counts, `groups`, `matching`, `selected`, `issues`, `releases`, and `selectedUsers`. Params:
+  `service`, `status` (as Insights), `release` (with `service`), `category` (`A01`..`A10`), `severity` (`error`,
+  `warning`, `info`), `endpoint`, `q`, and `key`. Each group has `kind`, `owasp`, `severity`, `impact`, `title`,
+  `description`, `shape`, `occurrences`, `count`, `endpoints`, `firstSeenMs`, `lastSeenMs`, `exampleTraceId`, and
+  `addresses` (sign-in guessing only). Issue states are kept as `insight` issues with the group key.
 
 ## Timing
 

@@ -13,7 +13,7 @@ export interface UsersAffected {
 const TOP_USERS = 10;
 
 /** The users of one item: keys of `kind` that start with `head` and end with the user. */
-export const usersNeed = (id: string, kind: "err.u" | "ins.u" | "ep.u", head: readonly string[]): GroupNeed =>
+export const usersNeed = (id: string, kind: "err.u" | "ins.u" | "ep.u" | "sec.u", head: readonly string[]): GroupNeed =>
   groupNeed(id, kind, "cur", { filter: { parts: [...head, null] }, order: { by: "n", desc: true, limit: TOP_USERS } });
 
 export function usersOf(d: NeedResults, id: string): UsersAffected {

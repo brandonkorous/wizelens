@@ -4,6 +4,7 @@ import type { Trace } from "../types.js";
 import { cartDup, checkoutFlow, grpcCall, ordersN1, payFail, reportSlow } from "./scenario-api.js";
 import { traceIdOf } from "./scenario-kit.js";
 import { fetchOnly, job, outside, pageCheckout, pageHome, uptimeRun } from "./scenario-web.js";
+import { securityAdmin, securityLogin } from "./scenario-security.js";
 
 const MIN = 60_000;
 const HOUR = 60 * MIN;
@@ -20,7 +21,7 @@ export const SCENARIO_ANCHORS: readonly number[] = [
 ];
 
 /** Every kind of trace, one of each per anchor, 9 s apart. */
-export const SCENARIO_BUILDERS = [ordersN1, cartDup, reportSlow, payFail, checkoutFlow, pageCheckout, pageHome, fetchOnly, job, grpcCall, uptimeRun, outside] as const;
+export const SCENARIO_BUILDERS = [ordersN1, cartDup, reportSlow, payFail, checkoutFlow, pageCheckout, pageHome, fetchOnly, job, grpcCall, uptimeRun, outside, securityLogin, securityAdmin] as const;
 
 /** The version server-side services ran at an anchor: 1.0.0 before a day ago, 1.2.0 in the last 20 minutes, 1.1.0 between. */
 export const scenarioVersion = (anchor: number): string => (SCENARIO_ANCHORS[anchor]! > DAY ? "1.0.0" : SCENARIO_ANCHORS[anchor]! < 20 * MIN ? "1.2.0" : "1.1.0");

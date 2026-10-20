@@ -16,10 +16,11 @@ export type RollupKind =
   | "react" | "rc" | "rc.route"
   | "rel"
   | "usr" | "err.u" | "ins.u" | "ep.u"
+  | "sec" | "sec.ep" | "sec.u" | "sec.auth"
   | ScopedKind;
 
 /** Kinds that also count per service: each item adds a copy keyed by its service first (see `SERVICE_KIND`). */
-export const SCOPED_BASE = ["req", "req.part", "trace", "ins", "ins.ep", "bn.layer", "bn.owner", "db", "db.q", "db.qd", "db.qe", "db.t", "db.op", "err", "err.t", "err.e"] as const;
+export const SCOPED_BASE = ["req", "req.part", "trace", "ins", "ins.ep", "bn.layer", "bn.owner", "db", "db.q", "db.qd", "db.qe", "db.t", "db.op", "err", "err.t", "err.e", "sec", "sec.ep"] as const;
 export type ScopedBase = (typeof SCOPED_BASE)[number];
 export type ScopedKind = `${ScopedBase}@svc`;
 
@@ -96,6 +97,12 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   "err.u": spec(),
   "ins.u": spec(),
   "ep.u": spec(),
+  /** Security risks by `kind|shape`; the top is the newest occurrence. `sec.ep` and `sec.u` key their endpoints and users. */
+  sec: spec(["count"], { top: "newest" }),
+  "sec.ep": spec(),
+  "sec.u": spec(),
+  /** Sign-in answers by `service|endpoint|address`: failures (401, 403) as err, 429s as `limited`; the top is the newest failure. */
+  "sec.auth": spec(["limited"], { top: "newest" }),
 };
 
 /** Every kind's fields; the per-service copies keep their base kind's. */

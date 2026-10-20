@@ -57,7 +57,7 @@ const byKindShape = (a: VFinding, b: VFinding) => (a.kind === b.kind ? (a.shape 
 describe("security vectors", () => {
   for (const c of cases) {
     it(c.name, () => {
-      const trace = buildTrace(TRACE, c.spans.map(spanOf), (c.logs ?? []).map(logOf));
+      const trace = buildTrace(TRACE, c.spans.map(spanOf), (c.logs ?? []).map(logOf), []);
       const got = findSecurity(trace).map((f) => ({ kind: f.kind, severity: f.severity, shape: f.shape, count: f.count, spanIds: f.spanIds }));
       expect(got.sort(byKindShape)).toEqual([...c.findings].sort(byKindShape));
     });
