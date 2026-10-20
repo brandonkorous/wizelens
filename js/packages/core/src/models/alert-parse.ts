@@ -2,7 +2,7 @@
 import { DEFAULT_SPREADS, isAnomalyMetric } from "../anomaly/baseline.js";
 import { isMetricAlertStat } from "../metrics/alert.js";
 import { MAX_METRIC_NAME } from "../metrics/types.js";
-import { cleanSearchParams } from "../saved-searches.js";
+import { cleanSearchParams } from "./log-search.js";
 import { ALERT_REMINDS_MS, ALERT_WINDOWS_MS, type AlertChannel, type AlertRuleInput, MAX_ALERT_CHANNELS } from "./alert-rule.js";
 import { type AlertMetric, alertScopeProblem, isAlertMetric, isAlertOp } from "./alerts.js";
 

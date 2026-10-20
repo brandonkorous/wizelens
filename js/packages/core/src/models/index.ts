@@ -67,6 +67,7 @@ export * from "./slo.js";
 export * from "./slo-parse.js";
 export * from "./slo-report.js";
 export * from "./saved.js";
+export * from "./log-search.js";
 export * from "./user-rows.js";
 export * from "./users.js";
 

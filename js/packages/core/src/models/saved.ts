@@ -1,5 +1,6 @@
-// Saved views, saved searches, and dashboards: one store per project, each item owned by a person and shared or not.
+// Saved views, saved searches (a log search can be a chart), and dashboards: one store per project, each item owned by a person and shared or not.
 import type { HistogramStat } from "../metrics/series.js";
+import { logSearchOf } from "./log-search.js";
 
 export type SavedKind = "view" | "search" | "dashboard";
 export type DashChartType = "line" | "area" | "bar" | "number" | "table";
@@ -27,6 +28,8 @@ export interface SavedItem {
   href: string;
   /** Dashboards: their charts. */
   panels: DashPanel[];
+  /** Log searches (href on the Logs page): drawn on the Logs page as a chart of the lines they match. */
+  chart: boolean;
   /** Everyone in the project sees it (cloud); hub items are always shared. */
   shared: boolean;
   /** Who made it: a user id on the cloud, empty on the hub. */
@@ -36,7 +39,7 @@ export interface SavedItem {
   updatedMs: number;
 }
 
-export type SavedInput = Pick<SavedItem, "kind" | "name" | "href" | "panels" | "shared">;
+export type SavedInput = Pick<SavedItem, "kind" | "name" | "href" | "panels" | "chart" | "shared">;
 
 export const MAX_DASH_PANELS = 24;
 export const MAX_PANEL_METRICS = 6;
@@ -76,5 +79,6 @@ export function parseSaved(b: Record<string, unknown>): SavedInput | string {
   if (kind !== "dashboard" && !href.startsWith("#/")) return 'Set href to the page address, starting with "#/".';
   const panels = kind === "dashboard" ? panelsOf(b.panels) : [];
   if (typeof panels === "string") return panels;
-  return { kind, name, href, panels, shared: b.shared === true };
+  const chart = kind === "search" && b.chart === true && logSearchOf(href) !== null;
+  return { kind, name, href, panels, chart, shared: b.shared === true };
 }

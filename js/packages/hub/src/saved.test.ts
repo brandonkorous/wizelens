@@ -23,3 +23,15 @@ it("keeps saved views, searches, and dashboards per project, all shared", async 
   expect((await call<{ error: string }>(url, "POST", "api/saved?project=shop", { kind: "dashboard", name: "x", panels: [{ type: "line", metrics: [] }] })).body.error).toMatch(/metrics/);
   expect((await call(url, "DELETE", `api/saved/${view.body.id}?project=shop`)).status).toBe(200);
 });
+
+it("charts log searches on the Logs page, and only those", async () => {
+  let url: string;
+  ({ hub, url } = await startHub());
+  const logs = await call<{ id: string; chart: boolean; href: string }>(url, "POST", "api/saved?project=shop", { kind: "search", name: "Timeouts", href: "#/logs?level=error&q=timeout", chart: true });
+  expect(logs.body).toMatchObject({ chart: true, href: "#/logs?level=error&q=timeout" });
+  expect((await call<{ chart: boolean }>(url, "PATCH", `api/saved/${logs.body.id}?project=shop`, { name: "Timeouts!" })).body.chart).toBe(true);
+  const other = await call<{ chart: boolean }>(url, "POST", "api/saved?project=shop", { kind: "search", name: "Fails", href: "#/search?q=status:error", chart: true });
+  expect(other.body.chart).toBe(false);
+  const view = await call<{ chart: boolean }>(url, "POST", "api/saved?project=shop", { kind: "view", name: "Logs", href: "#/logs?level=warn", chart: true });
+  expect(view.body.chart).toBe(false);
+});

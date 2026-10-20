@@ -1,7 +1,7 @@
 import type { DatabaseSync, StatementSync } from "node:sqlite";
 
 // The hub file (docs/CONTRACT.md, "Hub storage"). Empty strings stand for "unknown" so keys stay unique.
-export const HUB_SCHEMA_VERSION = "4";
+export const HUB_SCHEMA_VERSION = "5";
 export const HUB_SCHEMA = `
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS traces (

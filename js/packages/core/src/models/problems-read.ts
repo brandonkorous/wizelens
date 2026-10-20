@@ -1,4 +1,4 @@
-// What the Problems page reads: services and their endpoints per bucket now and in earlier windows, versions, and error groups.
+// What the Problems page reads: services and their endpoints per bucket now and in earlier windows, releases (rel), and error groups.
 import { type BaselineMode, baselineModeOf, probeNeeds, shiftsOf } from "../anomaly/shifts.js";
 import type { ErrorSeen, VersionSeen } from "../anomaly/causes.js";
 import type { KeyBuckets } from "../anomaly/detect.js";
@@ -51,7 +51,7 @@ export const problemNeeds = (): Need[] =>
     ...serviceNeeds("cur"),
     ...edgeNeeds(),
     ...probeNeeds(),
-    groupNeed("pb.ver", "svc.v", "cur"),
+    groupNeed("pb.ver", "rel", "cur"),
     groupNeed("pb.err", "err.g", "cur", { top: true, order: { by: "n", desc: true, limit: ERRORS_MAX } }),
   ]);
 
@@ -70,7 +70,7 @@ export function problemFollowUp(ctx: PageContext, first: NeedResults): Need[] {
   const errors = errorCandidates(first, ctx);
   return [
     ...series,
-    ...(versions.length ? [groupNeed("pb.ver.before", "svc.v", "before", { filter: { keys: versions } })] : []),
+    ...(versions.length ? [groupNeed("pb.ver.before", "rel", "before", { filter: { keys: versions } })] : []),
     ...(errors.length ? [groupNeed("pb.err.before", "err.g", "before", { filter: { keys: errors } })] : []),
   ];
 }
