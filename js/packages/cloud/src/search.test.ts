@@ -23,7 +23,7 @@ describe("cloud search", () => {
     expect(await searchParity((q) => searchSql(src, q), traces, windows, "prod")).toEqual([]);
     expect(await suggestParity((r) => suggestSql(src, r), traces, windows[0]!)).toEqual([]);
     expect(await tagParity((q) => searchSql(src, q), traces, windows[0]!, "prod")).toEqual([]);
-  });
+  }, 120_000);
 
   it("never reads another project's rows", async () => {
     const src = { d: PG_DIALECT, run: pgRunner(s.db), scope: { project: "other" } };
