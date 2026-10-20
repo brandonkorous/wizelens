@@ -8,6 +8,8 @@ import { appPrincipalOf } from "../auth/oauth-access.js";
 import type { AppPrincipal, Principal, ProjectAccess } from "../auth/principal.js";
 import { bearerOf, fail, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
+import { listEvents } from "../repo/alert-events.js";
+import { listRules } from "../repo/alerts.js";
 import { audit } from "../repo/audit.js";
 import { keyAllows, keyByToken, projectInOrg } from "../repo/projects.js";
 import { projectTags } from "../repo/tags.js";
@@ -18,6 +20,8 @@ import { thresholdsOf } from "../repo/settings.js";
 
 /** Traces the MCP tools search through, newest first. */
 const MCP_RECENT = 500;
+/** Newest alert events get_alerts lists. */
+const ALERT_EVENTS = 50;
 
 type Writes = Promise<void>[];
 
@@ -48,6 +52,7 @@ async function projectSource(ctx: Ctx, access: ProjectAccess, r: Reader, writes:
     search: (q) => telemetry.search(project.id, q),
     suggest: (r) => telemetry.suggest(project.id, r),
     page: (page, range, params) => projectPage(ctx.app, project, page, range, params),
+    alerts: async () => ({ rules: await listRules(db, project.id), events: await listEvents(db, project.id, ALERT_EVENTS) }),
     now: () => ctx.app.config.now(),
     tags: () => projectTags(db, project.id),
     // Every tool call is kept in the organization's audit log.
@@ -73,6 +78,7 @@ async function projectsSource(ctx: Ctx, r: Reader, writes: Writes): Promise<McpP
     nPlusOneThreshold: ctx.app.config.nPlusOneThreshold,
     metrics: true,
     overview: true,
+    alerts: true,
     projects,
     open: async (id) => projectSource(ctx, await accessOf(ctx, r, id), r, writes),
     audit: (line) => void writes.push(audit(db, r.orgId, r.actor, "mcp.call", { line, ...(r.via ? { app: r.via } : {}) }, ctx.app.config.now())),

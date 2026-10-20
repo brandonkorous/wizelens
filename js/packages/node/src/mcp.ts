@@ -5,6 +5,7 @@ import { registerFindTools } from "./mcp-find.js";
 import { registerMetricTools } from "./mcp-metrics.js";
 import { registerOverviewTool } from "./mcp-overview.js";
 import { registerProblemTools } from "./mcp-problems.js";
+import { registerPageTools } from "./mcp-page.js";
 import { projectsSource, registerProjectTools, singleSource } from "./mcp-projects.js";
 import { type McpDataSource, type McpProjects, type Source } from "./mcp-shared.js";
 import { registerSearchTools } from "./mcp-search.js";
@@ -18,7 +19,8 @@ const isProjects = (d: McpDataSource | McpProjects): d is McpProjects => "projec
 
 const MANY = "You can read several projects. Call list_projects, then pass `project` to the other tools. get_overview, get_timeseries, and group_requests without `project` cover all of them.";
 
-function createServer(data: McpDataSource | McpProjects): McpServer {
+/** The MCP server with every tool the data allows. */
+export function createMcpServer(data: McpDataSource | McpProjects): McpServer {
   const many = isProjects(data) && data.projects.length > 1;
   const server = new McpServer({ name: "wizelens", version: data.version }, many ? { instructions: MANY } : undefined);
   const src: Source = isProjects(data) ? projectsSource(data) : singleSource(data);
@@ -31,12 +33,13 @@ function createServer(data: McpDataSource | McpProjects): McpServer {
   registerOverviewTool(server, src);
   registerTrafficTools(server, src);
   registerProblemTools(server, src);
+  registerPageTools(server, src);
   return server;
 }
 
 /** Handle one MCP streamable HTTP request in stateless mode, for one data source or several projects. */
 export async function handleMcp(data: McpDataSource | McpProjects, req: IncomingMessage, res: ServerResponse, body: unknown): Promise<void> {
-  const server = createServer(data);
+  const server = createMcpServer(data);
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   res.on("close", () => {
     void transport.close();

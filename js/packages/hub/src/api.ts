@@ -16,7 +16,6 @@ import { infraPage } from "./infra-read.js";
 import { metricParams, metricsPage, rangeOf } from "./metrics-read.js";
 import { sendPageModel } from "./models-api.js";
 import { streamChanges } from "./changes-api.js";
-import { handleSavedSearches } from "./saved-searches.js";
 import { sendSearch, sendSuggest } from "./search-api.js";
 import { handleUptime } from "./uptime/api.js";
 import { type HubMaps, listMaps, resolveMaps, uploadSourceMap } from "./sourcemaps-api.js";
@@ -39,7 +38,7 @@ const num = (p: URLSearchParams, k: string) => (p.has(k) && Number.isFinite(Numb
 export function hubInfo(c: ApiContext): ServiceInfo {
   return {
     mode: "hub",
-    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "savedSearches", "saved", "tags", "settings", ...(c.o.uptime ? (["uptime"] as const) : [])],
+    capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "saved", "tags", "settings", ...(c.o.uptime ? (["uptime"] as const) : [])],
     service: c.o.name,
     version: c.version,
     runtime: `node ${process.version} · lens-node ${NODE_VERSION}`,
@@ -103,7 +102,7 @@ export async function handleApi(c: ApiContext, sub: string, req: IncomingMessage
   if (sub === "api/ingest" && method === "POST") return ingest(c, req, res);
   if (sub === SOURCEMAPS_PATH && method === "POST") return uploadSourceMap(c.data.store.db, c.o.now(), req, res, url);
   if (sub === SOURCEMAPS_PATH && method === "GET") return listMaps(c.data.store.db, res, url);
-  if (sub === SOURCEMAPS_RESOLVE_PATH && method === "POST") return resolveMaps(c.maps, req, res, url);
+  if (sub === SOURCEMAPS_RESOLVE_PATH && method === "POST") return resolveMaps(c.maps, c.data.store.db, req, res, url);
   if (sub === "api/traces" && method === "GET") {
     const { q, full } = queryOf(url.searchParams);
     return sendJson(res, 200, full ? c.data.traces(q) : c.data.summaries(q));
@@ -121,7 +120,6 @@ export async function handleApi(c: ApiContext, sub: string, req: IncomingMessage
   if (await handleTags(c, sub, req, res, url)) return;
   if (sub === "api/models/metrics" && method === "GET") return sendJson(res, 200, metrics(c, url.searchParams));
   if ((sub === "api/models/hosts" || sub === "api/models/kubernetes") && method === "GET") return sendJson(res, 200, infraPage(c.data.store.db, sub === "api/models/hosts" ? "hosts" : "kubernetes", url.searchParams, c.o.now()));
-  if (sub.startsWith("api/saved-searches") && (await handleSavedSearches(c.data.store.db, sub, req, res, url, c.o.now()))) return;
   if (sub.startsWith("api/models/") && method === "GET") return sendPageModel(c, sub.slice("api/models/".length), url.searchParams, res);
   const m = /^api\/traces\/([0-9a-f]{32})$/.exec(sub);
   if (m && method === "GET") return sendTrace(c, m[1]!, req, res, url);

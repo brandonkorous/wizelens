@@ -37,7 +37,7 @@ Each card names a **suspected cause**, the most telling one it finds:
 
 | Cause | What WizeLens saw |
 |---|---|
-| **New release** | A service in the problem started sending a new `service.version` just before it began |
+| **New release** | A service in the problem started sending a new `service.version` just before it began, and not in the week before. The same releases as the chart markers and the service page's versions |
 | **New error** | An error group that did not happen in the week before started with it |
 | **Query** | A query got slower, fails more, or runs far more often than normal |
 | **Downstream service** | A service that the others call, and that calls none of them, is above normal too |

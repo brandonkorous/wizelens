@@ -6,6 +6,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **AI tools (MCP):** `get_page` reads any dashboard page (services, endpoints, error groups, database, insights, users,
+  and more) with its filters, `get_alerts` lists alert rules and events (channel secrets left out), and
+  `find_n_plus_one` groups N+1 patterns over the whole store. The hub answers `list_projects` and a `project` argument
+  when it holds several projects, like the cloud, and its store searches add only traces not indexed yet instead of
+  the newest 2000. The in-app Node add-on gets `get_overview` and `get_page` from its own traces.
 - **Project settings.** Each project sets its own slow query and N+1 thresholds, more redacted keys, and a shorter
   retention, in Settings → This project (hub and cloud). New hub start options `--slow-query-ms`, `--n-plus-one`, and
   `--redact-keys`; cloud `--slow-query-ms` and `--n-plus-one`.
@@ -239,10 +244,16 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   a bot asking for files that do not exist, no longer push up error rates, failed requests, error groups, or alerts. 5xx
   answers, and errors on spans with no HTTP status, still count. It follows the OpenTelemetry rule for server spans, and
   applies to client spans as well, because WizeLens sees the other side of the call. Stats are rebuilt once
-  (`FACTS_VERSION` 8). Sampling in every SDK (Node, .NET, Go, Java, Python) no longer keeps a trace only for a 4xx.
+  (`FACTS_VERSION` 9). Sampling in every SDK (Node, .NET, Go, Java, Python) no longer keeps a trace only for a 4xx.
   The Node framework add-ons (Fastify, Express, Koa, Hono) and `recordException` still record a thrown 4xx error (one
   with a 4xx `statusCode` or `status`) as an exception, but no longer mark the span as failed. .NET does the same for a
   server span that answered 4xx.
+- **One store for saved things.** The Logs page's charts are saved searches now (the store of saved views and
+  dashboards), so they also show under Saved in the sidebar, on the Search page, and in Ctrl+K, and can be shared or kept
+  to yourself on the cloud. Existing charts move over by themselves (cloud migration 22; hub schema 5). The
+  `api/saved-searches` routes and the `savedSearches` capability are gone; use `api/saved` with `chart: true`.
+- **One version fact.** Problems names a new release from the release facts (`rel`) that the release markers and the
+  service page use. The separate `svc.v` facts are gone. Stats are rebuilt once after this update (`FACTS_VERSION` 8).
 - Stats are rebuilt once after this update (`FACTS_VERSION` 4), so each count can be read per service and per endpoint.
 - **Duplicate queries need known parameters.** A statement with placeholders but no captured parameters is no longer a
   duplicate query (the agents sanitize SQL, so two runs may have had different values). Node and .NET always capture
@@ -250,6 +261,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Fixed
 
+- **Source maps under "All projects".** The hub read a stack with the maps of no project when the dashboard showed all
+  projects, so maps uploaded to a project did not apply. The errors panel, the error page, and the trace page's Errors tab
+  now send the error's trace and span, and the hub and cloud read the maps of the project it was sent to (on the cloud, also
+  for a browser error on another project's trace page).
 - Danger links (Revoke, Delete) in tables show in red, as meant.
 - **A link to an error opens that error.** The Errors page showed the first listed error when the linked one was not
   among the newest 200 (links from the service page do that). It now loads the linked group by key, or says it is not

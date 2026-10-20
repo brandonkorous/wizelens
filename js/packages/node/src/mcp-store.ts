@@ -36,11 +36,11 @@ async function storePages(data: McpDataSource, base: Omit<SearchQuery, "limit" |
   return out;
 }
 
-/** The matches of a search, newest first, up to `max`: the store, plus the newest traces in memory, which the store indexes only once they go quiet. `tag:` reads the host's tags. */
+/** The matches of a search, newest first, up to `max`: the store, plus the traces it has not indexed yet (they are indexed once they go quiet). `tag:` reads the host's tags. */
 export async function findAll<K extends SearchKind>(data: McpDataSource, kind: K, node: SearchNode | null, range: TimeRange, max: number): Promise<SearchItems[K][]> {
   const base = { kind, node: expandTags(node, activeTags(await tagsOf(data))).node, window: windowOf(data, range), env: data.env };
-  const recent = searchMemory(await data.all(), { ...base, limit: max }).items as unknown[];
-  if (!data.search) return recent as SearchItems[K][];
+  if (!data.search) return searchMemory(await data.all(), { ...base, limit: max }).items as SearchItems[K][];
+  const recent = searchMemory(await (data.unsettled ?? data.all)(), { ...base, limit: max }).items as unknown[];
   const seen = new Map<string, unknown>();
   for (const item of [...(await storePages(data, base, max)), ...recent]) seen.set(idOf(item), item);
   return [...seen.values()].sort((a, b) => timeOf(b) - timeOf(a)).slice(0, max) as SearchItems[K][];

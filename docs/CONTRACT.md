@@ -136,7 +136,7 @@ type HostMode = "in-app" | "hub" | "cloud";
 type Capability =
   | "federation" | "environments" | "registry" | "accounts" | "alerts" | "sharing"
   | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search" | "issues"
-  | "infra" | "uptime" | "statusPages" | "sourcemaps" | "savedSearches" | "slos" | "saved" | "tags";
+  | "infra" | "uptime" | "statusPages" | "sourcemaps" | "slos" | "saved" | "tags";
 
 interface ServiceInfo {
   mode?: HostMode;          // absent = "in-app"
@@ -218,16 +218,15 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `sourcemaps` | The host resolves browser stacks at `api/sourcemaps/resolve` (see "Source maps"). Without it, the dashboard resolves them in the browser from the maps the site serves | ✅ (Node) | ✅ | ✅ |
 | `tags` | The host answers `api/tags` and `api/tags/match` (see "Tags"); lists show tag chips, Settings shows Tags, and "Tag this" appears. `editable` in `api/tags` says whether rules can change there | ✅ | ✅ | ✅ |
 | `changes` | The host streams `api/changes?project=` (server-sent events): an `event: data` line each time the project gets new stats, at most every 2 s (the hub: each settle round), and a comment every 25 s. The dashboard reloads the open page then, keeping the old numbers on screen until the new ones arrive | | ✅ | ✅ |
-| `saved` | The host keeps saved views, saved searches, and dashboards. See "Saved views and dashboards" below | | ✅ | ✅ |
+| `saved` | The host keeps saved views, saved searches (log searches charted on the Logs page), and dashboards. See "Saved views and dashboards" below. Without it, the Logs page keeps its charted searches in the browser | | ✅ | ✅ |
 | `slos` | The host keeps SLOs and Apdex targets. See "SLOs and Apdex" below | | ✅ | ✅ |
 | `issues` | The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. See "Issue states" below | | ✅ | ✅ |
 | `uptime` | The host runs uptime checks (`api/uptime` on the hub, `api/projects/{p}/uptime` in the cloud) and serves the `uptime` page model; the Uptime page appears. See "Uptime checks" | | ✅ (unless `--no-uptime`) | ✅ |
 | `statusPages` | A project can turn on a public status page (`api/status/{token}`) | | | ✅ |
-| `savedSearches` | The host keeps saved searches (`api/saved-searches`). Without it, the dashboard keeps them in the browser | | ✅ | ✅ |
 
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search", "tags"]`, plus `metrics` when metrics are on and `sourcemaps` (Node) unless `sourceMaps: false`. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "savedSearches", "saved", "tags", "uptime"]` (`uptime` only while checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "saved", "tags", "settings", "uptime"]` (`uptime` only while checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
 
 ## Add-on options (v0.3)
 
@@ -427,7 +426,7 @@ Server name `wizelens`. Disabled by default. Every call is written to the app lo
 | `list_traces` | `limit?=20`, `minDurationMs?`, `status?`, `q?`, `range?=24h` | Node hosts: TraceItem[] (`{ traceId, path, durationMs, health, status, services, startMs, spanCount, slow }`); .NET: TraceSummary[] |
 | `get_trace` | `traceId`, `federate?=true` | Trace (spans + logs, redacted) |
 | `find_slow_queries` | `thresholdMs?=100`, `limit?=20`, `range?=24h` (Node hosts) | `{ traceId, spanId, durationMs, query, service }[]`, slowest first |
-| `find_n_plus_one` | `minRepeats?=5` | `{ traceId, kind: "db"\|"http", shape, count, totalMs }[]` |
+| `find_n_plus_one` | `minRepeats?` (the project's threshold), `limit?=20`, `range?=24h` | Node hosts: groups `{ kind: "db"\|"http", shape, endpoints, requests, repeats, totalMs, lastSeen, exampleTraceId }[]`, most time first: from the insight stats at the project's threshold, else from the requests with that many calls (up to 200 read whole). .NET: `{ traceId, kind, shape, count, totalMs }[]` |
 | `get_errors` | `limit?=20`, `range?=24h` (Node hosts) | `{ traceId, spanId, service, name, message, type, stack }[]` |
 | `search` | `q`, `kind?=requests`, `range?=24h`, `limit?=20`, `cursor?` | SearchPage (below) plus `tags` (tag names per row, as `api/tags/match` answers) and `unknownTags`; a bad `q` is an error with `start`/`end` |
 | `list_tags` | none | `{ name, query, builtIn, enabled }[]`: the names `tag:` reads |
@@ -436,7 +435,9 @@ Server name `wizelens`. Disabled by default. Every call is written to the app lo
 | `get_timeseries` | `range?=24h` (1h, 6h, 24h, 7d, 30d) or `from` + `to` (ISO 8601), `service?`, `endpoint?`, `buckets?=24` (16, 24, 48) | Hub and cloud, from the `traffic` page model. `{ window: { from, to, stillSettling }, scope: { service, endpoint, found }, bucketMinutes, totals, points[] }`; totals and each point are `{ requests, errors, errorRatePercent, avgMs, p95Ms }`, points with `start`. Without `endpoint` and `service`: every request (`req`); with `service`: that service (`svc`); with `endpoint`: that endpoint (`svc.ep`), of one service or all. On a multi-project reader with no `project`: `{ projects[] }`, one per project |
 | `group_requests` | `range?=24h` or `from` + `to`, `service?`, `sort?=requests` (requests, errors, errorRate, p95, avg), `limit?=50` (up to 200), `minRequests?=0` | Hub and cloud, from the `traffic` page model. `{ window, endpoints, requests, shown, rows[] }`: `endpoints` and `requests` count every endpoint kept by `minRequests`; each row is `{ project?, service, endpoint, requests, errors, errorRatePercent, avgMs, p95Ms }` for the endpoints of APIs and web apps (`svc.ep`). With no `project` on a multi-project reader, across every project |
 | `list_problems` | `range?=24h` (1h, 6h, 24h, 7d) | Hub and cloud. `{ window, baseline, problems, ongoing, list[] }` from the problems page model: each problem `{ id, title, started, ended, ongoing, services, suspectedCause, otherCauses, anomalies[] ({ metric, service, endpoint, started, ongoing, value, normal, alertsAbove }), moreAnomalies }`, ongoing first. On a multi-project cloud reader with no `project`: `{ range, projects[] }` |
-| `list_projects` | none | Cloud, when the reader has more than one project: `{ id, name }[]` |
+| `get_page` | `page`, `params?` (text values), `range?=24h` | Node hosts. Any dashboard page model (overview, services, service, endpoint, requests, traces, errors, error, database, query, insights, logs, rendering, route, users, user) with its parameters, as `api/models/<page>` answers. In-app: from the app's own traces |
+| `get_alerts` | none | Hub and cloud. `{ firing, rules, events }`: rules with channel kinds only (no URLs or keys), newest 50 events |
+| `list_projects` | none | Cloud, when the reader has more than one project; the hub, when it holds more than one (the one with no project is "default"): `{ id, name }[]` |
 
 Every tool that takes a search expands `tag:` with the host's tags first.
 
@@ -487,8 +488,11 @@ their totals, requests over time, newest and slowest requests, and the error gro
 ## Saved views and dashboards
 
 Hosts with `saved` keep items per project at `api/saved?project=` (hub) or `api/projects/:project/saved` (cloud):
-`{ kind: "view" | "search" | "dashboard", name, href, panels, shared }`. Views and searches keep a dashboard address (`href`,
-starting `#/`) with its filters and time range; dashboards keep up to 24 charts. A chart (`panels[]`) has 1 to 6 metrics
+`{ kind: "view" | "search" | "dashboard", name, href, panels, chart, shared }`. Views and searches keep a dashboard address (`href`,
+starting `#/`) with its filters and time range; dashboards keep up to 24 charts. A search of the Logs page (`href` `#/logs?…`, with
+the filters `level`, `exact`, `service`, `category`, `q`, `pattern`, `origin`) with `chart: true` is drawn on the Logs page as a
+chart of the lines it matches (Log Metrics); `chart` is false on every other item. The Logs page saves its charts here
+(shared with the project by default on the cloud), so they are saved searches too: in the sidebar, Search, and Ctrl+K. A chart (`panels[]`) has 1 to 6 metrics
 (`{ name, stat }`), a `type` (`line`, `area`, `bar` stacked, `number`, or `table`), a `where` filter (`key=value`, comma-separated,
 `service` included), a `group` to split lines by, and a `width` (1 half, 2 whole). On the cloud an item belongs to the person who
 made it and is shared with the project only when `shared`; on the hub every item is shared. The metrics model takes `where` too
@@ -578,8 +582,12 @@ set. The error group key is `service|type|message shape`, plus `|<frame>` for br
 message thrown in two places is two groups, and one error stays one group across builds. Errors whose map was not found keep
 the key without a frame. This changed the facts: `FACTS_VERSION` 7.
 
-**Resolve on read.** `POST api/sourcemaps/resolve` (`?project=` on the hub and cloud) with `{ stack, release }` (the stack
-cut at 64 KB) answers `{ frames: ResolvedFrame[] }`:
+**Resolve on read.** `POST api/sourcemaps/resolve` (`?project=` on the hub and cloud) with `{ stack, release, traceId?,
+spanId? }` (the stack cut at 64 KB) answers `{ frames: ResolvedFrame[] }`. The maps are those of the project the error belongs
+to: on the hub, the project its trace was sent to (so "All projects" resolves too); on the cloud, the project its span was sent
+to among the projects the caller may join (a browser error on another project's trace page). Without `traceId`, or when it is
+not found, `?project=` decides. The dashboard sends the error's `traceId` and `spanId` from the errors panel, the error page,
+and the trace page's Errors tab.
 
 ```ts
 interface ResolvedFrame {
@@ -713,13 +721,11 @@ interface IngestBatch {
 | GET | `/_wizelens/api/services` | `{ services: HubService[], environments, projects, traces, spans }` |
 | POST | `/_wizelens/api/ingest` | `IngestBatch`. Browser errors get `wizelens.error.frame` first (see "Source maps") |
 | POST / GET | `/_wizelens/api/sourcemaps` | Upload one map, or list them; `project` is optional (`""`). See "Source maps" |
-| POST | `/_wizelens/api/sourcemaps/resolve` | `{ stack, release }` → `{ frames }`, with `?project=` |
+| POST | `/_wizelens/api/sourcemaps/resolve` | `{ stack, release, traceId?, spanId? }` → `{ frames }`; the maps of the trace's project, else `?project=` |
 | POST | `/v1/traces`, `/v1/logs`, `/v1/metrics` | OTLP/HTTP, JSON or protobuf, optional gzip. Also under `/_wizelens/v1/...` |
 | GET | `/_wizelens/api/models/metrics` | The Metrics page: `range`, `project`, `env`, `service`, `metric`, `group`, `stat`, `q`. Read from the metric rollups (see "Metrics"), with no point cap |
 | GET | `/_wizelens/api/models/hosts`, `/_wizelens/api/models/kubernetes` | The Hosts and Kubernetes pages (see "Hosts and Kubernetes"): `range`, `project`, `env`, `host`, `node`, `pod`, `cluster`, `ns`, `workload`, `service`, `q` |
 | GET | `/_wizelens/api/models/{page}` | One page model (see "Page models"): `range`, `project`, `env`, and the page's own parameters. Ranges up to the hub's age limit. `serverStats` |
-| GET / POST | `/_wizelens/api/saved-searches?project=&kind=logs` | `{ searches: SavedSearch[] }`, or save `{ name, kind?: "logs", params }` (201 `{ search }`; `params` keeps only the Logs page filters `level`, `exact`, `service`, `category`, `q`, `pattern`, `origin`). `savedSearches` |
-| DELETE | `/_wizelens/api/saved-searches/{id}` | 204, or 404 |
 | POST | `/_wizelens/mcp` | With `--mcp`. The same tools, over the newest 2000 traces of every service, plus `list_metrics`, `get_metric`, `get_overview`, `list_problems`, `get_timeseries`, and `group_requests` |
 | GET / POST | `/_wizelens/api/uptime?project=` | `UptimeList` / add a check (`project` in the body). See "Uptime checks". 404 with `--no-uptime` |
 | PATCH / DELETE | `/_wizelens/api/uptime/{id}` | Change (only the fields sent) or delete a check |
@@ -787,7 +793,7 @@ CREATE TABLE services (project TEXT, service TEXT, environment TEXT, host TEXT, 
 CREATE TABLE metrics  (time_ms REAL, project TEXT, env TEXT, service TEXT, name TEXT, series_key TEXT, json TEXT); -- series_key = sha1
 CREATE TABLE sourcemaps (project TEXT, release TEXT, file TEXT, map BLOB, bytes INTEGER, uploaded_ms REAL,
                        PRIMARY KEY (project, release, file));                                            -- map gzipped
-CREATE TABLE saved_searches (id TEXT PRIMARY KEY, project TEXT, kind TEXT, name TEXT, params TEXT, created_ms REAL); -- kind 'logs'
+CREATE TABLE saved (id TEXT PRIMARY KEY, project TEXT, kind TEXT, json TEXT, created_ms REAL);        -- SavedItem as JSON
 CREATE TABLE tag_rules    (id TEXT PRIMARY KEY, name TEXT UNIQUE, color TEXT, query TEXT, created_ms REAL, updated_ms REAL);
 CREATE TABLE tag_builtins (name TEXT PRIMARY KEY, enabled INTEGER);                                     -- built-ins turned off
 ```
@@ -819,7 +825,7 @@ traces. Incidents that ended more than 90 days ago are dropped.
 
 `@wizeworks/lens-cloud` (command `wizelens-cloud`, default port **5970**) is the hosted service. It serves the same dashboard,
 answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats",
-"metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "savedSearches", "slos", "saved", "tags"]`,
+"metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "slos", "saved", "tags", "settings"]`,
 and keeps data in Postgres (`DATABASE_URL=postgres://...`). PGlite (`pglite:<folder>` or `memory`) runs the same SQL in-process,
 for tests and trials.
 
@@ -926,7 +932,6 @@ retention, and the audit log.
 | GET | `api/orgs/{org}/audit?before=` | Admin |
 | GET | `api/info`, `api/traces`, `api/traces/{id}`, `api/services` — all with `?project=` | Member or read key. `api/traces/{id}` joins other projects (see "Traces across projects") |
 | PATCH | `api/orgs/{org}/projects/{p}` | Admin. `{ logRetentionDays }`: 1 to 400, or null to follow the organization. Answers the project (with `logRetentionDays`) and writes `project.update` to the audit log |
-| GET / POST / DELETE | `api/projects/{p}/saved-searches[/{id}]` | Reader lists (`?kind=logs`), writer saves or deletes. Shared with everyone who can read the project. `savedSearches` |
 | POST | `api/projects/{p}/services/forget` | Admin. Forgets offline hosts; each service keeps its newest host. Answers `{ removed }` and writes `service.forget` to the audit log |
 | GET | `api/models/{page}?project=&range=&env=&…` | Member or read key. See "Page models". `metrics` is a page too |
 | GET / POST / PATCH / DELETE | `api/projects/{p}/alerts[/{id}]`, `…/{id}/test` | Read: viewer; change: member |
@@ -1014,8 +1019,6 @@ Pages read small tables built from the stored traces, never the traces themselve
   `rollup_10s` (kept 6 h 10 min), `rollup_5m` (kept 50 h), `rollup_1h` (kept for the retention). Each row has `n`, `err`,
   `sum_v`, counters `c0`..`c5`, `first_ms`, `last_ms`, and one representative (`top`, `top_rank`) and newest trace ids (`ids`).
   `hist_<tier>` holds a log-bucket histogram per row (bins 4% wide, so percentiles are within 2%).
-  Since `FACTS_VERSION` 7, `svc.v` counts traces per service name and `service.version` (key `<service>\u001f<version>`),
-  so a page can tell when a version first sent data.
 - A query reads the coarsest tier that still gives a window enough buckets, and finer tiers at the window's edges; an edge
   bucket that no kept tier can split is weighted by its overlap. Series place each tier bucket by its midpoint, or spread it
   over the page buckets it overlaps when page buckets are not whole tier buckets.
@@ -1023,6 +1026,8 @@ Pages read small tables built from the stored traces, never the traces themselve
   are rebuilt from its spans and logs, and the rollups get its new contribution minus the old one (kept as JSON in
   `traces.contrib`). `settled_ms` is set to the `updated_ms` that was read, so a late span settles the trace again. Representatives,
   first and last times, and ids are display fields and are never taken back out.
+- **One version fact** (`FACTS_VERSION` 8): the `svc.v` kind (traces per service and version, added in 7 for Problems) is
+  gone; Problems reads `rel` below, so one release fact feeds markers, compare versions, and "new release" causes.
 - **Releases** (`FACTS_VERSION` 5): `rel` counts each span that starts work in its service (no parent, or a parent in another
   service) under `service|version`, from the span's `service.version`, with a histogram. Hosts copy `sender.release` onto the
   sender's spans that have no version (OTLP: the resource's `service.version`). `HubSender.version` stays the add-on's own
@@ -1091,7 +1096,7 @@ The `problems` page model finds anomalies with plain statistics, no model or tra
   Consecutive buckets above normal make one anomaly; it is ongoing while it reaches the newest bucket (or the one before,
   while the newest has too little data).
 - **Problems**: anomalies that start within 15 minutes (or two buckets) of each other on the same service, or on services
-  joined in the call map (`edge`), become one problem. Its suspected cause, most telling first: a **release** (a `svc.v` version
+  joined in the call map (`edge`), become one problem. Its suspected cause, most telling first: a **release** (a `rel` version
   first seen up to that span before the start, or in the first bucket, and not seen in the week before the window), a **new
   error group** (first seen near the start, not in the week before), a **query** (an endpoint of a database row above normal),
   or a **downstream** service (called by others in the problem, calling none of them).
@@ -1236,7 +1241,9 @@ secrets (keys, shares, status page links) are stored as SHA-256 hashes only; Bet
 (per project, unique name) and `tag_builtins` (the built-ins a project turned off); they stay in Postgres in scale mode too.
 Migration 17 added `uptime_checks`, `uptime_incidents`, and `status_pages` (see "Uptime checks"). Migration 18 added
 `sourcemaps` (see "Source maps"). Migration 19 added `fact_logs.pattern`, `projects.log_retention_days`,
-`alert_rules.log_search`, and `saved_searches`. Migration 20 added `alert_events.problem` (see "Problems").
+`alert_rules.log_search`, and `saved_searches`. Migration 20 added `alert_events.problem` (see "Problems"). Migration 22 moved
+every `saved_searches` row into `saved_items` as a shared `search` of the Logs page with `chart: true` (owner: the user who saved
+it), and dropped `saved_searches`.
 
 ### Telemetry stores (small mode and scale mode)
 

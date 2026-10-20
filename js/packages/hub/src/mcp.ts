@@ -1,41 +1,80 @@
-import { alignNow, pageContext, runPage, searchSql, SQLITE_DIALECT, suggestSql, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
-import { type McpDataSource, type OverviewPage } from "@wizeworks/lens-node/kit";
+import { type PageName, searchSql, SQLITE_DIALECT, suggestSql, type Trace } from "@wizeworks/lens-core";
+import type { McpDataSource, McpProject, McpProjects } from "@wizeworks/lens-node/kit";
+import { listEvents, listRules } from "./alerts/store.js";
 import type { HubData } from "./data.js";
 import { metricsPage } from "./metrics-read.js";
-import { hubExecutor, hubSettling, sqliteRunner } from "./scale-exec.js";
+import { hubPage } from "./models-api.js";
+import { sqliteRunner } from "./scale-exec.js";
+import { factsOf } from "./settings.js";
+import { distinctOf, loadTraces } from "./store-read.js";
 import { hubTags } from "./tags.js";
 
-/** Recent traces the MCP tools search through. */
+/** Recent traces the MCP tools read whole, and unsettled ones they add to store searches. */
 const MCP_RECENT = 2000;
-/** A custom window may start a little before what the hub keeps: snapping moves it. */
-const KEEP_SLACK_MS = 15 * 60_000;
+const ALERT_EVENTS = 50;
+/** What the default project (no project set) is called in list_projects. */
+const DEFAULT_PROJECT = "default";
 
-/** One page model over every service, as `api/models/<page>` serves it. */
-function pageOf(data: HubData) {
-  return <P extends OverviewPage>(page: P, range: TimeRange, params: Record<string, string> = {}) => {
-    const store = data.store;
-    if (TIME_RANGES[range].ms > store.maxAgeMs) throw new Error("This range is longer than the hub keeps data.");
-    const ctx = pageContext(range, alignNow(store.now()), params, { slowQueryMs: store.slowQueryMs }, hubSettling(store, {}));
-    if (store.now() - ctx.window.from > store.maxAgeMs + KEEP_SLACK_MS) throw new Error("This time window starts before the hub keeps data.");
-    return runPage(page, ctx, hubExecutor(store, {}, data.keepRemote));
+interface HubMcpInfo {
+  name: string;
+  version: string;
+  audit: (line: string) => void;
+}
+
+/** Traces written since they last settled: the store's search does not have them yet. */
+function unsettled(data: HubData, project: string | undefined): Trace[] {
+  const where = project === undefined ? "" : " AND project = ?";
+  const ids = (data.store.db.prepare(`SELECT trace_id FROM traces WHERE settled_ms < updated_ms${where} ORDER BY start_ms DESC LIMIT ?`).all(...(project === undefined ? [] : [project]), MCP_RECENT) as { trace_id: string }[]).map((r) => r.trace_id);
+  return loadTraces(data.store.db, ids, data.keepRemote);
+}
+
+/** The hub's data for one project, or for all of it when `project` is undefined. */
+function scopedSource(data: HubData, project: string | undefined, info: HubMcpInfo): McpDataSource {
+  const store = data.store;
+  const scope = project === undefined ? {} : { project };
+  const src = { d: SQLITE_DIALECT, run: sqliteRunner(store.db), scope };
+  const facts = factsOf(store, project ?? "");
+  return {
+    service: project ? `${info.name} · ${project}` : info.name,
+    version: info.version,
+    slowQueryMs: facts.slowQueryMs!,
+    nPlusOneThreshold: facts.nPlusOneThreshold!,
+    all: () => data.traces({ limit: MCP_RECENT, project }),
+    unsettled: () => unsettled(data, project),
+    get: (traceId, federate) => data.getTrace(traceId, federate),
+    audit: info.audit,
+    metrics: (range, params) => metricsPage(store.db, range, scope, params, store.now()),
+    search: (q) => searchSql(src, q),
+    suggest: (r) => suggestSql(src, r),
+    now: () => store.now(),
+    page: <P extends PageName>(page: P, range: Parameters<typeof hubPage>[2], params: Record<string, string> = {}) => hubPage(data, page, range, scope, params),
+    alerts: async () => ({ rules: listRules(store.db, project ?? ""), events: listEvents(store.db, project ?? "", ALERT_EVENTS) }),
+    tags: () => hubTags(store.db),
   };
 }
 
-export function hubMcpSource(data: HubData, name: string, version: string, audit: (line: string) => void): McpDataSource {
-  const src = { d: SQLITE_DIALECT, run: sqliteRunner(data.store.db), scope: {} };
+/** The hub's projects: the named ones, and the default one when traces have none. */
+function hubProjects(data: HubData): McpProject[] {
+  const named = distinctOf(data.store.db, "project").map((p) => ({ id: p, name: p }));
+  const unnamed = data.store.db.prepare("SELECT 1 FROM traces WHERE project = '' LIMIT 1").get() !== undefined;
+  return [...named, ...(unnamed ? [{ id: "", name: DEFAULT_PROJECT }] : [])];
+}
+
+/** One project: tools read it. Several: tools take `project`, and list_projects names them, as on the cloud. */
+export function hubMcpSource(data: HubData, name: string, version: string, audit: (line: string) => void): McpDataSource | McpProjects {
+  const info = { name, version, audit };
+  const projects = hubProjects(data);
+  if (projects.length <= 1) return scopedSource(data, projects[0]?.id, info);
   return {
     service: name,
     version,
     slowQueryMs: data.store.slowQueryMs,
     nPlusOneThreshold: data.store.nPlusOneThreshold,
-    all: () => data.traces({ limit: MCP_RECENT }),
-    get: (traceId, federate) => data.getTrace(traceId, federate),
+    metrics: true,
+    overview: true,
+    alerts: true,
+    projects,
+    open: async (projectId) => scopedSource(data, projectId, info),
     audit,
-    metrics: (range, params) => metricsPage(data.store.db, range, {}, params, data.store.now()),
-    search: (q) => searchSql(src, q),
-    suggest: (r) => suggestSql(src, r),
-    now: () => data.store.now(),
-    page: pageOf(data),
-    tags: () => hubTags(data.store.db),
   };
 }

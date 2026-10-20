@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
+import { logSearchOf } from "@wizeworks/lens-core";
 import { changeSaved, useSavedApi } from "../data/saved";
 import { useRoute } from "../routes";
 import { Check, Field } from "../ui/Field";
@@ -12,10 +13,13 @@ function SaveForm({ close }: { close: () => void }) {
   const api = useSavedApi();
   const [name, setName] = useState("");
   const [shared, setShared] = useState(false);
+  const [chart, setChart] = useState(false);
+  const logs = logSearchOf(location.hash) !== null;
   const [note, setNote] = useState<string | null>(null);
   const save = () => {
     const href = location.hash || "#/";
-    void changeSaved(api.url(), "POST", { kind: href.startsWith("#/search") ? "search" : "view", name: name.trim(), href, shared: !api.cloud || shared }).then(
+    const kind = href.startsWith("#/search") || logs ? "search" : "view";
+    void changeSaved(api.url(), "POST", { kind, name: name.trim(), href, chart: logs && chart, shared: !api.cloud || shared }).then(
       () => close(),
       (e: unknown) => setNote(e instanceof Error ? e.message : String(e)),
     );
@@ -24,6 +28,7 @@ function SaveForm({ close }: { close: () => void }) {
     <form className="wl-save-view" onSubmit={(e) => (e.preventDefault(), save())}>
       <Field label="Name" required autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Checkout errors this week" />
       {api.cloud && <Check label="Share with the team" checked={shared} onChange={(e) => setShared(e.target.checked)} />}
+      {logs && <Check label="Chart it on the Logs page" checked={chart} onChange={(e) => setChart(e.target.checked)} />}
       <p className="wl-muted wl-small">Saves this page with its filters and time range. It shows under Saved in the sidebar.</p>
       {note && <p className="wl-text-error wl-small">{note}</p>}
       <button type="submit" className="wl-btn wl-btn-primary" disabled={!name.trim()}>Save view</button>

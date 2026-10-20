@@ -51,6 +51,17 @@ describe("hub source maps", () => {
     expect(frames[0]!.raw.fn).toBe("a");
   });
 
+  it("resolves a stack under All projects by the project of the error's trace", async () => {
+    let url: string;
+    ({ hub, url } = await startHub({ sourceMaps: { fetch: false } }));
+    await upload(url, "1.0.0", CART_MAP, {}, "shop");
+    await post(`${url}/_wizelens/api/ingest`, { sender: { service: "web-api", project: "shop" }, spans: [browserError("1".repeat(16), "1.0.0")] });
+    const resolve = async (body: Record<string, unknown>) => ((await (await post(`${url}/_wizelens/api/sourcemaps/resolve`, { stack: CART_STACK, release: "1.0.0", ...body })).json()) as { frames: ResolvedFrame[] }).frames;
+    expect((await resolve({}))[0]!.source).toBeNull();
+    expect((await resolve({ traceId: T1, spanId: "1".repeat(16) }))[0]).toMatchObject({ source: "src/cart.ts", fn: "applyCoupon" });
+    expect((await resolve({ traceId: "f".repeat(32) }))[0]!.source).toBeNull();
+  });
+
   it("keeps only the newest releases", async () => {
     let url: string;
     ({ hub, url } = await startHub());

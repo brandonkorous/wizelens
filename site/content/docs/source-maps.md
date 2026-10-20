@@ -75,6 +75,9 @@ npx @wizeworks/lens-cli sourcemaps list --release 1.4.0
 For WizeLens Cloud, use `https://cloud.wizelens.com` and an **ingest key** of the project (Team → Keys): the maps go to that
 project. The cloud keeps the newest 20 releases of each project.
 
+A stack is read with the maps of the project the error was sent to, whatever project you look from: on the hub under **All
+projects** too, and on the cloud when a browser error from your web project shows on an API project's trace page.
+
 The plugins take the same settings as options (`url`, `token`, `release`, `project`, `urlPrefix`, `deleteAfterUpload`), plus
 `upload: false` to skip the upload and `failOnError: true` to fail the build when it does not work (by default it warns).
 

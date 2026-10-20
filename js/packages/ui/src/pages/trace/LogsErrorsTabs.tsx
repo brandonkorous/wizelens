@@ -48,7 +48,7 @@ function BrowserStack({ span }: { span: Span }) {
   const e = errorInfo(span);
   return (
     <div onClick={(ev) => ev.stopPropagation()}>
-      <ErrorStack event={{ type: e.type ?? "Error", message: e.message, stack: e.stack, browser: true, release: releaseOf(span) }} />
+      <ErrorStack event={{ type: e.type ?? "Error", message: e.message, stack: e.stack, browser: true, release: releaseOf(span), traceId: span.traceId, spanId: span.spanId }} />
     </div>
   );
 }

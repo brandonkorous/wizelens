@@ -15,6 +15,7 @@ import { createLogSink, createLogWriter, makeLogger } from "./logger.js";
 import { looseLogsOf } from "./loose-logs.js";
 import { captureConsole } from "./logs/console.js";
 import type { McpDataSource } from "./mcp.js";
+import { memoryPages } from "./mcp-memory.js";
 import { createMetricParts, mcpMetrics } from "./metrics/setup.js";
 import type { MetricStore } from "./metrics/store.js";
 import { SqlitePersister } from "./persist.js";
@@ -44,12 +45,13 @@ function openPersister(store: TraceStore, options: WizeLensOptions, dashboard: b
 }
 
 function mcpSource(options: WizeLensOptions, store: TraceStore, getTrace: McpDataSource["get"], metrics: MetricStore | null, tags: readonly TagRule[]): McpDataSource {
+  const thresholds = { slowQueryMs: options.slowQueryMs ?? DEFAULT_SLOW_QUERY_MS, nPlusOneThreshold: options.nPlusOneThreshold ?? DEFAULT_N_PLUS_ONE };
   return {
     service: options.serviceName,
     version: VERSION,
-    slowQueryMs: options.slowQueryMs ?? DEFAULT_SLOW_QUERY_MS,
-    nPlusOneThreshold: options.nPlusOneThreshold ?? DEFAULT_N_PLUS_ONE,
+    ...thresholds,
     all: () => store.all(),
+    page: memoryPages(() => store.all(), thresholds),
     get: getTrace,
     audit: options.audit ?? ((line: string) => console.info(line)),
     env: process.env.NODE_ENV || "development",
