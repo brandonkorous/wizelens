@@ -1,4 +1,5 @@
-import { context, propagation, type Tracer } from "@opentelemetry/api";
+import { type Context, context, propagation, type Tracer } from "@opentelemetry/api";
+import type { AsyncLocalStorage } from "node:async_hooks";
 import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
 import { W3CTraceContextPropagator } from "@opentelemetry/core";
 import { UndiciInstrumentation } from "@opentelemetry/instrumentation-undici";
@@ -21,12 +22,18 @@ export interface Tracing {
 }
 
 let globalsInstalled = false;
+let manager: AsyncLocalStorageContextManager | undefined;
+
+/** The storage under OpenTelemetry's active context, for libraries that announce work on a tracing channel (graphql 17). */
+export const contextStorage = (): AsyncLocalStorage<Context> | undefined =>
+  (manager as unknown as { _asyncLocalStorage?: AsyncLocalStorage<Context> } | undefined)?._asyncLocalStorage;
 
 /** Install one ALS context manager and the W3C propagator. Apps that set their own keep them. */
 export function installGlobals(): void {
   if (globalsInstalled) return;
   globalsInstalled = true;
-  context.setGlobalContextManager(new AsyncLocalStorageContextManager().enable());
+  manager = new AsyncLocalStorageContextManager().enable();
+  if (!context.setGlobalContextManager(manager)) manager = undefined;
   propagation.setGlobalPropagator(new W3CTraceContextPropagator());
 }
 

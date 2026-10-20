@@ -5,7 +5,7 @@ import { instrumentMongoDb } from "../adapters/mongodb.js";
 import { instrumentMysql2 } from "../adapters/mysql2.js";
 import { instrumentPg } from "../adapters/pg.js";
 import { instrumentRedis } from "../adapters/redis.js";
-import { instrumentGraphql, traceGraphqlFunction } from "../graphql/index.js";
+import { instrumentGraphql, traceGraphqlChannels, traceGraphqlFunction } from "../graphql/index.js";
 import { instrumentGrpc } from "../grpc/index.js";
 import { instrumentBunyan } from "../logs/bunyan.js";
 import { instrumentPino } from "../logs/pino.js";
@@ -57,7 +57,15 @@ const DATABASES: [string, () => void][] = [
   ["ioredis", () => onLoad(nm("ioredis/built/index.js"), (mod) => void instrumentIoRedis(autoHandle, mod))],
   ["redis", () => onLoad(nm("@redis/client/dist/lib/client/index.js"), (mod) => void instrumentRedis(autoHandle, mod))],
   ["mongodb", () => onLoad(nm("mongodb/lib/collection.js"), (mod) => void instrumentMongoDb(autoHandle, mod))],
-  ["elasticsearch", () => onLoad(nm("@elastic/transport/lib/Transport.js"), (mod) => void instrumentElasticsearch(autoHandle, mod))],
+  [
+    "elasticsearch",
+    () => {
+      onLoad(nm("@elastic/transport/lib/Transport.js"), (mod) => void instrumentElasticsearch(autoHandle, mod));
+      // The 9.x client imports the transport's ES module build in ES module apps.
+      onEsm(esmPatch(nm("@elastic/transport/esm/Transport.js"), "elastic-transport", "Transport"));
+      onEsmBinding("elastic-transport", (Transport) => void instrumentElasticsearch(autoHandle, Transport));
+    },
+  ],
 ];
 
 /** BullMQ's ES build keeps each class in its own file. */
@@ -93,8 +101,10 @@ const GRAPHQL_FILES: [string, string, string][] = [
   ["@graphql-tools/executor/cjs/execution/normalizedExecutor.js", "@graphql-tools/executor/esm/execution/normalizedExecutor.js", "normalizedExecutor"],
 ];
 
-/** GraphQL: CommonJS builds are patched on load; ES module builds hand over the function. */
+/** GraphQL: 17 and later through their tracing channels; older CommonJS builds are patched on load, ES module builds hand over the function. */
 function hookGraphql(): void {
+  traceGraphqlChannels(autoHandle);
+  onLoad(nm("graphql/diagnostics.js"), () => void traceGraphqlChannels(autoHandle));
   for (const [cjs, esm, binding] of GRAPHQL_FILES) {
     const id = `graphql-${binding}`;
     onLoad(nm(cjs), (mod) => void instrumentGraphql(autoHandle, mod));

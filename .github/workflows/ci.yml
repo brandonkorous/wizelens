@@ -104,6 +104,55 @@ jobs:
           WIZELENS_TEST_CLICKHOUSE: http://wizelens:ci@127.0.0.1:8123
         run: pnpm exec vitest run $(grep -rl --include='*.test.ts' 'CH_URL' src)
 
+  real-libraries:
+    name: Real libraries
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7.4-alpine
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 2s --health-timeout 2s --health-retries 30
+      mongo:
+        # MongoDB 8 will not start on Linux 6.19+ (SERVER-121912); 7.0 does.
+        image: mongo:7.0
+        ports: ["27017:27017"]
+        options: --health-cmd "mongosh --quiet --eval 1" --health-interval 2s --health-timeout 5s --health-retries 30
+      sqs:
+        image: softwaremill/elasticmq-native:1.6.9
+        ports: ["9324:9324"]
+      elastic:
+        image: docker.elastic.co/elasticsearch/elasticsearch:9.1.0
+        ports: ["9200:9200"]
+        env:
+          discovery.type: single-node
+          xpack.security.enabled: "false"
+          ES_JAVA_OPTS: -Xms512m -Xmx512m
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the Node add-on and what it uses
+        run: pnpm --filter "@wizeworks/lens-node..." build
+
+      - name: Wait for Elasticsearch
+        run: for i in $(seq 1 90); do curl -sf http://127.0.0.1:9200 && break; sleep 2; done
+
+      # Redis, MongoDB, Elasticsearch, BullMQ, SQS, axios, NestJS, and GraphQL, with the real libraries, in code and with the auto install.
+      - name: Test the Node add-on on real servers
+        working-directory: js/packages/node
+        env:
+          WIZELENS_TEST_REAL: "1"
+        run: pnpm exec vitest run src/real
+
   hub-image:
     name: Hub Docker image
     runs-on: ubuntu-latest
