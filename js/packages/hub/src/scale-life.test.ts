@@ -89,7 +89,7 @@ describe("hub stats over time", () => {
     const path = join(dir, "v2.db");
     writeV2(path, traces, 1);
     const { store, clock } = clockStore(path);
-    expect(store.db.prepare("SELECT value FROM meta WHERE key = 'schema'").get()).toEqual({ value: "4" });
+    expect(store.db.prepare("SELECT value FROM meta WHERE key = 'schema'").get()).toEqual({ value: "5" });
     expect(hubSettling(store, {}, 0)).toBe(traces.length);
     settleAll(store, clock);
     expect(await parity(hubExecutor(store), traces)).toEqual([]);

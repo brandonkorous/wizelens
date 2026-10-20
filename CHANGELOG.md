@@ -239,6 +239,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Changed
 
+- **One store for saved things.** The Logs page's charts are saved searches now (the store of saved views and
+  dashboards), so they also show under Saved in the sidebar, on the Search page, and in Ctrl+K, and can be shared or kept
+  to yourself on the cloud. Existing charts move over by themselves (cloud migration 22; hub schema 5). The
+  `api/saved-searches` routes and the `savedSearches` capability are gone; use `api/saved` with `chart: true`.
+- **One version fact.** Problems names a new release from the release facts (`rel`) that the release markers and the
+  service page use. The separate `svc.v` facts are gone. Stats are rebuilt once after this update (`FACTS_VERSION` 8).
 - Stats are rebuilt once after this update (`FACTS_VERSION` 4), so each count can be read per service and per endpoint.
 - **Duplicate queries need known parameters.** A statement with placeholders but no captured parameters is no longer a
   duplicate query (the agents sanitize SQL, so two runs may have had different values). Node and .NET always capture
@@ -246,6 +252,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Fixed
 
+- **Source maps under "All projects".** The hub read a stack with the maps of no project when the dashboard showed all
+  projects, so maps uploaded to a project did not apply. The errors panel, the error page, and the trace page's Errors tab
+  now send the error's trace and span, and the hub and cloud read the maps of the project it was sent to (on the cloud, also
+  for a browser error on another project's trace page).
 - Danger links (Revoke, Delete) in tables show in red, as meant.
 - **A link to an error opens that error.** The Errors page showed the first listed error when the linked one was not
   among the newest 200 (links from the service page do that). It now loads the linked group by key, or says it is not

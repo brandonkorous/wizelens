@@ -6,7 +6,8 @@ import { parseSaved, type SavedItem } from "@wizeworks/lens-core";
 import { sendJson } from "@wizeworks/lens-node/kit";
 import { parseJson, readBody } from "./body.js";
 
-const itemsOf = (rows: unknown[]): SavedItem[] => (rows as { json: string }[]).map((r) => JSON.parse(r.json) as SavedItem);
+// Items saved before log searches could be charts have no `chart`.
+const itemsOf = (rows: unknown[]): SavedItem[] => (rows as { json: string }[]).map((r) => ({ chart: false, ...(JSON.parse(r.json) as Partial<SavedItem>) }) as SavedItem);
 
 export const listSaved = (db: DatabaseSync, project: string): SavedItem[] => itemsOf(db.prepare("SELECT json FROM saved WHERE project = ? ORDER BY created_ms").all(project));
 

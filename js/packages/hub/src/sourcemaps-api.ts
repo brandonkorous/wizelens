@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
-import { answerResolve, checkUpload, type MapLoader, MAX_SOURCEMAP_BYTES, normalizeRelease, parseSourceMap } from "@wizeworks/lens-core";
+import { answerResolve, checkUpload, type MapLoader, MAX_SOURCEMAP_BYTES, normalizeRelease, parseSourceMap, resolveTargetOf } from "@wizeworks/lens-core";
 import { localMapLoader, sendJson, type SourceMapOptions } from "@wizeworks/lens-node/kit";
 import { parseJson, readBody } from "./body.js";
 import { listSourceMaps, saveSourceMap, uploadedMapLoader } from "./sourcemaps.js";
@@ -40,14 +40,21 @@ export function listMaps(db: DatabaseSync, res: ServerResponse, url: URL): void 
   sendJson(res, 200, { maps: listSourceMaps(db, projectOf(url), normalizeRelease(url.searchParams.get("release")) ?? undefined) });
 }
 
-/** `POST api/sourcemaps/resolve[?project=]` with `{stack, release}`. */
-export async function resolveMaps(maps: HubMaps, req: IncomingMessage, res: ServerResponse, url: URL): Promise<void> {
+/** The project whose maps a resolve call reads: the one its trace was sent to (so "All projects" works), else `?project=`. */
+function resolveProject(db: DatabaseSync, body: unknown, url: URL): string {
+  const target = resolveTargetOf(body);
+  const row = target && (db.prepare("SELECT project FROM traces WHERE trace_id = ?").get(target.traceId) as { project: string } | undefined);
+  return row ? row.project : projectOf(url);
+}
+
+/** `POST api/sourcemaps/resolve[?project=]` with `{stack, release, traceId?, spanId?}`. */
+export async function resolveMaps(maps: HubMaps, db: DatabaseSync, req: IncomingMessage, res: ServerResponse, url: URL): Promise<void> {
   let body: unknown;
   try {
     body = parseJson(await readBody(req));
   } catch {
     return sendJson(res, 400, { error: "invalid body" });
   }
-  const answer = await answerResolve(body, maps(projectOf(url)));
+  const answer = await answerResolve(body, maps(resolveProject(db, body, url)));
   sendJson(res, answer.status, answer.body);
 }

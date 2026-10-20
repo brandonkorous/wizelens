@@ -95,11 +95,9 @@ export type Capability =
   | "statusPages"
   /** The host resolves browser stacks at `api/sourcemaps/resolve` (uploaded maps, a build folder, or a dev server). */
   | "sourcemaps"
-  /** The host keeps saved searches (`api/saved-searches`); without it the dashboard keeps them in the browser. */
-  | "savedSearches"
   /** The host keeps SLOs and Apdex targets (`api/slos`, `api/apdex`). */
   | "slos"
-  /** The host keeps saved views, saved searches, and dashboards (`api/saved`). */
+  /** The host keeps saved views, saved searches (log searches charted on the Logs page), and dashboards (`api/saved`); without it the Logs page keeps its charted searches in the browser. */
   | "saved"
   /** The host answers `api/tags` and `api/tags/match` (docs/TAGS-PLAN.md); `editable` in `api/tags` says if rules can change there. */
   | "tags"

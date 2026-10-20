@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import { FACTS_VERSION } from "@wizeworks/lens-core";
-import { SAVED_SEARCH_SCHEMA } from "./saved-searches.js";
+import { moveSavedSearches } from "./schema-saved.js";
 import { upgradeFts } from "./schema-fts.js";
 import { HUB_SCHEMA, HUB_SCHEMA_VERSION } from "./schema.js";
 import { HUB_UPTIME_SCHEMA } from "./uptime/store.js";
@@ -114,7 +114,7 @@ export function upgradeHubSchema(db: DatabaseSync): void {
   db.exec(HUB_SCALE_SCHEMA);
   db.exec(HUB_UPTIME_SCHEMA);
   db.exec(SOURCEMAPS_SCHEMA);
-  db.exec(SAVED_SEARCH_SCHEMA);
+  moveSavedSearches(db);
   const logCols = new Set((db.prepare("PRAGMA table_info(fact_logs)").all() as { name: string }[]).map((c) => c.name));
   if (!logCols.has("pattern")) db.exec("ALTER TABLE fact_logs ADD COLUMN pattern TEXT NOT NULL DEFAULT ''");
   db.exec("CREATE INDEX IF NOT EXISTS ix_fact_logs_pattern ON fact_logs (pattern, time_ms)");

@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterEach, expect, it } from "vitest";
-import { isLooseTraceId, type LogRecord, newLooseTraceId, type SavedSearch } from "@wizeworks/lens-core";
+import { isLooseTraceId, type LogRecord, newLooseTraceId, type SavedItem } from "@wizeworks/lens-core";
 import { evaluateAll } from "./alerts/evaluate.js";
 import type { Cloud } from "./server.js";
 import { settleCloud } from "./settle.js";
@@ -58,7 +58,7 @@ it("alerts on the count of a log search, and lists lines outside a request as lo
   expect(full.body.some((t) => isLooseTraceId(t.traceId))).toBe(true);
 });
 
-it("sets a project's log retention and keeps saved searches per project", async () => {
+it("sets a project's log retention and keeps charted log searches in the saved store", async () => {
   const { owner, orgId, projectId } = await setup({ now: Date.now() });
   const patch = (days: unknown) => owner.call<{ logRetentionDays: number | null }>("PATCH", `api/orgs/${orgId}/projects/${projectId}`, { logRetentionDays: days });
   expect((await patch(7)).body.logRetentionDays).toBe(7);
@@ -66,10 +66,10 @@ it("sets a project's log retention and keeps saved searches per project", async 
   const listed = await owner.call<{ projects: { id: string; logRetentionDays: number | null }[] }>("GET", `api/orgs/${orgId}`);
   expect(listed.body.projects.find((p) => p.id === projectId)?.logRetentionDays).toBe(7);
   expect((await patch(null)).body.logRetentionDays).toBeNull();
-  const api = `api/projects/${projectId}/saved-searches`;
-  const made = await owner.call<{ search: SavedSearch }>("POST", api, { name: "Errors", params: { level: "error" } });
-  expect(made.body.search).toMatchObject({ kind: "logs", name: "Errors", params: { level: "error" } });
-  expect((await owner.call<{ searches: SavedSearch[] }>("GET", `${api}?kind=logs`)).body.searches.map((s) => s.name)).toEqual(["Errors"]);
-  expect((await owner.call("DELETE", `${api}/${made.body.search.id}`)).status).toBe(200);
-  expect((await owner.call("DELETE", `${api}/${made.body.search.id}`)).status).toBe(404);
+  const api = `api/projects/${projectId}/saved`;
+  const made = await owner.call<SavedItem>("POST", api, { kind: "search", name: "Errors", href: "#/logs?level=error", chart: true, shared: true });
+  expect(made.body).toMatchObject({ kind: "search", name: "Errors", href: "#/logs?level=error", chart: true, shared: true });
+  expect((await owner.call<{ items: SavedItem[] }>("GET", api)).body.items.filter((i) => i.chart).map((s) => s.name)).toEqual(["Errors"]);
+  expect((await owner.call("DELETE", `${api}/${made.body.id}`)).status).toBe(200);
+  expect((await owner.call("DELETE", `${api}/${made.body.id}`)).status).toBe(404);
 });

@@ -39,7 +39,7 @@ async function info(ctx: Ctx): Promise<void> {
   const project = await projectInfo(ctx);
   const value: ServiceInfo = {
     mode: "cloud",
-    capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats", "metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "savedSearches", "slos", "saved", "tags", "settings"],
+    capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats", "metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "slos", "saved", "tags", "settings"],
     service: "WizeLens Cloud",
     version: ctx.app.version,
     runtime: `node ${process.version}`,

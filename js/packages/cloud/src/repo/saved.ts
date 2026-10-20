@@ -20,11 +20,11 @@ const SELECT = `SELECT s.id, s.project_id AS "projectId", s.kind, s.name, s.shar
   s.created_ms AS "createdMs", s.updated_ms AS "updatedMs" FROM saved_items s LEFT JOIN users u ON u.id = s.owner_id`;
 
 const itemOf = ({ body, ...r }: Row): SavedItem => {
-  const b = JSON.parse(body) as Pick<SavedItem, "href" | "panels">;
-  return { ...r, href: b.href ?? "", panels: b.panels ?? [], ownerName: r.ownerName ?? "", createdMs: Number(r.createdMs), updatedMs: Number(r.updatedMs) };
+  const b = JSON.parse(body) as Partial<Pick<SavedItem, "href" | "panels" | "chart">>;
+  return { ...r, href: b.href ?? "", panels: b.panels ?? [], chart: b.chart === true, ownerName: r.ownerName ?? "", createdMs: Number(r.createdMs), updatedMs: Number(r.updatedMs) };
 };
 
-const bodyOf = (i: SavedInput) => JSON.stringify({ href: i.href, panels: i.panels });
+const bodyOf = (i: SavedInput) => JSON.stringify({ href: i.href, panels: i.panels, chart: i.chart });
 
 /** Items a viewer sees: their own and the shared ones (`userId` null: shared only, for read keys). */
 export async function listSaved(q: Queryable, projectId: string, userId: string | null): Promise<SavedItem[]> {
