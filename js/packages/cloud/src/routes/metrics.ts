@@ -31,6 +31,6 @@ export async function projectMetrics(
 export function metricRange(ctx: Ctx, retentionDays: number): TimeRange {
   const range = ctx.url.searchParams.get("range") ?? "1h";
   if (!isTimeRange(range)) return fail(400, `Unknown range "${range}".`);
-  if (TIME_RANGES[range].ms > retentionDays * DAY_MS) fail(400, "This range is longer than the organization keeps data.");
+  if (TIME_RANGES[range].ms > retentionDays * DAY_MS) fail(400, "This range is longer than this project keeps data.");
   return range;
 }

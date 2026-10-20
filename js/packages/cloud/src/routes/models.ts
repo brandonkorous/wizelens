@@ -80,7 +80,7 @@ async function metrics(ctx: Ctx): Promise<void> {
 /** `GET api/models/hosts` and `api/models/kubernetes`: host and Kubernetes metrics with the services on them. */
 async function infra(ctx: Ctx, page: "hosts" | "kubernetes"): Promise<void> {
   const { project } = await projectOf(ctx);
-  const range = metricRange(ctx, await retentionDays(ctx.app, project.orgId));
+  const range = metricRange(ctx, await retentionDays(ctx.app, project.id));
   const now = alignNow(ctx.app.config.now());
   const env = ctx.url.searchParams.get("env") || undefined;
   const params = Object.fromEntries(INFRA_PARAMS.flatMap((k) => (ctx.url.searchParams.get(k) ? [[k, ctx.url.searchParams.get(k)!.slice(0, 300)]] : [])));

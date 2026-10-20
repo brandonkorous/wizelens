@@ -1131,7 +1131,7 @@ One trace can cross projects, for example a front end in one project calling a s
 answers the asked project's part plus the parts of the same trace id in the other projects the caller may read:
 
 - **Same organization only.** Projects of other organizations are never read, even when the caller belongs to both.
-- **A person** sees every project of the organization. **A read key** or **connected app** sees only its own projects (checked again against the
+- **A person** sees every project of the organization that a project role does not hide (`none`). **A read key** or **connected app** sees only its own projects (checked again against the
   organization on every call, so a key row that names a foreign project still gets nothing from it).
 - **404** when the asked project has no part of the trace, so a project cannot be used to probe others.
 - `join=false` returns the asked project's part only. Lists, page models, stats, and alerts stay per project.
