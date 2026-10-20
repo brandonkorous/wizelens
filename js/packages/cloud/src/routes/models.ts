@@ -10,6 +10,7 @@ import { projectOf } from "./data.js";
 import { metricParamsOf, metricRange, projectMetrics } from "./metrics.js";
 import { factsWith } from "../repo/settings.js";
 import { projectRetentionMs } from "../scale-exec.js";
+import { projectScope } from "../telemetry/store.js";
 
 const CACHE_MS = 15_000;
 const CACHE_MAX = 500;
@@ -50,14 +51,15 @@ export async function projectPage<P extends PageName>(app: CloudApp, project: { 
   const hit = cached(key, app.config.now());
   if (hit) return hit as ModelOf<P>;
   const t = app.telemetry;
-  const pc = pageContext(range, now, params, { slowQueryMs }, await t.settling(project.id, { env, before: app.config.now() - SETTLE_BEHIND_MS }));
+  const scope = projectScope(project);
+  const pc = pageContext(range, now, params, { slowQueryMs }, await t.settling(scope, { env, before: app.config.now() - SETTLE_BEHIND_MS }));
   // A custom window (`from`, `to`) may start before what the organization keeps; a little slack covers snapping.
   if (now - pc.window.from > days * DAY_MS + 15 * 60_000) fail(400, "This time window starts before this project keeps data.");
   const issues = ISSUE_PAGES.has(page) ? { issues: issueStatesOf(await listIssues(app.db, project.id)) } : {};
   const apdex = APDEX_PAGES.has(page) ? { apdex: await apdexTargets(app.db, project.id) } : {};
   const kind = LIST_SEARCH_KIND[page];
-  const search = kind && isStructuredSearch(params.q) ? { searchIds: await searchTraceIds((q) => t.search(project.id, q), kind, params.q!, pc.window, env, activeTags(await projectTags(app.db, project.id))) } : {};
-  const value = await runPage(page, { ...pc, ...issues, ...apdex, ...search }, t.executor(project.id, days * DAY_MS, env));
+  const search = kind && isStructuredSearch(params.q) ? { searchIds: await searchTraceIds((q) => t.search(scope, q), kind, params.q!, pc.window, env, activeTags(await projectTags(app.db, project.id))) } : {};
+  const value = await runPage(page, { ...pc, ...issues, ...apdex, ...search }, t.executor(scope, days * DAY_MS, env));
   remember(key, value, app.config.now());
   return value;
 }
@@ -72,7 +74,7 @@ async function metrics(ctx: Ctx): Promise<void> {
   const key = JSON.stringify([project.id, "metrics", range, env, params, now]);
   const hit = cached(key, ctx.app.config.now());
   if (hit) return sendJson(ctx.res, 200, hit);
-  const value = await projectMetrics(ctx.app.telemetry, project.id, range, params, { now, env });
+  const value = await projectMetrics(ctx.app.telemetry, projectScope(project), range, params, { now, env });
   remember(key, value, ctx.app.config.now());
   sendJson(ctx.res, 200, value);
 }
@@ -87,7 +89,7 @@ async function infra(ctx: Ctx, page: "hosts" | "kubernetes"): Promise<void> {
   const key = JSON.stringify([project.id, page, range, env, params, now]);
   const hit = cached(key, ctx.app.config.now());
   if (hit) return sendJson(ctx.res, 200, hit);
-  const data = await ctx.app.telemetry.infraData({ projectId: project.id, env }, range, params, now);
+  const data = await ctx.app.telemetry.infraData({ scope: projectScope(project), env }, range, params, now);
   const registry = (await listServices(ctx.app.db, project.id, ctx.app.config.now())).filter((s) => !env || (s.environment ?? "") === env);
   const value = page === "hosts" ? hostsModelOf(data, registry) : kubeModelOf(data, registry);
   remember(key, value, ctx.app.config.now());

@@ -1,7 +1,7 @@
 // Moving to scale mode: copy every project's spans, logs, and metric points from Postgres into another store (ClickHouse).
 import type { LogRecord, MetricPoint, Span } from "@wizeworks/lens-core";
 import type { Db } from "../db/db.js";
-import type { TelemetryStore } from "./store.js";
+import { type TelemetryStore, tenantScope } from "./store.js";
 
 const PAGE = 500;
 
@@ -63,8 +63,8 @@ async function copyPoints(db: Db, to: TelemetryStore, projectId: string, now: nu
 /** Copy everything (the target settles it later); projects the target has are skipped, else rollups count twice; `force` copies them too, after the switch. */
 export async function copyTelemetry(db: Db, to: TelemetryStore, now: number, log: (line: string) => void = () => {}, force = false): Promise<CopyResult> {
   const out: CopyResult = { traces: 0, points: 0 };
-  for (const { id } of await db.query<{ id: string }>("SELECT id FROM projects ORDER BY id")) {
-    if (!force && (await to.counts(id)).traces > 0) {
+  for (const { id, org_id } of await db.query<{ id: string; org_id: string }>("SELECT id, org_id FROM projects ORDER BY id")) {
+    if (!force && (await to.counts(tenantScope(org_id, [id]))).traces > 0) {
       log(`  ${id}: already copied, skipped`);
       continue;
     }

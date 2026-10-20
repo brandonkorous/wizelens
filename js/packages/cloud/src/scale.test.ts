@@ -4,6 +4,7 @@ import { pageParity } from "../../core/src/testing/scale-pages.js";
 import { scenarioTraces } from "../../core/src/testing/scenario.js";
 import { cloudExecutor, cloudSettling } from "./scale-exec.js";
 import { parity, RANGES, type ScaleDb, scaleDb, settleAll, writeTraces } from "./test/scale.js";
+import { tenantScope } from "./telemetry/store.js";
 
 const traces = scenarioTraces();
 let s: ScaleDb;
@@ -19,7 +20,7 @@ afterAll(() => s.db.close());
 
 describe("cloud stats tables", () => {
   it("settles the scenario", async () => {
-    expect(await cloudSettling(s.db, s.projectId)).toBeNull();
+    expect(await cloudSettling(s.db, tenantScope(s.orgId, [s.projectId]))).toBeNull();
     const [row] = await s.db.query<{ n: number }>("SELECT count(*)::int AS n FROM fact_traces WHERE project_id = $1", [s.projectId]);
     // Lines outside a request (loose batches) are not traces to list.
     expect(row!.n).toBe(traces.filter((t) => !isLooseTraceId(t.traceId)).length);
@@ -28,8 +29,8 @@ describe("cloud stats tables", () => {
 
   it("answers every need like the memory executor", async () => {
     expect(await parity(s, traces)).toEqual([]);
-    expect(await parity({ ...s, ex: cloudExecutor(s.db, s.projectId, s.retentionMs, "prod") }, traces, ["24h"])).toEqual([]);
-    expect(await parity({ ...s, ex: cloudExecutor(s.db, "other", s.retentionMs) }, traces, ["1h"])).not.toEqual([]);
+    expect(await parity({ ...s, ex: cloudExecutor(s.db, tenantScope(s.orgId, [s.projectId]), s.retentionMs, "prod") }, traces, ["24h"])).toEqual([]);
+    expect(await parity({ ...s, ex: cloudExecutor(s.db, tenantScope(s.orgId, ["other"]), s.retentionMs) }, traces, ["1h"])).not.toEqual([]);
   });
 
   // Every page, range, and filter on PGlite: slow on a busy CI runner.

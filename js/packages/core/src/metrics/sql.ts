@@ -11,9 +11,12 @@ export interface MetricSql {
   args: unknown[];
 }
 
-/** Which rows: project and env (each optional on the hub), one service, some metric names. */
+/** Which rows: organization, projects, and env (each optional on the hub), one service, some metric names. */
 export interface MetricSqlScope {
-  project?: string;
+  /** The organization every row must belong to (the cloud). */
+  org?: string;
+  /** The projects read; missing means all (the hub), an empty list reads nothing. */
+  projects?: readonly string[];
   env?: string;
   service?: string;
   names?: readonly string[];
@@ -39,17 +42,26 @@ class Args {
 export const metricProjectColumn = (d: MetricDialect): string => (d === "sqlite" ? "project" : "project_id");
 export const metricTable = (t: Tier): string => `metric_${t.name}`;
 
-function scopeWhere(a: Args, s: MetricSqlScope): string[] {
+/** The organization and project conditions, for the rollup tables and for metric_series. */
+function ownerWhere(a: Args, s: MetricSqlScope): string[] {
   const pc = metricProjectColumn(a.d);
   const out: string[] = [];
-  if (s.project !== undefined) out.push(`${pc} = ${a.p(s.project)}`);
+  if (s.org !== undefined) {
+    if (a.d === "sqlite") throw new Error("The sqlite metric tables have no organization column.");
+    out.push(`org_id = ${a.p(s.org)}`);
+  }
+  if (s.projects) out.push(!s.projects.length ? "1 = 0" : s.projects.length === 1 ? `${pc} = ${a.p(s.projects[0])}` : a.in(pc, s.projects));
+  return out;
+}
+
+function scopeWhere(a: Args, s: MetricSqlScope): string[] {
+  const out = ownerWhere(a, s);
   if (s.env !== undefined) out.push(`env = ${a.p(s.env)}`);
   if (s.names) out.push(a.in("name", s.names));
   if (s.keys) out.push(a.in("series_key", s.keys));
   if (s.service !== undefined) {
-    const service = a.p(s.service);
-    const own = s.project !== undefined ? ` AND ${pc} = ${a.p(s.project)}` : "";
-    out.push(`series_key IN (SELECT series_key FROM metric_series WHERE service = ${service}${own})`);
+    const where = [`service = ${a.p(s.service)}`, ...ownerWhere(a, s)];
+    out.push(`series_key IN (SELECT series_key FROM metric_series WHERE ${where.join(" AND ")})`);
   }
   return out;
 }

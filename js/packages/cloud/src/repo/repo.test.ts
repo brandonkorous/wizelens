@@ -7,6 +7,7 @@ import { deleteOrgEverything, listMembers, orgsOfUser } from "./orgs.js";
 import { createKey, createProject, keyByToken, revokeKey } from "./projects.js";
 import { countTraces, getTrace, listServices, queryTraces } from "./trace-read.js";
 import { pruneByRetention, writeBatch } from "./trace-write.js";
+import { projectScope, tenantScope } from "../telemetry/store.js";
 
 let db: Db;
 beforeAll(async () => {
@@ -62,12 +63,12 @@ describe("cloud traces", () => {
     const write = { sender, via: "addon" as const, spans: [span(T1, "1".repeat(16)), span(T2, "2".repeat(16), { startMs: 2_000_000 })], logs: [], remotes: [] };
     await db.tx((q) => writeBatch(q, p.id, write, 10));
     await db.tx((q) => writeBatch(q, p.id, write, 11));
-    expect((await queryTraces(db, { projectId: p.id, limit: 10 })).map((t) => t.traceId)).toEqual([T2, T1]);
-    expect(await getTrace(db, p.id, T1)).toMatchObject({ spanCount: 1 });
-    expect(await getTrace(db, "other", T1)).toBeUndefined();
+    expect((await queryTraces(db, { scope: projectScope(p), limit: 10 })).map((t) => t.traceId)).toEqual([T2, T1]);
+    expect(await getTrace(db, projectScope(p), T1)).toMatchObject({ spanCount: 1 });
+    expect(await getTrace(db, tenantScope(orgId, ["other"]), T1)).toBeUndefined();
     expect(await countTraces(db, p.id, 0, 1_500_000, "prod")).toBe(1);
     expect((await listServices(db, p.id, 20))[0]).toMatchObject({ service: "orders-api", online: true });
     expect(await pruneByRetention(db, 1_000_000 + 86_400_000 + 1)).toBe(1);
-    expect((await queryTraces(db, { projectId: p.id, limit: 10 })).map((t) => t.traceId)).toEqual([T2]);
+    expect((await queryTraces(db, { scope: projectScope(p), limit: 10 })).map((t) => t.traceId)).toEqual([T2]);
   });
 });

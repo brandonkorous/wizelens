@@ -27,7 +27,7 @@ import { addEvent } from "../repo/alert-events.js";
 import { enabledRules, saveEvaluation } from "../repo/alerts.js";
 import { sloById } from "../repo/slos.js";
 import { memberEmails } from "../repo/users.js";
-import { projectRetentionMs } from "../scale-exec.js";
+import { projectRetentionMs, projectScopeOf } from "../scale-exec.js";
 import { problemFor } from "./problem-link.js";
 
 /** Names for the notice: project, the link to the rule's page, and for a firing rule the problem it is part of. */
@@ -53,7 +53,7 @@ async function noticeOf(app: CloudApp, rule: AlertRule, state: AlertNoticeState,
 /** One OpenTelemetry metric over the rule's window (from its rollups), and a sample series for its unit. */
 async function measureMetric(app: CloudApp, rule: AlertRule, now: number) {
   const at = alignNow(now);
-  const q = { projectId: rule.projectId, env: rule.env || undefined, service: rule.metricService || undefined };
+  const q = { scope: await projectScopeOf(app.db, rule.projectId), env: rule.env || undefined, service: rule.metricService || undefined };
   const data = await app.telemetry.metricAlertData(q, rule.metricName, { from: at - rule.windowMs, to: at }, at);
   const stat = rule.metricStat || "avg";
   return { value: metricAlertValueOf(data, stat), sample: data.series[0], stat };
@@ -69,7 +69,7 @@ async function messageOf(app: CloudApp, rule: AlertRule, state: AlertNoticeState
 
 async function executorOf(app: CloudApp, rule: AlertRule, env = rule.env) {
   const retentionMs = await projectRetentionMs(app.db, rule.projectId, app.config.retentionDays);
-  return app.telemetry.executor(rule.projectId, retentionMs, env || undefined);
+  return app.telemetry.executor(await projectScopeOf(app.db, rule.projectId), retentionMs, env || undefined);
 }
 
 /** An "above normal" rule: every service and endpoint over the window against the same window in earlier weeks (or days). */

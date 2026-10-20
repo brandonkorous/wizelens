@@ -6,14 +6,16 @@ export interface Dialect {
   name: DialectName;
   /** The project column: project_id on the cloud, project on the hub. */
   project: string;
+  /** The organization column, on the cloud only: every row names its organization. */
+  org?: string;
   /** Text columns have trigram indexes (`<table>_fts`, SQLite FTS5) that "contains" can read. */
   fts?: boolean;
 }
 
-export const PG_DIALECT: Dialect = { name: "pg", project: "project_id" };
+export const PG_DIALECT: Dialect = { name: "pg", project: "project_id", org: "org_id" };
 export const SQLITE_DIALECT: Dialect = { name: "sqlite", project: "project", fts: true };
 /** ClickHouse reads views with the Postgres table names, so the same SQL reads merged rows. */
-export const CH_DIALECT: Dialect = { name: "ch", project: "project_id" };
+export const CH_DIALECT: Dialect = { name: "ch", project: "project_id", org: "org_id" };
 
 /** Runs one read and returns its rows. Hosts wrap their driver (async pg, or sync node:sqlite). */
 export interface SqlRunner {
@@ -26,9 +28,12 @@ export interface Statement {
   params: unknown[];
 }
 
-/** Which project and environment a query reads. Empty or missing means all (the hub); the cloud always sets a project. */
+/** Which rows a query reads. Missing projects means all (the hub); the cloud always names its organization and projects. */
 export interface SqlScope {
-  project?: string;
+  /** The organization every row must belong to. */
+  org?: string;
+  /** The projects read; an empty list reads nothing. */
+  projects?: readonly string[];
   env?: string;
 }
 
@@ -138,10 +143,20 @@ export const leastOf = (d: Dialect, a: string, b: string): string => (d.name ===
 
 export const greatestOf = (d: Dialect, a: string, b: string): string => (d.name === "sqlite" ? `max(${a}, ${b})` : `greatest(${a}, ${b})`);
 
-/** Scope conditions on a table with the dialect's project column and an env column. */
+/** `col` is one of the projects: `=` for one, so the sort key still narrows the read. */
+export function projectsIn(q: SqlText, col: string, projects: readonly string[]): string {
+  if (!projects.length) return "1 = 0";
+  return projects.length === 1 ? `${col} = ${q.p(projects[0])}` : q.in(col, projects);
+}
+
+/** Scope conditions on a table with the dialect's project, organization, and env columns. */
 export function scopeWhere(q: SqlText, scope: SqlScope, alias = ""): string[] {
   const out: string[] = [];
-  if (scope.project) out.push(`${alias}${q.d.project} = ${q.p(scope.project)}`);
+  if (scope.org !== undefined) {
+    if (!q.d.org) throw new Error(`The ${q.d.name} tables have no organization column.`);
+    out.push(`${alias}${q.d.org} = ${q.p(scope.org)}`);
+  }
+  if (scope.projects) out.push(projectsIn(q, `${alias}${q.d.project}`, scope.projects));
   if (scope.env) out.push(`${alias}env = ${q.p(scope.env)}`);
   return out;
 }

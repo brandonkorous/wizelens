@@ -2,7 +2,7 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { alignNow, CH_DIALECT, infraSteps, metricAlertSteps, metricPageSteps, type MetricRows, type ProjectSettings, runMetricAsync, searchSql, sqlExecutor, type SqlRunner, suggestSql } from "@wizeworks/lens-core";
-import type { OrgOf, RetentionOf, TelemetryStore } from "../store.js";
+import { metricScope, type OrgOf, type RetentionOf, sqlScope, type TelemetryStore, type TenantScope } from "../store.js";
 import { checkFactsVersionCh, clearProjectCh, stampOrgs, syncProjects } from "./admin.js";
 import { type ChClient, chClient } from "./http.js";
 import { MetricWriter } from "./metrics.js";
@@ -81,7 +81,7 @@ export async function openClickHouse(o: ChStoreOptions): Promise<TelemetryStore>
 
 function chTelemetry(ch: ChClient, { settler, pool, rebuild }: ReturnType<typeof settlerOf>, upkeep: { days: RetentionOf; logDays: RetentionOf; orgOf: OrgOf }): TelemetryStore {
   const { queue, retention, logRetention, orgs } = settler;
-  const src = (projectId: string) => ({ d: CH_DIALECT, run: chRunner(ch), scope: { project: projectId } });
+  const src = (s: TenantScope, env?: string) => ({ d: CH_DIALECT, run: chRunner(ch), scope: sqlScope(s, env) });
   const metrics = new MetricWriter(ch);
   const runMetric = (s: { sql: string; args: unknown[] }) => ch.query(s.sql, s.args) as Promise<MetricRows>;
   // One settle at a time: the queue hands each trace to one run, so a second call waits for the first rather than return before its traces are written.
@@ -94,22 +94,21 @@ function chTelemetry(ch: ChClient, { settler, pool, rebuild }: ReturnType<typeof
       await writeRaw(ch, queue, project, w, now, { ms: retentionMs, logMs: await logRetention.msOf(projectId) });
       await metrics.write(project, w.sender.environment ?? "", w.metrics ?? [], now, retentionMs);
     },
-    traces: async (t) => loadTraces(ch, [t.projectId], await findTraceIds(ch, t, Date.now())),
-    trace: (projectId, traceId) => getTrace(ch, [projectId], traceId),
-    joinedTrace: (primaryId, scope, traceId) => joinedTrace(ch, primaryId, scope, traceId),
-    counts: (projectId) => counts(ch, projectId),
-    traceEnvs: (projectId) => traceEnvs(ch, projectId),
-    activeHours: (projectId, from, to) => activeHours(ch, projectId, from, to),
+    traces: async (t) => loadTraces(ch, t.scope, await findTraceIds(ch, t, Date.now())),
+    trace: (s, traceId) => getTrace(ch, s, traceId),
+    joinedTrace: (primaryId, s, traceId) => joinedTrace(ch, primaryId, s, traceId),
+    counts: (s) => counts(ch, s),
+    traceEnvs: (s) => traceEnvs(ch, s),
+    activeHours: (s, from, to) => activeHours(ch, s, from, to),
     lastTraceMs: () => lastTraceMs(ch, Date.now()),
-    executor: (projectId, retentionMs, env) =>
-      sqlExecutor({ ...src(projectId), scope: { project: projectId, env }, retentionMs, loadTrace: (id) => getTrace(ch, [projectId], id).then((t) => t ?? null) }),
-    settling: async (projectId, o = {}) => queue.count(projectId, o.env, o.before) || null,
-    search: (projectId, q) => searchSql(src(projectId), q),
-    suggest: (projectId, r) => suggestSql(src(projectId), r),
-    slowestEndpoints: (projectId, w, minCount, limit) => slowestEndpoints(ch, projectId, w, minCount, limit),
-    metricData: (m, range, params, now) => runMetricAsync(metricPageSteps("ch", { project: m.projectId, env: m.env }, range, alignNow(now), params), runMetric),
-    metricAlertData: (m, name, w, now) => runMetricAsync(metricAlertSteps("ch", { project: m.projectId, env: m.env, service: m.service }, name, w, now), runMetric),
-    infraData: (m, range, params, now) => runMetricAsync(infraSteps("ch", { project: m.projectId, env: m.env }, range, alignNow(now), params), runMetric),
+    executor: (s, retentionMs, env) => sqlExecutor({ ...src(s, env), retentionMs, loadTrace: (id) => getTrace(ch, s, id).then((t) => t ?? null) }),
+    settling: async (s, o = {}) => s.projects.reduce((n, p) => n + queue.count(p, o.env, o.before), 0) || null,
+    search: (s, q) => searchSql(src(s), q),
+    suggest: (s, r) => suggestSql(src(s), r),
+    slowestEndpoints: (s, w, minCount, limit) => slowestEndpoints(ch, s, w, minCount, limit),
+    metricData: (m, range, params, now) => runMetricAsync(metricPageSteps("ch", metricScope(m), range, alignNow(now), params), runMetric),
+    metricAlertData: (m, name, w, now) => runMetricAsync(metricAlertSteps("ch", metricScope(m), name, w, now), runMetric),
+    infraData: (m, range, params, now) => runMetricAsync(infraSteps("ch", metricScope(m), range, alignNow(now), params), runMetric),
     settle(now, o) {
       const run = settled.then(() => settleClickHouse(settler, now, o));
       settled = run.catch(() => undefined);

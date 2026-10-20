@@ -19,6 +19,7 @@ import { writeBatch } from "./repo/trace-write.js";
 import { projectMetrics } from "./routes/metrics.js";
 import { seedOrg, testDb } from "./test/db.js";
 import { pgTelemetry } from "./telemetry/pg-store.js";
+import { tenantScope } from "./telemetry/store.js";
 
 const RANGES = Object.keys(TIME_RANGES) as TimeRange[];
 let db: Db;
@@ -56,7 +57,7 @@ describe("cloud metric rollups in Postgres", () => {
       const points = metricScenario(range, METRIC_NOW, 3);
       const id = await projectWith(points);
       for (const params of paramSets(points)) {
-        const sql = await projectMetrics(pgTelemetry(db), id, range, params, { now: METRIC_NOW + 4_000, env: "prod" });
+        const sql = await projectMetrics(pgTelemetry(db), tenantScope(org, [id]), range, params, { now: METRIC_NOW + 4_000, env: "prod" });
         const memory = metricsModelOf(metricDataOf(points, range, METRIC_NOW, params, { tiers: true }));
         expect(diffClose(sql, memory), `${range} ${JSON.stringify(params)}`).toEqual([]);
       }
@@ -69,13 +70,13 @@ describe("cloud metric rollups in Postgres", () => {
     for (const ms of [300_000, 3_600_000, 6 * 3_600_000, 24 * 3_600_000]) {
       const w = { from: METRIC_NOW - ms, to: METRIC_NOW };
       for (const name of new Set(points.map((p) => p.name))) {
-        const data = await loadMetricAlertData(db, { projectId: id }, name, w, METRIC_NOW);
+        const data = await loadMetricAlertData(db, { scope: tenantScope(org, [id]) }, name, w, METRIC_NOW);
         const memory = metricAlertDataOf(points.filter((p) => p.name === name), w, METRIC_NOW, { tiers: true });
         for (const stat of Object.keys(METRIC_ALERT_STATS) as MetricAlertStat[]) {
           expect(diffClose(metricAlertValueOf(data, stat), metricAlertValueOf(memory, stat)), `${name} ${stat} ${ms}`).toEqual([]);
         }
       }
-      const worker = await loadMetricAlertData(db, { projectId: id, service: "worker" }, "process.cpu.utilization", w, METRIC_NOW);
+      const worker = await loadMetricAlertData(db, { scope: tenantScope(org, [id]), service: "worker" }, "process.cpu.utilization", w, METRIC_NOW);
       const mine = points.filter((p) => p.name === "process.cpu.utilization" && p.service === "worker");
       expect(diffClose(metricAlertValueOf(worker, "avg"), metricAlertValueOf(metricAlertDataOf(mine, w, METRIC_NOW, { tiers: true }), "avg"))).toEqual([]);
     }

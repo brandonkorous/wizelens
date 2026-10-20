@@ -3,7 +3,7 @@ import { activeTags, BUILT_IN_PREFIX, checkTagInput, matchTags, searchSql, SQLIT
 import { sendJson } from "@wizeworks/lens-node/kit";
 import type { ApiContext } from "./api.js";
 import { parseJson, readBody } from "./body.js";
-import { sqliteRunner } from "./scale-exec.js";
+import { sqliteRunner, sqlScopeOf } from "./scale-exec.js";
 import { createTag, deleteTag, hubTags, setBuiltIn, updateTag } from "./tags.js";
 
 // The hub's tags API (docs/TAGS-PLAN.md). Changes come only from the hub's own pages (or a tool with no Origin), never another site.
@@ -57,7 +57,7 @@ async function change(c: ApiContext, id: string, req: IncomingMessage, res: Serv
 async function match(c: ApiContext, req: IncomingMessage, res: ServerResponse, p: URLSearchParams): Promise<void> {
   const r = tagMatchRequestOf(await bodyOf(req));
   if (!r.ok) return sendJson(res, 400, r);
-  const src = { d: SQLITE_DIALECT, run: sqliteRunner(c.data.store.db), scope: { project: p.get("project") || undefined } };
+  const src = { d: SQLITE_DIALECT, run: sqliteRunner(c.data.store.db), scope: sqlScopeOf({ project: p.get("project") || undefined }) };
   sendJson(res, 200, { matches: await matchTags((q) => searchSql(src, q), r.kind, r.items, activeTags(hubTags(c.data.store.db)), p.get("env") || undefined) });
 }
 

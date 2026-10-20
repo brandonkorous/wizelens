@@ -125,7 +125,7 @@ function bucketQueries(d: MetricDialect, scope: MetricSqlScope, w: TimeWindow, s
 export function* metricPageSteps(d: MetricDialect, scope: MetricSqlScope, range: TimeRange, now: number, params: Readonly<Record<string, string>>): MetricSteps<MetricData> {
   const w = snapWindow(periodWindow(range, now, params), now);
   const segments = planTotals(w, now, Number.POSITIVE_INFINITY);
-  const base = { project: scope.project, env: scope.env };
+  const base = { org: scope.org, projects: scope.projects, env: scope.env };
   const [totals, ends] = [metricTotalsSql(d, base, segments), metricEndsSql(d, base, segments)];
   if (!totals || !ends) return { range, window: w, params, services: [], series: [] };
   const [tRows, eRows] = yield [totals, ends];

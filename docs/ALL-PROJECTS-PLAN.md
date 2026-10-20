@@ -19,10 +19,10 @@ The rules of `GAPS-PLAN.md` ("Rules for every phase") still hold.
 
 | Phase | What | Size | State |
 |---|---|---|---|
-| A | Loose ends | S | |
-| B | `org_id` on every telemetry row | M | |
-| C | The database enforces the org | M | |
+| A | Loose ends | S | Done |
+| B | `org_id` on every telemetry row | M | Done |
 | D | One scope type: one org, a list of projects | L | |
+| C | The database enforces the org | M | |
 | E | Data routes read many projects | L | |
 | F | Per-project features, read across | M | |
 | G | The dashboard: org picker and "All projects" | L | |
@@ -69,27 +69,29 @@ fixed per project and safe to stamp at ingest.
 
 ## Phase C — The database enforces the org
 
-1. **ClickHouse.** A second user, `wizelens_reader`, read-only. One row policy per table in `PROJECT_TABLES`:
-   `USING org_id = getSetting('SQL_wl_org')`. Every API read sends `SQL_wl_org` as a query setting. A read without it
-   fails. Ingest, settling, retention, rebuild, and copy keep the writer user.
-2. **Postgres telemetry.** Row level security on the telemetry tables:
-   `USING (org_id = current_setting('wl.org', true))` for a reader role. Reads run in a transaction with
-   `SET LOCAL wl.org`.
-3. **Deploy.** The reader user, its secret, and the setting prefix go into the ClickHouse config in `sparx.works`.
-   The cloud reads `CLICKHOUSE_READER_URL`; without it the cloud refuses to start in production.
-4. **Tests.** A read without the setting fails. A read with org A returns no org B row, even with org B's project ids.
+1. **ClickHouse.** On start the cloud makes a read-only user, `<writer>_reader`, whose password is an HMAC of the
+   writer's, so every pod derives the same one and no new secret is needed (production, Docker, and CI users all have
+   access management). One row policy per table in `ORG_TABLES`: `org_id = getSetting('SQL_wl_org')` for the reader,
+   `1` for the writer (a table with policies shows nothing to users it does not name). Every read in a `TenantScope`
+   goes as the reader with `SQL_wl_org` set; without the setting the read fails. Ingest, settling, retention,
+   rebuild, and copy keep the writer.
+2. **Postgres telemetry.** Row level security on the telemetry tables for a `wl_reader` role:
+   `USING (org_id = current_setting('wl.org'))`. Scoped reads run in a transaction with `SET LOCAL ROLE wl_reader` and
+   `wl.org` set. The owner (writer) is not subject to the policies.
+3. **Tests.** A read without the setting fails. A read with org A returns no org B row, even with no org condition in
+   its SQL.
 
 ## Phase D — One scope type: one org, a list of projects
 
-1. `SqlScope` becomes `{ org?: string; projects?: readonly string[]; env?: string }`. `scopeWhere` writes
-   `org_id = ?` for `org` and `project_id IN (…)` (`=` for one) for `projects`. The hub leaves both out (one tenant).
-2. Same change in `MetricSqlScope` and its `scopeWhere` (`core/src/metrics/sql.ts:14-16,42-51`), and the search
-   attribute lookup (`core/src/scale/sql/search-sql.ts:70-75,90`).
-3. **Cloud `TenantScope`**: `{ org: string; projects: readonly string[] }`, built only by `tenantScope()`, which
-   throws on an empty org or list. `TelemetryStore` reads (`telemetry/store.ts:46-84`) take a `TenantScope`, not a
-   project id. The ClickHouse store passes `org` as `SQL_wl_org` too.
-4. Parity tests in `core/src/testing/scale-pages.ts` run a two-project scope on memory, SQLite, Postgres, and
-   ClickHouse.
+1. `SqlScope` is `{ org?: string; projects?: readonly string[]; env?: string }`. `scopeWhere` writes `org_id = ?` for
+   `org` and `project_id IN (…)` (`=` for one) for `projects`. The hub leaves both out, or names one project.
+2. Same change in `MetricSqlScope` and its `scopeWhere`, and the search attribute lookup, which now matches on
+   `(project_id, trace_id[, owner])`.
+3. **Cloud `TenantScope`** (`telemetry/store.ts`): `{ org; projects }`, branded, built only by `tenantScope()`, which
+   throws on an empty org or list. Every `TelemetryStore` read takes one; writes and upkeep keep project ids. Settling
+   reads under the org its rows carry.
+4. Tests (`tenant-scope.test.ts`): two projects of org A read as one scope add up; org B's project named under org A
+   reads nothing, on Postgres and ClickHouse.
 
 ## Phase E — Data routes read many projects
 

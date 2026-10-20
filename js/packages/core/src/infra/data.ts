@@ -47,7 +47,7 @@ const keyOfId = (id: string) => id.split("\u001f").at(-1)!;
 export function* infraSteps(d: MetricDialect, scope: MetricSqlScope, range: TimeRange, now: number, params: Readonly<Record<string, string>>): MetricSteps<MetricData> {
   const w = snapWindow(windowOf(range, now), now);
   const segments = planTotals(w, now, Number.POSITIVE_INFINITY);
-  const base = { project: scope.project, env: scope.env, names: INFRA_METRICS };
+  const base = { org: scope.org, projects: scope.projects, env: scope.env, names: INFRA_METRICS };
   const [totals, ends] = [metricTotalsSql(d, base, segments), metricEndsSql(d, base, segments)];
   if (!totals || !ends) return { range, window: w, params, services: [], series: [] };
   const [tRows, eRows] = yield [totals, ends];

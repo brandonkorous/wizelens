@@ -1,4 +1,5 @@
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
+import { sqlScopeOf } from "./scale-exec.js";
 import { alignNow, isTimeRange, metricPageSteps, type MetricRows, type MetricsModel, metricsModelOf, runMetricSync, type TimeRange } from "@wizeworks/lens-core";
 
 export interface MetricScope {
@@ -20,6 +21,6 @@ export const rangeOf = (v: string | null | undefined, fallback: TimeRange = "1h"
 
 /** The metrics page for a scope and range, from the metric rollup tiers. */
 export function metricsPage(db: DatabaseSync, range: TimeRange, scope: MetricScope, params: Record<string, string>, now: number): MetricsModel {
-  const steps = metricPageSteps("sqlite", { project: scope.project || undefined, env: scope.env || undefined }, range, alignNow(now), params);
+  const steps = metricPageSteps("sqlite", sqlScopeOf(scope), range, alignNow(now), params);
   return metricsModelOf(runMetricSync(steps, (q) => db.prepare(q.sql).all(...(q.args as SQLInputValue[])) as MetricRows));
 }

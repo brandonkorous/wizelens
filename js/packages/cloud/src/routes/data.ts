@@ -9,6 +9,7 @@ import { forgetOfflineServices } from "../repo/services.js";
 import { environmentsOf, listServices, type TraceQuery } from "../repo/trace-read.js";
 import { factsWith } from "../repo/settings.js";
 import { projectRetentionMs } from "../scale-exec.js";
+import { projectScope } from "../telemetry/store.js";
 
 const DAY_MS = 86_400_000;
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -57,7 +58,7 @@ async function traces(ctx: Ctx): Promise<void> {
   const { project } = await projectOf(ctx);
   const p = ctx.url.searchParams;
   const full = p.get("full") === "true";
-  const q: TraceQuery = { projectId: project.id, limit: clamp(num(p, "limit") ?? (full ? 1000 : 50), 1, full ? 5000 : 1000) };
+  const q: TraceQuery = { scope: projectScope(project), limit: clamp(num(p, "limit") ?? (full ? 1000 : 50), 1, full ? 5000 : 1000) };
   q.since = num(p, "since");
   q.before = num(p, "before");
   q.env = p.get("env") || undefined;
@@ -70,7 +71,7 @@ async function traces(ctx: Ctx): Promise<void> {
 // One trace, with its parts from the other projects the caller may read in the same organization (`join=false`: this project only).
 async function trace(ctx: Ctx): Promise<void> {
   const access = await projectOf(ctx);
-  const scope = ctx.url.searchParams.get("join") === "false" ? [access.project.id] : await joinScope(ctx.app.db, access);
+  const scope = ctx.url.searchParams.get("join") === "false" ? projectScope(access.project) : await joinScope(ctx.app.db, access);
   const t = await ctx.app.telemetry.joinedTrace(access.project.id, scope, ctx.params.id!);
   if (!t) fail(404, "Trace not found.");
   sendJson(ctx.res, 200, t);
@@ -81,9 +82,9 @@ async function services(ctx: Ctx): Promise<void> {
   const db = ctx.app.db;
   sendJson(ctx.res, 200, {
     services: await listServices(db, project.id, ctx.app.config.now()),
-    environments: await environmentsOf(db, project.id, await ctx.app.telemetry.traceEnvs(project.id)),
+    environments: await environmentsOf(db, project.id, await ctx.app.telemetry.traceEnvs(projectScope(project))),
     projects: [],
-    ...(await ctx.app.telemetry.counts(project.id)),
+    ...(await ctx.app.telemetry.counts(projectScope(project))),
   });
 }
 

@@ -39,7 +39,7 @@ describe.skipIf(!CH_URL)("Problems page on ClickHouse", () => {
     t = await chTest(1000, ANOMALY_NOW);
     await chWriteChunked(t, traces);
     await t.store.settle(ANOMALY_NOW + 10_000, { budgetMs: Number.POSITIVE_INFINITY });
-    const ex = t.store.executor(t.projectId, t.retentionMs);
+    const ex = t.store.executor(t.scope, t.retentionMs);
     expect(await problemsParity(ex, traces, ANOMALY_NOW, RANGES, t.retentionMs)).toEqual([]);
     const m = await runPage("problems", pageContext("1h", ANOMALY_NOW, {}), ex);
     expect(m.problems.map((p) => p.cause?.kind)).toEqual(["release"]);

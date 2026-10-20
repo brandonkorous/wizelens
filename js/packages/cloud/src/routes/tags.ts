@@ -6,6 +6,7 @@ import { fail, readJsonBody, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
 import { createTag, deleteTag, projectTags, setBuiltIn, updateTag } from "../repo/tags.js";
+import { projectScope } from "../telemetry/store.js";
 
 // Tag rules for one project (docs/TAGS-PLAN.md): anyone who reads the project reads them; the `tag` permission changes them.
 
@@ -73,7 +74,7 @@ async function match(ctx: Ctx): Promise<void> {
   const r = tagMatchRequestOf(await readJsonBody(ctx.req));
   if (!r.ok) return sendJson(ctx.res, 400, r);
   const tags = activeTags(await projectTags(ctx.app.db, a.project.id));
-  const run = (q: SearchQuery) => ctx.app.telemetry.search(a.project.id, q);
+  const run = (q: SearchQuery) => ctx.app.telemetry.search(projectScope(a.project), q);
   sendJson(ctx.res, 200, { matches: await matchTags(run, r.kind, r.items, tags, ctx.url.searchParams.get("env") || undefined) });
 }
 

@@ -42,7 +42,7 @@ function searchSqlText<K extends SearchKind>(src: SqlSource, query: SearchQuery<
     ...scopeWhere(q, { ...src.scope, env: query.env ?? src.scope.env }, "s."), `s.kind = ${q.p(query.kind)}`,
     `s.time_ms >= ${msLit(q.d, query.window.from)}`, `s.time_ms < ${msLit(q.d, query.window.to)}`,
     ...(query.cursor ? [cursorCond(q, query.cursor)] : []), ...(query.traceIds ? [q.in("s.trace_id", query.traceIds)] : []),
-    searchCond(q, query.kind, query.node, src.scope.project),
+    searchCond(q, query.kind, query.node, src.scope),
   ];
   const cols = join.table ? "r.*, s.time_ms AS s_time, s.owner AS s_owner" : "s.*, s.time_ms AS s_time, s.owner AS s_owner";
   const order = `s.time_ms DESC, ${collate(src.d, "s.trace_id")} ASC, ${collate(src.d, "s.owner")} ASC`;
@@ -75,12 +75,12 @@ async function chRows<K extends SearchKind>(src: SqlSource, query: SearchQuery<K
   if (!join.table || !page.length) return page;
   const q = new SqlText(src.d);
   const times = page.map((r) => num(r.s_time));
-  const where = [...scopeWhere(q, { project: src.scope.project }), `${join.time} >= ${msLit(q.d, Math.min(...times))}`, `${join.time} <= ${msLit(q.d, Math.max(...times))}`];
+  const where = [...scopeWhere(q, { org: src.scope.org, projects: src.scope.projects }), `${join.time} >= ${msLit(q.d, Math.min(...times))}`, `${join.time} <= ${msLit(q.d, Math.max(...times))}`];
   const found = await src.run.all(`SELECT * FROM ${join.table} WHERE ${[...where, q.in("trace_id", [...new Set(page.map((r) => String(r.trace_id)))])].join(" AND ")}`, q.params);
-  const keyOf = (traceId: unknown, owner: string) => `${String(traceId)} ${owner}`;
-  const byKey = new Map(found.map((r) => [keyOf(r.trace_id, query.kind === "logs" ? String(r.idx) : ""), r]));
+  const keyOf = (project: unknown, traceId: unknown, owner: string) => `${String(project)} ${String(traceId)} ${owner}`;
+  const byKey = new Map(found.map((r) => [keyOf(r.project_id, r.trace_id, query.kind === "logs" ? String(r.idx) : ""), r]));
   return page.flatMap((p) => {
-    const r = byKey.get(keyOf(p.trace_id, query.kind === "logs" ? String(p.s_owner) : ""));
+    const r = byKey.get(keyOf(p.project_id, p.trace_id, query.kind === "logs" ? String(p.s_owner) : ""));
     return r ? [{ ...r, s_time: p.s_time, s_owner: p.s_owner }] : [];
   });
 }

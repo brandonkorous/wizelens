@@ -1,6 +1,6 @@
 import { type FactOptions, FACT_TABLES, FACTS_VERSION, factOptionsOf, LOG_KINDS_SQL, PG_DIALECT, settingsOf, settleStatements, type Statement, tierPruneStatements, type TraceState, type Trace } from "@wizeworks/lens-core";
 import type { Db, Queryable } from "./db/db.js";
-import { loadTraces } from "./repo/trace-read.js";
+import { loadSettling } from "./repo/trace-read.js";
 import type { SettleOptions } from "./telemetry/store.js";
 import { KEEP_DAYS } from "./repo/settings.js";
 
@@ -17,6 +17,8 @@ export const STATS_TABLES = [...FACT_TABLES, ...["10s", "5m", "1h"].flatMap((t) 
 
 export interface TraceStateRow {
   project_id: string;
+  /** The organization the row carries ('' for a project that is gone). */
+  org_id?: string;
   trace_id: string;
   env: string;
   updated_ms?: number;
@@ -44,10 +46,10 @@ export const stateOf = (r: TraceStateRow, defaultDays: number, defaultFacts: Par
 });
 
 async function loadAll(q: Queryable, rows: readonly TraceStateRow[]): Promise<Map<string, Trace>> {
-  const byProject = new Map<string, string[]>();
-  for (const r of rows) byProject.set(r.project_id, [...(byProject.get(r.project_id) ?? []), r.trace_id]);
+  const byProject = new Map<string, { org: string; ids: string[] }>();
+  for (const r of rows) byProject.set(r.project_id, { org: r.org_id ?? "", ids: [...(byProject.get(r.project_id)?.ids ?? []), r.trace_id] });
   const out = new Map<string, Trace>();
-  for (const [project, ids] of byProject) for (const t of await loadTraces(q, project, ids)) out.set(`${project} ${t.traceId}`, t);
+  for (const [project, { org, ids }] of byProject) for (const t of await loadSettling(q, org, project, ids)) out.set(`${project} ${t.traceId}`, t);
   return out;
 }
 
@@ -57,7 +59,7 @@ async function settleBatch(db: Db, now: number, batch: number, defaultDays: numb
     const [lock] = await q.query<{ ok: boolean }>("SELECT pg_try_advisory_xact_lock($1) AS ok", [LOCK]);
     if (!lock?.ok) return { n: -1, projects: [] };
     const rows = await q.query<TraceStateRow>(
-      `SELECT t.project_id, t.trace_id, t.env, t.updated_ms, t.contrib, ${KEEP_DAYS} AS retention_days, p.log_retention_days, p.settings FROM traces t
+      `SELECT t.project_id, t.org_id, t.trace_id, t.env, t.updated_ms, t.contrib, ${KEEP_DAYS} AS retention_days, p.log_retention_days, p.settings FROM traces t
        LEFT JOIN projects p ON p.id = t.project_id LEFT JOIN orgs o ON o.id = p.org_id
        WHERE t.settled_ms < t.updated_ms AND (t.updated_ms <= $1 OR t.settled_ms <= $2) ORDER BY t.start_ms DESC LIMIT $3`,
       [now - QUIET_MS, now - BUSY_MS, batch],

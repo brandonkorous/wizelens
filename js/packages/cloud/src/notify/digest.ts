@@ -48,6 +48,7 @@ interface Person {
 
 interface ProjectRow {
   id: string;
+  org_id: string;
   name: string;
   org: string;
   retention_days: number;
@@ -71,7 +72,7 @@ async function sendOne(app: CloudApp, who: Person, p: ProjectRow, period: Digest
   if (!(await claim(app, who.id, p.id, period, key))) return;
   try {
     const id = `${p.id}:${period}`;
-    if (!cache.has(id)) cache.set(id, digestData(app.db, app.telemetry, p.id, p.retention_days, period, app.config.now()));
+    if (!cache.has(id)) cache.set(id, digestData(app.db, app.telemetry, { id: p.id, orgId: p.org_id }, p.retention_days, period, app.config.now()));
     const data = await cache.get(id)!;
     if (!data || data.empty) return;
     const links = { project: `${app.baseUrl()}/_wizelens/#/?project=${encodeURIComponent(p.id)}`, stop: stopUrl(app, who.id, { projectId: p.id, period }) };
@@ -86,7 +87,7 @@ async function digestsFor(app: CloudApp, who: Person, cache: Cache): Promise<voi
   const due = dueKeys(localOf(app.config.now(), who.time_zone ?? "UTC"), who.digest_hour ?? 8);
   if (due.length === 0) return;
   const projects = await app.db.query<ProjectRow>(
-    `SELECT p.id, p.name, o.name AS org, ${KEEP_DAYS} AS retention_days FROM members m JOIN orgs o ON o.id = m.org_id JOIN projects p ON p.org_id = o.id
+    `SELECT p.id, p.org_id, p.name, o.name AS org, ${KEEP_DAYS} AS retention_days FROM members m JOIN orgs o ON o.id = m.org_id JOIN projects p ON p.org_id = o.id
      WHERE m.user_id = $1 AND ${VISIBLE_TO_MEMBER} ORDER BY p.name`,
     [who.id],
   );

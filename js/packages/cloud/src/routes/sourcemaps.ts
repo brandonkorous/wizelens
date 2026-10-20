@@ -2,6 +2,7 @@ import { answerResolve, checkUpload, MAX_SOURCEMAP_BYTES, normalizeRelease, pars
 import { readBody } from "@wizeworks/lens-hub/kit";
 import type { Ctx } from "../app.js";
 import { joinScope } from "../auth/join-scope.js";
+import { tenantScope } from "../telemetry/store.js";
 import type { ProjectAccess } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson } from "../http/http.js";
 import type { RateLimiter } from "../http/limiter.js";
@@ -37,8 +38,9 @@ export async function listProjectMaps(ctx: Ctx, limiter: RateLimiter): Promise<v
 async function mapsProject(ctx: Ctx, access: ProjectAccess, body: unknown): Promise<string> {
   const target = resolveTargetOf(body);
   if (!target?.spanId) return access.project.id;
-  for (const id of await joinScope(ctx.app.db, access)) {
-    const part = await ctx.app.telemetry.joinedTrace(id, [id], target.traceId);
+  const scope = await joinScope(ctx.app.db, access);
+  for (const id of scope.projects) {
+    const part = await ctx.app.telemetry.trace(tenantScope(scope.org, [id]), target.traceId);
     if (part?.spans.some((s) => s.spanId === target.spanId)) return id;
   }
   return access.project.id;

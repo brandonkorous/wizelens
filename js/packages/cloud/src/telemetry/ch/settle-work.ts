@@ -2,6 +2,7 @@
 import { compact, type FactOptions, factRows, FACT_TABLES, type FactTable, isLooseTraceId, mergeDeltas, type SettleDelta, settleDelta, storedOf, type Trace, traceFacts, withoutTop } from "@wizeworks/lens-core";
 import type { ChClient } from "./http.js";
 import type { Dirty } from "./queue.js";
+import { tenantScope } from "../store.js";
 import { loadTraces } from "./read.js";
 import { factKeepOf, factObjects, type Label, tombstones, writeDeltas } from "./settle-rows.js";
 
@@ -49,7 +50,7 @@ async function projectWork(ch: ChClient, t: ProjectTask): Promise<ProjectWork> {
   const { project, items, now, retentionMs, logRetentionMs, ver } = t;
   const keep = { ms: retentionMs, logMs: logRetentionMs };
   const ids = items.map((d) => d.traceId);
-  const [traces, stored] = await Promise.all([loadTraces(ch, [project], ids), storedContribs(ch, project, ids)]);
+  const [traces, stored] = await Promise.all([loadTraces(ch, tenantScope(t.org, [project]), ids), storedContribs(ch, project, ids)]);
   const raw = Object.fromEntries(FACT_TABLES.map((t) => [t, [] as unknown[][]])) as Record<FactTable, unknown[][]>;
   const work: ProjectWork = { facts: {} as Record<FactTable, Row[]>, deltas: [], states: [], resettled: [] };
   items.forEach((d, i) => {

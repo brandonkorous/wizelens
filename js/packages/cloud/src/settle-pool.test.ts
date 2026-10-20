@@ -35,9 +35,9 @@ describe.skipIf(!CH_URL)("ClickHouse settle in worker threads", () => {
     opened.push(t);
     await chWrite(t, traces);
     expect(await t.store.settle(SCENARIO_NOW + 10_000, { batch: 7, budgetMs: Number.POSITIVE_INFINITY })).toBe(traces.length);
-    expect(await t.store.settling(t.projectId)).toBeNull();
+    expect(await t.store.settling(t.scope)).toBeNull();
     // Workers write in any order, so between equally slow calls either trace may be the example; ch-scale checks it in order.
-    const diffs = await pageParity(t.store.executor(t.projectId, t.retentionMs), traces, RANGES, t.retentionMs);
+    const diffs = await pageParity(t.store.executor(t.scope, t.retentionMs), traces, RANGES, t.retentionMs);
     expect(diffs.filter((d) => !d.includes(".exampleTraceId:"))).toEqual([]);
   }, CH_LIMIT);
 });

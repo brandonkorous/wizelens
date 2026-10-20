@@ -6,6 +6,7 @@ import { CH_URL } from "./test/ch.js";
 import { setupOwner, startCloud } from "./test/cloud.js";
 import { until } from "./test/notify.js";
 import { span, T1 } from "./test/db.js";
+import { tenantScope } from "./telemetry/store.js";
 
 let cloud: Cloud;
 let agent: McpClient | undefined;
@@ -36,7 +37,7 @@ async function setup(projects: 1 | 2) {
   const ingest = (await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", projectIds: [projectId] })).body.token;
   const failed = span(T1, "1".repeat(16), { status: "error", statusMessage: "boom", startMs: Date.now() - 1000 });
   await fetch(`${url}/_wizelens/api/ingest`, { method: "POST", headers: { Authorization: `Bearer ${ingest}` }, body: JSON.stringify({ sender: { service: "api" }, spans: [failed] }) });
-  await until(async () => (await cloud.app.telemetry.traces({ projectId, limit: 1 })).length > 0, 10_000);
+  await until(async () => (await cloud.app.telemetry.traces({ scope: tenantScope(orgId, [projectId]), limit: 1 })).length > 0, 10_000);
   const read = (await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "read", name: "agent", projectIds })).body.token;
   return { url, read, projectId };
 }

@@ -1,7 +1,7 @@
 import { type Executor, PG_DIALECT, type SqlRunner, sqlExecutor } from "@wizeworks/lens-core";
 import type { Queryable } from "./db/db.js";
 import { getTrace } from "./repo/trace-read.js";
-import type { SettlingScope } from "./telemetry/store.js";
+import { type SettlingScope, sqlScope, type TenantScope, tenantScope } from "./telemetry/store.js";
 import { KEEP_DAYS } from "./repo/settings.js";
 
 const DAY_MS = 86_400_000;
@@ -15,22 +15,30 @@ export async function projectRetentionMs(q: Queryable, projectId: string, fallba
   return (row?.d ?? fallbackDays) * DAY_MS;
 }
 
-/** Page needs from a project's stats tables, optionally one environment. The 1 h tier keeps the organization's retention. */
-export function cloudExecutor(q: Queryable, projectId: string, retentionMs: number, env?: string): Executor {
+/** A project's own read scope, with its organization from Postgres. Throws for a project that is gone. */
+export async function projectScopeOf(q: Queryable, projectId: string): Promise<TenantScope> {
+  const [row] = await q.query<{ org_id: string }>("SELECT org_id FROM projects WHERE id = $1", [projectId]);
+  if (!row) throw new Error(`Project ${projectId} does not exist.`);
+  return tenantScope(row.org_id, [projectId]);
+}
+
+/** Page needs from the scope's stats tables, optionally one environment. The 1 h tier keeps the organization's retention. */
+export function cloudExecutor(q: Queryable, scope: TenantScope, retentionMs: number, env?: string): Executor {
   return sqlExecutor({
     d: PG_DIALECT,
     run: pgRunner(q),
-    scope: { project: projectId, env },
+    scope: sqlScope(scope, env),
     retentionMs,
-    loadTrace: async (id) => (await getTrace(q, projectId, id)) ?? null,
+    loadTrace: async (id) => (await getTrace(q, scope, id)) ?? null,
   });
 }
 
-/** Traces of a project still waiting for their stats, optionally only those last written at or before `before`. Null when none. */
-export async function cloudSettling(q: Queryable, projectId: string, o: SettlingScope = {}): Promise<number | null> {
+/** Traces of the scope still waiting for their stats, optionally only those last written at or before `before`. Null when none. */
+export async function cloudSettling(q: Queryable, s: TenantScope, o: SettlingScope = {}): Promise<number | null> {
   const [row] = await q.query<{ n: number }>(
-    "SELECT count(*)::int AS n FROM traces WHERE project_id = $1 AND settled_ms < updated_ms AND ($2::text = '' OR env = $2::text) AND ($3::float8 IS NULL OR updated_ms <= $3::float8)",
-    [projectId, o.env ?? "", o.before ?? null],
+    `SELECT count(*)::int AS n FROM traces WHERE org_id = $1 AND project_id = ANY($2) AND settled_ms < updated_ms
+     AND ($3::text = '' OR env = $3::text) AND ($4::float8 IS NULL OR updated_ms <= $4::float8)`,
+    [s.org, [...s.projects], o.env ?? "", o.before ?? null],
   );
   return row?.n || null;
 }

@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { buildTrace, type Trace, windowOf } from "@wizeworks/lens-core";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { searchParity } from "../../core/src/testing/search-parity.js";
-import { CH_LIMIT, CH_URL, type ChTest, chSettle, chTest, chWrite, testOrgOf } from "./test/ch.js";
+import { CH_LIMIT, CH_URL, type ChTest, chScope, chSettle, chTest, chWrite, testOrgOf } from "./test/ch.js";
 import { parity } from "./test/scale.js";
 import { chClient } from "./telemetry/ch/http.js";
 import { openClickHouse } from "./telemetry/ch/store.js";
@@ -35,9 +35,9 @@ describe.skipIf(!CH_URL)("ClickHouse store over time", () => {
     const rest = half(traces, true).filter((x) => x.spans.length + x.logs.length > 0);
     await chWrite(t, rest, SCENARIO_NOW + 20_000);
     expect(await chSettle(t, SCENARIO_NOW + 40_000)).toBe(rest.length);
-    expect(await parity({ ex: t.store.executor(t.projectId, t.retentionMs), retentionMs: t.retentionMs } as never, traces)).toEqual([]);
+    expect(await parity({ ex: t.store.executor(t.scope, t.retentionMs), retentionMs: t.retentionMs } as never, traces)).toEqual([]);
     const windows = [windowOf("30d", SCENARIO_NOW + 40_000)];
-    expect(await searchParity((q) => t.store.search(t.projectId, q), traces, windows, "prod")).toEqual([]);
+    expect(await searchParity((q) => t.store.search(t.scope, q), traces, windows, "prod")).toEqual([]);
   }, CH_LIMIT);
 
   it("clears a project's telemetry", async () => {
@@ -46,9 +46,9 @@ describe.skipIf(!CH_URL)("ClickHouse store over time", () => {
     await chWrite(t, traces.slice(0, 20));
     await chSettle(t);
     await t.store.clearProject(t.projectId);
-    await until(async () => (await t.store.counts(t.projectId)).traces === 0);
-    const page = await t.store.search(t.projectId, { kind: "spans", node: null, window: windowOf("30d", SCENARIO_NOW), limit: 10 });
-    await until(async () => (await t.store.search(t.projectId, { kind: "spans", node: null, window: windowOf("30d", SCENARIO_NOW), limit: 10 })).items.length === 0);
+    await until(async () => (await t.store.counts(t.scope)).traces === 0);
+    const page = await t.store.search(t.scope, { kind: "spans", node: null, window: windowOf("30d", SCENARIO_NOW), limit: 10 });
+    await until(async () => (await t.store.search(t.scope, { kind: "spans", node: null, window: windowOf("30d", SCENARIO_NOW), limit: 10 })).items.length === 0);
     expect(page.kind).toBe("spans");
   }, CH_LIMIT);
 
@@ -56,11 +56,11 @@ describe.skipIf(!CH_URL)("ClickHouse store over time", () => {
     const name = `wl_test_ttl_${Date.now().toString(36)}`;
     const url = `${CH_URL.replace(/\/$/, "")}/${name}`;
     const store = await openClickHouse({ url, retentionOf: async (ids) => new Map(ids.map((id) => [id, 1])), orgOf: testOrgOf, defaultRetentionDays: 1, now: Date.now });
-    opened.push({ store, projectId: "p", retentionMs: 0, url, drop: () => chClient({ url: url.replace(name, "default") }).command(`DROP DATABASE IF EXISTS ${name}`) });
+    opened.push({ store, projectId: "p", scope: chScope("p"), retentionMs: 0, url, drop: () => chClient({ url: url.replace(name, "default") }).command(`DROP DATABASE IF EXISTS ${name}`) });
     const shift = (t: Trace, by: number) => buildTrace(t.traceId, t.spans.map((s) => ({ ...s, startMs: s.startMs + by })), [], []);
     const [old, fresh] = [shift(traces[0]!, Date.now() - 3 * 86_400_000 - SCENARIO_NOW), shift(traces[1]!, Date.now() - SCENARIO_NOW)];
     for (const tr of [old, fresh]) await store.write("p", { sender: { service: "api" }, via: "addon", spans: tr.spans, logs: [], remotes: [] }, Date.now());
-    expect(await store.trace("p", old.traceId)).toBeUndefined();
-    expect((await store.trace("p", fresh.traceId))?.spanCount).toBe(fresh.spanCount);
+    expect(await store.trace(chScope("p"), old.traceId)).toBeUndefined();
+    expect((await store.trace(chScope("p"), fresh.traceId))?.spanCount).toBe(fresh.spanCount);
   }, CH_LIMIT);
 });

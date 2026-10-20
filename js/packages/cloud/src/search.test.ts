@@ -18,7 +18,7 @@ afterAll(() => s.db.close());
 
 describe("cloud search", () => {
   it("pages through the same results as the memory runner", async () => {
-    const src = { d: PG_DIALECT, run: pgRunner(s.db), scope: { project: s.projectId } };
+    const src = { d: PG_DIALECT, run: pgRunner(s.db), scope: { org: s.orgId, projects: [s.projectId] } };
     const windows = [windowOf("30d", SCENARIO_NOW), windowOf("1h", SCENARIO_NOW)];
     expect(await searchParity((q) => searchSql(src, q), traces, windows, "prod")).toEqual([]);
     expect(await suggestParity((r) => suggestSql(src, r), traces, windows[0]!)).toEqual([]);
@@ -26,7 +26,7 @@ describe("cloud search", () => {
   }, 120_000);
 
   it("never reads another project's rows", async () => {
-    const src = { d: PG_DIALECT, run: pgRunner(s.db), scope: { project: "other" } };
+    const src = { d: PG_DIALECT, run: pgRunner(s.db), scope: { org: s.orgId, projects: ["other"] } };
     const page = await searchSql(src, { kind: "spans", node: null, window: windowOf("30d", SCENARIO_NOW), limit: 50 });
     expect(page.items).toEqual([]);
   });

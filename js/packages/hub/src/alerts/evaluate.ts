@@ -41,7 +41,7 @@ export interface HubAlertDeps {
 /** The OpenTelemetry metric of a rule over its window, from the metric rollups, and its unit. */
 function measureMetric(store: HubStore, rule: AlertRule, now: number): { value: number | null; unit: string } {
   const at = alignNow(now);
-  const scope = { project: rule.projectId || undefined, env: rule.env || undefined, service: rule.metricService || undefined };
+  const scope = { projects: rule.projectId ? [rule.projectId] : undefined, env: rule.env || undefined, service: rule.metricService || undefined };
   const steps = metricAlertSteps("sqlite", scope, rule.metricName, { from: at - rule.windowMs, to: at }, at);
   const data = runMetricSync(steps, (q) => store.db.prepare(q.sql).all(...(q.args as SQLInputValue[])) as MetricRows);
   const stat = rule.metricStat || "avg";
