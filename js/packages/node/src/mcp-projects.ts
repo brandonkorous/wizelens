@@ -30,12 +30,15 @@ export function pickProject(ps: readonly McpProject[], wanted: string | undefine
 
 /** Several projects: each call names one with the `project` argument. */
 export function projectsSource(m: McpProjects): Source {
-  const project = z.string().max(200).optional().describe("Project id or name, from list_projects. Needed when the key reads more than one project.");
+  const together = m.all && m.projects.length > 1;
+  const note = together ? "Leave it out to read every project together; services show as \"service · project\"." : "Needed when the key reads more than one project.";
+  const project = z.string().max(200).optional().describe(`Project id or name, from list_projects. ${note}`);
   return {
     defaults: { slowQueryMs: m.slowQueryMs, nPlusOneThreshold: m.nPlusOneThreshold, metrics: m.metrics, metricRanges: m.metricRanges, overview: !!m.overview, alerts: !!m.alerts },
     arg: { project },
     open: async (tool, args) => {
-      const data = await m.open(pickProject(m.projects, (args as { project?: string }).project).id);
+      const wanted = (args as { project?: string }).project;
+      const data = !wanted && together ? await m.all!() : await m.open(pickProject(m.projects, wanted).id);
       data.audit(auditLine(data.service, tool, args));
       return data;
     },

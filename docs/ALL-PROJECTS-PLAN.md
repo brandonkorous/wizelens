@@ -26,7 +26,7 @@ The rules of `GAPS-PLAN.md` ("Rules for every phase") still hold.
 | E | Data routes read many projects | L | Done |
 | F | Per-project features, read across | M | Done |
 | G | The dashboard: org picker and "All projects" | L | Done |
-| H | MCP, docs, and the site | S | |
+| H | MCP, docs, and the site | S | Done |
 
 ## Three locks against a cross-org read
 
@@ -146,10 +146,10 @@ fixed per project and safe to stamp at ingest.
 
 ## Phase H — MCP, docs, and the site
 
-1. **MCP.** The cloud MCP reads the multi-project scope directly. `search`, `get_errors`, `list_traces`, and the
-   others take no `project` and cover the reader's projects, like `get_overview` does today
-   (`node/src/mcp-projects.ts:19-29` stops throwing).
-2. **Contract.** `docs/CONTRACT.md` "Traces across projects" (`:1128-1139`) and the `?project=` routes (`:945`) cover
-   `project=all`, the org list routes, and the three locks.
-3. **Site.** A docs section and a product page line for the single pane of glass, with a live demo per
-   the marketing site style.
+1. **MCP.** A reader with several projects reads them all together when a tool names no `project` (`McpProjects.all`,
+   `routes/mcp-all.ts`): one scope with labels, alerts and tags of every project. `get_overview`, `get_timeseries`,
+   `group_requests`, and `list_problems` still report one entry per project.
+2. **Contract.** `docs/CONTRACT.md` has an "All projects" section (the scope, the three locks, labels, per-project
+   state) and the new routes.
+3. **Site.** The cloud page has an "Every project, one screen." tile with a live demo (`ProjectsArt`), and the cloud
+   docs an "All projects" section.

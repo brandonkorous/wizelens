@@ -57,15 +57,16 @@ it("an MCP client connects with a many-project read key and ?project=", async ()
   expect(res.content[0]!.text).toContain(T1);
 });
 
-it("a many-project read key connects without ?project= and picks a project per call", async () => {
+it("a many-project read key connects without ?project=, reads every project together, or picks one per call", async () => {
   const { url, read, projectId } = await setup(2);
   const c = await connect(`${url}/_wizelens/mcp`, read);
   expect(c.getInstructions()).toContain("list_projects");
   const listed = (await c.callTool({ name: "list_projects", arguments: {} })) as { content: { text: string }[] };
   expect(JSON.parse(listed.content[0]!.text).map((p: { name: string }) => p.name)).toContain("Second");
-  const missing = (await c.callTool({ name: "list_traces", arguments: {} })) as { isError?: boolean; content: { text: string }[] };
-  expect(missing.isError).toBe(true);
-  expect(missing.content[0]!.text).toContain("Add the project argument");
+  // No project: every project the key reads, together.
+  const together = (await c.callTool({ name: "list_traces", arguments: {} })) as { isError?: boolean; content: { text: string }[] };
+  expect(together.isError).toBeFalsy();
+  expect(together.content[0]!.text).toContain(T1);
   const byId = (await c.callTool({ name: "list_traces", arguments: { project: projectId } })) as { content: { text: string }[] };
   expect(byId.content[0]!.text).toContain(T1);
   const byName = (await c.callTool({ name: "list_traces", arguments: { project: "second" } })) as { isError?: boolean; content: { text: string }[] };

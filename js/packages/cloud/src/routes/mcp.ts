@@ -12,7 +12,8 @@ import type { Router } from "../http/router.js";
 import { listEvents } from "../repo/alert-events.js";
 import { listRules } from "../repo/alerts.js";
 import { audit } from "../repo/audit.js";
-import { keyAllows, keyByToken, projectInOrg } from "../repo/projects.js";
+import { keyAllows, keyByToken, listProjects, projectInOrg } from "../repo/projects.js";
+import { allSource } from "./mcp-all.js";
 import { projectTags } from "../repo/tags.js";
 import { projectMetrics } from "./metrics.js";
 import { projectPage } from "./models.js";
@@ -72,7 +73,7 @@ async function accessOf(ctx: Ctx, r: Reader, projectId: string): Promise<Project
 /** Several projects: the tools take a `project` argument, and list_projects names them. */
 async function projectsSource(ctx: Ctx, r: Reader, writes: Writes): Promise<McpProjects> {
   const { db } = ctx.app;
-  const projects = await db.query<{ id: string; name: string }>("SELECT id, name FROM projects WHERE org_id = $1 AND id = ANY($2) ORDER BY name", [r.orgId, [...r.projectIds]]);
+  const projects = (await listProjects(db, r.orgId)).filter((p) => r.projectIds.includes(p.id));
   return {
     service: "wizelens-cloud",
     version: ctx.app.version,
@@ -83,6 +84,7 @@ async function projectsSource(ctx: Ctx, r: Reader, writes: Writes): Promise<McpP
     alerts: true,
     projects,
     open: async (id) => projectSource(ctx, await accessOf(ctx, r, id), r, writes),
+    all: () => allSource(ctx, r, projects, writes),
     audit: (line) => void writes.push(audit(db, r.orgId, r.actor, "mcp.call", { line, ...(r.via ? { app: r.via } : {}) }, ctx.app.config.now())),
   };
 }

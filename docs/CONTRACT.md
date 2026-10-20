@@ -942,10 +942,13 @@ retention, and the audit log.
 | POST / DELETE | `api/orgs/{org}/projects[/{id}]`, `…/{id}/clear` (deletes data only) | Admin |
 | POST / DELETE | `api/orgs/{org}/keys[/{id}]` | Admin. The secret is in the answer once |
 | GET | `api/orgs/{org}/audit?before=` | Admin |
-| GET | `api/info`, `api/traces`, `api/traces/{id}`, `api/services` — all with `?project=` | Member or read key. `api/traces/{id}` joins other projects (see "Traces across projects") |
+| GET | `api/info`, `api/traces`, `api/traces/{id}`, `api/services` — all with `?project=` (or `?project=all&org=`) | Member or read key. `api/traces/{id}` joins other projects (see "Traces across projects"); `project=all` reads every project the caller may (see "All projects") |
 | PATCH | `api/orgs/{org}/projects/{p}` | Admin. `{ logRetentionDays }`: 1 to 400, or null to follow the organization. Answers the project (with `logRetentionDays`) and writes `project.update` to the audit log |
 | POST | `api/projects/{p}/services/forget` | Admin. Forgets offline hosts; each service keeps its newest host. Answers `{ removed }` and writes `service.forget` to the audit log |
-| GET | `api/models/{page}?project=&range=&env=&…` | Member or read key. See "Page models". `metrics` is a page too |
+| GET | `api/models/{page}?project=&range=&env=&…` | Member or read key. See "Page models". `metrics` is a page too. `project=all&org=`: every project the caller may read (see "All projects") |
+| GET | `api/orgs/{org}/alerts`, `/issues`, `/slos`, `/uptime`, `/shares` | Member or read key: every readable project's rows, each with `projectId` and `project` (its label). Changes stay on `api/projects/{project}/…` |
+| POST | `api/orgs/{org}/issues` | Member who can write: a labeled error group's change lands in its project; an insight's in every project the caller may write |
+| GET / POST / PATCH / DELETE | `api/orgs/{org}/saved[/{id}]` | The list holds the organization's own items (`projectId` "") and every readable project's; only the organization's own change here (member who can write; owner, or admin to delete a shared one) |
 | GET / POST / PATCH / DELETE | `api/projects/{p}/alerts[/{id}]`, `…/{id}/test` | Read: viewer; change: member |
 | POST / GET / DELETE | `api/projects/{p}/shares[/{id}]` | Read: viewer; change: member |
 | GET / POST | `api/projects/{p}/uptime` | Read: viewer or read key (`UptimeList`); add: member (audited `uptime.create`) |
@@ -960,7 +963,7 @@ retention, and the audit log.
 | POST | `api/ingest`, `/v1/traces`, `/v1/logs`, `/v1/metrics` | Ingest key |
 | POST / GET | `api/sourcemaps?release=&file=` | Ingest key: upload one map to the key's project, or list them (see "Source maps") |
 | POST | `api/sourcemaps/resolve?project=` | Member or read key: `{ stack, release }` → `{ frames }` |
-| POST | `mcp?project=` | Read key or connected app (OAuth access token). Without `?project=`, a reader with one project reads it; one with several adds `list_projects` and a `project` argument (id or name) on every tool, and `get_overview` without it reports on all |
+| POST | `mcp?project=` | Read key or connected app (OAuth access token). Without `?project=`, a reader with one project reads it; one with several adds `list_projects` and a `project` argument (id or name) on every tool. A tool called without `project` reads every project together (services as "service · project"); `get_overview`, `get_timeseries`, `group_requests`, and `list_problems` report one entry per project |
 | GET | `/.well-known/oauth-protected-resource[/_wizelens/mcp]`, `/.well-known/oauth-authorization-server/_wizelens/api/auth` | Anyone (CORS open). OAuth metadata for MCP clients |
 | * | `api/auth/oauth2/*` | Better Auth's OAuth provider: `authorize`, `token`, `register`, `revoke` (apps post without the dashboard header), `consent`, `continue`, `public-client` |
 | POST | `api/auth/wizelens/oauth-grant` | Signed in within 15 minutes: `{ organizationId, allProjects, projectIds, oauth_query }` from the consent page. Answers `{ id }` |
@@ -1134,7 +1137,30 @@ answers the asked project's part plus the parts of the same trace id in the othe
 - **A person** sees every project of the organization that a project role does not hide (`none`). **A read key** or **connected app** sees only its own projects (checked again against the
   organization on every call, so a key row that names a foreign project still gets nothing from it).
 - **404** when the asked project has no part of the trace, so a project cannot be used to probe others.
-- `join=false` returns the asked project's part only. Lists, page models, stats, and alerts stay per project.
+- `join=false` returns the asked project's part only. With `project=all`, every part in the caller's projects.
+
+### All projects
+
+The cloud reads every project of one organization at once with `?project=all&org=<organization id>` on the data
+routes (traces, one trace, services, page models, metrics, hosts, Kubernetes, search, suggest, tags, changes, source
+map resolve), and `api/orgs/{org}/…` for alerts, issues, SLOs, uptime, shares, and saved items.
+
+- **Which projects.** A person reads the organization's projects a project role does not hide; a read key or
+  connected app its own. 404 when that leaves none, or the caller is not in the organization.
+- **One organization, three locks.** Every telemetry row carries its organization (`org_id`). Every read names the
+  organization and its project list, and the code refuses one without both. Reads run as a reader the database holds
+  to the named organization: ClickHouse row policies on `getSetting('SQL_wl_org')`, Postgres row level security on
+  `wl.org`. A read without an organization fails; a foreign project id reads nothing.
+- **Same-named services stay apart.** With more than one project, rollup rows named by a service (services,
+  endpoints, edges, error groups, log groups, releases, per-service kinds) group by project and show as
+  "api · Shop" (the project's name, or "name (slug)" when two share one). Other rows (levels, layers, routes,
+  queries) add up across projects, as environments do. A filter that names a labeled service reads its project only.
+  List and search rows carry `project` and label their services.
+- **Per-project state.** Issue states and Apdex targets key on the labels; tags of every project apply (a name two
+  use keeps the first). Retention is the longest of the projects; thresholds are theirs when they agree, else the
+  cloud's.
+- **One project only.** Settings, tag rule changes, source map uploads, Apdex targets, the status page, and share
+  links belong to one project.
 - MCP `get_trace` joins the same way for its read key or connected app (`federate: false`: the asked project only).
 
 ### Sharing
