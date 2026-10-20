@@ -6,7 +6,7 @@ import { SpanPanel } from "./SpanPanel";
 import { SqlTab } from "./SqlTab";
 import { Waterfall } from "./Waterfall";
 
-export type Tab = Exclude<TraceView, "insights">;
+export type Tab = Exclude<TraceView, "insights" | "security">;
 
 export interface TraceTabsProps {
   trace: Trace;

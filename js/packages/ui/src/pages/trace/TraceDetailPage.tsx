@@ -12,14 +12,21 @@ import { TagThisTrace, TraceTags } from "./TraceTags";
 import { type Tab, TraceTabs } from "./TraceTabs";
 import { useTrace } from "./useTrace";
 
-const tabOfFinding = (f: Finding): Tab =>
-  f.kind === "n+1-http" ? "http" : f.kind === "error" ? "errors" : f.kind === "n+1-db" || f.kind === "duplicate-query" || f.kind === "slow-query" ? "sql" : "timeline";
+const SQL_KINDS = new Set(["n+1-db", "duplicate-query", "slow-query", "sql-injection"]);
+const HTTP_KINDS = new Set(["n+1-http", "plain-http", "ssrf"]);
+
+const tabOfFinding = (f: Finding): Tab => (HTTP_KINDS.has(f.kind) ? "http" : f.kind === "error" ? "errors" : SQL_KINDS.has(f.kind) ? "sql" : "timeline");
+
+/** Views that scroll to a part above the tabs, not a tab. */
+const SCROLL_VIEWS: Partial<Record<TraceView, string>> = { insights: "wl-insights", security: "wl-security" };
+const tabView = (view: TraceView | undefined): Tab | null => (view && !SCROLL_VIEWS[view] ? (view as Tab) : null);
 
 /** Tab state that follows the link (`#/traces/<id>/sql`). With `linked`, the URL follows the open tab. */
 function useTab(traceId: string, view: TraceView | undefined, linked: boolean): [Tab, (t: Tab) => void] {
-  const [tab, setTabState] = useState<Tab>(view && view !== "insights" ? view : "timeline");
+  const [tab, setTabState] = useState<Tab>(tabView(view) ?? "timeline");
   useEffect(() => {
-    if (view && view !== "insights") setTabState(view);
+    const t = tabView(view);
+    if (t) setTabState(t);
   }, [view]);
   const setTab = (t: Tab) => {
     setTabState(t);
@@ -44,7 +51,8 @@ export function TraceBody({ trace, view, loading = false, onRefresh, shared = fa
   const [selected, setSelected] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<Set<string>>(new Set());
   useEffect(() => {
-    if (view === "insights") document.getElementById("wl-insights")?.scrollIntoView({ block: "start" });
+    const id = view ? SCROLL_VIEWS[view] : undefined;
+    if (id) document.getElementById(id)?.scrollIntoView({ block: "start" });
   }, [view]);
   // The host's own thresholds, so the trace page finds what its Insights page finds.
   const analysis = useData().info?.analysis;

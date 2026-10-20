@@ -1,5 +1,5 @@
 import { type ReactNode, useMemo } from "react";
-import { analyzeTrace, type Finding, type FindingKind, type Trace, type TraceView, traceTiming } from "@wizeworks/lens-core";
+import { analyzeTrace, type Finding, type FindingKind, SECURITY_LABELS, type Trace, type TraceView, traceTiming } from "@wizeworks/lens-core";
 import { fmtMs, type PageStats, pct, type RecordedRequest, type Recorder, type RequestView } from "@wizeworks/lens-browser";
 import { DashLink, dashboardLink, NoServerData, PanelBar, StackBar, statusPill, useTrace } from "./panel-parts.js";
 import { Waterfall, waterfallRows } from "./waterfall.js";
@@ -11,6 +11,7 @@ const FINDING_LABEL: Record<FindingKind, string> = {
   "duplicate-query": "Duplicate",
   "slow-query": "Slow query",
   "db-wait": "Database wait",
+  ...SECURITY_LABELS,
 };
 
 // Rows of the short timeline and insights shown. The dashboard shows them all.

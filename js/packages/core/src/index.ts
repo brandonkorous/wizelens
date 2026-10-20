@@ -28,3 +28,4 @@ export * from "./infra/index.js";
 export * from "./uptime/index.js";
 export * from "./sourcemaps/index.js";
 export * from "./tags/index.js";
+export * from "./security/index.js";

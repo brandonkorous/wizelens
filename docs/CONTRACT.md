@@ -45,7 +45,7 @@ All `api/*` endpoints return JSON (camelCase) and send `Access-Control-Allow-Ori
 
 | Method + path | Returns |
 |---|---|
-| `GET /` and static files | Dashboard UI (from `@wizeworks/lens-ui` build). Hash routing: `#/`, `#/requests`, `#/traces`, `#/traces/{traceId}[/{view}]`, `#/database`, `#/rendering`, `#/errors`, `#/logs`, `#/services`, `#/insights`, `#/settings[/{section}]` (`tags` is one section). `{view}` is one of `timeline`, `sql`, `http`, `logs`, `errors`, `insights`. |
+| `GET /` and static files | Dashboard UI (from `@wizeworks/lens-ui` build). Hash routing: `#/`, `#/requests`, `#/traces`, `#/traces/{traceId}[/{view}]`, `#/database`, `#/rendering`, `#/errors`, `#/logs`, `#/services`, `#/insights`, `#/settings[/{section}]` (`tags` is one section). `{view}` is one of `timeline`, `sql`, `http`, `messages`, `logs`, `errors`, `insights`, `security`. |
 | `GET api/info` | `ServiceInfo` (see Types) |
 | `GET api/traces?limit=50&session={id}` | `TraceSummary[]`, newest first. With `session`, only traces that have a span whose `wizelens.browser.session` equals `{id}`. Loose batches (lines outside a request) are left out of summaries on every host; `full=true` includes them. |
 | `GET api/traces?full=true&limit=1000&since={ms}` | `Trace[]` from this service only (no federation), newest first. `limit` max 5000. With `since`, only traces whose last activity (`startMs + durationMs`) is at or after `{ms}`. The dashboard uses this for its charts and merges the results of every service it knows. |
@@ -379,7 +379,7 @@ Each kind has one OWASP Top 10:2025 category (`OWASP_OF`). Findings name what wa
 - **The request** is the entry server span (`entryServerSpan`). Its response headers are known when it has any
   `http.response.header.*` attribute; rules that read them skip a request without. It is **HTTPS** when `url.scheme` is
   `https` or the first `x-forwarded-proto` value is `https`.
-- **Inputs** of the request: `url.query` values (decoded), path values (each `{name}` or `:name` segment of
+- **Inputs** of the request: `url.query` values (decoded, `+` is a space), path values (each `{name}` or `:name` segment of
   `http.route` against the same segment of `url.path`, decoded), and the string and number leaves of
   `wizelens.request.body` when it is complete JSON (depth 5, 100 values). A value counts when it is 3 to 200 characters,
   or 2 or more digits, and is not a redaction marker.
@@ -397,22 +397,24 @@ Each kind has one OWASP Top 10:2025 category (`OWASP_OF`). Findings name what wa
   is redacted whole or has `Max-Age=0`. Missing `Secure` over HTTPS or with `SameSite=None`; missing `HttpOnly` when the
   name matches `sess|sid|auth|token|jwt|login|remember|identity|\.aspnetcore\.`. Shape `cookie {name}: missing HttpOnly, Secure`.
 - **`secret-in-url`** (warning): the request's `url.query`, or an `http.client` span's `url.full` query, has a key that is
-  a default redact key. Shape: `{endpoint}?{key}={}` for the request, `httpShape` for a call.
+  a default redact key. Shape: `{method} {route or path}?{key}={}` with only those keys for the request, `httpShape` for a call.
 - **`plain-http`** (warning): an `http.client` span to `http://` (`url.full`, else `url.scheme`) whose host is public:
-  not `localhost`, a loopback, private, or link-local address, a name without a dot, or a name ending in `.local`,
-  `.internal`, `.svc`, or `.cluster.local`. Shape `httpShape`.
+  not `localhost`, `::1`, an IPv4 in `0.`, `10.`, `127.`, `169.254.`, `172.16-31.`, or `192.168.`, an IPv6 in `fc`, `fd`,
+  or `fe80:`, a name without a dot, or a name ending in `.local`, `.internal`, `.svc`, `.cluster.local`, or `.localhost`.
+  Shape `httpShape`.
 - **`ssrf`** (error): an `http.client` span whose host equals an input, or whose `url.full` starts with an input, or
   whose host equals the host of an input that is a URL. Only inputs with a `.`, `:`, or `/` count. Shape `httpShape`.
 - **`stack-exposed`** (warning): a 4xx or 5xx answer whose `wizelens.response.body` holds a stack trace
   (`STACK_RE`: Python "Traceback (most recent call last)", Go "goroutine N [", Java `.java:N)`, .NET `:line N` or
   `at Name(`, Node `at name (file:N:N)`, PHP "Stack trace:" + "#0"). Shape: the endpoint.
-- **`exposed-path`** (error): a 2xx answer to a sensitive path (`EXPOSED_PATHS`: `.env`, `.git/`, `.svn/`, `.aws/`,
+- **`exposed-path`** (error): a 2xx answer to a sensitive path (`EXPOSED_PATHS`: `.env` and `.env.*`, `.git/`, `.svn/`, `.aws/`,
   `.ds_store`, `web.config`, `phpinfo.php`, `server-status`, `elmah.axd`, `trace.axd`, `debug/pprof`, and the
   `actuator` endpoints `env`, `heapdump`, `threaddump`, `configprops`, `mappings`, `beans`, `loggers`, `shutdown`,
   `jolokia`). Shape: the path, lower case.
 - **`open-admin`** (warning): a 2xx answer to a path with an `admin`, `internal`, or `management` segment (not a
-  sign-in path) that is not an HTML GET, and has no `enduser.id` in the trace and no `authorization`, `cookie`,
-  `x-api-key`, or `api-key` request header. Shape: the endpoint.
+  sign-in path: `login`, `signin`, `sign-in`, `logon`), with no `enduser.id` in the trace and no `authorization`,
+  `cookie`, `x-api-key`, or `api-key` request header. A GET counts only when its headers are known and it did not answer
+  `text/html` (an app shell). Shape: the endpoint.
 - **`secret-leak`**: redaction markers (see "Redaction") in log lines (`in logs`), span attributes and events
   (`in span data`), or `wizelens.response.body` (`in a response`; not `jwt`, which login answers send). Error, except
   `jwt` (warning). Shape `{label} {where}`, for example `Card number in logs`; count the markers.
