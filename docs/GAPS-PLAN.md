@@ -6,6 +6,8 @@ build order: bugs first, then the shared pieces (filters, URL state) that later 
 Phases 14 to 20 were added the same day from a comparison with Datadog, Dynatrace, and New Relic: the gaps that
 APM buyers expect and that phases 0 to 13 do not cover.
 
+All 21 phases are done. The next gaps are in `GAPS-PLAN-2.md` (phases 21 to 47).
+
 ## Status
 
 | Phase | What | Size | State |
