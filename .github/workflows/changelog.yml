@@ -1,0 +1,28 @@
+name: Changelog
+
+# Runs again when a label changes, so "no changelog" takes effect at once.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  changelog:
+    name: Changelog is updated
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: A product change adds a line to CHANGELOG.md
+        run: node scripts/check-changelog.mjs
+        env:
+          CHANGELOG_BASE: origin/${{ github.base_ref }}
+          CHANGELOG_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
