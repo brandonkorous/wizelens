@@ -26,9 +26,18 @@ maps each one to the OWASP Top 10:2025 (docs/SECURITY-PLAN.md).
   failed requests, error groups, problems, alerts, health, and search all leave it out; its status stays, so `status:5xx`
   still finds it. An exception inside it still counts. The browser package reads the header too, and the Node add-on
   exposes it to the page. The samplers in Go, Java, and Python do not keep a trace only for an expected error status.
+- **A page for every stack at wizelens.com.** Vue, Angular, Svelte, Java, Python, and Go join Node, .NET, and React, in the
+  menu, the footer, the sitemap, share images, `llms.txt`, the home page, and the install tabs. The Java and Python docs say
+  how to install until the packages are on Maven Central and PyPI.
 
 ### Changed
 
+- **A calmer menu.** The dashboard menu is in sections (Investigate, Infrastructure, Analyze, Monitor, Manage) under small
+  headings. Click a heading to fold it; the menu remembers, and a folded section still shows the page you are on. On a
+  phone the bar has Overview, Problems, Requests, Errors, and **More**, a drawer with every other page and your saved views.
+- **Docs and version at the foot of the menu.** The foot shows a Docs link and the version of your hub, cloud, or add-on,
+  which opens this changelog. It replaces the WizeWorks tagline.
+- **The Security page** shows the package check line inside the OWASP panel, under the tiles.
 - **Redaction keeps the evidence and hides more.** `Set-Cookie` keeps each cookie's name and flags, URL queries keep their
   keys (`token=[redacted]`; Node, the browser, Python, Java, and Go now redact query values too), and JWTs, cloud and API
   keys, private keys, and card numbers inside any value or log line become a typed marker such as `[redacted:jwt]`
@@ -41,6 +50,8 @@ maps each one to the OWASP Top 10:2025 (docs/SECURITY-PLAN.md).
 - **`get_timeseries` gives whole counts.** Over a window where one stored bucket spans two points, such as 24h in
   48 buckets, a point could say 10.4 requests. Each point now has a whole number of requests and errors, never more
   errors than requests, and the points add up to the totals.
+- **Cloud migration 24 on a managed Postgres.** An app user that may not create roles no longer stops the migration: the
+  admin makes the `wl_reader` role first (`deploy/k8s/jobs/db-role.sql`), and the migration says so if it is missing.
 
 ## [0.3.0-alpha.6] — Who your users are
 
