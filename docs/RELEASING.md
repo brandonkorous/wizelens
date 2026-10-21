@@ -17,6 +17,19 @@ for `v*` (`scripts/check-version.mjs`), `python/pyproject.toml` for `python/v*`,
 git tag python/v0.1.0a1 && git push origin python/v0.1.0a1
 ```
 
+## A `v*` release, step by step
+
+1. Every pull request that changes the product adds a line under `## [Unreleased] — <title>` in `CHANGELOG.md`
+   (the `Changelog` check fails without one, unless the pull request has the label `no changelog`).
+2. On a branch from `main`, run `pnpm release:prep 0.3.0-alpha.8`. It sets that version in every `package.json`,
+   `dotnet/Directory.Build.props`, and the inject chart, renames `[Unreleased]` to `[0.3.0-alpha.8]` with its title, and
+   adds the release to the changelog page's share image text.
+3. Merge that pull request, then tag the merge on `main`: `git tag v0.3.0-alpha.8 && git push origin v0.3.0-alpha.8`.
+
+The release stops before it publishes when `CHANGELOG.md` has no section for the tag's version, so the site never
+calls a shipped release "Unreleased". The site and the cloud deploy from `main` on every merge, so work under
+"Unreleased" is already live on the cloud; the tag is what puts it in the packages.
+
 Python versions follow PEP 440 (`0.1.0a1`, `0.1.0`), Java versions SemVer (`0.1.0-alpha.1`), and Go tags `vMAJOR.MINOR.PATCH`.
 A version with a pre-release part makes a GitHub pre-release.
 

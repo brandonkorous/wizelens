@@ -2,7 +2,7 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] — Security from real traffic
+## [0.3.0-alpha.7] — Security from real traffic
 
 A Security page finds the risks that slip past pull requests and tests, from the traffic your app really serves, and
 maps each one to the OWASP Top 10:2025 (docs/SECURITY-PLAN.md).
