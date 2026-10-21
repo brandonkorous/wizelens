@@ -26,6 +26,15 @@ the dashboard and API.
 Health checks (kube-probe, GoogleHC, ELB-HealthChecker, and Google uptime checks) and CORS preflights are not traced, so
 they never bury real visits.
 
+## The HUD on your pages
+
+In development, every full HTML page your app answers gets [the HUD](/docs/hud/): Razor Pages, MVC views, and static
+`.html` files. There is no code to add. The add-on serves the browser script at `/_wizelens/wizelens.js` and puts its tag
+before the page's last `</body>`. The page then traces its own calls too.
+
+With `UseResponseCompression()` before `UseWizeLens()`, pages get the tag and stay compressed. After it, page loads come
+back plain so the tag fits. Turn it off with `o.Hud = false` or `WIZELENS_HUD=false`.
+
 ## Databases
 
 | You use | Do this |

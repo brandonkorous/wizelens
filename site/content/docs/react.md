@@ -29,7 +29,7 @@ everything else still works.
 - Page views with TTFB, SSR, FCP, LCP, INP, and CLS, plus hydration, slow images, and React components that render too often.
 - Browser errors and browser `console` lines (at most 500 per page), each in its page view's trace. Minified stacks map back to
   your source with [source maps](/docs/source-maps/).
-- [The HUD](/docs/hud/) in the corner of your page.
+- [The HUD](/docs/hud/) in the corner of your page: the same HUD every stack shows.
 
 ![The HUD card in the corner of a page](/shots/hud-card.png)
 
@@ -53,7 +53,7 @@ Calls answered by another WizeLens server on the page's origin work the same way
 |---|---|---|
 | `endpoint` | `/_wizelens` | WizeLens base path or URL on your API. |
 | `enabled` | `true` | Pass `import.meta.env.DEV` (or similar). |
-| `hud` | `true` | Show the in-page HUD. |
+| `hud` | `true` | Show the in-page HUD. `false` also stops reading traces back, for a send-only server. |
 | `propagateTo` | same origin | Which requests get a `traceparent` header. |
 | `release` | from the build plugin | The web app's version, kept on browser spans for release markers and version compares, and so stacks find the right [source maps](/docs/source-maps/). |
 | `slowMs` | `500` | Requests at or over this many ms show as "warning" (orange). |

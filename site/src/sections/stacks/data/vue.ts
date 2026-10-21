@@ -37,9 +37,9 @@ export const VUE: Stack = {
   captures: [
     { title: "Requests", items: ["traceparent on every fetch and XHR", "Same origin, or what you allow", "Joins the server trace"] },
     { title: "Page views", items: ["TTFB, FCP, LCP, INP, CLS", "Slow and oversized images", "One per finished vue-router navigation"] },
-    { title: "Errors", items: ["Errors Vue catches, with the component", "Its trail: App > Cart > PriceLine", "Uncaught errors and rejections"] },
+    { title: "Errors and source maps", items: ["Errors Vue catches, with the component", "Its trail: App > Cart > PriceLine", "Uncaught errors and rejections", "Minified stacks mapped to your source", "Dev servers' maps read on their own"] },
     { title: "Logs", items: ["Browser console lines, 500 per page", "Server logs in the same trace"] },
-    { title: "Source maps", items: ["Minified stacks mapped to your source", "Dev servers' maps read on their own"] },
+    { title: "The HUD", items: ["Total, server, database, render", "On when your server's read API answers", "One click to the full trace"] },
     { title: "In components", items: ["inject(WIZELENS_KEY)", "this.$wizelens in the Options API", "setUser(id, { name }) for the Users page"] },
   ],
   highlightsTitle: "Built on Vue's own hooks.",
@@ -52,6 +52,7 @@ export const VUE: Stack = {
   docs: [
     { label: "Vue setup", href: "/docs/browser/#vue" },
     { label: "Source maps", href: "/docs/source-maps/" },
+    { label: "The HUD", href: "/docs/hud/" },
     { label: "Node setup", href: "/docs/node/" },
   ],
 };

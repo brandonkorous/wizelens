@@ -37,7 +37,11 @@ To serve the dashboard anyway, for example on a staging server behind a VPN, set
 
 ## The browser
 
-Hide the HUD, and keep sending page loads, React renders, and browser errors:
+A send-only add-on puts no HUD on the pages it serves, and its `api/info` answers 404. So Vue, Angular, Svelte, and plain
+JS (`hud: "auto"`, the default) show no HUD in production, read nothing back, and keep sending page loads and browser
+errors.
+
+React shows the HUD unless you hide it. Hide it, and keep sending page loads, React renders, and browser errors:
 
 ```tsx
 <WizeLensProvider hud={false}>
@@ -45,7 +49,8 @@ Hide the HUD, and keep sending page loads, React renders, and browser errors:
 </WizeLensProvider>
 ```
 
-With `hud={false}` the browser never reads traces back, so it works with a send-only server.
+With `hud={false}` (React) or `hud: false` (the other packages) the browser never reads traces back, so it works with a
+send-only server.
 
 ## One key per service
 

@@ -2,18 +2,40 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] — The site shows the whole product
+## [Unreleased] — The HUD on every stack
 
-wizelens.com and its docs now match everything WizeLens does, with real screenshots, and the HUD panel counts like the card.
+The in-page HUD now shows in every web app: on the pages your .NET or Node app renders, with no code, and in React, Vue,
+Angular, Svelte, and plain JS (docs/HUD-PLAN.md). wizelens.com and its docs match everything WizeLens does, with real
+screenshots, and the HUD panel counts like the card.
 
 ### Added
 
+- **The HUD on every stack.** One HUD, `<wizelens-hud>`, now lives in `@wizeworks/lens-browser`, with its styles in its
+  own shadow root, and every browser package shows it. In development, the .NET and Node add-ons put it on the HTML pages
+  your app serves, with no code and no browser package: Razor Pages, MVC views, static `.html` files, and pages from
+  Express, Fastify, Koa, Hono, NestJS, and `node:http`. Like Glimpse, the HUD leads with the page's own request, the one
+  the server rendered, with its server time, queries, and insights. The add-ons serve the script at `{base}/wizelens.js`
+  and add its tag before the last `</body>` of each full `200` `text/html` page. Page loads reach the app without `Accept-Encoding`, so a
+  compressing layer sends them plain and they still get it; with `UseResponseCompression()` before `UseWizeLens()`, .NET
+  pages stay compressed too. A page has one HUD: when your app starts WizeLens, its instance takes over from the one the
+  server put in. Turn it off with `hud: false` (Node), `o.Hud = false` (.NET), or `WIZELENS_HUD=false`. In the browser,
+  `hud: "auto"` shows it when the server's read API answers; the script tag takes `data-hud` and `data-slow-ms`. The
+  gateway-api and orders-api samples serve a page at `/` that shows it.
 - **wizelens.com shows the whole product.** Every page and doc was checked against the code. New docs pages for Search
   (the full search language), Errors, Releases, Users, Alerts, SLOs and Apdex, and Dashboards; the dashboard docs follow
   the new menu, with every page and which host has it. The home page adds Tags, Users, Uptime, and SLO tiles, an Auto
   install tab, all 18 MCP tools, and real screenshots of today's dashboard and of the HUD. The Cloud page covers single
   sign-on and SCIM, account security, Problems, uptime and status pages, SLOs, Security, and Hosts and Kubernetes. The
   privacy, security, and terms pages cover WizeLens Cloud at app.wizelens.com.
+
+### Changed
+
+- **`lens-browser`, Vue, Angular, and Svelte show the HUD** when the server's read API answers (`hud: "auto"`, the
+  default), as it does in development, and stay hidden against a send-only server. `hud: true` always shows it;
+  `hud: false` hides it and reads nothing back. `readServer` follows `hud` unless you set it, and `slowMs` sets the
+  orange line.
+- **React's HUD is the shared one.** `WizeLensProvider` mounts the same `<wizelens-hud>` every stack shows. Its props
+  (`hud`, default `true`, and `slowMs`) and the HUD's saved settings stay as they were.
 
 ### Fixed
 

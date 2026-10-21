@@ -14,7 +14,7 @@ import { TotalCost } from "./TotalCost";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 const FREE = [
-  { name: "The add-ons", body: "MIT licensed. The dashboard and HUD in your .NET, Node, and React apps, and the SDKs for the browser, Java, Python, and Go, with no account." },
+  { name: "The add-ons", body: "MIT licensed. The dashboard in your .NET and Node apps, the HUD in every web app, and the SDKs for the browser, Java, Python, and Go, with no account." },
   { name: "The hub", body: "MIT licensed. One process and one SQLite file for every service on your machine or team." },
   { name: "The cloud", body: "MIT licensed. Run it yourself on your own Postgres. Billing is off unless you add Stripe keys: no plans, no caps, no prompts." },
 ];

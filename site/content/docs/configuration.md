@@ -11,6 +11,7 @@ Pass options to `builder.Services.AddWizeLens(o => { ... })`.
 |---|---|---|
 | `Enabled` | `WIZELENS_ENABLED`, else Development only | Turn WizeLens on or off. |
 | `Dashboard` | `WIZELENS_DASHBOARD`, else Development only | Serve the dashboard, read API, and MCP. `false` is send-only. See [Production](/docs/production/). |
+| `Hud` | `WIZELENS_HUD`, else `true` | While the dashboard is served, put [the HUD](/docs/hud/) on the app's HTML pages, with its script at `{BasePath}/wizelens.js`. |
 | `BasePath` | `/_wizelens` | Where the dashboard and API live. |
 | `ServiceName` | app name | Name shown for this service. |
 | `Storage` | `Sqlite`, or `Memory` when send-only | `Sqlite` (survives restarts) or `Memory`. |
@@ -48,6 +49,7 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | `serviceName` | *(required)* | Name shown for this service. |
 | `enabled` | `WIZELENS_ENABLED`, else on unless `NODE_ENV=production` | Turn WizeLens on or off. |
 | `dashboard` | `WIZELENS_DASHBOARD`, else on unless `NODE_ENV=production` | Serve the dashboard, read API, and MCP. `false` is send-only. See [Production](/docs/production/). |
+| `hud` | `WIZELENS_HUD`, else `true` | While the dashboard is served, put [the HUD](/docs/hud/) on the app's HTML pages, with its script at `{basePath}/wizelens.js`. Next.js pages use `WizeLensProvider`. |
 | `basePath` | `/_wizelens` | Where the dashboard and API live. |
 | `storage` | `"sqlite"`, or `"memory"` when send-only | `"sqlite"` or `"memory"`. |
 | `storagePath` | `{cwd}/.wizelens/traces.db` | SQLite file. |
@@ -113,15 +115,18 @@ Options for `initWizeLens({ ... })` from `@wizeworks/lens-browser`, `@wizeworks/
 | `captureXhr` | `true` | Trace `XMLHttpRequest` calls too (Angular's `HttpClient`, axios). |
 | `resolveFrames` | `true` | Read the page's own source maps so errors group by your source. |
 | `flushIntervalMs` | `1000` | How often browser spans are sent, in ms. |
-| `readServer` | `false` | Read traces back from the server after each call. Leave it off with a send-only server. |
+| `hud` | `"auto"` | The in-page [HUD](/docs/hud/). `"auto"` asks `{endpoint}/api/info` once and shows it when the server's read API answers. `true` shows it; `false` hides it and reads nothing back. |
+| `slowMs` | `500` | The HUD shows requests at or over this many ms as "warning". |
+| `readServer` | follows `hud` | Read traces back from the server after each call. Off with a send-only server. |
 | `serverStatsDelayMs` | `400` | With `readServer`, how long to wait after a response before reading its server stats. |
 | `maxRecent` | `30` | How many recent requests `lens.recorder` keeps. |
 | `framework` | none | Render stats and timings from a UI framework. The React package sets it. |
 | `router` | none | Vue only: a vue-router instance. Each finished navigation is a page view. |
 | `lens` | none | Vue only: use this running instance instead of starting one. |
 
-The script tag takes `data-endpoint`, `data-release`, `data-enabled="false"`, `data-console="false"`, and
-`data-xhr="false"`. Svelte's `trackNavigation` takes `mode` (`"history"` or `"hash"`) and `lens`. See
+The script tag takes `data-endpoint`, `data-release`, `data-enabled="false"`, `data-console="false"`,
+`data-xhr="false"`, `data-hud` (`auto`, `true`, or `false`; default `auto`), and `data-slow-ms`. Svelte's
+`trackNavigation` takes `mode` (`"history"` or `"hash"`) and `lens`. See
 [Vue, Angular, Svelte, and plain JS](/docs/browser/).
 
 ## Command line
@@ -147,6 +152,7 @@ See [Source maps](/docs/source-maps/).
 |---|---|---|
 | `WIZELENS_ENABLED` | .NET, Node, Java, Python, Go | Turn WizeLens on (`true`) or off (`false`). Default: .NET and Node, on in development only; Java, Python, and Go, on everywhere. |
 | `WIZELENS_DASHBOARD` | .NET, Node | Serve the dashboard, read API, and MCP (`true`), or send only (`false`). |
+| `WIZELENS_HUD` | .NET, Node | Put the HUD on the app's HTML pages while the dashboard is served (`true`), or not (`false`). Default `true`. |
 | `WIZELENS_HUB` | .NET, Node, Java, Python, Go | Send to this hub or cloud. |
 | `WIZELENS_HUB_TOKEN` | .NET, Node, Java, Python, Go | The hub token, or a cloud ingest key. |
 | `WIZELENS_PROJECT` | .NET, Node, Java, Python, Go | Project name on a shared hub. |

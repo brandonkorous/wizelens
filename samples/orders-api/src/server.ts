@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import express from "express";
 import { createWizeLens, instrumentNodeSqlite } from "@wizeworks/lens-node";
+import { HOME_PAGE } from "./home-page.ts";
 
 const PORT = Number(process.env.PORT ?? 5200);
 
@@ -69,6 +70,11 @@ app.get("/orders/:id", (req, res) => {
     return;
   }
   res.json(row);
+});
+
+// A server-rendered page. Open http://localhost:5200/ to see the HUD that WizeLens puts on it.
+app.get("/", (_req, res) => {
+  res.type("html").send(HOME_PAGE);
 });
 
 app.get("/health", (_req, res) => {

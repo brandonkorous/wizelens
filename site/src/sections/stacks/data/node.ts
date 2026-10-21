@@ -34,7 +34,7 @@ export const NODE: Stack = {
     { label: "fetch POST billing/invoices", ms: "58 ms", start: 32, dur: 58, kind: "net", depth: 1, line: 0 },
   ],
   captures: [
-    { title: "Frameworks", items: ["Express", "Fastify", "Koa", "Hono", "NestJS", "Next.js", "node:http", "GraphQL, one endpoint per operation", "Response bodies (opt-in)"] },
+    { title: "Frameworks", items: ["Express", "Fastify", "Koa", "Hono", "NestJS", "Next.js", "node:http", "GraphQL, one endpoint per operation", "Response bodies (opt-in)", "The HUD on HTML pages, in development"] },
     { title: "Databases", items: ["pg", "mysql2", "better-sqlite3", "node:sqlite", "Prisma", "TypeORM", "Drizzle", "Redis (ioredis, node-redis)", "MongoDB", "Elasticsearch", "traceDb() for any driver"] },
     { title: "Calls out", items: ["fetch and undici, automatic", "node:http and https (axios, got, AWS SDK), automatic", "@grpc/grpc-js"] },
     { title: "Messages", items: ["amqplib (RabbitMQ)", "kafkajs", "@azure/service-bus", "BullMQ", "Amazon SQS"] },
@@ -58,5 +58,6 @@ export const NODE: Stack = {
     { label: "Next.js setup", href: "/docs/nextjs/" },
     { label: "Install with no code change", href: "/docs/auto-install/#node" },
     { label: "All Node options", href: "/docs/configuration/#node" },
+    { label: "The HUD", href: "/docs/hud/" },
   ],
 };

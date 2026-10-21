@@ -4,7 +4,7 @@ export type Faq = { q: string; a: string };
 export const FAQS: Faq[] = [
   {
     q: "What is WizeLens?",
-    a: "WizeLens shows you everything one request did. You add a small package to your app, and every request becomes one trace: the click in the browser, every service it touched, every SQL query, every log line, and the render. In .NET and Node, a dashboard at /_wizelens shows it, and in React a small HUD in the corner of your page shows the latest request as you work. Java, Python, and Go services send to the hub or the cloud.",
+    a: "WizeLens shows you everything one request did. You add a small package to your app, and every request becomes one trace: the click in the browser, every service it touched, every SQL query, every log line, and the render. In .NET and Node, a dashboard at /_wizelens shows it, and a small HUD in the corner of your page shows the latest request as you work, on pages your server renders and in React, Vue, Angular, and Svelte. Java, Python, and Go services send to the hub or the cloud.",
   },
   {
     q: "Is WizeLens free?",
@@ -12,7 +12,7 @@ export const FAQS: Faq[] = [
   },
   {
     q: "Is WizeLens a replacement for Glimpse?",
-    a: "In spirit, yes. Glimpse showed what one ASP.NET request did. WizeLens does that for ASP.NET Core, Node, Java, Python, and Go, and for React, Next.js, Vue, Angular, and Svelte in the browser, and it follows the request through every service, built on OpenTelemetry. WizeLens is an independent project and is not affiliated with Glimpse.",
+    a: "In spirit, yes. Glimpse showed what one ASP.NET request did, in a HUD on the page. WizeLens does that for ASP.NET Core, Node, Java, Python, and Go, and for React, Next.js, Vue, Angular, and Svelte in the browser, and it follows the request through every service, built on OpenTelemetry. Its HUD sits on the pages your .NET or Node app renders, with no code. WizeLens is an independent project and is not affiliated with Glimpse.",
   },
   {
     q: "How is WizeLens different from an APM or observability platform?",

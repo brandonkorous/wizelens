@@ -44,7 +44,10 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.MapGet("/api/health", () => Results.Ok(new { status = "ok", service = "gateway-api" }));
+// A server-rendered page. Open http://localhost:5100/ to see the HUD that WizeLens puts on it.
+app.MapGet("/", () => Results.Content(HomePage.Html, "text/html; charset=utf-8"));
+
+app.MapGet("/api/health",() => Results.Ok(new { status = "ok", service = "gateway-api" }));
 
 // Deliberate N+1: one query for the list, then one EF query AND one HTTP call per customer.
 app.MapGet("/api/customers-with-orders", async (GatewayDb db, IHttpClientFactory httpClientFactory, ILogger<Program> logger, CancellationToken ct) =>

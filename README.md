@@ -168,7 +168,7 @@ Browse to **`/_wizelens`** on any service. That's it.
 
 ### The in-page HUD
 
-A small card in the corner of every page shows the latest request as you work: **Total**, **Server**, **Database**, and **Render** time, one bar that splits them, and the SQL, fetch, and insight counts.
+A small card in the corner of every page shows the latest request as you work: **Total**, **Server**, **Database**, and **Render** time, one bar that splits them, and the SQL, fetch, and insight counts. It shows on the pages your .NET or Node app renders, with no code, and in React, Vue, Angular, Svelte, and plain JS.
 
 - **One color tells you the state.** 🔵 info · 🟢 fast, no issues · 🟡 completed, but with optimizations · 🟠 slow or a 4xx · 🔴 failed · ⚪ no data.
 - **Hover for a quick peek.** Database shows each query's time, the slowest, and the average. Server splits its own code, its own queries, and calls to other services.
@@ -430,7 +430,8 @@ pnpm dev:orders                              # http://localhost:5200
 pnpm dev:web                                 # http://localhost:5173
 ```
 
-Open http://localhost:5173, click the buttons, then open http://localhost:5173/_wizelens/.
+Open http://localhost:5173, click the buttons, then open http://localhost:5173/_wizelens/. For a page the server renders,
+open http://localhost:5100/ (.NET) or http://localhost:5200/ (Node): the add-on puts the HUD on it, with no browser package.
 
 To try the hub, start it first with `pnpm dev:hub` (http://localhost:5960/_wizelens/), then start the other three with
 `WIZELENS_HUB=http://localhost:5960` set.
