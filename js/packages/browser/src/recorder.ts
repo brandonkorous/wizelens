@@ -1,7 +1,8 @@
 import { type BrowserCapture, createBrowserCapture, createCaptureHandle } from "./capture.js";
 import { type FetchContext, patchFetch } from "./fetch-patch.js";
 import type { Recorder, RecorderOptions } from "./recorder-types.js";
-import { createInstaller, createRequestStore } from "./request-store.js";
+import { documentRequest } from "./document-request.js";
+import { createInstaller, createRequestStore, type RequestStore } from "./request-store.js";
 import { injectedRelease } from "./error-frames.js";
 import { createSender, type Sender } from "./sender.js";
 import { ServerData } from "./server-data.js";
@@ -50,6 +51,14 @@ function noteDocument(data: ServerData, endpointUrl: string): void {
   if (doc?.endpoint && doc.endpoint !== endpointUrl) data.noteEndpoint(doc.traceId, doc.endpoint);
 }
 
+// The page's own request leads the HUD's list, like Glimpse: its server trace loads a moment later.
+function showDocument(store: RequestStore, data: ServerData, delayMs: number): void {
+  const doc = documentRequest();
+  if (!doc) return;
+  store.upsert(doc);
+  setTimeout(() => void data.loadServerStats(doc.traceId), delayMs);
+}
+
 // Send queued spans before the page goes away, so a refresh does not lose them.
 function flushOnHide(sender: Sender): () => void {
   if (typeof addEventListener !== "function") return () => {};
@@ -86,6 +95,7 @@ export function createRecorder(options: RecorderOptions = {}): Recorder {
   const install = createInstaller({
     start() {
       noteDocument(data, cfg.endpointUrl);
+      showDocument(store, data, cfg.statsDelayMs);
       original = globalThis.fetch;
       globalThis.fetch = patchFetch(original, ctx);
       const timer = setInterval(() => void sender.flush(false), cfg.flushIntervalMs);
