@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useStep } from "./useStep";
 
 const ROLES = ["Viewer", "Member", "Admin", "Owner"];
-const CAN = ["Read", "Alerts and share links", "Projects, keys, members", "Owners"];
+const CAN = ["Read", "Alerts, tags, share links", "Projects, keys, people", "Spend cap, delete the org"];
 
 export function RolesArt({ seen }: { seen: boolean }) {
   return (
@@ -30,19 +30,8 @@ const STATES = [
   { dot: "var(--wl-green)", text: "Error rate is 1.1% (no longer above 2%)" },
 ];
 
-function useToggle(active: boolean, ms: number): number {
-  const [i, setI] = useState(0);
-  const reduced = useReducedMotion();
-  useEffect(() => {
-    if (!active || reduced) return;
-    const id = window.setInterval(() => setI((x) => (x + 1) % 2), ms);
-    return () => window.clearInterval(id);
-  }, [active, ms, reduced]);
-  return i;
-}
-
 export function AlertsArt({ seen }: { seen: boolean }) {
-  const i = useToggle(seen, 2600);
+  const i = useStep(seen, 2, 2600);
   const s = STATES[i]!;
   return (
     <div className="wl-ct-alert">
@@ -58,7 +47,7 @@ export function AlertsArt({ seen }: { seen: boolean }) {
 }
 
 export function ShareArt({ seen }: { seen: boolean }) {
-  const revoked = useToggle(seen, 3200) === 1;
+  const revoked = useStep(seen, 2, 3200) === 1;
   return (
     <div className={`wl-ct-share${revoked ? " wl-ct-revoked" : ""}`}>
       <div className="wl-ct-share-top">

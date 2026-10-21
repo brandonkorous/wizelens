@@ -26,7 +26,7 @@ function Hero() {
         <div className="wl-cloud-copy">
           <Headline lines={["Pay for data.", "Not for people."]} />
           <div className="wl-cloud-intro wl-rise" style={riseDelay(0.35)}>
-            <p className="wl-lede">Every plan of WizeLens Cloud has unlimited users, alerts, share links, and MCP for your AI agents. You pay for the data you send. Running it yourself is free.</p>
+            <p className="wl-lede">Every plan of WizeLens Cloud has unlimited users, alerts, uptime checks, share links, and MCP for your AI agents. You pay for the data you send. Running it yourself is free.</p>
             <div className="wl-hero-cta">
               <a href={APP_URL} className="wl-btn wl-btn-primary">Start free <ArrowRight /></a>
               <a href="#plans" className="wl-btn wl-btn-ghost">See the plans</a>

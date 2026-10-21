@@ -37,6 +37,11 @@ Each service keeps its own dashboard too.
 - **SLOs and Apdex,** like the cloud's: error budgets, burn rates, and a target time per service.
 - **Alerts,** like the cloud's: to Slack, Teams, Discord, PagerDuty, or a webhook (no email). Webhooks may be plain http or on
   your own network.
+- **Problems, Security, and Tags,** like the cloud's: what is above normal and why, risks from real traffic, known-vulnerable
+  packages (OSV), and named searches under **Settings → Tags**. See [Problems](/docs/problems/), [Security](/docs/security/),
+  and [Tags](/docs/tags/).
+- **Resolve and ignore errors;** a resolved error that comes back shows as **Regressed**.
+- **Hosts and Kubernetes** from the OpenTelemetry Collector. See [Hosts and Kubernetes](/docs/kubernetes/).
 
 An OpenTelemetry app shows as "Idle" between sends. That is normal: it only sends when it has data.
 
@@ -65,6 +70,7 @@ Run it with `--host 0.0.0.0 --token <text>`. Then:
 | `--redact-keys <a,b>` | `WIZELENS_HUB_REDACT_KEYS` | none: hide keys that contain these, on top of the built-in list |
 | `--mcp` | `WIZELENS_HUB_MCP=1` | off |
 | `--no-uptime` | `WIZELENS_HUB_UPTIME=0` | checks on |
+| `--no-osv` | `WIZELENS_HUB_OSV=0` | packages checked against OSV |
 | `--import <file>` | | Copy an add-on's `.wizelens/traces.db` in at start |
 | `--sourcemaps <dir>` | `WIZELENS_HUB_SOURCEMAPS=a,b` | Read browser [source maps](/docs/source-maps/) from a build folder. Can repeat |
 

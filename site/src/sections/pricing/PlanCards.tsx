@@ -5,7 +5,16 @@ import { motion } from "motion/react";
 import { ArrowRight } from "@/components/ui/icons";
 import { APP_URL, PLANS, SALES_MAIL, TIERS, gbText, money, yearlyPrice, type Plan } from "./plans";
 
-const EVERY = ["Unlimited users", "MCP for Claude and other agents", "Alerts to Slack and webhooks", "Share links", "Traces across services"];
+const EVERY = [
+  "Unlimited users",
+  "MCP for Claude and other agents",
+  "Alerts to Slack, Teams, Discord, PagerDuty, email, and webhooks",
+  "Uptime checks and public status pages",
+  "SLOs, dashboards, and share links",
+  "Problems, Security, and error workflow",
+  "Hosts and Kubernetes",
+  "Traces across services",
+];
 
 function Price({ p, yearly }: { p: Plan; yearly: boolean }) {
   if (p.monthly === null) return <div className="wl-pl-price"><b>Custom</b></div>;
