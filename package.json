@@ -6,6 +6,7 @@
     "build": "pnpm -r --filter \"./js/packages/*\" build",
     "test": "pnpm -r --filter \"./js/packages/*\" test",
     "check:size": "node scripts/check-size.mjs",
+    "check:changelog": "node scripts/check-changelog.mjs",
     "dev:web": "pnpm --filter sample-web dev",
     "dev:orders": "pnpm --filter sample-orders-api dev",
     "dev:hub": "pnpm --filter @wizeworks/lens-hub start",
