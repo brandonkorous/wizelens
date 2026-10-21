@@ -17,8 +17,8 @@
 .wl-cl-side ul { list-style: none; margin: 10px 0 0; padding: 12px 0 0; border-top: 1px solid var(--wl-line); display: grid; gap: 6px; }
 .wl-cl-side li { font-size: 14px; color: var(--wl-muted); }
 .wl-cl-body { min-width: 0; max-width: 760px; }
-.wl-cl-body .wl-prose > h2:first-child { margin-top: 0; }
-.wl-cl-body .wl-prose h2 { font-size: 22px; margin-top: 40px; }
+.wl-cl-body .wl-prose > :first-child { margin-top: 0; }
+.wl-cl-body .wl-prose h3 { font-size: 22px; margin-top: 40px; }
 .wl-cl-body .wl-prose li { font-size: 15.5px; }
 
 @media (max-width: 960px) {

@@ -4,7 +4,7 @@ import { pageMeta } from "@/lib/seo";
 import { Story } from "@/sections/story/Story";
 
 const description =
-  "Glimpse let you open the hood on one ASP.NET request. Then apps split into services. Why we rebuilt that view as WizeLens, for .NET, Node, and React.";
+  "Glimpse opened the hood on one ASP.NET request. Then apps split into services. Why we rebuilt that view as WizeLens, for every stack from React to Go.";
 
 export const metadata = pageMeta({
   path: "/story/",

@@ -1,17 +1,21 @@
 ---
 title: License
-description: The WizeLens packages for .NET, Node, React, the hub, and the cloud are open source under the MIT License.
-updated: October 17, 2026
+description: Every WizeLens package, for .NET, Node, the browser, Java, Python, Go, the hub, and the cloud, is open source under the MIT License.
+updated: October 21, 2026
 ---
 
-Every WizeLens package in the repository is released under the MIT License:
+Every WizeLens package, for .NET, Node, the browser, Java, Python, Go, the hub, and the cloud, is open source under the MIT
+License:
 
 | Package | Platform |
 |---|---|
-| `WizeLens.AspNetCore`, `WizeLens.EntityFrameworkCore`, `WizeLens.Serilog`, `WizeLens.NLog`, `WizeLens.Kafka`, `WizeLens.Redis`, `WizeLens.MongoDB`, `WizeLens.Elasticsearch` | NuGet |
-| `@wizeworks/lens-node`, `@wizeworks/lens-react`, `@wizeworks/lens-core`, `@wizeworks/lens-ui` | npm |
+| `WizeLens.AspNetCore`, `WizeLens.EntityFrameworkCore`, `WizeLens.Serilog`, `WizeLens.NLog`, `WizeLens.Kafka`, `WizeLens.Redis`, `WizeLens.MongoDB`, `WizeLens.Elasticsearch`, `WizeLens.AutoInstrumentation` | NuGet |
+| `@wizeworks/lens-node`, `@wizeworks/lens-react`, `@wizeworks/lens-browser`, `@wizeworks/lens-vue`, `@wizeworks/lens-angular`, `@wizeworks/lens-svelte`, `@wizeworks/lens-cli`, `@wizeworks/lens-core`, `@wizeworks/lens-ui` | npm |
 | `@wizeworks/lens-hub` | npm, Docker |
 | `@wizeworks/lens-cloud` | npm, Docker |
+| `com.wizelens:wizelens` | Java |
+| `wizelens` | Python |
+| `github.com/brandonkorous/wizelens/go` | Go |
 
 In plain words: you can use, copy, change, and share the software, for free, in any project, including paid ones. Keep the
 copyright notice and the license text with it. The software comes with no warranty.
