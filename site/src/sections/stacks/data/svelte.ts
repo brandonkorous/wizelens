@@ -35,9 +35,9 @@ export const SVELTE: Stack = {
   captures: [
     { title: "Requests", items: ["traceparent on every fetch and XHR", "Same origin, or what you allow", "Joins the server trace"] },
     { title: "Page views", items: ["TTFB, SSR, FCP, LCP, INP, CLS", "Slow and oversized images", "Each client-side navigation", "The first load joins the server's trace"] },
-    { title: "Errors", items: ["Errors from handleError", "With route id and status", "Uncaught errors and rejections"] },
+    { title: "Errors and source maps", items: ["Errors from handleError", "With route id and status", "Uncaught errors and rejections", "Minified stacks mapped to your source", "Dev servers' maps read on their own"] },
     { title: "Logs and users", items: ["Browser console lines, 500 per page", "Server logs in the same trace", "lens.setUser(id, { name }) for the Users page"] },
-    { title: "Source maps", items: ["Minified stacks mapped to your source", "Dev servers' maps read on their own", "Errors group by your source"] },
+    { title: "The HUD", items: ["Total, server, database, render", "On when your server's read API answers", "One click to the full trace"] },
     { title: "Plain Svelte", items: ["trackNavigation() in main.ts", "Hash mode for svelte-spa-router", "Back, forward, and hash changes"] },
   ],
   highlightsTitle: "Passed in, not patched in.",
@@ -50,6 +50,7 @@ export const SVELTE: Stack = {
   docs: [
     { label: "Svelte and SvelteKit setup", href: "/docs/browser/#svelte-and-sveltekit" },
     { label: "Source maps", href: "/docs/source-maps/" },
+    { label: "The HUD", href: "/docs/hud/" },
     { label: "Node setup", href: "/docs/node/" },
   ],
 };

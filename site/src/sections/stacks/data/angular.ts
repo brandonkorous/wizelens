@@ -37,9 +37,9 @@ export const ANGULAR: Stack = {
   captures: [
     { title: "Requests", items: ["HttpClient, with or without withFetch()", "traceparent on every fetch and XHR", "Same origin, or what you allow"] },
     { title: "Page views", items: ["TTFB, FCP, LCP, INP, CLS", "Slow and oversized images", "Each NavigationEnd, after redirects", "useHash: true too"] },
-    { title: "Errors", items: ["Every error ErrorHandler gets", "zone.js rejections unwrapped", "Still logged like Angular's own", "Uncaught errors and rejections"] },
+    { title: "Errors and source maps", items: ["Every error ErrorHandler gets", "zone.js rejections unwrapped", "Still logged like Angular's own", "Uncaught errors and rejections", "Minified stacks mapped to your source"] },
     { title: "Logs and users", items: ["Browser console lines, 500 per page", "Server logs in the same trace", "lens.setUser(id, { name }) for the Users page"] },
-    { title: "Source maps", items: ["Minified stacks mapped to your source", "Errors group by your source"] },
+    { title: "The HUD", items: ["Total, server, database, render", "On when your server's read API answers", "One click to the full trace"] },
     { title: "Setup", items: ["Standalone: app.config.ts", "NgModule: one ErrorHandler provider", "Before Angular 19: the root constructor"] },
   ],
   highlightsTitle: "Registered the Angular way.",
@@ -52,6 +52,7 @@ export const ANGULAR: Stack = {
   docs: [
     { label: "Angular setup", href: "/docs/browser/#angular" },
     { label: "Source maps", href: "/docs/source-maps/" },
+    { label: "The HUD", href: "/docs/hud/" },
     { label: "ASP.NET Core setup", href: "/docs/aspnet-core/" },
   ],
 };

@@ -44,6 +44,16 @@ exception handlers. Requests are named by their route template with the global p
 and carry `nest.controller`, `nest.handler`, and `nest.version`. Exceptions Nest's filters answer (from guards, pipes,
 handlers, or middleware) are recorded on the request. Already mounted the middleware? Pass `{ capture: false }`.
 
+## The HUD on your pages
+
+In development, every full HTML page your app answers gets [the HUD](/docs/hud/), on every framework above but Next.js.
+There is no code to add: the add-on serves the browser script at `/_wizelens/wizelens.js`, from `@wizeworks/lens-browser`,
+which installs with it, and puts its tag before the page's last `</body>`. The page then traces its own calls too.
+
+Page loads reach your app without `Accept-Encoding`, so `compression()`, `@fastify/compress`, `koa-compress`, and
+`hono/compress` send them plain and the tag fits. Turn it off with `hud: false` or `WIZELENS_HUD=false`. Next.js pages
+show it with [`WizeLensProvider`](/docs/react/).
+
 ## GraphQL
 
 ```ts

@@ -68,6 +68,11 @@ Every other driver and ORM is on the [ASP.NET Core](/docs/aspnet-core/) and [Nod
 
 ## 3. Add the browser (optional)
 
+Pages your .NET or Node app renders, such as Razor Pages, MVC views, or Express templates, need nothing here: in
+development the add-on puts the browser script and [the HUD](/docs/hud/) on them by itself.
+
+For a React app:
+
 ```bash
 npm install @wizeworks/lens-react
 ```
@@ -82,8 +87,8 @@ import { WizeLensProvider } from "@wizeworks/lens-react";
 </WizeLensProvider>
 ```
 
-Now each server trace starts at the click that caused it, and the HUD shows in the corner of your page. On Vue, Angular,
-Svelte, or plain JS, see [Vue, Angular, Svelte, and plain JS](/docs/browser/).
+Now each server trace starts at the click that caused it, and the HUD shows in the corner of your page. Vue, Angular,
+Svelte, and plain JS show the same HUD: see [Vue, Angular, Svelte, and plain JS](/docs/browser/).
 
 ## 4. Open the dashboard
 

@@ -37,7 +37,7 @@ export function unwrapAngularError(error: unknown): unknown {
   return error;
 }
 
-/** An `ErrorHandler` that sends each error Angular catches to WizeLens, then logs it like Angular's own. Starts WizeLens when it is not running. */
+/** An `ErrorHandler` that sends each error Angular catches to WizeLens, then logs it like Angular's own. Starts WizeLens (and its HUD, per `hud` and `slowMs`) when it is not running. */
 export function createWizeLensErrorHandler(from?: WizeLens | WizeLensOptions): WizeLensErrorHandler {
   const lens = asWizeLens(from);
   return {
@@ -48,7 +48,7 @@ export function createWizeLensErrorHandler(from?: WizeLens | WizeLensOptions): W
   };
 }
 
-/** Record each finished Angular navigation as a page view. Returns a stop function. */
+/** Record each finished Angular navigation as a page view. Given options, starts WizeLens (`hud` and `slowMs` included) when it is not running. Returns a stop function. */
 export function trackAngularRouter(router: AngularRouterLike, from?: WizeLens | WizeLensOptions): () => void {
   const lens = asWizeLens(from);
   if (!lens.enabled) return () => {};

@@ -168,7 +168,7 @@ Browse to **`/_wizelens`** on any service. That's it.
 
 ### The in-page HUD
 
-A small card in the corner of every page shows the latest request as you work: **Total**, **Server**, **Database**, and **Render** time, one bar that splits them, and the SQL, fetch, and insight counts.
+A small card in the corner of every page shows the latest request as you work: **Total**, **Server**, **Database**, and **Render** time, one bar that splits them, and the SQL, fetch, and insight counts. It shows on the pages your .NET or Node app renders, with no code, and in React, Vue, Angular, Svelte, and plain JS.
 
 - **One color tells you the state.** 🔵 info · 🟢 fast, no issues · 🟡 completed, but with optimizations · 🟠 slow or a 4xx · 🔴 failed · ⚪ no data.
 - **Hover for a quick peek.** Database shows each query's time, the slowest, and the average. Server splits its own code, its own queries, and calls to other services.
@@ -351,6 +351,7 @@ Guardrails:
 |---|---|---|
 | `Enabled` | `WIZELENS_ENABLED`, else Development only | Turn WizeLens on or off. |
 | `Dashboard` | `WIZELENS_DASHBOARD`, else Development only | Serve the dashboard, read API, and MCP. `false` is send-only: capture and send to the hub or cloud, no reads. |
+| `Hud` | `true` (or `WIZELENS_HUD`) | While the dashboard is served, put the in-page HUD on the app's HTML pages (Razor Pages, MVC views, static `.html`): a script tag from `{BasePath}/wizelens.js` before the last `</body>` of each `200` `text/html` answer. Works with `UseResponseCompression` before or after `UseWizeLens` (after: page loads come back uncompressed). Fragments and answers the app compresses itself are left alone. `false` turns it off. |
 | `BasePath` | `/_wizelens` | Where the dashboard and API live. |
 | `ServiceName` | app name | Name shown for this service. |
 | `Storage` | `Sqlite`, or `Memory` when send-only | `Sqlite` (survives restarts) or `Memory`. |
@@ -378,6 +379,7 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 | `serviceName` | *(required)* | Name shown for this service. |
 | `enabled` | `WIZELENS_ENABLED`, else on unless `NODE_ENV=production` | Turn WizeLens on or off. |
 | `dashboard` | `WIZELENS_DASHBOARD`, else on unless `NODE_ENV=production` | Serve the dashboard, read API, and MCP. `false` is send-only: capture and send to the hub or cloud, no reads. |
+| `hud` | `true` (or `WIZELENS_HUD`) | While the dashboard is served, put the in-page HUD on the app's HTML pages (any framework, static `.html` too): a script tag from `{basePath}/wizelens.js` before the last `</body>` of each `200` `text/html` answer to a `GET`. Page navigations reach the app without `Accept-Encoding`, so a compressing layer answers them in plain HTML; other answers stay compressed. Fragments are left alone. |
 | `basePath` | `/_wizelens` | Where the dashboard and API live. |
 | `storage` | `"sqlite"`, or `"memory"` when send-only | `"sqlite"` or `"memory"`. |
 | `storagePath` | `{cwd}/.wizelens/traces.db` | SQLite file. |
@@ -428,7 +430,8 @@ pnpm dev:orders                              # http://localhost:5200
 pnpm dev:web                                 # http://localhost:5173
 ```
 
-Open http://localhost:5173, click the buttons, then open http://localhost:5173/_wizelens/.
+Open http://localhost:5173, click the buttons, then open http://localhost:5173/_wizelens/. For a page the server renders,
+open http://localhost:5100/ (.NET) or http://localhost:5200/ (Node): the add-on puts the HUD on it, with no browser package.
 
 To try the hub, start it first with `pnpm dev:hub` (http://localhost:5960/_wizelens/), then start the other three with
 `WIZELENS_HUB=http://localhost:5960` set.

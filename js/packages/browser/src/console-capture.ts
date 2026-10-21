@@ -48,11 +48,12 @@ function attributesOf(args: readonly unknown[]): Record<string, string | null> {
 export function watchConsole(view: () => ViewRef, push: (log: ClientLog) => void): () => void {
   if (typeof console === "undefined") return () => {};
   let count = 0;
+  let watching = true;
   const wrapped = new Map<Method, { original: Fn; wrapper: Fn }>();
   for (const [name, level] of Object.entries(METHODS) as [Method, LogLevel][]) {
     const original = console[name] as Fn;
     const wrapper: Fn = function (this: unknown, ...args) {
-      if (++count <= MAX_LOGS) {
+      if (watching && ++count <= MAX_LOGS) {
         const v = view();
         const message = formatConsole(args);
         push({ traceId: v.traceId, spanId: v.spanId, timeMs: now(), level, category: "console", message, service: "browser", attributes: attributesOf(args) });
@@ -63,7 +64,8 @@ export function watchConsole(view: () => ViewRef, push: (log: ClientLog) => void
     console[name] = wrapper;
   }
   return () => {
-    // Leave a method alone when something else wrapped it after us.
+    watching = false;
+    // Leave a method alone when something else wrapped it after us; ours then passes through.
     for (const [name, { original, wrapper }] of wrapped) if (console[name] === wrapper) console[name] = original;
   };
 }

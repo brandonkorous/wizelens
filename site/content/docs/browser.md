@@ -1,6 +1,6 @@
 ---
 title: Vue, Angular, Svelte, and plain JS
-description: Links every fetch and XHR call to its server trace, and sends page views, Web Vitals, errors, and console lines from any web app.
+description: Links every fetch and XHR call to its server trace, sends page views, Web Vitals, errors, and console lines from any web app, and shows the HUD.
 ---
 
 Not on React? The browser side of WizeLens works on any page. `@wizeworks/lens-browser` does the work; the Vue, Angular, and Svelte
@@ -14,12 +14,14 @@ packages are small layers on top that hook your framework's errors and router. N
   Minified stacks map back to your source with [source maps](/docs/source-maps/).
 - A 5xx the server marks with `X-WizeLens-Expected` is not a failed call. See
   [Answers you expect](/docs/dashboard/#answers-you-expect).
+- [The HUD](/docs/hud/) in the corner of your page, when your server's read API answers (`hud: "auto"`, the default).
 
-React adds per-component render stats and [the HUD](/docs/hud/); see [React](/docs/react/).
+React adds per-component render stats; see [React](/docs/react/).
 
 ## Plain JS
 
-One script tag, no build step:
+Pages your .NET or Node app renders already get WizeLens and the HUD in development, with no tag at all: see
+[The HUD](/docs/hud/#on-pages-your-server-renders). For any other page, one script tag, no build step:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@wizeworks/lens-browser/dist/wizelens.iife.js" data-endpoint="/_wizelens"></script>
@@ -33,6 +35,8 @@ It starts on its own and sets `window.WizeLens`. More attributes:
 | `data-enabled="false"` | Load it without starting. |
 | `data-console="false"` | Do not copy `console` lines. |
 | `data-xhr="false"` | Do not trace `XMLHttpRequest` calls. |
+| `data-hud="true"` | `auto` (the default), `true`, or `false`. See [The HUD](/docs/hud/#in-your-web-app). |
+| `data-slow-ms="800"` | The HUD shows requests at or over this many ms as orange. Default 500. |
 
 With a bundler:
 
@@ -143,7 +147,9 @@ svelte-spa-router.
 | `captureXhr` | `true` | Trace `XMLHttpRequest` calls too. |
 | `resolveFrames` | `true` | Read the page's own source maps (dev servers serve them) so errors group by your source. |
 | `flushIntervalMs` | `1000` | How often browser spans are sent, in ms. |
-| `readServer` | `false` | Read traces back from the server after each call. Leave it off with a send-only server. |
+| `hud` | `"auto"` | The in-page HUD. `"auto"` asks `{endpoint}/api/info` once and shows it when the server's read API answers. `true` shows it; `false` hides it and reads nothing back. See [The HUD](/docs/hud/). |
+| `slowMs` | `500` | The HUD shows requests at or over this many ms as orange. |
+| `readServer` | follows `hud` | Read traces back from the server after each call. Off with a send-only server. |
 | `serverStatsDelayMs` | `400` | With `readServer`, how long to wait after a response before reading its server stats. |
 | `maxRecent` | `30` | How many recent requests `lens.recorder` keeps. |
 

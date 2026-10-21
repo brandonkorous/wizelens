@@ -1,5 +1,6 @@
-/** HUD styles. Injected once into the host page; every class starts with `wl-`. Colors follow the brand guide. */
+/** HUD styles, inside the HUD's shadow root so the page's CSS cannot reach them. Every class starts with `wl-`. Colors follow the brand guide. */
 export const HUD_CSS = `
+:host{all:initial}
 .wl-hud{
   --wl-blue:#2563EB;--wl-blue-text:#5B8DEF;--wl-green:#22C55E;--wl-amber:#F4B400;--wl-orange:#F97316;--wl-red:#E63946;--wl-slate:#64748B;
   --wl-bg:#1F2126;--wl-raised:#2A2D33;--wl-line:#33373E;--wl-fg:#F5F6F8;--wl-muted:#A1A8B3;

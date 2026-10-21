@@ -9,6 +9,8 @@ description: What to check when a request, query, log line, or service does not 
 | Requests but no queries | The database line runs before the first query. |
 | Requests but no logs | Lines outside a request need `Logs.Outside` / `logs.outside` on (the default) and a level at or above `Logs.MinLevel` / `logs.minLevel` (default info). Serilog and NLog apps need `WizeLens.Serilog` or `WizeLens.NLog`. Node loggers other than `console` and Fastify need their one line. |
 | No browser timing | `import "@wizeworks/lens-react/install"` is the first import, and `/_wizelens` reaches your API. |
+| No HUD on a page your server renders | The add-on serves the dashboard (development, or `WIZELENS_DASHBOARD=true`), `Hud` / `hud` and `WIZELENS_HUD` are not `false`, and the page is a full `200` `text/html` answer with a `</body>`. A page your app compresses itself is left alone. Node: the log says when `@wizeworks/lens-browser` is missing. See [The HUD](/docs/hud/). |
+| No HUD in Vue, Angular, Svelte, or plain JS | With `hud: "auto"` (the default) it shows only when `{endpoint}/api/info` answers. Open that address: it must reach the server's dashboard, not your app's HTML fallback. Or pass `hud: true`. |
 | A downstream service is missing | It runs WizeLens too, and the call goes through `HttpClient`, `fetch`, or gRPC. |
 | A service is missing in the hub | `WIZELENS_HUB` is set where the service runs, and the service was restarted. The service log says when it cannot reach the hub. |
 | An OpenTelemetry app shows "Idle" | Normal: OpenTelemetry apps send only when they have data. |

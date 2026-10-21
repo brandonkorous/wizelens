@@ -62,6 +62,7 @@ The same variables as the code install, plus the standard OpenTelemetry service 
 | `OTEL_SERVICE_NAME` | Service name. Node: else `service.name` in `OTEL_RESOURCE_ATTRIBUTES`, else the app's `package.json` name (no scope), else `node-app`. .NET: else the application name |
 | `WIZELENS_ENABLED` | On or off. Default: on in development, off in production |
 | `WIZELENS_DASHBOARD` | Serve `/_wizelens` in the app. Default: on in development, off in production (send-only) |
+| `WIZELENS_HUD` | `false` takes [the HUD](/docs/hud/) off the app's HTML pages. Default: on while `/_wizelens` is served |
 | `WIZELENS_HUB`, `WIZELENS_HUB_TOKEN` | Where to send, see [the hub](/docs/hub/) and [the cloud](/docs/cloud/) |
 | `WIZELENS_PROJECT` | The project on a shared hub |
 | `WIZELENS_SAMPLE_RATE` | Share of traces kept, see [Sampling](/docs/sampling/) |

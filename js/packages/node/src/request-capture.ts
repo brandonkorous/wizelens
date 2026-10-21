@@ -16,6 +16,7 @@ import {
 } from "@wizeworks/lens-core";
 import { type ResponseTap, tapResponse } from "./body-capture.js";
 import { keepExposeHeaders } from "./expose-headers.js";
+import { injectHud } from "./hud-inject.js";
 import { firstHeader, sendJson } from "./http-util.js";
 import { headerAttributes, requestAttributes } from "./request-attributes.js";
 import { namedRoute } from "./request-naming.js";
@@ -31,6 +32,8 @@ export interface CaptureDeps {
   w3c: W3CTraceContextPropagator;
   captureResponseBody: boolean;
   handler: (req: IncomingMessage, res: ServerResponse) => Promise<boolean>;
+  /** The HUD script tag for full HTML pages, or null when the HUD or the dashboard is off. */
+  hudTag: string | null;
 }
 
 /** One captured request: its server span and the context that makes it the parent of everything inside. */
@@ -136,6 +139,7 @@ export function captureRequest(d: CaptureDeps, req: IncomingMessage, res: Server
   res.appendHeader("Server-Timing", serverTimingValue(span.spanContext().traceId, endpoint));
   keepExposeHeaders(res);
   (req as unknown as Record<symbol, OtelSpan>)[REQ_SPAN] = span;
+  if (d.hudTag && !isOwnPath(d, pathOf(rawUrl))) injectHud(req, res, d.hudTag);
   const tap = tapResponse(res, d.captureResponseBody);
   let ended = false;
   const finish = () => {

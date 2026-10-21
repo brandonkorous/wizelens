@@ -1,7 +1,8 @@
 import { type BrowserCapture, createBrowserCapture, createCaptureHandle } from "./capture.js";
 import { type FetchContext, patchFetch } from "./fetch-patch.js";
 import type { Recorder, RecorderOptions } from "./recorder-types.js";
-import { createInstaller, createRequestStore } from "./request-store.js";
+import { documentRequest } from "./document-request.js";
+import { createInstaller, createRequestStore, type RequestStore } from "./request-store.js";
 import { injectedRelease } from "./error-frames.js";
 import { createSender, type Sender } from "./sender.js";
 import { ServerData } from "./server-data.js";
@@ -13,13 +14,20 @@ export type { RecordedRequest, Recorder, RecorderOptions, ServerStats } from "./
 export { mergeRequests, serverStatsFromTrace, summaryToRequest } from "./requests.js";
 export { getSessionId } from "./session.js";
 
+const pageBase = () => (typeof location !== "undefined" ? location.href : "http://localhost/");
+
+/** The WizeLens base URL for an `endpoint` option (default "/_wizelens"), absolute and without a trailing slash. */
+export function endpointUrlOf(endpoint = "/_wizelens"): string {
+  return new URL(endpoint.replace(/\/+$/, "") + "/", pageBase()).href.replace(/\/$/, "");
+}
+
 function resolveOptions(options: RecorderOptions) {
-  const base = typeof location !== "undefined" ? location.href : "http://localhost/";
-  const endpoint = new URL((options.endpoint ?? "/_wizelens").replace(/\/+$/, "") + "/", base);
+  const base = pageBase();
+  const endpointUrl = endpointUrlOf(options.endpoint);
   return {
     base,
-    endpoint,
-    endpointUrl: endpoint.href.replace(/\/$/, ""),
+    endpoint: new URL(`${endpointUrl}/`),
+    endpointUrl,
     maxRecent: options.maxRecent ?? 30,
     flushIntervalMs: options.flushIntervalMs ?? 1000,
     statsDelayMs: options.serverStatsDelayMs ?? 400,
@@ -41,6 +49,14 @@ type Config = ReturnType<typeof resolveOptions>;
 function noteDocument(data: ServerData, endpointUrl: string): void {
   const doc = documentTrace();
   if (doc?.endpoint && doc.endpoint !== endpointUrl) data.noteEndpoint(doc.traceId, doc.endpoint);
+}
+
+// The page's own request leads the HUD's list, like Glimpse: its server trace loads a moment later.
+function showDocument(store: RequestStore, data: ServerData, delayMs: number): void {
+  const doc = documentRequest();
+  if (!doc) return;
+  store.upsert(doc);
+  setTimeout(() => void data.loadServerStats(doc.traceId), delayMs);
 }
 
 // Send queued spans before the page goes away, so a refresh does not lose them.
@@ -79,6 +95,7 @@ export function createRecorder(options: RecorderOptions = {}): Recorder {
   const install = createInstaller({
     start() {
       noteDocument(data, cfg.endpointUrl);
+      showDocument(store, data, cfg.statsDelayMs);
       original = globalThis.fetch;
       globalThis.fetch = patchFetch(original, ctx);
       const timer = setInterval(() => void sender.flush(false), cfg.flushIntervalMs);

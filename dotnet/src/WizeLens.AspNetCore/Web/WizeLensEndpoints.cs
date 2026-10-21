@@ -31,6 +31,7 @@ internal static partial class WizeLensEndpoints
         SearchEndpoints.Map(group);
         TagEndpoints.Map(group);
         if (options.MetricsOn) group.MapGet("api/metrics/points", (MetricStore metrics, double? since) => Results.Json(new { points = metrics.Since(since) }, WizeLensJson.Options));
+        HudScript.MapRoutes(group);
         MapUi(group);
         if (options.EnableMcp) endpoints.MapMcp(options.NormalizedBasePath + "/mcp");
     }

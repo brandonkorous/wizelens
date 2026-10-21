@@ -15,6 +15,8 @@ export interface WizeLensOptions {
   enabled?: boolean;
   /** Serve the dashboard, read API, and MCP. Off is send-only: capture and send, no reads. Default: WIZELENS_DASHBOARD, else off in production. */
   dashboard?: boolean;
+  /** Put the HUD script tag on the full HTML pages this service answers, while the dashboard is served. Default: WIZELENS_HUD, else true. */
+  hud?: boolean;
   /** Where traces live. "sqlite" keeps them across restarts. Default "sqlite", or "memory" when the dashboard is off. */
   storage?: "sqlite" | "memory";
   /** SQLite file for `storage: "sqlite"`. Default `{cwd}/.wizelens/traces.db`. */

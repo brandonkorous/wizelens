@@ -115,9 +115,16 @@ public static class WizeLensExtensions
         if (!options.IsEnabled || options.PipelineAdded) return app;
         options.PipelineAdded = true;
 
-        app.UseMiddleware<WizeLensMiddleware>();
+        UseMiddleware(app, options);
         if (app is IEndpointRouteBuilder endpoints) WizeLensEndpoints.Map(endpoints, options);
         return app;
+    }
+
+    /// <summary>The HUD injection when it is on (outside, so a kept response body is the app's own), then the request middleware.</summary>
+    internal static void UseMiddleware(IApplicationBuilder app, WizeLensOptions options)
+    {
+        if (options.InjectsHud) app.UseMiddleware<HudMiddleware>();
+        app.UseMiddleware<WizeLensMiddleware>();
     }
 
     /// <summary>Maps the endpoints yourself when the app is not a <c>WebApplication</c> (call it inside <c>UseEndpoints</c>).</summary>

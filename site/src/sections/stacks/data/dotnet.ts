@@ -36,7 +36,7 @@ export const DOTNET: Stack = {
     { label: "info  Loaded 8 customers", ms: "", start: 236, dur: 1, kind: "log", depth: 2, line: 4 },
   ],
   captures: [
-    { title: "Requests", items: ["ASP.NET Core hosting", "Routing and handler time", "Request and response headers", "Response bodies (opt-in)"] },
+    { title: "Requests", items: ["ASP.NET Core hosting", "Routing and handler time", "Request and response headers", "Response bodies (opt-in)", "The HUD on Razor Pages and MVC views"] },
     { title: "Databases", items: ["EF Core", "Dapper", "Any ADO.NET provider", "Npgsql, SqlClient, MySqlConnector with no code", "Redis, MongoDB, Elasticsearch (WizeLens.Redis, .MongoDB, .Elasticsearch)"] },
     { title: "Calls out", items: ["HttpClient", "Grpc.Net.Client", "Grpc.AspNetCore"] },
     { title: "Messages", items: ["RabbitMQ.Client 7+", "Azure Service Bus", "MassTransit", "Kafka (WizeLens.Kafka)"] },
@@ -48,7 +48,7 @@ export const DOTNET: Stack = {
   ],
   highlightsTitle: "Made for the way .NET apps run.",
   highlights: [
-    { title: "If you used Glimpse, you know this.", body: "Open the hood on one request and see what it really did. WizeLens brings that back for ASP.NET Core, and follows the request into every service after it." },
+    { title: "If you used Glimpse, you know this.", body: "Open the hood on one request and see what it really did. WizeLens brings that back for ASP.NET Core and follows the request into every service after it. In development, the HUD sits on every page your app renders, with no code." },
     { title: "Survives dotnet watch.", body: "Traces live in a small SQLite file next to your app, so a restart does not wipe them. If the file cannot be written, WizeLens keeps working in memory." },
     { title: "Wrap any connection.", body: "Dapper or a provider WizeLens does not know? Wrap the connection and every command is captured.", code: "new ProfiledDbConnection(new SqliteConnection(cs))" },
     { title: "Errors and slow traces stay.", body: "Sample with WIZELENS_SAMPLE_RATE and WizeLens still keeps every trace with an error or a span of 1 second or more.", code: "o.Sampling.Rate = 0.1" },
@@ -59,6 +59,7 @@ export const DOTNET: Stack = {
     { label: "ASP.NET Core setup", href: "/docs/aspnet-core/" },
     { label: "Install with no code change", href: "/docs/auto-install/#aspnet-core" },
     { label: "All .NET options", href: "/docs/configuration/#aspnet-core" },
+    { label: "The HUD", href: "/docs/hud/" },
     { label: "Quick start", href: "/docs/quick-start/" },
   ],
 };

@@ -21,9 +21,13 @@ export interface VueRouterLike {
 }
 
 export interface WizeLensVueOptions extends WizeLensOptions {
+  /** The in-page HUD. "auto" (default) shows it when `{endpoint}/api/info` answers, as in development; false also reads nothing back. */
+  hud?: boolean | "auto";
+  /** The HUD shows requests at or over this many ms as "warning". Default 500. */
+  slowMs?: number;
   /** A vue-router instance: each finished navigation is a page view. */
   router?: VueRouterLike;
-  /** Use this running instance instead of starting one. */
+  /** Use this running instance instead of starting one. Its own `hud` and `slowMs` stay as they are. */
   lens?: Lens;
 }
 
@@ -69,7 +73,7 @@ export function trackVueRouter(router: VueRouterLike, lens: Lens): () => void {
   });
 }
 
-/** Install with `app.use(WizeLens, options)`. Starts WizeLens (or uses `options.lens`), hooks errors, and tracks the router. */
+/** Install with `app.use(WizeLens, options)`. Starts WizeLens and its HUD (or uses `options.lens`), hooks errors, and tracks the router. */
 export const WizeLens = {
   install(app: VueAppLike, options: WizeLensVueOptions = {}): void {
     const { router, lens: given, ...rest } = options;

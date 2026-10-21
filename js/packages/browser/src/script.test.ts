@@ -42,3 +42,30 @@ it("shapes a view from the path a router passes, as for a hash router", () => {
   expect(newPageView("spa", 10, false, "/orders/7")).toMatchObject({ route: "/orders/{}", path: "/orders/7", url: "http://app.test/orders/7" });
   expect(newPageView("load", 0)).toMatchObject({ route: "/", path: "/", url: "http://app.test/#/orders/7" });
 });
+
+it("reads the HUD, the slow mark, and who put the tag in the page", () => {
+  expect(scriptOptions(tag({ "data-endpoint": "" }))).toMatchObject({ hud: "auto", slowMs: undefined, source: "app" });
+  const injected = tag({ "data-endpoint": "/_wizelens", "data-hud": "true", "data-slow-ms": "800", "data-source": "inject" });
+  expect(scriptOptions(injected)).toMatchObject({ hud: true, slowMs: 800, source: "inject" });
+  expect(scriptOptions(tag({ "data-endpoint": "/x", "data-hud": "false", "data-slow-ms": "soon" }))).toMatchObject({ hud: false, slowMs: undefined });
+  expect(scriptOptions(tag({ "data-endpoint": "/x", "data-hud": "maybe" }))?.hud).toBe("auto");
+});
+
+it("starts an injected tag after the page's load event, and gives way to a running instance", async () => {
+  stubDom();
+  stubServer();
+  vi.stubGlobal("document", { ...document, readyState: "loading" });
+  const mod = await import("./script.js");
+  mod.startFromTag({ endpoint: "/_wizelens", hud: false, source: "inject" });
+  expect(mod.currentWizeLens()).toBeNull();
+  dispatchEvent(new Event("load"));
+  expect(mod.registered()?.source).toBe("inject");
+  await mod.currentWizeLens()?.shutdown();
+  vi.stubGlobal("document", { ...document, readyState: "complete" });
+  const app = mod.initWizeLens({ hud: false });
+  mod.startFromTag({ endpoint: "/_wizelens", hud: false, source: "inject" });
+  expect(mod.currentWizeLens()).toBe(app);
+  expect(mod.registered()?.source).toBe("app");
+  await app.shutdown();
+  delete (globalThis as { __wizelensLoadView?: unknown }).__wizelensLoadView;
+});

@@ -38,7 +38,7 @@ export const appConfig: ApplicationConfig = {
 it like Angular's own handler (`console.error("ERROR", error)`). Promise rejections that zone.js wraps are unwrapped first, so the
 error groups by its real stack.
 
-Given options instead of an instance, it starts WizeLens itself (or uses the running instance).
+Given options instead of an instance, it starts WizeLens itself, `hud` and `slowMs` included (or uses the running instance).
 
 ## Page views: `trackAngularRouter`
 
@@ -65,6 +65,23 @@ With the History API (Angular's default) page views are seen without it too; it 
 })
 export class AppModule {}
 ```
+
+## The HUD
+
+The same HUD as every WizeLens browser package: the last request, its server trace, errors, and links into the dashboard, in a
+`<wizelens-hud>` element with its own shadow root, so your CSS cannot reach it. Two options set it:
+
+| Option | Default | Description |
+|---|---|---|
+| `hud` | `"auto"` | `"auto"` asks `{endpoint}/api/info` once and shows the HUD when the server's read API answers, as in development; a send-only server shows nothing. `true` shows it and reads traces back. `false` shows nothing and reads nothing back. |
+| `slowMs` | `500` | The HUD shows requests at or over this many ms as "warning". |
+
+```ts
+const lens = initWizeLens({ endpoint: "/_wizelens", enabled: isDevMode(), hud: true, slowMs: 800 });
+```
+
+When a .NET or Node add-on puts its HUD script into the pages it serves in development, the app's instance takes over from it: one HUD and one
+capture per page.
 
 ## HttpClient
 

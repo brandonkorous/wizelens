@@ -40,7 +40,7 @@ jobs:
       - name: Size rules (250 lines per file, 50 per function, one-line comments)
         run: pnpm check:size
 
-      - name: Build JS packages and the dashboard
+      - name: Build JS packages, the dashboard, and the HUD script
         run: pnpm build
 
       - name: Build the marketing site (static export)
@@ -53,7 +53,7 @@ jobs:
       - name: Test JS packages
         run: pnpm test
 
-      - name: Build .NET (embeds the dashboard)
+      - name: Build .NET (embeds the dashboard and the HUD script)
         run: dotnet build dotnet/WizeLens.slnx -c Release
 
       - name: Test .NET

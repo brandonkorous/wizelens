@@ -5,8 +5,8 @@ description: WizeLens shows you what one request did, from the click in React to
 
 WizeLens is the spirit of Glimpse, rebuilt for how we build today. You add a small package to each app. Then every request
 becomes one trace: the browser, every service it touched, every database call, every log line, and the render. In .NET
-and Node, a dashboard at `/_wizelens` shows it, and in React a small HUD in the corner of your page shows the latest
-request as you work. Java, Python, and Go services send to [the hub](/docs/hub/) or [the cloud](/docs/cloud/) through
+and Node, a dashboard at `/_wizelens` shows it, and a small HUD in the corner of your page shows the latest request as
+you work, on pages your server renders and in React, Vue, Angular, Svelte, and plain JS. Java, Python, and Go services send to [the hub](/docs/hub/) or [the cloud](/docs/cloud/) through
 OpenTelemetry, and Vue, Angular, Svelte, and plain JS pages link each click to its server trace.
 
 It finds the common problems for you: N+1 queries and HTTP calls, duplicate and slow queries, database waits, errors,
@@ -18,6 +18,8 @@ render problems, security risks from the OWASP Top 10, and services running abov
 - **A dashboard on every service.** Overview, Problems, Search, Requests, Traces, Errors, Logs, Database, Rendering,
   Metrics, Services, Insights, Security, and Users in every app. The hub and the cloud add Hosts, Kubernetes, Alerts,
   Uptime, SLOs, and Dashboards. See [The dashboard](/docs/dashboard/).
+- **The HUD on your page.** The latest request's timing, queries, and insights in the corner of every web app. Pages a
+  .NET or Node app renders get it in development with no code. See [The HUD](/docs/hud/).
 - **Insights.** Problems ranked, with a short note on how to fix them.
 - **AI access, only if you allow it.** A read-only MCP endpoint your own agent can use. There is no AI inside WizeLens.
 - **Safe by default.** On in development only. Passwords, tokens, and keys are redacted before anything is stored.

@@ -32,6 +32,7 @@ Vue 3 and vue-router 4. The package does not import `vue`, so it adds nothing to
 - Sets `app.config.errorHandler`, and keeps the handler your app already had (it still runs). Each error carries `vue.component`,
   `vue.component.trail` ("App > Cart > PriceLine"), and Vue's `vue.info`.
 - With `router`, each finished navigation is a page view. Failed or cancelled navigations are not.
+- Shows the in-page HUD (see below).
 
 ## Options
 
@@ -41,6 +42,25 @@ All [@wizeworks/lens-browser options](https://github.com/brandonkorous/wizelens/
 |---|---|
 | `router` | Your vue-router instance. |
 | `lens` | An instance from `initWizeLens` to use instead of starting one. |
+| `hud` | The in-page HUD: `true`, `false`, or `"auto"` (default). |
+| `slowMs` | The HUD shows requests at or over this many ms as "warning". Default `500`. |
+
+## The HUD
+
+The same HUD as every WizeLens browser package: the last request, its server trace, errors, and links into the dashboard, in a
+`<wizelens-hud>` element with its own shadow root, so your CSS cannot reach it.
+
+- `"auto"` (default) asks `{endpoint}/api/info` once and shows the HUD when the server's read API answers, as in development. A
+  send-only server shows nothing.
+- `true` shows it and reads traces back from the server.
+- `false` shows nothing and reads nothing back.
+
+```ts
+app.use(WizeLens, { endpoint: "/_wizelens", router, hud: true, slowMs: 800 });
+```
+
+When a .NET or Node add-on puts its HUD script into the pages it serves in development, the plugin takes over from it: one HUD and one
+capture per page.
 
 ## In components
 

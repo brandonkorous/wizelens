@@ -21,6 +21,27 @@ app.use(wizelens.errorMiddleware); // last
 - **gRPC and messaging:** `instrumentGrpc`, `instrumentAmqplib`, `instrumentKafkaJs`, `instrumentServiceBus`.
 - **Outgoing `fetch`** is traced automatically. Tag requests with `wizelens.tag(key, value)` and name the user with `wizelens.setUser(id)`.
 
+## The HUD on your pages
+
+While the dashboard is served, the add-on puts the WizeLens HUD on the HTML pages your app answers, with no code in the page.
+It serves the `@wizeworks/lens-browser` script at `/_wizelens/wizelens.js` (and its map) and adds this tag right before the
+last `</body>`:
+
+```html
+<script src="/_wizelens/wizelens.js" data-endpoint="/_wizelens" data-hud="true" data-source="inject" defer></script>
+```
+
+Only a `GET` answered `200` with `Content-Type: text/html` and no `Content-Encoding` gets it, outside `/_wizelens`, and only
+when the body has a `</body>` (fragments, such as htmx partials, are left alone). The body streams through, and an answer that
+gets the tag loses a `Content-Length` it can no longer keep. It works the same for Express, Fastify, Koa, Hono, NestJS, Next.js,
+and plain `node:http`. A page that starts WizeLens itself takes over from the injected script. Turn it off with `hud: false` or
+`WIZELENS_HUD=false`.
+
+So that a compressing layer (`compression()`, `@fastify/compress`, `koa-compress`, `hono/compress`, Next.js) answers a page in
+plain HTML that can take the tag, a page navigation (a `GET` whose `Accept` has `text/html`) reaches your app without its
+`Accept-Encoding` header while the HUD is on. Scripts, JSON, and other files are still compressed. This only happens while the
+dashboard is served, which is development by default.
+
 ## Logs
 
 Log lines written during a request go into its trace. Lines written outside a request (startup, timers) are skipped.

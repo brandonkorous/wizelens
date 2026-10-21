@@ -1,7 +1,8 @@
-import { Fragment } from "react";
 import { browserTypeOf, isErrorSpan, type Span, type Trace } from "@wizeworks/lens-core";
-import { fmtMs, type RecordedRequest } from "@wizeworks/lens-browser";
-import { Empty } from "./panel-parts.js";
+import { fmtMs } from "../hud-model.js";
+import type { RecordedRequest } from "../recorder-types.js";
+import { h } from "./dom.js";
+import { empty } from "./parts.js";
 
 type RowKind = "server" | "internal" | "db" | "client" | "messaging" | "browser" | "render" | "error";
 
@@ -74,48 +75,30 @@ export function waterfallRows(req: RecordedRequest, trace: Trace | null): WfRow[
 
 function niceStep(raw: number): number {
   const pow = 10 ** Math.floor(Math.log10(Math.max(raw, 0.001)));
-  return ([1, 2, 5, 10].map((m) => m * pow).find((s) => s >= raw) ?? 10 * pow) as number;
+  return [1, 2, 5, 10].map((m) => m * pow).find((s) => s >= raw) ?? 10 * pow;
 }
 
-function ticksFor(total: number): number[] {
+export function ticksFor(total: number): number[] {
   const step = niceStep(total / 4);
   const ticks: number[] = [];
   for (let t = 0; t <= total + 0.001 && ticks.length < 8; t += step) ticks.push(t);
   return ticks;
 }
 
-export function Waterfall({ rows: all, origin, limit }: { rows: WfRow[]; origin: number; limit: number }) {
+/** The short timeline: the first `limit` rows on a shared time axis. */
+export function waterfall(all: WfRow[], origin: number, limit: number): HTMLElement {
   const rows = all.slice(0, limit);
-  if (rows.length === 0) return <Empty>No timeline yet.</Empty>;
+  if (rows.length === 0) return empty("No timeline yet.");
   const start = Math.min(origin, ...all.map((r) => r.startMs));
   const total = Math.max(1, ...all.map((r) => r.startMs + r.barMs - start));
   const ticks = ticksFor(total);
   const left = (ms: number) => `${(ms / total) * 100}%`;
-  return (
-    <div className="wl-wf">
-      <div />
-      <div />
-      <div className="wl-wf-axis">
-        {ticks.map((t) => (
-          <span key={t} style={{ left: left(t) }}>
-            {fmtMs(t)}
-          </span>
-        ))}
-      </div>
-      {rows.map((r) => (
-        <Fragment key={r.key}>
-          <div className="wl-wf-name" style={{ paddingLeft: r.depth * 10 }} title={`${r.name}\nstarts at +${fmtMs(r.startMs - start)}`}>
-            <span>{r.name}</span>
-          </div>
-          <div className="wl-wf-at">{fmtMs(r.durationMs)}</div>
-          <div className="wl-wf-track">
-            {ticks.slice(1).map((t) => (
-              <span key={t} className="wl-wf-grid" style={{ left: left(t) }} />
-            ))}
-            <i className={`wl-k-${r.kind}`} style={{ left: left(r.startMs - start), width: left(r.barMs) }} />
-          </div>
-        </Fragment>
-      ))}
-    </div>
-  );
+  const axis = h("div", { class: "wl-wf-axis" }, ticks.map((t) => h("span", { style: `left:${left(t)}` }, fmtMs(t))));
+  const grid = () => ticks.slice(1).map((t) => h("span", { class: "wl-wf-grid", style: `left:${left(t)}` }));
+  const row = (r: WfRow) => [
+    h("div", { class: "wl-wf-name", style: `padding-left:${r.depth * 10}px`, title: `${r.name}\nstarts at +${fmtMs(r.startMs - start)}` }, h("span", null, r.name)),
+    h("div", { class: "wl-wf-at" }, fmtMs(r.durationMs)),
+    h("div", { class: "wl-wf-track" }, grid(), h("i", { class: `wl-k-${r.kind}`, style: `left:${left(r.startMs - start)};width:${left(r.barMs)}` })),
+  ];
+  return h("div", { class: "wl-wf" }, h("div"), h("div"), axis, rows.map(row));
 }

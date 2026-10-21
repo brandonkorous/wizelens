@@ -54,6 +54,24 @@ All `api/*` endpoints return JSON (camelCase) and send `Access-Control-Allow-Ori
 | `GET api/tags` | `TagList` (see "Tags"): the built-ins and the rules of the `tags` option, `editable: false` |
 | `POST api/tags/match` | Body `{ kind, items: { traceId, owner, timeMs }[] }` (up to 200). `{ matches }`: tag names per row (see "Tags") |
 | `POST mcp` (+ GET for SSE if SDK needs) | MCP streamable HTTP. Only when MCP is enabled. 404 otherwise. |
+| `GET wizelens.js`, `GET wizelens.js.map` | .NET and Node add-ons, while they serve the dashboard: the `@wizeworks/lens-browser` script-tag bundle (`application/javascript`) and its source map, `Cache-Control: no-cache`. The add-ons put it on the app's HTML pages (see "The HUD on served pages"). 404 when send-only. |
+
+### The HUD on served pages
+
+While an add-on serves the dashboard and its HUD switch is on (.NET `Hud`, Node `hud`, both default true, or
+`WIZELENS_HUD`), an answer gets
+`<script src="{base}/wizelens.js" data-endpoint="{base}" data-hud="true" data-source="inject" defer></script>` right
+before its last `</body>` when the request is a `GET` outside `{base}`, the answer is `200` with `Content-Type: text/html`
+and no `Content-Encoding`, and the body has a `</body>`. Anything else passes through untouched. The body streams; a
+`Content-Length` is dropped or set to the new length. A page navigation (`Accept` takes `text/html`) reaches the app
+without `Accept-Encoding`, so a compressing layer answers it in plain HTML (.NET puts the header back once the answer
+reaches the HUD, so compression placed before the add-on still compresses the tagged page).
+
+In the browser, `hud` is `boolean | "auto"` (script tag: `data-hud`, default `auto`; `data-slow-ms`). `"auto"` asks
+`GET {endpoint}/api/info` once and shows the HUD when it answers 200 with a JSON object; `readServer` follows `hud` unless
+set. One instance per page: each started instance registers at `globalThis[Symbol.for("wizelens.browser")]` as
+`{ source: "app" | "inject", stop() }`. An injected tag starts after the page's `load` event and does nothing when an
+instance is registered; an app instance stops an injected one and takes over. See docs/HUD-PLAN.md.
 
 ### Federation (`federate=true`)
 
@@ -816,12 +834,14 @@ It serves the same dashboard at `/_wizelens/`, the same read API, OTLP/HTTP, and
 | Project | `Project` | `project` | `WIZELENS_PROJECT` |
 | On or off | `Enabled` | `enabled` | `WIZELENS_ENABLED` (`true`/`1`/`on`/`yes`, `false`/`0`/`off`/`no`) |
 | Dashboard | `Dashboard` | `dashboard` | `WIZELENS_DASHBOARD` (same words) |
+| HUD on served pages | `Hud` | `hud` | `WIZELENS_HUD` (same words; default on, only while the dashboard is served) |
 
 **Send-only.** The dashboard is on in development and off elsewhere (.NET: outside the Development environment; Node: when
 `NODE_ENV=production`), unless the option or variable says otherwise. With it off, only `POST {basePath}/api/client-spans`
 answers (and its CORS preflight); every other path under `{basePath}` (UI, `api/info`, `api/traces`, metrics, MCP) is a 404.
 Storage defaults to memory, MCP is off, and `sender.endpoint` is left out of every `IngestBatch`, so the hub never tries to
-read from the service. The browser package skips its reads (`api/traces`) when `hud` is false (`readServer: false`).
+read from the service. The browser package skips its reads (`api/traces`) when `hud` is false, or `"auto"` and `api/info` does not answer
+(`readServer` follows `hud`). A send-only add-on puts no HUD on its pages.
 
 The add-on keeps working as before (its own store and dashboard). In addition, it queues every new span, log, and remote
 and sends them every second in one `IngestBatch` (at most 1000 of each). With nothing to send, it sends an empty batch every

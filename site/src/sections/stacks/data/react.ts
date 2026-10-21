@@ -46,7 +46,7 @@ export const REACT: Stack = {
   ],
   shot: {
     title: "The HUD, on your own page.",
-    body: "After every request: total, server, database, and render time, the query and fetch counts, and what to fix. Click it for the timeline and the insights. This is the sample shop, after one real request.",
+    body: "After every request: total, server, database, and render time, the query and fetch counts, and what to fix. Click it for the timeline and the insights. This is the sample shop, after one real request. Vue, Angular, Svelte, and the pages your server renders show the same HUD.",
     src: "/shots/hud-panel.jpg",
     alt: "The WizeLens HUD open on the sample shop: GET /api/customers-with-orders, its timeline, and two N+1 insights",
     width: 1538,
