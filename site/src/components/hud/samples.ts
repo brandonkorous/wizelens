@@ -21,6 +21,7 @@ export type HudSample = {
   render: number;
   sql: number;
   fetch: number;
+  errors: number;
   scale: number;
   rows: SpanRow[];
   insights: HudInsight[];
@@ -28,7 +29,7 @@ export type HudSample = {
 
 const N_PLUS_ONE: HudSample = {
   id: "n1", button: "customers", method: "GET", path: "/api/customers-with-orders", code: 200, health: "opportunity",
-  time: "8:54:51 PM", service: "gateway-api", total: 305, server: 263, db: 9.6, render: 35, sql: 17, fetch: 8, scale: 300,
+  time: "8:54:51 PM", service: "gateway-api", total: 305, server: 263, db: 9.6, render: 35, sql: 17, fetch: 8, errors: 0, scale: 300,
   rows: [
     { label: "fetch /api/customers-with-orders", ms: "270 ms", start: 0, dur: 270, kind: "net", depth: 0 },
     { label: "GET /api/customers-with-orders", ms: "263 ms", start: 5, dur: 263, kind: "server", depth: 1 },
@@ -39,13 +40,14 @@ const N_PLUS_ONE: HudSample = {
   ],
   insights: [
     { tag: "N+1 query", title: "N+1 query: ran 8 times", ms: "2.9 ms", detail: 'SELECT "c"."Id", "c"."Email", "c"."Name" FROM "Customers"…', tone: "warning" },
-    { tag: "N+1 HTTP", title: "N+1 HTTP: GET /orders ran 8 times", ms: "45 ms", detail: "GET localhost:5291/orders?customerId=…", tone: "warning" },
+    { tag: "N+1 HTTP", title: "N+1 HTTP: called 8 times", ms: "45 ms", detail: "GET localhost:5291/orders?customerId={}", tone: "warning" },
+    { tag: "N+1 query", title: "N+1 query: ran 8 times", ms: "2.4 ms", detail: "SELECT id, product, amount FROM orders WHERE customer_id = ?", tone: "warning" },
   ],
 };
 
 const FAST: HudSample = {
   id: "ok", button: "products", method: "GET", path: "/api/products", code: 200, health: "success",
-  time: "8:55:03 PM", service: "gateway-api", total: 112, server: 74, db: 21, render: 17, sql: 4, fetch: 1, scale: 120,
+  time: "8:55:03 PM", service: "gateway-api", total: 112, server: 74, db: 21, render: 17, sql: 4, fetch: 1, errors: 0, scale: 120,
   rows: [
     { label: "fetch /api/products", ms: "95 ms", start: 0, dur: 95, kind: "net", depth: 0 },
     { label: "GET /api/products", ms: "92 ms", start: 2, dur: 92, kind: "server", depth: 1 },
@@ -58,7 +60,7 @@ const FAST: HudSample = {
 
 const SLOW: HudSample = {
   id: "slow", button: "order", method: "POST", path: "/api/orders", code: 201, health: "warning",
-  time: "8:55:18 PM", service: "gateway-api", total: 642, server: 168, db: 412, render: 62, sql: 6, fetch: 2, scale: 660,
+  time: "8:55:18 PM", service: "gateway-api", total: 642, server: 168, db: 412, render: 62, sql: 6, fetch: 2, errors: 0, scale: 660,
   rows: [
     { label: "fetch /api/orders", ms: "580 ms", start: 0, dur: 580, kind: "net", depth: 0 },
     { label: "POST /api/orders", ms: "575 ms", start: 3, dur: 575, kind: "server", depth: 1 },
@@ -74,14 +76,14 @@ const SLOW: HudSample = {
 
 const FAILED: HudSample = {
   id: "err", button: "boom", method: "GET", path: "/api/boom", code: 500, health: "critical",
-  time: "8:55:31 PM", service: "gateway-api", total: 28, server: 26, db: 0, render: 2, sql: 0, fetch: 1, scale: 30,
+  time: "8:55:31 PM", service: "gateway-api", total: 28, server: 26, db: 0, render: 2, sql: 0, fetch: 1, errors: 1, scale: 30,
   rows: [
     { label: "fetch /api/boom", ms: "28 ms", start: 0, dur: 28, kind: "net", depth: 0 },
     { label: "GET /api/boom", ms: "26 ms", start: 1, dur: 26, kind: "server", depth: 1 },
     { label: "InvalidOperationException", ms: "", start: 24, dur: 1, kind: "error", depth: 2 },
   ],
   insights: [
-    { tag: "Error", title: "InvalidOperationException", ms: "500", detail: "Sequence contains no elements · BoomController.cs:42", tone: "critical" },
+    { tag: "Error", title: "gateway-api: Sequence contains no elements", ms: "26 ms", detail: "GET /api/boom", tone: "critical" },
   ],
 };
 

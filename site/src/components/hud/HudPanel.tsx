@@ -42,14 +42,11 @@ function Timeline({ s }: { s: HudSample }) {
 }
 
 function Insights({ s }: { s: HudSample }) {
-  if (s.insights.length === 0) {
-    return <p className="wl-hud-none">Nothing to fix here.</p>;
-  }
   return (
     <>
       {s.insights.map((ins, i) => (
         <motion.div
-          key={`${s.id}-${ins.title}`}
+          key={`${s.id}-${i}`}
           className="wl-hud-ins"
           style={{ borderLeftColor: HEALTH_COLOR[ins.tone] }}
           initial={{ opacity: 0, x: 12 }}
@@ -86,7 +83,7 @@ export function HudPanel({ sample }: { sample: HudSample }) {
           <p className="wl-hud-meta">{sample.time} · {sample.total} ms · {sample.service}</p>
           <h4 className="wl-hud-h">Timeline</h4>
           <Timeline s={sample} />
-          <h4 className="wl-hud-h">Insights · {sample.insights.length}</h4>
+          {sample.insights.length > 0 && <h4 className="wl-hud-h">Insights · {sample.insights.length}</h4>}
           <Insights s={sample} />
         </motion.div>
       </AnimatePresence>

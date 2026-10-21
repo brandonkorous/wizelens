@@ -5,32 +5,50 @@ export type Beat =
   | { kind: "answer"; text: string }
   | { kind: "audit"; text: string };
 
+// The session as the .NET add-on runs it: its tool arguments, its JSON, and its audit log lines.
 export const BEATS: Beat[] = [
   { kind: "ask", text: "Why is /api/customers-with-orders slow?" },
-  { kind: "call", tool: "find_n_plus_one", args: '{ "service": "gateway-api" }' },
+  { kind: "call", tool: "find_n_plus_one", args: "{}" },
   {
     kind: "result",
     lines: [
-      "{",
-      '  "trace": "e8fa3b92",',
-      '  "statement": "SELECT id, product, amount FROM orders WHERE customer_id = ?",',
+      "[{",
+      '  "traceId": "e8fa3b92…",',
+      '  "kind": "http",',
+      '  "shape": "GET localhost:5291/orders?customerId={}",',
       '  "count": 8,',
-      '  "headers": { "authorization": "[redacted]" }',
-      "}",
+      '  "totalMs": 45.2',
+      "}]",
+    ],
+  },
+  { kind: "call", tool: "get_trace", args: '{ "traceId": "e8fa3b92…" }' },
+  {
+    kind: "result",
+    lines: [
+      '"name": "GET /api/customers-with-orders",',
+      '"http.request.header.authorization": "[redacted]",',
+      '"http.request.header.cookie": "[redacted]",',
     ],
   },
   {
     kind: "answer",
-    text: "The gateway asks orders-api for each customer's orders: 8 calls in one request. Ask once for all eight customers.",
+    text: "The gateway calls orders-api once per customer: 8 calls in one request. Ask once for all eight customers.",
   },
-  { kind: "audit", text: "audit  mcp  find_n_plus_one  read-only  12 ms" },
+  {
+    kind: "audit",
+    text: 'WizeLens MCP audit: tool find_n_plus_one called with {"minRepeats":null}\nWizeLens MCP audit: tool get_trace called with {"traceId":"e8fa3b92…","federate":true}',
+  },
 ];
 
-export const TOOLS = ["get_overview", "get_timeseries", "group_requests", "list_traces", "get_trace", "find_slow_queries", "find_n_plus_one", "get_errors", "search", "get_metric"];
+export const TOOLS = [
+  "get_overview", "list_problems", "get_timeseries", "group_requests", "list_traces", "get_trace", "search", "search_fields",
+  "list_tags", "get_errors", "find_slow_queries", "find_n_plus_one", "find_security_issues", "get_page", "list_metrics",
+  "get_metric", "get_alerts", "list_projects",
+];
 
 export const GUARDS = [
-  { title: "Off by default.", body: "Nothing is reachable until you turn it on, per service." },
+  { title: "Off by default.", body: "Turn it on per service or on the hub, or connect Claude to the cloud at mcp.wizelens.com with a sign-in." },
   { title: "Read-only.", body: "No tool can change anything. It can only look." },
   { title: "Redacted.", body: "Secrets are replaced before they are stored, so an agent never sees them." },
-  { title: "Audited.", body: "Every call writes a line to your log. In the cloud, Claude signs in and reads only the projects you pick." },
+  { title: "Audited.", body: "Every call writes a line to your log. In the cloud, Claude reads only the projects you pick." },
 ];

@@ -1,12 +1,13 @@
 "use client";
 
 const LINES = [
+  { lvl: "info", svc: "orders-api", from: "pino", msg: "Listening on :5291 (outside a request)" },
   { lvl: "info", svc: "gateway-api", from: "Serilog", msg: "Loaded 8 customers" },
   { lvl: "info", svc: "orders-api", from: "pino", msg: "GET /orders 200 in 3.9 ms" },
   { lvl: "warn", svc: "orders-api", from: "pino", msg: "Query took 398 ms on order_lines" },
   { lvl: "info", svc: "web", from: "console", msg: "Cart updated (3 items)" },
   { lvl: "error", svc: "gateway-api", from: "ILogger", msg: "Sequence contains no elements" },
-  { lvl: "info", svc: "billing", from: "winston", msg: "Invoice 1042 sent" },
+  { lvl: "info", svc: "billing", from: "winston", msg: "Invoice job sent 12 invoices (outside a request)" },
   { lvl: "debug", svc: "gateway-api", from: "NLog", msg: "Cache hit: products:all" },
   { lvl: "info", svc: "search", from: "bunyan", msg: "Index refreshed (24 docs)" },
   { lvl: "warn", svc: "web", from: "console", msg: "Image hero.jpg took 1.4 s" },

@@ -46,7 +46,11 @@ export function Install() {
       <div className="wl-wrap wl-install">
         <div className="wl-install-copy">
           <h2 className="wl-h2">Two lines in .NET. One in Node.</h2>
-          <p className="wl-lede">Add the package, add a line, run your app. WizeLens is on in development and off in production unless you turn it on.</p>
+          <p className="wl-lede">
+            Add the package, add a line, run your app. The .NET and Node add-ons are on in development and off in
+            production unless you turn them on. In the browser and in Java, Python, and Go, you choose with enabled or
+            WIZELENS_ENABLED.
+          </p>
           <div className="wl-install-tabs" role="tablist" aria-label="Platform">
             {SNIPPETS.map((x) => (
               <button key={x.id} role="tab" aria-selected={x.id === id} className={x.id === id ? "wl-on" : undefined} onClick={() => setId(x.id)}>

@@ -6,7 +6,7 @@ import { CheckIcon, PlayIcon } from "@/components/ui/icons";
 import { BEATS, type Beat } from "./script";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
-const GAPS = [900, 1100, 900, 1300, 1300, 900];
+const GAPS = [900, 1100, 900, 1300, 900, 1100, 1300, 900];
 
 function useScript(start: boolean) {
   const [shown, setShown] = useState(-1);

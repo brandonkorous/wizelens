@@ -49,7 +49,7 @@ export function changelog(releases) {
 export function cloud() {
   const role = (r, c) => box({ alignItems: "center", gap: 10, padding: "10px 16px", borderRadius: 999, background: C.night2, fontSize: 20 }, box({ width: 30, height: 30, borderRadius: 15, background: c }), r);
   return frame({ dark: true, path: "/cloud/", children: box({ width: "100%", justifyContent: "space-between", alignItems: "center" },
-    box({ flexDirection: "column", width: 520 }, title("The same lens, for the team.", 84, true, 520), sub("Roles, 30 days of history, alerts, and share links. Self-hosted on Postgres.", true, 500, 24)),
+    box({ flexDirection: "column", width: 520 }, title("The same lens, for the team.", 84, true, 520), sub("Roles, alerts, share links, and up to 400 days of history. Hosted, or on your own Postgres.", true, 500, 24)),
     box({ flexDirection: "column", gap: 16, width: 470 },
       box({ alignItems: "center", gap: 14, padding: "20px 24px", borderRadius: 18, background: C.white, color: C.charcoal },
         box({ width: 14, height: 14, borderRadius: 7, background: C.red }),

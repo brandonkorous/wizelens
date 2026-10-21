@@ -12,23 +12,23 @@ export const FAQS: Faq[] = [
   },
   {
     q: "Is WizeLens a replacement for Glimpse?",
-    a: "In spirit, yes. Glimpse showed what one ASP.NET request did. WizeLens does that for ASP.NET Core on .NET 10, for Node, and for React and Next.js, and it follows the request through every service, built on OpenTelemetry. WizeLens is an independent project and is not affiliated with Glimpse.",
+    a: "In spirit, yes. Glimpse showed what one ASP.NET request did. WizeLens does that for ASP.NET Core, Node, Java, Python, and Go, and for React, Next.js, Vue, Angular, and Svelte in the browser, and it follows the request through every service, built on OpenTelemetry. WizeLens is an independent project and is not affiliated with Glimpse.",
   },
   {
     q: "How is WizeLens different from an APM or observability platform?",
-    a: "Observability platforms watch production fleets. WizeLens is made for the developer at the desk: two lines of setup, no account, no agent, and no collector. It points at the problem, such as an N+1 query, instead of only showing data. When a team needs history and alerts, the same dashboard runs in the local hub or WizeLens Cloud.",
+    a: "WizeLens starts at the developer's desk: two lines of setup, no account, no agent, and no collector. It points at the problem, such as an N+1 query, instead of only showing data. The same dashboard then runs on the hub or WizeLens Cloud for production, with alerts, uptime checks, SLOs, problems, and hosts and Kubernetes.",
   },
   {
     q: "Does WizeLens send my data anywhere?",
-    a: "No. Traces stay in your app, your own hub, or your own cloud database. The software sends no telemetry to WizeWorks. Passwords, tokens, cookies, and keys are redacted before anything is stored.",
+    a: "Only where you send it: your app, your own hub, your own cloud, or WizeLens Cloud if you pick it. The software sends no telemetry to WizeWorks. To check for known-vulnerable packages, the hub and the cloud send package names and versions (nothing else) to OSV. Start them with --no-osv, or set WIZELENS_PACKAGES=false in a service, to turn that off. Passwords, tokens, cookies, and keys are redacted before anything is stored.",
   },
   {
     q: "Can I run WizeLens in production?",
-    a: "WizeLens is on in development and off in production unless you turn it on. If you do, it is send-only: it sends traces to your cloud or hub, and the app serves no dashboard or read API. Sampling keeps a share of the traces plus every trace with an error or a slow span. WizeLens is in alpha today.",
+    a: "Yes. The .NET and Node add-ons are on in development and off in production unless you turn them on. In production they are send-only: they send traces to your hub or cloud, and the app serves no dashboard or read API. Sampling keeps a share of the traces plus every trace with an error or a slow span. A 4xx answer is not a failure. A 5xx your app sends on purpose, such as a 503 while a site is paused, stays out of error rates and alerts when it carries the X-WizeLens-Expected: 1 header. Platform teams can turn it on with no code change, with a variable, a startup hook, or a Kubernetes pod label.",
   },
   {
     q: "Does WizeLens use AI?",
-    a: "There is no AI inside WizeLens. It has an optional, read-only MCP endpoint that your own AI agent, such as Claude, can use to read traces, slow queries, N+1 problems, errors, and a health report. In the cloud, Claude signs in and reads only the projects you pick. It is off by default, redacted, and every call is logged.",
+    a: "There is no AI inside WizeLens. It has a read-only MCP endpoint that your own AI agent, such as Claude, can use to read traces, slow queries, N+1 problems, errors, problems, security risks, and a health report. On an add-on or the hub it is off until you turn it on. For WizeLens Cloud, add mcp.wizelens.com to Claude and sign in; it reads only the projects you pick. Secrets are redacted, and every call is logged.",
   },
   {
     q: "What does WizeLens work with?",

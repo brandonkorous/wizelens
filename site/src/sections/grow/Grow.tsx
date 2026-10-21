@@ -17,13 +17,13 @@ const STAGES: Stage[] = [
   {
     n: "2", title: "The local hub", license: "MIT",
     body: "Every service sends to one place on your machine or your network, also when a service is stopped.",
-    points: ["7 days in one SQLite file", "Projects and environments", "Any language over OpenTelemetry"],
+    points: ["7 days in one SQLite file", "Alerts, uptime checks, and SLOs", "Any language over OpenTelemetry"],
     art: (seen) => <HubArt seen={seen} />, cmd: "npx @wizeworks/lens-hub",
   },
   {
-    n: "3", title: "WizeLens Cloud", license: "Self-hosted",
-    body: "The same dashboard for a whole team, with history, alerts, and links you can share.",
-    points: ["Organizations, roles, and invites", "7- and 30-day history", "Alerts to webhooks and Slack"],
+    n: "3", title: "WizeLens Cloud", license: "MIT",
+    body: "The same dashboard for a whole team, hosted at app.wizelens.com or on your own Postgres.",
+    points: ["Organizations, roles, and invites", "14 to 400 days of history", "Alerts to Slack, Teams, Discord, PagerDuty, email, and webhooks", "Public status pages and share links"],
     art: (seen) => <CloudArt seen={seen} />,
   },
 ];

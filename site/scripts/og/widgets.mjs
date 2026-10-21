@@ -17,7 +17,7 @@ export function hudCard() {
     box({ alignItems: "center", gap: 12 },
       box({ width: 14, height: 14, borderRadius: 7, background: C.amber }),
       box({ fontSize: 22, fontWeight: 700 }, "WizeLens"),
-      box({ fontSize: 19, color: "#98a1ad", flex: 1 }, "GET /api/customers"),
+      box({ fontSize: 17, color: "#98a1ad", flex: 1, minWidth: 0, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }, "GET /api/customers-with-orders"),
       box({ fontSize: 17, fontWeight: 700, padding: "3px 10px", borderRadius: 7, background: "#15803d" }, "200")),
     box({ justifyContent: "space-between", marginTop: 24 }, stat("305 ms", "Total"), stat("263 ms", "Server"), stat("9.6 ms", "Database", C.amber), stat("35 ms", "Render")),
     box({ height: 10, borderRadius: 5, overflow: "hidden", marginTop: 20, background: C.hud2 },

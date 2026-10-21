@@ -8,7 +8,9 @@
 .wl-hero-note { font-size: 14px; color: var(--wl-muted); }
 
 .wl-stage { position: relative; margin-top: clamp(48px, 7vw, 88px); height: clamp(560px, 50vw, 640px); border-radius: 28px; background: var(--wl-paper); border: 1px solid var(--wl-line); overflow: hidden; transform-origin: 50% 0; }
-.wl-stage-hud { position: absolute; right: 24px; bottom: 24px; width: min(400px, calc(100% - 48px)); display: grid; gap: 10px; z-index: 2; }
+.wl-stage-hud { position: absolute; right: 24px; bottom: 24px; width: min(400px, calc(100% - 48px)); max-height: calc(100% - 48px); display: flex; flex-direction: column; gap: 10px; z-index: 2; }
+.wl-stage-hud .wl-hud-panel { flex: 0 1 auto; min-height: 0; }
+.wl-stage-hud .wl-hud-card { flex: none; }
 
 .wl-app { position: absolute; left: 28px; top: 28px; bottom: 28px; right: 28px; background: var(--wl-white); border: 1px solid var(--wl-line); border-radius: 16px; box-shadow: var(--wl-shadow); overflow: hidden; }
 .wl-app-bar { display: flex; align-items: center; height: 46px; padding: 0 16px; border-bottom: 1px solid var(--wl-line); background: var(--wl-paper); }
