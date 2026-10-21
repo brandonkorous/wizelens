@@ -61,8 +61,8 @@ export function CloudArt({ seen }: { seen: boolean }) {
       <motion.div className="wl-grow-alert" initial={{ opacity: 0, y: 16, scale: 0.96 }} animate={seen ? { opacity: 1, y: 0, scale: 1 } : {}} transition={{ delay: 0.6, duration: 0.6, ease: EASE }}>
         <span className="wl-dot" style={{ background: "var(--wl-red)" }} />
         <div>
-          <b>Error rate on orders-api is above 2%</b>
-          <span>3.4% for 5 minutes · sent to Slack</span>
+          <b>Error rate is 3.4% (above 2%)</b>
+          <span>orders-api · production · sent to Slack</span>
         </div>
       </motion.div>
     </div>

@@ -68,6 +68,7 @@ cluster:
   podAnnotations: {}
 
 # A Service in front of the agents that keeps traffic on the node, so apps can send OTLP to
-# http://<release>-wizelens-collector-agent.<namespace>:4318 and their spans get their pod and node.
+# http://<fullname>-agent.<namespace>:4318 and their spans get their pod and node. A release named
+# wizelens-collector makes wizelens-collector-agent.
 otlpService:
   enabled: true

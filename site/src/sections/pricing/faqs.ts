@@ -12,7 +12,7 @@ export const PRICING_FAQS: Faq[] = [
   },
   {
     q: "Can I cap what I spend?",
-    a: "Yes. On Team and Business, an owner can set a monthly limit for extra data, in dollars. Past it, the cloud answers 429 like the Free cap until the 1st, so extra data never costs more than your limit.",
+    a: "Yes. On Team and Business, an owner can set a monthly limit for extra data, in dollars. Past it, the cloud answers 429 like the Free cap until the 1st, so extra data never costs more than your limit. Owners and admins get an email when it stops.",
   },
   {
     q: "Can I cancel any time?",

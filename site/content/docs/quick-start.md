@@ -3,7 +3,8 @@ title: Quick start
 description: From nothing to your first trace in about five minutes. Pick the parts that match your stack.
 ---
 
-WizeLens is on in development only. In production it does nothing unless you turn it on yourself.
+The .NET and Node add-ons are on in development only. In production they do nothing until you turn them on, and then
+they only send: see [Production](/docs/production/).
 
 > **Alpha:** the packages are prereleases on NuGet and npm. Expect changes between versions.
 
@@ -41,7 +42,12 @@ app.use(wizelens.middleware);        // first
 app.use(wizelens.errorMiddleware);   // last
 ```
 
-On Fastify, Koa, Hono, or Next.js, see the [Node](/docs/node/) and [Next.js](/docs/nextjs/) pages.
+On Fastify, Koa, Hono, NestJS, or Next.js, see the [Node](/docs/node/) and [Next.js](/docs/nextjs/) pages.
+
+### Java, Python, and Go
+
+They send to [the hub](/docs/hub/) or [WizeLens Cloud](/docs/cloud/) through OpenTelemetry with WizeLens defaults. See
+[Java](/docs/java/), [Python](/docs/python/), and [Go](/docs/go/).
 
 ## 2. Add your database
 
@@ -76,7 +82,8 @@ import { WizeLensProvider } from "@wizeworks/lens-react";
 </WizeLensProvider>
 ```
 
-Now each server trace starts at the click that caused it, and the HUD shows in the corner of your page.
+Now each server trace starts at the click that caused it, and the HUD shows in the corner of your page. On Vue, Angular,
+Svelte, or plain JS, see [Vue, Angular, Svelte, and plain JS](/docs/browser/).
 
 ## 4. Open the dashboard
 

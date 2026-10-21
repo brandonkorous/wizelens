@@ -5,19 +5,27 @@ import { motion } from "motion/react";
 const COLS = ["In your app", "The local hub", "WizeLens Cloud"];
 
 const ROWS: [string, string, string, string][] = [
-  ["Data lives in", "A SQLite file next to each app", "One SQLite file", "Postgres"],
-  ["How far back", "24 hours or 2,000 traces", "7 days", "30 days (1 to 400)"],
+  ["Data lives in", "A SQLite file next to each app", "One SQLite file", "Postgres, plus ClickHouse at scale"],
+  ["How far back", "24 hours or 2,000 traces", "7 days, or what you set", "14 to 400 days by plan (self-hosted: 30, 1 to 400)"],
   ["Services", "Found by following the trace", "Every service, plus any OpenTelemetry app", "Every service, by project and environment"],
   ["People", "You", "Your team, with one shared token", "Organizations, roles, and invites"],
-  ["Alerts", "", "", "Webhooks and Slack"],
-  ["Share links", "", "", "Read-only, 1 to 30 days"],
+  ["Sign-in", "", "One shared token", "Passwords, passkeys, two-step, SSO, SCIM"],
+  ["Alerts", "", "Slack, Teams, Discord, PagerDuty, webhooks", "Slack, Teams, Discord, PagerDuty, webhooks, email"],
+  ["Problems", "What is above normal, and why", "What is above normal, and why", "The same, linked from its alerts"],
+  ["Uptime checks", "", "From your machine", "Run for you, plus public status pages"],
+  ["SLOs and dashboards", "", "Error budgets, Apdex, dashboards", "Error budgets, Apdex, dashboards"],
+  ["Error workflow", "", "Resolve, ignore, Regressed", "Also assign, with an audit line"],
+  ["Tags", "In code", "Settings → Tags", "Settings → Tags, audited"],
+  ["Vulnerable packages (OSV)", "", "Checked against OSV", "Checked against OSV"],
+  ["Hosts and Kubernetes", "", "From the OpenTelemetry Collector", "From the OpenTelemetry Collector"],
+  ["Share links", "", "", "A trace or a page, read-only, 1 to 30 days"],
   ["AI access", "One read-only endpoint per service", "One endpoint for every service", "Claude signs in, reads the projects you pick, audited"],
 ];
 
 // Where each way of running WizeLens fits, side by side.
 export function Compare() {
   return (
-    <section className="wl-section">
+    <section className="wl-section wl-paper">
       <div className="wl-wrap">
         <div className="wl-head wl-head-split">
           <h2 className="wl-h2">Same dashboard. Pick the size.</h2>

@@ -42,9 +42,9 @@ export function HistoryArt({ seen }: { seen: boolean }) {
 
 export function ScaleArt({ seen }: { seen: boolean }) {
   const facts = [
-    { v: 42000, before: "", after: "", label: "traces on Postgres" },
-    { v: 200, before: "", after: "", label: "traces a second" },
-    { v: 60, before: "< ", after: " ms", label: "for every page" },
+    { v: 192000, before: "", after: "", label: "traces over 30 days" },
+    { v: 1545, before: "", after: "", label: "traces taken in each second" },
+    { v: 200, before: "< ", after: " ms", label: "p50 for a 30-day search" },
   ];
   return (
     <div className="wl-ct-scale">
@@ -67,6 +67,7 @@ export function RetentionArt({ seen }: { seen: boolean }) {
         <motion.i initial={{ left: "100%" }} animate={seen ? { left: `${at}%` } : {}} transition={{ duration: 1.4, delay: 0.3, ease: [0.22, 1, 0.36, 1] }} />
       </div>
       <div className="wl-ct-ret-scale"><span>1 day</span><b>30 days by default</b><span>400 days</span></div>
+      <div className="wl-ct-ret-rows"><span>Shop · traces 30 days · logs 90 days</span><span>Admin · traces 14 days · logs 14 days</span></div>
     </div>
   );
 }

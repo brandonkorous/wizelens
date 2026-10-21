@@ -9,7 +9,7 @@ export const SITE = {
 };
 
 export const HOME_DESCRIPTION =
-  "See everything one request did, from the click in React to the SQL, across every .NET and Node service. Open source request tracing that finds N+1 queries for you.";
+  "See everything one request did, from the browser click to the SQL, in .NET, Node, Java, Python, and Go. Open source tracing that finds N+1s and security risks.";
 
 type PageMeta = {
   path: string;

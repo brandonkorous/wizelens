@@ -11,7 +11,8 @@ export function AiAccess() {
             <h2 className="wl-h2">Your AI can look. Only if you let it.</h2>
             <p className="wl-lede">
               There is no AI inside WizeLens. There is a door: a read-only MCP endpoint that your own agent can use to
-              read traces, slow queries, N+1 problems, and errors. You decide if it opens.
+              read traces, slow queries, N+1 problems, errors, problems, security risks, and a health report for every
+              project you allow. You decide if it opens.
             </p>
             <ul className="wl-guards">
               {GUARDS.map((g) => (

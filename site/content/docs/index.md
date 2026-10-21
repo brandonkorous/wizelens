@@ -9,12 +9,15 @@ and Node, a dashboard at `/_wizelens` shows it, and in React a small HUD in the 
 request as you work. Java, Python, and Go services send to [the hub](/docs/hub/) or [the cloud](/docs/cloud/) through
 OpenTelemetry, and Vue, Angular, Svelte, and plain JS pages link each click to its server trace.
 
-It finds the common problems for you: N+1 queries, N+1 HTTP calls, duplicate queries, slow queries, and errors.
+It finds the common problems for you: N+1 queries and HTTP calls, duplicate and slow queries, database waits, errors,
+render problems, security risks from the OWASP Top 10, and services running above their normal.
 
 ## What you get
 
 - **One timeline per request.** The click, the API, each service after it, each query, and the render.
-- **A dashboard on every service.** Eleven pages: overview, problems, requests, traces, database, rendering, errors, logs, metrics, services, and insights.
+- **A dashboard on every service.** Overview, Problems, Search, Requests, Traces, Errors, Logs, Database, Rendering,
+  Metrics, Services, Insights, Security, and Users in every app. The hub and the cloud add Hosts, Kubernetes, Alerts,
+  Uptime, SLOs, and Dashboards. See [The dashboard](/docs/dashboard/).
 - **Insights.** Problems ranked, with a short note on how to fix them.
 - **AI access, only if you allow it.** A read-only MCP endpoint your own agent can use. There is no AI inside WizeLens.
 - **Safe by default.** On in development only. Passwords, tokens, and keys are redacted before anything is stored.
@@ -34,9 +37,9 @@ It finds the common problems for you: N+1 queries, N+1 HTTP calls, duplicate que
 |---|---|---|
 | **In your app** | A small SQLite file per service: the newest 2,000 traces or 24 hours | One developer, one machine |
 | **[The local hub](/docs/hub/)** | One SQLite file for every service, 7 days | A whole system on your machine or team network |
-| **[WizeLens Cloud](/docs/cloud/)** | Postgres, 7 and 30 days, computed on the server | A team, with accounts, alerts, and share links |
+| **[WizeLens Cloud](/docs/cloud/)** | Postgres, and ClickHouse at scale: 14, 30, or 90 days by plan (up to 400 on Enterprise), 30 by default when you host it | A team, with accounts, alerts, and share links |
 
-The add-ons and the hub are MIT licensed. All three are in alpha.
+The add-ons, the hub, and the cloud are MIT licensed. All three are in alpha.
 
 ## Next
 

@@ -31,9 +31,11 @@ export function search(index: SearchEntry[], query: string, limit = 8): SearchEn
     .map((x) => x.e);
 }
 
+// About 140 characters around the first query word the text holds; whole sections can be long.
 export function snippet(text: string, query: string): string {
-  const first = query.toLowerCase().split(/\s+/).find(Boolean) ?? "";
-  const at = Math.max(0, text.toLowerCase().indexOf(first) - 40);
+  const lower = text.toLowerCase();
+  const hit = query.toLowerCase().split(/\s+/).filter(Boolean).map((w) => lower.indexOf(w)).find((i) => i >= 0) ?? 0;
+  const at = Math.max(0, hit - 40);
   const cut = text.slice(at, at + 140);
   return `${at > 0 ? "…" : ""}${cut}${at + 140 < text.length ? "…" : ""}`;
 }

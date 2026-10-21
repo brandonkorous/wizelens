@@ -4,12 +4,10 @@ import { motion } from "motion/react";
 import { Headline, riseDelay } from "@/components/ui/Headline";
 import { CopyCommand } from "@/components/ui/CopyCommand";
 import { ArrowRight } from "@/components/ui/icons";
-import { Tile } from "@/sections/bento/Tile";
 import { Compare } from "./Compare";
+import { OpsFeatures } from "./OpsFeatures";
 import { TeamDemo } from "./TeamDemo";
-import { HistoryArt, KeysArt, RetentionArt, ScaleArt } from "./tiles/DataTiles";
-import { ProjectsArt } from "./tiles/ProjectsArt";
-import { AlertsArt, AuditArt, RolesArt, ShareArt } from "./tiles/TeamTiles";
+import { TeamFeatures } from "./TeamFeatures";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -20,6 +18,8 @@ const SAFE = [
   "Webhooks cannot reach private addresses unless you allow it.",
   "Passwords, tokens, and keys are redacted before they are stored.",
   "Every MCP call goes to the audit log, with the key, or the person and app, that made it.",
+  "Two-step sign-in, passkeys, and a breached-password check.",
+  "A fresh cloud needs its one-time setup link, so nobody else can claim it.",
 ];
 
 function Hero() {
@@ -29,7 +29,7 @@ function Hero() {
         <div className="wl-cloud-copy">
           <Headline lines={["The same lens,", "for the team."]} />
           <div className="wl-cloud-intro wl-rise" style={riseDelay(0.35)}>
-            <p className="wl-lede">WizeLens Cloud is the dashboard you already know, with accounts, history, alerts, share links, and AI access you can scope. Start free at app.wizelens.com, or run it yourself on your own Postgres.</p>
+            <p className="wl-lede">WizeLens Cloud is the dashboard you already know, with accounts, single sign-on, history, alerts, uptime checks, share links, and AI access you can scope. Start free at app.wizelens.com, or run it yourself on your own Postgres, with ClickHouse when you grow.</p>
             <div className="wl-hero-cta">
               <a href="https://app.wizelens.com" className="wl-btn wl-btn-primary">Start free <ArrowRight /></a>
               <a href="/pricing/" className="wl-btn wl-btn-ghost">See pricing</a>
@@ -45,43 +45,19 @@ function Hero() {
   );
 }
 
-function Features() {
-  return (
-    <section className="wl-section wl-paper">
-      <div className="wl-wrap">
-        <div className="wl-head wl-head-split">
-          <h2 className="wl-h2">Built for more than one person.</h2>
-          <p className="wl-lede">Everything the in-app dashboard does, plus the parts a team needs.</p>
-        </div>
-        <div className="wl-bento wl-cloud-bento">
-          <Tile area="ro" title="Roles that make sense." body="Organizations hold projects. Viewers read, members alert and share, admins run projects and keys, owners run owners.">{(s) => <RolesArt seen={s} />}</Tile>
-          <Tile area="pa" title="Every project, one screen." body="Pick All projects and see your whole organization at once. Totals add up, and two services with the same name stay apart.">{(s) => <ProjectsArt seen={s} />}</Tile>
-          <Tile area="hi" title="30 days of history." body="Every page is computed on the server, from stats tables, never from a sample.">{(s) => <HistoryArt seen={s} />}</Tile>
-          <Tile area="al" title="Alerts that say what happened." body="Error rate, latency, traffic, new errors, slow queries, or any metric. To webhooks and Slack, when it fires and when it clears.">{(s) => <AlertsArt seen={s} />}</Tile>
-          <Tile area="sh" title="Share one trace." body="A read-only link to one trace, for 1 to 30 days. Revoke it any time.">{(s) => <ShareArt seen={s} />}</Tile>
-          <Tile area="sc" title="Fast with a lot of data." body="Measured at 200 traces a second on Postgres." night>{(s) => <ScaleArt seen={s} />}</Tile>
-          <Tile area="ke" title="Keys for apps, sign-in for agents." body="Apps send with an ingest key. Claude signs in and reads only the projects you pick.">{() => <KeysArt />}</Tile>
-          <Tile area="au" title="An audit log." body="Who changed what, and every call an agent made." night>{(s) => <AuditArt seen={s} />}</Tile>
-          <Tile area="re" title="Keep what you need." body="Retention per organization.">{(s) => <RetentionArt seen={s} />}</Tile>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function SelfHost() {
   return (
     <section className="wl-section wl-night">
       <div className="wl-wrap wl-cloud-self">
         <div>
           <h2 className="wl-h2">Run it yourself.</h2>
-          <p className="wl-lede">One Docker Compose file with Postgres. Put it behind https, create the first account, and you own the first organization.</p>
+          <p className="wl-lede">One Docker Compose file with Postgres, and ClickHouse when you need scale. Put it behind https, create the first account from the setup link it prints, and you own the first organization.</p>
         </div>
         <div className="wl-cloud-steps">
           <CopyCommand command="docker compose -f deploy/docker-compose.cloud.yml up -d" />
           <ol>
-            <li><b>Start it</b> with POSTGRES_PASSWORD and WIZELENS_CLOUD_PUBLIC_URL set.</li>
-            <li><b>Sign up</b> as the first account, then invite your team.</li>
+            <li><b>Start it</b> with POSTGRES_PASSWORD, WIZELENS_CLOUD_AUTH_SECRET, and WIZELENS_CLOUD_PUBLIC_URL set.</li>
+            <li><b>Open the setup link</b> in the log to make the first account, then invite your team.</li>
             <li><b>Make an ingest key</b> per app and set WIZELENS_HUB and WIZELENS_HUB_TOKEN.</li>
           </ol>
           <ul className="wl-cloud-safe">{SAFE.map((s) => <li key={s}>{s}</li>)}</ul>
@@ -98,7 +74,8 @@ export function Cloud() {
   return (
     <main>
       <Hero />
-      <Features />
+      <TeamFeatures />
+      <OpsFeatures />
       <Compare />
       <SelfHost />
     </main>

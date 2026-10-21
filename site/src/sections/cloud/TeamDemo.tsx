@@ -79,16 +79,25 @@ function Keys({ beat }: { beat: number }) {
   );
 }
 
-// The cloud hero: a small Team page that runs by itself.
-export function TeamDemo() {
-  const box = useRef<HTMLDivElement>(null);
-  const beat = useBeat(useInView(box, { amount: 0.3 }));
+const RAIL = ["People", "Projects", "API keys", "Connected apps", "Single sign-on", "SCIM", "Shared links", "Audit log", "Billing"];
+
+// The section list down the side, with counts like the real page; the open section follows the beat.
+function Rail({ beat }: { beat: number }) {
+  const open = beat >= 3 ? "API keys" : "People";
+  const count: Record<string, number> = { People: beat >= 2 ? 4 : 3, Projects: 3, "API keys": beat >= 3 ? 2 : 1 };
   return (
-    <div className="wl-td" ref={box} aria-hidden>
-      <div className="wl-td-head">
-        <b>Fieldnote</b>
-        <span>3 projects · production, staging</span>
-        <button type="button" tabIndex={-1} className={beat === 1 ? "wl-td-press" : undefined}>Invite</button>
+    <ul className="wl-td-rail">
+      {RAIL.map((r) => <li key={r} className={r === open ? "wl-on" : undefined}>{r}{count[r] !== undefined && <i className="wl-num">{count[r]}</i>}</li>)}
+    </ul>
+  );
+}
+
+function People({ beat }: { beat: number }) {
+  return (
+    <>
+      <div className="wl-td-section">
+        <b>People</b>
+        <button type="button" tabIndex={-1} className={beat === 1 ? "wl-td-press" : undefined}>Invite someone</button>
       </div>
       <AnimatePresence>
         {beat >= 1 && beat < 3 && (
@@ -101,7 +110,31 @@ export function TeamDemo() {
         {PEOPLE.map((p) => <Person key={p.initials} p={p} />)}
         <AnimatePresence>{beat >= 2 && <Person key="new" p={NEW_PERSON} fresh />}</AnimatePresence>
       </div>
-      <Keys beat={beat} />
+    </>
+  );
+}
+
+// The cloud hero: a small Team page that runs by itself.
+export function TeamDemo() {
+  const box = useRef<HTMLDivElement>(null);
+  const beat = useBeat(useInView(box, { amount: 0.3 }));
+  return (
+    <div className="wl-td" ref={box} aria-hidden>
+      <div className="wl-td-head">
+        <b>Team</b>
+        <span>Fieldnote: people, projects, keys, and access.</span>
+      </div>
+      <div className="wl-td-body">
+        <Rail beat={beat} />
+        <div className="wl-td-main">
+          {beat >= 3 ? (
+            <>
+              <div className="wl-td-section"><b>API keys</b><button type="button" tabIndex={-1}>New key</button></div>
+              <Keys beat={beat} />
+            </>
+          ) : <People beat={beat} />}
+        </div>
+      </div>
       <Toast beat={beat} />
     </div>
   );

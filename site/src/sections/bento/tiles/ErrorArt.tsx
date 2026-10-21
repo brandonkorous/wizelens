@@ -30,6 +30,11 @@ export function ErrorArt({ seen }: { seen: boolean }) {
           </motion.code>
         ))}
       </div>
+      <motion.div className="wl-er-foot" initial={{ opacity: 0, y: 6 }} animate={seen ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.8 }}>
+        <span className="wl-er-badge">Regressed</span>
+        <span>back in 2.4.1 · 3 users</span>
+        <span className="wl-er-acts"><span>Resolve</span><span>Ignore</span></span>
+      </motion.div>
     </div>
   );
 }

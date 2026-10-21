@@ -8,12 +8,16 @@ uses that to find the risks that slip past pull requests and tests, and maps eac
 [OWASP Top 10:2025](https://owasp.org/Top10/). Each risk shows its evidence, the endpoints and users it touched, how to fix
 it, and an example trace. Pick a service and a release to see what is **new in that release**.
 
+On the hub and the cloud, **Mark fixed** a risk once you fixed it (it comes back as **Regressed** if it shows up again),
+or **Dismiss** it for 1 hour, 1 day, 1 week, or for good. Filter by OWASP category, severity, status (Open, Fixed,
+Dismissed), release, service, and endpoint, and **Export** the list as CSV.
+
 A finding is a strong hint from real traffic, not proof. Open the example trace to check it. WizeLens never stores a
 secret to report it: a risk names what was found and where, never the value.
 
-The same rules run in .NET and in Node, on the same shared test cases, so every service gives the same answer. Risks
-also show on each trace (the **Security risks** list above the tabs), in Ctrl+K, and through the MCP tool
-`find_security_issues`.
+The same rules run in .NET and in Node, on the same shared test cases, and on the hub and the cloud for OpenTelemetry
+services, so every service gives the same answer. Risks also show on each trace (the **Security risks** list above the
+tabs), in Ctrl+K, and through the MCP tool [`find_security_issues`](/docs/ai-access/#tools).
 
 ## The rules
 
@@ -59,7 +63,8 @@ Every SDK sends the names and versions of the packages it runs once at start: np
 The hub and the cloud check them against [OSV](https://osv.dev) every few minutes (each version once a day) and list each
 version with advisories, its CVEs, and the version that fixes it. Only package names and versions leave your machine.
 
-Turn it off in an app with `WIZELENS_PACKAGES=false`, or on the hub with `--no-osv` (`WIZELENS_HUB_OSV=0`).
+Turn it off in an app with `WIZELENS_PACKAGES=false` (`reportPackages: false` in Node, `ReportPackages = false` in .NET),
+on the hub with `--no-osv` (`WIZELENS_HUB_OSV=0`), or on your own cloud with `--no-osv` (`WIZELENS_CLOUD_OSV=0`).
 
 ## Alerts
 

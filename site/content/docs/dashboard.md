@@ -1,36 +1,181 @@
 ---
 title: The dashboard
-description: Eleven pages, one look, at /_wizelens on every service, the hub, and the cloud.
+description: Every page, one look, at /_wizelens on every service, the hub, and the cloud.
 ---
 
-Pick a time range in the top bar. Every number compares itself with the range before it. Search everything with
-**Ctrl K** (**⌘ K**). Light and dark themes are built in.
+The same dashboard runs inside your app at `/_wizelens`, on [the local hub](/docs/hub/), and on
+[WizeLens Cloud](/docs/cloud/). Your app shows 15 pages, the hub 21, and the cloud 22. Light and dark themes are built in.
+
+Pick a time range in the top bar, or any from–to, or drag across a chart to zoom. Numbers compare with **the period
+before**, or with the **same time last week**. Charts mark the moment each new [release](/docs/releases/) first sent data.
+Search everything with **Ctrl K** (**⌘ K**).
 
 ![The Overview page](/shots/overview.jpg)
 
 ## Pages
 
-| Page | What you get |
+The menu is in sections. Pages a host does not run are left out of its menu.
+
+### The top of the menu
+
+| Page | Where | What you get |
+|---|---|---|
+| **Overview** | Every host | Total Requests, Avg Duration, SQL Queries, Error Rate, Apdex, and Insights Found; Request Activity, Request Timing Breakdown, Services, Recent Requests, Latest Insights, and New and Regressed Errors |
+| **Problems** | Every host | Services and endpoints above their normal error rate, p95, or traffic, grouped into problems with a suspected cause ([more](/docs/problems/)) |
+| **Search** | Every host | Find any request, trace, span, or log line with the search language; counts per kind, results over time, CSV ([more](/docs/search/)) |
+
+### Investigate
+
+| Page | Where | What you get |
+|---|---|---|
+| **Requests** | Every host | Filter by method, status, duration, service, endpoint, user, or a search; **With insights**; Live or Paused; CSV; a side panel with Overview, Headers, Response, and Trace |
+| **Traces** | Every host | One request as layers: browser, network, routing, handler, each service, each database, render; bottlenecks and the slowest spans; filter by status and duration |
+| **Errors** | Every host | Errors over time, top types, errors by service, and the stack and request of each group; Resolve or Ignore a group (hub and cloud), **Regressed** when it comes back, assign on the cloud; filter by status, release, type, endpoint, user ([more](/docs/errors/)) |
+| **Logs** | Every host | Every log line, in requests and outside them, filtered by level, service, text, or pattern; patterns, charts from saved searches; Live or Paused ([more](/docs/logs/)) |
+| **Database** | Every host | Slow queries over time, time per operation, the slowest, most frequent, or most total-time queries, table hot spots; filter by database, operation, and table |
+| **Rendering** | Every host | Render time per route, SSR, hydration, image loading, layout shift, and the React components that render too often |
+| **Metrics** | Every host | CPU, memory, GC, request times, and your own counters per service, as charts; split by any attribute |
+
+### Infrastructure
+
+| Page | Where | What you get |
+|---|---|---|
+| **Services** | Every host | Health of each service, database, and outside host, a map of who calls whom, and a full page per service with its versions |
+| **Hosts** | Hub, cloud | CPU, memory, the fullest disk, and network per host, with the services on each ([more](/docs/kubernetes/)) |
+| **Kubernetes** | Hub, cloud | Nodes, pods, workloads, restarts, and out-of-memory kills, per cluster and namespace ([more](/docs/kubernetes/)) |
+
+### Analyze
+
+| Page | Where | What you get |
+|---|---|---|
+| **Insights** | Every host | Every N+1, duplicate query, slow query, and render problem, ranked, with how to fix it ([more](/docs/insights/)) |
+| **Security** | Every host | OWASP Top 10 risks from real traffic, and known-vulnerable packages on the hub and the cloud ([more](/docs/security/)) |
+| **Users** | Every host | Signed-in users (`enduser.id`) by requests, failures, and latency; a page per user ([more](/docs/users/)) |
+
+### Monitor
+
+| Page | Where | What you get |
+|---|---|---|
+| **Alerts** | Hub, cloud | Rules, channels, notices, and a page per rule ([more](/docs/alerts/)) |
+| **Uptime** | Hub, cloud | Checks that call your URLs on a schedule, with uptime, response time, incidents, and certificate warnings ([more](/docs/uptime/)) |
+| **SLOs** | Hub, cloud | Error budgets, burn rate, and Apdex targets ([more](/docs/slos/)) |
+| **Dashboards** | Hub, cloud | Your own pages of metric charts ([more](/docs/dashboards/)) |
+
+### Manage
+
+| Page | Where | What you get |
+|---|---|---|
+| **Team** | Cloud | People, Projects, API keys, Connected apps, Single sign-on, SCIM, Shared links, Audit log, Billing, and Organization ([more](/docs/cloud/)) |
+| **Settings** | Every host | Your preferences and how WizeLens is set up (below) |
+
+Lists open a page of their own for each service, endpoint, error group, query, page route, and user. Number cards open
+the list behind them: Error Rate opens the failed requests.
+
+## Settings
+
+| Tab | Where | What it holds |
+|---|---|---|
+| **Dashboard** | Every host | Theme, default time range, time zone (yours or UTC), and clock (12-hour or 24-hour). Saved in this browser. |
+| **This project** | Hub, cloud | Slow query (ms), N+1 threshold, how many days to keep data, and more redacted keys |
+| **Connect a service** | Hub, cloud | How to send a service's data here. An app that sends to a hub shows **Sends to**. |
+| **Services**, **This hub**, **This cloud** | Every host | How WizeLens is set up in each connected service, or on the hub or cloud itself |
+| **Tags** | Every host | The tags of this project ([more](/docs/tags/)) |
+| **Add-on options** | Every host | Every option of the .NET and Node add-ons, and the environment variable that sets it |
+
+## Around every page
+
+### The menu
+
+The menu has a top group (Overview, Problems, Search) and five sections: **Investigate**, **Infrastructure**,
+**Analyze**, **Monitor**, and **Manage**. Click a heading to fold its section. The menu remembers what you folded, and a
+folded section still shows the page you are on. Saved views show under **Saved**.
+
+The foot of the menu has a **Docs** link and the version of your add-on, hub, or cloud. Click the version to open the
+[changelog](/changelog).
+
+On a phone, a bar at the bottom holds **Overview**, **Problems**, **Requests**, **Errors**, and **More**. **More** opens a
+drawer with every other page, in the same sections, and your saved views.
+
+### The top bar
+
+| Part | What it does |
 |---|---|
-| **Overview** | Requests, duration, SQL, error rate, and insights at a glance; request activity, timing breakdown, services, recent requests, latest insights |
-| **Problems** | Services and endpoints above their normal error rate, p95, or traffic, grouped into problems with a suspected cause. See [Problems](/docs/problems/) |
-| **Requests** | Filter by method, status, duration, service, or text; export to CSV; a side panel with summary, headers, response, tags, and timing |
-| **Traces** | One request as layers: browser, network, routing, handler, each service, each database, render. Plus bottlenecks and the slowest spans |
-| **Database** | Slow queries over time, time per operation, top slow queries, table hot spots |
-| **Rendering** | Render time per route, SSR, hydration, image loading, layout shift, and the React components that render too often |
-| **Errors** | Exceptions over time, top types, errors by service, and the stack trace and request of each one. Browser errors too |
-| **Logs** | Every log line from every service, in requests and outside them, filtered by level, service, text, or pattern; patterns, charts from saved searches. See [Logs](/docs/logs/) |
-| **Metrics** | CPU, memory, GC, request times, and your own counters per service, as charts; split by any attribute |
-| **Services** | Health of each service, database, and outside host, and a map of who calls whom |
-| **Insights** | Every N+1, duplicate query, slow query, and render problem, ranked, with how to fix it |
-| **Uptime** | Hub and cloud: checks that call your URLs on a schedule, with uptime, response time, incidents, and certificate warnings ([more](/docs/uptime/)) |
-| **Settings** | How each connected service is set up, and your dashboard preferences |
+| Search box | Opens Ctrl K search (below) |
+| Where it runs | **In-app**, **Local hub**, or **Cloud**, and how long the host keeps data |
+| Service chip | Shows while a service is chosen. Click it to show all services again. |
+| Project menu | Hub and cloud: organization, project, environment, and the services sending data, each with its hosts. Pick a service and every page counts that service only. |
+| Environment | In your app: its environment and the services it is connected to |
+| Time range | Presets, a **Custom range** from–to, and **Compare with**: **The period before** or **Same time last week** |
+| Star | **Save this view** (below) |
+| Link | **Share this page** (below) |
+| Bell | Errors, insights, serious security risks, and fired alerts of the last 24 hours |
+| Theme | Light, dark, or the same as your system |
+| Your name | Cloud: **Account**, your organization and role, and **Sign out** |
+
+The address bar holds the time range, a custom window, the compare choice, the project, the environment, and the service.
+A copied link, or the link in an alert notice, opens exactly what you saw.
+
+### Projects and All projects
+
+On the cloud, the project menu lists your organization's projects, with **All projects** first when there is more than
+one. All projects shows every project you may read on one screen, with totals that add up. With more than one
+organization, the same menu picks the organization. See [All projects](/docs/cloud/#all-projects).
+
+The hub lists its projects and environments, each with **All projects** and **All environments** first.
+
+### Save this view
+
+The star in the top bar saves the page you are on, with its filters and time range. Give it a **Name**. It shows under
+**Saved** in the menu, in the phone's **More** drawer, and in Ctrl K. A saved search also shows under the box on the Search
+page. On the Logs page, **Chart it on the Logs page** turns the search into a chart.
+
+On the cloud a saved view is yours until you tick **Share with the team**. On the hub every saved view is shared with the
+project. The star shows on the hub and the cloud.
+
+### Share this page
+
+On the cloud, the link button makes a read-only link to the page you are on: Overview, Requests, Errors, Database, Logs,
+Insights, Security, Rendering, Services, Traces, and the page of one error, service, endpoint, query, or route. Pick
+**For 1 day**, **For 7 days**, or **For 30 days**, then **Make a link**. The numbers are kept as they are now and do not
+change. Anyone with the link can open it. A link belongs to one project, so it is not offered under All projects. See
+and revoke links under **Team → Shared links**.
+
+### Live or paused
+
+Requests and Logs update as new data comes in. Click **Live** to switch to **Paused** and keep the list still. Click again
+to go live.
+
+### A new version
+
+When your hub or cloud starts a new release, an open dashboard shows "A new version of WizeLens is ready." with **Refresh**
+and **Later**. The page keeps working until you refresh.
+
+## Ctrl K
+
+**Ctrl K** (**⌘ K**) opens one search over everything: pages, requests, trace ids, log lines, services, error groups,
+queries, insights, security risks, metrics, alerts, SLOs, saved views, and dashboards. The first hit is
+**Search everything**, which opens the [Search page](/docs/search/) with your text.
 
 ![The Traces page](/shots/traces.jpg)
 
 ## One trace
 
-Open any trace for the full detail: the timeline, SQL, HTTP calls, logs, and errors, across every service it touched.
+Open any trace for the full detail, across every service it touched.
+
+- **The header:** services, health, and how the time splits into server code, database, render, and network and other.
+  **Copy trace id** copies it.
+- **Tabs:** Timeline, SQL, HTTP, Messages, Logs, and Errors, each with its count.
+- **Findings:** the errors and insights of this request, then its **Security risks**. Click one to select its spans.
+- **The timeline:** **Find spans by name or service**, **Errors only**, **Critical path**, **Expand all**, and
+  **Collapse all**. A span with children shows its self time.
+- **A span:** its service, kind, duration, start, status, and id; the query and its parameters; events, logs, and
+  attributes. Click an attribute value to find spans with it. Links open its service, endpoint, query, error, and the
+  request's logs. A span from Kubernetes links to its pod and node.
+- **JSON** downloads the trace.
+- **Compare** with another trace: paste its id, or pick a recent trace of the same request. The compare page shows the
+  numbers side by side, self time per service, and both timelines.
+- **Tag this** and the trace's tags ([more](/docs/tags/)).
+- **Share** (cloud): a read-only link to this trace for 1, 7, or 30 days.
 
 ## What counts as an error
 
@@ -42,7 +187,7 @@ pages that look something up and fall back, do not push up your error rate.
 
 Some 5xx answers are on purpose. A site that is paused answers 503 "come back later", so search engines keep its pages
 and try again. Mark these answers as expected, and WizeLens leaves them out of error rates, failed requests, error
-groups, problems, and alerts. The status stays as it is: `status:5xx` still finds them.
+groups, problems, alerts, and health. The status stays as it is: `status:5xx` still finds them.
 
 | How | Code |
 |---|---|
@@ -65,7 +210,7 @@ server time. When queries ran at the same time, "all queries added up" is shown 
 | Running | Ranges |
 |---|---|
 | In your app | Up to 24 hours (newest 2,000 traces) |
-| The hub | Up to 7 days |
-| The cloud | Up to 30 days, computed on the server |
+| The hub | Up to what it keeps: 7 days by default (`--retention`) |
+| The cloud | Up to 30 days in the menu, computed on the server |
 
 Ranges longer than the host keeps are hidden.

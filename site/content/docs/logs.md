@@ -50,12 +50,14 @@ chart it too (**Chart it on the Logs page**). An app's own dashboard keeps them 
 
 ## Log alerts
 
-On the cloud, **Alert on this search** (or a new alert with **Log lines**) counts the lines that match a search over 5
-minutes to 24 hours, and fires when the count is above or below your threshold:
+On the hub and the cloud, **Alert on this search** (or a new alert with **Log lines**) counts the lines that match a
+search over 5 minutes to 24 hours, and fires when the count is above or below your threshold:
 
 ```text
 Log lines (error and up, "timed out") is 12 (above 10)
 ```
+
+See [Alerts](/docs/alerts/) for channels, reminders, and muting.
 
 ## How long logs are kept
 

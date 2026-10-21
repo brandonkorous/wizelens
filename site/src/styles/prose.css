@@ -36,3 +36,4 @@
   .wl-pre-copy { opacity: 1; }
 }
 .wl-prose img { width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--wl-line); box-shadow: var(--wl-shadow); }
+.wl-prose img[src$="hud-card.png"] { width: auto; max-width: min(460px, 100%); border-radius: 12px; }

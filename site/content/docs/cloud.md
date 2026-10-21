@@ -1,6 +1,6 @@
 ---
 title: WizeLens Cloud
-description: The same dashboard for a whole team, with accounts, history, alerts, share links, and scoped AI access. Run it yourself on Postgres.
+description: The same dashboard for a whole team, with accounts, SSO, history, alerts, uptime checks, and scoped AI access. Use it hosted, or run it on Postgres.
 ---
 
 ## Try it on your machine
@@ -9,24 +9,37 @@ description: The same dashboard for a whole team, with accounts, history, alerts
 npx @wizeworks/lens-cloud
 ```
 
-This runs Postgres in-process (PGlite) and keeps data in `./.wizelens-cloud`. Open http://localhost:5970/_wizelens/ and
-create the first account. PGlite is for trials and tests. Use real Postgres for a team.
+This runs Postgres in-process (PGlite) and keeps data in `./.wizelens-cloud`. Open the setup link it prints
+(`http://localhost:5970/_wizelens/#/setup?token=…`) to create the first account. The link works once. PGlite is for trials
+and tests. Use real Postgres for a team.
 
 ## Run it for a team
 
-Run it with Postgres, on a server your team can reach:
+Run it with Postgres, on a server your team can reach. Put the settings in `deploy/.env`, next to the compose file:
 
 ```bash
-POSTGRES_PASSWORD=<a long secret> WIZELENS_CLOUD_PUBLIC_URL=https://wizelens.example.com \
-  docker compose -f deploy/docker-compose.cloud.yml up -d
+POSTGRES_PASSWORD=<a long secret>
+WIZELENS_CLOUD_AUTH_SECRET=<32+ random characters: openssl rand -base64 32>
+WIZELENS_CLOUD_PUBLIC_URL=https://wizelens.example.com
 ```
 
-Put it behind https (any reverse proxy). With an https public URL, the sign-in cookie is marked secure.
+Then start it with `docker compose -f deploy/docker-compose.cloud.yml up -d`. Keep the auth secret: it signs sessions and
+encrypts two-step secrets.
+
+Put it behind https (any reverse proxy). With an https public URL, the sign-in cookie is marked secure. For email, set
+`WIZELENS_CLOUD_RESEND_API_KEY` or `WIZELENS_CLOUD_SMTP_URL`, and `WIZELENS_CLOUD_MAIL_FROM`; without them, emails go to the log.
+
+**Scale mode** keeps spans, logs, metrics, and every stats and search table in ClickHouse, and accounts and settings in
+Postgres, so heavy searches never slow sign-in or ingest. Pages and searches give the same answers in both modes. Set
+`CLICKHOUSE_PASSWORD` and `WIZELENS_CLOUD_CLICKHOUSE_URL=http://wizelens:<password>@clickhouse:8123/wizelens`, then run
+`docker compose -f deploy/docker-compose.cloud.yml --profile scale up -d`. To move data you already have, run
+`wizelens-cloud copy-telemetry --database <postgres url> --clickhouse <url>` once before the switch.
 
 ## Connect your apps
 
-Open the public URL and create the first account: you own the first organization. On the **Team** page, invite people
-(send them the link), add projects, and make an **ingest key** for each app. Then set on each app, and restart it:
+Open the setup link from the log (`docker compose -f deploy/docker-compose.cloud.yml logs cloud`), or set
+`WIZELENS_CLOUD_SETUP_TOKEN`, and create the first account: you own the first organization. On the **Team** page, invite
+people (send them the link), add projects, and make an **ingest key** for each app. Then set on each app, and restart it:
 
 ```bash
 WIZELENS_HUB=https://wizelens.example.com
@@ -44,18 +57,13 @@ Organizations hold projects. People join an organization with a role:
 | Role | Can |
 |---|---|
 | Viewer | Read everything in the organization |
-| Member | Also make alerts and share links |
+| Member | Also make alerts, tags, uptime checks, and share links |
 | Admin | Also manage projects, keys, and members |
-| Owner | Also manage owners. An organization always keeps one owner. |
+| Owner | Also manage owners, set the spend cap, and delete the organization. An organization always keeps one owner. |
 
 People join with an invite link (7 days, one use). Run the cloud with `--signup open` to let anyone sign up; each new
 person then gets their own organization. Org changes, member changes, keys, shares, and every MCP call go to the audit log.
 Admins export the audit log as CSV or JSON (Business and Enterprise on the hosted cloud).
-
-**SCIM.** Under Team, SCIM, an admin makes a token and pastes it with the SCIM base URL
-(`<public-url>/_wizelens/api/auth/scim/v2`) into Okta, Entra ID, or another identity provider. People it creates join as
-members, and people it deactivates leave the organization (owners stay). Admins set roles in WizeLens. On the hosted
-cloud, SCIM and single sign-on are on Business and Enterprise.
 
 A member or viewer can have their own role on one project: more (up to admin of that project), less, or no access.
 No access hides the project everywhere: the dashboard, trace links across projects, connected apps, and AI agents.
@@ -63,6 +71,18 @@ Owners and admins always keep their organization role. Set it in **Team → Proj
 
 The audit log pages back through all history and filters by action and by person. The export (CSV or JSON, on plans
 with audit export) follows the same filters, and is itself in the log.
+
+## Single sign-on and SCIM
+
+Owners and admins connect OIDC (Okta, Entra ID, Google, Auth0, Keycloak) or SAML 2.0 under **Team → Single sign-on**.
+Sign-in works once you prove the email domain with a DNS TXT record; new people from that domain join as members, with a
+confirmed email, and the sign-in page shows **Sign in with SSO**. OIDC needs the provider's origin in `--sso-origins`, so
+the cloud fetches from no other place. SAML needs none.
+
+Under **Team → SCIM**, an admin makes a token and pastes it with the SCIM base URL
+(`<public-url>/_wizelens/api/auth/scim/v2`) into Okta, Entra ID, or another identity provider. People it creates join as
+members, and people it deactivates leave the organization (owners stay). Admins set roles in WizeLens. On the hosted
+cloud, single sign-on and SCIM are on Business and Enterprise; a self-hosted cloud has both.
 
 ## Project settings
 
@@ -160,11 +180,40 @@ Members and above add and change checks; every change is in the audit log. A pro
 an unguessable, read-only link that shows check names, state, uptime, and incident times. See
 [Uptime checks](/docs/uptime/).
 
+## Errors and tags
+
+Resolve an error group, or ignore it for an hour, a day, a week, or for good. A resolved group that happens again shows as
+**Regressed** and comes back to the list. In the cloud, a group can also be **assigned** to a member, and each change
+writes an audit line. Insights get **Mark fixed** and **Dismiss**. [Tags](/docs/tags/) name a search, and everything it
+finds wears that name in every list; members and up manage them under **Settings → Tags**, and each change is audited.
+
+## Security
+
+The **Security** page finds risks in the traffic your apps really serve, mapped to the OWASP Top 10, and lists the packages
+your services run that have known vulnerabilities, checked against OSV. Only package names and versions are sent to OSV.
+`--no-osv` turns the package check off. An alert rule can watch **New security risks**. See [Security](/docs/security/).
+
+## Hosts and Kubernetes
+
+Run the standard OpenTelemetry Collector with an ingest key, and the **Hosts** and **Kubernetes** pages show CPU, memory,
+disk, and network per host, and nodes, pods, restarts, and out-of-memory kills. See [Hosts and Kubernetes](/docs/kubernetes/).
+
 ## Share links
 
 A share link opens one trace, or one page as it was when you made the link, read-only, for anyone with the link, for 1 to
 30 days. Use the link button in the top bar on a page. You can revoke it. Nothing else is reachable with it. It shows the parts of the trace its maker may read; after the maker leaves the organization, only the
 shared project's part.
+
+## Your account
+
+**Account → Sign-in and security** has two-step sign-in with an authenticator app and 10 backup codes, and passkeys.
+**Devices** lists where you are signed in, with sign-out per device. Breached passwords are refused (on Postgres), and
+sign-in tries are limited per address.
+
+**Account → Emails** sets digests per project (daily, weekly, or monthly, at your hour and time zone; weekly is on by
+default), project health emails (a busy project went quiet for 2 hours, and when it is back), and, for owners and admins,
+team change emails. Security emails are always on: password or email changed, two-step sign-in on or off, a passkey added
+or removed, new backup codes, and a sign-in on a new browser. Team, health, and digest emails have a one-click stop link.
 
 ## Plans and billing
 
@@ -200,9 +249,11 @@ keys. Every organization is unlimited, and `--retention-days` sets history as be
 | Flag | Environment variable | Default |
 |---|---|---|
 | `--database <url>` | `DATABASE_URL` | `pglite:./.wizelens-cloud` (`postgres://…`, `pglite:<folder>`, or `memory`) |
+| `--clickhouse <url>` | `WIZELENS_CLOUD_CLICKHOUSE_URL` | none. Scale mode: telemetry in ClickHouse, `http://user:pass@host:8123/database` |
 | `--port <n>` | `PORT` | `5970` |
 | `--host <addr>` | `WIZELENS_CLOUD_HOST` | `0.0.0.0` |
 | `--public-url <url>` | `WIZELENS_CLOUD_PUBLIC_URL` | the request's own address |
+| `--mcp-url <url>` | `WIZELENS_CLOUD_MCP_URL` | none: another origin your proxy sends to MCP, such as `https://mcp.example.com` |
 | `--signup <invite\|open>` | `WIZELENS_CLOUD_SIGNUP` | `invite` |
 | `--retention-days <n>` | `WIZELENS_CLOUD_RETENTION_DAYS` | `30` |
 | `--ingest-per-minute <n>` | `WIZELENS_CLOUD_INGEST_PER_MINUTE` | `1200` ingest calls per key |
@@ -210,6 +261,17 @@ keys. Every organization is unlimited, and `--retention-days` sets history as be
 | `--n-plus-one <n>` | `WIZELENS_CLOUD_N_PLUS_ONE` | `5` similar calls in a request make an N+1 |
 | `--settle-workers <n>` | `WIZELENS_CLOUD_SETTLE_WORKERS` | Scale mode: threads that index new traces. `0` uses the main thread. Default: CPUs − 1, at most 4 |
 | `--allow-private-webhooks` | `WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1` | off (alert webhooks and uptime checks may not reach private addresses) |
+| `--no-osv` | `WIZELENS_CLOUD_OSV=0` | packages checked against OSV |
+| `--auth-secret <text>` | `WIZELENS_CLOUD_AUTH_SECRET` | required with Postgres: 32+ characters that sign sessions and encrypt two-step secrets. `2:new,1:old` rotates it |
+| `--resend-api-key <key>` | `WIZELENS_CLOUD_RESEND_API_KEY` | none: mail through Resend (`re_…`). Needs `--public-url` |
+| `--resend-webhook-secret <s>` | `WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET` | none: the Resend webhook's `whsec_` secret, so bounces and complaints stop later mail. The webhook goes to `<public-url>/_wizelens/api/mail/resend` |
+| `--smtp-url <url>` | `WIZELENS_CLOUD_SMTP_URL` | none: mail over SMTP, `smtp://user:pass@host:587` or `smtps://…:465`. Needs `--public-url` |
+| `--mail-from <address>` | `WIZELENS_CLOUD_MAIL_FROM` | the sender, such as `WizeLens <a@b.com>` |
+| `--mail-reply-to <address>` | `WIZELENS_CLOUD_MAIL_REPLY_TO` | none: where replies go |
+| `--trust-proxy` | `WIZELENS_CLOUD_TRUST_PROXY=1` | off: read the client address from the last `X-Forwarded-For` entry (your own proxy only) |
+| `--setup-token <text>` | `WIZELENS_CLOUD_SETUP_TOKEN` | random: the first account's token, printed at start while no account exists |
+| `--check-pwned-passwords`, `--no-check-pwned-passwords` | `WIZELENS_CLOUD_CHECK_PWNED=1\|0` | on with Postgres, off with PGlite: refuse breached passwords |
+| `--sso-origins <list>` | `WIZELENS_CLOUD_SSO_ORIGINS` | none: OIDC provider origins, comma separated, such as `https://acme.okta.com`. SAML needs none |
 | `--stripe-secret-key <key>` | `WIZELENS_CLOUD_STRIPE_SECRET_KEY` | none: billing is off and every organization is unlimited. With it (`sk_…` or `rk_…`), plans and limits apply and new organizations start on Free |
 | `--stripe-webhook-secret <s>` | `WIZELENS_CLOUD_STRIPE_WEBHOOK_SECRET` | none; required with a Stripe key. The webhook goes to `<public-url>/_wizelens/api/auth/stripe/webhook` |
 | `--stripe-prices <json>` | `WIZELENS_CLOUD_STRIPE_PRICES` | none; required with a Stripe key. The price and meter ids `stripe-setup` prints |

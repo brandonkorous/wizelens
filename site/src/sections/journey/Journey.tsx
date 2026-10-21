@@ -40,7 +40,7 @@ export function Journey() {
             <JourneyTimeline progress={progress} />
             <motion.p className="wl-journey-sum" animate={{ opacity: active === STEPS.length - 1 ? 1 : 0, y: active === STEPS.length - 1 ? 0 : 8 }}>
               <span className="wl-dot" style={{ background: "var(--wl-amber)" }} />
-              GET /api/customers-with-orders · 305 ms · 36 spans · 3 services · 2 insights
+              GET /api/customers-with-orders · 305 ms · 36 spans · 3 services · 3 insights
             </motion.p>
             <div className="wl-journey-bar" aria-hidden>
               <motion.span style={{ scaleX: progress, originX: 0 }} />

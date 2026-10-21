@@ -6,7 +6,7 @@ description: The OpenTelemetry Go SDK and contrib instrumentation with WizeLens 
 ## The WizeLens module
 
 Go has no agent: services use the OpenTelemetry SDK and the contrib instrumentation. The WizeLens module sets them up
-in a few lines and adds what they leave out.
+in a few lines and adds what they leave out. Requires Go 1.26 or newer.
 
 ```bash
 go get github.com/brandonkorous/wizelens/go
@@ -28,11 +28,41 @@ http.ListenAndServe(":8080", wizelens.Handler(mux, "inventory")) // server spans
 |---|---|
 | `Start` | Tracer and logger providers with OTLP over HTTP to `WIZELENS_HUB`, W3C trace context, and sampling that keeps every trace with an error or a slow span |
 | `OpenDB`, `DBOptions` | [otelsql](https://github.com/XSAM/otelsql) with one span per query, named by its first word, plus `wizelens.db.parameters` |
-| `Handler`, `Capture` | [otelhttp](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp) plus request headers and, with `WIZELENS_CAPTURE_BODY=true`, request and response bodies |
+| `Handler`, `Capture` | [otelhttp](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp) plus request and response headers and, with `WIZELENS_CAPTURE_BODY=true`, request and response bodies |
 | `Transport` | otelhttp's client transport |
 | `Logger` | The [otelslog](https://pkg.go.dev/go.opentelemetry.io/contrib/bridges/otelslog) bridge, also writing to your own handler |
 
 `OTEL_EXPORTER_OTLP_ENDPOINT` and the other `OTEL_*` variables still win when you set them.
+
+`Start` takes more options:
+
+| Option | What it does |
+|---|---|
+| `WithServiceName("inventory")` | The service name when `OTEL_SERVICE_NAME` is not set |
+| `WithSettings(s)` | Use these settings instead of the `WIZELENS_*` variables. Start from `wizelens.SettingsFromEnv()` and change fields |
+| `WithExporters(spans, logs)` | Send spans and logs to these exporters instead of OTLP, for tests or another backend. Either may be `nil` |
+
+```go
+s := wizelens.SettingsFromEnv()
+s.SampleRate = 0.25
+shutdown, err := wizelens.Start(ctx, wizelens.WithServiceName("inventory"), wizelens.WithSettings(s))
+```
+
+## Answers you expect
+
+When a 5xx is on purpose, such as a 503 "come back later", set `wizelens.expected` on the request's server span. WizeLens
+then leaves it out of error rates, and the sampler does not keep the trace for that status alone:
+
+```go
+import (
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+)
+
+trace.SpanFromContext(r.Context()).SetAttributes(attribute.Bool("wizelens.expected", true))
+```
+
+See [Answers you expect](/docs/dashboard/#answers-you-expect).
 
 ## Plain OpenTelemetry
 
@@ -60,9 +90,14 @@ own `otelsql.Open` call.
 | `WIZELENS_KEEP_ERRORS` | `true` | Keep traces with an error at any rate |
 | `WIZELENS_CAPTURE_BODY` | `false` | Request and response bodies (text and JSON, 16 KB) |
 | `WIZELENS_CAPTURE_SQL_PARAMETERS` | `true` | SQL parameters, sensitive names redacted |
-| `WIZELENS_CAPTURE_HEADERS` | `true` | Request headers, secrets redacted |
+| `WIZELENS_CAPTURE_HEADERS` | `true` | Request and response headers, secrets redacted (`Set-Cookie` keeps names and flags) |
 | `WIZELENS_REDACT_KEYS` | none | More key fragments to redact, comma-separated |
+| `WIZELENS_PACKAGES` | `true` | Send the module list once at start, for the known-vulnerability check |
 | `WIZELENS_ENABLED` | `true` | `false` makes `Start` do nothing |
+
+The module is on wherever it runs, in development and in production. With `WIZELENS_PACKAGES` on, the hub or the cloud
+checks the modules against OSV and shows each vulnerable version on the [Security](/docs/security/#known-vulnerable-packages) page. Only names and versions leave the
+app.
 
 ## A runnable sample
 

@@ -51,7 +51,7 @@ export function rehypeHeadings() {
   };
 }
 
-// Splits the page at each heading into plain-text sections for the docs search.
+// Splits the page at each heading into whole plain-text sections for the docs search; the snippet trims them.
 export function rehypeSections() {
   return (tree: Root, file: VFile) => {
     const sections: Section[] = [{ id: "", title: "", text: "" }];
@@ -62,7 +62,7 @@ export function rehypeSections() {
         continue;
       }
       const last = sections[sections.length - 1]!;
-      if (last.text.length < 600) last.text = `${last.text} ${toString(node)}`.replace(/\s+/g, " ").trim();
+      last.text = `${last.text} ${toString(node)}`.replace(/\s+/g, " ").trim();
     }
     file.data.sections = sections;
   };

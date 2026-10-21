@@ -7,8 +7,9 @@ description: opentelemetry-instrument with WizeLens defaults. N+1 queries, slow 
 
 Python apps send to WizeLens through [OpenTelemetry auto-instrumentation](https://opentelemetry.io/docs/zero-code/python/).
 It traces FastAPI, Flask, Django, SQLAlchemy, psycopg, sqlite3, requests, httpx, and more, with no code change.
+Requires Python 3.10 or newer.
 
-> **Coming to PyPI:** the first release of `wizelens` is not on PyPI yet. Until it is, install it from GitHub:
+> **Install from GitHub:** the first release of `wizelens` is not on PyPI yet. Until it is, install it from GitHub:
 > `pip install "wizelens @ git+https://github.com/brandonkorous/wizelens#subdirectory=python"`. The commands below then
 > work as written.
 
@@ -33,7 +34,8 @@ The insights work on what the instrumentations send: N+1 queries, N+1 HTTP calls
 | SQL parameters | None, so no duplicate-query insight | On every DB-API driver and SQLAlchemy, sensitive names redacted |
 | `connection.execute()` (sqlite3, psycopg 3) | Not traced | Traced |
 | Logs | Off unless you turn them on | Every `logging` line, with its trace |
-| Request headers | Off | On, with secrets redacted |
+| Metrics | You set `OTEL_METRICS_EXPORTER` | Sent with traces and logs (`OTEL_METRICS_EXPORTER=otlp`) |
+| Request and response headers | Off | On, secrets redacted, `Set-Cookie` names and flags kept |
 | FastAPI | A span per message sent | One server span per request |
 
 Anything you set yourself with `OTEL_*` wins.
@@ -61,6 +63,23 @@ wizelens.configure(service_name="orders-api")   # before your app imports its li
 Then instrument libraries yourself, for example `FastAPIInstrumentor.instrument_app(app)`. For a driver WizeLens does
 not patch, put the parameters on the span with `wizelens.record_parameters(params)`.
 
+`configure` also takes `settings=wizelens.Settings(...)` to set values in code instead of `WIZELENS_*` variables. If you set
+up OpenTelemetry yourself without `configure`, `wizelens.capture_dbapi_parameters(settings)` and
+`wizelens.capture_sqlalchemy_parameters(settings)` put SQL parameters on the DB-API and SQLAlchemy spans.
+
+## Answers you expect
+
+When a 5xx is on purpose, such as a 503 "come back later", set `wizelens.expected` on the request's server span. WizeLens
+then leaves it out of error rates, and the sampler does not keep the trace for that status alone:
+
+```python
+from opentelemetry import trace
+
+trace.get_current_span().set_attribute("wizelens.expected", True)
+```
+
+See [Answers you expect](/docs/dashboard/#answers-you-expect).
+
 ## Settings
 
 | Variable | Default | What it does |
@@ -75,7 +94,12 @@ not patch, put the parameters on the span with `wizelens.record_parameters(param
 | `WIZELENS_CAPTURE_SQL_PARAMETERS` | `true` | SQL parameters |
 | `WIZELENS_CAPTURE_LOGS` | `true` | `logging` lines |
 | `WIZELENS_REDACT_KEYS` | none | More key fragments to redact, comma-separated |
+| `WIZELENS_PACKAGES` | `true` | Send the app's package names and versions once at start, for the known-vulnerability check |
 | `WIZELENS_ENABLED` | `true` | `false` turns OpenTelemetry off |
+
+The package is on wherever it runs, in development and in production. With `WIZELENS_PACKAGES` on, the hub or the cloud
+checks the packages against OSV and shows each vulnerable version on the [Security](/docs/security/#known-vulnerable-packages) page. Only names and versions leave the
+app.
 
 ## A runnable sample
 

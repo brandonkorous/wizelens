@@ -30,7 +30,7 @@ export function organization(): Thing {
 }
 
 export function website(): Thing {
-  return { "@type": "WebSite", "@id": SITE_ID, url: SITE.url, name: SITE.name, description: "Request inspection for .NET, Node, and React.", publisher: { "@id": ORG_ID }, inLanguage: "en" };
+  return { "@type": "WebSite", "@id": SITE_ID, url: SITE.url, name: SITE.name, description: "Request tracing for .NET, Node, Java, Python, Go, and the browser.", publisher: { "@id": ORG_ID }, inLanguage: "en" };
 }
 
 export function software(description: string): Thing {
@@ -49,8 +49,8 @@ export function software(description: string): Thing {
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     publisher: { "@id": ORG_ID },
     codeRepository: SITE.repo,
-    programmingLanguage: ["C#", "TypeScript"],
-    keywords: "request profiler, distributed tracing, N+1 query detection, OpenTelemetry, ASP.NET Core, Node.js, React, Next.js, Glimpse, MCP",
+    programmingLanguage: ["C#", "TypeScript", "Java", "Python", "Go"],
+    keywords: "request profiler, distributed tracing, N+1 query detection, OpenTelemetry, ASP.NET Core, Node.js, Java, Python, Go, React, Next.js, Vue, Angular, Svelte, OWASP Top 10, Glimpse, MCP",
   };
 }
 

@@ -7,6 +7,7 @@ export const SNIPPETS: Snippet[] = [
     file: "Program.cs",
     note: "Two lines. Add WizeLens.EntityFrameworkCore and one call for EF Core queries.",
     code: `using WizeLens;
+using WizeLens.EntityFrameworkCore;
 
 builder.Services.AddWizeLens();
 builder.Services.AddDbContext<AppDb>(o =>
@@ -48,13 +49,22 @@ root.render(
     id: "next",
     label: "Next.js",
     file: "instrumentation.ts",
-    note: "App Router or Pages. Each request is one trace, named by its route.",
-    code: `export async function register() {
+    note: 'App Router or Pages. Each request is one trace, named by its route, with its server errors. Add serverExternalPackages: ["@wizeworks/lens-node"] to next.config.mjs.',
+    code: `import type { Instrumentation } from "next";
+
+export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { registerWizeLens } = await import("@wizeworks/lens-node/next");
     registerWizeLens({ serviceName: "web" });
   }
-}`,
+}
+
+export const onRequestError: Instrumentation.onRequestError = async (...args) => {
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { onRequestError } = await import("@wizeworks/lens-node/next");
+    onRequestError(...args);
+  }
+};`,
   },
   {
     id: "vue",
@@ -77,7 +87,7 @@ createApp(App)
 
 providers: [
   { provide: ErrorHandler, useValue: createWizeLensErrorHandler(lens) },
-  provideAppInitializer(() => trackAngularRouter(inject(Router), lens)),
+  provideAppInitializer(() => void trackAngularRouter(inject(Router), lens)),
 ]`,
   },
   {
@@ -114,7 +124,7 @@ java -javaagent:opentelemetry-javaagent.jar -jar app.jar`,
     id: "python",
     label: "Python",
     file: "terminal",
-    note: "FastAPI, Flask, or Django, with no code change. Coming to PyPI; until then it installs from GitHub.",
+    note: "FastAPI, Flask, or Django, with no code change. The wizelens package installs from GitHub.",
     code: `pip install "wizelens @ git+https://github.com/brandonkorous/wizelens#subdirectory=python"
 opentelemetry-bootstrap -a install
 
@@ -130,6 +140,20 @@ defer shutdown(context.Background())
 
 db, err := wizelens.OpenDB("pgx", dsn, "postgresql")
 http.ListenAndServe(":8080", wizelens.Handler(mux, "inventory"))`,
+  },
+  {
+    id: "auto",
+    label: "Auto",
+    file: "terminal",
+    note: "No code change. For platform teams: a variable, a startup hook, or a pod label.",
+    code: `# Node
+NODE_OPTIONS="--import @wizeworks/lens-node/auto" node server.js
+
+# .NET
+DOTNET_STARTUP_HOOKS=/opt/wizelens/dotnet/WizeLens.AutoInstrumentation.dll dotnet MyApp.dll
+
+# Kubernetes: label the pod
+wizelens.dev/inject: node`,
   },
   {
     id: "hub",

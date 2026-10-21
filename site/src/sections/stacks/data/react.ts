@@ -10,15 +10,15 @@ export const REACT: Stack = {
   lede: "Every fetch links to the server trace it started. Page loads join the server that rendered them. Renders, hydration, and Web Vitals are timed, and the HUD sits in the corner of your page.",
   facts: [
     { value: "1 provider", label: "in React" },
-    { value: "2 files", label: "in Next.js, no route file" },
+    { value: "2 files", label: "on the Next.js server: instrumentation.ts and next.config" },
     { value: "React 18+", label: "App Router or Pages" },
   ],
-  file: "instrumentation.ts · layout.tsx",
+  file: "instrumentation.ts · providers.tsx",
   code: [
     "// instrumentation.ts",
     'registerWizeLens({ serviceName: "web" });',
     "",
-    "// app/layout.tsx",
+    '// app/providers.tsx ("use client")',
     'import "@wizeworks/lens-react/install";',
     '<WizeLensProvider endpoint="/_wizelens">',
   ],
@@ -40,7 +40,18 @@ export const REACT: Stack = {
     { title: "Next.js", items: ["One trace per request, by route", "Render, route handler, and fetch steps", "Server errors from onRequestError"] },
     { title: "Errors and logs", items: ["Browser errors", "Browser console lines", "Server errors in the same trace"] },
     { title: "The HUD", items: ["Total, server, database, render", "Health color in the corner", "One click to the full trace"] },
+    { title: "Source maps", items: ["Minified stacks mapped to your source", "Dev servers' maps read on their own", "Vite, webpack, and Next.js plugins upload at build", "release ties each stack to its maps"] },
+    { title: "Users", items: ["<WizeLensUser id name /> anywhere in the tree", "Or the user and userName props", "Names on the Users page"] },
+    { title: "Answers you expect", items: ["wizelens.expected() in Next.js server code", "Or the X-WizeLens-Expected header", "Read in the browser too, so the page's call is not an error"] },
   ],
+  shot: {
+    title: "The HUD, on your own page.",
+    body: "After every request: total, server, database, and render time, the query and fetch counts, and what to fix. Click it for the timeline and the insights. This is the sample shop, after one real request.",
+    src: "/shots/hud-panel.jpg",
+    alt: "The WizeLens HUD open on the sample shop: GET /api/customers-with-orders, its timeline, and two N+1 insights",
+    width: 1538,
+    height: 784,
+  },
   highlightsTitle: "The front end is half the story.",
   highlights: [
     { title: "The click starts the trace.", body: "Each fetch carries a traceparent, so the server trace begins at the button that was clicked, not at the API." },
@@ -51,6 +62,7 @@ export const REACT: Stack = {
   docs: [
     { label: "React setup", href: "/docs/react/" },
     { label: "Next.js setup", href: "/docs/nextjs/" },
+    { label: "Source maps", href: "/docs/source-maps/" },
     { label: "The HUD", href: "/docs/hud/" },
   ],
 };

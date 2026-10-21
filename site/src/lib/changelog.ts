@@ -15,7 +15,7 @@ function idOf(version: string): string {
   return version.toLowerCase() === "unreleased" ? "unreleased" : `v${version.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`;
 }
 
-// Reads CHANGELOG.md from the repo and splits it into one entry per release, newest first.
+// Reads CHANGELOG.md from the repo and splits it into one entry per release, newest first; groups stay h3.
 export async function loadReleases(): Promise<Release[]> {
   const raw = await readFile(SOURCE, "utf8");
   const parts = raw.split(/\r?\n(?=## \[)/).slice(1);
@@ -23,11 +23,11 @@ export async function loadReleases(): Promise<Release[]> {
     parts.map(async (part) => {
       const [first = "", ...rest] = part.split(/\r?\n/);
       const { version, title } = parseHeading(first);
-      const body = rest.join("\n").replace(/^### /gm, "## ");
+      const body = rest.join("\n");
       const rendered = await renderMarkdown(body);
       const id = idOf(version);
       const html = rendered.html.replace(/ id="/g, ` id="${id}-`).replace(/ href="#/g, ` href="#${id}-`);
-      return { id, version, title, html, sections: rendered.headings.filter((h) => h.depth === 2).map((h) => h.text) };
+      return { id, version, title, html, sections: [...new Set(rendered.headings.filter((h) => h.depth === 3).map((h) => h.text))] };
     }),
   );
 }

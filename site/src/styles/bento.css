@@ -9,6 +9,8 @@
     "db db db db db db db er er er er er"
     "lg lg lg lg lg mt mt mt mt mt mt mt"
     "lg lg lg lg lg sv sv sv sv ck ck ck"
+    "tg tg tg tg tg tg tg us us us us us"
+    "up up up up up sl sl sl sl sl sl sl"
     "sm sm sm sm sm sm rx rx rx rx rx rx"
     "sc sc sc sc sc sc sc sc sc sc sc sc";
 }
@@ -28,11 +30,13 @@
       "lg mt"
       "lg sv"
       "ck sm"
+      "tg us"
+      "up sl"
       "rx rx"
       "sc sc";
   }
 }
 @media (max-width: 680px) {
-  .wl-bento { grid-template-columns: minmax(0, 1fr); grid-template-areas: "db" "rd" "er" "lg" "mt" "sv" "ck" "sm" "rx" "sc"; grid-auto-rows: auto; }
+  .wl-bento { grid-template-columns: minmax(0, 1fr); grid-template-areas: "db" "rd" "er" "lg" "mt" "sv" "ck" "tg" "us" "up" "sl" "sm" "rx" "sc"; grid-auto-rows: auto; }
   .wl-tile { padding: 22px; }
 }

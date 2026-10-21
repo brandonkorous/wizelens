@@ -4,6 +4,8 @@
 .wl-kinds { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .wl-kinds li { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--wl-white); border: 1px solid var(--wl-line); font-size: 15px; font-weight: 550; }
 .wl-insight-note { font-size: 15px; color: var(--wl-muted); }
+.wl-insight-problems { padding: 16px 18px; border-radius: var(--wl-radius-sm); background: var(--wl-white); border: 1px solid var(--wl-line); border-left: 4px solid var(--wl-red); font-size: 15.5px; color: var(--wl-fg-2); }
+.wl-insight-problems b { color: var(--wl-fg); }
 
 .wl-q { position: relative; padding: 22px; border-radius: var(--wl-radius); background: var(--wl-white); border: 1px solid var(--wl-line); box-shadow: var(--wl-shadow); min-height: 470px; }
 .wl-q-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 28px; margin-bottom: 14px; font: 500 13px var(--wl-mono); color: var(--wl-muted); }

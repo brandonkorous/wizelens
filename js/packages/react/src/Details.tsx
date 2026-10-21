@@ -1,5 +1,5 @@
 import { type ReactNode, useMemo } from "react";
-import { analyzeTrace, type Finding, type FindingKind, SECURITY_LABELS, type Trace, type TraceView, traceTiming } from "@wizeworks/lens-core";
+import { analyzeTrace, type Finding, type FindingKind, insightsOf, SECURITY_LABELS, securityOf, type Trace, type TraceView, traceTiming } from "@wizeworks/lens-core";
 import { fmtMs, type PageStats, pct, type RecordedRequest, type Recorder, type RequestView } from "@wizeworks/lens-browser";
 import { DashLink, dashboardLink, NoServerData, PanelBar, StackBar, statusPill, useTrace } from "./panel-parts.js";
 import { Waterfall, waterfallRows } from "./waterfall.js";
@@ -93,14 +93,28 @@ function RequestBody({ req, view, trace, link }: { req: RecordedRequest; view: R
       <h3>Timeline</h3>
       {req.profiled && !trace ? <NoServerData req={req} /> : <Waterfall rows={rows} origin={req.startMs} limit={TIMELINE_ROWS} />}
       {req.profiled && <DashLink href={link("timeline")}>{rows.length > TIMELINE_ROWS ? `View all ${rows.length} rows` : "View the full timeline"}</DashLink>}
-      {findings.length > 0 && (
-        <>
-          <h3>Insights · {findings.length}</h3>
-          <FindingList findings={findings.slice(0, TOP_INSIGHTS)} />
-          <DashLink href={link("insights")}>{findings.length > TOP_INSIGHTS ? `View all ${findings.length} insights` : "View insights"}</DashLink>
-        </>
-      )}
+      <FindingGroups findings={findings} link={link} />
     </>
+  );
+}
+
+// Errors, insights, and security risks apart, so the counts match the card's.
+function FindingGroups({ findings, link }: { findings: Finding[]; link: (v: TraceView) => string }) {
+  const groups: [string, TraceView, Finding[]][] = [
+    ["Errors", "errors", findings.filter((f) => f.kind === "error")],
+    ["Insights", "insights", insightsOf(findings)],
+    ["Security risks", "security", securityOf(findings)],
+  ];
+  return groups.map(([title, view, list]) =>
+    list.length === 0 ? null : (
+      <div key={view}>
+        <h3>
+          {title} · {list.length}
+        </h3>
+        <FindingList findings={list.slice(0, TOP_INSIGHTS)} />
+        <DashLink href={link(view)}>{list.length > TOP_INSIGHTS ? `View all ${list.length} ${title.toLowerCase()}` : `View ${title.toLowerCase()}`}</DashLink>
+      </div>
+    ),
   );
 }
 

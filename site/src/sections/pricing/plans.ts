@@ -18,7 +18,7 @@ export const PLANS: Plan[] = [
   { id: "free", name: "Free", monthly: 0, gb: 10, days: "14 days", note: "For one app, or trying it out.", features: ["Unlimited users", "Alerts, share links, and MCP", "Stops at 10 GB until the 1st"] },
   { id: "team", name: "Team", monthly: 29, gb: 50, days: "30 days", note: "For a team with a few services.", features: ["Everything in Free", "Extra data from $0.30 a GB", "An optional monthly spend cap"] },
   { id: "business", name: "Business", monthly: 99, gb: 150, days: "90 days", note: "For a company that signs in with SSO.", features: ["Everything in Team", "SAML and OIDC single sign-on", "SCIM user provisioning", "Audit log export"] },
-  { id: "enterprise", name: "Enterprise", monthly: null, gb: null, days: "Up to 400 days", note: "For more data, longer history, or a contract.", features: ["Everything in Business", "Data and history set for you", "An SLA and invoicing"] },
+  { id: "enterprise", name: "Enterprise", monthly: null, gb: null, days: "Up to 400 days", note: "For more data, longer history, or a contract.", features: ["Everything in Business", "Data and history set for you", "An SLA and data residency"] },
 ];
 
 // Extra data on Team and Business. The steps count the GB above the plan's included GB.

@@ -34,8 +34,8 @@ read WizeLens every morning. Ask it something like:
 > are new or growing, and which endpoints got slower. Keep it short.
 
 `get_overview` with no project reads every project the connection may see, so one call covers 20 APIs or more. For
-charts, `get_timeseries` gives exact requests, errors, and p95 per hour (or any bucket), and `group_requests` gives the same
-per endpoint. Both count every request, not a sample.
+charts, `get_timeseries` gives exact requests, errors, error rate, average, and p95 per bucket (16, 24, or 48 in the
+window), and `group_requests` gives the same per endpoint. Both count every request, not a sample.
 
 ### What a connected app gets
 
@@ -60,7 +60,7 @@ as a header:
 ```
 
 A key for one project reads that project. A key for several adds `list_projects`, and every tool takes a `project`
-argument (its id or name). `?project=<id>` on the address fixes one project.
+argument (its id or name); leave it out to read every project together. `?project=<id>` on the address fixes one project.
 
 ### Your own cloud
 
@@ -92,26 +92,45 @@ Then point any MCP client at the service:
 ```
 
 The **hub** covers every service with one address: start it with `--mcp`, and use `http://localhost:5960/_wizelens/mcp`.
-When the hub runs with `--token`, send that token as `Authorization: Bearer <token>`.
+When the hub runs with `--token`, send that token as `Authorization: Bearer <token>`. When it holds more than one
+project, the tools take a `project` argument, as on the cloud.
 
 ## Tools
 
-| Tool | What it answers |
-|---|---|
-| `get_overview` | "How is everything doing?" Requests, error rate, and duration against the window before, every service's health, the top errors, and the biggest insights. Hub and cloud. |
-| `get_timeseries` | "How did traffic, errors, and latency change over time?" Exact counts per bucket, for everything, one service, or one endpoint, over a range or a custom window. Hub and cloud. |
-| `group_requests` | "Which endpoints are busiest, failing most, or slowest?" Count, errors, error rate, and p95 per endpoint, sorted as you ask. Hub and cloud. |
-| `list_problems` | "Is anything wrong right now, and why?" Services and endpoints above their normal error rate, p95, or traffic, grouped into problems, each with a suspected cause: a new release, a new error, a query, or a service further down the calls. Hub and cloud. |
-| `list_traces` | "What happened recently? Anything slow or failing?" |
-| `get_trace` | "Show me everything that happened in this request, across services." |
-| `get_errors` | "What broke, and where?" |
-| `find_slow_queries` | "Which queries are slow?" |
-| `find_n_plus_one` | "Where are my N+1 queries and N+1 HTTP calls?" Grouped by query, over the whole store. |
-| `get_page` | "Show me the Database page", "What did user 42 run into?" Any dashboard page, with its filters. |
-| `get_alerts` | "Which alerts are firing?" Rules, their state, and the newest events. Hub and cloud. |
-| `search`, `search_fields` | "Find requests, traces, spans, or logs that match this." Same search language as the dashboard. |
-| `list_metrics`, `get_metric` | "How is CPU, memory, or my own counter doing?" |
-| `list_projects` | "Which projects can I read?" Cloud, when you may read more than one; the hub, when it holds more than one. |
+Every tool is read-only. "Every host" means the Node add-on, the .NET add-on, the hub, and the cloud.
+
+| Tool | What it answers | Arguments | Hosts |
+|---|---|---|---|
+| `get_overview` | "How is everything doing?" Requests, error rate, and average duration against the window before, every service's status, traffic, errors, and p95, the top errors, and the biggest insights. | `range` (1h, 6h, 24h, 7d) | Node, hub, cloud |
+| `get_timeseries` | "How did traffic, errors, and latency change over time?" Exact requests, errors, error rate, average, and p95 per bucket, for everything, one service, or one endpoint. | `range` (1h to 30d) or `from` and `to`, `service`, `endpoint`, `buckets` (16, 24, 48) | Node, hub, cloud |
+| `group_requests` | "Which endpoints are busiest, failing most, or slowest?" Count, errors, error rate, average, and p95 per endpoint, sorted as you ask. | `range` or `from` and `to`, `service`, `sort` (requests, errors, errorRate, p95, avg), `limit`, `minRequests` | Node, hub, cloud |
+| `list_problems` | "Is anything wrong right now, and why?" Services and endpoints above their normal error rate, p95, or traffic, grouped into problems, each with a suspected cause: a new release, a new error, a query, or a service further down the calls. | `range` (1h, 6h, 24h, 7d) | Node, hub, cloud |
+| `get_page` | "Show me the Database page", "What did user 42 run into?" One of 21 dashboard pages, with the numbers the dashboard shows: overview, services, service, endpoint, requests, traces, errors, error, database, query, insights, security, logs, log-patterns, rendering, route, traffic, problems, uptime, users, and user. | `page`, `params` (the page's filters), `range` | Node, hub, cloud |
+| `list_traces` | "What happened recently? Anything slow or failing?" Traces, newest first, from the whole store. | `limit`, `minDurationMs`, `status` (unset, ok, error), `q` (a search), `range` | Every host |
+| `get_trace` | "Show me everything that happened in this request, across services." Every span and log line, redacted. | `traceId`, `federate` (default true) | Every host |
+| `get_errors` | "What broke, and where?" Errors and exceptions with their stack traces, newest first. | `limit`, `range` | Every host |
+| `find_slow_queries` | "Which queries are slow?" The slowest database calls over a threshold, with their SQL. | `thresholdMs`, `limit`, `range` | Every host |
+| `find_n_plus_one` | "Where are my N+1 queries and N+1 HTTP calls?" Grouped by query or call shape, the most time first. | `minRepeats`, `limit`, `range` (.NET: `minRepeats`) | Every host |
+| `find_security_issues` | "What security risks does real traffic show?" [OWASP Top 10:2025](/docs/security/) risks grouped by kind, the most severe first, each with an example trace. | `severity` (error, warning, info), `limit`, `range` | Every host |
+| `search` | "Find requests, traces, spans, or logs that match this." The same [search language](/docs/search/) as the dashboard, with the tags on each result. | `q`, `kind` (requests, traces, spans, logs), `range`, `limit`, `cursor` | Every host |
+| `search_fields` | "What can I search on?" The search fields, the attribute keys seen in the data, or the common values of one field. | `field`, `prefix`, `range` | Every host |
+| `list_tags` | "Which tags does this project have?" Built-in and custom [tags](/docs/tags/), each a name for a search. Use `tag:name` in any search. | none | Every host |
+| `list_metrics` | "Which metrics are there?" CPU, memory, GC, request rates, and your own metrics, with the newest value of each. | `range`, `service`, `q` (.NET: `q`) | Every host |
+| `get_metric` | "How is CPU, memory, or my own counter doing?" One metric's newest, lowest, highest, and average values per line. | `name`, `range`, `service`, `group`, `stat` (p50, p95, p99, avg) (.NET: `name`) | Every host |
+| `get_alerts` | "Which alerts are firing?" Rules, what each watches, its state, and the newest events. Channel secrets are left out. | none | Hub, cloud |
+| `list_projects` | "Which projects can I read?" Their ids and names, for the `project` argument. | none | Hub, when it holds more than one project; cloud, when you may read more than one |
+
+`range` is 15m, 1h, 6h, 24h (the default), 7d, or 30d unless the table says otherwise.
+
+On the Node add-on, the page tools (`get_overview`, `get_timeseries`, `group_requests`, `list_problems`, and `get_page`)
+read the traces the app keeps. The metric tools read its own runtime and app metrics, 15 minutes or an hour of them, and
+are there unless `captureMetrics` is off. The .NET add-on has `list_traces`, `get_trace`, `get_errors`,
+`find_slow_queries`, `find_n_plus_one`, `find_security_issues`, `search`, `search_fields`, `list_tags`, `list_metrics`,
+and `get_metric`. `get_alerts` is on the hub and the cloud.
+
+On a host with several projects, every tool takes a `project` argument: its id or name, from `list_projects`. On the cloud,
+leave it out to read every project together; `get_overview`, `get_timeseries`, `group_requests`, and `list_problems`
+without it cover every project on the hub too.
 
 ## Guardrails
 

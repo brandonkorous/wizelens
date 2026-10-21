@@ -3,15 +3,16 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "motion/react";
 
-const QUERIES = ["orders 500", "slow query", "boom"];
+const QUERIES = ["status:5xx path:/api/*", "duration:>300ms", "order_lines"];
 
+// What Ctrl K lists for each query: search hits, then error groups, queries, and insights by name.
 const ITEMS = [
-  { kind: "Request", text: "POST /api/orders · 500", key: "orders 500" },
-  { kind: "Trace", text: "orders-api · 642 ms", key: "orders 500" },
-  { kind: "Insight", text: "Slow query: 398 ms", key: "slow query" },
-  { kind: "Query", text: "SELECT * FROM order_lines", key: "slow query" },
-  { kind: "Error", text: "InvalidOperationException", key: "boom" },
-  { kind: "Request", text: "GET /api/boom · 500", key: "boom" },
+  { kind: "Search", text: "Search everything for this", key: "status:5xx path:/api/*" },
+  { kind: "Request", text: "GET /api/boom · 500 · 28 ms", key: "status:5xx path:/api/*" },
+  { kind: "Request", text: "POST /api/orders · 201 · 642 ms", key: "duration:>300ms" },
+  { kind: "Request", text: "GET /api/customers-with-orders · 200 · 305 ms", key: "duration:>300ms" },
+  { kind: "Query", text: "SELECT * FROM order_lines WHERE sku LIKE @p0", key: "order_lines" },
+  { kind: "Insight", text: "Slow query: 398 ms", key: "order_lines" },
 ];
 
 function useTyping(active: boolean): string {

@@ -4,7 +4,7 @@ import { HUB_DEFAULT_PORT, HUB_ENV, HUB_TOKEN_ENV, PROJECT_ENV } from "@wizework
 
 /** Where maps go and who sends them. Everything has an environment variable, so CI needs no flags. */
 export interface TargetOptions {
-  /** The hub or cloud address, for example "https://cloud.wizelens.com". Default: WIZELENS_URL, WIZELENS_HUB, then the local hub. */
+  /** The hub or cloud address, for example "https://app.wizelens.com". Default: WIZELENS_URL, WIZELENS_HUB, then the local hub. */
   url?: string;
   /** The cloud ingest key (wl_ik_...) or the hub token. Default: WIZELENS_TOKEN, then WIZELENS_HUB_TOKEN. */
   token?: string;

@@ -20,17 +20,19 @@ It hooks everything the add-on supports, as the app loads it:
 
 | What | Hooked |
 |---|---|
-| Requests | Every `node:http` and `node:https` server, so every framework. Routes are named for Express, Fastify, Koa (`@koa/router`), Hono (`@hono/node-server`), and Next.js |
+| Requests | Every `node:http` and `node:https` server, so every framework. Routes are named for Express, Fastify, Koa (`@koa/router`), Hono (`@hono/node-server`), Next.js, and NestJS |
 | Errors | Express (`next(err)` and unhandled), Fastify, Koa, and Hono errors go on the request span |
-| Databases | `pg`, `mysql2`, `better-sqlite3`, `node:sqlite`, and Prisma Client (`@prisma/client`). TypeORM and Drizzle through their driver |
-| Outgoing calls | `fetch` and undici |
-| gRPC and messaging | `@grpc/grpc-js`, `amqplib`, `kafkajs`, `@azure/service-bus` |
+| Databases | `pg`, `mysql2`, `better-sqlite3`, `node:sqlite`, Prisma Client (`@prisma/client`), ioredis, node-redis, MongoDB, and Elasticsearch. TypeORM and Drizzle through their driver |
+| Outgoing calls | `fetch`, undici, and `node:http` / `node:https` (axios, got, the AWS SDK) |
+| gRPC and messaging | `@grpc/grpc-js`, `amqplib`, `kafkajs`, `@azure/service-bus`, BullMQ, and Amazon SQS |
+| GraphQL | graphql-js and GraphQL Yoga |
 | Logs | `console`, pino (also Fastify's logger), winston, and bunyan |
 | Metrics | CPU, memory, heap, event loop, and GC |
 
 Nothing starts until the process serves a request or starts a server, so `npm`, build tools, and scripts that inherit
-`NODE_OPTIONS` stay untouched. Worker threads are skipped. On Node 22.13 and 22.14, the hooks that edit ES modules
-(Hono's ES build, the ES build of `@azure/service-bus`, `import "node:sqlite"`) are off; Node 22.15 and newer have them.
+`NODE_OPTIONS` stay untouched. Worker threads are skipped. On Node 22.13 and 22.14, the hooks that edit ES modules are
+off: Hono's ES build, the ES builds of `@azure/service-bus`, the Elasticsearch 9 transport, BullMQ, and the SQS client,
+graphql 16's ES build, and `import "node:sqlite"`. Node 22.15 and newer have them.
 
 ## ASP.NET Core
 
@@ -57,13 +59,20 @@ The same variables as the code install, plus the standard OpenTelemetry service 
 
 | Variable | What |
 |---|---|
-| `OTEL_SERVICE_NAME` | Service name. Default: Node, the app's `package.json` name (no scope); .NET, the application name |
+| `OTEL_SERVICE_NAME` | Service name. Node: else `service.name` in `OTEL_RESOURCE_ATTRIBUTES`, else the app's `package.json` name (no scope), else `node-app`. .NET: else the application name |
 | `WIZELENS_ENABLED` | On or off. Default: on in development, off in production |
 | `WIZELENS_DASHBOARD` | Serve `/_wizelens` in the app. Default: on in development, off in production (send-only) |
 | `WIZELENS_HUB`, `WIZELENS_HUB_TOKEN` | Where to send, see [the hub](/docs/hub/) and [the cloud](/docs/cloud/) |
 | `WIZELENS_PROJECT` | The project on a shared hub |
 | `WIZELENS_SAMPLE_RATE` | Share of traces kept, see [Sampling](/docs/sampling/) |
-| `WIZELENS_AUTO_SKIP` | Node: hooks to leave off, for example `prisma,pino` |
+| `WIZELENS_RELEASE` | The app's version on every span, for release markers and Problems |
+| `WIZELENS_LOGS_OUTSIDE`, `WIZELENS_LOGS_MIN_LEVEL`, `WIZELENS_LOGS_SAMPLE_RATE` | Lines written outside a request, see [Logs](/docs/logs/) |
+| `WIZELENS_PACKAGES` | `false` stops the package report for the known-vulnerability check |
+| `WIZELENS_AUTO_SKIP` | Node: hooks to leave off, comma-separated, for example `prisma,pino` |
+
+The names `WIZELENS_AUTO_SKIP` takes: `express`, `koa`, `fastify`, `hono`, `next`, `nest`, `pg`, `mysql2`, `sqlite`,
+`prisma`, `ioredis`, `redis`, `mongodb`, `elasticsearch`, `amqplib`, `kafkajs`, `servicebus`, `bullmq`, `sqs`, `grpc`,
+`graphql`, `pino`, `winston`, and `bunyan`. The full list of variables is on [Configuration](/docs/configuration/#environment-variables).
 
 In production, set `WIZELENS_ENABLED=true` and a hub, like any service: see [Production](/docs/production/).
 

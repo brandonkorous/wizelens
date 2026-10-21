@@ -1,16 +1,7 @@
 "use client";
 
 import { Tile } from "./Tile";
-import { DatabaseArt } from "./tiles/DatabaseArt";
-import { RenderArt } from "./tiles/RenderArt";
-import { ErrorArt } from "./tiles/ErrorArt";
-import { LogsArt } from "./tiles/LogsArt";
-import { MetricsArt } from "./tiles/MetricsArt";
-import { ServicesArt } from "./tiles/ServicesArt";
-import { SearchArt } from "./tiles/SearchArt";
-import { SamplingArt } from "./tiles/SamplingArt";
-import { RedactArt } from "./tiles/RedactArt";
-import { SecurityArt } from "./tiles/SecurityArt";
+import { TILES } from "./cells";
 
 export function Bento() {
   return (
@@ -19,41 +10,16 @@ export function Bento() {
         <div className="wl-head wl-head-split">
           <h2 className="wl-h2">Everything a request touched.</h2>
           <p className="wl-lede">
-            Eleven dashboard pages, one look. Requests, traces, database, rendering, errors, logs, metrics, services,
-            insights, and security risks, for one service or all of them.
+            One dashboard for all of it. Requests, traces, errors, logs, database, rendering, metrics, services, hosts,
+            Kubernetes, insights, security, users, problems, uptime, SLOs, and alerts, for one service or all of them.
           </p>
         </div>
         <div className="wl-bento">
-          <Tile area="db" title="Every query, from any ORM." body="EF Core, Dapper, Prisma, Drizzle, TypeORM, or the raw driver. Each statement with its time and where it came from.">
-            {(seen) => <DatabaseArt seen={seen} />}
-          </Tile>
-          <Tile area="rd" title="Renders, timed per component." body="React renders, hydration, and Web Vitals for each page.">
-            {(seen) => <RenderArt seen={seen} />}
-          </Tile>
-          <Tile area="er" title="Errors, with the request around them." body="The stack, the request, and the spans that led to it. Browser errors too.">
-            {(seen) => <ErrorArt seen={seen} />}
-          </Tile>
-          <Tile area="lg" title="Logs from every logger." body="Serilog, NLog, ILogger, pino, winston, bunyan, console, and more, linked to their trace." night>
-            {(seen) => <LogsArt seen={seen} />}
-          </Tile>
-          <Tile area="mt" title="Metrics next to the traces." body="CPU, memory, GC, and your own OpenTelemetry counters, per service.">
-            {(seen) => <MetricsArt seen={seen} />}
-          </Tile>
-          <Tile area="sv" title="Who calls whom." body="Every service, database, and outside host, on one map.">
-            {(seen) => <ServicesArt seen={seen} />}
-          </Tile>
-          <Tile area="ck" title="Ctrl K finds it." body="Search requests, traces, errors, and services.">
-            {(seen) => <SearchArt seen={seen} />}
-          </Tile>
-          <Tile area="sm" title="Keep a share. Keep every error." body="Sampling picks the same traces in every service. A trace with an error or a slow span is always kept.">
-            {(seen) => <SamplingArt seen={seen} />}
-          </Tile>
-          <Tile area="rx" title="Secrets never get stored." body="Passwords, tokens, cookies, and connection strings are redacted before anything is written.">
-            {(seen) => <RedactArt seen={seen} />}
-          </Tile>
-          <Tile area="sc" title="Security risks, from real traffic." body="SQL built from input, missing headers, cookies without flags, secrets in URLs and logs, open admin routes, sign-in guessing, and known-vulnerable packages. Mapped to the OWASP Top 10, with the release that brought each one in." night>
-            {(seen) => <SecurityArt seen={seen} />}
-          </Tile>
+          {TILES.map(({ area, title, body, night, Art }) => (
+            <Tile key={area} area={area} title={title} body={body} night={night}>
+              {(seen) => <Art seen={seen} />}
+            </Tile>
+          ))}
         </div>
       </div>
     </section>

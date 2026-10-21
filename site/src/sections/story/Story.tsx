@@ -11,10 +11,10 @@ import { StoryScene } from "./StoryScene";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 const PRINCIPLES = [
-  { title: "Drop-in, not a platform.", body: "Two lines in .NET, one in Node, one provider in React. No agent, no collector, no account." },
+  { title: "Drop-in, not a platform.", body: "Two lines in .NET, one in Node, one provider in React, one Start call in Go, and the OpenTelemetry agent in Java and Python. No collector, no account." },
   { title: "Built on open standards.", body: "OpenTelemetry shapes and the W3C traceparent header. Anything that speaks OTLP can join." },
-  { title: "Opinionated.", body: "It does not just show you the data. It points at the N+1, the duplicate, and the slow query." },
-  { title: "Yours.", body: "Your data stays on your machine until you send it somewhere. On in development only." },
+  { title: "Opinionated.", body: "It does not just show you the data. It points at the N+1, the duplicate, the slow query, and the security risk." },
+  { title: "Yours.", body: "Your data stays on your machine until you send it somewhere. The .NET and Node add-ons open their dashboard in development only, and only send in production." },
   { title: "AI-ready, not AI-bundled.", body: "No AI inside. A read-only, redacted door your own agent can use, if you open it." },
 ];
 

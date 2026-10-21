@@ -8,6 +8,8 @@ description: The OpenTelemetry Java agent with WizeLens defaults. N+1 queries, s
 Java apps send to WizeLens through the [OpenTelemetry Java agent](https://opentelemetry.io/docs/zero-code/java/agent/).
 It traces Spring, servlets, JDBC, Hibernate, HTTP clients, Kafka, and more, with no code change.
 
+Requires Java 17 or newer. The body filter below needs Jakarta Servlet (Spring Boot 3 or newer).
+
 ```bash
 curl -LO https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
 
@@ -25,7 +27,7 @@ queries had the same values. It does not call them duplicates; the extension bel
 The extension is one jar that the agent loads. It sets the WizeLens defaults, keeps every trace with an error or a slow
 span when you sample, and turns on SQL parameters.
 
-> **Coming to Maven Central:** the first release of `com.wizelens:wizelens` is not on Maven Central yet, so the download
+> **Build from the repository:** the first release of `com.wizelens:wizelens` is not on Maven Central yet, so the download
 > and the dependency below do not work until it is. Until then, build the jar from the repository:
 > `git clone https://github.com/brandonkorous/wizelens && mvn -f wizelens/java/pom.xml install -DskipTests`. That makes
 > `wizelens/java/target/wizelens-0.1.0-alpha.1.jar` (use it as `wizelens.jar`) and puts the dependency in your local
@@ -44,12 +46,15 @@ What it sets (anything you set yourself with `-D` or `OTEL_*` wins):
 | Setting | Value |
 |---|---|
 | `otel.exporter.otlp.endpoint` | `WIZELENS_HUB`, else `http://localhost:5960` |
+| `otel.exporter.otlp.protocol` | `http/protobuf` |
 | `otel.exporter.otlp.headers` | `Authorization=Bearer <WIZELENS_HUB_TOKEN>` |
 | `otel.traces.sampler` | `parentbased_always_on`: WizeLens samples at the end of the trace instead |
 | `otel.instrumentation.jdbc.experimental.capture-query-parameters` | `true` (off with `WIZELENS_CAPTURE_SQL_PARAMETERS=false`) |
 | `otel.instrumentation.http.server.capture-request-headers` | Common headers; `authorization` and `cookie` arrive redacted |
+| `otel.instrumentation.http.server.capture-response-headers` | Cache and content headers, `Location`, `Set-Cookie`, and the security headers the [Security](/docs/security/) page checks: `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Strict-Transport-Security`, `Server`, `X-Powered-By`, and the CORS headers |
 | Logback and Log4j attributes | MDC and code attributes on each log line |
 | Resource | `wizelens.project` from `WIZELENS_PROJECT` |
+| `otel.sdk.disabled` | `true` when `WIZELENS_ENABLED=false`, and nothing else is set |
 
 ## Request and response bodies
 
@@ -87,9 +92,29 @@ and Response tabs.
 | `WIZELENS_CAPTURE_BODY` | `false` | Request and response bodies |
 | `WIZELENS_CAPTURE_SQL_PARAMETERS` | `true` | SQL parameters |
 | `WIZELENS_REDACT_KEYS` | none | More key fragments to redact, comma-separated |
+| `WIZELENS_PACKAGES` | `true` | Send the app's package names and versions once at start, for the known-vulnerability check |
 | `WIZELENS_ENABLED` | `true` | `false` turns the agent's SDK off |
 
 Each also works as a system property: `-Dwizelens.sample.rate=0.1`.
+
+The extension is on wherever it runs, in development and in production. With `WIZELENS_PACKAGES` on, the hub or the cloud
+checks the packages against OSV and shows each vulnerable version on the [Security](/docs/security/#known-vulnerable-packages) page. Only names and versions leave the
+app.
+
+## Answers you expect
+
+When a 5xx is on purpose, such as a 503 "come back later", set `wizelens.expected` on the request's server span. WizeLens
+then leaves it out of error rates, and the sampler does not keep the trace for that status alone. Add
+`io.opentelemetry:opentelemetry-api` to your app; the agent connects it to its own SDK:
+
+```java
+import io.opentelemetry.api.trace.Span;
+
+Span.current().setAttribute("wizelens.expected", true);
+```
+
+The `X-WizeLens-Expected` response header is not read in Java apps, because the agent does not capture it. See
+[Answers you expect](/docs/dashboard/#answers-you-expect).
 
 ## A runnable sample
 

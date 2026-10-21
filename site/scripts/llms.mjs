@@ -10,12 +10,12 @@ const SITE = join(dirname(fileURLToPath(import.meta.url)), "..");
 const URL_BASE = "https://wizelens.com";
 const PUB = join(SITE, "public");
 
-const SUMMARY = "WizeLens shows you everything one request did: the click in the browser (React, Vue, Angular, Svelte, or plain JS), every .NET, Node, Java, Python, and Go service it touched, every SQL query, every log line, and the render, on one timeline. It finds N+1 queries, N+1 HTTP calls, duplicate and slow queries, and errors for you. Open source (MIT), built on OpenTelemetry and W3C traceparent, on in development only, and readable by your own AI agent through an opt-in, read-only MCP endpoint. Made by WizeWorks LLC, Visalia, California.";
+const SUMMARY = "WizeLens shows you everything one request did: the click in the browser (React, Vue, Angular, Svelte, or plain JS), every .NET, Node, Java, Python, and Go service it touched, every SQL query, every log line, and the render, on one timeline. It finds N+1 queries, N+1 HTTP calls, duplicate and slow queries, errors, problems, and security risks (OWASP Top 10) for you. Open source (MIT), built on OpenTelemetry and W3C traceparent, on in development and send-only in production when you turn it on, and readable by your own AI agent through an opt-in, read-only MCP endpoint. Made by WizeWorks LLC, Visalia, California.";
 
 const PAGES = [
   ["Home", "/", "What WizeLens is and how one click becomes one trace."],
   ["WizeLens for ASP.NET Core", "/dotnet/", "Two lines in Program.cs; EF Core, ADO.NET, HttpClient, gRPC, messaging, logs, metrics."],
-  ["WizeLens for Node", "/node/", "Express, Fastify, Koa, Hono, Next.js; one line per driver, queue, or logger."],
+  ["WizeLens for Node", "/node/", "Express, Fastify, Koa, Hono, NestJS, Next.js; one line per driver, queue, or logger, or none with the --import auto install."],
   ["WizeLens for React and Next.js", "/react/", "Fetch linked to server traces, render timing, Web Vitals, the HUD."],
   ["WizeLens for Vue", "/vue/", "One plugin: fetch and XHR linked to server traces, router page views, Web Vitals, component errors."],
   ["WizeLens for Angular", "/angular/", "An ErrorHandler and a router tracker: HttpClient calls linked to server traces, page views, Web Vitals."],

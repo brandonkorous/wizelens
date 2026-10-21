@@ -29,6 +29,21 @@ function SplitBar({ s }: { s: HudSample }) {
   );
 }
 
+const plural = (n: number, word: string) => `${word}${n === 1 ? "" : "s"}`;
+
+// Errors win over insights, as the add-on's card shows them: "1 Error" with a red dot, else "3 Insights".
+function Issues({ s }: { s: HudSample }) {
+  const errors = s.errors > 0;
+  const n = errors ? s.errors : s.insights.length;
+  const flag = errors || (n > 0 && (s.health === "warning" || s.health === "opportunity"));
+  return (
+    <span>
+      <Num value={n} decimals={0} /> {plural(n, errors ? "Error" : "Insight")}
+      {flag && <i className="wl-dot" style={{ background: errors ? "var(--wl-red)" : HEALTH_COLOR[s.health] }} />}
+    </span>
+  );
+}
+
 // The small card that sits in the corner of every page, as the add-on draws it.
 export function HudCard({ sample }: { sample: HudSample }) {
   const stats = [
@@ -57,10 +72,7 @@ export function HudCard({ sample }: { sample: HudSample }) {
       <div className="wl-hud-foot">
         <span><Num value={sample.sql} decimals={0} /> SQL</span>
         <span><Num value={sample.fetch} decimals={0} /> Fetch</span>
-        <span>
-          <Num value={sample.insights.length} decimals={0} /> Insights
-          {sample.insights.length > 0 && <i className="wl-dot" style={{ background: HEALTH_COLOR[sample.health] }} />}
-        </span>
+        <Issues s={sample} />
       </div>
     </div>
   );

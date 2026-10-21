@@ -31,6 +31,8 @@ everything else still works.
   your source with [source maps](/docs/source-maps/).
 - [The HUD](/docs/hud/) in the corner of your page.
 
+![The HUD card in the corner of a page](/shots/hud-card.png)
+
 ## Where `endpoint` points
 
 `endpoint` is where your API serves WizeLens. With a dev proxy (Vite or Next.js rewrites), proxy `/_wizelens` to your API too:
@@ -64,10 +66,26 @@ Calls answered by another WizeLens server on the page's origin work the same way
 ## The signed-in user
 
 Render `WizeLensUser` where the page knows who is signed in. It can sit anywhere under the root, not only next to the
-provider, so a server component can hand it the session's user:
+provider:
 
 ```tsx
 import { WizeLensUser } from "@wizeworks/lens-react";
+
+<WizeLensUser id={session.user.id} name={session.user.name} />
+```
+
+`WizeLensUser` runs in the browser. In Next.js, render it from a client component, or re-export it from a file that starts
+with `"use client"`. A server component then passes the session's user to it as props:
+
+```tsx
+// app/signed-in-user.tsx
+"use client";
+export { WizeLensUser } from "@wizeworks/lens-react";
+```
+
+```tsx
+// app/layout.tsx (a server component)
+import { WizeLensUser } from "./signed-in-user";
 
 <WizeLensUser id={session.user.id} name={session.user.name} />
 ```
