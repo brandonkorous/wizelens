@@ -36,6 +36,12 @@ maps each one to the OWASP Top 10:2025 (docs/SECURITY-PLAN.md).
 - **More headers.** The Go SDK captures response headers, and the Java SDK captures the security headers.
 - `FACTS_VERSION` 11: hosts rebuild their stats once, so answers marked as expected leave the error counts.
 
+### Fixed
+
+- **`get_timeseries` gives whole counts.** Over a window where one stored bucket spans two points, such as 24h in
+  48 buckets, a point could say 10.4 requests. Each point now has a whole number of requests and errors, never more
+  errors than requests, and the points add up to the totals.
+
 ## [0.3.0-alpha.6] — Who your users are
 
 The Users page shows names, and front ends that call an API in another project now see their own users.

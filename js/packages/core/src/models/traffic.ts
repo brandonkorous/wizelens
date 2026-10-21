@@ -9,6 +9,7 @@ import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
 import { groupNeed, rowsOf, seriesNeed, seriesOf, sumAggs, uniqueNeeds } from "./read.js";
 import { endpointPrefix, findRow } from "./service-detail.js";
 import { serviceNeeds, serviceRowsOf } from "./service-rows.js";
+import { wholeCounts, wholeErrors } from "./whole.js";
 
 export const TRAFFIC_BUCKETS: readonly BucketCount[] = [16, 24, 48];
 /** Services whose endpoints are read, busiest first, and endpoints per service. */
@@ -52,6 +53,24 @@ export const statsOf = (a: Agg): TrafficStats => ({
   p95Ms: a.hist && a.n ? histPercentile(a.hist, a.n, 95) : null,
 });
 
+/** Stats with whole counts; a bucket with no whole request has no latency. */
+const wholeStats = (a: Agg, requests: number, errors: number): TrafficStats => ({
+  requests,
+  errors,
+  errorRatePercent: percentOf(errors, requests),
+  avgMs: requests ? avgOfAgg(a) : null,
+  p95Ms: requests && a.hist && a.n ? histPercentile(a.hist, a.n, 95) : null,
+});
+
+/** Points and totals with whole counts, though a coarse rollup bucket was spread over several points by overlap. */
+export function trafficPoints(series: readonly Agg[], starts: readonly number[]): Pick<TrafficModel, "points" | "totals"> {
+  const requests = wholeCounts(series.map((a) => a.n));
+  const errors = wholeErrors(series.map((a) => a.err), requests);
+  const points = series.map((a, i) => ({ start: starts[i]!, ...wholeStats(a, requests[i]!, errors[i]!) }));
+  const sum = (v: readonly number[]) => v.reduce((t, x) => t + x, 0);
+  return { points, totals: wholeStats(sumAggs(series), sum(requests), sum(errors)) };
+}
+
 /** The series: every request (`req`), one service (`svc`), or one endpoint (`svc.ep`, of one service or all). */
 function seriesNeedOf(row: ServiceRow | null, endpoint: string, buckets: BucketCount): Need {
   if (endpoint) return seriesNeed("ts", "svc.ep", "cur", buckets, { filter: row ? { keys: [joinKey(row.key, endpoint)] } : { parts: [null, endpoint] }, hist: true });
@@ -84,13 +103,11 @@ export const trafficPage: PageDef<TrafficModel> = {
     const row = findRow(rows, d.params.service ?? null);
     const found = !d.params.service || !!row;
     const series = found ? seriesOf(d, "ts", buckets) : [];
-    const starts = bucketStarts(d.window, buckets);
     return {
       meta: metaOf(d),
       scope: { service: row?.name ?? d.params.service ?? null, endpoint: d.params.endpoint || null, found },
       bucketMs: (d.window.to - d.window.from) / buckets,
-      points: series.map((a, i) => ({ start: starts[i]!, ...statsOf(a) })),
-      totals: statsOf(sumAggs(series)),
+      ...trafficPoints(series, bucketStarts(d.window, buckets)),
       endpoints: found ? endpointsOf(d, endpointRows(rows, row), d.params.endpoint ?? "") : [],
     };
   },
