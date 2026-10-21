@@ -29,6 +29,12 @@ maps each one to the OWASP Top 10:2025 (docs/SECURITY-PLAN.md).
 - **A page for every stack at wizelens.com.** Vue, Angular, Svelte, Java, Python, and Go join Node, .NET, and React, in the
   menu, the footer, the sitemap, share images, `llms.txt`, the home page, and the install tabs. The Java and Python docs say
   how to install until the packages are on Maven Central and PyPI.
+- **wizelens.com shows the whole product.** Every page and doc was checked against the code. New docs pages for Search
+  (the full search language), Errors, Releases, Users, Alerts, SLOs and Apdex, and Dashboards; the dashboard docs follow
+  the new menu, with every page and which host has it. The home page adds Tags, Users, Uptime, and SLO tiles, an Auto
+  install tab, all 18 MCP tools, and real screenshots of today's dashboard and of the HUD. The Cloud page covers single
+  sign-on and SCIM, account security, Problems, uptime and status pages, SLOs, Security, and Hosts and Kubernetes. The
+  privacy, security, and terms pages cover WizeLens Cloud at app.wizelens.com.
 
 ### Changed
 
@@ -39,9 +45,9 @@ maps each one to the OWASP Top 10:2025 (docs/SECURITY-PLAN.md).
   which opens this changelog. It replaces the WizeWorks tagline.
 - **The Security page** shows the package check line inside the OWASP panel, under the tiles.
 - **Redaction keeps the evidence and hides more.** `Set-Cookie` keeps each cookie's name and flags, URL queries keep their
-  keys (`token=[redacted]`; Node, the browser, Python, Java, and Go now redact query values too), and JWTs, cloud and API
-  keys, private keys, and card numbers inside any value or log line become a typed marker such as `[redacted:jwt]`
-  (`docs/redact-vectors.json`).
+  keys (`token=[redacted]`; Node and the browser now redact query values before they send, and the hub and the cloud do
+  it for Python, Java, and Go), and JWTs, cloud and API keys, private keys, and card numbers inside any value or log line
+  become a typed marker such as `[redacted:jwt]` (`docs/redact-vectors.json`).
 - **More headers.** The Go SDK captures response headers, and the Java SDK captures the security headers.
 - `FACTS_VERSION` 11: hosts rebuild their stats once, so answers marked as expected leave the error counts.
 
@@ -49,6 +55,11 @@ maps each one to the OWASP Top 10:2025 (docs/SECURITY-PLAN.md).
 
 - **Cloud migration 24 on a managed Postgres.** An app user that may not create roles no longer stops the migration: the
   admin makes the `wl_reader` role first (`deploy/k8s/jobs/db-role.sql`), and the migration says so if it is missing.
+- **The HUD panel's counts match the card.** The panel listed errors and security risks under "Insights", so it said
+  "Insights · 4" next to a card with 3 insights. It now shows Errors, Insights, and Security risks apart, each with a link.
+- **The version at the foot of the menu** opens the changelog at that release, and the Docs and changelog links end in `/`.
+- **lens-cli** names the cloud as `https://app.wizelens.com` in its README and help, and `--release` lists
+  `npm_package_version` among its defaults.
 
 ## [0.3.0-alpha.6] — Who your users are
 
@@ -323,6 +334,18 @@ tools for AI agents; and a 4xx answer is no longer a failure.
 - **Requests:** exact endpoint and user filters (as chips), "with insights", and DB time and errors columns to sort by.
   Links from errors, insights, the Database page, and the service page use the exact endpoint, not a text search.
 - **Rendering:** search routes and components; LCP and large images columns.
+- **"A new version is ready" notice.** When a host starts a new release, an open dashboard shows a notice with
+  Refresh and Later, and keeps working until you refresh. It checks `version.json` every 5 minutes, when the tab comes
+  back into view, and when the live-update stream reconnects. A page whose file is gone after a release asks for a
+  refresh instead of breaking.
+- **Settle in worker threads (cloud, scale mode).** Indexing new traces runs in worker threads, so it uses more than one
+  CPU core and ingest and pages stay fast during a backlog. `--settle-workers <n>` (`WIZELENS_CLOUD_SETTLE_WORKERS`);
+  default CPUs − 1, at most 4; `0` keeps it in the main thread. A worker that dies fails only its batch, which settles
+  again, and a new worker takes its place. The production pod has 2 CPUs and 2 workers.
+- **A full page for each service** (`#/services/<name>`). It shows health, requests, error rate, and latency against the
+  window before; traffic and latency over time; every endpoint or query; who calls the service and what it calls; and for
+  APIs and workers its top errors, slowest requests, newest log lines, runtime metrics, and hosts. The quick look on the
+  Services page has a "View full service" button. Search and the Overview's service list open the full page.
 
 ### Changed
 
@@ -369,21 +392,6 @@ tools for AI agents; and a 4xx answer is no longer a failure.
   traffic the banner showed "1 trace left" almost all the time. Now the hub and the cloud count only traces whose stats
   run more than a minute behind (after a restart, a stats rebuild, or a big copy). The banner then says "Stats are
   catching up", and search says "Search is catching up".
-
-### Added
-
-- **"A new version is ready" notice.** When a host starts a new release, an open dashboard shows a notice with
-  Refresh and Later, and keeps working until you refresh. It checks `version.json` every 5 minutes, when the tab comes
-  back into view, and when the live-update stream reconnects. A page whose file is gone after a release asks for a
-  refresh instead of breaking.
-- **Settle in worker threads (cloud, scale mode).** Indexing new traces runs in worker threads, so it uses more than one
-  CPU core and ingest and pages stay fast during a backlog. `--settle-workers <n>` (`WIZELENS_CLOUD_SETTLE_WORKERS`);
-  default CPUs − 1, at most 4; `0` keeps it in the main thread. A worker that dies fails only its batch, which settles
-  again, and a new worker takes its place. The production pod has 2 CPUs and 2 workers.
-- **A full page for each service** (`#/services/<name>`). It shows health, requests, error rate, and latency against the
-  window before; traffic and latency over time; every endpoint or query; who calls the service and what it calls; and for
-  APIs and workers its top errors, slowest requests, newest log lines, runtime metrics, and hosts. The quick look on the
-  Services page has a "View full service" button. Search and the Overview's service list open the full page.
 
 ## [0.3.0-alpha.3] — Search and scale
 

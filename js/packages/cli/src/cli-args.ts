@@ -9,7 +9,7 @@ Usage:
 
 Options:
   --release <version>  The version your app sends as service.version.
-                       Default: WIZELENS_RELEASE, then package.json.
+                       Default: WIZELENS_RELEASE, npm_package_version, then package.json.
   --url <address>      The hub or cloud. Default: WIZELENS_URL, WIZELENS_HUB,
                        then http://localhost:5960.
   --token <key>        Cloud ingest key (wl_ik_...) or hub token.

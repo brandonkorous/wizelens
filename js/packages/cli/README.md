@@ -4,7 +4,7 @@ The WizeLens command line, and build plugins for Vite, webpack, and Next.js. The
 WizeLens hub or WizeLens Cloud, so minified stacks show your original file, line, function, and code.
 
 ```bash
-npx @wizeworks/lens-cli sourcemaps upload ./dist --release 1.4.0 --url https://cloud.wizelens.com --token wl_ik_...
+npx @wizeworks/lens-cli sourcemaps upload ./dist --release 1.4.0 --url https://app.wizelens.com --token wl_ik_...
 npx @wizeworks/lens-cli sourcemaps list --release 1.4.0
 ```
 
