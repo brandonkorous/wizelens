@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Bell, BellRing, Lightbulb, ShieldAlert, TriangleAlert } from "lucide-react";
-import { errorInfo, insightsOf, isErrorSpan, requestRows, securityOf, type Trace } from "@wizeworks/lens-core";
+import { errorInfo, insightsOf, isErrorSpan, isFailed, requestRows, securityOf, type Trace } from "@wizeworks/lens-core";
 import { useHost } from "../data/host";
 import { useSeenPref } from "../data/prefs";
 import { useApi } from "../data/useApi";
@@ -41,7 +41,7 @@ function notesOf(traces: readonly Trace[], now: number): Note[] {
   const map = new Map<string, Note>();
   for (const r of requestRows(recent)) {
     const href = traceHref(r.traceId);
-    if (r.errors > 0 || (r.status ?? 0) >= 500) {
+    if (isFailed(r)) {
       const msg = errorMessage(byId.get(r.traceId)!);
       add(map, { key: `e|${r.endpoint}|${msg}`, kind: "error", title: `Error in ${r.endpoint}`, detail: msg, timeMs: r.startMs, count: 1, href });
     }

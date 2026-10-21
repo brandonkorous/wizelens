@@ -1,5 +1,6 @@
 import { adjustClockSkew, shiftLogs } from "./skew.js";
-import type { LogRecord, Span, SpanStatus, Trace, TraceSummary } from "./types.js";
+import { ATTR_EXPECTED } from "./attributes.js";
+import { HEADER_EXPECTED, type LogRecord, type Span, type SpanStatus, type Trace, type TraceSummary } from "./types.js";
 
 /** Pick the root span: no parent, else parent not in the set (earliest), else earliest. */
 export function findRootSpan(spans: readonly Span[]): Span | undefined {
@@ -40,12 +41,35 @@ export function isClientErrorStatus(span: Span): boolean {
   return code !== null && code >= 400 && code < 500;
 }
 
-/** The span's status is error, and it did not answer 4xx. */
-export const isErrorStatus = (span: Span): boolean => span.status === "error" && !isClientErrorStatus(span);
+const isOn = (v: unknown): boolean => {
+  const first = Array.isArray(v) ? v[0] : v;
+  if (first === true || first === 1) return true;
+  if (typeof first !== "string") return false;
+  const t = first.trim().toLowerCase();
+  return t !== "" && t !== "0" && t !== "false" && t !== "no";
+};
 
+/** The response header as the server span records it (`http.response.header.x-wizelens-expected`). */
+export const ATTR_EXPECTED_HEADER = `http.response.header.${HEADER_EXPECTED.toLowerCase()}`;
+
+/** The app expected this answer (`wizelens.expected`, or the `X-WizeLens-Expected` header): a deliberate 503 is then not a failure, and keeps its status. */
+export const isExpectedSpan = (span: Span): boolean => isOn(span.attributes[ATTR_EXPECTED]) || isOn(span.attributes[ATTR_EXPECTED_HEADER]);
+
+/** The span's status is error, it did not answer 4xx, and the app did not expect the answer. */
+export const isErrorStatus = (span: Span): boolean => span.status === "error" && !isClientErrorStatus(span) && !isExpectedSpan(span);
+
+const hasException = (span: Span): boolean => span.events.some((e) => e.name === "exception");
+
+/** An error status or an exception. A 4xx answer never is; an expected answer is only when something threw. */
 export function isErrorSpan(span: Span): boolean {
   if (isClientErrorStatus(span)) return false;
-  return span.status === "error" || span.events.some((e) => e.name === "exception");
+  return isErrorStatus(span) || hasException(span);
+}
+
+/** A span that failed: an error, or an answer of 500 or more that the app did not expect. */
+export function isFailedAnswer(span: Span): boolean {
+  if (isErrorSpan(span)) return true;
+  return Number(span.attributes["http.response.status_code"] ?? 0) >= 500 && !isExpectedSpan(span);
 }
 
 function timeBounds(spans: readonly Span[], logs: readonly LogRecord[]): { start: number; end: number } {

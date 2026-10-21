@@ -38,6 +38,23 @@ A request fails when it answers 500 or more, or when a step inside it throws or 
 404 Not Found, is not a failure, even when your app marks it as an error. So bots that ask for files you do not have, and
 pages that look something up and fall back, do not push up your error rate.
 
+### Answers you expect
+
+Some 5xx answers are on purpose. A site that is paused answers 503 "come back later", so search engines keep its pages
+and try again. Mark these answers as expected, and WizeLens leaves them out of error rates, failed requests, error
+groups, problems, and alerts. The status stays as it is: `status:5xx` still finds them.
+
+| How | Code |
+|---|---|
+| Any app, any language | Send the response header `X-WizeLens-Expected: 1` |
+| Node, Next.js | `wizelens.expected()` inside the request |
+| .NET | `WizeLensRequest.Expected()` inside the request |
+| Java, Python, Go | Set the attribute `wizelens.expected` to `true` on the server span |
+
+The header works with every add-on, and it reaches the browser too, so the page's own request is not an error either.
+An answer you expect still fails when your code throws while it builds it: only the status is forgiven, never an
+exception.
+
 ## Time
 
 Database and outgoing times are wall time: spans that overlap count once, so a request never shows more database time than

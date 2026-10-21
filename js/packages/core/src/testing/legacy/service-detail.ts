@@ -2,7 +2,7 @@ import { httpShape, queryText } from "../../analysis.js";
 import { browserTypeOf } from "../../attributes.js";
 import { avgOf, groupBy, normalizeQuery } from "../../stats/common.js";
 import { databaseOf, hostOf, type ServiceEdge, type ServiceKind, type ServiceRow } from "../../stats/services.js";
-import { isErrorSpan } from "../../trace.js";
+import { isFailedAnswer } from "../../trace.js";
 import type { Span, Trace } from "../../types.js";
 
 /** One endpoint, query, or call target of a service, with its numbers. */
@@ -13,7 +13,7 @@ export interface EndpointStat {
   errors: number;
 }
 
-export const failedSpan = (s: Span) => isErrorSpan(s) || Number(s.attributes["http.response.status_code"] ?? 0) >= 500;
+export const failedSpan = (s: Span) => isFailedAnswer(s);
 
 function externalSpans(traces: readonly Trace[]): Span[] {
   const out: Span[] = [];

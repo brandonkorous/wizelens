@@ -141,6 +141,8 @@ export interface ServiceInfo {
 export const HEADER_TRACE = "X-WizeLens-Trace";
 export const HEADER_ENDPOINT = "X-WizeLens-Endpoint";
 export const HEADER_HOP = "X-WizeLens-Hop";
+/** Response header: the app expected this answer, so a 5xx is not a failure (a deliberate 503 "come back later"). */
+export const HEADER_EXPECTED = "X-WizeLens-Expected";
 export const HEADER_TRACEPARENT = "traceparent";
 export const MAX_FEDERATION_HOPS = 5;
 /** `Server-Timing` metrics that carry the trace id and endpoint to the page, which cannot read a document's headers. */

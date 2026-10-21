@@ -18,7 +18,7 @@ import { serviceFacts, traceServices } from "./facts-services.js";
 import { securityFacts } from "./facts-security.js";
 
 /** Bump when fact semantics change: hosts then rebuild their facts and rollups. */
-export const FACTS_VERSION = 10;
+export const FACTS_VERSION = 11;
 /** A trace waits a few seconds for its stats on purpose; only one written longer ago than this counts as stats running behind. */
 export const SETTLE_BEHIND_MS = 60_000;
 /** Slow query threshold that hosts fix when a trace settles; the same as `analyzeTrace`'s default. */

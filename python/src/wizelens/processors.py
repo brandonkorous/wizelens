@@ -19,6 +19,14 @@ def _answered_4xx(span: ReadableSpan) -> bool:
     return isinstance(code, int) and 400 <= code < 500
 
 
+def _expected(span: ReadableSpan) -> bool:
+    """The app set wizelens.expected (a deliberate 503), so an error status alone is not a failure."""
+    value = (span.attributes or {}).get("wizelens.expected")
+    if isinstance(value, bool):
+        return value
+    return isinstance(value, str) and value.strip().lower() not in ("", "0", "false", "no")
+
+
 class SamplingSpanProcessor(SpanProcessor):
     """Holds the spans of a trace outside the rate until its local root ends; sends them on when the trace is kept."""
 
@@ -40,7 +48,7 @@ class SamplingSpanProcessor(SpanProcessor):
         self._sampler.offer(format(ctx.trace_id, "032x"), self._important(span), root, lambda: self._inner.on_end(span))
 
     def _important(self, span: ReadableSpan) -> bool:
-        if self._keep_errors and span.status.status_code is StatusCode.ERROR and not _answered_4xx(span):
+        if self._keep_errors and span.status.status_code is StatusCode.ERROR and not _answered_4xx(span) and not _expected(span):
             return True
         if span.start_time is None or span.end_time is None:
             return False

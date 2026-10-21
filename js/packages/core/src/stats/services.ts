@@ -1,5 +1,5 @@
 import { browserTypeOf } from "../attributes.js";
-import { isErrorSpan } from "../trace.js";
+import { isFailedAnswer } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { avgOf, groupBy, percentileOf, percentOf } from "./common.js";
 import { isConsumer, isProducer, queueOf } from "./messaging.js";
@@ -44,7 +44,7 @@ export function statusOf(requests: number, errorRate: number, p95Ms: number | nu
 }
 
 /** A failed span: an error, or a 5xx response. */
-export const isFailedSpan = (s: Span): boolean => isErrorSpan(s) || Number(s.attributes["http.response.status_code"] ?? 0) >= 500;
+export const isFailedSpan = (s: Span): boolean => isFailedAnswer(s);
 const str = (s: Span, k: string) => (s.attributes[k] == null ? null : String(s.attributes[k]));
 
 function rowOf(key: string, name: string, kind: ServiceKind, spans: Span[], detail: string | null): ServiceRow {

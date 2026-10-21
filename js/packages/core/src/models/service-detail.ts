@@ -3,7 +3,7 @@ import { avgOfAgg } from "../scale/agg.js";
 import { joinKey } from "../scale/kinds.js";
 import { normalizeQuery } from "../stats/common.js";
 import { type ServiceEdge, type ServiceKind, type ServiceRow } from "../stats/services.js";
-import { isErrorSpan } from "../trace.js";
+import { isFailedAnswer } from "../trace.js";
 import type { Span } from "../types.js";
 import type { Row } from "./read.js";
 
@@ -15,7 +15,7 @@ export interface EndpointStat {
   errors: number;
 }
 
-export const failedSpan = (s: Span) => isErrorSpan(s) || Number(s.attributes["http.response.status_code"] ?? 0) >= 500;
+export const failedSpan = (s: Span) => isFailedAnswer(s);
 
 /** The endpoint, query, or call shape a span counts as in a service row of this kind. */
 export function endpointNameOf(s: Span, kind: ServiceKind): string {

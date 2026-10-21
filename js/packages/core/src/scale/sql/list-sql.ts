@@ -37,7 +37,7 @@ function requestWhere(q: SqlText, f: ListFilter): string[] {
   const out: string[] = [];
   if (f.method) out.push(`method = ${q.p(f.method)}`);
   if (f.service) out.push(`(service = ${q.p(f.service)} OR ${q.contains("services", `\u001f${f.service}\u001f`)})`);
-  if (f.status === "failed") out.push(`(errors > 0 OR COALESCE(status, 0) >= 500)`);
+  if (f.status === "failed") out.push(q.isTrue("failed"));
   else if (f.status) {
     const hundred = Number(f.status[0]) * 100;
     out.push(Number.isFinite(hundred) ? `COALESCE(status, 0) >= ${lit(hundred)} AND COALESCE(status, 0) < ${lit(hundred + 100)}` : "1 = 0");
@@ -126,7 +126,10 @@ const TABLES: Record<ListNeed["table"], TableSql> = {
 export function requestItemOfRow(r: Row): RequestItem {
   return {
     traceId: String(r.trace_id), startMs: num(r.start_ms), method: String(r.method), path: String(r.path), endpoint: String(r.endpoint),
-    status: numOrNull(r.status), aborted: boolOf(r.aborted), durationMs: num(r.duration_ms), serverMs: numOrNull(r.server_ms), dbMs: num(r.db_ms),
+    status: numOrNull(r.status),
+    // Only `failed` is stored: a 5xx that did not fail is one the app expected.
+    expected: !boolOf(r.failed) && (numOrNull(r.status) ?? 0) >= 500,
+    aborted: boolOf(r.aborted), durationMs: num(r.duration_ms), serverMs: numOrNull(r.server_ms), dbMs: num(r.db_ms),
     dbCount: num(r.db_count), fetchCount: num(r.fetch_count), fetchMs: num(r.fetch_ms), renderMs: numOrNull(r.render_ms), networkMs: numOrNull(r.network_ms),
     service: String(r.service), services: servicesOf(String(r.services)), errors: num(r.errors), insights: num(r.insights), health: String(r.health) as Health,
     userAgent: strOrNull(r.user_agent), clientAddress: strOrNull(r.client_address), user: strOrNull(r.end_user), requestId: strOrNull(r.request_id),

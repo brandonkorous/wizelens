@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using WizeLens.Analysis;
 using WizeLens.Capture;
 
 namespace WizeLens;
@@ -14,6 +15,9 @@ public static class WizeLensRequest
         if (string.IsNullOrWhiteSpace(key)) return;
         ServerActivity()?.SetTag(TagPrefix + key.Trim(), value ?? "");
     }
+
+    /// <summary>Marks the current request's answer as expected, for example a deliberate 503: a 5xx is then not a failure. An exception still is. Does nothing outside a request.</summary>
+    public static void Expected() => ServerActivity()?.SetTag(RequestParts.ExpectedAttribute, true);
 
     internal static Activity? ServerActivity()
     {

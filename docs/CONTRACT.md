@@ -109,7 +109,7 @@ interface TraceSummary {
   service: string;
   startMs: number;
   durationMs: number;       // max(end) - min(start) over spans
-  status: SpanStatus;       // "error" if any span is error, leaving out 4xx answers
+  status: SpanStatus;       // "error" if any span is error, leaving out 4xx and expected answers
   spanCount: number;
   dbCount: number;
   httpClientCount: number;
@@ -125,6 +125,16 @@ interface TraceSummary {
 the trace `status`, request `errors` (failed: `errors > 0` or status 500 and above), error groups, service and endpoint
 error counts, the search `error` field, and `keepErrors` sampling all use this rule, in Node and .NET; the Go, Java, and Python
 samplers use it too.
+
+**Expected answers.** A span is *expected* when `wizelens.expected` is `true` (or `"1"`/`"true"`), or when its
+`http.response.header.x-wizelens-expected` is set to anything but empty, `0`, `false`, or `no`. An expected span's `error`
+status and its 5xx status code are not a failure; an `exception` event on it still is. A request row carries `expected`
+from its entry server span (else its browser fetch span) and is failed when `errors > 0`, or when its status is 500 or more
+and it is not expected; `health` is then not `critical` for the status alone. Stored request facts keep only `failed`, so a
+row read back from a store reports `expected` only for a 5xx (`status >= 500 && !failed`). The Node add-on and the .NET
+add-on set `wizelens.expected` and leave the span status unset when the app calls `expected()` / `Expected()` or answers
+with the `X-WizeLens-Expected` header; the Node add-on lists that header in `Access-Control-Expose-Headers`, and the
+browser package does not fail a fetch whose answer carries it.
 
 interface Trace extends TraceSummary {
   spans: Span[];            // sorted by startMs
@@ -166,7 +176,7 @@ interface SamplingInfo {
 
 | Category | Attributes |
 |---|---|
-| http.server | `http.request.method`, `http.route`, `url.path`, `url.query`, `http.response.status_code`, `server.address`, `client.address` (first `X-Forwarded-For` value, else the socket), `user_agent.original`, `http.request.header.{name}` / `http.response.header.{name}` (lower-case names, values joined with `, `, max 50 headers, 1 KB each, redacted), `http.request.body.size`, `http.response.body.size`, `wizelens.request.id`, `enduser.id` (when known), `wizelens.tag.{key}` (app tags), `wizelens.server.routed_ms` (when the runtime can tell), `wizelens.response.body` + `wizelens.response.body.truncated` (only with body capture on: text and JSON, first 16 KB), `wizelens.request.body` + `wizelens.request.body.truncated` (the Java, Python, and Go SDKs, with `WIZELENS_CAPTURE_BODY=true`; complete JSON has sensitive keys redacted) |
+| http.server | `http.request.method`, `http.route`, `url.path`, `url.query`, `http.response.status_code`, `server.address`, `client.address` (first `X-Forwarded-For` value, else the socket), `user_agent.original`, `http.request.header.{name}` / `http.response.header.{name}` (lower-case names, values joined with `, `, max 50 headers, 1 KB each, redacted), `http.request.body.size`, `http.response.body.size`, `wizelens.request.id`, `enduser.id` (when known), `wizelens.tag.{key}` (app tags), `wizelens.expected` (the app expected the answer: see Expected answers), `wizelens.server.routed_ms` (when the runtime can tell), `wizelens.response.body` + `wizelens.response.body.truncated` (only with body capture on: text and JSON, first 16 KB), `wizelens.request.body` + `wizelens.request.body.truncated` (the Java, Python, and Go SDKs, with `WIZELENS_CAPTURE_BODY=true`; complete JSON has sensitive keys redacted) |
 | any span | `service.version`: the version of the app that ran it, so Problems can name a new release. Node: `release`, else `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else `npm_package_version`. .NET: `Release`, else `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else the entry assembly's informational version. OTLP: the resource's `service.version`, copied onto that service's spans that have none |
 | internal | `wizelens.layer` = `handler` for a controller action or endpoint handler span |
 | gRPC (on http.server / http.client) | `rpc.system` = `grpc`, `rpc.service` (e.g. `orders.v1.Orders`), `rpc.method` (e.g. `GetOrder`), `rpc.grpc.status_code` (number). Name: `{service}/{method}`. A non-zero status code on the server is an error. |

@@ -50,6 +50,15 @@ def test_rate_zero_drops_a_trace_that_only_answered_4xx():
     assert _names(exporter) == []
 
 
+def test_rate_zero_drops_a_trace_whose_only_error_was_expected():
+    tracer, exporter = _tracer(TraceSampler(0))
+    with tracer.start_as_current_span("GET /") as span:
+        span.set_attribute("http.response.status_code", 503)
+        span.set_attribute("wizelens.expected", True)
+        span.set_status(Status(StatusCode.ERROR))
+    assert _names(exporter) == []
+
+
 def test_rate_zero_keeps_a_slow_trace():
     tracer, exporter = _tracer(TraceSampler(0), keep_slow_ms=20.0)
     with tracer.start_as_current_span("GET /report"):

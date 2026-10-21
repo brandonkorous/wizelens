@@ -3,7 +3,7 @@ import { ATTR_ENDUSER, ATTR_REQUEST_ABORTED, ATTR_REQUEST_ID, ATTR_USER_NAME, AT
 import { busyMs } from "../busy.js";
 import { REDACTED } from "../redact.js";
 import { type Health, healthOf, insightsOf, traceTiming } from "../health.js";
-import { entryServerSpan, isErrorSpan } from "../trace.js";
+import { entryServerSpan, isErrorSpan, isExpectedSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { memoByObject } from "./common.js";
 
@@ -19,6 +19,8 @@ export interface RequestRow {
   /** Method and route shape, for grouping: "GET /api/orders/{}". */
   endpoint: string;
   status: number | null;
+  /** True when the app expected the answer (`wizelens.expected`, or the `X-WizeLens-Expected` header), so a 5xx is not a failure. Read back from stored facts, it is only known for a 5xx. */
+  expected: boolean;
   /** True when the client left before the server answered. */
   aborted: boolean;
   /** Request start to the next paint when the browser measured it, else the trace duration. */
@@ -116,6 +118,8 @@ function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | nu
   const who = userSpan(trace, server);
   const statusRaw = server?.attributes["http.response.status_code"] ?? fetch?.attributes["http.response.status_code"];
   const status = typeof statusRaw === "number" ? statusRaw : statusRaw == null ? null : Number(statusRaw) || null;
+  const answer = server ?? fetch;
+  const expected = answer ? isExpectedSpan(answer) : false;
   return {
     traceId: trace.traceId,
     startMs: fetch?.startMs ?? server?.startMs ?? trace.startMs,
@@ -123,6 +127,7 @@ function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | nu
     path,
     endpoint,
     status,
+    expected,
     aborted: server?.attributes[ATTR_REQUEST_ABORTED] === true,
     durationMs: timing.totalMs,
     serverMs: timing.serverMs,
@@ -137,7 +142,7 @@ function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | nu
     errors,
     findings,
     insights,
-    health: healthOf({ status, error: errors > 0, totalMs: timing.totalMs, insights }),
+    health: healthOf({ status, expected, error: errors > 0, totalMs: timing.totalMs, insights }),
     userAgent: str(server, "user_agent.original"),
     clientAddress: str(server, "client.address"),
     user: str(who, ATTR_ENDUSER),
@@ -171,4 +176,5 @@ export function requestRows(traces: readonly Trace[]): RequestRow[] {
   return rows.sort((a, b) => b.startMs - a.startMs);
 }
 
-export const isFailed = (r: Pick<RequestRow, "errors" | "status">): boolean => r.errors > 0 || (r.status ?? 0) >= 500;
+/** An error inside the request, or an answer of 500 or more that the app did not expect. */
+export const isFailed = (r: Pick<RequestRow, "errors" | "status"> & { expected?: boolean }): boolean => r.errors > 0 || ((r.status ?? 0) >= 500 && r.expected !== true);

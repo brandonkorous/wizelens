@@ -1,4 +1,4 @@
-import type { RequestRow } from "../stats/requests.js";
+import { isFailed, type RequestRow } from "../stats/requests.js";
 import type { ModelParams } from "./input.js";
 
 /** What filters and sorts read: a request row with or without its findings. */
@@ -51,7 +51,7 @@ export function filterFromQuery(query: URLSearchParams | ModelParams): RequestFi
 
 function statusMatches(r: Row, status: string): boolean {
   if (!status) return true;
-  if (status === "failed") return r.errors > 0 || (r.status ?? 0) >= 500;
+  if (status === "failed") return isFailed(r);
   const code = r.status ?? 0;
   const hundred = Number(status[0]) * 100;
   return code >= hundred && code < hundred + 100;

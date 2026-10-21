@@ -29,10 +29,33 @@ internal static partial class RequestParts
     /// <summary>A 4xx answer: the caller asked for something missing or wrong. It is not a failure, even when the app marks the span as an error.</summary>
     public static bool IsClientErrorStatus(Span s) => AttributeValue.AsDouble(s.Attributes.GetValueOrDefault("http.response.status_code")) is >= 400 and < 500;
 
-    /// <summary>The span's status is error, and it did not answer 4xx.</summary>
-    public static bool IsErrorStatus(Span s) => s.Status == SpanStatuses.Error && !IsClientErrorStatus(s);
+    /// <summary>The app expected this answer: a deliberate 503 is then not a failure, and keeps its status.</summary>
+    public const string ExpectedAttribute = "wizelens.expected";
 
-    public static bool IsErrorSpan(Span s) => !IsClientErrorStatus(s) && (s.Status == SpanStatuses.Error || s.Events.Any(e => e.Name == "exception"));
+    /// <summary>The response header that marks an answer as expected.</summary>
+    public const string ExpectedHeader = "X-WizeLens-Expected";
+
+    /// <summary>The response header as the server span records it.</summary>
+    public static readonly string ExpectedHeaderAttribute = "http.response.header." + ExpectedHeader.ToLowerInvariant();
+
+    /// <summary>True for true, 1, and any text but "", "0", "false", or "no".</summary>
+    public static bool IsOn(object? value) => AttributeValue.Normalize(value) switch
+    {
+        bool b => b,
+        long l => l == 1,
+        double d => d == 1,
+        string t => t.Trim().ToLowerInvariant() is not ("" or "0" or "false" or "no"),
+        _ => false,
+    };
+
+    /// <summary>The app expected this answer (<c>wizelens.expected</c>, or the <c>X-WizeLens-Expected</c> header).</summary>
+    public static bool IsExpectedSpan(Span s) => IsOn(s.Attributes.GetValueOrDefault(ExpectedAttribute)) || IsOn(s.Attributes.GetValueOrDefault(ExpectedHeaderAttribute));
+
+    /// <summary>The span's status is error, it did not answer 4xx, and the app did not expect the answer.</summary>
+    public static bool IsErrorStatus(Span s) => s.Status == SpanStatuses.Error && !IsClientErrorStatus(s) && !IsExpectedSpan(s);
+
+    /// <summary>An error status or an exception. A 4xx answer never is; an expected answer is only when something threw.</summary>
+    public static bool IsErrorSpan(Span s) => !IsClientErrorStatus(s) && (IsErrorStatus(s) || s.Events.Any(e => e.Name == "exception"));
 
     /// <summary>pageview, react, error, or fetch for a browser span; null for others.</summary>
     public static string? BrowserTypeOf(Span s)
@@ -112,10 +135,10 @@ internal static partial class RequestParts
     }
 
     /// <summary>The health color of a request: critical, warning, opportunity, or success.</summary>
-    public static string HealthOf(double? status, bool error, double totalMs, int insights)
+    public static string HealthOf(double? status, bool expected, bool error, double totalMs, int insights)
     {
         var code = status ?? 0;
-        if (error || code >= 500) return "critical";
+        if (error || (code >= 500 && !expected)) return "critical";
         if (code >= 400 || totalMs >= SlowMs) return "warning";
         return insights > 0 ? "opportunity" : "success";
     }

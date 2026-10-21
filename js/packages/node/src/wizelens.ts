@@ -19,7 +19,7 @@ import { memoryPages } from "./mcp-memory.js";
 import { createMetricParts, mcpMetrics } from "./metrics/setup.js";
 import type { MetricStore } from "./metrics/store.js";
 import { SqlitePersister } from "./persist.js";
-import { createErrorMiddleware, recordException, setUser, tag } from "./request-api.js";
+import { createErrorMiddleware, expected, recordException, setUser, tag } from "./request-api.js";
 import { TraceStore } from "./store.js";
 import { isEnabled, servesDashboard } from "./mode.js";
 import { localMapLoader } from "./sourcemaps.js";
@@ -128,6 +128,7 @@ export function buildWizeLens(options: WizeLensOptions): WizeLens {
     logger: makeLogger(p.write, p.service),
     recordException,
     tag,
+    expected,
     setUser,
     getTrace: p.getTrace,
     shutdown: async () => {

@@ -1,4 +1,4 @@
-import { ATTR_BROWSER_REMOTE, ATTR_BROWSER_RENDER_MS, HEADER_ENDPOINT, HEADER_TRACE, newSpanId, newTraceId, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_REMOTE, ATTR_BROWSER_RENDER_MS, ATTR_EXPECTED, HEADER_ENDPOINT, HEADER_EXPECTED, HEADER_TRACE, newSpanId, newTraceId, type Span } from "@wizeworks/lens-core";
 import { browserSpan, currentRoute } from "./browser-span.js";
 import { afterNextPaint } from "./paint.js";
 import type { RecordedRequest } from "./recorder-types.js";
@@ -65,8 +65,14 @@ function remoteOf(ctx: FetchContext, answer: Answer | null): string | null {
   return endpoint && endpoint !== ctx.endpoint.href.replace(/\/+$/, "") ? endpoint : null;
 }
 
-function requestSpan(ctx: FetchContext, call: Call, traceId: string, durationMs: number, status: number | null, error: string | null): Span {
-  const failed = error ?? (status !== null && status >= 500 ? `HTTP ${status}` : null);
+/** The server sent `X-WizeLens-Expected`: it meant this answer, so a 5xx is not a failure. */
+const isExpectedAnswer = (answer: Answer | null): boolean => {
+  const v = answer?.header(HEADER_EXPECTED)?.trim().toLowerCase();
+  return !!v && v !== "0" && v !== "false" && v !== "no";
+};
+
+function requestSpan(ctx: FetchContext, call: Call, traceId: string, durationMs: number, status: number | null, error: string | null, expected: boolean): Span {
+  const failed = error ?? (status !== null && status >= 500 && !expected ? `HTTP ${status}` : null);
   return browserSpan({
     type: "fetch",
     traceId,
@@ -83,6 +89,7 @@ function requestSpan(ctx: FetchContext, call: Call, traceId: string, durationMs:
       "http.request.method": call.method,
       "http.response.status_code": status,
       "wizelens.browser.page": typeof location !== "undefined" ? location.pathname : null,
+      ...(expected ? { [ATTR_EXPECTED]: true } : {}),
     },
     events: error ? [{ name: "exception", timeMs: now(), attributes: { "exception.type": "FetchError", "exception.message": error } }] : [],
   });
@@ -117,7 +124,7 @@ export function finishCall(ctx: FetchContext, call: Call, answer: Answer | null,
   ctx.store.upsert({ ...call.record, status, durationMs, renderMs: null, traceId, profiled: !!serverTrace, error });
   // The server ends its span after it sends the response, so wait a moment.
   if (serverTrace) setTimeout(() => void ctx.loadServerStats(serverTrace), ctx.statsDelayMs);
-  const span = requestSpan(ctx, call, traceId, durationMs, status, error);
+  const span = requestSpan(ctx, call, traceId, durationMs, status, error, isExpectedAnswer(answer));
   if (remote) span.attributes[ATTR_BROWSER_REMOTE] = remote;
   if (answer) holdForRender(ctx, span, answer, headersAt);
   else ctx.sender.push(span);

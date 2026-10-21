@@ -48,7 +48,7 @@ export function ErrorsPanel({ m, name }: { m: ServicePageModel; name: string }) 
 
 const SLOW_COLUMNS: Column<RequestItem>[] = [
   { key: "path", header: "Request", className: "wl-svc-wide", cell: (r) => <span className="wl-truncate" title={`${r.method} ${r.path}`}>{r.method} {r.path}</span> },
-  { key: "status", header: "Status", cell: (r) => <DotText tone={toneOfStatus(r.status)} colorText={(r.status ?? 0) >= 500}>{r.aborted ? "Aborted" : (r.status ?? "…")}</DotText> },
+  { key: "status", header: "Status", cell: (r) => <DotText tone={toneOfStatus(r.status)} colorText={(r.status ?? 0) >= 500 && !r.expected}>{r.aborted ? "Aborted" : (r.status ?? "…")}</DotText> },
   { key: "duration", header: "Duration", num: true, sort: (r) => r.durationMs, cell: (r) => <span className={isFailed(r) ? "wl-text-error" : undefined}>{fmtMs(r.durationMs)}</span> },
 ];
 

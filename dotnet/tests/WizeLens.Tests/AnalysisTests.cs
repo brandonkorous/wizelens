@@ -1,5 +1,6 @@
 using WizeLens.Analysis;
 using WizeLens.Model;
+using WizeLens.Search;
 using WizeLens.Storage;
 
 namespace WizeLens.Tests;
@@ -112,6 +113,35 @@ public class AnalysisTests
         Assert.True(RequestParts.IsErrorSpan(down.Spans[0]));
         Assert.Equal(SpanStatuses.Error, down.Status);
         Assert.Single(TraceAnalysis.Errors(down));
+    }
+
+    [Fact]
+    public void An_expected_answer_is_not_a_failure_unless_something_threw()
+    {
+        Span Answered(string id, Dictionary<string, object?> extra, bool threw = false) => new()
+        {
+            TraceId = TraceId, SpanId = id, Name = "GET /", Category = SpanCategories.HttpServer, Service = "site", StartMs = 1000, DurationMs = 5,
+            Status = SpanStatuses.Error, Attributes = new(extra) { ["http.response.status_code"] = 503 },
+            Events = threw ? new List<SpanEvent> { new() { Name = "exception", Attributes = new() { ["exception.message"] = "boom" } } } : new List<SpanEvent>(),
+        };
+
+        foreach (var marked in new[] { Answered("e1", new() { [RequestParts.ExpectedAttribute] = true }), Answered("e2", new() { [RequestParts.ExpectedHeaderAttribute] = "1" }) })
+        {
+            var paused = Build(marked);
+            Assert.False(RequestParts.IsErrorSpan(paused.Spans[0]));
+            Assert.Equal(0, paused.ErrorCount);
+            Assert.Empty(TraceAnalysis.Errors(paused));
+            var row = RequestItems.Of(paused)!;
+            Assert.True(row.Expected);
+            Assert.Equal(503d, row.Status);
+            Assert.NotEqual("critical", row.Health);
+            Assert.False((bool)SearchDocs.RequestDoc(row).Fields["error"]!);
+        }
+
+        Assert.True(RequestParts.IsErrorSpan(Build(Answered("e3", new() { [RequestParts.ExpectedAttribute] = true }, threw: true)).Spans[0]));
+        var down = RequestItems.Of(Build(Answered("e4", new())))!;
+        Assert.False(down.Expected);
+        Assert.Equal("critical", down.Health);
     }
 
     private static Trace Build(params Span[] spans) => TraceBuilder.Build(TraceId, spans, [], []);

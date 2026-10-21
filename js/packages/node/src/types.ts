@@ -140,6 +140,8 @@ export interface WizeLens {
   recordException(err: unknown): void;
   /** Tag the current request, e.g. tag("cache", "hit") shows as "cache:hit". No-op outside a request. */
   tag(key: string, value?: string): void;
+  /** Mark the current request's answer as expected, e.g. a deliberate 503: a 5xx is then not a failure. An exception still is. No-op outside a request. */
+  expected(): void;
   /** Set the user of the current request (`enduser.id`), with a display name for the Users page. No-op outside a request. */
   setUser(id: string, options?: UserOptions): void;
   /** Get one trace, optionally federated across downstream services. */
