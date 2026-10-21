@@ -2,10 +2,10 @@
 
 Browser side of [WizeLens](https://github.com/brandonkorous/wizelens) for any web page, with no framework: links every `fetch` and
 `XMLHttpRequest` call to its server trace, and sends page views, Web Vitals, browser errors, and `console` lines to the WizeLens add-on
-on your API.
+on your API. It also shows the in-page HUD.
 
 Using a framework? [Vue](https://github.com/brandonkorous/wizelens/tree/main/js/packages/vue), [Angular](https://github.com/brandonkorous/wizelens/tree/main/js/packages/angular), and [Svelte](https://github.com/brandonkorous/wizelens/tree/main/js/packages/svelte) have small packages on top of this one, and
-[React](https://github.com/brandonkorous/wizelens/tree/main/js/packages/react) adds render stats and the in-page HUD.
+[React](https://github.com/brandonkorous/wizelens/tree/main/js/packages/react) adds render stats. All of them show the same HUD.
 
 ## Install
 
@@ -35,6 +35,9 @@ No build step: load the bundle and give it the endpoint. It starts on its own an
 | `data-enabled="false"` | Load but do not start. |
 | `data-console="false"` | Do not copy `console` calls. |
 | `data-xhr="false"` | Do not trace `XMLHttpRequest`. |
+| `data-hud` | `true`, `false`, or `auto` (default). See [The HUD](#the-hud). |
+| `data-slow-ms` | The HUD shows requests at or over this many ms as "warning". Default `500`. |
+| `data-source="inject"` | Set by a server that put the tag in the page. The tag waits for the page's `load` and stands aside for an app's own instance. |
 
 Without `data-endpoint`, start it yourself: `WizeLens.initWizeLens({ endpoint: "/_wizelens" })`. An ES module build is at
 `@wizeworks/lens-browser/script` (`dist/wizelens.js`).
@@ -52,7 +55,9 @@ Without `data-endpoint`, start it yourself: `WizeLens.initWizeLens({ endpoint: "
 | `captureConsole` | `true` | Copy `console` calls into the page view's trace (at most 500 per page). |
 | `captureXhr` | `true` | Trace `XMLHttpRequest` calls too (Angular's HttpClient, axios). |
 | `resolveFrames` | `true` | Read the page's own source maps (dev servers serve them) so errors group by your source. |
-| `readServer` | `false` | Read traces back from the server. Only the React HUD needs it. |
+| `hud` | `"auto"` | The in-page HUD: `true`, `false`, or `"auto"`. See [The HUD](#the-hud). |
+| `slowMs` | `500` | The HUD shows requests at or over this many ms as "warning". |
+| `readServer` | follows `hud` | Read traces back from the server, for the HUD. |
 
 ## The instance
 
@@ -68,6 +73,29 @@ Without `data-endpoint`, start it yourself: `WizeLens.initWizeLens({ endpoint: "
 | `recorder` | The lower-level recorder (or `null` when off). |
 
 Uncaught errors and unhandled promise rejections are sent without any call.
+
+## The HUD
+
+A small card in the corner of the page: the last request, its server trace (time in the database, queries, errors, and security
+risks), page timings, and links into the dashboard. A details panel, a settings panel, and a minimized mark come off it, and Esc
+closes a panel. It is the `<wizelens-hud>` custom element, with its styles inside an open shadow root so the page's CSS cannot reach
+it, and it keeps its settings in `localStorage` (`wizelens.hud.panel`, `wizelens.hud.live`, `wizelens.hud.min`).
+
+| `hud` | Means |
+|---|---|
+| `true` | Show the HUD, and read traces back from the server. |
+| `false` | No HUD and no reads: works with a send-only server. |
+| `"auto"` | Ask `GET {endpoint}/api/info` once. Show the HUD when it answers 200 with JSON (the server's read API is on, as in development); stay hidden otherwise. |
+
+To show it for a recorder of your own, `mountHud(recorder, { slowMs })` adds the element to the page and returns a function that takes
+it away. `defineHud()` defines the element without adding one.
+
+## One instance per page
+
+Each running instance registers on the page (`registered()` reads it), whichever copy of this package started it. The .NET and Node
+add-ons put a script tag with `data-source="inject"` into the HTML pages they serve in development, so server-rendered pages get the
+HUD with no code. That script does nothing when the app already started WizeLens, and an app that starts later stops it and takes
+over, so a page never has two HUDs or traces a call twice.
 
 ## Cross-origin APIs
 

@@ -57,6 +57,23 @@ trackNavigation(); // or trackNavigation({ mode: "hash" }) for svelte-spa-router
 `trackNavigation({ mode, lens })` records back, forward, and (in hash mode) hash changes as page views, and returns a stop function.
 `pushState` route changes are seen by WizeLens itself.
 
+## The HUD
+
+The same HUD as every WizeLens browser package: the last request, its server trace, errors, and links into the dashboard, in a
+`<wizelens-hud>` element with its own shadow root, so your CSS cannot reach it. Two options set it:
+
+| Option | Default | Description |
+|---|---|---|
+| `hud` | `"auto"` | `"auto"` asks `{endpoint}/api/info` once and shows the HUD when the server's read API answers, as in development; a send-only server shows nothing. `true` shows it and reads traces back. `false` shows nothing and reads nothing back. |
+| `slowMs` | `500` | The HUD shows requests at or over this many ms as "warning". |
+
+```ts
+initWizeLens({ endpoint: "/_wizelens", enabled: dev, hud: true, slowMs: 800 });
+```
+
+When a .NET or Node add-on puts its HUD script into the pages it serves in development, the app's instance takes over from it: one HUD and one
+capture per page.
+
 Options are the [@wizeworks/lens-browser options](https://github.com/brandonkorous/wizelens/tree/main/js/packages/browser#options).
 
 MIT licensed.

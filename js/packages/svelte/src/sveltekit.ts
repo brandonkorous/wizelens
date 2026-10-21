@@ -16,7 +16,7 @@ export interface AfterNavigateLike {
   to?: { url: URL } | null;
 }
 
-// The lens to use when called: the one given, else the running one. Null means nothing to do.
+// The lens to use when called: the one given (options start it, HUD included), else the running one. Null means nothing to do.
 const lensOf = (from?: WizeLens | WizeLensOptions): WizeLens | null => (from ? asWizeLens(from) : currentWizeLens());
 
 /** A SvelteKit `handleError` for hooks.client.ts that sends the error to WizeLens, then runs `next` (else logs it, as SvelteKit does). */

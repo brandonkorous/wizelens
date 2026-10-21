@@ -1,6 +1,7 @@
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { type RecordedRequest, type Recorder, setBrowserRelease, setBrowserUser } from "@wizeworks/lens-browser";
 import { Hud } from "./Hud.js";
+import { claimPage } from "./page-instance.js";
 import { createRecorder } from "./react-capture.js";
 
 const WizeLensContext = createContext<Recorder | null>(null);
@@ -10,7 +11,7 @@ export interface WizeLensProviderProps {
   endpoint?: string;
   /** Turn profiling on. Default true. Pass e.g. `import.meta.env.DEV`. */
   enabled?: boolean;
-  /** Show the in-page HUD. Default true. Off also stops reading traces back, so it works with a send-only server. */
+  /** Show the in-page HUD (the shared `<wizelens-hud>` element). Default true. Off also stops reading traces back, so it works with a send-only server. */
   hud?: boolean;
   /** Which requests get a `traceparent` header. Default: same origin only. */
   propagateTo?: (url: URL) => boolean;
@@ -54,12 +55,14 @@ export function WizeLensProvider({
   // Before install, so the first page load already carries the release.
   useEffect(() => setBrowserRelease(release), [release]);
   useEffect(() => setBrowserUser(user, userName), [user, userName]);
-  useEffect(() => recorder?.install(), [recorder]);
+  // Set when another copy of WizeLens stops this one through the page registry.
+  const [stopped, setStopped] = useState<Recorder | null>(null);
+  useEffect(() => (recorder ? claimPage(recorder, () => setStopped(recorder)) : undefined), [recorder]);
 
   return (
     <WizeLensContext.Provider value={recorder}>
       {children}
-      {recorder && hud && <Hud recorder={recorder} slowMs={slowMs} />}
+      {recorder && hud && stopped !== recorder && <Hud recorder={recorder} slowMs={slowMs} />}
     </WizeLensContext.Provider>
   );
 }
