@@ -21,7 +21,7 @@ function edit(path, pattern, replace) {
   console.log(`ok  ${path}`);
 }
 
-// Renames the Unreleased section and returns its title, such as "Security from real traffic".
+// Renames the Unreleased section to the version, keeping its title, such as "Security from real traffic".
 function changelog() {
   const file = join(ROOT, "CHANGELOG.md");
   const text = readFileSync(file, "utf8");
@@ -34,7 +34,6 @@ function changelog() {
   if (!/^- /m.test(body)) fail("the Unreleased section has no entries");
   writeFileSync(file, text.replace(match[0], `## [${version}] — ${title}`));
   console.log("ok  CHANGELOG.md");
-  return title;
 }
 
 function packages() {
@@ -48,10 +47,8 @@ function packages() {
 
 function main() {
   if (!version || !/^\d+\.\d+\.\d+(-[0-9a-z.]+)?$/i.test(version)) fail("usage: pnpm release:prep 0.3.0-alpha.8");
-  const title = changelog();
+  changelog();
   packages();
-  const label = `${version} (${title.charAt(0).toLowerCase()}${title.slice(1)})`;
-  edit("site/src/app/changelog/page.tsx", /imageAlt: "WizeLens changelog: /, `imageAlt: "WizeLens changelog: ${label}, `);
   console.log(`\nrelease-prep: ready for v${version}. Next: pnpm install, commit, merge, then tag v${version} on main.`);
 }
 

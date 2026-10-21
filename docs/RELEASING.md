@@ -22,8 +22,8 @@ git tag python/v0.1.0a1 && git push origin python/v0.1.0a1
 1. Every pull request that changes the product adds a line under `## [Unreleased] — <title>` in `CHANGELOG.md`
    (the `Changelog` check fails without one, unless the pull request has the label `no changelog`).
 2. On a branch from `main`, run `pnpm release:prep 0.3.0-alpha.8`. It sets that version in every `package.json`,
-   `dotnet/Directory.Build.props`, and the inject chart, renames `[Unreleased]` to `[0.3.0-alpha.8]` with its title, and
-   adds the release to the changelog page's share image text.
+   `dotnet/Directory.Build.props`, and the inject chart, and renames `[Unreleased]` to `[0.3.0-alpha.8]` with its
+   title. The changelog page reads its share image text from `CHANGELOG.md`, so it needs no edit.
 3. Merge that pull request, then tag the merge on `main`: `git tag v0.3.0-alpha.8 && git push origin v0.3.0-alpha.8`.
 
 The release stops before it publishes when `CHANGELOG.md` has no section for the tag's version, so the site never
