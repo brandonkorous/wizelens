@@ -1,10 +1,9 @@
-import { browserTypeOf, isErrorSpan, type Span, type Trace } from "@wizeworks/lens-core";
 import { fmtMs } from "../hud-model.js";
 import type { RecordedRequest } from "../recorder-types.js";
 import { h } from "./dom.js";
 import { empty } from "./parts.js";
 
-type RowKind = "server" | "internal" | "db" | "client" | "messaging" | "browser" | "render" | "error";
+type RowKind = "browser" | "render" | "error";
 
 export interface WfRow {
   key: string;
@@ -13,62 +12,36 @@ export interface WfRow {
   durationMs: number;
   kind: RowKind;
   depth: number;
-  /** Bar length. A query group's bar runs from its first start to its last end. */
   barMs: number;
+  /** Shown on hover after the name: the status. */
+  title?: string;
+  /** Opens this row's trace in the dashboard, in a new tab. */
+  href?: string | null;
 }
 
-const KIND: Record<Span["category"], RowKind> = {
-  "http.server": "server",
-  "http.client": "client",
-  db: "db",
-  messaging: "messaging",
-  browser: "browser",
-  internal: "internal",
-};
+const failed = (r: RecordedRequest) => !!r.error || (r.status ?? 0) >= 500;
 
-const queries = (n: number) => (n === 1 ? "1 query" : `${n} queries`);
-
-function depthOf(span: Span, byId: Map<string, Span>): number {
-  let depth = 0;
-  let parent = span.parentSpanId ? byId.get(span.parentSpanId) : undefined;
-  while (parent && depth < 6) {
-    depth++;
-    parent = parent.parentSpanId ? byId.get(parent.parentSpanId) : undefined;
-  }
-  return depth;
+// One call: its method and path, with its query count when the server sent one.
+function callRow(r: RecordedRequest, href: string | null, label: string): WfRow {
+  const sql = r.server && r.server.dbCount > 0 ? ` · ${r.server.dbCount} SQL` : "";
+  const ms = r.durationMs ?? 0;
+  const title = r.status === null ? (r.error ? "failed" : "running") : String(r.status);
+  return { key: r.id, name: `${r.method} ${r.path}${label}${sql}`, title, startMs: r.startMs, durationMs: ms, kind: failed(r) ? "error" : "browser", depth: 0, barMs: ms, href };
 }
 
-function addSpan(rows: WfRow[], groups: Map<string, WfRow & { count: number }>, s: Span, byId: Map<string, Span>): void {
-  const kind: RowKind = isErrorSpan(s) ? "error" : KIND[s.category];
-  const row = { key: s.spanId, name: s.name, startMs: s.startMs, durationMs: s.durationMs, kind, depth: depthOf(s, byId), barMs: s.durationMs };
-  if (s.category !== "db") return void rows.push(row);
-  const id = `db:${s.parentSpanId ?? "root"}`;
-  const g = groups.get(id);
-  if (!g) {
-    const first = { ...row, key: id, count: 1 };
-    groups.set(id, first);
-    return void rows.push(first);
-  }
-  g.count++;
-  g.durationMs += s.durationMs;
-  g.barMs = Math.max(g.barMs, s.startMs + s.durationMs - g.startMs);
-  g.name = `${s.service} – ${queries(g.count)}`;
-  if (kind === "error") g.kind = "error";
+export interface RouteRender {
+  startMs: number;
+  renderMs: number | null;
 }
 
-/** Rows for the request: browser call, server spans (queries grouped per parent), and the render after the response. */
-export function waterfallRows(req: RecordedRequest, trace: Trace | null): WfRow[] {
-  const spans = [...(trace?.spans ?? [])].filter((s) => browserTypeOf(s) !== "react").sort((a, b) => a.startMs - b.startMs);
-  const byId = new Map(spans.map((s) => [s.spanId, s]));
+/** Rows for a page: its load request and first paint (or the route render), then each call it made, oldest first. */
+export function pageRows(calls: readonly RecordedRequest[], lead: RecordedRequest | null, route: RouteRender | null, link: (r: RecordedRequest) => string | null): WfRow[] {
   const rows: WfRow[] = [];
-  if (!spans.some((s) => s.category === "browser") && req.durationMs !== null) {
-    rows.push({ key: "browser", name: `fetch ${req.path}`, startMs: req.startMs, durationMs: req.durationMs, kind: "browser", depth: 0, barMs: req.durationMs });
-  }
-  const groups = new Map<string, WfRow & { count: number }>();
-  for (const s of spans) addSpan(rows, groups, s, byId);
-  if (req.durationMs !== null && req.renderMs !== null) {
-    const startMs = req.startMs + req.durationMs;
-    rows.push({ key: "render", name: "Render (read body, app code, paint)", startMs, durationMs: req.renderMs, kind: "render", depth: 0, barMs: req.renderMs });
+  if (route?.renderMs != null) rows.push({ key: "render", name: "Route render", startMs: route.startMs, durationMs: route.renderMs, kind: "render", depth: 0, barMs: route.renderMs });
+  for (const r of calls) {
+    rows.push(callRow(r, link(r), r === lead ? " (page)" : ""));
+    if (r !== lead || r.durationMs === null || r.renderMs === null) continue;
+    rows.push({ key: "render", name: "First paint", startMs: r.startMs + r.durationMs, durationMs: r.renderMs, kind: "render", depth: 1, barMs: r.renderMs });
   }
   return rows;
 }
@@ -85,18 +58,19 @@ export function ticksFor(total: number): number[] {
   return ticks;
 }
 
-/** The short timeline: the first `limit` rows on a shared time axis. */
-export function waterfall(all: WfRow[], origin: number, limit: number): HTMLElement {
-  const rows = all.slice(0, limit);
-  if (rows.length === 0) return empty("No timeline yet.");
-  const start = Math.min(origin, ...all.map((r) => r.startMs));
-  const total = Math.max(1, ...all.map((r) => r.startMs + r.barMs - start));
+const rowName = (r: WfRow) => (r.href ? h("a", { href: r.href, target: "_blank", rel: "noreferrer" }, r.name) : h("span", null, r.name));
+
+/** The timeline: `rows` on a shared time axis that starts at `origin`. */
+export function waterfall(rows: WfRow[], origin: number): HTMLElement {
+  if (rows.length === 0) return empty("No calls yet.");
+  const start = Math.min(origin, ...rows.map((r) => r.startMs));
+  const total = Math.max(1, ...rows.map((r) => r.startMs + r.barMs - start));
   const ticks = ticksFor(total);
   const left = (ms: number) => `${(ms / total) * 100}%`;
   const axis = h("div", { class: "wl-wf-axis" }, ticks.map((t) => h("span", { style: `left:${left(t)}` }, fmtMs(t))));
   const grid = () => ticks.slice(1).map((t) => h("span", { class: "wl-wf-grid", style: `left:${left(t)}` }));
   const row = (r: WfRow) => [
-    h("div", { class: "wl-wf-name", style: `padding-left:${r.depth * 10}px`, title: `${r.name}\nstarts at +${fmtMs(r.startMs - start)}` }, h("span", null, r.name)),
+    h("div", { class: "wl-wf-name", style: `padding-left:${r.depth * 10}px`, title: `${r.name}${r.title ? ` · ${r.title}` : ""}\nstarts at +${fmtMs(r.startMs - start)}` }, rowName(r)),
     h("div", { class: "wl-wf-at" }, fmtMs(r.durationMs)),
     h("div", { class: "wl-wf-track" }, grid(), h("i", { class: `wl-k-${r.kind}`, style: `left:${left(r.startMs - start)};width:${left(r.barMs)}` })),
   ];

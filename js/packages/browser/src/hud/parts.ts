@@ -57,10 +57,3 @@ export function panelBar(onClose: () => void, ...children: Child[]): HTMLElement
 }
 
 export const empty = (text: string) => h("div", { class: "wl-empty" }, text);
-
-export function noServerData(req: RecordedRequest | null): HTMLElement {
-  if (!req) return empty("No requests yet. Use your app and they show up here.");
-  if (req.durationMs === null) return empty("The request is still running…");
-  if (!req.profiled) return empty("No server data. The server did not answer with an X-WizeLens-Trace header.");
-  return empty("Loading the trace…");
-}

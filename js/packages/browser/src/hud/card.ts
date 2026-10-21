@@ -2,13 +2,15 @@ import type { TraceView } from "@wizeworks/lens-core";
 import { fmtMs, plural, type RequestView } from "../hud-model.js";
 import type { RecordedRequest } from "../recorder-types.js";
 import { type Child, h } from "./dom.js";
-import { iconBolt, iconChevron, iconGear, iconMinimize } from "./icons.js";
+import { iconChevron, iconGear, iconMinimize, iconPause, iconPlay } from "./icons.js";
 import { stackBar, statusPill } from "./parts.js";
 import type { Panel } from "./storage.js";
 import { dbTip, renderTip, serverTip, totalTip } from "./tips.js";
 
 export interface CardModel {
   req: RecordedRequest | null;
+  /** How many calls the page made, and whether it is a route change. */
+  page: { calls: number; navigation: "load" | "spa" } | null;
   view: RequestView;
   busy: boolean;
   live: boolean;
@@ -57,14 +59,22 @@ function cardHead(m: CardModel, a: CardActions): HTMLElement {
   );
 }
 
-function cardMetrics({ req, view, link }: CardModel, a: CardActions): HTMLElement {
+// What the tips say the numbers cover.
+function scopes(page: CardModel["page"]) {
+  if (!page) return { total: undefined, sum: null };
+  const total = page.navigation === "load" ? "Page start to the first paint" : "Route change to the end of the calls that loaded it";
+  return { total, sum: page.calls > 0 ? `The page and its ${plural(page.calls, "call")}, added up` : null };
+}
+
+function cardMetrics({ req, view, link, page }: CardModel, a: CardActions): HTMLElement {
   const details = () => a.details();
+  const scope = scopes(page);
   return h(
     "div",
     { class: "wl-metrics" },
-    metric("total", "Total", view.totalMs, "", req && totalTip(view, link("timeline")), details),
-    metric("server", "Server", view.serverMs, "", req && serverTip(req, view, link("http")), details),
-    metric("db", "Database", view.dbMs, "wl-v-db", req && dbTip(req, view, link("sql")), details),
+    metric("total", "Total", view.totalMs, "", req && totalTip(view, link("timeline"), scope.total), details),
+    metric("server", "Server", view.serverMs, "", req && serverTip(req, view, link("http"), scope.sum), details),
+    metric("db", "Database", view.dbMs, "wl-v-db", req && dbTip(req, view, link("sql"), scope.sum), details),
     metric("render", "Render", view.renderMs, "", req && renderTip(view, link("timeline")), details),
   );
 }
@@ -78,10 +88,10 @@ function issueLabel({ req, view }: CardModel): Child[] {
 }
 
 function cardButtons({ live, panel }: CardModel, a: CardActions): HTMLElement[] {
-  const liveTitle = live ? "Live: shows the newest request. Click to pin this one." : "Paused on this request. Click to follow the newest.";
+  const liveTitle = live ? "Live: follows the page you are on. Click to pause on what you see now." : "Paused: new calls and pages wait. Click to go live.";
   const on = (yes: boolean) => (yes ? " wl-on" : "");
   return [
-    h("button", { type: "button", class: `wl-iconbtn${on(live)}`, onClick: () => a.toggleLive(), "aria-pressed": String(live), title: liveTitle }, iconBolt()),
+    h("button", { type: "button", class: `wl-iconbtn${on(live)}`, onClick: () => a.toggleLive(), "aria-label": live ? "Pause" : "Go live", title: liveTitle }, live ? iconPause() : iconPlay()),
     h(
       "button",
       { type: "button", class: `wl-iconbtn${on(panel === "settings")}`, onClick: () => a.toggle("settings"), "aria-expanded": String(panel === "settings"), title: "Settings" },
@@ -96,8 +106,8 @@ function cardFoot(m: CardModel, a: CardActions): HTMLElement {
   return h(
     "div",
     { class: "wl-foot" },
-    count(link("sql"), "Database queries in this request", `${view.sql ?? (req ? "—" : 0)} SQL`),
-    count(link("http"), "HTTP calls this request made to other services", `${view.fetch ?? (req ? "—" : 0)} Fetch`),
+    count(link("sql"), "Database queries of this page and its calls", `${view.sql ?? (req ? "—" : 0)} SQL`),
+    count(null, "Calls this page made: fetch and XHR. Open the details to see them", `${view.fetch ?? (req ? "—" : 0)} Fetch`),
     count(link(view.errors > 0 ? "errors" : "insights"), "Errors and hints: N+1, duplicate, and slow queries", issueLabel(m)),
     h("span", { class: "wl-spacer" }),
     cardButtons(m, a),

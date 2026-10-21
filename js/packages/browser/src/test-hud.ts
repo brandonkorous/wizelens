@@ -8,6 +8,7 @@ import { now } from "./session.js";
 // HUD test helpers: a recorder fed by hand, request rows, and a localStorage.
 export interface FakeRecorder extends Recorder {
   store: RequestStore;
+  stats: Map<string, ServerStats>;
   traces: Map<string, Trace>;
   statsLoads: string[];
   listeners(): number;
@@ -17,9 +18,11 @@ export function fakeRecorder(): FakeRecorder {
   const store = createRequestStore(30);
   const traces = new Map<string, Trace>();
   const statsLoads: string[] = [];
+  const stats = new Map<string, ServerStats>();
   let listening = 0;
   return {
     store,
+    stats,
     traces,
     statsLoads,
     listeners: () => listening,
@@ -35,6 +38,7 @@ export function fakeRecorder(): FakeRecorder {
     flush: async () => {},
     restore: async () => {},
     loadServerStats: async (id) => void statsLoads.push(id),
+    getServerStats: (id) => stats.get(id) ?? null,
     getTrace: (id) => traces.get(id) ?? null,
     loadTrace: async (id) => traces.get(id) ?? null,
     traceLink: (id, view) => `http://app.test/_wizelens/#/traces/${id}${view ? `/${view}` : ""}`,

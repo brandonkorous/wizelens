@@ -168,14 +168,14 @@ Browse to **`/_wizelens`** on any service. That's it.
 
 ### The in-page HUD
 
-A small card in the corner of every page shows the latest request as you work: **Total**, **Server**, **Database**, and **Render** time, one bar that splits them, and the SQL, fetch, and insight counts. It shows on the pages your .NET or Node app renders, with no code, and in React, Vue, Angular, Svelte, and plain JS.
+A small card in the corner of every page shows the page you are on, like Glimpse: **Total** and **Render** time of the page load, **Server** and **Database** time of the page and all its calls added up, one bar that splits them, and the SQL, fetch, and insight counts of the whole page. It shows on the pages your .NET or Node app renders, with no code, and in React, Vue, Angular, Svelte, and plain JS.
 
 - **One color tells you the state.** 🔵 info · 🟢 fast, no issues · 🟡 completed, but with optimizations · 🟠 slow or a 4xx · 🔴 failed · ⚪ no data.
 - **Hover for a quick peek.** Database shows each query's time, the slowest, and the average. Server splits its own code, its own queries, and calls to other services.
-- **Click for a closer look.** A small panel shows the split, the first rows of the timeline, the top insights, and this page's Web Vitals.
-- **Everything else is one click away.** Every "view all" link and every footer count opens the full dashboard in a new tab, right on that request's timeline, SQL, HTTP calls, or insights.
+- **Click for a closer look.** A small panel lists every call the page made on one timeline, adds new ones as they happen, and shows the top insights and this page's Web Vitals.
+- **Everything else is one click away.** Every "view all" link and every footer count opens the full dashboard in a new tab, right on the page's timeline, SQL, or insights, and each call in the panel opens its own trace.
 - **Render time is real.** WizeLens measures from the response to the next paint: read the body, run your code, render, paint.
-- **Stays out of the way.** Minimize it to the aperture mark; its center dot keeps the health color. Pin a request, or follow the newest one live. It survives page refreshes.
+- **Stays out of the way.** Minimize it to the aperture mark; its center dot keeps the health color. Live, it follows the page you are on and never jumps between calls; pause it to hold what you see. It survives page refreshes.
 
 <p align="center"><img src="docs/images/hud.png" alt="WizeLens HUD card with Total, Server, Database and Render, and the details panel open" width="640"></p>
 

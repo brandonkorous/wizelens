@@ -4,6 +4,8 @@ import { dashLink, panelBar } from "./parts.js";
 
 export interface SettingsActions {
   setLive(on: boolean): void;
+  /** Forget the calls of the page on screen. */
+  clear(): void;
   close(): void;
 }
 
@@ -17,7 +19,7 @@ export function settings(recorder: Recorder, live: boolean, slowMs: number, a: S
     h(
       "div",
       { class: "wl-body" },
-      h("label", { class: "wl-switch" }, h("input", { type: "checkbox", checked: live, onChange }), "Live: always show the newest request"),
+      h("label", { class: "wl-switch" }, h("input", { type: "checkbox", checked: live, onChange }), "Live: follow the page you are on"),
       h(
         "dl",
         { class: "wl-kv" },
@@ -31,7 +33,7 @@ export function settings(recorder: Recorder, live: boolean, slowMs: number, a: S
       h(
         "div",
         { class: "wl-row-btns" },
-        h("button", { type: "button", class: "wl-btn", onClick: () => recorder.clear() }, "Clear the request list"),
+        h("button", { type: "button", class: "wl-btn", onClick: () => a.clear() }, "Clear this page's calls"),
         dashLink(`${recorder.endpointUrl}/`, "Open the dashboard", "wl-btn"),
       ),
     ),

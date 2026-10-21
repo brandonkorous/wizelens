@@ -120,6 +120,7 @@ export function createRecorder(options: RecorderOptions = {}): Recorder {
     flush: () => sender.flush(),
     restore: () => data.restore(),
     loadServerStats: (traceId) => data.loadServerStats(traceId),
+    getServerStats: (traceId) => data.getServerStats(traceId),
     getTrace: (traceId) => data.getTrace(traceId),
     loadTrace: (traceId) => data.loadTrace(traceId),
     traceLink: (id, view) => `${data.endpointOf(id)}/#/traces/${id}${view ? `/${view}` : ""}`,

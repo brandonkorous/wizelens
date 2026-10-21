@@ -1,16 +1,17 @@
 ---
 title: The HUD
-description: A small card in the corner of your page that shows the latest request as you work, in every web app.
+description: A small card in the corner of your page that shows the page you are on and every call it makes, in every web app.
 ---
 
-The HUD is a small card in the corner of your page. It shows the latest request: **Total**, **Server**, **Database**,
-and **Render** time, one bar that splits them, and the SQL, fetch, and insight counts. When a page loads, it starts
-with the page's own request, the one your server rendered; each call the page makes after that takes its place.
+The HUD is a small card in the corner of your page. Like Glimpse, it shows the page you are on, such as `GET /orders`,
+and adds up every call the page makes: **Total** and **Render** time of the page load, **Server** and **Database** time
+of the page and all its calls, one bar that splits them, and the SQL, fetch, and insight counts. Calls that load panels
+or poll a status add to the counts. They never take the page's place, so the card holds still.
 
 It works in every web app: pages your .NET or Node app renders, and React, Vue, Angular, Svelte, and plain JS. It is one
 element, `<wizelens-hud>`, with its styles in its own shadow root, so your page's CSS never reaches it.
 
-![The HUD card after a request that ran 17 queries and 8 fetches and found 3 insights](/shots/hud-card.png)
+![The HUD card on a page that ran 17 queries and found 3 insights](/shots/hud-card.png)
 
 ## On pages your server renders
 
@@ -95,15 +96,33 @@ the injected one stops, and your options apply. So a page never shows two HUDs.
 | Red | It failed |
 | Gray | No data |
 
-Requests at or over `slowMs` (default 500 ms) show as orange.
+The card takes the worst color of the page and its calls. A page load or a call at or over `slowMs` (default 500 ms)
+shows as orange.
+
+## What the numbers cover
+
+| Number | Covers |
+|---|---|
+| Total | The page load: navigation start to the first paint. After a route change: the change to the end of the calls that loaded the new page. Calls the page repeats, like a status poll, do not count. |
+| Server, Database | The server time and query time of the page and all its calls, added up. The hover tip says how many calls. |
+| Render | The page load: the response to the first paint. After a route change: the change to the next paint. |
+| SQL | Queries of the page and all its calls. |
+| Fetch | Calls the page made: `fetch` and `XMLHttpRequest`, any method. |
+| Insights, Errors | Of the page and all its calls. |
+
+A client-side route change (`history.pushState`, the back and forward buttons) starts a new page. A new query string on
+the same path does not.
 
 ## Look closer
 
 - **Hover** a number for a quick look. Database shows each query's time, the slowest, and the average. Server splits its own
   code, its own queries, and calls to other services.
-- **Click** for a small panel: the split, the first rows of the timeline, the request's errors, insights, and security
-  risks (the top three of each), and this page's Web Vitals.
-- **Every "view all" link** and every count opens the full dashboard in a new tab, right on that request.
+- **Click** for a small panel: the split, every call the page made on one timeline with its query count, and the
+  errors, insights, and security risks of the calls that have them (the top three of each), and this page's Web
+  Vitals. New calls land at the bottom as they happen. Click a call to open its trace in the dashboard. The page's
+  time stays at the top and its Web Vitals at the bottom; only the calls scroll. "Page load" is the card's Total.
+- **Every "view all" link** and the SQL and insight counts open the full dashboard in a new tab, on the page's own
+  trace.
 - **Esc** closes the panel.
 
 ![The HUD panel open on a page of the sample shop, with the timeline and two N+1 insights](/shots/hud-panel.jpg)
@@ -111,9 +130,10 @@ Requests at or over `slowMs` (default 500 ms) show as orange.
 ## Stay out of the way
 
 - Minimize it to the aperture mark. Its center dot keeps the health color.
-- Pin a request, or follow the newest one live.
+- Live follows the page you are on. The pause button holds what you see: new calls and pages wait until you press
+  play.
 - **Settings** (the gear) turns Live on or off, shows the `slowMs` in effect, the endpoint, and the session, clears
-  the request list, and opens the dashboard.
+  the page's calls, and opens the dashboard.
 - It remembers its state across page refreshes.
 
 ## Turn it off
