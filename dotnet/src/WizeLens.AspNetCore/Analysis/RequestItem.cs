@@ -6,7 +6,7 @@ namespace WizeLens.Analysis;
 
 /// <summary>A request row without its findings. Path keeps the query; endpoint is "METHOD route".</summary>
 public sealed record RequestItem(
-    string TraceId, double StartMs, string Method, string Path, string Endpoint, double? Status, bool Aborted,
+    string TraceId, double StartMs, string Method, string Path, string Endpoint, double? Status, bool Expected, bool Aborted,
     double DurationMs, double? ServerMs, double DbMs, int DbCount, int FetchCount, double FetchMs, double? RenderMs, double? NetworkMs,
     string Service, List<string> Services, int Errors, int Insights, string Health,
     string? UserAgent, string? ClientAddress, string? User, string? RequestId, List<string> Tags);
@@ -69,12 +69,14 @@ public static class RequestItems
         var insights = RequestParts.InsightCount(t);
         var (method, path, endpoint) = IdentityOf(server, fetch);
         var status = StatusOf(server, fetch);
+        var answer = server ?? fetch;
+        var expected = answer is not null && RequestParts.IsExpectedSpan(answer);
         return new RequestItem(
-            t.TraceId, fetch?.StartMs ?? server?.StartMs ?? t.StartMs, method, path, endpoint, status,
+            t.TraceId, fetch?.StartMs ?? server?.StartMs ?? t.StartMs, method, path, endpoint, status, expected,
             AttributeValue.Normalize(server?.Attributes.GetValueOrDefault("wizelens.request.aborted")) is true,
             totalMs, server?.DurationMs, RequestParts.BusyMs(db), db.Count, clients.Count, RequestParts.BusyMs(clients), renderMs,
             fetch is not null && server is not null ? Math.Max(0, fetch.DurationMs - server.DurationMs) : null,
-            server?.Service ?? "browser", [.. t.Services], errors, insights, RequestParts.HealthOf(status, errors > 0, totalMs, insights),
+            server?.Service ?? "browser", [.. t.Services], errors, insights, RequestParts.HealthOf(status, expected, errors > 0, totalMs, insights),
             Str(server, "user_agent.original"), Str(server, "client.address"), Str(server, "enduser.id"), Str(server, "wizelens.request.id"), TagsOf(server));
     }
 }

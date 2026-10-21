@@ -2,7 +2,9 @@ package wizelens
 
 import (
 	"context"
+	"strings"
 
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	otellog "go.opentelemetry.io/otel/log"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
@@ -30,7 +32,7 @@ func (p *SamplingSpanProcessor) OnEnd(s sdktrace.ReadOnlySpan) {
 }
 
 func (p *SamplingSpanProcessor) important(s sdktrace.ReadOnlySpan) bool {
-	if p.KeepErrors && s.Status().Code == codes.Error && !answered4xx(s) {
+	if p.KeepErrors && s.Status().Code == codes.Error && !answered4xx(s) && !expectedAnswer(s) {
 		return true
 	}
 	ms := float64(s.EndTime().Sub(s.StartTime()).Microseconds()) / 1000
@@ -43,6 +45,23 @@ func answered4xx(s sdktrace.ReadOnlySpan) bool {
 		if a.Key == "http.response.status_code" || a.Key == "http.status_code" {
 			c := a.Value.AsInt64()
 			return c >= 400 && c < 500
+		}
+	}
+	return false
+}
+
+// expectedAnswer: the app set wizelens.expected (a deliberate 503), so an error status alone is not a failure.
+func expectedAnswer(s sdktrace.ReadOnlySpan) bool {
+	for _, a := range s.Attributes() {
+		if a.Key != "wizelens.expected" {
+			continue
+		}
+		switch a.Value.Type() {
+		case attribute.BOOL:
+			return a.Value.AsBool()
+		case attribute.STRING:
+			v := strings.ToLower(strings.TrimSpace(a.Value.AsString()))
+			return v != "" && v != "0" && v != "false" && v != "no"
 		}
 	}
 	return false

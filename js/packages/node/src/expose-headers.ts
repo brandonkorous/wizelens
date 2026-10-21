@@ -1,10 +1,10 @@
 import type { ServerResponse } from "node:http";
-import { HEADER_ENDPOINT, HEADER_TRACE } from "@wizeworks/lens-core";
+import { HEADER_ENDPOINT, HEADER_EXPECTED, HEADER_TRACE } from "@wizeworks/lens-core";
 
 const EXPOSE = "access-control-expose-headers";
-const OURS = [HEADER_TRACE, HEADER_ENDPOINT];
+const OURS = [HEADER_TRACE, HEADER_ENDPOINT, HEADER_EXPECTED];
 
-/** The header value with our two names added, without repeats. */
+/** The header value with our names added, without repeats. */
 export function withOurNames(value: unknown): string {
   const list = Array.isArray(value) ? value.join(",") : value == null ? "" : String(value);
   const parts = new Set(list.split(",").map((s) => s.trim()).filter(Boolean));

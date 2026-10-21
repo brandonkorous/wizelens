@@ -19,6 +19,7 @@ export function disabledWizeLens(options: WizeLensOptions, basePath: string): Wi
     logger: noopLogger(),
     recordException: () => {},
     tag: () => {},
+    expected: () => {},
     setUser: () => {},
     getTrace: async () => undefined,
     shutdown: async () => {},

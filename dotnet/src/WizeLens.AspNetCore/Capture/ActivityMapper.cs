@@ -112,8 +112,11 @@ internal static class ActivityMapper
     {
         // A server span that answered 4xx is not a failure, even with an exception (OpenTelemetry's rule).
         if (span.Category == SpanCategories.HttpServer && RequestParts.IsClientErrorStatus(span)) return SpanStatuses.Unset;
+        // An answer the app expected (a deliberate 503) is not a failure, unless something threw.
+        var threw = span.Events.Any(e => e.Name == "exception");
+        if (span.Category == SpanCategories.HttpServer && RequestParts.IsExpectedSpan(span) && !threw) return SpanStatuses.Unset;
         if (activity.Status == ActivityStatusCode.Error) return SpanStatuses.Error;
-        if (span.Events.Any(e => e.Name == "exception")) return SpanStatuses.Error;
+        if (threw) return SpanStatuses.Error;
 
         var code = AttributeValue.AsDouble(span.Attributes.GetValueOrDefault("http.response.status_code"));
         if (code is not null)

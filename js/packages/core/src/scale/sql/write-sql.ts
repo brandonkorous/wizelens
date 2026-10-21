@@ -1,6 +1,7 @@
 // Writes for the stats tables, shared by both hosts: fact rows, rollup and hist upserts, and fact deletes.
 import { patternIdOf } from "../../stats/log-patterns.js";
 import { levelRank, type LogRow } from "../../stats/logs.js";
+import { isFailed } from "../../stats/requests.js";
 import type { CriticalSpan } from "../../stats/traces.js";
 import type { Scope } from "../compact.js";
 import type { HistDelta, RollupDelta, SettleDelta } from "../delta.js";
@@ -50,7 +51,7 @@ export type FactTable = keyof typeof FACT_COLUMNS;
 export const FACT_TABLES = Object.keys(FACT_COLUMNS) as FactTable[];
 
 function requestValues(r: RequestItem, env: string): unknown[] {
-  const failed = r.errors > 0 || (r.status ?? 0) >= 500;
+  const failed = isFailed(r);
   const search = searchText([r.path, r.endpoint, r.user, r.requestId, r.clientAddress, ...r.tags]);
   return [r.traceId, env, r.startMs, r.method, r.path, r.endpoint, int32(r.status), statusClassOf(r.status), failed, durationClassOf(r.durationMs), r.aborted, r.durationMs, r.serverMs, r.dbMs, int32(r.dbCount), int32(r.fetchCount), r.fetchMs, r.renderMs, r.networkMs, r.service, servicesText(r.services), int32(r.errors), int32(r.insights), r.health, r.userAgent, r.clientAddress, r.user, r.requestId, JSON.stringify(r.tags), search];
 }

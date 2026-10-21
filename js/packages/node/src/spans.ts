@@ -1,4 +1,5 @@
 import { context, createContextKey, type Span as OtelSpan, SpanStatusCode, trace } from "@opentelemetry/api";
+import { ATTR_EXPECTED } from "@wizeworks/lens-core";
 
 /** Context key that holds the server span of the current request. */
 export const SERVER_SPAN = createContextKey("wizeworks.wizelens.server-span");
@@ -16,6 +17,17 @@ export function recordOn(span: OtelSpan, err: unknown): void {
   span.recordException(error);
   if (!isClientError(err)) span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
 }
+
+const expectedSpans = new WeakSet<OtelSpan>();
+
+/** The app expected this request's answer: a 5xx on it is not a failure. */
+export function markExpected(span: OtelSpan): void {
+  expectedSpans.add(span);
+  span.setAttribute(ATTR_EXPECTED, true);
+}
+
+/** True when `markExpected` ran on the span. */
+export const isMarkedExpected = (span: OtelSpan): boolean => expectedSpans.has(span);
 
 /** The server span of the request that is running now, if any. */
 export function currentServerSpan(): OtelSpan | undefined {

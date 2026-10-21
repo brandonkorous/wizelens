@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using WizeLens.Analysis;
 using WizeLens.Storage;
 
 namespace WizeLens.Capture;
@@ -30,7 +31,9 @@ internal static class RequestEnricher
         if (request.Host.Port is { } port) activity.SetTag("server.port", port);
         activity.SetTag("http.response.status_code", statusCode);
         activity.DisplayName = $"{request.Method} {route ?? request.Path.Value}";
-        if (statusCode >= 500 && activity.Status != ActivityStatusCode.Error) activity.SetStatus(ActivityStatusCode.Error);
+        var expected = RequestParts.IsOn(activity.GetTagItem(RequestParts.ExpectedAttribute)) || RequestParts.IsOn(context.Response.Headers[RequestParts.ExpectedHeader].ToString());
+        if (expected) activity.SetTag(RequestParts.ExpectedAttribute, true);
+        if (statusCode >= 500 && !expected && activity.Status != ActivityStatusCode.Error) activity.SetStatus(ActivityStatusCode.Error);
         AddClient(activity, context);
         AddHeaders(activity, RequestHeaderPrefix, request.Headers);
         AddHeaders(activity, ResponseHeaderPrefix, context.Response.Headers);

@@ -14,6 +14,8 @@ export const DEFAULT_SLOW_MS = 500;
 export interface HealthInput {
   /** HTTP status. Null when there is no response yet, or no status. */
   status: number | null;
+  /** True when the app expected the answer: a 5xx is then not critical. */
+  expected?: boolean;
   /** True for a network error, an exception, or an error span. */
   error: boolean;
   /** Full time of the request. Null while it runs. */
@@ -25,7 +27,7 @@ export interface HealthInput {
 export function healthOf(input: HealthInput | null, slowMs = DEFAULT_SLOW_MS): Health {
   if (!input) return "neutral";
   const status = input.status ?? 0;
-  if (input.error || status >= 500) return "critical";
+  if (input.error || (status >= 500 && input.expected !== true)) return "critical";
   if (input.totalMs === null) return "info";
   if (status >= 400 || input.totalMs >= slowMs) return "warning";
   if (input.insights === null) return "info";

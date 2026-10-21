@@ -13,6 +13,8 @@ import io.opentelemetry.sdk.trace.SpanProcessor;
 public final class SamplingSpanProcessor implements SpanProcessor {
   private static final AttributeKey<Long> HTTP_STATUS = AttributeKey.longKey("http.response.status_code");
   private static final AttributeKey<Long> OLD_HTTP_STATUS = AttributeKey.longKey("http.status_code");
+  private static final AttributeKey<Boolean> EXPECTED = AttributeKey.booleanKey("wizelens.expected");
+  private static final AttributeKey<String> EXPECTED_TEXT = AttributeKey.stringKey("wizelens.expected");
   private final SpanProcessor inner;
   private final TraceSampler sampler;
   private final boolean keepErrors;
@@ -43,7 +45,7 @@ public final class SamplingSpanProcessor implements SpanProcessor {
   }
 
   private boolean important(ReadableSpan span) {
-    if (keepErrors && span.toSpanData().getStatus().getStatusCode() == StatusCode.ERROR && !answered4xx(span)) return true;
+    if (keepErrors && span.toSpanData().getStatus().getStatusCode() == StatusCode.ERROR && !answered4xx(span) && !expectedAnswer(span)) return true;
     return keepSlowMs != null && span.getLatencyNanos() / 1e6 >= keepSlowMs;
   }
 
@@ -52,6 +54,15 @@ public final class SamplingSpanProcessor implements SpanProcessor {
     Long code = span.getAttribute(HTTP_STATUS);
     if (code == null) code = span.getAttribute(OLD_HTTP_STATUS);
     return code != null && code >= 400 && code < 500;
+  }
+
+  /** The app set wizelens.expected (a deliberate 503), so an error status alone is not a failure. */
+  private static boolean expectedAnswer(ReadableSpan span) {
+    if (Boolean.TRUE.equals(span.getAttribute(EXPECTED))) return true;
+    String text = span.getAttribute(EXPECTED_TEXT);
+    if (text == null) return false;
+    String v = text.trim().toLowerCase(java.util.Locale.ROOT);
+    return !v.isEmpty() && !v.equals("0") && !v.equals("false") && !v.equals("no");
   }
 
   @Override

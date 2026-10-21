@@ -98,7 +98,7 @@ function eventsOf(trace: Trace): ErrorEvent[] {
   const spans = errorSpans(trace);
   if (spans.length === 0) return [];
   const row = requestOf(trace);
-  const critical = (row?.status ?? 0) >= 500 || trace.logs.some((l) => l.level === "critical");
+  const critical = ((row?.status ?? 0) >= 500 && row?.expected !== true) || trace.logs.some((l) => l.level === "critical");
   return spans.map((s) => eventOf(trace, s, row, critical));
 }
 

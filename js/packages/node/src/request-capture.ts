@@ -3,11 +3,13 @@ import type { TLSSocket } from "node:tls";
 import { type Context, context, ROOT_CONTEXT, type Span as OtelSpan, SpanKind, SpanStatusCode, trace, type Tracer } from "@opentelemetry/api";
 import { suppressTracing, type W3CTraceContextPropagator } from "@opentelemetry/core";
 import {
+  ATTR_EXPECTED,
   ATTR_REQUEST_ABORTED,
   ATTR_REQUEST_ID,
   ATTR_RESPONSE_BODY,
   ATTR_RESPONSE_BODY_TRUNCATED,
   HEADER_ENDPOINT,
+  HEADER_EXPECTED,
   HEADER_TRACE,
   RESPONSE_HEADER_PREFIX,
   serverTimingValue,
@@ -17,7 +19,7 @@ import { keepExposeHeaders } from "./expose-headers.js";
 import { firstHeader, sendJson } from "./http-util.js";
 import { headerAttributes, requestAttributes } from "./request-attributes.js";
 import { namedRoute } from "./request-naming.js";
-import { SERVER_SPAN } from "./spans.js";
+import { isMarkedExpected, SERVER_SPAN } from "./spans.js";
 
 const REQ_SPAN = Symbol.for("wizeworks.wizelens.span");
 
@@ -82,6 +84,12 @@ export function serveOwnPath(d: CaptureDeps, req: IncomingMessage, res: ServerRe
   );
 }
 
+/** The app answered with `X-WizeLens-Expected` set to anything but empty, "0", "false", or "no". */
+function isExpectedHeader(value: unknown): boolean {
+  const v = (Array.isArray(value) ? value[0] : value)?.toString().trim().toLowerCase();
+  return !!v && v !== "0" && v !== "false" && v !== "no";
+}
+
 function finishSpan(span: OtelSpan, res: ServerResponse, tap: ResponseTap, method: string, routeOf: RouteOf): void {
   // A close before the response finished: the client left, and no status was ever sent.
   if (!res.writableFinished) span.setAttribute(ATTR_REQUEST_ABORTED, true);
@@ -98,7 +106,9 @@ function finishSpan(span: OtelSpan, res: ServerResponse, tap: ResponseTap, metho
     span.setAttribute(ATTR_RESPONSE_BODY, body.text);
     span.setAttribute(ATTR_RESPONSE_BODY_TRUNCATED, body.truncated);
   }
-  if (res.statusCode >= 500) span.setStatus({ code: SpanStatusCode.ERROR, message: `HTTP ${res.statusCode}` });
+  const expected = isMarkedExpected(span) || isExpectedHeader(res.getHeader(HEADER_EXPECTED));
+  if (expected) span.setAttribute(ATTR_EXPECTED, true);
+  if (res.statusCode >= 500 && !expected) span.setStatus({ code: SpanStatusCode.ERROR, message: `HTTP ${res.statusCode}` });
   span.end();
 }
 

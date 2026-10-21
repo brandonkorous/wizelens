@@ -67,6 +67,31 @@ describe("fastify", () => {
     expect(missing.attributes["http.response.status_code"]).toBe(404);
     expect(missing.events.map((e) => e.name)).toContain("exception");
   });
+
+  it("does not fail a 503 the app marked as expected, by header or by call", async () => {
+    const wl = make("fastify-expected");
+    const app = Fastify();
+    await app.register(wizelensFastify(wl));
+    app.get("/paused", async (_req, reply) => reply.header("X-WizeLens-Expected", "1").code(503).send("come back later"));
+    app.get("/maintenance", async (_req, reply) => {
+      wl.expected();
+      return reply.code(503).send("come back later");
+    });
+    app.get("/down", async (_req, reply) => reply.code(503).send("down"));
+    await app.listen({ port: 0, host: "127.0.0.1" });
+    closers.push(() => app.close());
+    const serverOf = async (path: string) => {
+      const res = await fetch(`${baseOf(app.server)}${path}`);
+      expect(res.headers.get("access-control-expose-headers")).toContain("X-WizeLens-Expected");
+      return (await traceOf(wl, res)).spans.find((s) => s.category === "http.server")!;
+    };
+    for (const path of ["/paused", "/maintenance"]) {
+      const span = await serverOf(path);
+      expect(span.status).toBe("unset");
+      expect(span.attributes).toMatchObject({ "http.response.status_code": 503, "wizelens.expected": true });
+    }
+    expect((await serverOf("/down")).status).toBe("error");
+  });
 });
 
 describe("koa", () => {

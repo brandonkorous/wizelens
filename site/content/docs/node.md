@@ -145,7 +145,11 @@ Metrics are kept in memory for 1 hour (`metricsMaxAgeMs`). `captureMetrics: fals
 ```ts
 wizelens.tag("cache", "hit");
 wizelens.setUser(user.id, { name: user.name });
+wizelens.expected(); // this answer is on purpose, such as a 503 "come back later"
 ```
+
+`expected()` keeps a 5xx you meant out of error rates; the header `X-WizeLens-Expected: 1` does the same. See
+[Answers you expect](/docs/dashboard/#answers-you-expect).
 
 `setUser` puts `enduser.id` on the request, and the name as `user.full_name`. The Users page shows the name, with the id
 under it. Leave the name out to keep only the id, or add `user.full_name` to the project's Redacted keys to drop names

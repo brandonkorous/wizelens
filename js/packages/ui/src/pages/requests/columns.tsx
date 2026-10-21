@@ -24,7 +24,7 @@ export function requestColumns(sort: Sort, onSort: (k: SortKey) => void): Column
     { key: "time", header: h("Time", "time"), cell: (r) => fmtTime(r.startMs), className: "wl-nowrap" },
     { key: "path", header: h("Path", "path"), cell: (r) => <span className="wl-rq-path wl-truncate" title={r.path}>{r.path}</span> },
     { key: "method", header: h("Method", "method"), cell: (r) => r.method },
-    { key: "status", header: h("Status", "status"), cell: (r) => <DotText tone={toneOfStatus(r.status)} colorText={(r.status ?? 0) >= 500}>{r.aborted ? "Aborted" : (r.status ?? "…")}</DotText> },
+    { key: "status", header: h("Status", "status"), cell: (r) => <DotText tone={toneOfStatus(r.status)} colorText={(r.status ?? 0) >= 500 && !r.expected}>{r.aborted ? "Aborted" : (r.status ?? "…")}</DotText> },
     { key: "duration", header: h("Duration", "duration"), cell: durationCell, className: "wl-nowrap" },
     { key: "sql", header: h("SQL", "sql"), cell: (r) => r.dbCount },
     { key: "db", header: h("DB Time", "db"), cell: (r) => (r.dbCount ? fmtMs(r.dbMs) : "–"), className: "wl-nowrap" },

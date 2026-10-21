@@ -1,6 +1,7 @@
 // Search documents for each kind: what free words read and which value each field has.
 import type { RequestItem } from "../scale/facts-lists.js";
 import { displayService } from "../stats/errors.js";
+import { isFailed } from "../stats/requests.js";
 import { LOG_LEVELS, type LogRow } from "../stats/logs.js";
 import { isErrorStatus } from "../trace.js";
 import type { AttributeValue, Attributes, Span, Trace } from "../types.js";
@@ -71,7 +72,7 @@ export const traceErrorTexts = (t: Trace): (string | null)[] => t.spans.flatMap(
 
 /** A request row; pass its trace's span attributes and error texts when the host has them. Its endpoint is "METHOD route"; path drops the query. */
 export function requestDoc(r: RequestItem, attrs: readonly Attributes[] = [], env?: string, errors: readonly (string | null)[] = []): SearchDoc {
-  const failed = r.errors > 0 || (r.status ?? 0) >= 500;
+  const failed = isFailed(r);
   const route = r.endpoint.slice(r.endpoint.indexOf(" ") + 1);
   return {
     kind: "requests",

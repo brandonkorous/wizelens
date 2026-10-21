@@ -75,7 +75,7 @@ public static partial class SearchDocs
     /// <summary>A request row; pass its trace's span attributes and error texts when the host has them. Path drops the query.</summary>
     public static SearchDoc RequestDoc(RequestItem r, IReadOnlyList<IReadOnlyDictionary<string, object?>>? attrs = null, string? env = null, IEnumerable<string?>? errors = null)
     {
-        var failed = r.Errors > 0 || (r.Status ?? 0) >= 500;
+        var failed = r.Errors > 0 || ((r.Status ?? 0) >= 500 && !r.Expected);
         var route = r.Endpoint[(r.Endpoint.IndexOf(' ') + 1)..];
         return new SearchDoc(SearchKinds.Requests, Lower([r.Path, r.Endpoint, r.User, r.RequestId, r.ClientAddress, .. r.Tags, .. errors ?? []]), new Dictionary<string, object?>
         {

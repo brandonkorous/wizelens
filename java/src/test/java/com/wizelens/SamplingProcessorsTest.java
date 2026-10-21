@@ -58,6 +58,13 @@ class SamplingProcessorsTest {
   }
 
   @Test
+  void rateZeroDropsATraceWhoseOnlyErrorWasExpected() {
+    Tracer t = tracer(new TraceSampler(0), 1000.0);
+    t.spanBuilder("GET /").startSpan().setAttribute("http.response.status_code", 503L).setAttribute("wizelens.expected", true).setStatus(StatusCode.ERROR).end();
+    assertEquals(List.of(), names());
+  }
+
+  @Test
   void rateZeroKeepsASlowTrace() {
     trace(tracer(new TraceSampler(0), 1000.0), "GET /report", StatusCode.UNSET, 1500);
     assertEquals(List.of("GET /report", "SELECT orders"), names());

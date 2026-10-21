@@ -82,6 +82,23 @@ it("marks a 5xx fetch span as an error", async () => {
   undo();
 });
 
+it("does not mark a 5xx the server sent as expected", async () => {
+  const calls: Call[] = [];
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    calls.push({ url: String(input), init });
+    return new Response("{}", { status: 503, headers: { "X-WizeLens-Expected": "1" } });
+  }) as typeof fetch;
+  const recorder = createRecorder({ flushIntervalMs: 60_000 });
+  const undo = recorder.install();
+  await recorder.restore();
+  await fetch("/api/paused");
+  await recorder.flush();
+  const span = postedSpans(calls)[0]!;
+  expect(span.status).not.toBe("error");
+  expect(span.attributes).toMatchObject({ "http.response.status_code": 503, "wizelens.expected": true });
+  undo();
+});
+
 it("with readServer off, sends spans but never reads traces back", async () => {
   const calls: Call[] = [];
   globalThis.fetch = echoServer(calls);

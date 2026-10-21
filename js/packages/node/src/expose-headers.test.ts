@@ -23,16 +23,16 @@ it("survives a CORS layer that sets the header with setHeader (Express, Koa)", a
     res.setHeader("Access-Control-Expose-Headers", "content-disposition");
     res.end("ok");
   });
-  expect(value).toBe("content-disposition, X-WizeLens-Trace, X-WizeLens-Endpoint");
+  expect(value).toBe("content-disposition, X-WizeLens-Trace, X-WizeLens-Endpoint, X-WizeLens-Expected");
 });
 
 it("survives headers passed to writeHead (Fastify, Hono)", async () => {
   const asObject = await exposed((res) => res.writeHead(200, { "access-control-expose-headers": "x-a" }).end());
-  expect(asObject).toBe("x-a, X-WizeLens-Trace, X-WizeLens-Endpoint");
+  expect(asObject).toBe("x-a, X-WizeLens-Trace, X-WizeLens-Endpoint, X-WizeLens-Expected");
   const asArray = await exposed((res) => res.writeHead(200, ["Access-Control-Expose-Headers", "x-b"]).end());
-  expect(asArray).toBe("x-b, X-WizeLens-Trace, X-WizeLens-Endpoint");
+  expect(asArray).toBe("x-b, X-WizeLens-Trace, X-WizeLens-Endpoint, X-WizeLens-Expected");
 });
 
 it("is added when nobody else sets it", async () => {
-  expect(await exposed((res) => res.end("ok"))).toBe("X-WizeLens-Trace, X-WizeLens-Endpoint");
+  expect(await exposed((res) => res.end("ok"))).toBe("X-WizeLens-Trace, X-WizeLens-Endpoint, X-WizeLens-Expected");
 });

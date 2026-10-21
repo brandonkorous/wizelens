@@ -1,5 +1,6 @@
 // Server-side scenario traces: N+1, duplicate and slow queries, failures, and a multi-service checkout. Test-only.
 import { ATTR_LAYER, ATTR_MESSAGING, ATTR_RPC } from "../attributes.js";
+import { ATTR_EXPECTED_HEADER } from "../trace.js";
 import type { Trace } from "../types.js";
 import { aborted, client, draft, fetchSpan, finish, log, query, server, span, tag } from "./scenario-kit.js";
 
@@ -34,11 +35,12 @@ export function cartDup(id: string, at: number, i: number): Trace {
   return finish(d);
 }
 
-/** A slow report: one slow query, then three slow queries that waited together, and a call to an outside host. */
+/** A slow report: one slow query, three slow queries that waited together, an outside call; one in four answers an expected 503 (paused). */
 export function reportSlow(id: string, at: number, i: number): Trace {
   const d = draft(id);
   const ms = 600 + 120 * (i % 5);
-  const srv = server(d, { at, ms, path: `/api/reports/${i % 4}`, route: "/api/reports/{id}" });
+  const paused = i % 4 === 3;
+  const srv = server(d, { at, ms, path: `/api/reports/${i % 4}`, route: "/api/reports/{id}", ...(paused ? { status: 503, extra: { [ATTR_EXPECTED_HEADER]: "1" } } : {}) });
   query(d, srv, at + 10, 250 + i, "SELECT region, SUM(total) FROM sales GROUP BY region", { ns: "shop", rows: 4, table: "sales" });
   for (let k = 0; k < 3; k++) query(d, srv, at + 300 + k * 5, 150, `SELECT * FROM stock WHERE warehouse = ${k}`, { ns: "shop", rows: 10 * (k + 1) });
   client(d, srv, at + 480, 30 + (i % 3), "https://maps.example.com/geo?q=berlin");

@@ -20,6 +20,12 @@ maps each one to the OWASP Top 10:2025 (docs/SECURITY-PLAN.md).
 - **MCP `find_security_issues`** on the Node add-on, the hub, the cloud, and the .NET add-on.
 - **Alert metric "New security risks".**
 - **The same rules in .NET and Node,** on shared test cases (`docs/security-vectors.json`).
+- **Answers you expect.** A 5xx your app sends on purpose, such as a paused site's 503 "come back later", no longer counts
+  as a failure. Send the response header `X-WizeLens-Expected: 1`, or call `wizelens.expected()` (Node, Next.js) or
+  `WizeLensRequest.Expected()` (.NET), or set `wizelens.expected` on the server span (Java, Python, Go). Error rates,
+  failed requests, error groups, problems, alerts, health, and search all leave it out; its status stays, so `status:5xx`
+  still finds it. An exception inside it still counts. The browser package reads the header too, and the Node add-on
+  exposes it to the page. The samplers in Go, Java, and Python do not keep a trace only for an expected error status.
 
 ### Changed
 
@@ -28,7 +34,7 @@ maps each one to the OWASP Top 10:2025 (docs/SECURITY-PLAN.md).
   keys, private keys, and card numbers inside any value or log line become a typed marker such as `[redacted:jwt]`
   (`docs/redact-vectors.json`).
 - **More headers.** The Go SDK captures response headers, and the Java SDK captures the security headers.
-- `FACTS_VERSION` 10: hosts rebuild their stats once.
+- `FACTS_VERSION` 11: hosts rebuild their stats once, so answers marked as expected leave the error counts.
 
 ## [0.3.0-alpha.6] — Who your users are
 

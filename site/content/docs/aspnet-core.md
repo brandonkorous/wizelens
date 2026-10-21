@@ -80,6 +80,10 @@ Kestrel), `HttpClient`, and your own meters. Taken every 10 seconds and kept for
 
 Tag a request from anywhere inside it: `WizeLensRequest.Tag("cache", "hit")`. The user comes from `HttpContext.User`.
 
+When a 5xx is on purpose, such as a 503 "come back later", call `WizeLensRequest.Expected()` or send the header
+`X-WizeLens-Expected: 1`. WizeLens then leaves it out of error rates. See
+[Answers you expect](/docs/dashboard/#answers-you-expect).
+
 ## Options
 
 Pass options to `AddWizeLens(o => { ... })`. The full list is on [Configuration](/docs/configuration/#aspnet-core).
