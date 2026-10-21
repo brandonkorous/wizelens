@@ -52,18 +52,20 @@ function Filters({ issues, releases }: { issues: boolean; releases: string[] }) 
   );
 }
 
+/** The package check line under the OWASP grid; null when the host does not check packages. */
+function scanNote({ scan }: SecurityModel, now: number): string | null {
+  if (!scan) return null;
+  if (!scan.packages) return "No service has reported its packages yet. WizeLens SDKs send them at start.";
+  return `${fmtCount(scan.packages)} package versions from ${fmtCount(scan.services)} services are checked against OSV${scan.checkedMs ? `, last ${fmtAgo(scan.checkedMs, now)}` : ""}.`;
+}
+
 function SecurityBody({ m, wanted }: { m: SecurityModel; wanted: string | null }) {
   const now = m.meta.window.to;
   const category = useRoute().query.get("category");
   return (
     <>
       <Cards m={m} />
-      <OwaspGrid categories={m.categories} selected={category} />
-      {m.scan && (
-        <p className="wl-muted wl-small wl-scan-note">
-          {m.scan.packages ? `${fmtCount(m.scan.packages)} package versions from ${fmtCount(m.scan.services)} services are checked against OSV${m.scan.checkedMs ? `, last ${fmtAgo(m.scan.checkedMs, now)}` : ""}.` : "No service has reported its packages yet. WizeLens SDKs send them at start."}
-        </p>
-      )}
+      <OwaspGrid categories={m.categories} selected={category} note={scanNote(m, now)} />
       <Filters issues={m.hasIssues} releases={m.releases.map((r) => r.version)} />
       <div className={`wl-grid${wanted ? " wl-grid-side" : ""}`}>
         <Panel flush title={`Risks (${fmtCount(m.matching)})`} action={<ExportButton page="security" disabled={m.matching === 0} />}>
