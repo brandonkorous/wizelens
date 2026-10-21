@@ -3,14 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useInView, useReducedMotion } from "motion/react";
 
-const PAGES = [
+type Page = { id: string; label: string; text: string; url?: string };
+
+const DASHBOARD = "localhost:5100/_wizelens/#/";
+
+const PAGES: Page[] = [
   { id: "overview", label: "Overview", text: "Requests, timing, services, and insights at a glance." },
-  { id: "traces", label: "Traces", text: "One request as layers, across every service." },
+  { id: "hud", label: "HUD", text: "Timing, queries, and insights in the corner of your own page.", url: "localhost:5173/" },
+  { id: "search", label: "Search", text: "One search language for requests, traces, spans, and logs." },
   { id: "requests", label: "Requests", text: "Filter, search, and open any request." },
-  { id: "database", label: "Database", text: "Slow queries, operations, and table hot spots." },
+  { id: "traces", label: "Traces", text: "One request as layers, across every service." },
+  { id: "errors", label: "Errors", text: "Error groups with their stack, request, and users." },
+  { id: "database", label: "Database", text: "Slow queries, N+1 patterns, and table hot spots." },
   { id: "rendering", label: "Rendering", text: "Routes, hydration, and components that render too often." },
-  { id: "errors", label: "Errors", text: "Every exception with its stack and request." },
+  { id: "security", label: "Security", text: "Risks from real traffic, mapped to the OWASP Top 10." },
 ];
+
+// The address the shot was taken at: the sample app for the HUD, else the dashboard's hash route.
+const urlOf = (p: Page) => p.url ?? DASHBOARD + (p.id === "overview" ? "" : p.id);
 
 const STEP_MS = 6000;
 
@@ -28,9 +38,22 @@ function useAutoplay(active: boolean, count: number) {
 
 type TabsProps = { index: number; round: number; playing: boolean; pick: (i: number) => void; setPaused: (p: boolean) => void };
 
+// On a phone the tabs scroll sideways; keep the open one in view without moving the page.
+function useTabInView(index: number) {
+  const list = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const box = list.current;
+    const tab = box?.children[index] as HTMLElement | undefined;
+    if (!box || !tab || box.scrollWidth <= box.clientWidth) return;
+    box.scrollTo({ left: tab.offsetLeft - (box.clientWidth - tab.offsetWidth) / 2, behavior: "smooth" });
+  }, [index]);
+  return list;
+}
+
 function TourTabs({ index, round, playing, pick, setPaused }: TabsProps) {
+  const list = useTabInView(index);
   return (
-    <div className="wl-tour-tabs" role="tablist" aria-label="Dashboard pages" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+    <div ref={list} className="wl-tour-tabs" role="tablist" aria-label="Dashboard pages" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
       {PAGES.map((p, i) => (
         <button key={p.id} role="tab" aria-selected={i === index} className={`wl-tour-tab${i === index ? " wl-tour-on" : ""}`} onClick={() => pick(i)}>
           <b>{p.label}</b>
@@ -67,7 +90,7 @@ export function Tour() {
         <TourTabs index={index} round={round} playing={playing} pick={pick} setPaused={setPaused} />
         <div className="wl-tour-frame">
           <div className="wl-tour-bar">
-            <span className="wl-app-url">localhost:5100/_wizelens/{page.id}</span>
+            <span className="wl-app-url">{urlOf(page)}</span>
           </div>
           <div className="wl-tour-shot">
             <AnimatePresence initial={false}>
