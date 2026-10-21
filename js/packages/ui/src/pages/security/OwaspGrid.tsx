@@ -3,8 +3,8 @@ import { fmtCount } from "../../format";
 import { setQuery } from "../../routes";
 import { Panel } from "../../ui/Panel";
 
-/** The OWASP Top 10:2025, each with its risks. A click filters the list to one category; a second click clears it. */
-export function OwaspGrid({ categories, selected }: { categories: SecurityCategory[]; selected: string | null }) {
+/** The OWASP Top 10:2025, each with its risks, and the package check line. A click filters to one category; a second click clears it. */
+export function OwaspGrid({ categories, selected, note }: { categories: SecurityCategory[]; selected: string | null; note: string | null }) {
   return (
     <Panel title="OWASP Top 10:2025">
       <div className="wl-owasp-grid">
@@ -20,6 +20,7 @@ export function OwaspGrid({ categories, selected }: { categories: SecurityCatego
           );
         })}
       </div>
+      {note && <p className="wl-muted wl-small wl-scan-note">{note}</p>}
     </Panel>
   );
 }
