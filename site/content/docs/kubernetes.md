@@ -35,13 +35,17 @@ For a hub, set `endpoint` to its address (for example `http://wizelens-hub.wizel
 | --- | --- |
 | `endpoint` | Where to send. The collector adds `/v1/metrics`, `/v1/traces`, and `/v1/logs`. |
 | `ingestKey` | A cloud ingest key, or the hub's token. |
-| `existingSecret.name`, `existingSecret.key` | Read the key from a Secret you made instead. |
+| `existingSecret.name`, `existingSecret.key` | Read the key from a Secret you made instead. The key defaults to `ingest-key`. |
 | `clusterName` | Shown as the cluster on every node, pod, and workload. Set it when one project has several clusters. |
 | `environment` | `deployment.environment.name` for everything the collectors send, for the environment menu. |
 | `project` | `wizelens.project`, for a hub that holds several projects. The cloud takes the project from the key. |
+| `agent.enabled` | Run the agent DaemonSet. On by default. |
+| `cluster.enabled` | Run the cluster collector. On by default. |
+| `otlpService.enabled` | The Service in front of the agents that takes OTLP from your apps. On by default. |
 | `agent.hostMetrics` | The node's own disks and network for the Hosts page. On by default. |
 | `agent.collectionInterval`, `cluster.collectionInterval` | How often to read. Default `30s`. |
 | `agent.kubeletUseNodeIp` | Reach the kubelet by node address, for clusters where node names do not resolve. |
+| `agent.kubeletInsecureSkipVerify` | Accept the kubelet's self-signed serving certificate. On by default. |
 | `agent.memoryLimitMib`, `cluster.memoryLimitMib` | The collector refuses data above this. Keep it under the memory limit. |
 
 The collectors only read: the ClusterRole allows `get`, `list`, and `watch`, and the kubelet's `nodes/stats`.
@@ -51,13 +55,14 @@ The collectors only read: the ClusterRole allows `get`, `list`, and `watch`, and
 Point your apps at the node's agent instead of straight at WizeLens:
 
 ```bash
-OTEL_EXPORTER_OTLP_ENDPOINT=http://wizelens-collector-wizelens-collector-agent.wizelens:4318
+OTEL_EXPORTER_OTLP_ENDPOINT=http://wizelens-collector-agent.wizelens:4318
 ```
 
-The Service keeps traffic on the node, so the agent knows which pod sent each span. The span then carries
-`k8s.pod.name`, `k8s.node.name`, and `k8s.namespace.name`, and the trace page links to that pod and node. WizeLens
-add-ons that send straight to a hub or the cloud still show their pods: inside Kubernetes their host name is the pod's
-name.
+The Service is named after the release: with `helm install wizelens-collector` it is `wizelens-collector-agent`, and
+with another release name it is `<release>-wizelens-collector-agent`. It keeps traffic on the node, so the agent knows
+which pod sent each span. The span then carries `k8s.pod.name`, `k8s.node.name`, and `k8s.namespace.name`, and the trace
+page links to that pod and node. WizeLens add-ons that send straight to a hub or the cloud still show their pods: inside
+Kubernetes their host name is the pod's name.
 
 ## A plain host
 
@@ -74,6 +79,8 @@ docker run -d --name wizelens-collector -v /:/hostfs:ro -v $PWD/host.yaml:/etc/o
 Without Docker, run `otelcol-contrib --config host.yaml` with the same variables and no `HOST_ROOT`.
 
 ## The Hosts page
+
+The Hosts and Kubernetes pages are on the [hub](/docs/hub/) and [WizeLens Cloud](/docs/cloud/).
 
 Every host that sends `hostmetrics`: CPU busy, memory used, the fullest disk, network in and out, and the services that
 run on it. A service runs on a host when it reports that host name, when its Kubernetes node is that host, or when its
@@ -103,7 +110,7 @@ are kept on every point.
 
 ## Troubleshooting
 
-- **No hosts.** Check the agent's log: `kubectl -n wizelens logs ds/wizelens-collector-wizelens-collector-agent`. A
+- **No hosts.** Check the agent's log: `kubectl -n wizelens logs ds/wizelens-collector-agent`. A
   `401` means the ingest key is wrong.
 - **Nodes but no CPU or memory.** The kubelet refused the agent. Try `agent.kubeletUseNodeIp=true`.
 - **Spans without a pod.** The app sends straight to WizeLens, or through a Service without a local traffic policy.

@@ -8,7 +8,8 @@ WizeLens follows the whole chain.
 
 ## Set up
 
-Install WizeLens in each service, in any mix of .NET and Node. Nothing else is needed.
+Install WizeLens in each service, in any mix of .NET and Node. Nothing else is needed. Java, Python, and Go services join
+through [the hub](/docs/hub/) or [the cloud](/docs/cloud/).
 
 ## How the services find each other
 

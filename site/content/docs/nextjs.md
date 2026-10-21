@@ -54,11 +54,82 @@ After you add or update the package, delete `.next` once.
 - Static files, hot reload, and the dev overlay are left out.
 
 `registerWizeLens(options)` takes the same options as `createWizeLens`, plus `ignore(path)` to skip paths you do not want.
+`ignore` replaces the default, so keep `nextIgnore` in it, or static files and hot reload are traced again:
+
+```ts
+// inside register(), in the nodejs branch
+const { registerWizeLens, nextIgnore } = await import("@wizeworks/lens-node/next");
+registerWizeLens({ serviceName: "web", ignore: (p) => nextIgnore(p) || p === "/health" });
+```
+
+## Tags, users, and expected answers
+
+`registerWizeLens` returns the instance. Anywhere else in server code, `nextWizeLens()` from `@wizeworks/lens-node/next`
+gives you the same one:
+
+```ts
+import { nextWizeLens } from "@wizeworks/lens-node/next";
+
+const wizelens = nextWizeLens();
+wizelens?.setUser(session.user.id, { name: session.user.name });
+wizelens?.tag("plan", "pro");
+wizelens?.expected(); // a 503 you send on purpose is not a failure
+```
+
+They work in any server code that runs during a request, and do nothing outside one. See
+[Node](/docs/node/#tags-and-users).
 
 ## With the browser
 
-Add [`@wizeworks/lens-react`](/docs/react/) to your root layout. Because the page's own server runs WizeLens, the page load
-joins the server's trace: the server sends its trace id in `Server-Timing`, and the browser's page-load spans go to that server.
+The root layout is a server component, so put [`@wizeworks/lens-react`](/docs/react/) in a client component and render that
+from the layout:
+
+```tsx
+// app/providers.tsx
+"use client";
+import "@wizeworks/lens-react/install"; // first import: lets WizeLens see every React render
+import type { ReactNode } from "react";
+import { WizeLensProvider } from "@wizeworks/lens-react";
+
+export function Providers({ children }: { children: ReactNode }) {
+  return <WizeLensProvider endpoint="/_wizelens">{children}</WizeLensProvider>;
+}
+```
+
+```tsx
+// app/layout.tsx
+import type { ReactNode } from "react";
+import { Providers } from "./providers";
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
+```
+
+Because the page's own server runs WizeLens, the page load joins the server's trace: the server sends its trace id in
+`Server-Timing`, and the browser's page-load spans go to that server.
+
+## Source maps
+
+For production browser stacks, wrap the config with `withWizeLens` from `@wizeworks/lens-cli/next` and keep
+`serverExternalPackages` inside it. It turns on browser source maps, puts the release in the bundle, and uploads the maps
+after `next build`:
+
+```js
+import { withWizeLens } from "@wizeworks/lens-cli/next";
+
+export default withWizeLens({
+  serverExternalPackages: ["@wizeworks/lens-node"],
+});
+```
+
+See [Source maps](/docs/source-maps/).
 
 ## Databases
 

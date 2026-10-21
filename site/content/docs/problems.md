@@ -13,9 +13,9 @@ three numbers per time bucket: **error rate**, **p95 duration**, and **traffic**
 in the **4 weeks before**: the same hour of the same weekday. Monday morning is compared with Monday mornings, not with Sunday
 night.
 
-A host that keeps less than two weeks (the hub keeps 7 days unless you start it with a longer `--retention`) compares with the
-same hour on the **6 days before** instead. WizeLens needs two earlier weeks (or days) with data before it judges anything.
-Until then the page says it is learning.
+While fewer than two of the 4 earlier weeks have data (a new install, or a hub that keeps 7 days, its default
+`--retention`), it compares with the same hour on the **6 days before** instead. WizeLens needs two earlier weeks (or
+days) with data before it judges anything. Until then the page says it is learning.
 
 A value is **above normal** when it is more than a few spreads above the mean of those earlier samples. The spread is their
 standard deviation, with a floor so a very steady history does not turn every wiggle into a problem. Very quiet moments are
@@ -57,7 +57,8 @@ Problems can only name a release when spans carry `service.version`.
 
 ## Alerts and AI tools
 
-In WizeLens Cloud, an alert rule can fire when error rate, p95, or requests **is above normal** for any service or endpoint.
-Every fired notice links to the problem it is part of, with its suspected cause. See [WizeLens Cloud](/docs/cloud/#alerts).
+On the hub and in WizeLens Cloud, an alert rule can fire when error rate, p95, or requests **is above normal** for any
+service or endpoint, with high, medium, or low sensitivity. In the cloud, every fired notice links to the problem it is
+part of, with its suspected cause. See [Alerts](/docs/alerts/).
 
-AI tools get `list_problems` on the hub and the cloud. See [AI access](/docs/ai-access/).
+AI tools get `list_problems` on the hub, the cloud, and the Node add-on. See [AI access](/docs/ai-access/).

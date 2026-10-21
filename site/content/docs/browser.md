@@ -12,6 +12,8 @@ packages are small layers on top that hook your framework's errors and router. N
 - Page views with TTFB, SSR, FCP, LCP, INP, and CLS, plus slow and oversized images.
 - Browser errors and unhandled rejections, and browser `console` lines (at most 500 per page), each in its page view's trace.
   Minified stacks map back to your source with [source maps](/docs/source-maps/).
+- A 5xx the server marks with `X-WizeLens-Expected` is not a failed call. See
+  [Answers you expect](/docs/dashboard/#answers-you-expect).
 
 React adds per-component render stats and [the HUD](/docs/hud/); see [React](/docs/react/).
 
@@ -23,8 +25,14 @@ One script tag, no build step:
 <script src="https://cdn.jsdelivr.net/npm/@wizeworks/lens-browser/dist/wizelens.iife.js" data-endpoint="/_wizelens"></script>
 ```
 
-It starts on its own and sets `window.WizeLens`. Add `data-release="1.4.0"` for your app's version, or `data-enabled="false"` to load
-it without starting.
+It starts on its own and sets `window.WizeLens`. More attributes:
+
+| Attribute | What it does |
+|---|---|
+| `data-release="1.4.0"` | Your app's version. |
+| `data-enabled="false"` | Load it without starting. |
+| `data-console="false"` | Do not copy `console` lines. |
+| `data-xhr="false"` | Do not trace `XMLHttpRequest` calls. |
 
 With a bundler:
 
@@ -134,6 +142,13 @@ svelte-spa-router.
 | `captureConsole` | `true` | Copy browser `console` calls into the page view's trace. |
 | `captureXhr` | `true` | Trace `XMLHttpRequest` calls too. |
 | `resolveFrames` | `true` | Read the page's own source maps (dev servers serve them) so errors group by your source. |
+| `flushIntervalMs` | `1000` | How often browser spans are sent, in ms. |
+| `readServer` | `false` | Read traces back from the server after each call. Leave it off with a send-only server. |
+| `serverStatsDelayMs` | `400` | With `readServer`, how long to wait after a response before reading its server stats. |
+| `maxRecent` | `30` | How many recent requests `lens.recorder` keeps. |
+
+The Vue plugin also takes `router` (a vue-router instance: each finished navigation is a page view) and `lens` (use a
+running instance instead of starting one).
 
 ## Where `endpoint` points
 

@@ -5,7 +5,7 @@ description: Turn WizeLens on in production to send traces to your cloud or hub.
 
 ## Turn it on
 
-WizeLens is off in production until you turn it on. Set these on each service and restart it:
+The .NET and Node add-ons are off in production until you turn them on. Set these on each service and restart it:
 
 ```bash
 WIZELENS_ENABLED=true
@@ -16,9 +16,12 @@ WIZELENS_SAMPLE_RATE=0.25                      # optional, see Sampling
 
 No code change is needed. `Enabled = true` (.NET) or `enabled: true` (Node) does the same as `WIZELENS_ENABLED`.
 
+The Java, Python, and Go SDKs are on wherever they run, and they only send. Set `WIZELENS_HUB` and `WIZELENS_HUB_TOKEN` as
+above; `WIZELENS_ENABLED=false` stops them. The browser package is on unless you pass `enabled: false`.
+
 ## Send-only
 
-Outside development the add-on is **send-only**. It captures every request, query, log, and browser span, and sends them
+Outside development the .NET and Node add-ons are **send-only**. It captures every request, query, log, and browser span, and sends them
 to the cloud or hub. It serves no dashboard, read API, or MCP, so nobody can read traces from the app itself.
 
 | Path under `/_wizelens` | Send-only |

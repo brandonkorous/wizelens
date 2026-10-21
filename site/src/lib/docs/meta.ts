@@ -11,7 +11,7 @@ function groupOf(slug: string): string {
 // Metadata for one docs page: its own title, canonical address, and share image.
 export async function docMetadata(slug: string): Promise<Metadata> {
   const doc = await loadDoc(slug);
-  const title = slug ? `${doc?.title} · WizeLens Docs` : "WizeLens Docs: set up request tracing for .NET, Node, and React";
+  const title = slug ? `${doc?.title} · WizeLens Docs` : "WizeLens Docs: request tracing for .NET, Node, Java, Python, and Go";
   const meta = pageMeta({
     path: docHref(slug),
     title,

@@ -36,6 +36,9 @@ and gets a `traceparent` header so the called service joins the same trace. Wize
 off with `instrumentFetch: false` or `instrumentHttp: false`. Express routing time is traced too. Open
 `http://localhost:<port>/_wizelens`.
 
+Health checks (kube-probe, GoogleHC, ELB-HealthChecker, and Google uptime checks) and CORS preflights are not traced, so
+they never bury real visits.
+
 **NestJS.** `instrumentNest` adds the request capture for Express or Fastify, a global interceptor, and a hook on Nest's
 exception handlers. Requests are named by their route template with the global prefix and version (`GET /api/v1/orders/:id`)
 and carry `nest.controller`, `nest.handler`, and `nest.version`. Exceptions Nest's filters answer (from guards, pipes,
@@ -45,6 +48,8 @@ handlers, or middleware) are recorded on the request. Already mounted the middle
 
 ```ts
 import * as graphql from "graphql";
+import { instrumentGraphql } from "@wizeworks/lens-node";
+
 instrumentGraphql(wizelens, graphql); // before you create the server
 ```
 
@@ -108,8 +113,10 @@ a Lambda SQS record. Other commands show as outgoing HTTP calls. The auto instal
 
 ## Logs
 
-Lines written during a request go into its trace. Lines written outside a request are skipped. Your loggers still write
-where they wrote before; WizeLens only copies the lines.
+Lines written during a request go into its trace. Lines written outside one (startup, jobs, timers) are kept too, as
+"Outside a request". The `logs` option (`{ outside, minLevel, sampleRate }`) or the `WIZELENS_LOGS_*` variables control how
+many: on, `info` and up, and all of them by default. See [Logs](/docs/logs/). Your loggers still write where they wrote
+before; WizeLens only copies the lines.
 
 | Logger | How |
 |---|---|
@@ -123,6 +130,9 @@ where they wrote before; WizeLens only copies the lines.
 | NestJS built-in logger | `NestFactory.create(AppModule, { logger: nestLogger(wizelens, new ConsoleLogger()) })` |
 | OpenTelemetry logs | `new LoggerProvider({ processors: [wizelensLogProcessor(wizelens)] })` |
 | Anything else | `wizelens.logger.info("message", { key: "value" })` |
+
+`wizelens.logger` has `trace`, `debug`, `info`, `warn`, `error`, and `critical`, and `logger.child("billing")` gives a logger
+with its own category. `wizelens.recordException(err)` records an error you caught on the active span.
 
 ## Metrics
 
@@ -154,5 +164,12 @@ wizelens.expected(); // this answer is on purpose, such as a 503 "come back late
 `setUser` puts `enduser.id` on the request, and the name as `user.full_name`. The Users page shows the name, with the id
 under it. Leave the name out to keep only the id, or add `user.full_name` to the project's Redacted keys to drop names
 on the server. When only the browser names the user, its spans name the request's user too.
+
+## Known vulnerabilities
+
+With a hub or WizeLens Cloud set, the add-on sends the names and versions of your installed packages once at start. The
+hub and the cloud check them against OSV and show each vulnerable version on the [Security](/docs/security/#known-vulnerable-packages) page, with its advisories, CVEs,
+and the version that fixes it. Only names and versions leave your machine. `reportPackages: false` or
+`WIZELENS_PACKAGES=false` turns it off.
 
 The full option list is on [Configuration](/docs/configuration/#node).
