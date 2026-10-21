@@ -8,6 +8,10 @@ description: opentelemetry-instrument with WizeLens defaults. N+1 queries, slow 
 Python apps send to WizeLens through [OpenTelemetry auto-instrumentation](https://opentelemetry.io/docs/zero-code/python/).
 It traces FastAPI, Flask, Django, SQLAlchemy, psycopg, sqlite3, requests, httpx, and more, with no code change.
 
+> **Coming to PyPI:** the first release of `wizelens` is not on PyPI yet. Until it is, install it from GitHub:
+> `pip install "wizelens @ git+https://github.com/brandonkorous/wizelens#subdirectory=python"`. The commands below then
+> work as written.
+
 ```bash
 pip install wizelens
 opentelemetry-bootstrap -a install          # instrumentations for the libraries you use

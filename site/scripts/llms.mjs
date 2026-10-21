@@ -10,13 +10,19 @@ const SITE = join(dirname(fileURLToPath(import.meta.url)), "..");
 const URL_BASE = "https://wizelens.com";
 const PUB = join(SITE, "public");
 
-const SUMMARY = "WizeLens shows you everything one request did: the click in React, every .NET and Node service it touched, every SQL query, every log line, and the render, on one timeline. It finds N+1 queries, N+1 HTTP calls, duplicate and slow queries, and errors for you. Open source (MIT), built on OpenTelemetry and W3C traceparent, on in development only, and readable by your own AI agent through an opt-in, read-only MCP endpoint. Made by WizeWorks LLC, Visalia, California.";
+const SUMMARY = "WizeLens shows you everything one request did: the click in the browser (React, Vue, Angular, Svelte, or plain JS), every .NET, Node, Java, Python, and Go service it touched, every SQL query, every log line, and the render, on one timeline. It finds N+1 queries, N+1 HTTP calls, duplicate and slow queries, and errors for you. Open source (MIT), built on OpenTelemetry and W3C traceparent, on in development only, and readable by your own AI agent through an opt-in, read-only MCP endpoint. Made by WizeWorks LLC, Visalia, California.";
 
 const PAGES = [
   ["Home", "/", "What WizeLens is and how one click becomes one trace."],
   ["WizeLens for ASP.NET Core", "/dotnet/", "Two lines in Program.cs; EF Core, ADO.NET, HttpClient, gRPC, messaging, logs, metrics."],
   ["WizeLens for Node", "/node/", "Express, Fastify, Koa, Hono, Next.js; one line per driver, queue, or logger."],
   ["WizeLens for React and Next.js", "/react/", "Fetch linked to server traces, render timing, Web Vitals, the HUD."],
+  ["WizeLens for Vue", "/vue/", "One plugin: fetch and XHR linked to server traces, router page views, Web Vitals, component errors."],
+  ["WizeLens for Angular", "/angular/", "An ErrorHandler and a router tracker: HttpClient calls linked to server traces, page views, Web Vitals."],
+  ["WizeLens for Svelte and SvelteKit", "/svelte/", "The first load joins the server trace; page views, Web Vitals, and errors with their route."],
+  ["WizeLens for Java", "/java/", "The OpenTelemetry Java agent with no code change; the WizeLens extension adds SQL parameters and sampling that keeps errors."],
+  ["WizeLens for Python", "/python/", "opentelemetry-instrument for FastAPI, Flask, and Django; the wizelens distro adds SQL parameters, logs, and sampling."],
+  ["WizeLens for Go", "/go/", "One module over the OpenTelemetry SDK: net/http, database/sql with parameters, outgoing calls, and slog."],
   ["WizeLens Cloud", "/cloud/", "Team dashboard, hosted at app.wizelens.com or self-hosted: roles, history, alerts, share links, and AI access by sign-in or read key."],
   ["Pricing", "/pricing/", "WizeLens Cloud plans: Free (10 GB, 14 days), Team $29 (50 GB, 30 days), Business $99 (150 GB, 90 days, SSO, SCIM), Enterprise custom. Unlimited users and MCP on every plan; free forever to self-host."],
   ["Glimpse, rebuilt", "/story/", "Why WizeLens exists: the spirit of Glimpse for apps split into services."],

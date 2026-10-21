@@ -1,0 +1,55 @@
+import type { Stack } from "../types";
+
+export const PYTHON: Stack = {
+  slug: "python",
+  name: "Python",
+  title: "WizeLens for Python",
+  seoTitle: "WizeLens for Python: tracing for FastAPI, Flask, and Django",
+  seoDescription: "opentelemetry-instrument with WizeLens defaults: FastAPI, Flask, and Django requests, SQL with its parameters, requests and httpx calls, and logs.",
+  headline: ["Python requests,", "no code change."],
+  lede: "opentelemetry-instrument traces FastAPI, Flask, Django, SQLAlchemy, psycopg, requests, and httpx. The wizelens package plugs into it and adds SQL parameters, logs, and sampling that keeps errors. It is coming to PyPI; install it from GitHub today.",
+  facts: [
+    { value: "0 code", label: "for FastAPI, Flask, and Django" },
+    { value: "1 package", label: "an OpenTelemetry distro" },
+    { value: "Soon", label: "on PyPI; from GitHub today" },
+  ],
+  file: "terminal",
+  code: [
+    "# until it is on PyPI, from GitHub",
+    'pip install "wizelens @ git+https://github.com/brandonkorous/wizelens#subdirectory=python"',
+    "opentelemetry-bootstrap -a install   # instrumentations for your libraries",
+    "",
+    "export OTEL_SERVICE_NAME=orders-api",
+    "opentelemetry-instrument uvicorn app:app",
+  ],
+  traceTitle: "GET /orders · 92 ms",
+  scale: 100,
+  rows: [
+    { label: "GET /orders", ms: "92 ms", start: 0, dur: 92, kind: "server", depth: 0, line: 5 },
+    { label: "SELECT id, customer_id FROM orders WHERE status = %s", ms: "2.6 ms", start: 6, dur: 3, kind: "db", depth: 1, line: 2 },
+    { label: "SELECT sku, qty FROM order_items WHERE order_id = %s", ms: "1.3 ms", start: 13, dur: 2, kind: "db", depth: 1, line: 2 },
+    { label: "GET pricing/prices", ms: "47 ms", start: 20, dur: 47, kind: "net", depth: 1, line: 2 },
+    { label: "info  loaded 12 orders", ms: "", start: 72, dur: 1, kind: "log", depth: 1, line: 1 },
+  ],
+  captures: [
+    { title: "Frameworks", items: ["FastAPI", "Flask", "Django", "One server span per FastAPI request", "Request and response bodies (opt-in)"] },
+    { title: "Databases", items: ["SQLAlchemy", "psycopg", "sqlite3", "Parameters on every DB-API driver", "connection.execute() too"] },
+    { title: "Calls out", items: ["requests", "httpx", "The trace carried to the next service"] },
+    { title: "Logs", items: ["Every logging line, with its trace", "basicConfig and dictConfig still work"] },
+    { title: "Insights", items: ["N+1 queries", "N+1 HTTP calls", "Duplicate queries", "Slow queries", "Database waits"] },
+    { title: "Packages", items: ["Every installed PyPI package", "Checked against OSV on the hub and cloud", "Off with WIZELENS_PACKAGES=false"] },
+  ],
+  highlightsTitle: "Auto-instrumentation, with WizeLens defaults.",
+  highlights: [
+    { title: "It finds the package on its own.", body: "wizelens is an OpenTelemetry distro and configurator, so opentelemetry-instrument loads it. Do not also install opentelemetry-distro." },
+    { title: "Logs are on.", body: "Plain OpenTelemetry leaves logs off. WizeLens sends each logging line with the trace it was written in." },
+    { title: "One line for bodies.", body: "Add the middleware for your framework and set WIZELENS_CAPTURE_BODY=true. Text and JSON bodies are kept, up to 16 KB each.", code: "app.add_middleware(WizeLensMiddleware)" },
+    { title: "No opentelemetry-instrument? One call.", body: "Call configure before your app imports its libraries, then instrument them yourself.", code: 'wizelens.configure(service_name="orders-api")' },
+  ],
+  docs: [
+    { label: "Python setup", href: "/docs/python/" },
+    { label: "Request and response bodies", href: "/docs/python/#request-and-response-bodies" },
+    { label: "Sampling", href: "/docs/sampling/" },
+    { label: "The hub", href: "/docs/hub/" },
+  ],
+};

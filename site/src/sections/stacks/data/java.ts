@@ -1,0 +1,56 @@
+import type { Stack } from "../types";
+
+export const JAVA: Stack = {
+  slug: "java",
+  name: "Java",
+  title: "WizeLens for Java",
+  seoTitle: "WizeLens for Java: tracing for Spring, JDBC, Hibernate, and Kafka",
+  seoDescription: "The OpenTelemetry Java agent, pointed at WizeLens: Spring requests, JDBC and Hibernate queries, HTTP calls, Kafka, and logs, with no code change.",
+  headline: ["The Java agent,", "pointed at WizeLens."],
+  lede: "The OpenTelemetry Java agent traces Spring, servlets, JDBC, Hibernate, HTTP clients, and Kafka with no code change, and it sends to WizeLens today. The WizeLens extension adds SQL parameters and sampling that keeps errors. It is coming to Maven Central.",
+  facts: [
+    { value: "0 code", label: "the agent does the tracing" },
+    { value: "3 loggers", label: "Logback, Log4j, java.util.logging" },
+    { value: "Soon", label: "the extension on Maven Central" },
+  ],
+  file: "run.sh",
+  code: [
+    "# opentelemetry-javaagent.jar, from the OpenTelemetry releases",
+    "export OTEL_SERVICE_NAME=orders-api",
+    "export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960",
+    "",
+    "java -javaagent:opentelemetry-javaagent.jar \\",
+    "     -jar app.jar",
+  ],
+  traceTitle: "GET /orders · 118 ms",
+  scale: 120,
+  rows: [
+    { label: "GET /orders", ms: "118 ms", start: 0, dur: 118, kind: "server", depth: 0, line: 5 },
+    { label: "SELECT o.id, o.total FROM orders o WHERE o.customer_id = ?", ms: "2.8 ms", start: 6, dur: 4, kind: "db", depth: 1, line: 4 },
+    { label: "SELECT i.sku, i.qty FROM order_items i WHERE i.order_id = ?", ms: "1.2 ms", start: 14, dur: 2, kind: "db", depth: 1, line: 4 },
+    { label: "GET pricing-api/prices", ms: "52 ms", start: 22, dur: 52, kind: "net", depth: 1, line: 4 },
+    { label: "publish order.created", ms: "3.1 ms", start: 80, dur: 4, kind: "msg", depth: 1, line: 4 },
+    { label: "info  Loaded 6 orders for customer 42", ms: "", start: 100, dur: 1, kind: "log", depth: 1, line: 4 },
+  ],
+  captures: [
+    { title: "Requests", items: ["Spring", "Servlets", "Request headers, with the extension", "Request and response bodies (WizeLensBodyFilter)"] },
+    { title: "Databases", items: ["JDBC", "Hibernate", "SQL parameters, with the extension"] },
+    { title: "Calls and messages", items: ["HTTP clients", "Kafka", "And more, through the agent"] },
+    { title: "Logs", items: ["Logback", "Log4j", "java.util.logging", "MDC and code attributes, with the extension"] },
+    { title: "Insights", items: ["N+1 queries", "N+1 HTTP calls", "Slow queries", "Database waits", "Duplicate queries, with the extension"] },
+    { title: "Packages", items: ["Every Maven jar on the class path, with the extension", "Inside Spring Boot and WAR jars too", "Checked against OSV on the hub and cloud"] },
+  ],
+  highlightsTitle: "The agent you know, with WizeLens defaults.",
+  highlights: [
+    { title: "No code change.", body: "The OpenTelemetry Java agent traces the app as it runs. Point it at WizeLens and you get traces, logs, and the insights.", code: "-javaagent:opentelemetry-javaagent.jar" },
+    { title: "One jar brings the values back.", body: "The agent replaces SQL values with ?, so WizeLens cannot call two queries duplicates. The extension turns parameters on. Until it is on Maven Central, build it with mvn -f java/pom.xml package.", code: "-Dotel.javaagent.extensions=wizelens.jar" },
+    { title: "Errors and slow traces stay.", body: "With the extension, sample with WIZELENS_SAMPLE_RATE and WizeLens still keeps every trace with an error or a span of 1 second or more." },
+    { title: "Your settings win.", body: "Anything you set with -D or OTEL_* wins over the extension. Each WIZELENS_* variable also works as a system property.", code: "-Dwizelens.sample.rate=0.1" },
+  ],
+  docs: [
+    { label: "Java setup", href: "/docs/java/" },
+    { label: "The WizeLens extension", href: "/docs/java/#add-the-wizelens-extension" },
+    { label: "Sampling", href: "/docs/sampling/" },
+    { label: "The hub", href: "/docs/hub/" },
+  ],
+};

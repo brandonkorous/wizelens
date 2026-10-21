@@ -4,8 +4,10 @@ description: WizeLens shows you what one request did, from the click in React to
 ---
 
 WizeLens is the spirit of Glimpse, rebuilt for how we build today. You add a small package to each app. Then every request
-becomes one trace: the browser, every service it touched, every database call, every log line, and the render. A dashboard
-at `/_wizelens` shows it, and a small HUD in the corner of your page shows the latest request as you work.
+becomes one trace: the browser, every service it touched, every database call, every log line, and the render. In .NET
+and Node, a dashboard at `/_wizelens` shows it, and in React a small HUD in the corner of your page shows the latest
+request as you work. Java, Python, and Go services send to [the hub](/docs/hub/) or [the cloud](/docs/cloud/) through
+OpenTelemetry, and Vue, Angular, Svelte, and plain JS pages link each click to its server trace.
 
 It finds the common problems for you: N+1 queries, N+1 HTTP calls, duplicate queries, slow queries, and errors.
 
@@ -23,7 +25,8 @@ It finds the common problems for you: N+1 queries, N+1 HTTP calls, duplicate que
 2. **Link.** The W3C `traceparent` header carries one trace id from the browser through every hop.
 3. **Discover.** Each response says where its WizeLens lives (`X-WizeLens-Endpoint`), so callers learn about downstream services by themselves.
 4. **Federate.** When you open a trace, the service you are looking at pulls the matching pieces from every downstream service and merges them into one timeline. There is no collector to run.
-5. **Analyze.** The same rules run in .NET and in Node, so every service gives the same answer.
+5. **Analyze.** The same rules run in .NET, in Node, and on the hub and the cloud for OpenTelemetry services (Java,
+   Python, Go), so every service gives the same answer.
 
 ## Three ways to run it
 

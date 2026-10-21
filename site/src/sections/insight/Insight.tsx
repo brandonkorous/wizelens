@@ -24,7 +24,7 @@ export function Insight() {
               <li key={k.label}><span className="wl-dot" style={{ background: k.color }} />{k.label}</li>
             ))}
           </ul>
-          <p className="wl-insight-note">The same rules run in .NET and in Node, so every service gives the same answer.</p>
+          <p className="wl-insight-note">The same rules run in .NET, in Node, and on the hub for Java, Python, and Go, so every service gives the same answer.</p>
         </div>
         <QueryFold />
       </div>

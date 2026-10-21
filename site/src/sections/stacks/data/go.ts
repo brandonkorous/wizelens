@@ -1,0 +1,56 @@
+import type { Stack } from "../types";
+
+export const GO: Stack = {
+  slug: "go",
+  name: "Go",
+  title: "WizeLens for Go",
+  seoTitle: "WizeLens for Go: tracing for net/http, database/sql, and slog",
+  seoDescription: "One Go module sets up OpenTelemetry for WizeLens: net/http and database/sql spans with SQL parameters, slog lines in their trace, and N+1 queries found.",
+  headline: ["Every Go request,", "in a few lines."],
+  lede: "Go has no agent, so the WizeLens module sets up the OpenTelemetry SDK and the contrib instrumentation in a few lines. It adds what they leave out: SQL parameters, request headers, and bodies. Spans and logs go to your hub or the cloud over OTLP.",
+  facts: [
+    { value: "1 module", label: "the OpenTelemetry SDK and contrib, set up" },
+    { value: "5 calls", label: "Start, OpenDB, Transport, Logger, Handler" },
+    { value: "v0.1.0", label: "out now with go get" },
+  ],
+  file: "main.go",
+  code: [
+    'shutdown, err := wizelens.Start(ctx, wizelens.WithServiceName("inventory"))',
+    "defer shutdown(context.Background())",
+    "",
+    'db, err := wizelens.OpenDB("pgx", dsn, "postgresql")',
+    "client := &http.Client{Transport: wizelens.Transport(nil)}",
+    'log := wizelens.Logger("inventory", slog.Default().Handler())',
+    'http.ListenAndServe(":8080", wizelens.Handler(mux, "inventory"))',
+  ],
+  traceTitle: "GET /orders · 84 ms",
+  scale: 90,
+  rows: [
+    { label: "GET /orders", ms: "84 ms", start: 0, dur: 84, kind: "server", depth: 0, line: 6 },
+    { label: "SELECT id, customer_id FROM orders WHERE status = $1", ms: "2.3 ms", start: 4, dur: 3, kind: "db", depth: 1, line: 3 },
+    { label: "SELECT sku, qty FROM order_items WHERE order_id = $1", ms: "1.4 ms", start: 10, dur: 2, kind: "db", depth: 1, line: 3 },
+    { label: "GET pricing/prices?sku=…", ms: "41 ms", start: 16, dur: 41, kind: "net", depth: 1, line: 4 },
+    { label: "info  loaded 12 orders", ms: "", start: 62, dur: 1, kind: "log", depth: 1, line: 5 },
+  ],
+  captures: [
+    { title: "Requests", items: ["net/http, through otelhttp", "Any http.Handler", "Request headers, secrets redacted", "Request and response bodies (opt-in)"] },
+    { title: "Databases", items: ["database/sql, through otelsql", "Any driver, such as pgx or sqlite", "One span per query, named by its first word", "SQL parameters, sensitive names redacted"] },
+    { title: "Calls out", items: ["http.Client, through Transport", "W3C trace context to the next service"] },
+    { title: "Logs", items: ["log/slog, through otelslog", "Your own slog handler still writes", "Each line with its trace (InfoContext and friends)"] },
+    { title: "Insights", items: ["N+1 queries", "N+1 HTTP calls", "Duplicate queries", "Slow queries", "Database waits"] },
+    { title: "Packages", items: ["Every Go module in the build", "Checked against OSV on the hub and cloud", "Off with WIZELENS_PACKAGES=false"] },
+  ],
+  highlightsTitle: "Plain OpenTelemetry, with the gaps filled.",
+  highlights: [
+    { title: "Already on OpenTelemetry?", body: "Point your OTLP HTTP exporters at WizeLens and the insights work on your spans. DBOptions adds SQL parameters to your own otelsql.Open call.", code: "OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960" },
+    { title: "Parameters make duplicates visible.", body: "Without the values on each query, WizeLens cannot tell whether two queries were the same. OpenDB puts them on every query span." },
+    { title: "Errors and slow traces stay.", body: "Sample with WIZELENS_SAMPLE_RATE and WizeLens still keeps every trace with an error or a span of 1 second or more. Log lines are kept or dropped with their trace." },
+    { title: "Your OTEL_* settings win.", body: "Set OTEL_EXPORTER_OTLP_ENDPOINT or any other OTEL_* variable and Start uses it. WIZELENS_ENABLED=false makes Start do nothing.", code: "WIZELENS_ENABLED=false" },
+  ],
+  docs: [
+    { label: "Go setup", href: "/docs/go/" },
+    { label: "Plain OpenTelemetry", href: "/docs/go/#plain-opentelemetry" },
+    { label: "Sampling", href: "/docs/sampling/" },
+    { label: "The hub", href: "/docs/hub/" },
+  ],
+};
