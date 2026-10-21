@@ -1,6 +1,6 @@
 {
   "name": "@wizeworks/lens-cli",
-  "version": "0.3.0-alpha.7",
+  "version": "0.3.0-alpha.8",
   "description": "The WizeLens command line, and build plugins for Vite, webpack, and Next.js that upload browser source maps to a hub or the cloud.",
   "license": "MIT",
   "author": "WizeWorks LLC",

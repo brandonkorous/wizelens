@@ -2,7 +2,7 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] — The HUD on every stack
+## [0.3.0-alpha.8] — The HUD on every stack
 
 The in-page HUD now shows in every web app: on the pages your .NET or Node app renders, with no code, and in React, Vue,
 Angular, Svelte, and plain JS (docs/HUD-PLAN.md). wizelens.com and its docs match everything WizeLens does, with real
@@ -44,6 +44,8 @@ screenshots, and the HUD panel counts like the card.
 - **The version at the foot of the menu** opens the changelog at that release, and the Docs and changelog links end in `/`.
 - **lens-cli** names the cloud as `https://app.wizelens.com` in its README and help, and `--release` lists
   `npm_package_version` among its defaults.
+- **wizelens.com.** The Cloud page no longer scrolls sideways on a phone, docs search finds words in every section of a
+  page, and the changelog page shows each group (Added, Changed, Fixed) as its own heading.
 
 ## [0.3.0-alpha.7] — Security from real traffic
 
