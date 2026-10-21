@@ -47,6 +47,9 @@ maps each one to the OWASP Top 10:2025 (docs/SECURITY-PLAN.md).
 
 ### Fixed
 
+- **`get_timeseries` gives whole counts.** Over a window where one stored bucket spans two points, such as 24h in
+  48 buckets, a point could say 10.4 requests. Each point now has a whole number of requests and errors, never more
+  errors than requests, and the points add up to the totals.
 - **Cloud migration 24 on a managed Postgres.** An app user that may not create roles no longer stops the migration: the
   admin makes the `wl_reader` role first (`deploy/k8s/jobs/db-role.sql`), and the migration says so if it is missing.
 
