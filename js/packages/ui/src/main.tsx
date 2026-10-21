@@ -7,6 +7,7 @@ import { startReleaseChecks } from "./data/release";
 import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/shell.css";
+import "./styles/nav.css";
 import "./styles/ui.css";
 import "./styles/trace.css";
 import "./styles/pages/cloud.css";

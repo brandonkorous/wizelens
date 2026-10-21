@@ -7,7 +7,7 @@ import { navigate } from "../routes";
 import { usePaletteMore } from "./paletteMore";
 import { usePaletteSearch } from "./paletteSearch";
 import { type HitKind, search } from "./searchIndex";
-import { NAV } from "./Sidebar";
+import { NAV } from "./nav";
 
 const ICONS: Record<HitKind, typeof Search> = {
   page: FileSearch,

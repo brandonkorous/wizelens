@@ -1,43 +1,11 @@
-import type { ComponentType } from "react";
-import { Activity, BellRing, Box, Boxes, Database, FileText, HeartPulse, House, LayoutDashboard, Lightbulb, List, Monitor, Search, Server, Settings, Share2, ShieldAlert, Siren, Target, TriangleAlert, UserRound, Users } from "lucide-react";
 import { SavedNav } from "./SavedNav";
-import type { Capability } from "@wizeworks/lens-core";
 import { useHost } from "../data/host";
 import { hrefTo, type PageId } from "../routes";
 import { Logo } from "./Logo";
-
-interface NavItem {
-  page: PageId;
-  label: string;
-  icon: ComponentType<{ "aria-hidden"?: boolean }>;
-  /** Shown only when the host has this capability. */
-  needs?: Capability;
-}
-
-export const NAV: NavItem[] = [
-  { page: "overview", label: "Overview", icon: House },
-  { page: "problems", label: "Problems", icon: Siren },
-  { page: "search", label: "Search", icon: Search },
-  { page: "requests", label: "Requests", icon: List },
-  { page: "traces", label: "Traces", icon: Share2 },
-  { page: "database", label: "Database", icon: Database },
-  { page: "rendering", label: "Rendering", icon: Monitor },
-  { page: "errors", label: "Errors", icon: TriangleAlert },
-  { page: "logs", label: "Logs", icon: FileText },
-  { page: "metrics", label: "Metrics", icon: Activity, needs: "metrics" },
-  { page: "hosts", label: "Hosts", icon: Server, needs: "infra" },
-  { page: "kubernetes", label: "Kubernetes", icon: Boxes, needs: "infra" },
-  { page: "services", label: "Services", icon: Box },
-  { page: "insights", label: "Insights", icon: Lightbulb },
-  { page: "security", label: "Security", icon: ShieldAlert },
-  { page: "uptime", label: "Uptime", icon: HeartPulse, needs: "uptime" },
-  { page: "users", label: "Users", icon: UserRound },
-  { page: "alerts", label: "Alerts", icon: BellRing, needs: "alerts" },
-  { page: "slos", label: "SLOs", icon: Target, needs: "slos" },
-  { page: "dashboards", label: "Dashboards", icon: LayoutDashboard, needs: "saved" },
-  { page: "team", label: "Team", icon: Users, needs: "accounts" },
-  { page: "settings", label: "Settings", icon: Settings },
-];
+import { MobileNav } from "./MobileNav";
+import { NAV, navPageOf } from "./nav";
+import { NavGroups } from "./NavGroups";
+import { SidebarFoot } from "./SidebarFoot";
 
 export interface SidebarProps {
   page: PageId;
@@ -48,7 +16,7 @@ export interface SidebarProps {
 }
 
 export function Sidebar({ page, counts = {}, dot }: SidebarProps) {
-  const current = page === "trace" ? "traces" : page;
+  const current = navPageOf(page);
   const host = useHost();
   const items = NAV.filter((n) => !n.needs || host.has(n.needs));
   return (
@@ -56,23 +24,12 @@ export function Sidebar({ page, counts = {}, dot }: SidebarProps) {
       <a className="wl-sidebar-brand" href={hrefTo("overview")} aria-label="WizeLens overview">
         <Logo dot={dot} />
       </a>
-      <nav className="wl-nav" aria-label="Main">
-        {items.map(({ page: p, label, icon: Icon }) => (
-          <a key={p} href={hrefTo(p)} className={current === p ? "wl-active" : undefined} aria-current={current === p ? "page" : undefined} title={label}>
-            <Icon aria-hidden={true} />
-            <span>{label}</span>
-            {!!counts[p] && <em className="wl-nav-count">{counts[p]! > 99 ? "99+" : counts[p]}</em>}
-          </a>
-        ))}
+      <nav className="wl-nav wl-nav-main" aria-label="Main">
+        <NavGroups items={items} current={current} counts={counts} />
       </nav>
       {host.has("saved") && <SavedNav />}
-      <div className="wl-sidebar-foot">
-        <span className="wl-mark" aria-hidden="true">W</span>
-        <div>
-          <strong>WizeWorks</strong>
-          <span>Build. Observe. Ship.</span>
-        </div>
-      </div>
+      <MobileNav items={items} current={current} counts={counts} saved={host.has("saved")} />
+      <SidebarFoot />
     </aside>
   );
 }
