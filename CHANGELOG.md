@@ -2,7 +2,28 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] — Security from real traffic
+## [Unreleased] — The site shows the whole product
+
+wizelens.com and its docs now match everything WizeLens does, with real screenshots, and the HUD panel counts like the card.
+
+### Added
+
+- **wizelens.com shows the whole product.** Every page and doc was checked against the code. New docs pages for Search
+  (the full search language), Errors, Releases, Users, Alerts, SLOs and Apdex, and Dashboards; the dashboard docs follow
+  the new menu, with every page and which host has it. The home page adds Tags, Users, Uptime, and SLO tiles, an Auto
+  install tab, all 18 MCP tools, and real screenshots of today's dashboard and of the HUD. The Cloud page covers single
+  sign-on and SCIM, account security, Problems, uptime and status pages, SLOs, Security, and Hosts and Kubernetes. The
+  privacy, security, and terms pages cover WizeLens Cloud at app.wizelens.com.
+
+### Fixed
+
+- **The HUD panel's counts match the card.** The panel listed errors and security risks under "Insights", so it said
+  "Insights · 4" next to a card with 3 insights. It now shows Errors, Insights, and Security risks apart, each with a link.
+- **The version at the foot of the menu** opens the changelog at that release, and the Docs and changelog links end in `/`.
+- **lens-cli** names the cloud as `https://app.wizelens.com` in its README and help, and `--release` lists
+  `npm_package_version` among its defaults.
+
+## [0.3.0-alpha.7] — Security from real traffic
 
 A Security page finds the risks that slip past pull requests and tests, from the traffic your app really serves, and
 maps each one to the OWASP Top 10:2025 (docs/SECURITY-PLAN.md).
@@ -29,12 +50,6 @@ maps each one to the OWASP Top 10:2025 (docs/SECURITY-PLAN.md).
 - **A page for every stack at wizelens.com.** Vue, Angular, Svelte, Java, Python, and Go join Node, .NET, and React, in the
   menu, the footer, the sitemap, share images, `llms.txt`, the home page, and the install tabs. The Java and Python docs say
   how to install until the packages are on Maven Central and PyPI.
-- **wizelens.com shows the whole product.** Every page and doc was checked against the code. New docs pages for Search
-  (the full search language), Errors, Releases, Users, Alerts, SLOs and Apdex, and Dashboards; the dashboard docs follow
-  the new menu, with every page and which host has it. The home page adds Tags, Users, Uptime, and SLO tiles, an Auto
-  install tab, all 18 MCP tools, and real screenshots of today's dashboard and of the HUD. The Cloud page covers single
-  sign-on and SCIM, account security, Problems, uptime and status pages, SLOs, Security, and Hosts and Kubernetes. The
-  privacy, security, and terms pages cover WizeLens Cloud at app.wizelens.com.
 
 ### Changed
 
@@ -53,13 +68,11 @@ maps each one to the OWASP Top 10:2025 (docs/SECURITY-PLAN.md).
 
 ### Fixed
 
+- **`get_timeseries` gives whole counts.** Over a window where one stored bucket spans two points, such as 24h in
+  48 buckets, a point could say 10.4 requests. Each point now has a whole number of requests and errors, never more
+  errors than requests, and the points add up to the totals.
 - **Cloud migration 24 on a managed Postgres.** An app user that may not create roles no longer stops the migration: the
   admin makes the `wl_reader` role first (`deploy/k8s/jobs/db-role.sql`), and the migration says so if it is missing.
-- **The HUD panel's counts match the card.** The panel listed errors and security risks under "Insights", so it said
-  "Insights · 4" next to a card with 3 insights. It now shows Errors, Insights, and Security risks apart, each with a link.
-- **The version at the foot of the menu** opens the changelog at that release, and the Docs and changelog links end in `/`.
-- **lens-cli** names the cloud as `https://app.wizelens.com` in its README and help, and `--release` lists
-  `npm_package_version` among its defaults.
 
 ## [0.3.0-alpha.6] — Who your users are
 

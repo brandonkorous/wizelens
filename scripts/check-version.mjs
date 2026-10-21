@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Checks that every npm package, the .NET packages, and the inject chart carry the same version (and, with an argument, that version).
+// Checks that every npm package, the .NET packages, and the inject chart carry the same version (and, with an argument, that version and its changelog section).
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -32,6 +32,12 @@ const wrong = all.filter(([, v]) => v !== target);
 for (const [name, v] of all) console.log(`${v === target ? "ok " : "BAD"} ${name} ${v}`);
 if (wrong.length > 0) {
   console.error(`check-version: ${wrong.length} package(s) are not at ${target}`);
+  process.exit(1);
+}
+// A release tag also needs its own CHANGELOG.md section, so the site never calls a shipped release "Unreleased".
+if (expected && !readFileSync(join(ROOT, "CHANGELOG.md"), "utf8").includes(`
+## [${expected}]`)) {
+  console.error(`check-version: CHANGELOG.md has no "## [${expected}]" section. Run pnpm release:prep ${expected} first.`);
   process.exit(1);
 }
 console.log(`check-version: all packages at ${target}`);
