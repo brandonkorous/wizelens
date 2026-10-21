@@ -25,6 +25,9 @@ public sealed class WizeLensOptions
     /// <summary>Serves the dashboard, read API, and MCP. False is send-only: capture and send, no reads. <c>null</c>: WIZELENS_DASHBOARD, else Development only.</summary>
     public bool? Dashboard { get; set; }
 
+    /// <summary>Puts the in-page HUD on the app's HTML pages while the dashboard is served. On by default; WIZELENS_HUD=false turns it off.</summary>
+    public bool Hud { get; set; } = EnvFlag("WIZELENS_HUD") ?? true;
+
     /// <summary>Where the dashboard and API live. Default <c>/_wizelens</c>.</summary>
     public string BasePath { get; set; } = "/_wizelens";
 
@@ -101,6 +104,9 @@ public sealed class WizeLensOptions
 
     /// <summary>True when the dashboard, read API, and MCP answer; false is send-only.</summary>
     internal bool ServesDashboard { get; set; }
+
+    /// <summary>True when HTML pages get the HUD script: WizeLens is on, serves the dashboard, and <see cref="Hud"/> is on.</summary>
+    internal bool InjectsHud => IsEnabled && ServesDashboard && Hud;
 
     /// <summary>The storage in use: the option, or SQLite with the dashboard and memory without it.</summary>
     internal WizeLensStorage StorageKind => Storage ?? (ServesDashboard ? WizeLensStorage.Sqlite : WizeLensStorage.Memory);

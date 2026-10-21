@@ -4,6 +4,7 @@
         <RootNamespace>WizeLens</RootNamespace>
         <Description>Glimpse-style request profiling for ASP.NET Core. Captures HTTP, database, logs and exceptions per request, serves a dashboard at /_wizelens, and exposes insights to AI agents over MCP.</Description>
         <UiDistDir>$(RepoRoot)\js\packages\ui\dist\</UiDistDir>
+        <HudDistDir>$(RepoRoot)\js\packages\browser\dist\</HudDistDir>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,6 +23,18 @@
             <Link>ui\%(RecursiveDir)%(Filename)%(Extension)</Link>
         </EmbeddedResource>
     </ItemGroup>
+
+    <!-- The HUD is the lens-browser script-tag bundle (Vite). Embed it when it exists; served at {BasePath}/wizelens.js. -->
+    <ItemGroup Condition="Exists('$(HudDistDir)wizelens.iife.js')">
+        <EmbeddedResource Include="$(HudDistDir)wizelens.iife.js" LogicalName="hud/wizelens.js" Link="hud\wizelens.js" />
+        <EmbeddedResource Include="$(HudDistDir)wizelens.iife.js.map" LogicalName="hud/wizelens.js.map" Link="hud\wizelens.js.map" Condition="Exists('$(HudDistDir)wizelens.iife.js.map')" />
+    </ItemGroup>
+
+    <!-- A CI build packs what it builds, so the dashboard and the HUD must be there; run pnpm build first. -->
+    <Target Name="RequireWebFiles" BeforeTargets="BeforeBuild" Condition="'$(CI)' == 'true'">
+        <Error Condition="!Exists('$(UiDistDir)index.html')" Text="The dashboard is not built ($(UiDistDir)index.html). Run pnpm build before the .NET build." />
+        <Error Condition="!Exists('$(HudDistDir)wizelens.iife.js')" Text="The HUD script is not built ($(HudDistDir)wizelens.iife.js). Run pnpm build before the .NET build." />
+    </Target>
 
     <ItemGroup>
         <InternalsVisibleTo Include="WizeLens.Tests" />

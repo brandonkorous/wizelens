@@ -4,15 +4,16 @@ FROM node:24-slim AS node
 WORKDIR /src
 RUN corepack enable
 COPY . .
-RUN pnpm install --frozen-lockfile --filter "@wizeworks/lens-node..." \
- && pnpm --filter "@wizeworks/lens-node..." build \
+RUN pnpm install --frozen-lockfile --filter "@wizeworks/lens-node..." --filter "@wizeworks/lens-browser..." \
+ && pnpm --filter "@wizeworks/lens-node..." --filter "@wizeworks/lens-browser..." build \
  && pnpm --filter @wizeworks/lens-node deploy --prod --legacy /out/node
 
-# The .NET startup hook folder: WizeLens.AutoInstrumentation.dll with every dependency next to it, and the dashboard embedded.
+# The .NET startup hook folder: WizeLens.AutoInstrumentation.dll with every dependency next to it, and the dashboard and HUD embedded.
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS dotnet
 WORKDIR /src
 COPY dotnet ./dotnet
 COPY --from=node /src/js/packages/ui/dist ./js/packages/ui/dist
+COPY --from=node /src/js/packages/browser/dist ./js/packages/browser/dist
 WORKDIR /src/dotnet/src/WizeLens.AutoInstrumentation
 RUN dotnet publish -c Release -o publish && rm -f publish/*.pdb
 

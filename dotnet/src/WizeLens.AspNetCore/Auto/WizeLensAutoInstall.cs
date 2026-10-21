@@ -21,11 +21,11 @@ internal static class WizeLensAutoInstall
         return true;
     }
 
-    /// <summary>The middleware, then the <c>/_wizelens</c> endpoints in a branch of their own, in front of the app's pipeline.</summary>
+    /// <summary>The middleware (and the HUD injection), then the <c>/_wizelens</c> endpoints in a branch of their own, in front of the app's pipeline.</summary>
     public static void UsePipeline(IApplicationBuilder app, WizeLensOptions options)
     {
         options.PipelineAdded = true;
-        app.UseMiddleware<WizeLensMiddleware>();
+        WizeLensExtensions.UseMiddleware(app, options);
         app.MapWhen(c => c.Request.Path.StartsWithSegments(options.NormalizedBasePath), branch =>
         {
             branch.UseRouting();
