@@ -1,12 +1,12 @@
 import { fmtMs } from "../hud-model.js";
 import type { Recorder } from "../recorder-types.js";
-import { card, type CardActions } from "./card.js";
+import { card, type CardActions, type CardModel } from "./card.js";
 import { details, type DetailsModel } from "./details.js";
 import { h } from "./dom.js";
 import { apertureMark } from "./icons.js";
 import { dashboardLink } from "./parts.js";
 import { settings, type SettingsActions } from "./settings.js";
-import type { HudSnapshot } from "./snapshot.js";
+import type { HudSnapshot } from "./page-summary.js";
 import type { HudSettings } from "./storage.js";
 
 export interface HudViewModel {
@@ -14,6 +14,8 @@ export interface HudViewModel {
   snap: HudSnapshot;
   settings: HudSettings;
   slowMs: number;
+  /** The page's call count and kind, for the tips. */
+  page: CardModel["page"];
   /** The details panel's data. Null while the panel is closed. */
   details: DetailsModel | null;
 }
@@ -35,7 +37,7 @@ function full(m: HudViewModel, a: HudActions): HTMLElement[] {
   const req = snap.req;
   const link = (v?: Parameters<Recorder["traceLink"]>[1]) => (req?.profiled ? dashboardLink(recorder, req, v) : null);
   const panel = m.settings.panel;
-  const cardEl = card({ req, view: snap.view, busy: snap.busy, live: m.settings.live, panel, link }, a);
+  const cardEl = card({ req, view: snap.view, busy: snap.busy, live: m.settings.live, panel, link, page: m.page }, a);
   if (panel === "details" && m.details) return [details(m.details, () => a.close()), cardEl];
   if (panel === "settings") return [settings(recorder, m.settings.live, m.slowMs, a), cardEl];
   return [cardEl];

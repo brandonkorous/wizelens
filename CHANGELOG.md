@@ -2,6 +2,28 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — The HUD shows the page
+
+### Changed
+
+- **The HUD card is the page, like Glimpse.** It showed one request at a time and jumped to each new call. A page that
+  loads its panels and status with many small calls changed it so fast that you could not read it. Now the card shows
+  the page you are on, such as `GET /orders`, and holds still. Total and Render are the page load. Server and Database
+  add up the page and all its calls; the tips say how many. SQL, insights, and errors cover the page and all its calls,
+  Fetch counts the calls the page made (`fetch` and XHR, any method), and the card takes the worst color among them.
+  The HUD keeps the page's calls after they leave the recorder's short list, up to 2,000 per page, and a call's server
+  stats still count when they come after it left the list (`recorder.getServerStats`).
+- **The details panel lists the page's calls.** Every call is on one timeline with its query count, and new calls land
+  at the bottom as they happen. Click a call to open its trace. Errors, insights, and security risks come from the
+  calls that have them. The page's time and split stay at the top and "This page" stays at the bottom; only the calls
+  scroll, and a list scrolled to its end keeps new calls in view. "Page load" is the card's Total, so the two match;
+  LCP shows for full page loads only.
+- **A route change starts a new page.** `history.pushState` and the back and forward buttons start one; a new query
+  string on the same path does not. Its Total runs to the end of the calls that loaded it, and calls the tab repeats,
+  like a status poll, do not count. Live follows the page you are on. Settings clears the page's calls.
+- **Pause and play.** The live button is now pause and play, not a bolt. Pause holds what you see: new calls and pages
+  wait until you press play. The settings button is now a gear.
+
 ## [0.3.0-alpha.8] — The HUD on every stack
 
 The in-page HUD now shows in every web app: on the pages your .NET or Node app renders, with no code, and in React, Vue,

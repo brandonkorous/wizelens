@@ -1,4 +1,5 @@
 import { type Trace, type TraceSummary, traceTiming } from "@wizeworks/lens-core";
+import type { ServerStats } from "./recorder-types.js";
 import type { RequestStore } from "./request-store.js";
 import { mergeRequests, serverStatsFromTrace, summaryToRequest } from "./requests.js";
 
@@ -14,12 +15,15 @@ export interface ServerDataOptions {
 }
 
 const JSON_ACCEPT = { headers: { Accept: "application/json" } };
+// Server stats kept by trace id, for rows that left the short list before their stats came. The HUD adds up a page's calls.
+const MAX_STATS = 2000;
 
 /** Reads traces from the WizeLens API: full traces for the HUD, and this tab's earlier requests. */
 export class ServerData {
   readonly #o: ServerDataOptions;
   readonly #traces = new Map<string, Trace>();
   readonly #statsLoaded = new Set<string>();
+  readonly #stats = new Map<string, ServerStats>();
   readonly #endpoints = new Map<string, string>();
   #restoring: Promise<void> | null = null;
 
@@ -39,6 +43,11 @@ export class ServerData {
   /** The WizeLens base URL that holds this trace. */
   endpointOf(traceId: string): string {
     return this.#endpoints.get(traceId) ?? this.#o.endpointUrl;
+  }
+
+  /** Loaded server stats of one trace, also after its row left the list. Null when not loaded. */
+  getServerStats(traceId: string): ServerStats | null {
+    return this.#stats.get(traceId) ?? null;
   }
 
   getTrace(traceId: string): Trace | null {
@@ -71,6 +80,8 @@ export class ServerData {
       if (retry) setTimeout(() => void this.loadServerStats(traceId, false), 1500);
       return;
     }
+    this.#stats.set(traceId, server);
+    if (this.#stats.size > MAX_STATS) this.#stats.delete(this.#stats.keys().next().value!);
     const renderMs = traceTiming(trace).renderMs;
     const store = this.#o.store;
     store.set(store.get().map((r) => (r.traceId === traceId ? { ...r, server, renderMs: r.renderMs ?? renderMs } : r)));

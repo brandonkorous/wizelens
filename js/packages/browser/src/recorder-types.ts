@@ -89,6 +89,8 @@ export interface Recorder {
   restore(): Promise<void>;
   /** Load server stats for one trace into its row. Runs on its own for profiled requests. */
   loadServerStats(traceId: string): Promise<void>;
+  /** Server stats of one trace, when loaded. They stay after the row leaves the list. */
+  getServerStats?(traceId: string): ServerStats | null;
   /** The full trace, when it is already loaded. */
   getTrace(traceId: string): Trace | null;
   /** Load the full (federated) trace. Null when the server has no data for it. */

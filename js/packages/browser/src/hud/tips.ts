@@ -1,4 +1,4 @@
-import { fmtMs, pct, type RequestView } from "../hud-model.js";
+import { fmtMs, type RequestView, share } from "../hud-model.js";
 import type { RecordedRequest } from "../recorder-types.js";
 import { type Child, h } from "./dom.js";
 import { dashLink, widthOf } from "./parts.js";
@@ -6,8 +6,8 @@ import { dashLink, widthOf } from "./parts.js";
 type Parts = NonNullable<NonNullable<RecordedRequest["server"]>["parts"]>;
 
 function tipHead(title: string, ms: number | null, total: number | null): Child[] {
-  const share = ms !== total ? pct(ms, total) : "";
-  return [h("h4", null, title), h("div", { class: "wl-tip-big" }, fmtMs(ms), share && h("span", { class: "wl-tip-sub" }, ` (${share})`))];
+  const part = ms !== total ? share(ms, total) : "";
+  return [h("h4", null, title), h("div", { class: "wl-tip-big" }, fmtMs(ms), part && h("span", { class: "wl-tip-sub" }, ` (${part})`))];
 }
 
 /** Opens the dashboard in a new tab. Hidden when the server has no trace for the request. */
@@ -18,12 +18,12 @@ function row(cls: string | null, label: string, ms: number | null): Child[] {
   return [h("dt", null, cls && h("i", { class: `wl-key ${cls}` }), label), h("dd", null, fmtMs(ms))];
 }
 
-export function totalTip(view: RequestView, href: string | null): Child[] {
+export function totalTip(view: RequestView, href: string | null, what = "Request start to the next paint"): Child[] {
   const s = view.segments;
   const rows = s && [row("wl-c-server", "Server code", s.server), row("wl-c-db", "Database", s.db), row("wl-c-render", "Render", s.render), row("wl-c-other", "Network and other", s.other)];
   return [
     tipHead("Total", view.totalMs, view.totalMs),
-    h("div", { class: "wl-tip-sub" }, "Request start to the next paint"),
+    h("div", { class: "wl-tip-sub" }, what),
     rows && h("dl", null, rows),
     tipLink("View the timeline", href),
   ];
@@ -38,10 +38,11 @@ function serverParts(p: Parts, total: number, others: string[]): Child[] {
   ];
 }
 
-export function serverTip(req: RecordedRequest, view: RequestView, href: string | null): Child[] {
+export function serverTip(req: RecordedRequest, view: RequestView, href: string | null, scope: string | null = null): Child[] {
   const srv = req.server;
   return [
     tipHead("Server", view.serverMs, view.totalMs),
+    scope && h("div", { class: "wl-tip-sub" }, scope),
     !srv && h("p", null, req.profiled ? "Loading server data…" : "No server data for this request."),
     srv?.parts && serverParts(srv.parts, view.serverMs || 1, srv.services.slice(1)),
     tipLink("View the server calls", href),
@@ -66,12 +67,12 @@ function dbRows(srv: NonNullable<RecordedRequest["server"]>): HTMLElement {
   );
 }
 
-export function dbTip(req: RecordedRequest, view: RequestView, href: string | null): Child[] {
+export function dbTip(req: RecordedRequest, view: RequestView, href: string | null, scope: string | null = null): Child[] {
   const srv = req.server;
   const bars = srv?.dbDurations.slice(0, 40) ?? [];
   return [
     tipHead("Database", view.dbMs, view.totalMs),
-    h("div", { class: "wl-tip-sub" }, srv ? (srv.dbCount === 1 ? "1 query" : `${srv.dbCount} queries`) : "No data yet"),
+    h("div", { class: "wl-tip-sub" }, srv ? (srv.dbCount === 1 ? "1 query" : `${srv.dbCount} queries`) : "No data yet", scope && ` · ${scope}`),
     bars.length > 0 && spark(bars),
     srv && srv.dbCount > 0 && dbRows(srv),
     tipLink("View all queries", href),

@@ -1,9 +1,9 @@
-import { type Finding, type FindingKind, insightsOf, SECURITY_LABELS, securityOf, type Trace, type TraceView, traceTiming } from "@wizeworks/lens-core";
-import { fmtMs, pct, type RequestView } from "../hud-model.js";
+import { type Finding, type FindingKind, insightsOf, SECURITY_LABELS, securityOf, type TraceView } from "@wizeworks/lens-core";
+import { fmtMs, plural, type RequestView, share } from "../hud-model.js";
 import type { PageStats } from "../page.js";
-import type { RecordedRequest } from "../recorder-types.js";
 import { type Child, h } from "./dom.js";
-import { dashLink, noServerData, panelBar, stackBar, statusPill } from "./parts.js";
+import { dashLink, panelBar, stackBar, statusPill } from "./parts.js";
+import type { HudSnapshot } from "./page-summary.js";
 import { waterfall, type WfRow } from "./waterfall.js";
 
 const FINDING_LABEL: Record<FindingKind, string> = {
@@ -16,16 +16,14 @@ const FINDING_LABEL: Record<FindingKind, string> = {
   ...SECURITY_LABELS,
 };
 
-// Rows of the short timeline and insights shown. The dashboard shows them all.
-const TIMELINE_ROWS = 6;
+// Calls and insights shown. The dashboard shows them all.
+const CALL_ROWS = 200;
 const TOP_INSIGHTS = 3;
 
-/** What the details panel shows. `findings` and `rows` come from the loaded trace. */
+/** What the details panel shows: the page, its calls as rows, and findings from the traces of its flagged calls. */
 export interface DetailsModel {
-  req: RecordedRequest | null;
-  view: RequestView;
+  snap: HudSnapshot;
   page: PageStats;
-  trace: Trace | null;
   findings: Finding[];
   rows: WfRow[];
   link: (view: TraceView) => string;
@@ -52,18 +50,20 @@ function findingList(findings: Finding[]): HTMLElement {
 
 function legend(view: RequestView): HTMLElement {
   const item = (cls: string, ms: number | null, label: string) => {
-    const share = pct(ms, view.totalMs);
-    return h("span", null, h("i", { class: `wl-dot ${cls}` }), " ", h("b", null, fmtMs(ms)), ` ${label} `, share && `(${share})`);
+    const part = share(ms, view.totalMs);
+    return h("span", null, h("i", { class: `wl-dot ${cls}` }), " ", h("b", null, fmtMs(ms)), ` ${label} `, part && `(${part})`);
   };
   return h("div", { class: "wl-legend" }, item("wl-c-server", view.serverMs, "Server"), item("wl-c-db", view.dbMs, "Database"), item("wl-c-render", view.renderMs, "Render"));
 }
 
-function pageVitals(page: PageStats): HTMLElement {
+// Page load is the card's Total, so the two match. LCP is for full loads only.
+function pageVitals(page: PageStats, snap: HudSnapshot): HTMLElement {
+  const lcp = snap.lead ? page.lcpMs : null;
   return h(
     "dl",
     { class: "wl-stats wl-stats-sm" },
-    stat("Page load", fmtMs(page.totalMs)),
-    stat("LCP", fmtMs(page.lcpMs), grade(page.lcpMs, 2500, 4000), "Largest Contentful Paint: when the main content shows. Good: 2.5 s or less."),
+    stat("Page load", fmtMs(snap.view.totalMs), null, snap.lead ? "Navigation start to the first paint. The same as Total." : "Route change to the end of the calls that loaded it. The same as Total."),
+    stat("LCP", fmtMs(lcp), grade(lcp, 2500, 4000), "Largest Contentful Paint: when the main content shows, on a full page load. Good: 2.5 s or less."),
     stat("INP", fmtMs(page.inpMs), grade(page.inpMs, 200, 500), "Interaction to Next Paint: the slowest click or key press. Good: 200 ms or less."),
     stat("CLS", page.cls === null ? "—" : page.cls.toFixed(3), grade(page.cls, 0.1, 0.25), "Cumulative Layout Shift: how much the page jumps. Good: 0.1 or less."),
   );
@@ -83,29 +83,39 @@ function findingGroups(findings: Finding[], link: (v: TraceView) => string): Chi
   });
 }
 
-function requestBody(m: DetailsModel, req: RecordedRequest): Child[] {
-  const { view, trace, rows, link } = m;
-  const service = trace ? traceTiming(trace).service : req.server?.services[0];
-  const all = rows.length > TIMELINE_ROWS ? `View all ${rows.length} rows` : "View the full timeline";
+// Every call of the page on one time axis. New calls land at the bottom.
+function calls(m: DetailsModel): Child[] {
+  const { snap, rows } = m;
+  const hidden = Math.max(0, rows.length - CALL_ROWS) + snap.dropped;
   return [
-    h("div", { class: "wl-meta" }, `${new Date(req.startMs).toLocaleTimeString()} · ${fmtMs(view.totalMs)}`, service ? ` · ${service}` : ""),
-    stackBar(view, true, view.health === "critical"),
-    legend(view),
-    h("h3", null, "Timeline"),
-    req.profiled && !trace ? noServerData(req) : waterfall(rows, req.startMs, TIMELINE_ROWS),
-    req.profiled && dashLink(link("timeline"), all),
-    findingGroups(m.findings, link),
+    h("h3", null, `Calls · ${snap.view.fetch ?? 0}`),
+    hidden > 0 && h("p", { class: "wl-muted" }, `${plural(hidden, "earlier call")} not shown.`),
+    waterfall(rows.slice(-CALL_ROWS), snap.req.startMs),
   ];
 }
 
-/** A short look at one request. Every "view all" link opens the dashboard in a new tab. */
+// The page's time and split. It stays at the top while the calls scroll.
+function summary({ req, view }: HudSnapshot): HTMLElement {
+  const services = req.server?.services ?? [];
+  return h(
+    "div",
+    { class: "wl-sum" },
+    h("div", { class: "wl-meta" }, `${new Date(req.startMs).toLocaleTimeString()} · ${fmtMs(view.totalMs)}`, services.length > 0 ? ` · ${services.join(", ")}` : ""),
+    stackBar(view, true, view.health === "critical"),
+    legend(view),
+  );
+}
+
+/** A short look at the page: its calls and what went wrong. Every "view all" link opens the dashboard in a new tab. */
 export function details(m: DetailsModel, onClose: () => void): HTMLElement {
-  const { req, view } = m;
+  const { req, view } = m.snap;
   const pill = statusPill(req, view);
   return h(
     "section",
-    { key: "details", class: "wl-panel wl-details", "aria-label": "WizeLens request details" },
-    panelBar(onClose, h("span", { class: "wl-panel-title", title: req?.url }, req ? `${req.method} ${req.path}` : "Request details"), req && h("span", { class: `wl-pill ${pill.cls}` }, pill.text)),
-    h("div", { class: "wl-body" }, req ? requestBody(m, req) : noServerData(null), h("h3", null, "This page"), pageVitals(m.page)),
+    { key: "details", class: "wl-panel wl-details", "aria-label": "WizeLens page details" },
+    panelBar(onClose, h("span", { class: "wl-panel-title", title: req.url }, `${req.method} ${req.path}`), h("span", { class: `wl-pill ${pill.cls}` }, pill.text)),
+    summary(m.snap),
+    h("div", { class: "wl-body" }, calls(m), findingGroups(m.findings, m.link)),
+    h("div", { class: "wl-page" }, h("h3", null, "This page"), pageVitals(m.page, m.snap)),
   );
 }

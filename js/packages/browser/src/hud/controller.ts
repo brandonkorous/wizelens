@@ -1,33 +1,42 @@
 import { analyzeTrace, type Finding, type Trace } from "@wizeworks/lens-core";
+import { pageLoadRequest } from "../document-request.js";
 import { createPageMonitor, EMPTY_PAGE_STATS, type PageStats } from "../page.js";
+import { afterNextPaint } from "../paint.js";
 import type { RecordedRequest, Recorder } from "../recorder-types.js";
+import { watchRoutes } from "../routes.js";
+import { now } from "../session.js";
 import type { DetailsModel } from "./details.js";
 import { morphChildren } from "./dom.js";
+import { type HudPage, PageLog } from "./page-log.js";
+import { type HudSnapshot, summarizePage } from "./page-summary.js";
 import { dashboardLink, traceIdOf, watchTrace } from "./parts.js";
-import { holdDelay, hudSnapshot, type HudSnapshot, pinOf, restoredIdOf } from "./snapshot.js";
 import { type HudSettings, type Panel, readSettings, subscribeStored, writeLive, writeMinimized, writePanel } from "./storage.js";
 import { type HudActions, hudView } from "./view.js";
-import { waterfallRows, type WfRow } from "./waterfall.js";
+import { pageRows } from "./waterfall.js";
 
-/** Runs one HUD in `root`: reads the recorder, keeps the settings, and patches the DOM when something changes. */
+// Traces loaded for the details panel: the page's own, and its calls with errors or insights.
+const MAX_TRACES = 10;
+
+const flagged = (r: RecordedRequest) => !!r.error || (r.status ?? 0) >= 500 || (r.server?.insights ?? 0) > 0 || (r.server?.errorCount ?? 0) > 0;
+const href = () => (typeof location === "undefined" ? "http://localhost/" : location.href);
+const origin = () => (typeof performance === "undefined" ? Date.now() : performance.timeOrigin);
+
+/** Runs one HUD in `root`: follows the page and its calls, keeps the settings, and patches the DOM when something changes. */
 export class HudController implements HudActions {
   readonly #recorder: Recorder;
   readonly #root: Node;
   readonly #slowMs: () => number;
+  readonly #log = new PageLog(href(), origin());
   #settings: HudSettings = readSettings();
-  #snap: HudSnapshot | null = null;
-  #pinnedId: string | null = null;
-  #page: PageStats = EMPTY_PAGE_STATS;
+  #page: HudPage = this.#log.current;
+  #pinnedId: number | null = null;
+  #pausedAt: number | null = null;
+  #vitals: PageStats = EMPTY_PAGE_STATS;
   #stops: (() => void)[] = [];
   #queued = false;
   #running = false;
-  #holdTimer: ReturnType<typeof setTimeout> | null = null;
-  #restoredId: string | null = null;
-  #traceId: string | null = null;
-  #trace: Trace | null = null;
-  #stopTrace: () => void = () => {};
-  #findings: { trace: Trace | null; list: Finding[] } = { trace: null, list: [] };
-  #rows: { req: RecordedRequest | null; trace: Trace | null; list: WfRow[] } = { req: null, trace: null, list: [] };
+  #traces = new Map<string, { trace: Trace | null; stop: () => void }>();
+  #findings = new WeakMap<Trace, Finding[]>();
 
   constructor(recorder: Recorder, root: Node, slowMs: () => number) {
     this.#recorder = recorder;
@@ -42,13 +51,16 @@ export class HudController implements HudActions {
     const onKey = (e: Event) => (e as KeyboardEvent).key === "Escape" && this.#settings.panel !== "" && this.close();
     if (typeof addEventListener === "function") addEventListener("keydown", onKey);
     this.#stops = [
-      this.#recorder.subscribe(() => this.queue()),
+      // Take rows at once: a burst of calls can push older rows out before the next render.
+      this.#recorder.subscribe(() => (this.#take(), this.queue())),
       subscribeStored(() => this.queue()),
-      monitor.subscribe(() => ((this.#page = monitor.getSnapshot()), this.queue())),
+      monitor.subscribe(() => ((this.#vitals = monitor.getSnapshot()), this.queue())),
+      watchRoutes(() => this.#navigate()),
       () => monitor.stop(),
       () => typeof removeEventListener === "function" && removeEventListener("keydown", onKey),
     ];
-    this.#page = monitor.getSnapshot();
+    this.#vitals = monitor.getSnapshot();
+    this.#take();
     this.render();
   }
 
@@ -57,9 +69,7 @@ export class HudController implements HudActions {
     this.#running = false;
     this.#stops.forEach((s) => s());
     this.#stops = [];
-    this.#setHold(null);
-    this.#watch(null);
-    this.#restoredId = null;
+    this.#watch([]);
     morphChildren(this.#root, []);
   }
 
@@ -76,15 +86,31 @@ export class HudController implements HudActions {
   render(): void {
     if (!this.#running) return;
     this.#settings = readSettings();
-    const snap = (this.#snap = hudSnapshot(this.#recorder.getSnapshot(), this.#settings, this.#pinnedId, this.#slowMs()));
-    this.#setHold(snap.held);
-    const restoredId = restoredIdOf(snap.req);
-    if (restoredId && restoredId !== this.#restoredId) void this.#recorder.loadServerStats(restoredId);
-    this.#restoredId = restoredId;
+    const live = this.#settings.live;
+    // Paused (also after a refresh): hold the page and its calls as they are now.
+    this.#pausedAt = live ? null : (this.#pausedAt ?? now());
+    const page = (this.#page = (!live && this.#log.find(this.#pinnedId)) || this.#log.current);
+    this.#pinnedId = live ? null : page.id;
+    const slowMs = this.#slowMs();
+    const snap = summarizePage(page, pageLoadRequest, slowMs, live ? Infinity : this.#pausedAt!);
     const open = this.#settings.panel === "details" && !this.#settings.minimized;
-    this.#watch(open ? traceIdOf(snap.req) : null);
-    const model = { recorder: this.#recorder, snap, settings: this.#settings, slowMs: this.#slowMs(), details: open ? this.#details(snap) : null };
+    this.#watch(open ? this.#flaggedTraces(snap) : []);
+    const info = { calls: snap.view.fetch ?? 0, navigation: page.navigation };
+    const model = { recorder: this.#recorder, snap, settings: this.#settings, slowMs, page: info, details: open ? this.#details(snap) : null };
+    const follow = this.#atBottom();
     morphChildren(this.#root, [hudView(model, this)]);
+    const body = this.#callsBox();
+    if (follow && body) body.scrollTop = body.scrollHeight;
+  }
+
+  #callsBox(): HTMLElement | null {
+    return ((this.#root as ParentNode).querySelector?.(".wl-details .wl-body") as HTMLElement | null) ?? null;
+  }
+
+  // The user has the calls list at its end: keep it there, so new calls stay in view.
+  #atBottom(): boolean {
+    const body = this.#callsBox();
+    return !!body && body.scrollHeight - body.scrollTop - body.clientHeight < 24;
   }
 
   details(): void {
@@ -99,12 +125,19 @@ export class HudController implements HudActions {
     writePanel("");
   }
 
+  clear(): void {
+    this.#recorder.clear();
+    this.#log.clear(this.#page);
+    this.queue();
+  }
+
   toggleLive(): void {
     this.setLive(!this.#settings.live);
   }
 
   setLive(on: boolean): void {
-    if (!on && this.#snap) this.#pinnedId = pinOf(this.#snap);
+    this.#pinnedId = on ? null : this.#page.id;
+    this.#pausedAt = on ? null : now();
     writeLive(on);
   }
 
@@ -116,32 +149,52 @@ export class HudController implements HudActions {
     writeMinimized(false);
   }
 
-  // Re-render when a held failure stops being held.
-  #setHold(held: RecordedRequest | null): void {
-    if (this.#holdTimer) clearTimeout(this.#holdTimer);
-    this.#holdTimer = held ? setTimeout(() => this.queue(), holdDelay(held)) : null;
+  #take(): void {
+    this.#log.take(this.#recorder.getSnapshot());
+    if (this.#recorder.getServerStats) this.#log.fill((id) => this.#recorder.getServerStats!(id));
   }
 
-  #watch(traceId: string | null): void {
-    if (traceId === this.#traceId) return;
-    this.#stopTrace();
-    this.#stopTrace = () => {};
-    this.#traceId = traceId;
-    this.#trace = null;
-    if (!traceId) return;
-    this.#stopTrace = watchTrace(this.#recorder, traceId, (t) => {
-      if (t === this.#trace) return;
-      this.#trace = t;
+  // A route change starts a new page. Its render time is the next paint.
+  #navigate(): void {
+    const page = this.#log.navigate(href(), origin() + (typeof performance === "undefined" ? 0 : performance.now()));
+    if (!page) return;
+    void afterNextPaint().then((at) => {
+      if (at !== null) page.renderMs = Math.max(0, at - page.startMs);
       this.queue();
     });
+    this.queue();
+  }
+
+  // The page's own trace, then the newest calls with errors or insights.
+  #flaggedTraces(snap: HudSnapshot): string[] {
+    const ids = snap.calls.filter((r) => r === snap.lead || flagged(r)).map(traceIdOf);
+    return [...new Set(ids.filter((id): id is string => id !== null))].slice(-MAX_TRACES);
+  }
+
+  #watch(traceIds: string[]): void {
+    for (const [id, w] of this.#traces) if (!traceIds.includes(id)) (w.stop(), this.#traces.delete(id));
+    for (const id of traceIds) {
+      if (this.#traces.has(id)) continue;
+      const w = { trace: null as Trace | null, stop: () => {} };
+      this.#traces.set(id, w);
+      w.stop = watchTrace(this.#recorder, id, (t) => {
+        if (t === w.trace) return;
+        w.trace = t;
+        this.queue();
+      });
+    }
   }
 
   #details(snap: HudSnapshot): DetailsModel {
-    const { req } = snap;
-    const trace = this.#trace;
-    if (this.#findings.trace !== trace) this.#findings = { trace, list: trace ? analyzeTrace(trace) : [] };
-    if (this.#rows.req !== req || this.#rows.trace !== trace) this.#rows = { req, trace, list: req ? waterfallRows(req, trace) : [] };
-    const link = (v: Parameters<Recorder["traceLink"]>[1]) => dashboardLink(this.#recorder, req, v);
-    return { req, view: snap.view, page: this.#page, trace, findings: this.#findings.list, rows: this.#rows.list, link };
+    const findings = [...this.#traces.values()].flatMap(({ trace }) => {
+      if (!trace) return [];
+      if (!this.#findings.has(trace)) this.#findings.set(trace, analyzeTrace(trace));
+      return this.#findings.get(trace)!;
+    });
+    const route = this.#page.navigation === "spa" ? this.#page : null;
+    const callLink = (r: RecordedRequest) => (r.profiled ? this.#recorder.traceLink(r.traceId) : null);
+    const rows = pageRows(snap.calls, snap.lead, route, callLink);
+    const link = (v: Parameters<Recorder["traceLink"]>[1]) => dashboardLink(this.#recorder, snap.req, v);
+    return { snap, page: this.#vitals, findings, rows, link };
   }
 }

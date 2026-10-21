@@ -22,9 +22,11 @@ function icon(size: number, ...children: SVGElement[]): SVGElement {
 const path = (d: string) => s("path", { d });
 
 export const iconChevron = () => icon(16, path("M6 15l6-6 6 6"));
-export const iconBolt = () => icon(16, path("M13 2L4 14h7l-1 8 9-12h-7z"));
-export const iconGear = () =>
-  icon(16, s("circle", { cx: 12, cy: 12, r: 3 }), path("M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"));
+export const iconPause = () => icon(16, s("rect", { x: 6, y: 4, width: 4, height: 16, rx: 1 }), s("rect", { x: 14, y: 4, width: 4, height: 16, rx: 1 }));
+export const iconPlay = () => icon(16, path("M7 4l13 8-13 8z"));
+const GEAR =
+  "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z";
+export const iconGear = () => icon(16, path(GEAR), s("circle", { cx: 12, cy: 12, r: 3 }));
 export const iconMinimize = () => icon(16, s("circle", { cx: 12, cy: 12, r: 9 }), path("M8 12h8"));
 export const iconExternal = (size = 14) => icon(size, path("M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"));
 export const iconClose = () => icon(16, path("M6 6l12 12M18 6L6 18"));

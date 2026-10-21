@@ -94,4 +94,8 @@ export function pct(part: number | null | undefined, total: number | null | unde
   return `${Math.round((part / total) * 100)}%`;
 }
 
+/** Like `pct`, but empty when the part is more than the total (time added up over many calls). */
+export const share = (part: number | null | undefined, total: number | null | undefined): string =>
+  part !== null && part !== undefined && total && part <= total ? pct(part, total) : "";
+
 export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
