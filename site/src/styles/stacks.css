@@ -44,7 +44,7 @@
 .wl-st-high { display: grid; gap: 12px; align-content: start; padding: 32px 32px 40px 0; border-bottom: 1px solid var(--wl-line); }
 .wl-st-high:nth-child(even) { padding-left: 32px; padding-right: 0; border-left: 1px solid var(--wl-line); }
 .wl-st-high p { font-size: 16.5px; color: var(--wl-fg-2); max-width: 34em; }
-.wl-st-high code { justify-self: start; padding: 6px 12px; border-radius: 8px; background: var(--wl-paper); border: 1px solid var(--wl-line); font-size: 13.5px; }
+.wl-st-high code { justify-self: start; max-width: 100%; overflow-wrap: anywhere; padding: 6px 12px; border-radius: 8px; background: var(--wl-paper); border: 1px solid var(--wl-line); font-size: 13.5px; }
 
 .wl-st-next { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 64px; align-items: end; }
 .wl-st-next > div { display: grid; gap: 24px; }
@@ -59,6 +59,7 @@
   .wl-ct { grid-template-columns: minmax(0, 1fr); }
   .wl-ct-code { border-right: 0; border-bottom: 1px solid var(--wl-night-line); }
   .wl-st-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wl-st-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 @media (max-width: 680px) {
   .wl-st-facts { grid-template-columns: minmax(0, 1fr); }
@@ -69,3 +70,4 @@
   .wl-ct-row { grid-template-columns: minmax(0, 1fr) 50px; }
   .wl-ct-track { grid-column: 1 / -1; }
 }
+.wl-st-shot { display: block; width: 100%; height: auto; border-radius: var(--wl-radius-sm); border: 1px solid var(--wl-line); box-shadow: var(--wl-shadow-pop); }

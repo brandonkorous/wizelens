@@ -7,7 +7,7 @@ export const GO: Stack = {
   seoTitle: "WizeLens for Go: tracing for net/http, database/sql, and slog",
   seoDescription: "One Go module sets up OpenTelemetry for WizeLens: net/http and database/sql spans with SQL parameters, slog lines in their trace, and N+1 queries found.",
   headline: ["Every Go request,", "in a few lines."],
-  lede: "Go has no agent, so the WizeLens module sets up the OpenTelemetry SDK and the contrib instrumentation in a few lines. It adds what they leave out: SQL parameters, request headers, and bodies. Spans and logs go to your hub or the cloud over OTLP.",
+  lede: "Go has no agent, so the WizeLens module sets up the OpenTelemetry SDK and the contrib instrumentation in a few lines. It adds what they leave out: SQL parameters, request and response headers, and bodies. Spans and logs go to your hub or the cloud over OTLP. Requires Go 1.26 or newer.",
   facts: [
     { value: "1 module", label: "the OpenTelemetry SDK and contrib, set up" },
     { value: "5 calls", label: "Start, OpenDB, Transport, Logger, Handler" },
@@ -33,7 +33,7 @@ export const GO: Stack = {
     { label: "info  loaded 12 orders", ms: "", start: 62, dur: 1, kind: "log", depth: 1, line: 5 },
   ],
   captures: [
-    { title: "Requests", items: ["net/http, through otelhttp", "Any http.Handler", "Request headers, secrets redacted", "Request and response bodies (opt-in)"] },
+    { title: "Requests", items: ["net/http, through otelhttp", "Any http.Handler", "Request and response headers, secrets redacted", "Request and response bodies (opt-in)"] },
     { title: "Databases", items: ["database/sql, through otelsql", "Any driver, such as pgx or sqlite", "One span per query, named by its first word", "SQL parameters, sensitive names redacted"] },
     { title: "Calls out", items: ["http.Client, through Transport", "W3C trace context to the next service"] },
     { title: "Logs", items: ["log/slog, through otelslog", "Your own slog handler still writes", "Each line with its trace (InfoContext and friends)"] },
@@ -45,6 +45,8 @@ export const GO: Stack = {
     { title: "Already on OpenTelemetry?", body: "Point your OTLP HTTP exporters at WizeLens and the insights work on your spans. DBOptions adds SQL parameters to your own otelsql.Open call.", code: "OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960" },
     { title: "Parameters make duplicates visible.", body: "Without the values on each query, WizeLens cannot tell whether two queries were the same. OpenDB puts them on every query span." },
     { title: "Errors and slow traces stay.", body: "Sample with WIZELENS_SAMPLE_RATE and WizeLens still keeps every trace with an error or a span of 1 second or more. Log lines are kept or dropped with their trace." },
+    { title: "A 5xx you meant is not a failure.", body: "A paused site's 503 is on purpose. Set wizelens.expected on the server span, or send the header X-WizeLens-Expected: 1. Error rates leave it out, and the sampler does not keep a trace for it alone.", code: 'span.SetAttributes(attribute.Bool("wizelens.expected", true))' },
+    { title: "Name the user.", body: "Set enduser.id on the server span, and user.full_name for a display name. The Users page counts each user's requests and shows the name.", code: 'span.SetAttributes(attribute.String("enduser.id", id))' },
     { title: "Your OTEL_* settings win.", body: "Set OTEL_EXPORTER_OTLP_ENDPOINT or any other OTEL_* variable and Start uses it. WIZELENS_ENABLED=false makes Start do nothing.", code: "WIZELENS_ENABLED=false" },
   ],
   docs: [

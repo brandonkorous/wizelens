@@ -7,11 +7,11 @@ export const PYTHON: Stack = {
   seoTitle: "WizeLens for Python: tracing for FastAPI, Flask, and Django",
   seoDescription: "opentelemetry-instrument with WizeLens defaults: FastAPI, Flask, and Django requests, SQL with its parameters, requests and httpx calls, and logs.",
   headline: ["Python requests,", "no code change."],
-  lede: "opentelemetry-instrument traces FastAPI, Flask, Django, SQLAlchemy, psycopg, requests, and httpx. The wizelens package plugs into it and adds SQL parameters, logs, and sampling that keeps errors. It is coming to PyPI; install it from GitHub today.",
+  lede: "opentelemetry-instrument traces FastAPI, Flask, Django, SQLAlchemy, psycopg, requests, and httpx. The wizelens package plugs into it and adds SQL parameters, logs, and sampling that keeps errors. Until it is on PyPI, install it from GitHub. Requires Python 3.10 or newer.",
   facts: [
     { value: "0 code", label: "for FastAPI, Flask, and Django" },
     { value: "1 package", label: "an OpenTelemetry distro" },
-    { value: "Soon", label: "on PyPI; from GitHub today" },
+    { value: "Python 3.10+", label: "from GitHub until it is on PyPI" },
   ],
   file: "terminal",
   code: [
@@ -32,7 +32,7 @@ export const PYTHON: Stack = {
     { label: "info  loaded 12 orders", ms: "", start: 72, dur: 1, kind: "log", depth: 1, line: 1 },
   ],
   captures: [
-    { title: "Frameworks", items: ["FastAPI", "Flask", "Django", "One server span per FastAPI request", "Request and response bodies (opt-in)"] },
+    { title: "Frameworks", items: ["FastAPI", "Flask", "Django", "One server span per FastAPI request", "Request and response headers, secrets redacted", "Request and response bodies (opt-in)"] },
     { title: "Databases", items: ["SQLAlchemy", "psycopg", "sqlite3", "Parameters on every DB-API driver", "connection.execute() too"] },
     { title: "Calls out", items: ["requests", "httpx", "The trace carried to the next service"] },
     { title: "Logs", items: ["Every logging line, with its trace", "basicConfig and dictConfig still work"] },
@@ -44,6 +44,8 @@ export const PYTHON: Stack = {
     { title: "It finds the package on its own.", body: "wizelens is an OpenTelemetry distro and configurator, so opentelemetry-instrument loads it. Do not also install opentelemetry-distro." },
     { title: "Logs are on.", body: "Plain OpenTelemetry leaves logs off. WizeLens sends each logging line with the trace it was written in." },
     { title: "One line for bodies.", body: "Add the middleware for your framework and set WIZELENS_CAPTURE_BODY=true. Text and JSON bodies are kept, up to 16 KB each.", code: "app.add_middleware(WizeLensMiddleware)" },
+    { title: "A 5xx you meant is not a failure.", body: "A paused site's 503 is on purpose. Set wizelens.expected on the server span, or send the header X-WizeLens-Expected: 1. Error rates leave it out, and the sampler does not keep a trace for it alone.", code: 'span.set_attribute("wizelens.expected", True)' },
+    { title: "Name the user.", body: "Set enduser.id on the server span, and user.full_name for a display name. The Users page counts each user's requests and shows the name.", code: 'span.set_attribute("enduser.id", user.id)' },
     { title: "No opentelemetry-instrument? One call.", body: "Call configure before your app imports its libraries, then instrument them yourself.", code: 'wizelens.configure(service_name="orders-api")' },
   ],
   docs: [

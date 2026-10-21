@@ -7,6 +7,9 @@ export type Capture = { title: string; items: string[] };
 
 export type Highlight = { title: string; body: string; code?: string };
 
+// A real screenshot of the product on this stack.
+export type Shot = { title: string; body: string; src: string; alt: string; width: number; height: number };
+
 export type Stack = {
   slug: string;
   name: string;
@@ -25,4 +28,5 @@ export type Stack = {
   highlightsTitle: string;
   highlights: Highlight[];
   docs: { label: string; href: string }[];
+  shot?: Shot;
 };

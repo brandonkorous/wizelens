@@ -40,7 +40,7 @@ export const VUE: Stack = {
     { title: "Errors", items: ["Errors Vue catches, with the component", "Its trail: App > Cart > PriceLine", "Uncaught errors and rejections"] },
     { title: "Logs", items: ["Browser console lines, 500 per page", "Server logs in the same trace"] },
     { title: "Source maps", items: ["Minified stacks mapped to your source", "Dev servers' maps read on their own"] },
-    { title: "In components", items: ["inject(WIZELENS_KEY)", "this.$wizelens in the Options API", "setUser for the signed-in user"] },
+    { title: "In components", items: ["inject(WIZELENS_KEY)", "this.$wizelens in the Options API", "setUser(id, { name }) for the Users page"] },
   ],
   highlightsTitle: "Built on Vue's own hooks.",
   highlights: [

@@ -7,11 +7,11 @@ export const JAVA: Stack = {
   seoTitle: "WizeLens for Java: tracing for Spring, JDBC, Hibernate, and Kafka",
   seoDescription: "The OpenTelemetry Java agent, pointed at WizeLens: Spring requests, JDBC and Hibernate queries, HTTP calls, Kafka, and logs, with no code change.",
   headline: ["The Java agent,", "pointed at WizeLens."],
-  lede: "The OpenTelemetry Java agent traces Spring, servlets, JDBC, Hibernate, HTTP clients, and Kafka with no code change, and it sends to WizeLens today. The WizeLens extension adds SQL parameters and sampling that keeps errors. It is coming to Maven Central.",
+  lede: "The OpenTelemetry Java agent traces Spring, servlets, JDBC, Hibernate, HTTP clients, and Kafka with no code change, and it sends to WizeLens today. The WizeLens extension adds SQL parameters, headers, and sampling that keeps errors. The extension requires Java 17 or newer.",
   facts: [
     { value: "0 code", label: "the agent does the tracing" },
     { value: "3 loggers", label: "Logback, Log4j, java.util.logging" },
-    { value: "Soon", label: "the extension on Maven Central" },
+    { value: "Java 17+", label: "for the WizeLens extension" },
   ],
   file: "run.sh",
   code: [
@@ -33,18 +33,20 @@ export const JAVA: Stack = {
     { label: "info  Loaded 6 orders for customer 42", ms: "", start: 100, dur: 1, kind: "log", depth: 1, line: 4 },
   ],
   captures: [
-    { title: "Requests", items: ["Spring", "Servlets", "Request headers, with the extension", "Request and response bodies (WizeLensBodyFilter)"] },
+    { title: "Requests", items: ["Spring", "Servlets", "Request and response headers, with the extension", "Request and response bodies (WizeLensBodyFilter)"] },
     { title: "Databases", items: ["JDBC", "Hibernate", "SQL parameters, with the extension"] },
     { title: "Calls and messages", items: ["HTTP clients", "Kafka", "And more, through the agent"] },
     { title: "Logs", items: ["Logback", "Log4j", "java.util.logging", "MDC and code attributes, with the extension"] },
     { title: "Insights", items: ["N+1 queries", "N+1 HTTP calls", "Slow queries", "Database waits", "Duplicate queries, with the extension"] },
-    { title: "Packages", items: ["Every Maven jar on the class path, with the extension", "Inside Spring Boot and WAR jars too", "Checked against OSV on the hub and cloud"] },
+    { title: "Packages", items: ["Every Maven jar on the class path, with the extension", "Inside Spring Boot and WAR jars too", "Checked against OSV on the hub and cloud", "Off with WIZELENS_PACKAGES=false"] },
   ],
   highlightsTitle: "The agent you know, with WizeLens defaults.",
   highlights: [
     { title: "No code change.", body: "The OpenTelemetry Java agent traces the app as it runs. Point it at WizeLens and you get traces, logs, and the insights.", code: "-javaagent:opentelemetry-javaagent.jar" },
-    { title: "One jar brings the values back.", body: "The agent replaces SQL values with ?, so WizeLens cannot call two queries duplicates. The extension turns parameters on. Until it is on Maven Central, build it with mvn -f java/pom.xml package.", code: "-Dotel.javaagent.extensions=wizelens.jar" },
+    { title: "One jar brings the values back.", body: "The agent replaces SQL values with ?, so WizeLens cannot call two queries duplicates. The extension turns parameters on. Until it is on Maven Central, build it with mvn -f java/pom.xml install -DskipTests and use target/wizelens-0.1.0-alpha.1.jar.", code: "-Dotel.javaagent.extensions=wizelens.jar" },
     { title: "Errors and slow traces stay.", body: "With the extension, sample with WIZELENS_SAMPLE_RATE and WizeLens still keeps every trace with an error or a span of 1 second or more." },
+    { title: "A 5xx you meant is not a failure.", body: "A paused site's 503 is on purpose. Set wizelens.expected on the server span. Error rates leave it out, and the sampler does not keep a trace for it alone.", code: 'Span.current().setAttribute("wizelens.expected", true)' },
+    { title: "Name the user.", body: "Set enduser.id on the server span, and user.full_name for a display name. The Users page counts each user's requests and shows the name.", code: 'Span.current().setAttribute("enduser.id", userId)' },
     { title: "Your settings win.", body: "Anything you set with -D or OTEL_* wins over the extension. Each WIZELENS_* variable also works as a system property.", code: "-Dwizelens.sample.rate=0.1" },
   ],
   docs: [

@@ -63,6 +63,22 @@ function Captures({ stack }: { stack: Stack }) {
   );
 }
 
+function ShotSection({ stack }: { stack: Stack }) {
+  const s = stack.shot;
+  if (!s) return null;
+  return (
+    <section className="wl-section">
+      <div className="wl-wrap">
+        <div className="wl-head wl-head-split">
+          <h2 className="wl-h2">{s.title}</h2>
+          <p className="wl-lede">{s.body}</p>
+        </div>
+        <motion.img className="wl-st-shot" src={s.src} alt={s.alt} width={s.width} height={s.height} loading="lazy" decoding="async" {...rise()} />
+      </div>
+    </section>
+  );
+}
+
 function Highlights({ stack }: { stack: Stack }) {
   return (
     <section className="wl-section">
@@ -109,6 +125,7 @@ export function StackPage({ stack }: { stack: Stack }) {
       <section className="wl-st-demo">
         <div className="wl-wrap"><CodeToTrace stack={stack} /></div>
       </section>
+      <ShotSection stack={stack} />
       <Captures stack={stack} />
       <Highlights stack={stack} />
       <Next stack={stack} />
