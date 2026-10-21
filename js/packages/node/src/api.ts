@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { annotateErrorFrames, answerResolve, HEADER_HOP, type MapLoader, type ServiceInfo, SOURCEMAPS_RESOLVE_PATH, type Span, type TagRule, type Trace, type TraceSummary } from "@wizeworks/lens-core";
 import { browserClockOffset, remoteOf, sanitizeClientLog, sanitizeClientSpan } from "./client-spans.js";
+import { isHudScript, serveHudScript } from "./hud-bundle.js";
 import { firstHeader, readJson, sendJson, setCors } from "./http-util.js";
 import { handleMcp, type McpDataSource } from "./mcp.js";
 import type { MetricStore } from "./metrics/store.js";
@@ -32,6 +33,8 @@ export interface ApiDeps {
   sourceMaps?: MapLoader | null;
   /** The `tags` option's rules and the built-ins (docs/TAGS-PLAN.md). */
   tags: readonly TagRule[];
+  /** The lens-browser script bundle served at `{basePath}/wizelens.js`, or null when it is not found. */
+  hudBundle: string | null;
 }
 
 const CLIENT_SPANS = "api/client-spans";
@@ -135,6 +138,7 @@ export function createHandler(d: ApiDeps) {
     else if (sub === "mcp") await handleMcpRoute(d, r, res, method);
     else if (sub.startsWith("api/")) await handleApi(d, sub, method, r, res, url);
     else if (method !== "GET" && method !== "HEAD") res.writeHead(405).end();
+    else if (isHudScript(sub)) await serveHudScript(d.hudBundle, sub, method, res);
     else await serveUi(d.uiDir, sub, res);
     return true;
   };

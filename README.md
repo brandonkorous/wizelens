@@ -351,6 +351,7 @@ Guardrails:
 |---|---|---|
 | `Enabled` | `WIZELENS_ENABLED`, else Development only | Turn WizeLens on or off. |
 | `Dashboard` | `WIZELENS_DASHBOARD`, else Development only | Serve the dashboard, read API, and MCP. `false` is send-only: capture and send to the hub or cloud, no reads. |
+| `Hud` | `true` (or `WIZELENS_HUD`) | While the dashboard is served, put the in-page HUD on the app's HTML pages (Razor Pages, MVC views, static `.html`): a script tag from `{BasePath}/wizelens.js` before the last `</body>` of each `200` `text/html` answer. Works with `UseResponseCompression` before or after `UseWizeLens` (after: page loads come back uncompressed). Fragments and answers the app compresses itself are left alone. `false` turns it off. |
 | `BasePath` | `/_wizelens` | Where the dashboard and API live. |
 | `ServiceName` | app name | Name shown for this service. |
 | `Storage` | `Sqlite`, or `Memory` when send-only | `Sqlite` (survives restarts) or `Memory`. |
@@ -378,6 +379,7 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 | `serviceName` | *(required)* | Name shown for this service. |
 | `enabled` | `WIZELENS_ENABLED`, else on unless `NODE_ENV=production` | Turn WizeLens on or off. |
 | `dashboard` | `WIZELENS_DASHBOARD`, else on unless `NODE_ENV=production` | Serve the dashboard, read API, and MCP. `false` is send-only: capture and send to the hub or cloud, no reads. |
+| `hud` | `true` (or `WIZELENS_HUD`) | While the dashboard is served, put the in-page HUD on the app's HTML pages (any framework, static `.html` too): a script tag from `{basePath}/wizelens.js` before the last `</body>` of each `200` `text/html` answer to a `GET`. Page navigations reach the app without `Accept-Encoding`, so a compressing layer answers them in plain HTML; other answers stay compressed. Fragments are left alone. |
 | `basePath` | `/_wizelens` | Where the dashboard and API live. |
 | `storage` | `"sqlite"`, or `"memory"` when send-only | `"sqlite"` or `"memory"`. |
 | `storagePath` | `{cwd}/.wizelens/traces.db` | SQLite file. |

@@ -9,6 +9,7 @@ import { createDbSpans, createTraceDb } from "./db.js";
 import { disabledWizeLens } from "./disabled.js";
 import { createGetTrace } from "./federation.js";
 import { connectHub, releaseOf } from "./hub-connect.js";
+import { hudTagFor, resolveHudBundle } from "./hud-bundle.js";
 import { samplingInfo, TraceSampler } from "./sampling.js";
 import { buildInfo, DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, VERSION } from "./info.js";
 import { createLogSink, createLogWriter, makeLogger } from "./logger.js";
@@ -21,7 +22,7 @@ import type { MetricStore } from "./metrics/store.js";
 import { SqlitePersister } from "./persist.js";
 import { createErrorMiddleware, expected, recordException, setUser, tag } from "./request-api.js";
 import { TraceStore } from "./store.js";
-import { isEnabled, servesDashboard } from "./mode.js";
+import { hudOn, isEnabled, servesDashboard } from "./mode.js";
 import { localMapLoader } from "./sourcemaps.js";
 import { createTracing, installGlobals } from "./tracing.js";
 import type { WizeLens, WizeLensOptions } from "./types.js";
@@ -86,7 +87,9 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const uiDir = resolveUiDir(options.uiDir);
   const hub = connectHub(options, store, info, dashboard ? selfEndpoints : null, metrics?.store ?? null);
   const enableMcp = dashboard && !!options.enableMcp;
-  const handler = createHandler({ basePath, store, redactKeys, uiDir, enableMcp, mcp, info, getTrace, metrics: metrics?.store ?? null, selfEndpoints, dashboard, sourceMaps, tags });
+  const hudBundle = dashboard ? resolveHudBundle() : null;
+  const deps = { basePath, store, redactKeys, uiDir, enableMcp, mcp, info, getTrace, selfEndpoints, dashboard, sourceMaps, tags, hudBundle };
+  const handler = createHandler({ ...deps, metrics: metrics?.store ?? null });
   const capture = {
     tracer: tracing.tracer,
     basePath,
@@ -95,6 +98,7 @@ function buildParts(options: WizeLensOptions, basePath: string) {
     w3c: new W3CTraceContextPropagator(),
     captureResponseBody: !!options.captureResponseBody,
     handler,
+    hudTag: hudTagFor(dashboard && hudOn(options), hudBundle, basePath),
   };
   return { hub, service, redactKeys, store, persister, tracing, logs, write, getTrace, handler, capture, metrics, middleware: createMiddleware(capture) };
 }

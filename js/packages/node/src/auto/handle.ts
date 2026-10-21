@@ -31,6 +31,7 @@ const fallbackCapture: CaptureDeps = {
   w3c: new W3CTraceContextPropagator(),
   captureResponseBody: false,
   handler: async () => false,
+  hudTag: null,
 };
 
 const capture = new Proxy(fallbackCapture, {
