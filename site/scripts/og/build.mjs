@@ -3,9 +3,15 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DOC_LIST } from "../../src/lib/docs/nav.ts";
+import { ANGULAR } from "../../src/sections/stacks/data/angular.ts";
 import { DOTNET } from "../../src/sections/stacks/data/dotnet.ts";
+import { GO } from "../../src/sections/stacks/data/go.ts";
+import { JAVA } from "../../src/sections/stacks/data/java.ts";
 import { NODE } from "../../src/sections/stacks/data/node.ts";
+import { PYTHON } from "../../src/sections/stacks/data/python.ts";
 import { REACT } from "../../src/sections/stacks/data/react.ts";
+import { SVELTE } from "../../src/sections/stacks/data/svelte.ts";
+import { VUE } from "../../src/sections/stacks/data/vue.ts";
 import { readMd } from "./build-md.mjs";
 import { BLADES } from "./parts.mjs";
 import { svgToPng, toPng } from "./render.mjs";
@@ -16,11 +22,11 @@ const OUT = join(SITE, "public", "og");
 
 function firstCode(body) {
   const m = /```(\w*)\r?\n([\s\S]*?)```/.exec(body);
-  if (!m || m[1] === "bash" || m[1] === "text") return /```(?:csharp|ts|tsx|js|json)\r?\n([\s\S]*?)```/.exec(body)?.[1]?.trimEnd() ?? null;
+  if (!m || m[1] === "bash" || m[1] === "text") return /```(?:csharp|ts|tsx|js|json|java|python|go)\r?\n([\s\S]*?)```/.exec(body)?.[1]?.trimEnd() ?? null;
   return m[2].trimEnd();
 }
 
-const CODE_FILE = { "aspnet-core": "Program.cs", node: "server.ts", nextjs: "instrumentation.ts", react: "main.tsx", "quick-start": "Program.cs", "ai-access": "Terminal" };
+const CODE_FILE = { "aspnet-core": "Program.cs", node: "server.ts", nextjs: "instrumentation.ts", react: "main.tsx", browser: "index.html", go: "main.go", java: "App.java", python: "app.py", "quick-start": "Program.cs", "ai-access": "Terminal" };
 
 function docImages() {
   return DOC_LIST.filter((d) => d.slug !== "contract").map((d) => {
@@ -45,7 +51,7 @@ function legalImages() {
 
 const IMAGES = [
   { name: "home", el: T.home },
-  ...[DOTNET, NODE, REACT].map((s) => ({ name: s.slug, el: () => T.stack(s) })),
+  ...[DOTNET, NODE, REACT, VUE, ANGULAR, SVELTE, JAVA, PYTHON, GO].map((s) => ({ name: s.slug, el: () => T.stack(s) })),
   { name: "story", el: T.story },
   { name: "changelog", el: () => T.changelog(releases()) },
   { name: "cloud", el: T.cloud },

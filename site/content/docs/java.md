@@ -25,6 +25,12 @@ queries had the same values. It does not call them duplicates; the extension bel
 The extension is one jar that the agent loads. It sets the WizeLens defaults, keeps every trace with an error or a slow
 span when you sample, and turns on SQL parameters.
 
+> **Coming to Maven Central:** the first release of `com.wizelens:wizelens` is not on Maven Central yet, so the download
+> and the dependency below do not work until it is. Until then, build the jar from the repository:
+> `git clone https://github.com/brandonkorous/wizelens && mvn -f wizelens/java/pom.xml install -DskipTests`. That makes
+> `wizelens/java/target/wizelens-0.1.0-alpha.1.jar` (use it as `wizelens.jar`) and puts the dependency in your local
+> Maven repository. The agent alone, above, works today.
+
 ```bash
 curl -L -o wizelens.jar https://repo1.maven.org/maven2/com/wizelens/wizelens/0.1.0-alpha.1/wizelens-0.1.0-alpha.1.jar
 

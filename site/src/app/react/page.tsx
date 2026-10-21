@@ -1,23 +1,8 @@
-import { JsonLd } from "@/components/seo/JsonLd";
-import { breadcrumbs, graph, software } from "@/lib/schema";
-import { pageMeta } from "@/lib/seo";
-import { StackPage } from "@/sections/stacks/StackPage";
 import { REACT } from "@/sections/stacks/data/react";
+import { StackRoute, stackMetadata } from "@/sections/stacks/route";
 
-export const metadata = pageMeta({
-  path: "/react/",
-  title: REACT.seoTitle,
-  absolute: true,
-  description: REACT.seoDescription,
-  image: "react",
-  imageAlt: `${REACT.headline.join(" ")} A trace built from ${REACT.file}.`,
-});
+export const metadata = stackMetadata(REACT);
 
 export default function Page() {
-  return (
-    <>
-      <JsonLd data={graph(software(REACT.seoDescription), breadcrumbs([{ name: "WizeLens", path: "/" }, { name: REACT.name, path: "/react/" }]))} />
-      <StackPage stack={REACT} />
-    </>
-  );
+  return <StackRoute stack={REACT} />;
 }

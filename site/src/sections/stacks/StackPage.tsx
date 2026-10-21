@@ -89,9 +89,9 @@ function Next({ stack }: { stack: Stack }) {
       <div className="wl-wrap wl-st-next">
         <div>
           <h2 className="wl-h2">Mixing stacks? One trace across all of them.</h2>
-          <p className="wl-lede">A React front end, a .NET gateway, and a Node service follow the same rules and join the same trace.</p>
+          <p className="wl-lede">A Vue front end, a .NET gateway, a Node service, and a Python worker join the same trace, and the same insights run on all of it.</p>
           <div className="wl-st-others">
-            {others.map((o) => <a key={o.slug} href={`/${o.slug}/`} className="wl-btn wl-btn-ghost">WizeLens for {o.name} <ArrowRight /></a>)}
+            {others.map((o) => <a key={o.slug} href={`/${o.slug}/`} className="wl-btn wl-btn-ghost">{o.name} <ArrowRight /></a>)}
           </div>
         </div>
         <ul className="wl-st-docs">

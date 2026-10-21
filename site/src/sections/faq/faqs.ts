@@ -4,7 +4,7 @@ export type Faq = { q: string; a: string };
 export const FAQS: Faq[] = [
   {
     q: "What is WizeLens?",
-    a: "WizeLens shows you everything one request did. You add a small package to your .NET, Node, or React app, and every request becomes one trace: the click in the browser, every service it touched, every SQL query, every log line, and the render. A dashboard at /_wizelens shows it, and a small HUD in the corner of your page shows the latest request as you work.",
+    a: "WizeLens shows you everything one request did. You add a small package to your app, and every request becomes one trace: the click in the browser, every service it touched, every SQL query, every log line, and the render. In .NET and Node, a dashboard at /_wizelens shows it, and in React a small HUD in the corner of your page shows the latest request as you work. Java, Python, and Go services send to the hub or the cloud.",
   },
   {
     q: "Is WizeLens free?",
@@ -32,6 +32,6 @@ export const FAQS: Faq[] = [
   },
   {
     q: "What does WizeLens work with?",
-    a: "ASP.NET Core on .NET 10, Node 22.13 or newer (Express, Fastify, Koa, Hono, Next.js), and React 18 or newer. Databases through EF Core, Dapper, ADO.NET, Prisma, Drizzle, TypeORM, pg, mysql2, and SQLite. gRPC, RabbitMQ, Kafka, and Azure Service Bus. Any other language can send OpenTelemetry to the hub.",
+    a: "ASP.NET Core on .NET 10, Node 22.13 or newer (Express, Fastify, Koa, Hono, NestJS, Next.js), and React 18 or newer, Vue, Angular, Svelte, or any page in the browser. Java (Spring and more, through the OpenTelemetry agent), Python (FastAPI, Flask, Django), and Go (net/http) through OpenTelemetry. Databases through EF Core, Dapper, ADO.NET, Prisma, Drizzle, TypeORM, pg, mysql2, SQLite, Redis, MongoDB, Elasticsearch, JDBC, SQLAlchemy, and database/sql. gRPC, RabbitMQ, Kafka, Azure Service Bus, BullMQ, and Amazon SQS. Any other language can send OpenTelemetry to the hub.",
   },
 ];

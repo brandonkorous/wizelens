@@ -102,6 +102,36 @@ export const handleError = createHandleError();`,
 </script>`,
   },
   {
+    id: "java",
+    label: "Java",
+    file: "terminal",
+    note: "The OpenTelemetry Java agent, with no code change. Spring, JDBC, Hibernate, HTTP clients, and Kafka.",
+    code: `OTEL_SERVICE_NAME=orders-api \\
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960 \\
+java -javaagent:opentelemetry-javaagent.jar -jar app.jar`,
+  },
+  {
+    id: "python",
+    label: "Python",
+    file: "terminal",
+    note: "FastAPI, Flask, or Django, with no code change. Coming to PyPI; until then it installs from GitHub.",
+    code: `pip install "wizelens @ git+https://github.com/brandonkorous/wizelens#subdirectory=python"
+opentelemetry-bootstrap -a install
+
+OTEL_SERVICE_NAME=orders-api opentelemetry-instrument uvicorn app:app`,
+  },
+  {
+    id: "go",
+    label: "Go",
+    file: "main.go",
+    note: "One module: net/http, database/sql with parameters, outgoing calls, and slog.",
+    code: `shutdown, err := wizelens.Start(ctx, wizelens.WithServiceName("inventory"))
+defer shutdown(context.Background())
+
+db, err := wizelens.OpenDB("pgx", dsn, "postgresql")
+http.ListenAndServe(":8080", wizelens.Handler(mux, "inventory"))`,
+  },
+  {
     id: "hub",
     label: "Local hub",
     file: "terminal",

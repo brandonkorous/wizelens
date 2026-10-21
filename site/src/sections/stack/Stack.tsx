@@ -4,10 +4,11 @@ import { useRef } from "react";
 import { motion, useInView } from "motion/react";
 
 const GROUPS = [
-  { title: "Frameworks", items: ["ASP.NET Core", "Express", "Fastify", "Koa", "Hono", "Next.js", "node:http", "React"] },
-  { title: "Databases and ORMs", items: ["EF Core", "Dapper", "ADO.NET", "Npgsql", "SqlClient", "MySqlConnector", "Prisma", "Drizzle", "TypeORM", "pg", "mysql2", "better-sqlite3", "node:sqlite"] },
-  { title: "Messaging and RPC", items: ["gRPC", "RabbitMQ", "Kafka", "Azure Service Bus", "MassTransit", "HttpClient", "fetch"] },
-  { title: "Logging", items: ["ILogger", "Serilog", "NLog", "console", "pino", "winston", "bunyan", "log4js", "consola", "NestJS"] },
+  { title: "Frameworks", items: ["ASP.NET Core", "Express", "Fastify", "Koa", "Hono", "NestJS", "Next.js", "node:http", "Spring", "FastAPI", "Flask", "Django", "net/http"] },
+  { title: "In the browser", items: ["React", "Vue", "Angular", "Svelte", "SvelteKit", "Plain JS"] },
+  { title: "Databases and ORMs", items: ["EF Core", "Dapper", "ADO.NET", "Npgsql", "SqlClient", "MySqlConnector", "Prisma", "Drizzle", "TypeORM", "pg", "mysql2", "better-sqlite3", "node:sqlite", "Redis", "MongoDB", "Elasticsearch", "JDBC", "Hibernate", "SQLAlchemy", "psycopg", "database/sql"] },
+  { title: "Messaging and RPC", items: ["gRPC", "RabbitMQ", "Kafka", "Azure Service Bus", "MassTransit", "BullMQ", "Amazon SQS", "GraphQL", "HttpClient", "fetch"] },
+  { title: "Logging", items: ["ILogger", "Serilog", "NLog", "console", "pino", "winston", "bunyan", "log4js", "consola", "Logback", "Log4j", "Python logging", "slog"] },
   { title: "Open standards", items: ["OpenTelemetry", "OTLP", "W3C traceparent", "MCP"] },
 ];
 
@@ -38,7 +39,8 @@ export function Stack() {
         <div className="wl-head wl-head-split">
           <h2 className="wl-h2">Works with what you already run.</h2>
           <p className="wl-lede">
-            .NET 10, Node 22, and React 18 or newer. Anything else that speaks OpenTelemetry can send to the hub.
+            .NET 10, Node 22, and React 18 or newer, plus Vue, Angular, and Svelte in the browser, and Java, Python, and Go
+            through OpenTelemetry. Anything else that speaks OpenTelemetry can send to the hub.
           </p>
         </div>
         <div className="wl-stack" ref={ref}>

@@ -1,0 +1,55 @@
+import type { Stack } from "../types";
+
+export const SVELTE: Stack = {
+  slug: "svelte",
+  name: "Svelte",
+  title: "WizeLens for Svelte and SvelteKit",
+  seoTitle: "WizeLens for SvelteKit: from the server render to the page view",
+  seoDescription: "Link every fetch to its server trace, join the first page load to the server that rendered it, and send each client error with its SvelteKit route.",
+  headline: ["One trace, from", "server to page view."],
+  lede: "Two lines in hooks.client.ts, one in your root layout. Every fetch links to the server trace it started, the first page load joins the server that rendered it, and errors carry their route.",
+  facts: [
+    { value: "2 files", label: "hooks.client.ts and +layout.svelte" },
+    { value: "1 trace", label: "for the first load and its server" },
+    { value: "Plain Svelte", label: "and svelte-spa-router too" },
+  ],
+  file: "hooks.client.ts · +layout.svelte",
+  code: [
+    "// src/hooks.client.ts",
+    'initWizeLens({ endpoint: "/_wizelens", enabled: dev });',
+    "export const handleError = createHandleError();",
+    "",
+    "// src/routes/+layout.svelte",
+    "trackSvelteKitNavigation(afterNavigate);",
+  ],
+  traceTitle: "page load /products/42 · 480 ms",
+  scale: 500,
+  rows: [
+    { label: "pageview /products/{}", ms: "480 ms", start: 0, dur: 480, kind: "net", depth: 0, line: 1 },
+    { label: "GET /products/42", ms: "140 ms", start: 8, dur: 140, kind: "server", depth: 1, line: 1 },
+    { label: "SELECT * FROM products WHERE id = $1", ms: "2.8 ms", start: 22, dur: 4, kind: "db", depth: 2, line: 1 },
+    { label: "fetch GET inventory/stock/42", ms: "62 ms", start: 40, dur: 62, kind: "net", depth: 2, line: 1 },
+    { label: "warn  no price for sku 42", ms: "", start: 300, dur: 2, kind: "log", depth: 1, line: 1 },
+    { label: "TypeError: price is undefined · /products/[id]", ms: "", start: 410, dur: 2, kind: "log", depth: 1, line: 2 },
+  ],
+  captures: [
+    { title: "Requests", items: ["traceparent on every fetch and XHR", "Same origin, or what you allow", "Joins the server trace"] },
+    { title: "Page views", items: ["TTFB, SSR, FCP, LCP, INP, CLS", "Slow and oversized images", "Each client-side navigation"] },
+    { title: "The first load", items: ["Joins the server's trace of that page", "When the server runs @wizeworks/lens-node"] },
+    { title: "Errors", items: ["Errors from handleError", "With route id and status", "Uncaught errors and rejections"] },
+    { title: "Logs", items: ["Browser console lines, 500 per page", "Server logs in the same trace"] },
+    { title: "Plain Svelte", items: ["trackNavigation() in main.ts", "Hash mode for svelte-spa-router", "Back, forward, and hash changes"] },
+  ],
+  highlightsTitle: "Passed in, not patched in.",
+  highlights: [
+    { title: "One trace from server to browser.", body: "When your SvelteKit server runs WizeLens for Node, the first page load joins the server's trace: the render, its queries, and the page's Web Vitals together." },
+    { title: "Errors know their route.", body: "createHandleError sends each client error with its route id, like /products/[id], then runs your own handler.", code: "createHandleError(({ message }) => ({ message }))" },
+    { title: "SvelteKit's functions, handed over.", body: "The package does not import svelte or $app/*. You pass it afterNavigate, and each client-side navigation is a page view. The first load already is one.", code: "trackSvelteKitNavigation(afterNavigate)" },
+    { title: "No SvelteKit? Still one line.", body: "In a plain Svelte app, call trackNavigation() after initWizeLens. Hash mode covers svelte-spa-router.", code: 'trackNavigation({ mode: "hash" })' },
+  ],
+  docs: [
+    { label: "Svelte and SvelteKit setup", href: "/docs/browser/#svelte-and-sveltekit" },
+    { label: "Source maps", href: "/docs/source-maps/" },
+    { label: "Node setup", href: "/docs/node/" },
+  ],
+};

@@ -1,0 +1,57 @@
+import type { Stack } from "../types";
+
+export const VUE: Stack = {
+  slug: "vue",
+  name: "Vue",
+  title: "WizeLens for Vue",
+  seoTitle: "WizeLens for Vue: every fetch linked to its server trace",
+  seoDescription: "A Vue 3 plugin that links each fetch and XHR to its server trace, sends page views from vue-router, and reports errors with the component that threw.",
+  headline: ["Every Vue fetch,", "tied to its server."],
+  lede: "One plugin in main.ts. Every fetch and XHR links to the server trace it started. Page views come from vue-router, and errors Vue catches arrive with the component that threw them.",
+  facts: [
+    { value: "1 plugin", label: "in main.ts" },
+    { value: "Vue 3", label: "with vue-router 4" },
+    { value: "No Vue import", label: "in the package, so nothing extra in your bundle" },
+  ],
+  file: "main.ts · server.ts",
+  code: [
+    "// main.ts",
+    "createApp(App)",
+    "  .use(router)",
+    '  .use(WizeLens, { endpoint: "/_wizelens", router })',
+    '  .mount("#app");',
+    "",
+    "// server.ts (Node)",
+    "app.use(wizelens.middleware);",
+  ],
+  traceTitle: "fetch /api/cart · 96 ms",
+  scale: 100,
+  rows: [
+    { label: "fetch /api/cart", ms: "96 ms", start: 0, dur: 96, kind: "net", depth: 0, line: 3 },
+    { label: "POST /api/cart", ms: "71 ms", start: 9, dur: 71, kind: "server", depth: 1, line: 7 },
+    { label: "SELECT price FROM products WHERE id = $1", ms: "1.2 ms", start: 14, dur: 2, kind: "db", depth: 2, line: 7 },
+    { label: "INSERT INTO cart_items (cart_id, product_id, qty) …", ms: "3.6 ms", start: 20, dur: 4, kind: "db", depth: 2, line: 7 },
+    { label: "info  item 42 added to cart 7", ms: "", start: 28, dur: 1, kind: "log", depth: 2, line: 7 },
+    { label: "fetch POST pricing/quote", ms: "40 ms", start: 32, dur: 40, kind: "net", depth: 2, line: 7 },
+  ],
+  captures: [
+    { title: "Requests", items: ["traceparent on every fetch and XHR", "Same origin, or what you allow", "Joins the server trace"] },
+    { title: "Page views", items: ["TTFB, FCP, LCP, INP, CLS", "Slow and oversized images", "One per finished vue-router navigation"] },
+    { title: "Errors", items: ["Errors Vue catches, with the component", "Its trail: App > Cart > PriceLine", "Uncaught errors and rejections"] },
+    { title: "Logs", items: ["Browser console lines, 500 per page", "Server logs in the same trace"] },
+    { title: "Source maps", items: ["Minified stacks mapped to your source", "Dev servers' maps read on their own"] },
+    { title: "In components", items: ["inject(WIZELENS_KEY)", "this.$wizelens in the Options API", "setUser for the signed-in user"] },
+  ],
+  highlightsTitle: "Built on Vue's own hooks.",
+  highlights: [
+    { title: "Errors come with the component.", body: "Each error Vue catches carries the component that threw and its parents, so you know where it came from, not just the line.", code: '"vue.component.trail": "App > Cart > PriceLine"' },
+    { title: "Your handler keeps working.", body: "WizeLens sets app.config.errorHandler and keeps the one your app already had. It still runs, right after WizeLens sends the error." },
+    { title: "Routes, not reloads.", body: "Pass your router and each finished navigation is a page view. Failed or cancelled navigations are left out." },
+    { title: "On only where you say.", body: "Pass enabled: import.meta.env.DEV and WizeLens runs in development. Off, it is an instance that does nothing.", code: "enabled: import.meta.env.DEV" },
+  ],
+  docs: [
+    { label: "Vue setup", href: "/docs/browser/#vue" },
+    { label: "Source maps", href: "/docs/source-maps/" },
+    { label: "Node setup", href: "/docs/node/" },
+  ],
+};

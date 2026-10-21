@@ -19,6 +19,12 @@ const COLUMNS = [
       { label: ".NET", href: "/dotnet/" },
       { label: "Node", href: "/node/" },
       { label: "React and Next.js", href: "/react/" },
+      { label: "Vue", href: "/vue/" },
+      { label: "Angular", href: "/angular/" },
+      { label: "Svelte", href: "/svelte/" },
+      { label: "Java", href: "/java/" },
+      { label: "Python", href: "/python/" },
+      { label: "Go", href: "/go/" },
     ],
   },
   {

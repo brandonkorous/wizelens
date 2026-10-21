@@ -1,10 +1,10 @@
 export type Token = { text: string; kind: "kw" | "str" | "com" | "fn" | "type" | "plain" };
 
 const KEYWORDS = new Set([
-  "using", "var", "const", "let", "import", "from", "export", "async", "function", "await", "if", "return", "new", "true", "false",
+  "using", "var", "const", "let", "import", "from", "export", "async", "function", "await", "if", "return", "new", "true", "false", "defer", "func",
 ]);
 
-const PATTERN = /(\/\/.*$|#.*$|"(?:[^"\\]|\\.)*"|`[^`]*`|\b[A-Za-z_][\w.]*\b|\s+|.)/gm;
+const PATTERN = /((?<!:)\/\/.*$|#.*$|"(?:[^"\\]|\\.)*"|`[^`]*`|\b[A-Za-z_][\w.]*\b|\s+|.)/gm;
 
 function kindOf(word: string, next: string): Token["kind"] {
   if (KEYWORDS.has(word)) return "kw";

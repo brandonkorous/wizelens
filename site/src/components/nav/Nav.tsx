@@ -11,6 +11,12 @@ const PLATFORMS: MenuItem[] = [
   { href: "/dotnet/", label: ".NET", note: "ASP.NET Core, EF Core, and every Meter" },
   { href: "/node/", label: "Node", note: "Express, Fastify, Koa, Hono, and more" },
   { href: "/react/", label: "React and Next.js", note: "From the click to the database" },
+  { href: "/vue/", label: "Vue", note: "Every fetch linked to its server trace" },
+  { href: "/angular/", label: "Angular", note: "HttpClient calls joined to their traces" },
+  { href: "/svelte/", label: "Svelte and SvelteKit", note: "Page views, vitals, and errors" },
+  { href: "/java/", label: "Java", note: "The OpenTelemetry agent, no code change" },
+  { href: "/python/", label: "Python", note: "FastAPI, Flask, and Django" },
+  { href: "/go/", label: "Go", note: "net/http, database/sql, and slog" },
 ];
 
 const BEFORE = [{ href: "/#journey", label: "How it works" }];

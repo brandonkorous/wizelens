@@ -1,0 +1,57 @@
+import type { Stack } from "../types";
+
+export const ANGULAR: Stack = {
+  slug: "angular",
+  name: "Angular",
+  title: "WizeLens for Angular",
+  seoTitle: "WizeLens for Angular: every HttpClient call linked to its server trace",
+  seoDescription: "Link each HttpClient call to its server trace, send page views from the Angular router, and catch every error your ErrorHandler sees, zone.js unwrapped.",
+  headline: ["Every Angular call,", "to its server trace."],
+  lede: "Two providers in app.config.ts. Every HttpClient call links to the server trace it started. Page views come from the router, and errors from your ErrorHandler, with zone.js unwrapped.",
+  facts: [
+    { value: "2 providers", label: "in app.config.ts" },
+    { value: "Angular 14+", label: "standalone or NgModule" },
+    { value: "XHR or fetch", label: "HttpClient traced either way" },
+  ],
+  file: "app.config.ts · Program.cs",
+  code: [
+    "// app.config.ts",
+    'const lens = initWizeLens({ endpoint: "/_wizelens" });',
+    "{ provide: ErrorHandler, useValue: createWizeLensErrorHandler(lens) },",
+    "provideAppInitializer(() => void trackAngularRouter(inject(Router), lens)),",
+    "",
+    "// Program.cs",
+    "builder.Services.AddWizeLens();",
+    "app.UseWizeLens();",
+  ],
+  traceTitle: "xhr /api/orders · 142 ms",
+  scale: 150,
+  rows: [
+    { label: "xhr /api/orders", ms: "142 ms", start: 0, dur: 142, kind: "net", depth: 0, line: 1 },
+    { label: "GET /api/orders", ms: "118 ms", start: 10, dur: 118, kind: "server", depth: 1, line: 7 },
+    { label: "Handler OrdersController.Get", ms: "104 ms", start: 16, dur: 104, kind: "server", depth: 2, line: 6 },
+    { label: "SELECT \"o\".\"Id\", \"o\".\"Total\" FROM \"Orders\"", ms: "2.4 ms", start: 22, dur: 3, kind: "db", depth: 3, line: 6 },
+    { label: "GET billing-api/invoices?customerId=…", ms: "61 ms", start: 34, dur: 61, kind: "net", depth: 3, line: 6 },
+    { label: "info  Loaded 12 orders", ms: "", start: 100, dur: 1, kind: "log", depth: 3, line: 6 },
+  ],
+  captures: [
+    { title: "Requests", items: ["HttpClient, with or without withFetch()", "traceparent on every fetch and XHR", "Same origin, or what you allow"] },
+    { title: "Page views", items: ["TTFB, FCP, LCP, INP, CLS", "Slow and oversized images", "Each NavigationEnd, after redirects", "useHash: true too"] },
+    { title: "Errors", items: ["Every error ErrorHandler gets", "zone.js rejections unwrapped", "Still logged like Angular's own", "Uncaught errors and rejections"] },
+    { title: "Logs", items: ["Browser console lines, 500 per page", "Server logs in the same trace"] },
+    { title: "Source maps", items: ["Minified stacks mapped to your source", "Errors group by your source"] },
+    { title: "Setup", items: ["Standalone: app.config.ts", "NgModule: one ErrorHandler provider", "Before Angular 19: the root constructor"] },
+  ],
+  highlightsTitle: "Registered the Angular way.",
+  highlights: [
+    { title: "HttpClient is covered either way.", body: "HttpClient uses XMLHttpRequest unless you call withFetch(). WizeLens traces both, so every call carries a traceparent to your API." },
+    { title: "Errors group by their real stack.", body: "zone.js wraps promise rejections. The error handler unwraps them first, sends the error, then logs it like Angular's own.", code: "createWizeLensErrorHandler(lens)" },
+    { title: "The path you land on.", body: "Each NavigationEnd is a page view, named by its path after redirects. Before Angular 19, call it from your root component's constructor.", code: "trackAngularRouter(router)" },
+    { title: "No Angular inside.", body: "The package does not import @angular/*. It works from Angular 14 on and adds nothing but WizeLens to your bundle. You register its two parts yourself." },
+  ],
+  docs: [
+    { label: "Angular setup", href: "/docs/browser/#angular" },
+    { label: "Source maps", href: "/docs/source-maps/" },
+    { label: "ASP.NET Core setup", href: "/docs/aspnet-core/" },
+  ],
+};
