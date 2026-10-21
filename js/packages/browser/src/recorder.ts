@@ -13,13 +13,20 @@ export type { RecordedRequest, Recorder, RecorderOptions, ServerStats } from "./
 export { mergeRequests, serverStatsFromTrace, summaryToRequest } from "./requests.js";
 export { getSessionId } from "./session.js";
 
+const pageBase = () => (typeof location !== "undefined" ? location.href : "http://localhost/");
+
+/** The WizeLens base URL for an `endpoint` option (default "/_wizelens"), absolute and without a trailing slash. */
+export function endpointUrlOf(endpoint = "/_wizelens"): string {
+  return new URL(endpoint.replace(/\/+$/, "") + "/", pageBase()).href.replace(/\/$/, "");
+}
+
 function resolveOptions(options: RecorderOptions) {
-  const base = typeof location !== "undefined" ? location.href : "http://localhost/";
-  const endpoint = new URL((options.endpoint ?? "/_wizelens").replace(/\/+$/, "") + "/", base);
+  const base = pageBase();
+  const endpointUrl = endpointUrlOf(options.endpoint);
   return {
     base,
-    endpoint,
-    endpointUrl: endpoint.href.replace(/\/$/, ""),
+    endpoint: new URL(`${endpointUrl}/`),
+    endpointUrl,
     maxRecent: options.maxRecent ?? 30,
     flushIntervalMs: options.flushIntervalMs ?? 1000,
     statsDelayMs: options.serverStatsDelayMs ?? 400,

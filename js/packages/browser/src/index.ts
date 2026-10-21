@@ -17,3 +17,10 @@ export { currentRequest, endOf, ERROR_HOLD_MS, fmtMs, heldError, NEUTRAL_VIEW, p
 export type { RequestView } from "./hud-model.js";
 export { watchRoutes } from "./routes.js";
 export { now } from "./session.js";
+export { defineHud, HUD_TAG, mountHud, WizeLensHudElement } from "./hud/element.js";
+export type { HudOptions } from "./hud/element.js";
+export { startWizeLens } from "./lens.js";
+export { probeReadApi } from "./read-probe.js";
+export { endpointUrlOf } from "./recorder.js";
+export { register, registered, REGISTRY_KEY, unregister } from "./registry.js";
+export type { InstanceSource, RegisteredInstance } from "./registry.js";

@@ -6,7 +6,7 @@ import { settle, spansOf, stubDom, stubServer } from "./test-dom.js";
 import { type Call, postedSpans } from "./test-env.js";
 
 const realFetch = globalThis.fetch;
-const OPTIONS = { flushIntervalMs: 60_000, resolveFrames: false, captureConsole: false };
+const OPTIONS = { flushIntervalMs: 60_000, resolveFrames: false, captureConsole: false, hud: false };
 let calls: Call[];
 
 beforeEach(() => {
@@ -33,7 +33,7 @@ it("does nothing when off or outside a page", async () => {
   expect(calls).toEqual([]);
 });
 
-it("traces fetch calls, never reads traces back, and returns the running instance", async () => {
+it("traces fetch calls, reads nothing back without the HUD, and returns the running instance", async () => {
   const lens = initWizeLens(OPTIONS);
   expect(initWizeLens()).toBe(lens);
   expect(asWizeLens()).toBe(lens);

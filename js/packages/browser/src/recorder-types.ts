@@ -63,8 +63,8 @@ export interface RecorderOptions {
   capturePages?: boolean;
   /** Copy `console.log`, `warn`, `error`, `info`, `debug`, and `trace` calls into the page view's trace. Default true. */
   captureConsole?: boolean;
-  /** Read traces back from the server, for the HUD. Default true. Off sends only, for a server with its dashboard off. */
-  readServer?: boolean;
+  /** Read traces back from the server, for the HUD. Default true. Off sends only, for a server with its dashboard off. A promise decides later; reads wait for it. */
+  readServer?: boolean | Promise<boolean>;
   /** Your app's version (release), sent as service.version so stacks find the right source maps. Default: what the build plugin set. */
   version?: string;
   /** Read this page's source maps (dev servers serve them) so browser errors group by source. Default true. */

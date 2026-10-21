@@ -8,8 +8,8 @@ export interface ServerDataOptions {
   sessionId: string;
   maxRecent: number;
   store: RequestStore;
-  /** False: never read from the server (its dashboard is off). */
-  readServer: boolean;
+  /** False: never read from the server (its dashboard is off). A promise: reads wait for its answer. */
+  readServer: boolean | Promise<boolean>;
   getFetch(): typeof fetch | undefined;
 }
 
@@ -46,7 +46,7 @@ export class ServerData {
   }
 
   async loadTrace(traceId: string): Promise<Trace | null> {
-    const get = this.#o.readServer ? this.#o.getFetch() : undefined;
+    const get = (await this.#o.readServer) ? this.#o.getFetch() : undefined;
     if (typeof get !== "function") return this.getTrace(traceId);
     try {
       const res = await get(`${this.endpointOf(traceId)}/api/traces/${traceId}?federate=true`, JSON_ACCEPT);
@@ -60,8 +60,9 @@ export class ServerData {
   }
 
   async loadServerStats(traceId: string, retry = true): Promise<void> {
-    if (!this.#o.readServer || this.#statsLoaded.has(traceId)) return;
+    if (this.#statsLoaded.has(traceId)) return;
     this.#statsLoaded.add(traceId);
+    if (!(await this.#o.readServer)) return;
     const trace = await this.loadTrace(traceId);
     const server = trace ? serverStatsFromTrace(trace) : null;
     if (!trace || !server || server.durationMs === null) {
@@ -90,7 +91,7 @@ export class ServerData {
 
   async #readRestored(): Promise<void> {
     const { getFetch, sessionId, maxRecent, endpointUrl, store, base, readServer } = this.#o;
-    const get = readServer ? getFetch() : undefined;
+    const get = (await readServer) ? getFetch() : undefined;
     if (typeof get !== "function") return;
     try {
       const q = new URLSearchParams({ session: sessionId, limit: String(maxRecent) });
