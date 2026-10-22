@@ -1,6 +1,6 @@
 {
   "name": "@wizeworks/lens-react",
-  "version": "0.3.0-alpha.8",
+  "version": "0.3.0-alpha.9",
   "description": "WizeLens for React apps: links browser fetch calls to server traces and shows an in-page HUD.",
   "license": "MIT",
   "author": "WizeWorks LLC",
