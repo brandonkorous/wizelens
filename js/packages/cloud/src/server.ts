@@ -26,6 +26,7 @@ import { UNSUBSCRIBE_PATH } from "./mail/unsubscribe.js";
 import { RESEND_WEBHOOK_PATH, resendWebhook } from "./mail/webhook.js";
 import { openTelemetry } from "./telemetry/index.js";
 import { allRoutes } from "./routes/index.js";
+import { browserKeyOf, ingestBrowser } from "./routes/browser.js";
 import { ingestBatch, ingestOtlp } from "./routes/ingest.js";
 import { ingestPackages } from "./routes/packages.js";
 import { listProjectMaps, uploadSourceMap } from "./routes/sourcemaps.js";
@@ -36,6 +37,8 @@ import { forgetModels } from "./routes/models.js";
 const require = createRequire(import.meta.url);
 export const CLOUD_VERSION: string = (require("../package.json") as { version: string }).version;
 const BASE = "/_wizelens";
+/** A page sends about once a second while open; this leaves room for a few tabs per visitor. */
+const VISITOR_PER_MINUTE = 300;
 
 export interface Cloud {
   readonly server: Server;
@@ -50,6 +53,8 @@ interface Parts {
   app: CloudApp;
   router: Router<Ctx>;
   ingest: RateLimiter;
+  /** Browser keys: per visitor, on top of the per-key cap. */
+  visitor: RateLimiter;
   uiDir: string | null;
   auth: () => (req: IncomingMessage, res: ServerResponse) => Promise<void>;
 }
@@ -61,6 +66,9 @@ const needsClientHeader = (req: IncomingMessage, sub: string) =>
 async function routeBase(p: Parts, ctx: Ctx, sub: string): Promise<void> {
   const { req, res } = ctx;
   if (sub === "api/ingest" && req.method === "POST") return ingestBatch(ctx, p.ingest);
+  // Pages on a key's sites post with a public browser key, from another origin.
+  const browserKey = browserKeyOf(sub);
+  if (browserKey) return ingestBrowser(ctx, browserKey, { key: p.ingest, visitor: p.visitor });
   if (sub === PACKAGES_PATH && req.method === "POST") return ingestPackages(ctx, p.ingest);
   // Build tools upload source maps with the project's ingest key.
   if (sub === SOURCEMAPS_PATH && req.method === "POST") return uploadSourceMap(ctx, p.ingest);
@@ -142,7 +150,7 @@ export async function createCloud(options: CloudOptions = {}): Promise<Cloud> {
   };
   const ready = (url: string) => ((listenUrl = url), (auth = wiring.start(url)), (handler = authHandler(auth, config.trustProxy)));
   if (config.publicUrl) ready(config.publicUrl);
-  const parts: Parts = { app, router: allRoutes(), ingest: new RateLimiter(config.ingestPerMinute, 60_000, config.now), uiDir: resolveUiDir(config.uiDir), auth: () => handler! };
+  const parts: Parts = { app, router: allRoutes(), ingest: new RateLimiter(config.ingestPerMinute, 60_000, config.now), visitor: new RateLimiter(VISITOR_PER_MINUTE, 60_000, config.now), uiDir: resolveUiDir(config.uiDir), auth: () => handler! };
   const server = createServer((req, res) => void route(parts, req, res).catch((err: unknown) => onError(err, res)));
   const stopJobs = config.jobs ? startJobs(app) : () => {};
   return {

@@ -68,7 +68,9 @@ describe("node --import @wizeworks/lens-node/auto", { timeout: 30_000 }, () => {
     expect(childrenOf(server("GET /users/:id")()!)).toHaveLength(1);
     await expectBoom("hono");
   });
+});
 
+describe("node --import @wizeworks/lens-node/auto with postgres.js", { timeout: 30_000 }, () => {
   it("traces postgres.js queries from its ES module and CommonJS builds", async () => {
     await start("postgres.mjs", "auto-postgres");
     expect(await (await app!.get("/esm")).text()).toBe("failed");

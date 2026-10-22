@@ -9,12 +9,21 @@ type Kind = ApiKey["kind"];
 const KINDS: [Kind, string][] = [
   ["ingest", "Ingest: an app sends data"],
   ["read", "Read: an AI agent or script reads data"],
+  ["browser", "Browser: a site with no WizeLens server sends page data"],
 ];
 
 /** What each kind of key may be limited to. */
 export const SCOPES: Record<Kind, [string, string][]> = {
   ingest: [["traces", "Traces"], ["logs", "Logs"], ["metrics", "Metrics"]],
   read: [["api", "API (pages, search, exports)"], ["mcp", "MCP (AI agents)"]],
+  browser: [["traces", "Page spans"], ["logs", "Console lines"]],
+};
+
+/** Where each kind of secret goes. */
+const WHERE: Record<Kind, string> = {
+  ingest: "Set it as WIZELENS_HUB_TOKEN on the app.",
+  read: "Send it as Authorization: Bearer <key> to /_wizelens/mcp.",
+  browser: "It is public: it goes in your page code, as endpoint={cloudEndpoint(key)} or <script data-key=\"key\">.",
 };
 
 const EXPIRY: [string, string][] = [["", "Never"], ["30", "In 30 days"], ["90", "In 90 days"], ["180", "In 180 days"], ["365", "In 1 year"]];
@@ -25,7 +34,7 @@ export function NewSecret({ kind, secret, note }: { kind: Kind; secret: string; 
     <div className="wl-share-link">
       <code className="wl-mono wl-small">{secret}</code> <CopyButton text={secret} label="Copy key" />
       <span className="wl-muted wl-small">
-        Copy it now: it is not shown again. {kind === "ingest" ? "Set it as WIZELENS_HUB_TOKEN on the app." : "Send it as Authorization: Bearer <key> to /_wizelens/mcp."} {note}
+        Copy it now: it is not shown again. {WHERE[kind]} {note}
       </span>
     </div>
   );
@@ -40,21 +49,27 @@ function ScopeChecks({ kind, scopes, onChange }: { kind: Kind; scopes: string[];
   );
 }
 
-/** Make a key. An ingest key sends to one project; a read key may read several. Both may expire and be limited. */
+/** The body that makes a key. Ingest and browser keys send to one project; a browser key also lists its sites. */
+function keyBody(kind: Kind, name: string, picked: string[], scopes: string[], expires: string, origins: string) {
+  const base = { kind, name, projectIds: kind === "read" ? picked : picked.slice(0, 1), scopes, expiresInDays: expires ? Number(expires) : null };
+  return kind === "browser" ? { ...base, origins } : base;
+}
+
+/** Make a key. An ingest or browser key sends to one project; a read key may read several. All may expire and be limited. */
 export function KeyForm({ orgId, data, reload, onClose }: { orgId: string; data: OrgData; reload: () => void; onClose: () => void }) {
   const [kind, setKind] = useState<Kind>("ingest");
   const [name, setName] = useState("");
   const [picked, setPicked] = useState<string[]>(data.projects[0] ? [data.projects[0].id] : []);
   const [scopes, setScopes] = useState<string[]>(SCOPES.ingest.map(([s]) => s));
   const [expires, setExpires] = useState("");
+  const [origins, setOrigins] = useState("");
   const [secret, setSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const toggle = (id: string, on: boolean) => setPicked((p) => (kind === "ingest" ? [id] : on ? [...p, id] : p.filter((x) => x !== id)));
+  const toggle = (id: string, on: boolean) => setPicked((p) => (kind !== "read" ? [id] : on ? [...p, id] : p.filter((x) => x !== id)));
   const pickKind = (k: Kind) => (setKind(k), setPicked((p) => p.slice(0, 1)), setScopes(SCOPES[k].map(([s]) => s)));
   const create = (e: FormEvent) => {
     e.preventDefault();
-    const body = { kind, name, projectIds: kind === "ingest" ? picked.slice(0, 1) : picked, scopes, expiresInDays: expires ? Number(expires) : null };
-    apiSend<{ token: string }>("POST", `./api/orgs/${orgId}/keys`, body).then(
+    apiSend<{ token: string }>("POST", `./api/orgs/${orgId}/keys`, keyBody(kind, name, picked, scopes, expires, origins)).then(
       (k) => (setSecret(k.token), setName(""), setError(null), reload()),
       (err: unknown) => setError(err instanceof Error ? err.message : String(err)),
     );
@@ -66,10 +81,13 @@ export function KeyForm({ orgId, data, reload, onClose }: { orgId: string; data:
         <FormRow>
           <SelectField label="Kind" value={kind} options={KINDS} onChange={pickKind} />
           <Field label="Name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="orders-api" hint="Name it after the app or agent that uses it." />
-          {kind === "ingest" && <SelectField label="Project" value={picked[0] ?? ""} options={projects} onChange={(id) => setPicked([id])} />}
+          {kind !== "read" && <SelectField label="Project" value={picked[0] ?? ""} options={projects} onChange={(id) => setPicked([id])} />}
           <SelectField label="Expires" value={expires} options={EXPIRY} onChange={setExpires} hint="It stops working then. Rotate it before." />
           <button type="submit" className="wl-btn wl-btn-primary" disabled={picked.length === 0 || scopes.length === 0}>Create key</button>
         </FormRow>
+        {kind === "browser" && (
+          <Field label="Sites" required value={origins} onChange={(e) => setOrigins(e.target.value)} placeholder="https://shop.example.com" hint="Only pages on these sites may send with it. Put a space or comma between sites; https://*.example.com takes its subdomains." />
+        )}
         {kind === "read" && (
           <fieldset className="wl-check-list">
             <legend>Projects it may read</legend>

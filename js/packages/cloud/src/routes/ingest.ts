@@ -8,7 +8,7 @@ import { type ApiKey, type IngestScope, keyAllows, keyByToken } from "../repo/pr
 import { writeService } from "../repo/trace-write.js";
 import { handleOtlp, type HubWrite, type OtlpSignal, parseIngest, parseJson, readBody } from "@wizeworks/lens-hub/kit";
 
-type IngestKey = ApiKey & { orgId: string };
+export type IngestKey = ApiKey & { orgId: string };
 
 /** The ingest key of the call. Add-ons send it as WIZELENS_HUB_TOKEN; OTLP apps as a bearer header. */
 async function ingestKey(ctx: Ctx, limiter: RateLimiter): Promise<IngestKey> {
@@ -24,14 +24,14 @@ async function ingestKey(ctx: Ctx, limiter: RateLimiter): Promise<IngestKey> {
 export const ingestProject = async (ctx: Ctx, limiter: RateLimiter): Promise<string> => (await ingestKey(ctx, limiter)).projectIds[0]!;
 
 /** 429 when the organization reached its Free GB or its spend cap. Add-ons and OTLP exporters back off and retry. */
-async function overLimit(ctx: Ctx, orgId: string): Promise<boolean> {
+export async function overLimit(ctx: Ctx, orgId: string): Promise<boolean> {
   const message = await ctx.app.billing.limits.blocked(orgId);
   if (message) sendJson(ctx.res, 429, { error: message }, { "Retry-After": "3600" });
   return !!message;
 }
 
 /** The request body as sent (before gzip is undone), counted as it is read: what a GB means on the bill. */
-function counted(req: IncomingMessage): { req: IncomingMessage; bytes: () => number } {
+export function counted(req: IncomingMessage): { req: IncomingMessage; bytes: () => number } {
   let n = 0;
   const pass = new Transform({ transform: (chunk: Buffer, _enc, done) => ((n += chunk.length), done(null, chunk)) });
   req.on("error", (err) => pass.destroy(err));
@@ -47,7 +47,7 @@ async function allowed(ctx: Ctx, key: IngestKey, w: HubWrite): Promise<HubWrite>
 }
 
 /** The service registry stays in Postgres; spans, logs, and metrics go to the telemetry store. Each write is counted for usage. */
-const save = (ctx: Ctx, key: IngestKey) => async (raw: HubWrite) => {
+export const save = (ctx: Ctx, key: IngestKey) => async (raw: HubWrite) => {
   const now = ctx.app.config.now();
   const projectId = key.projectIds[0]!;
   const w = await allowed(ctx, key, raw);

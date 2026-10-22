@@ -1,6 +1,7 @@
 import type { Attributes } from "@wizeworks/lens-core";
 import { setBrowserRelease, setBrowserUser } from "./browser-span.js";
 import { mountHud } from "./hud/element.js";
+import { isCloudBrowserEndpoint } from "./cloud.js";
 import { probeReadApi } from "./read-probe.js";
 import { createRecorder, endpointUrlOf } from "./recorder.js";
 import type { Recorder, RecorderOptions } from "./recorder-types.js";
@@ -75,7 +76,8 @@ function start(options: WizeLensOptions, source: InstanceSource): { lens: WizeLe
   setBrowserRelease(release ?? rest.version);
   setBrowserUser(user, userName);
   // Asked before install, so the probe is not traced. No HUD reads nothing back: send-only servers work as they are.
-  const showHud = hud === "auto" ? probeReadApi(endpointUrlOf(rest.endpoint), globalThis.fetch) : hud;
+  const endpointUrl = endpointUrlOf(rest.endpoint);
+  const showHud = hud === "auto" ? !isCloudBrowserEndpoint(endpointUrl) && probeReadApi(endpointUrl, globalThis.fetch) : hud;
   const recorder = createRecorder({ ...rest, readServer: rest.readServer ?? showHud, version: release ?? rest.version });
   const uninstall = recorder.install();
   const stopHud = startHud(recorder, showHud, slowMs);
