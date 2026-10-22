@@ -105,16 +105,18 @@ export class HubExporter {
       remotes: this.#remotes.splice(0, BATCH),
       metrics: this.#metrics.splice(0, BATCH),
     };
-    if (await this.#post(batch)) return this.#ok();
+    const status = await this.#post(batch);
+    if (status >= 200 && status < 300) return this.#ok();
     this.#spans.unshift(...batch.spans!);
     this.#logs.unshift(...batch.logs!);
     this.#remotes.unshift(...batch.remotes!);
     this.#metrics.unshift(...batch.metrics!);
     this.#trim();
-    this.#fail();
+    this.#fail(status);
   }
 
-  async #post(batch: IngestBatch): Promise<boolean> {
+  /** The hub's status code, or 0 when it could not be reached. */
+  async #post(batch: IngestBatch): Promise<number> {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (this.#o.token) headers.Authorization = `Bearer ${this.#o.token}`;
     try {
@@ -122,9 +124,9 @@ export class HubExporter {
       const res = await context.with(suppressTracing(ROOT_CONTEXT), () =>
         fetch(`${this.url}/_wizelens/api/ingest`, { method: "POST", headers, body: JSON.stringify(batch), signal: AbortSignal.timeout(TIMEOUT_MS) }),
       );
-      return res.ok;
+      return res.status;
     } catch {
-      return false;
+      return 0;
     }
   }
 
@@ -135,12 +137,24 @@ export class HubExporter {
     this.#lastSentMs = this.#now();
   }
 
-  #fail(): void {
+  #fail(status: number): void {
     this.#failures++;
     this.#retryAtMs = this.#now() + Math.min(MAX_BACKOFF_MS, 1000 * 2 ** Math.min(this.#failures, 5));
     if (this.#warned) return;
     this.#warned = true;
-    this.#o.warn?.(`[wizelens] Could not reach the hub at ${this.url}. Traces stay in this app, and sending will retry.`);
+    this.#o.warn?.(`[wizelens] ${this.#failText(status)} Traces stay in this app, and sending will retry.`);
+  }
+
+  /** Why the hub took nothing: unreachable, the key, a limit, or another answer. */
+  #failText(status: number): string {
+    if (status === 0) return `Could not reach the hub at ${this.url}.`;
+    if (status === 401 || status === 403) {
+      return this.#o.token
+        ? `The hub at ${this.url} refused the key (${status}). Check WIZELENS_HUB_TOKEN: it must be a live ingest key (wl_ik_).`
+        : `The hub at ${this.url} needs a key (${status}). Set WIZELENS_HUB_TOKEN to an ingest key (wl_ik_).`;
+    }
+    if (status === 429) return `The hub at ${this.url} asked to slow down (429): a limit of the key or the plan.`;
+    return `The hub at ${this.url} answered ${status}.`;
   }
 
   /** Send what is left (best effort), then stop. */

@@ -37,6 +37,22 @@ describe("HubExporter", () => {
     expect(batches[1]).toMatchObject({ spans: [], logs: [], remotes: [] });
   });
 
+  it("says why the hub took nothing: no key, a refused key, a limit, or no answer", async () => {
+    const said = async (status: number, token?: string) => {
+      globalThis.fetch = vi.fn(async () => (status ? new Response(null, { status }) : Promise.reject(new Error("down")))) as unknown as typeof fetch;
+      const warn = vi.fn();
+      const e = new HubExporter({ url: "http://hub", token, sender: () => ({ service: "api" }), now: () => 0, warn });
+      e.add({ type: "span", span: span("1".repeat(16)) });
+      await e.tick();
+      return String(warn.mock.calls[0]?.[0]);
+    };
+    expect(await said(401)).toContain("needs a key (401)");
+    expect(await said(401, "wl_ik_old")).toContain("refused the key (401)");
+    expect(await said(429, "wl_ik_x")).toContain("slow down (429)");
+    expect(await said(503, "wl_ik_x")).toContain("answered 503");
+    expect(await said(0, "wl_ik_x")).toContain("Could not reach the hub");
+  });
+
   it("keeps the data, backs off, and warns once while the hub is down", async () => {
     let up = false;
     const batches = fakeHub(() => up);
