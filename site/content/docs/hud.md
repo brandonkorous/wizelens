@@ -117,9 +117,9 @@ the same path does not.
 
 - **Hover** a number for a quick look. Database shows each query's time, the slowest, and the average. Server splits its own
   code, its own queries, and calls to other services.
-- **Click** for a small panel: the split, every call the page made on one timeline with its query count, and the
-  errors, insights, and security risks of the calls that have them (the top three of each), and this page's Web
-  Vitals. New calls land at the bottom as they happen. Click a call to open its trace in the dashboard. The page's
+- **Click** for a small panel: the split; the errors, insights, and security risks of the calls that have them (the
+  top three of each), first, so you see what to fix; every call the page made on one timeline with its query count;
+  and this page's Web Vitals. New calls land at the bottom as they happen. Click a call to open its trace in the dashboard. The page's
   time stays at the top and its Web Vitals at the bottom; only the calls scroll. "Page load" is the card's Total.
 - **Every "view all" link** and the SQL and insight counts open the full dashboard in a new tab, on the page's own
   trace.

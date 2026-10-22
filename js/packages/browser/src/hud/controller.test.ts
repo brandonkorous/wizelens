@@ -147,7 +147,7 @@ it("lists the page's calls in the details, adds new ones, and shows the errors o
   recorder.store.upsert(call("s2", "/api/cart", { startMs: now() }));
   await flushRenders();
   expect(names()).toEqual(["GET /api/orders · 4 SQL", "GET /api/cart · 4 SQL"]);
-  expect(findAll(panel, (el) => el.nodeName === "H3").map((el) => el.textContent)).toEqual(["Calls · 2", "Errors · 1", "This page"]);
+  expect(findAll(panel, (el) => el.nodeName === "H3").map((el) => el.textContent)).toEqual(["Errors · 1", "Calls · 2", "This page"]);
   dispatchEvent(Object.assign(new Event("keydown"), { key: "Escape" }));
   await flushRenders();
   expect(byClass(root, "wl-details")).toHaveLength(0);

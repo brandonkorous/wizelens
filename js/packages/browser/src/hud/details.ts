@@ -69,7 +69,7 @@ function pageVitals(page: PageStats, snap: HudSnapshot): HTMLElement {
   );
 }
 
-// Errors, insights, and security risks apart, so the counts match the card's.
+// Errors, insights, and security risks apart, so the counts match the card's. They come first: they are what to fix.
 function findingGroups(findings: Finding[], link: (v: TraceView) => string): Child[] {
   const groups: [string, TraceView, Finding[]][] = [
     ["Errors", "errors", findings.filter((f) => f.kind === "error")],
@@ -115,7 +115,7 @@ export function details(m: DetailsModel, onClose: () => void): HTMLElement {
     { key: "details", class: "wl-panel wl-details", "aria-label": "WizeLens page details" },
     panelBar(onClose, h("span", { class: "wl-panel-title", title: req.url }, `${req.method} ${req.path}`), h("span", { class: `wl-pill ${pill.cls}` }, pill.text)),
     summary(m.snap),
-    h("div", { class: "wl-body" }, calls(m), findingGroups(m.findings, m.link)),
+    h("div", { class: "wl-body" }, findingGroups(m.findings, m.link), calls(m)),
     h("div", { class: "wl-page" }, h("h3", null, "This page"), pageVitals(m.page, m.snap)),
   );
 }
