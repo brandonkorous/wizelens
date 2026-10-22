@@ -2,7 +2,10 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] — The HUD shows the page
+## [0.3.0-alpha.9] — The HUD shows the page
+
+The HUD card shows the page you are on and holds still on busy pages, like Glimpse. It adds up the page and every
+call it makes, and the details panel lists each call as it happens.
 
 ### Changed
 
