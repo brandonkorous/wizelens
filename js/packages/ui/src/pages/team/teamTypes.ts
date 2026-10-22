@@ -11,7 +11,7 @@ export interface Member {
 
 export interface ApiKey {
   id: string;
-  kind: "ingest" | "read";
+  kind: "ingest" | "read" | "browser";
   name: string;
   prefix: string;
   projectIds: string[];
@@ -22,6 +22,8 @@ export interface ApiKey {
   /** Null: never expires. */
   expiresMs: number | null;
   rotatedFrom: string | null;
+  /** Browser keys: the sites whose pages may send with it. */
+  origins: string[] | null;
 }
 
 /** A member's or viewer's own role on one project; "none" hides the project from them. */

@@ -1,10 +1,12 @@
-// API keys: ingest keys send one project's data, read keys read some projects. Optional expiry, scopes, and rotation with a grace period.
+// API keys: ingest keys send one project's data, read keys read some projects, browser keys send page data from listed sites. Optional expiry, scopes, and rotation with a grace period.
 import { hashToken, newId, newToken } from "../auth/crypto.js";
 import type { Queryable } from "../db/db.js";
 
-export type KeyKind = "ingest" | "read";
+export type KeyKind = "ingest" | "read" | "browser";
 export const INGEST_SCOPES = ["traces", "logs", "metrics"] as const;
 export const READ_SCOPES = ["api", "mcp"] as const;
+/** A browser key is public: it sends page spans and console lines, nothing else. */
+export const BROWSER_SCOPES = ["traces", "logs"] as const;
 export type IngestScope = (typeof INGEST_SCOPES)[number];
 export type ReadScope = (typeof READ_SCOPES)[number];
 export type KeyScope = IngestScope | ReadScope;
@@ -14,7 +16,7 @@ export interface ApiKey {
   kind: KeyKind;
   name: string;
   prefix: string;
-  /** Ingest keys: exactly one project. Read keys: the projects they may read. */
+  /** Ingest and browser keys: exactly one project. Read keys: the projects they may read. */
   projectIds: string[];
   /** What the key may do; null for everything its kind allows. */
   scopes: KeyScope[] | null;
@@ -24,23 +26,31 @@ export interface ApiKey {
   expiresMs: number | null;
   /** The key this one replaced. */
   rotatedFrom: string | null;
+  /** Browser keys: the sites (origins) whose pages may send with it. Null for other kinds. */
+  origins: string[] | null;
 }
 
-interface KeyRow extends Omit<ApiKey, "projectIds" | "scopes"> {
+interface KeyRow extends Omit<ApiKey, "projectIds" | "scopes" | "origins"> {
   project_ids: string;
   scopes: string | null;
+  origins: string | null;
   org_id: string;
 }
 
-const KEY_COLUMNS = `id, org_id, kind, name, prefix, project_ids, scopes, created_ms AS "createdMs", last_used_ms AS "lastUsedMs", expires_ms AS "expiresMs", rotated_from AS "rotatedFrom"`;
-const toKey = ({ project_ids, scopes, org_id: _org, ...k }: KeyRow): ApiKey => ({ ...k, projectIds: JSON.parse(project_ids) as string[], scopes: scopes ? (JSON.parse(scopes) as KeyScope[]) : null });
+const KEY_COLUMNS = `id, org_id, kind, name, prefix, project_ids, scopes, created_ms AS "createdMs", last_used_ms AS "lastUsedMs", expires_ms AS "expiresMs", rotated_from AS "rotatedFrom", origins`;
+const toKey = ({ project_ids, scopes, origins, org_id: _org, ...k }: KeyRow): ApiKey => ({
+  ...k,
+  projectIds: JSON.parse(project_ids) as string[],
+  scopes: scopes ? (JSON.parse(scopes) as KeyScope[]) : null,
+  origins: origins ? (JSON.parse(origins) as string[]) : null,
+});
 
 export const keyAllows = (key: Pick<ApiKey, "scopes">, scope: KeyScope): boolean => !key.scopes || key.scopes.includes(scope);
 
 /** Checked scopes for a kind: null (all) when none or all are picked. Throws a message for people on a bad one. */
 export function scopesFor(kind: KeyKind, raw: unknown): KeyScope[] | null {
   if (raw === undefined || raw === null) return null;
-  const all: readonly string[] = kind === "ingest" ? INGEST_SCOPES : READ_SCOPES;
+  const all: readonly string[] = kind === "ingest" ? INGEST_SCOPES : kind === "browser" ? BROWSER_SCOPES : READ_SCOPES;
   if (!Array.isArray(raw) || raw.some((s) => !all.includes(s as string))) throw new Error(`Scopes for a ${kind} key are: ${all.join(", ")}.`);
   const picked = all.filter((s) => raw.includes(s)) as KeyScope[];
   if (!picked.length) throw new Error("Pick at least one scope.");
@@ -51,6 +61,7 @@ export interface KeyExtras {
   scopes?: KeyScope[] | null;
   expiresMs?: number | null;
   rotatedFrom?: string;
+  origins?: string[] | null;
 }
 
 /** A new key. Returns the secret once; only its hash is kept. */
@@ -58,9 +69,9 @@ export async function createKey(q: Queryable, orgId: string, kind: KeyKind, name
   const token = newToken(kind);
   const id = newId();
   await q.query(
-    `INSERT INTO api_keys (id, org_id, kind, project_ids, name, prefix, token_hash, created_by, created_ms, scopes, expires_ms, rotated_from)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-    [id, orgId, kind, JSON.stringify(projectIds), name.trim().slice(0, 100) || kind, token.slice(0, 12), hashToken(token), by, now, x.scopes ? JSON.stringify(x.scopes) : null, x.expiresMs ?? null, x.rotatedFrom ?? null],
+    `INSERT INTO api_keys (id, org_id, kind, project_ids, name, prefix, token_hash, created_by, created_ms, scopes, expires_ms, rotated_from, origins)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+    [id, orgId, kind, JSON.stringify(projectIds), name.trim().slice(0, 100) || kind, token.slice(0, 12), hashToken(token), by, now, x.scopes ? JSON.stringify(x.scopes) : null, x.expiresMs ?? null, x.rotatedFrom ?? null, x.origins ? JSON.stringify(x.origins) : null],
   );
   return { id, token };
 }
@@ -76,15 +87,21 @@ export async function keyInOrg(q: Queryable, orgId: string, keyId: string): Prom
   return row && toKey(row);
 }
 
+/** Replace a browser key's sites. False when the key is not a live browser key of the organization. */
+export async function setKeyOrigins(q: Queryable, orgId: string, keyId: string, origins: string[]): Promise<boolean> {
+  const rows = await q.query("UPDATE api_keys SET origins = $1 WHERE org_id = $2 AND id = $3 AND kind = 'browser' AND revoked_ms IS NULL RETURNING id", [JSON.stringify(origins), orgId, keyId]);
+  return rows.length > 0;
+}
+
 export async function revokeKey(q: Queryable, orgId: string, keyId: string, now: number): Promise<boolean> {
   const rows = await q.query("UPDATE api_keys SET revoked_ms = $1 WHERE org_id = $2 AND id = $3 AND revoked_ms IS NULL RETURNING id", [now, orgId, keyId]);
   return rows.length > 0;
 }
 
-/** A new secret with the same name, kind, projects, scopes, and lifetime. The old one keeps working for `graceMs`, so apps can switch. */
+/** A new secret with the same name, kind, projects, scopes, sites, and lifetime. The old one keeps working for `graceMs`, so apps can switch. */
 export async function rotateKey(q: Queryable, orgId: string, old: ApiKey, by: string, now: number, graceMs: number) {
   const life = old.expiresMs === null ? null : old.expiresMs - old.createdMs;
-  const key = await createKey(q, orgId, old.kind, old.name, old.projectIds, by, now, { scopes: old.scopes, expiresMs: life === null ? null : now + life, rotatedFrom: old.id });
+  const key = await createKey(q, orgId, old.kind, old.name, old.projectIds, by, now, { scopes: old.scopes, expiresMs: life === null ? null : now + life, rotatedFrom: old.id, origins: old.origins });
   const until = Math.min(old.expiresMs ?? Infinity, now + graceMs);
   await q.query("UPDATE api_keys SET expires_ms = $1 WHERE id = $2", [until, old.id]);
   return { ...key, oldExpiresMs: until };

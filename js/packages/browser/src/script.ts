@@ -1,4 +1,5 @@
-// Entry of the script-tag bundle (`window.WizeLens`). A tag with `data-endpoint` starts WizeLens on its own.
+// Entry of the script-tag bundle (`window.WizeLens`). A tag with `data-endpoint` or `data-key` starts WizeLens on its own.
+import { cloudEndpoint } from "./cloud.js";
 import { startWizeLens, type WizeLensOptions } from "./lens.js";
 import type { InstanceSource } from "./registry.js";
 
@@ -18,9 +19,11 @@ function positive(value: string | null): number | undefined {
   return Number.isFinite(n) && n > 0 ? n : undefined;
 }
 
-/** Options from a script tag's data attributes, or null when it has no `data-endpoint`. */
+/** Options from a script tag's data attributes, or null when it has neither `data-endpoint` nor `data-key` (a browser key: send to WizeLens Cloud, or to the cloud at `data-endpoint`). */
 export function scriptOptions(el: { getAttribute(name: string): string | null } | null): ScriptOptions | null {
-  const endpoint = el?.getAttribute("data-endpoint");
+  const key = el?.getAttribute("data-key");
+  const raw = el?.getAttribute("data-endpoint");
+  const endpoint = key ? cloudEndpoint(key, raw || undefined) : raw;
   if (!el || endpoint == null) return null;
   const off = (name: string) => el.getAttribute(name) === "false";
   return {

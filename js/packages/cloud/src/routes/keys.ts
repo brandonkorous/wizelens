@@ -4,7 +4,8 @@ import { requireOrg } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson, str } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
-import { createKey, keyInOrg, type KeyKind, listProjects, revokeKey, rotateKey, scopesFor } from "../repo/projects.js";
+import { originsFor } from "../repo/key-origins.js";
+import { createKey, keyInOrg, type KeyKind, listProjects, revokeKey, rotateKey, scopesFor, setKeyOrigins } from "../repo/projects.js";
 
 const DAY_MS = 86_400_000;
 const MAX_DAYS = 3650;
@@ -19,30 +20,35 @@ function daysOf(raw: unknown): number | null {
   return n;
 }
 
-function scopesOf(kind: KeyKind, raw: unknown) {
+/** Run a check that throws a message for people; the message becomes a 400. */
+function checked<T>(check: () => T, fallback: string): T {
   try {
-    return scopesFor(kind, raw);
+    return check();
   } catch (err) {
-    return fail(400, err instanceof Error ? err.message : "Invalid scopes.");
+    return fail(400, err instanceof Error ? err.message : fallback);
   }
 }
 
-/** Ingest keys belong to one project. Read keys name the projects they may read. */
+const scopesOf = (kind: KeyKind, raw: unknown) => checked(() => scopesFor(kind, raw), "Invalid scopes.");
+const originsOf = (kind: KeyKind, raw: unknown) => (kind === "browser" ? checked(() => originsFor(raw), "Invalid sites.") : null);
+
+/** Ingest and browser keys belong to one project; a browser key also lists its sites. Read keys name the projects they may read. */
 async function newKey(ctx: Ctx): Promise<void> {
   const org = ctx.params.org!;
   const { user } = await requireOrg(ctx, org, "manage");
   const body = await readJsonBody(ctx.req);
   const kind = body.kind as KeyKind;
-  if (kind !== "ingest" && kind !== "read") fail(400, 'Set kind to "ingest" or "read".');
+  if (kind !== "ingest" && kind !== "read" && kind !== "browser") fail(400, 'Set kind to "ingest", "read", or "browser".');
   const known = new Set((await listProjects(ctx.app.db, org)).map((p) => p.id));
   const ids = Array.isArray(body.projectIds) ? body.projectIds.filter((id): id is string => typeof id === "string" && known.has(id)) : [];
-  if (ids.length === 0 || (kind === "ingest" && ids.length !== 1)) fail(400, "Pick one project for an ingest key, or one or more for a read key.");
+  if (ids.length === 0 || (kind !== "read" && ids.length !== 1)) fail(400, "Pick one project for an ingest or browser key, or one or more for a read key.");
   const scopes = scopesOf(kind, body.scopes);
+  const origins = originsOf(kind, body.origins);
   const days = daysOf(body.expiresInDays);
   const expiresMs = days === null ? null : now(ctx) + days * DAY_MS;
-  const key = await createKey(ctx.app.db, org, kind, str(body, "name", false), ids, user.id, now(ctx), { scopes, expiresMs });
-  await audit(ctx.app.db, org, `user:${user.id}`, "key.create", { keyId: key.id, kind, projectIds: ids, scopes, expiresMs }, now(ctx));
-  sendJson(ctx.res, 201, { ...key, expiresMs });
+  const key = await createKey(ctx.app.db, org, kind, str(body, "name", false), ids, user.id, now(ctx), { scopes, expiresMs, origins });
+  await audit(ctx.app.db, org, `user:${user.id}`, "key.create", { keyId: key.id, kind, projectIds: ids, scopes, expiresMs, origins }, now(ctx));
+  sendJson(ctx.res, 201, { ...key, expiresMs, origins });
 }
 
 /** A new secret for the same key; the old one stops after the grace period. */
@@ -58,6 +64,16 @@ async function rotate(ctx: Ctx): Promise<void> {
   sendJson(ctx.res, 201, key);
 }
 
+/** A browser key's sites, changed in place: the secret in page code stays the same. */
+async function editOrigins(ctx: Ctx): Promise<void> {
+  const { org, key } = ctx.params as { org: string; key: string };
+  const { user } = await requireOrg(ctx, org, "manage");
+  const origins = originsOf("browser", (await readJsonBody(ctx.req)).origins)!;
+  if (!(await setKeyOrigins(ctx.app.db, org, key, origins))) fail(404, "Browser key not found.");
+  await audit(ctx.app.db, org, `user:${user.id}`, "key.origins", { keyId: key, origins }, now(ctx));
+  sendJson(ctx.res, 200, { origins });
+}
+
 async function dropKey(ctx: Ctx): Promise<void> {
   const { org, key } = ctx.params as { org: string; key: string };
   const { user } = await requireOrg(ctx, org, "manage");
@@ -67,5 +83,5 @@ async function dropKey(ctx: Ctx): Promise<void> {
 }
 
 export function keyRoutes(r: Router<Ctx>): void {
-  r.on("POST", "api/orgs/:org/keys", newKey).on("POST", "api/orgs/:org/keys/:key/rotate", rotate).on("DELETE", "api/orgs/:org/keys/:key", dropKey);
+  r.on("POST", "api/orgs/:org/keys", newKey).on("POST", "api/orgs/:org/keys/:key/rotate", rotate).on("PATCH", "api/orgs/:org/keys/:key", editOrigins).on("DELETE", "api/orgs/:org/keys/:key", dropKey);
 }

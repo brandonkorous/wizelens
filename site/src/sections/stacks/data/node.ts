@@ -35,7 +35,7 @@ export const NODE: Stack = {
   ],
   captures: [
     { title: "Frameworks", items: ["Express", "Fastify", "Koa", "Hono", "NestJS", "Next.js", "node:http", "GraphQL, one endpoint per operation", "Response bodies (opt-in)", "The HUD on HTML pages, in development"] },
-    { title: "Databases", items: ["pg", "mysql2", "better-sqlite3", "node:sqlite", "Prisma", "TypeORM", "Drizzle", "Redis (ioredis, node-redis)", "MongoDB", "Elasticsearch", "traceDb() for any driver"] },
+    { title: "Databases", items: ["pg", "postgres.js", "mysql2", "better-sqlite3", "node:sqlite", "Prisma", "TypeORM", "Drizzle", "Redis (ioredis, node-redis)", "MongoDB", "Elasticsearch", "traceDb() for any driver"] },
     { title: "Calls out", items: ["fetch and undici, automatic", "node:http and https (axios, got, AWS SDK), automatic", "@grpc/grpc-js"] },
     { title: "Messages", items: ["amqplib (RabbitMQ)", "kafkajs", "@azure/service-bus", "BullMQ", "Amazon SQS"] },
     { title: "Logs", items: ["console, automatic", "pino", "winston", "bunyan", "log4js", "consola", "NestJS", "OpenTelemetry logs", "Lines outside a request, by level and rate"] },

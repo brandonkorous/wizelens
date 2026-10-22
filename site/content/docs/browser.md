@@ -161,3 +161,28 @@ running instance instead of starting one).
 `endpoint` is where your API serves WizeLens, as for [React](/docs/react/#where-endpoint-points). With a dev proxy, proxy
 `/_wizelens` to your API too. For an API on another origin, pass `propagateTo: (url) => url.origin === "https://api.example.com"` and
 let that API accept the `traceparent` header in its CORS settings.
+
+## Static sites
+
+A static site (a Next.js export, Astro, Vite, or plain HTML on a CDN) has no WizeLens server to send to. Make a
+**browser key** on the cloud's **Team** page, list the sites that serve the pages, and send straight to the cloud:
+
+```tsx
+import { cloudEndpoint, WizeLensProvider } from "@wizeworks/lens-react";
+
+<WizeLensProvider endpoint={cloudEndpoint("wl_bk_...")} hud={false} enabled={process.env.NODE_ENV === "production"} />
+```
+
+```ts
+import { cloudEndpoint, initWizeLens } from "@wizeworks/lens-browser";
+
+initWizeLens({ endpoint: cloudEndpoint("wl_bk_..."), hud: false });
+```
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@wizeworks/lens-browser/dist/wizelens.iife.js" data-key="wl_bk_..." data-hud="false"></script>
+```
+
+The key is public: it is meant to be in your page. It sends only browser spans and console lines, only from the sites
+on the key, and it reads nothing back. A self-hosted cloud passes its address too: `cloudEndpoint(key, "https://wizelens.example.com")`,
+or `data-endpoint` next to `data-key`. With a Content Security Policy, allow the cloud in `connect-src`.

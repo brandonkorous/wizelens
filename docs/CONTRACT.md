@@ -1097,6 +1097,8 @@ retention, and the audit log.
 | GET | `api/shared/{token}` | Anyone with the link: `{ trace, expiresMs }`, or for a page link `{ page, title, params, model, createdMs, expiresMs }` |
 | GET / POST / GET, PATCH, DELETE | `api/projects/{p}/saved[/{id}]` | Read: viewer (own and shared items); add: member; change: the owner; delete: the owner or an admin |
 | POST | `api/ingest`, `/v1/traces`, `/v1/logs`, `/v1/metrics` | Ingest key |
+| OPTIONS / POST | `b/{browser key}/api/client-spans` | Browser key (`wl_bk_`) in the path, from a page whose `Origin` is one of the key's sites; CORS answers that site only. Body as the add-on's `api/client-spans` (any content type, so pages post plain text and skip the CORS check). Every span is stored as a browser span (`service` and `category` "browser", never `server` kind) and every line as a browser line. At most 500 of each per call; capped per key and per visitor address. 204 |
+| PATCH | `api/orgs/{org}/keys/{id}` | Admin. `{ origins }`: a browser key's sites, changed in place (audited `key.origins`) |
 | POST / GET | `api/sourcemaps?release=&file=` | Ingest key: upload one map to the key's project, or list them (see "Source maps") |
 | POST | `api/sourcemaps/resolve?project=` | Member or read key: `{ stack, release }` → `{ frames }` |
 | POST | `mcp?project=` | Read key or connected app (OAuth access token). Without `?project=`, a reader with one project reads it; one with several adds `list_projects` and a `project` argument (id or name) on every tool. A tool called without `project` reads every project together (services as "service · project"); `get_overview`, `get_timeseries`, `group_requests`, and `list_problems` report one entry per project |

@@ -108,12 +108,13 @@ Outgoing `fetch` calls and routing time are traced automatically. Not on Express
 | Library | One line |
 |---|---|
 | `pg` | `instrumentPg(wizelens, pg)` |
+| postgres.js (`postgres`) | `instrumentPostgresJs(wizelens, sql)` |
 | `mysql2` | `instrumentMysql2(wizelens, mysql)` |
 | `better-sqlite3` | `instrumentBetterSqlite3(wizelens, db)` |
 | `node:sqlite` | `instrumentNodeSqlite(wizelens, db)` |
 | Prisma | `prisma.$extends(prismaExtension(wizelens, { system: "postgresql" }))` |
 | TypeORM | `instrumentTypeOrm(wizelens, dataSource)` |
-| Drizzle | `instrumentDrizzle(wizelens, db)` (on `pg`, `mysql2`, `better-sqlite3`, or `node:sqlite`) |
+| Drizzle | `instrumentDrizzle(wizelens, db)` (on `pg`, postgres.js, `mysql2`, `better-sqlite3`, or `node:sqlite`) |
 | Anything else | `wizelens.traceDb({ system: "postgresql" }, sql, params, () => run(sql, params))` |
 
 An ORM and the driver under it never count the same query twice. Queries outside a request (startup, jobs) are skipped unless you set `traceQueriesOutsideRequests: true`.
@@ -218,7 +219,7 @@ Open any trace for the full detail: timeline, SQL, HTTP, logs, and errors. Searc
 |---|---|---|
 | Incoming requests | ✅ hosting activity | ✅ Express, Fastify, Koa, Hono, Next.js, `node:http` |
 | Outgoing HTTP | ✅ `HttpClient` | ✅ `fetch` / undici |
-| Database (driver level) | ✅ `ProfiledDbConnection` — ADO.NET, Dapper, any provider | ✅ `pg`, `mysql2`, `better-sqlite3`, `node:sqlite`, and `traceDb()` for any other driver |
+| Database (driver level) | ✅ `ProfiledDbConnection` — ADO.NET, Dapper, any provider | ✅ `pg`, postgres.js, `mysql2`, `better-sqlite3`, `node:sqlite`, and `traceDb()` for any other driver |
 | Database (ORM) | ✅ EF Core | ✅ Prisma, TypeORM, Drizzle |
 | Logs | ✅ `ILogger`, Serilog (`WizeLens.Serilog`), NLog (`WizeLens.NLog`) | ✅ `console`, Fastify / pino, winston, bunyan, log4js, consola, NestJS, OpenTelemetry logs, `wizelens.logger` |
 | Exceptions | ✅ | ✅ |

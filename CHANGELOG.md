@@ -2,6 +2,19 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.3.0-alpha.10] — Static sites and postgres.js
+
+### Added
+
+- **Browser keys for static sites.** A site with no WizeLens server (a static export, a CDN page) can now send page
+  views, fetch calls, errors, and console lines straight to WizeLens Cloud. Make a browser key (`wl_bk_…`) on the
+  Team page and list the sites that may use it; then pass `endpoint={cloudEndpoint(key)}` in React, Vue, Angular,
+  Svelte, or plain JS, or put `data-key` on the script tag. The key is public by design: it sends only browser spans
+  and console lines, only from its sites, and reads nothing. Change a key's sites in place with **Sites**.
+- **postgres.js.** `instrumentPostgresJs(wizelens, sql)` traces every query of the `postgres` package, with the final
+  SQL, rows, and parameters. Drizzle on postgres.js is traced by `instrumentDrizzle`, transactions too, and the auto
+  install picks up postgres.js with no code.
+
 ## [0.3.0-alpha.9] — The HUD shows the page
 
 The HUD card shows the page you are on and holds still on busy pages, like Glimpse. It adds up the page and every

@@ -17,7 +17,7 @@ app.use(wizelens.errorMiddleware); // last
 ```
 
 - **Frameworks:** Express (`wizelens.middleware`), Fastify (`wizelensFastify`), Koa (`wizelensKoa`), Hono (`wizelensHono`), or plain `node:http` (`wizelens.handler`).
-- **Databases:** `instrumentPg`, `instrumentMysql2`, `instrumentBetterSqlite3`, `instrumentNodeSqlite`, `prismaExtension`, `instrumentTypeOrm`, `instrumentDrizzle`, or `wizelens.traceDb` for anything else.
+- **Databases:** `instrumentPg`, `instrumentPostgresJs`, `instrumentMysql2`, `instrumentBetterSqlite3`, `instrumentNodeSqlite`, `prismaExtension`, `instrumentTypeOrm`, `instrumentDrizzle`, or `wizelens.traceDb` for anything else.
 - **gRPC and messaging:** `instrumentGrpc`, `instrumentAmqplib`, `instrumentKafkaJs`, `instrumentServiceBus`.
 - **Outgoing `fetch`** is traced automatically. Tag requests with `wizelens.tag(key, value)` and name the user with `wizelens.setUser(id)`.
 

@@ -1,6 +1,6 @@
 {
   "name": "@wizeworks/lens-node",
-  "version": "0.3.0-alpha.9",
+  "version": "0.3.0-alpha.10",
   "description": "WizeLens add-on for Node.js: request timeline, outgoing HTTP, database calls, logs, errors, and an in-app dashboard.",
   "license": "MIT",
   "author": "WizeWorks LLC",
@@ -125,6 +125,7 @@
     "mysql2": "^3.24.6",
     "pg": "^8.23.1",
     "pino": "^10.4.0",
+    "postgres": "^3.4.9",
     "redis": "^6.3.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",

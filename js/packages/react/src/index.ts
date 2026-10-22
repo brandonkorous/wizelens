@@ -9,6 +9,7 @@ export type { RequestView } from "@wizeworks/lens-browser";
 export { createRecorder, reactFramework, reactStatsSpan, startBrowserCapture } from "./react-capture.js";
 export type { CaptureOptions } from "./react-capture.js";
 export { getSessionId, mergeRequests, serverStatsFromTrace, summaryToRequest } from "@wizeworks/lens-browser";
+export { cloudEndpoint } from "@wizeworks/lens-browser";
 export type { RecordedRequest, Recorder, RecorderOptions, ServerStats } from "@wizeworks/lens-browser";
 export { clsFromShifts, createPageMonitor, navigationBreakdown } from "@wizeworks/lens-browser";
 export type { PageMonitor, PageStats } from "@wizeworks/lens-browser";

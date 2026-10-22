@@ -94,11 +94,17 @@ keys apply to data that arrives after you save. A shorter retention deletes olde
 
 - **Ingest key** (`wl_ik_…`): one project. Apps send data with it. The project comes from the key, never from the sender.
 - **Read key** (`wl_rk_…`): one or more projects, read-only. For scripts, CI, and agents with no person to sign in.
+- **Browser key** (`wl_bk_…`): one project, for a site with no WizeLens server, such as a static site. Its pages send
+  page views, fetch calls, errors, and console lines straight to the cloud. The key is public, because it ships in page
+  code, so it can do only that: it sends only browser spans, only from the sites you list (`https://shop.example.com`, or
+  `https://*.example.com` for its subdomains), and it reads nothing. Change its sites with **Sites** on the key; the key
+  stays the same. See [Static sites](/docs/browser/#static-sites).
 
 Only a hash of each key is stored. The secret is shown once, when you make the key.
 
 - **Expiry:** a key can stop working after 30, 90, 180, or 365 days. Expired keys stay in the list until revoked.
-- **Scopes:** an ingest key can send only traces, logs, or metrics; a read key can use only the API or only MCP.
+- **Scopes:** an ingest key can send only traces, logs, or metrics; a read key can use only the API or only MCP; a
+  browser key can send only page spans or only console lines.
 - **Rotate:** a new secret for the same key, with the same projects, scopes, and lifetime. The old secret keeps
   working for 24 hours, so apps can switch without a gap.
 

@@ -1,5 +1,6 @@
 import { type BrowserCapture, createBrowserCapture, createCaptureHandle } from "./capture.js";
 import { type FetchContext, patchFetch } from "./fetch-patch.js";
+import { isCloudBrowserEndpoint } from "./cloud.js";
 import type { Recorder, RecorderOptions } from "./recorder-types.js";
 import { documentRequest } from "./document-request.js";
 import { createInstaller, createRequestStore, type RequestStore } from "./request-store.js";
@@ -35,7 +36,8 @@ function resolveOptions(options: RecorderOptions) {
     capturePages: options.capturePages ?? true,
     captureConsole: options.captureConsole ?? true,
     captureXhr: options.captureXhr ?? true,
-    readServer: options.readServer ?? true,
+    // A browser key only sends: the cloud reads nothing back to a page.
+    readServer: isCloudBrowserEndpoint(endpointUrl) ? false : (options.readServer ?? true),
     version: options.version ?? injectedRelease(),
     resolveFrames: options.resolveFrames ?? true,
     framework: options.framework,

@@ -4,6 +4,7 @@ import { instrumentIoRedis } from "../adapters/ioredis.js";
 import { instrumentMongoDb } from "../adapters/mongodb.js";
 import { instrumentMysql2 } from "../adapters/mysql2.js";
 import { instrumentPg } from "../adapters/pg.js";
+import { instrumentPostgresJs } from "../adapters/postgres.js";
 import { instrumentRedis } from "../adapters/redis.js";
 import { instrumentGraphql, traceGraphqlChannels, traceGraphqlFunction } from "../graphql/index.js";
 import { instrumentGrpc } from "../grpc/index.js";
@@ -48,6 +49,11 @@ function patchFactory(target: unknown, name: string, hook: (made: unknown) => vo
 
 const DATABASES: [string, () => void][] = [
   ["pg", () => onLoad(nm("pg/lib/index.js"), (pg) => void instrumentPg(autoHandle, pg))],
+  ["postgres", () => {
+    onLoad(nm("postgres/cjs/src/query.js"), (mod) => void instrumentPostgresJs(autoHandle, mod));
+    onEsm(esmPatch(nm("postgres/src/query.js"), "postgres-query", "Query"));
+    onEsmBinding("postgres-query", (Query) => void instrumentPostgresJs(autoHandle, Query));
+  }],
   ["mysql2", () => {
     onLoad(nm("mysql2/lib/connection.js"), (Connection) => void instrumentMysql2(autoHandle, { Connection }));
     onLoad(nm("mysql2/lib/pool.js"), (Connection) => void instrumentMysql2(autoHandle, { Connection }));
