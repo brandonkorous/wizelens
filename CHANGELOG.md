@@ -2,7 +2,7 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] — Static sites and postgres.js
+## [0.3.0-alpha.10] — Static sites and postgres.js
 
 ### Added
 

@@ -1,6 +1,6 @@
 {
   "name": "@wizeworks/lens-angular",
-  "version": "0.3.0-alpha.9",
+  "version": "0.3.0-alpha.10",
   "description": "WizeLens for Angular apps: an ErrorHandler and a router tracker that link browser calls to server traces and send page views and errors.",
   "license": "MIT",
   "author": "WizeWorks LLC",
