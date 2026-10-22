@@ -96,6 +96,7 @@ Then your database, one line:
 | Library | Code |
 |---|---|
 | `pg` | `instrumentPg(wizelens, pg)` |
+| postgres.js (`postgres`) | `instrumentPostgresJs(wizelens, sql)` |
 | `mysql2` | `instrumentMysql2(wizelens, mysql)` |
 | `better-sqlite3` | `instrumentBetterSqlite3(wizelens, db)` |
 | `node:sqlite` | `instrumentNodeSqlite(wizelens, db)` |

@@ -68,6 +68,18 @@ describe("node --import @wizeworks/lens-node/auto", { timeout: 30_000 }, () => {
     expect(childrenOf(server("GET /users/:id")()!)).toHaveLength(1);
     await expectBoom("hono");
   });
+
+  it("traces postgres.js queries from its ES module and CommonJS builds", async () => {
+    await start("postgres.mjs", "auto-postgres");
+    expect(await (await app!.get("/esm")).text()).toBe("failed");
+    expect(await (await app!.get("/cjs")).text()).toBe("failed");
+    const queries = () => hub.spans.filter((s) => s.category === "db" && s.parentSpanId);
+    await eventually(() => queries().length === 2);
+    expect(queries().map((s) => [s.name, s.status, s.attributes["wizelens.db.adapter"]])).toEqual([
+      ["SELECT orders", "error", "postgres"],
+      ["SELECT orders", "error", "postgres"],
+    ]);
+  });
 });
 
 describe("node --import @wizeworks/lens-node/auto with GraphQL", { timeout: 30_000 }, () => {

@@ -3,6 +3,7 @@ export type { DbCallInfo, LogFn, WizeLens, WizeLensLogger, WizeLensOptions } fro
 export type { SamplingOptions } from "./sampling.js";
 export type { SourceMapOptions } from "./sourcemaps.js";
 export { instrumentPg } from "./adapters/pg.js";
+export { instrumentPostgresJs } from "./adapters/postgres.js";
 export { instrumentMysql2 } from "./adapters/mysql2.js";
 export { instrumentBetterSqlite3, instrumentNodeSqlite } from "./adapters/sqlite.js";
 export { prismaExtension } from "./adapters/prisma.js";

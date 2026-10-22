@@ -48,6 +48,8 @@ export interface DbSpan {
   ctx: Context;
   end(result: unknown): void;
   fail(err: unknown): void;
+  /** Replace the query text and parameters, for a driver that builds the final SQL only when it runs. Keeps the adapter. */
+  retext(sql: string, params: unknown): void;
 }
 
 /** Start a database span, or null when the call runs inside another database span. ORM calls (`outermost`) always start one. */
@@ -74,7 +76,12 @@ export function createDbSpans(tracer: Tracer, redactKeys: readonly string[], out
       recordOn(span, err);
       span.end();
     };
-    return { ctx, end, fail };
+    const retext = (text: string, values: unknown) => {
+      const { "wizelens.db.adapter": _adapter, ...next } = dbAttributes(info, text, values, redactKeys);
+      span.setAttributes(next);
+      span.updateName(spanName(next));
+    };
+    return { ctx, end, fail, retext };
   };
 }
 

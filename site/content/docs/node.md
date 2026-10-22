@@ -77,12 +77,13 @@ which hooks graphql as it loads. WebSocket subscriptions are not traced.
 | Library | Code |
 |---|---|
 | `pg` | `instrumentPg(wizelens, pg)` |
+| postgres.js (`postgres`) | `instrumentPostgresJs(wizelens, sql)` |
 | `mysql2` | `instrumentMysql2(wizelens, mysql)` |
 | `better-sqlite3` | `instrumentBetterSqlite3(wizelens, db)` |
 | `node:sqlite` | `instrumentNodeSqlite(wizelens, db)` |
 | Prisma | `const prisma = new PrismaClient().$extends(prismaExtension(wizelens, { system: "postgresql" }))` |
 | TypeORM | `instrumentTypeOrm(wizelens, dataSource)` |
-| Drizzle | `instrumentDrizzle(wizelens, db)` (on `pg`, `mysql2`, `better-sqlite3`, or `node:sqlite`) |
+| Drizzle | `instrumentDrizzle(wizelens, db)` (on `pg`, postgres.js, `mysql2`, `better-sqlite3`, or `node:sqlite`) |
 | `ioredis` | `instrumentIoRedis(wizelens, Redis)` (Redis, Cluster, pipelines, MULTI) |
 | `redis` (node-redis v4+) | `instrumentRedis(wizelens, redis)` |
 | `mongodb` | `instrumentMongoDb(wizelens, mongodb)` (or a MongoClient, Db, or collection) |

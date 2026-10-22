@@ -44,6 +44,7 @@ export function runChecked(span: DbSpan | null, args: unknown[], invoke: (args: 
   const checked: DbSpan | null = span && {
     ctx: span.ctx,
     fail: span.fail,
+    retext: span.retext,
     end: (result) => {
       const err = errorOf(result);
       if (err) span.fail(err);
