@@ -2,6 +2,14 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — Clearer hub warnings
+
+### Changed
+
+- **The hub warning names the cause.** An app that could not send to the hub always said "Could not reach the hub",
+  even when the hub answered and refused it. Now it says the hub needs a key or refused the key (`401`, `403`), asked
+  to slow down (`429`), answered with another status, or could not be reached at all.
+
 ## [0.3.0-alpha.10] — Static sites and postgres.js
 
 ### Added
