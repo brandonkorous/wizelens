@@ -1,7 +1,7 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, type ReactNode, useState } from "react";
 import { DEFAULT_EXPECT_STATUS, UPTIME_METHODS, type UptimeCheckInput, type UptimeMethod } from "@wizeworks/lens-core";
 import { Check, Field, FormRow, SelectField, TextArea } from "../../ui/Field";
-import { Panel } from "../../ui/Panel";
+import { Modal } from "../../ui/Modal";
 
 const INTERVALS: [string, string][] = [1, 2, 5, 10, 15, 30, 60].map((m) => [String(m), m === 1 ? "Every minute" : m === 60 ? "Every hour" : `Every ${m} minutes`]);
 const METHODS: [UptimeMethod, string][] = UPTIME_METHODS.map((m) => [m, m]);
@@ -26,7 +26,7 @@ const draftOf = (c: UptimeCheckInput | null): UptimeCheckInput => {
 };
 
 /** New or changed check: what to call, how often, and what counts as up. */
-export function CheckForm({ initial, onSave, onCancel }: { initial: UptimeCheckInput | null; onSave: (c: UptimeCheckInput) => Promise<string | null>; onCancel: () => void }) {
+export function CheckForm({ initial, lead, onSave, onCancel }: { initial: UptimeCheckInput | null; lead?: ReactNode; onSave: (c: UptimeCheckInput) => Promise<string | null>; onCancel: () => void }) {
   const [c, setC] = useState(() => draftOf(initial));
   const [headers, setHeaders] = useState(() => headersText(c.headers));
   const [error, setError] = useState<string | null>(null);
@@ -36,8 +36,9 @@ export function CheckForm({ initial, onSave, onCancel }: { initial: UptimeCheckI
     void onSave({ ...c, headers: parseHeaders(headers) }).then(setError);
   };
   return (
-    <Panel title={initial ? `Edit "${initial.name}"` : "New check"} className="wl-panel-form">
+    <Modal title={initial ? `Edit "${initial.name}"` : "New check"} onClose={onCancel} wide>
       <form className="wl-form" onSubmit={submit}>
+        {lead}
         <FormRow>
           <Field label="Name" value={c.name} onChange={(e) => set("name")(e.target.value)} placeholder="Website" />
           <Field label="URL" required type="url" value={c.url} onChange={(e) => set("url")(e.target.value)} placeholder="https://example.com/health" />
@@ -53,11 +54,11 @@ export function CheckForm({ initial, onSave, onCancel }: { initial: UptimeCheckI
         <TextArea label="Headers (optional)" value={headers} onChange={(e) => setHeaders(e.target.value)} placeholder="Authorization: Bearer ..." hint='One "Name: value" per line. Secret values show as [redacted]; leave them as they are to keep them.' />
         <Check label="On" checked={c.enabled} onChange={(e) => set("enabled")(e.target.checked)} />
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
-        <div className="wl-form-actions wl-form-actions-start">
-          <button type="submit" className="wl-btn wl-btn-primary">Save check</button>
+        <div className="wl-form-actions">
           <button type="button" className="wl-btn" onClick={onCancel}>Cancel</button>
+          <button type="submit" className="wl-btn wl-btn-primary">Save check</button>
         </div>
       </form>
-    </Panel>
+    </Modal>
   );
 }

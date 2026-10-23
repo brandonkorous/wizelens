@@ -15,16 +15,22 @@ export function toCsv<T>(columns: CsvColumns<T>, rows: readonly T[]): string {
   return [head, ...body].join("\r\n");
 }
 
+/** Rows of cells as CSV text, for example a sheet read from Excel. */
+export const rowsToCsv = (rows: readonly (readonly Cell[])[]): string => rows.map((r) => r.map(field).join(",")).join("\r\n");
+
 export const isoTime = (ms: number | null | undefined): string => (ms ? new Date(ms).toISOString() : "");
 export const round2 = (ms: number | null | undefined): number | null => (ms === null || ms === undefined ? null : Math.round(ms * 100) / 100);
 
 /** Save text as `wizelens-<what>-<time>.csv`. */
-export function downloadCsv(what: string, text: string): void {
-  const blob = new Blob([text], { type: "text/csv;charset=utf-8" });
+export const downloadCsv = (what: string, text: string): void => downloadText(what, "csv", text, "text/csv;charset=utf-8");
+
+/** Save text as `wizelens-<what>-<time>.<ext>`, made in the browser. */
+export function downloadText(what: string, ext: string, text: string, type: string): void {
+  const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `wizelens-${what}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.csv`;
+  a.download = `wizelens-${what}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.${ext}`;
   document.body.appendChild(a);
   a.click();
   a.remove();

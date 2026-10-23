@@ -5,7 +5,8 @@ import { act, useApi } from "../../data/useApi";
 import { fmtAgo, fmtDate } from "../../format";
 import { CopyButton } from "../../ui/Badges";
 import { useAsk } from "../../ui/Dialog";
-import { Field, FormRow } from "../../ui/Field";
+import { Field } from "../../ui/Field";
+import { Modal } from "../../ui/Modal";
 import { Empty, Panel } from "../../ui/Panel";
 import { SectionHead } from "../../ui/Sections";
 import { type Column, Table } from "../../ui/Table";
@@ -35,12 +36,9 @@ function TokenForm({ orgId, reload, onClose }: { orgId: string; reload: () => vo
     apiSend<{ token: string }>("POST", `./api/orgs/${orgId}/scim/tokens`, { name }).then((r) => (setToken(r.token), setError(null), reload()), (err: unknown) => setError(err instanceof Error ? err.message : String(err)));
   };
   return (
-    <Panel title="New SCIM token" className="wl-panel-form" action={<button type="button" className="wl-link-btn" onClick={onClose}>{token ? "Done" : "Close"}</button>}>
+    <Modal title="New SCIM token" onClose={onClose} closeLabel={token ? "Done" : "Close"}>
       <form className="wl-form" onSubmit={create}>
-        <FormRow>
-          <Field label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Okta" hint="The identity provider that uses it." />
-          <button type="submit" className="wl-btn wl-btn-primary" disabled={!!token}>Create token</button>
-        </FormRow>
+        <Field label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Okta" hint="The identity provider that uses it." autoFocus />
         {token && (
           <div className="wl-share-link">
             <code className="wl-mono wl-small">{token}</code> <CopyButton text={token} label="Copy token" />
@@ -48,8 +46,12 @@ function TokenForm({ orgId, reload, onClose }: { orgId: string; reload: () => vo
           </div>
         )}
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
+        <div className="wl-form-actions">
+          <button type="button" className={token ? "wl-btn wl-btn-primary" : "wl-btn"} onClick={onClose}>{token ? "Done" : "Cancel"}</button>
+          {!token && <button type="submit" className="wl-btn wl-btn-primary">Create token</button>}
+        </div>
       </form>
-    </Panel>
+    </Modal>
   );
 }
 
@@ -76,7 +78,7 @@ function TokensPanel({ orgId, info, reload }: { orgId: string; info: ScimInfo; r
 export function ScimSection({ orgId, plan }: { orgId: string; plan: string }) {
   const { data, error, reload } = useApi<ScimInfo>(`./api/orgs/${orgId}/scim`);
   const [adding, setAdding] = useState(false);
-  const add = data?.allowed && !adding && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setAdding(true)}><Plus aria-hidden="true" /> New token</button>;
+  const add = data?.allowed && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setAdding(true)}><Plus aria-hidden="true" /> New token</button>;
   return (
     <>
       <SectionHead title="SCIM provisioning" description="Your identity provider adds people as members and removes them when they are deactivated. Admins set roles here." action={add} />

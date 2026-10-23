@@ -52,7 +52,7 @@ function KeyStep({ ctx }: { ctx: OrgCtx | null }) {
   const manage = canManage(ctx?.data.role);
   return (
     <>
-      <Panel title="1. Make a sending key" action={manage && <AddButton label="Make a sending key" open={making} onOpen={() => setMaking(true)} />}>
+      <Panel title="1. Make a sending key" action={manage && <AddButton label="Make a sending key" onOpen={() => setMaking(true)} />}>
         <p className="wl-settings-note">
           An ingest key lets an app send to one project. A browser key lets a site with no WizeLens server send its page data.{" "}
           {manage ? <>Every key is listed under <a href={hrefTo("connect", ["keys"])}>Sending keys</a>.</> : "Ask an owner or admin of your organization for one."}

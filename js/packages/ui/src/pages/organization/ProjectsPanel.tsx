@@ -5,7 +5,8 @@ import { apiSend } from "../../data/api";
 import { act } from "../../data/useApi";
 import { CopyButton } from "../../ui/Badges";
 import { useAsk } from "../../ui/Dialog";
-import { Field, FormRow } from "../../ui/Field";
+import { Field } from "../../ui/Field";
+import { Modal } from "../../ui/Modal";
 import { Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 import type { OrgData } from "./orgTypes";
@@ -19,15 +20,16 @@ export function NewProjectForm({ orgId, reload, onClose }: { orgId: string; relo
     void act(() => apiSend("POST", `./api/orgs/${orgId}/projects`, { name }), () => (reload(), void loadAccount())).then((err) => (setError(err), err || onClose()));
   };
   return (
-    <Panel title="New project" className="wl-panel-form" action={<button type="button" className="wl-link-btn" onClick={onClose}>Close</button>}>
+    <Modal title="New project" onClose={onClose}>
       <form className="wl-form" onSubmit={add}>
-        <FormRow>
-          <Field label="Name" required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} placeholder="Checkout" autoFocus hint="Usually one app or team. Make a sending key for it next, under Connect." />
-          <button type="submit" className="wl-btn wl-btn-primary">Add project</button>
-        </FormRow>
+        <Field label="Name" required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} placeholder="Checkout" autoFocus hint="Usually one app or team. Make a sending key for it next, under Connect." />
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
+        <div className="wl-form-actions">
+          <button type="button" className="wl-btn" onClick={onClose}>Cancel</button>
+          <button type="submit" className="wl-btn wl-btn-primary">Add project</button>
+        </div>
       </form>
-    </Panel>
+    </Modal>
   );
 }
 

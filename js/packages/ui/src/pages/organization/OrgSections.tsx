@@ -6,7 +6,8 @@ import { type ClockChoice, type TimeZoneChoice, useClockPref, useTimeZonePref } 
 import { type Theme, useTheme } from "../../data/prefs";
 import { FormRow, SelectField } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
-import { AddButton, SectionHead } from "../../ui/Sections";
+import { AddButton, ImportButton, SectionHead } from "../../ui/Sections";
+import { ImportProjectsForm } from "./ImportProjects";
 import { DeleteOrgPanel, OrgNameForm } from "./OrgPanels";
 import { canManage, ROLE_LABEL } from "./orgTypes";
 import { NewProjectForm, ProjectsPanel } from "./ProjectsPanel";
@@ -45,13 +46,20 @@ export function PreferencesSection() {
   );
 }
 
-/** The organization's projects: add one, clear one's data, or delete one. */
+/** The organization's projects: add one, import many with a key each, clear one's data, or delete one. */
 export function ProjectsSection({ org, data, reload }: OrgCtx) {
-  const [adding, setAdding] = useState(false);
+  const [open, setOpen] = useState<"new" | "import" | null>(null);
+  const actions = (
+    <>
+      <ImportButton onOpen={() => setOpen("import")} />
+      <AddButton label="New project" onOpen={() => setOpen("new")} />
+    </>
+  );
   return (
     <>
-      <SectionHead title="Projects" description="Each project keeps its own traces, logs, dashboards, and alerts. A trace that crosses projects still opens whole for people who can read both." action={<AddButton label="New project" open={adding} onOpen={() => setAdding(true)} />} />
-      {adding && <NewProjectForm orgId={org.id} reload={reload} onClose={() => setAdding(false)} />}
+      <SectionHead title="Projects" description="Each project keeps its own traces, logs, dashboards, and alerts. A trace that crosses projects still opens whole for people who can read both." action={actions} />
+      {open === "new" && <NewProjectForm orgId={org.id} reload={reload} onClose={() => setOpen(null)} />}
+      {open === "import" && <ImportProjectsForm orgId={org.id} data={data} reload={reload} onClose={() => setOpen(null)} />}
       <ProjectsPanel orgId={org.id} data={data} reload={reload} />
     </>
   );

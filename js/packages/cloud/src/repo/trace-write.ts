@@ -10,7 +10,7 @@ import { KEEP_DAYS } from "./settings.js";
 const CHUNK = 200;
 
 /** `INSERT ... VALUES ($1, $2), ($3, $4) ... <tail>` for many rows at once. */
-async function insertMany(q: Queryable, head: string, rows: unknown[][], tail: string): Promise<void> {
+export async function insertMany(q: Queryable, head: string, rows: unknown[][], tail: string): Promise<void> {
   for (let i = 0; i < rows.length; i += CHUNK) {
     const part = rows.slice(i, i + CHUNK);
     const width = part[0]!.length;

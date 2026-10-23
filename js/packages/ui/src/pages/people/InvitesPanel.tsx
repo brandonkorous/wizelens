@@ -6,6 +6,7 @@ import { inviteLink } from "../../shell/auth/flow";
 import { CopyButton } from "../../ui/Badges";
 import { useAsk } from "../../ui/Dialog";
 import { Field, FormRow, SelectField } from "../../ui/Field";
+import { Modal } from "../../ui/Modal";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 import { type Invite, type OrgData, ROLE_HELP, ROLE_LABEL, ROLE_OPTIONS } from "../organization/orgTypes";
@@ -31,12 +32,11 @@ export function InviteForm({ orgId, mail, reload, onClose }: Props & { onClose: 
     }, reload).then(setError);
   };
   return (
-    <Panel title="Invite someone" className="wl-panel-form" action={<button type="button" className="wl-link-btn" onClick={onClose}>Close</button>}>
+    <Modal title="Invite someone" onClose={onClose} closeLabel={link ? "Done" : "Close"}>
       <form className="wl-form" onSubmit={send}>
         <FormRow>
           <Field label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="sam@company.com" autoFocus />
           <SelectField label="Role" value={role} options={ROLE_OPTIONS} onChange={setRole} hint={ROLE_HELP[role]} />
-          <button type="submit" className="wl-btn wl-btn-primary">Send invite</button>
         </FormRow>
         {link && (
           <div className="wl-share-link">
@@ -45,8 +45,12 @@ export function InviteForm({ orgId, mail, reload, onClose }: Props & { onClose: 
           </div>
         )}
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
+        <div className="wl-form-actions">
+          <button type="button" className="wl-btn" onClick={onClose}>{link ? "Done" : "Cancel"}</button>
+          <button type="submit" className="wl-btn wl-btn-primary">{link ? "Invite someone else" : "Send invite"}</button>
+        </div>
       </form>
-    </Panel>
+    </Modal>
   );
 }
 

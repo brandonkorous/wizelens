@@ -2,7 +2,7 @@ import { type FormEvent, useState } from "react";
 import { apiSend } from "../../data/api";
 import { CopyButton } from "../../ui/Badges";
 import { Check, Field, FormRow, SelectField } from "../../ui/Field";
-import { Panel } from "../../ui/Panel";
+import { Modal } from "../../ui/Modal";
 import type { ApiKey, OrgData } from "../organization/orgTypes";
 
 export type Kind = ApiKey["kind"];
@@ -80,14 +80,13 @@ export function KeyForm({ orgId, data, kinds, reload, onClose }: { orgId: string
   };
   const projects = data.projects.map((p): [string, string] => [p.id, p.name]);
   return (
-    <Panel title={kinds.includes("read") ? "New read key" : "New sending key"} className="wl-panel-form" action={<button type="button" className="wl-link-btn" onClick={onClose}>{secret ? "Done" : "Close"}</button>}>
+    <Modal title={kinds.includes("read") ? "New read key" : "New sending key"} onClose={onClose} closeLabel={secret ? "Done" : "Close"}>
       <form className="wl-form" onSubmit={create}>
         <FormRow>
           {kinds.length > 1 && <SelectField label="Kind" value={kind} options={KINDS.filter(([k]) => kinds.includes(k))} onChange={pickKind} />}
           <Field label="Name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="orders-api" hint="Name it after the app or agent that uses it." />
           {kind !== "read" && <SelectField label="Project" value={picked[0] ?? ""} options={projects} onChange={(id) => setPicked([id])} />}
           <SelectField label="Expires" value={expires} options={EXPIRY} onChange={setExpires} hint="It stops working then. Rotate it before." />
-          <button type="submit" className="wl-btn wl-btn-primary" disabled={picked.length === 0 || scopes.length === 0}>Create key</button>
         </FormRow>
         {kind === "browser" && (
           <Field label="Sites" required value={origins} onChange={(e) => setOrigins(e.target.value)} placeholder="https://shop.example.com" hint="Only pages on these sites may send with it. Put a space or comma between sites; https://*.example.com takes its subdomains." />
@@ -101,7 +100,11 @@ export function KeyForm({ orgId, data, kinds, reload, onClose }: { orgId: string
         <ScopeChecks kind={kind} scopes={scopes} onChange={setScopes} />
         {secret && <NewSecret kind={kind} secret={secret} />}
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
+        <div className="wl-form-actions">
+          <button type="button" className="wl-btn" onClick={onClose}>{secret ? "Done" : "Cancel"}</button>
+          <button type="submit" className="wl-btn wl-btn-primary" disabled={picked.length === 0 || scopes.length === 0}>{secret ? "Create another key" : "Create key"}</button>
+        </div>
       </form>
-    </Panel>
+    </Modal>
   );
 }

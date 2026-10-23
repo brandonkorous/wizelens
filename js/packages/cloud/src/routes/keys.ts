@@ -13,7 +13,7 @@ const MAX_DAYS = 3650;
 const GRACE_HOURS = 24;
 const now = (ctx: Ctx) => ctx.app.config.now();
 
-function daysOf(raw: unknown): number | null {
+export function daysOf(raw: unknown): number | null {
   if (raw === undefined || raw === null || raw === "") return null;
   const n = Number(raw);
   if (!Number.isInteger(n) || n < 1 || n > MAX_DAYS) fail(400, `A key expires in 1 to ${MAX_DAYS} days, or never.`);

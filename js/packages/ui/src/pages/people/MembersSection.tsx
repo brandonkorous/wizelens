@@ -11,7 +11,7 @@ export function MembersSection({ org, data, me, mail, reload }: OrgCtx) {
   const manage = canManage(data.role);
   return (
     <>
-      <SectionHead title="Members" description={`Who is in ${org.name}, and what each person may change.`} action={manage && <AddButton label="Invite someone" open={inviting} onOpen={() => setInviting(true)} />} />
+      <SectionHead title="Members" description={`Who is in ${org.name}, and what each person may change.`} action={manage && <AddButton label="Invite someone" onOpen={() => setInviting(true)} />} />
       {inviting && <InviteForm orgId={org.id} mail={mail} reload={reload} onClose={() => setInviting(false)} />}
       <MembersPanel orgId={org.id} me={me} data={data} reload={reload} />
       {manage && data.invites.length > 0 && <InvitesPanel orgId={org.id} mail={mail} data={data} reload={reload} />}
