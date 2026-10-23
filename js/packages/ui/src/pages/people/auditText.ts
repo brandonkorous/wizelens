@@ -26,6 +26,8 @@ const ACTIONS: Record<string, string> = {
   "key.create": "Made a key",
   "key.revoke": "Revoked a key",
   "key.rotate": "Rotated a key",
+  "key.rotate_many": "Rotated many keys",
+  "key.revoke_many": "Revoked many keys",
   "project.role": "Changed access to a project",
   "project.settings": "Changed project settings",
   "slo.create": "Added an SLO",

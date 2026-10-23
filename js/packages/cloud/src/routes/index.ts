@@ -9,6 +9,7 @@ import { savedRoutes } from "./saved.js";
 import { sloRoutes } from "./slos.js";
 import { orgListRoutes } from "./org-lists.js";
 import { orgSavedRoutes } from "./saved-org.js";
+import { keyBulkRoutes } from "./keys-bulk.js";
 import { keyRoutes } from "./keys.js";
 import { settingsRoutes } from "./settings.js";
 import { meRoutes } from "./me.js";
@@ -35,6 +36,7 @@ export function allRoutes(): Router<Ctx> {
   orgRoutes(r);
   projectImportRoutes(r);
   projectRoutes(r);
+  keyBulkRoutes(r);
   keyRoutes(r);
   settingsRoutes(r);
   dataRoutes(r);
