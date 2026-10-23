@@ -51,9 +51,9 @@ export const saveKeysCsv = (keys: readonly ImportedKey[]) => downloadCsv("keys",
 export const saveKeysJson = (keys: readonly ImportedKey[]) => downloadText("keys", "json", JSON.stringify(keys, null, 2), "application/json");
 export const saveLeftRows = (rows: readonly ProjectImportRow[]) => downloadCsv("projects-not-made", toCsv(ROW_COLUMNS, rows));
 
-/** A file to start from: every column, one ingest and one browser row. */
+/** A file to start from: every column, a project with two services, and a browser row. */
 export const saveSample = () =>
-  downloadCsv("projects-sample", "name,kind,sites,key name\r\norders-api,ingest,,orders-api-prod\r\nShop web,browser,https://shop.example.com https://www.example.com,shop-pages");
+  downloadCsv("projects-sample", "name,kind,sites,key name\r\nOrders,ingest,,orders-api\r\nOrders,ingest,,orders-worker\r\nShop web,browser,https://shop.example.com https://www.example.com,shop-pages");
 
 const bodyOf = (r: ProjectImportRow) => ({ name: r.name, kind: r.kind, sites: r.sites, keyName: r.keyName });
 

@@ -1,9 +1,9 @@
-// A list of projects to make at once, each with its own sending key: read from CSV, a sheet pasted as text, plain names, or JSON.
+// A list of projects to make at once, with a sending key per row (a project may have many): read from CSV, a sheet pasted as text, plain names, or JSON.
 import { readCsv } from "./csv.js";
 
 export type ImportKind = "ingest" | "browser";
 
-/** One project to make (or find by name) and the sending key to make for it. */
+/** One sending key to make, and the project (found or made by name) it sends to. */
 export interface ProjectImportRow {
   /** The row in the file, counting from 1 after any header. */
   row: number;
@@ -99,16 +99,17 @@ function checkRows(raw: (Raw & { row: number })[]): ProjectImport {
   const rows: ProjectImportRow[] = [];
   const problems: ImportProblem[] = [];
   const seen = new Map<string, number>();
-  if (raw.length > MAX_IMPORT_ROWS) problems.push({ row: 0, message: `A file holds up to ${MAX_IMPORT_ROWS} projects; this one has ${raw.length}. Split it.` });
+  if (raw.length > MAX_IMPORT_ROWS) problems.push({ row: 0, message: `A file holds up to ${MAX_IMPORT_ROWS} rows; this one has ${raw.length}. Split it.` });
   for (const r of raw.slice(0, MAX_IMPORT_ROWS)) {
     const out = rowOf(r);
     if (typeof out === "string") {
       problems.push({ row: r.row, message: out });
       continue;
     }
-    const first = seen.get(out.name.toLowerCase());
-    if (first !== undefined) problems.push({ row: r.row, message: `"${out.name}" is already on row ${first}.` });
-    else (seen.set(out.name.toLowerCase(), r.row), rows.push(out));
+    const id = `${out.name}\n${out.keyName}`.toLowerCase();
+    const first = seen.get(id);
+    if (first !== undefined) problems.push({ row: r.row, message: `"${out.name}" already has a key named "${out.keyName}" on row ${first}. Give each of its keys its own key name.` });
+    else (seen.set(id, r.row), rows.push(out));
   }
   return { rows, problems };
 }

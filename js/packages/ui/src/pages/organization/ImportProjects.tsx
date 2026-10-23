@@ -29,7 +29,7 @@ function Progress({ done, total }: { done: number; total: number }) {
 
 const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
 
-/** Many projects at once, from a file: each row gets a project (unless one has that name) and a new sending key, shown once. */
+/** Many projects at once, from a file: each row gets a new sending key, shown once, and a project when none has that name. */
 export function ImportProjectsForm({ orgId, data, reload, onClose }: { orgId: string; data: OrgData; reload: () => void; onClose: () => void }) {
   const [text, setText] = useState("");
   const [expires, setExpires] = useState("");
@@ -40,7 +40,7 @@ export function ImportProjectsForm({ orgId, data, reload, onClose }: { orgId: st
   const parsed = useMemo(() => (text.trim() ? parseProjectImport(text) : null), [text]);
   const existing = useMemo(() => new Set(data.projects.map((p) => p.name.toLowerCase())), [data.projects]);
   const rows = parsed?.problems.length === 0 ? parsed.rows : [];
-  const fresh = rows.filter((r) => !existing.has(r.name.toLowerCase())).length;
+  const fresh = new Set(rows.map((r) => r.name.toLowerCase()).filter((n) => !existing.has(n))).size;
   const unsaved = !!run && run.keys.length > 0 && !saved;
   useLeaveGuard(unsaved || done !== null);
   const start = async () => {
