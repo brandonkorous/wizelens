@@ -31,3 +31,4 @@ export * from "./sourcemaps/index.js";
 export * from "./tags/index.js";
 export * from "./security/index.js";
 export * from "./import/index.js";
+export * from "./bulk.js";

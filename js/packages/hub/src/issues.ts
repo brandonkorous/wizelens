@@ -1,7 +1,7 @@
 // Issue states on the hub: error groups and insights resolved or ignored, per project ("" for all).
 import type { DatabaseSync } from "node:sqlite";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { applyIssueChange, type IssueKind, type IssueState, issueStatesOf, type IssueStates, parseIssueChange } from "@wizeworks/lens-core";
+import { applyIssueChange, type IssueKind, type IssueState, issueStatesOf, type IssueStates, parseIssueChanges } from "@wizeworks/lens-core";
 import { sendJson } from "@wizeworks/lens-node/kit";
 import { parseJson, readBody } from "./body.js";
 
@@ -36,15 +36,18 @@ function save(db: DatabaseSync, project: string, kind: IssueKind, key: string, s
   ).run(project, kind, key, s.status, s.untilMs, s.resolvedMs, s.assignee, s.updatedMs);
 }
 
-/** `GET api/issues?project=`: the project's states. `POST api/issues?project=`: resolve, ignore, or reopen one (the hub has no members to assign to). */
+/** `GET api/issues?project=`: the project's states. `POST api/issues?project=`: resolve, ignore, or reopen one issue, or many with `keys` (the hub has no members to assign to). */
 export async function handleIssues(db: DatabaseSync, method: string, project: string, req: IncomingMessage, res: ServerResponse, now: number): Promise<void> {
   if (method === "GET") return sendJson(res, 200, { issues: listIssues(db, project), members: [] });
-  const c = parseIssueChange(parseJson(await readBody(req)));
-  if (typeof c === "string") return sendJson(res, 400, { error: c });
-  if (c.action === "assign") return sendJson(res, 400, { error: "The hub has no members to assign to." });
-  const prev = listIssues(db, project).find((s) => s.kind === c.kind && s.key === c.key);
-  const next = applyIssueChange(prev, c, now);
-  save(db, project, c.kind, c.key, next);
+  const cs = parseIssueChanges(parseJson(await readBody(req)));
+  if (typeof cs === "string") return sendJson(res, 400, { error: cs });
+  if (cs[0]!.action === "assign") return sendJson(res, 400, { error: "The hub has no members to assign to." });
+  const known = listIssues(db, project);
+  const issues = cs.map((c) => {
+    const next = applyIssueChange(known.find((s) => s.kind === c.kind && s.key === c.key), c, now);
+    save(db, project, c.kind, c.key, next);
+    return next;
+  });
   version++;
-  sendJson(res, 200, { issue: next });
+  sendJson(res, 200, { issue: issues[0] ?? null, issues });
 }

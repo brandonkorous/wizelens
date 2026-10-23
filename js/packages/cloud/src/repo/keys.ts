@@ -87,6 +87,18 @@ export async function keyInOrg(q: Queryable, orgId: string, keyId: string): Prom
   return row && toKey(row);
 }
 
+/** The live keys of the organization among `ids`. */
+export async function keysInOrg(q: Queryable, orgId: string, ids: string[]): Promise<ApiKey[]> {
+  const rows = await q.query<KeyRow>(`SELECT ${KEY_COLUMNS} FROM api_keys WHERE org_id = $1 AND id = ANY($2::text[]) AND revoked_ms IS NULL`, [orgId, ids]);
+  return rows.map(toKey);
+}
+
+/** Revoke the live keys of the organization among `ids`; returns the ids revoked. */
+export async function revokeKeys(q: Queryable, orgId: string, ids: string[], now: number): Promise<string[]> {
+  const rows = await q.query<{ id: string }>("UPDATE api_keys SET revoked_ms = $1 WHERE org_id = $2 AND id = ANY($3::text[]) AND revoked_ms IS NULL RETURNING id", [now, orgId, ids]);
+  return rows.map((r) => r.id);
+}
+
 /** Replace a browser key's sites. False when the key is not a live browser key of the organization. */
 export async function setKeyOrigins(q: Queryable, orgId: string, keyId: string, origins: string[]): Promise<boolean> {
   const rows = await q.query("UPDATE api_keys SET origins = $1 WHERE org_id = $2 AND id = $3 AND kind = 'browser' AND revoked_ms IS NULL RETURNING id", [JSON.stringify(origins), orgId, keyId]);

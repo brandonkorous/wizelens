@@ -1,6 +1,7 @@
 // Importing projects from a file: send the rows in parts, and save the new keys as CSV or JSON. The secrets stay in this browser.
 import { MAX_IMPORT_REQUEST, type ProjectImportRow } from "@wizeworks/lens-core";
 import { apiSend } from "../../data/api";
+import { inParts } from "../../data/bulk";
 import { type CsvColumns, downloadCsv, downloadText, toCsv } from "../../data/csv";
 
 /** One key the server made. `token` is the secret, sent this once. */
@@ -59,16 +60,7 @@ const bodyOf = (r: ProjectImportRow) => ({ name: r.name, kind: r.kind, sites: r.
 
 /** Send the rows in parts, one after another. Each part is all or nothing; a failure stops the rest. */
 export async function runImport(orgId: string, rows: readonly ProjectImportRow[], expiresInDays: number | null, progress: (done: number) => void): Promise<ImportRun> {
-  const keys: ImportedKey[] = [];
-  for (let i = 0; i < rows.length; i += MAX_IMPORT_REQUEST) {
-    const part = rows.slice(i, i + MAX_IMPORT_REQUEST);
-    try {
-      const res = await apiSend<{ keys: ImportedKey[] }>("POST", `./api/orgs/${orgId}/projects/import`, { projects: part.map(bodyOf), expiresInDays });
-      keys.push(...res.keys);
-      progress(keys.length);
-    } catch (err) {
-      return { keys, error: err instanceof Error ? err.message : String(err), left: rows.slice(i) };
-    }
-  }
-  return { keys, error: null, left: [] };
+  const send = async (part: ProjectImportRow[]) => (await apiSend<{ keys: ImportedKey[] }>("POST", `./api/orgs/${orgId}/projects/import`, { projects: part.map(bodyOf), expiresInDays })).keys;
+  const run = await inParts(rows, MAX_IMPORT_REQUEST, send, progress);
+  return { keys: run.done, error: run.error, left: run.left };
 }

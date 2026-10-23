@@ -50,3 +50,37 @@ describe("parseProjectImport", () => {
     expect(parseProjectImport(big).problems[0]!.message).toMatch(/up to 5000/);
   });
 });
+
+describe("parseCheckImport", () => {
+  it("reads URLs, a header with options, and JSON, and checks each like a hand-made check", async () => {
+    const { parseCheckImport } = await import("./checks.js");
+    expect(parseCheckImport("https://a.io/health\nhttps://b.io", 100).rows.map((r) => [r.input.name, r.input.method, r.input.intervalMin])).toEqual([["a.io", "GET", 5], ["b.io", "GET", 5]]);
+    const csv = parseCheckImport("Name,URL,Method,Interval,Expected status\nShop,https://shop.io,HEAD,1,200-399", 100);
+    expect(csv.rows[0]!.input).toMatchObject({ name: "Shop", url: "https://shop.io", method: "HEAD", intervalMin: 1, expectStatus: "200-399" });
+    expect(parseCheckImport('[{"url": "https://c.io", "name": "C"}]', 100).rows[0]!.input.name).toBe("C");
+  });
+
+  it("names bad rows, repeats, and a list past the limit", async () => {
+    const { parseCheckImport } = await import("./checks.js");
+    const { problems } = parseCheckImport("url,method\nnot a url,GET\nhttps://a.io,GET\nhttps://a.io,GET\nhttps://b.io,FLY", 100);
+    expect(problems.map((p) => p.row)).toEqual([1, 3, 4]);
+    expect(parseCheckImport("https://a.io\nhttps://b.io\nhttps://c.io", 2).problems[0]!.message).toMatch(/at most 2/);
+  });
+});
+
+describe("parseInviteList", () => {
+  it("takes a plain list, or rows with roles, and names bad or known emails", async () => {
+    const { parseInviteList } = await import("./invites.js");
+    expect(parseInviteList("a@x.io, B@x.io; c@x.io\nd@x.io").rows.map((r) => [r.email, r.role])).toEqual([["a@x.io", "member"], ["b@x.io", "member"], ["c@x.io", "member"], ["d@x.io", "member"]]);
+    expect(parseInviteList("email,role\na@x.io,admin\nb@x.io,").rows.map((r) => r.role)).toEqual(["admin", "member"]);
+    const bad = parseInviteList("email,role\nnope,member\na@x.io,boss\nb@x.io,viewer\nb@x.io,viewer\nk@x.io,", new Set(["k@x.io"]));
+    expect(bad.problems.map((p) => p.row)).toEqual([1, 2, 4, 5]);
+  });
+});
+
+describe("parseInviteList plain lists", () => {
+  it("splits a mixed plain list and keeps admin@ addresses as emails", async () => {
+    const { parseInviteList } = await import("./invites.js");
+    expect(parseInviteList("admin@x.io\nb@x.io, c@x.io").rows.map((r) => r.email)).toEqual(["admin@x.io", "b@x.io", "c@x.io"]);
+  });
+});

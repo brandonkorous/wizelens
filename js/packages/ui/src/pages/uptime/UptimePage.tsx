@@ -12,6 +12,9 @@ import { IncidentsPanel } from "./IncidentsPanel";
 import { StatusPagePanel } from "./StatusPagePanel";
 import { CertWarnings, UptimeCards } from "./UptimeCards";
 import { ChecksTable } from "./UptimeTable";
+import { useChecksBulk } from "./ChecksBulk";
+import { ImportChecks } from "./ImportChecks";
+import { ImportButton } from "../../ui/Sections";
 import "../../styles/pages/uptime.css";
 import { useTargetProject } from "../../ui/ProjectSelect";
 
@@ -61,7 +64,14 @@ function UptimeList() {
     if (!err) setEditing(null);
     return err;
   };
-  const add = api.canWrite && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setEditing("new")}><Plus aria-hidden="true" /> New check</button>;
+  const [importing, setImporting] = useState(false);
+  const bulk = useChecksBulk(api, checks, setNote);
+  const add = api.canWrite && (
+    <>
+      <ImportButton label="Import URLs" onOpen={() => setImporting(true)} />
+      <button type="button" className="wl-btn wl-btn-primary" onClick={() => setEditing("new")}><Plus aria-hidden="true" /> New check</button>
+    </>
+  );
   return (
     <>
       <PageHeader title="Uptime" subtitle={SUBTITLE}>{add}</PageHeader>
@@ -70,8 +80,10 @@ function UptimeList() {
       <CertWarnings checks={checks} nowMs={api.data?.nowMs ?? Date.now()} />
       {editing && <CheckForm initial={editing === "new" ? null : editing} lead={editing === "new" && target.field} onSave={save} onCancel={() => setEditing(null)} />}
       <UptimeCards checks={checks} model={model} />
+      {importing && <ImportChecks api={api} lead={target.field} projectId={target.id ?? undefined} onClose={() => setImporting(false)} />}
       <Panel title="Checks" flush>
-        <ChecksTable checks={checks} model={model} nowMs={api.data?.nowMs ?? Date.now()} canWrite={api.canWrite} {...actions} empty={<Empty title="No checks yet"><HeartPulse aria-hidden="true" /> Add one to hear when a site or API stops answering.</Empty>} />
+        {bulk.bar}
+        <ChecksTable select={bulk.select} checks={checks} model={model} nowMs={api.data?.nowMs ?? Date.now()} canWrite={api.canWrite} {...actions} empty={<Empty title="No checks yet"><HeartPulse aria-hidden="true" /> Add one to hear when a site or API stops answering.</Empty>} />
       </Panel>
       <IncidentsPanel incidents={api.data?.incidents ?? []} nowMs={api.data?.nowMs ?? Date.now()} />
       <StatusPagePanel />

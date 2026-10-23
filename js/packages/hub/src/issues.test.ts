@@ -27,4 +27,13 @@ describe("hub issues", () => {
     expect((await post(base, { kind: "bug", key: "k", action: "resolve" })).status).toBe(400);
     expect((await post(base, { kind: "error", key: "k", action: "assign", assignee: "u" })).status).toBe(400);
   });
+
+  it("resolves many issues in one request", async () => {
+    let url: string;
+    ({ hub, url } = await startHub());
+    const base = `${url}/_wizelens/api/issues?project=shop`;
+    expect((await post(base, { kind: "error", keys: ["a", "b", "c"], action: "resolve" })).status).toBe(200);
+    const list = (await (await fetch(base)).json()) as { issues: { key: string; status: string }[] };
+    expect(list.issues.map((s) => s.key).sort()).toEqual(["a", "b", "c"]);
+  });
 });

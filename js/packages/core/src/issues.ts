@@ -1,4 +1,5 @@
 // Error groups and insights as issues: resolved, ignored (for a while or for good), regressed when a resolved one comes back, and assigned.
+import { MAX_BULK } from "./bulk.js";
 
 export type IssueKind = "error" | "insight";
 
@@ -62,6 +63,23 @@ export function parseIssueChange(body: unknown): IssueChange | string {
   if (until !== null && !Number.isFinite(until)) return "Set untilMs to a time, or leave it out to ignore for good.";
   const assignee = typeof b.assignee === "string" && b.assignee ? b.assignee.slice(0, 200) : null;
   return { kind: b.kind, key: b.key, action: b.action as IssueAction, untilMs: until, assignee };
+}
+
+/** One change, or the same change to many issues (`keys`, up to MAX_BULK), from a request body; or a message saying what is wrong. */
+export function parseIssueChanges(body: unknown): IssueChange[] | string {
+  const b = (body ?? {}) as Record<string, unknown>;
+  if (b.keys === undefined) {
+    const one = parseIssueChange(b);
+    return typeof one === "string" ? one : [one];
+  }
+  if (!Array.isArray(b.keys) || b.keys.length === 0 || b.keys.length > MAX_BULK) return `Set keys to a list of 1 to ${MAX_BULK} issue keys.`;
+  const out: IssueChange[] = [];
+  for (const key of new Set(b.keys)) {
+    const c = parseIssueChange({ ...b, key });
+    if (typeof c === "string") return c;
+    out.push(c);
+  }
+  return out;
 }
 
 /** The state after a change; null when nothing is left to keep (reopened and not assigned). */

@@ -5,7 +5,9 @@ import { fmtAgo, fmtDate } from "../../format";
 import { Badge } from "../../ui/Badges";
 import { useAsk } from "../../ui/Dialog";
 import { Empty, Panel } from "../../ui/Panel";
+import { ListFilter, matchesText, useSelection } from "../../ui/Selection";
 import { type Column, Table } from "../../ui/Table";
+import { KeysBulk } from "./KeysBulk";
 import { type Kind, NewSecret, SCOPES } from "./KeyForm";
 import type { ApiKey, OrgData } from "../organization/orgTypes";
 
@@ -50,7 +52,12 @@ export function KeysPanel({ orgId, data, kinds, reload }: { orgId: string; data:
   const { dialog, confirm, prompt } = useAsk();
   const [rotated, setRotated] = useState<Rotated | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [filter, setFilter] = useState("");
   const now = Date.now();
+  const all = data.keys.filter((k) => kinds.includes(k.kind));
+  const rows = all.filter((k) => matchesText(filter, k.name, k.prefix, k.kind, ...k.projectIds.map((id) => names.get(id))));
+  const { picked, select, clear } = useSelection(all.map((k) => k.id), "key");
   const revoke = async (k: ApiKey) =>
     (await confirm({ title: `Revoke ${k.name}?`, body: REVOKED[k.kind], confirmLabel: "Revoke key", danger: true })) &&
     void act(() => apiSend("DELETE", `./api/orgs/${orgId}/keys/${k.id}`), reload).then(setError);
@@ -84,13 +91,21 @@ export function KeysPanel({ orgId, data, kinds, reload }: { orgId: string; data:
   ];
   return (
     <Panel flush>
+      {all.length > 0 && (
+        <div className="wl-list-tools">
+          <ListFilter value={filter} onChange={setFilter} placeholder="Filter by key, project, or kind" />
+          {filter && <span className="wl-muted wl-small">{rows.length} of {all.length}</span>}
+        </div>
+      )}
+      <KeysBulk orgId={orgId} picked={all.filter((k) => picked.includes(k.id))} names={names} clear={clear} reload={reload} onDone={(err, ok) => (setError(err), setNote(ok))} />
       {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
+      {note && <p className="wl-panel-note" role="status">{note}</p>}
       {rotated && (
         <div className="wl-panel-banner">
           <NewSecret kind={rotated.kind} secret={rotated.token} note={`The old secret stops ${fmtDate(rotated.oldExpiresMs)}.`} />
         </div>
       )}
-      <Table columns={columns} rows={data.keys.filter((k) => kinds.includes(k.kind))} rowKey={(k) => k.id} empty={<EmptyKeys reading={kinds.includes("read")} />} />
+      <Table columns={columns} rows={rows} rowKey={(k) => k.id} select={select} empty={filter ? <Empty>No key matches “{filter}”.</Empty> : <EmptyKeys reading={kinds.includes("read")} />} />
       {dialog}
     </Panel>
   );
