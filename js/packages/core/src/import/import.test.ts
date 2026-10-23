@@ -67,3 +67,20 @@ describe("parseCheckImport", () => {
     expect(parseCheckImport("https://a.io\nhttps://b.io\nhttps://c.io", 2).problems[0]!.message).toMatch(/at most 2/);
   });
 });
+
+describe("parseInviteList", () => {
+  it("takes a plain list, or rows with roles, and names bad or known emails", async () => {
+    const { parseInviteList } = await import("./invites.js");
+    expect(parseInviteList("a@x.io, B@x.io; c@x.io\nd@x.io").rows.map((r) => [r.email, r.role])).toEqual([["a@x.io", "member"], ["b@x.io", "member"], ["c@x.io", "member"], ["d@x.io", "member"]]);
+    expect(parseInviteList("email,role\na@x.io,admin\nb@x.io,").rows.map((r) => r.role)).toEqual(["admin", "member"]);
+    const bad = parseInviteList("email,role\nnope,member\na@x.io,boss\nb@x.io,viewer\nb@x.io,viewer\nk@x.io,", new Set(["k@x.io"]));
+    expect(bad.problems.map((p) => p.row)).toEqual([1, 2, 4, 5]);
+  });
+});
+
+describe("parseInviteList plain lists", () => {
+  it("splits a mixed plain list and keeps admin@ addresses as emails", async () => {
+    const { parseInviteList } = await import("./invites.js");
+    expect(parseInviteList("admin@x.io\nb@x.io, c@x.io").rows.map((r) => r.email)).toEqual(["admin@x.io", "b@x.io", "c@x.io"]);
+  });
+});

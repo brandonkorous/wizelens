@@ -7,7 +7,7 @@ export function useSelection(ids: readonly string[], noun: string) {
   const [raw, setRaw] = useState<Set<string>>(() => new Set());
   const known = useMemo(() => new Set(ids), [ids]);
   const picked = useMemo(() => new Set([...raw].filter((id) => known.has(id))), [raw, known]);
-  const select: TableSelect = { picked, onChange: setRaw, noun };
+  const select: TableSelect = { picked, onChange: setRaw, noun, pickable: (id) => known.has(id) };
   return { picked: [...picked], select, clear: () => setRaw(new Set()) };
 }
 

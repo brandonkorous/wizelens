@@ -32,6 +32,8 @@ export interface TableSelect {
   onChange: (next: Set<string>) => void;
   /** What one row is, for the boxes' labels, for example "key". */
   noun: string;
+  /** Rows with no box, for example your own row among members. */
+  pickable?: (key: string) => boolean;
 }
 
 /** A tick box that can also show "some" (indeterminate). */
@@ -54,6 +56,7 @@ function PickAll({ keys, select }: { keys: string[]; select: TableSelect }) {
 }
 
 function PickOne({ id, select }: { id: string; select: TableSelect }) {
+  if (select.pickable && !select.pickable(id)) return <td className="wl-cell-pick" />;
   const change = (pick: boolean) => {
     const next = new Set(select.picked);
     if (pick) next.add(id);
@@ -105,7 +108,7 @@ export function Table<T>({ columns, rows, rowKey, onRowClick, selectedKey, empty
       <table className="wl-table">
         <thead>
           <tr>
-            {select && <PickAll keys={sorted.map(rowKey)} select={select} />}
+            {select && <PickAll keys={sorted.map(rowKey).filter((k) => select.pickable?.(k) ?? true)} select={select} />}
             {columns.map((c) => (
               <HeaderCell key={c.key} col={c} sort={sort} onSort={onSort} />
             ))}
