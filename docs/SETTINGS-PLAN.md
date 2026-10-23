@@ -9,11 +9,11 @@ layouts in a clickable mock-up and picked **pages by task**.
 
 | Step | State |
 |---|---|
-| 1. Connect page: setup steps, server setup, sending keys, AI read keys, add-on options | Planned |
-| 2. People & access page: members, project access, single sign-on, user sync, connected apps, shared links, audit log | Planned |
-| 3. Organization page (Settings on a hub or in-app): projects, data retention, thresholds, tags, billing, general, preferences | Planned |
-| 4. Menus and links: sidebar, user menu, new organization in the switcher, old links redirect, Team and Settings pages go | Planned |
-| 5. Cloud links in emails and Stripe, docs, and the changelog | Planned |
+| 1. Connect page: setup steps, server setup, sending keys, AI read keys, add-on options | Done |
+| 2. People & access page: members, project access, single sign-on, user sync, connected apps, shared links, audit log | Done |
+| 3. Organization page (Settings on a hub or in-app): projects, data retention, thresholds, tags, billing, general, preferences | Done |
+| 4. Menus and links: sidebar, user menu, new organization in the switcher, old links redirect, Team and Settings pages go | Done |
+| 5. Cloud links in emails and Stripe, docs, and the changelog | Done |
 
 ## The pages
 

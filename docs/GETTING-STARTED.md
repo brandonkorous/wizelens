@@ -240,7 +240,7 @@ Turn on the read-only MCP endpoint per service (`EnableMcp = true` / `enableMcp:
 `http://localhost:<port>/_wizelens/mcp`. Secrets are redacted before anything is stored. On the hub, start it with `--mcp`:
 one endpoint (`http://localhost:5960/_wizelens/mcp`) then covers every service. On WizeLens Cloud, add
 `https://mcp.wizelens.com` to Claude or another MCP client: it opens the WizeLens sign-in, and you pick the projects it may
-read (OAuth; remove it any time under Account, Connected apps). For scripts, make a **read key** on the Team page and send
+read (OAuth; remove it any time under Account, My apps). For scripts, make a **read key** under Connect, AI read keys, and send
 it as `Authorization: Bearer wl_rk_...`. With several projects, the agent calls `list_projects` and names a project on each
 tool call, or `get_overview` with no project for a report on all of them. Every call is in the audit log.
 

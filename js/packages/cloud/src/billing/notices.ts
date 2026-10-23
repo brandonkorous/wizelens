@@ -41,6 +41,6 @@ export async function sendUsageNotices(app: CloudApp): Promise<void> {
     "SELECT o.id, o.name FROM orgs o WHERE o.plan IN ('free', 'team', 'business', 'enterprise') AND EXISTS (SELECT 1 FROM usage_daily u WHERE u.org_id = o.id AND u.day LIKE $1)",
     [`${month}-%`],
   );
-  const url = `${app.baseUrl()}/_wizelens/#/team/billing`;
+  const url = `${app.baseUrl()}/_wizelens/#/organization/billing`;
   for (const org of orgs) await checkOrg(app, org, month, url);
 }

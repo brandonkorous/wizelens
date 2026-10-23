@@ -29,5 +29,5 @@ and dropped if not. An error that comes after the choice still keeps the rest of
 
 ## What it changes
 
-The local store, the SQLite file, and the hub all get only the kept traces. The **Settings** page shows the rate, so read the
+The local store, the SQLite file, and the hub all get only the kept traces. **Connect → This service** shows the rate, so read the
 counts on other pages as a share of the traffic.

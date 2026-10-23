@@ -42,13 +42,13 @@ window), and `group_requests` gives the same per endpoint. Both count every requ
 - **Read only.** The only permission is `wizelens:read`. No tool can change anything.
 - **Only what you picked.** One organization, and the projects you chose. "All projects" also covers projects made later.
 - **Until you end it.** The access token lasts an hour and the app renews it on its own (the refresh token lasts 30 days
-  and renews on each use). Remove an app any time under **Account → Connected apps**. Admins see and remove everyone's
-  apps under **Team → Connected apps**. Leaving the organization ends it too.
+  and renews on each use). Remove an app any time under **Account → My apps**. Admins see and remove everyone's
+  apps under **People & access → Connected apps**. Leaving the organization ends it too.
 - **Audited.** The audit log shows who connected which app, and every tool call with the person and the app.
 
 ### Read keys (scripts and CI)
 
-For a script, a CI job, or an agent with no person to sign in, make a **read key** under **Team → API keys** and send it
+For a script, a CI job, or an agent with no person to sign in, make a **read key** under **Connect → AI read keys** and send it
 as a header:
 
 ```json

@@ -186,4 +186,4 @@ database parameter names, and headers.
   become a typed marker, such as `[redacted:jwt]` or `[redacted:card]`.
 
 `RedactKeys` (.NET) and `redactKeys` (Node) replace the list, so include the defaults you want to keep. Java, Python, and
-Go add to it with `WIZELENS_REDACT_KEYS`. Hub and cloud projects add more keys in Settings.
+Go add to it with `WIZELENS_REDACT_KEYS`. Hub and cloud projects add more keys under Thresholds and hidden keys.

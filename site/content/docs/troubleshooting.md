@@ -15,7 +15,7 @@ description: What to check when a request, query, log line, or service does not 
 | A service is missing in the hub | `WIZELENS_HUB` is set where the service runs, and the service was restarted. The service log says why the hub took nothing: it could not be reached, it needs a key or refused one (`401`, `403`: set `WIZELENS_HUB_TOKEN` to a live `wl_ik_` key), or it asked to slow down (`429`). |
 | An OpenTelemetry app shows "Idle" | Normal: OpenTelemetry apps send only when they have data. |
 | Next.js routes all 404 after an update | Stop `next dev`, delete `.next`, and start it again. |
-| Fewer requests than you sent | Sampling is on. See the **Settings** page and `WIZELENS_SAMPLE_RATE`. |
+| Fewer requests than you sent | Sampling is on. See **Connect → This service** and `WIZELENS_SAMPLE_RATE`. |
 | Old data is gone after a restart | Traces are kept for 24 hours or 2,000 traces. Change `MaxAge` / `maxAgeMs` and `MaxTraces` / `maxTraces`. |
 | No CORS preflight requests | By design: `OPTIONS` preflights carry no `traceparent`, so they are not traced. |
 | A 404 or 400 does not count as an error | By design: a 4xx answer is not a failure. See [What counts as an error](/docs/dashboard/#what-counts-as-an-error). |

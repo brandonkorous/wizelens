@@ -22,7 +22,7 @@ A request whose server span has no user takes it from a browser span of the same
 user only in the browser still fills the Users page, also when it calls an API in another project.
 
 The name is optional. Leave it out to keep only ids, or add `user.full_name` to the project's redacted keys
-(**Settings → This project → More redacted keys** on the hub and the cloud) to drop names on the server.
+(**Thresholds and hidden keys → More hidden keys**, in **Settings** on the hub and **Organization** on the cloud) to drop names on the server.
 
 ## The Users page
 

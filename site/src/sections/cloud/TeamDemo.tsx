@@ -65,7 +65,7 @@ function Keys({ beat }: { beat: number }) {
   const masked = beat >= 4;
   return (
     <div className="wl-td-keys">
-      <div className="wl-td-key"><span>Read key · agents</span><code>wl_rk_••••••••3a1d</code></div>
+      <div className="wl-td-key"><span>Ingest key · web</span><code>wl_ik_••••••••3a1d</code></div>
       <AnimatePresence>
         {made && (
           <motion.div className={`wl-td-key${masked ? "" : " wl-td-key-new"}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
@@ -79,15 +79,17 @@ function Keys({ beat }: { beat: number }) {
   );
 }
 
-const RAIL = ["People", "Projects", "API keys", "Connected apps", "Single sign-on", "SCIM", "Shared links", "Audit log", "Billing"];
+const PEOPLE_RAIL = ["Members", "Project access", "Single sign-on", "User sync (SCIM)", "Connected apps", "Shared links", "Audit log"];
+const CONNECT_RAIL = ["Setup steps", "Server setup", "Sending keys", "AI read keys", "Add-on options"];
 
-// The section list down the side, with counts like the real page; the open section follows the beat.
+// The section list down the side, with counts like the real pages; the page and its open section follow the beat.
 function Rail({ beat }: { beat: number }) {
-  const open = beat >= 3 ? "API keys" : "People";
-  const count: Record<string, number> = { People: beat >= 2 ? 4 : 3, Projects: 3, "API keys": beat >= 3 ? 2 : 1 };
+  const keys = beat >= 3;
+  const open = keys ? "Sending keys" : "Members";
+  const count: Record<string, number> = { Members: beat >= 2 ? 4 : 3, "Sending keys": keys ? 2 : 1, "AI read keys": 1 };
   return (
     <ul className="wl-td-rail">
-      {RAIL.map((r) => <li key={r} className={r === open ? "wl-on" : undefined}>{r}{count[r] !== undefined && <i className="wl-num">{count[r]}</i>}</li>)}
+      {(keys ? CONNECT_RAIL : PEOPLE_RAIL).map((r) => <li key={r} className={r === open ? "wl-on" : undefined}>{r}{count[r] !== undefined && <i className="wl-num">{count[r]}</i>}</li>)}
     </ul>
   );
 }
@@ -96,7 +98,7 @@ function People({ beat }: { beat: number }) {
   return (
     <>
       <div className="wl-td-section">
-        <b>People</b>
+        <b>Members</b>
         <button type="button" tabIndex={-1} className={beat === 1 ? "wl-td-press" : undefined}>Invite someone</button>
       </div>
       <AnimatePresence>
@@ -114,22 +116,22 @@ function People({ beat }: { beat: number }) {
   );
 }
 
-// The cloud hero: a small Team page that runs by itself.
+// The cloud hero: People & access, then Connect, running by themselves.
 export function TeamDemo() {
   const box = useRef<HTMLDivElement>(null);
   const beat = useBeat(useInView(box, { amount: 0.3 }));
   return (
     <div className="wl-td" ref={box} aria-hidden>
       <div className="wl-td-head">
-        <b>Team</b>
-        <span>Fieldnote: people, projects, keys, and access.</span>
+        <b>{beat >= 3 ? "Connect" : "People & access"}</b>
+        <span>{beat >= 3 ? "Send data from your services, and let AI tools read it." : "Who can see what in Fieldnote."}</span>
       </div>
       <div className="wl-td-body">
         <Rail beat={beat} />
         <div className="wl-td-main">
           {beat >= 3 ? (
             <>
-              <div className="wl-td-section"><b>API keys</b><button type="button" tabIndex={-1}>New key</button></div>
+              <div className="wl-td-section"><b>Sending keys</b><button type="button" tabIndex={-1}>New sending key</button></div>
               <Keys beat={beat} />
             </>
           ) : <People beat={beat} />}

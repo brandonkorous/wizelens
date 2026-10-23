@@ -11,7 +11,7 @@ traces expire, and changing its search moves it everywhere at once.
 
 ## Built-in tags
 
-Three tags come on by default. Turn any of them off under **Settings → Tags**.
+Three tags come on by default. Turn any of them off under **Settings → Tags** (on the cloud, **Organization → Tags**).
 
 | Tag | Shows on |
 |---|---|
@@ -26,7 +26,7 @@ On the local hub and on WizeLens Cloud:
 - **Tag this.** Open a request, a trace, an error, a service, or a user, and press **Tag this**. Pick what to tag: the endpoint,
   the service, the user, or the error. WizeLens fills in a search that keeps finding it after the trace itself is gone,
   and shows what the search finds now. Name it, pick a color, and add it.
-- **Settings → Tags → New tag.** Write any search, such as `service:api route:/checkout*` or
+- **Settings → Tags → New tag** (on the cloud, **Organization → Tags**). Write any search, such as `service:api route:/checkout*` or
   `@http.response.header.content-type:text/event-stream*`.
 - **From a search.** On the Search page, **Tag this** saves the current search as a tag.
 

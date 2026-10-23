@@ -20,7 +20,7 @@ afterEach(async () => {
 });
 
 const upgrade = (who: Client, body: Record<string, unknown> = {}) =>
-  who.call<{ url: string }>("POST", "api/auth/subscription/upgrade", { plan: "team", customerType: "organization", referenceId: orgId, successUrl: "/_wizelens/#/team/billing", cancelUrl: "/_wizelens/#/team/billing", disableRedirect: true, ...body });
+  who.call<{ url: string }>("POST", "api/auth/subscription/upgrade", { plan: "team", customerType: "organization", referenceId: orgId, successUrl: "/_wizelens/#/organization/billing", cancelUrl: "/_wizelens/#/organization/billing", disableRedirect: true, ...body });
 
 /** Post one signed event to the webhook, as Stripe does. */
 async function deliver(type: string, object: unknown, header?: string): Promise<number> {

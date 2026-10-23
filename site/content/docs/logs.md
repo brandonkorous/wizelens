@@ -63,7 +63,7 @@ See [Alerts](/docs/alerts/) for channels, reminders, and muting.
 
 Logs can be kept for more or less time than traces.
 
-- **Cloud:** each project has its own log retention under **Team → Projects → Logs kept** (1 to 400 days), or follows the
+- **Cloud:** each project has its own log retention under **Organization → Data retention** (1 to 400 days), or follows the
   organization's.
 - **Hub:** `--log-retention <time>` (`WIZELENS_HUB_LOG_RETENTION`), else the same as `--retention`.
 

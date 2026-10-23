@@ -45,7 +45,7 @@ All `api/*` endpoints return JSON (camelCase) and send `Access-Control-Allow-Ori
 
 | Method + path | Returns |
 |---|---|
-| `GET /` and static files | Dashboard UI (from `@wizeworks/lens-ui` build). Hash routing: `#/`, `#/requests`, `#/traces`, `#/traces/{traceId}[/{view}]`, `#/database`, `#/rendering`, `#/errors`, `#/logs`, `#/services`, `#/insights`, `#/settings[/{section}]` (`tags` is one section). `{view}` is one of `timeline`, `sql`, `http`, `messages`, `logs`, `errors`, `insights`, `security`. |
+| `GET /` and static files | Dashboard UI (from `@wizeworks/lens-ui` build). Hash routing: `#/`, `#/requests`, `#/traces`, `#/traces/{traceId}[/{view}]`, `#/database`, `#/rendering`, `#/errors`, `#/logs`, `#/services`, `#/insights`, `#/connect[/{section}]`, `#/settings[/{section}]` (hub and in-app; `tags` is one section), and on the cloud `#/people[/{section}]`, `#/organization[/{section}]`, and `#/account[/{section}]`. Old `#/team/...` and `#/settings/...` links open their new place (docs/SETTINGS-PLAN.md). `{view}` is one of `timeline`, `sql`, `http`, `messages`, `logs`, `errors`, `insights`, `security`. |
 | `GET api/info` | `ServiceInfo` (see Types) |
 | `GET api/traces?limit=50&session={id}` | `TraceSummary[]`, newest first. With `session`, only traces that have a span whose `wizelens.browser.session` equals `{id}`. Loose batches (lines outside a request) are left out of summaries on every host; `full=true` includes them. |
 | `GET api/traces?full=true&limit=1000&since={ms}` | `Trace[]` from this service only (no federation), newest first. `limit` max 5000. With `since`, only traces whose last activity (`startMs + durationMs`) is at or after `{ms}`. The dashboard uses this for its charts and merges the results of every service it knows. |
@@ -235,7 +235,7 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `federation` | The dashboard finds other services through trace `remotes` and reads them directly | ✅ | ✅ (services that do not send to the hub) | |
 | `environments` | The host holds more than one environment and project; the top-bar picker filters by them | | ✅ | ✅ |
 | `registry` | The host knows its services (`api/services`): online state, project, environment, runtime | | ✅ | ✅ |
-| `accounts` | People sign in; the top bar shows the user and the Team page appears | | | ✅ |
+| `accounts` | People sign in; the top bar shows the user, and the People & access and Organization pages take the place of Settings | | | ✅ |
 | `alerts` | The host runs alert rules; the Alerts page and the bell show them. The hub at `api/alerts?project=`, the cloud at `api/projects/:project/alerts` | | ✅ | ✅ |
 | `sharing` | Traces can be shared by a read-only link | | | ✅ |
 | `serverStats` | The host computes page numbers itself (`api/models/<page>`); ranges reach 7 and 30 days | | ✅ | ✅ |

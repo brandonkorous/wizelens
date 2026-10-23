@@ -165,7 +165,7 @@ let that API accept the `traceparent` header in its CORS settings.
 ## Static sites
 
 A static site (a Next.js export, Astro, Vite, or plain HTML on a CDN) has no WizeLens server to send to. Make a
-**browser key** on the cloud's **Team** page, list the sites that serve the pages, and send straight to the cloud:
+**browser key** under the cloud's **Connect → Sending keys**, list the sites that serve the pages, and send straight to the cloud:
 
 ```tsx
 import { cloudEndpoint, WizeLensProvider } from "@wizeworks/lens-react";

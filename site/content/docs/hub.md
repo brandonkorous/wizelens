@@ -78,8 +78,8 @@ Run it with `--host 0.0.0.0 --token <text>`. Then:
 
 ## Project settings
 
-Each project can set its own slow query and N+1 thresholds, more redacted keys, and a shorter retention, in
-**Settings → This project**. Thresholds and keys apply to data that arrives after you save. A shorter retention
+Each project can set its own slow query and N+1 thresholds and more redacted keys in **Settings → Thresholds and hidden
+keys**, and a shorter retention in **Settings → Data retention**. Thresholds and keys apply to data that arrives after you save. A shorter retention
 deletes older data at the next cleanup, within minutes.
 
 ## In code
