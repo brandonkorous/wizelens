@@ -1,5 +1,6 @@
 import type { Ctx } from "../app.js";
 import { Router } from "../http/router.js";
+import { alertBulkRoutes } from "./alerts-bulk.js";
 import { alertRoutes } from "./alerts.js";
 import { appRoutes } from "./apps.js";
 import { billingRoutes } from "./billing.js";
@@ -44,6 +45,7 @@ export function allRoutes(): Router<Ctx> {
   changeRoutes(r);
   searchRoutes(r);
   tagRoutes(r);
+  alertBulkRoutes(r);
   alertRoutes(r);
   issueRoutes(r);
   sloRoutes(r);
