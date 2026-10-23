@@ -198,3 +198,14 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-drop > svg { width: 24px; height: 24px; margin-bottom: 4px; color: var(--wl-accent); }
 .wl-drop strong { font-weight: 600; overflow-wrap: anywhere; }
 .wl-drop-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.wl-cell-pick { width: 36px; padding-right: 0 !important; }
+.wl-pick { width: 16px; height: 16px; margin: 0; accent-color: var(--wl-accent); cursor: pointer; vertical-align: middle; }
+.wl-table tr.wl-picked td { background: var(--wl-accent-soft); }
+.wl-select-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px 20px; border-bottom: 1px solid var(--wl-line); background: var(--wl-accent-soft); color: var(--wl-accent-text); }
+.wl-select-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.wl-select-actions .wl-btn { height: 32px; padding: 0 12px; }
+.wl-select-clear { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+.wl-select-clear svg { width: 14px; height: 14px; }
+.wl-list-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 20px; border-bottom: 1px solid var(--wl-line); }
+.wl-list-filter { flex: 0 1 360px; height: 36px; }
+.wl-list-filter svg { width: 16px; height: 16px; }

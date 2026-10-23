@@ -1,31 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { parseProjectImport } from "@wizeworks/lens-core";
 import { loadAccount } from "../../data/account";
 import { useAsk } from "../../ui/Dialog";
 import { Modal } from "../../ui/Modal";
+import { PartsProgress } from "../../ui/OneTimeSecrets";
+import { useLeaveGuard } from "../../ui/useLeaveGuard";
 import { type ImportRun, runImport } from "./importFile";
 import { ImportPick } from "./ImportPick";
 import { ImportResult } from "./ImportResult";
 import type { OrgData } from "./orgTypes";
-
-/** Asks before the tab closes while new secrets are not saved yet. */
-function useLeaveGuard(on: boolean) {
-  useEffect(() => {
-    if (!on) return;
-    const stop = (e: BeforeUnloadEvent) => e.preventDefault();
-    window.addEventListener("beforeunload", stop);
-    return () => window.removeEventListener("beforeunload", stop);
-  }, [on]);
-}
-
-function Progress({ done, total }: { done: number; total: number }) {
-  return (
-    <div className="wl-import-progress" role="status">
-      <progress max={total} value={done} />
-      <span>Made {done} of {total} keys. Keep this page open.</span>
-    </div>
-  );
-}
 
 const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
 
@@ -61,7 +44,7 @@ export function ImportProjectsForm({ orgId, data, reload, onClose }: { orgId: st
   return (
     <Modal title="Import projects and keys" wide onClose={done === null ? close : undefined} closeLabel={run ? "Done" : "Close"}>
       <div className="wl-form">
-        {done !== null && <Progress done={done} total={rows.length} />}
+        {done !== null && <PartsProgress done={done} total={rows.length} what="Made keys for" />}
         {done === null && run && <ImportResult run={run} onSaved={() => setSaved(true)} />}
         {done === null && !run && <ImportPick text={text} parsed={parsed} existing={existing} expires={expires} onText={setText} onExpires={setExpires} />}
         {done === null && (
