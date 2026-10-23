@@ -3,7 +3,7 @@ import { auth } from "../../data/account";
 import { authBase } from "../../data/auth-client";
 import { act } from "../../data/useApi";
 import { Field, FormRow, SelectField, TextArea } from "../../ui/Field";
-import { Panel } from "../../ui/Panel";
+import { Modal } from "../../ui/Modal";
 
 type Kind = "oidc" | "saml";
 type Values = Record<string, string>;
@@ -60,7 +60,7 @@ export function SsoForm({ orgId, reload, onClose }: { orgId: string; reload: () 
     }, reload).then((err) => (setError(err), err || onClose()));
   };
   return (
-    <Panel title="Add an identity provider" className="wl-panel-form" action={<button type="button" className="wl-link-btn" onClick={onClose}>Close</button>}>
+    <Modal title="Add an identity provider" onClose={onClose} wide>
       <form className="wl-form" onSubmit={send}>
         <FormRow>
           <SelectField label="Protocol" value={kind} options={KINDS} onChange={setKind} hint={kind === "oidc" ? "Okta, Entra ID, Google, Auth0, Keycloak." : "Any SAML 2.0 identity provider."} />
@@ -74,6 +74,6 @@ export function SsoForm({ orgId, reload, onClose }: { orgId: string; reload: () 
           <button type="submit" className="wl-btn wl-btn-primary">Add provider</button>
         </div>
       </form>
-    </Panel>
+    </Modal>
   );
 }

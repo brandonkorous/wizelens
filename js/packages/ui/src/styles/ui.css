@@ -151,6 +151,7 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-banner { padding: 10px 14px; border-radius: 10px; margin-bottom: 16px; }
 .wl-banner-error { background: var(--wl-error-soft); color: var(--wl-error); }
 .wl-banner-info { background: var(--wl-accent-soft); color: var(--wl-accent-text); }
+.wl-banner-warning { background: var(--wl-warn-soft); color: var(--wl-warn); }
 .wl-link-btn { border: 0; background: none; padding: 0; color: var(--wl-accent); cursor: pointer; font: inherit; }
 .wl-link-btn:hover { text-decoration: underline; }
 .wl-link-btn.wl-text-error { color: var(--wl-error); }
@@ -191,3 +192,9 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-save-view { display: grid; gap: 10px; width: 320px; padding: 12px; }
 .wl-share-url { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .wl-share-url code { flex: 1; min-width: 0; font-size: 12px; }
+.wl-drop { position: relative; display: grid; justify-items: center; gap: 4px; padding: 26px 16px; border: 1.5px dashed var(--wl-line-strong); border-radius: 12px; background: var(--wl-surface-2); text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.wl-drop:hover, .wl-drop.wl-drop-over { border-color: var(--wl-accent); background: var(--wl-accent-soft); }
+.wl-drop:focus-within { outline: 2px solid var(--wl-accent); outline-offset: 2px; }
+.wl-drop > svg { width: 24px; height: 24px; margin-bottom: 4px; color: var(--wl-accent); }
+.wl-drop strong { font-weight: 600; overflow-wrap: anywhere; }
+.wl-drop-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }

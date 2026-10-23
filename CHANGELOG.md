@@ -4,7 +4,21 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased] — Settings by task
 
+### Added
+
+- **Import many projects at once, each with its own sending key.** Under **Organization → Projects** or **Connect →
+  Sending keys**, choose **Import from a file**: drop an Excel sheet (`.xlsx`), a CSV, JSON, or a plain list of names,
+  up to 5000 projects. Columns are `name`, and if you like `kind` (ingest or browser), `sites` (for browser keys), and
+  `key name`. WizeLens shows what it will make, row by row, and makes nothing while a row is wrong. A name that is
+  already a project gets a new key, not a second project. The new keys are shown once: download them as CSV or JSON, or
+  copy them, before you close. The file is read in your browser. Scripts can call `POST /api/orgs/<org>/projects/import`
+  with up to 500 projects at a time.
+
 ### Changed
+
+- **Forms open in their own window.** New project, new sending or read key, the import, inviting someone, project
+  access, a new identity provider, a new SCIM token, and a new or changed uptime check now open over the page. The list
+  behind them stays as it was, and Escape or the close button closes them.
 
 - **Team and Settings become pages by task.** The menu's Manage group now has **Connect** (setup steps, server setup,
   sending keys, AI read keys, and add-on options), **People & access** (members, project access, single sign-on, user

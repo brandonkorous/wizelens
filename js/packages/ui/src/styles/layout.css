@@ -33,8 +33,6 @@
 .wl-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 
 /* A form that opens from a section's button, above the list it adds to. */
-.wl-panel-form { border-color: var(--wl-accent); }
-.wl-panel-form .wl-form { margin-bottom: 0; }
 
 /* Facts about one thing, in two columns: label left, value right. */
 .wl-facts { display: grid; grid-template-columns: minmax(140px, 220px) minmax(0, 1fr); gap: 10px 20px; margin: 0; }
@@ -50,6 +48,22 @@
 .wl-dialog-body { color: var(--wl-fg-2); font-size: 14px; line-height: 1.55; }
 .wl-dialog-body p { margin: 0 0 8px; }
 .wl-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+.wl-dialog.wl-modal { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 48px); }
+.wl-dialog.wl-modal[open] { display: flex; flex-direction: column; }
+.wl-dialog.wl-modal-wide { width: min(1040px, calc(100vw - 32px)); }
+.wl-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 16px 4px 22px; }
+.wl-modal-head h2 { font-size: 17px; }
+.wl-modal-body { padding: 12px 22px 22px; overflow: auto; }
+.wl-modal-close { width: 32px; height: 32px; border-radius: 8px; }
+.wl-modal-close svg { width: 18px; height: 18px; }
+.wl-modal-close:focus:not(:focus-visible) { outline: none; }
+.wl-dialog.wl-modal:focus { outline: none; }
+.wl-dialog.wl-modal::backdrop { backdrop-filter: blur(2px); }
+.wl-modal-body > form { display: grid; padding: 0; }
+.wl-modal-body > .wl-form { margin-bottom: 0; }
+.wl-modal-body .wl-form-actions { margin-top: 4px; }
+.wl-modal-body > .wl-modal-lead { margin-top: 0; }
+.wl-modal-body > .wl-modal-foot { margin-top: 16px; }
 
 /* A muted id with a copy button, beside a name. */
 .wl-id { display: inline-flex; align-items: center; gap: 4px; color: var(--wl-muted); font: 12px var(--wl-mono); }

@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { hrefTo, type PageId } from "../routes";
 
 export interface Section {
@@ -31,10 +31,14 @@ export function SectionLayout({ page, sections, active }: { page: PageId; sectio
   );
 }
 
-/** A section's main button, hidden while its form is open. */
-export function AddButton({ label, open, onOpen }: { label: string; open: boolean; onOpen: () => void }) {
-  if (open) return null;
+/** A section's main button. Its form opens in a modal over the page. */
+export function AddButton({ label, onOpen }: { label: string; onOpen: () => void }) {
   return <button type="button" className="wl-btn wl-btn-primary" onClick={onOpen}><Plus aria-hidden="true" /> {label}</button>;
+}
+
+/** A section's second button: import many from a file. */
+export function ImportButton({ label = "Import from a file", onOpen }: { label?: string; onOpen: () => void }) {
+  return <button type="button" className="wl-btn" onClick={onOpen}><Upload aria-hidden="true" /> {label}</button>;
 }
 
 /** The heading of one section, with what it is for and its main action (a button) on the right. */

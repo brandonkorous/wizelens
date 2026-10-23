@@ -18,6 +18,7 @@ import { dataRoutes } from "./data.js";
 import { modelRoutes } from "./models.js";
 import { notifyRoutes } from "./notify.js";
 import { orgRoutes } from "./orgs.js";
+import { projectImportRoutes } from "./project-import.js";
 import { projectRoutes } from "./projects.js";
 import { scimRoutes } from "./scim.js";
 import { searchRoutes } from "./search.js";
@@ -32,6 +33,7 @@ export function allRoutes(): Router<Ctx> {
   meRoutes(r);
   notifyRoutes(r);
   orgRoutes(r);
+  projectImportRoutes(r);
   projectRoutes(r);
   keyRoutes(r);
   settingsRoutes(r);

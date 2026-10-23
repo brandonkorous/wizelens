@@ -9,3 +9,8 @@
 .wl-snippet:first-child { border-top: 0; padding-top: 0; }
 .wl-snippet:last-child { padding-bottom: 0; }
 .wl-chip.wl-chip-own { background: var(--wl-accent-soft); color: var(--wl-accent-text); }
+.wl-import-problems { margin: 6px 0 0; padding-left: 18px; }
+.wl-import-save { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.wl-import-progress { display: grid; gap: 8px; }
+.wl-import-progress progress { width: 100%; height: 8px; accent-color: var(--wl-accent); }
+.wl-import-intro { margin: 0; }

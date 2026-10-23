@@ -61,15 +61,14 @@ function UptimeList() {
     if (!err) setEditing(null);
     return err;
   };
-  const add = api.canWrite && !editing && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setEditing("new")}><Plus aria-hidden="true" /> New check</button>;
+  const add = api.canWrite && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setEditing("new")}><Plus aria-hidden="true" /> New check</button>;
   return (
     <>
       <PageHeader title="Uptime" subtitle={SUBTITLE}>{add}</PageHeader>
       {api.error && <div className="wl-banner wl-banner-error">{api.error}</div>}
       {note && <div className="wl-banner wl-banner-info">{note}</div>}
       <CertWarnings checks={checks} nowMs={api.data?.nowMs ?? Date.now()} />
-      {editing === "new" && target.field}
-      {editing && <CheckForm initial={editing === "new" ? null : editing} onSave={save} onCancel={() => setEditing(null)} />}
+      {editing && <CheckForm initial={editing === "new" ? null : editing} lead={editing === "new" && target.field} onSave={save} onCancel={() => setEditing(null)} />}
       <UptimeCards checks={checks} model={model} />
       <Panel title="Checks" flush>
         <ChecksTable checks={checks} model={model} nowMs={api.data?.nowMs ?? Date.now()} canWrite={api.canWrite} {...actions} empty={<Empty title="No checks yet"><HeartPulse aria-hidden="true" /> Add one to hear when a site or API stops answering.</Empty>} />

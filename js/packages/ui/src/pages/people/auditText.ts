@@ -18,6 +18,7 @@ const ACTIONS: Record<string, string> = {
   "member.role": "Changed a role",
   "invite.cancel": "Cancelled an invite",
   "project.create": "Added a project",
+  "project.import": "Imported projects and keys",
   "project.clear": "Cleared a project's data",
   "project.delete": "Deleted a project",
   "project.update": "Changed a project's settings",

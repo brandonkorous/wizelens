@@ -111,6 +111,27 @@ Only a hash of each key is stored. The secret is shown once, when you make the k
 - **Rotate:** a new secret for the same key, with the same projects, scopes, and lifetime. The old secret keeps
   working for 24 hours, so apps can switch without a gap.
 
+### Many apps at once
+
+To onboard hundreds of services, choose **Import from a file** under **Organization → Projects** or **Connect →
+Sending keys**. Drop an Excel sheet (`.xlsx`, the first sheet), a CSV, JSON, or a plain list of names, up to 5000
+projects:
+
+```csv
+name,kind,sites,key name
+orders-api,ingest,,orders-api-prod
+Shop web,browser,https://shop.example.com https://www.example.com,shop-pages
+```
+
+Only `name` is needed. `kind` is `ingest` (the default) or `browser`; a browser row lists its `sites`. `key name`
+defaults to the project's name. WizeLens shows each row and what it will make, and makes nothing while a row is wrong.
+A name that is already a project gets a new key instead of a second project. All keys in the file get the expiry you
+pick.
+
+The new keys are shown once. Download them as CSV or JSON (each row has the project, its id, and the key), or copy
+them, before you close the window. Scripts can send the same rows to `POST /api/orgs/<org>/projects/import` as
+`{ "projects": [...], "expiresInDays": 90 }`, up to 500 at a time.
+
 ## AI apps
 
 Claude and other MCP clients connect without a key: add `https://mcp.wizelens.com` (or `<your cloud>/_wizelens/mcp`), sign
