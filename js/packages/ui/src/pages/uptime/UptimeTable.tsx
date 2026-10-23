@@ -4,7 +4,7 @@ import { fmtAgo, fmtMs } from "../../format";
 import { hrefTo } from "../../routes";
 import { Badge, DotText, type Tone } from "../../ui/Badges";
 import { Sparkline } from "../../ui/Sparkline";
-import { type Column, Table } from "../../ui/Table";
+import { type Column, Table, type TableSelect } from "../../ui/Table";
 import { fmtUptime, statsOf, stateOf } from "./uptimeParts";
 import { projectColumn } from "../../ui/ProjectColumn";
 
@@ -30,6 +30,7 @@ interface TableProps {
   onEdit: (c: UptimeCheckView) => void;
   onDelete: (c: UptimeCheckView) => void;
   empty: ReactNode;
+  select?: TableSelect;
 }
 
 function actionColumn(p: TableProps): Column<UptimeCheckView>[] {
@@ -72,5 +73,5 @@ function ResponseCell({ c, model }: { c: UptimeCheckView; model: UptimeModel | n
 }
 
 export function ChecksTable(p: TableProps) {
-  return <Table columns={columns(p)} rows={p.checks} rowKey={(c) => c.id} empty={p.empty} defaultSort={{ key: "state", desc: false }} />;
+  return <Table columns={columns(p)} rows={p.checks} rowKey={(c) => c.id} empty={p.empty} defaultSort={{ key: "state", desc: false }} select={p.select} />;
 }

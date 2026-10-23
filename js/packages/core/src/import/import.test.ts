@@ -50,3 +50,20 @@ describe("parseProjectImport", () => {
     expect(parseProjectImport(big).problems[0]!.message).toMatch(/up to 5000/);
   });
 });
+
+describe("parseCheckImport", () => {
+  it("reads URLs, a header with options, and JSON, and checks each like a hand-made check", async () => {
+    const { parseCheckImport } = await import("./checks.js");
+    expect(parseCheckImport("https://a.io/health\nhttps://b.io", 100).rows.map((r) => [r.input.name, r.input.method, r.input.intervalMin])).toEqual([["a.io", "GET", 5], ["b.io", "GET", 5]]);
+    const csv = parseCheckImport("Name,URL,Method,Interval,Expected status\nShop,https://shop.io,HEAD,1,200-399", 100);
+    expect(csv.rows[0]!.input).toMatchObject({ name: "Shop", url: "https://shop.io", method: "HEAD", intervalMin: 1, expectStatus: "200-399" });
+    expect(parseCheckImport('[{"url": "https://c.io", "name": "C"}]', 100).rows[0]!.input.name).toBe("C");
+  });
+
+  it("names bad rows, repeats, and a list past the limit", async () => {
+    const { parseCheckImport } = await import("./checks.js");
+    const { problems } = parseCheckImport("url,method\nnot a url,GET\nhttps://a.io,GET\nhttps://a.io,GET\nhttps://b.io,FLY", 100);
+    expect(problems.map((p) => p.row)).toEqual([1, 3, 4]);
+    expect(parseCheckImport("https://a.io\nhttps://b.io\nhttps://c.io", 2).problems[0]!.message).toMatch(/at most 2/);
+  });
+});
