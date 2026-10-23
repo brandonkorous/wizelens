@@ -5,7 +5,7 @@ import { SectionHead } from "../../ui/Sections";
 import { InviteForm, InvitesPanel } from "../people/InvitesPanel";
 import { KeyForm, KeysPanel } from "../connect/KeysPanel";
 import { MembersPanel } from "../people/MembersPanel";
-import { DeleteOrgPanel, NewOrgPanel, OrgSettings } from "../organization/OrgPanels";
+import { DeleteOrgPanel, NewOrgPanel, OrgNameForm } from "../organization/OrgPanels";
 import { NewProjectForm, ProjectsPanel } from "../organization/ProjectsPanel";
 import { canManage, type OrgData } from "../organization/orgTypes";
 
@@ -45,7 +45,7 @@ export function ProjectsSection({ org, data, reload }: TeamCtx) {
     <>
       <SectionHead title="Projects" description="Each project keeps its own traces, logs, dashboards, and alerts. Logs can be kept for more or less time than traces. A trace that crosses projects still opens whole for people who can read both." action={<AddButton label="New project" open={adding} onOpen={() => setAdding(true)} />} />
       {adding && <NewProjectForm orgId={org.id} reload={reload} onClose={() => setAdding(false)} />}
-      <ProjectsPanel orgId={org.id} retentionDays={org.retentionDays} data={data} reload={reload} />
+      <ProjectsPanel orgId={org.id} data={data} reload={reload} />
     </>
   );
 }
@@ -71,7 +71,7 @@ export function OrgSection({ org }: { org: OrgWithProjects }) {
   return (
     <>
       <SectionHead title="Organization" description={`${org.name}. Your role: ${org.role}.`} />
-      {manage && <OrgSettings key={`settings:${org.id}`} org={org} />}
+      {manage && <OrgNameForm key={`settings:${org.id}`} org={org} />}
       <NewOrgPanel />
       {org.role === "owner" && <DeleteOrgPanel key={`delete:${org.id}`} org={org} />}
     </>

@@ -28,7 +28,6 @@ import { RenderingPage } from "./pages/rendering/RenderingPage";
 import { RequestsPage } from "./pages/requests/RequestsPage";
 import { SearchPage } from "./pages/search/SearchPage";
 import { ServicesPage } from "./pages/services/ServicesPage";
-import { SettingsPage } from "./pages/settings/SettingsPage";
 import { ConnectPage } from "./pages/connect/ConnectPage";
 import { TracesPage } from "./pages/traces/TracesPage";
 import { UptimePage } from "./pages/uptime/UptimePage";
@@ -48,6 +47,8 @@ const lazyPage = (load: () => Promise<ComponentType>) =>
 const TeamPage = lazyPage(() => import("./pages/team/TeamPage").then((m) => m.TeamPage));
 const PeoplePage = lazyPage(() => import("./pages/people/PeoplePage").then((m) => m.PeoplePage));
 const AccountPage = lazyPage(() => import("./pages/account/AccountPage").then((m) => m.AccountPage));
+// Settings (Organization on the cloud) is opened now and then, so it loads on first visit too.
+const OrgPage = lazyPage(() => import("./pages/organization/OrgPage").then((m) => m.OrgPage));
 
 const PAGES: Record<Exclude<PageId, "trace" | "shared" | "status" | AuthPageId>, ComponentType> = {
   overview: OverviewPage,
@@ -65,10 +66,10 @@ const PAGES: Record<Exclude<PageId, "trace" | "shared" | "status" | AuthPageId>,
   services: ServicesPage,
   insights: InsightsPage,
   security: SecurityPage,
-  settings: SettingsPage,
+  settings: OrgPage,
   connect: ConnectPage,
   people: PeoplePage,
-  organization: TeamPage,
+  organization: OrgPage,
   alerts: AlertsPage,
   uptime: UptimePage,
   slos: SlosPage,

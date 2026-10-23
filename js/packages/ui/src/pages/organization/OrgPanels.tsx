@@ -1,29 +1,24 @@
 import { type FormEvent, useState } from "react";
 import { loadAccount, type OrgWithProjects } from "../../data/account";
 import { apiSend } from "../../data/api";
-import { useUsage } from "../../data/billing";
 import { setProjectScope } from "../../data/prefs";
 import { act } from "../../data/useApi";
 import { Field, FormRow } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
 
-/** Organization name and how long it keeps data. Owners and admins only. */
-export function OrgSettings({ org }: { org: OrgWithProjects }) {
-  const usage = useUsage(org.id).data;
-  const max = usage?.billing ? usage.maxRetentionDays : 400;
+/** The organization's name. Owners and admins only; retention is under Data retention. */
+export function OrgNameForm({ org }: { org: OrgWithProjects }) {
   const [name, setName] = useState(org.name);
-  const [days, setDays] = useState(org.retentionDays);
   const [note, setNote] = useState<string | null>(null);
   const save = (e: FormEvent) => {
     e.preventDefault();
-    void act(() => apiSend("PATCH", `./api/orgs/${org.id}`, { name, retentionDays: days }), () => void loadAccount()).then((err) => setNote(err ?? "Saved."));
+    void act(() => apiSend("PATCH", `./api/orgs/${org.id}`, { name }), () => void loadAccount()).then((err) => setNote(err ?? "Saved."));
   };
   return (
-    <Panel title="General">
+    <Panel title="Name">
       <form className="wl-form" onSubmit={save}>
         <FormRow>
-          <Field label="Name" required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} />
-          <Field label="Keep data for (days)" narrow type="number" min={1} max={max} required value={days} onChange={(e) => setDays(Number(e.target.value))} hint={`1 to ${max}${max < 400 ? ` on the ${usage?.plan.name} plan` : ""}. Older traces are deleted every few minutes.`} />
+          <Field label="Organization name" required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} />
           <button type="submit" className="wl-btn wl-btn-primary">Save</button>
         </FormRow>
         {note && <p className="wl-muted wl-small" role="status">{note}</p>}
