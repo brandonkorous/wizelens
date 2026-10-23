@@ -46,6 +46,7 @@ const lazyPage = (load: () => Promise<ComponentType>) =>
 
 // Cloud-only pages load on first visit, so in-app and hub dashboards never download them.
 const TeamPage = lazyPage(() => import("./pages/team/TeamPage").then((m) => m.TeamPage));
+const PeoplePage = lazyPage(() => import("./pages/people/PeoplePage").then((m) => m.PeoplePage));
 const AccountPage = lazyPage(() => import("./pages/account/AccountPage").then((m) => m.AccountPage));
 
 const PAGES: Record<Exclude<PageId, "trace" | "shared" | "status" | AuthPageId>, ComponentType> = {
@@ -66,7 +67,7 @@ const PAGES: Record<Exclude<PageId, "trace" | "shared" | "status" | AuthPageId>,
   security: SecurityPage,
   settings: SettingsPage,
   connect: ConnectPage,
-  people: TeamPage,
+  people: PeoplePage,
   organization: TeamPage,
   alerts: AlertsPage,
   uptime: UptimePage,
