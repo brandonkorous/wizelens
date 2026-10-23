@@ -13,11 +13,28 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   already a project gets a new key, not a second project. The new keys are shown once: download them as CSV or JSON, or
   copy them, before you close. The file is read in your browser. Scripts can call `POST /api/orgs/<org>/projects/import`
   with up to 500 projects at a time.
+- **Work on many items at once.** Lists have tick boxes; pick rows (or every row shown) and use the bar above the list:
+  - **Sending and read keys:** rotate many (the new secrets are shown once, to download) or revoke many. A filter finds
+    keys by name, project, or kind.
+  - **Errors, insights, and security risks:** resolve, ignore (for a while or for good), reopen, or assign many in one
+    go, on the cloud and on the hub.
+  - **Alerts:** make one rule in many projects at once (pick them, or select all); mute, unmute, turn on or off, or
+    delete many rules. The alert form opens in its own window.
+  - **Thresholds and hidden keys:** copy one project's settings, and if you like its data retention, to many projects.
+  - **Uptime:** import many checks from Excel, CSV, JSON, or a list of URLs; run now, pause, resume, or delete many.
+  - **Members:** invite many people from a list or a file, with a role per row, and download their invite links;
+    change the role of many members, or remove them.
+  - **Projects:** filter the list; clear the data of many projects, or delete them.
+  - **Shared links:** revoke many.
+- **API calls for many items.** `POST /api/orgs/<org>/keys/rotate` and `.../keys/revoke` take `keyIds`;
+  `.../alerts/copy` takes a rule and `projectIds`; `.../alerts/bulk` takes an action and rules; `.../settings/copy`
+  takes `from`, `projectIds`, and `parts`. Issue changes take `keys` in place of `key`. Each takes up to 500 at a time.
 
 ### Changed
 
 - **Forms open in their own window.** New project, new sending or read key, the import, inviting someone, project
-  access, a new identity provider, a new SCIM token, and a new or changed uptime check now open over the page. The list
+  access, a new identity provider, a new SCIM token, a new or changed uptime check, and a new or changed alert now open
+  over the page. The list
   behind them stays as it was, and Escape or the close button closes them.
 
 - **Team and Settings become pages by task.** The menu's Manage group now has **Connect** (setup steps, server setup,

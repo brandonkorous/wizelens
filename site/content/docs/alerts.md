@@ -99,6 +99,10 @@ runs with `--allow-private-webhooks`.
 | **Test** | Sends a test notice to every channel, and says how it went |
 | **Edit**, **Delete** | Change or remove the rule |
 
+Tick rules to **Mute…**, **Unmute**, **Turn on**, **Turn off**, or **Delete** them together. In the cloud, a new alert
+can be made in many projects at once: under **Make this alert in**, pick the projects (or **Select all**). Each project
+gets its own copy of the rule.
+
 **Recent notices** lists what fired, resolved, reminded, was tested, acknowledged, muted, or unmuted, with the message and
 how each channel took it.
 

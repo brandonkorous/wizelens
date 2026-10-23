@@ -52,6 +52,7 @@ function PickAll({ keys, select }: { keys: string[]; select: TableSelect }) {
     for (const k of keys) if (pick) next.add(k); else next.delete(k);
     select.onChange(next);
   };
+  if (keys.length === 0) return <th className="wl-cell-pick" />;
   return <th className="wl-cell-pick"><PickBox checked={all} some={on > 0} label={`Select every ${select.noun} shown`} onChange={change} /></th>;
 }
 

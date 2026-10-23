@@ -62,7 +62,9 @@ Organizations hold projects. People join an organization with a role:
 | Admin | Also manage projects, keys, and members |
 | Owner | Also manage owners, set the spend cap, and delete the organization. An organization always keeps one owner. |
 
-People join with an invite link (7 days, one use). Run the cloud with `--signup open` to let anyone sign up; each new
+People join with an invite link (7 days, one use). **Invite many** takes a pasted list of emails or a file (Excel, CSV,
+or JSON, with an optional role per row) and gives you every invite link to download. Tick members to change their role
+or remove them together. Run the cloud with `--signup open` to let anyone sign up; each new
 person then gets their own organization. Org changes, member changes, keys, shares, and every MCP call go to the audit log.
 Admins export the audit log as CSV or JSON (Business and Enterprise on the hosted cloud).
 
@@ -93,6 +95,9 @@ picker. Retention, for traces and logs of every project, is under **Organization
 set. Owners, admins, and admins of the project change them. Thresholds and keys apply to data that arrives after you
 save. A shorter retention deletes older data within minutes.
 
+**Copy to other projects**, next to the project picker, copies one project's saved thresholds and hidden keys, and if
+you tick it, its data retention, to every project you pick. It needs admin rights on each of them.
+
 ## Keys
 
 - **Ingest key** (`wl_ik_…`): one project. Apps send data with it. The project comes from the key, never from the sender.
@@ -110,6 +115,9 @@ Only a hash of each key is stored. The secret is shown once, when you make the k
   browser key can send only page spans or only console lines.
 - **Rotate:** a new secret for the same key, with the same projects, scopes, and lifetime. The old secret keeps
   working for 24 hours, so apps can switch without a gap.
+- **Many keys at once:** tick keys (the filter finds them by name, project, or kind), then **Rotate** or **Revoke**.
+  Rotating many asks when the old secrets stop (at once, or in 1 hour to 7 days) and shows the new ones once, to
+  download as CSV or JSON. Scripts use `POST /api/orgs/<org>/keys/rotate` and `/keys/revoke` with `{ "keyIds": [...] }`.
 
 ### Many apps at once
 
