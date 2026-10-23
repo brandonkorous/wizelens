@@ -7,7 +7,9 @@ import { CopyButton } from "../../ui/Badges";
 import { useAsk } from "../../ui/Dialog";
 import { Field } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
-import { Panel } from "../../ui/Panel";
+import { Empty, Panel } from "../../ui/Panel";
+import { ListFilter, matchesText } from "../../ui/Selection";
+import { useProjectsBulk } from "./ProjectsBulk";
 import { type Column, Table } from "../../ui/Table";
 import type { OrgData } from "./orgTypes";
 
@@ -36,7 +38,9 @@ export function NewProjectForm({ orgId, reload, onClose }: { orgId: string; relo
 /** Projects of the organization, with how many keys send to each: clear a project's data, or delete it. */
 export function ProjectsPanel({ orgId, data, reload }: { orgId: string; data: OrgData; reload: () => void }) {
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState("");
   const { dialog, confirm } = useAsk();
+  const bulk = useProjectsBulk(orgId, data.projects, reload, setError);
   const run = (fn: () => Promise<unknown>) => void act(fn, () => (reload(), void loadAccount())).then(setError);
   const keysOf = (p: Project) => data.keys.filter((k) => k.projectIds.includes(p.id)).length;
   const clear = async (p: Project) =>
@@ -62,13 +66,14 @@ export function ProjectsPanel({ orgId, data, reload }: { orgId: string; data: Or
       ),
     },
   ];
+  const shown = data.projects.filter((p) => matchesText(filter, p.name, p.slug, p.id));
   return (
-    <>
-      <Panel flush>
-        {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
-        <Table columns={columns} rows={data.projects} rowKey={(p) => p.id} />
-        {dialog}
-      </Panel>
-    </>
+    <Panel flush>
+      {data.projects.length > 8 && <div className="wl-list-tools"><ListFilter value={filter} onChange={setFilter} placeholder="Filter projects" /></div>}
+      {bulk.bar}
+      {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
+      <Table columns={columns} rows={shown} rowKey={(p) => p.id} select={bulk.select} empty={<Empty>No project matches “{filter}”.</Empty>} />
+      {dialog}
+    </Panel>
   );
 }

@@ -29,3 +29,22 @@ describe("cloud issues", () => {
     expect(errors.body.hasIssues).toBe(true);
   });
 });
+
+describe("cloud issues in bulk", () => {
+  it("resolves many in one request with one audit entry, and assigns many", async () => {
+    let url: string;
+    ({ cloud, url } = await startCloud());
+    const { owner, orgId, projectId } = await setupOwner(cloud, url);
+    const base = `api/projects/${projectId}/issues`;
+    const keys = ["api|Error|a", "api|Error|b", "api|Error|c"];
+    const res = await owner.call<{ issues: { status: string }[] }>("POST", base, { kind: "error", keys, action: "resolve" });
+    expect(res.body.issues.map((i) => i.status)).toEqual(["resolved", "resolved", "resolved"]);
+    const me = (await owner.call<{ members: { id: string }[] }>("GET", base)).body.members[0]!.id;
+    expect((await owner.call("POST", base, { kind: "error", keys: keys.slice(0, 2), action: "assign", assignee: me })).status).toBe(200);
+    const list = (await owner.call<{ issues: { key: string; assignee: string | null }[] }>("GET", base)).body.issues;
+    expect(list.filter((i) => i.assignee === me).map((i) => i.key).sort()).toEqual(keys.slice(0, 2));
+    const audit = (await owner.call<{ action: string; detail: { keys?: string[] } }[]>("GET", `api/orgs/${orgId}/audit`)).body.filter((a) => a.action === "issue.resolve");
+    expect(audit).toHaveLength(1);
+    expect(audit[0]!.detail.keys).toEqual(keys);
+  });
+});

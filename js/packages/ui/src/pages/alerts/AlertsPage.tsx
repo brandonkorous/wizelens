@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BellRing, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { cleanSearchParams, logSearchText } from "@wizeworks/lens-core";
 import { apiSend } from "../../data/api";
 import { useHost } from "../../data/host";
@@ -16,7 +16,8 @@ import { RuleActions, RuleState } from "./RuleActions";
 import "../../styles/pages/alerts.css";
 import { type InProject } from "../../data/projectScope";
 import { projectColumn } from "../../ui/ProjectColumn";
-import { useTargetProject } from "../../ui/ProjectSelect";
+import { RulesTable } from "./AlertsBulk";
+import { useRuleTargets } from "./ruleTargets";
 
 type Url = (path?: string) => string;
 
@@ -91,28 +92,28 @@ function AlertRules() {
   const query = useRoute().query;
   const { data, error, reload } = useApi<AlertsData>(api.ready ? api.url() : null);
   const [editing, setEditing] = useState<AlertRule | null>(null);
-  const target = useTargetProject();
+  const targets = useRuleTargets();
   const [note, setNote] = useState<string | null>(null);
+  const [bulkError, setBulkError] = useState<string | null>(null);
   const creating = query.get("new") === "1";
   const close = () => (setEditing(null), creating && setQuery({ new: null, log: null, ...Object.fromEntries(DRAFT_PARAMS.map((k) => [k, null])) }));
   const save = async (r: RuleDraft) => {
-    const err = await act(() => (editing ? apiSend("PATCH", api.url(`/${encodeURIComponent(editing.id)}`, owner(editing)), r) : apiSend("POST", api.url("", target.id ?? undefined), r)), reload);
+    const err = editing ? await act(() => apiSend("PATCH", api.url(`/${encodeURIComponent(editing.id)}`, owner(editing)), r), reload) : await targets.create(r, api.url, reload);
     if (!err) close();
     return err;
   };
   const done = (n?: string) => (setNote(n ?? null), reload());
   const remove = (r: AlertRule) => void act(() => apiSend("DELETE", api.url(`/${encodeURIComponent(r.id)}`, owner(r))), reload);
-  const add = api.canWrite && !editing && !creating && <a className="wl-btn wl-btn-primary" href="#/alerts?new=1"><Plus aria-hidden="true" /> New alert</a>;
-  const form = editing ? <AlertForm key={editing.id} title={`Edit "${editing.name}"`} initial={draftOf(editing)} onSave={save} onCancel={close} /> : creating && api.canWrite ? <AlertForm title="New alert" initial={draftFromQuery(query)} onSave={save} onCancel={close} /> : null;
+  const add = api.canWrite && <a className="wl-btn wl-btn-primary" href="#/alerts?new=1"><Plus aria-hidden="true" /> New alert</a>;
+  const form = editing ? <AlertForm key={editing.id} title={`Edit "${editing.name}"`} initial={draftOf(editing)} onSave={save} onCancel={close} /> : creating && api.canWrite ? <AlertForm title="New alert" lead={targets.field} initial={draftFromQuery(query)} onSave={save} onCancel={close} /> : null;
   return (
     <>
       <PageHeader title="Alerts" subtitle="Get told when error rates, latency, traffic, or any metric cross a line. Checked every minute.">{add}</PageHeader>
-      {error && <div className="wl-banner wl-banner-error">{error}</div>}
+      {(error || bulkError) && <div className="wl-banner wl-banner-error">{error || bulkError}</div>}
       {note && <div className="wl-banner wl-banner-info">{note}</div>}
-      {form && creating && target.field}
       {form}
       <Panel title="Rules" flush>
-        <Table columns={ruleColumns(api.canWrite, api.url, done, setEditing, remove)} rows={data?.rules ?? []} rowKey={(r) => r.id} onRowClick={(r) => navigate(alertHref(r.id, r.projectId))} empty={<Empty title="No alerts yet"><BellRing aria-hidden="true" /> Add one to hear about problems before your users do.</Empty>} />
+        <RulesTable rules={data?.rules ?? []} columns={ruleColumns(api.canWrite, api.url, done, setEditing, remove)} canWrite={api.canWrite} url={api.url} onDone={(err) => (setBulkError(err), reload())} />
       </Panel>
       <Panel title="Recent notices" flush>
         <Table columns={eventColumns(true)} rows={data?.events ?? []} rowKey={(e) => e.id} onRowClick={(e) => navigate(alertHref(e.ruleId, e.projectId))} empty={<Empty>Nothing fired yet.</Empty>} />

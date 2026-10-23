@@ -22,6 +22,12 @@ The local hub and WizeLens Cloud can call your URLs on a schedule and tell you w
 Redirects are followed, up to 5, unless the expected status is itself a 3xx code. **Run now** runs a check at once, so you
 see right away whether it works.
 
+## Many checks at once
+
+**Import URLs** takes a pasted list of URLs or a file (Excel, CSV, or JSON) with the columns `url`, and if you like
+`name`, `method`, `interval` (minutes), and `expected status`. Each row is checked like a check made by hand, and
+nothing is added while a row is wrong. Tick checks to **Run now**, **Pause**, **Resume**, or **Delete** them together.
+
 ## What you see
 
 - **Status per check:** up, down, pending (not run yet), or off.

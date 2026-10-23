@@ -1,7 +1,8 @@
 // Issue states from the host (hub or cloud), and changes to them: resolve, ignore, reopen, assign.
 import { useSyncExternalStore } from "react";
-import type { IssueAction, IssueKind, IssueState } from "@wizeworks/lens-core";
+import { type IssueAction, type IssueKind, type IssueState, MAX_BULK } from "@wizeworks/lens-core";
 import { apiSend } from "./api";
+import { inParts } from "./bulk";
 import { useHost } from "./host";
 import { getScope, useProjectScope } from "./prefs";
 import { useApi } from "./useApi";
@@ -44,4 +45,13 @@ export async function changeIssue(cloud: boolean, kind: IssueKind, key: string, 
   } catch (e) {
     return e instanceof Error ? e.message : String(e);
   }
+}
+
+/** The same change to many issues, sent in parts. Returns an error message (naming how many changed first), or null. */
+export async function changeIssues(cloud: boolean, kind: IssueKind, keys: string[], action: IssueAction, extra: { untilMs?: number | null; assignee?: string | null } = {}): Promise<string | null> {
+  const send = async (part: string[]) => (await apiSend("POST", issuesUrl(cloud, getScope().project), { kind, keys: part, action, ...extra }), part);
+  const run = await inParts(keys, MAX_BULK, send);
+  tick++;
+  for (const l of listeners) l();
+  return run.error && (run.done.length ? `Changed ${run.done.length} of ${keys.length}, then stopped: ${run.error}` : run.error);
 }

@@ -13,7 +13,7 @@ import { memberEmails } from "../repo/users.js";
 const MAX_EMAILS = 20;
 
 /** Who did it, in words: the person's name or email. Only people can mute and acknowledge. */
-const whoOf = (a: { principal: { kind: string; user?: { name: string; email: string } } }): string => (a.principal.kind === "user" && a.principal.user ? a.principal.user.name || a.principal.user.email : "someone");
+export const whoOf = (a: { principal: { kind: string; user?: { name: string; email: string } } }): string => (a.principal.kind === "user" && a.principal.user ? a.principal.user.name || a.principal.user.email : "someone");
 const DAY_MS = 86_400_000;
 
 /** Email goes only to members of the organization with a confirmed address, so a rule cannot send mail to strangers. */
@@ -27,7 +27,11 @@ async function emailChannel(ctx: Ctx, orgId: string, to: unknown): Promise<Alert
 
 /** Check a rule from the request body. A change sends only what it changes: the rest comes from `current`. */
 async function ruleInput(ctx: Ctx, orgId: string, projectId: string, current?: object): Promise<RuleInput> {
-  const b = { ...current, ...(await readJsonBody(ctx.req)) } as Record<string, unknown>;
+  return checkRule(ctx, orgId, projectId, { ...current, ...(await readJsonBody(ctx.req)) });
+}
+
+/** Check a rule for one project: webhooks, SLOs, and email addresses. A 400 says what is wrong. */
+export async function checkRule(ctx: Ctx, orgId: string, projectId: string, b: Record<string, unknown>): Promise<RuleInput> {
   const allowPrivate = ctx.app.config.allowPrivateWebhooks;
   const checkSlo = async (id: string) => ((await sloById(ctx.app.db, projectId, id)) ? null : "That SLO is not in this project.");
   const r = await parseAlertRule(b, { checkUrl: (url) => checkTarget(url, allowPrivate), checkSlo, email: (to) => emailChannel(ctx, orgId, to) });
@@ -77,6 +81,12 @@ async function test(ctx: Ctx): Promise<void> {
   sendJson(ctx.res, 200, { delivery: await notify(ctx.app, rule, "test", rule.lastValue, ctx.app.config.now()) });
 }
 
+/** The event a mute or unmute leaves on the rule, in words. */
+export function muteMessage(actor: string, untilMs: number | null): string {
+  if (untilMs === null) return `Unmuted by ${actor}`;
+  return untilMs === MUTED_FOREVER ? `Muted by ${actor} until unmuted` : `Muted by ${actor} until ${new Date(untilMs).toISOString().slice(0, 16).replace("T", " ")} UTC`;
+}
+
 /** `{ untilMs }`: no notices until then (`null` unmutes, `-1` mutes until unmuted). */
 async function mute(ctx: Ctx): Promise<void> {
   const access = await requireProject(ctx, ctx.params.project!, "write");
@@ -89,8 +99,7 @@ async function mute(ctx: Ctx): Promise<void> {
   const untilMs = raw === null ? null : raw === -1 ? MUTED_FOREVER : Number(raw);
   if (untilMs !== null && (!Number.isFinite(untilMs) || untilMs <= now)) return fail(400, "Set untilMs to a future time, -1 for until unmuted, or null to unmute.");
   await muteRule(ctx.app.db, project.id, rule.id, untilMs);
-  const message = untilMs === null ? `Unmuted by ${actor}` : untilMs === MUTED_FOREVER ? `Muted by ${actor} until unmuted` : `Muted by ${actor} until ${new Date(untilMs).toISOString().slice(0, 16).replace("T", " ")} UTC`;
-  await addEvent(ctx.app.db, rule, { kind: untilMs === null ? "unmute" : "mute", value: null, message, timeMs: now, delivery: "" });
+  await addEvent(ctx.app.db, rule, { kind: untilMs === null ? "unmute" : "mute", value: null, message: muteMessage(actor, untilMs), timeMs: now, delivery: "" });
   sendJson(ctx.res, 200, await ruleById(ctx.app.db, project.id, rule.id));
 }
 

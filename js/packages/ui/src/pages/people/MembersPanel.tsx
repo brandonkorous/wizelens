@@ -6,6 +6,7 @@ import { Select } from "../../ui/Controls";
 import { useAsk } from "../../ui/Dialog";
 import { Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
+import { useMembersBulk } from "./MembersBulk";
 import { canManage, type Member, type OrgData, ROLE_LABEL, ROLE_OPTIONS } from "../organization/orgTypes";
 
 interface Ctx {
@@ -56,10 +57,12 @@ export function MembersPanel({ orgId, me, data, reload }: { orgId: string; me: s
     run: (fn) => void act(fn, reload).then(setError),
     confirm,
   };
+  const bulk = useMembersBulk(orgId, me, data, reload, setError);
   return (
     <Panel title="Members" flush>
+      {ctx.manage && bulk.bar}
       {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
-      <Table columns={columns(ctx)} rows={data.members} rowKey={(m) => m.memberId} />
+      <Table columns={columns(ctx)} rows={data.members} rowKey={(m) => m.memberId} select={ctx.manage ? bulk.select : undefined} />
       {dialog}
     </Panel>
   );

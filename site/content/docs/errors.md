@@ -75,6 +75,9 @@ On the hub and in the cloud, each group has these actions on the details panel a
 | **Reopen** | Takes back a resolve or an ignore |
 | **Assignee** | Cloud: pick a member of the organization, or Unassigned |
 
+To change many groups at once, tick them (or tick the header to pick every group on the page) and use the bar above the
+list: **Resolve**, **Ignore…**, **Reopen**, or, in the cloud, **Assign**. Insights and security risks work the same way.
+
 A resolved group that happens again shows as **Regressed** and comes back to the Unresolved list. A group first seen in
 the time range shows as **New**. The Overview's **New and Regressed Errors** panel lists both.
 

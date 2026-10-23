@@ -62,6 +62,14 @@ export async function updateRule(q: Queryable, projectId: string, id: string, r:
   );
 }
 
+/** Turn a rule on or off; off also clears its firing state and acknowledgement. */
+export async function setRuleEnabled(q: Queryable, projectId: string, id: string, on: boolean): Promise<void> {
+  await q.query(
+    "UPDATE alert_rules SET enabled = $3, state = CASE WHEN $3 THEN state ELSE 'ok' END, ack_ms = CASE WHEN $3 THEN ack_ms ELSE NULL END WHERE project_id = $1 AND id = $2",
+    [projectId, id, on],
+  );
+}
+
 export async function deleteRule(q: Queryable, projectId: string, id: string): Promise<boolean> {
   return (await q.query("DELETE FROM alert_rules WHERE project_id = $1 AND id = $2 RETURNING id", [projectId, id])).length > 0;
 }

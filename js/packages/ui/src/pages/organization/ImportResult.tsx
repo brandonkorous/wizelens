@@ -1,4 +1,5 @@
 import { Badge, CopyButton } from "../../ui/Badges";
+import { OneTimeSecrets } from "../../ui/OneTimeSecrets";
 import { type Column, Table } from "../../ui/Table";
 import { type ImportedKey, type ImportRun, keysCsv, saveKeysCsv, saveKeysJson, saveLeftRows } from "./importFile";
 
@@ -34,23 +35,15 @@ function Stopped({ run }: { run: ImportRun }) {
 export function ImportResult({ run, onSaved }: { run: ImportRun; onSaved: () => void }) {
   const made = new Set(run.keys.filter((k) => k.newProject).map((k) => k.projectId));
   const old = new Set(run.keys.filter((k) => !made.has(k.projectId)).map((k) => k.projectId)).size;
-  const save = (fn: (keys: ImportedKey[]) => void) => () => (fn(run.keys), onSaved());
   return (
     <>
       {run.error && <Stopped run={run} />}
       {run.keys.length > 0 && (
         <>
-          <div className="wl-banner wl-banner-warning">
-            <strong>Save these keys now. They are shown only this once.</strong> WizeLens keeps only a hash of each key, so no one can show them again. If a key is lost, rotate it.
-          </div>
+          <OneTimeSecrets csv={keysCsv(run.keys)} saveCsv={() => saveKeysCsv(run.keys)} saveJson={() => saveKeysJson(run.keys)} onSaved={onSaved} />
           <p>
             Made {count(run.keys.length, "sending key")} and {count(made.size, "new project")}.{old ? ` ${old === 1 ? "1 project was" : `${old} projects were`} already there and got new keys.` : ""}
           </p>
-          <div className="wl-row-actions wl-import-save">
-            <button type="button" className="wl-btn wl-btn-primary" onClick={save(saveKeysCsv)}>Download keys (CSV)</button>
-            <button type="button" className="wl-btn" onClick={save(saveKeysJson)}>Download keys (JSON)</button>
-            <span onClickCapture={onSaved}><CopyButton text={keysCsv(run.keys)} label="Copy all as CSV" asLink /></span>
-          </div>
           <KeyTable keys={run.keys} />
         </>
       )}

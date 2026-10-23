@@ -1,8 +1,8 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, type ReactNode, useState } from "react";
 import { ALERT_METRICS, type AlertMetric, type AlertRuleInput, isAnomalyMetric } from "@wizeworks/lens-core";
 import { Select } from "../../ui/Controls";
 import { Check, Field, FormRow } from "../../ui/Field";
-import { Panel } from "../../ui/Panel";
+import { Modal } from "../../ui/Modal";
 import { REMINDS, WINDOWS } from "./alertTypes";
 import { ChannelFields } from "./ChannelFields";
 import { AboveNormalNote, LineFields } from "./LineFields";
@@ -52,7 +52,7 @@ function cleaned(r: RuleDraft): RuleDraft {
 }
 
 /** New or changed rule: what to watch, when it fires, how often it reminds, and where notices go. */
-export function AlertForm({ initial, title, onSave, onCancel }: { initial: RuleDraft; title: string; onSave: (r: RuleDraft) => Promise<string | null>; onCancel: () => void }) {
+export function AlertForm({ initial, title, lead, onSave, onCancel }: { initial: RuleDraft; title: string; lead?: ReactNode; onSave: (r: RuleDraft) => Promise<string | null>; onCancel: () => void }) {
   const [r, setR] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const set = <K extends keyof RuleDraft>(k: K) => (v: RuleDraft[K]) => setR((x) => ({ ...x, [k]: v }));
@@ -61,8 +61,9 @@ export function AlertForm({ initial, title, onSave, onCancel }: { initial: RuleD
     void onSave(cleaned(r)).then(setError);
   };
   return (
-    <Panel title={title}>
+    <Modal title={title} onClose={onCancel} wide>
       <form className="wl-form" onSubmit={submit}>
+        {lead}
         <FormRow>
           <Field label="Name" required value={r.name} onChange={(e) => set("name")(e.target.value)} placeholder="Checkout errors" />
           <Field label="Environment (optional)" value={r.env} onChange={(e) => set("env")(e.target.value)} placeholder="All" />
@@ -80,11 +81,11 @@ export function AlertForm({ initial, title, onSave, onCancel }: { initial: RuleD
         </FormRow>
         <ChannelFields channels={r.channels} onChange={set("channels")} />
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
-        <FormRow>
-          <button type="submit" className="wl-btn wl-btn-primary">Save alert</button>
+        <div className="wl-form-actions">
           <button type="button" className="wl-btn" onClick={onCancel}>Cancel</button>
-        </FormRow>
+          <button type="submit" className="wl-btn wl-btn-primary">Save alert</button>
+        </div>
       </form>
-    </Panel>
+    </Modal>
   );
 }

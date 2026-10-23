@@ -10,6 +10,8 @@ export const NOTICED = new Set([
   "member.role",
   "key.create",
   "key.revoke",
+  "key.revoke_many",
+  "key.rotate_many",
   "sso.create",
   "sso.update",
   "sso.delete",
@@ -55,6 +57,11 @@ export function namesOf(q: Queryable) {
 export type Names = ReturnType<typeof namesOf>;
 
 const s = (v: unknown) => (typeof v === "string" ? v : "");
+/** "3 keys" from a list in the detail. */
+const count = (list: unknown, noun: string) => {
+  const n = Array.isArray(list) ? list.length : 0;
+  return `${n} ${noun}${n === 1 ? "" : "s"}`;
+};
 
 async function projectsText(names: Names, ids: unknown): Promise<string> {
   const list = Array.isArray(ids) ? await Promise.all(ids.filter((x): x is string => typeof x === "string").map(names.project)) : [];
@@ -76,6 +83,8 @@ export async function describe(row: AuditRow, names: Names): Promise<string> {
     "member.role": async () => `${who} made ${await names.member(s(d.memberId))} ${s(d.role)}.`,
     "key.create": async () => `${who} made ${d.kind === "read" ? "a read key" : d.kind === "browser" ? "a browser key" : "an ingest key"} for ${await projectsText(names, d.projectIds)}.`,
     "key.revoke": async () => `${who} revoked the key ${(await names.key(s(d.keyId))) || s(d.keyId)}.`,
+    "key.revoke_many": () => `${who} revoked ${count(d.keyIds, "key")}.`,
+    "key.rotate_many": () => `${who} rotated ${count(d.keyIds, "key")}; the old secrets stop in ${Number(d.graceHours) || 0} hours.`,
     "sso.create": () => `${who} added ${sso}.`,
     "sso.update": () => `${who} changed ${sso}.`,
     "sso.delete": () => `${who} removed ${sso}.`,

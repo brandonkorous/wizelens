@@ -4,12 +4,10 @@ import { Badge } from "../../ui/Badges";
 import { FileDrop } from "../../ui/FileDrop";
 import { FormRow, SelectField, TextArea } from "../../ui/Field";
 import { type Column, Table } from "../../ui/Table";
-import { rowsToCsv } from "../../data/csv";
-import { readXlsx } from "../../data/xlsx";
+import { LIST_FILES, textOfFile } from "../../data/fileText";
 import { saveSample } from "./importFile";
 
 const SHOWN = 100;
-const ACCEPT = ".csv,.tsv,.txt,.json,.xlsx,text/csv,text/plain,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 const PLACEHOLDER = ["orders-api", "billing-api", "Shop web,browser,https://shop.example.com"].join("\n");
 const NEW = "New project";
 const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
@@ -70,12 +68,6 @@ export interface PickProps {
   onExpires: (v: string) => void;
 }
 
-/** A file's text; an Excel sheet becomes CSV, so it shows in the box like any other. */
-async function textOfFile(file: File): Promise<string> {
-  if (!/\.xlsx$/i.test(file.name)) return file.text();
-  return rowsToCsv(await readXlsx(await file.arrayBuffer()));
-}
-
 /** Step one: a file or pasted rows, the shared expiry, and a preview of what will be made. */
 export function ImportPick({ text, parsed, existing, expires, onText, onExpires }: PickProps) {
   const [fileName, setFileName] = useState<string | null>(null);
@@ -95,7 +87,7 @@ export function ImportPick({ text, parsed, existing, expires, onText, onExpires 
         One sending key per row. Columns: <code>name</code> (the project), and if you like <code>kind</code> (ingest or browser), <code>sites</code> (for browser keys), and <code>key name</code>. A project with many services takes one row per service, each with its own key name. An Excel sheet (the first one is read), CSV, JSON, or a plain list of names works.{" "}
         <button type="button" className="wl-link-btn" onClick={saveSample}>Download a sample file</button>
       </p>
-      <FileDrop accept={ACCEPT} fileName={fileName} hint="Excel (.xlsx), CSV, or JSON, up to 5000 rows. It is read in this browser." status={status} onFile={pick} />
+      <FileDrop accept={LIST_FILES} fileName={fileName} hint="Excel (.xlsx), CSV, or JSON, up to 5000 rows. It is read in this browser." status={status} onFile={pick} />
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
       <FormRow>
         <TextArea label="Or paste the rows" rows={4} value={text} onChange={(e) => typed(e.target.value)} placeholder={PLACEHOLDER} />
