@@ -31,7 +31,7 @@ import { ServicesPage } from "./pages/services/ServicesPage";
 import { ConnectPage } from "./pages/connect/ConnectPage";
 import { TracesPage } from "./pages/traces/TracesPage";
 import { UptimePage } from "./pages/uptime/UptimePage";
-import { AUTH_PAGES, type AuthPageId, type PageId, type Route, useRoute } from "./routes";
+import { AUTH_PAGES, type AuthPageId, legacyHref, type PageId, replaceHref, type Route, useRoute } from "./routes";
 import { releaseMissing } from "./data/release";
 import { EmailBanner } from "./shell/EmailBanner";
 import { UsageBanner } from "./shell/UsageBanner";
@@ -44,13 +44,12 @@ const lazyPage = (load: () => Promise<ComponentType>) =>
   lazy(() => load().then((Page) => ({ default: Page }), () => (releaseMissing(), { default: UpdateNeeded })));
 
 // Cloud-only pages load on first visit, so in-app and hub dashboards never download them.
-const TeamPage = lazyPage(() => import("./pages/team/TeamPage").then((m) => m.TeamPage));
 const PeoplePage = lazyPage(() => import("./pages/people/PeoplePage").then((m) => m.PeoplePage));
 const AccountPage = lazyPage(() => import("./pages/account/AccountPage").then((m) => m.AccountPage));
 // Settings (Organization on the cloud) is opened now and then, so it loads on first visit too.
 const OrgPage = lazyPage(() => import("./pages/organization/OrgPage").then((m) => m.OrgPage));
 
-const PAGES: Record<Exclude<PageId, "trace" | "shared" | "status" | AuthPageId>, ComponentType> = {
+const PAGES: Record<Exclude<PageId, "trace" | "shared" | "status" | "team" | AuthPageId>, ComponentType> = {
   overview: OverviewPage,
   problems: ProblemsPage,
   search: SearchPage,
@@ -75,7 +74,6 @@ const PAGES: Record<Exclude<PageId, "trace" | "shared" | "status" | AuthPageId>,
   slos: SlosPage,
   dashboards: DashboardsPage,
   users: UsersPage,
-  team: TeamPage,
   account: AccountPage,
 };
 
@@ -92,15 +90,24 @@ function useHealthDot(): string | undefined {
   }, [data.traces, data.updatedMs]);
 }
 
+/** An old Team or Settings link: open the page its section moved to. */
+function Moved({ href }: { href: string }) {
+  useEffect(() => replaceHref(href), [href]);
+  return null;
+}
+
 function PageView({ route }: { route: Route }) {
   const cloud = useHost().has("accounts");
+  // Wait for the host's info: an old Settings link opens a different place on the cloud.
+  const moved = useData().info ? legacyHref(route, cloud) : null;
+  if (moved) return <Moved href={moved} />;
   if (route.page === "trace") {
     const [traceId, view, other] = route.params;
     if (view === "compare" && other) return <TraceCompare key={`${traceId}/${other}`} a={traceId!} b={other} />;
     return <TraceDetail key={traceId} traceId={traceId!} view={view as never} />;
   }
   const page = route.page;
-  const elsewhere = page === "shared" || page === "status" || (AUTH_PAGES as readonly string[]).includes(page) || (page === "account" && !cloud);
+  const elsewhere = page === "shared" || page === "status" || page === "team" || (AUTH_PAGES as readonly string[]).includes(page) || (page === "account" && !cloud);
   const Page = elsewhere ? OverviewPage : PAGES[page as keyof typeof PAGES];
   return <Page />;
 }

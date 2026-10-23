@@ -51,7 +51,7 @@ function ShareMenu({ traceId }: { traceId: string }) {
             <div className="wl-share-link">
               <code className="wl-mono wl-small">{link.url}</code>
               <CopyButton text={link.url} label="Copy link" />
-              <span className="wl-muted wl-small">Works until {fmtDate(link.expiresMs)}. Revoke it on the Team page.</span>
+              <span className="wl-muted wl-small">Works until {fmtDate(link.expiresMs)}. Revoke it under People & access, Shared links.</span>
             </div>
           )}
           {error && <div className="wl-banner wl-banner-error">{error}</div>}

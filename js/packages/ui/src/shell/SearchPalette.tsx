@@ -7,7 +7,7 @@ import { navigate } from "../routes";
 import { usePaletteMore } from "./paletteMore";
 import { usePaletteSearch } from "./paletteSearch";
 import { type HitKind, search } from "./searchIndex";
-import { NAV } from "./nav";
+import { navFor } from "./nav";
 
 const ICONS: Record<HitKind, typeof Search> = {
   page: FileSearch,
@@ -43,11 +43,12 @@ export function useSearchShortcut(open: () => void): void {
 export function SearchPalette({ traces, onClose }: { traces: readonly Trace[]; onClose: () => void }) {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
-  const server = useHost().has("search");
+  const host = useHost();
+  const server = host.has("search");
   const [range] = useRange();
   const remote = usePaletteSearch(query, range, server);
   const more = usePaletteMore(query, range, server);
-  const local = useMemo(() => search(traces, NAV, query, server), [traces, query, server]);
+  const local = useMemo(() => search(traces, navFor(host.has), query, server), [traces, host, query, server]);
   const hits = useMemo(() => [...remote.slice(0, 1), ...local, ...more, ...remote.slice(1)], [remote, local, more]);
   const go = (i: number) => {
     const hit = hits[i];

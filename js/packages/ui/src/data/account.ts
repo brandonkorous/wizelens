@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import type { OrgRole } from "@wizeworks/lens-core";
-import { apiFetch } from "./api";
+import { apiFetch, apiSend } from "./api";
 import type { AuthClient } from "./auth-client";
 import { getScope, setOrgScope, setProjectScope } from "./prefs";
 import { ALL_PROJECTS } from "./projectScope";
@@ -90,6 +90,13 @@ export async function loadAccount(): Promise<AccountState> {
   emit();
   if (state.signedIn) provider.refresh();
   return state;
+}
+
+/** A new organization, owned by you, with a first project. The dashboard switches to it. */
+export async function createOrg(name: string): Promise<void> {
+  const made = await apiSend<{ id: string }>("POST", "./api/orgs", { name });
+  const org = (await loadAccount()).orgs?.find((o) => o.id === made.id);
+  if (org) pickOrg(org);
 }
 
 let client: Promise<AuthClient> | null = null;

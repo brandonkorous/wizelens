@@ -40,7 +40,7 @@ export interface Usage {
 export const useUsage = (orgId: string | null) => useApi<Usage>(orgId ? `./api/orgs/${orgId}/usage` : null);
 
 /** Where Stripe sends people back: this dashboard's Billing section. */
-const back = () => `${window.location.pathname}#/team/billing`;
+const back = () => `${window.location.pathname}#/organization/billing`;
 const org = (orgId: string) => ({ customerType: "organization", referenceId: orgId });
 
 /** Start or change a paid plan: Stripe Checkout for a new plan, the Stripe portal to confirm a change. Goes to Stripe. */

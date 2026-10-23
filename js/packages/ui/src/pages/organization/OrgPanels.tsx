@@ -1,7 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { loadAccount, type OrgWithProjects } from "../../data/account";
 import { apiSend } from "../../data/api";
-import { setProjectScope } from "../../data/prefs";
 import { act } from "../../data/useApi";
 import { Field, FormRow } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
@@ -22,33 +21,6 @@ export function OrgNameForm({ org }: { org: OrgWithProjects }) {
           <button type="submit" className="wl-btn wl-btn-primary">Save</button>
         </FormRow>
         {note && <p className="wl-muted wl-small" role="status">{note}</p>}
-      </form>
-    </Panel>
-  );
-}
-
-/** A new organization, owned by you, with a first project. The dashboard switches to it. */
-export function NewOrgPanel() {
-  const [name, setName] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const create = (e: FormEvent) => {
-    e.preventDefault();
-    void act(async () => {
-      const org = await apiSend<{ id: string }>("POST", "./api/orgs", { name });
-      const first = (await loadAccount()).orgs?.find((o) => o.id === org.id)?.projects[0];
-      if (first) setProjectScope(first.id);
-      setName("");
-    }, () => void loadAccount()).then(setError);
-  };
-  return (
-    <Panel title="Another organization">
-      <p className="wl-muted wl-settings-note">For a separate company or client. You own it, and it starts with one project.</p>
-      <form className="wl-form" onSubmit={create}>
-        <FormRow>
-          <Field label="Name" required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme" />
-          <button type="submit" className="wl-btn wl-btn-primary">Create organization</button>
-        </FormRow>
-        {error && <div className="wl-banner wl-banner-error">{error}</div>}
       </form>
     </Panel>
   );

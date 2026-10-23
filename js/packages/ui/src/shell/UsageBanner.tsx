@@ -16,7 +16,7 @@ export function UsageBanner() {
   return (
     <div className={`wl-banner ${data.blocked ? "wl-banner-error" : "wl-banner-warn"} wl-banner-thin`} role="status">
       {text}{" "}
-      {manage ? <a href={hrefTo("team", ["billing"])}>{data.blocked && data.reason === "cap" ? "Change the spend cap" : "See plans"}</a> : <span>Ask an owner or admin to upgrade.</span>}
+      {manage ? <a href={hrefTo("organization", ["billing"])}>{data.blocked && data.reason === "cap" ? "Change the spend cap" : "See plans"}</a> : <span>Ask an owner or admin to upgrade.</span>}
     </div>
   );
 }

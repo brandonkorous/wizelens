@@ -76,7 +76,7 @@ export function RegistryPanel() {
     <>
       <Panel title={title} flush action={action}>
         {forget.note && <div className="wl-banner wl-banner-info wl-panel-banner">{forget.note}</div>}
-        <Table columns={columns(updatedMs)} rows={groups} rowKey={(g) => g.key} onRowClick={(g) => setOpen(g.key === open ? null : g.key)} selectedKey={open} defaultSort={{ key: "status", desc: false }} empty={<Empty title="No service has sent data yet"><a href="#/settings/connect">Connect one</a> in Settings.</Empty>} />
+        <Table columns={columns(updatedMs)} rows={groups} rowKey={(g) => g.key} onRowClick={(g) => setOpen(g.key === open ? null : g.key)} selectedKey={open} defaultSort={{ key: "status", desc: false }} empty={<Empty title="No service has sent data yet"><a href="#/connect">Connect one</a>.</Empty>} />
         {forget.dialog}
       </Panel>
       {selected && <RegistryHosts key={selected.key} group={selected} now={updatedMs} onClose={() => setOpen(null)} />}
