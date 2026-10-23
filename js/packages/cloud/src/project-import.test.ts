@@ -61,6 +61,21 @@ describe("project import", () => {
   });
 });
 
+describe("project import, many keys", () => {
+  it("makes one project for many rows of a new name, with a key per row", async () => {
+    let url: string;
+    ({ cloud, url } = await startCloud());
+    const { owner, orgId } = await setupOwner(cloud, url);
+    const projects = [{ name: "Orders", keyName: "orders-api" }, { name: "orders", keyName: "orders-worker" }, { name: "Shop", kind: "browser", sites: "https://shop.io", keyName: "shop" }];
+    const { keys } = (await owner.call<Imported>("POST", `api/orgs/${orgId}/projects/import`, { projects })).body;
+    expect(keys.map((k) => [k.projectName, k.keyName, k.newProject])).toEqual([["Orders", "orders-api", true], ["Orders", "orders-worker", false], ["Shop", "shop", true]]);
+    expect(keys[1]!.projectId).toBe(keys[0]!.projectId);
+    expect((await owner.call<{ projects: unknown[] }>("GET", `api/orgs/${orgId}`)).body.projects).toHaveLength(3);
+    const audit = (await owner.call<{ action: string; detail: { projects: number; keys: number } }[]>("GET", `api/orgs/${orgId}/audit`)).body;
+    expect(audit.find((a) => a.action === "project.import")?.detail).toMatchObject({ projects: 2, keys: 3 });
+  });
+});
+
 describe("project import access", () => {
   it("is for owners and admins only", async () => {
     let url: string;

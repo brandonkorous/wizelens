@@ -127,13 +127,15 @@ projects:
 
 ```csv
 name,kind,sites,key name
-orders-api,ingest,,orders-api-prod
+Orders,ingest,,orders-api
+Orders,ingest,,orders-worker
 Shop web,browser,https://shop.example.com https://www.example.com,shop-pages
 ```
 
 Only `name` is needed. `kind` is `ingest` (the default) or `browser`; a browser row lists its `sites`. `key name`
-defaults to the project's name. WizeLens shows each row and what it will make, and makes nothing while a row is wrong.
-A name that is already a project gets a new key instead of a second project. All keys in the file get the expiry you
+defaults to the project's name. Each row makes one key. A project with many services takes one row per service, each
+with its own key name, and the first row makes the project. WizeLens shows each row and what it will make, and makes
+nothing while a row is wrong. A name that is already a project gets a new key instead of a second project. All keys in the file get the expiry you
 pick.
 
 The new keys are shown once. Download them as CSV or JSON (each row has the project, its id, and the key), or copy

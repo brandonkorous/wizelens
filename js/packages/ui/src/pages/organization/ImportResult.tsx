@@ -33,8 +33,8 @@ function Stopped({ run }: { run: ImportRun }) {
 
 /** Step three: every new secret, shown this once, to save as a file or copy. */
 export function ImportResult({ run, onSaved }: { run: ImportRun; onSaved: () => void }) {
-  const made = run.keys.filter((k) => k.newProject).length;
-  const old = run.keys.length - made;
+  const made = new Set(run.keys.filter((k) => k.newProject).map((k) => k.projectId));
+  const old = new Set(run.keys.filter((k) => !made.has(k.projectId)).map((k) => k.projectId)).size;
   return (
     <>
       {run.error && <Stopped run={run} />}
@@ -42,7 +42,7 @@ export function ImportResult({ run, onSaved }: { run: ImportRun; onSaved: () => 
         <>
           <OneTimeSecrets csv={keysCsv(run.keys)} saveCsv={() => saveKeysCsv(run.keys)} saveJson={() => saveKeysJson(run.keys)} onSaved={onSaved} />
           <p>
-            Made {count(run.keys.length, "sending key")} and {count(made, "new project")}.{old ? ` ${old === 1 ? "1 project was" : `${old} projects were`} already there and got a new key.` : ""}
+            Made {count(run.keys.length, "sending key")} and {count(made.size, "new project")}.{old ? ` ${old === 1 ? "1 project was" : `${old} projects were`} already there and got new keys.` : ""}
           </p>
           <KeyTable keys={run.keys} />
         </>

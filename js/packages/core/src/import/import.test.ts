@@ -41,7 +41,14 @@ describe("parseProjectImport", () => {
     expect(problems.map((p) => p.row)).toEqual([1, 2, 3, 4, 6]);
     expect(problems[1]!.message).toMatch(/robot/);
     expect(problems[3]!.message).toMatch(/not a site/);
-    expect(problems[4]!.message).toMatch(/already on row 5/);
+    expect(problems[4]!.message).toMatch(/already has a key named "d" on row 5/);
+  });
+
+  it("takes many keys for one project, one row per service, and refuses a key name twice", () => {
+    const text = "name,kind,sites,key name\nOrders,,,orders-api\norders,,,orders-worker\nOrders,browser,https://shop.io,shop\nOrders,,,ORDERS-API";
+    const { rows, problems } = parseProjectImport(text);
+    expect(rows.map((r) => [r.name, r.keyName, r.kind])).toEqual([["Orders", "orders-api", "ingest"], ["orders", "orders-worker", "ingest"], ["Orders", "shop", "browser"]]);
+    expect(problems).toEqual([{ row: 4, message: expect.stringMatching(/already has a key named "ORDERS-API" on row 1/) }]);
   });
 
   it("refuses an empty file and one past the limit", () => {

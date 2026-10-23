@@ -8,8 +8,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 - **Import many projects at once, each with its own sending key.** Under **Organization → Projects** or **Connect →
   Sending keys**, choose **Import from a file**: drop an Excel sheet (`.xlsx`), a CSV, JSON, or a plain list of names,
-  up to 5000 projects. Columns are `name`, and if you like `kind` (ingest or browser), `sites` (for browser keys), and
-  `key name`. WizeLens shows what it will make, row by row, and makes nothing while a row is wrong. A name that is
+  up to 5000 rows. Columns are `name`, and if you like `kind` (ingest or browser), `sites` (for browser keys), and
+  `key name`. Each row makes one key, so a project with many services takes one row per service, each with its own
+  key name. WizeLens shows what it will make, row by row, and makes nothing while a row is wrong. A name that is
   already a project gets a new key, not a second project. The new keys are shown once: download them as CSV or JSON, or
   copy them, before you close. The file is read in your browser. Scripts can call `POST /api/orgs/<org>/projects/import`
   with up to 500 projects at a time.
