@@ -12,6 +12,7 @@ import { orgListRoutes } from "./org-lists.js";
 import { orgSavedRoutes } from "./saved-org.js";
 import { keyBulkRoutes } from "./keys-bulk.js";
 import { keyRoutes } from "./keys.js";
+import { settingsCopyRoutes } from "./settings-copy.js";
 import { settingsRoutes } from "./settings.js";
 import { meRoutes } from "./me.js";
 import { mcpRoutes } from "./mcp.js";
@@ -39,6 +40,7 @@ export function allRoutes(): Router<Ctx> {
   projectRoutes(r);
   keyBulkRoutes(r);
   keyRoutes(r);
+  settingsCopyRoutes(r);
   settingsRoutes(r);
   dataRoutes(r);
   modelRoutes(r);

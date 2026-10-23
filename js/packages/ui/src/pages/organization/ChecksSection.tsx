@@ -1,11 +1,13 @@
 import { type FormEvent, useEffect, useState } from "react";
 import type { ProjectSettings as Settings } from "@wizeworks/lens-core";
+import { currentProject, useAccount } from "../../data/account";
 import { apiSend } from "../../data/api";
 import { firstProject, type SettingsReply, settingsBody, useSettingsProjects } from "../../data/projectSettings";
 import { useApi } from "../../data/useApi";
 import { Field, FormRow, SelectField } from "../../ui/Field";
 import { Empty, Panel } from "../../ui/Panel";
 import { SectionHead } from "../../ui/Sections";
+import { CopySettings } from "./CopySettings";
 
 interface Draft {
   slowQueryMs: string;
@@ -91,7 +93,11 @@ function ProjectChecks({ url, canEdit }: { url: string; canEdit: boolean }) {
 /** Thresholds and extra hidden keys of the project picked here, not the one chosen at the top. */
 export function ChecksSection() {
   const sp = useSettingsProjects();
+  const orgId = currentProject(useAccount())?.org.id;
   const [picked, setPicked] = useState(() => firstProject(sp.options));
+  const [copying, setCopying] = useState(false);
+  const canCopy = sp.cloud && !!orgId && sp.canEdit(picked) && sp.options.filter(([id]) => sp.canEdit(id)).length > 1;
+  const name = sp.options.find(([id]) => id === picked)?.[1] ?? picked;
   const who = sp.cloud && !sp.canEdit(picked) ? " Only owners and admins can change them." : "";
   return (
     <>
@@ -101,7 +107,11 @@ export function ChecksSection() {
           <Empty title="No projects yet" />
         ) : (
           <>
-            <FormRow><SelectField label="Project" value={picked} options={sp.options} onChange={setPicked} /></FormRow>
+            <FormRow>
+              <SelectField label="Project" value={picked} options={sp.options} onChange={setPicked} />
+              {canCopy && <button type="button" className="wl-btn" onClick={() => setCopying(true)}>Copy to other projects</button>}
+            </FormRow>
+            {copying && orgId && <CopySettings orgId={orgId} from={{ id: picked, name }} targets={sp.options.filter(([id]) => sp.canEdit(id))} onClose={() => setCopying(false)} />}
             <ProjectChecks key={picked} url={sp.url(picked)} canEdit={sp.canEdit(picked)} />
           </>
         )}
