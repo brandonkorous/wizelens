@@ -6,6 +6,7 @@ import { DotText } from "../../ui/Badges";
 import { Pager } from "../../ui/Controls";
 import { Empty, Panel } from "../../ui/Panel";
 import { Sparkline } from "../../ui/Sparkline";
+import { useIssueBulk } from "../../ui/IssueBulk";
 import { IssueBadge } from "../../ui/IssueControls";
 import { useSetService } from "../../ui/ServiceSelect";
 import { type Column, Table } from "../../ui/Table";
@@ -38,9 +39,12 @@ export function RecentExceptionsPanel({ stats, selected }: { stats: ErrorsModel;
   const filtered = isErrorFiltered(stats.filter);
   const title = stats.filter.sort === "count" ? "Most Frequent Exceptions" : "Recent Exceptions";
   const groupTags = useGroupTags();
+  const bulk = useIssueBulk("error", stats.groups.map((g) => g.key));
   return (
     <Panel title={`${title} (${fmtCount(stats.groupCount)})`} flush className="wl-err-list" action={<ExportButton page="errors" disabled={stats.groupCount === 0} />}>
+      {bulk.bar}
       <Table
+        select={bulk.select}
         columns={withTags(groupColumns(stats.issues), "error", (g) => groupTags("errors", errorGroupDoc(g)))}
         rows={stats.groups}
         rowKey={(g) => g.key}

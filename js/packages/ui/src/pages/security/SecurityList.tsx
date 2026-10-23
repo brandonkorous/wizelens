@@ -2,6 +2,7 @@ import { type IssueInfo, type SecurityGroup, SECURITY_LABELS } from "@wizeworks/
 import { fmtAgo, fmtCount } from "../../format";
 import { setQuery } from "../../routes";
 import { Badge, ImpactBadge } from "../../ui/Badges";
+import { useIssueBulk } from "../../ui/IssueBulk";
 import { IssueBadge } from "../../ui/IssueControls";
 import { Empty } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
@@ -48,14 +49,19 @@ export function SecurityList({ groups, issues, selected, now, filtered }: Securi
   ) : (
     <Empty title="No security risks in this range">WizeLens checks every request for SQL built from input, missing security headers, loose CORS, cookies without flags, secrets in URLs and logs, plain HTTP calls, open admin routes, and stack traces in answers.</Empty>
   );
+  const bulk = useIssueBulk("insight", groups.map((g) => g.key), "risk");
   return (
-    <Table
-      columns={columns(now, selected !== null, issues)}
-      rows={groups}
-      rowKey={(g) => g.key}
-      selectedKey={selected}
-      onRowClick={(g) => setQuery({ key: g.key === selected ? null : g.key })}
-      empty={empty}
-    />
+    <>
+      {bulk.bar}
+      <Table
+        columns={columns(now, selected !== null, issues)}
+        rows={groups}
+        rowKey={(g) => g.key}
+        selectedKey={selected}
+        onRowClick={(g) => setQuery({ key: g.key === selected ? null : g.key })}
+        empty={empty}
+        select={bulk.select}
+      />
+    </>
   );
 }

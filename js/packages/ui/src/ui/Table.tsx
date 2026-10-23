@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, type MouseEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 
 export interface Column<T> {
@@ -60,7 +60,9 @@ function PickOne({ id, select }: { id: string; select: TableSelect }) {
     else next.delete(id);
     select.onChange(next);
   };
-  return <td className="wl-cell-pick"><PickBox checked={select.picked.has(id)} label={`Select this ${select.noun}`} onChange={change} /></td>;
+  // A click near the box picks too, and never opens the row.
+  const near = (e: MouseEvent) => (e.stopPropagation(), change(!select.picked.has(id)));
+  return <td className="wl-cell-pick" onClick={near}><PickBox checked={select.picked.has(id)} label={`Select this ${select.noun}`} onChange={change} /></td>;
 }
 
 function useSorted<T>(rows: readonly T[], columns: Column<T>[], sort: { key: string; desc: boolean } | null): readonly T[] {

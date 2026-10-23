@@ -2,6 +2,7 @@ import type { InsightGroup, IssueInfo } from "@wizeworks/lens-core";
 import { fmtAgo, fmtCount, fmtMs } from "../../format";
 import { setQuery } from "../../routes";
 import { ImpactBadge } from "../../ui/Badges";
+import { useIssueBulk } from "../../ui/IssueBulk";
 import { IssueBadge } from "../../ui/IssueControls";
 import { Empty } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
@@ -49,14 +50,19 @@ export function InsightList({ groups, issues, selected, now, filtered }: Insight
   ) : (
     <Empty title="No insights in this range">WizeLens checks every request for N+1 queries, repeated queries, slow queries, chatty HTTP calls, and render problems.</Empty>
   );
+  const bulk = useIssueBulk("insight", groups.map((g) => g.key), "insight");
   return (
-    <Table
-      columns={columns(now, selected !== null, issues)}
-      rows={groups}
-      rowKey={(g) => g.key}
-      selectedKey={selected}
-      onRowClick={(g) => setQuery({ key: g.key === selected ? null : g.key })}
-      empty={empty}
-    />
+    <>
+      {bulk.bar}
+      <Table
+        columns={columns(now, selected !== null, issues)}
+        rows={groups}
+        rowKey={(g) => g.key}
+        selectedKey={selected}
+        onRowClick={(g) => setQuery({ key: g.key === selected ? null : g.key })}
+        empty={empty}
+        select={bulk.select}
+      />
+    </>
   );
 }
