@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import type { OrgWithProjects } from "../../data/account";
 import { SectionHead } from "../../ui/Sections";
-import { InviteForm, InvitesPanel } from "./InvitesPanel";
-import { KeyForm, KeysPanel } from "./KeysPanel";
-import { MembersPanel } from "./MembersPanel";
-import { DeleteOrgPanel, NewOrgPanel, OrgSettings } from "./OrgPanels";
-import { NewProjectForm, ProjectsPanel } from "./ProjectsPanel";
-import { canManage, type OrgData } from "./teamTypes";
+import { InviteForm, InvitesPanel } from "../people/InvitesPanel";
+import { KeyForm, KeysPanel } from "../connect/KeysPanel";
+import { MembersPanel } from "../people/MembersPanel";
+import { DeleteOrgPanel, NewOrgPanel, OrgSettings } from "../organization/OrgPanels";
+import { NewProjectForm, ProjectsPanel } from "../organization/ProjectsPanel";
+import { canManage, type OrgData } from "../organization/orgTypes";
+
+const ALL_KINDS = ["ingest", "read", "browser"] as const;
 
 export interface TeamCtx {
   org: OrgWithProjects;
@@ -57,8 +59,8 @@ export function KeysSection({ org, data, reload }: TeamCtx) {
         description="Ingest keys let an app send data to one project. Read keys let an AI agent or script read the projects you pick. Only a hash is kept, so a key is shown once."
         action={<AddButton label="New key" open={adding} onOpen={() => setAdding(true)} />}
       />
-      {adding && <KeyForm orgId={org.id} data={data} reload={reload} onClose={() => setAdding(false)} />}
-      <KeysPanel orgId={org.id} data={data} reload={reload} />
+      {adding && <KeyForm orgId={org.id} data={data} kinds={ALL_KINDS} reload={reload} onClose={() => setAdding(false)} />}
+      <KeysPanel orgId={org.id} data={data} kinds={ALL_KINDS} reload={reload} />
     </>
   );
 }

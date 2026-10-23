@@ -29,6 +29,7 @@ import { RequestsPage } from "./pages/requests/RequestsPage";
 import { SearchPage } from "./pages/search/SearchPage";
 import { ServicesPage } from "./pages/services/ServicesPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
+import { ConnectPage } from "./pages/connect/ConnectPage";
 import { TracesPage } from "./pages/traces/TracesPage";
 import { UptimePage } from "./pages/uptime/UptimePage";
 import { AUTH_PAGES, type AuthPageId, type PageId, type Route, useRoute } from "./routes";
@@ -64,6 +65,9 @@ const PAGES: Record<Exclude<PageId, "trace" | "shared" | "status" | AuthPageId>,
   insights: InsightsPage,
   security: SecurityPage,
   settings: SettingsPage,
+  connect: ConnectPage,
+  people: TeamPage,
+  organization: TeamPage,
   alerts: AlertsPage,
   uptime: UptimePage,
   slos: SlosPage,

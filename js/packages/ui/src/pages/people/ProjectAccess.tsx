@@ -5,7 +5,7 @@ import { act } from "../../data/useApi";
 import { Select } from "../../ui/Controls";
 import { Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
-import { type Member, type OrgData, type ProjectRole, ROLE_LABEL } from "./teamTypes";
+import { type Member, type OrgData, type ProjectRole, ROLE_LABEL } from "../organization/orgTypes";
 
 type Choice = ProjectRole | "";
 

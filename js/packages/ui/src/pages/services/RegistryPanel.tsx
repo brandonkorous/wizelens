@@ -13,7 +13,7 @@ import { Badge, DotText } from "../../ui/Badges";
 import { useAsk } from "../../ui/Dialog";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
-import { canManage } from "../team/teamTypes";
+import { canManage } from "../organization/orgTypes";
 import { RegistryHosts } from "./RegistryHosts";
 import { ALL_PROJECTS } from "../../data/projectScope";
 

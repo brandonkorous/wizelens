@@ -8,11 +8,11 @@ import { useRoute } from "../../routes";
 import { FormRow, SelectField } from "../../ui/Field";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { type Section, SectionHead, SectionLayout } from "../../ui/Sections";
-import { HubConnect } from "./HubConnect";
-import { OptionsReference } from "./OptionsReference";
-import { ProjectSettings } from "./ProjectSettings";
-import { SourceSettings } from "./SourceSettings";
-import { TagsSettings } from "./TagsSettings";
+import { SetupSteps } from "../connect/SetupSteps";
+import { OptionsReference } from "../connect/OptionsReference";
+import { ProjectSettings } from "../organization/ProjectSettings";
+import { SourceSettings } from "../connect/SourceSettings";
+import { TagsSettings } from "../organization/TagsSettings";
 import "../../styles/pages/settings.css";
 
 const THEMES: [Theme, string][] = [
@@ -65,7 +65,7 @@ export function SettingsPage() {
   const sections: Section[] = [
     { id: "dashboard", label: "Dashboard", icon: SlidersHorizontal, render: () => <Preferences /> },
     ...(host.has("settings") ? [{ id: "project", label: "This project", icon: FolderCog, render: () => <ProjectSettings /> }] : []),
-    ...(mode === "hub" || mode === "cloud" || data.info?.hub ? [{ id: "connect", label: mode === "in-app" ? "Sends to" : "Connect a service", icon: Plug, render: () => <HubConnect info={data.info} /> }] : []),
+    ...(mode === "hub" || mode === "cloud" || data.info?.hub ? [{ id: "connect", label: mode === "in-app" ? "Sends to" : "Connect a service", icon: Plug, render: () => <SetupSteps info={data.info} ctx={null} /> }] : []),
     {
       id: "services",
       label: services.label,

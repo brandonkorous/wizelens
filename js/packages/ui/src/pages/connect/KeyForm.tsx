@@ -3,9 +3,13 @@ import { apiSend } from "../../data/api";
 import { CopyButton } from "../../ui/Badges";
 import { Check, Field, FormRow, SelectField } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
-import type { ApiKey, OrgData } from "./teamTypes";
+import type { ApiKey, OrgData } from "../organization/orgTypes";
 
-type Kind = ApiKey["kind"];
+export type Kind = ApiKey["kind"];
+
+/** Keys that send data (apps and sites), and keys that read it (agents and scripts). */
+export const SENDING: readonly Kind[] = ["ingest", "browser"];
+export const READING: readonly Kind[] = ["read"];
 const KINDS: [Kind, string][] = [
   ["ingest", "Ingest: an app sends data"],
   ["read", "Read: an AI agent or script reads data"],
@@ -55,12 +59,12 @@ function keyBody(kind: Kind, name: string, picked: string[], scopes: string[], e
   return kind === "browser" ? { ...base, origins } : base;
 }
 
-/** Make a key. An ingest or browser key sends to one project; a read key may read several. All may expire and be limited. */
-export function KeyForm({ orgId, data, reload, onClose }: { orgId: string; data: OrgData; reload: () => void; onClose: () => void }) {
-  const [kind, setKind] = useState<Kind>("ingest");
+/** Make a key of one of `kinds`. An ingest or browser key sends to one project; a read key may read several. All may expire and be limited. */
+export function KeyForm({ orgId, data, kinds, reload, onClose }: { orgId: string; data: OrgData; kinds: readonly Kind[]; reload: () => void; onClose: () => void }) {
+  const [kind, setKind] = useState<Kind>(kinds[0]!);
   const [name, setName] = useState("");
   const [picked, setPicked] = useState<string[]>(data.projects[0] ? [data.projects[0].id] : []);
-  const [scopes, setScopes] = useState<string[]>(SCOPES.ingest.map(([s]) => s));
+  const [scopes, setScopes] = useState<string[]>(SCOPES[kinds[0]!].map(([s]) => s));
   const [expires, setExpires] = useState("");
   const [origins, setOrigins] = useState("");
   const [secret, setSecret] = useState<string | null>(null);
@@ -76,10 +80,10 @@ export function KeyForm({ orgId, data, reload, onClose }: { orgId: string; data:
   };
   const projects = data.projects.map((p): [string, string] => [p.id, p.name]);
   return (
-    <Panel title="New key" className="wl-panel-form" action={<button type="button" className="wl-link-btn" onClick={onClose}>{secret ? "Done" : "Close"}</button>}>
+    <Panel title={kinds.includes("read") ? "New read key" : "New sending key"} className="wl-panel-form" action={<button type="button" className="wl-link-btn" onClick={onClose}>{secret ? "Done" : "Close"}</button>}>
       <form className="wl-form" onSubmit={create}>
         <FormRow>
-          <SelectField label="Kind" value={kind} options={KINDS} onChange={pickKind} />
+          {kinds.length > 1 && <SelectField label="Kind" value={kind} options={KINDS.filter(([k]) => kinds.includes(k))} onChange={pickKind} />}
           <Field label="Name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="orders-api" hint="Name it after the app or agent that uses it." />
           {kind !== "read" && <SelectField label="Project" value={picked[0] ?? ""} options={projects} onChange={(id) => setPicked([id])} />}
           <SelectField label="Expires" value={expires} options={EXPIRY} onChange={setExpires} hint="It stops working then. Rotate it before." />

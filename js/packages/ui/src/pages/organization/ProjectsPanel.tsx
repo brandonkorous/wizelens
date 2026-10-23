@@ -7,8 +7,8 @@ import { useAsk } from "../../ui/Dialog";
 import { Field, FormRow } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
-import { ProjectAccess } from "./ProjectAccess";
-import type { OrgData } from "./teamTypes";
+import { ProjectAccess } from "../people/ProjectAccess";
+import type { OrgData } from "./orgTypes";
 import { LogRetentionSelect } from "./LogRetentionSelect";
 
 /** Add a project. Opens from the section's button. */

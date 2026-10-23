@@ -5,14 +5,14 @@ import { useRoute } from "../../routes";
 import { AppsPanel } from "../account/AppsPanel";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { type Section, SectionHead, SectionLayout } from "../../ui/Sections";
-import { SharesSection } from "./ActivityPanels";
-import { AuditSection } from "./AuditLog";
-import { NewOrgPanel } from "./OrgPanels";
-import { BillingSection } from "./BillingSection";
-import { ScimSection } from "./ScimSection";
-import { SsoSection } from "./SsoPanel";
+import { SharesSection } from "../people/SharesSection";
+import { AuditSection } from "../people/AuditLog";
+import { NewOrgPanel } from "../organization/OrgPanels";
+import { BillingSection } from "../organization/BillingSection";
+import { ScimSection } from "../people/ScimSection";
+import { SsoSection } from "../people/SsoPanel";
 import { KeysSection, OrgSection, PeopleSection, ProjectsSection, type TeamCtx } from "./TeamSections";
-import { canManage, type OrgData } from "./teamTypes";
+import { canManage, type OrgData } from "../organization/orgTypes";
 
 function sectionsOf(ctx: TeamCtx | null, current: NonNullable<ReturnType<typeof currentProject>>, billing: boolean): Section[] {
   const { org, project } = current;

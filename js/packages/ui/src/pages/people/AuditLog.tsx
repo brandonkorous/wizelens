@@ -8,8 +8,8 @@ import { Empty, Panel } from "../../ui/Panel";
 import { SectionHead } from "../../ui/Sections";
 import { type Column, Table } from "../../ui/Table";
 import { actionText, actorText, type AuditEntry, detailText, GROUP_LABEL, namesOf } from "./auditText";
-import { PlanPrompt, useFeature } from "./PlanPrompt";
-import type { OrgData } from "./teamTypes";
+import { PlanPrompt, useFeature } from "../organization/PlanPrompt";
+import type { OrgData } from "../organization/orgTypes";
 
 const PAGE = 100;
 

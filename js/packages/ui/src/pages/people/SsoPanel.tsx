@@ -7,7 +7,7 @@ import { Badge, CopyButton } from "../../ui/Badges";
 import { useAsk } from "../../ui/Dialog";
 import { Empty, Panel } from "../../ui/Panel";
 import { SectionHead } from "../../ui/Sections";
-import { PlanPrompt, useFeature } from "./PlanPrompt";
+import { PlanPrompt, useFeature } from "../organization/PlanPrompt";
 import { SsoForm } from "./SsoForm";
 
 /** One provider as Better Auth lists it (secrets never come back). */

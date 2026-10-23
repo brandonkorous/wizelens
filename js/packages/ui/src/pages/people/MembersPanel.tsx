@@ -6,7 +6,7 @@ import { Select } from "../../ui/Controls";
 import { useAsk } from "../../ui/Dialog";
 import { Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
-import { canManage, type Member, type OrgData, ROLE_LABEL, ROLE_OPTIONS } from "./teamTypes";
+import { canManage, type Member, type OrgData, ROLE_LABEL, ROLE_OPTIONS } from "../organization/orgTypes";
 
 interface Ctx {
   orgId: string;

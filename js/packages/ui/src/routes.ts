@@ -19,6 +19,9 @@ export type PageId =
   | "problems"
   | "search"
   | "settings"
+  | "connect"
+  | "people"
+  | "organization"
   | "alerts"
   | "uptime"
   | "status"
@@ -41,7 +44,7 @@ export interface Route {
 }
 
 export const AUTH_PAGES: readonly AuthPageId[] = ["setup", "two-factor", "forgot-password", "reset-password", "verify-email", "invite", "delete-account", "oauth", "oauth-consent"];
-const PAGES: readonly PageId[] = ["overview", "problems", "search", "requests", "traces", "database", "rendering", "errors", "logs", "metrics", "hosts", "kubernetes", "services", "insights", "security", "settings", "alerts", "slos", "dashboards", "users", "uptime", "team", "shared", "status", "account", ...AUTH_PAGES];
+const PAGES: readonly PageId[] = ["overview", "problems", "search", "requests", "traces", "database", "rendering", "errors", "logs", "metrics", "hosts", "kubernetes", "services", "insights", "security", "settings", "connect", "people", "organization", "alerts", "slos", "dashboards", "users", "uptime", "team", "shared", "status", "account", ...AUTH_PAGES];
 const TRACE_ID = /^[0-9a-f]{32}$/;
 
 /** Read a hash like "#/requests?status=5xx" or "#/traces/<id>/sql". */

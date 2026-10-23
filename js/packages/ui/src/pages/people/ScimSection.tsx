@@ -9,7 +9,7 @@ import { Field, FormRow } from "../../ui/Field";
 import { Empty, Panel } from "../../ui/Panel";
 import { SectionHead } from "../../ui/Sections";
 import { type Column, Table } from "../../ui/Table";
-import { PlanPrompt } from "./PlanPrompt";
+import { PlanPrompt } from "../organization/PlanPrompt";
 
 interface ScimToken {
   id: string;
