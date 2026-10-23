@@ -8,7 +8,7 @@ import { useAsk } from "../../ui/Dialog";
 import { Field, FormRow, SelectField } from "../../ui/Field";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
-import { type Invite, type OrgData, ROLE_HELP, ROLE_LABEL, ROLE_OPTIONS } from "./teamTypes";
+import { type Invite, type OrgData, ROLE_HELP, ROLE_LABEL, ROLE_OPTIONS } from "../organization/orgTypes";
 
 interface Props {
   orgId: string;

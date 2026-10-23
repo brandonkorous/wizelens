@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { Activity, BellRing, Box, Boxes, Database, FileText, HeartPulse, House, LayoutDashboard, Lightbulb, List, Monitor, Search, Server, Settings, Share2, ShieldAlert, Siren, Target, TriangleAlert, UserRound, Users } from "lucide-react";
+import { Activity, BellRing, Box, Boxes, Building2, Database, FileText, HeartPulse, House, LayoutDashboard, Lightbulb, List, Monitor, Plug, Search, Server, Settings, Share2, ShieldAlert, Siren, Target, TriangleAlert, UserRound, Users } from "lucide-react";
 import type { Capability } from "@wizeworks/lens-core";
 import type { PageId } from "../routes";
 
@@ -12,6 +12,8 @@ export interface NavItem {
   group: NavGroupId;
   /** Shown only when the host has this capability. */
   needs?: Capability;
+  /** Hidden when the host has this capability: another item takes its place. */
+  hideWith?: Capability;
 }
 
 /** Menu sections in order. The first one has no heading. */
@@ -45,9 +47,14 @@ export const NAV: NavItem[] = [
   { page: "uptime", label: "Uptime", icon: HeartPulse, group: "monitor", needs: "uptime" },
   { page: "slos", label: "SLOs", icon: Target, group: "monitor", needs: "slos" },
   { page: "dashboards", label: "Dashboards", icon: LayoutDashboard, group: "monitor", needs: "saved" },
-  { page: "team", label: "Team", icon: Users, group: "manage", needs: "accounts" },
-  { page: "settings", label: "Settings", icon: Settings, group: "manage" },
+  { page: "connect", label: "Connect", icon: Plug, group: "manage" },
+  { page: "people", label: "People & access", icon: Users, group: "manage", needs: "accounts" },
+  { page: "organization", label: "Organization", icon: Building2, group: "manage", needs: "accounts" },
+  { page: "settings", label: "Settings", icon: Settings, group: "manage", hideWith: "accounts" },
 ];
+
+/** The menu items this host shows. */
+export const navFor = (has: (c: Capability) => boolean): NavItem[] => NAV.filter((n) => (!n.needs || has(n.needs)) && (!n.hideWith || !has(n.hideWith)));
 
 /** The pages on the phone tab bar. Every other page is under "More". */
 export const MOBILE_TABS: readonly PageId[] = ["overview", "problems", "requests", "errors"];

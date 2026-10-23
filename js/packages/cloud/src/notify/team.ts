@@ -15,7 +15,8 @@ async function claim(app: CloudApp): Promise<AuditRow[]> {
   );
 }
 
-const auditLink = (app: CloudApp, orgId: string) => `${app.baseUrl()}/_wizelens/#/team?org=${encodeURIComponent(orgId)}`;
+/** A People & access section of the organization: the audit log for managers, the members list for anyone. */
+const peopleLink = (app: CloudApp, orgId: string, section: "audit" | "members") => `${app.baseUrl()}/_wizelens/#/people/${section}?org=${encodeURIComponent(orgId)}`;
 
 /** A member whose role changed hears it from us too, even when they are not a manager. */
 async function tellRoleChange(app: CloudApp, row: AuditRow, org: string): Promise<void> {
@@ -25,7 +26,7 @@ async function tellRoleChange(app: CloudApp, row: AuditRow, org: string): Promis
     [d.memberId ?? ""],
   );
   if (!m || m.team === false || row.actor === `user:${m.user_id}`) return;
-  app.mailer.send(renderMail(m.email, roleChanged(org, d.role ?? "member", auditLink(app, row.org_id), stopUrl(app, m.user_id, "team"))));
+  app.mailer.send(renderMail(m.email, roleChanged(org, d.role ?? "member", peopleLink(app, row.org_id, "members"), stopUrl(app, m.user_id, "team"))));
 }
 
 /** One email per manager with the changes others made in that organization. */
@@ -36,7 +37,7 @@ async function noticeOrg(app: CloudApp, orgId: string, rows: AuditRow[], names: 
   const changes = await Promise.all(rows.map(async (r) => ({ actor: r.actor, text: await describe(r, names), timeMs: r.time_ms })));
   for (const m of await managersOf(app.db, orgId, "team", app.mailer.live)) {
     const theirs = changes.filter((c) => c.actor !== `user:${m.id}`);
-    if (theirs.length) app.mailer.send(renderMail(m.email, teamChanges(o.name, theirs, auditLink(app, orgId), stopUrl(app, m.id, "team"))));
+    if (theirs.length) app.mailer.send(renderMail(m.email, teamChanges(o.name, theirs, peopleLink(app, orgId, "audit"), stopUrl(app, m.id, "team"))));
   }
 }
 

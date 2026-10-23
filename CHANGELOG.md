@@ -2,6 +2,25 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — Settings by task
+
+### Changed
+
+- **Team and Settings become pages by task.** The menu's Manage group now has **Connect** (setup steps, server setup,
+  sending keys, AI read keys, and add-on options), **People & access** (members, project access, single sign-on, user
+  sync, connected apps, shared links, and the audit log), and **Organization** (projects, data retention, thresholds
+  and hidden keys, tags, billing, and the name). A hub or a single app keeps a **Settings** page for what it has.
+- **Connecting a service is one page.** On the cloud, step 1 of Connect makes the sending key right there, so you no
+  longer go from Settings to Team and back.
+- **Data retention has one place.** Organization, Data retention holds the longest any project keeps data and, for
+  each project, how long its traces and logs stay. Thresholds and hidden keys has its own project picker, so it no
+  longer depends on the project chosen at the top.
+- **Your own preferences live in Account.** Theme, time range, time zone, and clock are under Account, Preferences,
+  also one click from the user menu. Your AI apps are "My apps", so they are not mixed up with the organization's
+  "Connected apps".
+- **New organization** is in the organization menu at the top. Old `#/team/...` and `#/settings/...` links, in emails
+  and bookmarks, open the new place.
+
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 
 ### Changed

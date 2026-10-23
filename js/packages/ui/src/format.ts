@@ -44,7 +44,7 @@ export function fmtShort(n: number): string {
   return fmtCount(n);
 }
 
-/** How times show: in the browser's zone or UTC, on a 12- or 24-hour clock. Set from the Settings page. */
+/** How times show: in the browser's zone or UTC, on a 12- or 24-hour clock. Set under Preferences. */
 let timeFormat = { utc: false, hour12: true };
 export const setTimeFormat = (f: { utc: boolean; hour12: boolean }): void => void (timeFormat = f);
 export const isUtc = (): boolean => timeFormat.utc;

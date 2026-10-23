@@ -11,8 +11,8 @@ npx @wizeworks/lens-cloud
 POSTGRES_PASSWORD=<a long secret> docker compose -f deploy/docker-compose.cloud.yml up -d
 ```
 
-The cloud prints a one-time setup link while it has no account. Open it and create the first account. Make an ingest key on the
-Team page, then on each app:
+The cloud prints a one-time setup link while it has no account. Open it and create the first account. Make an ingest key under
+Connect, Setup steps, then on each app:
 
 ```bash
 WIZELENS_HUB=http://localhost:5970
@@ -77,7 +77,7 @@ page. `pnpm --filter @wizeworks/lens-cloud email:preview <folder>` writes every 
 Sign-in is [Better Auth](https://better-auth.com) (pinned to one version): email and password, passkeys, two-step codes from an
 authenticator app with backup codes, password reset and email confirm by link, sessions per device (sign out one or all),
 organizations with owner, admin, member, and viewer roles, email invites, single sign-on per organization (OIDC or SAML, after a
-DNS proof of the email domain; Team page), and account deletion. Sign-in tries are limited per
+DNS proof of the email domain; People & access page), and account deletion. Sign-in tries are limited per
 client address across all instances. Existing accounts keep working after the upgrade; everyone signs in once more. See
 `docs/CONTRACT.md`, "Tenancy and access".
 

@@ -77,5 +77,5 @@ search narrow the list further, and **Export** downloads it as CSV.
 | N+1 repeats | `NPlusOneThreshold` | `nPlusOneThreshold` | `5` |
 | Slow query | `SlowQueryMs` | `slowQueryMs` | `100` |
 
-On the hub and the cloud, set both per project under **Settings → This project** (they apply to data that arrives after
+On the hub and the cloud, set both per project under **Thresholds and hidden keys** (in **Settings** on the hub, **Organization** on the cloud; they apply to data that arrives after
 you save), or for the whole host at start with `--slow-query-ms` and `--n-plus-one`.

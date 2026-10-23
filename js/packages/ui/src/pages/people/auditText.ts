@@ -1,4 +1,4 @@
-import type { OrgData } from "./teamTypes";
+import type { OrgData } from "../organization/orgTypes";
 
 export interface AuditEntry {
   actor: string;

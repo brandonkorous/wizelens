@@ -1,9 +1,9 @@
-import { ChevronDown, LogOut, Settings2, UserRound } from "lucide-react";
+import { Building2, ChevronDown, LogOut, Settings2, SlidersHorizontal, UserRound } from "lucide-react";
 import { currentProject, signOut, useAccount } from "../data/account";
 import { hrefTo } from "../routes";
 import { Menu } from "./Menu";
 
-/** The signed-in person: their account, the Team page, and sign out. */
+/** The signed-in person: their account and preferences, their organization, and sign out. */
 export function UserMenu() {
   const account = useAccount();
   const user = account?.user;
@@ -24,9 +24,12 @@ export function UserMenu() {
           <a className="wl-menu-item" href={hrefTo("account")} onClick={close}>
             <Settings2 size={16} aria-hidden="true" /> Account
           </a>
+          <a className="wl-menu-item" href={hrefTo("account", ["preferences"])} onClick={close}>
+            <SlidersHorizontal size={16} aria-hidden="true" /> Preferences
+          </a>
           {org && (
-            <a className="wl-menu-item" href={hrefTo("team")} onClick={close}>
-              {org.name} · {org.role}
+            <a className="wl-menu-item" href={hrefTo("organization")} onClick={close}>
+              <Building2 size={16} aria-hidden="true" /> {org.name}
             </a>
           )}
           <button type="button" className="wl-menu-item" onClick={() => void signOut()}>

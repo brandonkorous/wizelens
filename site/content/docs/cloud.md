@@ -38,8 +38,9 @@ Postgres, so heavy searches never slow sign-in or ingest. Pages and searches giv
 ## Connect your apps
 
 Open the setup link from the log (`docker compose -f deploy/docker-compose.cloud.yml logs cloud`), or set
-`WIZELENS_CLOUD_SETUP_TOKEN`, and create the first account: you own the first organization. On the **Team** page, invite
-people (send them the link), add projects, and make an **ingest key** for each app. Then set on each app, and restart it:
+`WIZELENS_CLOUD_SETUP_TOKEN`, and create the first account: you own the first organization. Under **People & access**, invite
+people (send them the link); under **Organization**, add projects; and under **Connect**, make an **ingest key** for each
+app. Then set on each app, and restart it:
 
 ```bash
 WIZELENS_HUB=https://wizelens.example.com
@@ -67,19 +68,19 @@ Admins export the audit log as CSV or JSON (Business and Enterprise on the hoste
 
 A member or viewer can have their own role on one project: more (up to admin of that project), less, or no access.
 No access hides the project everywhere: the dashboard, trace links across projects, connected apps, and AI agents.
-Owners and admins always keep their organization role. Set it in **Team → Projects → Access**.
+Owners and admins always keep their organization role. Set it in **People & access → Project access**.
 
 The audit log pages back through all history and filters by action and by person. The export (CSV or JSON, on plans
 with audit export) follows the same filters, and is itself in the log.
 
 ## Single sign-on and SCIM
 
-Owners and admins connect OIDC (Okta, Entra ID, Google, Auth0, Keycloak) or SAML 2.0 under **Team → Single sign-on**.
+Owners and admins connect OIDC (Okta, Entra ID, Google, Auth0, Keycloak) or SAML 2.0 under **People & access → Single sign-on**.
 Sign-in works once you prove the email domain with a DNS TXT record; new people from that domain join as members, with a
 confirmed email, and the sign-in page shows **Sign in with SSO**. OIDC needs the provider's origin in `--sso-origins`, so
 the cloud fetches from no other place. SAML needs none.
 
-Under **Team → SCIM**, an admin makes a token and pastes it with the SCIM base URL
+Under **People & access → User sync (SCIM)**, an admin makes a token and pastes it with the SCIM base URL
 (`<public-url>/_wizelens/api/auth/scim/v2`) into Okta, Entra ID, or another identity provider. People it creates join as
 members, and people it deactivates leave the organization (owners stay). Admins set roles in WizeLens. On the hosted
 cloud, single sign-on and SCIM are on Business and Enterprise; a self-hosted cloud has both.
@@ -87,8 +88,10 @@ cloud, single sign-on and SCIM are on Business and Enterprise; a self-hosted clo
 ## Project settings
 
 Each project can set its own slow query and N+1 thresholds, more redacted keys, and a shorter retention than its
-organization, in **Settings → This project**. Owners, admins, and admins of the project change them. Thresholds and
-keys apply to data that arrives after you save. A shorter retention deletes older data within minutes.
+organization. Thresholds and keys are under **Organization → Thresholds and hidden keys**, which has its own project
+picker. Retention, for traces and logs of every project, is under **Organization → Data retention**, the one place it is
+set. Owners, admins, and admins of the project change them. Thresholds and keys apply to data that arrives after you
+save. A shorter retention deletes older data within minutes.
 
 ## Keys
 
@@ -111,8 +114,8 @@ Only a hash of each key is stored. The secret is shown once, when you make the k
 ## AI apps
 
 Claude and other MCP clients connect without a key: add `https://mcp.wizelens.com` (or `<your cloud>/_wizelens/mcp`), sign
-in, and pick the projects the app may read. It keeps read-only access until you remove it under **Account → Connected
-apps**; admins see everyone's under **Team → Connected apps**. See [AI access](/docs/ai-access/).
+in, and pick the projects the app may read. It keeps read-only access until you remove it under **Account → My
+apps**; admins see everyone's under **People & access → Connected apps**. See [AI access](/docs/ai-access/).
 
 ## Traces across projects
 
@@ -140,7 +143,7 @@ picks the organization first.
 
 Pages are computed on the server from stats tables, never from a sample of traces, so 7- and 30-day pages answer in well
 under a second on busy projects. Each organization keeps traces for 30 days by default (1 to 400). Each project can keep
-its logs for more or less time than that, under **Team → Projects → Logs kept** (see [Logs](/docs/logs/)).
+its traces for less, and its logs for more or less, under **Organization → Data retention** (see [Logs](/docs/logs/)).
 
 ## Alerts
 
@@ -191,7 +194,7 @@ an unguessable, read-only link that shows check names, state, uptime, and incide
 Resolve an error group, or ignore it for an hour, a day, a week, or for good. A resolved group that happens again shows as
 **Regressed** and comes back to the list. In the cloud, a group can also be **assigned** to a member, and each change
 writes an audit line. Insights get **Mark fixed** and **Dismiss**. [Tags](/docs/tags/) name a search, and everything it
-finds wears that name in every list; members and up manage them under **Settings → Tags**, and each change is audited.
+finds wears that name in every list; members and up manage them under **Organization → Tags**, and each change is audited.
 
 ## Security
 

@@ -15,7 +15,7 @@ function CheckEmail({ text }: { text: string }) {
   );
 }
 
-/** The very first account on a new cloud, with the token from the setup link. Its organization can be renamed on the Team page. */
+/** The very first account on a new cloud, with the token from the setup link. Its organization can be renamed under Organization, General. */
 export function SetupScreen({ token, state }: { token: string; state: AccountState }) {
   const [done, setDone] = useState(false);
   if (!token) return <AuthCard title="Set up WizeLens Cloud" intro="This cloud has no account yet. Open the setup link printed in the cloud's log." />;

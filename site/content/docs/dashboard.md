@@ -65,22 +65,40 @@ The menu is in sections. Pages a host does not run are left out of its menu.
 
 | Page | Where | What you get |
 |---|---|---|
-| **Team** | Cloud | People, Projects, API keys, Connected apps, Single sign-on, SCIM, Shared links, Audit log, Billing, and Organization ([more](/docs/cloud/)) |
-| **Settings** | Every host | Your preferences and how WizeLens is set up (below) |
+| **Connect** | Every host | How to send data here, how the host is set up, keys, and every add-on option (below) |
+| **People & access** | Cloud | Members, Project access, Single sign-on, User sync (SCIM), Connected apps, Shared links, and Audit log ([more](/docs/cloud/)) |
+| **Organization** | Cloud | Projects, Data retention, Thresholds and hidden keys, Tags, Billing, and General (below) |
+| **Settings** | Hub, in-app | Data retention and thresholds (hub), Tags, and Preferences (below) |
 
 Lists open a page of their own for each service, endpoint, error group, query, page route, and user. Number cards open
 the list behind them: Error Rate opens the failed requests.
 
-## Settings
+Your own preferences (theme, default time range, time zone, and clock) are under **Account → Preferences** in the user
+menu on the cloud, and under **Settings → Preferences** on a hub or in-app. They are saved in this browser.
 
-| Tab | Where | What it holds |
+## Connect
+
+| Section | Where | What it holds |
 |---|---|---|
-| **Dashboard** | Every host | Theme, default time range, time zone (yours or UTC), and clock (12-hour or 24-hour). Saved in this browser. |
-| **This project** | Hub, cloud | Slow query (ms), N+1 threshold, how many days to keep data, and more redacted keys |
-| **Connect a service** | Hub, cloud | How to send a service's data here. An app that sends to a hub shows **Sends to**. |
-| **Services**, **This hub**, **This cloud** | Every host | How WizeLens is set up in each connected service, or on the hub or cloud itself |
-| **Tags** | Every host | The tags of this project ([more](/docs/tags/)) |
+| **Setup steps** | Hub, cloud | How to send a service's data here. On the cloud, step 1 makes the sending key right there. An app that sends to a hub shows **Sends to**. |
+| **Server setup**, **This service** | Every host | How WizeLens is set up on the hub or cloud, or in each connected service |
+| **Sending keys** | Cloud | Ingest keys (apps) and browser keys (static sites) |
+| **AI read keys** | Cloud | Read keys for AI agents and scripts, and the MCP address |
 | **Add-on options** | Every host | Every option of the .NET and Node add-ons, and the environment variable that sets it |
+
+## Organization and Settings
+
+| Section | Where | What it holds |
+|---|---|---|
+| **Projects** | Cloud | Add a project, clear its data, or delete it |
+| **Data retention** | Hub, cloud | How long each project keeps traces; on the cloud also its logs, and the longest any project keeps data |
+| **Thresholds and hidden keys** | Hub, cloud | Slow query (ms), N+1 threshold, and more hidden keys, for the project you pick |
+| **Tags** | Every host | The tags of this project ([more](/docs/tags/)) |
+| **Billing** | Cloud | The plan, this month's data, and the spend cap |
+| **General** | Cloud | The organization's name, and deleting it |
+| **Preferences** | Hub, in-app | Theme, default time range, time zone, and clock |
+
+A new organization is made from the organization menu at the top.
 
 ## Around every page
 
@@ -138,7 +156,7 @@ On the cloud, the link button makes a read-only link to the page you are on: Ove
 Insights, Security, Rendering, Services, Traces, and the page of one error, service, endpoint, query, or route. Pick
 **For 1 day**, **For 7 days**, or **For 30 days**, then **Make a link**. The numbers are kept as they are now and do not
 change. Anyone with the link can open it. A link belongs to one project, so it is not offered under All projects. See
-and revoke links under **Team → Shared links**.
+and revoke links under **People & access → Shared links**.
 
 ### Live or paused
 

@@ -19,6 +19,9 @@ export type PageId =
   | "problems"
   | "search"
   | "settings"
+  | "connect"
+  | "people"
+  | "organization"
   | "alerts"
   | "uptime"
   | "status"
@@ -41,7 +44,7 @@ export interface Route {
 }
 
 export const AUTH_PAGES: readonly AuthPageId[] = ["setup", "two-factor", "forgot-password", "reset-password", "verify-email", "invite", "delete-account", "oauth", "oauth-consent"];
-const PAGES: readonly PageId[] = ["overview", "problems", "search", "requests", "traces", "database", "rendering", "errors", "logs", "metrics", "hosts", "kubernetes", "services", "insights", "security", "settings", "alerts", "slos", "dashboards", "users", "uptime", "team", "shared", "status", "account", ...AUTH_PAGES];
+const PAGES: readonly PageId[] = ["overview", "problems", "search", "requests", "traces", "database", "rendering", "errors", "logs", "metrics", "hosts", "kubernetes", "services", "insights", "security", "settings", "connect", "people", "organization", "alerts", "slos", "dashboards", "users", "uptime", "team", "shared", "status", "account", ...AUTH_PAGES];
 const TRACE_ID = /^[0-9a-f]{32}$/;
 
 /** Read a hash like "#/requests?status=5xx" or "#/traces/<id>/sql". */
@@ -93,6 +96,50 @@ export const userHref = (user: string) => hrefTo("users", [enc(user)]);
 /** The Alerts page with a new rule open, filled from what the person was looking at. */
 export const newAlertHref = (fields: Record<string, string>) => hrefTo("alerts", [], { new: "1", ...fields });
 
+/** Old Team links and where each section went. */
+const TEAM_MOVES: Record<string, [PageId, string]> = {
+  "": ["people", "members"],
+  people: ["people", "members"],
+  projects: ["organization", "projects"],
+  keys: ["connect", "keys"],
+  apps: ["people", "apps"],
+  sso: ["people", "sso"],
+  scim: ["people", "scim"],
+  links: ["people", "links"],
+  audit: ["people", "audit"],
+  billing: ["organization", "billing"],
+  organization: ["organization", "general"],
+};
+
+/** Old Settings sections that moved to another page or name. */
+const SETTINGS_MOVES: Record<string, (cloud: boolean) => [PageId, string]> = {
+  dashboard: (cloud) => (cloud ? ["account", "preferences"] : ["settings", "preferences"]),
+  project: (cloud) => [cloud ? "organization" : "settings", "checks"],
+  connect: () => ["connect", "setup"],
+  services: () => ["connect", "server"],
+  options: () => ["connect", "options"],
+};
+
+/** Where an old Team or Settings link (emails, bookmarks, Stripe) opens now, with its query; null for every other link. */
+export function legacyHref(route: Route, cloud: boolean): string | null {
+  const section = route.params[0] ?? "";
+  const query = Object.fromEntries(route.query.entries());
+  if (route.page === "team") {
+    const [page, to] = TEAM_MOVES[section] ?? TEAM_MOVES[""]!;
+    return hrefTo(page, [to], query);
+  }
+  if (route.page !== "settings") return null;
+  const moved = SETTINGS_MOVES[section];
+  if (moved) return hrefTo(moved(cloud)[0], [moved(cloud)[1]], query);
+  return cloud ? hrefTo("organization", section ? [section] : [], query) : null;
+}
+
+/** Swap the current address for another, with no new history entry. */
+export function replaceHref(href: string): void {
+  history.replaceState(null, "", href);
+  window.dispatchEvent(new HashChangeEvent("hashchange"));
+}
+
 export function navigate(href: string): void {
   window.location.hash = href.replace(/^#/, "");
 }
@@ -105,9 +152,7 @@ export function setQuery(updates: Record<string, string | number | null | undefi
     if (v === null || v === undefined || v === "") delete next[k];
     else next[k] = String(v);
   }
-  const href = hrefTo(route.page, route.params, next);
-  history.replaceState(null, "", href);
-  window.dispatchEvent(new HashChangeEvent("hashchange"));
+  replaceHref(hrefTo(route.page, route.params, next));
 }
 
 export function useRoute(): Route {

@@ -23,7 +23,7 @@ export function PlanPrompt({ feature, plan, compact = false }: { feature: Featur
         <strong>{NAME[feature]} is on the {needs} plan.</strong>
         <p className="wl-muted">This organization is on {PLAN_NAME[plan as PlanId] ?? plan}. Owners and admins can upgrade on the Billing page; nothing else changes.</p>
       </div>
-      <a className="wl-btn wl-btn-primary" href={hrefTo("team", ["billing"])}>
+      <a className="wl-btn wl-btn-primary" href={hrefTo("organization", ["billing"])}>
         Upgrade to {needs}
       </a>
     </div>

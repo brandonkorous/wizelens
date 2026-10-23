@@ -73,7 +73,7 @@ npx @wizeworks/lens-cli sourcemaps list --release 1.4.0
 | Path prefix | `--url-prefix` | | none |
 | Delete each map after it uploads | `--delete` | | off |
 
-For WizeLens Cloud, use `https://app.wizelens.com` and an **ingest key** of the project (Team → Keys): the maps go to that
+For WizeLens Cloud, use `https://app.wizelens.com` and an **ingest key** of the project (Connect → Sending keys): the maps go to that
 project. The cloud keeps the newest 20 releases of each project.
 
 A stack is read with the maps of the project the error was sent to, whatever project you look from: on the hub under **All

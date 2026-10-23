@@ -1,31 +1,28 @@
 import { type FormEvent, useEffect, useState } from "react";
 import type { ProjectSettings as Settings } from "@wizeworks/lens-core";
 import { apiSend } from "../../data/api";
-import { type SettingsReply, useProjectSettingsApi } from "../../data/projectSettings";
+import { firstProject, type SettingsReply, settingsBody, useSettingsProjects } from "../../data/projectSettings";
 import { useApi } from "../../data/useApi";
-import { Field, FormRow } from "../../ui/Field";
+import { Field, FormRow, SelectField } from "../../ui/Field";
 import { Empty, Panel } from "../../ui/Panel";
 import { SectionHead } from "../../ui/Sections";
-import { PickProject } from "../../ui/PickProject";
 
 interface Draft {
   slowQueryMs: string;
   nPlusOneThreshold: string;
-  retentionDays: string;
   redactKeys: string;
 }
 
 const draftOf = (s: Settings): Draft => ({
   slowQueryMs: s.slowQueryMs?.toString() ?? "",
   nPlusOneThreshold: s.nPlusOneThreshold?.toString() ?? "",
-  retentionDays: s.retentionDays?.toString() ?? "",
   redactKeys: (s.redactKeys ?? []).join(", "),
 });
 
-const bodyOf = (d: Draft) => ({
+/** The draft's fields only; retention stays as the project has it. */
+const patchOf = (d: Draft) => ({
   slowQueryMs: d.slowQueryMs || null,
   nPlusOneThreshold: d.nPlusOneThreshold || null,
-  retentionDays: d.retentionDays || null,
   redactKeys: d.redactKeys.split(",").map((k) => k.trim()).filter(Boolean),
 });
 
@@ -39,7 +36,7 @@ function KeysInEffect({ reply }: { reply: SettingsReply }) {
   );
 }
 
-function SettingsForm({ url, reply, canEdit, onSaved }: { url: string; reply: SettingsReply; canEdit: boolean; onSaved: (r: SettingsReply) => void }) {
+function ChecksForm({ url, reply, canEdit, onSaved }: { url: string; reply: SettingsReply; canEdit: boolean; onSaved: (r: SettingsReply) => void }) {
   const [draft, setDraft] = useState(() => draftOf(reply.settings));
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   useEffect(() => setDraft(draftOf(reply.settings)), [reply]);
@@ -47,7 +44,7 @@ function SettingsForm({ url, reply, canEdit, onSaved }: { url: string; reply: Se
   const d = reply.defaults;
   const save = (e: FormEvent) => {
     e.preventDefault();
-    apiSend<SettingsReply>("PUT", url, bodyOf(draft)).then(
+    apiSend<SettingsReply>("PUT", url, settingsBody(reply.settings, patchOf(draft))).then(
       (r) => (onSaved(r), setNote({ ok: true, text: "Saved. New data uses these settings." })),
       (err: unknown) => setNote({ ok: false, text: err instanceof Error ? err.message : String(err) }),
     );
@@ -58,9 +55,8 @@ function SettingsForm({ url, reply, canEdit, onSaved }: { url: string; reply: Se
       <FormRow>
         <Field label="Slow query (ms)" narrow type="number" min={1} max={60000} disabled={off} value={draft.slowQueryMs} onChange={set("slowQueryMs")} placeholder={String(d.slowQueryMs)} hint={`A database call this slow or slower counts as slow. Empty: ${d.slowQueryMs}.`} />
         <Field label="N+1 threshold" narrow type="number" min={2} max={1000} disabled={off} value={draft.nPlusOneThreshold} onChange={set("nPlusOneThreshold")} placeholder={String(d.nPlusOneThreshold)} hint={`This many similar calls in one request is an N+1. Empty: ${d.nPlusOneThreshold}.`} />
-        <Field label="Keep data for (days)" narrow type="number" min={1} max={d.retentionDays} disabled={off} value={draft.retentionDays} onChange={set("retentionDays")} placeholder={String(d.retentionDays)} hint={`At most ${d.retentionDays}. Older data is deleted within minutes.`} />
       </FormRow>
-      <Field label="More redacted keys" disabled={off} value={draft.redactKeys} onChange={set("redactKeys")} placeholder="ssn, iban, dob" hint="Comma list. A value whose key contains one of these is stored as [redacted], on top of the keys in effect below." />
+      <Field label="More hidden keys" disabled={off} value={draft.redactKeys} onChange={set("redactKeys")} placeholder="ssn, iban, dob" hint="Comma list. A value whose key contains one of these is stored as [redacted], on top of the keys in effect below." />
       {note && !note.ok && <div className="wl-banner wl-banner-error">{note.text}</div>}
       {canEdit && (
         <div className="wl-form-actions wl-form-actions-split">
@@ -72,27 +68,43 @@ function SettingsForm({ url, reply, canEdit, onSaved }: { url: string; reply: Se
         </div>
       )}
       <div>
-        <div className="wl-section-title">Redacted keys in effect</div>
+        <div className="wl-section-title">Hidden keys in effect</div>
         <KeysInEffect reply={reply} />
       </div>
     </form>
   );
 }
 
-/** One project's thresholds, extra redacted keys, and retention, kept by the hub or the cloud. */
-export function ProjectSettings() {
-  const api = useProjectSettingsApi();
-  const { data, error, reload } = useApi<SettingsReply>(api.url);
+/** One project's settings, loaded fresh for it: a new project never saves over with the last one's values. */
+function ProjectChecks({ url, canEdit }: { url: string; canEdit: boolean }) {
+  const { data, error, reload } = useApi<SettingsReply>(url);
   const [saved, setSaved] = useState<SettingsReply | null>(null);
   const reply = saved ?? data;
-  const who = api.canEdit ? "" : " Only owners and admins can change them.";
   return (
     <>
-      <SectionHead title="This project" description={`Settings for ${api.label || "this project"}. Thresholds and redacted keys apply to data that arrives after you save.${who}`} />
+      {error && <div className="wl-banner wl-banner-error">{error}</div>}
+      {reply ? <ChecksForm url={url} reply={reply} canEdit={canEdit} onSaved={(r) => (setSaved(r), reload())} /> : !error && <p className="wl-muted">Loading…</p>}
+    </>
+  );
+}
+
+/** Thresholds and extra hidden keys of the project picked here, not the one chosen at the top. */
+export function ChecksSection() {
+  const sp = useSettingsProjects();
+  const [picked, setPicked] = useState(() => firstProject(sp.options));
+  const who = sp.cloud && !sp.canEdit(picked) ? " Only owners and admins can change them." : "";
+  return (
+    <>
+      <SectionHead title="Thresholds and hidden keys" description={`When a database call counts as slow, when repeated calls count as an N+1, and which values are stored as [redacted]. Changes apply to data that arrives after you save.${who}`} />
       <Panel>
-        {!api.url && <PickProject what="Settings" />}
-        {error && <div className="wl-banner wl-banner-error">{error}</div>}
-        {api.url && reply && <SettingsForm url={api.url} reply={reply} canEdit={api.canEdit} onSaved={(r) => (setSaved(r), reload())} />}
+        {sp.options.length === 0 ? (
+          <Empty title="No projects yet" />
+        ) : (
+          <>
+            <FormRow><SelectField label="Project" value={picked} options={sp.options} onChange={setPicked} /></FormRow>
+            <ProjectChecks key={picked} url={sp.url(picked)} canEdit={sp.canEdit(picked)} />
+          </>
+        )}
       </Panel>
     </>
   );

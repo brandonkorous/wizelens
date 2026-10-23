@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Layers } from "lucide-react";
+import { Check, ChevronDown, Layers, Plus } from "lucide-react";
 import { displayService, groupServices, type ServiceGroup } from "@wizeworks/lens-core";
 import { type OrgWithProjects, pickOrg } from "../data/account";
 import { useEnvScope, useProjectScope, useServiceScope } from "../data/prefs";
@@ -7,6 +7,7 @@ import { useSetService } from "../ui/ServiceSelect";
 import { type HubRegistry, inScope, presenceOf } from "../data/sources";
 import { fmtAgo, fmtCount } from "../format";
 import { Menu } from "./Menu";
+import { useNewOrg } from "./NewOrg";
 
 /** The cloud's choices: the shown organization's projects ("All projects" first with more than one), and every organization of the person. */
 export interface CloudChoices {
@@ -60,6 +61,27 @@ function ServiceLine({ g, active, onPick }: { g: ServiceGroup; active: boolean; 
   );
 }
 
+/** The services sending data in the chosen scope; a click filters every page by one. */
+function ServiceChoices({ services, close }: { services: ServiceGroup[]; close: () => void }) {
+  const [service] = useServiceScope();
+  const pick = useSetService();
+  return (
+    <>
+      <div className="wl-menu-head">Services</div>
+      {services.length > 0 && (
+        <button type="button" className={`wl-menu-item${service ? "" : " wl-active"}`} onClick={() => (pick(""), close())}>
+          <span className="wl-truncate">All services</span>
+          {!service && <Check size={14} aria-hidden="true" className="wl-menu-check" />}
+        </button>
+      )}
+      {services.map((g) => (
+        <ServiceLine key={g.key} g={g} active={displayService(g.service) === service} onPick={() => (pick(displayService(g.service)), close())} />
+      ))}
+      {services.length === 0 && <div className="wl-menu-note">No service has sent data yet. See Connect to add one.</div>}
+    </>
+  );
+}
+
 /** The button's text: the project (or All projects) and environment; the organization too when the person has several. */
 function labelOf(cloud: CloudChoices | undefined, project: string, env: string): string {
   if (!cloud) return [project, env].filter(Boolean).join(" · ") || "All projects";
@@ -72,12 +94,11 @@ function labelOf(cloud: CloudChoices | undefined, project: string, env: string):
 export function HubMenu({ registry, cloud }: { registry: HubRegistry | null; cloud?: CloudChoices }) {
   const [env, setEnv] = useEnvScope();
   const [project, setProject] = useProjectScope();
-  const [service] = useServiceScope();
-  const pick = useSetService();
   const services = groupServices((registry?.services ?? []).filter((s) => inScope(s, { env, project }, !cloud)));
   const online = services.filter((g) => g.online > 0).length;
   const pairs = (list: string[]) => list.map((v): [string, string] => [v, v]);
-  const orgs = cloud && cloud.orgs.length > 1 ? cloud.orgs : [];
+  const orgs = cloud?.orgs ?? [];
+  const newOrg = useNewOrg();
   const label = (
     <>
       <Layers aria-hidden="true" />
@@ -89,25 +110,23 @@ export function HubMenu({ registry, cloud }: { registry: HubRegistry | null; clo
     </>
   );
   return (
-    <Menu label={label} title="Organization, project, environment, and connected services">
-      {(close) => (
-        <>
-          <Choices title="Organization" values={orgs.map((o): [string, string] => [o.id, o.name])} value={cloud?.org?.id ?? ""} all={false} onPick={(v) => (pickOrg(orgs.find((o) => o.id === v)!), close())} />
-          <Choices title="Project" values={cloud?.projects ?? pairs(registry?.projects ?? [])} value={project} all={!cloud} onPick={(v) => (setProject(v), close())} />
-          <Choices title="Environment" values={pairs(registry?.environments ?? [])} value={env} onPick={(v) => (setEnv(v), close())} />
-          <div className="wl-menu-head">Services</div>
-          {services.length > 0 && (
-            <button type="button" className={`wl-menu-item${service ? "" : " wl-active"}`} onClick={() => (pick(""), close())}>
-              <span className="wl-truncate">All services</span>
-              {!service && <Check size={14} aria-hidden="true" className="wl-menu-check" />}
-            </button>
-          )}
-          {services.map((g) => (
-            <ServiceLine key={g.key} g={g} active={displayService(g.service) === service} onPick={() => (pick(displayService(g.service)), close())} />
-          ))}
-          {services.length === 0 && <div className="wl-menu-note">No service has sent data yet. See Settings to connect one.</div>}
-        </>
-      )}
-    </Menu>
+    <>
+      <Menu label={label} title="Organization, project, environment, and connected services">
+        {(close) => (
+          <>
+            <Choices title="Organization" values={orgs.map((o): [string, string] => [o.id, o.name])} value={cloud?.org?.id ?? ""} all={false} onPick={(v) => (pickOrg(orgs.find((o) => o.id === v)!), close())} />
+            {cloud && (
+              <button type="button" className="wl-menu-item" onClick={() => (close(), newOrg.start())}>
+                <Plus size={14} aria-hidden="true" /> New organization
+              </button>
+            )}
+            <Choices title="Project" values={cloud?.projects ?? pairs(registry?.projects ?? [])} value={project} all={!cloud} onPick={(v) => (setProject(v), close())} />
+            <Choices title="Environment" values={pairs(registry?.environments ?? [])} value={env} onPick={(v) => (setEnv(v), close())} />
+            <ServiceChoices services={services} close={close} />
+          </>
+        )}
+      </Menu>
+      {newOrg.dialog}
+    </>
   );
 }

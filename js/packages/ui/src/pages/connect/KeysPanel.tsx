@@ -6,8 +6,8 @@ import { Badge } from "../../ui/Badges";
 import { useAsk } from "../../ui/Dialog";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
-import { NewSecret, SCOPES } from "./KeyForm";
-import type { ApiKey, OrgData } from "./teamTypes";
+import { type Kind, NewSecret, SCOPES } from "./KeyForm";
+import type { ApiKey, OrgData } from "../organization/orgTypes";
 
 export { KeyForm } from "./KeyForm";
 
@@ -33,6 +33,10 @@ function Expiry({ k, now }: { k: ApiKey; now: number }) {
   return days <= 14 ? <Badge tone="warning">{days <= 1 ? "In a day" : `In ${days} days`}</Badge> : <span title={fmtDate(k.expiresMs)}>{fmtDate(k.expiresMs)}</span>;
 }
 
+function EmptyKeys({ reading }: { reading: boolean }) {
+  return reading ? <Empty title="No read keys yet">Make one for each AI agent or script that reads data.</Empty> : <Empty title="No sending keys yet">Make an ingest key for each app that sends data.</Empty>;
+}
+
 /** The secret a rotation made, with when the old one stops. */
 interface Rotated {
   kind: ApiKey["kind"];
@@ -40,8 +44,8 @@ interface Rotated {
   oldExpiresMs: number;
 }
 
-/** Ingest keys (apps send with them), read keys (agents read with them), and browser keys (pages send with them): expiry, scopes, sites, rotate, and revoke. */
-export function KeysPanel({ orgId, data, reload }: { orgId: string; data: OrgData; reload: () => void }) {
+/** The keys of `kinds`: ingest (apps send), browser (pages send), or read (agents read). Expiry, scopes, sites, rotate, and revoke. */
+export function KeysPanel({ orgId, data, kinds, reload }: { orgId: string; data: OrgData; kinds: readonly Kind[]; reload: () => void }) {
   const names = new Map(data.projects.map((p) => [p.id, p.name]));
   const { dialog, confirm, prompt } = useAsk();
   const [rotated, setRotated] = useState<Rotated | null>(null);
@@ -59,7 +63,7 @@ export function KeysPanel({ orgId, data, reload }: { orgId: string; data: OrgDat
   };
   const columns: Column<ApiKey>[] = [
     { key: "name", header: "Key", cell: (k) => <span className="wl-who"><strong>{k.name}</strong><small className="wl-mono">{k.prefix}…</small></span> },
-    { key: "kind", header: "Kind", cell: (k) => <Badge tone={k.kind === "read" ? "neutral" : "info"}>{KIND_LABEL[k.kind]}</Badge> },
+    ...(kinds.length > 1 ? [{ key: "kind", header: "Kind", cell: (k: ApiKey) => <Badge tone="info">{KIND_LABEL[k.kind]}</Badge> }] : []),
     { key: "projects", header: "Projects", cell: (k) => k.projectIds.map((id) => names.get(id) ?? "Deleted project").join(", "), className: "wl-wrap" },
     { key: "scopes", header: "May", cell: (k) => scopesText(k), className: "wl-wrap" },
     { key: "made", header: "Created", cell: (k) => fmtDate(k.createdMs), className: "wl-nowrap" },
@@ -86,7 +90,7 @@ export function KeysPanel({ orgId, data, reload }: { orgId: string; data: OrgDat
           <NewSecret kind={rotated.kind} secret={rotated.token} note={`The old secret stops ${fmtDate(rotated.oldExpiresMs)}.`} />
         </div>
       )}
-      <Table columns={columns} rows={data.keys} rowKey={(k) => k.id} empty={<Empty title="No keys yet">Make an ingest key for each app that sends data.</Empty>} />
+      <Table columns={columns} rows={data.keys.filter((k) => kinds.includes(k.kind))} rowKey={(k) => k.id} empty={<EmptyKeys reading={kinds.includes("read")} />} />
       {dialog}
     </Panel>
   );

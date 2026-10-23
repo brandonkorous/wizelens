@@ -5,7 +5,7 @@ import { useHost } from "../../data/host";
 import { useApi } from "../../data/useApi";
 import { Select } from "../../ui/Controls";
 import { Check, Field, FormRow } from "../../ui/Field";
-import type { OrgData } from "../team/teamTypes";
+import type { OrgData } from "../organization/orgTypes";
 import type { Channel } from "./alertTypes";
 
 const URL_KINDS: [Channel["kind"], string][] = [

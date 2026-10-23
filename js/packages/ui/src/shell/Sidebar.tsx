@@ -3,7 +3,7 @@ import { useHost } from "../data/host";
 import { hrefTo, type PageId } from "../routes";
 import { Logo } from "./Logo";
 import { MobileNav } from "./MobileNav";
-import { NAV, navPageOf } from "./nav";
+import { navFor, navPageOf } from "./nav";
 import { NavGroups } from "./NavGroups";
 import { SidebarFoot } from "./SidebarFoot";
 
@@ -18,7 +18,7 @@ export interface SidebarProps {
 export function Sidebar({ page, counts = {}, dot }: SidebarProps) {
   const current = navPageOf(page);
   const host = useHost();
-  const items = NAV.filter((n) => !n.needs || host.has(n.needs));
+  const items = navFor(host.has);
   return (
     <aside className="wl-sidebar">
       <a className="wl-sidebar-brand" href={hrefTo("overview")} aria-label="WizeLens overview">

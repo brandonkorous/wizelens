@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
+import { Plus } from "lucide-react";
 import { hrefTo, type PageId } from "../routes";
 
 export interface Section {
@@ -28,6 +29,12 @@ export function SectionLayout({ page, sections, active }: { page: PageId; sectio
       <div className="wl-sections-body">{current.render()}</div>
     </div>
   );
+}
+
+/** A section's main button, hidden while its form is open. */
+export function AddButton({ label, open, onOpen }: { label: string; open: boolean; onOpen: () => void }) {
+  if (open) return null;
+  return <button type="button" className="wl-btn wl-btn-primary" onClick={onOpen}><Plus aria-hidden="true" /> {label}</button>;
 }
 
 /** The heading of one section, with what it is for and its main action (a button) on the right. */
