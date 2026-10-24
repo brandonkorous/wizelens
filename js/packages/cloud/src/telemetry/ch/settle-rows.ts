@@ -9,6 +9,11 @@ type Row = Record<string, unknown>;
 const COUNTERS = ["c0", "c1", "c2", "c3", "c4", "c5"];
 const keyCols = (t: FactTable) => FACT_KEYS[`${t}_t`]!;
 const keyOf = (t: FactTable, r: Row) => [r.trace_id, ...keyCols(t).map((c) => r[c])].map((v) => JSON.stringify(v ?? null)).join("|");
+/** What settle_state keeps of a row: its key, and for attributes their owner's time, so a tombstone takes the count from the right hour. */
+const storedCols = (t: FactTable) => (t === "fact_attrs" ? [...keyCols(t), "time_ms"] : keyCols(t));
+type StoredKeys = Partial<Record<FactTable, unknown[][]>>;
+const storedRows = (t: FactTable, id: string, keys: StoredKeys) => (keys[t] ?? []).map((v) => rowOf(["trace_id", ...storedCols(t)], [id, ...v]));
+const sameAttr = (r: Row) => `${keyOf("fact_attrs", r)}|${JSON.stringify(r.time_ms ?? null)}`;
 
 /** How long a fact row is kept: log rows (lines, their search rows and attributes) by the log retention, the rest by the trace retention. */
 export function factKeepOf(table: FactTable, r: Row, keep: Keep): number {
@@ -30,6 +35,17 @@ export function factObjects(rows: Record<FactTable, unknown[][]>, org: string, v
   return out;
 }
 
+/** Attribute rows take their owner's time (its span's or log line's search row), for the hourly attribute counts, and expire from it. */
+export function timeAttrs(facts: Record<FactTable, Row[]>, expireOf: (r: Row, table: FactTable) => number): void {
+  const at = new Map(facts.fact_search.map((r) => [`${r.trace_id}|${r.kind}|${r.owner}`, Number(r.time_ms)]));
+  for (const r of facts.fact_attrs) {
+    const ms = at.get(`${r.trace_id}|${r.src === "l" ? "logs" : "spans"}|${r.owner}`);
+    if (ms === undefined) continue;
+    r.time_ms = ms;
+    r.expire_ms = expireOf(r, "fact_attrs");
+  }
+}
+
 /** Each trace's fact row keys, as settle_state keeps them (`{table: [[key values]]}`), so the next settle finds its old rows without a scan. */
 export function factKeysOf(facts: Record<FactTable, Row[]>): Map<string, string> {
   const byTrace = new Map<string, Partial<Record<FactTable, unknown[][]>>>();
@@ -37,7 +53,7 @@ export function factKeysOf(facts: Record<FactTable, Row[]>): Map<string, string>
     for (const r of facts[t]) {
       const id = String(r.trace_id);
       const keys = byTrace.get(id) ?? {};
-      (keys[t] ??= []).push(keyCols(t).map((c) => r[c] ?? null));
+      (keys[t] ??= []).push(storedCols(t).map((c) => r[c] ?? null));
       byTrace.set(id, keys);
     }
   }
@@ -46,7 +62,7 @@ export function factKeysOf(facts: Record<FactTable, Row[]>): Map<string, string>
 
 /** Old fact rows of traces settled before settle_state kept their keys: a scan, since fact tables are not ordered by trace. */
 async function scannedKeys(ch: ChClient, project: string, t: FactTable, traceIds: readonly string[]): Promise<Row[]> {
-  const cols = ["trace_id", ...keyCols(t)];
+  const cols = ["trace_id", ...storedCols(t)];
   const sql = `SELECT ${cols.join(", ")} FROM ${t}_t FINAL PREWHERE has({p2:Array(String)}, trace_id) WHERE project_id = {p1:String}`;
   return traceIds.length ? ch.query<Row>(sql, [project, traceIds]) : [];
 }
@@ -55,15 +71,20 @@ async function scannedKeys(ch: ChClient, project: string, t: FactTable, traceIds
 export async function tombstones(ch: ChClient, project: { id: string; org: string }, old: ReadonlyMap<string, string>, fresh: Record<FactTable, Row[]>, ver: number): Promise<Record<FactTable, Row[]>> {
   const out = {} as Record<FactTable, Row[]>;
   const unkept = [...old].filter(([, keys]) => !keys).map(([id]) => id);
-  const kept = [...old].filter(([, keys]) => keys).map(([id, keys]) => [id, JSON.parse(keys) as Partial<Record<FactTable, unknown[][]>>] as const);
+  const kept = [...old].filter(([, keys]) => keys).map(([id, keys]) => [id, JSON.parse(keys) as StoredKeys] as const);
   for (const t of FACT_TABLES) {
     const keep = new Set(fresh[t].map((r) => keyOf(t, r)));
-    const cols = ["trace_id", ...keyCols(t)];
-    const stored = kept.flatMap(([id, keys]) => (keys[t] ?? []).map((v) => rowOf(cols, [id, ...v])));
+    const stored = kept.flatMap(([id, keys]) => storedRows(t, id, keys));
     const before = [...stored, ...(await scannedKeys(ch, project.id, t, unkept))];
     out[t] = before.filter((r) => !keep.has(keyOf(t, r))).map((r) => ({ project_id: project.id, org_id: project.org, ...r, ver, is_deleted: 1, expire_ms: NONE_HIGH }));
   }
   return out;
+}
+
+/** Fresh attribute rows less those the trace already has, unchanged: written again, the attribute counts would take them twice. */
+export function newAttrs(old: ReadonlyMap<string, string>, fresh: readonly Row[]): Row[] {
+  const had = new Set([...old].flatMap(([id, keys]) => (keys ? storedRows("fact_attrs", id, JSON.parse(keys) as StoredKeys).map(sameAttr) : [])));
+  return fresh.filter((r) => !had.has(sameAttr(r)));
 }
 
 const ROLLUP_INPUT = [

@@ -22,6 +22,8 @@ describe.skipIf(!CH_URL)("ClickHouse re-settle tombstones", () => {
     const ch = chClient({ url: t.url });
     const colors = async () => (await ch.query<{ value: string }>(`SELECT value FROM fact_attrs WHERE trace_id = {p1:String} AND value IN ('red', 'blue', 'green')`, [base.traceId])).map((r) => r.value);
     const keysOf = async () => (await ch.query<{ k: string }>("SELECT fact_keys AS k FROM settle_state FINAL WHERE trace_id = {p1:String}", [base.traceId]))[0]?.k ?? "";
+    const window = { from: 0, to: SCENARIO_NOW + 3_600_000 };
+    const suggested = async () => (await t.store.suggest(t.scope, { field: "@test.color", prefix: "", window, limit: 10 })).map((x) => [x.value, x.count]);
     const round = async (color: string, at: number) => {
       await chWrite(t, [colored(base, color)], at);
       await chSettle(t, at + 10_000);
@@ -33,6 +35,9 @@ describe.skipIf(!CH_URL)("ClickHouse re-settle tombstones", () => {
 
     await round("blue", SCENARIO_NOW + 60_000);
     expect(await colors()).toEqual(["blue"]);
+    // The attribute counts took red away and added blue once; unchanged attributes were not written again.
+    expect(await suggested()).toEqual([["blue", 1]]);
+    expect((await t.store.suggest(t.scope, { field: null, prefix: "@test.co", window, limit: 10 })).map((x) => [x.value, x.count])).toEqual([["@test.color", 1]]);
 
     // A state from before keys were kept: the same row with no keys, at a newer version.
     await ch.command(`INSERT INTO settle_state (project_id, org_id, trace_id, settled_ms, contrib, ver, expire_ms, fact_keys)
@@ -40,6 +45,7 @@ describe.skipIf(!CH_URL)("ClickHouse re-settle tombstones", () => {
     expect(await keysOf()).toBe("");
     await round("green", SCENARIO_NOW + 120_000);
     expect(await colors()).toEqual(["green"]);
+    expect(await suggested()).toEqual([["green", 1]]);
     expect(JSON.parse(await keysOf())).toHaveProperty("fact_attrs");
   }, CH_LIMIT);
 });
