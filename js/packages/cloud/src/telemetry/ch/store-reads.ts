@@ -1,10 +1,11 @@
 // Scoped reads on ClickHouse: each goes as the reader user for its scope's organization, so row policies hold it there too.
-import { alignNow, CH_DIALECT, infraSteps, metricAlertSteps, metricPageSteps, type MetricRows, runMetricAsync, searchSql, sqlExecutor, type SqlRunner, suggestSql } from "@wizeworks/lens-core";
+import { alignNow, CH_DIALECT, infraSteps, metricAlertSteps, metricPageSteps, type MetricRows, runMetricAsync, searchSql, sqlExecutor, type SqlRunner } from "@wizeworks/lens-core";
 import { metricScope, sqlScope, type TelemetryStore, type TenantScope } from "../store.js";
 import type { ChClient } from "./http.js";
 import { activeHours, counts, slowestEndpoints, traceEnvs } from "./queries.js";
 import type { SettleQueue } from "./queue.js";
 import { findTraceIds, getTrace, joinedTrace, loadTraces } from "./read.js";
+import { suggestCh } from "./suggest.js";
 
 export const chRunner = (ch: ChClient): SqlRunner => ({ all: (sql, params) => ch.query<Record<string, unknown>>(sql, params) });
 
@@ -28,7 +29,7 @@ export function chReads(as: (org: string) => ChClient, queue: SettleQueue): Read
     executor: (s, retentionMs, env) => sqlExecutor({ ...src(s, env), retentionMs, loadTrace: (id) => getTrace(read(s), s, id).then((t) => t ?? null) }),
     settling: async (s, o = {}) => s.projects.reduce((n, p) => n + queue.count(p, o.env, o.before), 0) || null,
     search: (s, q) => searchSql(src(s), q),
-    suggest: (s, r) => suggestSql(src(s), r),
+    suggest: (s, r) => suggestCh(read(s), s, src(s), r),
     slowestEndpoints: (s, w, minCount, limit) => slowestEndpoints(read(s), s, w, minCount, limit),
     metricData: (m, range, params, now) => runMetricAsync(metricPageSteps("ch", metricScope(m), range, alignNow(now), params), runMetric(m.scope)),
     metricAlertData: (m, name, w, now) => runMetricAsync(metricAlertSteps("ch", metricScope(m), name, w, now), runMetric(m.scope)),

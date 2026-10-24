@@ -12,4 +12,4 @@ export { clampLimit, compareEntries, decodeCursor, encodeCursor, pageOf, SEARCH_
 export { searchRequestOf, suggestRequestOf, type SearchRequest, type SuggestRequestResult } from "./request.js";
 export { isStructuredSearch, LIST_SEARCH_KIND, LIST_SEARCH_MAX, memorySearchIds, searchTraceIds } from "./lists.js";
 export { searchSummary, type SearchSummary, SUMMARY_CAP } from "./summary.js";
-export { DATA_FIELDS, fieldSuggestions, FIXED_VALUES, suggestMemory, type Suggestion, type SuggestRequest } from "./suggest.js";
+export { DATA_FIELDS, fieldSuggestions, FIXED_VALUES, fixedSuggestions, suggestMemory, type Suggestion, type SuggestRequest, topCounts } from "./suggest.js";

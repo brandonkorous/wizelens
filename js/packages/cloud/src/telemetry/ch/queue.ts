@@ -75,7 +75,8 @@ export class SettleQueue {
   async recover(ch: ChClient, now: number): Promise<number> {
     const rows = await ch.query<{ project_id: string; trace_id: string; env: string; u: number; s: number }>(
       `SELECT u.project_id, u.trace_id, any(u.env) AS env, max(u.updated_ms) AS u, any(s.settled_ms) AS s FROM trace_updates u
-       LEFT JOIN (SELECT project_id, trace_id, settled_ms FROM settle_state FINAL) s ON s.project_id = u.project_id AND s.trace_id = u.trace_id
+       LEFT JOIN (SELECT project_id, trace_id, settled_ms FROM settle_state FINAL
+         PREWHERE (project_id, trace_id) IN (SELECT project_id, trace_id FROM trace_updates WHERE updated_ms > {p1:Float64})) s ON s.project_id = u.project_id AND s.trace_id = u.trace_id
        WHERE u.updated_ms > {p1:Float64} GROUP BY u.project_id, u.trace_id HAVING u > s`,
       [now - RECOVER_MS],
     );

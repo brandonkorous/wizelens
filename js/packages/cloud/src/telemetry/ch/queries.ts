@@ -8,22 +8,25 @@ const MONTH_MS = 30 * 86_400_000;
 const OWNED = "org_id = {p1:String} AND has({p2:Array(String)}, project_id)";
 const owned = (s: TenantScope) => [s.org, s.projects];
 
-/** Traces and spans of a scope. */
+/** Hourly trace rollups: one row per project, env, and hour, with traces in `n` and their spans in `sum_v`. Small, and ordered for these reads. */
+const TRACE_HOURS = "rollup_1h_t WHERE kind = 'trace'";
+
+/** Traces of a scope (a trace in two projects counts once), from the trace sketches; spans of settled traces, from the rollups. */
 export async function counts(ch: ChClient, scope: TenantScope): Promise<{ traces: number; spans: number }> {
-  const [t] = await ch.query<{ n: number }>(`SELECT uniqExact(trace_id) AS n FROM trace_heads WHERE ${OWNED}`, owned(scope));
-  const [s] = await ch.query<{ n: number }>(`SELECT count() AS n FROM spans_raw FINAL WHERE ${OWNED}`, owned(scope));
-  return { traces: Number(t?.n ?? 0), spans: Number(s?.n ?? 0) };
+  const [t] = await ch.query<{ n: number }>(`SELECT uniqCombined64Merge(ids) AS n FROM trace_hours_t WHERE ${OWNED}`, owned(scope));
+  const [s] = await ch.query<{ n: number }>(`SELECT sum(sum_v) AS n FROM ${TRACE_HOURS} AND ${OWNED}`, owned(scope));
+  return { traces: Number(t?.n ?? 0), spans: Math.max(0, Math.round(Number(s?.n ?? 0))) };
 }
 
 export async function traceEnvs(ch: ChClient, scope: TenantScope): Promise<string[]> {
-  return (await ch.query<{ env: string }>(`SELECT DISTINCT env FROM trace_heads WHERE ${OWNED}`, owned(scope))).map((r) => r.env);
+  return (await ch.query<{ env: string }>(`SELECT DISTINCT env FROM trace_hours_t WHERE ${OWNED}`, owned(scope))).map((r) => r.env);
 }
 
-/** Distinct hours with a trace start in (from, to]. */
+/** Distinct hours with a trace start in (from, to]. An hour holds no trace when its rollups add up to none. */
 export async function activeHours(ch: ChClient, scope: TenantScope, from: number, to: number): Promise<number> {
   const [row] = await ch.query<{ n: number }>(
-    `SELECT uniqExact(intDiv(toInt64(s), 3600000)) AS n FROM (SELECT min(start_ms) AS s FROM trace_heads WHERE ${OWNED}
-     AND start_ms <= {p4:Float64} GROUP BY trace_id) WHERE s > {p3:Float64} AND s <= {p4:Float64}`,
+    `SELECT count() AS n FROM (SELECT bucket_ms FROM ${TRACE_HOURS} AND ${OWNED} AND bucket_ms > {p3:Float64} - 3600000 AND bucket_ms <= {p4:Float64}
+     GROUP BY bucket_ms HAVING sum(n) > 0 AND max(last_ms) > {p3:Float64} AND min(first_ms) <= {p4:Float64})`,
     [...owned(scope), from, to],
   );
   return Number(row?.n ?? 0);
@@ -32,8 +35,7 @@ export async function activeHours(ch: ChClient, scope: TenantScope, from: number
 /** The newest trace start per project, over the last month (older projects count as quiet). */
 export async function lastTraceMs(ch: ChClient, now: number): Promise<Map<string, number>> {
   const rows = await ch.query<{ project_id: string; s: number }>(
-    `SELECT project_id, max(s) AS s FROM (SELECT project_id, trace_id, min(start_ms) AS s FROM trace_heads WHERE start_ms > {p1:Float64}
-     GROUP BY project_id, trace_id) GROUP BY project_id`,
+    `SELECT project_id, max(last_ms) AS s FROM ${TRACE_HOURS} AND bucket_ms > {p1:Float64} - 3600000 GROUP BY project_id HAVING sum(n) > 0 AND s > {p1:Float64}`,
     [now - MONTH_MS],
   );
   return new Map(rows.map((r) => [r.project_id, Number(r.s)]));
