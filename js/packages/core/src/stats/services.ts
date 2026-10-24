@@ -1,4 +1,5 @@
 import { browserTypeOf, isWebAppCall } from "../attributes.js";
+import { withoutBotBrowser } from "../bots.js";
 import { requestMsOf } from "../stream.js";
 import { isUptimeSpan } from "../uptime/check.js";
 import { browserAppOf, webAppName, webRowKey } from "../web-app.js";
@@ -88,7 +89,7 @@ export function hostOf(s: Span): string {
 
 /** Services, databases, and outside hosts seen in the traces, busiest first. */
 export function serviceRows(traces: readonly Trace[]): ServiceRow[] {
-  const spans = traces.flatMap((t) => t.spans).filter((s) => !isUptimeSpan(s));
+  const spans = traces.flatMap(withoutBotBrowser).filter((s) => !isUptimeSpan(s));
   const rows: ServiceRow[] = [];
   for (const [name, list] of groupBy(spans.filter((s) => s.category === "http.server"), (s) => s.service)) rows.push(rowOf(`api:${name}`, name, "api", list, null));
   for (const [app, list] of groupBy(spans.filter(isWebAppCall), (s) => browserAppOf(s) ?? "")) rows.push(rowOf(webRowKey(app || null), webAppName(app), "web", list, "browser"));

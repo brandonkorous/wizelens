@@ -17,6 +17,7 @@ export * from "./issues.js";
 export * from "./releases.js";
 export * from "./analysis.js";
 export * from "./endpoint.js";
+export * from "./bots.js";
 export * from "./nosql.js";
 export * from "./health.js";
 export * from "./stream.js";

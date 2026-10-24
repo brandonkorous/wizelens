@@ -6,6 +6,7 @@ import { shownServices, spanServiceName } from "../web-app.js";
 import type { Span, Trace } from "../types.js";
 import { groupBy, memoByObject, percentOf } from "./common.js";
 import { errorKeyOf, httpErrorKeyOf, httpStatusOf } from "./error-keys.js";
+import { isThirdPartyError } from "./third-party.js";
 import { isFailed, type RequestRow, requestOf } from "./requests.js";
 
 /** One error: a span with an exception, or a failed span without one. */
@@ -24,7 +25,7 @@ export interface ErrorEvent {
   method: string | null;
   path: string | null;
   status: number | null;
-  /** The request failed with a 5xx, or a critical log line was written. */
+  /** The request failed with a 5xx, or a critical log line was written; never for a third-party browser error. */
   critical: boolean;
   browser: boolean;
   /** Browser errors: the first app frame after source maps ("src/App.tsx:checkout"), or null. */
@@ -56,6 +57,7 @@ function eventOf(trace: Trace, span: Span, row: RequestRow | null, critical: boo
   const ex = span.events.find((e) => e.name === "exception");
   const frame = browser ? textAttr(ex?.attributes[ATTR_ERROR_FRAME]) : null;
   const endpoint = row?.endpoint ?? (typeof route === "string" ? route : trace.rootName);
+  const thirdParty = browser && isThirdPartyError(span, info.stack);
   const httpStatus = !ex && type === "HttpError" ? (httpStatusOf(span.statusMessage) ?? row?.status ?? null) : null;
   return {
     key: httpStatus !== null ? httpErrorKeyOf(service, httpStatus, endpoint) : errorKeyOf(service, type, info.message, frame),
@@ -70,13 +72,13 @@ function eventOf(trace: Trace, span: Span, row: RequestRow | null, critical: boo
     method: row?.method ?? null,
     path: row?.path ?? (typeof route === "string" ? route : null),
     status: row?.status ?? null,
-    critical,
+    critical: critical && !thirdParty,
     browser,
     frame,
     release: textAttr(span.attributes[ATTR_SERVICE_VERSION]),
     userAgent: row?.userAgent ?? null,
     user: row?.user ?? null,
-    tags: row?.tags ?? [],
+    tags: thirdParty ? [...(row?.tags ?? []), "third-party"] : (row?.tags ?? []),
   };
 }
 

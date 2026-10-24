@@ -1,5 +1,6 @@
 // Service facts: the svc and svc.ep kinds (Services rows), edge (who calls whom), and bn.* (bottlenecks).
 import { isWebAppCall } from "../attributes.js";
+import { withoutBotBrowser } from "../bots.js";
 import { endpointNameOf } from "../models/service-detail.js";
 import { isConsumer, isProducer, queueOf } from "../stats/messaging.js";
 import { databaseOf, edgeCallsOf, externalCallsOf, hostOf, isFailedSpan, type ServiceKind } from "../stats/services.js";
@@ -44,7 +45,8 @@ function streamContributions(s: Span, key: string, endpoint: string): Contributi
 
 function serviceContributions(trace: Trace): Contribution[] {
   const external = new Set(externalCallsOf(trace));
-  return trace.spans.flatMap((s) => {
+  // A bot's renderer is not a person waiting: its browser spans stay out of the Web App row, its p95, and Problems.
+  return withoutBotBrowser(trace).flatMap((s) => {
     const row = serviceRowOf(s, external);
     if (!row) return [];
     const { key, ...info } = row;

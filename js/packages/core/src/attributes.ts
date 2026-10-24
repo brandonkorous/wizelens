@@ -35,8 +35,12 @@ export function browserTypeOf(span: Span): BrowserSpanType | null {
   return t === "pageview" || t === "react" || t === "error" ? t : "fetch";
 }
 
-/** A browser fetch the app waited for: not a prefetch, not cancelled. The Web App row counts only these. */
-export const isWebAppCall = (s: Span): boolean => browserTypeOf(s) === "fetch" && s.attributes[ATTR_BROWSER_PREFETCH] !== true && s.attributes[ATTR_BROWSER_CANCELLED] !== true;
+/** Set on browser spans from a crawler's renderer or a driven browser (Googlebot, HeadlessChrome, `navigator.webdriver`). */
+export const ATTR_BROWSER_BOT = "wizelens.browser.bot";
+
+/** A browser fetch the app waited for: not a prefetch, not cancelled, not a bot's renderer. The Web App row counts only these. */
+export const isWebAppCall = (s: Span): boolean =>
+  browserTypeOf(s) === "fetch" && s.attributes[ATTR_BROWSER_PREFETCH] !== true && s.attributes[ATTR_BROWSER_CANCELLED] !== true && s.attributes[ATTR_BROWSER_BOT] !== true;
 
 /** Page view timings in ms (CLS is a score). Absent when not measured. */
 export const ATTR_PAGE = {

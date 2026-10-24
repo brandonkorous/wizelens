@@ -140,6 +140,15 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
     called with `X-sparx-Internal-Cron-Token` is not open.
   - Auth guessing counts a 401 or 403 only on a sign-in path or when the request sent credentials. A check such as
     Caddy's on-demand TLS `GET /internal/domain-check`, refused with no credentials, is not guessing.
+- **Googlebot's renderer and other sites' scripts no longer make a web app look slow or broken.**
+  - The browser script marks every span from a crawler's renderer or a driven browser (Googlebot, HeadlessChrome,
+    `navigator.webdriver`) as `wizelens.browser.bot`. Those spans, and the browser spans of any request a bot's user
+    agent made (so older data too), stay out of the Web App row, its p95, and the Problems built on it.
+  - A trace keeps one span per span id, so a renderer that sends the same span twice does not double it.
+  - A browser error whose stack frames are all on other sites (an embedded Google sign-in) is tagged `third-party`
+    and is never critical.
+  - Request, trace, and span ids (`wizelens.request.id`, `trace_id`, `span.id`) are not scanned for secrets, so their
+    digits are no longer stored as `[redacted:card]`. Node and .NET.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 
