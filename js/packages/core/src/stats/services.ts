@@ -1,6 +1,7 @@
 import { browserTypeOf, isWebAppCall } from "../attributes.js";
 import { requestMsOf } from "../stream.js";
 import { isUptimeSpan } from "../uptime/check.js";
+import { browserAppOf, webAppName, webRowKey } from "../web-app.js";
 import { isFailedAnswer } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { avgOf, groupBy, percentileOf, percentOf } from "./common.js";
@@ -90,8 +91,7 @@ export function serviceRows(traces: readonly Trace[]): ServiceRow[] {
   const spans = traces.flatMap((t) => t.spans).filter((s) => !isUptimeSpan(s));
   const rows: ServiceRow[] = [];
   for (const [name, list] of groupBy(spans.filter((s) => s.category === "http.server"), (s) => s.service)) rows.push(rowOf(`api:${name}`, name, "api", list, null));
-  const web = spans.filter(isWebAppCall);
-  if (web.length) rows.push(rowOf("web:browser", "Web App", "web", web, "browser"));
+  for (const [app, list] of groupBy(spans.filter(isWebAppCall), (s) => browserAppOf(s) ?? "")) rows.push(rowOf(webRowKey(app || null), webAppName(app), "web", list, "browser"));
   for (const [db, list] of groupBy(spans.filter((s) => s.category === "db"), databaseOf)) rows.push(rowOf(`db:${db}`, db, "database", list, str(list[0]!, "db.system.name")));
   for (const [host, list] of groupBy(externalCalls(traces), hostOf)) rows.push(rowOf(`ext:${host}`, host, "external", list, host));
   rows.push(...messagingRows(spans, new Set(rows.filter((r) => r.kind === "api").map((r) => r.name))));
@@ -136,7 +136,7 @@ export function edgeCallsOf(t: Trace): EdgeCall[] {
     const message = messagingEdge(s);
     if (message) calls.push({ ...message, span: s });
     const to = message ? null : edgeTarget(s, byParent);
-    if (to) calls.push({ from: s.category === "browser" ? "Web App" : s.service, to, span: s });
+    if (to) calls.push({ from: s.category === "browser" ? webAppName(browserAppOf(s)) : s.service, to, span: s });
   }
   return calls;
 }

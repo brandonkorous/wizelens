@@ -1,5 +1,5 @@
 // Release facts: requests and jobs per service version (rel), from each span that starts work in its service.
-import { displayService } from "../stats/errors.js";
+import { spanServiceName } from "../web-app.js";
 import { isFailedSpan } from "../stats/services.js";
 import { versionOf } from "../releases.js";
 import { requestMsOf } from "../stream.js";
@@ -15,6 +15,6 @@ export function releaseFacts(trace: Trace): Contribution[] {
     const parent = s.parentSpanId ? byId.get(s.parentSpanId) : undefined;
     if (!version || (parent && parent.service === s.service)) return [];
     const ms = requestMsOf(s);
-    return [contribution("rel", joinKey(displayService(s.service), version), s.startMs, { err: isFailedSpan(s) ? 1 : 0, sum: ms, values: [ms] })];
+    return [contribution("rel", joinKey(spanServiceName(s), version), s.startMs, { err: isFailedSpan(s) ? 1 : 0, sum: ms, values: [ms] })];
   });
 }

@@ -2,6 +2,7 @@ import { errorInfo } from "../analysis.js";
 import { ATTR_BROWSER_ROUTE, ATTR_ERROR_FRAME, ATTR_SERVICE_VERSION, browserTypeOf } from "../attributes.js";
 import { errorSpansOf } from "../trace.js";
 import { isUptimeSpan } from "../uptime/check.js";
+import { shownServices, spanServiceName } from "../web-app.js";
 import type { Span, Trace } from "../types.js";
 import { groupBy, memoByObject, percentOf } from "./common.js";
 import { errorKeyOf, httpErrorKeyOf, httpStatusOf } from "./error-keys.js";
@@ -17,7 +18,7 @@ export interface ErrorEvent {
   type: string;
   message: string;
   stack: string | null;
-  /** Service name; browser errors show as "Web App". */
+  /** Service name; browser errors show by their app ("shop (browser)"), else as "Web App". */
   service: string;
   endpoint: string;
   method: string | null;
@@ -35,13 +36,7 @@ export interface ErrorEvent {
   tags: string[];
 }
 
-/** How the dashboard names the browser's service. */
-export const WEB_APP = "Web App";
-
-export const displayService = (service: string): string => (service === "browser" ? WEB_APP : service);
-
-/** The service name as spans carry it, from its display name. */
-export const rawService = (service: string): string => (service === WEB_APP ? "browser" : service);
+export { displayService, isWebAppName, rawService, spanServiceName, WEB_APP, webAppName } from "../web-app.js";
 
 /** Error spans worth showing: exceptions first; plain failed spans only when the trace has no exception. Uptime runs are not app errors. */
 function errorSpans(trace: Trace): Span[] {
@@ -55,7 +50,7 @@ const textAttr = (v: unknown): string | null => (typeof v === "string" && v ? v 
 function eventOf(trace: Trace, span: Span, row: RequestRow | null, critical: boolean): ErrorEvent {
   const info = errorInfo(span);
   const type = info.type ?? (span.statusMessage?.startsWith("HTTP") ? "HttpError" : "Error");
-  const service = displayService(span.service);
+  const service = spanServiceName(span);
   const browser = browserTypeOf(span) !== null;
   const route = span.attributes[ATTR_BROWSER_ROUTE];
   const ex = span.events.find((e) => e.name === "exception");
@@ -150,11 +145,11 @@ export interface ServiceErrors {
 }
 
 // A request counts for every service it touched, so a browser fetch that never reached the server does not skew the rate.
-const touched = (r: RequestRow, service: string) => displayService(r.service) === service || r.services.some((s) => displayService(s) === service);
+const touched = (r: RequestRow, service: string) => shownServices([r.service, ...r.services], r.app).includes(service);
 
 /** Errors per service, with the error rate of the requests it took part in. Most errors first. */
 export function errorsByService(events: readonly ErrorEvent[], requests: readonly RequestRow[]): ServiceErrors[] {
-  const names = new Set([...events.map((e) => e.service), ...requests.flatMap((r) => [r.service, ...r.services].map(displayService))]);
+  const names = new Set([...events.map((e) => e.service), ...requests.flatMap((r) => shownServices([r.service, ...r.services], r.app))]);
   return [...names]
     .map((service) => {
       const reqs = requests.filter((r) => touched(r, service));

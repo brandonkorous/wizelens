@@ -2,7 +2,7 @@
 import { type Agg } from "../scale/agg.js";
 import { splitKey } from "../scale/kinds.js";
 import type { Need, NeedResults, WindowRef } from "../scale/needs.js";
-import { WEB_APP } from "../stats/errors.js";
+import { isWebAppName } from "../web-app.js";
 import { compareInsights, type InsightGroup, insightGroupOf, type InsightHit } from "../stats/insights.js";
 import { componentInsight, routeInsight } from "../stats/rendering.js";
 import { byDesc, groupNeed, rowsOf } from "./read.js";
@@ -18,7 +18,7 @@ export function insightNeeds(win: WindowRef, scope: InsightScope = "all", servic
   const id = ids(win);
   const one = service ? { service } : {};
   const requests = [groupNeed(id.ins, "ins", win, { top: true, ...one }), groupNeed(id.ep, "ins.ep", win, one)];
-  const pages = scope === "all" && (!service || service === WEB_APP);
+  const pages = scope === "all" && (!service || isWebAppName(service));
   return pages ? [...requests, ...routeNeeds(win), ...componentNeeds(win)] : requests;
 }
 

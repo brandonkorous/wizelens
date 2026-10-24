@@ -11,8 +11,8 @@ export const FAKE_MAP = '{"version":3,"sources":[],"mappings":""}';
 /** The tag from docs/HUD-PLAN.md, with nothing about the server. */
 export const PLAIN_TAG = '<script src="/_wizelens/wizelens.js" data-endpoint="/_wizelens" data-hud="true" data-source="inject" defer></script>';
 const release = releaseOf({});
-/** The tag a test server injects: the plain tag plus the release it finds (this package's package.json in tests). */
-export const TAG = PLAIN_TAG.replace(" defer>", `${release ? ` data-release="${release}"` : ""} defer>`);
+/** The tag a test server named `service` injects: its browser app name, and the release it finds (this package's package.json in tests). */
+export const tagOf = (service: string): string => PLAIN_TAG.replace(" defer>", ` data-service="${service} (browser)"${release ? ` data-release="${release}"` : ""} defer>`);
 
 let bundle: string | undefined;
 

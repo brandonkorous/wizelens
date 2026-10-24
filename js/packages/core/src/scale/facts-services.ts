@@ -7,7 +7,7 @@ import { traceParts } from "../stats/traces.js";
 import { isStreamSpan, requestMsOf } from "../stream.js";
 import { isUptimeSpan } from "../uptime/check.js";
 import type { Span, Trace } from "../types.js";
-import { displayService } from "../stats/errors.js";
+import { browserAppOf, spanServiceName, webAppName, webRowKey } from "../web-app.js";
 import { type Contribution, contribution, withServices } from "./agg.js";
 import { joinKey } from "./kinds.js";
 
@@ -24,7 +24,7 @@ const attr = (s: Span, k: string) => (s.attributes[k] == null ? null : String(s.
 export function serviceRowOf(s: Span, external: ReadonlySet<Span>): (ServiceRowInfo & { key: string }) | null {
   if (isUptimeSpan(s)) return null;
   if (s.category === "http.server") return { key: `api:${s.service}`, name: s.service, kind: "api", detail: null };
-  if (isWebAppCall(s)) return { key: "web:browser", name: "Web App", kind: "web", detail: "browser" };
+  if (isWebAppCall(s)) return { key: webRowKey(browserAppOf(s)), name: webAppName(browserAppOf(s)), kind: "web", detail: "browser" };
   if (s.category === "db") return { key: `db:${databaseOf(s)}`, name: databaseOf(s), kind: "database", detail: attr(s, "db.system.name") };
   if (external.has(s)) return { key: `ext:${hostOf(s)}`, name: hostOf(s), kind: "external", detail: hostOf(s) };
   if (isProducer(s)) return { key: `queue:${queueOf(s)}`, name: queueOf(s), kind: "queue", detail: queueOf(s) };
@@ -64,7 +64,7 @@ function edgeContributions(trace: Trace): Contribution[] {
 }
 
 /** Every service with a span in the trace, by display name: the services a whole-trace count is filed under. */
-export const traceServices = (t: Trace): string[] => [...new Set(t.spans.map((s) => displayService(s.service)))];
+export const traceServices = (t: Trace): string[] => [...new Set(t.spans.map(spanServiceName))];
 
 /** Bottleneck parts at the trace's start time, with the same filter as `bottlenecks`. */
 function bottleneckContributions(trace: Trace): Contribution[] {

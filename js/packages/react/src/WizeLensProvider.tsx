@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { type RecordedRequest, type Recorder, setBrowserRelease, setBrowserUser } from "@wizeworks/lens-browser";
+import { type RecordedRequest, type Recorder, setBrowserApp, setBrowserRelease, setBrowserUser } from "@wizeworks/lens-browser";
 import { Hud } from "./Hud.js";
 import { claimPage } from "./page-instance.js";
 import { createRecorder } from "./react-capture.js";
@@ -23,6 +23,8 @@ export interface WizeLensProviderProps {
   captureConsole?: boolean;
   /** The web app's version, kept on browser spans for release markers and version compares, and so browser stacks find the right source maps. Default: what the build plugin set. */
   release?: string;
+  /** The web app's name, so it gets its own Services row ("shop (browser)") in place of "Web App". */
+  service?: string;
   /** Read this page's source maps (dev servers serve them) so errors group by source. Default true. */
   resolveFrames?: boolean;
   /** The signed-in user, sent as `enduser.id` on every browser span, so the Users page counts their requests. */
@@ -41,6 +43,7 @@ export function WizeLensProvider({
   capturePages = true,
   captureConsole = true,
   release,
+  service,
   resolveFrames = true,
   user,
   userName,
@@ -54,6 +57,7 @@ export function WizeLensProvider({
 
   // Before install, so the first page load already carries the release.
   useEffect(() => setBrowserRelease(release), [release]);
+  useEffect(() => setBrowserApp(service), [service]);
   useEffect(() => setBrowserUser(user, userName), [user, userName]);
   // Set when another copy of WizeLens stops this one through the page registry.
   const [stopped, setStopped] = useState<Recorder | null>(null);

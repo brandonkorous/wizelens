@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { displayService, endpointNameOf, errorEvents, normalizeQuery, queryText, quoteText, type Span, type SpanEvent, type Trace } from "@wizeworks/lens-core";
+import { endpointNameOf, errorEvents, normalizeQuery, queryText, quoteText, type Span, spanServiceName, type SpanEvent, type Trace } from "@wizeworks/lens-core";
 import { fmtMs } from "../../format";
 import { endpointHref, errorHref, hrefTo, queryHref } from "../../routes";
 import { serviceHref } from "../services/serviceParts";
@@ -107,7 +107,7 @@ function Query({ span }: { span: Span }) {
 
 /** Pages about this span: its service, endpoint, query, error group, and the request's logs. */
 function SpanLinks({ span, trace }: { span: Span; trace: Trace }) {
-  const service = displayService(span.service);
+  const service = spanServiceName(span);
   const error = errorEvents([trace]).find((e) => e.spanId === span.spanId);
   const links: [string, string][] = [[serviceHref(service), service]];
   if (span.category === "http.server") links.push([endpointHref(`api:${span.service}`, endpointNameOf(span, "api")), "Endpoint"]);

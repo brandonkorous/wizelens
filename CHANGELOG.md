@@ -113,6 +113,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   own `package.json` (found from the started script or the working folder, never a package's). Started as
   `node server.js`, a service used to report no release at all. The HUD tag the add-on injects carries the server's
   release (`data-release`), and the Connect setup steps show `WIZELENS_RELEASE`.
+- **Each web app can have its own name in place of "Web App".** Set `service` in `lens({ service })`,
+  `<WizeLensProvider service>`, or `data-service` on the script tag, and the app's Services row, errors, console lines,
+  service map, and trace layers show "shop-web (browser)". Spans keep the service `browser` and carry the name as
+  `wizelens.browser.app`. On the cloud, a page that sets no name shows under its browser key's name. The HUD tag the
+  Node add-on injects names the app after its server ("api (browser)"). Data sent before, and apps that set no name,
+  still show as "Web App". Request lists filter every browser app as one "browser" service.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

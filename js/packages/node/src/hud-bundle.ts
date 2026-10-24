@@ -19,16 +19,18 @@ export function resolveHudBundle(): string | null {
   }
 }
 
-/** What the injected tag tells the page about its server: the release, so browser spans carry the server's. */
+/** What the injected tag tells the page about its server: its release, and the name its browser app shows under. */
 export interface HudMeta {
   release?: string;
+  service?: string;
 }
 
 const escapeAttr = (v: string): string => v.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
-const metaAttrs = (m: HudMeta): string => (m.release ? ` data-release="${escapeAttr(m.release)}"` : "");
+const attr = (name: string, v: string | undefined): string => (v ? ` ${name}="${escapeAttr(v)}"` : "");
+const metaAttrs = (m: HudMeta): string => `${attr("data-service", m.service)}${attr("data-release", m.release)}`;
 
-/** The tag the add-on puts before `</body>`, as docs/HUD-PLAN.md has it, plus the server's release when known. */
+/** The tag the add-on puts before `</body>`, as docs/HUD-PLAN.md has it, plus the server's browser app name and release. */
 export const hudTag = (basePath: string, meta: HudMeta = {}): string =>
   `<script src="${basePath}/${HUD_SCRIPT}" data-endpoint="${basePath}" data-hud="true" data-source="inject"${metaAttrs(meta)} defer></script>`;
 

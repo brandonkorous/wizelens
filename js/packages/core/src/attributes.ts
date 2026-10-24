@@ -10,6 +10,8 @@ export const ATTR_BROWSER_RENDER_MS = "wizelens.browser.render_ms";
 export const ATTR_BROWSER_TYPE = "wizelens.browser.type";
 /** Route shape of the page the span belongs to, for example "/products/{}". */
 export const ATTR_BROWSER_ROUTE = "wizelens.browser.route";
+/** The browser app's name (`lens({ service })`, `data-service`); it shows as "<name> (browser)". Absent: "Web App". */
+export const ATTR_BROWSER_APP = "wizelens.browser.app";
 /** Page view: "load" for a full page load, "spa" for a client-side route change. */
 export const ATTR_BROWSER_NAVIGATION = "wizelens.browser.navigation";
 /** Browser span: the WizeLens endpoint of the server that answered, when it is not the one the browser sends to. */

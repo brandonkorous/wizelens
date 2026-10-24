@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { ATTR_BROWSER_APP } from "@wizeworks/lens-core";
 import { originAllowed, originOf, originsFor } from "./repo/key-origins.js";
+import { browserWrite } from "./routes/browser.js";
 import type { Cloud } from "./server.js";
 import { type Client, setupOwner, startCloud } from "./test/cloud.js";
 import { span, T1 } from "./test/db.js";
@@ -92,5 +94,14 @@ describe("the browser intake", () => {
     expect((await post({ spans: [pageView()] }, docs)).status).toBe(403);
     expect((await owner.call("PATCH", `api/orgs/${orgId}/keys/${made.id}`, { origins: [SHOP, docs] })).status).toBe(200);
     expect((await post({ spans: [pageView()] }, docs)).status).toBe(204);
+  });
+});
+
+describe("the browser app a key's data shows under", () => {
+  it("is the page's own name, else the key's name", () => {
+    const named = pageView({ spanId: "3".repeat(16), attributes: { [ATTR_BROWSER_APP]: "shop-web" } });
+    const w = browserWrite({ spans: [pageView(), named], logs: [{ traceId: T1, timeMs: Date.now(), level: "info", category: "console", message: "hi", attributes: {} }] }, [], Date.now(), "site");
+    expect(w.spans.map((s) => s.attributes[ATTR_BROWSER_APP])).toEqual(["site", "shop-web"]);
+    expect(w.logs.map((l) => l.log.attributes[ATTR_BROWSER_APP])).toEqual(["site"]);
   });
 });

@@ -6,6 +6,7 @@ import { REDACTED } from "../redact.js";
 import { type Health, healthOf, insightsOf, traceTiming } from "../health.js";
 import { isStreamSpan } from "../stream.js";
 import { isUptimeSpan } from "../uptime/check.js";
+import { browserAppOf } from "../web-app.js";
 import { entryServerSpan, errorSpansOf, isExpectedSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { memoByObject } from "./common.js";
@@ -39,6 +40,8 @@ export interface RequestRow {
   /** Service of the first server span, else "browser". */
   service: string;
   services: string[];
+  /** The browser app's name (`wizelens.browser.app`) of the request's browser call, or null. */
+  app: string | null;
   errors: number;
   findings: Finding[];
   insights: number;
@@ -144,6 +147,7 @@ function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | nu
     networkMs: fetch && server ? Math.max(0, fetch.durationMs - server.durationMs) : null,
     service: server?.service ?? "browser",
     services: trace.services,
+    app: browserAppOf(fetch),
     errors,
     findings,
     insights,

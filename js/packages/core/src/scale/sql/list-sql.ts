@@ -131,7 +131,8 @@ export function requestItemOfRow(r: Row): RequestItem {
     expected: !boolOf(r.failed) && (numOrNull(r.status) ?? 0) >= 500,
     aborted: boolOf(r.aborted), durationMs: num(r.duration_ms), serverMs: numOrNull(r.server_ms), dbMs: num(r.db_ms),
     dbCount: num(r.db_count), fetchCount: num(r.fetch_count), fetchMs: num(r.fetch_ms), renderMs: numOrNull(r.render_ms), networkMs: numOrNull(r.network_ms),
-    service: String(r.service), services: servicesOf(String(r.services)), errors: num(r.errors), insights: num(r.insights), health: String(r.health) as Health,
+    // List tables keep no browser app name: request lists filter browser apps as one "browser" service.
+    service: String(r.service), services: servicesOf(String(r.services)), app: null, errors: num(r.errors), insights: num(r.insights), health: String(r.health) as Health,
     userAgent: strOrNull(r.user_agent), clientAddress: strOrNull(r.client_address), user: strOrNull(r.end_user), requestId: strOrNull(r.request_id),
     tags: JSON.parse(String(r.tags)) as string[],
   };

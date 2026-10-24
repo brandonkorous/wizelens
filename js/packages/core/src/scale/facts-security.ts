@@ -2,7 +2,7 @@
 import type { Finding } from "../analysis.js";
 import { findSecurity, securityOf } from "../security/index.js";
 import { normalizeQuery } from "../stats/common.js";
-import { displayService } from "../stats/errors.js";
+import { shownServices } from "../web-app.js";
 import type { RequestRow } from "../stats/requests.js";
 import type { Trace } from "../types.js";
 import { type Contribution, contribution, withServices } from "./agg.js";
@@ -47,13 +47,13 @@ function authContributions(trace: Trace, r: RequestRow): Contribution[] {
   const failed = status === 401 || status === 403;
   if (!failed && status !== 429 && !AUTH_PATH.test(r.path.split("?")[0]!)) return [];
   const top = failed ? { top: { rank: trace.startMs, data: { traceId: trace.traceId } } } : {};
-  return [contribution("sec.auth", joinKey(displayService(r.service), r.endpoint, r.clientAddress ?? ""), trace.startMs, { err: failed ? 1 : 0, c: [status === 429 ? 1 : 0], ...top })];
+  return [contribution("sec.auth", joinKey(shownServices([r.service], r.app)[0]!, r.endpoint, r.clientAddress ?? ""), trace.startMs, { err: failed ? 1 : 0, c: [status === 429 ? 1 : 0], ...top })];
 }
 
 /** Everything a trace adds to the security rollups. A request's findings come from its row; a job's from the trace. */
 export function securityFacts(trace: Trace, row: RequestRow | null): Contribution[] {
   const findings = row ? securityOf(row.findings) : findSecurity(trace);
-  const services = row ? [row.service, ...row.services].map(displayService) : traceServices(trace);
+  const services = row ? shownServices([row.service, ...row.services], row.app) : traceServices(trace);
   const risks = riskContributions(trace, findings, row?.endpoint ?? trace.rootName, row?.user ?? null).flatMap((c) => withServices(c, services));
   return [...risks, ...(row ? authContributions(trace, row) : [])];
 }
