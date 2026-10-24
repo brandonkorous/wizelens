@@ -13,6 +13,7 @@ import {
   VERSION_ATTR,
 } from "@wizeworks/lens-core";
 import type { TraceStore } from "./store.js";
+import { dropControlFlow } from "./control-flow.js";
 
 /** Set this attribute to force a contract category. Removed before storing. */
 export const CATEGORY_ATTR = "wizelens.category";
@@ -59,6 +60,10 @@ function clientName(attrs: Attributes, fallback: string): string {
 
 /** Map a finished OTel span to a contract Span. */
 export function toContractSpan(span: ReadableSpan, service: string, redactKeys: readonly string[]): Span {
+  return dropControlFlow(contractSpanOf(span, service, redactKeys));
+}
+
+function contractSpanOf(span: ReadableSpan, service: string, redactKeys: readonly string[]): Span {
   const ctx = span.spanContext();
   const raw = toAttributes(span.attributes);
   const category = categoryOf(span, raw);

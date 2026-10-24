@@ -73,6 +73,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   is marked expected, a span of the same service that only repeats the 5xx (Next.js `BaseServer.handleRequest` with
   `error.type: 503`) and has no exception is not an error: not in error groups, request errors, trace status, or
   findings.
+- **Next.js control flow is not recorded as exceptions.** `NoFallbackError`, `NEXT_NOT_FOUND`,
+  `NEXT_HTTP_ERROR_FALLBACK;*`, `NEXT_REDIRECT*`, `BAILOUT_TO_CLIENT_SIDE_RENDERING`, and `DYNAMIC_SERVER_USAGE` are
+  dropped from spans (with the error status they caused) and from `onRequestError`. A Better Auth `APIError` that
+  answered 4xx is not an exception either.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

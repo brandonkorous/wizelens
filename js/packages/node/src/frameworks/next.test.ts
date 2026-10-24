@@ -18,7 +18,8 @@ function nextLikeHandler(req: IncomingMessage, res: ServerResponse): void {
     platform?.setAttribute("http.route", "/items/[id]");
     tracer.startActiveSpan("render route (app) /items/[id]", (render) => render.end());
     if (req.url === "/boom") onRequestError(new Error("render failed"), { path: "/boom", method: "GET" }, { routerKind: "App Router", routePath: "/boom", routeType: "render" });
-    res.statusCode = req.url === "/boom" ? 500 : 200;
+    if (req.url === "/gone") onRequestError(Object.assign(new Error("NEXT_HTTP_ERROR_FALLBACK;404"), { digest: "NEXT_HTTP_ERROR_FALLBACK;404" }), { path: "/gone", method: "GET" }, { routerKind: "App Router", routePath: "/gone", routeType: "render" });
+    res.statusCode = req.url === "/boom" ? 500 : req.url === "/gone" ? 404 : 200;
     res.end("<html></html>");
     span.end();
   });
@@ -90,6 +91,12 @@ it("records an onRequestError error once, with a log", async () => {
   expect(errors).toHaveLength(1);
   expect(t.logs.some((l) => l.message === "render failed")).toBe(true);
   onRequestError(new Error("render failed"), { path: "/", method: "GET" }, { routerKind: "App Router", routePath: "/", routeType: "render" });
+});
+
+it("does not record a Next.js not-found signal as an error", async () => {
+  const t = await traceOf(await fetch(`${base}/gone`));
+  expect(t.spans.flatMap((s) => s.events.filter((e) => e.name === "exception"))).toHaveLength(0);
+  expect(t.logs.some((l) => l.message.startsWith("NEXT_HTTP_ERROR_FALLBACK"))).toBe(false);
 });
 
 it("starts one instance per process", () => {
