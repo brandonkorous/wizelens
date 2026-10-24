@@ -99,6 +99,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   Overview, and Problems skip every run, also runs written before. The Uptime page reads new `up` and `up.chk` stats.
   The stats version moves to 12, so hubs and the cloud rebuild their stats once after the update; pages fill back in
   as the rebuild runs.
+- **Settling and the services page stay fast as data grows.** When a trace gets more data, the cloud now finds the rows
+  it wrote before in one small lookup, where it used to search the whole project (up to 90 seconds). Trace and span
+  counts, environments, and project health read small hourly totals in place of every trace. A trace that two projects
+  share still counts once.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 
