@@ -23,39 +23,28 @@ internal static partial class ValuePatterns
 
     public static string Marker(string kind) => $"[redacted:{kind}]";
 
-    /// <summary>The text with every secret found by pattern replaced by its marker.</summary>
-    public static string RedactText(string text)
+    /// <summary>The text with every secret found by pattern replaced by its marker. The card pattern skips values of count and id keys.</summary>
+    public static string RedactText(string text, string key = "")
     {
         var output = text;
         foreach (var p in Patterns)
         {
-            if (!p.Hint(output)) continue;
-            output = p.Re.Replace(output, m => p.Kind != "card" || IsCardNumber(m.Value) ? Marker(p.Kind) : m.Value);
+            if (!p.Hint(output) || p.Kind == "card" && key.Length > 0 && CardNumbers.IsNumericKey(key)) continue;
+            var whole = output;
+            output = p.Re.Replace(output, m => p.Kind != "card" || IsCardAt(m, whole) ? Marker(p.Kind) : m.Value);
         }
         return output;
     }
 
+    private static bool IsCardAt(Match m, string text) => IsCardNumber(m.Value) && !CardNumbers.NumericContext(text, m.Index, m.Length);
+
     /// <summary>True for an attribute key whose values are ids and sampling numbers, never secrets (a baggage <c>sample_rand</c> passes Luhn).</summary>
     public static bool SkipsValuePatterns(string key) => PatternFreeKey().IsMatch(key.ToLowerInvariant());
 
-    /// <summary>13 to 19 digits, the first 3 to 6, Luhn valid.</summary>
-    public static bool IsCardNumber(string match)
-    {
-        var digits = match.Replace(" ", "").Replace("-", "");
-        return digits.Length is >= 13 and <= 19 && digits[0] is >= '3' and <= '6' && LuhnValid(digits);
-    }
+    /// <summary>A card brand's prefix and length, Luhn valid.</summary>
+    public static bool IsCardNumber(string match) => CardNumbers.IsCardNumber(match);
 
-    public static bool LuhnValid(string digits)
-    {
-        var sum = 0;
-        for (var i = 0; i < digits.Length; i++)
-        {
-            var d = digits[digits.Length - 1 - i] - '0';
-            if (i % 2 == 1) d = d * 2 > 9 ? d * 2 - 9 : d * 2;
-            sum += d;
-        }
-        return sum % 10 == 0;
-    }
+    public static bool LuhnValid(string digits) => CardNumbers.LuhnValid(digits);
 
     [GeneratedRegex(@"-----BEGIN (?:[A-Z]+ )*PRIVATE KEY-----[\s\S]*?(?:-----END (?:[A-Z]+ )*PRIVATE KEY-----|$)", Ascii)]
     private static partial Regex PrivateKey();

@@ -1,4 +1,7 @@
 // Redaction by value: secrets found inside any text become a typed marker such as "[redacted:jwt]" (docs/CONTRACT.md "Redaction").
+import { isCardNumber, isNumericKey, numericContext } from "./redact-card.js";
+
+export { isCardNumber, isNumericKey, luhnValid } from "./redact-card.js";
 
 /** The kinds of secret found by pattern. */
 export type SecretKind = "jwt" | "aws-key" | "private-key" | "stripe-key" | "github-token" | "slack-token" | "google-key" | "card";
@@ -30,30 +33,15 @@ export const secretMarker = (kind: SecretKind): string => `[redacted:${kind}]`;
 /** Markers in a text, as `[redacted:kind]` finds them. */
 export const MARKER_RE = /\[redacted:([a-z-]+)\]/g;
 
-/** True for digits that pass the Luhn check. */
-export function luhnValid(digits: string): boolean {
-  let sum = 0;
-  for (let i = 0; i < digits.length; i++) {
-    let d = digits.charCodeAt(digits.length - 1 - i) - 48;
-    if (i % 2 === 1) d = d * 2 > 9 ? d * 2 - 9 : d * 2;
-    sum += d;
-  }
-  return sum % 10 === 0;
-}
+const isCardAt = (m: string, at: number, text: string): boolean => isCardNumber(m) && !numericContext(text, at, m.length);
 
-/** A card number: 13 to 19 digits, the first 3 to 6, Luhn valid. */
-export function isCardNumber(match: string): boolean {
-  const digits = match.replace(/[ -]/g, "");
-  return digits.length >= 13 && digits.length <= 19 && digits[0]! >= "3" && digits[0]! <= "6" && luhnValid(digits);
-}
-
-/** The text with every secret found by pattern replaced by its marker. */
-export function redactText(text: string): string {
+/** The text with every secret found by pattern replaced by its marker. The card pattern skips values of count and id keys. */
+export function redactText(text: string, key = ""): string {
   let out = text;
   for (const p of VALUE_PATTERNS) {
-    if (!p.hint(out)) continue;
+    if (!p.hint(out) || (p.kind === "card" && key && isNumericKey(key))) continue;
     p.re.lastIndex = 0;
-    out = out.replace(p.re, (m) => (p.kind !== "card" || isCardNumber(m) ? secretMarker(p.kind) : m));
+    out = out.replace(p.re, (m: string, at: number, whole: string) => (p.kind !== "card" || isCardAt(m, at, whole) ? secretMarker(p.kind) : m));
   }
   return out;
 }

@@ -70,7 +70,7 @@ export function redactValue(key: string, value: AttributeValue, keys: readonly s
   if (isSensitiveKey(k, keys)) return REDACTED;
   if (k === "url.query") return redactText(redactQueryString(value, keys));
   if (k === "url.full") return redactText(redactUrl(value, keys));
-  return skipsValuePatterns(k) ? value : redactText(value);
+  return skipsValuePatterns(k) ? value : redactText(value, k);
 }
 
 export function redactAttributes(attrs: Attributes, keys: readonly string[] = DEFAULT_REDACT_KEYS): Attributes {

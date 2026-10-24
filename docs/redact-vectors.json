@@ -33,6 +33,10 @@
     { "in": "order 4111111111111112 is not a card", "out": "order 4111111111111112 is not a card" },
     { "in": "at 1729400000000 ms", "out": "at 1729400000000 ms" },
     { "in": "id 12345678901234567890123 is too long", "out": "id 12345678901234567890123 is too long" },
-    { "in": "phone 555-123-4567", "out": "phone 555-123-4567" }
+    { "in": "phone 555-123-4567", "out": "phone 555-123-4567" },
+    { "in": "pay 2223 0031 2200 3222 now", "out": "pay [redacted:card] now" },
+    { "in": "sample_rand=0.4111111111111111", "out": "sample_rand=0.4111111111111111" },
+    { "in": "remaining_count: 4111111111111111", "out": "remaining_count: 4111111111111111" },
+    { "in": "no brand 6000000000000007 or 5000000000000009", "out": "no brand 6000000000000007 or 5000000000000009" }
   ]
 }
