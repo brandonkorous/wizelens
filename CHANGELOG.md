@@ -56,7 +56,8 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 ### Fixed
 
 - **The cloud shows data again under heavy load.** Its ClickHouse store ran out of memory, so pages loaded empty, new
-  data was refused, and the nightly backup failed. It now has 6 GiB in place of 4 GiB.
+  data was refused, and the nightly backup failed. Loading whole traces now reads only the traces asked for, which uses
+  about a twentieth of the memory, and the store has 6 GiB in place of 4 GiB.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 
