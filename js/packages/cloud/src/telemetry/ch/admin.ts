@@ -24,14 +24,17 @@ const EXPIRE_FROM: Record<string, string> = {
   attr_keys_t: "bucket_ms", attr_values_t: "bucket_ms",
 };
 
+/** The stats version here: the shared facts version, then this store's own settle format (2: settle states keep fact keys, attribute rows their owner's time). */
+const CH_FACTS = `${FACTS_VERSION}.2`;
+
 /** When the facts version changed: empty the stats and settle every trace again, a page at a time. True when it did. */
 export async function checkFactsVersionCh(ch: ChClient, rebuild: Rebuild): Promise<boolean> {
   await ensureMeta(ch);
   const [row] = await ch.query<{ value: string }>("SELECT value FROM ch_meta FINAL WHERE key = 'facts'");
-  if (row?.value === String(FACTS_VERSION)) return false;
+  if (row?.value === CH_FACTS) return false;
   for (const t of STATS) await ch.command(`TRUNCATE TABLE IF EXISTS ${t}`);
   await rebuild.start();
-  await ch.insert("ch_meta", [{ key: "facts", value: String(FACTS_VERSION), ver: nextVer(Date.now()) }]);
+  await ch.insert("ch_meta", [{ key: "facts", value: CH_FACTS, ver: nextVer(Date.now()) }]);
   return true;
 }
 
