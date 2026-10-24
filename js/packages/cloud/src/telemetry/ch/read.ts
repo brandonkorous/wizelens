@@ -38,7 +38,8 @@ export async function findTraceIds(ch: ChClient, t: TraceQuery, now: number): Pr
 async function jsonOf(ch: ChClient, table: "spans_raw" | "logs_raw", s: TenantScope, ids: readonly string[]): Promise<Map<string, string[]>> {
   const out = new Map<string, string[]>();
   for (let i = 0; i < ids.length; i += CHUNK) {
-    const sql = `SELECT trace_id, json FROM ${table} FINAL WHERE org_id = {p1:String} AND has({p2:Array(String)}, project_id) AND has({p3:Array(String)}, trace_id)`;
+    // FINAL turns off the automatic PREWHERE; without it every granule's json is read (~20x the memory).
+    const sql = `SELECT trace_id, json FROM ${table} FINAL PREWHERE has({p3:Array(String)}, trace_id) WHERE org_id = {p1:String} AND has({p2:Array(String)}, project_id)`;
     for (const r of await ch.query<{ trace_id: string; json: string }>(sql, [s.org, s.projects, ids.slice(i, i + CHUNK)])) out.set(r.trace_id, [...(out.get(r.trace_id) ?? []), r.json]);
   }
   return out;

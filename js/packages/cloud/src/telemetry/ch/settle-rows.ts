@@ -37,7 +37,7 @@ export async function tombstones(ch: ChClient, project: { id: string; org: strin
     out[t] = [];
     if (!traceIds.length) continue;
     const cols = ["trace_id", ...keyCols(t)];
-    const sql = `SELECT ${cols.join(", ")} FROM ${t}_t FINAL WHERE project_id = {p1:String} AND has({p2:Array(String)}, trace_id)`;
+    const sql = `SELECT ${cols.join(", ")} FROM ${t}_t FINAL PREWHERE has({p2:Array(String)}, trace_id) WHERE project_id = {p1:String}`;
     const keep = new Set(fresh[t].map((r) => keyOf(t, r)));
     for (const old of await ch.query<Row>(sql, [project.id, traceIds])) {
       if (!keep.has(keyOf(t, old))) out[t].push({ project_id: project.id, org_id: project.org, ...old, ver, is_deleted: 1, expire_ms: NONE_HIGH });

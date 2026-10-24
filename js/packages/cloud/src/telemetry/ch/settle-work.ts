@@ -32,7 +32,7 @@ const hasData = (t: Trace | undefined): t is Trace => !!t && t.spanCount + t.log
 /** Stored contributions of some traces, by trace id. */
 async function storedContribs(ch: ChClient, project: string, ids: readonly string[]): Promise<Map<string, string>> {
   const rows = await ch.query<{ trace_id: string; contrib: string }>(
-    "SELECT trace_id, contrib FROM settle_state FINAL WHERE project_id = {p1:String} AND has({p2:Array(String)}, trace_id)",
+    "SELECT trace_id, contrib FROM settle_state FINAL PREWHERE has({p2:Array(String)}, trace_id) WHERE project_id = {p1:String}",
     [project, ids],
   );
   return new Map(rows.map((r) => [r.trace_id, r.contrib]));
