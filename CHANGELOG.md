@@ -23,6 +23,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - **Search suggestions for `@` attributes answer at once.** Attribute keys and values come from hourly counts, where they
   used to join every attribute row (one took 22 minutes). The cloud rebuilds its stats once after the update, so older
   data shows in them too; pages fill back in as the rebuild runs.
+- **The cloud's ClickHouse disk is twice as fast.** It is now 128 GiB (Azure P10: 500 IOPS, 100 MB/s), where 64 GiB
+  (P6: 50 MB/s) made busy reads wait for the disk. The deploy grows the disk in place when its size in
+  `deploy/k8s/base/clickhouse.yaml` grows, without a restart.
 
 ## [0.3.0-alpha.12] — Settings by task, and numbers that match reality
 

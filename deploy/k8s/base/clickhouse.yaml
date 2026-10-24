@@ -73,9 +73,10 @@ spec:
     - metadata: { name: data }
       spec:
         accessModes: [ReadWriteOnce]
-        # Premium SSD: merges and FINAL reads are disk-bound. The class allows growing the disk in place.
+        # Premium SSD: merges and FINAL reads are disk-bound. The deploy grows the disk when this size grows (see deploy.yml).
+        # 128Gi is P10 (500 IOPS, 100 MB/s); P6 at 64Gi capped reads at 50 MB/s and slowed them past 1s (2026-10-24).
         storageClassName: managed-csi-premium
-        resources: { requests: { storage: 64Gi } }
+        resources: { requests: { storage: 128Gi } }
 ---
 apiVersion: v1
 kind: Service
