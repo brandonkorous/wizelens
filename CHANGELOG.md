@@ -83,6 +83,8 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   links open the nearest problem by time.
 - **Next.js middleware no longer names requests "GET middleware GET".** The Node add-on takes a route from the
   framework only when it is a path; otherwise it uses `next.route`, else the shape of the path (`/orders/{}`).
+- **The MCP `search` tool puts tags on each result.** Each item's `tags` now holds the tag rules it matches, next to
+  the tags the app set. The separate `tags` map, keyed by "trace id + space", is gone.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

@@ -59,9 +59,10 @@ describe("in-app tags", () => {
       return JSON.parse(((await res.json()) as { result: { content: { text: string }[] } }).result.content[0]!.text) as Record<string, unknown>;
     };
     expect(((await call("list_tags", {})) as unknown as { name: string }[]).map((t) => t.name)).toEqual(["stream", "probe", "bot", "pay", "slow"]);
-    const found = (await call("search", { q: "tag:pay", range: "1h" })) as { items: { traceId: string }[]; tags: Record<string, string[]> };
+    const found = (await call("search", { q: "tag:pay", range: "1h" })) as { items: { traceId: string; tags: string[] }[]; tags?: unknown };
     expect(found.items.map((i) => i.traceId)).toEqual([pay]);
-    expect(found.tags).toEqual({ [`${pay} `]: ["pay", "slow"] });
+    expect(found.items[0]!.tags).toEqual(expect.arrayContaining(["pay", "slow"]));
+    expect(found.tags).toBeUndefined();
     expect(((await call("list_traces", { q: "tag:stream", range: "1h" })) as unknown as { traceId: string }[]).map((t) => t.traceId)).toEqual([stream]);
   });
 });
