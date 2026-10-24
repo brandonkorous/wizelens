@@ -103,6 +103,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   is now grouped by its status and endpoint (`site|HttpError|503|GET /robots.txt`), not one "HTTP #" group for every
   route. A state set on the old group (resolved, ignored, assigned) carries over to each group split from it until you
   change that group. The stats version moves to 13, so hubs and the cloud rebuild their stats once more.
+- **An endpoint has one name on every page.** Requests, Services, the Endpoint page, security findings, and the MCP
+  `group_requests` tool now name an endpoint by its route, else by the shape of its path without the query
+  (`GET /api/live/{}`). A route-less request no longer shows its raw path with ids on the Service page, and a new
+  query key no longer makes a new endpoint. Old data is renamed when its stats are rebuilt (stats version 13).
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

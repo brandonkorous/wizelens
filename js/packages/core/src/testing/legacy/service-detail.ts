@@ -1,5 +1,6 @@
 import { httpShape, queryText } from "../../analysis.js";
 import { isWebAppCall } from "../../attributes.js";
+import { spanEndpointName } from "../../endpoint.js";
 import { avgOf, groupBy, normalizeQuery } from "../../stats/common.js";
 import { databaseOf, hostOf, type ServiceEdge, type ServiceKind, type ServiceRow } from "../../stats/services.js";
 import { isFailedAnswer } from "../../trace.js";
@@ -37,9 +38,7 @@ export function spansOfRow(traces: readonly Trace[], row: ServiceRow): Span[] {
 export function endpointNameOf(s: Span, kind: ServiceKind): string {
   if (kind === "database") return normalizeQuery(queryText(s));
   if (kind === "external") return httpShape(s);
-  const route = s.attributes["http.route"];
-  const method = s.attributes["http.request.method"];
-  return typeof route === "string" && typeof method === "string" ? `${method} ${route}` : s.name;
+  return spanEndpointName(s);
 }
 
 /** Busiest endpoints (or queries, or call shapes) of one service row. */

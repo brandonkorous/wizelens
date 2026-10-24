@@ -29,8 +29,7 @@ const SECRET_TITLE = "A secret is sent in the URL";
 /** The request's own query: shape `METHOD route?key={}`, with only the sensitive keys. */
 export function findSecretInUrl(r: SecurityRequest): Finding[] {
   const own = sensitiveQueryKeys(str(r.span, "url.query"));
-  const route = str(r.span, "http.route") ?? r.path;
-  return own.length ? [spanFinding("secret-in-url", "warning", SECRET_TITLE, `${r.method} ${route}?${own.map((k) => `${k}={}`).join("&")}`, r.span)] : [];
+  return own.length ? [spanFinding("secret-in-url", "warning", SECRET_TITLE, `${r.endpoint}?${own.map((k) => `${k}={}`).join("&")}`, r.span)] : [];
 }
 
 /** Outgoing calls with a sensitive key in their query. */

@@ -1,4 +1,5 @@
 import { httpShape, queryText } from "../analysis.js";
+import { spanEndpointName } from "../endpoint.js";
 import { avgOfAgg } from "../scale/agg.js";
 import { joinKey } from "../scale/kinds.js";
 import { normalizeQuery } from "../stats/common.js";
@@ -21,9 +22,7 @@ export const failedSpan = (s: Span) => isFailedAnswer(s);
 export function endpointNameOf(s: Span, kind: ServiceKind): string {
   if (kind === "database") return normalizeQuery(queryText(s));
   if (kind === "external") return httpShape(s);
-  const route = s.attributes["http.route"];
-  const method = s.attributes["http.request.method"];
-  return typeof route === "string" && typeof method === "string" ? `${method} ${route}` : s.name;
+  return spanEndpointName(s);
 }
 
 /** Key prefix of a row's `svc.ep` keys. */

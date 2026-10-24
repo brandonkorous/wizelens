@@ -1,6 +1,7 @@
-import { ANALYSIS_DEFAULTS, pathShape, analyzeTrace, type AnalysisOptions, type Finding } from "../analysis.js";
+import { ANALYSIS_DEFAULTS, analyzeTrace, type AnalysisOptions, type Finding } from "../analysis.js";
 import { ATTR_ENDUSER, ATTR_REQUEST_ABORTED, ATTR_REQUEST_ID, ATTR_USER_NAME, ATTR_RPC, browserTypeOf, TAG_PREFIX } from "../attributes.js";
 import { busyMs } from "../busy.js";
+import { endpointName } from "../endpoint.js";
 import { REDACTED } from "../redact.js";
 import { type Health, healthOf, insightsOf, traceTiming } from "../health.js";
 import { isStreamSpan } from "../stream.js";
@@ -92,8 +93,7 @@ function pathOf(server: Span | undefined, fetch: Span | undefined): string {
 }
 
 function endpointOf(method: string, server: Span | undefined, path: string): string {
-  const route = str(server, "http.route");
-  return `${method} ${route ?? pathShape(path)}`;
+  return endpointName(method, str(server, "http.route"), path);
 }
 
 /** Method, path, and endpoint of a request. gRPC calls read "gRPC" and "/{service}/{method}". */
