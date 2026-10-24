@@ -77,6 +77,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   `NEXT_HTTP_ERROR_FALLBACK;*`, `NEXT_REDIRECT*`, `BAILOUT_TO_CLIENT_SIDE_RENDERING`, and `DYNAMIC_SERVER_USAGE` are
   dropped from spans (with the error status they caused) and from `onRequestError`. A Better Auth `APIError` that
   answered 4xx is not an exception either.
+- **Problems no longer snowball, and their ids no longer collide across projects.** Anomalies join one problem only
+  when their times overlap, and a problem's starts span at most the near window, so a day of small anomalies is no
+  longer one 24 hour problem. Problem ids include the projects read, so two projects never share one. Old problem
+  links open the nearest problem by time.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

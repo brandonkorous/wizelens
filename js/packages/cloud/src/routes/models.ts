@@ -64,7 +64,7 @@ export async function scopePage<P extends PageName>(app: CloudApp, r: PageScope,
   const hit = cached(key, app.config.now());
   if (hit) return hit as ModelOf<P>;
   const t = app.telemetry;
-  const pc = pageContext(range, now, params, { slowQueryMs }, await t.settling(r.scope, { env, before: app.config.now() - SETTLE_BEHIND_MS }));
+  const pc = pageContext(range, now, params, { slowQueryMs, scope: ids.join(",") }, await t.settling(r.scope, { env, before: app.config.now() - SETTLE_BEHIND_MS }));
   // Only a custom window (`from`, `to`) can start before what is kept; a named range snaps into a bucket that is still kept.
   if (pc.custom && now - pc.window.from > keepMs + 15 * 60_000) fail(400, "This time window starts before these projects keep data.");
   const value = await runPage(page, { ...pc, ...(await pageExtras(app, r, page, params, pc.window, env)) }, t.executor(r.scope, keepMs, env));

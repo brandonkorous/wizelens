@@ -134,6 +134,12 @@ export interface ListRows<T = unknown> {
   aggregate?: { total: Agg; series: Agg[] };
 }
 
+/** Host settings for a page: the slow query threshold, and the projects read as stable text (problem ids include it). */
+export interface PageOptions {
+  slowQueryMs: number;
+  scope?: string;
+}
+
 /** Everything a page model needs besides data: the windows, the URL params, and the options. */
 export interface PageContext {
   range: TimeRange;
@@ -141,7 +147,7 @@ export interface PageContext {
   prev: TimeWindow;
   now: number;
   params: ModelParams;
-  options: { slowQueryMs: number };
+  options: PageOptions;
   /** Traces still waiting for their stats, when the host knows; null or absent when none. */
   settling?: number | null;
   /** True when the window is a custom from–to; `range` is then the smallest preset that covers it. */
