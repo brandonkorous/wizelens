@@ -1,7 +1,7 @@
 // A09 Logging and Alerting Failures: secrets that reached logs, span data, or a response. Redaction left a marker where each was.
 import type { Finding } from "../analysis.js";
 import { ATTR_REQUEST_BODY, ATTR_RESPONSE_BODY } from "../attributes.js";
-import { MARKER_RE, type SecretKind } from "../redact-values.js";
+import { MARKER_RE, type SecretKind, skipsValuePatterns } from "../redact-values.js";
 import type { Attributes, Trace } from "../types.js";
 
 export const SECRET_LABELS: Record<SecretKind, string> = {
@@ -24,7 +24,7 @@ export function markersIn(text: string): SecretKind[] {
 }
 
 const attrMarkers = (a: Attributes, skip: ReadonlySet<string>): SecretKind[] =>
-  Object.entries(a).flatMap(([k, v]) => (typeof v === "string" && !skip.has(k) ? markersIn(v) : []));
+  Object.entries(a).flatMap(([k, v]) => (typeof v === "string" && !skip.has(k) && !skipsValuePatterns(k) ? markersIn(v) : []));
 
 const BODIES = new Set([ATTR_RESPONSE_BODY, ATTR_REQUEST_BODY]);
 const NONE = new Set<string>();

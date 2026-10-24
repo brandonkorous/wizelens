@@ -1,20 +1,22 @@
 import type { IncomingHttpHeaders, IncomingMessage, OutgoingHttpHeaders } from "node:http";
 import type { Attributes as OtelAttributes } from "@opentelemetry/api";
-import { REQUEST_HEADER_PREFIX } from "@wizeworks/lens-core";
+import { redactSetCookie, REQUEST_HEADER_PREFIX } from "@wizeworks/lens-core";
 import { firstHeader } from "./http-util.js";
 import { CATEGORY_ATTR } from "./processor.js";
 
 const MAX_HEADERS = 50;
 const MAX_HEADER_VALUE = 1024;
 
-/** Headers as `{prefix}{lower-case name}` attributes. Redaction happens when the span is stored. */
+/** Headers as `{prefix}{lower-case name}` attributes. Redaction happens when the span is stored; Set-Cookie values go here already. */
 export function headerAttributes(headers: IncomingHttpHeaders | OutgoingHttpHeaders, prefix: string): OtelAttributes {
   const out: OtelAttributes = {};
   let count = 0;
   for (const [name, value] of Object.entries(headers)) {
     if (value === undefined || count >= MAX_HEADERS) continue;
+    const lower = name.toLowerCase();
     const text = Array.isArray(value) ? value.join(", ") : String(value);
-    out[`${prefix}${name.toLowerCase()}`] = text.slice(0, MAX_HEADER_VALUE);
+    // Cookie values are hidden first, so a long session cookie does not push its flags past the cut.
+    out[`${prefix}${lower}`] = (lower === "set-cookie" ? redactSetCookie(text) : text).slice(0, MAX_HEADER_VALUE);
     count++;
   }
   return out;

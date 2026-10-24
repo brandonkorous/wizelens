@@ -55,8 +55,9 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   "req.dim": spec(REQ),
   "req.svc": spec(["dbCount", "withInsights", "primary"]),
   "req.part": spec([], { hist: true }),
-  svc: spec([], { hist: true, top: "newest" }),
-  "svc.ep": spec([], { hist: true, ids: 20 }),
+  /** c0: requests from bots and scanners, left out of request-count anomalies. */
+  svc: spec(["bot"], { hist: true, top: "newest" }),
+  "svc.ep": spec(["bot"], { hist: true, ids: 20 }),
   /** Streams by Services row (`svc.stream`) and by row and endpoint (`req.stream`): sum and histogram of their open time. */
   "svc.stream": spec([], { hist: true }),
   "req.stream": spec([], { hist: true }),
@@ -76,7 +77,7 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   "db.t": spec(["withRows", "rows"]),
   "db.op": spec(),
   err: spec(["critical"]),
-  "err.g": spec(["critical"], { top: "newest", ids: 50 }),
+  "err.g": spec(["critical", "bot"], { top: "newest", ids: 50 }),
   "err.ge": spec(),
   "err.t": spec(),
   "err.s": spec(),

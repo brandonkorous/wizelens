@@ -1,10 +1,12 @@
-import { ANALYSIS_DEFAULTS, pathShape, analyzeTrace, type AnalysisOptions, type Finding } from "../analysis.js";
+import { ANALYSIS_DEFAULTS, analyzeTrace, type AnalysisOptions, type Finding } from "../analysis.js";
 import { ATTR_ENDUSER, ATTR_REQUEST_ABORTED, ATTR_REQUEST_ID, ATTR_USER_NAME, ATTR_RPC, browserTypeOf, TAG_PREFIX } from "../attributes.js";
 import { busyMs } from "../busy.js";
+import { endpointName } from "../endpoint.js";
 import { REDACTED } from "../redact.js";
 import { type Health, healthOf, insightsOf, traceTiming } from "../health.js";
 import { isStreamSpan } from "../stream.js";
 import { isUptimeSpan } from "../uptime/check.js";
+import { browserAppOf } from "../web-app.js";
 import { entryServerSpan, errorSpansOf, isExpectedSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { memoByObject } from "./common.js";
@@ -38,6 +40,8 @@ export interface RequestRow {
   /** Service of the first server span, else "browser". */
   service: string;
   services: string[];
+  /** The browser app's name (`wizelens.browser.app`) of the request's browser call, or null. */
+  app: string | null;
   errors: number;
   findings: Finding[];
   insights: number;
@@ -92,8 +96,7 @@ function pathOf(server: Span | undefined, fetch: Span | undefined): string {
 }
 
 function endpointOf(method: string, server: Span | undefined, path: string): string {
-  const route = str(server, "http.route");
-  return `${method} ${route ?? pathShape(path)}`;
+  return endpointName(method, str(server, "http.route"), path);
 }
 
 /** Method, path, and endpoint of a request. gRPC calls read "gRPC" and "/{service}/{method}". */
@@ -144,6 +147,7 @@ function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | nu
     networkMs: fetch && server ? Math.max(0, fetch.durationMs - server.durationMs) : null,
     service: server?.service ?? "browser",
     services: trace.services,
+    app: browserAppOf(fetch),
     errors,
     findings,
     insights,

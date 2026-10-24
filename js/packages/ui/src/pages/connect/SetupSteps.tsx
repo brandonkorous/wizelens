@@ -18,6 +18,9 @@ function Snippet({ label, text }: { label: string; text: string }) {
   );
 }
 
+/** Without a release, errors, release markers, and version compares have nothing to name; the add-on reads it from this variable. */
+const ReleaseSnippet = () => <Snippet label="Its release, such as the git commit (errors and release markers name it)" text="WIZELENS_RELEASE=$GIT_SHA" />;
+
 /** The last step on every host: restart, then find the service on the Services page. */
 function RestartStep({ n, cloud }: { n: number; cloud: boolean }) {
   return (
@@ -38,6 +41,7 @@ function HubSteps({ hubUrl }: { hubUrl: string }) {
       <Panel title="1. Set these on the service">
         <Snippet label="WizeLens add-on (.NET or Node)" text={`WIZELENS_HUB=${hubUrl}`} />
         <Snippet label="Group it in a project (optional)" text="WIZELENS_PROJECT=my-project" />
+        <ReleaseSnippet />
         <Snippet label="Any OpenTelemetry app (OTLP/HTTP)" text={`OTEL_EXPORTER_OTLP_ENDPOINT=${hubUrl}`} />
         <Snippet label="OTLP project (optional)" text="OTEL_RESOURCE_ATTRIBUTES=service.namespace=my-project" />
       </Panel>
@@ -72,6 +76,7 @@ function CloudSteps({ url, ctx }: { url: string; ctx: OrgCtx | null }) {
       <Panel title="2. Set these on the service">
         <Snippet label="WizeLens add-on (.NET or Node)" text={`WIZELENS_HUB=${url}`} />
         <Snippet label="Its ingest key" text="WIZELENS_HUB_TOKEN=wl_ik_..." />
+        <ReleaseSnippet />
         <Snippet label="Any OpenTelemetry app (OTLP/HTTP)" text={`OTEL_EXPORTER_OTLP_ENDPOINT=${url}`} />
         <Snippet label="OTLP key" text="OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer wl_ik_..." />
       </Panel>

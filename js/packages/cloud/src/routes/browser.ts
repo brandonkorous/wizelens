@@ -1,5 +1,5 @@
 // Browser keys: a page with no WizeLens server (a static site) sends here. The key is public: browser data only, from its sites only.
-import { annotateErrorFrames, type HubLog, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_APP, annotateErrorFrames, type Attributes, type HubLog, type Span } from "@wizeworks/lens-core";
 import { type HubWrite, MAX_BODY, parseJson, readBody } from "@wizeworks/lens-hub/kit";
 import { browserClockOffset, sanitizeClientLog, sanitizeClientSpan } from "@wizeworks/lens-node/kit";
 import type { Ctx } from "../app.js";
@@ -43,18 +43,21 @@ async function browserKey(ctx: Ctx, token: string): Promise<IngestKey> {
   return key;
 }
 
+/** The app name a span or line keeps, else the key's name: each browser key is its own Services row unless the page names one. */
+const withApp = (attrs: Attributes, app: string): Attributes => (typeof attrs[ATTR_BROWSER_APP] === "string" && attrs[ATTR_BROWSER_APP] ? attrs : { ...attrs, [ATTR_BROWSER_APP]: app });
+
 /** Browser data only: every span is a browser span, every line a browser line. A public key cannot write server or database spans. */
-function browserWrite(body: Record<string, unknown>, redactKeys: readonly string[], now: number): HubWrite {
+export function browserWrite(body: Record<string, unknown>, redactKeys: readonly string[], now: number, app: string): HubWrite {
   const shiftMs = browserClockOffset(body.sentAt, now);
   const list = (v: unknown) => (Array.isArray(v) ? v.slice(0, MAX_ITEMS) : []);
   const spans = list(body.spans)
     .map((raw) => sanitizeClientSpan(raw, redactKeys, shiftMs))
     .filter((s): s is Span => s !== null)
-    .map((s): Span => ({ ...s, service: "browser", category: "browser", kind: s.kind === "server" ? "client" : s.kind }));
+    .map((s): Span => ({ ...s, service: "browser", category: "browser", kind: s.kind === "server" ? "client" : s.kind, attributes: withApp(s.attributes, app) }));
   const logs = list(body.logs)
     .map((raw) => sanitizeClientLog(raw, redactKeys, shiftMs))
     .filter((l): l is HubLog => l !== null)
-    .map((l): HubLog => ({ ...l, log: { ...l.log, service: "browser" } }));
+    .map((l): HubLog => ({ ...l, log: { ...l.log, service: "browser", attributes: withApp(l.log.attributes, app) } }));
   return { sender: { service: "browser", runtime: "browser" }, via: "addon", spans, logs, remotes: [], metrics: [] };
 }
 
@@ -77,7 +80,7 @@ async function intake(ctx: Ctx, token: string, limits: BrowserLimits): Promise<v
     return fail(400, "The body is not valid JSON.");
   }
   if (!raw || typeof raw !== "object") return fail(400, "Send { spans, logs }.");
-  const w = browserWrite(raw as Record<string, unknown>, ctx.app.config.redactKeys, ctx.app.config.now());
+  const w = browserWrite(raw as Record<string, unknown>, ctx.app.config.redactKeys, ctx.app.config.now(), key.name);
   await annotateErrorFrames(w.spans, ctx.app.maps(key.projectIds[0]!));
   if (w.spans.length > 0 || w.logs.length > 0) await save(ctx, key)(w);
   ctx.app.billing.usage.add(key.orgId, { bytes: body.bytes() });

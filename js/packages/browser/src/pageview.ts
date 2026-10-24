@@ -1,4 +1,4 @@
-import { type Attributes, ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_REMOTE, ATTR_PAGE, newSpanId, newTraceId, pathShape, type Span } from "@wizeworks/lens-core";
+import { type Attributes, ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_REMOTE, ATTR_PAGE, ATTR_PAGE_PRERENDERED, newSpanId, newTraceId, pathShape, type Span } from "@wizeworks/lens-core";
 import { browserSpan, round1, type ViewRef } from "./browser-span.js";
 import type { ImageInfo } from "./images.js";
 import { clsFromShifts, type NavPoints, type Shift } from "./vitals.js";
@@ -65,20 +65,28 @@ export function newPageView(navigation: PageView["navigation"], startRel: number
   };
 }
 
+/** When a prerendered page was shown, in ms from navigation start; 0 for a page loaded as it was opened. */
+export const activationOf = (nav: NavPoints | null): number => Math.max(0, nav?.activationStart ?? 0);
+
+/** A time from navigation start as seen by the person: from when a prerendered page was shown, never below 0. */
+const seen = (ms: number | null, nav: NavPoints | null): number | null => (ms === null ? null : Math.max(0, ms - activationOf(nav)));
+
 function loadTimings(nav: NavPoints, fcpMs: number | null): Attributes {
+  const from = Math.max(nav.startTime, activationOf(nav));
   return {
-    [ATTR_PAGE.ttfbMs]: round1(nav.responseStart - nav.startTime),
+    [ATTR_PAGE.ttfbMs]: round1(Math.max(0, nav.responseStart - from)),
     [ATTR_PAGE.ssrMs]: round1(nav.responseStart - nav.requestStart),
-    [ATTR_PAGE.clientRenderMs]: fcpMs === null ? null : round1(Math.max(0, fcpMs - nav.responseEnd)),
-    [ATTR_PAGE.loadMs]: nav.loadEventEnd > 0 ? round1(nav.loadEventEnd - nav.startTime) : null,
+    [ATTR_PAGE.clientRenderMs]: fcpMs === null ? null : round1(Math.max(0, fcpMs - Math.max(nav.responseEnd, activationOf(nav)))),
+    [ATTR_PAGE.loadMs]: nav.loadEventEnd > 0 ? round1(Math.max(0, nav.loadEventEnd - from)) : null,
+    ...(activationOf(nav) > 0 ? { [ATTR_PAGE_PRERENDERED]: true } : {}),
   };
 }
 
-/** How long the view took to show: LCP (else the load event) for a load, the measured render for a route change. */
+/** How long the view took to show: LCP (else the load event) for a load, the measured render for a route change. A prerendered page counts from when it was shown. */
 export function viewRenderMs(view: PageView, nav: NavPoints | null): number | null {
   if (view.navigation === "spa") return view.renderMs;
-  if (view.lcpMs !== null) return view.lcpMs;
-  return nav && nav.loadEventEnd > 0 ? nav.loadEventEnd - nav.startTime : null;
+  if (view.lcpMs !== null) return seen(view.lcpMs, nav);
+  return nav && nav.loadEventEnd > 0 ? seen(nav.loadEventEnd - nav.startTime, nav) : null;
 }
 
 /** Contract attributes of a page view span. Unknown values are left out. */
@@ -89,8 +97,8 @@ export function pageViewAttributes(view: PageView, nav: NavPoints | null, images
     [ATTR_BROWSER_REMOTE]: view.remote,
     "url.full": view.url,
     ...(load && nav ? loadTimings(nav, view.fcpMs) : {}),
-    [ATTR_PAGE.fcpMs]: load ? round1(view.fcpMs) : null,
-    [ATTR_PAGE.lcpMs]: load ? round1(view.lcpMs) : null,
+    [ATTR_PAGE.fcpMs]: load ? round1(seen(view.fcpMs, nav)) : null,
+    [ATTR_PAGE.lcpMs]: load ? round1(seen(view.lcpMs, nav)) : null,
     [ATTR_PAGE.cls]: Math.round(clsFromShifts(view.shifts) * 1000) / 1000,
     [ATTR_PAGE.inpMs]: round1(view.inpMs),
     [ATTR_PAGE.hydrationMs]: load ? round1(view.hydrationMs) : null,

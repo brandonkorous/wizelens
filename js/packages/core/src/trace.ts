@@ -121,13 +121,19 @@ function statusOf(spans: readonly Span[]): SpanStatus {
 }
 
 /** Build a full Trace from parts. Sorts spans and logs, computes summary fields. */
+/** The first span of each span id: a crawler's renderer can send the same span twice in one trace. */
+export function uniqueSpans(spans: readonly Span[]): Span[] {
+  const seen = new Set<string>();
+  return spans.filter((s) => !seen.has(s.spanId) && !!seen.add(s.spanId));
+}
+
 export function buildTrace(
   traceId: string,
   spans: readonly Span[],
   logs: readonly LogRecord[],
   remotes: Iterable<string>,
 ): Trace {
-  const fixed = adjustClockSkew(dropLateBrowserSpans(spans));
+  const fixed = adjustClockSkew(dropLateBrowserSpans(uniqueSpans(spans)));
   const sortedSpans = fixed.spans.sort((a, b) => a.startMs - b.startMs);
   const sortedLogs = shiftLogs(logs, fixed.offsets).sort((a, b) => a.timeMs - b.timeMs);
   const root = findRootSpan(sortedSpans);

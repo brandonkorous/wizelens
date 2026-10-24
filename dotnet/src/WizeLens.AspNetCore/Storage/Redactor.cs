@@ -33,7 +33,7 @@ internal sealed partial class Redactor(IEnumerable<string> keys)
         if (IsSensitive(k)) return Redacted;
         if (k == "url.query") return ValuePatterns.RedactText(RedactQueryString(text));
         if (k == "url.full") return ValuePatterns.RedactText(RedactUrl(text));
-        return ValuePatterns.RedactText(text);
+        return ValuePatterns.SkipsValuePatterns(k) ? text : ValuePatterns.RedactText(text);
     }
 
     /// <summary>A query string with the values of sensitive keys replaced: <c>token=[redacted]</c>.</summary>

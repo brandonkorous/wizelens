@@ -41,7 +41,7 @@ export function RequestContext({ event }: { event: ErrorEvent }) {
 }
 
 export function ErrorTags({ event }: { event: ErrorEvent }) {
-  const tags = [...event.tags, event.browser ? "browser" : "server", ...(event.critical ? ["critical"] : [])];
+  const tags = [...event.tags, event.browser ? "browser" : "server", ...(event.critical ? ["critical"] : []), ...(event.bot ? ["bot"] : [])];
   if (tags.length === 0) return <Empty>No tags on this request.</Empty>;
   return (
     <div className="wl-chips">

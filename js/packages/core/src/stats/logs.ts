@@ -1,7 +1,7 @@
 import { isLooseTraceId } from "../loose.js";
 import type { Attributes, LogLevel, Trace } from "../types.js";
 import { memoByObject } from "./common.js";
-import { displayService } from "./errors.js";
+import { browserAppOf, webAppName } from "../web-app.js";
 import { patternIdOf } from "./log-patterns.js";
 
 export const LOG_LEVELS: readonly LogLevel[] = ["trace", "debug", "info", "warn", "error", "critical"];
@@ -30,7 +30,7 @@ function rowsOf(trace: Trace): LogRow[] {
     spanId: l.spanId,
     timeMs: l.timeMs,
     level: l.level,
-    service: displayService(l.service),
+    service: l.service === "browser" ? webAppName(browserAppOf(l)) : l.service,
     category: l.category,
     message: l.message,
     attributes: l.attributes,

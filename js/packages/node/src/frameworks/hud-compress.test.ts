@@ -10,7 +10,7 @@ import { compress as honoCompress } from "hono/compress";
 import Koa from "koa";
 import koaCompress from "koa-compress";
 import { afterAll, describe, expect, it, vi } from "vitest";
-import { TAG } from "../test/hud.js";
+import { tagOf } from "../test/hud.js";
 import type { WizeLensOptions } from "../types.js";
 import { createWizeLens } from "../wizelens.js";
 import { wizelensFastify } from "./fastify.js";
@@ -25,6 +25,7 @@ vi.mock("../hud-bundle.js", async (importOriginal) => {
 // Bigger than every compressing layer's 1 KB threshold.
 const PAGE = `<!doctype html><html><body>${"<p>order line</p>".repeat(200)}</body></html>`;
 const SCRIPT = `console.log(${JSON.stringify("x".repeat(4000))});`;
+const SERVICE = "hud-gzip";
 const make = (name: string, o: Partial<WizeLensOptions> = {}) =>
   createWizeLens({ serviceName: name, enabled: true, dashboard: true, storage: "memory", instrumentFetch: false, captureConsole: false, ...o });
 const closers: (() => Promise<unknown>)[] = [];
@@ -45,14 +46,14 @@ async function get(url: string, accept: string) {
 async function check(base: string): Promise<void> {
   const page = await get(`${base}/page`, "text/html,application/xhtml+xml,*/*;q=0.8");
   expect(page.encoding).toBeNull();
-  expect(page.text).toBe(PAGE.replace("</body>", `${TAG}</body>`));
+  expect(page.text).toBe(PAGE.replace("</body>", `${tagOf(SERVICE)}</body>`));
   const script = await get(`${base}/app.js`, "*/*");
   expect(script.encoding).toBe("gzip");
   expect(script.text).toBe(SCRIPT);
 }
 
 function expressApp(o: Partial<WizeLensOptions> = {}, seen: string[] = []) {
-  const wl = make("hud-gzip-express", o);
+  const wl = make(SERVICE, o);
   const app = express();
   app.use(wl.middleware);
   app.use(compression());
@@ -82,7 +83,7 @@ describe("the HUD on pages a compressing layer would gzip", () => {
 
   it("@fastify/compress", async () => {
     const app = Fastify();
-    await app.register(wizelensFastify(make("hud-gzip-fastify")));
+    await app.register(wizelensFastify(make(SERVICE)));
     await app.register(fastifyCompress, { global: true });
     app.get("/page", async (_req, reply) => reply.type("text/html").send(PAGE));
     app.get("/app.js", async (_req, reply) => reply.type("application/javascript").send(SCRIPT));
@@ -94,7 +95,7 @@ describe("the HUD on pages a compressing layer would gzip", () => {
   it("koa-compress", async () => {
     const app = new Koa();
     app.silent = true;
-    app.use(wizelensKoa(make("hud-gzip-koa")));
+    app.use(wizelensKoa(make(SERVICE)));
     app.use(koaCompress({ threshold: 1024 }));
     app.use((ctx) => {
       if (ctx.path === "/page") (ctx.type = "html"), (ctx.body = PAGE);
@@ -105,7 +106,7 @@ describe("the HUD on pages a compressing layer would gzip", () => {
 
   it("hono/compress", async () => {
     const app = new Hono();
-    app.use(wizelensHono(make("hud-gzip-hono")));
+    app.use(wizelensHono(make(SERVICE)));
     app.use(honoCompress());
     app.get("/page", (c) => c.html(PAGE));
     app.get("/app.js", (c) => c.body(SCRIPT, 200, { "content-type": "application/javascript" }));

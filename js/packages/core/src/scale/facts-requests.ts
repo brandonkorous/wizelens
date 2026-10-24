@@ -1,7 +1,7 @@
 // Request facts: the req* kinds (totals, filter dimensions, per service, time parts) and the ins* kinds.
 import { insightHits } from "../stats/insights.js";
 import { isFailed, type RequestRow } from "../stats/requests.js";
-import { displayService } from "../stats/errors.js";
+import { shownServices } from "../web-app.js";
 import { type Contribution, contribution, withServices } from "./agg.js";
 import { joinKey } from "./kinds.js";
 
@@ -58,7 +58,7 @@ function partContributions(r: RequestRow): Contribution[] {
 function userContributions(r: RequestRow, base: Pick<Contribution, "err" | "sum">, name: string | null): Contribution[] {
   if (!r.user) return [];
   const top = name ? { top: { rank: r.startMs, data: { name } } } : {};
-  return [contribution("usr", r.user, r.startMs, { ...base, values: [r.durationMs], ...top }), contribution("ep.u", joinKey(displayService(r.service), r.endpoint, r.user), r.startMs)];
+  return [contribution("usr", r.user, r.startMs, { ...base, values: [r.durationMs], ...top }), contribution("ep.u", joinKey(shownServices([r.service], r.app)[0]!, r.endpoint, r.user), r.startMs)];
 }
 
 /** Everything one request adds to the rollups; `userName` is the user's display name, kept on their `usr` row. */
@@ -74,6 +74,6 @@ export function requestContributions(r: RequestRow, userName: string | null = nu
   for (const s of new Set([r.service, ...r.services])) {
     out.push(contribution("req.svc", joinKey(s, ...dims), at, { ...base, c: [r.dbCount, withInsights, s === r.service ? 1 : 0] }));
   }
-  const services = [r.service, ...r.services].map(displayService);
+  const services = shownServices([r.service, ...r.services], r.app);
   return [...out, ...partContributions(r), ...insightContributions(r), ...userContributions(r, base, userName)].flatMap((c) => withServices(c, services));
 }

@@ -1,5 +1,5 @@
 import type { LogLevel, LogRecord } from "@wizeworks/lens-core";
-import type { ViewRef } from "./browser-span.js";
+import { browserAppAttrs, type ViewRef } from "./browser-span.js";
 import { now } from "./session.js";
 
 /** A browser log line, sent with the browser spans. */
@@ -56,7 +56,7 @@ export function watchConsole(view: () => ViewRef, push: (log: ClientLog) => void
       if (watching && ++count <= MAX_LOGS) {
         const v = view();
         const message = formatConsole(args);
-        push({ traceId: v.traceId, spanId: v.spanId, timeMs: now(), level, category: "console", message, service: "browser", attributes: attributesOf(args) });
+        push({ traceId: v.traceId, spanId: v.spanId, timeMs: now(), level, category: "console", message, service: "browser", attributes: { ...browserAppAttrs(), ...attributesOf(args) } });
       }
       return original.apply(this, args);
     };

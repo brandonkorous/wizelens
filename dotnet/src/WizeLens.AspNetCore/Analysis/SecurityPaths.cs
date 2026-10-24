@@ -5,7 +5,7 @@ namespace WizeLens.Analysis;
 /// <summary>Open sensitive paths (A02), open admin routes (A01), and stack traces in answers (A10); the same as core/src/security/paths.ts.</summary>
 public static partial class SecurityPaths
 {
-    private static readonly string[] CredentialHeaders = ["authorization", "cookie", "x-api-key", "api-key"];
+    private const string HeaderPrefix = "http.request.header.";
 
     public static IEnumerable<SecurityFinding> ExposedPath(SecurityRequest r)
     {
@@ -13,7 +13,11 @@ public static partial class SecurityPaths
         if (r.Is2xx && Exposed().IsMatch(path)) yield return SecurityFinding.Of("exposed-path", "error", "A sensitive file or debug page is open", path, r.Span);
     }
 
-    public static bool Anonymous(SecurityRequest r) => !r.User && CredentialHeaders.All(h => r.RequestHeader(h) is null);
+    /// <summary>True when a request header is a credential by its name (Authorization, Cookie, any <c>*-token</c>, <c>*-auth</c>, <c>*-secret</c>, <c>*-key</c>), or its value was redacted as one.</summary>
+    public static bool SentCredentials(Model.Span span) => span.Attributes.Any(kv => kv.Key.StartsWith(HeaderPrefix, StringComparison.Ordinal)
+        && (CredentialName().IsMatch(kv.Key[HeaderPrefix.Length..]) || kv.Value is string v && v.StartsWith("[redacted", StringComparison.Ordinal)));
+
+    public static bool Anonymous(SecurityRequest r) => !r.User && !SentCredentials(r.Span);
 
     public static IEnumerable<SecurityFinding> OpenAdmin(SecurityRequest r)
     {
@@ -35,6 +39,9 @@ public static partial class SecurityPaths
 
     [GeneratedRegex(@"Traceback \(most recent call last\)|goroutine \d+ \[|\.java:\d+\)|:line \d+|(?:\n|\\n)\s*at [\w.$<>`[\]]+ ?\(|(?:\n|\\n)\s*at .+ \(.+:\d+:\d+\)|Stack trace:(?:\s|\\n)*#0", RegexOptions.ECMAScript)]
     private static partial Regex Stack();
+
+    [GeneratedRegex(@"(?:^|[-_])(?:authorization|cookie|token|auth|secret|key|apikey)(?:$|[-_])", RegexOptions.ECMAScript)]
+    private static partial Regex CredentialName();
 
     [GeneratedRegex(@"(?:^|/)(?:admin|internal|management)(?:/|$)", RegexOptions.ECMAScript)]
     private static partial Regex AdminSegment();

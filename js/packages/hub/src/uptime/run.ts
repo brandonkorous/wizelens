@@ -1,8 +1,9 @@
 import { type IncomingMessage, request as httpRequest } from "node:http";
 import { request as httpsRequest } from "node:https";
 import type { TLSSocket } from "node:tls";
-import { parseExpectStatus, statusMatches, type UptimeCheckInput, type UptimeResult } from "@wizeworks/lens-core";
+import { parseExpectStatus, statusMatches, type UptimeCheckInput, type UptimeHop, type UptimeResult } from "@wizeworks/lens-core";
 import { isCertError, probeCertEnd } from "./cert.js";
+import { stallText, timeHop } from "./hop-timing.js";
 import { checkLiteral, guardedLookup } from "./guard.js";
 
 export interface RunOptions {
@@ -11,6 +12,8 @@ export interface RunOptions {
   now?: () => number;
   /** Extra trusted certificates, for tests. */
   ca?: string;
+  /** Try a failed check once more before calling it down. Default true. */
+  confirm?: boolean;
 }
 
 const MAX_REDIRECTS = 5;
@@ -48,8 +51,8 @@ function readBody(res: IncomingMessage, keep: boolean): Promise<string> {
   });
 }
 
-/** One request, no redirects followed. */
-function hop(url: URL, check: UptimeCheckInput, o: RunOptions, signal: AbortSignal): Promise<Hop> {
+/** One request on a fresh connection, no redirects followed. Its phase times go on `hops` as it runs. */
+function hop(url: URL, check: UptimeCheckInput, o: RunOptions, signal: AbortSignal, hops: UptimeHop[]): Promise<Hop> {
   checkLiteral(url, o.allowPrivate);
   const send = url.protocol === "https:" ? httpsRequest : httpRequest;
   const headers = { "user-agent": USER_AGENT, accept: "*/*", ...check.headers };
@@ -61,6 +64,7 @@ function hop(url: URL, check: UptimeCheckInput, o: RunOptions, signal: AbortSign
         reject,
       );
     });
+    hops.push(timeHop(req, url));
     req.on("error", reject);
     req.end();
   });
@@ -69,11 +73,11 @@ function hop(url: URL, check: UptimeCheckInput, o: RunOptions, signal: AbortSign
 /** Redirects are followed unless the check expects a 3xx status itself. */
 const followsRedirects = (check: UptimeCheckInput) => !(parseExpectStatus(check.expectStatus) ?? []).some(([lo, hi]) => lo < 400 && hi >= 300);
 
-async function follow(check: UptimeCheckInput, o: RunOptions, signal: AbortSignal): Promise<Hop & { url: string; tls: number | null }> {
+async function follow(check: UptimeCheckInput, o: RunOptions, signal: AbortSignal, hops: UptimeHop[]): Promise<Hop & { url: string; tls: number | null }> {
   let url = new URL(check.url);
   let tls: number | null = null;
   for (let i = 0; ; i++) {
-    const h = await hop(url, check, o, signal);
+    const h = await hop(url, check, o, signal, hops);
     tls ??= h.tlsExpiresMs;
     if (!followsRedirects(check) || h.status < 300 || h.status >= 400 || !h.location || i >= MAX_REDIRECTS) return { ...h, url: url.toString(), tls };
     url = new URL(h.location, url);
@@ -94,21 +98,30 @@ const errorText = (err: unknown, timeoutMs: number): string => {
   return (e.message || e.code || "The request failed").slice(0, 300);
 };
 
-/** Run one check: follow redirects, time it, match status and body, and read the certificate's end. */
-export async function runCheck(check: UptimeCheckInput, o: RunOptions): Promise<UptimeResult> {
+/** One try: follow redirects, time it and each hop, match status and body, and read the certificate's end. */
+async function attempt(check: UptimeCheckInput, o: RunOptions): Promise<UptimeResult> {
   const now = o.now ?? Date.now;
   const startMs = now();
   const t0 = performance.now();
   const took = () => Math.max(0, Math.round((performance.now() - t0) * 10) / 10);
+  const hops: UptimeHop[] = [];
   try {
-    const h = await follow(check, o, AbortSignal.timeout(check.timeoutMs));
+    const h = await follow(check, o, AbortSignal.timeout(check.timeoutMs), hops);
     const error = verdict(check, h);
-    return { startMs, durationMs: took(), ok: error === null, status: h.status, error, tlsExpiresMs: h.tls, finalUrl: h.url };
+    return { startMs, durationMs: took(), ok: error === null, status: h.status, error, tlsExpiresMs: h.tls, finalUrl: h.url, hops };
   } catch (err) {
     const durationMs = took();
     const cert = isCertError(err);
     const tlsExpiresMs = cert ? await probeCertEnd(check.url, o.allowPrivate, check.timeoutMs) : null;
-    const error = `${cert ? "The TLS certificate is not valid: " : ""}${errorText(err, check.timeoutMs)}`;
-    return { startMs, durationMs, ok: false, status: null, error, tlsExpiresMs, finalUrl: check.url };
+    const error = `${cert ? "The TLS certificate is not valid: " : ""}${errorText(err, check.timeoutMs)}${stallText(hops)}`;
+    return { startMs, durationMs, ok: false, status: null, error, tlsExpiresMs, finalUrl: check.url, hops };
   }
+}
+
+/** Run one check. A failure is tried once more on a fresh connection, so a check is down only after two failures in a row. */
+export async function runCheck(check: UptimeCheckInput, o: RunOptions): Promise<UptimeResult> {
+  const first = await attempt(check, o);
+  if (first.ok || o.confirm === false) return first;
+  const again = await attempt(check, o);
+  return { ...again, startMs: first.startMs, error: again.ok ? null : `${again.error} (failed twice in a row)` };
 }

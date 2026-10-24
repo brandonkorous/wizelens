@@ -10,6 +10,8 @@ export const ATTR_BROWSER_RENDER_MS = "wizelens.browser.render_ms";
 export const ATTR_BROWSER_TYPE = "wizelens.browser.type";
 /** Route shape of the page the span belongs to, for example "/products/{}". */
 export const ATTR_BROWSER_ROUTE = "wizelens.browser.route";
+/** The browser app's name (`lens({ service })`, `data-service`); it shows as "<name> (browser)". Absent: "Web App". */
+export const ATTR_BROWSER_APP = "wizelens.browser.app";
 /** Page view: "load" for a full page load, "spa" for a client-side route change. */
 export const ATTR_BROWSER_NAVIGATION = "wizelens.browser.navigation";
 /** Browser span: the WizeLens endpoint of the server that answered, when it is not the one the browser sends to. */
@@ -33,8 +35,12 @@ export function browserTypeOf(span: Span): BrowserSpanType | null {
   return t === "pageview" || t === "react" || t === "error" ? t : "fetch";
 }
 
-/** A browser fetch the app waited for: not a prefetch, not cancelled. The Web App row counts only these. */
-export const isWebAppCall = (s: Span): boolean => browserTypeOf(s) === "fetch" && s.attributes[ATTR_BROWSER_PREFETCH] !== true && s.attributes[ATTR_BROWSER_CANCELLED] !== true;
+/** Set on browser spans from a crawler's renderer or a driven browser (Googlebot, HeadlessChrome, `navigator.webdriver`). */
+export const ATTR_BROWSER_BOT = "wizelens.browser.bot";
+
+/** A browser fetch the app waited for: not a prefetch, not cancelled, not a bot's renderer. The Web App row counts only these. */
+export const isWebAppCall = (s: Span): boolean =>
+  browserTypeOf(s) === "fetch" && s.attributes[ATTR_BROWSER_PREFETCH] !== true && s.attributes[ATTR_BROWSER_CANCELLED] !== true && s.attributes[ATTR_BROWSER_BOT] !== true;
 
 /** Page view timings in ms (CLS is a score). Absent when not measured. */
 export const ATTR_PAGE = {
@@ -52,6 +58,9 @@ export const ATTR_PAGE = {
   images: "wizelens.page.images",
   largeImages: "wizelens.page.large_images",
 } as const;
+
+/** A page view of a prerendered page: its times count from when it was shown (`activationStart`). */
+export const ATTR_PAGE_PRERENDERED = "wizelens.page.prerendered";
 
 /** React render stats span: JSON string of ReactComponentStat[]. */
 export const ATTR_REACT_COMPONENTS = "wizelens.react.components";

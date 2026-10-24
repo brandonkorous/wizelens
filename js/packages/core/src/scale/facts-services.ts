@@ -1,13 +1,15 @@
 // Service facts: the svc and svc.ep kinds (Services rows), edge (who calls whom), and bn.* (bottlenecks).
 import { isWebAppCall } from "../attributes.js";
+import { isBotRequestTrace, withoutBotBrowser } from "../bots.js";
 import { endpointNameOf } from "../models/service-detail.js";
+import { externalName } from "../stats/in-cluster.js";
 import { isConsumer, isProducer, queueOf } from "../stats/messaging.js";
 import { databaseOf, edgeCallsOf, externalCallsOf, hostOf, isFailedSpan, type ServiceKind } from "../stats/services.js";
 import { traceParts } from "../stats/traces.js";
 import { isStreamSpan, requestMsOf } from "../stream.js";
 import { isUptimeSpan } from "../uptime/check.js";
 import type { Span, Trace } from "../types.js";
-import { displayService } from "../stats/errors.js";
+import { browserAppOf, spanServiceName, webAppName, webRowKey } from "../web-app.js";
 import { type Contribution, contribution, withServices } from "./agg.js";
 import { joinKey } from "./kinds.js";
 
@@ -24,9 +26,9 @@ const attr = (s: Span, k: string) => (s.attributes[k] == null ? null : String(s.
 export function serviceRowOf(s: Span, external: ReadonlySet<Span>): (ServiceRowInfo & { key: string }) | null {
   if (isUptimeSpan(s)) return null;
   if (s.category === "http.server") return { key: `api:${s.service}`, name: s.service, kind: "api", detail: null };
-  if (isWebAppCall(s)) return { key: "web:browser", name: "Web App", kind: "web", detail: "browser" };
+  if (isWebAppCall(s)) return { key: webRowKey(browserAppOf(s)), name: webAppName(browserAppOf(s)), kind: "web", detail: "browser" };
   if (s.category === "db") return { key: `db:${databaseOf(s)}`, name: databaseOf(s), kind: "database", detail: attr(s, "db.system.name") };
-  if (external.has(s)) return { key: `ext:${hostOf(s)}`, name: hostOf(s), kind: "external", detail: hostOf(s) };
+  if (external.has(s)) return { key: `ext:${hostOf(s)}`, name: externalName(hostOf(s)), kind: "external", detail: hostOf(s) };
   if (isProducer(s)) return { key: `queue:${queueOf(s)}`, name: queueOf(s), kind: "queue", detail: queueOf(s) };
   if (isConsumer(s)) return { key: `worker:${s.service}`, name: s.service, kind: "worker", detail: null };
   return null;
@@ -44,12 +46,14 @@ function streamContributions(s: Span, key: string, endpoint: string): Contributi
 
 function serviceContributions(trace: Trace): Contribution[] {
   const external = new Set(externalCallsOf(trace));
-  return trace.spans.flatMap((s) => {
+  const bot = isBotRequestTrace(trace) ? 1 : 0;
+  // A bot's renderer is not a person waiting: its browser spans stay out of the Web App row, its p95, and Problems.
+  return withoutBotBrowser(trace).flatMap((s) => {
     const row = serviceRowOf(s, external);
     if (!row) return [];
     const { key, ...info } = row;
     const ms = requestMsOf(s);
-    const base = { err: isFailedSpan(s) ? 1 : 0, sum: ms };
+    const base = { err: isFailedSpan(s) ? 1 : 0, sum: ms, c: [bot] };
     const out = [contribution("svc", key, s.startMs, { ...base, values: [ms], top: { rank: s.startMs, data: info } })];
     if (!WITH_ENDPOINTS.has(row.kind)) return out;
     const endpoint = endpointNameOf(s, row.kind);
@@ -64,7 +68,7 @@ function edgeContributions(trace: Trace): Contribution[] {
 }
 
 /** Every service with a span in the trace, by display name: the services a whole-trace count is filed under. */
-export const traceServices = (t: Trace): string[] => [...new Set(t.spans.map((s) => displayService(s.service)))];
+export const traceServices = (t: Trace): string[] => [...new Set(t.spans.map(spanServiceName))];
 
 /** Bottleneck parts at the trace's start time, with the same filter as `bottlenecks`. */
 function bottleneckContributions(trace: Trace): Contribution[] {

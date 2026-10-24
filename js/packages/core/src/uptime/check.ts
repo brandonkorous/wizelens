@@ -80,6 +80,18 @@ export interface UptimeResult {
   tlsExpiresMs: number | null;
   /** The address that answered, after redirects. */
   finalUrl: string;
+  /** Each request of the run, redirects included, with its phase times; absent from runners that do not time them. */
+  hops?: UptimeHop[];
+}
+
+/** One request of a run: its URL (no query) and when each phase ended, in ms from its start; null when it did not get there. */
+export interface UptimeHop {
+  url: string;
+  status: number | null;
+  dnsMs: number | null;
+  connectMs: number | null;
+  tlsMs: number | null;
+  ttfbMs: number | null;
 }
 
 /** Whole days until a certificate ends (negative once it has), or null without one. */

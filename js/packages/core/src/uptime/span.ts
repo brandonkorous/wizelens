@@ -24,6 +24,7 @@ function attributesOf(check: UptimeCheck, r: UptimeResult): Attributes {
     [ATTR_UPTIME_CHECK]: check.id,
     "wizelens.uptime.check_name": check.name,
     [ATTR_UPTIME_OK]: r.ok,
+    ...(r.hops?.length ? { "wizelens.uptime.hops": JSON.stringify(r.hops) } : {}),
     ...(r.tlsExpiresMs === null ? {} : { "tls.server.not_after": new Date(r.tlsExpiresMs).toISOString(), "wizelens.uptime.tls_days_left": days }),
   };
 }

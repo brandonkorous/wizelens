@@ -3,6 +3,7 @@ import { busyMs } from "../busy.js";
 import { DEFAULT_SLOW_MS } from "../health.js";
 import { entryServerSpan, findRootSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
+import { spanServiceName } from "../web-app.js";
 import { avgOf, groupBy, series, type TimeWindow } from "./common.js";
 import { requestOf } from "./requests.js";
 import { isConsumer, isProducer, queueOf } from "./messaging.js";
@@ -49,15 +50,15 @@ function serverPart(s: Span, own: number): TracePart[] {
 }
 
 function fetchParts(s: Span, child: Span | undefined, own: number): TracePart[] {
-  const parts: TracePart[] = [{ key: "browser", label: "Browser", kind: "browser", owner: "Web App", ms: s.durationMs, segs: [[s.startMs, end(s)]] }];
+  const parts: TracePart[] = [{ key: "browser", label: "Browser", kind: "browser", owner: spanServiceName(s), ms: s.durationMs, segs: [[s.startMs, end(s)]] }];
   parts.push({ key: "network", label: "Network", kind: "network", owner: "Network", ms: own, segs: child ? gaps(s, child) : [[s.startMs, end(s)]] });
   const render = num(s, ATTR_BROWSER_RENDER_MS);
-  if (render) parts.push({ key: "render", label: "Render", kind: "render", owner: "Web App", ms: render, segs: [[end(s), end(s) + render]] });
+  if (render) parts.push({ key: "render", label: "Render", kind: "render", owner: spanServiceName(s), ms: render, segs: [[end(s), end(s) + render]] });
   return parts;
 }
 
 const pagePart = (key: string, label: string, kind: LayerKind, s: Span, from: number, to: number): TracePart =>
-  ({ key: `page:${key}`, label, kind, owner: "Web App", ms: to - from, segs: [[s.startMs + from, s.startMs + to]] });
+  ({ key: `page:${key}`, label, kind, owner: spanServiceName(s), ms: to - from, segs: [[s.startMs + from, s.startMs + to]] });
 
 /** A page view as phases from the navigation start: server response, first paint, main content, load. */
 function pageviewParts(s: Span): TracePart[] {

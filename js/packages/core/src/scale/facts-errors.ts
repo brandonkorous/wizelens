@@ -14,7 +14,7 @@ const capStack = (e: ErrorEvent): ErrorEvent => (e.stack && e.stack.length > TOP
 
 function eventContributions(e: ErrorEvent, user: string | null): Contribution[] {
   const at = e.timeMs;
-  const critical = { c: [e.critical ? 1 : 0] };
+  const critical = { c: [e.critical ? 1 : 0, e.bot ? 1 : 0] };
   const users = user ? [contribution("err.u", joinKey(e.key, user), at)] : [];
   return [
     ...users,

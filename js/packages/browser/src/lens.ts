@@ -1,5 +1,5 @@
 import type { Attributes } from "@wizeworks/lens-core";
-import { setBrowserRelease, setBrowserUser } from "./browser-span.js";
+import { setBrowserApp, setBrowserRelease, setBrowserUser } from "./browser-span.js";
 import { mountHud } from "./hud/element.js";
 import { isCloudBrowserEndpoint } from "./cloud.js";
 import { probeReadApi } from "./read-probe.js";
@@ -12,6 +12,8 @@ export interface WizeLensOptions extends RecorderOptions {
   enabled?: boolean;
   /** The web app's version, kept on browser spans for release markers and so stacks find the right source maps. Default: what the build plugin set. */
   release?: string;
+  /** The web app's name, so each app has its own Services row ("shop (browser)") in place of one "Web App". Sent as `wizelens.browser.app`. */
+  service?: string;
   /** The signed-in user, sent as `enduser.id` on every browser span. Change it later with `setUser`. */
   user?: string | null;
   /** The signed-in user's display name, sent as `user.full_name` for the Users page. */
@@ -72,8 +74,9 @@ function startHud(recorder: Recorder, show: boolean | Promise<boolean>, slowMs: 
 }
 
 function start(options: WizeLensOptions, source: InstanceSource): { lens: WizeLens; entry: RegisteredInstance } {
-  const { enabled: _on, release, user, userName, hud = "auto", slowMs, ...rest } = options;
+  const { enabled: _on, release, service, user, userName, hud = "auto", slowMs, ...rest } = options;
   setBrowserRelease(release ?? rest.version);
+  setBrowserApp(service);
   setBrowserUser(user, userName);
   // Asked before install, so the probe is not traced. No HUD reads nothing back: send-only servers work as they are.
   const endpointUrl = endpointUrlOf(rest.endpoint);

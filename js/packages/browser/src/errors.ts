@@ -49,12 +49,15 @@ export function errorSpan(view: ViewRef, err: CapturedError, sessionId: string):
   });
 }
 
+/** A page the browser renders ahead, before anyone opens it: its errors are not anyone's. */
+const isPrerendering = (): boolean => typeof document !== "undefined" && (document as { prerendering?: boolean }).prerendering === true;
+
 /** Report uncaught errors and unhandled promise rejections. Returns a stop function. */
 export function watchErrors(onError: (err: CapturedError) => void): () => void {
   if (typeof addEventListener !== "function") return () => {};
   let count = 0;
   const report = (err: CapturedError) => {
-    if (++count <= MAX_ERRORS) onError(err);
+    if (!isPrerendering() && ++count <= MAX_ERRORS) onError(err);
   };
   const onWindowError = (e: Event) => {
     const ev = e as ErrorEvent;

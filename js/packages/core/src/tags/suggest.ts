@@ -2,7 +2,8 @@
 import type { SearchField, SearchNode } from "../search/ast.js";
 import { formatSearch } from "../search/format.js";
 import type { Suggestion, SuggestRequest } from "../search/suggest.js";
-import { messageShape, rawService } from "../stats/errors.js";
+import { messageShape } from "../stats/error-keys.js";
+import { rawService } from "../stats/errors.js";
 import { TAG_LIMITS, type TagRule } from "./types.js";
 
 /** What "Tag this" offers: a label, a tag name to start from, and the search. */

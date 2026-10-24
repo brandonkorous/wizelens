@@ -1,4 +1,5 @@
 import { ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_ROUTE, ATTR_PAGE, browserTypeOf } from "../attributes.js";
+import { withoutBotBrowser } from "../bots.js";
 import type { Span, Trace } from "../types.js";
 import { avgOf, groupBy, type Impact, percentileOf } from "./common.js";
 import type { InsightGroup } from "./insights.js";
@@ -34,13 +35,23 @@ const num = (s: Span, key: string): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
+/** A page's host and route ("mypiggles.com/"), so the same route on two sites is two routes; the route alone when no URL is known. */
+function routeKey(route: unknown, url: unknown): string {
+  const path = typeof route === "string" && route ? route : "/";
+  if (typeof url !== "string") return path;
+  try {
+    return `${new URL(url).host}${path}`;
+  } catch {
+    return path;
+  }
+}
+
 export function pageViewOf(s: Span): PageView {
-  const route = s.attributes[ATTR_BROWSER_ROUTE];
   const url = s.attributes["url.full"];
   return {
     traceId: s.traceId,
     startMs: s.startMs,
-    route: typeof route === "string" && route ? route : "/",
+    route: routeKey(s.attributes[ATTR_BROWSER_ROUTE], url),
     navigation: s.attributes[ATTR_BROWSER_NAVIGATION] === "spa" ? "spa" : "load",
     url: typeof url === "string" ? url : null,
     renderMs: num(s, ATTR_PAGE.renderMs) ?? (s.durationMs > 0 ? s.durationMs : null),
@@ -62,7 +73,7 @@ export function pageViewOf(s: Span): PageView {
 /** Page views in the traces, newest first. */
 export function pageViews(traces: readonly Trace[]): PageView[] {
   const out: PageView[] = [];
-  for (const t of traces) for (const s of t.spans) if (browserTypeOf(s) === "pageview") out.push(pageViewOf(s));
+  for (const t of traces) for (const s of withoutBotBrowser(t)) if (browserTypeOf(s) === "pageview") out.push(pageViewOf(s));
   return out.sort((a, b) => b.startMs - a.startMs);
 }
 

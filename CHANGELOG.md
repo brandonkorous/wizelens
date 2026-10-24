@@ -99,6 +99,79 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   Overview, and Problems skip every run, also runs written before. The Uptime page reads new `up` and `up.chk` stats.
   The stats version moves to 12, so hubs and the cloud rebuild their stats once after the update; pages fill back in
   as the rebuild runs.
+- **HTTP status errors no longer merge into one group per service.** A failed request with no exception ("HTTP 503")
+  is now grouped by its status and endpoint (`site|HttpError|503|GET /robots.txt`), not one "HTTP #" group for every
+  route. A state set on the old group (resolved, ignored, assigned) carries over to each group split from it until you
+  change that group. The stats version moves to 13, so hubs and the cloud rebuild their stats once more.
+- **An endpoint has one name on every page.** Requests, Services, the Endpoint page, security findings, and the MCP
+  `group_requests` tool now name an endpoint by its route, else by the shape of its path without the query
+  (`GET /api/live/{}`). A route-less request no longer shows its raw path with ids on the Service page, and a new
+  query key no longer makes a new endpoint. Old data is renamed when its stats are rebuilt (stats version 13).
+- **Node services report a release without extra setup.** When `release` and `WIZELENS_RELEASE` are not set, the Node
+  add-on now reads `OTEL_SERVICE_VERSION`, then the commit a host or CI sets (`SOURCE_VERSION`, `GIT_SHA`,
+  `GIT_COMMIT`, `VERCEL_GIT_COMMIT_SHA`, `RENDER_GIT_COMMIT`), then `npm_package_version`, then the version in the app's
+  own `package.json` (found from the started script or the working folder, never a package's). Started as
+  `node server.js`, a service used to report no release at all. The HUD tag the add-on injects carries the server's
+  release (`data-release`), and the Connect setup steps show `WIZELENS_RELEASE`.
+- **Each web app can have its own name in place of "Web App".** Set `service` in `lens({ service })`,
+  `<WizeLensProvider service>`, or `data-service` on the script tag, and the app's Services row, errors, console lines,
+  service map, and trace layers show "shop-web (browser)". Spans keep the service `browser` and carry the name as
+  `wizelens.browser.app`. On the cloud, a page that sets no name shows under its browser key's name. The HUD tag the
+  Node add-on injects names the app after its server ("api (browser)"). Data sent before, and apps that set no name,
+  still show as "Web App". Request lists filter every browser app as one "browser" service.
+- **Fewer false security findings.**
+  - A long session cookie no longer shows as "missing HttpOnly, Secure": the Node add-on hides Set-Cookie values
+    before it cuts a header to 1024 characters, so the flags stay.
+  - The `baggage` header is no longer scanned for secrets, so a Sentry `sample_rand` is not a "card number in span
+    data".
+  - Behind a proxy (the request has `Via` or `X-Forwarded-*`), a missing Strict-Transport-Security,
+    X-Content-Type-Options, or X-Frame-Options is info, "may be set at the edge", since the proxy can add it after
+    WizeLens saw the answer. A missing Content-Security-Policy is still a warning.
+  - A `Content-Security-Policy-Report-Only` header is "CSP in report-only mode" (info), not a missing CSP.
+  - The Node add-on reports the packages the app can load: its `dependencies` and theirs, not dev tools such as
+    vitest or esbuild left in a pnpm store.
+  - A `SELECT set_config(...)` run once per transaction (row-level security setup) is named "Session setup", with
+    info severity, not an N+1 query.
+- **More security findings that were not real are gone.**
+  - `traceparent` and `tracestate` are not scanned for secrets, so a 16-digit span id is no longer stored as
+    `[redacted:card]` (which also broke the stored header). Node and .NET.
+  - "An admin route answered without credentials" now counts any request header named like a credential
+    (`*-token`, `*-auth`, `*-secret`, `*-key`, as well as Authorization and Cookie), or a redacted one, so a cron route
+    called with `X-sparx-Internal-Cron-Token` is not open.
+  - Auth guessing counts a 401 or 403 only on a sign-in path or when the request sent credentials. A check such as
+    Caddy's on-demand TLS `GET /internal/domain-check`, refused with no credentials, is not guessing.
+- **Googlebot's renderer and other sites' scripts no longer make a web app look slow or broken.**
+  - The browser script marks every span from a crawler's renderer or a driven browser (Googlebot, HeadlessChrome,
+    `navigator.webdriver`) as `wizelens.browser.bot`. Those spans, and the browser spans of any request a bot's user
+    agent made (so older data too), stay out of the Web App row, its p95, and the Problems built on it.
+  - A trace keeps one span per span id, so a renderer that sends the same span twice does not double it.
+  - A browser error whose stack frames are all on other sites (an embedded Google sign-in) is tagged `third-party`
+    and is never critical.
+  - Request, trace, and span ids (`wizelens.request.id`, `trace_id`, `span.id`) are not scanned for secrets, so their
+    digits are no longer stored as `[redacted:card]`. Node and .NET.
+- **Render insights count what people saw.**
+  - A page Chrome prerendered is timed from when it was shown (`activationStart`), not from when it was rendered
+    ahead, and is marked `wizelens.page.prerendered`. The browser script sends no errors while a page is still
+    prerendering.
+  - Page views from a bot's renderer (by the page's own mark, or the request's user agent, such as bingbot) stay out
+    of render routes, phases, and insights.
+  - Routes are keyed by host and route (`mypiggles.com/`), so two sites that share a route are no longer one row.
+    Render insight keys change with them; render stats fill in again after the rebuild.
+- **Uptime failures say where they stalled, and one blip no longer opens an incident.** Each run times every request
+  it makes, redirects included: DNS, connect, TLS, and first byte, kept on the run's span as `wizelens.uptime.hops`.
+  A failed run's reason names the last URL and the phase it was in ("Timed out after 10 s at
+  https://getpiggles.com/sign-in (waiting for the first byte)"). A failed check is tried once more on a fresh
+  connection before it counts, so a check goes down, and an incident opens, only after two failures in a row. Hubs
+  and the cloud both.
+- **Calls inside the cluster are named as such and no longer raise Problems.** A call to a dotless host (`http://api/`)
+  or a cluster DNS name (`api-rest.sparx-prod.svc.cluster.local:3000`) shows as "api-rest (in-cluster)" in Services
+  and on the map, not as an outside service. Its traffic follows the app's, so it no longer drives "Traffic above
+  normal" or "p95 above normal" Problems of its own.
+- **Bots and scanners no longer make critical errors or Problems.** When stats are built, a request is a bot's when
+  its user agent is a crawler or scripted client, or its path is one only scanners ask for (`/.env`, `/wp-*`,
+  `/.git/`, `/.srcgraph/`, `debug.log`). Its errors are never critical; each error group counts how many came from
+  bots, and a group of only bot hits shows "Bot-only" in place of "Error". Services rows count bot requests apart, and
+  "Traffic above normal" Problems count only the rest, so a burst of `GET /.env` is no longer a Problem.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

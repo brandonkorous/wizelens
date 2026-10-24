@@ -40,7 +40,7 @@ it("adds a check, runs it, keeps incidents, and writes results as wizelens-uptim
   await send(`${api}/${check.id}/run`, "POST");
   clock.now += 120_000;
   const list = (await (await fetch(`${api}?project=shop`)).json()) as UptimeList;
-  expect(list.checks[0]).toMatchObject({ state: "down", lastStatus: 500, lastError: "Expected status 200-299, got 500" });
+  expect(list.checks[0]).toMatchObject({ state: "down", lastStatus: 500, lastError: "Expected status 200-299, got 500 (failed twice in a row)" });
   expect(list.incidents).toEqual([expect.objectContaining({ checkName: "Site", endMs: null })]);
   expect(list.checks[0]!.uptime["24h"]).toBeLessThan(100);
   expect((await (await fetch(`${api}?project=other`)).json()) as UptimeList).toMatchObject({ checks: [] });

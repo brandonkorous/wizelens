@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, Box, Monitor } from "lucide-react";
-import { type ErrorGroup, errorGroupDoc, type ErrorsModel, type IssueInfo, isErrorFiltered, percentChange, type ServiceErrorRow } from "@wizeworks/lens-core";
+import { type ErrorGroup, errorGroupDoc, type ErrorsModel, type IssueInfo, isErrorFiltered, isWebAppName, percentChange, type ServiceErrorRow } from "@wizeworks/lens-core";
 import { fmtCount, fmtPct, fmtTime } from "../../format";
 import { setQuery } from "../../routes";
 import { DotText } from "../../ui/Badges";
@@ -73,7 +73,7 @@ function Change({ now, before }: { now: number; before: number }) {
 
 function serviceColumns(): Column<ServiceErrorRow>[] {
   return [
-    { key: "service", header: "Service", cell: (s) => <span className="wl-cell-icon">{s.service === "Web App" ? <Monitor aria-hidden="true" /> : <Box aria-hidden="true" />}{s.service}</span> },
+    { key: "service", header: "Service", cell: (s) => <span className="wl-cell-icon">{isWebAppName(s.service) ? <Monitor aria-hidden="true" /> : <Box aria-hidden="true" />}{s.service}</span> },
     { key: "exceptions", header: "Exceptions", num: true, sort: (s) => s.exceptions, cell: (s) => fmtCount(s.exceptions) },
     { key: "rate", header: "Error Rate", num: true, sort: (s) => s.errorRate, cell: (s) => (s.requests ? fmtPct(s.errorRate) : "–") },
     { key: "trend", header: "Trend", cell: (s) => <Sparkline values={s.trend} width={110} height={24} color="var(--wl-red)" /> },

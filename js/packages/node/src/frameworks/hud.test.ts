@@ -10,7 +10,7 @@ import Fastify from "fastify";
 import { Hono } from "hono";
 import Koa from "koa";
 import { afterAll, describe, expect, it, vi } from "vitest";
-import { fetchPage, TAG } from "../test/hud.js";
+import { fetchPage, tagOf } from "../test/hud.js";
 import { createWizeLens } from "../wizelens.js";
 import { wizelensFastify } from "./fastify.js";
 import { wizelensHono } from "./hono.js";
@@ -22,7 +22,8 @@ vi.mock("../hud-bundle.js", async (importOriginal) => {
 });
 
 const PAGE = "<!doctype html><html><body><main>Shop</main></body></html>";
-const WITH_TAG = PAGE.replace("</body>", `${TAG}</body>`);
+const SERVICE = "hud-web";
+const WITH_TAG = PAGE.replace("</body>", `${tagOf(SERVICE)}</body>`);
 const make = (name: string) => createWizeLens({ serviceName: name, enabled: true, dashboard: true, storage: "memory", instrumentFetch: false, captureConsole: false });
 const closers: (() => Promise<unknown>)[] = [];
 afterAll(async () => void (await Promise.all(closers.map((c) => c()))));
@@ -47,7 +48,7 @@ describe("the HUD on every framework", () => {
   it("express: res.send and a static file streamed with its Content-Length", async () => {
     const dir = mkdtempSync(join(tmpdir(), "wl-hud-static-"));
     writeFileSync(join(dir, "index.html"), PAGE);
-    const wl = make("hud-express");
+    const wl = make(SERVICE);
     const app = express();
     app.use(wl.middleware);
     app.get("/page", (_req, res) => void res.send(PAGE));
@@ -62,7 +63,7 @@ describe("the HUD on every framework", () => {
 
   it("fastify: writeHead with a Content-Length, then the payload", async () => {
     const app = Fastify();
-    await app.register(wizelensFastify(make("hud-fastify")));
+    await app.register(wizelensFastify(make(SERVICE)));
     app.get("/page", async (_req, reply) => reply.type("text/html").send(PAGE));
     app.get("/data", async () => ({ html: "</body>" }));
     await app.listen({ port: 0, host: "127.0.0.1" });
@@ -73,7 +74,7 @@ describe("the HUD on every framework", () => {
   it("koa: a string body and a streamed one", async () => {
     const app = new Koa();
     app.silent = true;
-    app.use(wizelensKoa(make("hud-koa")));
+    app.use(wizelensKoa(make(SERVICE)));
     app.use((ctx) => {
       if (ctx.path === "/data") ctx.body = { html: "</body>" };
       else if (ctx.path === "/page") ctx.body = PAGE;
@@ -86,7 +87,7 @@ describe("the HUD on every framework", () => {
 
   it("hono: c.html and c.json", async () => {
     const app = new Hono();
-    app.use(wizelensHono(make("hud-hono")));
+    app.use(wizelensHono(make(SERVICE)));
     app.get("/page", (c) => c.html(PAGE));
     app.get("/data", (c) => c.json({ html: "</body>" }));
     await check(await listening(serve({ fetch: app.fetch, port: 0, hostname: "127.0.0.1" }) as Server));

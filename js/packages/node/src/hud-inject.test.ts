@@ -1,7 +1,7 @@
 import type { ServerResponse } from "node:http";
 import { gzipSync } from "node:zlib";
 import { afterAll, describe, expect, it, vi } from "vitest";
-import { closeServers, fetchPage, serveWith, TAG } from "./test/hud.js";
+import { closeServers, fetchPage, serveWith, tagOf } from "./test/hud.js";
 import { createWizeLens } from "./wizelens.js";
 import type { WizeLensOptions } from "./types.js";
 
@@ -13,6 +13,7 @@ vi.mock("./hud-bundle.js", async (importOriginal) => {
 afterAll(closeServers);
 
 const PAGE = "<!doctype html><html><head><title>Orders</title></head><body><h1>Orders</h1></body></html>";
+const TAG = tagOf("hud-api");
 const WITH_TAG = PAGE.replace("</body>", `${TAG}</body>`);
 const make = (o: Partial<WizeLensOptions> = {}) =>
   createWizeLens({ serviceName: "hud-api", enabled: true, dashboard: true, storage: "memory", instrumentFetch: false, captureConsole: false, ...o });

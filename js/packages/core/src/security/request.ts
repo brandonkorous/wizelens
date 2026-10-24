@@ -1,5 +1,5 @@
 // The request a trace answers, as the security rules read it: its headers, HTTPS, and its input values.
-import { pathShape } from "../analysis.js";
+import { endpointName } from "../endpoint.js";
 import { ATTR_ENDUSER, ATTR_REQUEST_BODY, ATTR_RESPONSE_BODY } from "../attributes.js";
 import { entryServerSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
@@ -96,14 +96,13 @@ export function securityRequest(trace: Trace): SecurityRequest | null {
   if (!span) return null;
   const method = (str(span, "http.request.method") ?? "GET").toUpperCase();
   const path = str(span, "url.path") ?? "/";
-  const query = str(span, "url.query");
   const header = (name: string) => str(span, `http.response.header.${name}`);
   const requestHeader = (name: string) => str(span, `http.request.header.${name}`);
   return {
     span,
     method,
     path,
-    endpoint: `${method} ${str(span, "http.route") ?? pathShape(query ? `${path}?${query}` : path)}`,
+    endpoint: endpointName(method, str(span, "http.route"), path),
     status: statusOf(span),
     https: str(span, "url.scheme")?.toLowerCase() === "https" || firstValue(requestHeader("x-forwarded-proto")) === "https",
     headersKnown: Object.keys(span.attributes).some((k) => k.startsWith("http.response.header.")),

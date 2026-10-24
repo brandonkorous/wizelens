@@ -29,6 +29,7 @@ export function scriptOptions(el: { getAttribute(name: string): string | null } 
   return {
     endpoint: endpoint || undefined,
     release: el.getAttribute("data-release") ?? undefined,
+    service: el.getAttribute("data-service") ?? undefined,
     enabled: !off("data-enabled"),
     captureConsole: !off("data-console"),
     captureXhr: !off("data-xhr"),

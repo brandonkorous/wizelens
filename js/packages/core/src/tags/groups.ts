@@ -1,7 +1,8 @@
 // Tags on rows that count many requests (endpoints, services, error groups, users): a rule shows when every field it names describes the row.
 import type { SearchField, SearchNode } from "../search/ast.js";
 import { compileSearch, type SearchDoc } from "../search/match.js";
-import { displayService, messageShape, rawService } from "../stats/errors.js";
+import { messageShape } from "../stats/error-keys.js";
+import { displayService, rawService } from "../stats/errors.js";
 import type { ActiveTag } from "./types.js";
 
 export type GroupKind = "endpoints" | "services" | "errors" | "users";

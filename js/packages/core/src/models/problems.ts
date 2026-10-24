@@ -7,6 +7,7 @@ import { type BaselineMode, baselineModeOf } from "../anomaly/shifts.js";
 import type { ServiceRowInfo } from "../scale/facts-services.js";
 import type { PageData, PageDef } from "../scale/needs.js";
 import { bucketStarts } from "../stats/common.js";
+import { isClusterDependency } from "../stats/in-cluster.js";
 import { type ModelMeta, metaOf } from "./input.js";
 import { errorsOf, keyBucketsOf, problemFollowUp, problemGrid, problemNeeds, samplesOf, versionsSeenOf } from "./problems-read.js";
 import { rowsOf } from "./read.js";
@@ -54,7 +55,10 @@ export function findProblem(problems: readonly Problem[], params: Readonly<Recor
 
 function rowInfoOf(d: PageData): (row: string) => ServiceRowInfo | null {
   const map = new Map(rowsOf(d, serviceRowsId("cur")).map((r) => [r.key, r.agg.top as ServiceRowInfo | null]));
-  return (row) => map.get(row) ?? null;
+  return (row) => {
+    const info = map.get(row) ?? null;
+    return isClusterDependency(info) ? null : info;
+  };
 }
 
 function problemsModel(d: PageData): ProblemsModel {

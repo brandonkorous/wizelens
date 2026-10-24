@@ -10,6 +10,8 @@ export interface NavPoints {
   responseStart: number;
   responseEnd: number;
   loadEventEnd: number;
+  /** When a prerendered page was shown; 0 or absent for a page loaded as it was opened. */
+  activationStart?: number;
 }
 
 export interface VitalHandlers {

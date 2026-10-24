@@ -40,9 +40,11 @@ describe("runCheck", () => {
 
   it("fails on a wrong status, missing text, or a timeout", async () => {
     const base = await serve(app);
-    expect(await runCheck(check({ url: `${base}/down` }), { allowPrivate: true })).toMatchObject({ ok: false, status: 503, error: "Expected status 200-299, got 503" });
+    expect(await runCheck(check({ url: `${base}/down` }), { allowPrivate: true })).toMatchObject({ ok: false, status: 503, error: "Expected status 200-299, got 503 (failed twice in a row)" });
     expect((await runCheck(check({ url: `${base}/health`, expectBody: "nope" }), { allowPrivate: true })).error).toMatch(/does not contain "nope"/);
-    expect(await runCheck(check({ url: `${base}/slow`, timeoutMs: 1000 }), { allowPrivate: true })).toMatchObject({ ok: false, status: null, error: "Timed out after 1 s" });
+    const slow = await runCheck(check({ url: `${base}/slow`, timeoutMs: 1000 }), { allowPrivate: true, confirm: false });
+    expect(slow).toMatchObject({ ok: false, status: null, error: `Timed out after 1 s at ${base}/slow (waiting for the first byte)` });
+    expect(slow.hops).toEqual([expect.objectContaining({ url: `${base}/slow`, status: null, ttfbMs: null, connectMs: expect.any(Number) })]);
   });
 
   it("follows redirects unless a 3xx is expected", async () => {
@@ -68,5 +70,16 @@ describe("runCheck", () => {
     expect(refused.ok).toBe(false);
     expect(refused.error).toMatch(/^The TLS certificate is not valid/);
     expect(refused.tlsExpiresMs).toBe(TEST_CERT_END);
+  });
+});
+
+describe("runCheck hops and retries", () => {
+  it("times each hop of a redirect, and passes when the confirm retry on a fresh connection passes", async () => {
+    let calls = 0;
+    const base = await serve((req, res) => (req.url === "/old" ? void res.writeHead(301, { Location: "/flaky" }).end() : void res.writeHead(++calls === 1 ? 503 : 200).end("ok")));
+    const r = await runCheck(check({ url: `${base}/old` }), { allowPrivate: true });
+    expect(r).toMatchObject({ ok: true, status: 200, error: null });
+    expect(r.hops?.map((h) => [h.url, h.status])).toEqual([[`${base}/old`, 301], [`${base}/flaky`, 200]]);
+    expect(r.hops?.every((h) => h.ttfbMs !== null && h.connectMs !== null)).toBe(true);
   });
 });

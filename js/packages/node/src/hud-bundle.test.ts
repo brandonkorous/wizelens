@@ -4,7 +4,7 @@ import { autoOptions } from "./auto/config.js";
 import { BodySplicer, lastBodyClose } from "./hud-body.js";
 import { hudTag, hudTagFor } from "./hud-bundle.js";
 import { hudOn } from "./mode.js";
-import { closeServers, fakeBundle, fetchPage, serveWith, TAG } from "./test/hud.js";
+import { closeServers, fakeBundle, fetchPage, PLAIN_TAG, serveWith } from "./test/hud.js";
 import type { WizeLensOptions } from "./types.js";
 import { buildWizeLens } from "./wizelens.js";
 
@@ -46,9 +46,9 @@ describe("the bundle file", () => {
   });
 
   it("is the tag from the plan, and warns once when the bundle is missing", () => {
-    expect(hudTag("/_wizelens")).toBe(TAG);
+    expect(hudTag("/_wizelens")).toBe(PLAIN_TAG);
     const warn = vi.fn();
-    expect(hudTagFor(true, fakeBundle(), "/_wizelens", warn)).toBe(TAG);
+    expect(hudTagFor(true, fakeBundle(), "/_wizelens", warn)).toBe(PLAIN_TAG);
     expect(hudTagFor(false, fakeBundle(), "/_wizelens", warn)).toBeNull();
     expect(hudTagFor(true, null, "/_wizelens", warn)).toBeNull();
     expect(hudTagFor(true, null, "/_wizelens", warn)).toBeNull();

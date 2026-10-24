@@ -5,7 +5,7 @@ export type { RecordedRequest, Recorder, RecorderOptions, ServerStats } from "./
 export type { FrameworkHooks } from "./framework.js";
 export { createBrowserCapture, createCaptureHandle, startBrowserCapture } from "./capture.js";
 export type { BrowserCapture, CaptureOptions } from "./capture.js";
-export { browserSpan, currentRoute, round1, setBrowserRelease, setBrowserUser } from "./browser-span.js";
+export { browserSpan, currentRoute, round1, setBrowserApp, setBrowserRelease, setBrowserUser } from "./browser-span.js";
 export type { BrowserSpanInput, ViewRef } from "./browser-span.js";
 export { clsFromShifts, createPageMonitor, EMPTY_PAGE_STATS, navigationBreakdown } from "./page.js";
 export type { PageMonitor, PageStats } from "./page.js";

@@ -3,6 +3,7 @@ export * from "./requests.js";
 export * from "./overview.js";
 export * from "./insights.js";
 export * from "./database.js";
+export * from "./error-keys.js";
 export * from "./errors.js";
 export * from "./rendering.js";
 export * from "./traces.js";

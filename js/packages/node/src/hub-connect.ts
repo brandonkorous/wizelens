@@ -1,12 +1,12 @@
 import { HUB_ENV, HUB_TOKEN_ENV, type HubSender, normalizeHubUrl, type ServiceInfo } from "@wizeworks/lens-core";
 import { HubExporter } from "./hub-export.js";
 import { reportPackages } from "./packages.js";
+import { releaseOf } from "./release.js";
 import type { MetricStore } from "./metrics/store.js";
 import type { TraceStore } from "./store.js";
 import type { WizeLensOptions } from "./types.js";
 
-/** The app's version: the option, else WIZELENS_RELEASE, else OTEL_SERVICE_VERSION, else npm_package_version (set by npm scripts). */
-export const releaseOf = (o: WizeLensOptions): string | undefined => (o.release || process.env.WIZELENS_RELEASE || process.env.OTEL_SERVICE_VERSION || process.env.npm_package_version)?.trim().slice(0, 50) || undefined;
+export { releaseOf } from "./release.js";
 
 /** The hub URL from options, or from WIZELENS_HUB. Null when no hub is set. */
 export const hubUrlOf = (o: WizeLensOptions): string | null => normalizeHubUrl(o.hub ?? process.env[HUB_ENV]);

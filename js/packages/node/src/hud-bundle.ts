@@ -19,16 +19,27 @@ export function resolveHudBundle(): string | null {
   }
 }
 
-/** The tag the add-on puts before `</body>`, exactly as docs/HUD-PLAN.md has it. */
-export const hudTag = (basePath: string): string =>
-  `<script src="${basePath}/${HUD_SCRIPT}" data-endpoint="${basePath}" data-hud="true" data-source="inject" defer></script>`;
+/** What the injected tag tells the page about its server: its release, and the name its browser app shows under. */
+export interface HudMeta {
+  release?: string;
+  service?: string;
+}
+
+const escapeAttr = (v: string): string => v.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+
+const attr = (name: string, v: string | undefined): string => (v ? ` ${name}="${escapeAttr(v)}"` : "");
+const metaAttrs = (m: HudMeta): string => `${attr("data-service", m.service)}${attr("data-release", m.release)}`;
+
+/** The tag the add-on puts before `</body>`, as docs/HUD-PLAN.md has it, plus the server's browser app name and release. */
+export const hudTag = (basePath: string, meta: HudMeta = {}): string =>
+  `<script src="${basePath}/${HUD_SCRIPT}" data-endpoint="${basePath}" data-hud="true" data-source="inject"${metaAttrs(meta)} defer></script>`;
 
 let warned = false;
 
 /** The script tag to inject, or null when the HUD is off or the bundle is missing (then one warning per process says so). */
-export function hudTagFor(on: boolean, bundle: string | null, basePath: string, warn: (line: string) => void = console.warn): string | null {
+export function hudTagFor(on: boolean, bundle: string | null, basePath: string, warn: (line: string) => void = console.warn, meta: HudMeta = {}): string | null {
   if (!on) return null;
-  if (bundle) return hudTag(basePath);
+  if (bundle) return hudTag(basePath, meta);
   if (warned) return null;
   warned = true;
   warn(`[wizelens] The HUD is on, but ${BUNDLE} was not found, so pages get no HUD. Install or build @wizeworks/lens-browser.`);

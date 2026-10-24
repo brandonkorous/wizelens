@@ -1,11 +1,14 @@
 import {
   type Attributes,
+  ATTR_BROWSER_APP,
+  ATTR_BROWSER_BOT,
   ATTR_BROWSER_ROUTE,
   ATTR_BROWSER_SESSION,
   ATTR_BROWSER_TYPE,
   ATTR_ENDUSER,
   ATTR_USER_NAME,
   type BrowserSpanType,
+  isBotUserAgent,
   pathShape,
   type Span,
   type SpanEvent,
@@ -16,6 +19,21 @@ import {
 /** The web app's version, put on every browser span as `service.version`. */
 let release: string | undefined;
 export const setBrowserRelease = (v: string | undefined): void => void (release = v?.trim().slice(0, 50) || undefined);
+
+/** The browser app's name, put on every browser span and console line as `wizelens.browser.app`. */
+let app: string | undefined;
+export const setBrowserApp = (v: string | undefined): void => void (app = v?.trim().slice(0, 100) || undefined);
+
+/** The app attribute for a browser span or console line; empty when no name is set. */
+export const browserAppAttrs = (): Attributes => (app ? { [ATTR_BROWSER_APP]: app } : {});
+
+/** A crawler's renderer or a driven browser: its page views are not people's, so its spans carry `wizelens.browser.bot`. */
+export function isBotBrowser(nav: { userAgent?: string; webdriver?: boolean } | undefined = typeof navigator !== "undefined" ? navigator : undefined): boolean {
+  return !!nav && (nav.webdriver === true || isBotUserAgent(nav.userAgent));
+}
+
+let bot: boolean | undefined;
+const botAttrs = (): Attributes => ((bot ??= isBotBrowser()) ? { [ATTR_BROWSER_BOT]: true } : {});
 
 /** The signed-in user, put on every browser span as `enduser.id`, and their display name as `user.full_name`. */
 let user: string | undefined;
@@ -73,6 +91,8 @@ export function browserSpan(i: BrowserSpanInput): Span {
       [ATTR_BROWSER_SESSION]: i.sessionId,
       [ATTR_BROWSER_ROUTE]: i.route,
       ...(release ? { [VERSION_ATTR]: release } : {}),
+      ...browserAppAttrs(),
+      ...botAttrs(),
       ...(user ? { [ATTR_ENDUSER]: user } : {}),
       ...(userName ? { [ATTR_USER_NAME]: userName } : {}),
     },

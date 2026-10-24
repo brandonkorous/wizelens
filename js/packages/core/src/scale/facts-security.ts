@@ -1,8 +1,10 @@
 // Security facts: the sec* kinds (risks by kind and shape, their endpoints and users) and sec.auth (sign-in failures by address).
 import type { Finding } from "../analysis.js";
 import { findSecurity, securityOf } from "../security/index.js";
+import { sentCredentials } from "../security/paths.js";
+import { entryServerSpan } from "../trace.js";
 import { normalizeQuery } from "../stats/common.js";
-import { displayService } from "../stats/errors.js";
+import { shownServices } from "../web-app.js";
 import type { RequestRow } from "../stats/requests.js";
 import type { Trace } from "../types.js";
 import { type Contribution, contribution, withServices } from "./agg.js";
@@ -41,19 +43,21 @@ function riskContributions(trace: Trace, findings: readonly Finding[], endpoint:
   });
 }
 
-/** A sign-in answer: `service|endpoint|address`, failures (401, 403) as err, and 429s as c0. */
+/** A sign-in answer: `service|endpoint|address`, failures (401, 403) as err, and 429s as c0. A refusal of a request with no credentials, off a sign-in path, is not a guess. */
 function authContributions(trace: Trace, r: RequestRow): Contribution[] {
   const status = r.status ?? 0;
-  const failed = status === 401 || status === 403;
-  if (!failed && status !== 429 && !AUTH_PATH.test(r.path.split("?")[0]!)) return [];
+  const authPath = AUTH_PATH.test(r.path.split("?")[0]!);
+  const server = entryServerSpan(trace.spans);
+  const failed = (status === 401 || status === 403) && (authPath || (!!server && sentCredentials(server)));
+  if (!failed && status !== 429 && !authPath) return [];
   const top = failed ? { top: { rank: trace.startMs, data: { traceId: trace.traceId } } } : {};
-  return [contribution("sec.auth", joinKey(displayService(r.service), r.endpoint, r.clientAddress ?? ""), trace.startMs, { err: failed ? 1 : 0, c: [status === 429 ? 1 : 0], ...top })];
+  return [contribution("sec.auth", joinKey(shownServices([r.service], r.app)[0]!, r.endpoint, r.clientAddress ?? ""), trace.startMs, { err: failed ? 1 : 0, c: [status === 429 ? 1 : 0], ...top })];
 }
 
 /** Everything a trace adds to the security rollups. A request's findings come from its row; a job's from the trace. */
 export function securityFacts(trace: Trace, row: RequestRow | null): Contribution[] {
   const findings = row ? securityOf(row.findings) : findSecurity(trace);
-  const services = row ? [row.service, ...row.services].map(displayService) : traceServices(trace);
+  const services = row ? shownServices([row.service, ...row.services], row.app) : traceServices(trace);
   const risks = riskContributions(trace, findings, row?.endpoint ?? trace.rootName, row?.user ?? null).flatMap((c) => withServices(c, services));
   return [...risks, ...(row ? authContributions(trace, row) : [])];
 }
