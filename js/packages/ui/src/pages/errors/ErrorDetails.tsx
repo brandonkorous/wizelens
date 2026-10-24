@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, Database, ExternalLink, Monitor, Server } from "lucide-react";
-import { endpointScope, type ErrorGroup, errorGroupDoc, errorScope, type IssueInfo, serviceScope } from "@wizeworks/lens-core";
+import { endpointScope, type ErrorGroup, errorGroupDoc, errorGroupLabel, errorScope, isBotOnly, type IssueInfo, serviceScope } from "@wizeworks/lens-core";
 import { fmtCount, fmtDateTime } from "../../format";
 import { errorHref, hrefTo, setQuery } from "../../routes";
 import { Badge } from "../../ui/Badges";
@@ -69,7 +69,7 @@ function GroupDetails({ group, info }: { group: ErrorGroup; info: IssueInfo | un
         <h2 className="wl-err-title">
           {group.type}: {group.message}
         </h2>
-        <Badge tone="danger">{group.critical ? "Critical" : "Error"}</Badge>
+        <Badge tone={isBotOnly(group) ? "neutral" : "danger"}>{errorGroupLabel(group)}</Badge>
         <IssueBadge info={info} />
       </div>
       <div className="wl-err-tagline">

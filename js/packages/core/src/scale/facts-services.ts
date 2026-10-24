@@ -1,6 +1,6 @@
 // Service facts: the svc and svc.ep kinds (Services rows), edge (who calls whom), and bn.* (bottlenecks).
 import { isWebAppCall } from "../attributes.js";
-import { withoutBotBrowser } from "../bots.js";
+import { isBotRequestTrace, withoutBotBrowser } from "../bots.js";
 import { endpointNameOf } from "../models/service-detail.js";
 import { externalName } from "../stats/in-cluster.js";
 import { isConsumer, isProducer, queueOf } from "../stats/messaging.js";
@@ -46,13 +46,14 @@ function streamContributions(s: Span, key: string, endpoint: string): Contributi
 
 function serviceContributions(trace: Trace): Contribution[] {
   const external = new Set(externalCallsOf(trace));
+  const bot = isBotRequestTrace(trace) ? 1 : 0;
   // A bot's renderer is not a person waiting: its browser spans stay out of the Web App row, its p95, and Problems.
   return withoutBotBrowser(trace).flatMap((s) => {
     const row = serviceRowOf(s, external);
     if (!row) return [];
     const { key, ...info } = row;
     const ms = requestMsOf(s);
-    const base = { err: isFailedSpan(s) ? 1 : 0, sum: ms };
+    const base = { err: isFailedSpan(s) ? 1 : 0, sum: ms, c: [bot] };
     const out = [contribution("svc", key, s.startMs, { ...base, values: [ms], top: { rank: s.startMs, data: info } })];
     if (!WITH_ENDPOINTS.has(row.kind)) return out;
     const endpoint = endpointNameOf(s, row.kind);

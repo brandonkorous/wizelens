@@ -167,6 +167,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   or a cluster DNS name (`api-rest.sparx-prod.svc.cluster.local:3000`) shows as "api-rest (in-cluster)" in Services
   and on the map, not as an outside service. Its traffic follows the app's, so it no longer drives "Traffic above
   normal" or "p95 above normal" Problems of its own.
+- **Bots and scanners no longer make critical errors or Problems.** When stats are built, a request is a bot's when
+  its user agent is a crawler or scripted client, or its path is one only scanners ask for (`/.env`, `/wp-*`,
+  `/.git/`, `/.srcgraph/`, `debug.log`). Its errors are never critical; each error group counts how many came from
+  bots, and a group of only bot hits shows "Bot-only" in place of "Error". Services rows count bot requests apart, and
+  "Traffic above normal" Problems count only the rest, so a burst of `GET /.env` is no longer a Problem.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

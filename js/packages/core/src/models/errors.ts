@@ -67,7 +67,7 @@ export function errorGroupOf({ key, agg }: Row, endpoints: ReadonlyMap<string, s
   const latest = agg.top as ErrorEvent;
   const { type, message, service, endpoint } = latest;
   const list = (endpoints.get(key) ?? []).slice(0, GROUP_LIST_MAX);
-  return { key, type, message, service, endpoint, count: agg.n, firstSeenMs: agg.firstMs, lastSeenMs: agg.lastMs, critical: (agg.c[0] ?? 0) > 0, latest, endpoints: list, traceIds: agg.ids.slice(0, GROUP_LIST_MAX) };
+  return { key, type, message, service, endpoint, count: agg.n, firstSeenMs: agg.firstMs, lastSeenMs: agg.lastMs, critical: (agg.c[0] ?? 0) > 0, bots: agg.c[1] ?? 0, latest, endpoints: list, traceIds: agg.ids.slice(0, GROUP_LIST_MAX) };
 }
 
 function cardsOf(d: NeedResults, win: WindowRef): ErrorsModel["cards"] {

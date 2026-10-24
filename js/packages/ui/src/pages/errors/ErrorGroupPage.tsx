@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Bell, Boxes, Bug, Users } from "lucide-react";
-import { countBy, type ErrorGroup, errorGroupDoc, type ErrorPageModel, percentChange, type RequestItem } from "@wizeworks/lens-core";
+import { countBy, type ErrorGroup, errorGroupDoc, errorGroupLabel, type ErrorPageModel, isBotOnly, percentChange, type RequestItem } from "@wizeworks/lens-core";
 import { traceRow, useGroupTags } from "../../data/tagMatch";
 import { TagChips } from "../../ui/TagChips";
 import { TaggedTable } from "../../ui/TaggedTable";
@@ -68,7 +68,7 @@ function Body({ m }: { m: ErrorPageModel }) {
   const stats: [string, ReactNode][] = [["Service", <a key="s" href={serviceHref(g.service)}>{g.service}</a>], ["Type", g.type], ["First seen", fmtDateTime(m.issue?.firstSeenMs || g.firstSeenMs)], ["Last seen", fmtDateTime(g.lastSeenMs)]];
   const badge = (
     <>
-      <Badge tone="danger">{g.critical ? "Critical" : "Error"}</Badge> <IssueBadge info={m.issue ?? undefined} /> <TagChips tags={tags} />
+      <Badge tone={isBotOnly(g) ? "neutral" : "danger"}>{errorGroupLabel(g)}</Badge> <IssueBadge info={m.issue ?? undefined} /> <TagChips tags={tags} />
     </>
   );
   const bars = [

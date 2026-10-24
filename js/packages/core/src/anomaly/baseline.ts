@@ -35,9 +35,12 @@ export interface Verdict {
   above: boolean;
 }
 
-/** A metric in one bucket: the percent that failed, the p95 in ms, or the count. Null when not measured. */
+/** Requests people made: the count less bots and scanners (counter c0 of `svc` and `svc.ep`). */
+const peopleOf = (a: Agg): number => Math.max(0, a.n - (a.c[0] ?? 0));
+
+/** A metric in one bucket: the percent that failed, the p95 in ms, or the count without bots. Null when not measured. */
 export function metricValue(metric: AnomalyMetric, a: Agg): number | null {
-  if (metric === "requests") return a.n;
+  if (metric === "requests") return peopleOf(a);
   if (a.n <= 1e-9) return null;
   if (metric === "error_rate") return (a.err / a.n) * 100;
   return a.hist ? histPercentile(a.hist, a.n, 95) : null;
@@ -61,7 +64,7 @@ function spreadOf(metric: AnomalyMetric, mean: number, sd: number, cur: Agg): nu
 
 /** True when the bucket has enough data for its value to mean something. */
 export function enoughData(metric: AnomalyMetric, cur: Agg): boolean {
-  if (metric === "requests") return cur.n >= MIN_REQUESTS;
+  if (metric === "requests") return peopleOf(cur) >= MIN_REQUESTS;
   if (metric === "error_rate") return cur.err >= MIN_ERRORS;
   return cur.n >= MIN_P95_ITEMS;
 }

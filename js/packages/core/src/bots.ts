@@ -22,3 +22,16 @@ export function withoutBotBrowser(trace: Trace): Span[] {
   const bot = isBotTrace(trace);
   return trace.spans.filter((s) => s.category !== "browser" || (!bot && s.attributes[ATTR_BROWSER_BOT] !== true));
 }
+
+/** Paths only scanners ask for on these apps: secrets files, WordPress, source control, and leaked logs. */
+export const SCANNER_PATH = /(?:^|\/)(?:\.env(?:\.[\w-]+)?$|\.git(?:\/|$)|\.svn\/|\.aws\/|\.ssh\/|\.srcgraph\/|wp-[\w-]+|wordpress\/|xmlrpc\.php$|phpmyadmin|debug\.log$)/i;
+
+/** True when a request came from a bot: its user agent, or a path only scanners ask for. */
+export const isBotRequest = (r: { userAgent: string | null; path: string }): boolean => isBotUserAgent(r.userAgent) || SCANNER_PATH.test(r.path.split("?")[0]!);
+
+/** True when the trace's request came from a bot, by user agent or scanner path (its entry server span). */
+export function isBotRequestTrace(trace: Trace): boolean {
+  const server = entryServerSpan(trace.spans);
+  const path = server?.attributes["url.path"];
+  return isBotTrace(trace) || (typeof path === "string" && SCANNER_PATH.test(path));
+}

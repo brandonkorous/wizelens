@@ -1,5 +1,6 @@
 import { errorInfo } from "../analysis.js";
 import { ATTR_BROWSER_ROUTE, ATTR_ERROR_FRAME, ATTR_SERVICE_VERSION, browserTypeOf } from "../attributes.js";
+import { isBotRequest } from "../bots.js";
 import { errorSpansOf } from "../trace.js";
 import { isUptimeSpan } from "../uptime/check.js";
 import { shownServices, spanServiceName } from "../web-app.js";
@@ -25,8 +26,10 @@ export interface ErrorEvent {
   method: string | null;
   path: string | null;
   status: number | null;
-  /** The request failed with a 5xx, or a critical log line was written; never for a third-party browser error. */
+  /** The request failed with a 5xx, or a critical log line was written; never for a third-party browser error or a bot. */
   critical: boolean;
+  /** The request came from a bot or scanner (user agent, or a path such as /.env). */
+  bot: boolean;
   browser: boolean;
   /** Browser errors: the first app frame after source maps ("src/App.tsx:checkout"), or null. */
   frame: string | null;
@@ -48,7 +51,7 @@ function errorSpans(trace: Trace): Span[] {
 
 const textAttr = (v: unknown): string | null => (typeof v === "string" && v ? v : null);
 
-function eventOf(trace: Trace, span: Span, row: RequestRow | null, critical: boolean): ErrorEvent {
+function eventOf(trace: Trace, span: Span, row: RequestRow | null, critical: boolean, bot: boolean): ErrorEvent {
   const info = errorInfo(span);
   const type = info.type ?? (span.statusMessage?.startsWith("HTTP") ? "HttpError" : "Error");
   const service = spanServiceName(span);
@@ -72,7 +75,8 @@ function eventOf(trace: Trace, span: Span, row: RequestRow | null, critical: boo
     method: row?.method ?? null,
     path: row?.path ?? (typeof route === "string" ? route : null),
     status: row?.status ?? null,
-    critical: critical && !thirdParty,
+    critical: critical && !thirdParty && !bot,
+    bot,
     browser,
     frame,
     release: textAttr(span.attributes[ATTR_SERVICE_VERSION]),
@@ -87,7 +91,8 @@ function eventsOf(trace: Trace): ErrorEvent[] {
   if (spans.length === 0) return [];
   const row = requestOf(trace);
   const critical = ((row?.status ?? 0) >= 500 && row?.expected !== true) || trace.logs.some((l) => l.level === "critical");
-  return spans.map((s) => eventOf(trace, s, row, critical));
+  const bot = row ? isBotRequest(row) : false;
+  return spans.map((s) => eventOf(trace, s, row, critical, bot));
 }
 
 const eventsOfTrace = memoByObject(eventsOf);
@@ -106,11 +111,19 @@ export interface ErrorGroup {
   firstSeenMs: number;
   lastSeenMs: number;
   critical: boolean;
+  /** Occurrences from bots and scanners; a group of only those is "bot-only". */
+  bots: number;
   /** Newest occurrence. */
   latest: ErrorEvent;
   endpoints: string[];
   traceIds: string[];
 }
+
+/** A group seen only from bots and scanners: not critical, and named "bot-only" so it does not read as a real failure. */
+export const isBotOnly = (g: Pick<ErrorGroup, "bots" | "count">): boolean => g.bots > 0 && g.bots >= g.count;
+
+/** The word a group's badge shows: critical, bot-only, or plain error. */
+export const errorGroupLabel = (g: Pick<ErrorGroup, "bots" | "count" | "critical">): string => (g.critical ? "Critical" : isBotOnly(g) ? "Bot-only" : "Error");
 
 /** Groups, newest first. `events` must be newest first. */
 export function errorGroups(events: readonly ErrorEvent[]): ErrorGroup[] {
@@ -126,6 +139,7 @@ export function errorGroups(events: readonly ErrorEvent[]): ErrorGroup[] {
       firstSeenMs: list[list.length - 1]!.timeMs,
       lastSeenMs: latest.timeMs,
       critical: list.some((e) => e.critical),
+      bots: list.filter((e) => e.bot).length,
       latest,
       endpoints: [...new Set(list.map((e) => e.endpoint))],
       traceIds: [...new Set(list.map((e) => e.traceId))],
