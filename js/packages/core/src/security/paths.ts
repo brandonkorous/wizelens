@@ -1,5 +1,6 @@
 // Open sensitive files and debug pages (A02), admin routes without credentials (A01), and stack traces in answers (A10).
 import type { Finding } from "../analysis.js";
+import type { Span } from "../types.js";
 import { spanFinding } from "./headers.js";
 import type { SecurityRequest } from "./request.js";
 
@@ -15,7 +16,9 @@ export const STACK_RE = /Traceback \(most recent call last\)|goroutine \d+ \[|\.
 
 const ADMIN_SEGMENT = /(?:^|\/)(?:admin|internal|management)(?:\/|$)/;
 const SIGN_IN = /login|signin|sign-in|logon/;
-const CREDENTIAL_HEADERS = ["authorization", "cookie", "x-api-key", "api-key"];
+/** A request header named as a credential: Authorization, Cookie, or any `*-token`, `*-auth`, `*-secret`, `*-key` header. */
+const CREDENTIAL_NAME = /(?:^|[-_])(?:authorization|cookie|token|auth|secret|key|apikey)(?:$|[-_])/;
+const HEADER_PREFIX = "http.request.header.";
 
 const is2xx = (r: SecurityRequest) => r.status !== null && r.status >= 200 && r.status < 300;
 
@@ -24,8 +27,12 @@ export function findExposedPath(r: SecurityRequest): Finding[] {
   return is2xx(r) && EXPOSED_PATHS.test(path) ? [spanFinding("exposed-path", "error", "A sensitive file or debug page is open", path, r.span)] : [];
 }
 
+/** True when a request header is a credential by its name, or its value was redacted as one. */
+export const sentCredentials = (span: Span): boolean =>
+  Object.entries(span.attributes).some(([k, v]) => k.startsWith(HEADER_PREFIX) && (CREDENTIAL_NAME.test(k.slice(HEADER_PREFIX.length)) || (typeof v === "string" && v.startsWith("[redacted"))));
+
 /** True when the request carried no credentials and no span names a user. */
-export const anonymous = (r: SecurityRequest): boolean => !r.user && CREDENTIAL_HEADERS.every((h) => r.requestHeader(h) === null);
+export const anonymous = (r: SecurityRequest): boolean => !r.user && !sentCredentials(r.span);
 
 export function findOpenAdmin(r: SecurityRequest): Finding[] {
   const path = r.path.toLowerCase();

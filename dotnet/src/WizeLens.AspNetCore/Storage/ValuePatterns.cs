@@ -81,7 +81,7 @@ internal static partial class ValuePatterns
     [GeneratedRegex(@"\b\d(?:[ -]?\d){12,18}\b", Ascii)]
     private static partial Regex Card();
 
-    [GeneratedRegex(@"(?:^|\.)baggage$", Ascii)]
+    [GeneratedRegex(@"(?:^|\.)(?:baggage|traceparent|tracestate)$", Ascii)]
     private static partial Regex PatternFreeKey();
 
     [GeneratedRegex(@"\d{4}", Ascii)]

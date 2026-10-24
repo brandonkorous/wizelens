@@ -13,6 +13,7 @@
     { "key": "url.full", "value": "https://api.example.com/v1/items", "want": "https://api.example.com/v1/items" },
     { "key": "db.query.text", "value": "SELECT * FROM cards WHERE pan = '4111 1111 1111 1111'", "want": "SELECT * FROM cards WHERE pan = '[redacted:card]'" },
     { "key": "app.count", "value": 4111111111111111, "want": 4111111111111111 },
+    { "key": "http.request.header.traceparent", "value": "00-0af7651916cd43dd8448eb211c80319c-4111111111111111-01", "want": "00-0af7651916cd43dd8448eb211c80319c-4111111111111111-01" },
     { "key": "http.request.header.baggage", "value": "sentry-environment=production,sentry-sample_rand=0.4111111111111111", "want": "sentry-environment=production,sentry-sample_rand=0.4111111111111111" },
     { "key": "user.password", "value": 1234, "want": "[redacted]" },
     { "key": "note", "value": null, "want": null }

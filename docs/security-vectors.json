@@ -191,6 +191,13 @@
       "findings": []
     },
     {
+      "name": "an internal cron route called with its own token header is not open",
+      "spans": [
+        { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "POST", "url.path": "/internal/cron/sweep", "http.route": "/internal/cron/sweep", "http.response.status_code": 200, "http.request.header.x-sparx-internal-cron-token": "[redacted]" } }
+      ],
+      "findings": []
+    },
+    {
       "name": "an admin API that answered with no credentials",
       "spans": [
         { "spanId": "s1", "category": "http.server", "attributes": { "http.request.method": "POST", "url.path": "/api/admin/users", "http.route": "/api/admin/users", "http.response.status_code": 201 } }

@@ -132,6 +132,14 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
     vitest or esbuild left in a pnpm store.
   - A `SELECT set_config(...)` run once per transaction (row-level security setup) is named "Session setup", with
     info severity, not an N+1 query.
+- **More security findings that were not real are gone.**
+  - `traceparent` and `tracestate` are not scanned for secrets, so a 16-digit span id is no longer stored as
+    `[redacted:card]` (which also broke the stored header). Node and .NET.
+  - "An admin route answered without credentials" now counts any request header named like a credential
+    (`*-token`, `*-auth`, `*-secret`, `*-key`, as well as Authorization and Cookie), or a redacted one, so a cron route
+    called with `X-sparx-Internal-Cron-Token` is not open.
+  - Auth guessing counts a 401 or 403 only on a sign-in path or when the request sent credentials. A check such as
+    Caddy's on-demand TLS `GET /internal/domain-check`, refused with no credentials, is not guessing.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

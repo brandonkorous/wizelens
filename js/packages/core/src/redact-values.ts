@@ -59,7 +59,7 @@ export function redactText(text: string): string {
 }
 
 /** Keys whose values are ids and sampling numbers, never secrets: value patterns skip them (a `sample_rand` passes Luhn). */
-const PATTERN_FREE_KEY = /(?:^|\.)baggage$/;
+const PATTERN_FREE_KEY = /(?:^|\.)(?:baggage|traceparent|tracestate)$/;
 
 /** True for an attribute key that value patterns leave alone. */
 export const skipsValuePatterns = (key: string): boolean => PATTERN_FREE_KEY.test(key.toLowerCase());
