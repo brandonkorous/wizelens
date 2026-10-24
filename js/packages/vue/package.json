@@ -1,6 +1,6 @@
 {
   "name": "@wizeworks/lens-vue",
-  "version": "0.3.0-alpha.11",
+  "version": "0.3.0-alpha.12",
   "description": "WizeLens for Vue 3 apps: a plugin that links browser calls to server traces, sends page views from vue-router, and reports component errors.",
   "license": "MIT",
   "author": "WizeWorks LLC",
