@@ -1,6 +1,6 @@
 {
   "name": "@wizeworks/lens-browser",
-  "version": "0.3.0-alpha.11",
+  "version": "0.3.0-alpha.12",
   "description": "WizeLens for any web page: links browser fetch and XHR calls to server traces, and sends page views, Web Vitals, errors, and console lines. No framework needed.",
   "license": "MIT",
   "author": "WizeWorks LLC",
