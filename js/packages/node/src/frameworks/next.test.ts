@@ -15,7 +15,7 @@ function nextLikeHandler(req: IncomingMessage, res: ServerResponse): void {
   const platform = trace.getActiveSpan();
   const attributes = { "next.span_type": "BaseServer.handleRequest", "http.method": req.method ?? "GET" };
   void tracer.startActiveSpan("GET", { kind: SpanKind.SERVER, attributes }, async (span) => {
-    platform?.setAttribute("http.route", "/items/[id]");
+    platform?.setAttribute("http.route", req.url?.startsWith("/mw/") ? "middleware GET" : "/items/[id]");
     tracer.startActiveSpan("render route (app) /items/[id]", (render) => render.end());
     if (req.url === "/boom") onRequestError(new Error("render failed"), { path: "/boom", method: "GET" }, { routerKind: "App Router", routePath: "/boom", routeType: "render" });
     if (req.url === "/gone") onRequestError(Object.assign(new Error("NEXT_HTTP_ERROR_FALLBACK;404"), { digest: "NEXT_HTTP_ERROR_FALLBACK;404" }), { path: "/gone", method: "GET" }, { routerKind: "App Router", routePath: "/gone", routeType: "render" });
@@ -91,6 +91,13 @@ it("records an onRequestError error once, with a log", async () => {
   expect(errors).toHaveLength(1);
   expect(t.logs.some((l) => l.message === "render failed")).toBe(true);
   onRequestError(new Error("render failed"), { path: "/", method: "GET" }, { routerKind: "App Router", routePath: "/", routeType: "render" });
+});
+
+it("does not name a request after Next.js middleware", async () => {
+  const t = await traceOf(await fetch(`${base}/mw/42`));
+  const server = t.spans.find((s) => s.category === "http.server")!;
+  expect(server.name).toBe("GET /mw/{}");
+  expect(server.attributes["http.route"]).toBe("/mw/{}");
 });
 
 it("does not record a Next.js not-found signal as an error", async () => {

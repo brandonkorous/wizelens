@@ -81,6 +81,8 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   when their times overlap, and a problem's starts span at most the near window, so a day of small anomalies is no
   longer one 24 hour problem. Problem ids include the projects read, so two projects never share one. Old problem
   links open the nearest problem by time.
+- **Next.js middleware no longer names requests "GET middleware GET".** The Node add-on takes a route from the
+  framework only when it is a path; otherwise it uses `next.route`, else the shape of the path (`/orders/{}`).
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 
