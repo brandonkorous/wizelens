@@ -55,6 +55,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Fixed
 
+- **The cloud shows data again under heavy load.** Its ClickHouse store ran out of memory, so pages loaded empty, new
+  data was refused, and the nightly backup failed. Loading whole traces now reads only the traces asked for, which uses
+  about a twentieth of the memory, and the store has 6 GiB in place of 4 GiB.
 - **Pages with the 30 day range no longer fail for most of each hour.** A named range such as 30d snaps its start to a
   whole hour, which could put it up to 59 minutes before what a project keeps, and the cloud and the hub then refused
   it with "This time window starts before these projects keep data." Only a custom from-to window is checked against
