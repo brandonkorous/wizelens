@@ -1,4 +1,5 @@
 import { formatTraceparent } from "@wizeworks/lens-core";
+import { failureOf, isPrefetch } from "./fetch-failure.js";
 import { type Answer, type FetchContext, finishCall, isWizeLensCall, startCall } from "./request-span.js";
 import { now } from "./session.js";
 
@@ -34,7 +35,7 @@ function track(ctx: FetchContext, xhr: Tracked): void {
     return;
   }
   if (isWizeLensCall(url, ctx.endpoint)) return;
-  const call = startCall(ctx, "xhr", url, info.method.toUpperCase());
+  const call = startCall(ctx, "xhr", url, info.method.toUpperCase(), isPrefetch(url, null));
   if (ctx.propagateTo(url)) {
     try {
       xhr.setRequestHeader("traceparent", formatTraceparent(call.traceId, call.spanId, true));
@@ -43,15 +44,19 @@ function track(ctx: FetchContext, xhr: Tracked): void {
     }
   }
   let headersAt: number | undefined;
-  let reason = "Network error";
+  let reason = new Error("Network error");
+  let aborted = false;
   const onState = () => xhr.readyState === HEADERS_RECEIVED && (headersAt ??= now());
   xhr.addEventListener("readystatechange", onState);
-  xhr.addEventListener("abort", () => (reason = "Aborted"));
-  xhr.addEventListener("timeout", () => (reason = "Timed out"));
+  xhr.addEventListener("abort", () => {
+    aborted = true;
+    reason = Object.assign(new Error("Aborted"), { name: "AbortError" });
+  });
+  xhr.addEventListener("timeout", () => (reason = Object.assign(new Error("Timed out"), { name: "TimeoutError" })));
   xhr.addEventListener("loadend", () => {
     xhr.removeEventListener("readystatechange", onState);
     const ok = xhr.status !== 0;
-    finishCall(ctx, call, ok ? answerOf(xhr) : null, ok ? null : reason, headersAt);
+    finishCall(ctx, call, ok ? answerOf(xhr) : null, ok ? null : failureOf(reason, null, aborted), headersAt);
   });
 }
 

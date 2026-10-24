@@ -1,4 +1,4 @@
-import { browserTypeOf } from "../attributes.js";
+import { browserTypeOf, isWebAppCall } from "../attributes.js";
 import { isFailedAnswer } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { avgOf, groupBy, percentileOf, percentOf } from "./common.js";
@@ -88,7 +88,7 @@ export function serviceRows(traces: readonly Trace[]): ServiceRow[] {
   const spans = traces.flatMap((t) => t.spans);
   const rows: ServiceRow[] = [];
   for (const [name, list] of groupBy(spans.filter((s) => s.category === "http.server"), (s) => s.service)) rows.push(rowOf(`api:${name}`, name, "api", list, null));
-  const web = spans.filter((s) => browserTypeOf(s) === "fetch");
+  const web = spans.filter(isWebAppCall);
   if (web.length) rows.push(rowOf("web:browser", "Web App", "web", web, "browser"));
   for (const [db, list] of groupBy(spans.filter((s) => s.category === "db"), databaseOf)) rows.push(rowOf(`db:${db}`, db, "database", list, str(list[0]!, "db.system.name")));
   for (const [host, list] of groupBy(externalCalls(traces), hostOf)) rows.push(rowOf(`ext:${host}`, host, "external", list, host));

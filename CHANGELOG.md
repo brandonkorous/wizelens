@@ -59,6 +59,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   whole hour, which could put it up to 59 minutes before what a project keeps, and the cloud and the hub then refused
   it with "This time window starts before these projects keep data." Only a custom from-to window is checked against
   retention now.
+- **Cancelled browser calls and prefetches are not errors.** A fetch or XHR that the app aborted, that the page cut
+  off as it was hidden or closed, or that failed while offline is marked `wizelens.browser.cancelled` with no error
+  and no exception. Next.js router prefetches (`_rsc=`, `RSC: 1`, `Next-Router-Prefetch: 1`) are marked
+  `wizelens.browser.prefetch` and never fail. Neither counts in the Web App row or its latency. A real network failure
+  is still an error, now with its real type (`TypeError`) in place of `FetchError`.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

@@ -19,6 +19,11 @@ export const ATTR_SERVICE_VERSION = "service.version";
 /** Browser exception event: the first app frame after source maps, "src/cart/Checkout.tsx:applyCoupon". Errors group by it. */
 export const ATTR_ERROR_FRAME = "wizelens.error.frame";
 
+/** Browser fetch span: the call was cancelled (aborted, page left, offline), so it is not a failure. */
+export const ATTR_BROWSER_CANCELLED = "wizelens.browser.cancelled";
+/** Browser fetch span: a router prefetch (Next.js RSC), never a failure and not in Web App latency. */
+export const ATTR_BROWSER_PREFETCH = "wizelens.browser.prefetch";
+
 export type BrowserSpanType = "fetch" | "pageview" | "react" | "error";
 
 /** Type of a browser span, or null for a server span. */
@@ -27,6 +32,9 @@ export function browserTypeOf(span: Span): BrowserSpanType | null {
   const t = span.attributes[ATTR_BROWSER_TYPE];
   return t === "pageview" || t === "react" || t === "error" ? t : "fetch";
 }
+
+/** A browser fetch the app waited for: not a prefetch, not cancelled. The Web App row counts only these. */
+export const isWebAppCall = (s: Span): boolean => browserTypeOf(s) === "fetch" && s.attributes[ATTR_BROWSER_PREFETCH] !== true && s.attributes[ATTR_BROWSER_CANCELLED] !== true;
 
 /** Page view timings in ms (CLS is a score). Absent when not measured. */
 export const ATTR_PAGE = {

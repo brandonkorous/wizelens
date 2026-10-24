@@ -1,5 +1,6 @@
-import { ATTR_BROWSER_REMOTE, ATTR_BROWSER_RENDER_MS, ATTR_EXPECTED, HEADER_ENDPOINT, HEADER_EXPECTED, HEADER_TRACE, newSpanId, newTraceId, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_CANCELLED, ATTR_BROWSER_PREFETCH, ATTR_BROWSER_REMOTE, ATTR_BROWSER_RENDER_MS, ATTR_EXPECTED, HEADER_ENDPOINT, HEADER_EXPECTED, HEADER_TRACE, newSpanId, newTraceId, type Span } from "@wizeworks/lens-core";
 import { browserSpan, currentRoute } from "./browser-span.js";
+import type { CallFailure } from "./fetch-failure.js";
 import { afterNextPaint } from "./paint.js";
 import type { RecordedRequest } from "./recorder-types.js";
 import type { RequestStore } from "./request-store.js";
@@ -31,6 +32,8 @@ export interface Call {
   spanId: string;
   startMs: number;
   record: RecordedRequest;
+  /** A router prefetch: never a failure. */
+  prefetch: boolean;
 }
 
 /** What a request span reads from the response. */
@@ -47,7 +50,7 @@ export function isWizeLensCall(url: URL, endpoint: URL): boolean {
 }
 
 /** Start a request: give it a trace and a span id, and add its row to the HUD's list. */
-export function startCall(ctx: FetchContext, kind: Call["kind"], url: URL, method: string): Call {
+export function startCall(ctx: FetchContext, kind: Call["kind"], url: URL, method: string, prefetch = false): Call {
   const traceId = newTraceId();
   const spanId = newSpanId();
   const path = url.origin === new URL(ctx.base).origin ? url.pathname + url.search : url.href;
@@ -56,7 +59,7 @@ export function startCall(ctx: FetchContext, kind: Call["kind"], url: URL, metho
     traceId, profiled: false, startMs: now(), error: null,
   };
   ctx.store.upsert(record);
-  return { kind, url, method, traceId, spanId, startMs: record.startMs, record };
+  return { kind, url, method, traceId, spanId, startMs: record.startMs, record, prefetch };
 }
 
 /** The answering server's WizeLens endpoint, when it is not the one this page sends to. */
@@ -71,8 +74,12 @@ const isExpectedAnswer = (answer: Answer | null): boolean => {
   return !!v && v !== "0" && v !== "false" && v !== "no";
 };
 
-function requestSpan(ctx: FetchContext, call: Call, traceId: string, durationMs: number, status: number | null, error: string | null, expected: boolean): Span {
-  const failed = error ?? (status !== null && status >= 500 && !expected ? `HTTP ${status}` : null);
+/** Attributes that keep a cancelled call or a prefetch out of errors and Web App latency. */
+const quietAttrs = (call: Call, failure: CallFailure | null) => ({ ...(failure?.cancelled ? { [ATTR_BROWSER_CANCELLED]: true } : {}), ...(call.prefetch ? { [ATTR_BROWSER_PREFETCH]: true } : {}) });
+
+function requestSpan(ctx: FetchContext, call: Call, traceId: string, durationMs: number, status: number | null, failure: CallFailure | null, expected: boolean): Span {
+  const error = failure && !failure.cancelled && !call.prefetch ? failure : null;
+  const failed = error?.message ?? (status !== null && status >= 500 && !expected && !call.prefetch ? `HTTP ${status}` : null);
   return browserSpan({
     type: "fetch",
     traceId,
@@ -90,8 +97,9 @@ function requestSpan(ctx: FetchContext, call: Call, traceId: string, durationMs:
       "http.response.status_code": status,
       "wizelens.browser.page": typeof location !== "undefined" ? location.pathname : null,
       ...(expected ? { [ATTR_EXPECTED]: true } : {}),
+      ...quietAttrs(call, failure),
     },
-    events: error ? [{ name: "exception", timeMs: now(), attributes: { "exception.type": "FetchError", "exception.message": error } }] : [],
+    events: error ? [{ name: "exception", timeMs: now(), attributes: { "exception.type": error.type, "exception.message": error.message } }] : [],
   });
 }
 
@@ -114,17 +122,17 @@ function holdForRender(ctx: FetchContext, span: Span, answer: Answer, headersAt:
 }
 
 /** End a request: update its HUD row, load its server stats, and send its browser span. `headersAt` defaults to now. */
-export function finishCall(ctx: FetchContext, call: Call, answer: Answer | null, error: string | null, headersAt = now()): void {
+export function finishCall(ctx: FetchContext, call: Call, answer: Answer | null, failure: CallFailure | null, headersAt = now()): void {
   const serverTrace = answer?.header(HEADER_TRACE) ?? null;
   const status = answer?.status ?? null;
   const durationMs = headersAt - call.startMs;
   const traceId = serverTrace ?? call.traceId;
   const remote = remoteOf(ctx, answer);
   if (serverTrace && remote) ctx.noteEndpoint(serverTrace, remote);
-  ctx.store.upsert({ ...call.record, status, durationMs, renderMs: null, traceId, profiled: !!serverTrace, error });
+  ctx.store.upsert({ ...call.record, status, durationMs, renderMs: null, traceId, profiled: !!serverTrace, error: failure?.message ?? null });
   // The server ends its span after it sends the response, so wait a moment.
   if (serverTrace) setTimeout(() => void ctx.loadServerStats(serverTrace), ctx.statsDelayMs);
-  const span = requestSpan(ctx, call, traceId, durationMs, status, error, isExpectedAnswer(answer));
+  const span = requestSpan(ctx, call, traceId, durationMs, status, failure, isExpectedAnswer(answer));
   if (remote) span.attributes[ATTR_BROWSER_REMOTE] = remote;
   if (answer) holdForRender(ctx, span, answer, headersAt);
   else ctx.sender.push(span);

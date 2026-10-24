@@ -1,5 +1,5 @@
 import { httpShape, queryText } from "../../analysis.js";
-import { browserTypeOf } from "../../attributes.js";
+import { isWebAppCall } from "../../attributes.js";
 import { avgOf, groupBy, normalizeQuery } from "../../stats/common.js";
 import { databaseOf, hostOf, type ServiceEdge, type ServiceKind, type ServiceRow } from "../../stats/services.js";
 import { isFailedAnswer } from "../../trace.js";
@@ -28,7 +28,7 @@ function externalSpans(traces: readonly Trace[]): Span[] {
 export function spansOfRow(traces: readonly Trace[], row: ServiceRow): Span[] {
   if (row.kind === "external") return externalSpans(traces).filter((s) => hostOf(s) === row.name);
   const all = traces.flatMap((t) => t.spans);
-  if (row.kind === "web") return all.filter((s) => browserTypeOf(s) === "fetch");
+  if (row.kind === "web") return all.filter(isWebAppCall);
   if (row.kind === "database") return all.filter((s) => s.category === "db" && databaseOf(s) === row.name);
   return all.filter((s) => s.category === "http.server" && s.service === row.name);
 }
