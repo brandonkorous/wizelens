@@ -30,18 +30,38 @@ export function factObjects(rows: Record<FactTable, unknown[][]>, org: string, v
   return out;
 }
 
-/** Rows the re-settled traces had before and no longer have, as tombstones. Only traces settled before can have any. */
-export async function tombstones(ch: ChClient, project: { id: string; org: string }, traceIds: readonly string[], fresh: Record<FactTable, Row[]>, ver: number): Promise<Record<FactTable, Row[]>> {
-  const out = {} as Record<FactTable, Row[]>;
+/** Each trace's fact row keys, as settle_state keeps them (`{table: [[key values]]}`), so the next settle finds its old rows without a scan. */
+export function factKeysOf(facts: Record<FactTable, Row[]>): Map<string, string> {
+  const byTrace = new Map<string, Partial<Record<FactTable, unknown[][]>>>();
   for (const t of FACT_TABLES) {
-    out[t] = [];
-    if (!traceIds.length) continue;
-    const cols = ["trace_id", ...keyCols(t)];
-    const sql = `SELECT ${cols.join(", ")} FROM ${t}_t FINAL PREWHERE has({p2:Array(String)}, trace_id) WHERE project_id = {p1:String}`;
-    const keep = new Set(fresh[t].map((r) => keyOf(t, r)));
-    for (const old of await ch.query<Row>(sql, [project.id, traceIds])) {
-      if (!keep.has(keyOf(t, old))) out[t].push({ project_id: project.id, org_id: project.org, ...old, ver, is_deleted: 1, expire_ms: NONE_HIGH });
+    for (const r of facts[t]) {
+      const id = String(r.trace_id);
+      const keys = byTrace.get(id) ?? {};
+      (keys[t] ??= []).push(keyCols(t).map((c) => r[c] ?? null));
+      byTrace.set(id, keys);
     }
+  }
+  return new Map([...byTrace].map(([id, keys]) => [id, JSON.stringify(keys)]));
+}
+
+/** Old fact rows of traces settled before settle_state kept their keys: a scan, since fact tables are not ordered by trace. */
+async function scannedKeys(ch: ChClient, project: string, t: FactTable, traceIds: readonly string[]): Promise<Row[]> {
+  const cols = ["trace_id", ...keyCols(t)];
+  const sql = `SELECT ${cols.join(", ")} FROM ${t}_t FINAL PREWHERE has({p2:Array(String)}, trace_id) WHERE project_id = {p1:String}`;
+  return traceIds.length ? ch.query<Row>(sql, [project, traceIds]) : [];
+}
+
+/** Rows the re-settled traces had before and no longer have, as tombstones. `old` holds each re-settled trace's stored keys ("" when none were kept). */
+export async function tombstones(ch: ChClient, project: { id: string; org: string }, old: ReadonlyMap<string, string>, fresh: Record<FactTable, Row[]>, ver: number): Promise<Record<FactTable, Row[]>> {
+  const out = {} as Record<FactTable, Row[]>;
+  const unkept = [...old].filter(([, keys]) => !keys).map(([id]) => id);
+  const kept = [...old].filter(([, keys]) => keys).map(([id, keys]) => [id, JSON.parse(keys) as Partial<Record<FactTable, unknown[][]>>] as const);
+  for (const t of FACT_TABLES) {
+    const keep = new Set(fresh[t].map((r) => keyOf(t, r)));
+    const cols = ["trace_id", ...keyCols(t)];
+    const stored = kept.flatMap(([id, keys]) => (keys[t] ?? []).map((v) => rowOf(cols, [id, ...v])));
+    const before = [...stored, ...(await scannedKeys(ch, project.id, t, unkept))];
+    out[t] = before.filter((r) => !keep.has(keyOf(t, r))).map((r) => ({ project_id: project.id, org_id: project.org, ...r, ver, is_deleted: 1, expire_ms: NONE_HIGH }));
   }
   return out;
 }

@@ -1,5 +1,5 @@
 // ClickHouse rollup, histogram, and metric tiers: rows add up when they merge, and views read them merged with the Postgres names.
-import { IDS_MAX, TIERS } from "@wizeworks/lens-core";
+import { IDS_MAX, LOOSE_TRACE_PREFIX, TIERS } from "@wizeworks/lens-core";
 import { dayOf, EXPIRE, monthOf, secondsOf } from "./schema-raw.js";
 
 const sum = (c: string) => `${c} SimpleAggregateFunction(sum, Float64)`;
@@ -63,4 +63,18 @@ const SERIES_DDL = [
     attributes, last_ms, last_value, last_hist FROM metric_series_t FINAL`,
 ];
 
-export const ROLLUP_DDL: readonly string[] = [...TIERS.flatMap(rollupDdl), ...TIERS.flatMap(metricDdl), ...SERIES_DDL];
+/** Distinct trace ids per project, env, and hour of trace_heads writes, as mergeable sketches: trace counts add up across projects without counting a shared trace twice. Loose (log-only) batches keep their own rows, which expire by the log days. */
+const TRACE_HOURS_DDL = `CREATE TABLE IF NOT EXISTS trace_hours_t (
+    project_id LowCardinality(String), loose UInt8, bucket_ms Float64, env LowCardinality(String),
+    ids AggregateFunction(uniqCombined64, String), expire_ms SimpleAggregateFunction(max, Float64)
+  ) ENGINE = AggregatingMergeTree PARTITION BY ${monthOf("bucket_ms")} ORDER BY (project_id, loose, bucket_ms, env) ${EXPIRE}`;
+
+/** What one block of trace_heads rows adds to trace_hours_t. */
+export const TRACE_HOURS_SELECT = `SELECT project_id, org_id, toUInt8(startsWith(trace_id, '${LOOSE_TRACE_PREFIX}')) AS loose,
+    toFloat64(intDiv(toInt64(start_ms), 3600000) * 3600000) AS bucket_ms, env, uniqCombined64State(trace_id) AS ids, max(expire_ms) AS expire_ms
+  FROM trace_heads GROUP BY project_id, org_id, loose, bucket_ms, env`;
+
+/** Fills trace_hours_t on every trace_heads insert. It reads org_id, so it runs after the org columns (see schema.ts). */
+export const TRACE_HOURS_VIEW = `CREATE MATERIALIZED VIEW IF NOT EXISTS trace_hours_mv TO trace_hours_t AS ${TRACE_HOURS_SELECT}`;
+
+export const ROLLUP_DDL: readonly string[] = [...TIERS.flatMap(rollupDdl), ...TIERS.flatMap(metricDdl), ...SERIES_DDL, TRACE_HOURS_DDL];
