@@ -104,8 +104,8 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   counts, environments, and project health read small hourly totals in place of every trace. A trace that two projects
   share still counts once.
 - **Search suggestions for `@` attributes answer at once.** Attribute keys and values come from hourly counts, where they
-  used to join every attribute row (one took 22 minutes). Data sent before this change shows in them once its trace
-  settles again; new data shows right away.
+  used to join every attribute row (one took 22 minutes). The cloud rebuilds its stats once after the update, so older
+  data shows in them too; pages fill back in as the rebuild runs.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 
