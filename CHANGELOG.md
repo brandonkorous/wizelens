@@ -53,6 +53,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - **New organization** is in the organization menu at the top. Old `#/team/...` and `#/settings/...` links, in emails
   and bookmarks, open the new place.
 
+### Fixed
+
+- **The cloud shows data again under heavy load.** Its ClickHouse store ran out of memory, so pages loaded empty, new
+  data was refused, and the nightly backup failed. It now has 6 GiB in place of 4 GiB.
+
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 
 ### Changed
