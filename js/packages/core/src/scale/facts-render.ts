@@ -1,5 +1,6 @@
 // Rendering facts: page views (pv*) by route and by phase, and React components (react, rc*).
 import { ATTR_BROWSER_ROUTE, browserTypeOf } from "../attributes.js";
+import { withoutBotBrowser } from "../bots.js";
 import { componentStatsOf } from "../stats/rendering-components.js";
 import { type PageView, pageViewOf } from "../stats/rendering.js";
 import type { Span, Trace } from "../types.js";
@@ -58,9 +59,9 @@ function reactContributions(s: Span): Contribution[] {
   return out;
 }
 
-/** Everything one trace's page views and React reports add to the rollups. */
+/** Everything one trace's page views and React reports add to the rollups. A bot's renderer adds nothing. */
 export function renderFacts(trace: Trace): Contribution[] {
-  return trace.spans.flatMap((s) => {
+  return withoutBotBrowser(trace).flatMap((s) => {
     const type = browserTypeOf(s);
     if (type === "pageview") return viewContributions(pageViewOf(s));
     return type === "react" ? reactContributions(s) : [];

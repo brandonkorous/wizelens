@@ -8,7 +8,7 @@ describe("page views and routes", () => {
   it("reads page view timings and skips other spans", () => {
     const views = pageViews([makePageView({ route: "/products/{}", page: { renderMs: 300, ssrMs: 90, lcpMs: 1200, cls: 0.02 } }), makeRequest()]);
     expect(views).toHaveLength(1);
-    expect(views[0]).toMatchObject({ route: "/products/{}", navigation: "load", renderMs: 300, ssrMs: 90, lcpMs: 1200, cls: 0.02, hydrationMs: null });
+    expect(views[0]).toMatchObject({ route: "app.test/products/{}", navigation: "load", renderMs: 300, ssrMs: 90, lcpMs: 1200, cls: 0.02, hydrationMs: null });
   });
 
   it("averages per route and rates issues", () => {
@@ -19,9 +19,9 @@ describe("page views and routes", () => {
       makePageView({ route: "/cart", page: { renderMs: 200, largeImages: 2 } }),
     ]);
     const rows = routeRows(views);
-    expect(rows[0]).toMatchObject({ route: "/checkout", views: 2, avgRenderMs: 1300, issue: "high" });
-    expect(rows.find((r) => r.route === "/")?.issue).toBe("none");
-    expect(rows.find((r) => r.route === "/cart")).toMatchObject({ issue: "minor", issues: ["Large images without lazy loading"] });
+    expect(rows[0]).toMatchObject({ route: "app.test/checkout", views: 2, avgRenderMs: 1300, issue: "high" });
+    expect(rows.find((r) => r.route === "app.test/")?.issue).toBe("none");
+    expect(rows.find((r) => r.route === "app.test/cart")).toMatchObject({ issue: "minor", issues: ["Large images without lazy loading"] });
   });
 
   it("flags server render that takes a large share", () => {
@@ -75,7 +75,7 @@ describe("render insights", () => {
       makePageView({ components: [component("Gallery", { renders: 4, actualMs: 100, selfMs: 100 })] }),
     ];
     const groups = renderInsightGroups(traces);
-    expect(groups.map((g) => g.key)).toEqual(["render|route|/checkout", "render|component|Gallery"]);
+    expect(groups.map((g) => g.key)).toEqual(["render|route|app.test/checkout", "render|component|Gallery"]);
     expect(groups[0]).toMatchObject({ area: "render", kind: "render", impact: "high", title: "Render bottleneck" });
     expect(insightGroups(traces).some((g) => g.area === "render")).toBe(true);
   });

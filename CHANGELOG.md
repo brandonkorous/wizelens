@@ -149,6 +149,14 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
     and is never critical.
   - Request, trace, and span ids (`wizelens.request.id`, `trace_id`, `span.id`) are not scanned for secrets, so their
     digits are no longer stored as `[redacted:card]`. Node and .NET.
+- **Render insights count what people saw.**
+  - A page Chrome prerendered is timed from when it was shown (`activationStart`), not from when it was rendered
+    ahead, and is marked `wizelens.page.prerendered`. The browser script sends no errors while a page is still
+    prerendering.
+  - Page views from a bot's renderer (by the page's own mark, or the request's user agent, such as bingbot) stay out
+    of render routes, phases, and insights.
+  - Routes are keyed by host and route (`mypiggles.com/`), so two sites that share a route are no longer one row.
+    Render insight keys change with them; render stats fill in again after the rebuild.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

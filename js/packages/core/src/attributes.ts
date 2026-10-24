@@ -59,6 +59,9 @@ export const ATTR_PAGE = {
   largeImages: "wizelens.page.large_images",
 } as const;
 
+/** A page view of a prerendered page: its times count from when it was shown (`activationStart`). */
+export const ATTR_PAGE_PRERENDERED = "wizelens.page.prerendered";
+
 /** React render stats span: JSON string of ReactComponentStat[]. */
 export const ATTR_REACT_COMPONENTS = "wizelens.react.components";
 /** React render stats span: commits since the last report. */
