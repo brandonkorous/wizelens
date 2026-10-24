@@ -71,7 +71,9 @@ describe("runCheck", () => {
     expect(refused.error).toMatch(/^The TLS certificate is not valid/);
     expect(refused.tlsExpiresMs).toBe(TEST_CERT_END);
   });
+});
 
+describe("runCheck hops and retries", () => {
   it("times each hop of a redirect, and passes when the confirm retry on a fresh connection passes", async () => {
     let calls = 0;
     const base = await serve((req, res) => (req.url === "/old" ? void res.writeHead(301, { Location: "/flaky" }).end() : void res.writeHead(++calls === 1 ? 503 : 200).end("ok")));
