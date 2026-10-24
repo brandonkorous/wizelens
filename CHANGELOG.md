@@ -103,6 +103,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   it wrote before in one small lookup, where it used to search the whole project (up to 90 seconds). Trace and span
   counts, environments, and project health read small hourly totals in place of every trace. A trace that two projects
   share still counts once.
+- **Search suggestions for `@` attributes answer at once.** Attribute keys and values come from hourly counts, where they
+  used to join every attribute row (one took 22 minutes). Data sent before this change shows in them once its trace
+  settles again; new data shows right away.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

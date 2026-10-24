@@ -11,6 +11,8 @@ import { DAY_MS, nextVer } from "./util.js";
 const STATS = [
   ...["fact_requests", "fact_traces", "fact_logs", "fact_critical", "fact_search", "fact_attrs"].map((t) => `${t}_t`),
   ...TIERS.flatMap((t) => [`${t.table}_t`, `${t.hist}_t`]),
+  "attr_keys_t",
+  "attr_values_t",
   "settle_state",
 ];
 
@@ -19,6 +21,7 @@ const EXPIRE_FROM: Record<string, string> = {
   spans_raw: "start_ms", logs_raw: "time_ms", trace_heads: "start_ms", settle_state: "settled_ms", metric_points_raw: "time_ms", metric_series_t: "last_ms",
   fact_requests_t: "start_ms", fact_traces_t: "start_ms", fact_logs_t: "time_ms", fact_critical_t: "start_ms", fact_search_t: "time_ms", fact_attrs_t: "time_ms",
   rollup_1h_t: "bucket_ms", hist_1h_t: "bucket_ms", metric_1h_t: "bucket_ms", trace_hours_t: "bucket_ms",
+  attr_keys_t: "bucket_ms", attr_values_t: "bucket_ms",
 };
 
 /** When the facts version changed: empty the stats and settle every trace again, a page at a time. True when it did. */
@@ -56,6 +59,7 @@ function daysSql(table: string): string {
   if (table in LOG_ROW) return `if(${LOOSE}, {p3:Float64}, if(${LOG_ROW[table]}, least({p2:Float64}, {p3:Float64}), {p2:Float64}))`;
   if (table === "trace_heads" || table === "settle_state" || table.startsWith("fact_")) return `if(${LOOSE}, {p3:Float64}, {p2:Float64})`;
   if (table === "trace_hours_t") return "if(loose = 1, {p3:Float64}, {p2:Float64})";
+  if (table === "attr_keys_t" || table === "attr_values_t") return "if(src = 'l', {p3:Float64}, {p2:Float64})";
   if (table === "rollup_1h_t" || table === "hist_1h_t") return `if(kind IN (${LOG_KINDS_SQL}), {p3:Float64}, {p2:Float64})`;
   return "{p2:Float64}";
 }
