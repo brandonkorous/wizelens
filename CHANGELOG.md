@@ -2,6 +2,17 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — Card numbers that are card numbers
+
+### Fixed
+
+- **Counts and ids are no longer taken for card numbers.** A digit run is redacted as `[redacted:card]` only when it
+  has a real card brand's prefix and length (Visa, Mastercard including 2221-2720, Amex, Diners, JCB, Discover,
+  UnionPay) and a valid Luhn sum. Digits that are part of a decimal number (`0.4111…`), that follow a count or id label
+  (`"remaining_count": …`), or that sit under a count, size, time, or id attribute key (`*.count`, `*.id`, `*_ms`) stay
+  as they are. This ends the false "Card number in span data" finding on a count such as AgConnect's founder slots.
+  Node and .NET.
+
 ## [0.3.0-alpha.12] — Settings by task, and numbers that match reality
 
 ### Added
