@@ -17,6 +17,7 @@ export type RollupKind =
   | "rel"
   | "usr" | "err.u" | "ins.u" | "ep.u"
   | "sec" | "sec.ep" | "sec.u" | "sec.auth"
+  | "up" | "up.chk"
   | ScopedKind;
 
 /** Kinds that also count per service: each item adds a copy keyed by its service first (see `SERVICE_KIND`). */
@@ -106,6 +107,9 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   "sec.u": spec(),
   /** Sign-in answers by `service|endpoint|address`: failures (401, 403) as err, 429s as `limited`; the top is the newest failure. */
   "sec.auth": spec(["limited"], { top: "newest" }),
+  /** Uptime check runs, all together (`up`, key "") and by check id (`up.chk`): failures as err, response times. */
+  up: spec(),
+  "up.chk": spec([], { hist: true }),
 };
 
 /** Every kind's fields; the per-service copies keep their base kind's. */

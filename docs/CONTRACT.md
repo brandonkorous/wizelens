@@ -87,7 +87,7 @@ Times are Unix epoch **milliseconds** as floating point numbers (sub-ms precisio
 ```ts
 type SpanKind = "server" | "client" | "internal" | "producer" | "consumer";
 type SpanStatus = "unset" | "ok" | "error";
-type SpanCategory = "http.server" | "http.client" | "db" | "messaging" | "browser" | "internal";
+type SpanCategory = "http.server" | "http.client" | "db" | "messaging" | "browser" | "internal" | "uptime";
 
 interface Span {
   traceId: string;          // 32 lowercase hex
@@ -1332,13 +1332,15 @@ contain; not with HEAD), `intervalMin` (1 to 60), `timeoutMs` (1 to 60 s), `env`
   `down`), the last status, time, duration, error, and the end of the TLS certificate (`tlsExpiresMs`, https only; read by a bare
   handshake that sends nothing when the certificate itself is refused). Checks run every 15 seconds when due; each due check is
   claimed first (cloud: `FOR UPDATE SKIP LOCKED`), so replicas and slow runs never run it twice.
-- **Results are telemetry.** Each run is one trace with one `http.server` span of the service `wizelens-uptime`, written through
-  the normal write path in the check's project and environment: `http.request.method`, `http.route` = `/uptime/{checkId}` (the
-  endpoint key the `uptime` page groups by), `url.full` and `url.path` without the query string, `server.address`,
+- **Results are telemetry.** Each run is one trace with one span of category `uptime` (kind `client`) of the service
+  `wizelens-uptime`, written through the normal write path in the check's project and environment: `http.request.method`,
+  `http.route` = `/uptime/{checkId}`, `url.full` and `url.path` without the query string, `server.address`,
   `http.response.status_code`, `wizelens.uptime.check_id`, `wizelens.uptime.check_name`, `wizelens.uptime.ok`, and with TLS
-  `tls.server.not_after` and `wizelens.uptime.tls_days_left`. A failed run has status `error`, the reason as `statusMessage`, an
-  `exception` event (`UptimeCheckFailed`), and an error log line; a certificate within 14 days of its end (`TLS_WARN_DAYS`) adds a
-  warn log line. So Requests, Errors, Logs, Search, the service page, and alert rules all see them.
+  `tls.server.not_after` and `wizelens.uptime.tls_days_left`. A failed run has status `error`, the reason as `statusMessage`, and
+  an error log line (no `exception` event); a certificate within 14 days of its end (`TLS_WARN_DAYS`) adds a warn log line.
+  Runs are not app traffic: requests, services, errors, and Problems skip every span with `wizelens.uptime.check_id` (also
+  runs written before as `http.server` spans). The `up` (all checks) and `up.chk` (by check id) stats feed the `uptime` page;
+  Search and Logs still find runs.
 - **Incidents**: a run that fails after a passing (or pending) one opens an incident with the reason; the next passing run closes
   it at its start. Turning a check off closes its open incident. Uptime for 24 h, 7 days, and 30 days is the share of time since
   the check was made not covered by incidents, so it does not depend on trace retention. Incidents are kept 90 days.

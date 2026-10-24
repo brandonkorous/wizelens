@@ -5,6 +5,7 @@ import { isConsumer, isProducer, queueOf } from "../stats/messaging.js";
 import { databaseOf, edgeCallsOf, externalCallsOf, hostOf, isFailedSpan, type ServiceKind } from "../stats/services.js";
 import { traceParts } from "../stats/traces.js";
 import { isStreamSpan, requestMsOf } from "../stream.js";
+import { isUptimeSpan } from "../uptime/check.js";
 import type { Span, Trace } from "../types.js";
 import { displayService } from "../stats/errors.js";
 import { type Contribution, contribution, withServices } from "./agg.js";
@@ -21,6 +22,7 @@ const attr = (s: Span, k: string) => (s.attributes[k] == null ? null : String(s.
 
 /** The Services row a span counts in, with the same rules as `serviceRows`. Null for spans no row counts. */
 export function serviceRowOf(s: Span, external: ReadonlySet<Span>): (ServiceRowInfo & { key: string }) | null {
+  if (isUptimeSpan(s)) return null;
   if (s.category === "http.server") return { key: `api:${s.service}`, name: s.service, kind: "api", detail: null };
   if (isWebAppCall(s)) return { key: "web:browser", name: "Web App", kind: "web", detail: "browser" };
   if (s.category === "db") return { key: `db:${databaseOf(s)}`, name: databaseOf(s), kind: "database", detail: attr(s, "db.system.name") };

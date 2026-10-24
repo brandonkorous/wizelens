@@ -4,6 +4,7 @@ import { busyMs } from "../busy.js";
 import { REDACTED } from "../redact.js";
 import { type Health, healthOf, insightsOf, traceTiming } from "../health.js";
 import { isStreamSpan } from "../stream.js";
+import { isUptimeSpan } from "../uptime/check.js";
 import { entryServerSpan, errorSpansOf, isExpectedSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { memoByObject } from "./common.js";
@@ -107,6 +108,8 @@ function identityOf(server: Span | undefined, fetch: Span | undefined): { method
 }
 
 function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | null {
+  // An uptime check run is not app traffic: the Uptime page has it.
+  if (trace.spans.some(isUptimeSpan)) return null;
   const server = entryServerSpan(trace.spans);
   const fetch = trace.spans.filter((s) => browserTypeOf(s) === "fetch").sort(byStart)[0];
   if (!server && !fetch) return null;

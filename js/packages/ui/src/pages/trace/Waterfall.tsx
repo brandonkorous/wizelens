@@ -10,7 +10,7 @@ interface Row {
   hasChildren: boolean;
 }
 
-const CATEGORY_LABEL: Record<SpanCategory, string> = { "http.server": "IN", "http.client": "OUT", db: "SQL", messaging: "MSG", browser: "WEB", internal: "FN" };
+const CATEGORY_LABEL: Record<SpanCategory, string> = { "http.server": "IN", "http.client": "OUT", db: "SQL", messaging: "MSG", browser: "WEB", internal: "FN", uptime: "UP" };
 const TICKS = [0, 0.25, 0.5, 0.75, 1];
 const byStart = (a: Span, b: Span) => a.startMs - b.startMs;
 

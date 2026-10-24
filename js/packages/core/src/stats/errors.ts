@@ -1,6 +1,7 @@
 import { errorInfo } from "../analysis.js";
 import { ATTR_BROWSER_ROUTE, ATTR_ERROR_FRAME, ATTR_SERVICE_VERSION, browserTypeOf } from "../attributes.js";
 import { errorSpansOf } from "../trace.js";
+import { isUptimeSpan } from "../uptime/check.js";
 import type { Span, Trace } from "../types.js";
 import { groupBy, memoByObject, percentOf } from "./common.js";
 import { isFailed, type RequestRow, requestOf } from "./requests.js";
@@ -50,9 +51,9 @@ export function messageShape(message: string): string {
     .trim();
 }
 
-/** Error spans worth showing: exceptions first; plain failed spans only when the trace has no exception. */
+/** Error spans worth showing: exceptions first; plain failed spans only when the trace has no exception. Uptime runs are not app errors. */
 function errorSpans(trace: Trace): Span[] {
-  const failed = errorSpansOf(trace.spans);
+  const failed = errorSpansOf(trace.spans).filter((s) => !isUptimeSpan(s));
   const withException = failed.filter((s) => s.events.some((e) => e.name === "exception"));
   return withException.length ? withException : failed;
 }

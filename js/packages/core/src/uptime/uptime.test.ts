@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import { runPageSync } from "../models/index.js";
 import { memoryExecutor } from "../scale/memory.js";
 import { pageContext } from "../scale/run.js";
+import { traceFacts } from "../scale/facts.js";
+import { errorEvents } from "../stats/errors.js";
 import { requestOf } from "../stats/requests.js";
+import { serviceRows } from "../stats/services.js";
+import type { Span } from "../types.js";
 import { SCENARIO_NOW, scenarioTraces } from "../testing/scenario.js";
 import { buildTrace } from "../trace.js";
 import type { UptimeCheck } from "./check.js";
@@ -61,13 +65,28 @@ describe("uptime percent", () => {
 });
 
 describe("uptime telemetry", () => {
-  it("writes a failed run as a failed request with no query string, and warns about a certificate near its end", () => {
+  it("writes a failed run as an uptime span with no query string or exception, and warns about a certificate near its end", () => {
     const r = { startMs: 1000, durationMs: 40, ok: false, status: 503, error: "expected status 200-299, got 503", tlsExpiresMs: 1000 + 3 * 86_400_000, finalUrl: check.url };
     const { spans, logs } = uptimeTelemetry(check, r);
-    const row = requestOf(buildTrace(spans[0]!.traceId, spans, logs.map((l) => l.log), []))!;
-    expect(row).toMatchObject({ service: "wizelens-uptime", endpoint: "GET /uptime/ck1", status: 503, errors: 1 });
+    expect(spans[0]).toMatchObject({ category: "uptime", kind: "client", status: "error", statusMessage: r.error, events: [] });
     expect(spans[0]!.attributes["url.full"]).toBe("https://example.com/health");
     expect(logs.map((l) => l.log.level)).toEqual(["error", "warn"]);
+  });
+
+  it("never counts a run as app traffic, a service, or an error, new or written before", () => {
+    const r = { startMs: 1000, durationMs: 40, ok: false, status: 503, error: "HTTP 503", tlsExpiresMs: null, finalUrl: check.url };
+    const fresh = uptimeTelemetry(check, r).spans[0]!;
+    const old: Span = { ...fresh, category: "http.server", kind: "server", events: [{ name: "exception", timeMs: 1040, attributes: { "exception.type": "UptimeCheckFailed", "exception.message": "Home: HTTP 503" } }] };
+    for (const s of [fresh, old]) {
+      const trace = buildTrace(s.traceId, [s], [], []);
+      expect(requestOf(trace)).toBeNull();
+      expect(errorEvents([trace])).toHaveLength(0);
+      expect(serviceRows([trace])).toHaveLength(0);
+      const kinds = traceFacts(trace).contributions.map((c) => c.kind);
+      expect(kinds).not.toContain("svc");
+      expect(kinds).not.toContain("err");
+      expect(traceFacts(trace).contributions.filter((c) => c.kind === "up.chk")).toEqual([expect.objectContaining({ key: "ck1", err: 1 })]);
+    }
   });
 
   it("gives the Uptime page runs, failures, and response time per check", () => {

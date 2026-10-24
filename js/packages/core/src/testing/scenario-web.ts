@@ -12,7 +12,7 @@ import {
 } from "../attributes.js";
 import { LOOSE_TRACE_PREFIX } from "../loose.js";
 import type { Attributes, Trace } from "../types.js";
-import { UPTIME_SERVICE, uptimeRoute } from "../uptime/check.js";
+import { ATTR_UPTIME_CHECK, ATTR_UPTIME_OK, UPTIME_SERVICE, uptimeRoute } from "../uptime/check.js";
 import { draft, type Draft, exception, fetchSpan, finish, log, query, server, span } from "./scenario-kit.js";
 
 type PageTimings = Partial<Record<keyof typeof ATTR_PAGE, number>>;
@@ -93,7 +93,8 @@ export function job(id: string, at: number, i: number): Trace {
 export function uptimeRun(id: string, at: number, i: number): Trace {
   const d = draft(id);
   const down = i % 3 === 0;
-  const error = down ? { type: "UptimeCheckFailed", message: "Home: expected status 200-299, got 503" } : undefined;
-  server(d, { at, ms: 80 + i * 7, path: "/health", route: uptimeRoute(i % 2 ? "ck-api" : "ck-home"), service: UPTIME_SERVICE, status: down ? 503 : 200, error });
+  const check = i % 2 ? "ck-api" : "ck-home";
+  const attributes = { "http.request.method": "GET", "http.route": uptimeRoute(check), "url.path": "/health", "http.response.status_code": down ? 503 : 200, [ATTR_UPTIME_CHECK]: check, [ATTR_UPTIME_OK]: !down };
+  span(d, { category: "uptime", kind: "client", service: UPTIME_SERVICE, startMs: at, durationMs: 80 + i * 7, name: `GET ${check}`, status: down ? "error" : "ok", statusMessage: down ? "expected status 200-299, got 503" : null, attributes });
   return finish(d);
 }

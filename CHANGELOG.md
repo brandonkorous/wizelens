@@ -91,6 +91,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   byte, so a service with streams keeps a true average, p95, and status. A client that closes a stream does not abort
   it. The Service and Endpoint pages show a new Streams figure: how many opened, and how long they stayed open. Old
   data is fixed when its stats are rebuilt.
+- **Uptime checks no longer count as app traffic or errors.** A check run is now a span of category `uptime` with no
+  exception event; the reason stays in its status message and log line. Requests, Services, error groups, the
+  Overview, and Problems skip every run, also runs written before. The Uptime page reads new `up` and `up.chk` stats.
+  The stats version moves to 12, so hubs and the cloud rebuild their stats once after the update; pages fill back in
+  as the rebuild runs.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

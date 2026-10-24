@@ -1,5 +1,6 @@
 import { browserTypeOf, isWebAppCall } from "../attributes.js";
 import { requestMsOf } from "../stream.js";
+import { isUptimeSpan } from "../uptime/check.js";
 import { isFailedAnswer } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { avgOf, groupBy, percentileOf, percentOf } from "./common.js";
@@ -86,7 +87,7 @@ export function hostOf(s: Span): string {
 
 /** Services, databases, and outside hosts seen in the traces, busiest first. */
 export function serviceRows(traces: readonly Trace[]): ServiceRow[] {
-  const spans = traces.flatMap((t) => t.spans);
+  const spans = traces.flatMap((t) => t.spans).filter((s) => !isUptimeSpan(s));
   const rows: ServiceRow[] = [];
   for (const [name, list] of groupBy(spans.filter((s) => s.category === "http.server"), (s) => s.service)) rows.push(rowOf(`api:${name}`, name, "api", list, null));
   const web = spans.filter(isWebAppCall);
