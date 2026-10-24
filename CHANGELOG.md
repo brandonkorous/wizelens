@@ -2,7 +2,7 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] — Card numbers that are card numbers
+## [Unreleased] — Fewer false alarms
 
 ### Fixed
 
@@ -12,6 +12,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   (`"remaining_count": …`), or that sit under a count, size, time, or id attribute key (`*.count`, `*.id`, `*_ms`) stay
   as they are. This ends the false "Card number in span data" finding on a count such as AgConnect's founder slots.
   Node and .NET.
+- **Scanners that hide their paths with percent codes count as bots.** A path is decoded (twice, for `%2500`),
+  stripped of control characters such as `%00`, and its slashes collapsed before the scanner-path match, so
+  `/%00.env.swp` or `/%2e%67it/config` is a bot request like `/.env.swp` and `/.git/config`: its errors are bot-only
+  and not critical, and it stays out of traffic Problems.
 
 ## [0.3.0-alpha.12] — Settings by task, and numbers that match reality
 
