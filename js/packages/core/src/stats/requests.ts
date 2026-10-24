@@ -3,6 +3,7 @@ import { ATTR_ENDUSER, ATTR_REQUEST_ABORTED, ATTR_REQUEST_ID, ATTR_USER_NAME, AT
 import { busyMs } from "../busy.js";
 import { REDACTED } from "../redact.js";
 import { type Health, healthOf, insightsOf, traceTiming } from "../health.js";
+import { isStreamSpan } from "../stream.js";
 import { entryServerSpan, errorSpansOf, isExpectedSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { memoByObject } from "./common.js";
@@ -128,7 +129,8 @@ function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | nu
     endpoint,
     status,
     expected,
-    aborted: server?.attributes[ATTR_REQUEST_ABORTED] === true,
+    // A client that closes a stream ends it as streams end: that is not an abort.
+    aborted: server?.attributes[ATTR_REQUEST_ABORTED] === true && !isStreamSpan(server),
     durationMs: timing.totalMs,
     serverMs: timing.serverMs,
     dbMs: timing.dbMs,

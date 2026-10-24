@@ -9,7 +9,7 @@ export type ProjectLabels = Readonly<Record<string, string>>;
 
 /** Kinds whose key names a service, and which of its parts do. Other kinds (levels, layers, routes, queries) add up across projects. */
 const SERVICE_PARTS: Readonly<Record<string, readonly number[]>> = {
-  svc: [0], "svc.ep": [0], edge: [0, 1], "err.g": [0], "err.ge": [0], "err.u": [0], "err.s": [0],
+  svc: [0], "svc.ep": [0], "svc.stream": [0], "req.stream": [0], edge: [0, 1], "err.g": [0], "err.ge": [0], "err.u": [0], "err.s": [0],
   "log.s": [0], "log.p": [0], rel: [0], "ep.u": [0], "req.svc": [0], "sec.auth": [0],
 };
 

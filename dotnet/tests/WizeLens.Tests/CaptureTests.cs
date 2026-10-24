@@ -28,6 +28,23 @@ public class CaptureTests
     }
 
     [Fact]
+    public async Task A_stream_is_marked_with_its_first_byte()
+    {
+        await using var app = await TestApp.StartAsync(a => a.MapGet("/events", async (HttpContext c) =>
+        {
+            c.Response.ContentType = "text/event-stream";
+            await c.Response.WriteAsync("data: one\n\n");
+            await c.Response.Body.FlushAsync();
+            await Task.Delay(200);
+            await c.Response.WriteAsync("data: two\n\n");
+        }));
+        var root = TestApp.Root(await app.TraceAsync(await app.Client.GetAsync("/events")));
+
+        Assert.Equal("true", root.Attr("wizelens.stream"));
+        Assert.True(double.Parse(root.Attr("wizelens.stream.first_byte_ms")!, System.Globalization.CultureInfo.InvariantCulture) < 150);
+    }
+
+    [Fact]
     public async Task Spans_carry_the_service_version()
     {
         await using var app = await TestApp.StartAsync(a => a.MapGet("/v", () => "ok"), o => o.Release = "2.0.0");

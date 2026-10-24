@@ -13,6 +13,7 @@ import { DetailHead } from "../../ui/DetailHead";
 import { ModelState } from "../../ui/ModelState";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
+import { StreamsCard } from "../../ui/StreamsCard";
 import { type Column, Table } from "../../ui/Table";
 import { TimeChart } from "../../ui/TimeChart";
 import { serviceHref } from "./serviceParts";
@@ -50,6 +51,7 @@ function Cards({ m }: { m: EndpointPageModel }) {
       <StatCard icon={TriangleAlert} label="Error Rate" value={fmtPct(t.errorRate)} change={change(t.errorRate, m.prev?.errorRate)} upIsGood={false} series={rate} danger {...common} />
       <StatCard icon={Timer} label="p95 Latency" value={fmtMs(t.p95Ms)} change={change(t.p95Ms, m.prev?.p95Ms)} upIsGood={false} series={m.chart.p95} {...common} />
       <StatCard icon={Timer} label="p99 Latency" value={fmtMs(t.p99Ms)} change={change(t.p99Ms, m.prev?.p99Ms)} upIsGood={false} series={m.chart.p99} {...common} />
+      <StreamsCard streams={m.streams} {...common} />
     </div>
   );
 }

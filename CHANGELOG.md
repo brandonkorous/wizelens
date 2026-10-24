@@ -85,6 +85,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   framework only when it is a path; otherwise it uses `next.route`, else the shape of the path (`/orders/{}`).
 - **The MCP `search` tool puts tags on each result.** Each item's `tags` now holds the tag rules it matches, next to
   the tags the app set. The separate `tags` map, keyed by "trace id + space", is gone.
+- **Streams no longer count as slow requests.** Server-sent events, MCP streams, and upgrades stay open for minutes on
+  purpose. A server span is a stream when the Node or .NET add-on marks it (`wizelens.stream`, with
+  `wizelens.stream.first_byte_ms`), it answered `text/event-stream`, or it answered 101. Its request time is its first
+  byte, so a service with streams keeps a true average, p95, and status. A client that closes a stream does not abort
+  it. The Service and Endpoint pages show a new Streams figure: how many opened, and how long they stayed open. Old
+  data is fixed when its stats are rebuilt.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

@@ -4,6 +4,7 @@ import { endpointNameOf } from "../models/service-detail.js";
 import { isConsumer, isProducer, queueOf } from "../stats/messaging.js";
 import { databaseOf, edgeCallsOf, externalCallsOf, hostOf, isFailedSpan, type ServiceKind } from "../stats/services.js";
 import { traceParts } from "../stats/traces.js";
+import { isStreamSpan, requestMsOf } from "../stream.js";
 import type { Span, Trace } from "../types.js";
 import { displayService } from "../stats/errors.js";
 import { type Contribution, contribution, withServices } from "./agg.js";
@@ -32,16 +33,25 @@ export function serviceRowOf(s: Span, external: ReadonlySet<Span>): (ServiceRowI
 /** Row kinds whose spans are listed by endpoint in the service detail. */
 const WITH_ENDPOINTS: ReadonlySet<ServiceKind> = new Set(["api", "web", "database", "external"]);
 
+/** A stream's open time, by Services row (`svc.stream`) and by row and endpoint (`req.stream`). */
+function streamContributions(s: Span, key: string, endpoint: string): Contribution[] {
+  if (!isStreamSpan(s)) return [];
+  const open = { sum: s.durationMs, values: [s.durationMs] };
+  return [contribution("svc.stream", key, s.startMs, open), contribution("req.stream", joinKey(key, endpoint), s.startMs, open)];
+}
+
 function serviceContributions(trace: Trace): Contribution[] {
   const external = new Set(externalCallsOf(trace));
   return trace.spans.flatMap((s) => {
     const row = serviceRowOf(s, external);
     if (!row) return [];
     const { key, ...info } = row;
-    const base = { err: isFailedSpan(s) ? 1 : 0, sum: s.durationMs };
-    const out = [contribution("svc", key, s.startMs, { ...base, values: [s.durationMs], top: { rank: s.startMs, data: info } })];
-    if (WITH_ENDPOINTS.has(row.kind)) out.push(contribution("svc.ep", joinKey(key, endpointNameOf(s, row.kind)), s.startMs, { ...base, values: [s.durationMs] }));
-    return out;
+    const ms = requestMsOf(s);
+    const base = { err: isFailedSpan(s) ? 1 : 0, sum: ms };
+    const out = [contribution("svc", key, s.startMs, { ...base, values: [ms], top: { rank: s.startMs, data: info } })];
+    if (!WITH_ENDPOINTS.has(row.kind)) return out;
+    const endpoint = endpointNameOf(s, row.kind);
+    return [...out, contribution("svc.ep", joinKey(key, endpoint), s.startMs, { ...base, values: [ms] }), ...streamContributions(s, key, endpoint)];
   });
 }
 

@@ -16,6 +16,7 @@ import { edgeNeeds, edgesOfRows, serviceNeeds, serviceRowsOf } from "./service-r
 import { type VersionStat, versionNeeds, versionsOf } from "./service-versions.js";
 import type { Apdex } from "./apdex.js";
 import { apdexByService, apdexNeed } from "./apdex-rows.js";
+import { type StreamStats, streamNeed, streamsOf } from "./stream-stats.js";
 
 const TOP_ERRORS = 50;
 const SLOWEST = 10;
@@ -68,6 +69,8 @@ export interface ServicePageModel {
   versions: VersionStat[];
   /** Apdex against the service's target (your own services). */
   apdex: Apdex | null;
+  /** Streams it served; their open time is not in its latency. Null when none. */
+  streams: StreamStats | null;
 }
 
 /** Needs for an owned service's errors, requests, and logs, by its display name. */
@@ -115,6 +118,7 @@ export const servicePage: PageDef<ServicePageModel> = {
       groupNeed("svc.ep", "svc.ep", "cur", { filter: { prefix: endpointPrefix(row.key) }, order: { by: "n", desc: true, limit: MODEL_LIST_MAX } }),
       seriesNeed("chart", "svc", "cur", CHART_BUCKETS, { filter: { keys: [row.key] }, hist: true }),
       seriesNeed("chart.prev", "svc", "prev", CHART_BUCKETS, { filter: { keys: [row.key] } }),
+      streamNeed("streams", "svc.stream", row.key),
       ...(isOwnedService(row.kind) ? [...ownedNeeds(row.name), apdexNeed(row.key)] : []),
     ];
   },
@@ -138,6 +142,7 @@ export const servicePage: PageDef<ServicePageModel> = {
       logs: owned && row ? logsOf(d, row.name) : NO_LOGS,
       versions: owned && row ? versionsOf(d, displayService(row.name)) : [],
       apdex: owned && row ? (apdexByService(d).get(displayService(row.name)) ?? null) : null,
+      streams: row ? streamsOf(d, "streams") : null,
     };
   },
 };

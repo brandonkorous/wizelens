@@ -1,4 +1,5 @@
 import { browserTypeOf, isWebAppCall } from "../attributes.js";
+import { requestMsOf } from "../stream.js";
 import { isFailedAnswer } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { avgOf, groupBy, percentileOf, percentOf } from "./common.js";
@@ -48,7 +49,7 @@ export const isFailedSpan = (s: Span): boolean => isFailedAnswer(s);
 const str = (s: Span, k: string) => (s.attributes[k] == null ? null : String(s.attributes[k]));
 
 function rowOf(key: string, name: string, kind: ServiceKind, spans: Span[], detail: string | null): ServiceRow {
-  const durations = spans.map((s) => s.durationMs);
+  const durations = spans.map(requestMsOf);
   const errors = spans.filter(isFailedSpan).length;
   const errorRate = percentOf(errors, spans.length);
   const p95Ms = percentileOf(durations, 95);

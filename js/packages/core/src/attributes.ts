@@ -76,6 +76,10 @@ export interface ReactComponentStat {
 export const ATTR_REQUEST_ID = "wizelens.request.id";
 /** Server span: true when the client left before the response was sent. Work after that is not in the span. */
 export const ATTR_REQUEST_ABORTED = "wizelens.request.aborted";
+/** Server span: the response is a stream (server-sent events, an MCP stream, an upgrade). Its open time is not request time. */
+export const ATTR_STREAM = "wizelens.stream";
+/** Stream server span: ms from the request start to the first byte, the part that counts as request time. */
+export const ATTR_STREAM_FIRST_BYTE_MS = "wizelens.stream.first_byte_ms";
 /** Server span: the app expected this answer, so a 5xx or an error status is not a failure. An exception still is. */
 export const ATTR_EXPECTED = "wizelens.expected";
 /** The signed-in user (OpenTelemetry names): their id, and a display name when the app sends one. */

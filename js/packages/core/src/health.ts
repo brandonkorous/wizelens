@@ -2,6 +2,7 @@ import type { Finding } from "./analysis.js";
 import { busyMs, busyWithin, totalMs } from "./busy.js";
 import { ATTR_BROWSER_RENDER_MS, browserTypeOf } from "./attributes.js";
 import { isSecurityKind } from "./security/kinds.js";
+import { requestMsOf } from "./stream.js";
 import { entryServerSpan } from "./trace.js";
 import { type Span, type Trace } from "./types.js";
 
@@ -71,6 +72,8 @@ const byStart = (a: Span, b: Span) => a.startMs - b.startMs;
 export function traceTiming(trace: Pick<Trace, "spans" | "durationMs">): Timing {
   const browser = trace.spans.filter((s) => browserTypeOf(s) === "fetch").sort(byStart)[0];
   const root = entryServerSpan(trace.spans);
+  // A stream's request time is its first byte: the minutes it stays open are not.
+  const rootMs = root ? requestMsOf(root) : null;
   const db = trace.spans.filter((s) => s.category === "db");
   const rawRender = browser?.attributes[ATTR_BROWSER_RENDER_MS];
   const renderMs = typeof rawRender === "number" && Number.isFinite(rawRender) ? Math.max(0, rawRender) : null;
@@ -82,13 +85,13 @@ export function traceTiming(trace: Pick<Trace, "spans" | "durationMs">): Timing 
     const out = own.filter((s) => s.category === "http.client");
     // Only time inside the server span counts: an aborted request ends early while its handler keeps running.
     const within = (spans: Span[]) => busyWithin(spans, root.startMs, root.startMs + root.durationMs);
-    server = { codeMs: Math.max(0, root.durationMs - within([...ownDb, ...out])), dbMs: within(ownDb), httpOutMs: within(out), httpOutCount: out.length };
+    server = { codeMs: Math.max(0, rootMs! - within([...ownDb, ...out])), dbMs: within(ownDb), httpOutMs: within(out), httpOutCount: out.length };
   }
 
   return {
     // Without a browser call the request is its entry server span: later spans (a cached page's renders) are not in it.
-    totalMs: browser ? browser.durationMs + (renderMs ?? 0) : (root?.durationMs ?? trace.durationMs),
-    serverMs: root?.durationMs ?? null,
+    totalMs: browser ? browser.durationMs + (renderMs ?? 0) : (rootMs ?? trace.durationMs),
+    serverMs: rootMs,
     dbMs: busyMs(db),
     dbTotalMs: totalMs(db),
     dbCount: db.length,
