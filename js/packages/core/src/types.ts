@@ -148,10 +148,12 @@ export const MAX_FEDERATION_HOPS = 5;
 /** `Server-Timing` metrics that carry the trace id and endpoint to the page, which cannot read a document's headers. */
 export const TIMING_TRACE = "wl-trace";
 export const TIMING_ENDPOINT = "wl-endpoint";
+/** `Server-Timing` metric with the epoch ms the server answered, so a page opened much later starts its own trace. */
+export const TIMING_START = "wl-start";
 
 /** The `Server-Timing` value for one response. */
-export const serverTimingValue = (traceId: string, endpoint: string): string =>
-  `${TIMING_TRACE};desc=${traceId}, ${TIMING_ENDPOINT};desc=${JSON.stringify(endpoint)}`;
+export const serverTimingValue = (traceId: string, endpoint: string, startMs: number = Date.now()): string =>
+  `${TIMING_TRACE};desc=${traceId}, ${TIMING_ENDPOINT};desc=${JSON.stringify(endpoint)}, ${TIMING_START};desc=${Math.round(startMs)}`;
 export const DEFAULT_BASE_PATH = "/_wizelens";
 /** sessionStorage key that holds the per-tab session id. */
 export const SESSION_STORAGE_KEY = "wizelens.session";

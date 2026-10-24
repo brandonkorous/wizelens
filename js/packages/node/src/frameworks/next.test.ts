@@ -51,6 +51,7 @@ it("sends the trace id and endpoint in Server-Timing for the page load", async (
   const timing = res.headers.get("server-timing")!;
   expect(timing).toContain(`wl-trace;desc=${res.headers.get("x-wizelens-trace")}`);
   expect(timing).toContain(`wl-endpoint;desc="${base}/_wizelens"`);
+  expect(timing).toMatch(/wl-start;desc=\d{13}/);
 });
 
 it("skips build files and serves the dashboard without calling the app", async () => {

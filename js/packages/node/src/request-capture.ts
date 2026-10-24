@@ -136,7 +136,7 @@ export function captureRequest(d: CaptureDeps, req: IncomingMessage, res: Server
   res.setHeader(HEADER_TRACE, span.spanContext().traceId);
   res.setHeader(HEADER_ENDPOINT, endpoint);
   // A page cannot read its own document headers, but it can read Server-Timing. The page load joins this trace with it.
-  res.appendHeader("Server-Timing", serverTimingValue(span.spanContext().traceId, endpoint));
+  res.appendHeader("Server-Timing", serverTimingValue(span.spanContext().traceId, endpoint, Date.now()));
   keepExposeHeaders(res);
   (req as unknown as Record<symbol, OtelSpan>)[REQ_SPAN] = span;
   if (d.hudTag && !isOwnPath(d, pathOf(rawUrl))) injectHud(req, res, d.hudTag);

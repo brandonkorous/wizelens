@@ -88,6 +88,17 @@ function timeBounds(spans: readonly Span[], logs: readonly LogRecord[]): { start
   return Number.isFinite(start) ? { start, end } : { start: 0, end: 0 };
 }
 
+/** A browser span this long after its server answered is from a cached page (a crawler, a restored tab), not this request. */
+export const LATE_BROWSER_MS = 10 * 60_000;
+
+/** The spans without browser spans that started more than LATE_BROWSER_MS after the entry server span ended. */
+export function dropLateBrowserSpans(spans: readonly Span[]): readonly Span[] {
+  const entry = entryServerSpan(spans);
+  if (!entry) return spans;
+  const last = entry.startMs + entry.durationMs + LATE_BROWSER_MS;
+  return spans.some((s) => s.category === "browser" && s.startMs > last) ? spans.filter((s) => s.category !== "browser" || s.startMs <= last) : spans;
+}
+
 function statusOf(spans: readonly Span[]): SpanStatus {
   if (spans.some(isErrorStatus)) return "error";
   return spans.some((s) => s.status === "ok") ? "ok" : "unset";
@@ -100,7 +111,7 @@ export function buildTrace(
   logs: readonly LogRecord[],
   remotes: Iterable<string>,
 ): Trace {
-  const fixed = adjustClockSkew(spans);
+  const fixed = adjustClockSkew(dropLateBrowserSpans(spans));
   const sortedSpans = fixed.spans.sort((a, b) => a.startMs - b.startMs);
   const sortedLogs = shiftLogs(logs, fixed.offsets).sort((a, b) => a.timeMs - b.timeMs);
   const root = findRootSpan(sortedSpans);

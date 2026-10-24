@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { TIMING_TRACE } from "@wizeworks/lens-core";
+import { TIMING_START, TIMING_TRACE } from "@wizeworks/lens-core";
 import { documentRequest } from "./document-request.js";
 
 const TRACE = "0af7651916cd43dd8448eb211c80319c";
 
-function stubNavigation(serverTiming: { name: string; description: string }[], paint?: number): void {
-  const nav = { startTime: 0, responseStart: 42, domContentLoadedEventEnd: 90, responseStatus: 200, serverTiming };
+function stubNavigation(serverTiming: { name: string; description: string }[], paint?: number, transferSize = 1200): void {
+  const nav = { startTime: 0, responseStart: 42, domContentLoadedEventEnd: 90, responseStatus: 200, serverTiming, transferSize };
   vi.stubGlobal("location", new URL("http://app.test/orders?page=2"));
   vi.stubGlobal("performance", {
     timeOrigin: 1_700_000_000_000,
@@ -34,6 +34,15 @@ describe("documentRequest", () => {
   it("uses DOMContentLoaded when the page has not painted yet", () => {
     stubNavigation([{ name: TIMING_TRACE, description: TRACE }]);
     expect(documentRequest()?.renderMs).toBe(48);
+  });
+
+  it("starts its own trace for a page opened long after the server answered, or from a cache", () => {
+    stubNavigation([{ name: TIMING_TRACE, description: TRACE }, { name: TIMING_START, description: String(1_700_000_000_000 - 6 * 60_000) }]);
+    expect(documentRequest()).toBeNull();
+    stubNavigation([{ name: TIMING_TRACE, description: TRACE }, { name: TIMING_START, description: String(1_700_000_000_000 - 60_000) }]);
+    expect(documentRequest()?.traceId).toBe(TRACE);
+    stubNavigation([{ name: TIMING_TRACE, description: TRACE }], undefined, 0);
+    expect(documentRequest()).toBeNull();
   });
 
   it("gives nothing for a page no WizeLens server traced", () => {

@@ -86,7 +86,8 @@ export function traceTiming(trace: Pick<Trace, "spans" | "durationMs">): Timing 
   }
 
   return {
-    totalMs: browser ? browser.durationMs + (renderMs ?? 0) : trace.durationMs,
+    // Without a browser call the request is its entry server span: later spans (a cached page's renders) are not in it.
+    totalMs: browser ? browser.durationMs + (renderMs ?? 0) : (root?.durationMs ?? trace.durationMs),
     serverMs: root?.durationMs ?? null,
     dbMs: busyMs(db),
     dbTotalMs: totalMs(db),

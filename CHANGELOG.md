@@ -64,6 +64,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   and no exception. Next.js router prefetches (`_rsc=`, `RSC: 1`, `Next-Router-Prefetch: 1`) are marked
   `wizelens.browser.prefetch` and never fail. Neither counts in the Web App row or its latency. A real network failure
   is still an error, now with its real type (`TypeError`) in place of `FetchError`.
+- **A page opened long after the server answered no longer stretches that request to hours.** A request without a
+  browser call is timed by its entry server span, not the whole trace. Server-Timing now carries `wl-start` (Node and
+  .NET), and the page starts its own trace when it opened more than 5 minutes after that, or came from a cache.
+  Browser spans that start more than 10 minutes after their server answer are left out of the trace, so data from
+  older SDKs is fixed too.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 
