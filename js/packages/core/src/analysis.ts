@@ -1,6 +1,6 @@
 import type { Span, Trace } from "./types.js";
 import { findSlowQueries, hasUnknownParams, queryText, repeatableQueries, valuesOf } from "./db-findings.js";
-import { isErrorSpan } from "./trace.js";
+import { errorSpansOf } from "./trace.js";
 import { findSecurity, type TraceSecurityKind } from "./security/index.js";
 
 export { dbSpans, findSlowQueries, hasUnknownParams, isSessionStatement, queryText, WAIT_MIN_QUERIES, WAIT_SHAPE } from "./db-findings.js";
@@ -160,7 +160,7 @@ export function errorInfo(span: Span): ErrorInfo {
 }
 
 export function findErrors(trace: Trace): Finding[] {
-  return trace.spans.filter(isErrorSpan).map((s) => ({
+  return errorSpansOf(trace.spans).map((s) => ({
     kind: "error" as const,
     severity: "error" as const,
     title: `${s.service}: ${errorInfo(s).message}`,

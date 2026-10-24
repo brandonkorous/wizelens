@@ -3,7 +3,7 @@ import { ATTR_ENDUSER, ATTR_REQUEST_ABORTED, ATTR_REQUEST_ID, ATTR_USER_NAME, AT
 import { busyMs } from "../busy.js";
 import { REDACTED } from "../redact.js";
 import { type Health, healthOf, insightsOf, traceTiming } from "../health.js";
-import { entryServerSpan, isErrorSpan, isExpectedSpan } from "../trace.js";
+import { entryServerSpan, errorSpansOf, isExpectedSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { memoByObject } from "./common.js";
 
@@ -112,7 +112,7 @@ function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | nu
   const timing = traceTiming(trace);
   const clients = trace.spans.filter((s) => s.category === "http.client");
   const findings = analyzeTrace(trace, analysis);
-  const errors = trace.spans.filter(isErrorSpan).length;
+  const errors = errorSpansOf(trace.spans).length;
   const insights = insightsOf(findings).length;
   const { method, path, endpoint } = identityOf(server, fetch);
   const who = userSpan(trace, server);

@@ -69,6 +69,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   .NET), and the page starts its own trace when it opened more than 5 minutes after that, or came from a cache.
   Browser spans that start more than 10 minutes after their server answer are left out of the trace, so data from
   older SDKs is fixed too.
+- **A deliberate 503 no longer shows up as an error through the framework's own span.** When the request's server span
+  is marked expected, a span of the same service that only repeats the 5xx (Next.js `BaseServer.handleRequest` with
+  `error.type: 503`) and has no exception is not an error: not in error groups, request errors, trace status, or
+  findings.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 
