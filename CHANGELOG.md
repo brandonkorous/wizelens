@@ -53,6 +53,13 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - **New organization** is in the organization menu at the top. Old `#/team/...` and `#/settings/...` links, in emails
   and bookmarks, open the new place.
 
+### Fixed
+
+- **Pages with the 30 day range no longer fail for most of each hour.** A named range such as 30d snaps its start to a
+  whole hour, which could put it up to 59 minutes before what a project keeps, and the cloud and the hub then refused
+  it with "This time window starts before these projects keep data." Only a custom from-to window is checked against
+  retention now.
+
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 
 ### Changed

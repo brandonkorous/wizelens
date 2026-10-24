@@ -32,3 +32,13 @@ it("computes page models on the server, for long ranges", async () => {
   expect((await owner.call("GET", `api/models/nope?project=${projectId}`)).status).toBe(404);
   expect((await owner.call("GET", `api/models/overview?project=${projectId}&range=90d`)).status).toBe(400);
 });
+
+it("answers a named range at its retention edge at any minute of the hour", async () => {
+  let url: string;
+  const now = NOW + 45 * 60_000;
+  ({ cloud, url } = await startCloud({ now: () => now }));
+  const { owner, projectId } = await setupOwner(cloud, url);
+  expect((await owner.call("GET", `api/models/overview?project=${projectId}&range=30d`)).status).toBe(200);
+  const from = now - 31 * DAY;
+  expect((await owner.call("GET", `api/models/overview?project=${projectId}&from=${from}&to=${now}`)).status).toBe(400);
+});
