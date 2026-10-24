@@ -3,11 +3,16 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { releaseOf } from "../release.js";
 import type { WizeLens } from "../types.js";
 
 export const FAKE_SCRIPT = "window.fakeHud = 1;\n//# sourceMappingURL=wizelens.iife.js.map\n";
 export const FAKE_MAP = '{"version":3,"sources":[],"mappings":""}';
-export const TAG = '<script src="/_wizelens/wizelens.js" data-endpoint="/_wizelens" data-hud="true" data-source="inject" defer></script>';
+/** The tag from docs/HUD-PLAN.md, with nothing about the server. */
+export const PLAIN_TAG = '<script src="/_wizelens/wizelens.js" data-endpoint="/_wizelens" data-hud="true" data-source="inject" defer></script>';
+const release = releaseOf({});
+/** The tag a test server injects: the plain tag plus the release it finds (this package's package.json in tests). */
+export const TAG = PLAIN_TAG.replace(" defer>", `${release ? ` data-release="${release}"` : ""} defer>`);
 
 let bundle: string | undefined;
 

@@ -98,7 +98,7 @@ function buildParts(options: WizeLensOptions, basePath: string) {
     w3c: new W3CTraceContextPropagator(),
     captureResponseBody: !!options.captureResponseBody,
     handler,
-    hudTag: hudTagFor(dashboard && hudOn(options), hudBundle, basePath),
+    hudTag: hudTagFor(dashboard && hudOn(options), hudBundle, basePath, undefined, { release: releaseOf(options) }),
   };
   return { hub, service, redactKeys, store, persister, tracing, logs, write, getTrace, handler, capture, metrics, middleware: createMiddleware(capture) };
 }

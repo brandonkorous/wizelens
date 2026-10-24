@@ -61,7 +61,7 @@ export interface WizeLensOptions {
   nPlusOneThreshold?: number;
   /** The project this service belongs to, so a shared hub can group it. Default: the WIZELENS_PROJECT variable. */
   project?: string;
-  /** The app's version, kept on every span as `service.version` for release markers, version compares, and Problems. Default: WIZELENS_RELEASE, else OTEL_SERVICE_VERSION, else npm_package_version. */
+  /** The app's version, kept on every span as `service.version` for release markers, version compares, and Problems. Default: WIZELENS_RELEASE, OTEL_SERVICE_VERSION, a commit variable (SOURCE_VERSION, GIT_SHA, GIT_COMMIT, VERCEL_GIT_COMMIT_SHA, RENDER_GIT_COMMIT), npm_package_version, then the app's package.json. */
   release?: string;
   /** Also send everything to this local hub, for example "http://localhost:5960". Default: the WIZELENS_HUB variable. */
   hub?: string;

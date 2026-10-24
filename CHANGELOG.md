@@ -107,6 +107,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   `group_requests` tool now name an endpoint by its route, else by the shape of its path without the query
   (`GET /api/live/{}`). A route-less request no longer shows its raw path with ids on the Service page, and a new
   query key no longer makes a new endpoint. Old data is renamed when its stats are rebuilt (stats version 13).
+- **Node services report a release without extra setup.** When `release` and `WIZELENS_RELEASE` are not set, the Node
+  add-on now reads `OTEL_SERVICE_VERSION`, then the commit a host or CI sets (`SOURCE_VERSION`, `GIT_SHA`,
+  `GIT_COMMIT`, `VERCEL_GIT_COMMIT_SHA`, `RENDER_GIT_COMMIT`), then `npm_package_version`, then the version in the app's
+  own `package.json` (found from the started script or the working folder, never a package's). Started as
+  `node server.js`, a service used to report no release at all. The HUD tag the add-on injects carries the server's
+  release (`data-release`), and the Connect setup steps show `WIZELENS_RELEASE`.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 
