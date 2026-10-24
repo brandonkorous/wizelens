@@ -8,6 +8,8 @@ export interface ResponseTap {
   bytes(): number;
   /** The kept body, or null when capture is off or the body is not text or JSON. */
   body(): { text: string; truncated: boolean } | null;
+  /** `performance.now()` when the app first wrote, flushed headers, or ended; undefined before that. */
+  firstAt(): number | undefined;
 }
 
 type Chunk = string | Uint8Array;
@@ -31,7 +33,9 @@ export function tapResponse(res: ServerResponse, capture: boolean): ResponseTap 
   let kept = 0;
   let eligible: boolean | undefined;
   const parts: Buffer[] = [];
+  let firstAt: number | undefined;
   const take = (chunk: unknown, enc: unknown): void => {
+    firstAt ??= performance.now();
     if (typeof chunk !== "string" && !(chunk instanceof Uint8Array)) return;
     const encoding = typeof enc === "string" ? (enc as BufferEncoding) : undefined;
     bytes += sizeOf(chunk, encoding);
@@ -44,13 +48,15 @@ export function tapResponse(res: ServerResponse, capture: boolean): ResponseTap 
   };
   wrap(res, "write", take);
   wrap(res, "end", take);
+  wrap(res, "flushHeaders", () => void (firstAt ??= performance.now()));
   return {
+    firstAt: () => firstAt,
     bytes: () => bytes,
     body: () => (capture && eligible ? { text: Buffer.concat(parts).toString("utf8"), truncated: bytes > kept } : null),
   };
 }
 
-function wrap(res: ServerResponse, method: "write" | "end", take: (chunk: unknown, enc: unknown) => void): void {
+function wrap(res: ServerResponse, method: "write" | "end" | "flushHeaders", take: (chunk: unknown, enc: unknown) => void): void {
   const original = res[method] as (...args: unknown[]) => unknown;
   const wrapped = function (this: ServerResponse, ...args: unknown[]) {
     try {

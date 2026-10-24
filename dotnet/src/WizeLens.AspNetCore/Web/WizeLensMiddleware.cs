@@ -29,7 +29,7 @@ internal sealed class WizeLensMiddleware(RequestDelegate next, WizeLensOptions o
         var selfEndpoint = SelfEndpoint(context, basePath);
         store.AddSelfEndpoint(selfEndpoint);
         var activity = Activity.Current;
-        if (activity is not null) AddResponseHeaders(context, activity.TraceId.ToHexString(), selfEndpoint);
+        if (activity is not null) AddResponseHeaders(context, activity, selfEndpoint);
         await ProfileAsync(context, activity);
     }
 
@@ -99,16 +99,19 @@ internal sealed class WizeLensMiddleware(RequestDelegate next, WizeLensOptions o
         }
     }
 
-    private static void AddResponseHeaders(HttpContext context, string traceId, string selfEndpoint)
+    private static void AddResponseHeaders(HttpContext context, Activity activity, string selfEndpoint)
     {
+        var traceId = activity.TraceId.ToHexString();
         context.Response.OnStarting(() =>
         {
+            // The response starts here: a stream's request time ends at this first byte.
+            activity.SetCustomProperty(RequestEnricher.FirstByteProperty, (DateTime.UtcNow - activity.StartTimeUtc).TotalMilliseconds);
             var headers = context.Response.Headers;
             headers[TraceHeader] = traceId;
             headers[EndpointHeader] = selfEndpoint;
             headers.Append("Access-Control-Expose-Headers", $"{TraceHeader}, {EndpointHeader}");
             // A page cannot read its own document headers, but it can read Server-Timing. The page load joins this trace with it.
-            headers.Append("Server-Timing", $"wl-trace;desc={traceId}, wl-endpoint;desc=\"{selfEndpoint}\"");
+            headers.Append("Server-Timing", $"wl-trace;desc={traceId}, wl-endpoint;desc=\"{selfEndpoint}\", wl-start;desc={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
             return Task.CompletedTask;
         });
     }

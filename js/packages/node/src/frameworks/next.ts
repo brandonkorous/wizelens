@@ -1,5 +1,6 @@
 import { trace } from "@opentelemetry/api";
 import { captureOf, providerOf } from "../adapters/registry.js";
+import { isControlFlowError } from "../control-flow.js";
 import { preciseProvider } from "../precise.js";
 import { currentServerSpan, recordOn } from "../spans.js";
 import type { WizeLens, WizeLensOptions } from "../types.js";
@@ -62,7 +63,7 @@ function alreadyRecorded(wizelens: WizeLens, traceId: string, message: string): 
 /** Next.js `onRequestError` hook: puts a server error on the request span and in the logs. Re-export it from instrumentation.ts. */
 export function onRequestError(err: unknown, request: NextRequestInfo, ctx: NextErrorContext): void {
   const wizelens = nextWizeLens();
-  if (!wizelens?.enabled) return;
+  if (!wizelens?.enabled || isControlFlowError(err)) return;
   const message = messageOf(err);
   const span = currentServerSpan();
   if (span && !alreadyRecorded(wizelens, span.spanContext().traceId, message)) recordOn(span, err);

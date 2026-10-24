@@ -4,6 +4,7 @@ import { compareSeriesLabel, fmtCount, fmtMs, fmtPct } from "../../format";
 import { Panel } from "../../ui/Panel";
 import { ApdexCard } from "../../ui/ApdexCard";
 import { StatCard } from "../../ui/StatCard";
+import { StreamsCard } from "../../ui/StreamsCard";
 import { TimeChart } from "../../ui/TimeChart";
 
 /** What a service row counts, by kind. */
@@ -24,6 +25,7 @@ export function ServiceCards({ m, row }: { m: ServicePageModel; row: ServiceRow 
       <StatCard icon={Clock} label="Avg Latency" value={fmtMs(row.avgMs)} change={change(row.avgMs, prev?.avgMs)} upIsGood={false} compareLabel={compareLabel} series={m.chart.avgMs} />
       <StatCard icon={Timer} label="p95 Latency" value={fmtMs(row.p95Ms)} change={change(row.p95Ms, prev?.p95Ms)} upIsGood={false} compareLabel={compareLabel} series={m.chart.p95Ms} />
       {m.owned && <ApdexCard apdex={m.apdex} compareLabel={compareLabel} />}
+      <StreamsCard streams={m.streams} compareLabel={compareLabel} />
     </div>
   );
 }

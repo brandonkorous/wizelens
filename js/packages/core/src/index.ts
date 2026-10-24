@@ -18,6 +18,7 @@ export * from "./releases.js";
 export * from "./analysis.js";
 export * from "./nosql.js";
 export * from "./health.js";
+export * from "./stream.js";
 export * from "./busy.js";
 export * from "./stats/index.js";
 export * from "./anomaly/index.js";

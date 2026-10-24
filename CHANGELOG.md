@@ -58,6 +58,47 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - **The cloud shows data again under heavy load.** Its ClickHouse store ran out of memory, so pages loaded empty, new
   data was refused, and the nightly backup failed. Loading whole traces now reads only the traces asked for, which uses
   about a twentieth of the memory, and the store has 6 GiB in place of 4 GiB.
+- **Pages with the 30 day range no longer fail for most of each hour.** A named range such as 30d snaps its start to a
+  whole hour, which could put it up to 59 minutes before what a project keeps, and the cloud and the hub then refused
+  it with "This time window starts before these projects keep data." Only a custom from-to window is checked against
+  retention now.
+- **Cancelled browser calls and prefetches are not errors.** A fetch or XHR that the app aborted, that the page cut
+  off as it was hidden or closed, or that failed while offline is marked `wizelens.browser.cancelled` with no error
+  and no exception. Next.js router prefetches (`_rsc=`, `RSC: 1`, `Next-Router-Prefetch: 1`) are marked
+  `wizelens.browser.prefetch` and never fail. Neither counts in the Web App row or its latency. A real network failure
+  is still an error, now with its real type (`TypeError`) in place of `FetchError`.
+- **A page opened long after the server answered no longer stretches that request to hours.** A request without a
+  browser call is timed by its entry server span, not the whole trace. Server-Timing now carries `wl-start` (Node and
+  .NET), and the page starts its own trace when it opened more than 5 minutes after that, or came from a cache.
+  Browser spans that start more than 10 minutes after their server answer are left out of the trace, so data from
+  older SDKs is fixed too.
+- **A deliberate 503 no longer shows up as an error through the framework's own span.** When the request's server span
+  is marked expected, a span of the same service that only repeats the 5xx (Next.js `BaseServer.handleRequest` with
+  `error.type: 503`) and has no exception is not an error: not in error groups, request errors, trace status, or
+  findings.
+- **Next.js control flow is not recorded as exceptions.** `NoFallbackError`, `NEXT_NOT_FOUND`,
+  `NEXT_HTTP_ERROR_FALLBACK;*`, `NEXT_REDIRECT*`, `BAILOUT_TO_CLIENT_SIDE_RENDERING`, and `DYNAMIC_SERVER_USAGE` are
+  dropped from spans (with the error status they caused) and from `onRequestError`. A Better Auth `APIError` that
+  answered 4xx is not an exception either.
+- **Problems no longer snowball, and their ids no longer collide across projects.** Anomalies join one problem only
+  when their times overlap, and a problem's starts span at most the near window, so a day of small anomalies is no
+  longer one 24 hour problem. Problem ids include the projects read, so two projects never share one. Old problem
+  links open the nearest problem by time.
+- **Next.js middleware no longer names requests "GET middleware GET".** The Node add-on takes a route from the
+  framework only when it is a path; otherwise it uses `next.route`, else the shape of the path (`/orders/{}`).
+- **The MCP `search` tool puts tags on each result.** Each item's `tags` now holds the tag rules it matches, next to
+  the tags the app set. The separate `tags` map, keyed by "trace id + space", is gone.
+- **Streams no longer count as slow requests.** Server-sent events, MCP streams, and upgrades stay open for minutes on
+  purpose. A server span is a stream when the Node or .NET add-on marks it (`wizelens.stream`, with
+  `wizelens.stream.first_byte_ms`), it answered `text/event-stream`, or it answered 101. Its request time is its first
+  byte, so a service with streams keeps a true average, p95, and status. A client that closes a stream does not abort
+  it. The Service and Endpoint pages show a new Streams figure: how many opened, and how long they stayed open. Old
+  data is fixed when its stats are rebuilt.
+- **Uptime checks no longer count as app traffic or errors.** A check run is now a span of category `uptime` with no
+  exception event; the reason stays in its status message and log line. Requests, Services, error groups, the
+  Overview, and Problems skip every run, also runs written before. The Uptime page reads new `up` and `up.chk` stats.
+  The stats version moves to 12, so hubs and the cloud rebuild their stats once after the update; pages fill back in
+  as the rebuild runs.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

@@ -35,15 +35,24 @@ export interface Problem {
 }
 
 const linked = (a: Anomaly, b: Anomaly, map: CallMap) => a.name === b.name || map.calls(a.name, b.name) || map.calls(b.name, a.name);
+const overlap = (a: Anomaly, b: Anomaly) => a.startMs <= b.endMs && b.startMs <= a.endMs;
 
-/** Groups of anomalies: two join when they start within `nearMs` of each other on the same or calling services. */
+/** Groups of anomalies: two join when they overlap in time, start within `nearMs`, and are on the same or calling services. A group's starts span at most `nearMs`. */
 export function groupAnomalies(anomalies: readonly Anomaly[], map: CallMap, nearMs: number): Anomaly[][] {
-  const list = anomalies.slice(0, ANOMALIES_MAX);
+  const list = [...anomalies.slice(0, ANOMALIES_MAX)].sort((a, b) => a.startMs - b.startMs);
   const parent = list.map((_, i) => i);
+  const first = list.map((a) => a.startMs);
+  const last = list.map((a) => a.startMs);
   const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i]!)));
+  const join = (i: number, j: number) => {
+    const [a, b] = [find(i), find(j)];
+    if (a === b || Math.max(last[a]!, last[b]!) - Math.min(first[a]!, first[b]!) > nearMs) return;
+    parent[b] = a;
+    [first[a], last[a]] = [Math.min(first[a]!, first[b]!), Math.max(last[a]!, last[b]!)];
+  };
   for (let i = 0; i < list.length; i++) {
     for (let j = i + 1; j < list.length && list[j]!.startMs - list[i]!.startMs <= nearMs; j++) {
-      if (linked(list[i]!, list[j]!, map)) parent[find(j)] = find(i);
+      if (overlap(list[i]!, list[j]!) && linked(list[i]!, list[j]!, map)) join(i, j);
     }
   }
   const groups = new Map<number, Anomaly[]>();
@@ -78,8 +87,8 @@ function titleOf(group: readonly Anomaly[], root: string, names: number): string
   return `${ANOMALY_LABEL[worst.metric]} above normal on ${root}${more}`;
 }
 
-/** One problem card from a group of anomalies (earliest first). */
-export function problemOf(group: readonly Anomaly[], inp: CauseInputs): Problem {
+/** One problem card from a group of anomalies (earliest first). `scope` (the projects read) keeps ids apart across projects. */
+export function problemOf(group: readonly Anomaly[], inp: CauseInputs, scope = ""): Problem {
   const first = group[0]!;
   const startMs = first.startMs;
   const endMs = Math.max(...group.map((a) => a.endMs));
@@ -88,7 +97,7 @@ export function problemOf(group: readonly Anomaly[], inp: CauseInputs): Problem 
   const services = servicesOf(group);
   const names = new Set(services.map((s) => s.name)).size;
   return {
-    id: hashId(`${first.row}|${first.metric}|${startMs}`),
+    id: hashId(`${scope}|${first.row}|${first.metric}|${startMs}`),
     title: titleOf(group, rootOf(cause, first), names),
     metric: first.metric,
     startMs,
@@ -103,7 +112,7 @@ export function problemOf(group: readonly Anomaly[], inp: CauseInputs): Problem 
 }
 
 /** Problems from anomalies: ongoing ones first, then the newest. */
-export function problemsOf(anomalies: readonly Anomaly[], inp: CauseInputs): Problem[] {
-  const problems = groupAnomalies(anomalies, inp.map, inp.nearMs).map((g) => problemOf(g, inp));
+export function problemsOf(anomalies: readonly Anomaly[], inp: CauseInputs, scope = ""): Problem[] {
+  const problems = groupAnomalies(anomalies, inp.map, inp.nearMs).map((g) => problemOf(g, inp, scope));
   return problems.sort((a, b) => Number(b.ongoing) - Number(a.ongoing) || b.startMs - a.startMs || (a.id < b.id ? -1 : 1));
 }

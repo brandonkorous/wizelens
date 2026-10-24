@@ -3,7 +3,7 @@ import type { ModelParams } from "../models/input.js";
 import { type TimeRange, windowOf } from "../stats/common.js";
 import { compareOf, compareWindow, customWindow, rangeCovering } from "../stats/period.js";
 import { FACT_SLOW_QUERY_MS } from "./facts.js";
-import type { Executor, Need, NeedResults, PageContext, PageDef, SyncExecutor } from "./needs.js";
+import type { Executor, Need, NeedResults, PageContext, PageDef, PageOptions, SyncExecutor } from "./needs.js";
 import { scopeNeed, unscopeResults } from "./scope.js";
 import { snapWindow } from "./window.js";
 
@@ -14,7 +14,7 @@ export type PageRegistry = Readonly<Record<string, PageDef<unknown>>>;
 export type ModelOfDef<D> = D extends PageDef<infer M> ? M : never;
 
 /** The context for a range ending at `now` (or the custom `from`–`to` in params): the window, the one it is compared with (`compare`), params, and options. */
-export function pageContext(range: TimeRange, now: number, params: ModelParams, options: { slowQueryMs: number } = { slowQueryMs: FACT_SLOW_QUERY_MS }, settling: number | null = null): PageContext {
+export function pageContext(range: TimeRange, now: number, params: ModelParams, options: PageOptions = { slowQueryMs: FACT_SLOW_QUERY_MS }, settling: number | null = null): PageContext {
   const custom = customWindow(params, now);
   const window = snapWindow(custom ?? windowOf(range, now), now);
   const compare = compareOf(params);

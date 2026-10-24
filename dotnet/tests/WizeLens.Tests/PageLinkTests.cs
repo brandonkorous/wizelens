@@ -18,6 +18,7 @@ public class PageLinkTests
 
         Assert.Contains($"wl-trace;desc={traceId}", timing);
         Assert.Contains("wl-endpoint;desc=\"http://localhost/_wizelens\"", timing);
+        Assert.Matches(@"wl-start;desc=\d{13}", timing);
     }
 
     [Theory]

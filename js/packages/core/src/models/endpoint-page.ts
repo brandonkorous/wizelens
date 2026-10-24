@@ -10,6 +10,7 @@ import { CHART_BUCKETS } from "./database.js";
 import { errorGroupOf } from "./errors.js";
 import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
 import { byDesc, counts, groupNeed, listNeed, listOf, type Row, rowsOf, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
+import { type StreamStats, streamNeed, streamsOf } from "./stream-stats.js";
 import { type UsersAffected, usersNeed, usersOf } from "./user-rows.js";
 
 const LIST = 50;
@@ -51,6 +52,8 @@ export interface EndpointPageModel {
   errors: ErrorGroup[];
   /** Signed-in users who called it in the range. */
   users: UsersAffected;
+  /** Streams it served; their open time is not in its latency. Null when none. */
+  streams: StreamStats | null;
 }
 
 const pct = (a: Agg, p: number) => (a.hist && a.n ? histPercentile(a.hist, a.n, p) : null);
@@ -92,6 +95,7 @@ export const endpointPage: PageDef<EndpointPageModel> = {
       groupNeed("ge", "err.ge", "cur", { filter: { prefix: `${displayService(id.name)}|`, parts: [null, id.endpoint] } }),
       listNeed("slowest", "requests", "cur", { filter: { endpoint: id.endpoint, service: rawService(id.name) }, sort: { key: "duration", desc: true }, limit: 10 }),
       usersNeed("users", "ep.u", [displayService(id.name), id.endpoint]),
+      streamNeed("streams", "req.stream", id.key),
     ]);
   },
   followUp(_ctx, first) {
@@ -118,6 +122,7 @@ export const endpointPage: PageDef<EndpointPageModel> = {
       calls: partsOf(rowsOf(d, "call")),
       errors: rowsOf(d, "errors").map((r) => errorGroupOf(r)),
       users: usersOf(d, "users"),
+      streams: streamsOf(d, "streams"),
     };
   },
 };

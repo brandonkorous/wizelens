@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { activeTags, checkSearch, decodeCursor, expandQuery, SEARCH_KINDS, searchMemory, suggestMemory, suggestTags } from "@wizeworks/lens-core";
 import { z } from "zod";
 import { json, READ_ONLY, type Source, tagsOf } from "./mcp-shared.js";
-import { pageTags } from "./mcp-tags.js";
+import { withPageTags } from "./mcp-tags.js";
 import { RANGES, windowOf } from "./mcp-store.js";
 
 const LANGUAGE = [
@@ -30,7 +30,7 @@ function registerSearch(server: McpServer, src: Source): void {
     const raw = { kind: (args.kind ?? "requests") as (typeof SEARCH_KINDS)[number], node: parsed.node, window: windowOf(data, args.range ?? "24h"), limit: args.limit ?? 20, cursor: decodeCursor(args.cursor), env: data.env };
     const { query, unknownTags } = expandQuery(raw, activeTags(await tagsOf(data)));
     const page = await (data.search ? data.search(query) : searchMemory(await data.all(), query));
-    return json({ ...page, tags: await pageTags(data, page), unknownTags });
+    return json({ ...(await withPageTags(data, page)), unknownTags });
   });
 }
 

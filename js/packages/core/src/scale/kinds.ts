@@ -7,7 +7,7 @@ export const COUNTER_SLOTS = 6;
 
 export type RollupKind =
   | "trace" | "req" | "req.dim" | "req.svc" | "req.part"
-  | "svc" | "svc.ep" | "ep.call" | "ep.q" | "edge" | "bn.layer" | "bn.owner"
+  | "svc" | "svc.ep" | "svc.stream" | "req.stream" | "ep.call" | "ep.q" | "edge" | "bn.layer" | "bn.owner"
   | "ins" | "ins.ep"
   | "db" | "db.q" | "db.qd" | "db.qe" | "db.t" | "db.op"
   | "err" | "err.g" | "err.ge" | "err.t" | "err.s" | "err.e"
@@ -17,6 +17,7 @@ export type RollupKind =
   | "rel"
   | "usr" | "err.u" | "ins.u" | "ep.u"
   | "sec" | "sec.ep" | "sec.u" | "sec.auth"
+  | "up" | "up.chk"
   | ScopedKind;
 
 /** Kinds that also count per service: each item adds a copy keyed by its service first (see `SERVICE_KIND`). */
@@ -56,6 +57,9 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   "req.part": spec([], { hist: true }),
   svc: spec([], { hist: true, top: "newest" }),
   "svc.ep": spec([], { hist: true, ids: 20 }),
+  /** Streams by Services row (`svc.stream`) and by row and endpoint (`req.stream`): sum and histogram of their open time. */
+  "svc.stream": spec([], { hist: true }),
+  "req.stream": spec([], { hist: true }),
   /** Per endpoint (`svc.ep` key head): outgoing calls by target, and queries by shape. */
   "ep.call": spec(),
   "ep.q": spec(),
@@ -103,6 +107,9 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   "sec.u": spec(),
   /** Sign-in answers by `service|endpoint|address`: failures (401, 403) as err, 429s as `limited`; the top is the newest failure. */
   "sec.auth": spec(["limited"], { top: "newest" }),
+  /** Uptime check runs, all together (`up`, key "") and by check id (`up.chk`): failures as err, response times. */
+  up: spec(),
+  "up.chk": spec([], { hist: true }),
 };
 
 /** Every kind's fields; the per-service copies keep their base kind's. */

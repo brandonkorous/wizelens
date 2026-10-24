@@ -14,7 +14,7 @@ Every add-on (.NET, Node, browser) MUST follow this. The UI depends only on this
 | `X-WizeLens-Trace` | response | Trace id (32 hex) of the request that produced this response. |
 | `X-WizeLens-Endpoint` | response | Absolute URL of this service's wizelens base, e.g. `http://localhost:5200/_wizelens`. |
 | `X-WizeLens-Hop` | request (federation) | Integer hop count. Stop federating when > 5. |
-| `Server-Timing` | response | Appended: `wl-trace;desc={traceId}, wl-endpoint;desc="{endpoint}"`. The page reads it from the navigation entry, so the page load joins the trace of the request that rendered the HTML. |
+| `Server-Timing` | response | Appended: `wl-trace;desc={traceId}, wl-endpoint;desc="{endpoint}", wl-start;desc={epoch ms}`. The page reads it from the navigation entry, so the page load joins the trace of the request that rendered the HTML. |
 
 Every app response that the add-on sees also gets
 `Access-Control-Expose-Headers: X-WizeLens-Trace, X-WizeLens-Endpoint` (append, do not replace). The names must
@@ -87,7 +87,7 @@ Times are Unix epoch **milliseconds** as floating point numbers (sub-ms precisio
 ```ts
 type SpanKind = "server" | "client" | "internal" | "producer" | "consumer";
 type SpanStatus = "unset" | "ok" | "error";
-type SpanCategory = "http.server" | "http.client" | "db" | "messaging" | "browser" | "internal";
+type SpanCategory = "http.server" | "http.client" | "db" | "messaging" | "browser" | "internal" | "uptime";
 
 interface Span {
   traceId: string;          // 32 lowercase hex
@@ -194,7 +194,7 @@ interface SamplingInfo {
 
 | Category | Attributes |
 |---|---|
-| http.server | `http.request.method`, `http.route`, `url.path`, `url.query`, `http.response.status_code`, `server.address`, `client.address` (first `X-Forwarded-For` value, else the socket), `user_agent.original`, `http.request.header.{name}` / `http.response.header.{name}` (lower-case names, values joined with `, `, max 50 headers, 1 KB each, redacted), `http.request.body.size`, `http.response.body.size`, `wizelens.request.id`, `enduser.id` (when known), `wizelens.tag.{key}` (app tags), `wizelens.expected` (the app expected the answer: see Expected answers), `wizelens.server.routed_ms` (when the runtime can tell), `wizelens.response.body` + `wizelens.response.body.truncated` (only with body capture on: text and JSON, first 16 KB), `wizelens.request.body` + `wizelens.request.body.truncated` (the Java, Python, and Go SDKs, with `WIZELENS_CAPTURE_BODY=true`; complete JSON has sensitive keys redacted) |
+| http.server | `http.request.method`, `http.route`, `url.path`, `url.query`, `http.response.status_code`, `server.address`, `client.address` (first `X-Forwarded-For` value, else the socket), `user_agent.original`, `http.request.header.{name}` / `http.response.header.{name}` (lower-case names, values joined with `, `, max 50 headers, 1 KB each, redacted), `http.request.body.size`, `http.response.body.size`, `wizelens.request.id`, `enduser.id` (when known), `wizelens.tag.{key}` (app tags), `wizelens.expected` (the app expected the answer: see Expected answers), `wizelens.server.routed_ms` (when the runtime can tell), `wizelens.response.body` + `wizelens.response.body.truncated` (only with body capture on: text and JSON, first 16 KB), `wizelens.request.body` + `wizelens.request.body.truncated` (the Java, Python, and Go SDKs, with `WIZELENS_CAPTURE_BODY=true`; complete JSON has sensitive keys redacted), `wizelens.stream` + `wizelens.stream.first_byte_ms` (a stream answer: see Streams) |
 | any span | `service.version`: the version of the app that ran it, so Problems can name a new release. Node: `release`, else `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else `npm_package_version`. .NET: `Release`, else `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else the entry assembly's informational version. OTLP: the resource's `service.version`, copied onto that service's spans that have none |
 | internal | `wizelens.layer` = `handler` for a controller action or endpoint handler span |
 | gRPC (on http.server / http.client) | `rpc.system` = `grpc`, `rpc.service` (e.g. `orders.v1.Orders`), `rpc.method` (e.g. `GetOrder`), `rpc.grpc.status_code` (number). Name: `{service}/{method}`. A non-zero status code on the server is an error. |
@@ -203,7 +203,7 @@ interface SamplingInfo {
 | db | A span is `db` when it has any of `db.system.name`, `db.system`, `db.query.text`, `db.operation.name`, `db.collection.name` (some libraries, such as Better Auth, send only the operation and the table). `db.system.name` (e.g. `sqlite`, `postgresql`, `microsoft.sql_server`), `db.query.text`, `db.operation.name`, `db.collection.name`, `db.namespace`, `db.response.returned_rows`, `wizelens.db.parameters` (JSON string, redacted), `wizelens.db.adapter` (`ado.net`, `efcore`, `pg`, `mysql2`, `better-sqlite3`, `node-sqlite`, `prisma`, `typeorm`, `drizzle`, ...). An ORM span (Prisma, TypeORM) hides the driver spans under it, so a query is counted once. |
 | exception event | `exception.type`, `exception.message`, `exception.stacktrace`; browser errors also `wizelens.error.frame` (see "Source maps") |
 | browser (all) | `wizelens.browser.type` (`fetch` when absent, `pageview`, `react`, `error`), `wizelens.browser.session` (per-tab id, kept in sessionStorage key `wizelens.session`), `wizelens.browser.route` (path shape of the page), `url.full`, `service.version` (the app release, when the app or its build plugin sets it) |
-| browser fetch | `http.request.method`, `http.response.status_code`, `wizelens.browser.page`, `wizelens.browser.render_ms` (ms from the response to the next paint; absent when not measured) |
+| browser fetch | `http.request.method`, `http.response.status_code`, `wizelens.browser.page`, `wizelens.browser.render_ms` (ms from the response to the next paint; absent when not measured), `wizelens.browser.cancelled` (aborted, cut off as the page was hidden or closed, or offline: no error, no exception), `wizelens.browser.prefetch` (a Next.js router prefetch: `_rsc=`, `RSC: 1`, or `Next-Router-Prefetch: 1`; never an error). Neither counts in the Web App row. |
 | browser pageview | Own trace per page view. Span start = navigation start (or route change), duration = render time. `wizelens.browser.navigation` (`load` / `spa`), `wizelens.page.ttfb_ms`, `.ssr_ms` (responseStart − requestStart), `.client_render_ms` (FCP − responseEnd), `.fcp_ms`, `.lcp_ms`, `.cls`, `.inp_ms`, `.load_ms`, `.hydration_ms` (first React commit), `.render_ms`, `.image_ms` (slowest image), `.images`, `.large_images` (images bigger than shown and not lazy) |
 | browser react | In the page view's trace. `wizelens.react.commits`, `wizelens.react.components` = JSON `{ name, renders, actualMs, selfMs, wasted, context }[]` since the last report |
 | browser error | In the page view's trace. Status `error`, one `exception` event (`exception.type`, `.message`, `.stacktrace`) |
@@ -494,6 +494,15 @@ Each kind has one OWASP Top 10:2025 category (`OWASP_OF`). Findings name what wa
   `addresses` (sign-in guessing only). Issue states are kept as `insight` issues with the group key.
 
 ## Timing
+
+- **Streams.** A server span is a stream when it has `wizelens.stream`, answered `text/event-stream`, or answered 101. Its
+  request time is `wizelens.stream.first_byte_ms` (0 when unknown), not the minutes it stayed open, in requests, services,
+  endpoints, and releases. A client that closes a stream does not abort it. The `svc.stream` and `req.stream` stats count
+  streams and their open time; the Service and Endpoint pages show them as Streams.
+- **Late browser spans.** A request without a browser call is timed by its entry server span. A browser span that starts
+  more than 10 minutes after its server answer ended is left out of the trace. `Server-Timing` carries
+  `wl-start;desc={epoch ms}`; a page that opened more than 5 minutes after it, or came from a cache (`transferSize` 0),
+  starts its own trace.
 
 - Database and outbound times are **wall time**: spans that overlap count once. "All queries added up" is shown next to it
   when queries ran at the same time. A request can never show more database time than server time.
@@ -1323,13 +1332,15 @@ contain; not with HEAD), `intervalMin` (1 to 60), `timeoutMs` (1 to 60 s), `env`
   `down`), the last status, time, duration, error, and the end of the TLS certificate (`tlsExpiresMs`, https only; read by a bare
   handshake that sends nothing when the certificate itself is refused). Checks run every 15 seconds when due; each due check is
   claimed first (cloud: `FOR UPDATE SKIP LOCKED`), so replicas and slow runs never run it twice.
-- **Results are telemetry.** Each run is one trace with one `http.server` span of the service `wizelens-uptime`, written through
-  the normal write path in the check's project and environment: `http.request.method`, `http.route` = `/uptime/{checkId}` (the
-  endpoint key the `uptime` page groups by), `url.full` and `url.path` without the query string, `server.address`,
+- **Results are telemetry.** Each run is one trace with one span of category `uptime` (kind `client`) of the service
+  `wizelens-uptime`, written through the normal write path in the check's project and environment: `http.request.method`,
+  `http.route` = `/uptime/{checkId}`, `url.full` and `url.path` without the query string, `server.address`,
   `http.response.status_code`, `wizelens.uptime.check_id`, `wizelens.uptime.check_name`, `wizelens.uptime.ok`, and with TLS
-  `tls.server.not_after` and `wizelens.uptime.tls_days_left`. A failed run has status `error`, the reason as `statusMessage`, an
-  `exception` event (`UptimeCheckFailed`), and an error log line; a certificate within 14 days of its end (`TLS_WARN_DAYS`) adds a
-  warn log line. So Requests, Errors, Logs, Search, the service page, and alert rules all see them.
+  `tls.server.not_after` and `wizelens.uptime.tls_days_left`. A failed run has status `error`, the reason as `statusMessage`, and
+  an error log line (no `exception` event); a certificate within 14 days of its end (`TLS_WARN_DAYS`) adds a warn log line.
+  Runs are not app traffic: requests, services, errors, and Problems skip every span with `wizelens.uptime.check_id` (also
+  runs written before as `http.server` spans). The `up` (all checks) and `up.chk` (by check id) stats feed the `uptime` page;
+  Search and Logs still find runs.
 - **Incidents**: a run that fails after a passing (or pending) one opens an incident with the reason; the next passing run closes
   it at its start. Turning a check off closes its open incident. Uptime for 24 h, 7 days, and 30 days is the share of time since
   the check was made not covered by incidents, so it does not depend on trace retention. Incidents are kept 90 days.

@@ -73,3 +73,19 @@ describe("an expected answer is not a failure", () => {
     expect(errorEvents([buildTrace(span.traceId, [span], [], [])])).toHaveLength(1);
   });
 });
+
+describe("an expected answer across the trace", () => {
+  it("does not fail the framework's child span that repeats an expected 503", () => {
+    const root = answered(503, { [ATTR_EXPECTED]: true });
+    const child = makeSpan({ traceId: root.traceId, parentSpanId: root.spanId, category: "internal", name: "BaseServer.handleRequest", status: "error", attributes: { "error.type": "503" } });
+    const trace = buildTrace(root.traceId, [root, child], [], []);
+    expect(trace.errorCount).toBe(0);
+    expect(trace.status).not.toBe("error");
+    expect(errorEvents([trace])).toHaveLength(0);
+    const row = requestRows([trace])[0]!;
+    expect(row).toMatchObject({ errors: 0, expected: true });
+    expect(row.findings.filter((f) => f.kind === "error")).toHaveLength(0);
+    const thrown = { ...child, events: [exception] };
+    expect(errorEvents([buildTrace(root.traceId, [root, thrown], [], [])])).toHaveLength(1);
+  });
+});

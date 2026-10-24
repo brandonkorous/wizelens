@@ -49,6 +49,7 @@ export * from "./services.js";
 export * from "./service-page.js";
 export * from "./error-page.js";
 export * from "./endpoint-page.js";
+export * from "./stream-stats.js";
 export * from "./query-page.js";
 export * from "./route-page.js";
 export * from "./insights.js";

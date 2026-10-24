@@ -23,6 +23,19 @@ describe("toContractSpan", () => {
     expect(span.category).toBe("db");
   });
 
+  it("drops Next.js control-flow exceptions and the error status they caused", () => {
+    const thrown = (type: string, message: string, attributes: Record<string, string | number> = {}) =>
+      ({ ...readable({}), attributes, status: { code: 2, message }, events: [{ name: "exception", time: [1, 0], attributes: { "exception.type": type, "exception.message": message } }] }) as unknown as ReadableSpan;
+    const span = toContractSpan(thrown("Error", "Internal: NoFallbackError"), "web", []);
+    expect(span.events).toEqual([]);
+    expect(span.status).toBe("unset");
+    expect(toContractSpan(thrown("Error", "NEXT_HTTP_ERROR_FALLBACK;404"), "web", []).events).toEqual([]);
+    expect(toContractSpan(thrown("APIError", "Unauthorized", { "http.response.status_code": 401 }), "web", []).events).toEqual([]);
+    const real = toContractSpan(thrown("TypeError", "x is undefined"), "web", []);
+    expect(real.events).toHaveLength(1);
+    expect(real.status).toBe("error");
+  });
+
   it("leaves a plain span internal", () => {
     expect(toContractSpan(readable({ "http.route": "/get-session" }), "console", []).category).toBe("internal");
   });

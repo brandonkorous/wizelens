@@ -19,6 +19,11 @@ export const ATTR_SERVICE_VERSION = "service.version";
 /** Browser exception event: the first app frame after source maps, "src/cart/Checkout.tsx:applyCoupon". Errors group by it. */
 export const ATTR_ERROR_FRAME = "wizelens.error.frame";
 
+/** Browser fetch span: the call was cancelled (aborted, page left, offline), so it is not a failure. */
+export const ATTR_BROWSER_CANCELLED = "wizelens.browser.cancelled";
+/** Browser fetch span: a router prefetch (Next.js RSC), never a failure and not in Web App latency. */
+export const ATTR_BROWSER_PREFETCH = "wizelens.browser.prefetch";
+
 export type BrowserSpanType = "fetch" | "pageview" | "react" | "error";
 
 /** Type of a browser span, or null for a server span. */
@@ -27,6 +32,9 @@ export function browserTypeOf(span: Span): BrowserSpanType | null {
   const t = span.attributes[ATTR_BROWSER_TYPE];
   return t === "pageview" || t === "react" || t === "error" ? t : "fetch";
 }
+
+/** A browser fetch the app waited for: not a prefetch, not cancelled. The Web App row counts only these. */
+export const isWebAppCall = (s: Span): boolean => browserTypeOf(s) === "fetch" && s.attributes[ATTR_BROWSER_PREFETCH] !== true && s.attributes[ATTR_BROWSER_CANCELLED] !== true;
 
 /** Page view timings in ms (CLS is a score). Absent when not measured. */
 export const ATTR_PAGE = {
@@ -68,6 +76,10 @@ export interface ReactComponentStat {
 export const ATTR_REQUEST_ID = "wizelens.request.id";
 /** Server span: true when the client left before the response was sent. Work after that is not in the span. */
 export const ATTR_REQUEST_ABORTED = "wizelens.request.aborted";
+/** Server span: the response is a stream (server-sent events, an MCP stream, an upgrade). Its open time is not request time. */
+export const ATTR_STREAM = "wizelens.stream";
+/** Stream server span: ms from the request start to the first byte, the part that counts as request time. */
+export const ATTR_STREAM_FIRST_BYTE_MS = "wizelens.stream.first_byte_ms";
 /** Server span: the app expected this answer, so a 5xx or an error status is not a failure. An exception still is. */
 export const ATTR_EXPECTED = "wizelens.expected";
 /** The signed-in user (OpenTelemetry names): their id, and a display name when the app sends one. */

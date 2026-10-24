@@ -72,6 +72,22 @@ export function isFailedAnswer(span: Span): boolean {
   return Number(span.attributes["http.response.status_code"] ?? 0) >= 500 && !isExpectedSpan(span);
 }
 
+const STATUS_5XX = /^5\d\d$/;
+
+/** A same-service span under an expected entry answer that only repeats its 5xx (Next's `BaseServer.handleRequest`). */
+function echoesExpected(s: Span, entry: Span): boolean {
+  if (s === entry || s.service !== entry.service || hasException(s)) return false;
+  return STATUS_5XX.test(String(s.attributes["http.response.status_code"] ?? s.attributes["error.type"] ?? ""));
+}
+
+/** The error spans of a trace. When its entry server span was expected, spans that only echo that 5xx are not errors. */
+export function errorSpansOf(spans: readonly Span[]): Span[] {
+  const failed = spans.filter(isErrorSpan);
+  const entry = failed.length ? entryServerSpan(spans) : undefined;
+  if (!entry || !isExpectedSpan(entry)) return failed;
+  return failed.filter((s) => !echoesExpected(s, entry));
+}
+
 function timeBounds(spans: readonly Span[], logs: readonly LogRecord[]): { start: number; end: number } {
   let start = Infinity;
   let end = -Infinity;
@@ -88,8 +104,19 @@ function timeBounds(spans: readonly Span[], logs: readonly LogRecord[]): { start
   return Number.isFinite(start) ? { start, end } : { start: 0, end: 0 };
 }
 
+/** A browser span this long after its server answered is from a cached page (a crawler, a restored tab), not this request. */
+export const LATE_BROWSER_MS = 10 * 60_000;
+
+/** The spans without browser spans that started more than LATE_BROWSER_MS after the entry server span ended. */
+export function dropLateBrowserSpans(spans: readonly Span[]): readonly Span[] {
+  const entry = entryServerSpan(spans);
+  if (!entry) return spans;
+  const last = entry.startMs + entry.durationMs + LATE_BROWSER_MS;
+  return spans.some((s) => s.category === "browser" && s.startMs > last) ? spans.filter((s) => s.category !== "browser" || s.startMs <= last) : spans;
+}
+
 function statusOf(spans: readonly Span[]): SpanStatus {
-  if (spans.some(isErrorStatus)) return "error";
+  if (errorSpansOf(spans).some(isErrorStatus)) return "error";
   return spans.some((s) => s.status === "ok") ? "ok" : "unset";
 }
 
@@ -100,7 +127,7 @@ export function buildTrace(
   logs: readonly LogRecord[],
   remotes: Iterable<string>,
 ): Trace {
-  const fixed = adjustClockSkew(spans);
+  const fixed = adjustClockSkew(dropLateBrowserSpans(spans));
   const sortedSpans = fixed.spans.sort((a, b) => a.startMs - b.startMs);
   const sortedLogs = shiftLogs(logs, fixed.offsets).sort((a, b) => a.timeMs - b.timeMs);
   const root = findRootSpan(sortedSpans);
@@ -119,7 +146,7 @@ export function buildTrace(
     spanCount: sortedSpans.length,
     dbCount: sortedSpans.filter((s) => s.category === "db").length,
     httpClientCount: sortedSpans.filter((s) => s.category === "http.client").length,
-    errorCount: sortedSpans.filter(isErrorSpan).length,
+    errorCount: errorSpansOf(sortedSpans).length,
     services: [...services].sort(),
     rootMethod: attrString(root, "http.request.method"),
     rootUrl: attrString(root, "url.path") ?? attrString(root, "url.full"),

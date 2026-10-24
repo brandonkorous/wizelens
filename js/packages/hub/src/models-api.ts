@@ -45,8 +45,8 @@ export async function hubPage<P extends PageName>(data: HubData, page: P, range:
   const slowQueryMs = factsOf(store, scope.project ?? "").slowQueryMs!;
   const key = JSON.stringify([page, range, scope, params, now, store.settleGen, issuesVersion(), apdexVersion(), packagesVersion(), slowQueryMs, keepMs]);
   if (cache.has(key)) return cache.get(key) as ModelOf<P>;
-  const ctx = pageContext(range, now, params, { slowQueryMs }, hubSettling(store, scope));
-  if (now - ctx.window.from > keepMs + WINDOW_SLACK_MS) throw new PageRangeError("This time window starts before the hub keeps data.");
+  const ctx = pageContext(range, now, params, { slowQueryMs, scope: scope.project ?? "" }, hubSettling(store, scope));
+  if (ctx.custom && now - ctx.window.from > keepMs + WINDOW_SLACK_MS) throw new PageRangeError("This time window starts before the hub keeps data.");
   const issues = ISSUE_PAGES.has(page) ? { issues: issueStates(store.db, scope.project ?? "") } : {};
   const apdex = APDEX_PAGES.has(page) ? { apdex: apdexTargets(store.db, scope.project ?? "") } : {};
   const search = await listSearch(store, page, params, ctx.window, scope);

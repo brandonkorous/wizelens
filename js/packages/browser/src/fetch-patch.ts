@@ -1,4 +1,5 @@
 import { formatTraceparent } from "@wizeworks/lens-core";
+import { failureOf, isPrefetch } from "./fetch-failure.js";
 import { watchBody } from "./paint.js";
 import { type Answer, type Call, type FetchContext, finishCall, isWizeLensCall, startCall } from "./request-span.js";
 
@@ -10,9 +11,12 @@ function requestUrl(input: RequestInfo | URL, base: string): URL {
   return new URL(input.url, base);
 }
 
+const headersOf = (input: RequestInfo | URL, init?: RequestInit): Headers => new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
+const signalOf = (input: RequestInfo | URL, init?: RequestInit): AbortSignal | null => init?.signal ?? (input instanceof Request ? input.signal : null);
+
 function withTraceparent(ctx: FetchContext, call: Call, input: RequestInfo | URL, init?: RequestInit): RequestInit | undefined {
   if (!ctx.propagateTo(call.url)) return init;
-  const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
+  const headers = headersOf(input, init);
   headers.set("traceparent", formatTraceparent(call.traceId, call.spanId, true));
   return { ...init, headers };
 }
@@ -34,7 +38,7 @@ export function patchFetch(orig: typeof fetch, ctx: FetchContext): typeof fetch 
     }
     if (isWizeLensCall(url, ctx.endpoint)) return orig(input, init);
     const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
-    const call = startCall(ctx, "fetch", url, method);
+    const call = startCall(ctx, "fetch", url, method, isPrefetch(url, headersOf(input, init)));
     const nextInit = withTraceparent(ctx, call, input, init);
     try {
       const rewrap = input instanceof Request && nextInit !== init;
@@ -42,7 +46,7 @@ export function patchFetch(orig: typeof fetch, ctx: FetchContext): typeof fetch 
       finishCall(ctx, call, answerOf(response), null);
       return response;
     } catch (err) {
-      finishCall(ctx, call, null, err instanceof Error ? err.message : String(err));
+      finishCall(ctx, call, null, failureOf(err, signalOf(input, init)));
       throw err;
     }
   };

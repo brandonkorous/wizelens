@@ -12,6 +12,10 @@ internal static class RequestEnricher
     public const string RequestHeaderPrefix = "http.request.header.";
     public const string ResponseHeaderPrefix = "http.response.header.";
     public const string RequestIdAttribute = "wizelens.request.id";
+    public const string StreamAttribute = "wizelens.stream";
+    public const string StreamFirstByteAttribute = "wizelens.stream.first_byte_ms";
+    /// <summary>Activity property: ms from the request start to the response start, set when the response starts.</summary>
+    public const string FirstByteProperty = "wizelens.first_byte_ms";
     private const int MaxHeaders = 50;
     private const int MaxHeaderValue = 1024;
 
@@ -34,9 +38,19 @@ internal static class RequestEnricher
         var expected = RequestParts.IsOn(activity.GetTagItem(RequestParts.ExpectedAttribute)) || RequestParts.IsOn(context.Response.Headers[RequestParts.ExpectedHeader].ToString());
         if (expected) activity.SetTag(RequestParts.ExpectedAttribute, true);
         if (statusCode >= 500 && !expected && activity.Status != ActivityStatusCode.Error) activity.SetStatus(ActivityStatusCode.Error);
+        MarkStream(activity, context.Response, statusCode);
         AddClient(activity, context);
         AddHeaders(activity, RequestHeaderPrefix, request.Headers);
         AddHeaders(activity, ResponseHeaderPrefix, context.Response.Headers);
+    }
+
+    /// <summary>A stream answer (server-sent events, an upgrade): its open time is not request time, so mark it and its first byte.</summary>
+    internal static void MarkStream(Activity activity, HttpResponse response, int statusCode)
+    {
+        var type = response.ContentType ?? "";
+        if (statusCode != StatusCodes.Status101SwitchingProtocols && !type.TrimStart().StartsWith("text/event-stream", StringComparison.OrdinalIgnoreCase)) return;
+        activity.SetTag(StreamAttribute, true);
+        if (activity.GetCustomProperty(FirstByteProperty) is double ms) activity.SetTag(StreamFirstByteAttribute, Math.Round(ms, 1));
     }
 
     private static void AddClient(Activity activity, HttpContext context)

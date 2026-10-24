@@ -3,7 +3,9 @@ import { ATTR_ENDUSER, ATTR_REQUEST_ABORTED, ATTR_REQUEST_ID, ATTR_USER_NAME, AT
 import { busyMs } from "../busy.js";
 import { REDACTED } from "../redact.js";
 import { type Health, healthOf, insightsOf, traceTiming } from "../health.js";
-import { entryServerSpan, isErrorSpan, isExpectedSpan } from "../trace.js";
+import { isStreamSpan } from "../stream.js";
+import { isUptimeSpan } from "../uptime/check.js";
+import { entryServerSpan, errorSpansOf, isExpectedSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
 import { memoByObject } from "./common.js";
 
@@ -106,13 +108,15 @@ function identityOf(server: Span | undefined, fetch: Span | undefined): { method
 }
 
 function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | null {
+  // An uptime check run is not app traffic: the Uptime page has it.
+  if (trace.spans.some(isUptimeSpan)) return null;
   const server = entryServerSpan(trace.spans);
   const fetch = trace.spans.filter((s) => browserTypeOf(s) === "fetch").sort(byStart)[0];
   if (!server && !fetch) return null;
   const timing = traceTiming(trace);
   const clients = trace.spans.filter((s) => s.category === "http.client");
   const findings = analyzeTrace(trace, analysis);
-  const errors = trace.spans.filter(isErrorSpan).length;
+  const errors = errorSpansOf(trace.spans).length;
   const insights = insightsOf(findings).length;
   const { method, path, endpoint } = identityOf(server, fetch);
   const who = userSpan(trace, server);
@@ -128,7 +132,8 @@ function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | nu
     endpoint,
     status,
     expected,
-    aborted: server?.attributes[ATTR_REQUEST_ABORTED] === true,
+    // A client that closes a stream ends it as streams end: that is not an abort.
+    aborted: server?.attributes[ATTR_REQUEST_ABORTED] === true && !isStreamSpan(server),
     durationMs: timing.totalMs,
     serverMs: timing.serverMs,
     dbMs: timing.dbMs,

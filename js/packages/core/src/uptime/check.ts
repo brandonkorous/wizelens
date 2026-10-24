@@ -1,7 +1,14 @@
 // Uptime checks (docs/CONTRACT.md, "Uptime checks"): what a check is, its state, and its incidents. Hubs and the cloud keep them.
+import type { Span } from "../types.js";
 
-/** The service every check result is written as, so pages, search, and alerts see them. */
+/** The service every check result is written as, so search and the Uptime page find them. */
 export const UPTIME_SERVICE = "wizelens-uptime";
+/** Check run span: the check it ran, and whether it passed. */
+export const ATTR_UPTIME_CHECK = "wizelens.uptime.check_id";
+export const ATTR_UPTIME_OK = "wizelens.uptime.ok";
+
+/** A check run: category "uptime", or (runs written before) a span with a check id. Never app traffic or an app error. */
+export const isUptimeSpan = (s: Span): boolean => s.category === "uptime" || s.attributes[ATTR_UPTIME_CHECK] != null;
 export const UPTIME_METHODS = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] as const;
 export type UptimeMethod = (typeof UPTIME_METHODS)[number];
 

@@ -1,4 +1,5 @@
 import { type BrowserCapture, createBrowserCapture, createCaptureHandle } from "./capture.js";
+import { watchLeaving } from "./fetch-failure.js";
 import { type FetchContext, patchFetch } from "./fetch-patch.js";
 import { isCloudBrowserEndpoint } from "./cloud.js";
 import type { Recorder, RecorderOptions } from "./recorder-types.js";
@@ -101,7 +102,7 @@ export function createRecorder(options: RecorderOptions = {}): Recorder {
       original = globalThis.fetch;
       globalThis.fetch = patchFetch(original, ctx);
       const timer = setInterval(() => void sender.flush(false), cfg.flushIntervalMs);
-      undo = [cfg.captureXhr ? patchXhr(ctx) : () => {}, () => clearInterval(timer), flushOnHide(sender)];
+      undo = [cfg.captureXhr ? patchXhr(ctx) : () => {}, () => clearInterval(timer), flushOnHide(sender), watchLeaving()];
       capture.acquire();
       void data.restore();
     },
