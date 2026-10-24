@@ -119,6 +119,19 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   `wizelens.browser.app`. On the cloud, a page that sets no name shows under its browser key's name. The HUD tag the
   Node add-on injects names the app after its server ("api (browser)"). Data sent before, and apps that set no name,
   still show as "Web App". Request lists filter every browser app as one "browser" service.
+- **Fewer false security findings.**
+  - A long session cookie no longer shows as "missing HttpOnly, Secure": the Node add-on hides Set-Cookie values
+    before it cuts a header to 1024 characters, so the flags stay.
+  - The `baggage` header is no longer scanned for secrets, so a Sentry `sample_rand` is not a "card number in span
+    data".
+  - Behind a proxy (the request has `Via` or `X-Forwarded-*`), a missing Strict-Transport-Security,
+    X-Content-Type-Options, or X-Frame-Options is info, "may be set at the edge", since the proxy can add it after
+    WizeLens saw the answer. A missing Content-Security-Policy is still a warning.
+  - A `Content-Security-Policy-Report-Only` header is "CSP in report-only mode" (info), not a missing CSP.
+  - The Node add-on reports the packages the app can load: its `dependencies` and theirs, not dev tools such as
+    vitest or esbuild left in a pnpm store.
+  - A `SELECT set_config(...)` run once per transaction (row-level security setup) is named "Session setup", with
+    info severity, not an N+1 query.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

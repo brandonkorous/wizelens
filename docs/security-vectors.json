@@ -48,9 +48,29 @@
       "findings": [
         { "kind": "cookie-flags", "severity": "warning", "shape": "cookie sid: missing HttpOnly, Secure", "count": 1, "spanIds": ["s1"] },
         { "kind": "cookie-flags", "severity": "warning", "shape": "cookie theme: missing Secure", "count": 1, "spanIds": ["s1"] },
-        { "kind": "missing-headers", "severity": "warning", "shape": "content-security-policy, strict-transport-security, x-content-type-options, x-frame-options", "count": 1, "spanIds": ["s1"] },
+        { "kind": "missing-headers", "severity": "warning", "shape": "content-security-policy", "count": 1, "spanIds": ["s1"] },
+        { "kind": "missing-headers", "severity": "info", "shape": "strict-transport-security, x-content-type-options, x-frame-options (behind a proxy: check the answer it sends)", "count": 1, "spanIds": ["s1"] },
         { "kind": "version-header", "severity": "info", "shape": "server: nginx/1.25.3", "count": 1, "spanIds": ["s1"] },
         { "kind": "version-header", "severity": "info", "shape": "x-powered-by: Express", "count": 1, "spanIds": ["s1"] }
+      ]
+    },
+    {
+      "name": "no proxy: missing edge headers stay warnings; a report-only CSP is info, not missing",
+      "spans": [
+        {
+          "spanId": "s1",
+          "category": "http.server",
+          "attributes": {
+            "http.request.method": "GET", "url.path": "/", "http.route": "/", "http.response.status_code": 200, "url.scheme": "https",
+            "http.response.header.content-type": "text/html",
+            "http.response.header.x-frame-options": "DENY",
+            "http.response.header.content-security-policy-report-only": "default-src 'self'"
+          }
+        }
+      ],
+      "findings": [
+        { "kind": "missing-headers", "severity": "warning", "shape": "strict-transport-security, x-content-type-options", "count": 1, "spanIds": ["s1"] },
+        { "kind": "missing-headers", "severity": "info", "shape": "content-security-policy-report-only: reports, does not block", "count": 1, "spanIds": ["s1"] }
       ]
     },
     {

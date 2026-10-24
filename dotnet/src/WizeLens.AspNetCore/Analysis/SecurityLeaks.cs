@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using WizeLens.Model;
+using WizeLens.Storage;
 
 namespace WizeLens.Analysis;
 
@@ -20,7 +21,7 @@ public static partial class SecurityLeaks
         : Marker().Matches(text).Select(m => m.Groups[1].Value).Where(Labels.ContainsKey);
 
     private static IEnumerable<string> AttrMarkers(Dictionary<string, object?> a, bool skipBodies) =>
-        a.Where(kv => kv.Value is string && !(skipBodies && Bodies.Contains(kv.Key))).SelectMany(kv => MarkersIn((string)kv.Value!));
+        a.Where(kv => kv.Value is string && !(skipBodies && Bodies.Contains(kv.Key)) && !ValuePatterns.SkipsValuePatterns(kv.Key)).SelectMany(kv => MarkersIn((string)kv.Value!));
 
     private static IEnumerable<Hit> HitsOf(Trace trace)
     {

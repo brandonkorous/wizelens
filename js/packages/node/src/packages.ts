@@ -1,9 +1,10 @@
-// The npm packages this app runs, from node_modules (npm, yarn, and pnpm layouts), sent to the hub once at start.
+// The npm packages this app runs (its run-time dependency tree, npm, yarn, and pnpm layouts), sent to the hub once at start.
 import { context, ROOT_CONTEXT } from "@opentelemetry/api";
 import { suppressTracing } from "@opentelemetry/core";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { type HubSender, MAX_PACKAGES, PACKAGES_PATH, type PackageRef } from "@wizeworks/lens-core";
+import { runtimePackages } from "./packages-graph.js";
 
 const MAX_DEPTH = 4;
 const RETRIES = 5;
@@ -33,8 +34,13 @@ async function packageDirs(modules: string): Promise<{ dirs: string[]; stores: s
   return { dirs, stores };
 }
 
-/** Every package under `root/node_modules`, once per name and version, at most `MAX_PACKAGES`. */
+/** The app's run-time packages (its dependencies and theirs); without an app package.json, every package under `root/node_modules`. */
 export async function listNodePackages(root = process.cwd()): Promise<PackageRef[]> {
+  return (await runtimePackages(root, MAX_PACKAGES)) ?? (await allNodePackages(root));
+}
+
+/** Every package under `root/node_modules`, once per name and version, at most `MAX_PACKAGES`. */
+export async function allNodePackages(root: string): Promise<PackageRef[]> {
   const found = new Map<string, PackageRef>();
   const seen = new Set<string>();
   const walk = async (modules: string, depth: number): Promise<void> => {

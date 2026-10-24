@@ -28,21 +28,33 @@ public static partial class SecurityRules
     {
         var missing = new List<string>();
         if (string.IsNullOrEmpty(r.Header("x-content-type-options"))) missing.Add("x-content-type-options");
-        if ((r.Header("content-type") ?? "").StartsWith("text/html", StringComparison.OrdinalIgnoreCase))
+        if (IsHtml(r))
         {
             var csp = r.Header("content-security-policy");
-            if (string.IsNullOrEmpty(csp)) missing.Add("content-security-policy");
+            if (string.IsNullOrEmpty(csp) && string.IsNullOrEmpty(r.Header("content-security-policy-report-only"))) missing.Add("content-security-policy");
             if (string.IsNullOrEmpty(r.Header("x-frame-options")) && !(csp ?? "").Contains("frame-ancestors", StringComparison.OrdinalIgnoreCase)) missing.Add("x-frame-options");
         }
         if (r.Https && string.IsNullOrEmpty(r.Header("strict-transport-security"))) missing.Add("strict-transport-security");
         return [.. missing.Order(StringComparer.Ordinal)];
     }
 
+    private static bool IsHtml(SecurityRequest r) => (r.Header("content-type") ?? "").StartsWith("text/html", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Headers a proxy in front (Caddy, nginx, a CDN) often adds after the app answered, where WizeLens cannot see them.</summary>
+    private static readonly HashSet<string> EdgeHeaders = ["strict-transport-security", "x-content-type-options", "x-frame-options"];
+
+    private static bool ViaProxy(SecurityRequest r) => new[] { "via", "x-forwarded-for", "x-forwarded-proto", "x-forwarded-host" }.Any(h => !string.IsNullOrEmpty(r.RequestHeader(h)));
+
     public static IEnumerable<SecurityFinding> Headers(SecurityRequest r)
     {
         if (!r.HeadersKnown || !r.Is2xx) yield break;
         var missing = MissingHeaders(r);
-        if (missing.Count > 0) yield return SecurityFinding.Of("missing-headers", "warning", "Security headers are missing", string.Join(", ", missing), r.Span);
+        var edge = ViaProxy(r) ? missing.Where(EdgeHeaders.Contains).ToList() : [];
+        var app = missing.Where(h => !edge.Contains(h)).ToList();
+        if (app.Count > 0) yield return SecurityFinding.Of("missing-headers", "warning", "Security headers are missing", string.Join(", ", app), r.Span);
+        if (edge.Count > 0) yield return SecurityFinding.Of("missing-headers", "info", "Security headers may be set at the edge", $"{string.Join(", ", edge)} (behind a proxy: check the answer it sends)", r.Span);
+        if (IsHtml(r) && string.IsNullOrEmpty(r.Header("content-security-policy")) && !string.IsNullOrEmpty(r.Header("content-security-policy-report-only")))
+            yield return SecurityFinding.Of("missing-headers", "info", "CSP in report-only mode", "content-security-policy-report-only: reports, does not block", r.Span);
     }
 
     public static IEnumerable<SecurityFinding> VersionHeaders(SecurityRequest r)

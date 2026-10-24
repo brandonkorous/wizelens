@@ -102,14 +102,18 @@ export function findDuplicateQueries(trace: Trace): Finding[] {
   return out;
 }
 
+/** `SELECT set_config(...)` run before each transaction, as row-level security setups do: not a query per row. */
+export const isSetConfigPreamble = (text: string): boolean => /^\s*select\s+(?:pg_catalog\.)?set_config\s*\(/i.test(text);
+
 export function findNPlusOneDb(trace: Trace, minRepeats = 5): Finding[] {
   const out: Finding[] = [];
   for (const [text, spans] of groupBy(repeatableQueries(trace), queryText)) {
     if (spans.length < minRepeats) continue;
+    const preamble = isSetConfigPreamble(text);
     out.push({
       kind: "n+1-db",
-      severity: "warning",
-      title: `N+1 query: ran ${spans.length} times`,
+      severity: preamble ? "info" : "warning",
+      title: preamble ? `Session setup (set_config) ran ${spans.length} times, once per transaction` : `N+1 query: ran ${spans.length} times`,
       shape: text,
       count: spans.length,
       totalMs: sum(spans),
