@@ -137,6 +137,14 @@ jobs:
             exit 1
           fi
           kubectl kustomize . | grep -E 'image:|env-hash:'
+          # A StatefulSet's disk size cannot change in place: grow the disk, then let apply make the StatefulSet again. Its pod keeps running.
+          want=$(kubectl kustomize . | yq 'select(.kind == "StatefulSet" and .metadata.name == "clickhouse") | .spec.volumeClaimTemplates[0].spec.resources.requests.storage')
+          have=$(kubectl get statefulset clickhouse -n "$NAMESPACE" -o jsonpath='{.spec.volumeClaimTemplates[0].spec.resources.requests.storage}' --ignore-not-found)
+          if [ -n "$have" ] && [ "$have" != "$want" ]; then
+            echo "Growing the ClickHouse disk from $have to $want."
+            kubectl patch pvc data-clickhouse-0 -n "$NAMESPACE" -p "{\"spec\":{\"resources\":{\"requests\":{\"storage\":\"$want\"}}}}"
+            kubectl delete statefulset clickhouse -n "$NAMESPACE" --cascade=orphan
+          fi
           kubectl apply -k .
 
       # The cloud migrates its database as it starts, so a failed rollout shows the migration error in its log.
