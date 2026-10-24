@@ -4,11 +4,12 @@ import { errorSpansOf } from "../trace.js";
 import { isUptimeSpan } from "../uptime/check.js";
 import type { Span, Trace } from "../types.js";
 import { groupBy, memoByObject, percentOf } from "./common.js";
+import { errorKeyOf, httpErrorKeyOf, httpStatusOf } from "./error-keys.js";
 import { isFailed, type RequestRow, requestOf } from "./requests.js";
 
 /** One error: a span with an exception, or a failed span without one. */
 export interface ErrorEvent {
-  /** Group key: service, type, and message shape; browser errors add their first app frame after source maps. */
+  /** Group key: service, type, and message shape (browser errors add their first app frame); HTTP status failures use status and endpoint. */
   key: string;
   traceId: string;
   spanId: string;
@@ -42,15 +43,6 @@ export const displayService = (service: string): string => (service === "browser
 /** The service name as spans carry it, from its display name. */
 export const rawService = (service: string): string => (service === WEB_APP ? "browser" : service);
 
-/** Message with ids and numbers replaced, so the same error with other values groups together. */
-export function messageShape(message: string): string {
-  return message
-    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, "{id}")
-    .replace(/\b[0-9a-f]{16,}\b/gi, "{id}")
-    .replace(/\d+/g, "#")
-    .trim();
-}
-
 /** Error spans worth showing: exceptions first; plain failed spans only when the trace has no exception. Uptime runs are not app errors. */
 function errorSpans(trace: Trace): Span[] {
   const failed = errorSpansOf(trace.spans).filter((s) => !isUptimeSpan(s));
@@ -60,10 +52,6 @@ function errorSpans(trace: Trace): Span[] {
 
 const textAttr = (v: unknown): string | null => (typeof v === "string" && v ? v : null);
 
-/** Service, type, and message shape; a browser error's group frame splits errors with the same message thrown in other places. */
-export const errorKeyOf = (service: string, type: string, message: string, frame: string | null): string =>
-  `${service}|${type}|${messageShape(message)}${frame ? `|${frame}` : ""}`;
-
 function eventOf(trace: Trace, span: Span, row: RequestRow | null, critical: boolean): ErrorEvent {
   const info = errorInfo(span);
   const type = info.type ?? (span.statusMessage?.startsWith("HTTP") ? "HttpError" : "Error");
@@ -72,8 +60,10 @@ function eventOf(trace: Trace, span: Span, row: RequestRow | null, critical: boo
   const route = span.attributes[ATTR_BROWSER_ROUTE];
   const ex = span.events.find((e) => e.name === "exception");
   const frame = browser ? textAttr(ex?.attributes[ATTR_ERROR_FRAME]) : null;
+  const endpoint = row?.endpoint ?? (typeof route === "string" ? route : trace.rootName);
+  const httpStatus = !ex && type === "HttpError" ? (httpStatusOf(span.statusMessage) ?? row?.status ?? null) : null;
   return {
-    key: errorKeyOf(service, type, info.message, frame),
+    key: httpStatus !== null ? httpErrorKeyOf(service, httpStatus, endpoint) : errorKeyOf(service, type, info.message, frame),
     traceId: trace.traceId,
     spanId: span.spanId,
     timeMs: ex?.timeMs ?? span.startMs + span.durationMs,
@@ -81,7 +71,7 @@ function eventOf(trace: Trace, span: Span, row: RequestRow | null, critical: boo
     message: info.message,
     stack: info.stack,
     service,
-    endpoint: row?.endpoint ?? (typeof route === "string" ? route : trace.rootName),
+    endpoint,
     method: row?.method ?? null,
     path: row?.path ?? (typeof route === "string" ? route : null),
     status: row?.status ?? null,

@@ -99,6 +99,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   Overview, and Problems skip every run, also runs written before. The Uptime page reads new `up` and `up.chk` stats.
   The stats version moves to 12, so hubs and the cloud rebuild their stats once after the update; pages fill back in
   as the rebuild runs.
+- **HTTP status errors no longer merge into one group per service.** A failed request with no exception ("HTTP 503")
+  is now grouped by its status and endpoint (`site|HttpError|503|GET /robots.txt`), not one "HTTP #" group for every
+  route. A state set on the old group (resolved, ignored, assigned) carries over to each group split from it until you
+  change that group. The stats version moves to 13, so hubs and the cloud rebuild their stats once more.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

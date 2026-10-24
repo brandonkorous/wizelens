@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { makeRequest } from "../testing/fixtures.js";
-import { errorEvents, errorGroups, errorRateOf, errorsByService, errorTypeCounts, messageShape } from "./errors.js";
+import { messageShape } from "./error-keys.js";
+import { errorEvents, errorGroups, errorRateOf, errorsByService, errorTypeCounts } from "./errors.js";
 import { filterLogs, levelCounts, logRows } from "./logs.js";
 import { requestRows } from "./requests.js";
 
