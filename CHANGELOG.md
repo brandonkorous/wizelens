@@ -157,6 +157,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
     of render routes, phases, and insights.
   - Routes are keyed by host and route (`mypiggles.com/`), so two sites that share a route are no longer one row.
     Render insight keys change with them; render stats fill in again after the rebuild.
+- **Uptime failures say where they stalled, and one blip no longer opens an incident.** Each run times every request
+  it makes, redirects included: DNS, connect, TLS, and first byte, kept on the run's span as `wizelens.uptime.hops`.
+  A failed run's reason names the last URL and the phase it was in ("Timed out after 10 s at
+  https://getpiggles.com/sign-in (waiting for the first byte)"). A failed check is tried once more on a fresh
+  connection before it counts, so a check goes down, and an incident opens, only after two failures in a row. Hubs
+  and the cloud both.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 
