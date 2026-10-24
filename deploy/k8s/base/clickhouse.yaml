@@ -62,9 +62,10 @@ spec:
           readinessProbe: { httpGet: { path: /ping, port: 8123 }, periodSeconds: 10 }
           livenessProbe: { httpGet: { path: /ping, port: 8123 }, periodSeconds: 20, failureThreshold: 6 }
           startupProbe: { httpGet: { path: /ping, port: 8123 }, periodSeconds: 5, failureThreshold: 120 }
+          # At 4Gi (3.2 GiB server cap) concurrent FINAL reads plus async inserts hit MEMORY_LIMIT_EXCEEDED (2026-10-24).
           resources:
-            requests: { cpu: 200m, memory: 1Gi }
-            limits: { memory: 4Gi }
+            requests: { cpu: 200m, memory: 3Gi }
+            limits: { memory: 6Gi }
       volumes:
         - name: config
           configMap: { name: clickhouse-config }
