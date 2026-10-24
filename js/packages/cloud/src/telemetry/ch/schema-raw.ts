@@ -35,5 +35,8 @@ export const RAW_TABLES: readonly string[] = [
   ) ENGINE = ReplacingMergeTree(ver) ORDER BY project_id`,
 ];
 
-/** Changes to shipped raw tables, in order. Log retention per project: 0 means the trace retention. */
-export const RAW_ALTERS: readonly string[] = ["ALTER TABLE project_retention ADD COLUMN IF NOT EXISTS log_days UInt32 DEFAULT 0"];
+/** Changes to shipped raw tables, in order. Log retention per project: 0 means the trace retention. Settle states keep each trace's fact keys, "" for older states. */
+export const RAW_ALTERS: readonly string[] = [
+  "ALTER TABLE project_retention ADD COLUMN IF NOT EXISTS log_days UInt32 DEFAULT 0",
+  "ALTER TABLE settle_state ADD COLUMN IF NOT EXISTS fact_keys String DEFAULT '' CODEC(ZSTD(3))",
+];

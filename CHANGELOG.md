@@ -16,6 +16,13 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   stripped of control characters such as `%00`, and its slashes collapsed before the scanner-path match, so
   `/%00.env.swp` or `/%2e%67it/config` is a bot request like `/.env.swp` and `/.git/config`: its errors are bot-only
   and not critical, and it stays out of traffic Problems.
+- **Settling and the services page stay fast as data grows.** When a trace gets more data, the cloud now finds the rows
+  it wrote before in one small lookup, where it used to search the whole project (up to 90 seconds). Trace and span
+  counts, environments, and project health read small hourly totals in place of every trace. A trace that two projects
+  share still counts once.
+- **Search suggestions for `@` attributes answer at once.** Attribute keys and values come from hourly counts, where they
+  used to join every attribute row (one took 22 minutes). The cloud rebuilds its stats once after the update, so older
+  data shows in them too; pages fill back in as the rebuild runs.
 
 ## [0.3.0-alpha.12] — Settings by task, and numbers that match reality
 
