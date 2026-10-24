@@ -163,6 +163,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   https://getpiggles.com/sign-in (waiting for the first byte)"). A failed check is tried once more on a fresh
   connection before it counts, so a check goes down, and an incident opens, only after two failures in a row. Hubs
   and the cloud both.
+- **Calls inside the cluster are named as such and no longer raise Problems.** A call to a dotless host (`http://api/`)
+  or a cluster DNS name (`api-rest.sparx-prod.svc.cluster.local:3000`) shows as "api-rest (in-cluster)" in Services
+  and on the map, not as an outside service. Its traffic follows the app's, so it no longer drives "Traffic above
+  normal" or "p95 above normal" Problems of its own.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 

@@ -2,6 +2,7 @@
 import { isWebAppCall } from "../attributes.js";
 import { withoutBotBrowser } from "../bots.js";
 import { endpointNameOf } from "../models/service-detail.js";
+import { externalName } from "../stats/in-cluster.js";
 import { isConsumer, isProducer, queueOf } from "../stats/messaging.js";
 import { databaseOf, edgeCallsOf, externalCallsOf, hostOf, isFailedSpan, type ServiceKind } from "../stats/services.js";
 import { traceParts } from "../stats/traces.js";
@@ -27,7 +28,7 @@ export function serviceRowOf(s: Span, external: ReadonlySet<Span>): (ServiceRowI
   if (s.category === "http.server") return { key: `api:${s.service}`, name: s.service, kind: "api", detail: null };
   if (isWebAppCall(s)) return { key: webRowKey(browserAppOf(s)), name: webAppName(browserAppOf(s)), kind: "web", detail: "browser" };
   if (s.category === "db") return { key: `db:${databaseOf(s)}`, name: databaseOf(s), kind: "database", detail: attr(s, "db.system.name") };
-  if (external.has(s)) return { key: `ext:${hostOf(s)}`, name: hostOf(s), kind: "external", detail: hostOf(s) };
+  if (external.has(s)) return { key: `ext:${hostOf(s)}`, name: externalName(hostOf(s)), kind: "external", detail: hostOf(s) };
   if (isProducer(s)) return { key: `queue:${queueOf(s)}`, name: queueOf(s), kind: "queue", detail: queueOf(s) };
   if (isConsumer(s)) return { key: `worker:${s.service}`, name: s.service, kind: "worker", detail: null };
   return null;
