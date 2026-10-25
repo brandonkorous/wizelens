@@ -26,6 +26,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - **The cloud's ClickHouse disk is twice as fast.** It is now 128 GiB (Azure P10: 500 IOPS, 100 MB/s), where 64 GiB
   (P6: 50 MB/s) made busy reads wait for the disk. The deploy grows the disk in place when its size in
   `deploy/k8s/base/clickhouse.yaml` grows, without a restart.
+- **Settling reads far less to load a trace.** A trace's spans and logs sit in several parts of the table, and each
+  part used to be read for every trace. A bloom filter on the trace id now skips the parts that do not hold it, so a
+  batch of 200 traces reads about a quarter of the 7 million rows it read before (over 1 second). Older data gets the
+  filter once, in the background, after the update.
 
 ## [0.3.0-alpha.12] — Settings by task, and numbers that match reality
 
