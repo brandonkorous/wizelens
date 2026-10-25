@@ -2,7 +2,7 @@
 import { type ChClient, chClient } from "./http.js";
 import { ATTR_DDL, ATTR_VIEWS } from "./schema-attrs.js";
 import { FACT_ALTERS, FACT_DDL } from "./schema-facts.js";
-import { RAW_ALTERS, RAW_TABLES } from "./schema-raw.js";
+import { RAW_ALTERS, RAW_TABLES, TRACE_INDEXED } from "./schema-raw.js";
 import { ROLLUP_DDL, TRACE_HOURS_SELECT, TRACE_HOURS_VIEW } from "./schema-rollups.js";
 
 const TABLES = [...RAW_TABLES, ...FACT_DDL, ...ROLLUP_DDL, ...ATTR_DDL].map((s) => /^CREATE TABLE IF NOT EXISTS (\w+)/.exec(s)?.[1]).filter((t): t is string => !!t);
@@ -37,7 +37,14 @@ export async function migrateClickHouse(url: string, client: ChClient, o: { ttl?
   u.pathname = "/default";
   await chClient({ url: u.toString() }).command(`CREATE DATABASE IF NOT EXISTS \`${client.database.replace(/`/g, "")}\``);
   const [had] = await client.query<{ n: number }>("SELECT count() AS n FROM system.tables WHERE database = currentDatabase() AND name = 'trace_hours_mv'");
+  const unindexed = await client.query<{ name: string }>(UNINDEXED, [TRACE_INDEXED]);
   for (const sql of CH_SCHEMA) await client.command(o.ttl === false ? withoutTtl(sql) : sql);
   // Once, when the view is new: count the traces written before it. Sketches merge, so a trace the view also saw counts once.
   if (!Number(had?.n)) await client.command(`INSERT INTO trace_hours_t (project_id, org_id, loose, bucket_ms, env, ids, expire_ms) ${TRACE_HOURS_SELECT}`);
+  // Once, when the trace index is new: build it for the parts written before it, in the background.
+  for (const { name } of unindexed) await client.command(`ALTER TABLE ${name} MATERIALIZE INDEX trace_bf`);
 }
+
+/** Existing raw tables without the trace index yet. */
+const UNINDEXED = `SELECT name FROM system.tables WHERE database = currentDatabase() AND has({p1:Array(String)}, name)
+  AND name NOT IN (SELECT table FROM system.data_skipping_indices WHERE database = currentDatabase() AND name = 'trace_bf')`;

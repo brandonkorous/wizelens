@@ -36,7 +36,11 @@ export const RAW_TABLES: readonly string[] = [
 ];
 
 /** Changes to shipped raw tables, in order. Log retention per project: 0 means the trace retention. Settle states keep each trace's fact keys, "" for older states. */
+/** Raw tables read by trace id: one trace sits in several parts, and a bloom filter skips the blocks of parts that do not hold it. */
+export const TRACE_INDEXED: readonly string[] = ["spans_raw", "logs_raw"];
+
 export const RAW_ALTERS: readonly string[] = [
   "ALTER TABLE project_retention ADD COLUMN IF NOT EXISTS log_days UInt32 DEFAULT 0",
   "ALTER TABLE settle_state ADD COLUMN IF NOT EXISTS fact_keys String DEFAULT '' CODEC(ZSTD(3))",
+  ...TRACE_INDEXED.map((t) => `ALTER TABLE ${t} ADD INDEX IF NOT EXISTS trace_bf trace_id TYPE bloom_filter(0.01) GRANULARITY 1`),
 ];
