@@ -64,7 +64,7 @@ export const ATTR_PAGE_PRERENDERED = "wizelens.page.prerendered";
 
 /** React render stats span: JSON string of ReactComponentStat[]. */
 export const ATTR_REACT_COMPONENTS = "wizelens.react.components";
-/** React render stats span: commits since the last report. */
+/** React render stats span: commits since the last report that rendered at least one app component. */
 export const ATTR_REACT_COMMITS = "wizelens.react.commits";
 
 /** Render work of one component since the last report. */

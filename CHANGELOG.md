@@ -203,6 +203,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   status (a 404 page is a 404, not an exception). Before, only the Node add-on dropped them, so apps on an older add-on
   showed every not-found page as an exception. The rule lives in core and the Node add-on uses the same one. Stats
   already built keep their old counts; new traces count the new way.
+- **React commit counts match what the app rendered.** `wizelens.react.commits` counted every commit React reported,
+  also the ones where no component of the app re-rendered (the root rendered again with the same tree, as the Next.js
+  router does, or a commit that only touched framework fibers). A page could show 620 commits next to about 100
+  component renders. The React add-on now counts a commit only when it rendered at least one app component, so commits
+  are never more than renders. Component render counts were right and do not change.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 
