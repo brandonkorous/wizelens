@@ -85,7 +85,7 @@ export function ErrorsByServicePanel({ stats }: { stats: ErrorsModel }) {
   const pick = useSetService();
   return (
     <Panel title="Errors by Service">
-      <Table columns={serviceColumns()} rows={stats.services} rowKey={(s) => s.service} selectedKey={stats.filter.service || null} onRowClick={(s) => pick(s.service === stats.filter.service ? "" : s.service)} empty={<Empty>No services seen yet.</Empty>} />
+      <Table paging={{ noun: "services", key: "svc" }} columns={serviceColumns()} rows={stats.services} rowKey={(s) => s.service} selectedKey={stats.filter.service || null} onRowClick={(s) => pick(s.service === stats.filter.service ? "" : s.service)} empty={<Empty>No services seen yet.</Empty>} />
     </Panel>
   );
 }

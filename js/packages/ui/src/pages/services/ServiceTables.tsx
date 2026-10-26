@@ -80,7 +80,7 @@ const EDGE_COLUMNS = (side: "from" | "to"): Column<ServiceEdge>[] => [
 export function EdgesPanel({ title, edges, side, empty }: { title: string; edges: ServiceEdge[]; side: "from" | "to"; empty: string }) {
   return (
     <Panel title={title} flush>
-      <Table columns={EDGE_COLUMNS(side)} rows={edges} rowKey={(e) => `${e.from}→${e.to}`} onRowClick={(e) => navigate(serviceHref(e[side]))} defaultSort={{ key: "calls", desc: true }} empty={<Empty>{empty}</Empty>} />
+      <Table paging={{ noun: "services", key: side === "from" ? "callers" : "callees" }} columns={EDGE_COLUMNS(side)} rows={edges} rowKey={(e) => `${e.from}→${e.to}`} onRowClick={(e) => navigate(serviceHref(e[side]))} defaultSort={{ key: "calls", desc: true }} empty={<Empty>{empty}</Empty>} />
     </Panel>
   );
 }

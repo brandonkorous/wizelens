@@ -75,7 +75,7 @@ export function TraceCompare({ a, b }: { a: string; b: string }) {
       {head}
       <div className="wl-grid wl-grid-2-even">
         <Panel title="Numbers" flush><Table columns={columns(ta.trace, tb.trace, "")} rows={linesOf(ta.trace, tb.trace)} rowKey={(l) => l.label} /></Panel>
-        <Panel title="Self Time per Service" flush><Table columns={columns(ta.trace, tb.trace, "Service")} rows={serviceLines(ta.trace, tb.trace)} rowKey={(l) => l.label} /></Panel>
+        <Panel title="Self Time per Service" flush><Table paging={{ noun: "services", key: "services" }} columns={columns(ta.trace, tb.trace, "Service")} rows={serviceLines(ta.trace, tb.trace)} rowKey={(l) => l.label} /></Panel>
       </div>
       <Side trace={ta.trace} label="A" />
       <Side trace={tb.trace} label="B" />

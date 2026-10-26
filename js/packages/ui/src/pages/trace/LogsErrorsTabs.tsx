@@ -1,5 +1,6 @@
 import { errorInfo, isErrorSpan, releaseOf, type Span, type Trace } from "@wizeworks/lens-core";
 import { fmtMs } from "../../format";
+import { usePagedRows } from "../../ui/PagedRows";
 import { Empty } from "../../ui/Panel";
 import { ErrorStack } from "../errors/ResolvedStack";
 import { ServiceChip } from "./tabParts";
@@ -10,36 +11,40 @@ interface Props {
 }
 
 export function LogsTab({ trace, onSelect }: Props) {
+  const shown = usePagedRows(trace.logs, { noun: "lines", key: "tracelogs", reset: trace.traceId });
   if (trace.logs.length === 0) return <Empty>No logs were written during this request.</Empty>;
   return (
-    <div className="wl-table-wrap">
-      <table className="wl-table">
-        <thead>
-          <tr>
-            <th className="wl-num">At</th>
-            <th>Level</th>
-            <th>Service</th>
-            <th>Category</th>
-            <th>Message</th>
-          </tr>
-        </thead>
-        <tbody>
-          {trace.logs.map((l, i) => (
-            <tr key={i} onClick={() => l.spanId && onSelect(l.spanId)} className={l.spanId ? "wl-clickable" : undefined}>
-              <td className="wl-num wl-muted">+{fmtMs(l.timeMs - trace.startMs)}</td>
-              <td>
-                <span className={`wl-lvl wl-lvl-${l.level}`}>{l.level}</span>
-              </td>
-              <td>
-                <ServiceChip service={l.service} services={trace.services} />
-              </td>
-              <td className="wl-muted wl-small">{l.category}</td>
-              <td className="wl-wrap">{l.message}</td>
+    <>
+      <div className="wl-table-wrap">
+        <table className="wl-table">
+          <thead>
+            <tr>
+              <th className="wl-num">At</th>
+              <th>Level</th>
+              <th>Service</th>
+              <th>Category</th>
+              <th>Message</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {shown.rows.map((l, i) => (
+              <tr key={i} onClick={() => l.spanId && onSelect(l.spanId)} className={l.spanId ? "wl-clickable" : undefined}>
+                <td className="wl-num wl-muted">+{fmtMs(l.timeMs - trace.startMs)}</td>
+                <td>
+                  <span className={`wl-lvl wl-lvl-${l.level}`}>{l.level}</span>
+                </td>
+                <td>
+                  <ServiceChip service={l.service} services={trace.services} />
+                </td>
+                <td className="wl-muted wl-small">{l.category}</td>
+                <td className="wl-wrap">{l.message}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {shown.pager}
+    </>
   );
 }
 

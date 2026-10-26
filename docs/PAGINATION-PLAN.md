@@ -73,7 +73,6 @@ About 70 tables have no pager. They fall in three groups.
 | Services | Every service | `pages/services/serviceParts.tsx` |
 | Services | Registry, registry hosts | `pages/services/RegistryPanel.tsx`, `pages/services/RegistryHosts.tsx` |
 | Services | Callers / callees | `pages/services/ServiceTables.tsx` |
-| Services | Service detail edges (raw `<table>`) | `pages/services/ServiceDetail.tsx` |
 | SLOs | SLOs | `pages/slos/SlosPage.tsx` |
 | Trace | HTTP spans (raw `<table>`) | `pages/trace/HttpTab.tsx` |
 | Trace | Logs, errors (raw `<table>`) | `pages/trace/LogsErrorsTabs.tsx` |
@@ -117,7 +116,7 @@ These are previews with a "View all" link to a paged page. They stay as they are
 
 Overview recent requests (5), services (5), new errors (5); service slowest requests (10) and logs (10); endpoint
 slowest requests (10); user slowest requests (10); service versions (10); traces bottlenecks (8); trace compare
-numbers (fixed rows). Key-value detail tables (span attributes, `KeyValues`) are not lists and stay as they are.
+numbers (fixed rows); service detail endpoints (10, the side panel on Services). Key-value detail tables (span attributes, `KeyValues`) are not lists and stay as they are.
 
 ## Shared parts (phase 0)
 

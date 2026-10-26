@@ -1,14 +1,12 @@
 import { type FormEvent, useState } from "react";
-import { slicePage } from "@wizeworks/lens-core";
 import { loadAccount, type OrgWithProjects } from "../../data/account";
 import { apiSend } from "../../data/api";
 import { useUsage } from "../../data/billing";
 import { type SettingsReply, settingsBody, useSettingsProjects } from "../../data/projectSettings";
 import { act, useApi } from "../../data/useApi";
-import { Pager } from "../../ui/Controls";
 import { Field, FormRow } from "../../ui/Field";
 import { Empty, Panel } from "../../ui/Panel";
-import { useTablePaging } from "../../ui/paging";
+import { usePagedRows } from "../../ui/PagedRows";
 import { SectionHead } from "../../ui/Sections";
 import { DaysSelect } from "./DaysSelect";
 import { canManage } from "./orgTypes";
@@ -67,9 +65,8 @@ function ProjectsRetention({ org }: { org: OrgWithProjects | null }) {
   const [error, setError] = useState<string | null>(null);
   const setLogs = (id: string, d: number | null) => void act(() => apiSend("PATCH", `./api/orgs/${org!.id}/projects/${id}`, { logRetentionDays: d }), () => void loadAccount()).then(setError);
   const logsOf = (id: string): LogDays | undefined => (org ? { value: org.projects.find((p) => p.id === id)?.logRetentionDays ?? null, onChange: (d) => setLogs(id, d) } : undefined);
-  const pg = useTablePaging({ noun: "projects", key: "retention" });
+  const shown = usePagedRows(sp.options, { noun: "projects", key: "retention" });
   if (sp.options.length === 0) return <Panel><Empty title="No projects yet" /></Panel>;
-  const shown = slicePage(sp.options, pg.page, pg.size);
   return (
     <Panel title="Each project" flush>
       {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
@@ -81,7 +78,7 @@ function ProjectsRetention({ org }: { org: OrgWithProjects | null }) {
           </tbody>
         </table>
       </div>
-      <Pager page={shown.page} pageSize={pg.size} total={sp.options.length} noun="projects" onPage={pg.onPage} onPageSize={pg.onPageSize} />
+      {shown.pager}
     </Panel>
   );
 }
