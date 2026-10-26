@@ -19,6 +19,19 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   product the tax code for business SaaS and every price an "exclusive" tax behavior (it adds them to products and
   prices made before), and says when Stripe Tax still needs the head office address. New plan and usage subscriptions
   use Stripe's flexible billing mode.
+- **Every long table has pages.** About 70 tables that showed a whole list, a silent top 10 to 200, or a "View all"
+  toggle now page like Requests do: "1–15 of 230", page buttons, and 15 / 30 / 50 / 100 per page. The pager shows
+  once a table has more rows than one page. The page sits in the address, so a link or the back button keeps it.
+  - **Telemetry lists page on the server,** so no row is lost past a cut: insights, security risks, rendering routes
+    and components, log patterns, database table hotspots, a service's endpoints and errors, an endpoint's queries,
+    calls, and errors, and a user's errors and newest requests. Click a column to sort the whole list, not one page.
+  - **Settings, infrastructure, and trace tables page in the browser:** keys, members, invites, projects, tags, apps,
+    sessions, alert rules, SLOs, uptime checks and incidents, hosts, pods, workloads, services, registry, and the
+    trace tabs. Import previews and rotated keys page inside their window.
+  - **Alert notices** on the Alerts page and on each rule page, and the **audit log**, page on the server. "Load
+    older" is gone. `GET api/orgs/<org>/audit` takes `offset`, and `GET api/orgs/<org>/audit/count` gives the total.
+  - **Search** steps through results with Previous and Next: "51–100 of 390+ requests". Export saves every result
+    loaded so far.
 
 ## [0.3.0-alpha.13] — Settings by task, and numbers that match reality
 
