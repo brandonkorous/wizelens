@@ -322,6 +322,12 @@ graduated price, and the webhook (with the events `checkout.session.completed` a
 `.updated`, and `.deleted`), then prints the three options to deploy with. A rerun reuses what exists. Organizations that
 existed before billing was turned on stay unlimited until you move them.
 
+Plans charge tax through Stripe Tax: Checkout asks for the billing address and an optional business tax ID, and tax is
+added on top of the price. Before the first Checkout, add the head office address in the Stripe Dashboard (Tax >
+Settings) and save the customer portal settings once (Settings > Billing > Customer portal). `stripe-setup` says when
+Stripe Tax is not active yet. Stripe collects tax only where you add a registration; until then it tracks your sales and
+tells you when you pass a threshold.
+
 `wizelens-cloud plan set <org id or slug> <free|team|business|enterprise|unlimited> [--gb N] [--retention-days N]
 [--database <url>]` sets a plan by hand, for an Enterprise contract (with its own GB and retention) or for support.
 The change goes to the organization's audit log.
