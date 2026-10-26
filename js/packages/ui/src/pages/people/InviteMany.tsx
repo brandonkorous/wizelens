@@ -54,7 +54,7 @@ export function InviteMany({ orgId, mail, data, reload, onClose }: { orgId: stri
               <SelectField label="Role for rows with none" value={role} options={ROLE_OPTIONS} onChange={setRole} hint={ROLE_HELP[role]} />
             </FormRow>
             {parsed && parsed.problems.length > 0 && <div className="wl-banner wl-banner-error">{parsed.problems.slice(0, 10).map((p) => <div key={`${p.row}${p.message}`}>{p.row ? `Row ${p.row}: ` : ""}{p.message}</div>)}</div>}
-            {rows.length > 0 && <Table columns={COLUMNS} rows={rows} rowKey={(r) => r.email} />}
+            {rows.length > 0 && <Table paging={{ noun: "invites" }} columns={COLUMNS} rows={rows} rowKey={(r) => r.email} />}
           </>
         )}
         {done === null && (

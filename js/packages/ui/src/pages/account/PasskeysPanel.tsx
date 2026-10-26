@@ -56,7 +56,7 @@ export function PasskeysPanel() {
         </FormRow>
         <ActionNotes a={a} />
       </form>
-      <Table columns={columns} rows={rows} rowKey={(p) => p.id} empty={<Empty>No passkeys yet. A passkey signs you in with your fingerprint, face, or device PIN.</Empty>} />
+      <Table paging={{ noun: "passkeys", key: "passkeys" }} columns={columns} rows={rows} rowKey={(p) => p.id} empty={<Empty>No passkeys yet. A passkey signs you in with your fingerprint, face, or device PIN.</Empty>} />
       {dialog}
     </Panel>
   );

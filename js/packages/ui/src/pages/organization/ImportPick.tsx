@@ -7,7 +7,6 @@ import { type Column, Table } from "../../ui/Table";
 import { LIST_FILES, textOfFile } from "../../data/fileText";
 import { saveSample } from "./importFile";
 
-const SHOWN = 100;
 const PLACEHOLDER = ["orders-api", "billing-api", "Shop web,browser,https://shop.example.com"].join("\n");
 const NEW = "New project";
 const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
@@ -40,8 +39,7 @@ function Preview({ rows, existing }: { rows: ProjectImportRow[]; existing: Set<s
   ];
   return (
     <>
-      <Table columns={columns} rows={rows.slice(0, SHOWN)} rowKey={(r) => String(r.row)} />
-      {rows.length > SHOWN && <p className="wl-muted wl-small">And {rows.length - SHOWN} more rows.</p>}
+      <Table paging={{ noun: "rows" }} columns={columns} rows={rows} rowKey={(r) => String(r.row)} />
     </>
   );
 }

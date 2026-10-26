@@ -28,7 +28,7 @@ export function AccessSection({ ctx }: { ctx: OrgCtx }) {
       <SectionHead title="Project access" description="Everyone sees every project with their organization role. Give a member or viewer more, less, or no access to one project here." />
       {open && <ProjectAccess key={open.id} orgId={org.id} project={open} data={data} reload={reload} onClose={() => setOpen(null)} />}
       <Panel flush>
-        <Table columns={columns} rows={data.projects} rowKey={(p) => p.id} />
+        <Table paging={{ noun: "projects", key: "access" }} columns={columns} rows={data.projects} rowKey={(p) => p.id} />
       </Panel>
     </>
   );

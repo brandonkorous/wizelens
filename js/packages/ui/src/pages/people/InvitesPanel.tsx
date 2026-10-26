@@ -85,7 +85,7 @@ export function InvitesPanel({ orgId, mail, data, reload }: Props & { data: OrgD
     <Panel title="Pending invites" flush>
       {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
       {note && <p className="wl-panel-note" role="status">{note}</p>}
-      <Table columns={columns} rows={data.invites} rowKey={(i) => i.id} empty={<Empty>No open invites.</Empty>} />
+      <Table paging={{ noun: "invites", key: "invites" }} columns={columns} rows={data.invites} rowKey={(i) => i.id} empty={<Empty>No open invites.</Empty>} />
       {dialog}
     </Panel>
   );

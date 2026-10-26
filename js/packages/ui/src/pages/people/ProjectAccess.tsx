@@ -41,7 +41,7 @@ export function ProjectAccess({ orgId, project, data, reload, onClose }: { orgId
     <Modal title={`Access to ${project.name}`} onClose={onClose} closeLabel="Done" wide>
       <p className="wl-muted wl-settings-note wl-modal-lead">Give a member or viewer more, less, or no access to this project. No access hides it from them, in the dashboard, links, and AI agents.</p>
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
-      <Table columns={columns} rows={data.members} rowKey={(m) => m.userId} />
+      <Table paging={{ noun: "members" }} columns={columns} rows={data.members} rowKey={(m) => m.userId} />
       <div className="wl-form-actions wl-modal-foot">
         <button type="button" className="wl-btn wl-btn-primary" onClick={onClose}>Done</button>
       </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PAGE_SIZES } from "@wizeworks/lens-core";
 import { setQuery, useRoute } from "../routes";
 
@@ -10,6 +10,8 @@ export interface TablePaging {
   key?: string;
   /** Rows per page at first; 15 when left out. */
   size?: number;
+  /** Back to page 1 when this changes, for example a filter's text. */
+  reset?: string;
 }
 
 export interface PageHandlers {
@@ -41,6 +43,21 @@ export function useTablePaging(paging: TablePaging | undefined): PagingState {
   const first = paging?.size ?? PAGE_SIZES[0]!;
   const [held, setHeld] = useState({ page: 1, size: first });
   const key = paging?.key;
-  if (!key) return { ...held, onPage: (page) => setHeld((h) => ({ ...h, page })), onPageSize: (size) => setHeld({ page: 1, size }) };
-  return { page: whole(query.get(`${key}.page`), 1), size: whole(query.get(`${key}.size`), first), ...urlPaging(`${key}.`) };
+  const state: PagingState = key
+    ? { page: whole(query.get(`${key}.page`), 1), size: whole(query.get(`${key}.size`), first), ...urlPaging(`${key}.`) }
+    : { ...held, onPage: (page) => setHeld((h) => ({ ...h, page })), onPageSize: (size) => setHeld({ page: 1, size }) };
+  useReset(paging?.reset, state.onPage);
+  return state;
+}
+
+/** Calls `onPage(1)` when `reset` changes after the first render. */
+function useReset(reset: string | undefined, onPage: (page: number) => void) {
+  const seen = useRef(reset);
+  const go = useRef(onPage);
+  go.current = onPage;
+  useEffect(() => {
+    if (seen.current === reset) return;
+    seen.current = reset;
+    go.current(1);
+  }, [reset]);
 }

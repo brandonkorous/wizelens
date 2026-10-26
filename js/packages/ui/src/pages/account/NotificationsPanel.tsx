@@ -18,7 +18,7 @@ function DigestTable({ rows, disabled, onChange }: { rows: DigestRow[]; disabled
       cell: (r) => <input type="checkbox" className="wl-notify-box" aria-label={`${label} digest for ${r.project}`} checked={r[p]} disabled={disabled} onChange={(e) => onChange(r, p, e.target.checked)} />,
     })),
   ];
-  return <Table columns={columns} rows={rows} rowKey={(r) => r.projectId} empty={<p className="wl-muted">No projects yet.</p>} />;
+  return <Table paging={{ noun: "projects", key: "digest" }} columns={columns} rows={rows} rowKey={(r) => r.projectId} empty={<p className="wl-muted">No projects yet.</p>} />;
 }
 
 function WhenRow({ n, busy, save }: { n: Notifications; busy: boolean; save: (p: NotificationsPatch) => void }) {

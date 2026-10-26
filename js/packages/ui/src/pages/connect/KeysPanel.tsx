@@ -105,7 +105,7 @@ export function KeysPanel({ orgId, data, kinds, reload }: { orgId: string; data:
           <NewSecret kind={rotated.kind} secret={rotated.token} note={`The old secret stops ${fmtDate(rotated.oldExpiresMs)}.`} />
         </div>
       )}
-      <Table columns={columns} rows={rows} rowKey={(k) => k.id} select={select} empty={filter ? <Empty>No key matches “{filter}”.</Empty> : <EmptyKeys reading={kinds.includes("read")} />} />
+      <Table paging={{ noun: "keys", key: kinds.includes("read") ? "readkeys" : "keys", reset: filter }} columns={columns} rows={rows} rowKey={(k) => k.id} select={select} empty={filter ? <Empty>No key matches “{filter}”.</Empty> : <EmptyKeys reading={kinds.includes("read")} />} />
       {dialog}
     </Panel>
   );

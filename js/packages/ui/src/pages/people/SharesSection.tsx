@@ -56,7 +56,7 @@ export function SharesSection({ orgId, project }: { orgId: string; project: { id
           <button type="button" className="wl-btn wl-btn-danger" onClick={() => void revokeMany()}>Revoke</button>
         </SelectionBar>
         {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
-        <Table columns={columns} rows={shares} rowKey={(s) => s.id} select={select} empty={<Empty title="No shared links">Open a trace and use Share to make one.</Empty>} />
+        <Table paging={{ noun: "links", key: "links" }} columns={columns} rows={shares} rowKey={(s) => s.id} select={select} empty={<Empty title="No shared links">Open a trace and use Share to make one.</Empty>} />
       </Panel>
       {dialog}
     </>

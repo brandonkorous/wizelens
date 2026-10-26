@@ -41,7 +41,7 @@ export function AppsPanel({ list, team }: { list: string; team?: boolean }) {
   return (
     <Panel flush>
       {(error || failed) && <div className="wl-banner wl-banner-error" role="alert">{error ?? failed}</div>}
-      {data && <Table columns={columns} rows={data.apps} rowKey={(a) => a.id} empty={empty} />}
+      {data && <Table paging={{ noun: "apps", key: "apps" }} columns={columns} rows={data.apps} rowKey={(a) => a.id} empty={empty} />}
       {dialog}
     </Panel>
   );

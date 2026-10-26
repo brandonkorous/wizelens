@@ -44,7 +44,7 @@ const COLUMNS: Column<Option>[] = [
 export function OptionsReference() {
   return (
     <Panel flush>
-      <Table columns={COLUMNS} rows={OPTIONS} rowKey={(o) => o.setting} />
+      <Table paging={{ noun: "options", key: "options" }} columns={COLUMNS} rows={OPTIONS} rowKey={(o) => o.setting} />
     </Panel>
   );
 }

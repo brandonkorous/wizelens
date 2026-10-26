@@ -72,7 +72,7 @@ export function ProjectsPanel({ orgId, data, reload }: { orgId: string; data: Or
       {data.projects.length > 8 && <div className="wl-list-tools"><ListFilter value={filter} onChange={setFilter} placeholder="Filter projects" /></div>}
       {bulk.bar}
       {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
-      <Table columns={columns} rows={shown} rowKey={(p) => p.id} select={bulk.select} empty={<Empty>No project matches “{filter}”.</Empty>} />
+      <Table paging={{ noun: "projects", key: "projects", reset: filter }} columns={columns} rows={shown} rowKey={(p) => p.id} select={bulk.select} empty={<Empty>No project matches “{filter}”.</Empty>} />
       {dialog}
     </Panel>
   );

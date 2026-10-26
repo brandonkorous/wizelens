@@ -52,7 +52,7 @@ export function RulesTable({ rules, columns, canWrite, url, onDone }: RulesTable
           <button type="button" className="wl-btn wl-btn-danger" disabled={busy} onClick={() => void run("delete")}>Delete</button>
         </SelectionBar>
       )}
-      <Table columns={columns} rows={shown} rowKey={(r) => r.id} select={canWrite ? select : undefined} onRowClick={(r) => navigate(alertHref(r.id, r.projectId))} empty={filter ? <Empty>No alert matches “{filter}”.</Empty> : <Empty title="No alerts yet"><BellRing aria-hidden="true" /> Add one to hear about problems before your users do.</Empty>} />
+      <Table paging={{ noun: "alerts", key: "rules", reset: filter }} columns={columns} rows={shown} rowKey={(r) => r.id} select={canWrite ? select : undefined} onRowClick={(r) => navigate(alertHref(r.id, r.projectId))} empty={filter ? <Empty>No alert matches “{filter}”.</Empty> : <Empty title="No alerts yet"><BellRing aria-hidden="true" /> Add one to hear about problems before your users do.</Empty>} />
       {dialog}
     </>
   );

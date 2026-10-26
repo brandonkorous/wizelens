@@ -24,7 +24,6 @@ interface Rotated {
 }
 
 const GRACE: [string, string][] = [["0", "At once"], ["1", "In 1 hour"], ["24", "In 24 hours"], ["72", "In 3 days"], ["168", "In 7 days"]];
-const SHOWN = 100;
 
 const columnsOf = (names: Map<string, string>): CsvColumns<Rotated> => [
   ["key_name", (k) => k.name],
@@ -47,8 +46,7 @@ function RotatedTable({ run, names }: { run: PartsRun<string, Rotated>; names: M
   return (
     <>
       {run.error && <div className="wl-banner wl-banner-error">It stopped after {run.done.length} keys: {run.error} The other {run.left.length} keys were not rotated.</div>}
-      <Table columns={columns} rows={run.done.slice(0, SHOWN)} rowKey={(k) => k.id} />
-      {run.done.length > SHOWN && <p className="wl-muted wl-small">And {run.done.length - SHOWN} more in the file.</p>}
+      <Table paging={{ noun: "keys" }} columns={columns} rows={run.done} rowKey={(k) => k.id} />
     </>
   );
 }

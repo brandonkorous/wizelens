@@ -20,7 +20,7 @@ function columns(nowMs: number, withCheck: boolean): Column<UptimeIncidentView>[
 export function IncidentsPanel({ incidents, nowMs, withCheck = true }: { incidents: readonly UptimeIncidentView[]; nowMs: number; withCheck?: boolean }) {
   return (
     <Panel title="Incidents" flush>
-      <Table columns={columns(nowMs, withCheck)} rows={incidents} rowKey={(i) => i.id} empty={<Empty>No incidents in the last 90 days.</Empty>} defaultSort={{ key: "start", desc: true }} />
+      <Table paging={{ noun: "incidents", key: "incidents" }} columns={columns(nowMs, withCheck)} rows={incidents} rowKey={(i) => i.id} empty={<Empty>No incidents in the last 90 days.</Empty>} defaultSort={{ key: "start", desc: true }} />
     </Panel>
   );
 }
