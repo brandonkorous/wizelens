@@ -1,4 +1,5 @@
 import { dropControlFlow } from "./control-flow.js";
+import { dropIgnoredPreload } from "./next-preload.js";
 import { markOldPrefetch } from "./prefetch.js";
 import { adjustClockSkew, shiftLogs } from "./skew.js";
 import { ATTR_EXPECTED } from "./attributes.js";
@@ -135,7 +136,7 @@ export function buildTrace(
   logs: readonly LogRecord[],
   remotes: Iterable<string>,
 ): Trace {
-  const fixed = adjustClockSkew(dropLateBrowserSpans(uniqueSpans(spans).map((s) => markOldPrefetch(dropControlFlow(s)))));
+  const fixed = adjustClockSkew(dropLateBrowserSpans(uniqueSpans(spans).map((s) => markOldPrefetch(dropIgnoredPreload(dropControlFlow(s))))));
   const sortedSpans = fixed.spans.sort((a, b) => a.startMs - b.startMs);
   const sortedLogs = shiftLogs(logs, fixed.offsets).sort((a, b) => a.timeMs - b.timeMs);
   const root = findRootSpan(sortedSpans);
