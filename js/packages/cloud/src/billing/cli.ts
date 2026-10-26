@@ -40,6 +40,7 @@ export async function stripeSetupMain(argv: string[], env: NodeJS.ProcessEnv, lo
   const { default: Stripe } = await import("stripe");
   const r = await stripeSetup(client ?? new Stripe(key!), a["public-url"] ?? env.WIZELENS_CLOUD_PUBLIC_URL);
   log(r.made.length ? `Made: ${r.made.join(", ")}.` : "Everything existed already; nothing new was made.");
+  if (!r.taxReady) log("\nStripe Tax is not active: add the head office address in the Stripe Dashboard (Tax > Settings). Checkout fails until it is.");
   log(`\nDeploy the cloud with:\n  --stripe-secret-key <the key>\n  --stripe-prices '${JSON.stringify(r.prices)}'`);
   if (r.webhookSecret) log(`  --stripe-webhook-secret ${r.webhookSecret}   (Stripe shows it only now)`);
   else if (r.webhookUrl) log(`  --stripe-webhook-secret <the signing secret of the webhook at ${r.webhookUrl}>`);

@@ -5,7 +5,7 @@ import { gzipSync } from "node:zlib";
 import { afterEach, describe, expect, it } from "vitest";
 import { planMain, stripeSetupMain } from "./billing/cli.js";
 import { sendUsageNotices } from "./billing/notices.js";
-import { stripeSetup } from "./billing/stripe-setup.js";
+import { stripeSetup, TAX_CODE } from "./billing/stripe-setup.js";
 import { dayOf } from "./billing/usage.js";
 import type { StripeClient } from "./billing/options.js";
 import type { Cloud } from "./server.js";
@@ -58,27 +58,33 @@ describe("usage counting", () => {
   });
 });
 
+type FakeProduct = { id: string; key: string; tax_code: string | null };
+type FakePrice = { id: string; lookup_key: string; tax_behavior: string; params: Record<string, unknown> };
+
 /** A fake Stripe for the setup command: what it made, and lists that return it on the next run. */
-function setupFake() {
+function setupFake(tax = "active") {
   const made: string[] = [];
   const meters: { id: string; event_name: string }[] = [];
-  const products: { id: string; key: string }[] = [];
-  const prices: { id: string; lookup_key: string; params: Record<string, unknown> }[] = [];
+  const products: FakeProduct[] = [];
+  const prices: FakePrice[] = [];
   const hooks: { url: string }[] = [];
   const list = <T>(rows: T[]) => async function* () { yield* rows; };
   const client = {
     billing: { meters: { list: () => list(meters)(), create: async (p: { event_name: string }) => (made.push("meter"), meters.push({ id: "mtr_1", event_name: p.event_name }), meters[0]) } },
     products: {
       search: async (p: { query: string }) => ({ data: products.filter((x) => p.query.includes(`'${x.key}'`)) }),
-      create: async (p: { metadata: { wizelens: string } }) => (made.push(`product ${p.metadata.wizelens}`), products.push({ id: `prod_${p.metadata.wizelens}`, key: p.metadata.wizelens }), products.at(-1)),
+      create: async (p: { tax_code: string; metadata: { wizelens: string } }) => (made.push(`product ${p.metadata.wizelens}`), products.push({ id: `prod_${p.metadata.wizelens}`, key: p.metadata.wizelens, tax_code: p.tax_code }), products.at(-1)),
+      update: async (id: string, p: { tax_code: string }) => Object.assign(products.find((x) => x.id === id)!, p),
     },
     prices: {
       list: async () => ({ data: prices }),
-      create: async (p: Record<string, unknown>) => (made.push(`price ${p.lookup_key}`), prices.push({ id: `price_${prices.length}`, lookup_key: p.lookup_key as string, params: p }), prices.at(-1)),
+      create: async (p: Record<string, unknown>) => (made.push(`price ${p.lookup_key}`), prices.push({ id: `price_${prices.length}`, lookup_key: p.lookup_key as string, tax_behavior: p.tax_behavior as string, params: p }), prices.at(-1)),
+      update: async (id: string, p: { tax_behavior: string }) => Object.assign(prices.find((x) => x.id === id)!, p),
     },
+    tax: { settings: { retrieve: async () => ({ status: tax }) } },
     webhookEndpoints: { list: () => list(hooks)(), create: async (p: { url: string }) => (made.push("webhook"), hooks.push(p), { secret: "whsec_new" }) },
   };
-  return { client: client as unknown as StripeClient, made, prices };
+  return { client: client as unknown as StripeClient, made, products, prices };
 }
 
 describe("stripe-setup", () => {
@@ -91,11 +97,24 @@ describe("stripe-setup", () => {
     const overage = f.prices.find((p) => p.lookup_key === "wizelens_gb_overage")!.params;
     expect(overage).toMatchObject({ tiers_mode: "graduated", recurring: { interval: "month", usage_type: "metered", meter: "mtr_1" }, tiers: [{ up_to: 500, unit_amount: 30 }, { up_to: 2000, unit_amount: 20 }, { up_to: "inf", unit_amount: 10 }] });
     expect(f.prices.find((p) => p.lookup_key === "wizelens_team_annual")!.params).toMatchObject({ unit_amount: 29000, recurring: { interval: "year" } });
+    expect(f.products.every((p) => p.tax_code === TAX_CODE) && f.prices.every((p) => p.tax_behavior === "exclusive")).toBe(true);
+    expect(first.taxReady).toBe(true);
     const count = f.made.length;
     const out: string[] = [];
     await stripeSetupMain(["--public-url", "https://app.wizelens.com"], {}, (l) => out.push(l), f.client);
     expect(f.made.length).toBe(count);
     expect(out.join("\n")).toMatch(/nothing new was made[\s\S]*--stripe-prices '\{"teamMonthly"/);
+  });
+
+  it("adds a missing tax code and tax behavior, and says when Stripe Tax is not active", async () => {
+    const f = setupFake("pending");
+    await stripeSetup(f.client);
+    for (const p of f.products) p.tax_code = null;
+    for (const p of f.prices) p.tax_behavior = "unspecified";
+    const out: string[] = [];
+    await stripeSetupMain([], {}, (l) => out.push(l), f.client);
+    expect(f.products.every((p) => p.tax_code === TAX_CODE) && f.prices.every((p) => p.tax_behavior === "exclusive")).toBe(true);
+    expect(out.join("\n")).toMatch(/Made: tax code on WizeLens Team[\s\S]*tax behavior on wizelens_gb_overage[\s\S]*Stripe Tax is not active/);
   });
 });
 

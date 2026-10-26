@@ -48,7 +48,7 @@ describe("Stripe checkout and webhooks", () => {
     expect((await upgrade(owner)).status).toBe(200);
     const customer = fake.called("customers.create")[0]!.args[0] as { metadata: Record<string, string> };
     expect(customer.metadata.wizelensOrgId).toBe(orgId);
-    expect(fake.called("checkout.sessions.create")).toHaveLength(1);
+    expect(fake.called("checkout.sessions.create").map((c) => c.args[0])).toMatchObject([{ automatic_tax: { enabled: true }, tax_id_collection: { enabled: true }, customer_update: { address: "auto", name: "auto" }, subscription_data: { billing_mode: { type: "flexible" } } }]);
   });
 
   it("sets the plan from the webhook and starts the usage subscription on the 1st", async () => {
@@ -56,7 +56,7 @@ describe("Stripe checkout and webhooks", () => {
     expect(await planOf()).toBe("team");
     const [create] = fake.called("subscriptions.create");
     const [params, opts] = create!.args as [Record<string, unknown>, { idempotencyKey: string }];
-    expect(params).toMatchObject({ customer, items: [{ price: PRICES.overage }], proration_behavior: "none", default_payment_method: "pm_card", metadata: { wizelensOrgId: orgId, wizelensRole: "usage" } });
+    expect(params).toMatchObject({ customer, items: [{ price: PRICES.overage }], proration_behavior: "none", automatic_tax: { enabled: true }, billing_mode: { type: "flexible" }, default_payment_method: "pm_card", metadata: { wizelensOrgId: orgId, wizelensRole: "usage" } });
     expect(new Date((params.billing_cycle_anchor as number) * 1000).getUTCDate()).toBe(1);
     expect(opts.idempotencyKey).toMatch(/^wl-usage-/);
     const audit = (await owner.call<{ action: string; detail: { plan: string } }[]>("GET", `api/orgs/${orgId}/audit`)).body.find((a) => a.action === "plan.change");

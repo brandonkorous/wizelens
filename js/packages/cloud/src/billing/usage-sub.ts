@@ -42,6 +42,9 @@ export async function ensureUsageSub(d: UsageSubDeps, orgId: string, customerId:
       items: [{ price: d.prices.overage }],
       billing_cycle_anchor: nextMonthStartS(d.now()),
       proration_behavior: "none",
+      // Tax like the plan: Stripe Tax from the address and tax ID that Checkout saved on the customer.
+      automatic_tax: { enabled: true },
+      billing_mode: { type: "flexible" },
       description: "WizeLens extra data (GB above the plan's included GB)",
       metadata: { wizelensOrgId: orgId, wizelensRole: USAGE_ROLE },
     },
