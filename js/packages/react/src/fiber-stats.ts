@@ -73,28 +73,31 @@ function contextChanged(f: FiberLike, prev: FiberLike): boolean {
   return false;
 }
 
-function record(f: FiberLike, out: ComponentStats): void {
+/** Count one render of `f` when it did work; true when it did. */
+function record(f: FiberLike, out: ComponentStats): boolean {
   const prev = f.alternate;
-  if (prev && ((f.flags ?? 0) & PERFORMED_WORK) === 0) return;
+  if (prev && ((f.flags ?? 0) & PERFORMED_WORK) === 0) return false;
   const name = componentName(f);
   let s = out.get(name);
   if (!s) {
-    if (out.size >= MAX_COMPONENTS) return;
+    if (out.size >= MAX_COMPONENTS) return true;
     s = { name, renders: 0, actualMs: 0, selfMs: 0, wasted: 0, context: 0 };
     out.set(name, s);
   }
   s.renders++;
   s.actualMs += f.actualDuration ?? 0;
   s.selfMs += f.selfBaseDuration ?? 0;
-  if (!prev || !shallowEqual(f.memoizedProps, prev.memoizedProps) || !statesEqual(f, prev)) return;
+  if (!prev || !shallowEqual(f.memoizedProps, prev.memoizedProps) || !statesEqual(f, prev)) return true;
   if (contextChanged(f, prev)) s.context++;
   else s.wasted++;
+  return true;
 }
 
 const isWizeLens = (f: FiberLike) => (f.type as Named | null)?.__wizelens === true;
 
-/** Add the components that rendered in this commit to `out`. Subtrees React did not visit are skipped. */
-export function collectCommit(root: FiberLike, out: ComponentStats): void {
+/** Add the components that rendered in this commit to `out`, and return how many renders that was. Subtrees React did not visit are skipped. */
+export function collectCommit(root: FiberLike, out: ComponentStats): number {
+  let renders = 0;
   const stack: FiberLike[] = [root];
   while (stack.length > 0) {
     const fiber = stack.pop()!;
@@ -102,10 +105,11 @@ export function collectCommit(root: FiberLike, out: ComponentStats): void {
     for (let c = fiber.alternate?.child ?? null; c; c = c.sibling) reused.add(c);
     for (let c = fiber.child; c; c = c.sibling) {
       if (reused.has(c) || isWizeLens(c)) continue;
-      if (USER_TAGS.has(c.tag)) record(c, out);
+      if (USER_TAGS.has(c.tag) && record(c, out)) renders++;
       stack.push(c);
     }
   }
+  return renders;
 }
 
 /** Most own render time first, at most `limit`. Children are not counted, so wrappers do not crowd out real hotspots. */

@@ -41,12 +41,12 @@ export function handleCommit(root: unknown): void {
   try {
     const current = (root as FiberRootLike | null)?.current;
     if (!current) return;
-    commits++;
     // The first commit of a root: the previous tree had no child yet.
     if (firstMountMs === null && current.alternate && !current.alternate.child) {
       firstMountMs = current.child?.actualDuration ?? current.actualDuration ?? null;
     }
-    collectCommit(current, stats);
+    // Only commits that rendered an app component count: React also commits when nothing of the app re-rendered.
+    if (collectCommit(current, stats) > 0) commits++;
   } catch {
     // An unknown React version: skip this commit.
   }
