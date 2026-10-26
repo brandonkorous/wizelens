@@ -4,6 +4,7 @@ import type { DatabaseModel, QueryRow, TableRow } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, fmtShort, fmtShownOf } from "../../format";
 import { hrefTo, navigate, queryHref, setQuery } from "../../routes";
 import { Pager } from "../../ui/Controls";
+import { urlPaging } from "../../ui/paging";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 import { ExportButton } from "../../ui/ExportButton";
@@ -57,9 +58,7 @@ export function TopQueriesPanel({ stats }: { stats: DatabaseModel }) {
   return (
     <Panel title={`${QUERY_TITLE[stats.filter.sort]} (${fmtCount(stats.queryShapes)})`} flush className="wl-db-queries" action={<ExportButton page="database" disabled={stats.queries.length === 0} />}>
       <Table columns={queryColumns(stats.slowMs)} rows={stats.queries} rowKey={(q) => q.key} onRowClick={(q) => navigate(queryHref(q.query))} empty={<Empty>No queries match in this time range.</Empty>} />
-      {stats.queryShapes > 0 && (
-        <Pager page={stats.page} pageSize={stats.size} total={stats.queryShapes} noun="queries" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />
-      )}
+      <Pager page={stats.page} pageSize={stats.size} total={stats.queryShapes} noun="queries" {...urlPaging()} />
     </Panel>
   );
 }

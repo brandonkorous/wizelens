@@ -144,6 +144,9 @@ export function navigate(href: string): void {
   window.location.hash = href.replace(/^#/, "");
 }
 
+/** URL keys of a table paged in the browser ("hosts.page", "hosts.size"). Models never see them. */
+export const CLIENT_PAGING = /\.(page|size)$/;
+
 /** Change query values on the current route without a new history entry. Null removes a value. */
 export function setQuery(updates: Record<string, string | number | null | undefined>): void {
   const route = parseRoute(window.location.hash);

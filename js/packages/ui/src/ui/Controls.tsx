@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { PAGE_SIZES } from "@wizeworks/lens-core";
 import { fmtCount } from "../format";
 
 export function Select<T extends string>({ value, options, onChange, label, small = false }: {
@@ -49,7 +50,12 @@ export interface PagerProps {
   onPageSize: (size: number) => void;
 }
 
+/** The size choices, with the size in use when it is not one of them. */
+const sizeOptions = (size: number): [string, string][] => [...new Set([...PAGE_SIZES, size])].sort((a, b) => a - b).map((s) => [String(s), `${s} / page`]);
+
+/** Page buttons and the size menu. Hidden when every row fits on the smallest page. */
 export function Pager({ page, pageSize, total, noun, onPage, onPageSize }: PagerProps) {
+  if (total <= PAGE_SIZES[0]!) return null;
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
@@ -72,7 +78,7 @@ export function Pager({ page, pageSize, total, noun, onPage, onPageSize }: Pager
         <button type="button" aria-label="Next page" disabled={page >= pages} onClick={() => onPage(page + 1)}>
           <ChevronRight size={16} />
         </button>
-        <Select small label="Rows per page" value={String(pageSize)} options={[["15", "15 / page"], ["30", "30 / page"], ["50", "50 / page"], ["100", "100 / page"]]} onChange={(v) => onPageSize(Number(v))} />
+        <Select small label="Rows per page" value={String(pageSize)} options={sizeOptions(pageSize)} onChange={(v) => onPageSize(Number(v))} />
       </div>
     </div>
   );

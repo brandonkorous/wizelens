@@ -2,8 +2,9 @@ import { UserRound } from "lucide-react";
 import { userDoc, type UserRow } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
 import { fmtAgo, fmtCount, fmtMs, fmtPct } from "../../format";
-import { decodeParam, navigate, setQuery, userHref, useRoute } from "../../routes";
+import { decodeParam, navigate, userHref, useRoute } from "../../routes";
 import { Pager } from "../../ui/Controls";
+import { urlPaging } from "../../ui/paging";
 import { UserSearch } from "./UserSearch";
 import { ModelState } from "../../ui/ModelState";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
@@ -34,7 +35,7 @@ function AllUsers() {
       {m && (
         <Panel title={`Users (${fmtCount(m.total)})`} flush>
           <GroupTaggedTable group="users" docOf={(u) => userDoc(u.user)} tagged="user" columns={USER_COLUMNS} rows={m.users} rowKey={(u) => u.user} onRowClick={(u) => navigate(userHref(u.user))} empty={<Empty title={q ? "No user matches" : "No signed-in users in this range"}>Send the user's id as <code>enduser.id</code>, and a name as <code>user.full_name</code> if you like, to see them here.</Empty>} />
-          {m.total > 0 && <Pager page={m.page} pageSize={m.size} total={m.total} noun="users" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />}
+          <Pager page={m.page} pageSize={m.size} total={m.total} noun="users" {...urlPaging()} />
         </Panel>
       )}
     </>

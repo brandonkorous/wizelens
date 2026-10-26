@@ -1,5 +1,8 @@
 import { Fragment, type MouseEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
+import { slicePage } from "@wizeworks/lens-core";
+import { Pager } from "./Controls";
+import { type TablePaging, useTablePaging } from "./paging";
 
 export interface Column<T> {
   key: string;
@@ -25,6 +28,8 @@ export interface TableProps<T> {
   detail?: (row: T) => ReactNode;
   /** Tick boxes for picking rows to act on together; the header box picks every row shown. */
   select?: TableSelect;
+  /** Pages in the browser, with the shared pager under the table. */
+  paging?: TablePaging;
 }
 
 export interface TableSelect {
@@ -98,25 +103,26 @@ function HeaderCell<T>({ col, sort, onSort }: { col: Column<T>; sort: { key: str
   );
 }
 
-/** A plain data table with optional sorting, row clicks, a selected row, and tick boxes to pick rows. */
-export function Table<T>({ columns, rows, rowKey, onRowClick, selectedKey, empty, defaultSort, detail, select }: TableProps<T>) {
-  const [sort, setSort] = useState(defaultSort ?? null);
-  const sorted = useSorted(rows, columns, sort);
-  const onSort = (key: string) => setSort((s) => (s?.key === key ? { key, desc: !s.desc } : { key, desc: true }));
-  if (rows.length === 0 && empty) return <>{empty}</>;
+interface BodyProps<T> extends TableProps<T> {
+  shown: readonly T[];
+  sort: { key: string; desc: boolean } | null;
+  onSort: (key: string) => void;
+}
+
+function TableBody<T>({ columns, shown, rowKey, onRowClick, selectedKey, detail, select, sort, onSort }: BodyProps<T>) {
   return (
     <div className="wl-table-wrap">
       <table className="wl-table">
         <thead>
           <tr>
-            {select && <PickAll keys={sorted.map(rowKey).filter((k) => select.pickable?.(k) ?? true)} select={select} />}
+            {select && <PickAll keys={shown.map(rowKey).filter((k) => select.pickable?.(k) ?? true)} select={select} />}
             {columns.map((c) => (
               <HeaderCell key={c.key} col={c} sort={sort} onSort={onSort} />
             ))}
           </tr>
         </thead>
         <tbody>
-          {sorted.map((row) => {
+          {shown.map((row) => {
             const key = rowKey(row);
             const open = key === selectedKey;
             const cls = [onRowClick ? "wl-clickable" : "", open ? "wl-selected" : "", select?.picked.has(key) ? "wl-picked" : ""].join(" ").trim();
@@ -141,5 +147,22 @@ export function Table<T>({ columns, rows, rowKey, onRowClick, selectedKey, empty
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** A plain data table with optional sorting, row clicks, a selected row, tick boxes, and pages. It sorts every row, then pages. */
+export function Table<T>(props: TableProps<T>) {
+  const { columns, rows, empty, defaultSort, paging } = props;
+  const [sort, setSort] = useState(defaultSort ?? null);
+  const sorted = useSorted(rows, columns, sort);
+  const pg = useTablePaging(paging);
+  const onSort = (key: string) => (setSort((s) => (s?.key === key ? { key, desc: !s.desc } : { key, desc: true })), paging && pg.onPage(1));
+  if (rows.length === 0 && empty) return <>{empty}</>;
+  const shown = paging ? slicePage(sorted, pg.page, pg.size) : { rows: sorted, page: 1 };
+  return (
+    <>
+      <TableBody {...props} shown={shown.rows} sort={sort} onSort={onSort} />
+      {paging && <Pager page={shown.page} pageSize={pg.size} total={rows.length} noun={paging.noun} onPage={pg.onPage} onPageSize={pg.onPageSize} />}
+    </>
   );
 }
