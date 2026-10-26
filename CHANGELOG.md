@@ -37,6 +37,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   `FetchError: Failed to fetch`. When the cloud and hubs read a trace, they now mark such a fetch as a prefetch
   (`wizelens.browser.prefetch`), with no error and no exception, as newer SDKs do, so it stays out of the Web App row
   and its errors.
+- **Next.js 16's preload of edge routes is not an error.** At start, Next preloads every route and ignores the ones it
+  cannot load ("Intentionally ignored because this is a preload step"). For an edge route that is a
+  `MODULE_NOT_FOUND` for `.next/server/app-edge-has-no-entrypoint` on a `load route module` span outside any request.
+  The cloud and hubs drop that exception and its error status when they read the trace. Another missing module, or the
+  same one inside a request, is still an error.
 
 ## [0.3.0-alpha.13] — Settings by task, and numbers that match reality
 
