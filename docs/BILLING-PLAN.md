@@ -75,6 +75,9 @@ Competitor Research" doc.
   an idempotency identifier, so a rerun never bills twice.
 - `wizelens-cloud stripe-setup --stripe-secret-key sk_...` creates the products, prices, and meter and prints the
   options to deploy with.
+- **Tax:** Stripe Tax on Checkout and the usage subscription (`automatic_tax`), billing address required, business tax
+  IDs collected. Products carry the business SaaS tax code `txcd_10103001`; prices are tax-exclusive. Subscriptions use
+  flexible billing mode. Registrations are added in the Dashboard as thresholds are reached.
 
 ## B5 — Dashboard
 

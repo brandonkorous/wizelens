@@ -4,6 +4,14 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased] — Fewer false alarms
 
+### Added
+
+- **Sales tax and VAT on cloud plans, through Stripe Tax.** Checkout asks for the billing address and an optional
+  business tax ID, and Stripe adds the right tax on top of the plan and the extra GB. `stripe-setup` gives every
+  product the tax code for business SaaS and every price an "exclusive" tax behavior (it adds them to products and
+  prices made before), and says when Stripe Tax still needs the head office address. New plan and usage subscriptions
+  use Stripe's flexible billing mode.
+
 ### Fixed
 
 - **Counts and ids are no longer taken for card numbers.** A digit run is redacted as `[redacted:card]` only when it
