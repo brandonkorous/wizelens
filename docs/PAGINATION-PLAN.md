@@ -126,7 +126,8 @@ numbers (fixed rows); service detail endpoints (10, the side panel on Services).
    page, then draws `Pager` under the table. A sort click goes back to page 1. A page past the end clamps to the last
    page. Group A tables add one prop and nothing else.
 3. **Raw `<table>` files** (trace tabs, retention, service detail, recent traces) use the same hook and `Pager`.
-4. **One rule for when the pager shows**: when the rows are more than the smallest page size (15). Small lists stay clean.
+4. **One rule for when the pager shows**: when the rows are more than the smaller of 15 and the table's page size.
+   Small lists stay clean; a table that starts at 5 or 6 rows still shows its pager from the 6th or 7th row.
 5. **Server paging helper** in core: `pageParams` takes the key prefix too, so a model can page two lists on one page.
 6. Tests: `Table` paging (sort then slice, clamp, reset), `usePaging` keys, `pageParams` with a prefix.
 
@@ -139,8 +140,7 @@ One commit per phase, one PR at the end. Each phase passes tests, lint, and type
 | 0 | Shared parts above, with tests. The six paged tables move to the shared hook (no visible change). |
 | 1 | Group A, settings: Account, Connect, Organization, People, Alerts rules, Dashboards, SLOs, Uptime, imports. |
 | 2 | Group A, telemetry and infra: Errors by service, Infra, Services, Query, Problems, Trace tabs, Trace compare. |
-| 3 | Group B, core models: page params and totals for each list, in the hub and cloud executors. Speed under 1 s. |
-| 4 | Group B, UI: each table reads the new model fields and shows `Pager`. Toggles in group C go. |
+| 3 + 4 | Group B, models and UI in one commit: page params and totals for each list, each table reads them and shows `Pager`. Toggles in group C go. |
 | 5 | Alert events (hub and cloud APIs: `offset` + `count`), audit log (`offset` + `count`), search (see open question). |
 | 6 | Check every page in the browser on the Piggles test bed. CHANGELOG entry. Open the PR. |
 
@@ -151,3 +151,9 @@ One commit per phase, one PR at the end. Each phase passes tests, lint, and type
 3. URL keys: a table paged in the browser keeps `<key>.page` and `<key>.size` (models never see them); a second
    server-paged list on a page keeps `<key>page` and `<key>size`; the main list keeps `page` and `size`.
 4. Dialogs (import previews, rotate keys) hold the page in the table, not in the URL.
+5. Lists built from trace ids the server keeps as samples (error occurrences, a query's traces, a route's loads,
+   critical spans, a user's newest requests on small hosts) page in the browser: the server has no rows past the sample.
+6. Server lists sort only by columns the server can sort by. Endpoint name and error rate on the service page lost
+   their sort; the rest kept theirs.
+7. Alert events page with `epage` / `esize` and answer `eventCount`. The audit log pages with `offset` and reads its
+   total from `GET api/orgs/:org/audit/count`. "Load older" and "Show more" are gone.

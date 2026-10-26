@@ -14,6 +14,7 @@ import { withTags } from "../../ui/TagChips";
 import { TagThis } from "../../ui/TagThis";
 import { useRowTags } from "../../data/tagMatch";
 import { resultItem, resultKey, SEARCH_COLUMNS, TAGGED_COLUMN } from "./columns";
+import { SearchPager, useSearchPage } from "./SearchPager";
 import "../../styles/pages/search.css";
 
 const PAGE = 50;
@@ -30,34 +31,39 @@ function Failure({ failure }: { failure: SearchFailure }) {
   return <Empty title="Search is not answering">{failure.message}. Your search is fine. Try again in a moment.</Empty>;
 }
 
-/** Downloads the results shown so far as CSV ("Show more" first for more). */
+/** Downloads every result loaded so far as CSV (step to later pages first for more). */
 function ExportShown({ kind, rows }: { kind: SearchKind; rows: readonly object[] }) {
   return (
     <button type="button" className="wl-btn wl-btn-sm" title="Download the results shown as CSV" onClick={() => downloadCsv(`search-${kind}`, objectsToCsv(rows))}>
-      <Upload aria-hidden="true" /> Export
+      <Upload aria-hidden="true" /> Export loaded
     </button>
   );
 }
 
-function Results({ kind, s }: { kind: SearchKind; s: SearchState }) {
-  const rows = s.pages.flatMap((p) => p.items) as Row[];
+interface ResultsProps {
+  kind: SearchKind;
+  s: SearchState;
+  /** The search's own key, so a new search goes back to page 1. */
+  searchKey: string;
+  counted: { n: number; more: boolean } | undefined;
+}
+
+function Results({ kind, s, searchKey, counted }: ResultsProps) {
+  const all = s.pages.flatMap((p) => p.items) as Row[];
+  const { at, go } = useSearchPage(searchKey, s);
+  const rows = (s.pages[at]?.items ?? []) as Row[];
+  const total = counted && counted.n >= all.length ? counted : { n: all.length, more: !!s.more };
   const settling = s.pages[0]?.settling;
   const unknown = s.pages[0]?.unknownTags ?? [];
   const tagsOf = useRowTags(kind, rows, (r) => resultItem(kind, r));
   const columns = withTags(SEARCH_COLUMNS[kind] as Column<Row>[], TAGGED_COLUMN[kind], tagsOf);
   const empty = s.loading ? <Empty title="Searching…" /> : <Empty title="Nothing matches">Try fewer terms, another kind, or a wider time range.</Empty>;
   return (
-    <Panel title={`${TABS.find(([k]) => k === kind)![1]} (${rows.length}${s.more ? "+" : ""})`} flush action={rows.length > 0 && <ExportShown kind={kind} rows={rows} />}>
+    <Panel title={`${TABS.find(([k]) => k === kind)![1]} (${countText(total)})`} flush action={all.length > 0 && <ExportShown kind={kind} rows={all} />}>
       {settling ? <p className="wl-search-note wl-muted wl-small">Search is catching up: {settling} {settling === 1 ? "trace is" : "traces are"} not in the results yet.</p> : null}
       {unknown.length > 0 && <p className="wl-search-note wl-muted wl-small">No tag named {unknown.join(", ")}. It finds only tags your app sets with that name.</p>}
       {s.failure ? <Failure failure={s.failure} /> : <Table columns={columns} rows={rows} rowKey={(r) => resultKey(kind, r)} empty={empty} />}
-      {s.more && (
-        <div className="wl-search-more">
-          <button type="button" className="wl-btn" onClick={s.more}>
-            Show more
-          </button>
-        </div>
-      )}
+      {!s.failure && <SearchPager s={s} at={at} size={PAGE} total={total} noun={kind} onPage={go} />}
     </Panel>
   );
 }
@@ -110,7 +116,7 @@ export function SearchPage() {
         <SavedSearches />
       </section>
       {summary && <ResultsOverTime summary={summary} kind={kind} />}
-      <Results kind={kind} s={s} />
+      <Results kind={kind} s={s} searchKey={JSON.stringify([q, kind, range, server])} counted={summary?.counts[kind]} />
     </div>
   );
 }

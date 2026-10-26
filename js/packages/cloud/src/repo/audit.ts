@@ -33,18 +33,31 @@ export interface AuditFilter {
 
 const like = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 
-/** Newest first, `limit` at most, with the filter. */
-export async function listAudit(q: Queryable, orgId: string, limit: number, f: AuditFilter = {}): Promise<AuditEntry[]> {
+/** The WHERE text and its args for one organization and the filter. */
+function auditWhere(orgId: string, f: AuditFilter): { where: string; args: unknown[] } {
   const where = ["org_id = $1", "time_ms < $2"];
   const args: unknown[] = [orgId, f.before ?? Number.MAX_SAFE_INTEGER];
   if (f.from !== undefined) where.push(`time_ms >= $${args.push(f.from)}`);
   if (f.action) where.push(f.action.endsWith(".") ? `action LIKE $${args.push(`${like(f.action)}%`)}` : `action = $${args.push(f.action)}`);
   if (f.actor) where.push(`actor = $${args.push(f.actor)}`);
+  return { where: where.join(" AND "), args };
+}
+
+/** Newest first, `limit` at most, `offset` rows in, with the filter. */
+export async function listAudit(q: Queryable, orgId: string, limit: number, f: AuditFilter = {}, offset = 0): Promise<AuditEntry[]> {
+  const { where, args } = auditWhere(orgId, f);
   const rows = await q.query<{ actor: string; action: string; detail: string; time_ms: number }>(
-    `SELECT actor, action, detail, time_ms FROM audit WHERE ${where.join(" AND ")} ORDER BY time_ms DESC LIMIT $${args.push(limit)}`,
+    `SELECT actor, action, detail, time_ms FROM audit WHERE ${where} ORDER BY time_ms DESC, id LIMIT $${args.push(limit)} OFFSET $${args.push(offset)}`,
     args,
   );
   return rows.map((r) => ({ actor: r.actor, action: r.action, detail: JSON.parse(r.detail) as Record<string, unknown>, timeMs: r.time_ms }));
+}
+
+/** How many lines match the filter. */
+export async function countAudit(q: Queryable, orgId: string, f: AuditFilter = {}): Promise<number> {
+  const { where, args } = auditWhere(orgId, f);
+  const rows = await q.query<{ n: string | number }>(`SELECT COUNT(*) AS n FROM audit WHERE ${where}`, args);
+  return Number(rows[0]?.n ?? 0);
 }
 
 /** The actions and actors an organization's log has, for the filter menus. */

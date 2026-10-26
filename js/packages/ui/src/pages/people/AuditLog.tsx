@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Download } from "lucide-react";
-import { apiFetch } from "../../data/api";
+import { PAGE_SIZES, type PageInfo, pageParams } from "@wizeworks/lens-core";
 import { useApi } from "../../data/useApi";
 import { fmtAgo, fmtDateTime } from "../../format";
+import { setQuery, useRoute } from "../../routes";
 import { Select } from "../../ui/Controls";
 import { Empty, Panel } from "../../ui/Panel";
 import { SectionHead } from "../../ui/Sections";
@@ -10,8 +11,6 @@ import { type Column, Table } from "../../ui/Table";
 import { actionText, actorText, type AuditEntry, detailText, GROUP_LABEL, namesOf } from "./auditText";
 import { PlanPrompt, useFeature } from "../organization/PlanPrompt";
 import type { OrgData } from "../organization/orgTypes";
-
-const PAGE = 100;
 
 /** The action groups ("key.") and actors the log has, for the filter menus. */
 function useFacets(orgId: string, names: ReturnType<typeof namesOf>) {
@@ -22,29 +21,27 @@ function useFacets(orgId: string, names: ReturnType<typeof namesOf>) {
   return { what, who };
 }
 
-/** Newest first, a page at a time: the first page reloads with the page, older pages add on. */
-function useAuditPages(base: string) {
-  const first = useApi<AuditEntry[]>(base);
-  const [older, setOlder] = useState<AuditEntry[]>([]);
-  const [done, setDone] = useState(false);
-  useEffect(() => (setOlder([]), setDone(false)), [base]);
-  const rows = [...(first.data ?? []), ...older];
-  const more = () => {
-    const last = rows.at(-1);
-    if (!last) return;
-    void apiFetch<AuditEntry[]>(`${base}&before=${last.timeMs}`).then((page) => (setOlder((o) => [...o, ...page]), setDone(page.length < PAGE)));
-  };
-  return { rows, more, done: done || (first.data !== null && first.data.length < PAGE), error: first.error };
+/** Newest first, one page at a time (auditpage, auditsize in the URL), and how many lines match. */
+function useAuditPage(orgId: string, filter: string) {
+  const { query } = useRoute();
+  const { page, size } = pageParams(Object.fromEntries(query), PAGE_SIZES[0]!, "audit");
+  const and = filter ? `&${filter}` : "";
+  const list = useApi<AuditEntry[]>(`./api/orgs/${orgId}/audit?limit=${size}&offset=${(page - 1) * size}${and}`);
+  const count = useApi<{ total: number }>(`./api/orgs/${orgId}/audit/count${filter ? `?${filter}` : ""}`);
+  const info: PageInfo = { key: "audit", total: count.data?.total ?? 0, page, size, sort: null };
+  return { rows: list.data ?? [], info, error: list.error ?? count.error };
 }
 
 /** Who did what: members, keys, projects, settings, shares, single sign-on, and every MCP call. Filter, page back, and export. */
 export function AuditSection({ orgId, org }: { orgId: string; org: OrgData | null }) {
-  const [action, setAction] = useState("");
-  const [actor, setActor] = useState("");
+  const [action, setActionText] = useState("");
+  const [actor, setActorText] = useState("");
+  const setAction = (v: string) => (setActionText(v), setQuery({ auditpage: null }));
+  const setActor = (v: string) => (setActorText(v), setQuery({ auditpage: null }));
   const names = namesOf(org);
   const facets = useFacets(orgId, names);
   const filter = new URLSearchParams({ ...(action ? { action } : {}), ...(actor ? { actor } : {}) }).toString();
-  const { rows, more, done, error } = useAuditPages(`./api/orgs/${orgId}/audit?limit=${PAGE}${filter ? `&${filter}` : ""}`);
+  const { rows, info, error } = useAuditPage(orgId, filter);
   const columns: Column<AuditEntry>[] = [
     { key: "time", header: "When", cell: (a) => <span title={fmtDateTime(a.timeMs)}>{fmtAgo(a.timeMs)}</span>, className: "wl-nowrap" },
     { key: "who", header: "Who", cell: (a) => actorText(a.actor, names), className: "wl-nowrap" },
@@ -69,12 +66,7 @@ export function AuditSection({ orgId, org }: { orgId: string; org: OrgData | nul
       </section>
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
       <Panel flush>
-        <Table columns={columns} rows={rows} rowKey={(a) => `${a.timeMs}:${a.action}:${a.actor}`} empty={<Empty>{filter ? "Nothing matches these filters." : "Nothing yet."}</Empty>} />
-        {!done && rows.length > 0 && (
-          <div className="wl-panel-more">
-            <button type="button" className="wl-btn" onClick={more}>Load older</button>
-          </div>
-        )}
+        <Table columns={columns} rows={rows} served={{ info, noun: "lines" }} rowKey={(a) => `${a.timeMs}:${a.action}:${a.actor}`} empty={<Empty>{filter ? "Nothing matches these filters." : "Nothing yet."}</Empty>} />
       </Panel>
     </>
   );

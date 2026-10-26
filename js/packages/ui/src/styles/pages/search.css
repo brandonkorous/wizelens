@@ -7,7 +7,6 @@
 .wl-search-page .wl-search-trace { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .wl-search-page .wl-badge { text-transform: capitalize; }
 .wl-search-note { margin: 0; padding: 10px 20px 0; }
-.wl-search-more { display: flex; justify-content: center; padding: 14px; border-top: 1px solid var(--wl-line); }
 .wl-search-bar { padding-bottom: 0; }
 .wl-search-bar .wl-tabbar { margin-bottom: 0; overflow: visible; border-bottom: 0; }
 .wl-saved-searches { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 10px; }

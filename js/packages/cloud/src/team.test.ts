@@ -90,6 +90,9 @@ describe("audit log", () => {
     expect(first).toHaveLength(2);
     const next = (await page(`limit=2&before=${first[1]!.timeMs}`)).body;
     expect(next[0]!.timeMs).toBeLessThan(first[1]!.timeMs);
+    expect((await page("limit=2&offset=2")).body[0]).toEqual((await page("limit=3")).body[2]);
+    const total = (await owner.call<{ total: number }>("GET", `api/orgs/${orgId}/audit/count?action=project.create`)).body.total;
+    expect(total).toBe(3);
     expect((await page("action=project.")).body.every((e) => e.action.startsWith("project."))).toBe(true);
     const facets = (await owner.call<{ actions: string[]; actors: string[] }>("GET", `api/orgs/${orgId}/audit/facets`)).body;
     expect(facets.actions).toContain("project.create");

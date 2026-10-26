@@ -1,4 +1,4 @@
-import { ALERT_METRICS, type AlertChannel, type AlertRule, logSearchText, METRIC_ALERT_STATS } from "@wizeworks/lens-core";
+import { ALERT_METRICS, type AlertChannel, type AlertRule, logSearchText, METRIC_ALERT_STATS, PAGE_SIZES, type PageInfo, pageParams } from "@wizeworks/lens-core";
 import { currentProject, useAccount } from "../../data/account";
 import { useHost } from "../../data/host";
 import { getScope } from "../../data/prefs";
@@ -22,14 +22,29 @@ export interface AlertEvent {
 
 export interface AlertsData {
   rules: InProject<AlertRule>[];
+  /** One page of the events, newest first, and how many there are. */
   events: InProject<AlertEvent>[];
+  eventCount: number;
 }
 
 /** One rule's page: the rule, its events, and its evaluated values. */
 export interface AlertRuleData {
   rule: AlertRule;
   events: AlertEvent[];
+  eventCount: number;
   values: { timeMs: number; value: number | null }[];
+}
+
+/** An alerts API URL with the page of events the route asks for (epage, esize). */
+export function withEventPage(url: string, query: URLSearchParams): string {
+  const extra = ["epage", "esize"].flatMap((k) => (query.get(k) ? [`${k}=${encodeURIComponent(query.get(k)!)}`] : []));
+  return extra.length ? `${url}${url.includes("?") ? "&" : "?"}${extra.join("&")}` : url;
+}
+
+/** Where the page of events sits: the route's page and size, and the count the API sent. */
+export function eventPaging(query: URLSearchParams, total: number): PageInfo {
+  const { page, size } = pageParams(Object.fromEntries(query), PAGE_SIZES[0]!, "e");
+  return { key: "e", total, page, size, sort: null };
 }
 
 export const WINDOWS: [string, string][] = [

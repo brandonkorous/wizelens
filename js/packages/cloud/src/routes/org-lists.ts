@@ -4,7 +4,7 @@ import type { Ctx } from "../app.js";
 import { type OrgAccess, requireOrgRead } from "../auth/org-access.js";
 import { sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
-import { listEvents } from "../repo/alert-events.js";
+import { countEvents, listEvents } from "../repo/alert-events.js";
 import { listRules } from "../repo/alerts.js";
 import { assignableMembers, listIssues } from "../repo/issues.js";
 import type { Project } from "../repo/projects.js";
@@ -12,6 +12,7 @@ import { listSlos } from "../repo/slos.js";
 import { listChecks, listIncidents } from "../repo/uptime.js";
 import { projectRetentionMs } from "../scale-exec.js";
 import { projectScope } from "../telemetry/store.js";
+import { eventPage } from "./alerts.js";
 import { projectLabels } from "./scope.js";
 import { liveShares } from "./shares.js";
 
@@ -32,8 +33,11 @@ const access = (ctx: Ctx) => requireOrgRead(ctx, ctx.params.org!);
 async function alerts(ctx: Ctx): Promise<void> {
   const a = await access(ctx);
   const db = ctx.app.db;
-  const [rules, events] = await Promise.all([each(a, (p) => listRules(db, p.id)), each(a, (p) => listEvents(db, p.id, LIST))]);
-  sendJson(ctx.res, 200, { rules, events: newest(events, (e) => e.timeMs) });
+  // A page across projects: each project's newest rows up to the page's end, merged, then cut to the page.
+  const { size, offset } = eventPage(ctx.url);
+  const [rules, events, counts] = await Promise.all([each(a, (p) => listRules(db, p.id)), each(a, (p) => listEvents(db, p.id, offset + size)), Promise.all(a.projects.map((p) => countEvents(db, { project: p.id })))]);
+  const page = events.sort((x, y) => y.timeMs - x.timeMs).slice(offset, offset + size);
+  sendJson(ctx.res, 200, { rules, events: page, eventCount: counts.reduce((t, n) => t + n, 0) });
 }
 
 /** Issue keys of error groups name their service with the project's label, as the error pages show them. */

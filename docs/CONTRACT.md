@@ -627,8 +627,9 @@ Hub start options: `--slow-query-ms`, `--n-plus-one`, `--redact-keys`; cloud: `-
   digests, and MCP. `GET api/orgs/:org` adds `projectRoles` for managers; `api/me` gives each project's `role`.
 - **Keys:** `expiresInDays` (1 to 3650) and `scopes` (ingest: traces, logs, metrics; read: api, mcp) on create;
   `POST api/orgs/:org/keys/:key/rotate` with `graceHours` (0 to 168, default 24) returns the new secret and `oldExpiresMs`.
-- **Audit:** `GET api/orgs/:org/audit?limit=&before=&from=&action=&actor=` (`action` ending in "." is a group),
-  `GET api/orgs/:org/audit/facets`, and `GET api/orgs/:org/audit/export?format=csv|json` with the same filter (plan gated).
+- **Audit:** `GET api/orgs/:org/audit?limit=&offset=&before=&from=&action=&actor=` (`action` ending in "." is a group),
+  `GET api/orgs/:org/audit/count` (`{ total }` for the same filter), `GET api/orgs/:org/audit/facets`,
+  and `GET api/orgs/:org/audit/export?format=csv|json` with the same filter (plan gated).
 
 ## Users
 
@@ -1086,7 +1087,7 @@ retention, and the audit log.
 | POST / GET / PATCH / DELETE | `api/orgs`, `api/orgs/{org}` | Signed in; read: any member; name and retention: admin; delete (with `password`): owner |
 | POST / DELETE | `api/orgs/{org}/projects[/{id}]`, `…/{id}/clear` (deletes data only) | Admin |
 | POST / DELETE | `api/orgs/{org}/keys[/{id}]` | Admin. The secret is in the answer once |
-| GET | `api/orgs/{org}/audit?before=` | Admin |
+| GET | `api/orgs/{org}/audit?offset=&before=`, `…/audit/count` | Admin |
 | GET | `api/info`, `api/traces`, `api/traces/{id}`, `api/services` — all with `?project=` (or `?project=all&org=`) | Member or read key. `api/traces/{id}` joins other projects (see "Traces across projects"); `project=all` reads every project the caller may (see "All projects") |
 | PATCH | `api/orgs/{org}/projects/{p}` | Admin. `{ logRetentionDays }`: 1 to 400, or null to follow the organization. Answers the project (with `logRetentionDays`) and writes `project.update` to the audit log |
 | POST | `api/projects/{p}/services/forget` | Admin. Forgets offline hosts; each service keeps its newest host. Answers `{ removed }` and writes `service.forget` to the audit log |
