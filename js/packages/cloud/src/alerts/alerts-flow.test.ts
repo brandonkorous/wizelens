@@ -71,6 +71,8 @@ it("watches one endpoint, reminds until acknowledged, stays quiet while muted, a
   const one = await t.owner.call<{ rule: { state: string; mutedUntilMs: number }; events: { kind: string }[]; values: unknown[] }>("GET", `${t.base}/${id}?from=0`);
   expect(one.body.rule.state).toBe("ok");
   expect(one.body.events.map((e) => e.kind)).toEqual(["mute", "ack", "remind", "fired"]);
+  const paged = await t.owner.call<{ events: { kind: string }[]; eventCount: number }>("GET", `${t.base}/${id}?from=0&epage=2`);
+  expect(paged.body).toMatchObject({ events: [], eventCount: 4 });
   expect(one.body.values.length).toBe(4);
 }, 60_000);
 

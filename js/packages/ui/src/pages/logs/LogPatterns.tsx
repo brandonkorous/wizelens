@@ -35,12 +35,13 @@ export function LogPatternsPanel() {
       Show every pattern
     </button>
   );
-  const title = `Log Patterns (${fmtCount(model.total)}${model.total > model.rows.length ? `, top ${model.rows.length}` : ""})`;
+  const title = `Log Patterns (${fmtCount(model.total)})`;
   return (
     <Panel title={title} action={clear} flush className="wl-log-patterns">
       <Table
         columns={COLUMNS}
         rows={model.rows}
+        served={{ info: model.paging, noun: "patterns" }}
         rowKey={(r) => r.id}
         selectedKey={active || null}
         onRowClick={(r) => setQuery({ pattern: r.id === active ? null : r.id, page: null })}

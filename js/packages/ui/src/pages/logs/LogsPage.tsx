@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Bell, FileText, OctagonX, TriangleAlert } from "lucide-react";
 import { fmtCount } from "../../format";
-import { hrefTo, setQuery } from "../../routes";
+import { hrefTo } from "../../routes";
 import { Pager } from "../../ui/Controls";
+import { urlPaging } from "../../ui/paging";
 import { LiveToggle } from "../../ui/LiveToggle";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
@@ -39,9 +40,7 @@ function LogTable({ stats }: { stats: LogsModel }) {
   return (
     <Panel title={`Log Lines (${fmtCount(matching)})`} flush action={<ExportButton page="logs" disabled={matching === 0} />}>
       <Table columns={withTags(LOG_COLUMNS, "message", tagsOf)} rows={rows} rowKey={(r) => r.key} selectedKey={open} onRowClick={(r) => toggle(r.key)} detail={(r) => <LogDetail row={r} />} empty={<Empty title="No matching log lines">Try a lower level, another service, or a wider time range.</Empty>} />
-      {matching > 0 && (
-        <Pager page={page} pageSize={pageSize} total={matching} noun="lines" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />
-      )}
+      <Pager page={page} pageSize={pageSize} total={matching} noun="lines" {...urlPaging()} />
     </Panel>
   );
 }

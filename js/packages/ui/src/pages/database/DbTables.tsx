@@ -1,14 +1,12 @@
-import { useState } from "react";
 import { Database } from "lucide-react";
 import type { DatabaseModel, QueryRow, TableRow } from "@wizeworks/lens-core";
-import { fmtCount, fmtMs, fmtShort, fmtShownOf } from "../../format";
+import { fmtCount, fmtMs, fmtShort } from "../../format";
 import { hrefTo, navigate, queryHref, setQuery } from "../../routes";
 import { Pager } from "../../ui/Controls";
+import { urlPaging } from "../../ui/paging";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 import { ExportButton } from "../../ui/ExportButton";
-
-const TOP = 5;
 
 /** Endpoint label without the method: "/api/orders". */
 const pathOf = (endpoint: string) => endpoint.replace(/^[A-Z]+ /, "");
@@ -43,23 +41,12 @@ function queryColumns(slowMs: number): Column<QueryRow>[] {
 
 const QUERY_TITLE = { avg: "Slowest Queries", count: "Most Frequent Queries", total: "Queries by Total Time" } as const;
 
-function ToggleAll({ open, total, onToggle }: { open: boolean; total: number; onToggle: () => void }) {
-  if (total <= TOP) return null;
-  return (
-    <button type="button" className="wl-view-all wl-link-btn" onClick={onToggle}>
-      {open ? `Show top ${TOP}` : `View all ${total}`}
-    </button>
-  );
-}
-
 /** One page of the query shapes that match the filter, in its order. A row opens the query's page. */
 export function TopQueriesPanel({ stats }: { stats: DatabaseModel }) {
   return (
     <Panel title={`${QUERY_TITLE[stats.filter.sort]} (${fmtCount(stats.queryShapes)})`} flush className="wl-db-queries" action={<ExportButton page="database" disabled={stats.queries.length === 0} />}>
       <Table columns={queryColumns(stats.slowMs)} rows={stats.queries} rowKey={(q) => q.key} onRowClick={(q) => navigate(queryHref(q.query))} empty={<Empty>No queries match in this time range.</Empty>} />
-      {stats.queryShapes > 0 && (
-        <Pager page={stats.page} pageSize={stats.size} total={stats.queryShapes} noun="queries" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />
-      )}
+      <Pager page={stats.page} pageSize={stats.size} total={stats.queryShapes} noun="queries" {...urlPaging()} />
     </Panel>
   );
 }
@@ -73,12 +60,10 @@ const TABLE_COLUMNS: Column<TableRow>[] = [
 
 /** Tables by queries. A row filters the query list by the table. */
 export function TableHotspotsPanel({ stats }: { stats: DatabaseModel }) {
-  const [all, setAll] = useState(false);
-  const rows = all ? stats.tables : stats.tables.slice(0, TOP);
   const pick = (t: TableRow) => setQuery({ table: t.table === stats.filter.table ? null : t.table, page: null });
   return (
-    <Panel title={`Table Hotspots (${fmtShownOf(stats.tables.length, stats.tableCount)})`} action={<ToggleAll open={all} total={stats.tables.length} onToggle={() => setAll(!all)} />}>
-      <Table columns={TABLE_COLUMNS} rows={rows} rowKey={(t) => t.table} selectedKey={stats.filter.table || null} onRowClick={pick} empty={<Empty>No table names found in the queries.</Empty>} />
+    <Panel title={`Table Hotspots (${fmtCount(stats.tableCount)})`}>
+      <Table columns={TABLE_COLUMNS} rows={stats.tables} served={{ info: stats.tablePaging, noun: "tables" }} rowKey={(t) => t.table} selectedKey={stats.filter.table || null} onRowClick={pick} empty={<Empty>No table names found in the queries.</Empty>} />
       <p className="wl-db-note">Rows returned come from the driver. Index use and rows scanned need query plans, which WizeLens does not run.</p>
     </Panel>
   );

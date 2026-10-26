@@ -59,7 +59,7 @@ function SloList() {
       {adding && target.field}
       {adding && <SloForm title="New SLO" initial={EMPTY_SLO} onSave={save} onCancel={() => setAdding(false)} />}
       <Panel title="Objectives" flush>
-        <Table columns={[COLUMNS[0]!, ...projectColumn<SloReport>(), ...COLUMNS.slice(1)]} rows={data?.slos ?? []} rowKey={(r) => r.slo.id} onRowClick={(r) => navigate(sloHref(r.slo.id, (r as InProject<typeof r>).projectId))} empty={<Empty title="No SLOs yet"><Target aria-hidden="true" /> Add one to track an error budget for a service or an endpoint.</Empty>} />
+        <Table paging={{ noun: "SLOs", key: "slos" }} columns={[COLUMNS[0]!, ...projectColumn<SloReport>(), ...COLUMNS.slice(1)]} rows={data?.slos ?? []} rowKey={(r) => r.slo.id} onRowClick={(r) => navigate(sloHref(r.slo.id, (r as InProject<typeof r>).projectId))} empty={<Empty title="No SLOs yet"><Target aria-hidden="true" /> Add one to track an error budget for a service or an endpoint.</Empty>} />
       </Panel>
       {data && api.apdexUrl && <ApdexTargets targets={data.apdex} url={api.apdexUrl} canWrite={api.canWrite} onSaved={reload} />}
       {data && !api.apdexUrl && <Panel title="Apdex targets"><PickProject what="Apdex targets" /></Panel>}

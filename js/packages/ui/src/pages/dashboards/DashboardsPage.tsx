@@ -60,7 +60,7 @@ function DashboardList() {
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
       {adding && <NewDashboard onDone={() => setAdding(false)} />}
       <Panel title="Dashboards" flush>
-        <Table columns={COLUMNS} rows={items} rowKey={(d) => d.id} onRowClick={(d) => navigate(dashboardHref(d.id, d.projectId))} empty={<Empty title="No dashboards yet"><LayoutDashboard aria-hidden="true" /> Make one to put the metrics you watch on one page.</Empty>} />
+        <Table paging={{ noun: "dashboards", key: "dashboards" }} columns={COLUMNS} rows={items} rowKey={(d) => d.id} onRowClick={(d) => navigate(dashboardHref(d.id, d.projectId))} empty={<Empty title="No dashboards yet"><LayoutDashboard aria-hidden="true" /> Make one to put the metrics you watch on one page.</Empty>} />
       </Panel>
     </>
   );

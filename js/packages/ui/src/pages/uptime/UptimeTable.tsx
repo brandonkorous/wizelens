@@ -73,5 +73,5 @@ function ResponseCell({ c, model }: { c: UptimeCheckView; model: UptimeModel | n
 }
 
 export function ChecksTable(p: TableProps) {
-  return <Table columns={columns(p)} rows={p.checks} rowKey={(c) => c.id} empty={p.empty} defaultSort={{ key: "state", desc: false }} select={p.select} />;
+  return <Table paging={{ noun: "checks", key: "checks" }} columns={columns(p)} rows={p.checks} rowKey={(c) => c.id} empty={p.empty} defaultSort={{ key: "state", desc: false }} select={p.select} />;
 }

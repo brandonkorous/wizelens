@@ -41,7 +41,7 @@ export function SessionsPanel({ sessionId }: { sessionId?: string }) {
     <Panel title="Signed in" action={action}>
       <ActionNotes a={list} />
       <ActionNotes a={a} />
-      {rows && <Table columns={columns} rows={rows} rowKey={(s) => s.id} />}
+      {rows && <Table paging={{ noun: "sessions", key: "sessions" }} columns={columns} rows={rows} rowKey={(s) => s.id} />}
     </Panel>
   );
 }

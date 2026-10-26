@@ -105,7 +105,7 @@ function serviceColumns(now: number): Column<InfraService>[] {
 export function ServicesPanel({ services, now, empty }: { services: InfraService[]; now: number; empty: string }) {
   return (
     <Panel title="Services" flush>
-      <Table columns={serviceColumns(now)} rows={services} rowKey={(s) => `${s.service}|${s.host}|${s.environment}`} defaultSort={{ key: "service", desc: false }} empty={<Empty title="No services">{empty}</Empty>} />
+      <Table paging={{ noun: "services", key: "services" }} columns={serviceColumns(now)} rows={services} rowKey={(s) => `${s.service}|${s.host}|${s.environment}`} defaultSort={{ key: "service", desc: false }} empty={<Empty title="No services">{empty}</Empty>} />
     </Panel>
   );
 }

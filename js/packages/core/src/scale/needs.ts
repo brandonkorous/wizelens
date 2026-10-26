@@ -25,7 +25,7 @@ export interface KeyFilter {
   exclude?: readonly string[];
 }
 
-export type AggOrder = "n" | "sum" | "avg" | "lastMs" | "c0" | "c1" | "c2" | "c3" | "c4" | "c5";
+export type AggOrder = "n" | "err" | "sum" | "avg" | "lastMs" | "c0" | "c1" | "c2" | "c3" | "c4" | "c5";
 
 /** Rollup groups of one kind over a window: one row per key. */
 export interface GroupNeed {
@@ -227,7 +227,7 @@ export function keyMatches(key: string, f: KeyFilter | undefined): boolean {
 /** The value a group order sorts by. Avg is null for empty rows, which sort last. */
 export function orderValue(a: Agg, by: AggOrder): number {
   if (by === "avg") return avgOfAgg(a) ?? -Infinity;
-  if (by === "n" || by === "sum" || by === "lastMs") return a[by];
+  if (by === "n" || by === "err" || by === "sum" || by === "lastMs") return a[by];
   return a.c[Number(by.slice(1))] ?? 0;
 }
 

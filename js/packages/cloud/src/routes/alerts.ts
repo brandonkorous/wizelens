@@ -1,11 +1,11 @@
-import { type AlertChannel, MUTED_FOREVER, parseAlertRule } from "@wizeworks/lens-core";
+import { type AlertChannel, MUTED_FOREVER, PAGE_SIZES, pageParams, parseAlertRule } from "@wizeworks/lens-core";
 import { checkTarget } from "@wizeworks/lens-hub/kit";
 import { notify } from "../alerts/evaluate.js";
 import type { Ctx } from "../app.js";
 import { requireProject } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
-import { addEvent, listEvents, ruleEvents, ruleValues } from "../repo/alert-events.js";
+import { addEvent, countEvents, listEvents, ruleEvents, ruleValues } from "../repo/alert-events.js";
 import { ackRule, createRule, deleteRule, listRules, muteRule, ruleById, type RuleInput, updateRule } from "../repo/alerts.js";
 import { sloById } from "../repo/slos.js";
 import { memberEmails } from "../repo/users.js";
@@ -38,9 +38,18 @@ export async function checkRule(ctx: Ctx, orgId: string, projectId: string, b: R
   return typeof r === "string" ? fail(400, r) : r;
 }
 
+/** The page of events a list asks for: `epage` and `esize`, 15 at first. */
+export function eventPage(url: URL): { size: number; offset: number } {
+  const { page, size } = pageParams(Object.fromEntries(url.searchParams), PAGE_SIZES[0]!, "e");
+  return { size, offset: (page - 1) * size };
+}
+
 async function list(ctx: Ctx): Promise<void> {
   const { project } = await requireProject(ctx, ctx.params.project!);
-  sendJson(ctx.res, 200, { rules: await listRules(ctx.app.db, project.id), events: await listEvents(ctx.app.db, project.id, 100) });
+  const { size, offset } = eventPage(ctx.url);
+  const db = ctx.app.db;
+  const [rules, events, eventCount] = await Promise.all([listRules(db, project.id), listEvents(db, project.id, size, offset), countEvents(db, { project: project.id })]);
+  sendJson(ctx.res, 200, { rules, events, eventCount });
 }
 
 /** One rule: its events and its values over `from`..`to` (default the last day). */
@@ -50,7 +59,9 @@ async function one(ctx: Ctx): Promise<void> {
   if (!rule) return fail(404, "Alert rule not found.");
   const to = Number(ctx.url.searchParams.get("to")) || ctx.app.config.now() + 1;
   const from = Number(ctx.url.searchParams.get("from")) || to - DAY_MS;
-  sendJson(ctx.res, 200, { rule, events: await ruleEvents(ctx.app.db, rule.id, 100), values: await ruleValues(ctx.app.db, rule.id, from, to) });
+  const { size, offset } = eventPage(ctx.url);
+  const [events, eventCount, values] = await Promise.all([ruleEvents(ctx.app.db, rule.id, size, offset), countEvents(ctx.app.db, { rule: rule.id }), ruleValues(ctx.app.db, rule.id, from, to)]);
+  sendJson(ctx.res, 200, { rule, events, eventCount, values });
 }
 
 async function create(ctx: Ctx): Promise<void> {

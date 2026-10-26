@@ -6,7 +6,7 @@ import { requireOrg, requireUser } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson, str } from "../http/http.js";
 import type { Router } from "../http/router.js";
 import { requireRetention } from "../billing/gate.js";
-import { audit, auditFacets, auditFilterOf, listAudit } from "../repo/audit.js";
+import { audit, auditFacets, auditFilterOf, countAudit, listAudit } from "../repo/audit.js";
 import { hasLivePlan } from "../repo/billing.js";
 import { hiddenProjects, listProjectRoles } from "../repo/project-roles.js";
 import { orgDeletionNotice } from "../notify/team.js";
@@ -74,11 +74,19 @@ async function deleteOrg(ctx: Ctx): Promise<void> {
 
 const AUDIT_PAGE = 100;
 
-/** `GET api/orgs/:org/audit`: newest first, `limit` (1 to 500) at a time; page back with `before` = the last time. */
+/** `GET api/orgs/:org/audit`: newest first, `limit` (1 to 500) at a time; page with `offset`, or back with `before` = the last time. */
 async function auditLog(ctx: Ctx): Promise<void> {
   await requireOrg(ctx, ctx.params.org!, "manage");
-  const limit = Math.min(500, Math.max(1, Number(ctx.url.searchParams.get("limit")) || AUDIT_PAGE));
-  sendJson(ctx.res, 200, await listAudit(ctx.app.db, ctx.params.org!, limit, auditFilterOf(ctx.url.searchParams)));
+  const p = ctx.url.searchParams;
+  const limit = Math.min(500, Math.max(1, Number(p.get("limit")) || AUDIT_PAGE));
+  const offset = Math.max(0, Math.floor(Number(p.get("offset")) || 0));
+  sendJson(ctx.res, 200, await listAudit(ctx.app.db, ctx.params.org!, limit, auditFilterOf(p), offset));
+}
+
+/** `GET api/orgs/:org/audit/count`: `{ total }` lines that match the same filter. */
+async function auditCount(ctx: Ctx): Promise<void> {
+  await requireOrg(ctx, ctx.params.org!, "manage");
+  sendJson(ctx.res, 200, { total: await countAudit(ctx.app.db, ctx.params.org!, auditFilterOf(ctx.url.searchParams)) });
 }
 
 async function auditFacetsOf(ctx: Ctx): Promise<void> {
@@ -92,5 +100,6 @@ export function orgRoutes(r: Router<Ctx>): void {
     .on("PATCH", "api/orgs/:org", changeOrg)
     .on("DELETE", "api/orgs/:org", deleteOrg)
     .on("GET", "api/orgs/:org/audit", auditLog)
-    .on("GET", "api/orgs/:org/audit/facets", auditFacetsOf);
+    .on("GET", "api/orgs/:org/audit/facets", auditFacetsOf)
+    .on("GET", "api/orgs/:org/audit/count", auditCount);
 }

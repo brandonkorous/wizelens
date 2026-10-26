@@ -2,9 +2,9 @@ import { issueId, issueStatusOf } from "../issues.js";
 import type { PageData, PageDef } from "../scale/needs.js";
 import { type InsightGroup, insightHeadline } from "../stats/insights.js";
 import type { Headline } from "../stats/overview.js";
-import { MODEL_LIST_MAX } from "./database.js";
 import { META_NEEDS, type ModelMeta, type ModelParams, metaOf, serviceParam } from "./input.js";
 import { insightGroupsOf, insightNeeds } from "./insight-groups.js";
+import { GROUP_PAGE_SIZE, IMPACT_RANK, type PageInfo, pagedRows, type SortValue } from "./paged.js";
 import { type IssueInfo, isIssueFilter } from "./error-issues.js";
 import { groupNeed, rowsOf, uniqueNeeds } from "./read.js";
 import { firstSeenBounds, inBounds, releasesNeed, releasesOf } from "./release-rows.js";
@@ -22,9 +22,10 @@ export interface InsightsModel {
   prevTotals: InsightTotals;
   /** "Insights Found", the same number the Overview shows. */
   found: Headline;
-  /** Groups that match the filters, most important first. */
+  /** One page of the groups that match the filters, most important first or in the `sort` column's order. */
   groups: InsightGroup[];
   matching: number;
+  paging: PageInfo;
   /** The `key` parameter's group, when it is in the range. */
   selected: InsightGroup | null;
   /** Issue status, first seen, and assignee of every group in the range. */
@@ -36,6 +37,16 @@ export interface InsightsModel {
   /** Signed-in users the `key` insight touched. */
   selectedUsers: UsersAffected | null;
 }
+
+/** Columns the insight list sorts by (sort=-seen). */
+const INSIGHT_SORTS: Record<string, SortValue<InsightGroup>> = {
+  impact: (g) => IMPACT_RANK[g.impact],
+  title: (g) => g.title,
+  area: (g) => g.area,
+  seen: (g) => g.occurrences,
+  time: (g) => g.totalMs,
+  last: (g) => g.lastSeenMs,
+};
 
 const totalsOf = (groups: readonly InsightGroup[]): InsightTotals => ({
   count: groups.length,
@@ -82,13 +93,15 @@ export const insightsPage: PageDef<InsightsModel> = {
     const shown = (g: InsightGroup) => status === "all" || all[g.key]!.status === status || (status === "unresolved" && all[g.key]!.status === "regressed");
     const bounds = firstSeenBounds(d, "rel.svc", serviceParam(d.params) ? (d.params.release ?? "") : "", null);
     const visible = groups.filter((g) => matches(g, d.params) && shown(g) && (!bounds || inBounds(bounds, all[g.key]!.firstSeenMs)));
+    const page = pagedRows(visible, d.params, "", GROUP_PAGE_SIZE, INSIGHT_SORTS);
     return {
       meta: metaOf(d),
       totals: totalsOf(groups),
       prevTotals: totalsOf(prev),
       found: insightHeadline(groups, prev, d.window),
-      groups: visible.slice(0, MODEL_LIST_MAX),
+      groups: page.rows,
       matching: visible.length,
+      paging: page.paging,
       selected: d.params.key ? (groups.find((g) => g.key === d.params.key) ?? null) : null,
       issues: all,
       hasIssues: !!d.issues,

@@ -61,6 +61,7 @@ export function ServiceTable({ rows, selectedKey }: { rows: ServiceRow[]; select
   const groupTags = useGroupTags();
   return (
     <Table
+      paging={{ noun: "services", key: "services" }}
       columns={withTags(COLUMNS, "name", (r) => groupTags("services", serviceDoc(r.name)))}
       rows={rows}
       rowKey={(r) => r.key}

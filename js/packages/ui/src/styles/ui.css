@@ -122,7 +122,6 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-btn-primary-outline { width: 100%; border-color: var(--wl-accent); color: var(--wl-accent); }
 .wl-btn-primary-outline:hover { background: var(--wl-accent-soft); }
 
-.wl-panel-more { display: flex; justify-content: center; padding: 14px; border-top: 1px solid var(--wl-line); }
 .wl-pager { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 14px 16px; border-top: 1px solid var(--wl-line); color: var(--wl-fg-2); font-size: 14px; }
 .wl-pager .wl-pages { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 .wl-pager button { min-width: 34px; height: 34px; padding: 0 8px; border: 1px solid var(--wl-line); border-radius: 8px; background: var(--wl-surface); cursor: pointer; }

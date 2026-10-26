@@ -7,6 +7,7 @@ import { settleHub } from "../settle.js";
 import { post, span, startHub } from "../test/helpers.js";
 import { evaluateHubAlerts } from "./evaluate.js";
 import { hubAlertDeps } from "./loop.js";
+import { listEvents, ruleEvents } from "./store.js";
 
 let hub: Hub;
 const closers: (() => void)[] = [];
@@ -57,6 +58,11 @@ describe("hub alerts", () => {
     expect(one.body.rule).toMatchObject({ state: "firing", ackMs: expect.any(Number) });
     expect(one.body.events.map((e) => e.kind)).toEqual(["ack", "fired"]);
     expect(one.body.values).toHaveLength(2);
+    const paged = await call<{ events: { kind: string }[]; eventCount: number }>(url, "GET", `api/alerts/${made.body.id}?project=shop&epage=2`);
+    expect(paged.body).toMatchObject({ events: [], eventCount: 2 });
+    expect((await call<{ eventCount: number }>(url, "GET", "api/alerts?project=shop")).body.eventCount).toBe(2);
+    expect(listEvents(hub.data.store.db, "shop", 1, 1).map((e) => e.kind)).toEqual(["fired"]);
+    expect(ruleEvents(hub.data.store.db, made.body.id, 5, 1).map((e) => e.kind)).toEqual(["fired"]);
     expect((await call<{ rules: unknown[] }>(url, "GET", "api/alerts?project=other")).body.rules).toEqual([]);
   });
 

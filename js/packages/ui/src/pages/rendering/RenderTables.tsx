@@ -1,11 +1,9 @@
-import type { ComponentRow, RouteIssue, RouteRow } from "@wizeworks/lens-core";
-import { fmtCount, fmtMs, fmtShownOf } from "../../format";
-import { hrefTo, navigate, routeHref, traceHref } from "../../routes";
+import type { ComponentRow, PageInfo, RouteIssue, RouteRow } from "@wizeworks/lens-core";
+import { fmtCount, fmtMs } from "../../format";
+import { navigate, routeHref, traceHref } from "../../routes";
 import { CountBadge, DotText, ImpactBadge, type Tone } from "../../ui/Badges";
-import { Empty, Panel, ViewAll } from "../../ui/Panel";
+import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
-
-const PREVIEW = 6;
 
 const ISSUE: Record<RouteIssue, { tone: Tone; label: string }> = {
   none: { tone: "success", label: "None" },
@@ -50,17 +48,13 @@ const COMPONENT_COLUMNS: Column<ComponentRow>[] = [
   { key: "count", header: <span className="wl-sr-only">Issue count</span>, num: true, cell: (c) => <CountBadge n={c.issues.length} /> },
 ];
 
-function more(all: boolean, what: "routes" | "components", total: number, label: string) {
-  if (total <= PREVIEW) return null;
-  return all ? <ViewAll href={hrefTo("rendering")} label="Show fewer" /> : <ViewAll href={hrefTo("rendering", [], { all: what })} label={label} />;
-}
-
-export function RouteTable({ routes, total, all }: { routes: RouteRow[]; total: number; all: boolean }) {
+export function RouteTable({ routes, paging }: { routes: RouteRow[]; paging: PageInfo }) {
   return (
-    <Panel flush title={`Pages & Routes (${fmtShownOf(routes.length, total)})`} action={more(all, "routes", routes.length, "View all pages")}>
+    <Panel flush title={`Pages & Routes (${fmtCount(paging.total)})`}>
       <Table
         columns={ROUTE_COLUMNS}
-        rows={all ? routes : routes.slice(0, PREVIEW)}
+        rows={routes}
+        served={{ info: paging, noun: "routes" }}
         rowKey={(r) => r.route}
         onRowClick={(r) => navigate(routeHref(r.route))}
         empty={<Empty title="No page views in this range" />}
@@ -69,7 +63,7 @@ export function RouteTable({ routes, total, all }: { routes: RouteRow[]; total: 
   );
 }
 
-export function ComponentTable({ components, total, hasReact, all }: { components: ComponentRow[]; total: number; hasReact: boolean; all: boolean }) {
+export function ComponentTable({ components, paging, hasReact }: { components: ComponentRow[]; paging: PageInfo; hasReact: boolean }) {
   const empty = hasReact ? (
     <Empty title="No component renders in this range" />
   ) : (
@@ -78,10 +72,11 @@ export function ComponentTable({ components, total, hasReact, all }: { component
     </Empty>
   );
   return (
-    <Panel flush title={`Component Hotspots (${fmtShownOf(components.length, total)})`} action={more(all, "components", components.length, "View all components")}>
+    <Panel flush title={`Component Hotspots (${fmtCount(paging.total)})`}>
       <Table
         columns={COMPONENT_COLUMNS}
-        rows={all ? components : components.slice(0, PREVIEW)}
+        rows={components}
+        served={{ info: paging, noun: "components" }}
         rowKey={(c) => c.name}
         onRowClick={(c) => navigate(traceHref(c.exampleTraceId))}
         empty={empty}

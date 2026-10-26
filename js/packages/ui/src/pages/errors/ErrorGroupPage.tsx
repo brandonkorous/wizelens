@@ -87,7 +87,7 @@ function Body({ m }: { m: ErrorPageModel }) {
         <ErrorStack event={g.latest} />
       </Panel>
       <Panel title={`Newest Occurrences (${fmtCount(m.requests.length || m.traces.length)})`} flush action={<ViewAll href={traceHref(g.latest.traceId)} label="Open latest trace" />}>
-        <TaggedTable kind="requests" itemOf={traceRow} tagged="path" columns={OCCURRENCE_COLUMNS} rows={m.requests} rowKey={(r) => r.traceId} onRowClick={(r) => navigate(traceHref(r.traceId, "errors"))} empty={<Empty>These occurrences were not requests (for example browser errors). Open the latest trace to see one.</Empty>} />
+        <TaggedTable paging={{ noun: "occurrences", key: "occ" }} kind="requests" itemOf={traceRow} tagged="path" columns={OCCURRENCE_COLUMNS} rows={m.requests} rowKey={(r) => r.traceId} onRowClick={(r) => navigate(traceHref(r.traceId, "errors"))} empty={<Empty>These occurrences were not requests (for example browser errors). Open the latest trace to see one.</Empty>} />
       </Panel>
     </>
   );

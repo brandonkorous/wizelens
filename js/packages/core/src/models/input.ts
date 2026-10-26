@@ -63,8 +63,18 @@ export function intParam(p: ModelParams, key: string, fallback: number, min: num
   return Number.isFinite(n) && n > 0 ? Math.min(max, Math.max(min, Math.floor(n))) : fallback;
 }
 
-/** The page and page size a list asks for. */
-export const pageParams = (p: ModelParams, defaultSize: number): { page: number; size: number } => ({
-  page: intParam(p, "page", 1, 1, 1_000_000),
-  size: intParam(p, "size", defaultSize, 5, 5000),
+/** Rows-per-page choices. A list shows its pager only when it has more rows than the smallest. */
+export const PAGE_SIZES: readonly number[] = [15, 30, 50, 100];
+
+/** The page and page size a list asks for; `key` names one of several lists on a page ("ep" reads epage and epsize). */
+export const pageParams = (p: ModelParams, defaultSize: number, key = ""): { page: number; size: number } => ({
+  page: intParam(p, `${key}page`, 1, 1, 1_000_000),
+  size: intParam(p, `${key}size`, defaultSize, 5, 5000),
 });
+
+/** One page of rows; a page past the end shows the last page. */
+export function slicePage<T>(rows: readonly T[], page: number, size: number): { rows: T[]; page: number } {
+  const last = Math.max(1, Math.ceil(rows.length / size));
+  const at = Math.min(Math.max(1, Math.floor(page)), last);
+  return { rows: rows.slice((at - 1) * size, at * size), page: at };
+}

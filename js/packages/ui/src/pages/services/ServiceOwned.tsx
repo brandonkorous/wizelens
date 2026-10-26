@@ -1,5 +1,4 @@
 // Panels only your own services (APIs and workers) have: errors, slow requests, logs, and runtime metrics.
-import { useState } from "react";
 import { type ErrorGroup, errorGroupDoc, isFailed, type LogRow, type RequestItem, type ServicePageModel } from "@wizeworks/lens-core";
 import { useData } from "../../data/hooks";
 import { useMetricsModel } from "../../data/metrics";
@@ -12,7 +11,6 @@ import { type Column, Table } from "../../ui/Table";
 import { withTags } from "../../ui/TagChips";
 import { logRow, traceRow, useGroupTags, useRowTags } from "../../data/tagMatch";
 import { LOG_COLUMNS } from "../logs/LogParts";
-import { ToggleAll, TOP } from "./ServiceTables";
 import "../../styles/pages/logs.css";
 import "../../styles/pages/metrics.css";
 
@@ -27,21 +25,15 @@ function errorColumns(now: number): Column<ErrorGroup>[] {
   ];
 }
 
-/** The service's most frequent errors. A row opens it on the Errors page. */
+/** The service's error groups, most frequent first, a page at a time. A row opens one on the Errors page. */
 export function ErrorsPanel({ m, name }: { m: ServicePageModel; name: string }) {
   const { updatedMs } = useData();
-  const [all, setAll] = useState(false);
-  const { groups, total } = m.errors;
+  const { groups, total, paging } = m.errors;
   const groupTags = useGroupTags();
-  const action = (
-    <span className="wl-row-actions">
-      <ToggleAll open={all} total={groups.length} onToggle={() => setAll(!all)} />
-      <ViewAll href={hrefTo("errors", [], { service: name })} label="View errors" />
-    </span>
-  );
+  const action = <ViewAll href={hrefTo("errors", [], { service: name })} label="View errors" />;
   return (
     <Panel title={`Top Errors (${fmtCount(total)})`} action={action} flush>
-      <Table columns={withTags(errorColumns(updatedMs), "error", (g) => groupTags("errors", errorGroupDoc(g)))} rows={all ? groups : groups.slice(0, TOP)} rowKey={(g) => g.key} onRowClick={(g) => navigate(errorHref(g.key))} empty={<Empty title="No exceptions">Nothing failed in this time range.</Empty>} />
+      <Table columns={withTags(errorColumns(updatedMs), "error", (g) => groupTags("errors", errorGroupDoc(g)))} rows={groups} served={{ info: paging, noun: "errors" }} rowKey={(g) => g.key} onRowClick={(g) => navigate(errorHref(g.key))} empty={<Empty title="No exceptions">Nothing failed in this time range.</Empty>} />
     </Panel>
   );
 }

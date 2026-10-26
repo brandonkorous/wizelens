@@ -3,8 +3,8 @@ import { histPercentile } from "../scale/hist.js";
 import type { Need, NeedResults, PageData, PageDef } from "../scale/needs.js";
 import { bucketStarts, percentChange } from "../stats/common.js";
 import type { ComponentRow, PhaseStat, RenderPhase, RouteRow } from "../stats/rendering.js";
-import { MODEL_LIST_MAX } from "./database.js";
 import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
+import { IMPACT_RANK, type PageInfo, pagedRows, type SortValue } from "./paged.js";
 import { aggByKey, avgs, counts, groupNeed, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
 import { componentNeeds, componentRowsOf, routeNeeds, routeRowsOf, viewsOf } from "./render-rows.js";
 
@@ -19,10 +19,13 @@ export interface RenderCard {
 export interface RenderingModel {
   meta: ModelMeta;
   views: number;
+  /** One page of the routes (URL key "rt"), and where it sits. */
   routes: RouteRow[];
+  routePaging: PageInfo;
+  /** One page of the components (URL key "cmp"), and where it sits. */
   components: ComponentRow[];
+  componentPaging: PageInfo;
   componentCount: number;
-  /** Routes before the list limit. */
   routeCount: number;
   hasReact: boolean;
   starts: number[];
@@ -38,6 +41,35 @@ const PHASES: { key: string; phase: string; label: string; kind: RenderPhase["ki
   { key: "images", phase: "image", label: "Image loading", kind: "ms" },
   { key: "cls", phase: "cls", label: "Layout shift", kind: "score" },
 ];
+
+/** Rows each table shows at first. */
+export const RENDER_PAGE_SIZE = 6;
+
+const orNone = (v: number | null) => v ?? -1;
+
+/** Columns the routes table sorts by (rtsort=-views). */
+const ROUTE_SORTS: Record<string, SortValue<RouteRow>> = {
+  route: (r) => r.route,
+  views: (r) => r.views,
+  render: (r) => orNone(r.avgRenderMs),
+  ssr: (r) => orNone(r.avgSsrMs),
+  hydration: (r) => orNone(r.avgHydrationMs),
+  lcp: (r) => orNone(r.avgLcpMs),
+  images: (r) => r.largeImages,
+  cls: (r) => orNone(r.avgCls),
+  issue: (r) => r.issues.length,
+};
+
+/** Columns the components table sorts by (cmpsort=-total). */
+const COMPONENT_SORTS: Record<string, SortValue<ComponentRow>> = {
+  name: (c) => c.name,
+  renders: (c) => c.renders,
+  avg: (c) => c.avgMs,
+  self: (c) => c.selfMs,
+  total: (c) => c.totalMs,
+  impact: (c) => IMPACT_RANK[c.impact],
+  issues: (c) => c.issues.length,
+};
 
 const p75 = (a: Agg | undefined): number | null => (a?.hist ? histPercentile(a.hist, a.n, 75) : null);
 const avg = (a: Agg | undefined): number | null => (a ? avgOfAgg(a) : null);
@@ -77,7 +109,7 @@ const firstNeeds = (): Need[] => [
   seriesNeed("views", "pv", "cur", RENDER_BUCKETS),
 ];
 
-/** The Rendering page. Params: q (text in a route or component name). */
+/** The Rendering page. Params: q (text in a route or component name); rtpage, rtsize, rtsort for routes; cmppage, cmpsize, cmpsort for components. */
 export const renderingPage: PageDef<RenderingModel> = {
   needs: () => uniqueNeeds(firstNeeds()),
   followUp(_ctx, first) {
@@ -91,12 +123,16 @@ export const renderingPage: PageDef<RenderingModel> = {
     const components = all.filter((c) => !q || c.name.toLowerCase().includes(q));
     const routes = routeRowsOf(d, "cur").filter((r) => !q || r.route.toLowerCase().includes(q));
     const withIssues = all.filter((c) => c.issues.length > 0).length;
+    const routePage = pagedRows(routes, d.params, "rt", RENDER_PAGE_SIZE, ROUTE_SORTS);
+    const componentPage = pagedRows(components, d.params, "cmp", RENDER_PAGE_SIZE, COMPONENT_SORTS);
     return {
       meta: metaOf(d),
       views: viewsOf(d, "cur"),
-      routes: routes.slice(0, MODEL_LIST_MAX),
+      routes: routePage.rows,
+      routePaging: routePage.paging,
       routeCount: routes.length,
-      components: components.slice(0, MODEL_LIST_MAX),
+      components: componentPage.rows,
+      componentPaging: componentPage.paging,
       componentCount: components.length,
       hasReact: totalOf(d, "react.cur").n > 0,
       starts: bucketStarts(d.window, RENDER_BUCKETS),

@@ -35,7 +35,7 @@ function TableView({ lines }: { lines: Line[] }) {
     { key: "max", header: "Highest", num: true, cell: (l) => stat(l, (v) => Math.max(...v)) },
     { key: "avg", header: "Average", num: true, cell: (l) => stat(l, (v) => v.reduce((t, x) => t + x, 0) / v.length) },
   ];
-  return <Table columns={columns} rows={lines} rowKey={(l) => l.label} />;
+  return <Table paging={{ noun: "lines" }} columns={columns} rows={lines} rowKey={(l) => l.label} />;
 }
 
 function NumberView({ lines }: { lines: Line[] }) {

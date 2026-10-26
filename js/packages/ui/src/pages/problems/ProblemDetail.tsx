@@ -100,7 +100,7 @@ export function ProblemDetail({ p, m }: { p: Problem; m: ProblemsModel }) {
       <CausesPanel p={p} />
       {chosen && <AnomalyChart a={chosen} m={m} />}
       <Panel flush title={more > 0 ? `Anomalies (${fmtCount(p.anomalies.length)} of ${fmtCount(p.anomalyCount)})` : `Anomalies (${fmtCount(p.anomalyCount)})`}>
-        <Table columns={anomalyColumns(m)} rows={p.anomalies} rowKey={(a) => a.id} onRowClick={(a) => setPicked(a.id)} selectedKey={chosen?.id ?? null} />
+        <Table paging={{ noun: "anomalies", key: "anomalies" }} columns={anomalyColumns(m)} rows={p.anomalies} rowKey={(a) => a.id} onRowClick={(a) => setPicked(a.id)} selectedKey={chosen?.id ?? null} />
       </Panel>
     </>
   );

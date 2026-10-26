@@ -3,7 +3,6 @@ import { OneTimeSecrets } from "../../ui/OneTimeSecrets";
 import { type Column, Table } from "../../ui/Table";
 import { type ImportedKey, type ImportRun, keysCsv, saveKeysCsv, saveKeysJson, saveLeftRows } from "./importFile";
 
-const SHOWN = 100;
 const count = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
 
 function KeyTable({ keys }: { keys: ImportedKey[] }) {
@@ -15,8 +14,7 @@ function KeyTable({ keys }: { keys: ImportedKey[] }) {
   ];
   return (
     <>
-      <Table columns={columns} rows={keys.slice(0, SHOWN)} rowKey={(k) => k.keyId} />
-      {keys.length > SHOWN && <p className="wl-muted wl-small">And {keys.length - SHOWN} more in the file.</p>}
+      <Table paging={{ noun: "keys" }} columns={columns} rows={keys} rowKey={(k) => k.keyId} />
     </>
   );
 }

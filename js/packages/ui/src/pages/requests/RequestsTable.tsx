@@ -6,6 +6,7 @@ import { loadPageModel } from "../../data/models";
 import { fmtCount } from "../../format";
 import { setQuery, useRoute } from "../../routes";
 import { Pager } from "../../ui/Controls";
+import { urlPaging } from "../../ui/paging";
 import { Empty, Panel } from "../../ui/Panel";
 import { Table } from "../../ui/Table";
 import { withTags } from "../../ui/TagChips";
@@ -63,9 +64,7 @@ export function RequestsTable({ model, selectedId }: { model: RequestsModel; sel
   return (
     <Panel flush title={title} action={action}>
       <Table columns={columns} rows={model.rows} rowKey={(r) => r.traceId} selectedKey={selectedId} onRowClick={(r) => setQuery({ trace: r.traceId })} empty={empty} />
-      {model.total > 0 && (
-        <Pager page={model.page} pageSize={model.pageSize} total={model.total} noun="requests" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />
-      )}
+      <Pager page={model.page} pageSize={model.pageSize} total={model.total} noun="requests" {...urlPaging()} />
     </Panel>
   );
 }

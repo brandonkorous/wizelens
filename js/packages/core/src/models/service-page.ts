@@ -2,15 +2,16 @@
 import type { RequestItem } from "../scale/facts-lists.js";
 import { histPercentile } from "../scale/hist.js";
 import { joinKey } from "../scale/kinds.js";
-import type { Need, NeedResults, PageDef } from "../scale/needs.js";
+import type { Need, NeedResults, PageData, PageDef } from "../scale/needs.js";
 import { bucketStarts } from "../stats/common.js";
 import { displayService, type ErrorGroup } from "../stats/errors.js";
 import type { LogRow } from "../stats/logs.js";
 import type { ServiceEdge, ServiceKind, ServiceRow } from "../stats/services.js";
-import { CHART_BUCKETS, MODEL_LIST_MAX } from "./database.js";
+import { CHART_BUCKETS } from "./database.js";
 import { errorGroupOf } from "./errors.js";
-import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
-import { aggByKey, avgs, byDesc, counts, groupCount, groupNeed, listNeed, listOf, rowsOf, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
+import { META_NEEDS, type ModelMeta, type ModelParams, metaOf } from "./input.js";
+import { groupPage, type PageInfo } from "./paged.js";
+import { aggByKey, avgs, counts, groupCount, groupNeed, listNeed, listOf, rowsOf, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
 import { edgesOf, endpointPrefix, type EndpointStat, endpointStatsOf, findRow } from "./service-detail.js";
 import { edgeNeeds, edgesOfRows, serviceNeeds, serviceRowsOf } from "./service-rows.js";
 import { type VersionStat, versionNeeds, versionsOf } from "./service-versions.js";
@@ -18,7 +19,11 @@ import type { Apdex } from "./apdex.js";
 import { apdexByService, apdexNeed } from "./apdex-rows.js";
 import { type StreamStats, streamNeed, streamsOf } from "./stream-stats.js";
 
-const TOP_ERRORS = 50;
+/** Endpoints ("ep") and error groups ("err") a page shows at first. */
+export const SERVICE_PAGE_SIZE = 10;
+const BY_COUNT = { key: "count", desc: true };
+const endpointPage = (p: ModelParams) => groupPage(p, "ep", SERVICE_PAGE_SIZE, { count: "n", errors: "err", avg: "avg" }, BY_COUNT);
+const errorPage = (p: ModelParams) => groupPage(p, "err", SERVICE_PAGE_SIZE, { count: "n", seen: "lastMs" }, BY_COUNT);
 const SLOWEST = 10;
 const RECENT_LOGS = 10;
 
@@ -28,10 +33,10 @@ const OWNED: ReadonlySet<ServiceKind> = new Set(["api", "worker"]);
 export const isOwnedService = (kind: ServiceKind): boolean => OWNED.has(kind);
 
 export interface ServicePageErrors {
-  /** The most frequent error groups, at most 50. */
+  /** One page of the error groups, most frequent first or in the `errsort` column's order. */
   groups: ErrorGroup[];
-  /** Error groups before the limit. */
   total: number;
+  paging: PageInfo;
   exceptions: number;
   prevExceptions: number;
 }
@@ -55,9 +60,10 @@ export interface ServicePageModel {
   starts: number[];
   /** `prevRequests`: the compared period's count per bucket, for a faint line. */
   chart: { requests: Series; errors: Series; avgMs: Series; p95Ms: Series; prevRequests: Series };
-  /** Busiest first, at most 200. */
+  /** One page of the endpoints, busiest first or in the `epsort` column's order. */
   endpoints: EndpointStat[];
   endpointCount: number;
+  endpointPaging: PageInfo;
   incoming: ServiceEdge[];
   outgoing: ServiceEdge[];
   errors: ServicePageErrors;
@@ -74,10 +80,10 @@ export interface ServicePageModel {
 }
 
 /** Needs for an owned service's errors, requests, and logs, by its display name. */
-function ownedNeeds(name: string): Need[] {
+function ownedNeeds(name: string, p: ModelParams): Need[] {
   const shown = displayService(name);
   return [
-    groupNeed("err.g", "err.g", "cur", { top: true, filter: { prefix: `${shown}|` }, order: { by: "n", desc: true, limit: TOP_ERRORS } }),
+    groupNeed("err.g", "err.g", "cur", { top: true, filter: { prefix: `${shown}|` }, order: errorPage(p).order }),
     groupNeed("err.cur", "err.s", "cur", { filter: { keys: [shown] } }),
     groupNeed("err.prev", "err.s", "prev", { filter: { keys: [shown] } }),
     listNeed("slowest", "requests", "cur", { filter: { service: name }, sort: { key: "duration", desc: true }, limit: SLOWEST, count: true }),
@@ -87,9 +93,10 @@ function ownedNeeds(name: string): Need[] {
   ];
 }
 
-function errorsOf(d: NeedResults): ServicePageErrors {
-  const groups = [...rowsOf(d, "err.g")].sort(byDesc((r) => r.agg.n)).map((r) => errorGroupOf(r));
-  return { groups, total: groupCount(d, "err.g"), exceptions: totalOf(d, "err.cur").n, prevExceptions: totalOf(d, "err.prev").n };
+function errorsOf(d: PageData): ServicePageErrors {
+  const groups = rowsOf(d, "err.g").map((r) => errorGroupOf(r));
+  const total = groupCount(d, "err.g");
+  return { groups, total, paging: errorPage(d.params).paging(total), exceptions: totalOf(d, "err.cur").n, prevExceptions: totalOf(d, "err.prev").n };
 }
 
 function logsOf(d: NeedResults, name: string): ServicePageLogs {
@@ -105,21 +112,21 @@ function chartOf(d: NeedResults): ServicePageModel["chart"] {
   return { requests: counts(s), errors: s.map((a) => a.err), avgMs: avgs(s), p95Ms: s.map((a) => (a.hist && a.n ? histPercentile(a.hist, a.n, 95) : null)), prevRequests };
 }
 
-const NO_ERRORS: ServicePageErrors = { groups: [], total: 0, exceptions: 0, prevExceptions: 0 };
+const noErrors = (p: ModelParams): ServicePageErrors => ({ groups: [], total: 0, paging: errorPage(p).paging(0), exceptions: 0, prevExceptions: 0 });
 const NO_LOGS: ServicePageLogs = { rows: [], total: 0, warnings: 0, errors: 0 };
 
-/** The Service page. Params: service (a Services row key, or a service name). */
+/** The Service page. Params: service (a Services row key, or a service name); eppage, epsize, epsort; errpage, errsize, errsort. */
 export const servicePage: PageDef<ServicePageModel> = {
   needs: () => uniqueNeeds([...META_NEEDS, ...serviceNeeds("cur"), ...serviceNeeds("prev"), ...edgeNeeds()]),
   followUp(ctx, first) {
     const row = findRow(serviceRowsOf(first, "cur"), ctx.params.service ?? null);
     if (!row) return [];
     return [
-      groupNeed("svc.ep", "svc.ep", "cur", { filter: { prefix: endpointPrefix(row.key) }, order: { by: "n", desc: true, limit: MODEL_LIST_MAX } }),
+      groupNeed("svc.ep", "svc.ep", "cur", { filter: { prefix: endpointPrefix(row.key) }, order: endpointPage(ctx.params).order }),
       seriesNeed("chart", "svc", "cur", CHART_BUCKETS, { filter: { keys: [row.key] }, hist: true }),
       seriesNeed("chart.prev", "svc", "prev", CHART_BUCKETS, { filter: { keys: [row.key] } }),
       streamNeed("streams", "svc.stream", row.key),
-      ...(isOwnedService(row.kind) ? [...ownedNeeds(row.name), apdexNeed(row.key)] : []),
+      ...(isOwnedService(row.kind) ? [...ownedNeeds(row.name, ctx.params), apdexNeed(row.key)] : []),
     ];
   },
   model(d) {
@@ -133,10 +140,11 @@ export const servicePage: PageDef<ServicePageModel> = {
       owned,
       starts: bucketStarts(d.window, CHART_BUCKETS),
       chart: chartOf(d),
-      endpoints: row ? endpointStatsOf([...rowsOf(d, "svc.ep")].sort(byDesc((r) => r.agg.n)), row.key) : [],
+      endpoints: row ? endpointStatsOf(rowsOf(d, "svc.ep"), row.key) : [],
       endpointCount: groupCount(d, "svc.ep"),
+      endpointPaging: endpointPage(d.params).paging(groupCount(d, "svc.ep")),
       ...(row ? edgesOf(edgesOfRows(d), row.name) : { incoming: [], outgoing: [] }),
-      errors: owned ? errorsOf(d) : NO_ERRORS,
+      errors: owned ? errorsOf(d) : noErrors(d.params),
       slowest: slowest.items,
       requestCount: slowest.total ?? slowest.items.length,
       logs: owned && row ? logsOf(d, row.name) : NO_LOGS,

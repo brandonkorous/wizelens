@@ -4,6 +4,7 @@ import { fmtCount, fmtMs, shortId } from "../../format";
 import { hrefTo, setQuery, useRoute } from "../../routes";
 import { Dot, toneOfHealth, type Tone } from "../../ui/Badges";
 import { Pager } from "../../ui/Controls";
+import { urlPaging } from "../../ui/paging";
 import { ListQueryBar } from "../../ui/ListQueryBar";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { ExportButton } from "../../ui/ExportButton";
@@ -75,7 +76,7 @@ export function RecentTraces({ items, total, page, size, selectedId }: RecentTra
           </table>
         </div>
       )}
-      {total > size && <Pager page={page} pageSize={size} total={total} noun="traces" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />}
+      <Pager page={page} pageSize={size} total={total} noun="traces" {...urlPaging()} />
     </Panel>
   );
 }

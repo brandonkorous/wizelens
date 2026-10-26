@@ -65,7 +65,7 @@ function Body({ d, now }: { d: Detail; now: number }) {
       <ServicesPanel services={d.services} now={now} empty="No WizeLens or OpenTelemetry service reports this host (or a pod on it) as where it runs." />
       {d.pods.length > 0 && <Pods d={d} />}
       <Panel title="File Systems" flush>
-        <Table columns={FS_COLUMNS} rows={d.fileSystems} rowKey={(f) => f.mount} defaultSort={{ key: "share", desc: true }} empty={<Empty title="No file systems">The collector's filesystem scraper sends none for this host.</Empty>} />
+        <Table paging={{ noun: "file systems", key: "fs" }} columns={FS_COLUMNS} rows={d.fileSystems} rowKey={(f) => f.mount} defaultSort={{ key: "share", desc: true }} empty={<Empty title="No file systems">The collector's filesystem scraper sends none for this host.</Empty>} />
       </Panel>
     </>
   );

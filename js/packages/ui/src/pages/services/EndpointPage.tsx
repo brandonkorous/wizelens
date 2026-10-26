@@ -36,8 +36,8 @@ const REQUEST_COLUMNS: Column<RequestItem>[] = [
 
 const errorColumns = (now: number): Column<ErrorGroup>[] => [
   { key: "error", header: "Error", className: "wl-cell-wide", cell: (g) => <span className="wl-truncate" title={g.message}>{g.type}: {g.message}</span> },
-  { key: "seen", header: "Last Seen", className: "wl-nowrap", cell: (g) => fmtAgo(g.lastSeenMs, now) },
-  { key: "count", header: "Count", num: true, cell: (g) => fmtCount(g.count) },
+  { key: "seen", header: "Last Seen", className: "wl-nowrap", sort: (g) => g.lastSeenMs, cell: (g) => fmtAgo(g.lastSeenMs, now) },
+  { key: "count", header: "Count", num: true, sort: (g) => g.count, cell: (g) => fmtCount(g.count) },
 ];
 
 function Cards({ m }: { m: EndpointPageModel }) {
@@ -81,11 +81,11 @@ function Lists({ m }: { m: EndpointPageModel }) {
   return (
     <>
       <div className="wl-grid wl-grid-2-even">
-        <Panel title={`Queries (${fmtCount(m.queries.length)})`} flush><Table columns={partColumns("Query")} rows={m.queries} rowKey={(p) => p.name} onRowClick={(p) => navigate(queryHref(p.name))} empty={<Empty>This endpoint ran no queries in this range.</Empty>} /></Panel>
-        <Panel title={`Calls (${fmtCount(m.calls.length)})`} flush><Table columns={partColumns("Service or host")} rows={m.calls} rowKey={(p) => p.name} onRowClick={(p) => navigate(serviceHref(p.name))} empty={<Empty>This endpoint called nothing in this range.</Empty>} /></Panel>
+        <Panel title={`Queries (${fmtCount(m.paging.queries.total)})`} flush><Table columns={partColumns("Query")} rows={m.queries} served={{ info: m.paging.queries, noun: "queries" }} rowKey={(p) => p.name} onRowClick={(p) => navigate(queryHref(p.name))} empty={<Empty>This endpoint ran no queries in this range.</Empty>} /></Panel>
+        <Panel title={`Calls (${fmtCount(m.paging.calls.total)})`} flush><Table columns={partColumns("Service or host")} rows={m.calls} served={{ info: m.paging.calls, noun: "calls" }} rowKey={(p) => p.name} onRowClick={(p) => navigate(serviceHref(p.name))} empty={<Empty>This endpoint called nothing in this range.</Empty>} /></Panel>
       </div>
       <div className="wl-grid wl-grid-2-even">
-        <Panel title={`Errors (${fmtCount(m.errors.length)})`} flush><GroupTaggedTable group="errors" docOf={errorGroupDoc} tagged="error" columns={errorColumns(m.meta.window.to)} rows={m.errors} rowKey={(g) => g.key} onRowClick={(g) => navigate(errorHref(g.key))} empty={<Empty title="No exceptions">Nothing failed here in this range.</Empty>} /></Panel>
+        <Panel title={`Errors (${fmtCount(m.paging.errors.total)})`} flush><GroupTaggedTable served={{ info: m.paging.errors, noun: "errors" }} group="errors" docOf={errorGroupDoc} tagged="error" columns={errorColumns(m.meta.window.to)} rows={m.errors} rowKey={(g) => g.key} onRowClick={(g) => navigate(errorHref(g.key))} empty={<Empty title="No exceptions">Nothing failed here in this range.</Empty>} /></Panel>
         <Panel title={m.slowest.length ? "Slowest Requests" : "Newest Requests"} flush action={viewAll}><TaggedTable kind="requests" itemOf={traceRow} tagged="path" columns={REQUEST_COLUMNS} rows={requests} rowKey={(r) => r.traceId} onRowClick={(r) => navigate(traceHref(r.traceId))} empty={<Empty>No request in this range.</Empty>} /></Panel>
       </div>
     </>

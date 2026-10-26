@@ -11,7 +11,7 @@ import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 import { AlertForm, draftOf, EMPTY_RULE, type RuleDraft } from "./AlertForm";
 import { AlertRulePage } from "./AlertRulePage";
-import { type AlertEvent, type AlertRule, type AlertsData, channelLabel, fmtValue, ruleText, useAlertsApi } from "./alertTypes";
+import { type AlertEvent, type AlertRule, type AlertsData, channelLabel, eventPaging, fmtValue, ruleText, useAlertsApi, withEventPage } from "./alertTypes";
 import { RuleActions, RuleState } from "./RuleActions";
 import "../../styles/pages/alerts.css";
 import { type InProject } from "../../data/projectScope";
@@ -90,7 +90,7 @@ const owner = (r: AlertRule) => (r as InProject<AlertRule>).projectId;
 function AlertRules() {
   const api = useAlertsApi();
   const query = useRoute().query;
-  const { data, error, reload } = useApi<AlertsData>(api.ready ? api.url() : null);
+  const { data, error, reload } = useApi<AlertsData>(api.ready ? withEventPage(api.url(), query) : null);
   const [editing, setEditing] = useState<AlertRule | null>(null);
   const targets = useRuleTargets();
   const [note, setNote] = useState<string | null>(null);
@@ -116,7 +116,7 @@ function AlertRules() {
         <RulesTable rules={data?.rules ?? []} columns={ruleColumns(api.canWrite, api.url, done, setEditing, remove)} canWrite={api.canWrite} url={api.url} onDone={(err) => (setBulkError(err), reload())} />
       </Panel>
       <Panel title="Recent notices" flush>
-        <Table columns={eventColumns(true)} rows={data?.events ?? []} rowKey={(e) => e.id} onRowClick={(e) => navigate(alertHref(e.ruleId, e.projectId))} empty={<Empty>Nothing fired yet.</Empty>} />
+        <Table columns={eventColumns(true)} rows={data?.events ?? []} served={{ info: eventPaging(query, data?.eventCount ?? 0), noun: "notices" }} rowKey={(e) => e.id} onRowClick={(e) => navigate(alertHref(e.ruleId, e.projectId))} empty={<Empty>Nothing fired yet.</Empty>} />
       </Panel>
     </>
   );

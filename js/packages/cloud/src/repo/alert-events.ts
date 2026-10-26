@@ -51,11 +51,20 @@ type EventRow = Omit<AlertEvent, "problem"> & { problem: string };
 const EVENT_COLUMNS = `e.id, e.rule_id AS "ruleId", r.name AS "ruleName", e.kind, e.value, e.threshold, e.message, e.time_ms AS "timeMs", e.delivery, e.problem`;
 const toEvent = (e: EventRow): AlertEvent => ({ ...e, value: e.value === null ? null : Number(e.value), threshold: Number(e.threshold), timeMs: Number(e.timeMs), problem: problemOf(e.problem) });
 
-export const listEvents = async (q: Queryable, projectId: string, limit: number): Promise<AlertEvent[]> =>
-  (await q.query<EventRow>(`SELECT ${EVENT_COLUMNS} FROM alert_events e JOIN alert_rules r ON r.id = e.rule_id WHERE e.project_id = $1 ORDER BY e.time_ms DESC LIMIT $2`, [projectId, limit])).map(toEvent);
+/** A project's events, newest first, `offset` rows in. */
+export const listEvents = async (q: Queryable, projectId: string, limit: number, offset = 0): Promise<AlertEvent[]> =>
+  (await q.query<EventRow>(`SELECT ${EVENT_COLUMNS} FROM alert_events e JOIN alert_rules r ON r.id = e.rule_id WHERE e.project_id = $1 ORDER BY e.time_ms DESC, e.id LIMIT $2 OFFSET $3`, [projectId, limit, offset])).map(toEvent);
 
-export const ruleEvents = async (q: Queryable, ruleId: string, limit: number): Promise<AlertEvent[]> =>
-  (await q.query<EventRow>(`SELECT ${EVENT_COLUMNS} FROM alert_events e JOIN alert_rules r ON r.id = e.rule_id WHERE e.rule_id = $1 ORDER BY e.time_ms DESC LIMIT $2`, [ruleId, limit])).map(toEvent);
+/** One rule's events, newest first, `offset` rows in. */
+export const ruleEvents = async (q: Queryable, ruleId: string, limit: number, offset = 0): Promise<AlertEvent[]> =>
+  (await q.query<EventRow>(`SELECT ${EVENT_COLUMNS} FROM alert_events e JOIN alert_rules r ON r.id = e.rule_id WHERE e.rule_id = $1 ORDER BY e.time_ms DESC, e.id LIMIT $2 OFFSET $3`, [ruleId, limit, offset])).map(toEvent);
+
+/** How many events a project, or one rule, has. */
+export async function countEvents(q: Queryable, by: { project: string } | { rule: string }): Promise<number> {
+  const [col, value] = "project" in by ? ["project_id", by.project] : ["rule_id", by.rule];
+  const rows = await q.query<{ n: string | number }>(`SELECT COUNT(*) AS n FROM alert_events WHERE ${col} = $1`, [value]);
+  return Number(rows[0]?.n ?? 0);
+}
 
 /** One rule's evaluated values in [from, to), oldest first. */
 export async function ruleValues(q: Queryable, ruleId: string, from: number, to: number): Promise<{ timeMs: number; value: number | null }[]> {

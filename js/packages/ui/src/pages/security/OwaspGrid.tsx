@@ -12,7 +12,7 @@ export function OwaspGrid({ categories, selected, note }: { categories: Security
           const active = selected === c.id;
           const tone = c.high > 0 ? " wl-owasp-high" : c.count > 0 ? " wl-owasp-some" : "";
           return (
-            <button key={c.id} type="button" className={`wl-owasp-tile${tone}${active ? " wl-active" : ""}`} aria-pressed={active} onClick={() => setQuery({ category: active ? null : c.id, key: null })}>
+            <button key={c.id} type="button" className={`wl-owasp-tile${tone}${active ? " wl-active" : ""}`} aria-pressed={active} onClick={() => setQuery({ category: active ? null : c.id, key: null, page: null })}>
               <span className="wl-owasp">{c.id}</span>
               <span className="wl-owasp-name">{c.name}</span>
               <strong className="wl-owasp-count">{fmtCount(c.count)}</strong>

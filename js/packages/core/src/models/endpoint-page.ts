@@ -8,12 +8,25 @@ import { bucketStarts, percentOf } from "../stats/common.js";
 import { displayService, type ErrorGroup, rawService } from "../stats/errors.js";
 import { CHART_BUCKETS } from "./database.js";
 import { errorGroupOf } from "./errors.js";
-import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
-import { byDesc, counts, groupNeed, listNeed, listOf, type Row, rowsOf, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
+import { META_NEEDS, type ModelMeta, type ModelParams, metaOf } from "./input.js";
+import { groupPage, type PageInfo } from "./paged.js";
+import { counts, groupCount, groupNeed, listNeed, listOf, type Row, rowsOf, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
 import { type StreamStats, streamNeed, streamsOf } from "./stream-stats.js";
 import { type UsersAffected, usersNeed, usersOf } from "./user-rows.js";
 
-const LIST = 50;
+/** Rows each list shows at first. */
+export const ENDPOINT_PAGE_SIZE = 15;
+
+/** Columns the queries and calls sort by (qsort=-avg, callsort=-errors). */
+const PART_ORDERS = { count: "n", avg: "avg", errors: "err" } as const;
+const BY_COUNT = { key: "count", desc: true };
+
+/** The queries ("q"), calls ("call"), and errors ("err") lists: each page's order, and where it sits. */
+const listPages = (p: ModelParams) => ({
+  q: groupPage(p, "q", ENDPOINT_PAGE_SIZE, PART_ORDERS, BY_COUNT),
+  call: groupPage(p, "call", ENDPOINT_PAGE_SIZE, PART_ORDERS, BY_COUNT),
+  err: groupPage(p, "err", ENDPOINT_PAGE_SIZE, { count: "n", seen: "lastMs" }, BY_COUNT),
+});
 
 export interface EndpointTotals {
   count: number;
@@ -47,9 +60,11 @@ export interface EndpointPageModel {
   slowest: RequestItem[];
   /** The newest requests that went through it (also when it served another service's call). */
   recent: RequestItem[];
+  /** One page each of the queries, calls, and error groups, and where each page sits. */
   queries: EndpointPart[];
   calls: EndpointPart[];
   errors: ErrorGroup[];
+  paging: { queries: PageInfo; calls: PageInfo; errors: PageInfo };
   /** Signed-in users who called it in the range. */
   users: UsersAffected;
   /** Streams it served; their open time is not in its latency. Null when none. */
@@ -63,7 +78,7 @@ function totalsOf(a: Agg): EndpointTotals | null {
 }
 
 const partsOf = (rows: readonly Row[]): EndpointPart[] =>
-  [...rows].sort(byDesc((r) => r.agg.n)).map((r) => ({ name: splitKey(r.key).at(-1)!, count: r.agg.n, errors: r.agg.err, avgMs: avgOfAgg(r.agg) }));
+  rows.map((r) => ({ name: splitKey(r.key).at(-1)!, count: r.agg.n, errors: r.agg.err, avgMs: avgOfAgg(r.agg) }));
 
 /** The Services row key and endpoint name from params: `service` is a row key ("api:orders") or a service name. */
 function idOf(p: Readonly<Record<string, string>>): { rowKey: string; name: string; endpoint: string; key: string } {
@@ -78,36 +93,37 @@ function chartOf(d: NeedResults): EndpointPageModel["chart"] {
   return { count: counts(s), errors: s.map((a) => a.err), p50: s.map((a) => pct(a, 50)), p95: s.map((a) => pct(a, 95)), p99: s.map((a) => pct(a, 99)), prevCount: counts(seriesOf(d, "chart.prev", CHART_BUCKETS)) };
 }
 
-/** The Endpoint page. Params: service (row key or name), endpoint ("GET /api/orders/{id}"). */
+/** The Endpoint page. Params: service (row key or name), endpoint ("GET /api/orders/{id}"); qpage, qsize, qsort; callpage, callsize, callsort; errpage, errsize, errsort. */
 export const endpointPage: PageDef<EndpointPageModel> = {
   needs: (ctx) => {
     const id = idOf(ctx.params);
     const keys = { filter: { keys: [id.key] } };
-    const order = { by: "n", desc: true, limit: LIST } as const;
+    const pages = listPages(ctx.params);
     return uniqueNeeds([
       ...META_NEEDS,
       groupNeed("ep", "svc.ep", "cur", { hist: true, ids: true, ...keys }),
       groupNeed("ep.prev", "svc.ep", "prev", { hist: true, ...keys }),
       seriesNeed("chart", "svc.ep", "cur", CHART_BUCKETS, { hist: true, ...keys }),
       seriesNeed("chart.prev", "svc.ep", "prev", CHART_BUCKETS, keys),
-      groupNeed("q", "ep.q", "cur", { filter: { prefix: joinKey(id.key, "") }, order }),
-      groupNeed("call", "ep.call", "cur", { filter: { prefix: joinKey(id.key, "") }, order }),
+      groupNeed("q", "ep.q", "cur", { filter: { prefix: joinKey(id.key, "") }, order: pages.q.order }),
+      groupNeed("call", "ep.call", "cur", { filter: { prefix: joinKey(id.key, "") }, order: pages.call.order }),
       groupNeed("ge", "err.ge", "cur", { filter: { prefix: `${displayService(id.name)}|`, parts: [null, id.endpoint] } }),
       listNeed("slowest", "requests", "cur", { filter: { endpoint: id.endpoint, service: rawService(id.name) }, sort: { key: "duration", desc: true }, limit: 10 }),
       usersNeed("users", "ep.u", [displayService(id.name), id.endpoint]),
       streamNeed("streams", "req.stream", id.key),
     ]);
   },
-  followUp(_ctx, first) {
+  followUp(ctx, first) {
     const ids = rowsOf(first, "ep")[0]?.agg.ids ?? [];
     const groups = [...new Set(rowsOf(first, "ge").map((r) => splitKey(r.key)[0]!))];
     return [
       ...(ids.length ? [listNeed("recent", "requests", "cur", { filter: { traceIds: ids }, limit: ids.length })] : []),
-      ...(groups.length ? [groupNeed("errors", "err.g", "cur", { top: true, filter: { keys: groups }, order: { by: "n", desc: true, limit: LIST } })] : []),
+      ...(groups.length ? [groupNeed("errors", "err.g", "cur", { top: true, filter: { keys: groups }, order: listPages(ctx.params).err.order })] : []),
     ];
   },
   model(d) {
     const id = idOf(d.params);
+    const pages = listPages(d.params);
     return {
       meta: metaOf(d),
       service: id.name,
@@ -121,6 +137,7 @@ export const endpointPage: PageDef<EndpointPageModel> = {
       queries: partsOf(rowsOf(d, "q")),
       calls: partsOf(rowsOf(d, "call")),
       errors: rowsOf(d, "errors").map((r) => errorGroupOf(r)),
+      paging: { queries: pages.q.paging(groupCount(d, "q")), calls: pages.call.paging(groupCount(d, "call")), errors: pages.err.paging(groupCount(d, "errors")) },
       users: usersOf(d, "users"),
       streams: streamsOf(d, "streams"),
     };

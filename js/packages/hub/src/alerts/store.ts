@@ -62,9 +62,15 @@ const EVENT_SQL = `SELECT e.id, e.rule_id AS ruleId, r.json AS rule, e.kind, e.v
 const eventsOf = (rows: unknown[]): HubAlertEvent[] =>
   (rows as (Omit<HubAlertEvent, "ruleName"> & { rule: string })[]).map(({ rule, ...e }) => ({ ...e, ruleName: (JSON.parse(rule) as AlertRule).name }));
 
-export const listEvents = (db: DatabaseSync, project: string, limit: number): HubAlertEvent[] => eventsOf(db.prepare(`${EVENT_SQL} WHERE e.project = ? ORDER BY e.time_ms DESC LIMIT ?`).all(project, limit));
+/** A project's events, newest first, `offset` rows in. */
+export const listEvents = (db: DatabaseSync, project: string, limit: number, offset = 0): HubAlertEvent[] => eventsOf(db.prepare(`${EVENT_SQL} WHERE e.project = ? ORDER BY e.time_ms DESC, e.id LIMIT ? OFFSET ?`).all(project, limit, offset));
 
-export const ruleEvents = (db: DatabaseSync, id: string, limit: number): HubAlertEvent[] => eventsOf(db.prepare(`${EVENT_SQL} WHERE e.rule_id = ? ORDER BY e.time_ms DESC LIMIT ?`).all(id, limit));
+/** One rule's events, newest first, `offset` rows in. */
+export const ruleEvents = (db: DatabaseSync, id: string, limit: number, offset = 0): HubAlertEvent[] => eventsOf(db.prepare(`${EVENT_SQL} WHERE e.rule_id = ? ORDER BY e.time_ms DESC, e.id LIMIT ? OFFSET ?`).all(id, limit, offset));
+
+/** How many events a project, or one rule, has. */
+export const countEvents = (db: DatabaseSync, by: { project: string } | { rule: string }): number =>
+  Number((db.prepare(`SELECT COUNT(*) AS n FROM alert_events WHERE ${"project" in by ? "project" : "rule_id"} = ?`).get("project" in by ? by.project : by.rule) as { n: number }).n);
 
 export function addValue(db: DatabaseSync, id: string, timeMs: number, value: number | null): void {
   db.prepare("INSERT INTO alert_values (rule_id, time_ms, value) VALUES (?, ?, ?) ON CONFLICT (rule_id, time_ms) DO UPDATE SET value = excluded.value").run(id, timeMs, value);

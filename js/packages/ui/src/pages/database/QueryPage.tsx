@@ -57,11 +57,11 @@ function Body({ m }: { m: QueryPageModel }) {
         </Panel>
       </div>
       <div className="wl-grid wl-grid-2-even">
-        <Panel title="Services" flush><GroupTaggedTable group="services" docOf={(u) => serviceDoc(u.service)} tagged="name" columns={useColumns(false)} rows={m.services} rowKey={(u) => u.service} onRowClick={(u) => navigate(serviceHref(u.service))} empty={<Empty>No service ran it.</Empty>} /></Panel>
-        <Panel title="Endpoints" flush><GroupTaggedTable group="endpoints" docOf={(u) => endpointDoc(u.service, u.endpoint)} tagged="name" columns={useColumns(true)} rows={m.endpoints} rowKey={(u) => `${u.service} ${u.endpoint}`} onRowClick={(u) => navigate(endpointHref(u.service, u.endpoint))} empty={<Empty>It ran outside requests (jobs, workers).</Empty>} /></Panel>
+        <Panel title="Services" flush><GroupTaggedTable paging={{ noun: "services", key: "svc" }} group="services" docOf={(u) => serviceDoc(u.service)} tagged="name" columns={useColumns(false)} rows={m.services} rowKey={(u) => u.service} onRowClick={(u) => navigate(serviceHref(u.service))} empty={<Empty>No service ran it.</Empty>} /></Panel>
+        <Panel title="Endpoints" flush><GroupTaggedTable paging={{ noun: "endpoints", key: "ep" }} group="endpoints" docOf={(u) => endpointDoc(u.service, u.endpoint)} tagged="name" columns={useColumns(true)} rows={m.endpoints} rowKey={(u) => `${u.service} ${u.endpoint}`} onRowClick={(u) => navigate(endpointHref(u.service, u.endpoint))} empty={<Empty>It ran outside requests (jobs, workers).</Empty>} /></Panel>
       </div>
       <Panel title={`Newest Traces (${fmtCount(m.traces.length)})`} flush>
-        <TaggedTable kind="traces" itemOf={traceRow} tagged="path" columns={TRACE_COLUMNS} rows={m.traces} rowKey={(t) => t.traceId} onRowClick={(t) => navigate(traceHref(t.traceId, "sql"))} empty={<Empty>No trace in this range.</Empty>} />
+        <TaggedTable paging={{ noun: "traces", key: "traces" }} kind="traces" itemOf={traceRow} tagged="path" columns={TRACE_COLUMNS} rows={m.traces} rowKey={(t) => t.traceId} onRowClick={(t) => navigate(traceHref(t.traceId, "sql"))} empty={<Empty>No trace in this range.</Empty>} />
       </Panel>
     </>
   );

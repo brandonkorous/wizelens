@@ -5,13 +5,13 @@ import { useRange } from "../../data/host";
 import { parseWindow, useWindowPref } from "../../data/period";
 import { useApi } from "../../data/useApi";
 import { fmtDateTime } from "../../format";
-import { hrefTo } from "../../routes";
+import { hrefTo, useRoute } from "../../routes";
 import { DetailHead } from "../../ui/DetailHead";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { Table } from "../../ui/Table";
 import { TimeChart } from "../../ui/TimeChart";
 import { eventColumns } from "./AlertsPage";
-import { type AlertRuleData, channelLabel, fmtValue, ruleText, useAlertsApi, windowLabel } from "./alertTypes";
+import { type AlertRuleData, channelLabel, eventPaging, fmtValue, ruleText, useAlertsApi, windowLabel, withEventPage } from "./alertTypes";
 import { RuleActions, RuleState } from "./RuleActions";
 
 const BUCKETS = 60;
@@ -52,6 +52,7 @@ function useShownWindow(): { from: number; to: number } {
 }
 
 function Body({ d, api, reload }: { d: AlertRuleData; api: ReturnType<typeof useAlertsApi>; reload: () => void }) {
+  const query = useRoute().query;
   const [note, setNote] = useState<string | null>(null);
   const w = useShownWindow();
   const r = d.rule;
@@ -69,7 +70,7 @@ function Body({ d, api, reload }: { d: AlertRuleData; api: ReturnType<typeof use
         <TimeChart starts={chart.starts} format={unit === undefined ? undefined : fmt} lines={[{ label: "Value", values: chart.values, color: "var(--wl-blue)" }, { label: "Threshold", values: chart.values.map(() => r.threshold), color: "var(--wl-red)", dashed: true }]} />
       </Panel>
       <Panel title="Notices and Changes" flush>
-        <Table columns={eventColumns(false)} rows={d.events} rowKey={(e) => e.id} empty={<Empty>Nothing happened to this alert yet.</Empty>} />
+        <Table columns={eventColumns(false)} rows={d.events} served={{ info: eventPaging(query, d.eventCount), noun: "notices" }} rowKey={(e) => e.id} empty={<Empty>Nothing happened to this alert yet.</Empty>} />
       </Panel>
     </>
   );
@@ -80,7 +81,8 @@ export function AlertRulePage({ id }: { id: string }) {
   const api = useAlertsApi();
   const w = useShownWindow();
   const url = api.url(`/${encodeURIComponent(id)}`);
-  const { data, error, reload } = useApi<AlertRuleData>(api.ready ? `${url}${url.includes("?") ? "&" : "?"}from=${w.from}&to=${w.to + 1}` : null);
+  const query = useRoute().query;
+  const { data, error, reload } = useApi<AlertRuleData>(api.ready ? withEventPage(`${url}${url.includes("?") ? "&" : "?"}from=${w.from}&to=${w.to + 1}`, query) : null);
   if (error) return <Panel><Empty title="This alert was not found">{error} Go back to <a href="#/alerts">all alerts</a>.</Empty></Panel>;
   return <div className="wl-dpage">{data ? <Body d={data} api={api} reload={reload} /> : <Panel><Empty>Loading…</Empty></Panel>}</div>;
 }

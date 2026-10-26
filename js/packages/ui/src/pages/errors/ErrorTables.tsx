@@ -4,6 +4,7 @@ import { fmtCount, fmtPct, fmtTime } from "../../format";
 import { setQuery } from "../../routes";
 import { DotText } from "../../ui/Badges";
 import { Pager } from "../../ui/Controls";
+import { urlPaging } from "../../ui/paging";
 import { Empty, Panel } from "../../ui/Panel";
 import { Sparkline } from "../../ui/Sparkline";
 import { useIssueBulk } from "../../ui/IssueBulk";
@@ -52,9 +53,7 @@ export function RecentExceptionsPanel({ stats, selected }: { stats: ErrorsModel;
         onRowClick={(g) => setQuery({ group: g.key })}
         empty={<Empty title={filtered ? "No matching exceptions" : "No exceptions"}>{filtered ? "Try another filter or a wider time range." : "Nothing failed in this time range."}</Empty>}
       />
-      {stats.groupCount > 0 && (
-        <Pager page={stats.page} pageSize={stats.size} total={stats.groupCount} noun="groups" onPage={(p) => setQuery({ page: p })} onPageSize={(s) => setQuery({ size: s, page: null })} />
-      )}
+      <Pager page={stats.page} pageSize={stats.size} total={stats.groupCount} noun="groups" {...urlPaging()} />
     </Panel>
   );
 }
@@ -86,7 +85,7 @@ export function ErrorsByServicePanel({ stats }: { stats: ErrorsModel }) {
   const pick = useSetService();
   return (
     <Panel title="Errors by Service">
-      <Table columns={serviceColumns()} rows={stats.services} rowKey={(s) => s.service} selectedKey={stats.filter.service || null} onRowClick={(s) => pick(s.service === stats.filter.service ? "" : s.service)} empty={<Empty>No services seen yet.</Empty>} />
+      <Table paging={{ noun: "services", key: "svc" }} columns={serviceColumns()} rows={stats.services} rowKey={(s) => s.service} selectedKey={stats.filter.service || null} onRowClick={(s) => pick(s.service === stats.filter.service ? "" : s.service)} empty={<Empty>No services seen yet.</Empty>} />
     </Panel>
   );
 }

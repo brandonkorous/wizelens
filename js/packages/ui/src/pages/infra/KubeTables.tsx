@@ -27,7 +27,7 @@ const NODE_COLUMNS = (now: number): Column<NodeRow>[] => [
 ];
 
 export function NodesTable({ rows, now }: { rows: NodeRow[]; now: number }) {
-  return <Table columns={NODE_COLUMNS(now)} rows={rows} rowKey={(n) => n.name} defaultSort={{ key: "name", desc: false }} empty={<Empty title="No nodes">kubeletstats sends nothing yet.</Empty>} />;
+  return <Table paging={{ noun: "nodes", key: "nodes" }} columns={NODE_COLUMNS(now)} rows={rows} rowKey={(n) => n.name} defaultSort={{ key: "name", desc: false }} empty={<Empty title="No nodes">kubeletstats sends nothing yet.</Empty>} />;
 }
 
 const WORKLOAD_COLUMNS: Column<WorkloadRow>[] = [
@@ -47,7 +47,7 @@ const WORKLOAD_COLUMNS: Column<WorkloadRow>[] = [
 ];
 
 export function WorkloadsTable({ rows }: { rows: WorkloadRow[] }) {
-  return <Table columns={WORKLOAD_COLUMNS} rows={rows} rowKey={(w) => w.key} defaultSort={{ key: "name", desc: false }} empty={<Empty title="No workloads">k8s_cluster sends nothing yet, or no pod names its workload.</Empty>} />;
+  return <Table paging={{ noun: "workloads", key: "workloads" }} columns={WORKLOAD_COLUMNS} rows={rows} rowKey={(w) => w.key} defaultSort={{ key: "name", desc: false }} empty={<Empty title="No workloads">k8s_cluster sends nothing yet, or no pod names its workload.</Empty>} />;
 }
 
 const POD_COLUMNS: Column<PodRow>[] = [
@@ -69,5 +69,5 @@ const POD_COLUMNS: Column<PodRow>[] = [
 ];
 
 export function PodsTable({ rows, empty = "No pods match these filters." }: { rows: PodRow[]; empty?: string }) {
-  return <Table columns={POD_COLUMNS} rows={rows} rowKey={(p) => p.key} defaultSort={{ key: "name", desc: false }} empty={<Empty title="No pods">{empty}</Empty>} />;
+  return <Table paging={{ noun: "pods", key: "pods" }} columns={POD_COLUMNS} rows={rows} rowKey={(p) => p.key} defaultSort={{ key: "name", desc: false }} empty={<Empty title="No pods">{empty}</Empty>} />;
 }

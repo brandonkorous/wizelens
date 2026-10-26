@@ -32,7 +32,7 @@ export function RegistryHosts({ group, now, onClose }: { group: ServiceGroup; no
   );
   return (
     <Panel title={title} flush action={action}>
-      <Table columns={columns(now)} rows={rows} rowKey={(s) => s.host ?? ""} defaultSort={{ key: "seen", desc: false }} empty={<Empty title="Only old hosts">Every host of this service has been offline for more than a day.</Empty>} />
+      <Table paging={{ noun: "hosts", reset: String(showOld) }} columns={columns(now)} rows={rows} rowKey={(s) => s.host ?? ""} defaultSort={{ key: "seen", desc: false }} empty={<Empty title="Only old hosts">Every host of this service has been offline for more than a day.</Empty>} />
     </Panel>
   );
 }

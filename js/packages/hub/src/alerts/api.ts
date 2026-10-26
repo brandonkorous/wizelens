@@ -1,14 +1,20 @@
 // `api/alerts?project=`: the hub's alert rules. Rules, a rule's history, test, mute, and acknowledge. The hub sends no email.
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { type AlertRule, MUTED_FOREVER, parseAlertRule } from "@wizeworks/lens-core";
+import { type AlertRule, MUTED_FOREVER, PAGE_SIZES, pageParams, parseAlertRule } from "@wizeworks/lens-core";
 import { sendJson } from "@wizeworks/lens-node/kit";
 import { parseJson, readBody } from "../body.js";
 import { sloById } from "../slos.js";
 import { checkTarget } from "./target.js";
 import { type HubAlertDeps, notifyHub } from "./evaluate.js";
-import { addEvent, createRule, deleteRule, listEvents, listRules, ruleById, ruleEvents, ruleValues, saveRule } from "./store.js";
+import { addEvent, countEvents, createRule, deleteRule, listEvents, listRules, ruleById, ruleEvents, ruleValues, saveRule } from "./store.js";
 
 const DAY_MS = 86_400_000;
+
+/** The page of events a list asks for: `epage` and `esize`, 15 at first. */
+const eventPage = (url: URL) => {
+  const { page, size } = pageParams(Object.fromEntries(url.searchParams), PAGE_SIZES[0]!, "e");
+  return { size, offset: (page - 1) * size };
+};
 
 interface AlertReq {
   deps: HubAlertDeps;
@@ -63,7 +69,15 @@ function history(r: AlertReq, rule: AlertRule): void {
   const to = Number(r.url.searchParams.get("to")) || r.now + 1;
   const from = Number(r.url.searchParams.get("from")) || to - DAY_MS;
   const db = r.deps.store.db;
-  sendJson(r.res, 200, { rule, events: ruleEvents(db, rule.id, 100), values: ruleValues(db, rule.id, from, to) });
+  const { size, offset } = eventPage(r.url);
+  sendJson(r.res, 200, { rule, events: ruleEvents(db, rule.id, size, offset), eventCount: countEvents(db, { rule: rule.id }), values: ruleValues(db, rule.id, from, to) });
+}
+
+/** Every rule, and one page of the project's events. */
+function list(r: AlertReq): void {
+  const db = r.deps.store.db;
+  const { size, offset } = eventPage(r.url);
+  sendJson(r.res, 200, { rules: listRules(db, r.project), events: listEvents(db, r.project, size, offset), eventCount: countEvents(db, { project: r.project }) });
 }
 
 /** One rule's routes: `api/alerts/:id` and its actions. */
@@ -86,7 +100,7 @@ export async function handleAlerts(deps: HubAlertDeps, now: number, sub: string,
   const r: AlertReq = { deps, now, project: url.searchParams.get("project") ?? "", req, res, url };
   const [, , id, action] = sub.split("/");
   if (id) return onRule(r, method, decodeURIComponent(id), action);
-  if (method === "GET") return sendJson(res, 200, { rules: listRules(deps.store.db, r.project), events: listEvents(deps.store.db, r.project, 100) });
+  if (method === "GET") return list(r);
   if (method === "POST") return create(r);
   sendJson(res, 405, { error: "method not allowed" });
 }

@@ -59,7 +59,7 @@ function AllHosts() {
         <>
           <Cards m={m} />
           <Panel title="All Hosts" flush>
-            <Table columns={columns(updatedMs)} rows={m.hosts} rowKey={(h) => h.name} defaultSort={{ key: "name", desc: false }} empty={<Empty title="No hosts match">Clear the search to see every host.</Empty>} />
+            <Table paging={{ noun: "hosts", key: "hosts", reset: q }} columns={columns(updatedMs)} rows={m.hosts} rowKey={(h) => h.name} defaultSort={{ key: "name", desc: false }} empty={<Empty title="No hosts match">Clear the search to see every host.</Empty>} />
           </Panel>
         </>
       )}

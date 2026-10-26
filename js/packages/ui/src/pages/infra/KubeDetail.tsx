@@ -91,7 +91,7 @@ function PodBody({ d, now }: { d: PodDetail; now: number }) {
       </div>
       <Charts d={d} />
       <Panel title="Containers" flush>
-        <Table columns={CONTAINER_COLUMNS} rows={d.containers} rowKey={(c) => c.name} empty={<Empty title="No containers">k8s_cluster sends no container state for this pod.</Empty>} />
+        <Table paging={{ noun: "containers", key: "containers" }} columns={CONTAINER_COLUMNS} rows={d.containers} rowKey={(c) => c.name} empty={<Empty title="No containers">k8s_cluster sends no container state for this pod.</Empty>} />
       </Panel>
       <ServicesPanel services={d.services} now={now} empty="No service reports this pod as where it runs." />
     </>

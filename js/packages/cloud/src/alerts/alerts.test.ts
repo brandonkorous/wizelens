@@ -52,6 +52,8 @@ it("fires once when the error rate breaks the rule, then resolves", async () => 
   const list = await owner.call<{ rules: { state: string }[]; events: { kind: string; delivery: string }[] }>("GET", `api/projects/${projectId}/alerts`);
   expect(list.body.rules[0]!.state).toBe("ok");
   expect(list.body.events.map((e) => e.kind)).toEqual(["resolved", "fired"]);
+  const second = await owner.call<{ events: { kind: string }[]; eventCount: number }>("GET", `api/projects/${projectId}/alerts?esize=5&epage=2`);
+  expect(second.body).toMatchObject({ events: [], eventCount: 2 });
   expect(list.body.events[0]!.delivery).toBe("webhook: sent");
 }, 60_000);
 

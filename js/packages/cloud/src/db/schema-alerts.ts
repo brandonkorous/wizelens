@@ -12,3 +12,8 @@ CREATE TABLE alert_values (
 );
 CREATE INDEX ix_alert_values_time ON alert_values (time_ms);
 `;
+
+// Migration 20: an alert event names the problem it is part of (docs/CONTRACT.md, "Problems").
+export const ALERT_PROBLEM_MIGRATION = `
+ALTER TABLE alert_events ADD COLUMN problem TEXT NOT NULL DEFAULT '';
+`;

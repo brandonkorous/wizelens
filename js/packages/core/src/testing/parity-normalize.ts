@@ -47,8 +47,8 @@ const TIES: Record<string, (m: Obj) => void> = {
     m.critical = sortBy(m.critical, num("durationMs"), str("traceId"), str("spanId"));
   },
   insights: (m) => {
-    // Issue states are new; the legacy model had none.
-    for (const k of ["issues", "hasIssues", "releases", "selectedUsers"]) delete m[k];
+    // Issue states and paging are new; the legacy model had none.
+    for (const k of ["issues", "hasIssues", "releases", "selectedUsers", "paging"]) delete m[k];
   },
   overview: (m) => {
     // The compared period's line is new; the legacy model had none.
@@ -67,12 +67,12 @@ const TIES: Record<string, (m: Obj) => void> = {
     for (const k of ["exact", "category", "traceId", "pattern", "origin", "user"]) delete f[k];
   },
   rendering: (m) => {
-    // The route count is new; the legacy model had none.
-    delete m.routeCount;
+    // The route count and paging are new; the legacy model had none.
+    for (const k of ["routeCount", "routePaging", "componentPaging"]) delete m[k];
   },
   database: (m) => {
     // The table count, the filter, paging, and database options are new; the legacy model had none.
-    for (const k of ["tableCount", "filter", "page", "size", "databases"]) delete m[k];
+    for (const k of ["tableCount", "tablePaging", "filter", "page", "size", "databases"]) delete m[k];
     m.queries = sortBy(m.queries, num("avgMs"), str("key"));
     m.tables = sortBy(m.tables, num("queries"), str("table"));
   },

@@ -46,7 +46,7 @@ export function ImportChecks({ api, lead, projectId, onClose }: { api: UptimeApi
             <FileDrop accept={LIST_FILES} fileName={fileName} hint="Excel (.xlsx), CSV, JSON, or a list of URLs." status={`${parsed?.rows.length ?? 0} checks read.`} onFile={pick} />
             <TextArea label="Or paste the URLs" rows={4} value={text} onChange={(e) => (setFileName(null), setText(e.target.value))} placeholder={PLACEHOLDER} />
             {parsed && parsed.problems.length > 0 && <div className="wl-banner wl-banner-error">{parsed.problems.slice(0, 10).map((p) => <div key={`${p.row}${p.message}`}>{p.row ? `Row ${p.row}: ` : ""}{p.message}</div>)}</div>}
-            {rows.length > 0 && <Table columns={COLUMNS} rows={rows} rowKey={(r) => String(r.row)} />}
+            {rows.length > 0 && <Table paging={{ noun: "checks" }} columns={COLUMNS} rows={rows} rowKey={(r) => String(r.row)} />}
             {result && <div className={`wl-banner ${result.ok ? "wl-banner-info" : "wl-banner-error"}`} role="status">{result.text}</div>}
             <div className="wl-form-actions">
               <button type="button" className="wl-btn" onClick={onClose}>{result ? "Done" : "Cancel"}</button>

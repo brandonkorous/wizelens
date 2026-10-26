@@ -6,6 +6,7 @@ import { type SettingsReply, settingsBody, useSettingsProjects } from "../../dat
 import { act, useApi } from "../../data/useApi";
 import { Field, FormRow } from "../../ui/Field";
 import { Empty, Panel } from "../../ui/Panel";
+import { usePagedRows } from "../../ui/PagedRows";
 import { SectionHead } from "../../ui/Sections";
 import { DaysSelect } from "./DaysSelect";
 import { canManage } from "./orgTypes";
@@ -64,6 +65,7 @@ function ProjectsRetention({ org }: { org: OrgWithProjects | null }) {
   const [error, setError] = useState<string | null>(null);
   const setLogs = (id: string, d: number | null) => void act(() => apiSend("PATCH", `./api/orgs/${org!.id}/projects/${id}`, { logRetentionDays: d }), () => void loadAccount()).then(setError);
   const logsOf = (id: string): LogDays | undefined => (org ? { value: org.projects.find((p) => p.id === id)?.logRetentionDays ?? null, onChange: (d) => setLogs(id, d) } : undefined);
+  const shown = usePagedRows(sp.options, { noun: "projects", key: "retention" });
   if (sp.options.length === 0) return <Panel><Empty title="No projects yet" /></Panel>;
   return (
     <Panel title="Each project" flush>
@@ -72,10 +74,11 @@ function ProjectsRetention({ org }: { org: OrgWithProjects | null }) {
         <table className="wl-table">
           <thead><tr><th>Project</th><th>Traces kept</th>{org && <th>Logs kept</th>}</tr></thead>
           <tbody>
-            {sp.options.map(([id, name]) => <RetentionRow key={id} name={name} url={sp.url(id)} canEdit={sp.canEdit(id)} host={org ? "organization" : "hub"} logs={logsOf(id)} />)}
+            {shown.rows.map(([id, name]) => <RetentionRow key={id} name={name} url={sp.url(id)} canEdit={sp.canEdit(id)} host={org ? "organization" : "hub"} logs={logsOf(id)} />)}
           </tbody>
         </table>
       </div>
+      {shown.pager}
     </Panel>
   );
 }

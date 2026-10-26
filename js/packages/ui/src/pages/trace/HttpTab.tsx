@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { Span } from "@wizeworks/lens-core";
 import { fmtMs } from "../../format";
+import { usePagedRows } from "../../ui/PagedRows";
 import { Empty } from "../../ui/Panel";
 import { badgesFor, FindingBadges, rowClass, ServiceChip, type TabProps } from "./tabParts";
 
@@ -32,26 +33,30 @@ function HttpRow({ span, props, kinds }: { span: Span; props: TabProps; kinds: R
 export function HttpTab(props: TabProps) {
   const spans = props.trace.spans.filter(isHttp);
   const kinds = useMemo(() => badgesFor(props.findings), [props.findings]);
+  const shown = usePagedRows(spans, { noun: "calls", key: "http", reset: props.trace.traceId });
   if (spans.length === 0) return <Empty>No HTTP activity in this request.</Empty>;
   return (
-    <div className="wl-table-wrap">
-      <table className="wl-table">
-        <thead>
-          <tr>
-            <th>Direction</th>
-            <th>Method</th>
-            <th>URL / route</th>
-            <th>Service</th>
-            <th className="wl-num">Status</th>
-            <th className="wl-num">Duration</th>
-          </tr>
-        </thead>
-        <tbody>
-          {spans.map((s) => (
-            <HttpRow key={s.spanId} span={s} props={props} kinds={kinds} />
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <div className="wl-table-wrap">
+        <table className="wl-table">
+          <thead>
+            <tr>
+              <th>Direction</th>
+              <th>Method</th>
+              <th>URL / route</th>
+              <th>Service</th>
+              <th className="wl-num">Status</th>
+              <th className="wl-num">Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            {shown.rows.map((s) => (
+              <HttpRow key={s.spanId} span={s} props={props} kinds={kinds} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {shown.pager}
+    </>
   );
 }

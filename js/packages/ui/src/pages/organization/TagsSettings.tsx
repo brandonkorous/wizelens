@@ -86,11 +86,11 @@ export function TagsSettings() {
         </Panel>
       )}
       <Panel title="Your tags" flush>
-        <Table columns={ruleColumns(editable, setEditing, (t) => void remove(t))} rows={own} rowKey={(t) => t.id} empty={<Empty title={tags ? "No tags yet" : "Loading…"}>{tags && "Add one here, or use Tag this on a request, an error, or a service."}</Empty>} />
+        <Table paging={{ noun: "tags", key: "tags" }} columns={ruleColumns(editable, setEditing, (t) => void remove(t))} rows={own} rowKey={(t) => t.id} empty={<Empty title={tags ? "No tags yet" : "Loading…"}>{tags && "Add one here, or use Tag this on a request, an error, or a service."}</Empty>} />
       </Panel>
       {host.mode === "in-app" && <InCodeNote />}
       <Panel title="Built-in tags" flush>
-        <Table columns={builtInColumns(editable, toggle)} rows={list?.tags.filter((t) => t.builtIn) ?? []} rowKey={(t) => t.id} />
+        <Table paging={{ noun: "tags", key: "builtin" }} columns={builtInColumns(editable, toggle)} rows={list?.tags.filter((t) => t.builtIn) ?? []} rowKey={(t) => t.id} />
       </Panel>
     </>
   );

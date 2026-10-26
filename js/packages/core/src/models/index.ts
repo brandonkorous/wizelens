@@ -24,6 +24,7 @@ import { uptimePage } from "./uptime.js";
 import { userPage, usersPage } from "./users.js";
 
 export * from "./input.js";
+export * from "./paged.js";
 export * from "./request-filter.js";
 export * from "./error-filter.js";
 export * from "./error-issues.js";

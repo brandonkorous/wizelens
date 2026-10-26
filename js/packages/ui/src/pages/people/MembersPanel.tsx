@@ -62,7 +62,7 @@ export function MembersPanel({ orgId, me, data, reload }: { orgId: string; me: s
     <Panel title="Members" flush>
       {ctx.manage && bulk.bar}
       {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
-      <Table columns={columns(ctx)} rows={data.members} rowKey={(m) => m.memberId} select={ctx.manage ? bulk.select : undefined} />
+      <Table paging={{ noun: "members", key: "members" }} columns={columns(ctx)} rows={data.members} rowKey={(m) => m.memberId} select={ctx.manage ? bulk.select : undefined} />
       {dialog}
     </Panel>
   );

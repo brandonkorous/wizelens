@@ -69,7 +69,7 @@ function TokensPanel({ orgId, info, reload }: { orgId: string; info: ScimInfo; r
   return (
     <Panel flush>
       {dialog}
-      <Table columns={columns} rows={info.tokens} rowKey={(t) => t.id} empty={<Empty title="No SCIM token yet">Make one, then paste it with the base URL into Okta, Entra ID, or another identity provider.</Empty>} />
+      <Table paging={{ noun: "tokens", key: "tokens" }} columns={columns} rows={info.tokens} rowKey={(t) => t.id} empty={<Empty title="No SCIM token yet">Make one, then paste it with the base URL into Okta, Entra ID, or another identity provider.</Empty>} />
     </Panel>
   );
 }

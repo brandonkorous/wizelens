@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { type ActiveTag, activeTags, isStructuredSearch, LIST_SEARCH_KIND, memorySearchIds, memoryExecutor, type ModelOf, pageContext, type PageName, type Release, runPageSync, type SyncExecutor, type TimeRange, type Trace } from "@wizeworks/lens-core";
-import { useRoute } from "../routes";
+import { CLIENT_PAGING, useRoute } from "../routes";
 import { useChangeTick } from "./changes";
 import { useIssueTick } from "./issues";
 import { publishReleases } from "./releases";
@@ -31,7 +31,8 @@ const OWN_SERVICE: ReadonlySet<PageName> = new Set(["services", "service"]);
 /** Model parameters: the period (custom window, compare), the chosen service, then the route's query (a link's values win). */
 export function withScope(page: PageName, query: Record<string, string>, service: string, period: Record<string, string> = NO_PARAMS): Record<string, string> {
   const scoped: Record<string, string> = service && !OWN_SERVICE.has(page) && !query.service ? { service } : {};
-  return { ...period, ...scoped, ...query };
+  const own = Object.fromEntries(Object.entries(query).filter(([k]) => !CLIENT_PAGING.test(k)));
+  return { ...period, ...scoped, ...own };
 }
 
 /** The period choices as model parameters, kept in step with the stored choices. */
