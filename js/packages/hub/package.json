@@ -1,6 +1,6 @@
 {
   "name": "@wizeworks/lens-hub",
-  "version": "0.3.0-alpha.12",
+  "version": "0.3.0-alpha.13",
   "description": "The WizeLens local hub: one place for the traces of every service on your machine or network, with the full dashboard and MCP.",
   "license": "MIT",
   "author": "WizeWorks LLC",

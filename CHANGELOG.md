@@ -2,48 +2,7 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] — Fewer false alarms
-
-### Fixed
-
-- **Counts and ids are no longer taken for card numbers.** A digit run is redacted as `[redacted:card]` only when it
-  has a real card brand's prefix and length (Visa, Mastercard including 2221-2720, Amex, Diners, JCB, Discover,
-  UnionPay) and a valid Luhn sum. Digits that are part of a decimal number (`0.4111…`), that follow a count or id label
-  (`"remaining_count": …`), or that sit under a count, size, time, or id attribute key (`*.count`, `*.id`, `*_ms`) stay
-  as they are. This ends the false "Card number in span data" finding on a count such as AgConnect's founder slots.
-  Node and .NET.
-- **Scanners that hide their paths with percent codes count as bots.** A path is decoded (twice, for `%2500`),
-  stripped of control characters such as `%00`, and its slashes collapsed before the scanner-path match, so
-  `/%00.env.swp` or `/%2e%67it/config` is a bot request like `/.env.swp` and `/.git/config`: its errors are bot-only
-  and not critical, and it stays out of traffic Problems.
-- **Settling and the services page stay fast as data grows.** When a trace gets more data, the cloud now finds the rows
-  it wrote before in one small lookup, where it used to search the whole project (up to 90 seconds). Trace and span
-  counts, environments, and project health read small hourly totals in place of every trace. A trace that two projects
-  share still counts once.
-- **Search suggestions for `@` attributes answer at once.** Attribute keys and values come from hourly counts, where they
-  used to join every attribute row (one took 22 minutes). The cloud rebuilds its stats once after the update, so older
-  data shows in them too; pages fill back in as the rebuild runs.
-- **The cloud's ClickHouse disk is twice as fast.** It is now 128 GiB (Azure P10: 500 IOPS, 100 MB/s), where 64 GiB
-  (P6: 50 MB/s) made busy reads wait for the disk. The deploy grows the disk in place when its size in
-  `deploy/k8s/base/clickhouse.yaml` grows, without a restart.
-- **Settling reads far less to load a trace.** A trace's spans and logs sit in several parts of the table, and each
-  part used to be read for every trace. A bloom filter on the trace id now skips the parts that do not hold it, so a
-  batch of 200 traces reads about a quarter of the 7 million rows it read before (over 1 second). Older data gets the
-  filter once, in the background, after the update.
-- **A Next.js `notFound()` or `redirect()` is not an error, whatever SDK sent it.** The cloud and hubs now drop
-  control-flow exceptions when they read a trace: `NEXT_HTTP_ERROR_FALLBACK;*` (404, 403, 401), `NEXT_REDIRECT*`,
-  `NEXT_NOT_FOUND`, `NoFallbackError`, and a Better Auth 4xx `APIError`, matched by type, message, or digest, with or
-  without an `Error:` head. The error status they caused goes too, so the span and its request count by their HTTP
-  status (a 404 page is a 404, not an exception). Before, only the Node add-on dropped them, so apps on an older add-on
-  showed every not-found page as an exception. The rule lives in core and the Node add-on uses the same one. Stats
-  already built keep their old counts; new traces count the new way.
-- **React commit counts match what the app rendered.** `wizelens.react.commits` counted every commit React reported,
-  also the ones where no component of the app re-rendered (the root rendered again with the same tree, as the Next.js
-  router does, or a commit that only touched framework fibers). A page could show 620 commits next to about 100
-  component renders. The React add-on now counts a commit only when it rendered at least one app component, so commits
-  are never more than renders. Component render counts were right and do not change.
-
-## [0.3.0-alpha.12] — Settings by task, and numbers that match reality
+## [0.3.0-alpha.13] — Settings by task, and numbers that match reality
 
 ### Added
 
@@ -213,6 +172,42 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   `/.git/`, `/.srcgraph/`, `debug.log`). Its errors are never critical; each error group counts how many came from
   bots, and a group of only bot hits shows "Bot-only" in place of "Error". Services rows count bot requests apart, and
   "Traffic above normal" Problems count only the rest, so a burst of `GET /.env` is no longer a Problem.
+- **Counts and ids are no longer taken for card numbers.** A digit run is redacted as `[redacted:card]` only when it
+  has a real card brand's prefix and length (Visa, Mastercard including 2221-2720, Amex, Diners, JCB, Discover,
+  UnionPay) and a valid Luhn sum. Digits that are part of a decimal number (`0.4111…`), that follow a count or id label
+  (`"remaining_count": …`), or that sit under a count, size, time, or id attribute key (`*.count`, `*.id`, `*_ms`) stay
+  as they are. This ends the false "Card number in span data" finding on a count such as AgConnect's founder slots.
+  Node and .NET.
+- **Scanners that hide their paths with percent codes count as bots.** A path is decoded (twice, for `%2500`),
+  stripped of control characters such as `%00`, and its slashes collapsed before the scanner-path match, so
+  `/%00.env.swp` or `/%2e%67it/config` is a bot request like `/.env.swp` and `/.git/config`: its errors are bot-only
+  and not critical, and it stays out of traffic Problems.
+- **Settling and the services page stay fast as data grows.** When a trace gets more data, the cloud now finds the rows
+  it wrote before in one small lookup, where it used to search the whole project (up to 90 seconds). Trace and span
+  counts, environments, and project health read small hourly totals in place of every trace. A trace that two projects
+  share still counts once.
+- **Search suggestions for `@` attributes answer at once.** Attribute keys and values come from hourly counts, where they
+  used to join every attribute row (one took 22 minutes). The cloud rebuilds its stats once after the update, so older
+  data shows in them too; pages fill back in as the rebuild runs.
+- **The cloud's ClickHouse disk is twice as fast.** It is now 128 GiB (Azure P10: 500 IOPS, 100 MB/s), where 64 GiB
+  (P6: 50 MB/s) made busy reads wait for the disk. The deploy grows the disk in place when its size in
+  `deploy/k8s/base/clickhouse.yaml` grows, without a restart.
+- **Settling reads far less to load a trace.** A trace's spans and logs sit in several parts of the table, and each
+  part used to be read for every trace. A bloom filter on the trace id now skips the parts that do not hold it, so a
+  batch of 200 traces reads about a quarter of the 7 million rows it read before (over 1 second). Older data gets the
+  filter once, in the background, after the update.
+- **A Next.js `notFound()` or `redirect()` is not an error, whatever SDK sent it.** The cloud and hubs now drop
+  control-flow exceptions when they read a trace: `NEXT_HTTP_ERROR_FALLBACK;*` (404, 403, 401), `NEXT_REDIRECT*`,
+  `NEXT_NOT_FOUND`, `NoFallbackError`, and a Better Auth 4xx `APIError`, matched by type, message, or digest, with or
+  without an `Error:` head. The error status they caused goes too, so the span and its request count by their HTTP
+  status (a 404 page is a 404, not an exception). Before, only the Node add-on dropped them, so apps on an older add-on
+  showed every not-found page as an exception. The rule lives in core and the Node add-on uses the same one. Stats
+  already built keep their old counts; new traces count the new way.
+- **React commit counts match what the app rendered.** `wizelens.react.commits` counted every commit React reported,
+  also the ones where no component of the app re-rendered (the root rendered again with the same tree, as the Next.js
+  router does, or a commit that only touched framework fibers). A page could show 620 commits next to about 100
+  component renders. The React add-on now counts a commit only when it rendered at least one app component, so commits
+  are never more than renders. Component render counts were right and do not change.
 
 ## [0.3.0-alpha.11] — Clearer hub warnings, and HUD findings first
 
