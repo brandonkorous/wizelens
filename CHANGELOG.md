@@ -32,6 +32,11 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
     older" is gone. `GET api/orgs/<org>/audit` takes `offset`, and `GET api/orgs/<org>/audit/count` gives the total.
   - **Search** steps through results with Previous and Next: "51–100 of 390+ requests". Export saves every result
     loaded so far.
+- **A page that prefetches all its links no longer shows a burst of failed calls, whatever SDK sent it.** Browser
+  SDKs before 0.3.0-alpha.13 recorded a Next.js router prefetch (`?_rsc=`) that the browser dropped as
+  `FetchError: Failed to fetch`. When the cloud and hubs read a trace, they now mark such a fetch as a prefetch
+  (`wizelens.browser.prefetch`), with no error and no exception, as newer SDKs do, so it stays out of the Web App row
+  and its errors.
 
 ## [0.3.0-alpha.13] — Settings by task, and numbers that match reality
 
