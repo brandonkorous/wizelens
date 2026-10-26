@@ -34,14 +34,14 @@ const STATUSES: [string, string][] = [["unresolved", "Open"], ["resolved", "Fixe
 function Filters({ issues, releases }: { issues: boolean; releases: string[] }) {
   const q = useRoute().query;
   const [scope] = useServiceScope();
-  const [text, setText] = useSearchText(q.get("q") ?? "", {});
+  const [text, setText] = useSearchText(q.get("q") ?? "", { page: null });
   return (
     <Panel className="wl-filters">
       <ServiceSelect value={q.get("service") ?? scope} />
-      {issues && <Select label="Status" value={q.get("status") ?? "unresolved"} onChange={(v) => setQuery({ status: v === "unresolved" ? null : v, key: null })} options={STATUSES} />}
-      {releases.length > 0 && <Select label="Release" value={q.get("release") ?? ""} onChange={(v) => setQuery({ release: v || null, key: null })} options={[["", "Any Release"], ...releases.map((v): [string, string] => [v, `New in ${v}`])]} />}
-      <Select label="Area" value={q.get("area") ?? "all"} onChange={(v) => setQuery({ area: v === "all" ? null : v })} options={[["all", "All Areas"], ["database", "Database"], ["http", "HTTP"], ["render", "Rendering"]]} />
-      <Select label="Impact" value={q.get("impact") ?? "all"} onChange={(v) => setQuery({ impact: v === "all" ? null : v })} options={[["all", "All Impacts"], ["high", "High"], ["medium", "Medium"], ["low", "Low"]]} />
+      {issues && <Select label="Status" value={q.get("status") ?? "unresolved"} onChange={(v) => setQuery({ status: v === "unresolved" ? null : v, key: null, page: null })} options={STATUSES} />}
+      {releases.length > 0 && <Select label="Release" value={q.get("release") ?? ""} onChange={(v) => setQuery({ release: v || null, key: null, page: null })} options={[["", "Any Release"], ...releases.map((v): [string, string] => [v, `New in ${v}`])]} />}
+      <Select label="Area" value={q.get("area") ?? "all"} onChange={(v) => setQuery({ area: v === "all" ? null : v, page: null })} options={[["all", "All Areas"], ["database", "Database"], ["http", "HTTP"], ["render", "Rendering"]]} />
+      <Select label="Impact" value={q.get("impact") ?? "all"} onChange={(v) => setQuery({ impact: v === "all" ? null : v, page: null })} options={[["all", "All Impacts"], ["high", "High"], ["medium", "Medium"], ["low", "Low"]]} />
       <SearchInput value={text} onChange={setText} placeholder="Search by query, endpoint, route, or component…" />
       <FilterChips chips={[["Endpoint", "endpoint", q.get("endpoint") ?? ""]]} />
     </Panel>
@@ -56,7 +56,7 @@ function InsightsBody({ m, wanted }: { m: InsightsModel; wanted: string | null }
       <Filters issues={m.hasIssues} releases={m.releases.map((r) => r.version)} />
       <div className={`wl-grid${wanted ? " wl-grid-side" : ""}`}>
         <Panel flush title={`Insights (${fmtCount(m.matching)})`} action={<ExportButton page="insights" disabled={m.matching === 0} />}>
-          <InsightList groups={m.groups} issues={m.issues} selected={m.selected?.key ?? null} now={now} filtered={m.matching !== m.totals.count} />
+          <InsightList groups={m.groups} issues={m.issues} selected={m.selected?.key ?? null} now={now} filtered={m.matching !== m.totals.count} paging={m.paging} />
         </Panel>
         {wanted && (m.selected ? <InsightDetail group={m.selected} info={m.issues[m.selected.key]} users={m.selectedUsers} now={now} /> : <Panel><Empty title="This insight is not in the selected time range" /></Panel>)}
       </div>

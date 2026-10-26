@@ -41,7 +41,7 @@ function Body({ m }: { m: UserModel }) {
   const tags = useGroupTags()("users", userDoc(m.user));
   const t = m.totals!;
   const named: [string, ReactNode][] = t.name ? [["User id", <span className="wl-mono">{m.user}</span>]] : [];
-  const stats: [string, ReactNode][] = [...named, ["Requests", fmtCount(t.requests)], ["Failed", fmtCount(t.errors)], ["Error groups", fmtCount(m.errors.length)]];
+  const stats: [string, ReactNode][] = [...named, ["Requests", fmtCount(t.requests)], ["Failed", fmtCount(t.errors)], ["Error groups", fmtCount(m.paging.errors.total)]];
   const actions = (
     <span className="wl-row-actions">
       <ViewAll href={hrefTo("requests", [], links)} label="Requests" />
@@ -59,14 +59,14 @@ function Body({ m }: { m: UserModel }) {
       </Panel>
       <div className="wl-grid wl-grid-2-even">
         <Panel title="Errors They Hit" flush>
-          <GroupTaggedTable group="errors" docOf={(e) => errorGroupDoc(e.group)} tagged="e" columns={[{ key: "e", header: "Error", className: "wl-cell-wide", cell: (e) => <span className="wl-truncate">{e.group.type}: {e.group.message}</span> }, { key: "n", header: "Times", num: true, cell: (e) => fmtCount(e.count) }]} rows={m.errors} rowKey={(e) => e.group.key} onRowClick={(e) => navigate(errorHref(e.group.key))} empty={<Empty>No errors in this range.</Empty>} />
+          <GroupTaggedTable group="errors" docOf={(e) => errorGroupDoc(e.group)} tagged="e" columns={[{ key: "e", header: "Error", className: "wl-cell-wide", cell: (e) => <span className="wl-truncate">{e.group.type}: {e.group.message}</span> }, { key: "n", header: "Times", num: true, sort: (e) => e.count, cell: (e) => fmtCount(e.count) }]} rows={m.errors} served={{ info: m.paging.errors, noun: "errors" }} rowKey={(e) => e.group.key} onRowClick={(e) => navigate(errorHref(e.group.key))} empty={<Empty>No errors in this range.</Empty>} />
         </Panel>
         <Panel title="Slowest Requests" flush>
           <TaggedTable kind="requests" itemOf={traceRow} tagged="path" columns={REQUEST_COLUMNS} rows={m.slowest} rowKey={(r) => r.traceId} onRowClick={(r) => navigate(traceHref(r.traceId))} empty={<Empty>No requests.</Empty>} />
         </Panel>
       </div>
       <Panel title="Newest Requests" flush>
-        <TaggedTable kind="requests" itemOf={traceRow} tagged="path" columns={REQUEST_COLUMNS} rows={m.recent} rowKey={(r) => r.traceId} onRowClick={(r) => navigate(hrefTo("requests", [], { trace: r.traceId }))} empty={<Empty>No requests.</Empty>} />
+        <TaggedTable kind="requests" itemOf={traceRow} tagged="path" columns={REQUEST_COLUMNS} rows={m.recent} served={{ info: m.paging.recent, noun: "requests" }} rowKey={(r) => r.traceId} onRowClick={(r) => navigate(hrefTo("requests", [], { trace: r.traceId }))} empty={<Empty>No requests.</Empty>} />
       </Panel>
     </>
   );

@@ -8,7 +8,8 @@ import { bucketStarts, percentOf } from "../stats/common.js";
 import type { ErrorGroup } from "../stats/errors.js";
 import { CHART_BUCKETS } from "./database.js";
 import { errorGroupOf } from "./errors.js";
-import { META_NEEDS, type ModelMeta, metaOf, pageParams } from "./input.js";
+import { META_NEEDS, type ModelMeta, type ModelParams, metaOf, pageParams } from "./input.js";
+import { groupPage, type PageInfo } from "./paged.js";
 import { avgs, byDesc, groupCount, groupNeed, listNeed, listOf, rowsOf, type Series, uniqueNeeds } from "./read.js";
 
 export interface UserRow {
@@ -78,18 +79,24 @@ export interface UserModel {
   slowest: RequestItem[];
   /** Error groups the user ran into, most often first, with how many times. */
   errors: { group: ErrorGroup; count: number }[];
+  /** Where the pages of the newest requests ("req") and the errors ("err") sit. */
+  paging: { recent: PageInfo; errors: PageInfo };
 }
 
-/** One user's page. Params: user. */
+/** Newest requests and error groups a page shows at first. */
+export const USER_PAGE_SIZE = 10;
+const userErrorPage = (p: ModelParams) => groupPage(p, "err", USER_PAGE_SIZE, { n: "n" }, { key: "n", desc: true });
+
+/** One user's page. Params: user; reqpage, reqsize for the newest requests; errpage, errsize, errsort for the errors. */
 export const userPage: PageDef<UserModel> = {
   needs: (ctx) => {
     const user = ctx.params.user ?? "";
     return uniqueNeeds([
       ...META_NEEDS,
       groupNeed("usr", "usr", "cur", { hist: true, top: true, filter: { keys: [user] } }),
-      listNeed("recent", "requests", "cur", { filter: { user }, sort: { key: "time", desc: true }, limit: 25, aggregate: { buckets: CHART_BUCKETS } }),
+      listNeed("recent", "requests", "cur", { filter: { user }, sort: { key: "time", desc: true }, page: pageParams(ctx.params, USER_PAGE_SIZE, "req"), aggregate: { buckets: CHART_BUCKETS } }),
       listNeed("slowest", "requests", "cur", { filter: { user }, sort: { key: "duration", desc: true }, limit: 10 }),
-      groupNeed("u.groups", "err.u", "cur", { filter: { parts: [null, user] }, order: { by: "n", desc: true, limit: 50 } }),
+      groupNeed("u.groups", "err.u", "cur", { filter: { parts: [null, user] }, order: userErrorPage(ctx.params).order }),
     ]);
   },
   followUp(_ctx, first) {
@@ -99,7 +106,8 @@ export const userPage: PageDef<UserModel> = {
   model(d) {
     const user = d.params.user ?? "";
     const a = rowsOf(d, "usr")[0]?.agg;
-    const series = listOf(d, "recent").aggregate?.series ?? [];
+    const recent = listOf<RequestItem>(d, "recent");
+    const series = recent.aggregate?.series ?? [];
     const groups = new Map(rowsOf(d, "groups").map((r) => [r.key, errorGroupOf(r)]));
     const errors = rowsOf(d, "u.groups").flatMap((r) => {
       const g = groups.get(splitKey(r.key)[0]!);
@@ -111,9 +119,13 @@ export const userPage: PageDef<UserModel> = {
       totals: a?.n ? rowOf(user, a) : null,
       starts: bucketStarts(d.window, CHART_BUCKETS),
       chart: { requests: series.map((s) => s.n), errors: series.map((s) => s.err), avgMs: avgs(series) },
-      recent: listOf<RequestItem>(d, "recent").items,
+      recent: recent.items,
       slowest: listOf<RequestItem>(d, "slowest").items,
       errors,
+      paging: {
+        recent: { key: "req", total: recent.total ?? recent.items.length, page: recent.page, size: recent.pageSize || USER_PAGE_SIZE, sort: null },
+        errors: userErrorPage(d.params).paging(groupCount(d, "u.groups")),
+      },
     };
   },
 };

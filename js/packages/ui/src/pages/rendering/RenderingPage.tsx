@@ -29,7 +29,7 @@ function Cards({ data }: { data: RenderingModel }) {
 
 /** Text that narrows the route and component tables. */
 function RenderSearch() {
-  const [text, setText] = useSearchText(useRoute().query.get("q") ?? "", {});
+  const [text, setText] = useSearchText(useRoute().query.get("q") ?? "", { rtpage: null, cmppage: null });
   return (
     <section className="wl-panel wl-filters">
       <SearchInput value={text} onChange={setText} placeholder="Search routes and components…" />
@@ -45,7 +45,6 @@ export function RenderingPage() {
 
 export function AllRendering() {
   const { model: data, loading, error } = usePageModel("rendering");
-  const all = useRoute().query.get("all");
   const empty = !data || (data.views === 0 && !data.hasReact);
   return (
     <>
@@ -62,8 +61,8 @@ export function AllRendering() {
           </div>
           <RenderSearch />
           <div className="wl-grid">
-            <RouteTable routes={data.routes} total={data.routeCount} all={all === "routes"} />
-            <ComponentTable components={data.components} total={data.componentCount} hasReact={data.hasReact} all={all === "components"} />
+            <RouteTable routes={data.routes} paging={data.routePaging} />
+            <ComponentTable components={data.components} paging={data.componentPaging} hasReact={data.hasReact} />
           </div>
         </>
       )}

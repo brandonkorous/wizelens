@@ -1,4 +1,4 @@
-import type { InsightGroup, IssueInfo } from "@wizeworks/lens-core";
+import type { InsightGroup, IssueInfo, PageInfo } from "@wizeworks/lens-core";
 import { fmtAgo, fmtCount, fmtMs } from "../../format";
 import { setQuery } from "../../routes";
 import { ImpactBadge } from "../../ui/Badges";
@@ -42,9 +42,10 @@ export interface InsightListProps {
   selected: string | null;
   now: number;
   filtered: boolean;
+  paging: PageInfo;
 }
 
-export function InsightList({ groups, issues, selected, now, filtered }: InsightListProps) {
+export function InsightList({ groups, issues, selected, now, filtered, paging }: InsightListProps) {
   const empty = filtered ? (
     <Empty title="No insights match these filters" />
   ) : (
@@ -57,6 +58,7 @@ export function InsightList({ groups, issues, selected, now, filtered }: Insight
       <Table
         columns={columns(now, selected !== null, issues)}
         rows={groups}
+        served={{ info: paging, noun: "insights" }}
         rowKey={(g) => g.key}
         selectedKey={selected}
         onRowClick={(g) => setQuery({ key: g.key === selected ? null : g.key })}

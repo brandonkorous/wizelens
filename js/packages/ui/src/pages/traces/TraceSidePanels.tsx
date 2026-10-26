@@ -51,18 +51,12 @@ function color(kind: LayerKind | "owner", key: string, names: string[]): string 
 
 /** The slowest spans below the request roots. */
 export function CriticalSpansPanel({ critical }: { critical: readonly CriticalSpan[] }) {
-  const [all, setAll] = useState(false);
-  const spans = critical.slice(0, all ? 25 : 6);
-  const services = [...new Set(spans.map((s) => s.service))];
-  const action = critical.length > 6 && (
-    <button type="button" className="wl-view-all wl-link-btn" onClick={() => setAll(!all)}>
-      {all ? "Show fewer" : `View all ${critical.length}`}
-    </button>
-  );
+  const services = [...new Set(critical.map((s) => s.service))];
   return (
-    <Panel title="Critical Spans" action={action}>
+    <Panel title="Critical Spans">
       <Table
-        rows={spans}
+        paging={{ noun: "spans", key: "critical", size: 6 }}
+        rows={critical}
         rowKey={(s) => `${s.traceId}:${s.spanId}`}
         onRowClick={(s) => navigate(traceHref(s.traceId))}
         empty={<Empty>No spans below the request roots yet.</Empty>}

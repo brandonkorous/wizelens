@@ -40,9 +40,12 @@ interface N1Group {
 
 const iso = (ms: number) => new Date(ms).toISOString();
 
+/** Insight groups read from the stats: one page this long holds them all. */
+const N1_STATS = 5000;
+
 /** From the stats: the N+1 insights of the whole range, at the host's threshold. */
 async function fromStats(data: McpDataSource, range: TimeRange): Promise<N1Group[]> {
-  const m = await data.page!("insights", range, { status: "all" });
+  const m = await data.page!("insights", range, { status: "all", size: String(N1_STATS) });
   return m.groups
     .filter((g) => g.kind === "n+1-db" || g.kind === "n+1-http")
     .map((g) => ({ kind: g.kind === "n+1-db" ? "db" : "http", shape: g.shape, endpoints: g.endpoints.slice(0, 5), requests: g.occurrences, repeats: g.count, totalMs: Math.round(g.totalMs), lastSeen: iso(g.lastSeenMs), exampleTraceId: g.exampleTraceId }));

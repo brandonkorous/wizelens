@@ -24,12 +24,12 @@ export function LogFilters({ stats }: { stats: LogsModel }) {
   const { filter, services } = stats;
   return (
     <section className="wl-panel wl-filters">
-      <Select label="Minimum level" value={filter.minLevel} options={LEVEL_OPTIONS} onChange={(v) => setQuery({ level: v === "trace" ? null : v, page: null })} />
+      <Select label="Minimum level" value={filter.minLevel} options={LEVEL_OPTIONS} onChange={(v) => setQuery({ level: v === "trace" ? null : v, page: null, patpage: null })} />
       <ServiceSelect value={filter.service} services={services} />
       <ListQueryBar value={filter.query} placeholder="Messages, categories, or trace IDs; or level:error service:api" />
-      <Check label="This level only" disabled={filter.minLevel === "trace"} checked={!!filter.exact} onChange={(e) => setQuery({ exact: e.target.checked ? "1" : null, page: null })} />
-      <Select label="Written" value={filter.origin ?? ""} options={ORIGIN_OPTIONS} onChange={(v) => setQuery({ origin: v || null, page: null })} />
-      <button type="button" className="wl-btn" onClick={() => setQuery({ level: null, exact: null, category: null, trace: null, q: null, pattern: null, origin: null, user: null, page: null })}>
+      <Check label="This level only" disabled={filter.minLevel === "trace"} checked={!!filter.exact} onChange={(e) => setQuery({ exact: e.target.checked ? "1" : null, page: null, patpage: null })} />
+      <Select label="Written" value={filter.origin ?? ""} options={ORIGIN_OPTIONS} onChange={(v) => setQuery({ origin: v || null, page: null, patpage: null })} />
+      <button type="button" className="wl-btn" onClick={() => setQuery({ level: null, exact: null, category: null, trace: null, q: null, pattern: null, origin: null, user: null, page: null, patpage: null })}>
         <RotateCcw aria-hidden="true" /> Reset
       </button>
       <FilterChips chips={[["Category", "category", filter.category ?? ""], ["Trace", "trace", filter.traceId ?? ""], ["Pattern", "pattern", filter.pattern ?? ""], ["User", "user", filter.user ?? ""]]} />

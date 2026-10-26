@@ -1,8 +1,9 @@
 import { Fragment, type MouseEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { slicePage } from "@wizeworks/lens-core";
+import { type PageInfo, slicePage } from "@wizeworks/lens-core";
+import { setQuery } from "../routes";
 import { Pager } from "./Controls";
-import { type TablePaging, useTablePaging } from "./paging";
+import { sortQuery, type TablePaging, urlPaging, useTablePaging } from "./paging";
 
 export interface Column<T> {
   key: string;
@@ -30,6 +31,8 @@ export interface TableProps<T> {
   select?: TableSelect;
   /** Pages in the browser, with the shared pager under the table. */
   paging?: TablePaging;
+  /** Sorted and paged by the server: `rows` is the page it sent. Header clicks and page buttons go to the URL. */
+  served?: { info: PageInfo; noun: string };
 }
 
 export interface TableSelect {
@@ -152,17 +155,20 @@ function TableBody<T>({ columns, shown, rowKey, onRowClick, selectedKey, detail,
 
 /** A plain data table with optional sorting, row clicks, a selected row, tick boxes, and pages. It sorts every row, then pages. */
 export function Table<T>(props: TableProps<T>) {
-  const { columns, rows, empty, defaultSort, paging } = props;
-  const [sort, setSort] = useState(defaultSort ?? null);
-  const sorted = useSorted(rows, columns, sort);
+  const { columns, rows, empty, defaultSort, paging, served } = props;
+  const [own, setOwn] = useState(defaultSort ?? null);
+  const sorted = useSorted(rows, columns, served ? null : own);
   const pg = useTablePaging(paging);
-  const onSort = (key: string) => (setSort((s) => (s?.key === key ? { key, desc: !s.desc } : { key, desc: true })), paging && pg.onPage(1));
-  if (rows.length === 0 && empty) return <>{empty}</>;
+  const sort = served ? served.info.sort : own;
+  const ownSort = (key: string) => (setOwn((s) => (s?.key === key ? { key, desc: !s.desc } : { key, desc: true })), paging && pg.onPage(1));
+  const onSort = served ? (key: string) => setQuery(sortQuery(served.info, key)) : ownSort;
+  if (rows.length === 0 && empty && !(served && served.info.total > 0)) return <>{empty}</>;
   const shown = paging ? slicePage(sorted, pg.page, pg.size) : { rows: sorted, page: 1 };
   return (
     <>
       <TableBody {...props} shown={shown.rows} sort={sort} onSort={onSort} />
       {paging && <Pager page={shown.page} pageSize={pg.size} total={rows.length} noun={paging.noun} onPage={pg.onPage} onPageSize={pg.onPageSize} />}
+      {served && <Pager page={served.info.page} pageSize={served.info.size} total={served.info.total} noun={served.noun} {...urlPaging(served.info.key)} />}
     </>
   );
 }

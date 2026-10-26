@@ -1,4 +1,4 @@
-import { type IssueInfo, type SecurityGroup, SECURITY_LABELS } from "@wizeworks/lens-core";
+import { type IssueInfo, type PageInfo, type SecurityGroup, SECURITY_LABELS } from "@wizeworks/lens-core";
 import { fmtAgo, fmtCount } from "../../format";
 import { setQuery } from "../../routes";
 import { Badge, ImpactBadge } from "../../ui/Badges";
@@ -41,9 +41,10 @@ export interface SecurityListProps {
   selected: string | null;
   now: number;
   filtered: boolean;
+  paging: PageInfo;
 }
 
-export function SecurityList({ groups, issues, selected, now, filtered }: SecurityListProps) {
+export function SecurityList({ groups, issues, selected, now, filtered, paging }: SecurityListProps) {
   const empty = filtered ? (
     <Empty title="No risks match these filters" />
   ) : (
@@ -56,6 +57,7 @@ export function SecurityList({ groups, issues, selected, now, filtered }: Securi
       <Table
         columns={columns(now, selected !== null, issues)}
         rows={groups}
+        served={{ info: paging, noun: "risks" }}
         rowKey={(g) => g.key}
         selectedKey={selected}
         onRowClick={(g) => setQuery({ key: g.key === selected ? null : g.key })}

@@ -53,9 +53,9 @@ export interface PagerProps {
 /** The size choices, with the size in use when it is not one of them. */
 const sizeOptions = (size: number): [string, string][] => [...new Set([...PAGE_SIZES, size])].sort((a, b) => a - b).map((s) => [String(s), `${s} / page`]);
 
-/** Page buttons and the size menu. Hidden when every row fits on the smallest page. */
+/** Page buttons and the size menu. Hidden when every row fits on one page of the smallest size. */
 export function Pager({ page, pageSize, total, noun, onPage, onPageSize }: PagerProps) {
-  if (total <= PAGE_SIZES[0]!) return null;
+  if (total <= Math.min(PAGE_SIZES[0]!, pageSize)) return null;
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);

@@ -3,9 +3,9 @@ import type { PageData, PageDef } from "../scale/needs.js";
 import { OWASP_CATEGORIES, type OwaspId } from "../security/kinds.js";
 import { percentChange, series, type TimeWindow } from "../stats/common.js";
 import { type Headline, SPARK_BUCKETS } from "../stats/overview.js";
-import { MODEL_LIST_MAX } from "./database.js";
 import { type IssueInfo, isIssueFilter } from "./error-issues.js";
 import { META_NEEDS, type ModelMeta, type ModelParams, metaOf, serviceParam } from "./input.js";
+import { GROUP_PAGE_SIZE, IMPACT_RANK, type PageInfo, pagedRows, type SortValue } from "./paged.js";
 import { groupNeed, rowsOf, uniqueNeeds } from "./read.js";
 import { firstSeenBounds, inBounds, releasesNeed, releasesOf } from "./release-rows.js";
 import type { PackageScan } from "../packages.js";
@@ -35,9 +35,10 @@ export interface SecurityModel {
   found: Headline;
   /** The OWASP Top 10:2025, each with its risks under the status, release, and service filters. */
   categories: SecurityCategory[];
-  /** Groups that match every filter, most important first. */
+  /** One page of the groups that match every filter, most important first or in the `sort` column's order. */
   groups: SecurityGroup[];
   matching: number;
+  paging: PageInfo;
   selected: SecurityGroup | null;
   issues: Record<string, IssueInfo>;
   hasIssues: boolean;
@@ -46,6 +47,16 @@ export interface SecurityModel {
   /** What the host checked against OSV; null where packages are not checked. */
   scan: PackageScan | null;
 }
+
+/** Columns the security list sorts by (sort=-seen). */
+const SECURITY_SORTS: Record<string, SortValue<SecurityGroup>> = {
+  impact: (g) => IMPACT_RANK[g.impact],
+  title: (g) => g.title,
+  owasp: (g) => g.owasp,
+  kind: (g) => g.kind,
+  seen: (g) => g.occurrences,
+  last: (g) => g.lastSeenMs,
+};
 
 const totalsOf = (groups: readonly SecurityGroup[]): SecurityTotals => ({
   count: groups.length,
@@ -106,14 +117,16 @@ export const securityPage: PageDef<SecurityModel> = {
     const bounds = firstSeenBounds(d, "rel.svc", service ? (d.params.release ?? "") : "", null);
     const scoped = groups.filter((g) => shown(g) && (!bounds || inBounds(bounds, all[g.key]!.firstSeenMs)));
     const visible = scoped.filter((g) => matches(g, d.params));
+    const page = pagedRows(visible, d.params, "", GROUP_PAGE_SIZE, SECURITY_SORTS);
     return {
       meta: metaOf(d),
       totals: totalsOf(groups),
       prevTotals: totalsOf(prev),
       found: securityHeadline(groups, prev, d.window),
       categories: categoriesOf(scoped),
-      groups: visible.slice(0, MODEL_LIST_MAX),
+      groups: page.rows,
       matching: visible.length,
+      paging: page.paging,
       selected: d.params.key ? (groups.find((g) => g.key === d.params.key) ?? null) : null,
       issues: all,
       hasIssues: !!d.issues,

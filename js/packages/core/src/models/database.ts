@@ -7,7 +7,8 @@ import { type DbSummary, OPERATIONS, type OperationRow, type QueryRow, type Tabl
 import type { InsightGroup } from "../stats/insights.js";
 import { SPARK_BUCKETS } from "../stats/overview.js";
 import { type QueryFilter, queryFilterOf, queryListNeed, queryOfKey, QUERY_PAGE_SIZE } from "./database-filter.js";
-import { META_NEEDS, type ModelMeta, metaOf, pageParams, scoped } from "./input.js";
+import { META_NEEDS, type ModelMeta, type ModelParams, metaOf, pageParams, scoped } from "./input.js";
+import { groupPage, type PageInfo } from "./paged.js";
 import { insightGroupsOf, insightNeeds } from "./insight-groups.js";
 import { aggByKey, avgs, byDesc, counter, counts, groupCount, groupNeed, type Row, rowsOf, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
 
@@ -29,9 +30,10 @@ export interface DatabaseModel {
   size: number;
   /** Databases, as the Services page names them, for the database filter. */
   databases: string[];
+  /** One page of the tables (URL key "tbl"), most queries first or in the `tblsort` column's order. */
   tables: TableRow[];
-  /** Tables before the list limit. */
   tableCount: number;
+  tablePaging: PageInfo;
   operations: OperationRow[];
   starts: number[];
   chart: { total: Series; slow: Series; avg: Series };
@@ -88,9 +90,15 @@ function changeOf(d: PageData, summary: DbSummary, insights: number): DatabaseMo
   };
 }
 
-const LIST = { order: { by: "n", desc: true, limit: MODEL_LIST_MAX } } as const;
+/** Tables a page of hotspots shows at first. */
+export const TABLE_PAGE_SIZE = 5;
 
-/** The Database page. Params: the filter (`queryFilterOf`), page, and size. */
+/** Columns the hotspots sort by (tblsort=-avg): the group orders behind them. */
+const TABLE_ORDERS = { queries: "n", avg: "avg", rows: "c1" } as const;
+
+const tablePage = (p: ModelParams) => groupPage(p, "tbl", TABLE_PAGE_SIZE, TABLE_ORDERS, { key: "queries", desc: true });
+
+/** The Database page. Params: the filter (`queryFilterOf`), page, and size; tblpage, tblsize, and tblsort for the table hotspots. */
 export const databasePage: PageDef<DatabaseModel> = {
   needs: (ctx) => {
     const f = queryFilterOf(ctx.params);
@@ -104,7 +112,7 @@ export const databasePage: PageDef<DatabaseModel> = {
       ...insightNeeds("prev", "requests", service),
       queryListNeed(f, ctx.params),
       groupNeed("db.qe", "db.qe", "cur", one),
-      groupNeed("db.t", "db.t", "cur", { ...LIST, ...one }),
+      groupNeed("db.t", "db.t", "cur", { order: tablePage(ctx.params).order, ...one }),
       groupNeed("db.op", "db.op", "cur", one),
       groupNeed("dbs", "svc", "cur", { filter: { prefix: "db:" } }),
       seriesNeed("chart", "db", "cur", CHART_BUCKETS, one),
@@ -127,6 +135,7 @@ export const databasePage: PageDef<DatabaseModel> = {
       databases: rowsOf(d, "dbs").map((r) => r.key.slice(3)).sort(),
       tables: tablesOf(d),
       tableCount: groupCount(d, "db.t"),
+      tablePaging: tablePage(d.params).paging(groupCount(d, "db.t")),
       operations: operationsOf(d),
       starts: bucketStarts(d.window, CHART_BUCKETS),
       chart: chartOf(seriesOf(d, "chart", CHART_BUCKETS)),

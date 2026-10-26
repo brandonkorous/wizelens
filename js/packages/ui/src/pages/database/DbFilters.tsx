@@ -14,9 +14,9 @@ const pairs = (list: string[]): [string, string][] => list.map((v) => [v, v]);
 export function DbFilters({ stats }: { stats: DatabaseModel }) {
   const f = stats.filter;
   const [text, setText] = useSearchText(f.q);
-  const set = (key: string) => (value: string) => setQuery({ [key]: value || null, page: null });
+  const set = (key: string) => (value: string) => setQuery({ [key]: value || null, page: null, tblpage: null });
   const tables = withCurrent(stats.tables.map((t) => t.table), f.table);
-  const reset = () => setQuery({ q: null, table: null, operation: null, database: null, sort: null, page: null });
+  const reset = () => setQuery({ q: null, table: null, operation: null, database: null, sort: null, page: null, tblpage: null });
   return (
     <section className="wl-panel wl-filters">
       <ServiceSelect value={f.service} />

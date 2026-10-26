@@ -38,14 +38,14 @@ const CATEGORIES: [string, string][] = [["all", "All Categories"], ...OWASP_CATE
 function Filters({ issues, releases }: { issues: boolean; releases: string[] }) {
   const q = useRoute().query;
   const [scope] = useServiceScope();
-  const [text, setText] = useSearchText(q.get("q") ?? "", {});
+  const [text, setText] = useSearchText(q.get("q") ?? "", { page: null });
   return (
     <Panel className="wl-filters">
       <ServiceSelect value={q.get("service") ?? scope} />
-      {issues && <Select label="Status" value={q.get("status") ?? "unresolved"} onChange={(v) => setQuery({ status: v === "unresolved" ? null : v, key: null })} options={STATUSES} />}
-      {releases.length > 0 && <Select label="Release" value={q.get("release") ?? ""} onChange={(v) => setQuery({ release: v || null, key: null })} options={[["", "Any Release"], ...releases.map((v): [string, string] => [v, `New in ${v}`])]} />}
-      <Select label="Category" value={q.get("category") ?? "all"} onChange={(v) => setQuery({ category: v === "all" ? null : v, key: null })} options={CATEGORIES} />
-      <Select label="Severity" value={q.get("severity") ?? "all"} onChange={(v) => setQuery({ severity: v === "all" ? null : v })} options={SEVERITIES} />
+      {issues && <Select label="Status" value={q.get("status") ?? "unresolved"} onChange={(v) => setQuery({ status: v === "unresolved" ? null : v, key: null, page: null })} options={STATUSES} />}
+      {releases.length > 0 && <Select label="Release" value={q.get("release") ?? ""} onChange={(v) => setQuery({ release: v || null, key: null, page: null })} options={[["", "Any Release"], ...releases.map((v): [string, string] => [v, `New in ${v}`])]} />}
+      <Select label="Category" value={q.get("category") ?? "all"} onChange={(v) => setQuery({ category: v === "all" ? null : v, key: null, page: null })} options={CATEGORIES} />
+      <Select label="Severity" value={q.get("severity") ?? "all"} onChange={(v) => setQuery({ severity: v === "all" ? null : v, page: null })} options={SEVERITIES} />
       <SearchInput value={text} onChange={setText} placeholder="Search by risk, query, header, or endpoint…" />
       <FilterChips chips={[["Endpoint", "endpoint", q.get("endpoint") ?? ""]]} />
     </Panel>
@@ -69,7 +69,7 @@ function SecurityBody({ m, wanted }: { m: SecurityModel; wanted: string | null }
       <Filters issues={m.hasIssues} releases={m.releases.map((r) => r.version)} />
       <div className={`wl-grid${wanted ? " wl-grid-side" : ""}`}>
         <Panel flush title={`Risks (${fmtCount(m.matching)})`} action={<ExportButton page="security" disabled={m.matching === 0} />}>
-          <SecurityList groups={m.groups} issues={m.issues} selected={m.selected?.key ?? null} now={now} filtered={m.matching !== m.totals.count} />
+          <SecurityList groups={m.groups} issues={m.issues} selected={m.selected?.key ?? null} now={now} filtered={m.matching !== m.totals.count} paging={m.paging} />
         </Panel>
         {wanted && (m.selected ? <SecurityDetail group={m.selected} info={m.issues[m.selected.key]} users={m.selectedUsers} now={now} /> : <Panel><Empty title="This risk is not in the selected time range" /></Panel>)}
       </div>

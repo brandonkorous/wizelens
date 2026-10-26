@@ -62,7 +62,7 @@ function Body({ m }: { m: RoutePageModel }) {
       <div className="wl-grid wl-grid-2-even">
         <Panel title={`Components (${fmtCount(m.components.length)})`}>{components.length ? <BarList items={components} /> : <Empty>No React render data for this route.</Empty>}</Panel>
         <Panel title={`Newest Page Loads (${fmtCount(m.loads.length)})`} flush>
-          <TaggedTable kind="traces" itemOf={traceRow} tagged="path" columns={LOAD_COLUMNS} rows={m.loads} rowKey={(t) => t.traceId} onRowClick={(t) => navigate(traceHref(t.traceId))} empty={<Empty>No page load in this range.</Empty>} />
+          <TaggedTable paging={{ noun: "loads", key: "loads" }} kind="traces" itemOf={traceRow} tagged="path" columns={LOAD_COLUMNS} rows={m.loads} rowKey={(t) => t.traceId} onRowClick={(t) => navigate(traceHref(t.traceId))} empty={<Empty>No page load in this range.</Empty>} />
         </Panel>
       </div>
     </>

@@ -4,7 +4,7 @@ import { type AggOrder, type BucketCount } from "../scale/needs.js";
 import { ROLLUP_KINDS, type RollupKind } from "../scale/kinds.js";
 import type { ListFilter } from "../scale/needs.js";
 
-const ORDERS: AggOrder[] = ["n", "sum", "avg", "lastMs", "c0", "c1", "c2", "c3", "c4", "c5"];
+const ORDERS: AggOrder[] = ["n", "err", "sum", "avg", "lastMs", "c0", "c1", "c2", "c3", "c4", "c5"];
 const BUCKETS: BucketCount[] = [16, 24, 48];
 const SERIES_KINDS: RollupKind[] = ["req", "trace", "db", "err", "log", "pv", "pv.g", "rc", "svc", "req.dim", "err.s", "log.s", "req.part"];
 

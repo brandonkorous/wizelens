@@ -41,7 +41,7 @@ describe("service page", () => {
     const m = run(db.key);
     expect(m.owned).toBe(false);
     expect(m.endpoints.length).toBeGreaterThan(0);
-    expect(m.errors).toEqual({ groups: [], total: 0, exceptions: 0, prevExceptions: 0 });
+    expect(m.errors).toEqual({ groups: [], total: 0, paging: { key: "err", total: 0, page: 1, size: 10, sort: { key: "count", desc: true } }, exceptions: 0, prevExceptions: 0 });
     expect(m.slowest).toEqual([]);
     expect(m.logs.rows).toEqual([]);
   });

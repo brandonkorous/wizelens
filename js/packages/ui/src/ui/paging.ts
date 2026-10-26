@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { PAGE_SIZES } from "@wizeworks/lens-core";
+import { PAGE_SIZES, type PageInfo } from "@wizeworks/lens-core";
 import { setQuery, useRoute } from "../routes";
 
 /** A table paged in the browser: what one row is, and where its page lives. */
@@ -35,6 +35,12 @@ export function urlPaging(key = ""): PageHandlers {
     onPage: (p) => setQuery({ [`${key}page`]: p > 1 ? p : null }),
     onPageSize: (s) => setQuery({ [`${key}size`]: s, [`${key}page`]: null }),
   };
+}
+
+/** URL values that sort a server-paged list by `column`: high first, or flipped on a second click. */
+export function sortQuery(info: PageInfo, column: string): Record<string, string | null> {
+  const desc = info.sort?.key === column ? !info.sort.desc : true;
+  return { [`${info.key}sort`]: `${desc ? "-" : ""}${column}`, [`${info.key}page`]: null };
 }
 
 /** The page and size of a table paged in the browser, from the URL or held here. */

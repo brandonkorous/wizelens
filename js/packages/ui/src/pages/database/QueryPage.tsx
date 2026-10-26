@@ -61,7 +61,7 @@ function Body({ m }: { m: QueryPageModel }) {
         <Panel title="Endpoints" flush><GroupTaggedTable paging={{ noun: "endpoints", key: "ep" }} group="endpoints" docOf={(u) => endpointDoc(u.service, u.endpoint)} tagged="name" columns={useColumns(true)} rows={m.endpoints} rowKey={(u) => `${u.service} ${u.endpoint}`} onRowClick={(u) => navigate(endpointHref(u.service, u.endpoint))} empty={<Empty>It ran outside requests (jobs, workers).</Empty>} /></Panel>
       </div>
       <Panel title={`Newest Traces (${fmtCount(m.traces.length)})`} flush>
-        <TaggedTable kind="traces" itemOf={traceRow} tagged="path" columns={TRACE_COLUMNS} rows={m.traces} rowKey={(t) => t.traceId} onRowClick={(t) => navigate(traceHref(t.traceId, "sql"))} empty={<Empty>No trace in this range.</Empty>} />
+        <TaggedTable paging={{ noun: "traces", key: "traces" }} kind="traces" itemOf={traceRow} tagged="path" columns={TRACE_COLUMNS} rows={m.traces} rowKey={(t) => t.traceId} onRowClick={(t) => navigate(traceHref(t.traceId, "sql"))} empty={<Empty>No trace in this range.</Empty>} />
       </Panel>
     </>
   );
