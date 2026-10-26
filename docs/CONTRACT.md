@@ -1450,3 +1450,5 @@ Postgres keeps accounts, organizations, projects, keys, the service registry, al
   in a request; `project_retention.log_days` remembers it. One cloud process writes telemetry: its settle queue lives in memory and
   is rebuilt on start from the update log of the last 6 hours. `wizelens-cloud copy-telemetry` copies a small-mode database into
   ClickHouse once (projects already there are skipped). Deployment: `deploy/README.md`, "ClickHouse".
+  Every ClickHouse call of a process (or settle worker thread) takes one of `WIZELENS_CLOUD_CLICKHOUSE_CONCURRENCY` slots
+  (default 24); more calls wait in line, so no burst passes ClickHouse's own limit.

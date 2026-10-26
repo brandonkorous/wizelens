@@ -1,6 +1,6 @@
 // A cap on ClickHouse calls in flight per process: a page or a test that asks for many reads at once waits in line instead of flooding the server.
 
-/** Calls in flight per process when WIZELENS_CH_CONCURRENCY is not set. */
+/** Calls in flight per process when WIZELENS_CLOUD_CLICKHOUSE_CONCURRENCY is not set. */
 export const DEFAULT_CH_CONCURRENCY = 24;
 
 export class Limiter {
@@ -33,7 +33,7 @@ export class Limiter {
   }
 }
 
-/** The slots from the environment: WIZELENS_CH_CONCURRENCY when it is a positive whole number, else the default. */
+/** The slots from the environment: WIZELENS_CLOUD_CLICKHOUSE_CONCURRENCY when it is a positive whole number, else the default. */
 export function concurrencyOf(env: string | undefined): number {
   const n = Number(env);
   return Number.isInteger(n) && n > 0 ? n : DEFAULT_CH_CONCURRENCY;
@@ -42,4 +42,4 @@ export function concurrencyOf(env: string | undefined): number {
 let shared: Limiter | null = null;
 
 /** The one limiter every client of this process (or worker thread) shares. */
-export const sharedLimiter = (): Limiter => (shared ??= new Limiter(concurrencyOf(process.env.WIZELENS_CH_CONCURRENCY)));
+export const sharedLimiter = (): Limiter => (shared ??= new Limiter(concurrencyOf(process.env.WIZELENS_CLOUD_CLICKHOUSE_CONCURRENCY)));

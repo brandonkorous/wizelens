@@ -8,7 +8,7 @@ export interface ChOptions {
   timeoutMs?: number;
   /** Settings sent with every call, for example the organization a reader's row policies read. */
   settings?: Record<string, string>;
-  /** The cap on calls in flight. Default: the one limiter the whole process shares (WIZELENS_CH_CONCURRENCY, default 24). */
+  /** The cap on calls in flight. Default: the one limiter the whole process shares (WIZELENS_CLOUD_CLICKHOUSE_CONCURRENCY, default 24). */
   limiter?: Limiter;
 }
 

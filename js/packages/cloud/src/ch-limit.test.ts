@@ -33,7 +33,7 @@ describe("the ClickHouse call limiter", () => {
     expect(await limiter.run(async () => "next")).toBe("next");
   });
 
-  it("reads its size from WIZELENS_CH_CONCURRENCY, else 24", () => {
+  it("reads its size from WIZELENS_CLOUD_CLICKHOUSE_CONCURRENCY, else 24", () => {
     expect([concurrencyOf("8"), concurrencyOf(undefined), concurrencyOf("0"), concurrencyOf("x")]).toEqual([8, DEFAULT_CH_CONCURRENCY, 24, 24]);
     expect(sharedLimiter()).toBe(sharedLimiter());
   });

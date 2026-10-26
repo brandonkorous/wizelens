@@ -2,6 +2,16 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — A steadier ClickHouse
+
+### Fixed
+
+- **The cloud never floods ClickHouse with queries.** Every ClickHouse call of a process (each settle worker thread
+  has its own) now waits for one of 24 slots, so a page or a rebuild that asks for many reads at once queues them
+  instead of sending them all. Before, one burst could pass ClickHouse's limit of 1000 queries at a time
+  (`TOO_MANY_SIMULTANEOUS_QUERIES`) and add to its memory use. Set `WIZELENS_CLOUD_CLICKHOUSE_CONCURRENCY` to change
+  the number.
+
 ## [0.3.0-alpha.13] — Settings by task, and numbers that match reality
 
 ### Added
