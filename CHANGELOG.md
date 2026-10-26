@@ -30,6 +30,13 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   part used to be read for every trace. A bloom filter on the trace id now skips the parts that do not hold it, so a
   batch of 200 traces reads about a quarter of the 7 million rows it read before (over 1 second). Older data gets the
   filter once, in the background, after the update.
+- **A Next.js `notFound()` or `redirect()` is not an error, whatever SDK sent it.** The cloud and hubs now drop
+  control-flow exceptions when they read a trace: `NEXT_HTTP_ERROR_FALLBACK;*` (404, 403, 401), `NEXT_REDIRECT*`,
+  `NEXT_NOT_FOUND`, `NoFallbackError`, and a Better Auth 4xx `APIError`, matched by type, message, or digest, with or
+  without an `Error:` head. The error status they caused goes too, so the span and its request count by their HTTP
+  status (a 404 page is a 404, not an exception). Before, only the Node add-on dropped them, so apps on an older add-on
+  showed every not-found page as an exception. The rule lives in core and the Node add-on uses the same one. Stats
+  already built keep their old counts; new traces count the new way.
 
 ## [0.3.0-alpha.12] — Settings by task, and numbers that match reality
 
