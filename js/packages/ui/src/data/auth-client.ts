@@ -4,7 +4,7 @@ import { createAuthClient } from "better-auth/client";
 import { organizationClient, twoFactorClient } from "better-auth/client/plugins";
 import { createAccessControl } from "better-auth/plugins/access";
 import { ACCESS_STATEMENTS, ORG_ROLES, type OrgRole, ROLE_GRANTS } from "@wizeworks/lens-core";
-import { hrefTo, navigate } from "../routes";
+import { toTwoFactor } from "../routes";
 import { pendingOAuth } from "./oauth";
 
 // Loaded only on cloud hosts (dynamic import from data/account.ts), so in-app and hub dashboards never ship it.
@@ -38,7 +38,7 @@ const oauthQuery = {
 export const authClient = createAuthClient({
   baseURL: new URL("api/auth", window.location.origin + window.location.pathname).toString(),
   fetchOptions: { credentials: "same-origin", headers: { "X-WizeLens-Client": "dashboard" } },
-  plugins: [organizationClient({ ac, roles }), twoFactorClient({ onTwoFactorRedirect: () => navigate(hrefTo("two-factor")) }), passkeyClient(), ssoClient({ domainVerification: { enabled: true } }), oauthQuery],
+  plugins: [organizationClient({ ac, roles }), twoFactorClient({ onTwoFactorRedirect: toTwoFactor }), passkeyClient(), ssoClient({ domainVerification: { enabled: true } }), oauthQuery],
 });
 
 export type AuthClient = typeof authClient;
