@@ -23,8 +23,10 @@ code: see [Install with no code change](/docs/auto-install/).
 App not built on `WebApplication`? Call `app.UseWizeLens()` early, then `endpoints.MapWizeLens()` inside `UseEndpoints` to map
 the dashboard and API.
 
-Health checks (kube-probe, GoogleHC, ELB-HealthChecker, and Google uptime checks) and CORS preflights are not traced, so
-they never bury real visits.
+Health checks (kube-probe, GoogleHC, ELB-HealthChecker, and Google uptime checks), CORS preflights, and files served as
+they are (images, fonts, scripts, style sheets from `UseStaticFiles`) are not traced, so they never bury real visits.
+A missing file (404) and an HTML page are still traced. `o.TraceStaticFiles = true` or `WIZELENS_STATIC_FILES=true`
+traces every file.
 
 ## The HUD on your pages
 

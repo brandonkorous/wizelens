@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { W3CTraceContextPropagator } from "@opentelemetry/core";
-import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS, type TagRule, tagsFromOptions } from "@wizeworks/lens-core";
+import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS, envFlag, type TagRule, tagsFromOptions } from "@wizeworks/lens-core";
 import { createHandler } from "./api.js";
 import { createMiddleware } from "./capture.js";
 import { addCleanup, partsOf, registerParts, runCleanups } from "./adapters/registry.js";
@@ -97,6 +97,7 @@ function buildParts(options: WizeLensOptions, basePath: string) {
     selfEndpoints,
     w3c: new W3CTraceContextPropagator(),
     captureResponseBody: !!options.captureResponseBody,
+    traceStaticFiles: options.traceStaticFiles ?? envFlag(process.env.WIZELENS_STATIC_FILES) ?? false,
     handler,
     hudTag: hudTagFor(dashboard && hudOn(options), hudBundle, basePath, undefined, { service: `${service} (browser)`, release: releaseOf(options) }),
   };

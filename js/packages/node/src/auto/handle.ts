@@ -30,6 +30,7 @@ const fallbackCapture: CaptureDeps = {
   selfEndpoints: new Set<string>(),
   w3c: new W3CTraceContextPropagator(),
   captureResponseBody: false,
+  traceStaticFiles: false,
   handler: async () => false,
   hudTag: null,
 };

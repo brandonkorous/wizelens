@@ -58,6 +58,9 @@ public sealed class WizeLensOptions
     /// <summary>Queries at or above this duration (ms) count as slow.</summary>
     public double SlowQueryMs { get; set; } = 100;
 
+    /// <summary>Traces files served as they are (images, fonts, scripts) that succeed. Off by default; WIZELENS_STATIC_FILES=true turns it on.</summary>
+    public bool TraceStaticFiles { get; set; } = EnvFlag("WIZELENS_STATIC_FILES") ?? false;
+
     /// <summary>Keeps the first 16 KB of text and JSON response bodies on the request span. Off by default.</summary>
     public bool CaptureResponseBody { get; set; }
 

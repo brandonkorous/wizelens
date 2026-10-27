@@ -53,6 +53,8 @@ export interface WizeLensOptions {
   audit?: (line: string) => void;
   /** Keep the first 16 KB of text and JSON response bodies. Default false. */
   captureResponseBody?: boolean;
+  /** Trace files served as they are (images, fonts, scripts) that succeed. Default false; WIZELENS_STATIC_FILES=true turns it on. */
+  traceStaticFiles?: boolean;
   /** Send the hub the names and versions of the installed packages once at start, for the known-vulnerability check. Default true; WIZELENS_PACKAGES=false turns it off. */
   reportPackages?: boolean;
   /** Queries at or over this many ms are slow. Default 100. */

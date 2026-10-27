@@ -23,6 +23,7 @@ Pass options to `builder.Services.AddWizeLens(o => { ... })`.
 | `NPlusOneThreshold` | `5` | Repeats in one trace that count as N+1. |
 | `SlowQueryMs` | `100` | Queries at or above this are slow. |
 | `CaptureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
+| `TraceStaticFiles` | `WIZELENS_STATIC_FILES`, else `false` | Trace files served as they are (images, fonts, scripts) that succeed. A missing file is always traced. |
 | `ReportPackages` | `true`, or `false` when `WIZELENS_PACKAGES=false` | With a hub or the cloud set, send the app's NuGet package names and versions once at start, for the known-vulnerability check on the [Security](/docs/security/#known-vulnerable-packages) page. |
 | `HubUrl` / `HubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a hub or the cloud. |
 | `Project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
@@ -65,6 +66,7 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | `audit` | `console.info` | Where MCP audit lines go. |
 | `slowQueryMs` / `nPlusOneThreshold` | `100` / `5` | Insight thresholds. |
 | `captureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
+| `traceStaticFiles` | `WIZELENS_STATIC_FILES`, else `false` | Trace files served as they are (images, fonts, scripts) that succeed. A missing file is always traced. |
 | `reportPackages` | `true` | With a hub or the cloud set, send the installed package names and versions once at start, for the known-vulnerability check on the [Security](/docs/security/#known-vulnerable-packages) page. `WIZELENS_PACKAGES=false` also turns it off. |
 | `logToConsole` | `false` | Lines you write with `wizelens.logger` also go to the console. |
 | `uiDir` | the dashboard build in the package | Serve the dashboard from another folder. |

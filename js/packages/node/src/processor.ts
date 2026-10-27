@@ -14,6 +14,7 @@ import {
 } from "@wizeworks/lens-core";
 import type { TraceStore } from "./store.js";
 import { dropControlFlow } from "./control-flow.js";
+import { isServedFileSpan } from "./served-file.js";
 
 /** Set this attribute to force a contract category. Removed before storing. */
 export const CATEGORY_ATTR = "wizelens.category";
@@ -103,6 +104,8 @@ export class StoreSpanProcessor implements SpanProcessor {
   onStart(_span: SdkSpan, _parentContext: Context): void {}
 
   onEnd(span: ReadableSpan): void {
+    // Images, fonts, scripts and style sheets would bury the pages; a failed one is not marked.
+    if (isServedFileSpan(span)) return;
     // A local root has no parent, or a parent in another process.
     const parent = span.parentSpanContext;
     const s = toContractSpan(span, this.service, this.redactKeys);

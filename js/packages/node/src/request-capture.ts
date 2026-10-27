@@ -18,6 +18,7 @@ import {
   serverTimingValue,
 } from "@wizeworks/lens-core";
 import { type ResponseTap, tapResponse } from "./body-capture.js";
+import { isServedFile, markServedFile } from "./served-file.js";
 import { keepExposeHeaders } from "./expose-headers.js";
 import { injectHud } from "./hud-inject.js";
 import { firstHeader, sendJson } from "./http-util.js";
@@ -35,6 +36,8 @@ export interface CaptureDeps {
   selfEndpoints: Set<string>;
   w3c: W3CTraceContextPropagator;
   captureResponseBody: boolean;
+  /** Trace files served as they are (images, fonts, scripts) that succeed. */
+  traceStaticFiles: boolean;
   handler: (req: IncomingMessage, res: ServerResponse) => Promise<boolean>;
   /** The HUD script tag for full HTML pages, or null when the HUD or the dashboard is off. */
   hudTag: string | null;
@@ -107,7 +110,7 @@ function markStream(span: OtelSpan, res: ServerResponse, tap: ResponseTap, up: U
   return true;
 }
 
-function finishSpan(span: OtelSpan, res: ServerResponse, taps: { tap: ResponseTap; up: UpgradeTap }, method: string, routeOf: RouteOf, startedAt: number): void {
+function finishSpan(span: OtelSpan, res: ServerResponse, taps: { tap: ResponseTap; up: UpgradeTap }, method: string, routeOf: RouteOf, startedAt: number, served: (status: number | undefined) => boolean): void {
   const { tap, up } = taps;
   const stream = markStream(span, res, tap, up, startedAt);
   const status = res.headersSent ? res.statusCode : up.status();
@@ -129,6 +132,7 @@ function finishSpan(span: OtelSpan, res: ServerResponse, taps: { tap: ResponseTa
   const expected = isMarkedExpected(span) || isExpectedHeader(res.getHeader(HEADER_EXPECTED));
   if (expected) span.setAttribute(ATTR_EXPECTED, true);
   if (res.statusCode >= 500 && !expected) span.setStatus({ code: SpanStatusCode.ERROR, message: `HTTP ${res.statusCode}` });
+  if (served(status)) markServedFile(span);
   span.end();
 }
 
@@ -163,7 +167,8 @@ export function captureRequest(d: CaptureDeps, req: IncomingMessage, res: Server
   const finish = () => {
     if (ended) return;
     ended = true;
-    finishSpan(span, res, { tap, up }, method, () => namedRoute(span, routeOf(), pathOf(rawUrl)), startedAt);
+    const served = (status: number | undefined) => !d.traceStaticFiles && isServedFile(pathOf(rawUrl), routeOf(), status, res.getHeader("content-type"));
+    finishSpan(span, res, { tap, up }, method, () => namedRoute(span, routeOf(), pathOf(rawUrl)), startedAt, served);
   };
   res.once("finish", finish);
   res.once("close", finish);
