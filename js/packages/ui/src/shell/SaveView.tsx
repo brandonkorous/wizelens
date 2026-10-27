@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useOnce } from "../ui/useOnce";
 import { Star } from "lucide-react";
 import { logSearchOf } from "@wizeworks/lens-core";
 import { changeSaved, useSavedApi } from "../data/saved";
@@ -16,13 +17,14 @@ function SaveForm({ close }: { close: () => void }) {
   const [chart, setChart] = useState(false);
   const logs = logSearchOf(location.hash) !== null;
   const [note, setNote] = useState<string | null>(null);
+  const { busy, once } = useOnce();
   const save = () => {
     const href = location.hash || "#/";
     const kind = href.startsWith("#/search") || logs ? "search" : "view";
-    void changeSaved(api.url(), "POST", { kind, name: name.trim(), href, chart: logs && chart, shared: !api.cloud || shared }).then(
+    once(() => changeSaved(api.url(), "POST", { kind, name: name.trim(), href, chart: logs && chart, shared: !api.cloud || shared }).then(
       () => close(),
       (e: unknown) => setNote(e instanceof Error ? e.message : String(e)),
-    );
+    ));
   };
   return (
     <form className="wl-save-view" onSubmit={(e) => (e.preventDefault(), save())}>
@@ -31,7 +33,7 @@ function SaveForm({ close }: { close: () => void }) {
       {logs && <Check label="Chart it on the Logs page" checked={chart} onChange={(e) => setChart(e.target.checked)} />}
       <p className="wl-muted wl-small">Saves this page with its filters and time range. It shows under Saved in the sidebar.</p>
       {note && <p className="wl-text-error wl-small">{note}</p>}
-      <button type="submit" className="wl-btn wl-btn-primary" disabled={!name.trim()}>Save view</button>
+      <button type="submit" className="wl-btn wl-btn-primary" disabled={!name.trim() || busy}>Save view</button>
     </form>
   );
 }

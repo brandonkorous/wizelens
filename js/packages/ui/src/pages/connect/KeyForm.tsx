@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from "react";
+import { useOnce } from "../../ui/useOnce";
 import { currentProject, useAccount } from "../../data/account";
 import { apiSend } from "../../data/api";
 import { CopyButton } from "../../ui/Badges";
@@ -73,14 +74,15 @@ export function KeyForm({ orgId, data, kinds, reload, onClose }: { orgId: string
   const [origins, setOrigins] = useState("");
   const [secret, setSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { busy, once } = useOnce();
   const toggle = (id: string, on: boolean) => setPicked((p) => (kind !== "read" ? [id] : on ? [...p, id] : p.filter((x) => x !== id)));
   const pickKind = (k: Kind) => (setKind(k), setPicked((p) => p.slice(0, 1)), setScopes(SCOPES[k].map(([s]) => s)));
   const create = (e: FormEvent) => {
     e.preventDefault();
-    apiSend<{ token: string }>("POST", `./api/orgs/${orgId}/keys`, keyBody(kind, name, picked, scopes, expires, origins)).then(
+    once(() => apiSend<{ token: string }>("POST", `./api/orgs/${orgId}/keys`, keyBody(kind, name, picked, scopes, expires, origins)).then(
       (k) => (setSecret(k.token), setName(""), setError(null), reload()),
       (err: unknown) => setError(err instanceof Error ? err.message : String(err)),
-    );
+    ));
   };
   const projects = data.projects.map((p): [string, string] => [p.id, p.name]);
   return (
@@ -106,7 +108,7 @@ export function KeyForm({ orgId, data, kinds, reload, onClose }: { orgId: string
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
         <div className="wl-form-actions">
           <button type="button" className="wl-btn" onClick={onClose}>{secret ? "Done" : "Cancel"}</button>
-          <button type="submit" className="wl-btn wl-btn-primary" disabled={picked.length === 0 || scopes.length === 0}>{secret ? "Create another key" : "Create key"}</button>
+          <button type="submit" className="wl-btn wl-btn-primary" disabled={picked.length === 0 || scopes.length === 0 || busy}>{secret ? "Create another key" : "Create key"}</button>
         </div>
       </form>
     </Modal>

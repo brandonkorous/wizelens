@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from "react";
+import { useOnce } from "../../ui/useOnce";
 import type { SloInput } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
 import { Select } from "../../ui/Controls";
@@ -20,11 +21,12 @@ function useServiceNames(): string[] {
 export function SloForm({ initial, title, onSave, onCancel }: { initial: SloInput; title: string; onSave: (s: SloInput) => Promise<string | null>; onCancel: () => void }) {
   const [s, setS] = useState(initial);
   const [error, setError] = useState<string | null>(null);
+  const { busy, once } = useOnce();
   const names = useServiceNames();
   const set = <K extends keyof SloInput>(k: K) => (v: SloInput[K]) => setS((x) => ({ ...x, [k]: v }));
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    void onSave(s).then(setError);
+    once(() => onSave(s).then(setError));
   };
   return (
     <Panel title={title}>
@@ -45,7 +47,7 @@ export function SloForm({ initial, title, onSave, onCancel }: { initial: SloInpu
         </FormRow>
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
         <FormRow>
-          <button type="submit" className="wl-btn wl-btn-primary">Save SLO</button>
+          <button type="submit" className="wl-btn wl-btn-primary" disabled={busy}>Save SLO</button>
           <button type="button" className="wl-btn" onClick={onCancel}>Cancel</button>
         </FormRow>
       </form>

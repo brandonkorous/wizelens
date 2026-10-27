@@ -1,4 +1,5 @@
 import { type FormEvent, type ReactNode, useState } from "react";
+import { useOnce } from "../../ui/useOnce";
 import { DEFAULT_EXPECT_STATUS, UPTIME_METHODS, type UptimeCheckInput, type UptimeMethod } from "@wizeworks/lens-core";
 import { Check, Field, FormRow, SelectField, TextArea } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
@@ -30,10 +31,11 @@ export function CheckForm({ initial, lead, onSave, onCancel }: { initial: Uptime
   const [c, setC] = useState(() => draftOf(initial));
   const [headers, setHeaders] = useState(() => headersText(c.headers));
   const [error, setError] = useState<string | null>(null);
+  const { busy, once } = useOnce();
   const set = <K extends keyof UptimeCheckInput>(k: K) => (v: UptimeCheckInput[K]) => setC((x) => ({ ...x, [k]: v }));
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    void onSave({ ...c, headers: parseHeaders(headers) }).then(setError);
+    once(() => onSave({ ...c, headers: parseHeaders(headers) }).then(setError));
   };
   return (
     <Modal title={initial ? `Edit "${initial.name}"` : "New check"} onClose={onCancel} wide>
@@ -56,7 +58,7 @@ export function CheckForm({ initial, lead, onSave, onCancel }: { initial: Uptime
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
         <div className="wl-form-actions">
           <button type="button" className="wl-btn" onClick={onCancel}>Cancel</button>
-          <button type="submit" className="wl-btn wl-btn-primary">Save check</button>
+          <button type="submit" className="wl-btn wl-btn-primary" disabled={busy}>Save check</button>
         </div>
       </form>
     </Modal>

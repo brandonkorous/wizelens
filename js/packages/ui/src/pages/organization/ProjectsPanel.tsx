@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from "react";
+import { useOnce } from "../../ui/useOnce";
 import { loadAccount, type Project } from "../../data/account";
 import { hrefTo } from "../../routes";
 import { apiSend } from "../../data/api";
@@ -17,10 +18,11 @@ import type { OrgData } from "./orgTypes";
 export function NewProjectForm({ orgId, project, reload, onClose }: { orgId: string; project?: Project; reload: () => void; onClose: () => void }) {
   const [name, setName] = useState(project?.name ?? "");
   const [error, setError] = useState<string | null>(null);
+  const { busy, once } = useOnce();
   const save = (e: FormEvent) => {
     e.preventDefault();
     const send = project ? () => apiSend("PATCH", `./api/orgs/${orgId}/projects/${project.id}`, { name }) : () => apiSend("POST", `./api/orgs/${orgId}/projects`, { name });
-    void act(send, () => (reload(), void loadAccount())).then((err) => (setError(err), err || onClose()));
+    once(() => act(send, () => (reload(), void loadAccount())).then((err) => (setError(err), err || onClose())));
   };
   const hint = project ? "Keys, data, alerts, and links stay as they are." : "Usually one app or team. Make a sending key for it next, under Connect.";
   return (
@@ -30,7 +32,7 @@ export function NewProjectForm({ orgId, project, reload, onClose }: { orgId: str
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
         <div className="wl-form-actions">
           <button type="button" className="wl-btn" onClick={onClose}>Cancel</button>
-          <button type="submit" className="wl-btn wl-btn-primary">{project ? "Rename" : "Add project"}</button>
+          <button type="submit" className="wl-btn wl-btn-primary" disabled={busy}>{project ? "Rename" : "Add project"}</button>
         </div>
       </form>
     </Modal>

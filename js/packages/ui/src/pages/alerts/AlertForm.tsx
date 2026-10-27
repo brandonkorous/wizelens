@@ -3,6 +3,7 @@ import { ALERT_METRICS, type AlertMetric, type AlertRuleInput, isAnomalyMetric }
 import { Select } from "../../ui/Controls";
 import { Check, Field, FormRow } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
+import { useOnce } from "../../ui/useOnce";
 import { REMINDS, WINDOWS } from "./alertTypes";
 import { ChannelFields } from "./ChannelFields";
 import { AboveNormalNote, LineFields } from "./LineFields";
@@ -55,11 +56,12 @@ function cleaned(r: RuleDraft): RuleDraft {
 export function AlertForm({ initial, title, lead, onSave, onCancel }: { initial: RuleDraft; title: string; lead?: ReactNode; onSave: (r: RuleDraft) => Promise<string | null>; onCancel: () => void }) {
   const [r, setR] = useState(initial);
   const [error, setError] = useState<string | null>(null);
+  const { busy, once } = useOnce();
   const set = <K extends keyof RuleDraft>(k: K) => (v: RuleDraft[K]) => setR((x) => ({ ...x, [k]: v }));
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (r.channels.some((c) => c.kind === "email" && c.to.length === 0)) return setError("Tick at least one member under “Email to members”, or remove that channel.");
-    void onSave(cleaned(r)).then(setError);
+    once(() => onSave(cleaned(r)).then(setError));
   };
   return (
     <Modal title={title} onClose={onCancel} wide>
@@ -84,7 +86,7 @@ export function AlertForm({ initial, title, lead, onSave, onCancel }: { initial:
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
         <div className="wl-form-actions">
           <button type="button" className="wl-btn" onClick={onCancel}>Cancel</button>
-          <button type="submit" className="wl-btn wl-btn-primary">Save alert</button>
+          <button type="submit" className="wl-btn wl-btn-primary" disabled={busy}>Save alert</button>
         </div>
       </form>
     </Modal>
