@@ -3,6 +3,7 @@
 @media (max-width: 1200px) { .wl-traces-top { grid-template-columns: minmax(0, 1fr); } }
 .wl-traces-top .wl-input { margin-bottom: 8px; }
 .wl-recent-traces .wl-table td, .wl-recent-traces .wl-table th { padding: 9px 8px; }
+.wl-trace-cell { display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
 
 .wl-timeline-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-right: auto; }
 .wl-timeline-title .wl-mono { font-weight: 450; }

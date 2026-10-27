@@ -101,3 +101,11 @@ export function serviceSlot(service: string, services: readonly string[]): numbe
 
 /** Short trace id for tables: the first 8 hex digits. */
 export const shortId = (traceId: string): string => traceId.slice(0, 8);
+
+const LONG_ID = /^(?=[0-9a-f-]*\d)[0-9a-f-]{16,}$|^\d{10,}$/i;
+/** A path with each long id segment (a uuid, a hex id, a 10+ digit number) cut to its first 8 characters, so the end stays in view. */
+export const shortPath = (path: string): string => {
+  const at = path.search(/[?#]/);
+  const [head, tail] = at < 0 ? [path, ""] : [path.slice(0, at), path.slice(at)];
+  return head.split("/").map((s) => (LONG_ID.test(s) ? `${s.slice(0, 8)}…` : s)).join("/") + tail;
+};
