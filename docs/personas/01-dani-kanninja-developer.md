@@ -175,12 +175,16 @@ the details and pick the API call that loaded the cards.
 **Done when:** the HUD names the board page (not the last API call), Server and
 DB are the sum of the page and its calls, and the details link opens that trace.
 
+**Outcome:** done. HUD named the page GET /dojo/c2be23b0-…/board (a route change, so no page row; "Route render" first). Hand sums of the 5 call traces matched: Server 18+12+15+12+6.1 = 63 ms vs HUD 62 ms (rounding); DB 14+9.5+12+9.3+3.7 = 48.5 ms vs HUD 48 ms; SQL 7+5+6+5+4 = 27 vs HUD 27. Each details link opened its own trace. #003 found and fixed (twice: the first proof read text, not the screen).
+
 ### Act 5 — one click, one trace
 
 Dani drags card 1 from `Measured` to `In the shop` and finds that move.
 
 **Done when:** one trace holds the browser fetch, the web app and the API request,
 with the SQL of the move inside the API span.
+
+**Outcome:** done after #004. Card 1 moved Measured → In the shop. The HUD link opens http://localhost:3000/_wizelens/#/traces/d75088eb9b87ea0e227ea2a6fecd7951: browser fetch 40 ms → POST /api/v1/boards/:boardId/cards/:cardId/move 8.3 ms → 7 SQL (SELECT auth_sessions … UPDATE cards … SELECT integration_connections), 9 spans. There is no web-app hop in this click: kanNINJA's browser calls the API directly, so "the web app" in the done-when does not apply.
 
 ### Act 6 — what does a board load cost in SQL?
 
@@ -303,3 +307,7 @@ sentence is often the defect.
 **Act 2.** The upgrade was done by pointing kanNINJA at the local tarballs (same as `npm install` of the newest version) and deleting `.next` once, as /docs/nextjs says. Both dashboards opened empty with "No requests in this range — Use your app and requests show up here."
 
 **Act 3.** Signup in the real Chrome was blocked by a password-manager extension popup on every field; switched to a clean headless Chromium (Playwright, America/Los_Angeles). HUD read "GET /dashboard 201" after making the board: filed #002, fixed, re-proved. The re-run's double-click on "Open dojo" made TWO boards — a kanNINJA defect, not WizeLens (reported to Brandon, not fixed here). After 64 cards on one page the HUD read 2228 SQL, 325 Fetch, 13 Insights.
+
+**Act 4.** HUD details listed every call as "GET http://localhost:3001/a…": filed #003, fixed by naming calls by their server route, re-read — the TEXT was right but on screen the 165 px column still cut /members and /clans. Second fix keeps the last path segment in view; proven on screen in act 5. The details panel stays open across reloads and covers the right third of the board; it got in the way of a drag once (noted, not filed: closing it is one click).
+
+**Act 5.** First link opened the API's dashboard with only the API half (8 spans): filed #004 (major), fixed with one rule for where spans go and where links point, re-proved. Span hand sum: fetch 40 + render 30 = 70 = TOTAL; SQL 6.62 = Database 6.6; but Server code 1.7 vs timeline self 2.4 — the last query ends 0.67 ms after the response: filed #005, blocked on a decision. Moving card 1 BACK into Measured (10 cards) cost 18 SQL vs 7 forward — kanNINJA re-numbers the target list one UPDATE per card. The trace page named it: "N+1 query: ran 10 times · update \"cards\" set \"order_index\" = $1 where \"cards\".\"id\" = $2 · 43 ms" (a kanNINJA finding for Brandon; WizeLens did its job).
