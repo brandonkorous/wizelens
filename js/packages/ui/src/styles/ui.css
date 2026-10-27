@@ -77,8 +77,12 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-table .wl-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .wl-table .wl-wrap { overflow-wrap: break-word; min-width: 12ch; }
 .wl-table .wl-nowrap { white-space: nowrap; }
+/* A fill column takes the free width, and its .wl-truncate text ends in "…" instead of widening the table. */
+.wl-table td.wl-fill { width: 100%; max-width: 0; min-width: 14ch; }
+.wl-table td.wl-fill .wl-cell-icon, .wl-table td.wl-fill .wl-tagged { display: flex; min-width: 0; }
+.wl-table td.wl-fill > .wl-truncate { display: block; }
 .wl-cell-icon { display: inline-flex; align-items: center; gap: 10px; }
-.wl-cell-icon svg { width: 18px; height: 18px; color: var(--wl-fg-2); }
+.wl-cell-icon svg { width: 18px; height: 18px; color: var(--wl-fg-2); flex: none; }
 .wl-user-id { font-size: 12px; }
 
 .wl-badge { display: inline-flex; align-items: center; justify-content: center; padding: 1px 9px; border-radius: 6px; font-size: 12.5px; font-weight: 600; line-height: 20px; white-space: nowrap; }
