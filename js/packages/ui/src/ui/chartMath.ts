@@ -8,8 +8,17 @@ export function niceMax(max: number): number {
   return 10 * pow;
 }
 
-/** Evenly spaced axis values from 0 to `max`. */
-export const ticksOf = (max: number, count = 4): number[] => Array.from({ length: count + 1 }, (_, i) => (max / count) * i);
+// For each top niceMax can pick, the step count that makes every step round (150 in 3 steps of 50, not 4 of 37.5).
+const STEPS: Record<string, number> = { "1": 5, "1.5": 3, "2": 4, "2.5": 5, "3": 3, "4": 4, "5": 5, "6": 3, "8": 4, "10": 5 };
+
+/** How many steps to cut a niceMax top into so each step is a round number. */
+export function stepsOf(max: number): number {
+  if (!(max > 0)) return 4;
+  return STEPS[String(+(max / 10 ** Math.floor(Math.log10(max))).toFixed(2))] ?? 4;
+}
+
+/** Evenly spaced axis values from 0 to `max`, in round steps unless `count` is given. */
+export const ticksOf = (max: number, count = stepsOf(max)): number[] => Array.from({ length: count + 1 }, (_, i) => (max / count) * i);
 
 /** SVG path through the points, skipping gaps (null values). */
 export function linePath(values: readonly (number | null)[], x: (i: number) => number, y: (v: number) => number): string {
