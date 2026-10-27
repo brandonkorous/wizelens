@@ -21,24 +21,24 @@ function statusOf(s: Source): ReactNode {
   return <DotText tone="danger" colorText>Unreachable{s.error ? ` (${s.error})` : ""}</DotText>;
 }
 
-const AI_DOCS = "https://wizelens.com/docs/ai-access/#on-your-own-machine";
+interface Switches { hub?: string; dotnet: string; node: string; docs: string }
 
-/** The switch that turns MCP on for this kind of service, as the docs write it. */
-function mcpSwitch(info: ServiceInfo): string | null {
-  if (info.mode === "hub") return "--mcp";
-  if (info.runtime.startsWith(".NET")) return "o.EnableMcp = true";
-  return info.runtime.startsWith("node") ? "enableMcp: true" : null;
+const MCP: Switches = { hub: "--mcp", dotnet: "o.EnableMcp = true", node: "enableMcp: true", docs: "https://wizelens.com/docs/ai-access/#on-your-own-machine" };
+const BODIES: Switches = { dotnet: "o.CaptureResponseBody = true", node: "captureResponseBody: true", docs: "https://wizelens.com/docs/configuration/" };
+
+/** "Off", with the option that turns it on for this kind of service, as the docs write it, and a link to them. */
+function offHint(info: ServiceInfo, sw: Switches): ReactNode {
+  const turnOn = info.mode === "hub" ? sw.hub : info.runtime.startsWith(".NET") ? sw.dotnet : info.runtime.startsWith("node") ? sw.node : undefined;
+  return (
+    <span>
+      {onOff(false)} {turnOn && <>Turn it on with <code className="wl-mono wl-small">{turnOn}</code>. </>}
+      <a href={sw.docs} target="_blank" rel="noreferrer">How</a>
+    </span>
+  );
 }
 
 function mcpRow(s: Source, info: ServiceInfo): ReactNode {
-  const turnOn = mcpSwitch(info);
-  if (!info.mcp)
-    return (
-      <span>
-        {onOff(false)} {turnOn && <>Turn it on with <code className="wl-mono wl-small">{turnOn}</code>. </>}
-        <a href={AI_DOCS} target="_blank" rel="noreferrer">How</a>
-      </span>
-    );
+  if (!info.mcp) return offHint(info, MCP);
   const url = `${s.endpoint}/mcp`;
   return (
     <span>
@@ -75,7 +75,7 @@ function infoRows(s: Source, info: ServiceInfo): [ReactNode, ReactNode][] {
     ["Slow query", info.analysis ? `${fmtMs(info.analysis.slowQueryMs)} or more` : null],
     ["N+1 threshold", info.analysis ? `${info.analysis.nPlusOneThreshold} repeats` : null],
     ["AI access (MCP)", mcpRow(s, info)],
-    ["Response bodies", info.captureResponseBody === undefined ? null : onOff(info.captureResponseBody)],
+    ["Response bodies", info.captureResponseBody === undefined ? null : info.captureResponseBody ? onOff(true) : offHint(info, BODIES)],
   ];
   return rows.filter((r): r is [ReactNode, ReactNode] => r[1] !== null);
 }

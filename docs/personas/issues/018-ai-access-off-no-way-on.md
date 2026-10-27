@@ -33,12 +33,17 @@ When MCP is off, the row reads "Off · Turn it on with `enableMcp: true`. How" �
 info: `--mcp` on the hub, `o.EnableMcp = true` for .NET, `enableMcp: true` for Node; other runtimes get the link only.
 **How** opens `https://wizelens.com/docs/ai-access/#on-your-own-machine`.
 
+Its neighbour had the same gap: "Response bodies Off". Both rows now use one `offHint`, so it also reads "Off ·
+Turn it on with `captureResponseBody: true`. How" (`o.CaptureResponseBody = true` on .NET), linking `/docs/configuration/`.
+
 ## Confirmed by
 
 > Re-ran P01 act 10: Connect on the API's dashboard read "AI access (MCP) Off Turn it on with enableMcp: true. How". Dani
 > added `enableMcp: true` to kanNINJA's `createWizeLens` (test-only, not committed); the API restarted, `api/info` said
 > `mcp: true`, and an MCP client at `http://localhost:3001/_wizelens/mcp` listed 16 tools and read the sign-up trace.
 > Dani removed it: the row read Off again, and the client got `MCP is disabled. Set enableMcp: true.`
+> Re-read after the neighbour fix: "AI access (MCP) Off Turn it on with enableMcp: true. How · Response bodies Off Turn it
+> on with captureResponseBody: true. How".
 
 ## Rating effect
 
