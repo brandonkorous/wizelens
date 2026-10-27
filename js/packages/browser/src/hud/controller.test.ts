@@ -175,6 +175,18 @@ it("shows the settings, follows the live switch, and clears the page's calls", a
   expect(byClass(root, "wl-settings")).toHaveLength(0);
 });
 
+it("moves to the bottom left from the settings, and remembers it", async () => {
+  hud.start();
+  click(buttonTitled("Settings"));
+  await flushRenders();
+  const box = findAll(one(root, "wl-settings"), (el) => el.nodeName === "INPUT")[1]!;
+  box.checked = true;
+  box.fire("change");
+  await flushRenders();
+  expect(local.get("wizelens.hud.side")).toBe("left");
+  expect(one(root, "wl-hud").getAttribute("class")).toBe("wl-hud wl-left");
+});
+
 it("stops listening and empties its root on stop", () => {
   hud.start();
   expect(recorder.listeners()).toBe(1);

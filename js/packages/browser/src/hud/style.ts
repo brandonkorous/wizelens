@@ -8,6 +8,7 @@ export const HUD_CSS = `
   position:fixed;right:16px;bottom:16px;z-index:2147483000;display:flex;flex-direction:column;align-items:flex-end;
   max-width:calc(100vw - 32px);color:var(--wl-fg);text-align:left;
   font:13px/1.4 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wl-hud.wl-left{right:auto;left:16px;align-items:flex-start}
 @media (prefers-color-scheme:dark){.wl-hud{--wl-main:#15171B;--wl-main-2:#1D2025;--wl-main-fg:#ECEEF1;--wl-main-muted:#98A1AD;--wl-main-line:#2A2E35;--wl-main-link:#6EA0FF}}
 .wl-hud *,.wl-hud *::before,.wl-hud *::after{box-sizing:border-box}
 .wl-hud button{font:inherit;color:inherit;background:none;border:0;margin:0;padding:0;cursor:pointer}

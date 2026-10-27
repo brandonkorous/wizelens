@@ -5,12 +5,14 @@ export type Panel = "details" | "settings";
 
 export const isPanel = (v: string): v is Panel => v === "details" || v === "settings";
 
-export const HUD_KEYS = { panel: "wizelens.hud.panel", live: "wizelens.hud.live", min: "wizelens.hud.min" } as const;
+export const HUD_KEYS = { panel: "wizelens.hud.panel", live: "wizelens.hud.live", min: "wizelens.hud.min", side: "wizelens.hud.side" } as const;
 
 export interface HudSettings {
   panel: Panel | "";
   live: boolean;
   minimized: boolean;
+  /** Bottom left instead of bottom right, for apps with controls in that corner. */
+  left: boolean;
 }
 
 // Values written while storage is blocked, so a setting still lasts for this page.
@@ -51,12 +53,13 @@ function readFlag(key: string, fallback: boolean): boolean {
 /** The stored settings, with defaults for missing or unknown values. */
 export function readSettings(): HudSettings {
   const panel = readStored(HUD_KEYS.panel) ?? "";
-  return { panel: isPanel(panel) ? panel : "", live: readFlag(HUD_KEYS.live, true), minimized: readFlag(HUD_KEYS.min, false) };
+  return { panel: isPanel(panel) ? panel : "", live: readFlag(HUD_KEYS.live, true), minimized: readFlag(HUD_KEYS.min, false), left: readStored(HUD_KEYS.side) === "left" };
 }
 
 export const writePanel = (panel: Panel | "") => writeStored(HUD_KEYS.panel, panel);
 export const writeLive = (on: boolean) => writeStored(HUD_KEYS.live, on ? "1" : "0");
 export const writeMinimized = (on: boolean) => writeStored(HUD_KEYS.min, on ? "1" : "0");
+export const writeLeft = (on: boolean) => writeStored(HUD_KEYS.side, on ? "left" : "right");
 
 /** Test hook: forget values kept in memory. */
 export function resetStoredMemory(): void {
