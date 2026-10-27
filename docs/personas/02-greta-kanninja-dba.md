@@ -236,6 +236,8 @@ the old frontend key.
 data stop, made a new key, put it in the env, and the gap in the data is under a
 minute and visible as a gap, not as "0 errors".
 
+**Outcome:** partly done: the warning after #042; the gap shows as 0 on the request chart, #043 (blocked on scope). Revoke on `kanninja-backend (API pods)` asked "It was used 26s ago, so something still uses it. … To replace it with no gap, use Rotate instead."; she revoked anyway at 10:29:40 UTC. Seen stopping: Services › kanninja-backend "Offline", last seen 1m ago; the API log said "The hub at http://localhost:5970 refused the key (401). Check WIZELENS_HUB_TOKEN …". New key `kanninja-backend (API pods)`, expires in 90 days, made 10:33:06 ("Copy it now: it is not shown again. Set it as WIZELENS_HUB_TOKEN on the app."), set in backend/.env, API restarted; first new request 10:33:28 (22 s after the key). Gap in data: 10:29:40–10:33:28 = 3 min 48 s, NOT under a minute (the run took that long between revoke and the new key). Latency Over Time shows a break; Requests Over Time draws 0 through it (#043).
+
 ### Act 11 — retention
 
 She sets data retention to 14 days and reads what that means for the data she has.
@@ -329,3 +331,5 @@ sentence is often the defect.
 **Act 8.** Double-clicking "Save SLO" made one SLO (#031 holds). Deleting the check asked first (#032 holds on Uptime). While the API was down Dani got the kanNINJA sign-in page twice, with no word that the service was down (a kanNINJA gap). Incident times show to the minute only.
 
 **Act 9.** The "Role" list in the invite form is a wrapped label, fine for screen readers. The alert page as Dani lists "Resolved · Error rate is not measured (no longer above 2%)" from act 7: true words, but "resolved" on no data is worth a look (not filed).
+
+**Act 10.** The cloud does not say anywhere that a revoked key is still being used to send; only the app's own log says so (in #043, optional part).
