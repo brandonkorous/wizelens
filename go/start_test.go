@@ -148,14 +148,19 @@ func TestOpenDBPutsParametersOnQuerySpans(t *testing.T) {
 	}
 	defer db.Close()
 	ctx := context.Background()
-	if _, err := db.ExecContext(ctx, "create table orders (id integer, item text)"); err != nil {
+	if _, err := db.ExecContext(ctx, "create table orders (id integer, item text, token text)"); err != nil {
 		t.Fatal(err)
 	}
-	rows, err := db.QueryContext(ctx, "select * from orders where id = ? and item = ?", 7, "pen")
-	if err != nil {
-		t.Fatal(err)
+	for _, q := range []struct {
+		sql  string
+		args []any
+	}{{"select * from orders where id = ? and item = ?", []any{7, "pen"}}, {"select id from orders where token = ?", []any{"live"}}} {
+		rows, err := db.QueryContext(ctx, q.sql, q.args...)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rows.Close()
 	}
-	rows.Close()
 	var found []string
 	for _, s := range spans.GetSpans() {
 		for _, a := range s.Attributes {
@@ -164,18 +169,18 @@ func TestOpenDBPutsParametersOnQuerySpans(t *testing.T) {
 			}
 		}
 	}
-	if strings.Join(found, "|") != `SELECT [7,"pen"]` {
+	if strings.Join(found, "|") != `SELECT [7,"pen"]|SELECT ["[redacted]"]` {
 		t.Fatalf("found %v", found)
 	}
 }
 
 func TestParamsJSONRedactsSensitiveNames(t *testing.T) {
 	s := SettingsFrom(func(string) string { return "" })
-	got := ParamsJSON([]driver.NamedValue{{Name: "id", Ordinal: 1, Value: int64(1)}, {Name: "password", Ordinal: 2, Value: "x"}}, s)
+	got := ParamsJSON("", []driver.NamedValue{{Name: "id", Ordinal: 1, Value: int64(1)}, {Name: "password", Ordinal: 2, Value: "x"}}, s)
 	if got != `{"id":1,"password":"[redacted]"}` {
 		t.Fatal(got)
 	}
-	if got := ParamsJSON([]driver.NamedValue{{Ordinal: 1, Value: []byte{1, 2}}}, s); got != `["<2 bytes>"]` {
+	if got := ParamsJSON("", []driver.NamedValue{{Ordinal: 1, Value: []byte{1, 2}}}, s); got != `["<2 bytes>"]` {
 		t.Fatal(got)
 	}
 }

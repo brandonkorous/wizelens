@@ -1,6 +1,7 @@
+import { Fragment } from "react";
 import { requestOf, type TagRule, type Trace, type TraceListItem } from "@wizeworks/lens-core";
 export { tracePath } from "@wizeworks/lens-core";
-import { fmtCount, fmtMs, shortId } from "../../format";
+import { fmtCount, fmtMs, shortId, shortPath } from "../../format";
 import { hrefTo, setQuery, useRoute } from "../../routes";
 import { Dot, toneOfHealth, type Tone } from "../../ui/Badges";
 import { Pager } from "../../ui/Controls";
@@ -18,19 +19,22 @@ export function traceTone(t: Trace): Tone {
 }
 
 
+/** A path that wraps after its slashes; a word breaks only when it is wider than the column. */
+const atSlashes = (path: string) => path.split("/").map((part, i) => (i === 0 ? part : <Fragment key={i}>/<wbr />{part}</Fragment>));
+
 function TraceRow({ item, selected, tags }: { item: TraceListItem; selected: boolean; tags: readonly TagRule[] }) {
   return (
     <tr className={`wl-clickable${selected ? " wl-selected" : ""}`} onClick={() => setQuery({ trace: item.traceId })}>
       <td>
-        <a href={hrefTo("traces", [], { trace: item.traceId })} className="wl-mono" onClick={(e) => e.stopPropagation()}>
-          {shortId(item.traceId)}
-        </a>
-      </td>
-      <td className="wl-wrap">
-        <span className="wl-tagged">
-          <span>{item.path}</span>
-          <TagChips tags={tags} />
-        </span>
+        <div className="wl-trace-cell">
+          <span className="wl-tagged">
+            <span title={item.path}>{atSlashes(shortPath(item.path))}</span>
+            <TagChips tags={tags} />
+          </span>
+          <a href={hrefTo("traces", [], { trace: item.traceId })} className="wl-mono wl-small" onClick={(e) => e.stopPropagation()}>
+            {shortId(item.traceId)}
+          </a>
+        </div>
       </td>
       <td className="wl-num">{fmtMs(item.durationMs)}</td>
       <td className="wl-num">
@@ -62,8 +66,7 @@ export function RecentTraces({ items, total, page, size, selectedId }: RecentTra
           <table className="wl-table">
             <thead>
               <tr>
-                <th>Trace ID</th>
-                <th>Path</th>
+                <th>Path · trace ID</th>
                 <th className="wl-num">Duration</th>
                 <th className="wl-num">Status</th>
               </tr>

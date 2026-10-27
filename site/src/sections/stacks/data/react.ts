@@ -59,6 +59,7 @@ export const REACT: Stack = {
     { title: "Next.js steps, not noise.", body: "Each request is one trace named by its route, with Next.js's own render, route handler, and fetch steps inside. Static files and hot reload are left out." },
     { title: "Import it first.", body: "The install import must come before React loads. That is how WizeLens times each component and measures hydration.", code: 'import "@wizeworks/lens-react/install";' },
   ],
+  setups: 2,
   docs: [
     { label: "React setup", href: "/docs/react/" },
     { label: "Next.js setup", href: "/docs/nextjs/" },

@@ -43,8 +43,9 @@ async function revokeMany(ctx: Ctx): Promise<void> {
   const { user } = await requireOrg(ctx, org, "manage");
   const ids = idsOf((await readJsonBody(ctx.req)).keyIds, "keys");
   const now = ctx.app.config.now();
+  const named = new Map((await keysInOrg(ctx.app.db, org, ids)).map((k) => [k.id, k.name]));
   const revoked = await revokeKeys(ctx.app.db, org, ids, now);
-  if (revoked.length) await audit(ctx.app.db, org, `user:${user.id}`, "key.revoke_many", { keyIds: revoked }, now);
+  if (revoked.length) await audit(ctx.app.db, org, `user:${user.id}`, "key.revoke_many", { keyIds: revoked, keyNames: revoked.map((id) => named.get(id) ?? id) }, now);
   sendJson(ctx.res, 200, { revoked, missing: ids.filter((id) => !revoked.includes(id)) });
 }
 

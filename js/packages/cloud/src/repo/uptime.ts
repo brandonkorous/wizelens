@@ -62,9 +62,9 @@ export async function claimDue(q: Queryable, secrets: readonly AuthSecret[], now
 /** Keep a run's result on its check, and open or close an incident. */
 export async function saveRun(q: Queryable, c: CloudCheck, r: UptimeResult): Promise<void> {
   const change = changeOf(c, r);
-  const last = lastRunOf(r);
-  await q.query("UPDATE uptime_checks SET state = $2, last_run_ms = $3, last_duration_ms = $4, last_status = $5, last_error = $6, tls_expires_ms = $7 WHERE id = $1", [
-    c.id, last.state, last.lastRunMs, last.lastDurationMs, last.lastStatus, last.lastError, last.tlsExpiresMs,
+  const last = lastRunOf(c, r);
+  await q.query("UPDATE uptime_checks SET state = $2, last_run_ms = $3, last_duration_ms = $4, last_status = $5, last_error = $6, tls_expires_ms = $7, created_ms = $8 WHERE id = $1", [
+    c.id, last.state, last.lastRunMs, last.lastDurationMs, last.lastStatus, last.lastError, last.tlsExpiresMs, last.createdMs,
   ]);
   if (change.open !== null) await q.query("INSERT INTO uptime_incidents (id, check_id, project_id, start_ms, reason) VALUES ($1, $2, $3, $4, $5)", [newId(), c.id, c.projectId, r.startMs, change.open]);
   if (change.closeAtMs !== null) await q.query("UPDATE uptime_incidents SET end_ms = $2 WHERE check_id = $1 AND end_ms IS NULL", [c.id, change.closeAtMs]);

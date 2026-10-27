@@ -81,6 +81,20 @@ describe("API keys", () => {
   });
 });
 
+describe("projects", () => {
+  it("renames a project, keeps its id and slug, and logs who renamed it", async () => {
+    const { owner, orgId, projectId } = await start();
+    const patch = (body: unknown) => owner.call<{ id: string; name: string; slug: string }>("PATCH", `api/orgs/${orgId}/projects/${projectId}`, body);
+    const before = (await owner.call<{ projects: { id: string; slug: string }[] }>("GET", `api/orgs/${orgId}`)).body.projects[0]!;
+    const renamed = (await patch({ name: "  kanninja-production " })).body;
+    expect(renamed).toMatchObject({ id: projectId, name: "kanninja-production", slug: before.slug });
+    expect((await patch({ name: " " })).status).toBe(400);
+    expect((await patch({})).status).toBe(400);
+    const log = (await owner.call<{ action: string; detail: { to: string } }[]>("GET", `api/orgs/${orgId}/audit?action=project.rename`)).body;
+    expect(log.map((e) => e.detail.to)).toEqual(["kanninja-production"]);
+  });
+});
+
 describe("audit log", () => {
   it("pages back, filters by action and actor, and exports CSV", async () => {
     const { owner, orgId } = await start();

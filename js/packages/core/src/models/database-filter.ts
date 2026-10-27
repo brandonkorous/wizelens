@@ -4,7 +4,7 @@ import type { AggOrder, GroupNeed } from "../scale/needs.js";
 import { type ModelParams, pageParams, scoped, serviceParam } from "./input.js";
 import { groupNeed } from "./read.js";
 
-export type QuerySort = "avg" | "count" | "total";
+export type QuerySort = "avg" | "count" | "total" | "slow";
 
 export interface QueryFilter {
   /** The service that ran the queries (display name); "" for all. */
@@ -22,10 +22,11 @@ export interface QueryFilter {
 
 export const QUERY_PAGE_SIZE = 15;
 
-const SORT_BY: Record<QuerySort, AggOrder> = { avg: "avg", count: "n", total: "sum" };
+// "slow": the runs at or over the slow limit, the first counter of a query shape.
+const SORT_BY: Record<QuerySort, AggOrder> = { avg: "avg", count: "n", total: "sum", slow: "c0" };
 const isSort = (v: string | undefined): v is QuerySort => !!v && Object.hasOwn(SORT_BY, v);
 
-/** The filter from URL parameters: service, q, table, operation, database, sort (avg, count, total). */
+/** The filter from URL parameters: service, q, table, operation, database, sort (avg, count, total, slow). */
 export const queryFilterOf = (p: ModelParams): QueryFilter => ({
   service: serviceParam(p) ?? "",
   q: p.q?.trim() ?? "",
@@ -44,7 +45,7 @@ export function queryListNeed(f: QueryFilter, p: ModelParams): GroupNeed {
   const contains = [f.q, f.table].filter(Boolean);
   const filter = { ...(byDatabase(f) ? { parts: [f.operation || null, f.database || null, null] } : {}), ...(contains.length ? { contains } : {}) };
   const order = { by: SORT_BY[f.sort], desc: true, limit: size, offset: (page - 1) * size };
-  return groupNeed("db.q", byDatabase(f) ? "db.qd" : "db.q", "cur", { top: true, filter, order, ...scoped(f.service || undefined) });
+  return groupNeed("db.q", byDatabase(f) ? "db.qd" : "db.q", "cur", { top: true, hist: true, filter, order, ...scoped(f.service || undefined) });
 }
 
 /** The query text of a `db.q` or `db.qd` key. */

@@ -4,6 +4,7 @@ import { type PageInfo, slicePage } from "@wizeworks/lens-core";
 import { setQuery } from "../routes";
 import { Pager } from "./Controls";
 import { sortQuery, type TablePaging, urlPaging, useTablePaging } from "./paging";
+import { pressable } from "./pressable";
 
 export interface Column<T> {
   key: string;
@@ -131,7 +132,7 @@ function TableBody<T>({ columns, shown, rowKey, onRowClick, selectedKey, detail,
             const cls = [onRowClick ? "wl-clickable" : "", open ? "wl-selected" : "", select?.picked.has(key) ? "wl-picked" : ""].join(" ").trim();
             return (
               <Fragment key={key}>
-                <tr className={cls || undefined} onClick={onRowClick && (() => onRowClick(row))}>
+                <tr className={cls || undefined} {...(onRowClick ? pressable(() => onRowClick(row)) : {})}>
                   {select && <PickOne id={key} select={select} />}
                   {columns.map((c) => (
                     <td key={c.key} className={[c.num ? "wl-num" : "", c.className ?? ""].join(" ").trim() || undefined}>

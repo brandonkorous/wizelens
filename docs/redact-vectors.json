@@ -1,5 +1,5 @@
 {
-  "about": "Redaction vectors (docs/CONTRACT.md, Redaction). The TS and .NET suites run them. A value given as a list of parts is the parts joined, so no real-looking secret sits in the repo.",
+  "about": "Redaction vectors (docs/CONTRACT.md, Redaction). The TS, .NET, Go and Python suites run them (Go and Python: the params part). A value given as a list of parts is the parts joined, so no real-looking secret sits in the repo.",
   "attributes": [
     { "key": "http.response.header.set-cookie", "value": "sid=abc123; Path=/; Secure; HttpOnly", "want": "sid=[redacted]; Path=/; Secure; HttpOnly" },
     { "key": "http.response.header.set-cookie", "value": "a=1; Expires=Wed, 21 Oct 2026 07:28:00 GMT; Path=/, b=2; SameSite=None", "want": "a=[redacted]; Expires=Wed, 21 Oct 2026 07:28:00 GMT; Path=/, b=[redacted]; SameSite=None" },
@@ -21,6 +21,8 @@
   "text": [
     { "in": "nothing secret here", "out": "nothing secret here" },
     { "in": ["auth ok for ", "eyJhbGciOiJIUzI1NiJ9", ".", "eyJzdWIiOiIxMjM0NTY3ODkwIn0", ".", "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c", " done"], "out": "auth ok for [redacted:jwt] done" },
+    { "in": ["GET /api/v1/realtime?ticket=v1.", "eyJib2FyZElkIjoiYi0xIn0", ".", "c2lnbmF0dXJlLW9mLXRoZS10aWNrZXQ"], "out": "GET /api/v1/realtime?ticket=v1.[redacted:signed-token]" },
+    { "in": "cursor eyJpZCI6MTJ9 stays", "out": "cursor eyJpZCI6MTJ9 stays" },
     { "in": ["key=", "AKIA", "QWERTYUIOPASDFGH", " region=us-east-1"], "out": "key=[redacted:aws-key] region=us-east-1" },
     { "in": ["using ", "sk_", "live_", "abcdefghijklmnop1234", " now"], "out": "using [redacted:stripe-key] now" },
     { "in": ["hook ", "whsec_", "abcdefghijklmnopqrstuv"], "out": "hook [redacted:stripe-key]" },
@@ -38,5 +40,17 @@
     { "in": "sample_rand=0.4111111111111111", "out": "sample_rand=0.4111111111111111" },
     { "in": "remaining_count: 4111111111111111", "out": "remaining_count: 4111111111111111" },
     { "in": "no brand 6000000000000007 or 5000000000000009", "out": "no brand 6000000000000007 or 5000000000000009" }
+  ],
+  "params": [
+    { "sql": "select \"id\" from \"auth_sessions\" where \"auth_sessions\".\"token\" = $1 limit $2", "params": ["AIJDisnqGFxkte6iHIaCitQ357eUDfdn", 1], "want": ["[redacted]", 1] },
+    { "sql": "select * from users where email = ? and age > ?", "params": ["nia@example.test", 30], "want": ["[redacted]", 30] },
+    { "sql": "select * from t where note = '?' and name like %s", "params": ["Nia's"], "want": ["Nia's"] },
+    { "sql": "update \"users\" set \"password\" = $1 where \"id\" in ($2)", "params": ["hunter2", 7], "want": ["[redacted]", 7] },
+    { "sql": "insert into \"auth_accounts\" (\"id\", \"user_id\", \"password\", \"created_at\") values ($1, $2, $3, default)", "params": ["a1", "u1", "argon-hash-here"], "want": ["a1", "u1", "[redacted]"] },
+    { "sql": "INSERT INTO [Users] ([Name], [Email]) VALUES (@p0, @p1)", "params": { "@p0": "Nia O'Brien", "@p1": "nia@example.test" }, "want": { "@p0": "Nia O'Brien", "@p1": "[redacted]" } },
+    { "sql": "select * from users where api_key = %(k)s", "params": { "k": "live-value" }, "want": { "k": "[redacted]" } },
+    { "sql": "select * from t where created::date > :since", "params": { "since": "2026-10-31" }, "want": { "since": "2026-10-31" } },
+    { "sql": "", "params": { "userEmail": "a@b.c", "id": 2 }, "want": { "userEmail": "[redacted]", "id": 2 } },
+    { "sql": "select * from \"boards\" where \"title\" = $1", "params": ["Q4 Workshop Fit-Out: Müller Kitchens"], "want": ["Q4 Workshop Fit-Out: Müller Kitchens"] }
   ]
 }

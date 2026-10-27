@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -37,30 +38,28 @@ func spanName(_ context.Context, method otelsql.Method, query string) string {
 	return string(method)
 }
 
-func parameterAttributes(_ context.Context, _ otelsql.Method, _ string, args []driver.NamedValue) []attribute.KeyValue {
+func parameterAttributes(_ context.Context, _ otelsql.Method, query string, args []driver.NamedValue) []attribute.KeyValue {
 	s := current()
 	if !s.Enabled || !s.CaptureSQLParameters || len(args) == 0 {
 		return nil
 	}
-	if text := ParamsJSON(args, s); text != "" {
+	if text := ParamsJSON(query, args, s); text != "" {
 		return []attribute.KeyValue{attribute.String(AttrDBParameters, text)}
 	}
 	return nil
 }
 
-// ParamsJSON is the wizelens.db.parameters text: an array by position, or an object when every parameter has a name.
-func ParamsJSON(args []driver.NamedValue, s Settings) string {
+// ParamsJSON is the wizelens.db.parameters text, an array by position or an object when all are named; values redacted by name or by the column query binds them to.
+func ParamsJSON(query string, args []driver.NamedValue, s Settings) string {
+	columns := paramColumns(query)
 	named := map[string]any{}
 	list := make([]any, 0, len(args))
-	for _, a := range args {
-		list = append(list, plain(a.Value))
+	for i, a := range args {
+		list = append(list, paramValue(a.Value, s, columns[strconv.Itoa(i)]))
 		if a.Name == "" {
 			named = nil
 		} else if named != nil {
-			named[a.Name] = plain(a.Value)
-			if s.IsSensitive(a.Name) {
-				named[a.Name] = Redacted
-			}
+			named[a.Name] = paramValue(a.Value, s, a.Name, columns[unsigiled(a.Name)])
 		}
 	}
 	var v any = list

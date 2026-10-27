@@ -24,6 +24,7 @@ import { firstHeader, sendJson } from "./http-util.js";
 import { headerAttributes, requestAttributes } from "./request-attributes.js";
 import { namedRoute } from "./request-naming.js";
 import { isMarkedExpected, SERVER_SPAN } from "./spans.js";
+import { tapUpgrade, type UpgradeTap } from "./upgrade-tap.js";
 
 const REQ_SPAN = Symbol.for("wizeworks.wizelens.span");
 
@@ -97,19 +98,22 @@ function isExpectedHeader(value: unknown): boolean {
 }
 
 /** A stream answer (server-sent events, an upgrade): marks it and its first byte, and tells whether it was one. */
-function markStream(span: OtelSpan, res: ServerResponse, tap: ResponseTap, startedAt: number): boolean {
-  if (!isStreamContentType(res.getHeader("content-type")) && res.statusCode !== 101) return false;
+function markStream(span: OtelSpan, res: ServerResponse, tap: ResponseTap, up: UpgradeTap, startedAt: number): boolean {
+  const upgraded = !res.headersSent && up.status() === 101;
+  if (!isStreamContentType(res.getHeader("content-type")) && res.statusCode !== 101 && !upgraded) return false;
   span.setAttribute(ATTR_STREAM, true);
-  const first = tap.firstAt();
+  const first = upgraded ? up.firstAt() : tap.firstAt();
   if (first !== undefined) span.setAttribute(ATTR_STREAM_FIRST_BYTE_MS, Math.round((first - startedAt) * 10) / 10);
   return true;
 }
 
-function finishSpan(span: OtelSpan, res: ServerResponse, tap: ResponseTap, method: string, routeOf: RouteOf, startedAt: number): void {
-  const stream = markStream(span, res, tap, startedAt);
-  // A close before the response finished: the client left, and no status was ever sent. A stream ends that way on purpose.
-  if (!res.writableFinished && !stream) span.setAttribute(ATTR_REQUEST_ABORTED, true);
-  if (res.headersSent) span.setAttribute("http.response.status_code", res.statusCode);
+function finishSpan(span: OtelSpan, res: ServerResponse, taps: { tap: ResponseTap; up: UpgradeTap }, method: string, routeOf: RouteOf, startedAt: number): void {
+  const { tap, up } = taps;
+  const stream = markStream(span, res, tap, up, startedAt);
+  const status = res.headersSent ? res.statusCode : up.status();
+  // A close before any status was sent: the client left with no answer. Once a status is out, it is the answer; a stream ends early on purpose.
+  if (!res.writableFinished && status === undefined && !stream) span.setAttribute(ATTR_REQUEST_ABORTED, true);
+  if (status !== undefined) span.setAttribute("http.response.status_code", status);
   const route = routeOf();
   if (route) {
     span.setAttribute("http.route", route);
@@ -154,11 +158,12 @@ export function captureRequest(d: CaptureDeps, req: IncomingMessage, res: Server
   (req as unknown as Record<symbol, OtelSpan>)[REQ_SPAN] = span;
   if (d.hudTag && !isOwnPath(d, pathOf(rawUrl))) injectHud(req, res, d.hudTag);
   const tap = tapResponse(res, d.captureResponseBody);
+  const up = tapUpgrade(req);
   let ended = false;
   const finish = () => {
     if (ended) return;
     ended = true;
-    finishSpan(span, res, tap, method, () => namedRoute(span, routeOf(), pathOf(rawUrl)), startedAt);
+    finishSpan(span, res, { tap, up }, method, () => namedRoute(span, routeOf(), pathOf(rawUrl)), startedAt);
   };
   res.once("finish", finish);
   res.once("close", finish);

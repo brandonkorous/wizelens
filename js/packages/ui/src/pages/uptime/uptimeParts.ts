@@ -1,5 +1,9 @@
 import type { UptimeCheck, UptimeCheckStats, UptimeModel } from "@wizeworks/lens-core";
 import type { Tone } from "../../ui/Badges";
+import type { AskOptions } from "../../ui/Dialog";
+
+/** What deleting a check asks first. */
+export const deleteCheck = (name: string): AskOptions => ({ title: `Delete ${name}?`, body: "It stops running, and its history and incidents are deleted.", confirmLabel: "Delete check", danger: true });
 
 /** "99.95%", "100%", or a dash before a check has run. Uptime keeps two decimals: 99.9 and 99.99 are far apart. */
 export function fmtUptime(pct: number | null | undefined): string {

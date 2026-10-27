@@ -8,7 +8,9 @@ import { hrefTo, navigate } from "../../routes";
 import { Empty, Panel } from "../../ui/Panel";
 import { StatCard } from "../../ui/StatCard";
 import { TimeChart } from "../../ui/TimeChart";
+import { useAsk } from "../../ui/Dialog";
 import { CheckForm } from "./CheckForm";
+import { deleteCheck } from "./uptimeParts";
 import { IncidentsPanel } from "./IncidentsPanel";
 import { CertBadge, StateText } from "./UptimeTable";
 import { fmtUptime, statsOf, toneOfUptime } from "./uptimeParts";
@@ -77,6 +79,7 @@ export function CheckDetail({ id }: { id: string }) {
   const { model } = usePageModel("uptime", { check: id });
   const [editing, setEditing] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const { dialog, confirm } = useAsk();
   const c = api.data?.checks.find((x) => x.id === id);
   if (!api.data) return <Panel><Empty title={api.error ? "Could not load the check" : "Loading…"}>{api.error}</Empty></Panel>;
   if (!c) return <Panel><a className="wl-back" href={hrefTo("uptime")}><ArrowLeft size={14} aria-hidden="true" /> All checks</a><Empty title="This check does not exist">It may have been deleted.</Empty></Panel>;
@@ -89,7 +92,8 @@ export function CheckDetail({ id }: { id: string }) {
     <span className="wl-uptime-actions">
       <button type="button" className="wl-btn" onClick={() => void api.runNow(c.id).then((e) => setNote(e ?? "Ran the check."))}>Run now</button>
       <button type="button" className="wl-btn" onClick={() => setEditing(true)}>Edit</button>
-      <button type="button" className="wl-btn wl-text-error" onClick={() => void api.remove(c.id).then((e) => (e ? setNote(e) : navigate(hrefTo("uptime"))))}>Delete</button>
+      <button type="button" className="wl-btn wl-text-error" onClick={async () => (await confirm(deleteCheck(c.name))) && void api.remove(c.id).then((e) => (e ? setNote(e) : navigate(hrefTo("uptime"))))}>Delete</button>
+      {dialog}
     </span>
   );
   return (

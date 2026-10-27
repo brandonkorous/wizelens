@@ -12,11 +12,14 @@ export interface QueryBarProps {
   /** The host answers `api/search/suggest`; else suggestions come from the loaded traces. */
   server: boolean;
   placeholder?: string;
+  /** Run the search after a pause in typing, as the other list filters do; else only on Enter. */
+  live?: boolean;
   /** A position the host reported as wrong, to mark. */
   serverError?: { message: string; start: number; end: number } | null;
 }
 
 const SUGGEST_DELAY_MS = 150;
+const LIVE_DELAY_MS = 400;
 
 /** Suggestions for the term under the caret, after a short pause; none while the term's own are loading, so Enter never picks a stale one. */
 function useSuggestions(token: TokenAt | null, range: TimeRange, server: boolean): Suggestion[] {
@@ -57,7 +60,7 @@ function SuggestList({ items, active, onPick }: { items: Suggestion[]; active: n
 }
 
 /** A search box for the search language, with autocomplete and errors that point at the bad part. */
-export function QueryBar({ value, onSubmit, range, server, placeholder, serverError }: QueryBarProps) {
+export function QueryBar({ value, onSubmit, range, server, placeholder, live, serverError }: QueryBarProps) {
   const [draft, setDraft] = useState(value);
   const [token, setToken] = useState<TokenAt | null>(null);
   const [active, setActive] = useState(0);
@@ -66,6 +69,12 @@ export function QueryBar({ value, onSubmit, range, server, placeholder, serverEr
   const items = useSuggestions(token, range, server);
   const check = checkSearch(draft);
   const error = !check.ok ? check : draft === value ? serverError ?? null : null;
+  useEffect(() => {
+    if (!live || !check.ok || draft.trim() === value.trim()) return;
+    const id = setTimeout(() => onSubmit(draft.trim()), LIVE_DELAY_MS);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live, draft, value, check.ok]);
   const read = (el: HTMLInputElement) => (setToken(tokenAt(el.value, el.selectionStart ?? el.value.length)), setActive(0));
   const pick = (s: Suggestion) => {
     if (!token) return;

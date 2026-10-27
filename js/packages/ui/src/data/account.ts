@@ -88,7 +88,7 @@ export async function loadAccount(): Promise<AccountState> {
   state = await apiFetch<AccountState>("./api/me");
   if (state.signedIn) pickProject(state);
   emit();
-  if (state.signedIn) provider.refresh();
+  if (state.signedIn) provider.reloadInfo();
   return state;
 }
 

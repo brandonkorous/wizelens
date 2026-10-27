@@ -27,7 +27,7 @@ afterEach(() => {
 const click = (el: FakeElement) => el.fire("click");
 const buttonTitled = (title: string) => findAll(root, (el) => el.nodeName === "BUTTON" && el.getAttribute("title") === title)[0]!;
 const foot = () => one(root, "wl-foot").textContent;
-const call = (id: string, path: string, over = {}) => row({ id, path, url: `http://app.test${path}`, traceId: `t-${id}`, server: serverStats({ insights: 0 }), ...over });
+const call = (id: string, path: string, over = {}) => row({ id, path, url: `http://app.test${path}`, traceId: `t-${id}`, server: serverStats({ name: `GET ${path}`, insights: 0 }), ...over });
 
 it("shows the page, with nothing counted yet", () => {
   hud.start();
@@ -173,6 +173,18 @@ it("shows the settings, follows the live switch, and clears the page's calls", a
   click(buttonTitled("Close (Esc)"));
   await flushRenders();
   expect(byClass(root, "wl-settings")).toHaveLength(0);
+});
+
+it("moves to the bottom left from the settings, and remembers it", async () => {
+  hud.start();
+  click(buttonTitled("Settings"));
+  await flushRenders();
+  const box = findAll(one(root, "wl-settings"), (el) => el.nodeName === "INPUT")[1]!;
+  box.checked = true;
+  box.fire("change");
+  await flushRenders();
+  expect(local.get("wizelens.hud.side")).toBe("left");
+  expect(one(root, "wl-hud").getAttribute("class")).toBe("wl-hud wl-left");
 });
 
 it("stops listening and empties its root on stop", () => {

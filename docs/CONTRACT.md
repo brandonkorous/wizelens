@@ -378,10 +378,15 @@ Redaction keeps the evidence the security rules need (`docs/redact-vectors.json`
 - **`set-cookie`** keeps each cookie's name and flags: `sid=[redacted]; Path=/; Secure; HttpOnly`.
 - **`url.query` and `url.full`** keep every key and lose the values of sensitive keys: `token=[redacted]`.
 - **Values by pattern.** Every string value (attributes, event attributes, log messages and attributes) has these
-  replaced with a typed marker: `[redacted:jwt]`, `[redacted:aws-key]`, `[redacted:private-key]`,
+  replaced with a typed marker: `[redacted:jwt]`, `[redacted:signed-token]` (a base64 JSON part and a signature, such as
+  `v1.eyJ….sig` WebSocket tickets), `[redacted:aws-key]`, `[redacted:private-key]`,
   `[redacted:stripe-key]`, `[redacted:github-token]`, `[redacted:slack-token]`, `[redacted:google-key]`, and
   `[redacted:card]` (13 to 19 digits, spaces or dashes allowed, first digit 3 to 6, Luhn valid). The patterns are
   `VALUE_PATTERNS` in `core/src/redact-values.ts`.
+- **SQL parameters** are redacted by their name or by the column the SQL binds them to (compared with, set to, or
+  inserted into), so `"t"."token" = $1` hides the first value. Placeholders are `$1`, `?`, `%s` (by position) and
+  `@name`, `:name`, `%(name)s` (by name). A column matches a redact key or `email`. The parser is `paramColumns` in
+  `core/src/redact-sql-params.ts`; the `params` vectors run in the TS, .NET, Go, and Python tests.
 
 ## Packages
 
@@ -420,7 +425,8 @@ entries merge. `find_security_issues` adds `advisories` (`{ id, severity, fixed 
 
 - **Duplicate query**: ≥ 2 `db` spans in one trace with identical `db.query.text` AND identical `wizelens.db.parameters`.
   A span with placeholders in its text (`?`, `$1`, `%s`, `%(name)s`, `:name`, `@name`) and no `wizelens.db.parameters`
-  (the OpenTelemetry agents sanitize SQL) is never a duplicate: its values are unknown.
+  (the OpenTelemetry agents sanitize SQL) is never a duplicate: its values are unknown. Neither is one whose parameters
+  hold a redacted value.
 - **N+1 query**: ≥ 5 (configurable) `db` spans in one trace with identical `db.query.text` (params may differ).
 - **Session statements** (`SET`, `RESET`, `BEGIN`, `START TRANSACTION`, `COMMIT`, `END`, `ROLLBACK`, `SAVEPOINT`, `RELEASE`,
   `DISCARD`, `USE`) are never duplicates or N+1. Apps that set `SET LOCAL app.tenant_id` per query repeat them by design.
@@ -517,6 +523,9 @@ at least `keepSlowMs` long. Otherwise it is dropped. A held trace whose root nev
 after the choice follow it; an error after a drop keeps the rest of the trace. Sampling applies to the store, the SQLite
 file, and the hub sends alike.
 
+The Node add-on does not keep Fastify's own per-request pino lines ("incoming request" and "request completed" at info or
+below): the server span already holds the method, path, status, and time. Lines the app writes with `request.log` are kept.
+
 ## Logs outside a request (v0.10)
 
 A log line written while no span is current (startup, background jobs, timers) is kept as a **loose** line when the add-on's
@@ -557,7 +566,9 @@ lines by `service␟level␟pattern␟origin` (`r` or `o`), with the newest line
   than 10 s, the add-on moves the posted span starts, event times, and log times by the difference. Without `sentAt`,
   times are kept.
 - Building a trace, a span that starts before its parent in the same service starts with its parent. A server span that
-  starts outside the call from another service that started it is moved inside that call.
+  starts outside the call from another service that started it is moved inside that call. A server span with no parent counts as
+  started by the one browser call in another service whose `url.full` path is its `url.path`: a cross-origin fetch sends no
+  `traceparent` and joins the server's trace from `X-WizeLens-Trace`. Only the clock uses this; the parent links stay as sent.
 
 ## MCP tools (read-only, phase 1)
 
@@ -920,7 +931,7 @@ Trace `remotes` that point at a service which sends to the hub are hidden, so th
 - `url.path` that holds a query (from `http.target`) is split into `url.path` and `url.query`.
 - Captured headers: a list value is joined with `, `, and `_` in the name becomes `-` (`http.request.header.content-type`).
 - SQL parameters: `db.query.parameter.<key>` (Java agent) become `wizelens.db.parameters`, a JSON array when every key
-  is a position, else an object with sensitive names redacted; the per-key attributes are removed. Python's
+  is a position, else an object, redacted by name and column (see "Redaction"); the per-key attributes are removed. Python's
   `db.statement.parameters` (the `str()` of a tuple or dict) is read as JSON the same way, or kept as text (redacted
   whole when it names a secret). A value an SDK already set wins.
 - A `db` span whose parent in the same export is also a `db` span (an ORM over its driver, such as SQLAlchemy over
@@ -1189,6 +1200,8 @@ Pages read small tables built from the stored traces, never the traces themselve
   are rebuilt from its spans and logs, and the rollups get its new contribution minus the old one (kept as JSON in
   `traces.contrib`). `settled_ms` is set to the `updated_ms` that was read, so a late span settles the trace again. Representatives,
   first and last times, and ids are display fields and are never taken back out.
+- **Query spread** (`FACTS_VERSION` 14): `db.q` and `db.qd` keep histograms, so the Database list, its CSV, and the Query page show
+  each query shape's p95 next to its average and max.
 - **One version fact** (`FACTS_VERSION` 8): the `svc.v` kind (traces per service and version, added in 7 for Problems) is
   gone; Problems reads `rel` below, so one release fact feeds markers, compare versions, and "new release" causes.
 - **Releases** (`FACTS_VERSION` 5): `rel` counts each span that starts work in its service (no parent, or a parent in another

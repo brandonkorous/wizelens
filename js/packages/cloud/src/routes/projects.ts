@@ -5,7 +5,7 @@ import type { Router } from "../http/router.js";
 import { audit } from "../repo/audit.js";
 import { membership } from "../repo/orgs.js";
 import { isProjectRole, overridable, type ProjectRole, setProjectRole } from "../repo/project-roles.js";
-import { createProject, deleteProject, deleteProjectData, projectInOrg } from "../repo/projects.js";
+import { createProject, deleteProject, deleteProjectData, type Project, projectInOrg } from "../repo/projects.js";
 
 const now = (ctx: Ctx) => ctx.app.config.now();
 
@@ -29,15 +29,29 @@ async function dropProject(ctx: Ctx): Promise<void> {
   sendJson(ctx.res, 200, { ok: true });
 }
 
-/** PATCH a project's settings: `logRetentionDays` (1 to 400, or null for the organization's retention). */
+async function rename(ctx: Ctx, p: Project, raw: unknown, actor: string): Promise<void> {
+  const name = typeof raw === "string" ? raw.trim() : "";
+  if (!name || name.length > 100) fail(400, "A project name is 1 to 100 characters.");
+  await ctx.app.db.query("UPDATE projects SET name = $1 WHERE id = $2", [name, p.id]);
+  await audit(ctx.app.db, p.orgId, actor, "project.rename", { projectId: p.id, from: p.name, to: name }, now(ctx));
+}
+
+async function setLogDays(ctx: Ctx, p: Project, days: unknown, actor: string): Promise<void> {
+  if (days !== null && (!Number.isInteger(days) || (days as number) < 1 || (days as number) > 400)) fail(400, "Log retention is 1 to 400 days, or null to follow the organization.");
+  await ctx.app.db.query("UPDATE projects SET log_retention_days = $1 WHERE id = $2", [days, p.id]);
+  await audit(ctx.app.db, p.orgId, actor, "project.update", { projectId: p.id, logRetentionDays: days }, now(ctx));
+}
+
+/** PATCH a project: `name` (1 to 100 characters) and `logRetentionDays` (1 to 400, or null for the organization's retention). */
 async function changeProject(ctx: Ctx): Promise<void> {
   const { org, project } = ctx.params as { org: string; project: string };
   const { user } = await requireOrg(ctx, org, "manage");
-  if (!(await projectInOrg(ctx.app.db, org, project))) return fail(404, "Project not found.");
-  const days = (await readJsonBody(ctx.req)).logRetentionDays;
-  if (days !== null && (!Number.isInteger(days) || (days as number) < 1 || (days as number) > 400)) fail(400, "Log retention is 1 to 400 days, or null to follow the organization.");
-  await ctx.app.db.query("UPDATE projects SET log_retention_days = $1 WHERE id = $2", [days, project]);
-  await audit(ctx.app.db, org, `user:${user.id}`, "project.update", { projectId: project, logRetentionDays: days }, now(ctx));
+  const found = await projectInOrg(ctx.app.db, org, project);
+  if (!found) return fail(404, "Project not found.");
+  const body = await readJsonBody(ctx.req);
+  if (!("name" in body) && !("logRetentionDays" in body)) fail(400, "Send a name or logRetentionDays.");
+  if ("name" in body) await rename(ctx, found, body.name, `user:${user.id}`);
+  if ("logRetentionDays" in body) await setLogDays(ctx, found, body.logRetentionDays, `user:${user.id}`);
   sendJson(ctx.res, 200, await projectInOrg(ctx.app.db, org, project));
 }
 

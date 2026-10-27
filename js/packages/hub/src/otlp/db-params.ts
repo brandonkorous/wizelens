@@ -48,12 +48,14 @@ function fromKeys(a: Attributes): Record<string, unknown> | unknown[] | null {
   return positional ? names.sort((x, y) => Number(x) - Number(y)).map((n) => named[n]) : named;
 }
 
+const sqlOf = (a: Attributes): string => String(a["db.query.text"] ?? a["db.statement"] ?? "");
+
 function fromPython(a: Attributes, keys: readonly string[]): string | null {
   const raw = a[PYTHON_PARAMS];
   if (typeof raw !== "string") return null;
   delete a[PYTHON_PARAMS];
   const parsed = pythonToJson(raw);
-  if (parsed !== null && typeof parsed === "object") return redactParams(parsed, keys);
+  if (parsed !== null && typeof parsed === "object") return redactParams(parsed, keys, sqlOf(a));
   return keys.some((k) => raw.toLowerCase().includes(k)) ? REDACTED : raw;
 }
 
@@ -62,7 +64,7 @@ export function foldDbParams(a: Attributes, keys: readonly string[]): void {
   const fromAgent = fromKeys(a);
   const python = fromPython(a, keys);
   if (a[DB_PARAMS] !== undefined) return;
-  if (fromAgent) a[DB_PARAMS] = redactParams(fromAgent, keys);
+  if (fromAgent) a[DB_PARAMS] = redactParams(fromAgent, keys, sqlOf(a));
   else if (python !== null) a[DB_PARAMS] = python;
 }
 

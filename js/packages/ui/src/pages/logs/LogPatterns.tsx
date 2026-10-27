@@ -28,8 +28,16 @@ const COLUMNS: Column<LogPatternRow>[] = [
 /** Similar lines grouped, with numbers and ids masked. A click filters the Logs page to one pattern. */
 export function LogPatternsPanel() {
   const { model } = usePageModel("log-patterns");
-  const active = useRoute().query.get("pattern") ?? "";
+  const route = useRoute().query;
+  const active = route.get("pattern") ?? "";
   if (!model) return null;
+  // Patterns come from a rollup by service, level and shape, so search text cannot narrow them.
+  if (route.get("q"))
+    return (
+      <Panel title="Log Patterns">
+        <p className="wl-muted wl-small">Patterns follow the level and service filters, not search text. The lines that match are below.</p>
+      </Panel>
+    );
   const clear = active && (
     <button type="button" className="wl-link-btn" onClick={() => setQuery({ pattern: null, page: null })}>
       Show every pattern

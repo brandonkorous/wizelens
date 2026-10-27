@@ -75,7 +75,9 @@ function frameOf(p: TimeChartProps, width: number, height: number): Frame {
 
 function Axes({ p, f, width }: { p: TimeChartProps; f: Frame; width: number }) {
   const fmt = p.format ?? ((v: number) => String(Math.round(v)));
-  const every = Math.max(1, Math.ceil(p.starts.length / 6));
+  // As many time labels as fit (a label like "11:55 PM" needs about 72 px), from 2 up to 6.
+  const fit = Math.max(2, Math.min(6, Math.floor((width - PAD.left - PAD.right) / 72)));
+  const every = Math.max(1, Math.ceil(p.starts.length / fit));
   return (
     <g>
       {ticksOf(f.max, f.max <= 4 && Number.isInteger(f.max) ? f.max : 4).map((t) => (

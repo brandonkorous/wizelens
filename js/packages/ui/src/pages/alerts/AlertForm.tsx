@@ -3,7 +3,8 @@ import { ALERT_METRICS, type AlertMetric, type AlertRuleInput, isAnomalyMetric }
 import { Select } from "../../ui/Controls";
 import { Check, Field, FormRow } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
-import { REMINDS, WINDOWS } from "./alertTypes";
+import { useOnce } from "../../ui/useOnce";
+import { METRIC_HINTS, REMINDS, WINDOWS } from "./alertTypes";
 import { ChannelFields } from "./ChannelFields";
 import { AboveNormalNote, LineFields } from "./LineFields";
 import { LogRuleFields } from "./LogRuleFields";
@@ -41,7 +42,7 @@ export const EMPTY_RULE: RuleDraft = {
 /** Only the fields a rule keeps, from a draft or a kept rule. */
 export const draftOf = (r: RuleDraft): RuleDraft => Object.fromEntries(Object.keys(EMPTY_RULE).map((k) => [k, r[k as keyof RuleDraft]])) as unknown as RuleDraft;
 
-/** The draft ready to send: metric rules drop the scope, trace rules drop the metric fields, and empty channels go. */
+/** The draft ready to send: metric rules drop the scope, trace rules drop the metric fields, and empty channels go. Submit stops an email channel with no member first. */
 function cleaned(r: RuleDraft): RuleDraft {
   const none = { metricName: "", metricStat: "" as const, metricService: "" };
   const metric =
@@ -55,10 +56,12 @@ function cleaned(r: RuleDraft): RuleDraft {
 export function AlertForm({ initial, title, lead, onSave, onCancel }: { initial: RuleDraft; title: string; lead?: ReactNode; onSave: (r: RuleDraft) => Promise<string | null>; onCancel: () => void }) {
   const [r, setR] = useState(initial);
   const [error, setError] = useState<string | null>(null);
+  const { busy, once } = useOnce();
   const set = <K extends keyof RuleDraft>(k: K) => (v: RuleDraft[K]) => setR((x) => ({ ...x, [k]: v }));
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    void onSave(cleaned(r)).then(setError);
+    if (r.channels.some((c) => c.kind === "email" && c.to.length === 0)) return setError("Tick at least one member under “Email to members”, or remove that channel.");
+    once(() => onSave(cleaned(r)).then(setError));
   };
   return (
     <Modal title={title} onClose={onCancel} wide>
@@ -73,6 +76,7 @@ export function AlertForm({ initial, title, lead, onSave, onCancel }: { initial:
           <LineFields r={r} set={set} />
           <Select label="Over the last" value={String(r.windowMs)} options={WINDOWS} onChange={(v) => set("windowMs")(Number(v))} />
         </FormRow>
+        {METRIC_HINTS[r.metric] && <p className="wl-muted wl-small">{METRIC_HINTS[r.metric]}</p>}
         {r.op === "above_normal" && <AboveNormalNote />}
         {r.metric === "metric" ? <MetricRuleFields r={r} set={set} /> : r.metric === "slo" ? <SloFields r={r} set={set} /> : r.metric === "log_count" ? <LogRuleFields search={r.logSearch ?? {}} onChange={set("logSearch")} /> : <ScopeFields r={r} set={set} />}
         <FormRow>
@@ -83,7 +87,7 @@ export function AlertForm({ initial, title, lead, onSave, onCancel }: { initial:
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
         <div className="wl-form-actions">
           <button type="button" className="wl-btn" onClick={onCancel}>Cancel</button>
-          <button type="submit" className="wl-btn wl-btn-primary">Save alert</button>
+          <button type="submit" className="wl-btn wl-btn-primary" disabled={busy}>Save alert</button>
         </div>
       </form>
     </Modal>

@@ -15,9 +15,9 @@ export function changeOf(check: Pick<UptimeCheck, "state">, r: UptimeResult): Up
   return { state: "down", open: check.state === "down" ? null : (r.error ?? "Failed"), closeAtMs: null };
 }
 
-/** The row fields one run sets on its check. */
-export function lastRunOf(r: UptimeResult): Pick<UptimeCheck, "state" | "lastRunMs" | "lastDurationMs" | "lastStatus" | "lastError" | "tlsExpiresMs"> {
-  return { state: r.ok ? "up" : "down", lastRunMs: r.startMs, lastDurationMs: r.durationMs, lastStatus: r.status, lastError: r.error, tlsExpiresMs: r.tlsExpiresMs };
+/** The row fields one run sets on its check. The first run moves `createdMs` to itself, so uptime counts only time a run has seen. */
+export function lastRunOf(check: Pick<UptimeCheck, "createdMs" | "lastRunMs">, r: UptimeResult): Pick<UptimeCheck, "state" | "createdMs" | "lastRunMs" | "lastDurationMs" | "lastStatus" | "lastError" | "tlsExpiresMs"> {
+  return { state: r.ok ? "up" : "down", createdMs: check.lastRunMs === null ? r.startMs : check.createdMs, lastRunMs: r.startMs, lastDurationMs: r.durationMs, lastStatus: r.status, lastError: r.error, tlsExpiresMs: r.tlsExpiresMs };
 }
 
 /** When a check runs next: one interval after its last run, or now when it never ran. */

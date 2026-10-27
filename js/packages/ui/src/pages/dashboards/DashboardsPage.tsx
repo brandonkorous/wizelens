@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from "react";
+import { useOnce } from "../../ui/useOnce";
 import { LayoutDashboard, Plus } from "lucide-react";
 import type { SavedItem } from "@wizeworks/lens-core";
 import { useHost } from "../../data/host";
@@ -25,12 +26,13 @@ function NewDashboard({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
   const [shared, setShared] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const { busy, once } = useOnce();
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    void changeSaved(api.url(), "POST", { kind: "dashboard", name, panels: [], shared: !api.cloud || shared }).then(
+    once(() => changeSaved(api.url(), "POST", { kind: "dashboard", name, panels: [], shared: !api.cloud || shared }).then(
       (d) => (onDone(), d && navigate(dashboardHref(d.id))),
       (err: unknown) => setNote(err instanceof Error ? err.message : String(err)),
-    );
+    ));
   };
   return (
     <Panel title="New dashboard">
@@ -41,7 +43,7 @@ function NewDashboard({ onDone }: { onDone: () => void }) {
         </FormRow>
         {note && <div className="wl-banner wl-banner-error">{note}</div>}
         <FormRow>
-          <button type="submit" className="wl-btn wl-btn-primary">Make it</button>
+          <button type="submit" className="wl-btn wl-btn-primary" disabled={busy}>Make it</button>
           <button type="button" className="wl-btn" onClick={onDone}>Cancel</button>
         </FormRow>
       </form>

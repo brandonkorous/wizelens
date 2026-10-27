@@ -34,11 +34,14 @@ function tracesHref(rule: AlertRule, from: number, to: number): string | null {
   if (rule.metric === "slo") return hrefTo("slos", [encodeURIComponent(rule.sloId)]);
   const scope = { ...(rule.service ? { service: rule.service } : {}), ...(rule.endpoint ? { endpoint: rule.endpoint } : {}), from: String(from), to: String(to) };
   if (rule.metric === "new_errors") return hrefTo("errors", [], { ...scope, new: "1" });
-  if (rule.metric === "slow_queries") return hrefTo("database", [], { ...scope, sort: "total" });
+  if (rule.metric === "slow_queries") return hrefTo("database", [], { ...scope, sort: "slow" });
   if (rule.metric === "new_security_risks") return hrefTo("security", [], scope);
   if (rule.metric === "error_rate") return hrefTo("requests", [], { ...scope, status: "failed" });
   return hrefTo("requests", [], { ...scope, sort: "duration" });
 }
+
+/** What the link behind the chart opens, in the words of that page. */
+const LINK_LABELS: Partial<Record<AlertRule["metric"], string>> = { slo: "Open the SLO", new_errors: "View the errors", slow_queries: "View the slow queries", new_security_risks: "View the risks" };
 
 /** The window the page shows: the custom one at the top, or the chosen range up to now. */
 function useShownWindow(): { from: number; to: number } {
@@ -66,7 +69,7 @@ function Body({ d, api, reload }: { d: AlertRuleData; api: ReturnType<typeof use
     <>
       <DetailHead back={["#/alerts", "All alerts"]} icon={BellRing} title={r.name} badge={<RuleState rule={r} />} actions={actions} stats={stats} />
       {note && <div className="wl-banner wl-banner-info">{note}</div>}
-      <Panel title={`Value Against the Line (every check, ${windowLabel(r.windowMs)} windows)`} action={traces && <ViewAll href={traces} label="View the traces" />}>
+      <Panel title={`Value Against the Line (every check, ${windowLabel(r.windowMs)} windows)`} action={traces && <ViewAll href={traces} label={LINK_LABELS[r.metric] ?? "View the traces"} />}>
         <TimeChart starts={chart.starts} format={unit === undefined ? undefined : fmt} lines={[{ label: "Value", values: chart.values, color: "var(--wl-blue)" }, { label: "Threshold", values: chart.values.map(() => r.threshold), color: "var(--wl-red)", dashed: true }]} />
       </Panel>
       <Panel title="Notices and Changes" flush>

@@ -59,7 +59,9 @@ const columns = (a: Trace, b: Trace, first: string): Column<Line>[] => [
 function Side({ trace, label }: { trace: Trace; label: string }) {
   return (
     <Panel title={`${label}: ${trace.rootName}`} action={<ViewAll href={traceHref(trace.traceId)} label="Open trace" />}>
-      <Waterfall trace={trace} selected={null} highlight={new Set()} onSelect={() => {}} />
+      <div className="wl-table-wrap">
+        <Waterfall trace={trace} selected={null} highlight={new Set()} onSelect={() => {}} />
+      </div>
     </Panel>
   );
 }

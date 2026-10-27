@@ -2,15 +2,16 @@ import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { PAGE_SIZES } from "@wizeworks/lens-core";
 import { fmtCount } from "../format";
 
-export function Select<T extends string>({ value, options, onChange, label, small = false }: {
+export function Select<T extends string>({ value, options, onChange, label, small = false, autoFocus }: {
   value: T;
   options: [T, string][];
   onChange: (v: T) => void;
   label: string;
   small?: boolean;
+  autoFocus?: boolean;
 }) {
   return (
-    <select className={`wl-select${small ? " wl-small" : ""}`} value={value} aria-label={label} onChange={(e) => onChange(e.target.value as T)}>
+    <select className={`wl-select${small ? " wl-small" : ""}`} value={value} aria-label={label} autoFocus={autoFocus} onChange={(e) => onChange(e.target.value as T)}>
       {options.map(([v, text]) => (
         <option key={v} value={v}>
           {text}
@@ -24,7 +25,7 @@ export function SearchInput({ value, onChange, placeholder }: { value: string; o
   return (
     <label className="wl-input">
       <Search aria-hidden="true" />
-      <input type="search" value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+      <input type="search" value={value} placeholder={placeholder} aria-label={placeholder.replace(/…$/, "")} onChange={(e) => onChange(e.target.value)} />
     </label>
   );
 }

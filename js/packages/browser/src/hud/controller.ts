@@ -10,7 +10,7 @@ import { morphChildren } from "./dom.js";
 import { type HudPage, PageLog } from "./page-log.js";
 import { type HudSnapshot, summarizePage } from "./page-summary.js";
 import { dashboardLink, traceIdOf, watchTrace } from "./parts.js";
-import { type HudSettings, type Panel, readSettings, subscribeStored, writeLive, writeMinimized, writePanel } from "./storage.js";
+import { type HudSettings, type Panel, readSettings, subscribeStored, writeLeft, writeLive, writeMinimized, writePanel } from "./storage.js";
 import { type HudActions, hudView } from "./view.js";
 import { pageRows } from "./waterfall.js";
 
@@ -139,6 +139,10 @@ export class HudController implements HudActions {
     this.#pinnedId = on ? null : this.#page.id;
     this.#pausedAt = on ? null : now();
     writeLive(on);
+  }
+
+  setLeft(on: boolean): void {
+    writeLeft(on);
   }
 
   minimize(): void {

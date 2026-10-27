@@ -23,6 +23,17 @@ public class AnalysisTests
     }
 
     [Fact]
+    public void Redacted_parameters_never_count_as_the_same()
+    {
+        var trace = Build(
+            Db("SELECT * FROM s WHERE token = @t", """{"@t":"[redacted]"}"""),
+            Db("SELECT * FROM s WHERE token = @t", """{"@t":"[redacted]"}"""));
+
+        Assert.Empty(TraceAnalysis.DuplicateQueries(trace));
+        Assert.Equal(0, RequestParts.InsightCount(trace));
+    }
+
+    [Fact]
     public void N_plus_one_db_ignores_parameters_and_respects_threshold()
     {
         var spans = Enumerable.Range(1, 5).Select(i => Db("SELECT * FROM orders WHERE customer = @c", $$"""{"@c":{{i}}}""")).ToArray();

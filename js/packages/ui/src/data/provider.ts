@@ -11,6 +11,8 @@ export interface DataProvider {
   getSnapshot(): DataSnapshot;
   start(): void;
   refresh(): void;
+  /** Read the host's info again, after a setting it reports has changed. */
+  reloadInfo(): void;
   /** One full trace, merged across services. */
   loadTrace(traceId: string): Promise<Trace>;
 }

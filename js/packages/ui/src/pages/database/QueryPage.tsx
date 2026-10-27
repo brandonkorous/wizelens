@@ -70,7 +70,7 @@ function Body({ m }: { m: QueryPageModel }) {
 /** One query shape on its own page: runs and time over time, the services and endpoints that run it, and its newest traces. */
 export function QueryPage({ query }: { query: string }) {
   const { model: m, loading, error } = usePageModel("query", { q: query });
-  const stats: [string, string][] = m?.totals ? [["Runs", fmtCount(m.totals.count)], ["Average", fmtMs(m.totals.avgMs)], ["Errors", fmtCount(m.totals.errors)], ["System", m.slowest?.system ?? "–"]] : [];
+  const stats: [string, string][] = m?.totals ? [["Runs", fmtCount(m.totals.count)], ["Average", fmtMs(m.totals.avgMs)], ["P95", fmtMs(m.totals.p95Ms)], ["Errors", fmtCount(m.totals.errors)], ["System", m.slowest?.system ?? "–"]] : [];
   return (
     <div className="wl-dpage wl-db-page">
       <ModelState model={m} loading={loading} error={error} what="this query" />

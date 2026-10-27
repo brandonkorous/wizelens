@@ -118,12 +118,14 @@ export function summarizePage(page: HudPage, loadRow: () => RecordedRequest | nu
   const totalMs = pageTotal(page, lead, calls);
   const renderMs = lead ? lead.renderMs : page.renderMs;
   const statuses = rows.flatMap((r) => (r.status === null ? [] : [r.status]));
+  // The page's own status; a failed call (4xx, 5xx) shows instead, and a 201 from a POST never does.
+  const failed = statuses.filter((s) => s >= 400);
   const req: RecordedRequest = {
     id: `page-${page.id}`,
     method: "GET",
     url: page.url,
     path: page.path,
-    status: statuses.length > 0 ? Math.max(...statuses) : totalMs === null ? null : 200,
+    status: failed.length > 0 ? Math.max(...failed) : (lead?.status ?? (statuses.length > 0 || totalMs !== null ? 200 : null)),
     durationMs: totalMs,
     renderMs,
     traceId: lead?.traceId ?? "",

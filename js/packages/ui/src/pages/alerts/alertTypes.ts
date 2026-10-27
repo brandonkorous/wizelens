@@ -99,3 +99,9 @@ export function useAlertsApi(): { url: (path?: string, projectId?: string) => st
 }
 
 export const channelLabel = (c: AlertChannel): string => ({ webhook: "Webhook", slack: "Slack", teams: "Teams", discord: "Discord", pagerduty: "PagerDuty", email: "Email" })[c.kind];
+
+/** One line under Metric, for the metrics that count less than their name suggests. */
+export const METRIC_HINTS: Partial<Record<string, string>> = {
+  error_rate: "Counts requests that recorded an error, or answered 500 or more. A plain 4xx is the caller's mistake and does not count.",
+  slow_queries: "Counts queries at or over the slow limit shown on Database.",
+};

@@ -26,6 +26,14 @@ describe("clock skew", () => {
     expect(t.durationMs).toBe(100);
   });
 
+  it("moves a server span inside the cross-origin fetch that joined its trace, with no traceparent", () => {
+    const fetch = makeSpan({ category: "browser", service: "browser", spanId: "f".repeat(16), startMs: 1031, durationMs: 17, attributes: { "url.full": "http://api.test/api/v1/boards/b1" } });
+    const api = makeSpan({ category: "http.server", service: "api", spanId: "9".repeat(16), startMs: 1000, durationMs: 7, attributes: { "url.path": "/api/v1/boards/b1" } });
+    const t = buildTrace("t".repeat(32), [fetch, api], [], []);
+    expect(t.spans.find((s) => s.service === "api")!.startMs).toBe(1036);
+    expect(t.durationMs).toBe(17);
+  });
+
   it("leaves spans that already fit alone", () => {
     const orders = makeSpan({ category: "http.server", service: "orders", parentSpanId: call.spanId, startMs: 1025, durationMs: 30 });
     const t = buildTrace("t".repeat(32), [gateway, call, orders], [], []);

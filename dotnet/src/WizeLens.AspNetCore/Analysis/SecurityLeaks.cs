@@ -9,7 +9,7 @@ public static partial class SecurityLeaks
 {
     public static readonly IReadOnlyDictionary<string, string> Labels = new Dictionary<string, string>
     {
-        ["jwt"] = "JWT", ["aws-key"] = "AWS key", ["private-key"] = "Private key", ["stripe-key"] = "Stripe key",
+        ["jwt"] = "JWT", ["signed-token"] = "Signed token", ["aws-key"] = "AWS key", ["private-key"] = "Private key", ["stripe-key"] = "Stripe key",
         ["github-token"] = "GitHub token", ["slack-token"] = "Slack token", ["google-key"] = "Google API key", ["card"] = "Card number",
     };
 

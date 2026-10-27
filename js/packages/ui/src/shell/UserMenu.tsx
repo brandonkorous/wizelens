@@ -17,7 +17,7 @@ export function UserMenu() {
     </>
   );
   return (
-    <Menu label={label} title={`Signed in as ${user.email}`}>
+    <Menu label={label} title={`Signed in as ${user.email}`} buttonClass="wl-top-btn wl-top-shrink wl-top-user">
       {(close) => (
         <>
           <div className="wl-menu-head">{user.email}</div>

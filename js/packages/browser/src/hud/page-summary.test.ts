@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { row, serverStats } from "../test-hud.js";
 import { MAX_CALLS, PageLog } from "./page-log.js";
 import { addUp, ROUTE_LOAD_MS, summarizePage } from "./page-summary.js";
-import { pageRows, ticksFor } from "./waterfall.js";
+import { callName, pageRows, splitName, ticksFor } from "./waterfall.js";
 
 const call = (id: string, startMs: number, over = {}) => row({ id, startMs, durationMs: 100, renderMs: 0, traceId: `t-${id}`, path: `/api/${id}`, server: serverStats({ insights: 0 }), ...over });
 const noLoad = () => null;
@@ -45,6 +45,14 @@ describe("summarizePage", () => {
     expect(s.server + s.db + s.render + s.other).toBeCloseTo(180);
   });
 
+  it("shows the page's own status unless a call failed", () => {
+    const log = new PageLog("http://app.test/dashboard", 0);
+    log.take([row({ id: "document-t0", startMs: 0, durationMs: 120, renderMs: 60 }), call("made", 10, { status: 201 })]);
+    expect(summarizePage(log.current, noLoad, 500).req.status).toBe(200);
+    log.take([call("broke", 20, { status: 502 }), call("missing", 30, { status: 404 })]);
+    expect(summarizePage(log.current, noLoad, 500).req.status).toBe(502);
+  });
+
   it("times a route change by the calls that loaded it, and takes the worst health", () => {
     const log = new PageLog("http://app.test/", 0);
     log.take([call("poll", 100, { path: "/api/status?x=1" }), call("poll2", 400, { path: "/api/status?x=2" })]);
@@ -73,9 +81,23 @@ describe("pageRows", () => {
     expect(rows.map((r) => [r.name, r.kind, r.href ?? null])).toEqual([
       ["GET /orders (page)", "browser", "#/traces/t1"],
       ["First paint", "render", null],
-      ["GET /api/b · 4 SQL", "error", "#/traces/t-b"],
+      ["GET /api/orders · 4 SQL", "error", "#/traces/t-b"],
     ]);
     expect(pageRows([], null, { startMs: 0, renderMs: 25 }, () => null)[0]).toMatchObject({ name: "Route render", durationMs: 25 });
+  });
+
+  it("names a call by its server route, else by its path with another origin's host last", () => {
+    const api = "http://localhost:3001/api/v1/boards/c2be23b0-868c-407f-bd45-adc4592e8a7a/members";
+    expect(callName(call("m", 0, { path: api, server: serverStats({ name: "GET /api/v1/boards/:id/members" }) }))).toBe("GET /api/v1/boards/:id/members");
+    expect(callName(call("m", 0, { path: api, server: undefined }))).toBe("GET /api/v1/boards/c2be23b0-868c-407f-bd45-adc4592e8a7a/members · localhost:3001");
+    expect(callName(call("o", 0, { path: "/orders?tab=2", server: undefined }))).toBe("GET /orders?tab=2");
+  });
+
+  it("splits a name into method, middle and last path segment, so a cut keeps both ends", () => {
+    expect(splitName("GET /api/v1/boards/:boardId/members · 6 SQL")).toEqual(["GET ", "/api/v1/boards/:boardId", "/members · 6 SQL"]);
+    expect(splitName("POST /a/b · localhost:3001 · 2 SQL")).toEqual(["POST ", "/a", "/b · localhost:3001 · 2 SQL"]);
+    expect(splitName("GET /orders (page)")).toEqual(["GET ", "", "/orders (page)"]);
+    expect(splitName("Route render")).toEqual(["", "Route render", ""]);
   });
 
   it("puts round ticks on the time axis", () => {

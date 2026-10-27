@@ -4,6 +4,7 @@ import { usePagedRows } from "../../ui/PagedRows";
 import { Empty } from "../../ui/Panel";
 import { ErrorStack } from "../errors/ResolvedStack";
 import { ServiceChip } from "./tabParts";
+import { pressable } from "../../ui/pressable";
 
 interface Props {
   trace: Trace;
@@ -12,7 +13,7 @@ interface Props {
 
 export function LogsTab({ trace, onSelect }: Props) {
   const shown = usePagedRows(trace.logs, { noun: "lines", key: "tracelogs", reset: trace.traceId });
-  if (trace.logs.length === 0) return <Empty>No logs were written during this request.</Empty>;
+  if (trace.logs.length === 0) return <Empty>No logs were written during this request. Fastify's own "incoming request" and "request completed" lines are not kept: the timeline shows the request.</Empty>;
   return (
     <>
       <div className="wl-table-wrap">
@@ -28,7 +29,7 @@ export function LogsTab({ trace, onSelect }: Props) {
           </thead>
           <tbody>
             {shown.rows.map((l, i) => (
-              <tr key={i} onClick={() => l.spanId && onSelect(l.spanId)} className={l.spanId ? "wl-clickable" : undefined}>
+              <tr key={i} className={l.spanId ? "wl-clickable" : undefined} {...(l.spanId ? pressable(() => onSelect(l.spanId!)) : {})}>
                 <td className="wl-num wl-muted">+{fmtMs(l.timeMs - trace.startMs)}</td>
                 <td>
                   <span className={`wl-lvl wl-lvl-${l.level}`}>{l.level}</span>
@@ -65,7 +66,7 @@ export function ErrorsTab({ trace, onSelect }: Props) {
   return (
     <ul className="wl-error-list">
       {errors.map((e) => (
-        <li key={e.spanId} className="wl-error-item" onClick={() => onSelect(e.spanId)}>
+        <li key={e.spanId} className="wl-error-item" {...pressable(() => onSelect(e.spanId))}>
           <div className="wl-error-head">
             <ServiceChip service={e.service} services={trace.services} />
             <strong>{e.type ?? "Error"}</strong>

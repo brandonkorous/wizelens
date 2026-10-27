@@ -53,7 +53,7 @@
 .wl-detail > * + * { margin-top: 16px; }
 .wl-detail .wl-insights { margin-bottom: 0; }
 .wl-back { display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; font-size: 13px; }
-.wl-trace-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.wl-trace-title { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .wl-trace-title h1 { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; font-size: 18px; font-family: var(--wl-mono); word-break: break-all; }
 .wl-small-chip { margin-left: 8px; }
 .wl-stats { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 12px 0 8px; }

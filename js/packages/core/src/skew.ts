@@ -15,6 +15,25 @@ function offsetFor(s: Span, parent: Span | undefined, inherited: number): number
   return parent.startMs + Math.max(0, (parent.durationMs - s.durationMs) / 2) - s.startMs;
 }
 
+const pathOf = (url: unknown): string | null => {
+  try {
+    return typeof url === "string" ? new URL(url).pathname : null;
+  } catch {
+    return null;
+  }
+};
+
+// A cross-origin fetch sends no traceparent, so the server span has no parent; the page joins its trace from X-WizeLens-Trace.
+function adoptedBy(spans: readonly Span[], ids: Set<string>): Map<string, Span> {
+  const roots = spans.filter((s) => !s.parentSpanId || !ids.has(s.parentSpanId));
+  const out = new Map<string, Span>();
+  for (const server of roots.filter((s) => s.category === "http.server")) {
+    const calls = roots.filter((b) => b.category === "browser" && b.service !== server.service && pathOf(b.attributes["url.full"]) === server.attributes["url.path"]);
+    if (calls.length === 1) out.set(server.spanId, calls[0]!);
+  }
+  return out;
+}
+
 /** Spans with cross-service clock skew removed, and the shift applied to each span id. */
 export function adjustClockSkew(spans: readonly Span[]): { spans: Span[]; offsets: Map<string, number> } {
   const ids = new Set(spans.map((s) => s.spanId));
@@ -35,7 +54,9 @@ export function adjustClockSkew(spans: readonly Span[]): { spans: Span[]; offset
     out.push(shifted);
     for (const k of kids.get(s.spanId) ?? []) visit(k, shifted, offset);
   };
-  for (const s of spans) if (!s.parentSpanId || !ids.has(s.parentSpanId)) visit(s, undefined, 0);
+  const adopted = adoptedBy(spans, ids);
+  for (const s of spans) if ((!s.parentSpanId || !ids.has(s.parentSpanId)) && !adopted.has(s.spanId)) visit(s, undefined, 0);
+  for (const [id, call] of adopted) visit(spans.find((s) => s.spanId === id)!, out.find((s) => s.spanId === call.spanId), 0);
   for (const s of spans) if (!offsets.has(s.spanId)) visit(s, undefined, 0);
   return { spans: out, offsets };
 }

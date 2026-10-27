@@ -5,6 +5,8 @@ export interface AskOptions {
   title: string;
   body?: ReactNode;
   confirmLabel: string;
+  /** The other button; "Cancel" unless the action itself is a cancel ("Keep invite"). */
+  cancelLabel?: string;
   danger?: boolean;
   /** The person types this exact text before the button works, for actions that cannot be undone. */
   typeToConfirm?: string;
@@ -43,7 +45,7 @@ function AskDialog({ ask, onClose }: { ask: Pending; onClose: (answer: string | 
         {ask.body && <div className="wl-dialog-body">{ask.body}</div>}
         {typed && <Field label={ask.input?.label ?? `Type ${ask.typeToConfirm} to confirm`} value={text} onChange={(e) => setText(e.target.value)} autoFocus type={ask.input?.password ? "password" : "text"} autoComplete={ask.input?.password ? "current-password" : "off"} />}
         <div className="wl-dialog-actions">
-          <button type="button" className="wl-btn" onClick={() => onClose(null)}>Cancel</button>
+          <button type="button" className="wl-btn" onClick={() => onClose(null)}>{ask.cancelLabel ?? "Cancel"}</button>
           <button type="submit" className={`wl-btn ${ask.danger ? "wl-btn-danger" : "wl-btn-primary"}`} disabled={!ready} autoFocus={!typed}>
             {ask.confirmLabel}
           </button>

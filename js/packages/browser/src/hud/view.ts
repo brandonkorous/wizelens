@@ -39,11 +39,11 @@ function full(m: HudViewModel, a: HudActions): HTMLElement[] {
   const panel = m.settings.panel;
   const cardEl = card({ req, view: snap.view, busy: snap.busy, live: m.settings.live, panel, link, page: m.page }, a);
   if (panel === "details" && m.details) return [details(m.details, () => a.close()), cardEl];
-  if (panel === "settings") return [settings(recorder, m.settings.live, m.slowMs, a), cardEl];
+  if (panel === "settings") return [settings(recorder, m.settings, m.slowMs, a), cardEl];
   return [cardEl];
 }
 
 /** The whole HUD: the minimized aperture, or the card with the open panel above it. */
 export function hudView(m: HudViewModel, a: HudActions): HTMLElement {
-  return h("div", { class: "wl-hud", role: "complementary", "aria-label": "WizeLens" }, m.settings.minimized ? mini(m, a) : full(m, a));
+  return h("div", { class: m.settings.left ? "wl-hud wl-left" : "wl-hud", role: "complementary", "aria-label": "WizeLens" }, m.settings.minimized ? mini(m, a) : full(m, a));
 }

@@ -8,6 +8,7 @@ export const HUD_CSS = `
   position:fixed;right:16px;bottom:16px;z-index:2147483000;display:flex;flex-direction:column;align-items:flex-end;
   max-width:calc(100vw - 32px);color:var(--wl-fg);text-align:left;
   font:13px/1.4 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wl-hud.wl-left{right:auto;left:16px;align-items:flex-start}
 @media (prefers-color-scheme:dark){.wl-hud{--wl-main:#15171B;--wl-main-2:#1D2025;--wl-main-fg:#ECEEF1;--wl-main-muted:#98A1AD;--wl-main-line:#2A2E35;--wl-main-link:#6EA0FF}}
 .wl-hud *,.wl-hud *::before,.wl-hud *::after{box-sizing:border-box}
 .wl-hud button{font:inherit;color:inherit;background:none;border:0;margin:0;padding:0;cursor:pointer}
@@ -114,14 +115,16 @@ span.wl-count{cursor:default}span.wl-count:hover{background:none;color:var(--wl-
 .wl-wf{display:grid;grid-template-columns:minmax(120px,34%) 64px minmax(0,1fr);align-items:center;font-size:12px}
 .wl-wf>*{min-height:24px;display:flex;align-items:center}
 .wl-wf-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px}
-.wl-wf-name span,.wl-wf-name a{overflow:hidden;text-overflow:ellipsis}
+.wl-wf-name a,.wl-wf-name>span{display:flex;min-width:0}
+.wl-wf-method{flex:none;white-space:pre}.wl-wf-head{flex:0 1 auto;min-width:1.2em;overflow:hidden;text-overflow:ellipsis}.wl-wf-tail{flex:0 0 auto;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .wl-wf-name a{color:inherit;text-decoration:none}.wl-wf-name a:hover{text-decoration:underline}
 .wl-wf-at{justify-content:flex-end;padding-right:12px;color:var(--wl-main-muted);font-variant-numeric:tabular-nums}
 .wl-wf-track{position:relative;height:24px}
 .wl-wf-track i{position:absolute;top:7px;height:10px;min-width:2px;border-radius:3px}
 .wl-wf-axis{position:relative;height:18px;color:var(--wl-main-muted);font-size:10.5px;border-bottom:1px solid var(--wl-main-line)}
 .wl-wf-axis span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
-.wl-wf-axis span:first-child{transform:none}
+.wl-wf-axis span:first-child{transform:none}.wl-wf-axis span:last-child:not(:first-child){transform:translateX(-100%)}
+.wl-wf-axis{container-type:inline-size}@container (max-width:240px){.wl-wf-axis span:not(:first-child):not(:last-child){display:none}}
 .wl-wf-grid{position:absolute;top:0;bottom:0;width:1px;background:var(--wl-main-line)}
 .wl-k-browser{background:#94A3B8}.wl-k-render{background:var(--wl-green)}.wl-k-error{background:var(--wl-red)}
 

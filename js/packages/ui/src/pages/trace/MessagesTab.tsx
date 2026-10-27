@@ -2,6 +2,7 @@ import { messageRows, type Trace } from "@wizeworks/lens-core";
 import { fmtMs } from "../../format";
 import { usePagedRows } from "../../ui/PagedRows";
 import { Empty } from "../../ui/Panel";
+import { pressable } from "../../ui/pressable";
 
 /** Every message this trace sent or handled: which service, which queue, and how long it took. */
 export function MessagesTab({ trace, onSelect }: { trace: Trace; onSelect: (spanId: string | null) => void }) {
@@ -23,7 +24,7 @@ export function MessagesTab({ trace, onSelect }: { trace: Trace; onSelect: (span
           </thead>
           <tbody>
             {shown.rows.map((m) => (
-              <tr key={m.spanId} className={`wl-clickable${m.error ? " wl-row-error" : ""}`} onClick={() => onSelect(m.spanId)}>
+              <tr key={m.spanId} className={`wl-clickable${m.error ? " wl-row-error" : ""}`} {...pressable(() => onSelect(m.spanId))}>
                 <td>
                   <span className="wl-cat wl-cat-messaging">{m.operation}</span>
                 </td>

@@ -19,6 +19,11 @@ function routes(wizelens: WizeLens) {
     });
     a.get("/big", (_req, res) => res.type("text/plain").send("x".repeat(20_000)));
     a.get("/slow", (_req, res) => void setTimeout(() => res.json({ ok: true }), 300));
+    a.get("/moved", (_req, res) => {
+      res.writeHead(307, { Location: "/sign-in", "Content-Type": "text/html" });
+      res.flushHeaders();
+      setTimeout(() => res.end("<p>Moved</p>"), 300);
+    });
     a.get("/bin", (_req, res) => res.type("application/octet-stream").send(Buffer.alloc(10)));
     a.get("/events", (_req, res) => {
       res.writeHead(200, { "Content-Type": "text/event-stream" });
@@ -101,6 +106,17 @@ describe("request capture", () => {
     const server = t.spans.find((s) => s.category === "http.server")!;
     expect(server.attributes["wizelens.request.aborted"]).toBe(true);
     expect(server.attributes["http.response.status_code"]).toBeUndefined();
+  });
+
+  it("keeps the status of an answer the client left after its status, not as aborted", async () => {
+    const ctl = new AbortController();
+    const res = await fetch(`${off.base}/moved`, { signal: ctl.signal, redirect: "manual" });
+    const traceId = res.headers.get("x-wizelens-trace")!;
+    ctl.abort();
+    await new Promise((r) => setTimeout(r, 500));
+    const server = (await getJson<Trace>(`${off.base}/_wizelens/api/traces/${traceId}`)).spans.find((s) => s.category === "http.server")!;
+    expect(server.attributes["http.response.status_code"]).toBe(307);
+    expect(server.attributes["wizelens.request.aborted"]).toBeUndefined();
   });
 
   it("marks a stream the client closed as a stream, with its first byte, not as aborted", async () => {

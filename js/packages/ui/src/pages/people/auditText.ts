@@ -22,6 +22,7 @@ const ACTIONS: Record<string, string> = {
   "project.clear": "Cleared a project's data",
   "project.delete": "Deleted a project",
   "project.update": "Changed a project's settings",
+  "project.rename": "Renamed a project",
   "service.forget": "Forgot offline hosts",
   "key.create": "Made a key",
   "key.revoke": "Revoked a key",
@@ -113,7 +114,8 @@ const project = (id: unknown, names: Names) => (typeof id === "string" ? (names.
 /** The useful facts of an entry, in words. Ids become names; the organization id and raw lines are left out. */
 export function detailText(d: Record<string, unknown>, names: Names): string {
   const parts: string[] = [];
-  if (typeof d.keyId === "string" && names.keys.has(d.keyId)) parts.push(names.keys.get(d.keyId)!);
+  if (typeof d.keyId === "string" && typeof d.name !== "string" && names.keys.has(d.keyId)) parts.push(names.keys.get(d.keyId)!);
+  if (Array.isArray(d.keyNames)) parts.push(d.keyNames.join(", "));
   if (typeof d.app === "string") parts.push(`with ${d.app}`);
   if (d.allProjects === true) parts.push("all projects");
   if (typeof d.userEmail === "string") parts.push(`for ${d.userEmail}`);
@@ -125,6 +127,7 @@ export function detailText(d: Record<string, unknown>, names: Names): string {
   if (typeof d.kind === "string") parts.push(`${d.kind} key`);
   const p = project(d.projectId, names);
   if (p && p !== d.name) parts.push(`project ${p}`);
+  if (typeof d.from === "string" && typeof d.to === "string") parts.push(`was ${d.from}`);
   if (Array.isArray(d.projectIds)) parts.push(`for ${d.projectIds.map((id) => project(id, names)).join(", ")}`);
   if (typeof d.providerId === "string") parts.push(d.providerId);
   if (typeof d.retentionDays === "number") parts.push(`keep data ${d.retentionDays} days`);

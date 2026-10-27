@@ -157,6 +157,7 @@ See [Source maps](/docs/source-maps/).
 | `WIZELENS_HUB_TOKEN` | .NET, Node, Java, Python, Go | The hub token, or a cloud ingest key. |
 | `WIZELENS_PROJECT` | .NET, Node, Java, Python, Go | Project name on a shared hub. |
 | `WIZELENS_RELEASE` | .NET, Node, command line | The app's version (`service.version` on every span), and the release the command line stores maps under. |
+| `NODE_ENV`, `ASPNETCORE_ENVIRONMENT`, `deployment.environment.name` | Node, .NET, OpenTelemetry (Java, Python, Go) | The environment the service reports, which the dashboard's environment picker lists. Node uses `NODE_ENV` (default `development`); .NET its host environment; the others the `deployment.environment.name` resource attribute (`OTEL_RESOURCE_ATTRIBUTES=deployment.environment.name=production`). |
 | `OTEL_SERVICE_VERSION` | .NET, Node | The app's version when `WIZELENS_RELEASE` is not set. |
 | `OTEL_SERVICE_NAME` | Auto installs, Java, Python, Go | The service name. |
 | `WIZELENS_PACKAGES` | .NET, Node, Java, Python, Go | `false` stops the package report for the known-vulnerability check. Default `true`. |

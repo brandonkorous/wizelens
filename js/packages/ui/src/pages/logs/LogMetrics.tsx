@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from "react";
+import { useOnce } from "../../ui/useOnce";
 import { BellPlus, Save } from "lucide-react";
 import { cleanSearchParams, logSearchText } from "@wizeworks/lens-core";
 import { useHost } from "../../data/host";
@@ -13,15 +14,16 @@ function SaveForm({ params, cloud, onSave, onDone }: { params: Record<string, st
   const [name, setName] = useState(logSearchText(params).slice(0, 100));
   const [shared, setShared] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { busy, once } = useOnce();
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    void onSave(name, shared).then((err) => (err ? setError(err) : onDone()));
+    once(() => onSave(name, shared).then((err) => (err ? setError(err) : onDone())));
   };
   return (
     <form className="wl-log-save" onSubmit={submit}>
       <Field label="Search name" required maxLength={100} value={name} placeholder="Checkout timeouts" onChange={(e) => setName(e.target.value)} autoFocus />
       {cloud && <Check label="Share with the team" checked={shared} onChange={(e) => setShared(e.target.checked)} />}
-      <button type="submit" className="wl-btn wl-btn-primary">Save</button>
+      <button type="submit" className="wl-btn wl-btn-primary" disabled={busy}>Save</button>
       <button type="button" className="wl-btn" onClick={onDone}>Cancel</button>
       {error && <span className="wl-text-error wl-small">{error}</span>}
     </form>

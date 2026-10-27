@@ -21,12 +21,20 @@ export interface WfRow {
 
 const failed = (r: RecordedRequest) => !!r.error || (r.status ?? 0) >= 500;
 
-// One call: its method and path, with its query count when the server sent one.
+/** A call by the server's own name for it ("GET /api/boards/:id"), else its method and path, another origin's host last. */
+export function callName(r: RecordedRequest): string {
+  if (r.server?.name) return r.server.name;
+  if (!/^https?:\/\//.test(r.path)) return `${r.method} ${r.path}`;
+  const u = new URL(r.path);
+  return `${r.method} ${u.pathname}${u.search} · ${u.host}`;
+}
+
+// One call: its name, with its query count when the server sent one.
 function callRow(r: RecordedRequest, href: string | null, label: string): WfRow {
   const sql = r.server && r.server.dbCount > 0 ? ` · ${r.server.dbCount} SQL` : "";
   const ms = r.durationMs ?? 0;
   const title = r.status === null ? (r.error ? "failed" : "running") : String(r.status);
-  return { key: r.id, name: `${r.method} ${r.path}${label}${sql}`, title, startMs: r.startMs, durationMs: ms, kind: failed(r) ? "error" : "browser", depth: 0, barMs: ms, href };
+  return { key: r.id, name: `${callName(r)}${label}${sql}`, title, startMs: r.startMs, durationMs: ms, kind: failed(r) ? "error" : "browser", depth: 0, barMs: ms, href };
 }
 
 export interface RouteRender {
@@ -58,7 +66,20 @@ export function ticksFor(total: number): number[] {
   return ticks;
 }
 
-const rowName = (r: WfRow) => (r.href ? h("a", { href: r.href, target: "_blank", rel: "noreferrer" }, r.name) : h("span", null, r.name));
+/** Splits a name into its method, its path's middle and its last segment, so a cut keeps "GET" and "/members · 6 SQL" and drops the middle. */
+export function splitName(name: string): [string, string, string] {
+  const end = name.search(/ · | \(/);
+  const cut = (end < 0 ? name : name.slice(0, end)).lastIndexOf("/");
+  const [head, tail] = cut <= 0 ? [name, ""] : [name.slice(0, cut), name.slice(cut)];
+  const method = tail ? (/^[A-Z]+ /.exec(head)?.[0] ?? "") : "";
+  return [method, head.slice(method.length), tail];
+}
+
+const rowName = (r: WfRow) => {
+  const [method, head, tail] = splitName(r.name);
+  const parts = [method ? h("span", { class: "wl-wf-method" }, method) : null, head ? h("span", { class: "wl-wf-head" }, head) : null, tail ? h("span", { class: "wl-wf-tail" }, tail) : null];
+  return r.href ? h("a", { href: r.href, target: "_blank", rel: "noreferrer" }, parts) : h("span", null, parts);
+};
 
 /** The timeline: `rows` on a shared time axis that starts at `origin`. */
 export function waterfall(rows: WfRow[], origin: number): HTMLElement {

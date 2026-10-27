@@ -3,6 +3,7 @@ import { fmtCount, fmtMs, fmtPct } from "../../format";
 import { navigate, setQuery } from "../../routes";
 import { Empty } from "../../ui/Panel";
 import { KIND_ICON, serviceHref, statusTone } from "./serviceParts";
+import { pressable } from "../../ui/pressable";
 
 const NODE_W = 190;
 const NODE_H = 46;
@@ -55,7 +56,7 @@ function Edge({ edge, a, b }: { edge: ServiceEdge; a: Placed; b: Placed }) {
   const rate = edge.calls ? (edge.errors / edge.calls) * 100 : 0;
   const label = [fmtCount(edge.calls), edge.p95Ms != null ? `p95 ${fmtMs(edge.p95Ms)}` : fmtMs(edge.avgMs), ...(edge.errors ? [`${fmtPct(rate)} failed`] : [])].join(" · ");
   return (
-    <g className={edge.errors ? "wl-dep-edge wl-failing" : "wl-dep-edge"} onClick={() => navigate(serviceHref(edge.to))} role="link" aria-label={`Open ${edge.to}`}>
+    <g className={edge.errors ? "wl-dep-edge wl-failing" : "wl-dep-edge"} {...pressable(() => navigate(serviceHref(edge.to)), "link")} aria-label={`Open ${edge.to}`}>
       <title>{`${edge.from} → ${edge.to}: ${label}`}</title>
       <path d={`M${x1},${y1} C${mid},${y1} ${mid},${y2} ${x2},${y2}`} fill="none" />
       <path className="wl-dep-hit" d={`M${x1},${y1} C${mid},${y1} ${mid},${y2} ${x2},${y2}`} fill="none" />
@@ -69,7 +70,7 @@ function Edge({ edge, a, b }: { edge: ServiceEdge; a: Placed; b: Placed }) {
 function Node({ p, selected }: { p: Placed; selected: boolean }) {
   const Icon = KIND_ICON[p.row.kind];
   return (
-    <g className={`wl-dep-node${selected ? " wl-selected" : ""}`} transform={`translate(${p.x},${p.y})`} onClick={() => setQuery({ service: p.row.key })} role="button" aria-label={`Show ${p.row.name}`}>
+    <g className={`wl-dep-node${selected ? " wl-selected" : ""}`} transform={`translate(${p.x},${p.y})`} {...pressable(() => setQuery({ service: p.row.key }), "button")} aria-label={`Show ${p.row.name}`}>
       <rect width={NODE_W} height={NODE_H} rx="10" />
       <foreignObject x="10" y="0" width={NODE_W - 20} height={NODE_H}>
         <div className="wl-dep-label">

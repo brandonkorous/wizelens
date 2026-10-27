@@ -62,7 +62,7 @@ export function InvitesPanel({ orgId, mail, data, reload }: Props & { data: OrgD
   const run = (fn: () => Promise<unknown>, done: string | null = null) => void act(fn, reload).then((err) => (setError(err), setNote(err ? null : done)));
   const resend = (i: Invite) => run(() => auth((c) => c.organization.inviteMember({ email: i.email, role: i.role, organizationId: orgId, resend: true })), mail ? `We sent the invite to ${i.email} again.` : "The invite works for 7 more days.");
   const cancel = async (i: Invite) =>
-    (await confirm({ title: "Cancel this invite?", body: `The link for ${i.email} stops working.`, confirmLabel: "Cancel invite", danger: true })) &&
+    (await confirm({ title: "Cancel this invite?", body: `The link for ${i.email} stops working.`, confirmLabel: "Cancel invite", cancelLabel: "Keep invite", danger: true })) &&
     run(() => auth((c) => c.organization.cancelInvitation({ invitationId: i.id })));
   const columns: Column<Invite>[] = [
     { key: "email", header: "Email", cell: (i) => <strong>{i.email}</strong> },

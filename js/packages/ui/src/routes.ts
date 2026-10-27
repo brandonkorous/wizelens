@@ -60,6 +60,9 @@ export function parseRoute(hash: string): Route {
 }
 
 /** Link to a page. Empty query values are left out. */
+/** Where a project's slow query and N+1 limits are changed: a settings page, or the add-on options for an in-app dashboard. */
+export const checksHref = (mode: string | undefined): string => (mode === "in-app" || !mode ? hrefTo("connect", ["options"]) : hrefTo(mode === "cloud" ? "organization" : "settings", ["checks"]));
+
 export function hrefTo(page: PageId, params: string[] = [], query: Record<string, string | number | null | undefined> = {}): string {
   const base = page === "trace" ? "traces" : page === "overview" ? "" : page;
   const path = [base, ...params].filter(Boolean).join("/");
@@ -142,6 +145,30 @@ export function replaceHref(href: string): void {
 
 export function navigate(href: string): void {
   window.location.hash = href.replace(/^#/, "");
+}
+
+const BACK_KEY = "wl-sign-in-back";
+
+/** Open the two-step sign-in, keeping the page that was asked for (this tab only) so sign-in comes back to it. */
+export function toTwoFactor(): void {
+  const hash = window.location.hash;
+  try {
+    if (!AUTH_PAGES.includes(parseRoute(hash).page as AuthPageId)) sessionStorage.setItem(BACK_KEY, hash);
+  } catch {
+    // Storage can be off; sign-in then lands on the overview.
+  }
+  navigate(hrefTo("two-factor"));
+}
+
+/** The page asked for before the two-step sign-in, once; null when there was none. */
+export function takeSignInBack(): string | null {
+  try {
+    const hash = sessionStorage.getItem(BACK_KEY);
+    sessionStorage.removeItem(BACK_KEY);
+    return hash || null;
+  } catch {
+    return null;
+  }
 }
 
 /** URL keys of a table paged in the browser ("hosts.page", "hosts.size"). Models never see them. */

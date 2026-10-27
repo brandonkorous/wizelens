@@ -82,7 +82,7 @@ export async function describe(row: AuditRow, names: Names): Promise<string> {
     "member.remove": () => `${who} removed ${s(d.memberEmail) || s(d.memberIdOrEmail) || "a member"}.`,
     "member.role": async () => `${who} made ${await names.member(s(d.memberId))} ${s(d.role)}.`,
     "key.create": async () => `${who} made ${d.kind === "read" ? "a read key" : d.kind === "browser" ? "a browser key" : "an ingest key"} for ${await projectsText(names, d.projectIds)}.`,
-    "key.revoke": async () => `${who} revoked the key ${(await names.key(s(d.keyId))) || s(d.keyId)}.`,
+    "key.revoke": async () => `${who} revoked the key ${s(d.name) || (await names.key(s(d.keyId))) || s(d.keyId)}.`,
     "key.revoke_many": () => `${who} revoked ${count(d.keyIds, "key")}.`,
     "key.rotate_many": () => `${who} rotated ${count(d.keyIds, "key")}; the old secrets stop in ${Number(d.graceHours) || 0} hours.`,
     "sso.create": () => `${who} added ${sso}.`,

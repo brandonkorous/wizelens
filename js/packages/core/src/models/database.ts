@@ -1,5 +1,6 @@
 import { type Agg, avgOfAgg } from "../scale/agg.js";
 import type { QueryTop } from "../scale/facts-db.js";
+import { histPercentile } from "../scale/hist.js";
 import { splitKey } from "../scale/kinds.js";
 import type { PageData, PageDef } from "../scale/needs.js";
 import { bucketStarts, percentChange } from "../stats/common.js";
@@ -61,7 +62,7 @@ function queriesOf(d: PageData): QueryRow[] {
   return rowsOf(d, "db.q").map(({ key, agg }) => {
     const top = agg.top as QueryTop;
     const query = queryOfKey(key);
-    const base = { key, query, count: agg.n, avgMs: agg.sum / agg.n, maxMs: top.durationMs, totalMs: agg.sum, slow: agg.c[0] ?? 0, errors: agg.err };
+    const base = { key, query, count: agg.n, avgMs: agg.sum / agg.n, maxMs: top.durationMs, p95Ms: agg.hist ? histPercentile(agg.hist, agg.n, 95) : null, totalMs: agg.sum, slow: agg.c[0] ?? 0, errors: agg.err };
     return { ...base, endpoints: endpoints.get(query) ?? [], system: top.system, exampleTraceId: top.traceId };
   });
 }

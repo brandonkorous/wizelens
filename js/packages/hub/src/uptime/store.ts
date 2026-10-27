@@ -71,11 +71,11 @@ export const claimRun = (db: DatabaseSync, c: HubCheck, now: number): void => vo
 /** Keep a run's result on its check, and open or close an incident. */
 export function saveRun(db: DatabaseSync, c: HubCheck, r: UptimeResult): void {
   const change = changeOf(c, r);
-  const last = lastRunOf(r);
+  const last = lastRunOf(c, r);
   db.exec("BEGIN");
   try {
-    db.prepare("UPDATE uptime_checks SET state = ?, last_run_ms = ?, last_duration_ms = ?, last_status = ?, last_error = ?, tls_expires_ms = ? WHERE id = ?").run(
-      last.state, last.lastRunMs, last.lastDurationMs, last.lastStatus, last.lastError, last.tlsExpiresMs, c.id,
+    db.prepare("UPDATE uptime_checks SET state = ?, last_run_ms = ?, last_duration_ms = ?, last_status = ?, last_error = ?, tls_expires_ms = ?, created_ms = ? WHERE id = ?").run(
+      last.state, last.lastRunMs, last.lastDurationMs, last.lastStatus, last.lastError, last.tlsExpiresMs, last.createdMs, c.id,
     );
     if (change.open !== null) db.prepare("INSERT INTO uptime_incidents (id, check_id, start_ms, end_ms, reason) VALUES (?, ?, ?, NULL, ?)").run(randomUUID(), c.id, r.startMs, change.open);
     if (change.closeAtMs !== null) db.prepare("UPDATE uptime_incidents SET end_ms = ? WHERE check_id = ? AND end_ms IS NULL").run(change.closeAtMs, c.id);

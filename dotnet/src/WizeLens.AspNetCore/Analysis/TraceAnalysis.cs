@@ -20,7 +20,7 @@ public static partial class TraceAnalysis
         .. trace.Spans
             .Where(IsRepeatable)
             .Where(s => !HasUnknownParams(s))
-            .GroupBy(s => (Query: s.Attr("db.query.text")!, Params: s.Attr("wizelens.db.parameters") ?? ""))
+            .GroupBy(s => (Query: s.Attr("db.query.text")!, Params: ParamsOf(s) ?? ""))
             .Where(g => g.Count() >= 2)
             .Select(g => new DuplicateQuery(trace.TraceId, g.Key.Query, g.Key.Params, g.Count(), g.Sum(s => s.DurationMs), g.First().Service))
             .OrderByDescending(d => d.Count),
@@ -65,10 +65,14 @@ public static partial class TraceAnalysis
     /// <summary>Placeholders but no captured parameters (OTLP agents): two such queries may differ, so they are never duplicates.</summary>
     public static bool HasUnknownParams(string query, object? parameters) => parameters is null && PlaceholderRegex().IsMatch(query);
 
+    /// <summary>The captured parameters, or null when a value is redacted: hidden values never count as the same parameters.</summary>
+    public static string? ParamsOf(Span s) =>
+        s.Attr("wizelens.db.parameters") is { } p && !p.Contains("[redacted", StringComparison.Ordinal) ? p : null;
+
     /// <summary>As above; Redis, MongoDB, and Elasticsearch text never has values, so without parameters it is always unknown.</summary>
     public static bool HasUnknownParams(Span s)
     {
-        var parameters = s.Attr("wizelens.db.parameters");
+        var parameters = ParamsOf(s);
         return HasUnknownParams(s.Attr("db.query.text") ?? s.Name, parameters)
             || parameters is null && s.Attr("db.system.name") is "redis" or "mongodb" or "elasticsearch";
     }

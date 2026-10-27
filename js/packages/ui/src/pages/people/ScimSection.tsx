@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from "react";
+import { useOnce } from "../../ui/useOnce";
 import { Plus } from "lucide-react";
 import { apiSend } from "../../data/api";
 import { act, useApi } from "../../data/useApi";
@@ -31,9 +32,10 @@ function TokenForm({ orgId, reload, onClose }: { orgId: string; reload: () => vo
   const [name, setName] = useState("");
   const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { busy, once } = useOnce();
   const create = (e: FormEvent) => {
     e.preventDefault();
-    apiSend<{ token: string }>("POST", `./api/orgs/${orgId}/scim/tokens`, { name }).then((r) => (setToken(r.token), setError(null), reload()), (err: unknown) => setError(err instanceof Error ? err.message : String(err)));
+    once(() => apiSend<{ token: string }>("POST", `./api/orgs/${orgId}/scim/tokens`, { name }).then((r) => (setToken(r.token), setError(null), reload()), (err: unknown) => setError(err instanceof Error ? err.message : String(err))));
   };
   return (
     <Modal title="New SCIM token" onClose={onClose} closeLabel={token ? "Done" : "Close"}>
@@ -48,7 +50,7 @@ function TokenForm({ orgId, reload, onClose }: { orgId: string; reload: () => vo
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
         <div className="wl-form-actions">
           <button type="button" className={token ? "wl-btn wl-btn-primary" : "wl-btn"} onClick={onClose}>{token ? "Done" : "Cancel"}</button>
-          {!token && <button type="submit" className="wl-btn wl-btn-primary">Create token</button>}
+          {!token && <button type="submit" className="wl-btn wl-btn-primary" disabled={busy}>Create token</button>}
         </div>
       </form>
     </Modal>

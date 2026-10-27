@@ -50,6 +50,8 @@ it("sends spans of a trace on another origin to the configured endpoint", async 
   const recorder = createRecorder({ endpoint: "http://api.test/_wizelens", flushIntervalMs: 60_000, serverStatsDelayMs: 60_000 });
   const undo = recorder.install();
   await fetch("/orders");
+  const traceId = recorder.getSnapshot()[0]!.traceId;
+  expect(recorder.traceLink(traceId)).toBe(`http://api.test/_wizelens/#/traces/${traceId}`);
   undo();
   await new Promise((r) => setTimeout(r, 2100));
   const postedTo = new Set(calls.filter((c) => c.url.endsWith("/api/client-spans")).map((c) => c.url));

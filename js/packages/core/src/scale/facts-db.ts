@@ -20,8 +20,8 @@ function callContributions(c: DbCall, slowQueryMs: number): Contribution[] {
   const rank = slowestRank(c.durationMs, c.traceId);
   const out = [
     contribution("db", "", at, base),
-    contribution("db.q", c.query, at, { ...base, top: { rank, data: top } }),
-    contribution("db.qd", joinKey(c.operation, databaseOf(c.span), c.query), at, { ...base, top: { rank, data: top } }),
+    contribution("db.q", c.query, at, { ...base, values: [c.durationMs], top: { rank, data: top } }),
+    contribution("db.qd", joinKey(c.operation, databaseOf(c.span), c.query), at, { ...base, values: [c.durationMs], top: { rank, data: top } }),
     contribution("db.qe", joinKey(c.query, c.endpoint), at),
     contribution("db.op", c.operation, at, { sum: c.durationMs }),
   ];

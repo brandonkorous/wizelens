@@ -10,18 +10,18 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 it("uses the React HUD's keys, so a setting carries over", () => {
-  expect(HUD_KEYS).toEqual({ panel: "wizelens.hud.panel", live: "wizelens.hud.live", min: "wizelens.hud.min" });
+  expect(HUD_KEYS).toEqual({ panel: "wizelens.hud.panel", live: "wizelens.hud.live", min: "wizelens.hud.min", side: "wizelens.hud.side" });
 });
 
 it("starts live, with the full card and no panel, when nothing is stored", () => {
-  expect(readSettings()).toEqual({ panel: "", live: true, minimized: false });
+  expect(readSettings()).toEqual({ panel: "", live: true, minimized: false, left: false });
 });
 
 it("reads stored settings and ignores values it does not know", () => {
   local.set("wizelens.hud.panel", "details");
   local.set("wizelens.hud.live", "0");
   local.set("wizelens.hud.min", "1");
-  expect(readSettings()).toEqual({ panel: "details", live: false, minimized: true });
+  expect(readSettings()).toEqual({ panel: "details", live: false, minimized: true, left: false });
   local.set("wizelens.hud.panel", "network");
   local.set("wizelens.hud.live", "yes");
   expect(readSettings()).toMatchObject({ panel: "", live: true });
@@ -53,5 +53,5 @@ it("tells subscribers about every write until they stop listening", () => {
   off();
   writeMinimized(true);
   expect(seen).toHaveBeenCalledTimes(2);
-  expect(readSettings()).toEqual({ panel: "settings", live: false, minimized: true });
+  expect(readSettings()).toEqual({ panel: "settings", live: false, minimized: true, left: false });
 });

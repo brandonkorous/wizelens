@@ -70,9 +70,9 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   ins: spec(["count"], { top: "newest" }),
   "ins.ep": spec(),
   db: spec(["slow"]),
-  "db.q": spec(["slow"], { top: "largest", ids: 20 }),
+  "db.q": spec(["slow"], { top: "largest", ids: 20, hist: true }),
   /** `db.q` keyed by operation and database first, for the Database page filters. */
-  "db.qd": spec(["slow"], { top: "largest" }),
+  "db.qd": spec(["slow"], { top: "largest", hist: true }),
   "db.qe": spec(),
   "db.t": spec(["withRows", "rows"]),
   "db.op": spec(),

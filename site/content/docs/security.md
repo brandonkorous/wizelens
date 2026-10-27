@@ -52,7 +52,7 @@ A06 Insecure Design and A08 Integrity Failures need a design review, not traffic
 ## Secrets stay hidden
 
 Before anything is stored, WizeLens replaces secrets found inside any value with a typed marker: `[redacted:jwt]`,
-`[redacted:aws-key]`, `[redacted:private-key]`, `[redacted:stripe-key]`, `[redacted:github-token]`,
+`[redacted:signed-token]` (a signed ticket such as `v1.eyJ….sig`), `[redacted:aws-key]`, `[redacted:private-key]`, `[redacted:stripe-key]`, `[redacted:github-token]`,
 `[redacted:slack-token]`, `[redacted:google-key]`, and `[redacted:card]`. The **secret leak** rule reads the markers. A
 `Set-Cookie` header keeps each cookie's name and flags (`sid=[redacted]; Path=/; Secure; HttpOnly`), and URL queries keep
 their keys (`token=[redacted]`), so the cookie and URL rules still work.

@@ -6,11 +6,12 @@ import datetime
 import decimal
 import json
 import uuid
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 from opentelemetry import trace
 
 from .settings import Settings
+from .sql_params import SQL_PARAM_KEYS, param_columns, unsigiled
 
 PARAMS_ATTR = "wizelens.db.parameters"
 REDACTED = "[redacted]"
@@ -29,22 +30,32 @@ def _plain(value: Any) -> Any:
     return repr(value)
 
 
-def params_json(params: Any, settings: Settings) -> Optional[str]:
-    """Parameters as the `wizelens.db.parameters` JSON text: sensitive names redacted, positions kept."""
+def _value(value: Any, names: Tuple[Optional[str], ...], settings: Settings) -> Any:
+    """One value: redacted when its name or its column is sensitive."""
+    if any(n and (settings.is_sensitive(n) or any(k in n.lower() for k in SQL_PARAM_KEYS)) for n in names):
+        return REDACTED
+    return _plain(value)
+
+
+def params_json(params: Any, settings: Settings, statement: Any = "") -> Optional[str]:
+    """Parameters as the `wizelens.db.parameters` JSON text: a value is redacted by its name or by the column `statement` binds it to."""
     if params is None:
         return None
+    if isinstance(statement, bytes):
+        statement = statement.decode("utf-8", "replace")
+    columns = param_columns(statement if isinstance(statement, str) else "")
     if isinstance(params, dict):
-        named = {str(k): REDACTED if settings.is_sensitive(str(k)) else _plain(v) for k, v in params.items()}
-        return json.dumps(named)
+        named = {str(k): v for k, v in params.items()}
+        return json.dumps({k: _value(v, (k, columns.get(unsigiled(k))), settings) for k, v in named.items()})
     if isinstance(params, (list, tuple)):
-        return json.dumps([_plain(v) for v in params])
+        return json.dumps([_value(v, (columns.get(str(i)),), settings) for i, v in enumerate(params)])
     return json.dumps([_plain(params)])
 
 
-def record_parameters(params: Any, span: Any = None, settings: Optional[Settings] = None) -> None:
-    """Put parameters on a span (the current one by default). For drivers WizeLens does not patch."""
+def record_parameters(params: Any, span: Any = None, settings: Optional[Settings] = None, statement: str = "") -> None:
+    """Put parameters on a span (the current one by default). For drivers WizeLens does not patch; pass the SQL so values bound to sensitive columns are redacted."""
     target = span or trace.get_current_span()
-    text = params_json(params, settings or Settings.from_env())
+    text = params_json(params, settings or Settings.from_env(), statement)
     if text is not None and target.is_recording():
         target.set_attribute(PARAMS_ATTR, text)
 
@@ -62,7 +73,7 @@ def capture_dbapi_parameters(settings: Settings) -> bool:
     def _populate_span(self: Any, span: Any, cursor: Any, *args: Any) -> None:
         original(self, span, cursor, *args)
         if len(args) > 1 and span.is_recording():
-            text = params_json(args[1], settings)
+            text = params_json(args[1], settings, args[0])
             if text is not None:
                 span.set_attribute(PARAMS_ATTR, text)
 
@@ -105,7 +116,7 @@ def capture_sqlalchemy_parameters(settings: Settings) -> bool:
             return
         # The bound names (compiled_parameters) let sensitive ones be redacted; the driver only sees positions.
         named = getattr(context, "compiled_parameters", None)
-        text = params_json(named[0] if named and len(named) == 1 else parameters, settings)
+        text = params_json(named[0] if named and len(named) == 1 else parameters, settings, statement)
         if text is not None:
             span.set_attribute(PARAMS_ATTR, text)
 

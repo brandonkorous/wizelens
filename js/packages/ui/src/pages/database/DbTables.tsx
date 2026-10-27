@@ -30,6 +30,7 @@ function queryColumns(slowMs: number): Column<QueryRow>[] {
   return [
     { key: "query", header: "Query", className: "wl-db-query", cell: (q) => <span className="wl-truncate" title={q.query}>{q.query}</span> },
     { key: "avg", header: "Avg", num: true, cell: (q) => <span className={q.avgMs >= slowMs ? "wl-text-error" : undefined}>{fmtMs(q.avgMs)}</span> },
+    { key: "p95", header: "P95", num: true, cell: (q) => fmtMs(q.p95Ms) },
     { key: "max", header: "Max", num: true, cell: (q) => fmtMs(q.maxMs) },
     { key: "count", header: "Count", num: true, cell: (q) => fmtCount(q.count) },
     { key: "total", header: "Total Time", num: true, cell: (q) => fmtMs(q.totalMs) },
@@ -39,7 +40,7 @@ function queryColumns(slowMs: number): Column<QueryRow>[] {
   ];
 }
 
-const QUERY_TITLE = { avg: "Slowest Queries", count: "Most Frequent Queries", total: "Queries by Total Time" } as const;
+const QUERY_TITLE = { avg: "Slowest Queries", count: "Most Frequent Queries", total: "Queries by Total Time", slow: "Queries With the Most Slow Runs" } as const;
 
 /** One page of the query shapes that match the filter, in its order. A row opens the query's page. */
 export function TopQueriesPanel({ stats }: { stats: DatabaseModel }) {

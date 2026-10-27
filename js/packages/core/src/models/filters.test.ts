@@ -67,6 +67,8 @@ describe("page filters", () => {
     expect(select.queries.every((q) => /^select/i.test(q.query))).toBe(true);
     const total = run("database", { sort: "total", size: "200" }).queries.map((q) => q.totalMs);
     expect(total).toEqual([...total].sort((a, b) => b - a));
+    const slow = run("database", { sort: "slow", size: "200" }).queries.map((q) => q.slow);
+    expect(slow).toEqual([...slow].sort((a, b) => b - a));
     const db = select.databases[0]!;
     expect(run("database", { database: db, size: "200" }).queryShapes).toBeGreaterThan(0);
     expect(run("database", { database: "nope" }).queries).toEqual([]);

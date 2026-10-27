@@ -79,3 +79,8 @@
 .wl-form-actions-split { justify-content: space-between; align-items: center; }
 .wl-panel-text { margin: 0 0 14px; color: var(--wl-muted); }
 .wl-form-actions-start { justify-content: flex-start; }
+
+/* Skip to content: hidden until a keyboard user tabs onto it. */
+.wl-skip { position: fixed; top: 8px; left: 8px; z-index: 1000; padding: 10px 14px; border: 2px solid var(--wl-accent); border-radius: 9px; background: var(--wl-surface); color: var(--wl-accent-text); font: 600 16px var(--wl-sans); transform: translateY(-200%); }
+.wl-skip:focus-visible { transform: none; }
+.wl-page:focus { outline: none; }

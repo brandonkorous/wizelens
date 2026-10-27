@@ -13,6 +13,7 @@ internal static partial class ValuePatterns
     [
         new("private-key", t => t.Contains("PRIVATE KEY-----", StringComparison.Ordinal), PrivateKey()),
         new("jwt", t => t.Contains("eyJ", StringComparison.Ordinal), Jwt()),
+        new("signed-token", t => t.Contains("eyJ", StringComparison.Ordinal), SignedToken()),
         new("aws-key", t => t.Contains("AKIA", StringComparison.Ordinal) || t.Contains("ASIA", StringComparison.Ordinal), AwsKey()),
         new("stripe-key", t => t.Contains("_live_", StringComparison.Ordinal) || t.Contains("_test_", StringComparison.Ordinal) || t.Contains("whsec_", StringComparison.Ordinal), StripeKey()),
         new("github-token", t => t.Contains("gh", StringComparison.Ordinal) || t.Contains("github_pat_", StringComparison.Ordinal), GitHubToken()),
@@ -51,6 +52,9 @@ internal static partial class ValuePatterns
 
     [GeneratedRegex(@"\beyJ[\w-]{10,}\.eyJ[\w-]{10,}\.[\w-]{10,}", Ascii)]
     private static partial Regex Jwt();
+
+    [GeneratedRegex(@"\beyJ[\w-]{10,}\.[\w-]{20,}", Ascii)]
+    private static partial Regex SignedToken();
 
     [GeneratedRegex(@"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b", Ascii)]
     private static partial Regex AwsKey();

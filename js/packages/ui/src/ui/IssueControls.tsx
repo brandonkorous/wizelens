@@ -25,15 +25,19 @@ export interface IssueActionsProps {
   info: IssueInfo | undefined;
 }
 
-/** Resolve, ignore (for a while or for good), reopen, and assign (cloud). Hidden on hosts that keep no issue states. */
+const STATES_DOCS = "https://wizelens.com/docs/errors/#resolve-ignore-and-assign";
+
+/** Resolve, ignore (for a while or for good), reopen, and assign (cloud). Hosts that keep no issue states say where they are kept. */
 export function IssueActions({ kind, issueKey, info }: IssueActionsProps) {
   const { on, members } = useIssueMembers();
-  const cloud = useHost().has("accounts");
+  const host = useHost();
+  const cloud = host.has("accounts");
   const [note, setNote] = useState<string | null>(null);
+  const [resolve, ignore] = WORDS[kind];
+  if (!host.has("issues")) return <p className="wl-issue-actions">{resolve} and {ignore} are on the hub and in the cloud, which keep these states. <a href={STATES_DOCS} target="_blank" rel="noreferrer">How</a></p>;
   if (!on) return null;
   const run = async (action: "resolve" | "ignore" | "reopen" | "assign", extra = {}) => setNote(await changeIssue(cloud, kind, issueKey, action, extra));
   const open = !info || info.status === "unresolved" || info.status === "regressed";
-  const [resolve, ignore] = WORDS[kind];
   const people: [string, string][] = [["", "Unassigned"], ...members.map((m): [string, string] => [m.id, m.name || m.email])];
   return (
     <div className="wl-issue-actions">

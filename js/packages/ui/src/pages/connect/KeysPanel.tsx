@@ -21,6 +21,12 @@ const REVOKED: Record<ApiKey["kind"], string> = {
   browser: "Pages that send with this key stop being recorded at once.",
 };
 
+/** The revoke question: a key used in the last day is still live, and Rotate replaces it with no gap. */
+function revokeText(k: ApiKey, now: number): string {
+  const live = k.lastUsedMs !== null && now - k.lastUsedMs < DAY_MS;
+  return live ? `It was used ${fmtAgo(k.lastUsedMs!)}, so something still uses it. ${REVOKED[k.kind]} To replace it with no gap, use Rotate instead.` : REVOKED[k.kind];
+}
+
 function scopesText(k: ApiKey): string {
   const labels = new Map(SCOPES[k.kind]);
   const may = k.scopes ? k.scopes.map((s) => labels.get(s)?.split(" (")[0] ?? s).join(", ") : "All";
@@ -59,7 +65,7 @@ export function KeysPanel({ orgId, data, kinds, reload }: { orgId: string; data:
   const rows = all.filter((k) => matchesText(filter, k.name, k.prefix, k.kind, ...k.projectIds.map((id) => names.get(id))));
   const { picked, select, clear } = useSelection(all.map((k) => k.id), "key");
   const revoke = async (k: ApiKey) =>
-    (await confirm({ title: `Revoke ${k.name}?`, body: REVOKED[k.kind], confirmLabel: "Revoke key", danger: true })) &&
+    (await confirm({ title: `Revoke ${k.name}?`, body: revokeText(k, Date.now()), confirmLabel: "Revoke key", danger: true })) &&
     void act(() => apiSend("DELETE", `./api/orgs/${orgId}/keys/${k.id}`), reload).then(setError);
   const rotate = async (k: ApiKey) =>
     (await confirm({ title: `Rotate ${k.name}?`, body: "You get a new secret for the same key. The old secret keeps working for 24 hours, so you can update the apps that use it.", confirmLabel: "Rotate key" })) &&

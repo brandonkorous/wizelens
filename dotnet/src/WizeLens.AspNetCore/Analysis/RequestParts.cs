@@ -114,7 +114,7 @@ internal static partial class RequestParts
         var db = t.Spans.Where(s => s.Category == SpanCategories.Db).ToList();
         var repeatable = db.Where(s => !TraceAnalysis.IsSessionStatement(s)).ToList();
         var known = repeatable.Where(s => !TraceAnalysis.HasUnknownParams(s));
-        var duplicates = known.GroupBy(s => $"{QueryText(s)}\0{(Value(s.Attributes, "wizelens.db.parameters") is { } p ? JsText.Of(p) : "")}").Count(g => g.Count() >= 2);
+        var duplicates = known.GroupBy(s => $"{QueryText(s)}\0{TraceAnalysis.ParamsOf(s) ?? ""}").Count(g => g.Count() >= 2);
         var nPlusOneDb = repeatable.GroupBy(QueryText).Count(g => g.Count() >= nPlusOne);
         var nPlusOneHttp = t.Spans.Where(s => s.Category == SpanCategories.HttpClient).GroupBy(HttpShape).Count(g => g.Count() >= nPlusOne);
         return nPlusOneDb + nPlusOneHttp + duplicates + SlowFindings(db.Where(s => s.DurationMs >= slowQueryMs));

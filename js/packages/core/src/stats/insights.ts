@@ -57,11 +57,13 @@ function subjectOf(shape: string): string {
   return table ? `A query on ${table}` : "A query";
 }
 
-function describe(kind: Hit["kind"], shape: string, perRequest: number, avgMs: number, endpoint: string): string {
+function describe(kind: Hit["kind"], shape: string, perRequest: number, avgMs: number, endpoint: string, requests: number): string {
   const n = Math.round(perRequest);
-  if (kind === "n+1-db") return `${subjectOf(shape)} runs ${n} times per request in ${endpoint}. Load the rows in one query (eager loading or a join).`;
-  if (kind === "n+1-http") return `${endpoint} makes ${n} similar calls per request. Batch them or cache the result.`;
-  if (kind === "duplicate-query") return `${subjectOf(shape)} runs ${n} times with the same parameters in ${endpoint}. Reuse the first result.`;
+  // Over several requests the count is a mean; one trace can show more.
+  const avg = requests > 1 ? " on average" : "";
+  if (kind === "n+1-db") return `${subjectOf(shape)} runs ${n} times per request${avg} in ${endpoint}. Load the rows in one query (eager loading or a join).`;
+  if (kind === "n+1-http") return `${endpoint} makes ${n} similar calls per request${avg}. Batch them or cache the result.`;
+  if (kind === "duplicate-query") return `${subjectOf(shape)} runs ${n} times${avg} with the same parameters in ${endpoint}. Reuse the first result.`;
   if (kind === "db-wait") return `${n === 1 ? "A slow SET or BEGIN" : `${n} slow queries at the same time`} in ${endpoint} waited about ${Math.round(avgMs)} ms. They likely waited for a connection or a lock. Check the pool size, and whether it happens only on the first request.`;
   return `${subjectOf(shape)} takes ${Math.round(avgMs)} ms on average in ${endpoint}. Check its indexes and how many rows it reads.`;
 }
@@ -108,7 +110,7 @@ export function insightGroupOf(key: string, g: InsightSummary): InsightGroup {
     area: g.kind === "n+1-http" ? "http" : "database",
     impact: impactOf(g.kind, g.occurrences, g.totalMs, avgMs),
     title: TITLES[g.kind],
-    description: describe(g.kind, g.shape, g.count / g.occurrences, avgMs, g.endpoints[0]!),
+    description: describe(g.kind, g.shape, g.count / g.occurrences, avgMs, g.endpoints[0]!, g.occurrences),
     shape: g.shape,
     occurrences: g.occurrences,
     count: g.count,

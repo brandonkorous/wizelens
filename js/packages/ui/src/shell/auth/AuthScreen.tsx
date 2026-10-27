@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 import { type AccountState, auth, AuthError, errorText, loadAccount } from "../../data/account";
-import { hrefTo, navigate } from "../../routes";
+import { hrefTo, navigate, toTwoFactor } from "../../routes";
 import { AuthCard, AuthForm, EMAIL, LinkButton, NAME, NEW_PASSWORD, PASSWORD } from "./AuthForm";
 import { SsoSignIn, takeSsoError } from "./SsoSignIn";
 
@@ -49,7 +49,7 @@ export function SignIn({ state, title = "Sign in to WizeLens", intro, email, onS
     setUnconfirmed(null);
     try {
       const data = await auth((c) => c.signIn.email({ email: v.email!, password: v.password! }));
-      if ("twoFactorRedirect" in data && data.twoFactorRedirect) return navigate(hrefTo("two-factor"));
+      if ("twoFactorRedirect" in data && data.twoFactorRedirect) return toTwoFactor();
       await onSignedIn();
     } catch (e) {
       if (state.mail && e instanceof AuthError && e.code === "EMAIL_NOT_VERIFIED") setUnconfirmed(v.email!);

@@ -47,6 +47,28 @@ describe("cloud accounts", () => {
   });
 });
 
+describe("cloud audit log", () => {
+  it("names the cancelled invite in the audit log", async () => {
+    let url: string;
+    ({ cloud, url } = await startCloud());
+    const { owner, orgId } = await setupOwner(cloud, url);
+    const id = await invite(owner, orgId, "sio@acme.io", "member");
+    expect((await owner.call("POST", "api/auth/organization/cancel-invitation", { invitationId: id })).status).toBe(200);
+    const log = (await owner.call<{ action: string; detail: Record<string, unknown> }[]>("GET", `api/orgs/${orgId}/audit`)).body;
+    expect(log.find((a) => a.action === "invite.cancel")?.detail).toMatchObject({ email: "sio@acme.io", role: "member" });
+  });
+
+  it("names a revoked key in the audit log, though the key is no longer listed", async () => {
+    let url: string;
+    ({ cloud, url } = await startCloud());
+    const { owner, orgId, projectId } = await setupOwner(cloud, url);
+    const made = (await owner.call<{ id: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", name: "orders API (pods)", projectIds: [projectId] })).body;
+    expect((await owner.call("DELETE", `api/orgs/${orgId}/keys/${made.id}`)).status).toBe(200);
+    const log = (await owner.call<{ action: string; detail: Record<string, unknown> }[]>("GET", `api/orgs/${orgId}/audit`)).body;
+    expect(log.find((a) => a.action === "key.revoke")?.detail).toMatchObject({ name: "orders API (pods)", kind: "ingest" });
+  });
+});
+
 describe("cloud data", () => {
   it("takes batches with an ingest key and serves them to members only", async () => {
     let url: string;

@@ -5,9 +5,10 @@ import { apiSend } from "../../data/api";
 import { useHost } from "../../data/host";
 import { act, useApi } from "../../data/useApi";
 import { fmtCount } from "../../format";
-import { endpointHref, navigate, newAlertHref } from "../../routes";
+import { endpointHref, hrefTo, navigate, newAlertHref } from "../../routes";
 import { Badge } from "../../ui/Badges";
 import { DetailHead } from "../../ui/DetailHead";
+import { useAsk } from "../../ui/Dialog";
 import { Empty, Panel } from "../../ui/Panel";
 import { TimeChart } from "../../ui/TimeChart";
 import { SloForm } from "./SloForm";
@@ -41,19 +42,24 @@ function Body({ r, url, canWrite, reload }: { r: SloReport; url: string; canWrit
     if (!err) setEditing(false);
     return err;
   };
-  const remove = () => void act(() => apiSend("DELETE", url), () => navigate("#/slos"));
+  const { dialog, confirm } = useAsk();
+  const remove = async () =>
+    (await confirm({ title: `Delete ${r.slo.name}?`, body: "Its budget history and any alert on its burn rate stop working.", confirmLabel: "Delete SLO", danger: true })) &&
+    void act(() => apiSend("DELETE", url), () => navigate("#/slos"));
   const alertHref = newAlertHref({ metric: "slo", sloId: r.slo.id, op: ">", threshold: FAST_BURN, windowMs: "3600000", name: `${r.slo.name} burns fast` });
   const actions = (
     <>
       {alerts && <a className="wl-btn wl-btn-sm" href={alertHref}><BellPlus aria-hidden="true" /> Alert on burn rate</a>}
       {canWrite && <button type="button" className="wl-btn wl-btn-sm" onClick={() => setEditing(true)}>Edit</button>}
-      {canWrite && <button type="button" className="wl-link-btn wl-text-error" onClick={remove}>Delete</button>}
+      {canWrite && <button type="button" className="wl-link-btn wl-text-error" onClick={() => void remove()}>Delete</button>}
+      {dialog}
     </>
   );
   const scope = r.slo.endpoint ? endpointHref(`api:${r.slo.service}`, r.slo.endpoint) : `#/services/api%3A${encodeURIComponent(r.slo.service)}`;
   return (
     <>
       <DetailHead back={["#/slos", "All SLOs"]} icon={Target} title={r.slo.name} badge={<Badge tone={budgetTone(s.budgetLeft)}>{s.budgetLeft !== null && s.budgetLeft > 0 ? `${fmtBudget(s.budgetLeft)} of budget left` : fmtBudget(s.budgetLeft)}</Badge>} actions={actions} stats={[...stats, ["Covers", <a key="s" href={scope}>{r.slo.endpoint || r.slo.service}</a>]]} />
+      <p className="wl-muted wl-small">Counts the requests {r.slo.service} answered. While it is down it answers none, so an outage spends no budget here: an <a href={hrefTo("uptime")}>uptime check</a> catches it.</p>
       {editing && <SloForm title={`Edit "${r.slo.name}"`} initial={r.slo} onSave={save} onCancel={() => setEditing(false)} />}
       <Charts r={r} />
     </>

@@ -43,6 +43,8 @@ export class DataStore {
   readonly #listeners = new Set<() => void>();
   readonly #lastPoll = new Map<string, number>();
   #timer: ReturnType<typeof setTimeout> | null = null;
+  /** Settings changed (how long data is kept, the slow limit): read this host's info again on the next poll. */
+  #infoStale = false;
   #registry: HubRegistry | null = null;
   #scope: Scope = getScope();
   #snapshot: DataSnapshot = { sources: [], traces: [], info: null, loading: true, updatedMs: Date.now(), registry: null };
@@ -71,6 +73,12 @@ export class DataStore {
     this.#lastPoll.clear();
     for (const s of this.#sources.values()) if (s.self) s.info = null;
     this.#emit();
+    this.refresh();
+  }
+
+  /** Read the info again, keeping the old one on screen until the new one comes. */
+  reloadInfo(): void {
+    this.#infoStale = true;
     this.refresh();
   }
 
@@ -108,7 +116,10 @@ export class DataStore {
     const started = Date.now();
     const last = this.#lastPoll.get(source.endpoint);
     try {
-      if (!source.info) source.info = await loadInfo(source.endpoint, source.self ? this.#scope : null);
+      if (!source.info || (source.self && this.#infoStale)) {
+        source.info = await loadInfo(source.endpoint, source.self ? this.#scope : null);
+        if (source.self) this.#infoStale = false;
+      }
       const hub = source.self && isHub(source.info);
       const selfInfo = [...this.#sources.values()].find((s) => s.self)?.info ?? null;
       const skip = !source.self && isHub(selfInfo) && !fitsScope(source.info, this.#scope);
