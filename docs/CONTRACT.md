@@ -1102,7 +1102,7 @@ retention, and the audit log.
 | POST / DELETE | `api/orgs/{org}/keys[/{id}]` | Admin. The secret is in the answer once |
 | GET | `api/orgs/{org}/audit?offset=&before=`, `…/audit/count` | Admin |
 | GET | `api/info`, `api/traces`, `api/traces/{id}`, `api/services` — all with `?project=` (or `?project=all&org=`) | Member or read key. `api/traces/{id}` joins other projects (see "Traces across projects"); `project=all` reads every project the caller may (see "All projects") |
-| PATCH | `api/orgs/{org}/projects/{p}` | Admin. `{ logRetentionDays }`: 1 to 400, or null to follow the organization. Answers the project (with `logRetentionDays`) and writes `project.update` to the audit log |
+| PATCH | `api/orgs/{org}/projects/{p}` | Admin. `{ logRetentionDays }`: 1 to 400, or null to follow the organization; more days than the plan keeps answers 402 with the plan it needs. Answers the project (with `logRetentionDays`) and writes `project.update` to the audit log |
 | POST | `api/projects/{p}/services/forget` | Admin. Forgets offline hosts; each service keeps its newest host. Answers `{ removed }` and writes `service.forget` to the audit log |
 | GET | `api/models/{page}?project=&range=&env=&…` | Member or read key. See "Page models". `metrics` is a page too. `project=all&org=`: every project the caller may read (see "All projects") |
 | GET | `api/orgs/{org}/alerts`, `/issues`, `/slos`, `/uptime`, `/shares` | Member or read key: every readable project's rows, each with `projectId` and `project` (its label). Changes stay on `api/projects/{project}/…` |

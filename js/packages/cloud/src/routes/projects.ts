@@ -1,4 +1,5 @@
 import type { Ctx } from "../app.js";
+import { requireRetention } from "../billing/gate.js";
 import { requireOrg } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson, str } from "../http/http.js";
 import type { Router } from "../http/router.js";
@@ -38,6 +39,8 @@ async function rename(ctx: Ctx, p: Project, raw: unknown, actor: string): Promis
 
 async function setLogDays(ctx: Ctx, p: Project, days: unknown, actor: string): Promise<void> {
   if (days !== null && (!Number.isInteger(days) || (days as number) < 1 || (days as number) > 400)) fail(400, "Log retention is 1 to 400 days, or null to follow the organization.");
+  // Logs may outlast the traces, never the plan.
+  if (days !== null) await requireRetention(ctx.app, p.orgId, days as number);
   await ctx.app.db.query("UPDATE projects SET log_retention_days = $1 WHERE id = $2", [days, p.id]);
   await audit(ctx.app.db, p.orgId, actor, "project.update", { projectId: p.id, logRetentionDays: days }, now(ctx));
 }

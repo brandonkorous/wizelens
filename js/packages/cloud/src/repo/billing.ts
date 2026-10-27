@@ -36,7 +36,7 @@ export interface PlanChange {
   retentionDays?: number | null;
 }
 
-/** Set the plan, lower retention to the plan's maximum, and write an audit line. Returns false when nothing changed. */
+/** Set the plan, lower retention (and each project's log days) to the plan's maximum, and write an audit line. Returns false when nothing changed. */
 export async function setPlan(q: Queryable, orgId: string, change: PlanChange, actor: string, now: number): Promise<boolean> {
   const before = await orgBilling(q, orgId);
   if (!before) throw new Error(`No organization ${orgId}.`);
@@ -46,6 +46,7 @@ export async function setPlan(q: Queryable, orgId: string, change: PlanChange, a
   if (before.plan === change.plan && before.planGb === gb && before.planRetentionDays === days) return false;
   const max = limitsOf({ plan: change.plan, planGb: gb, planRetentionDays: days }, true).maxRetentionDays;
   await q.query("UPDATE orgs SET plan = $1, plan_gb = $2, plan_retention_days = $3, retention_days = LEAST(retention_days, $4) WHERE id = $5", [change.plan, gb, days, max, orgId]);
+  await q.query("UPDATE projects SET log_retention_days = LEAST(log_retention_days, $1) WHERE org_id = $2 AND log_retention_days IS NOT NULL", [max, orgId]);
   if (change.plan !== "team" && change.plan !== "business") await q.query("UPDATE orgs SET spend_cap_cents = NULL WHERE id = $1", [orgId]);
   await audit(q, orgId, actor, "plan.change", { from: before.plan, plan: change.plan, ...(custom ? { gb, retentionDays: days } : {}) }, now);
   return true;
