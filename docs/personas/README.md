@@ -37,8 +37,8 @@ and half the cloud's screens do not exist in-app at all.
 
 | # | Persona | Role | Host | Status |
 | --- | --- | --- | --- | --- |
-| P01 | [Dani Okonkwo-Brennan](01-dani-kanninja-developer.md) | developer | in-app dashboard + HUD | not started |
-| P02 | [Greta Lindqvist-Ochoa](02-greta-kanninja-dba.md) | system and database admin | WizeLens Cloud | not started |
+| P01 | [Dani Okonkwo-Brennan](01-dani-kanninja-developer.md) | developer | in-app dashboard + HUD | done |
+| P02 | [Greta Lindqvist-Ochoa](02-greta-kanninja-dba.md) | system and database admin | WizeLens Cloud | done |
 
 ## What each one is the only proof of
 

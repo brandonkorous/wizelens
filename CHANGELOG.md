@@ -11,6 +11,33 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   instead of sending them all. Before, one burst could pass ClickHouse's limit of 1000 queries at a time
   (`TOO_MANY_SIMULTANEOUS_QUERIES`) and add to its memory use. Set `WIZELENS_CLOUD_CLICKHOUSE_CONCURRENCY` to change
   the number.
+- **Fixes from two persona runs on kanNINJA** (a developer on the in-app dashboard, a database admin on the cloud;
+  `docs/personas/`). Each one was found on screen and re-proved there.
+  - **Requests tell the truth about how they ended.** A redirect the browser followed shows its 307, not "Aborted".
+    A WebSocket that closes when the visitor leaves (`@fastify/websocket`) shows as a 101 stream, and only the time
+    to the 101 counts as request time, so it no longer pushes up a service's average and p95.
+  - **Secrets stay hidden.** SQL values bound to token, password and email columns are redacted in every SDK, named
+    placeholders too, and signed tokens such as `v1.eyJ…` tickets are hidden by their shape.
+  - **Alerts.** An email channel no longer vanishes on save; a double-click on Save makes one alert; deleting an
+    alert, SLO or check asks first; the form says what an error and a slow query count; a slow-SQL alert opens the
+    slow queries first; two-step sign-in comes back to the alert link you opened.
+  - **Uptime counts from the first run**, not from when the check was saved. The SLO page says an outage spends no
+    budget there.
+  - **People, keys and the audit log.** Cancelling an invite asks Keep invite or Cancel invite. Revoking a key in use
+    says so and points to Rotate. The audit log shows the date and time, names a cancelled invite, and names a
+    revoked key after it is gone. A new key starts on the project you are in.
+  - **Retention.** Keeping data for less time asks first and names the date before which data is deleted; the top
+    bar shows the new days at once; the page says a project's logs can keep their own days.
+  - **Phones and keyboards.** The top bar fits the window; tables that wrap keep whole words; detail page buttons,
+    pagers, trace, compare, search and Connect fit 360 px; time charts show only the labels that fit; the HUD's call
+    names and axis labels fit. Skip to content, a focus ring and a name on search boxes, and table rows, list items
+    and map shapes open from the keyboard.
+  - **Plainer words.** An insight's per-request count says when it is an average; Resolve and Ignore say where they
+    live on hosts that keep no issue states; Off for AI access and response bodies says how to turn it on; Logs says
+    what a search covers; list search boxes filter as you type.
+  - **HUD and traces.** The HUD shows the page's own status and names calls by their route; a call's trace opens
+    where its browser half lives; a cross-origin API span sits inside the fetch that joined its trace; the HUD can
+    sit bottom left.
 
 ### Added
 
@@ -42,6 +69,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   `MODULE_NOT_FOUND` for `.next/server/app-edge-has-no-entrypoint` on a `load route module` span outside any request.
   The cloud and hubs drop that exception and its error status when they read the trace. Another missing module, or the
   same one inside a request, is still an error.
+- **p95 for every query shape** on Database and on each query page, and in the CSV export. Stats rebuild from stored
+  traces on start, with no migration.
+- **Database says what "slow" means** ("Slow means ≥ 250 ms · Change") and links to where the limit is set.
+- **Rename a project** from Organization › Projects; the audit log keeps the old name.
+- **The React and Next.js page of the site has a Next.js setup button,** and the docs say which setting names a
+  service's environment.
 
 ## [0.3.0-alpha.13] — Settings by task, and numbers that match reality
 
