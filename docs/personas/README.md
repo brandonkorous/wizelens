@@ -60,12 +60,12 @@ is still finding in-app dashboard defects, P01 did not fix what it found.**
 
 ## Screen coverage
 
-WizeLens ships **169 rateable screens** across the in-app dashboard, the cloud,
+WizeLens ships **177 rateable screens** across the in-app dashboard, the cloud,
 the cloud's account screens, the HUD, the site and the docs. Every one is a row
 in [rating.md](rating.md), generated from the code by
 [gen-screens.mjs](gen-screens.mjs) so the denominator is real.
 
-Two runs will not open all 169. **Those rows stay `—`, deliberately.** An unrated
+Two runs will not open all 177. The first count, 169, missed eight detail pages (one service, problem, uptime check, host, Kubernetes node and pod); P02 found two of them by using them. **Those rows stay `—`, deliberately.** An unrated
 screen is unrated; it is never assumed fine because a sibling scored well
 (CLAUDE.md RULE #4).
 

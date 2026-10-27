@@ -38,9 +38,11 @@ const details = [
   ["Trace › Messages", "#/traces/<id>/messages"], ["Trace › Logs", "#/traces/<id>/logs"], ["Trace › Errors", "#/traces/<id>/errors"],
   ["Trace compare", "#/traces/<a>/compare/<b>"], ["Error group", "#/errors/<group>"], ["Service endpoint", "#/services/<svc>/endpoints/<ep>"],
   ["Query shape", "#/database/queries/<sql>"], ["Page route", "#/rendering/routes/<route>"], ["User", "#/users/<user>"],
+  ["Service", "#/services/<svc>"], ["Problem", "#/problems/<id>"],
 ];
 for (const [s, k] of details) { add("Dashboard · in-app (/_wizelens)", s, k); add("Dashboard · cloud", s, k); }
-for (const [s, k] of [["Alert rule", "#/alerts/<id>"], ["SLO", "#/slos/<id>"], ["Dashboard", "#/dashboards/<id>"], ["Shared page (signed out)", "#/shared/<token>"], ["Status page", "#/status/<slug>"]]) add("Dashboard · cloud", s, k);
+for (const [s, k] of [["Alert rule", "#/alerts/<id>"], ["SLO", "#/slos/<id>"], ["Dashboard", "#/dashboards/<id>"], ["Shared page (signed out)", "#/shared/<token>"], ["Status page", "#/status/<slug>"],
+  ["Uptime check", "#/uptime/<id>"], ["Host", "#/hosts/<name>"], ["Kubernetes node", "#/kubernetes/node/<name>"], ["Kubernetes pod", "#/kubernetes/pod/<ns>/<name>"]]) add("Dashboard · cloud", s, k);
 
 // Account screens on the cloud (AUTH_PAGES plus the sign-in screens themselves).
 for (const s of ["Sign in", "Create account", "No organization yet"]) add("Cloud · account screens", s, "(signed out)");

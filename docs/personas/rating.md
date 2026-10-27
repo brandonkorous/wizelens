@@ -8,7 +8,7 @@ Every screen in WizeLens, scored on **Design** and **Ease** as the personas open
 them. How and when to score is RULE #6 in [CLAUDE.md](CLAUDE.md); this file is
 where the numbers live.
 
-**Scored so far: 19 of 169 screens.** Update that line as rows fill in —
+**Scored so far: 45 of 177 screens.** Update that line as rows fill in —
 it is the denominator, and a rating file that does not show what it has not looked
 at is the same lie as an empty issue list.
 
@@ -71,7 +71,7 @@ is a `major` issue, not a rating.**
 ---
 
 
-### Dashboard · in-app (/_wizelens) — 37 screens
+### Dashboard · in-app (/_wizelens) — 39 screens
 
 | Screen | Key | Design | Ease | Gap to 10 | Persona |
 | --- | --- | --- | --- | --- | --- |
@@ -112,75 +112,83 @@ is a `major` issue, not a rating.**
 | Query shape | `#/database/queries/<sql>` | — | — | — | — |
 | Page route | `#/rendering/routes/<route>` | — | — | — | — |
 | User | `#/users/<user>` | — | — | — | — |
+| Service | `#/services/<svc>` | — | — | — | — |
+| Problem | `#/problems/<id>` | — | — | — | — |
 
-### Dashboard · cloud — 64 screens
+### Dashboard · cloud — 70 screens
 
 | Screen | Key | Design | Ease | Gap to 10 | Persona |
 | --- | --- | --- | --- | --- | --- |
-| Overview | `#/` | — | — | — | — |
+| Overview | `#/` | 8 | 7 | at 360 the six stat cards stack one per row before the first chart; "No data for previous 7 days" on every card while the org is a day old; was: top bar ran off the screen #046 | P02 |
 | Problems | `#/problems` | — | — | — | — |
-| Search | `#/search` | — | — | — | — |
-| Requests | `#/requests` | — | — | — | — |
-| Traces | `#/traces` | — | — | — | — |
-| Errors | `#/errors` | — | — | — | — |
+| Search | `#/search` | 8 | 7 | runs only on Enter, unlike the list boxes beside it; was: top bar ran off the screen #046 | P02 |
+| Requests | `#/requests` | 8 | 8 | at 360 the filters fill the first screen; Path cuts long ids at 1440; was: top bar #046 | P02 |
+| Traces | `#/traces` | 7 | 7 | list panel is a third of the width at 1440; at 360 the list starts below four stat cards; was: top bar #046 | P02 |
+| Errors | `#/errors` | 8 | 7 | at 360 five menus and two boxes fill the first screen; the details panel starts below the fold at 1440; was: top bar #046 | P02 |
 | Logs | `#/logs` | — | — | — | — |
-| Database | `#/database` | — | — | — | — |
+| Database | `#/database` | 8 | 8 | query text cut at 1440 with no wrap toggle; at 360 the filters fill the first screen; was: top bar #046 | P02 |
 | Rendering | `#/rendering` | — | — | — | — |
 | Metrics | `#/metrics` | — | — | — | — |
-| Services | `#/services` | — | — | — | — |
+| Services | `#/services` | 8 | 7 | `localhost:3001` (the web app's calls to the API) is listed as its own Unhealthy service beside `kanninja-backend`, the same API; two tables name the same services; was: top bar #046 | P02 |
 | Hosts | `#/hosts` | — | — | — | — |
 | Kubernetes | `#/kubernetes` | — | — | — | — |
 | Insights | `#/insights` | — | — | — | — |
 | Security | `#/security` | — | — | — | — |
 | Users | `#/users` | — | — | — | — |
-| Alerts | `#/alerts` | — | — | — | — |
-| Uptime | `#/uptime` | — | — | — | — |
-| SLOs | `#/slos` | — | — | — | — |
+| Alerts | `#/alerts` | 7 → 8 | 7 | five controls on every rule row (Mute, Turn off, Test, Edit, Delete); was: Rule column one letter wide at 360 #047, top bar #046 | P02 |
+| Uptime | `#/uptime` | 8 | 8 | "Average of the checks that are on" is cut at 1440; at 360 the checks table starts below four cards | P02 |
+| SLOs | `#/slos` | 7 → 8 | 8 | Apdex targets share the page with SLOs as a second idea with no heading link between them; was: Goal column one letter wide at 360 #047 | P02 |
 | Dashboards | `#/dashboards` | — | — | — | — |
 | Connect | `#/connect` | — | — | — | — |
 | People & access | `#/people` | — | — | — | — |
 | Organization | `#/organization` | — | — | — | — |
-| Connect › setup | `#/connect/setup` | — | — | — | — |
+| Connect › setup | `#/connect/setup` | 8 | 8 | env lines are small mono at 360 and wrap mid-value; copy buttons sit far right of the value | P02 |
 | Connect › server | `#/connect/server` | — | — | — | — |
-| Connect › Sending keys | `#/connect/keys` | — | — | — | — |
+| Connect › Sending keys | `#/connect/keys` | 7 → 8 | 8 | during a rotate the old and new secrets are two rows with one name, told apart only by "In a day"; was: Projects column split letters at 360 #047, revoke said nothing about use #042 | P02 |
 | Connect › AI read keys | `#/connect/read-keys` | — | — | — | — |
-| Organization › Projects | `#/organization/projects` | — | — | — | — |
-| Organization › Data retention | `#/organization/retention` | — | — | — | — |
-| Organization › Thresholds and hidden keys | `#/organization/checks` | — | — | — | — |
+| Organization › Projects | `#/organization/projects` | 8 | 8 | at 360 Rename, Access, Clear data and Delete sit off to the right inside the table scroll | P02 |
+| Organization › Data retention | `#/organization/retention` | 8 | 8 | the hint under Days is small muted text; was: shortening asked nothing and showed old days #044, logs vs traces rule unclear #045 | P02 |
+| Organization › Thresholds and hidden keys | `#/organization/checks` | 8 | 8 | hints under the two numbers are small muted text | P02 |
 | Organization › Tags | `#/organization/tags` | — | — | — | — |
 | Organization › Billing | `#/organization/billing` | — | — | — | — |
-| Organization › General | `#/organization/general` | — | — | — | — |
-| People & access › Members | `#/people/members` | — | — | — | — |
+| Organization › General | `#/organization/general` | 8 | 8 | "Delete this organization" sits right under the name box (the typed name and password guard it) | P02 |
+| People & access › Members | `#/people/members` | 8 | 8 | at 360 "Member since" moves into the table scroll | P02 |
 | People & access › Project access | `#/people/access` | — | — | — | — |
 | People & access › Single sign-on | `#/people/sso` | — | — | — | — |
 | People & access › User sync (SCIM) | `#/people/scim` | — | — | — | — |
 | People & access › Connected apps | `#/people/apps` | — | — | — | — |
 | People & access › Shared links | `#/people/links` | — | — | — | — |
-| People & access › Audit log | `#/people/audit` | — | — | — | — |
+| People & access › Audit log | `#/people/audit` | 7 → 8 | 8 | at 360 What and Detail move into the table scroll; was: revoked key unnamed #048, cancelled invite unnamed #040, no "how long ago" #041 | P02 |
 | Account › Profile | `#/account/profile` | — | — | — | — |
 | Account › Devices | `#/account/devices` | — | — | — | — |
 | Account › Preferences | `#/account/preferences` | — | — | — | — |
 | Account › Emails | `#/account/emails` | — | — | — | — |
 | Account › Delete account | `#/account/delete` | — | — | — | — |
-| Account › Security | `#/account/security` | — | — | — | — |
+| Account › Security | `#/account/security` | 8 | 8 | "Turn off" two-step is a solid red button beside "New backup codes" | P02 |
 | Connect › options | `#/connect/options` | — | — | — | — |
-| Trace › Timeline | `#/traces/<id>` | — | — | — | — |
+| Trace › Timeline | `#/traces/<id>` | 8 | 7 | a browser-only trace reads "Network and other 4.84 s" with one span bar and no word on what took the time; at 360 the tabs scroll | P02 |
 | Trace › SQL | `#/traces/<id>/sql` | — | — | — | — |
 | Trace › HTTP | `#/traces/<id>/http` | — | — | — | — |
 | Trace › Messages | `#/traces/<id>/messages` | — | — | — | — |
 | Trace › Logs | `#/traces/<id>/logs` | — | — | — | — |
 | Trace › Errors | `#/traces/<id>/errors` | — | — | — | — |
 | Trace compare | `#/traces/<a>/compare/<b>` | — | — | — | — |
-| Error group | `#/errors/<group>` | — | — | — | — |
+| Error group | `#/errors/<group>` | 7 → 8 | 7 | Next.js's own failed telemetry call (dev only) shows as a kanninja-frontend error, true but noise; was: buttons ran off the screen at 360 #049 | P02 |
 | Service endpoint | `#/services/<svc>/endpoints/<ep>` | — | — | — | — |
-| Query shape | `#/database/queries/<sql>` | — | — | — | — |
+| Query shape | `#/database/queries/<sql>` | 8 | 8 | at 360 the SQL wraps to 7 lines before the numbers; the copy button is under the text, not beside it | P02 |
 | Page route | `#/rendering/routes/<route>` | — | — | — | — |
 | User | `#/users/<user>` | — | — | — | — |
-| Alert rule | `#/alerts/<id>` | — | — | — | — |
-| SLO | `#/slos/<id>` | — | — | — | — |
+| Service | `#/services/<svc>` | 8 | 8 | at 360 the facts (kind, hosts, version…) fill the first screen before a number; was: top bar #046 | P02 |
+| Problem | `#/problems/<id>` | — | — | — | — |
+| Alert rule | `#/alerts/<id>` | 8 | 8 | the line starts on the day the rule was made, so most of the 7-day chart is blank with no word on why; was: link said traces and opened queries #036, lost after two-step sign-in #035 | P02 |
+| SLO | `#/slos/<id>` | 8 | 6 | an outage spends no budget here; the page now says so (#038, decision); the budget chart is a flat line at 0 once spent | P02 |
 | Dashboard | `#/dashboards/<id>` | — | — | — | — |
 | Shared page (signed out) | `#/shared/<token>` | — | — | — | — |
 | Status page | `#/status/<slug>` | — | — | — | — |
+| Uptime check | `#/uptime/<id>` | 8 | 8 | on day one the 30-day card reads the same as 24 h and does not say how much is measured; was: counted from before the first run #037 | P02 |
+| Host | `#/hosts/<name>` | — | — | — | — |
+| Kubernetes node | `#/kubernetes/node/<name>` | — | — | — | — |
+| Kubernetes pod | `#/kubernetes/pod/<ns>/<name>` | — | — | — | — |
 
 ### Cloud · account screens — 12 screens
 
@@ -198,6 +206,8 @@ is a `major` issue, not a rating.**
 | delete-account | `#/delete-account` | — | — | — | — |
 | oauth | `#/oauth` | — | — | — | — |
 | oauth-consent | `#/oauth-consent` | — | — | — | — |
+
+Sign in, Create account, two-factor and invite were opened by P02 (acts 1, 7 and 9) in light at 1440 only, so they are not scored (RULE #6).
 
 ### HUD (in the app's own page) — 2 screens
 
@@ -269,7 +279,6 @@ is a `major` issue, not a rating.**
 | troubleshooting | `/docs/troubleshooting` | — | — | — | — |
 | uptime | `/docs/uptime` | — | — | — | — |
 | users | `/docs/users` | — | — | — | — |
-
 
 ---
 
