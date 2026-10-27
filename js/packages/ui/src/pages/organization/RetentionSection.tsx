@@ -93,7 +93,7 @@ function ProjectsRetention({ org }: { org: OrgWithProjects | null }) {
 
 /** How long data is kept, all in one place: the organization's longest (cloud), then each project's traces and logs. */
 export function RetentionSection({ org }: { org: OrgWithProjects | null }) {
-  const where = org ? "Older data is deleted within minutes. A project never keeps data longer than the organization." : "Older data is deleted within minutes. A project's days apply to its traces and logs, and are never longer than the hub's.";
+  const where = org ? "Older data is deleted within minutes. A project never keeps traces longer than the organization; its logs can have their own days." : "Older data is deleted within minutes. A project's days apply to its traces and logs, and are never longer than the hub's.";
   return (
     <>
       <SectionHead title="Data retention" description={`How long traces and logs are kept. ${where}`} />
