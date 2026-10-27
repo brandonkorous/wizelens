@@ -184,6 +184,8 @@ now flag with those numbers.
 **Done when:** a 300 ms query is flagged and a 200 ms one is not; an N+1 of 9 is
 flagged and one of 7 is not (or the screens say plainly why they are not).
 
+**Outcome:** done, with one part not checked. Organization › Thresholds and hidden keys: Slow query 250, N+1 8, Save → "Saved. New data uses these settings."; values stay after leaving and coming back. Database now reads "Slow queries (≥ 250 ms)" and "Slow means ≥ 250 ms · Change" (#028). After Dani dropped a card at the top of Inbox (14 renumbers), Insights shows "N+1 query pattern · runs 14 times per request in POST /api/v1/boards/:boardId/cards/:cardId/move". Problems: "WizeLens is learning what normal looks like … needs two of them with data (it has 0)" — true, it does not use these limits. NOT CHECKED: a renumber of 5–7 (flagged at the old 5, not at 8). kanNINJA renumbers only when two cards clash on one place; 4 drops from the screen gave 14, 0, 0, 0 renumbers.
+
 ### Act 6 — is personal data leaking into SQL?
 
 She opens the sign-up and sign-in traces from P01 and searches the cloud for
@@ -309,3 +311,5 @@ sentence is often the defect.
 **Act 3.** Each key went into its service's env file (`backend/.env`, `frontend/.env.local`, both git-ignored) as WIZELENS_HUB=http://localhost:5970 and WIZELENS_HUB_TOKEN; both services restarted. Dani loaded the board once. Overview: "Total Requests 16 · SQL Queries 36 · Apdex 0.75 Fair"; both services "Degraded" from first-compile times (1.7 s, dev server). Recent Requests shows the realtime call with its whole `?ticket=v1.eyJ…` value — a signed ticket holding Dani's profile id and name: kept for act 6. Traces → `/api/v1/boards/c2be23b0…` → Open trace: TOTAL 658 ms = fetch 338 + render 321 (rounding), 9 spans, 7 queries.
 
 **Act 4.** Sorted by "Most total time" (the Order select, URL keeps `sort=total`). First look: the row and the Query page gave Avg and Max only — no p95, the number her act asks for: #027, fixed (histograms for `db.q`/`db.qd`, FACTS_VERSION 14, P95 column + CSV + Query page head), cloud restarted, stats rebuilt from stored traces without loss. The costliest shape is the auth lookup that every API request does (Better Auth session → user), 7 of 7 endpoints — so the fix for kanNINJA is caching the session user per request, not an index (lookups are by primary key, 2.8 ms each). The trace's SQL tab shows the session token param as `[redacted]` and the user id param in clear.
+
+**Act 5.** Greta looked for the limit on Database first; only chart labels named it (#028, fixed: a Change link by the limit). The thresholds page says changes apply to new data only — the 14-call N+1 came after the save. No query reached 250 ms (the slowest is 41 ms), so "Slow 0" is right and was not provoked. The in-app HUD still uses its own default 5 (it showed the same N+1 as "ran 14 times"); the two limits are separate on purpose, but nothing on either screen says so — noted, not filed.
