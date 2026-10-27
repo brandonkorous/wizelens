@@ -48,6 +48,13 @@ async function rememberRemoved(ctx: HookCtx, body: Record<string, unknown>): Pro
 
 const str = (v: unknown) => (typeof v === "string" ? v : undefined);
 
+/** A cancel sends only the invite id (kept out as a secret), so the log names the invite from the answer. */
+function cancelledInvite(ctx: HookCtx): Record<string, unknown> {
+  if (ctx.path !== "/organization/cancel-invitation") return {};
+  const r = ctx.context.returned as { email?: unknown; role?: unknown } | undefined;
+  return { email: str(r?.email), role: str(r?.role) };
+}
+
 
 /** Better Auth signs in whoever opens an email-change link; with 2FA on, that must happen on a device already signed in. */
 async function guardEmailChange(ctx: HookCtx): Promise<void> {
@@ -113,7 +120,7 @@ async function auditOrgChange(deps: AuthDeps, ctx: HookCtx): Promise<void> {
   if (!action || !orgId) return;
   const actor = (await getSessionFromCtx(ctx))?.user.id;
   const removed = ctx.request && removedEmailOf.get(ctx.request);
-  const detail = { ...Object.fromEntries(Object.entries((ctx.body ?? {}) as Record<string, unknown>).filter(([k]) => !SECRET_KEYS.includes(k))), ...(removed ? { memberEmail: removed } : {}) };
+  const detail = { ...Object.fromEntries(Object.entries((ctx.body ?? {}) as Record<string, unknown>).filter(([k]) => !SECRET_KEYS.includes(k))), ...(removed ? { memberEmail: removed } : {}), ...cancelledInvite(ctx) };
   await audit(deps.db, orgId, actor ? `user:${actor}` : "system", action, detail, Date.now());
   await pruneProjectRoles(deps.db, orgId);
 }

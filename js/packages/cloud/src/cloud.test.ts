@@ -38,6 +38,16 @@ describe("cloud accounts", () => {
     expect(audit).toEqual(expect.arrayContaining(["member.invite", "member.join", "org.create"]));
   });
 
+  it("names the cancelled invite in the audit log", async () => {
+    let url: string;
+    ({ cloud, url } = await startCloud());
+    const { owner, orgId } = await setupOwner(cloud, url);
+    const id = await invite(owner, orgId, "sio@acme.io", "member");
+    expect((await owner.call("POST", "api/auth/organization/cancel-invitation", { invitationId: id })).status).toBe(200);
+    const log = (await owner.call<{ action: string; detail: Record<string, unknown> }[]>("GET", `api/orgs/${orgId}/audit`)).body;
+    expect(log.find((a) => a.action === "invite.cancel")?.detail).toMatchObject({ email: "sio@acme.io", role: "member" });
+  });
+
   it("refuses changes without the dashboard header", async () => {
     let url: string;
     ({ cloud, url } = await startCloud());
