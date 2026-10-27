@@ -6,7 +6,7 @@ import type { Recorder, RecorderOptions } from "./recorder-types.js";
 import { documentRequest } from "./document-request.js";
 import { createInstaller, createRequestStore, type RequestStore } from "./request-store.js";
 import { injectedRelease } from "./error-frames.js";
-import { createSender, type Sender } from "./sender.js";
+import { createSender, type Sender, spanHome } from "./sender.js";
 import { ServerData } from "./server-data.js";
 import { documentTrace } from "./server-timing.js";
 import { getSessionId } from "./session.js";
@@ -126,7 +126,7 @@ export function createRecorder(options: RecorderOptions = {}): Recorder {
     getServerStats: (traceId) => data.getServerStats(traceId),
     getTrace: (traceId) => data.getTrace(traceId),
     loadTrace: (traceId) => data.loadTrace(traceId),
-    traceLink: (id, view) => `${data.endpointOf(id)}/#/traces/${id}${view ? `/${view}` : ""}`,
+    traceLink: (id, view) => `${spanHome(data.endpointOf(id), cfg.endpointUrl)}/#/traces/${id}${view ? `/${view}` : ""}`,
     pageView: (url) => capture.current()?.pageView(url),
     captureError: (error, attributes) => capture.current()?.captureError(error, attributes),
     clear: store.clear,

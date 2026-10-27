@@ -17,6 +17,11 @@ export interface Sender {
 
 const BATCH = 20;
 
+/** Where a trace's browser spans go, and so where the whole trace is read: its owner on this origin, else this page's endpoint, which federates downstream. */
+export function spanHome(owner: string, endpointUrl: string): string {
+  return owner !== endpointUrl && sameOrigin(owner) ? owner : endpointUrl;
+}
+
 // Send to another server only on this page's origin, like the server's remote rule.
 function sameOrigin(endpoint: string): boolean {
   try {
@@ -81,10 +86,7 @@ export function createSender(
     }
     const send = getFetch();
     if ((queue.length === 0 && logs.length === 0) || !send) return;
-    const target = (traceId: string) => {
-      const owner = endpointOf(traceId);
-      return owner !== endpointUrl && sameOrigin(owner) ? owner : endpointUrl;
-    };
+    const target = (traceId: string) => spanHome(endpointOf(traceId), endpointUrl);
     const groups = groupByEndpoint(queue.splice(0, queue.length), logs.splice(0, logs.length), target);
     await Promise.all([...groups].map(([endpoint, batch]) => post(send, endpoint, batch)));
   }
