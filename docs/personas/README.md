@@ -2,11 +2,12 @@
 
 **Version:** 1.0
 **Author:** Brandon Korous
-**Last Updated:** 2026-10-26
+**Last Updated:** 2026-10-27
 
-Two real WizeLens users, each set up from nothing in a real app (kanNINJA v2:
-Next.js 15 web, Fastify 5 API, Drizzle on postgres.js) and operated until their
-job works or breaks. The rules are in [CLAUDE.md](CLAUDE.md); the screen scores
+Five real WizeLens users, each set up from nothing in a real app and operated
+until their job works or breaks: kanNINJA v2 (Next.js 15 web, Fastify 5 API,
+Drizzle on postgres.js) for P01, P02 and P05; Microsoft's eShopOnWeb (.NET 8,
+EF Core on SQL Server) for P03; a static Vite site for P04. The rules are in [CLAUDE.md](CLAUDE.md); the screen scores
 are in [rating.md](rating.md); the defects are in [issues/](issues/). What we
 learned about the product before writing a persona is in
 [discovery.md](discovery.md).
@@ -39,17 +40,25 @@ and half the cloud's screens do not exist in-app at all.
 | --- | --- | --- | --- | --- |
 | P01 | [Dani Okonkwo-Brennan](01-dani-kanninja-developer.md) | developer | in-app dashboard + HUD | done |
 | P02 | [Greta Lindqvist-Ochoa](02-greta-kanninja-dba.md) | system and database admin | WizeLens Cloud | done |
+| P03 | [Sid Ramaswamy-Kowalczyk](03-sid-eshop-dotnet-developer.md) | .NET developer | in-app dashboard served by the .NET SDK + HUD on Razor pages | not started |
+| P04 | [Noor Haddad-Pellegrini](04-noor-static-site-phone.md) | front-end only, on a phone | WizeLens Cloud, browser script tag | not started |
+| P05 | [Marisol Teixeira-Wójcik](05-marisol-credit-union-admin.md) | team admin | WizeLens Cloud: SSO, people, billing | not started |
 
 ## What each one is the only proof of
 
 | # | Nothing else in the roster covers this |
 | --- | --- |
 | P01 | **The spine, deeply.** Site → docs → upgrade a real Next.js + Node app → first trace on `/_wizelens` → the HUD on a real page → one click as one trace across two services |
+| P03 | **The .NET spine on a framework he cannot change.** NuGet on .NET 8, EF Core on SQL Server, Razor pages with the HUD, a WebAssembly admin calling an API |
+| P04 | **The negative space.** No server at all: the script tag, a browser key, a person who does not read code, every screen on a phone with thumbs |
+| P05 | **The conditions.** Stripe test-mode billing, SSO-only sign-in from Keycloak, offboarding from one place, least access proved both ways, spend limits, an audit export |
 | P02 | **The cloud and the edges.** Sign-up with 2FA, per-service keys, alerts by email, uptime, SLOs, least access, retention, a key revoked by mistake, and a neighbour org that must stay invisible |
 
 ## Run order
 
-`P01 → P02`
+`P01 → P02 → P03 → P04 → P05`
+
+Added 2026-10-27 to raise the product from 7.5 to 9 (46 of 177 screens scored after P02). P03 and P04 have the most different spines (another language; no server), so they go first; P05 needs a mature cloud and real billing, so it goes last.
 
 P01 makes the traffic P02 watches: P02's cloud shows P01's board. P02 needs a
 mature app underneath it (real data, real errors), so it goes last.
@@ -71,13 +80,12 @@ screen is unrated; it is never assumed fine because a sibling scored well
 
 ## Coverage this roster deliberately does not have
 
-- **.NET, Python, Java and Go.** No local .NET on this machine; both personas run Node and Next.js.
-- **Vue, Angular, Svelte and the script tag.** kanNINJA is React; the shared HUD web component is seen only through React.
+- **Python, Java and Go.** .NET is covered by P03 (the SDK builds here after the env fix in the repo notes).
+- **Vue, Angular and Svelte.** React through npm (P01) and the plain script tag (P04) are covered; the other frameworks are not.
 - **The hub** (`wizelens-hub`, self-hosted collector) and **ClickHouse scale mode**: the cloud here runs on PGlite.
 - **Hosts and Kubernetes** with real infra data: no infra collector runs.
-- **Billing.** No Stripe account is connected to the local cloud; plans, checkout and overage are not exercised.
 - **Real mail delivery.** Mail is read from the cloud's and kanNINJA's console logs, not from an inbox.
-- **SSO and SCIM.** No identity provider is set up.
+- **SSO from a hosted provider** (Okta, Entra ID). P05 uses Keycloak locally.
 - **Load.** Two accounts is a correctness exercise, not a performance one.
 
 An honest gap list is worth more than a roster that claims to cover everything.
