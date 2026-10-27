@@ -19,13 +19,13 @@ export interface BarItem {
 export function BarList({ items, max, compact = false }: { items: BarItem[]; max?: number; compact?: boolean }) {
   const top = max ?? Math.max(0, ...items.map((i) => i.value));
   return (
-    <div className="wl-bars">
+    <div className={`wl-bars${compact ? " wl-compact" : ""}`}>
       {items.map((item, idx) => {
         const width = top > 0 ? Math.max(1.5, (item.value / top) * 100) : 0;
         return (
           <div
             key={item.key ?? idx}
-            className={`wl-bar-row${compact ? " wl-compact" : ""}${item.onClick ? " wl-clickable" : ""}`}
+            className={`wl-bar-row${item.onClick ? " wl-clickable" : ""}`}
             {...(item.onClick ? pressable(item.onClick, "button") : {})}
           >
             <span className="wl-truncate" title={typeof item.label === "string" ? item.label : undefined}>{item.label}</span>
