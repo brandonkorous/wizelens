@@ -4,6 +4,7 @@ import { fmtMs } from "../../format";
 import { usePagedRows } from "../../ui/PagedRows";
 import { Empty } from "../../ui/Panel";
 import { badgesFor, FindingBadges, rowClass, ServiceChip, type TabProps } from "./tabParts";
+import { pressable } from "../../ui/pressable";
 
 const isHttp = (s: Span) => s.category === "http.client" || s.category === "http.server" || s.category === "browser";
 const direction = (s: Span) => (s.category === "http.server" ? "IN" : s.category === "browser" ? "WEB" : "OUT");
@@ -13,7 +14,7 @@ function HttpRow({ span, props, kinds }: { span: Span; props: TabProps; kinds: R
   const status = a["http.response.status_code"];
   const target = String(a["url.full"] ?? a["http.route"] ?? a["url.path"] ?? span.name);
   return (
-    <tr className={`wl-clickable ${rowClass(span, props)}`} onClick={() => props.onSelect(span.spanId)}>
+    <tr className={`wl-clickable ${rowClass(span, props)}`} {...pressable(() => props.onSelect(span.spanId))}>
       <td>
         <span className={`wl-cat wl-cat-${span.category.replace(".", "-")}`}>{direction(span)}</span>
       </td>

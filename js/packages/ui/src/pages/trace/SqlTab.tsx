@@ -3,6 +3,7 @@ import { busyMs, queryText } from "@wizeworks/lens-core";
 import { fmtMs } from "../../format";
 import { Empty } from "../../ui/Panel";
 import { badgesFor, FindingBadges, rowClass, ServiceChip, type TabProps } from "./tabParts";
+import { pressable } from "../../ui/pressable";
 
 export function SqlTab(props: TabProps) {
   const { trace, findings, onSelect } = props;
@@ -32,7 +33,7 @@ export function SqlTab(props: TabProps) {
       </div>
       <ol className="wl-sql-list">
         {spans.map((s, i) => (
-          <li key={s.spanId} className={`wl-sql-item ${rowClass(s, props)}`} onClick={() => onSelect(s.spanId)}>
+          <li key={s.spanId} className={`wl-sql-item ${rowClass(s, props)}`} {...pressable(() => onSelect(s.spanId))}>
             <div className="wl-sql-meta">
               <span className="wl-muted">#{i + 1}</span>
               <ServiceChip service={s.service} services={trace.services} />

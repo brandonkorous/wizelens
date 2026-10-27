@@ -1,4 +1,5 @@
-import type { KeyboardEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
+import { pressable } from "./pressable";
 
 export interface BarItem {
   key?: string;
@@ -25,7 +26,7 @@ export function BarList({ items, max, compact = false }: { items: BarItem[]; max
           <div
             key={item.key ?? idx}
             className={`wl-bar-row${compact ? " wl-compact" : ""}${item.onClick ? " wl-clickable" : ""}`}
-            {...(item.onClick ? { role: "button", tabIndex: 0, onClick: item.onClick, onKeyDown: (e: KeyboardEvent) => e.key === "Enter" && item.onClick?.() } : {})}
+            {...(item.onClick ? pressable(item.onClick, "button") : {})}
           >
             <span className="wl-truncate">{item.label}</span>
             {compact && <span className="wl-num wl-muted">{item.share}</span>}
