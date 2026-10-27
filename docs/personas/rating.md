@@ -8,7 +8,7 @@ Every screen in WizeLens, scored on **Design** and **Ease** as the personas open
 them. How and when to score is RULE #6 in [CLAUDE.md](CLAUDE.md); this file is
 where the numbers live.
 
-**Scored so far: 0 of 169 screens.** Update that line as rows fill in —
+**Scored so far: 19 of 169 screens.** Update that line as rows fill in —
 it is the denominator, and a rating file that does not show what it has not looked
 at is the same lie as an empty issue list.
 
@@ -75,21 +75,21 @@ is a `major` issue, not a rating.**
 
 | Screen | Key | Design | Ease | Gap to 10 | Persona |
 | --- | --- | --- | --- | --- | --- |
-| Overview | `#/` | — | — | — | — |
+| Overview | `#/` | 8 | 7 | at 360 the six stat cards stack one per row (~850 px) before the first chart; "No data for previous day" on every card on day one; was: time axis overlapped at 360 #022 | P01 |
 | Problems | `#/problems` | — | — | — | — |
-| Search | `#/search` | — | — | — | — |
-| Requests | `#/requests` | — | — | — | — |
-| Traces | `#/traces` | — | — | — | — |
-| Errors | `#/errors` | — | — | — | — |
-| Logs | `#/logs` | — | — | — | — |
-| Database | `#/database` | — | — | — | — |
+| Search | `#/search` | 8 | 7 | runs only on Enter, unlike the list boxes beside it (#014); was: tabs and time axis overflowed at 360 #021 #022 | P01 |
+| Requests | `#/requests` | 8 | 8 | Path cuts the end of long ids at 1440, so /clans and /members look alike; at 360 the filters fill the first screen | P01 |
+| Traces | `#/traces` | 6 → 7 | 5 → 7 | list panel is a third of the width at 1440; was: search waited for Enter #014, 9-line paths #016, cross-origin traces read 2-3x long #015, pager overflowed at 360 #017 | P01 |
+| Errors | `#/errors` | 8 | 7 | details panel starts below the fold at 1440; dev-restart ENOENT noise counts with app errors; Resolve lives on the hub/cloud #012 | P01 |
+| Logs | `#/logs` | 7 | 6 → 7 | "Errors 173" (log lines) beside the Errors page's 65 (exceptions), two meanings of one word; was: search answered with unfiltered patterns #020 | P01 |
+| Database | `#/database` | 8 | 8 | query text cut at 1440 with no wrap toggle; at 360 the filters fill the first screen | P01 |
 | Rendering | `#/rendering` | — | — | — | — |
 | Metrics | `#/metrics` | — | — | — | — |
 | Services | `#/services` | — | — | — | — |
-| Insights | `#/insights` | — | — | — | — |
+| Insights | `#/insights` | 8 | 8 | Endpoints column cuts the route (/api/v1/boards/:boardId/cards/:c…); was: N+1 count read as exact #010 | P01 |
 | Security | `#/security` | — | — | — | — |
 | Users | `#/users` | — | — | — | — |
-| Connect | `#/connect` | — | — | — | — |
+| Connect | `#/connect` | 7 | 6 → 7 | read-only: every setting is code; was: Off with no way on #018, panel wider than a phone #021 | P01 |
 | Settings | `#/settings` | — | — | — | — |
 | Connect › setup | `#/connect/setup` | — | — | — | — |
 | Connect › server | `#/connect/server` | — | — | — | — |
@@ -100,13 +100,13 @@ is a `major` issue, not a rating.**
 | Settings › Tags | `#/settings/tags` | — | — | — | — |
 | Settings › Preferences | `#/settings/preferences` | — | — | — | — |
 | Connect › options | `#/connect/options` | — | — | — | — |
-| Trace › Timeline | `#/traces/<id>` | — | — | — | — |
-| Trace › SQL | `#/traces/<id>/sql` | — | — | — | — |
+| Trace › Timeline | `#/traces/<id>` | 8 | 8 | span bars under 1 ms are slivers; was: header actions overflowed at 360 #021 | P01 |
+| Trace › SQL | `#/traces/<id>/sql` | 8 | 8 | long SELECT lists wrap to 3 lines with no collapse; params shown redacted as [redacted] with no column name | P01 |
 | Trace › HTTP | `#/traces/<id>/http` | — | — | — | — |
 | Trace › Messages | `#/traces/<id>/messages` | — | — | — | — |
-| Trace › Logs | `#/traces/<id>/logs` | — | — | — | — |
+| Trace › Logs | `#/traces/<id>/logs` | 8 | 7 → 8 | Service chip wraps to 2 lines in light at 1440; was: empty tab did not say Fastify's lines are left out #020 | P01 |
 | Trace › Errors | `#/traces/<id>/errors` | — | — | — | — |
-| Trace compare | `#/traces/<a>/compare/<b>` | — | — | — | — |
+| Trace compare | `#/traces/<a>/compare/<b>` | 7 | 5 → 7 | Total adds render to the fetch without saying so; was: "Same request" list read 48 ms for 17 ms loads #015, waterfall overflowed at 360 #021 | P01 |
 | Error group | `#/errors/<group>` | — | — | — | — |
 | Service endpoint | `#/services/<svc>/endpoints/<ep>` | — | — | — | — |
 | Query shape | `#/database/queries/<sql>` | — | — | — | — |
@@ -203,16 +203,16 @@ is a `major` issue, not a rating.**
 
 | Screen | Key | Design | Ease | Gap to 10 | Persona |
 | --- | --- | --- | --- | --- | --- |
-| HUD card | `bottom corner of the app` | — | — | — | — |
-| HUD details panel | `HUD › details` | — | — | — | — |
+| HUD card | `bottom corner of the app` | 8 | 7 → 8 | on a light page the card is dark and its panels light; Next.js' dev "N" button covers the SQL count bottom left; was: covered the last card #011 | P01 |
+| HUD details panel | `HUD › details` | 6 → 8 | 8 | on a phone the full call name is only in a hover title, which touch cannot open; was: method cut and axis labels overlapped at 360 #023 | P01 |
 
 ### Site · wizelens.com — 19 screens
 
 | Screen | Key | Design | Ease | Gap to 10 | Persona |
 | --- | --- | --- | --- | --- | --- |
-| Home | `/` | — | — | — | — |
+| Home | `/` | 8 | 8 | light only (site has no dark theme); hero demo shows only the logo for ~3 s before it plays; 12px grey footnote under the buttons is hard to read | P01 |
 | angular | `/angular` | — | — | — | — |
-| changelog | `/changelog` | — | — | — | — |
+| changelog | `/changelog` | 8 | 8 | light only; 20 version chips before any content at 360px | P01 |
 | cloud | `/cloud` | — | — | — | — |
 | dotnet | `/dotnet` | — | — | — | — |
 | go | `/go` | — | — | — | — |
@@ -222,7 +222,7 @@ is a `major` issue, not a rating.**
 | pricing | `/pricing` | — | — | — | — |
 | privacy | `/privacy` | — | — | — | — |
 | python | `/python` | — | — | — | — |
-| react | `/react` | — | — | — | — |
+| react | `/react` | 8 | 6 → 8 | light only; was: Set it up opened React docs for a Next.js dev #001 | P01 |
 | security | `/security` | — | — | — | — |
 | story | `/story` | — | — | — | — |
 | svelte | `/svelte` | — | — | — | — |
@@ -251,7 +251,7 @@ is a `major` issue, not a rating.**
 | java | `/docs/java` | — | — | — | — |
 | kubernetes | `/docs/kubernetes` | — | — | — | — |
 | logs | `/docs/logs` | — | — | — | — |
-| nextjs | `/docs/nextjs` | — | — | — | — |
+| nextjs | `/docs/nextjs` | 8 | 8 | light only; no section for upgrading an app that already has WizeLens (only one line: delete .next) | P01 |
 | node | `/docs/node` | — | — | — | — |
 | problems | `/docs/problems` | — | — | — | — |
 | production | `/docs/production` | — | — | — | — |
