@@ -95,22 +95,21 @@ export function toAttributeValue(value: unknown): AttributeValue {
 
 const bigintSafe = (_k: string, v: unknown) => (typeof v === "bigint" ? v.toString() : v);
 
-/** One positional value: redacted when its column is sensitive, else with secrets found by pattern replaced. */
-function positional(value: unknown, column: string | undefined, keys: readonly string[]): unknown {
-  if (column && isSensitiveKey(column, [...keys, ...SQL_PARAM_KEYS])) return REDACTED;
+/** One value: redacted when its name or its column is sensitive, else with secrets found by pattern replaced. */
+function paramValue(value: unknown, names: (string | undefined)[], keys: readonly string[]): unknown {
+  const all = [...keys, ...SQL_PARAM_KEYS];
+  if (names.some((n) => n && isSensitiveKey(n, all))) return REDACTED;
   return typeof value === "string" ? redactText(value) : value;
 }
 
-/** DB parameters as the `wizelens.db.parameters` JSON string; sensitive names redacted, positional ones by the column `sql` binds them to. */
+/** DB parameters as the `wizelens.db.parameters` JSON string; a value is redacted by its name or by the column `sql` binds it to. */
 export function redactParams(params: unknown, keys: readonly string[] = DEFAULT_REDACT_KEYS, sql = ""): string | null {
   if (params === undefined || params === null) return null;
-  if (Array.isArray(params)) {
-    const columns = paramColumns(sql);
-    return JSON.stringify(params.map((v, i) => positional(v, columns.get(i), keys)), bigintSafe);
-  }
+  const columns = paramColumns(sql);
+  if (Array.isArray(params)) return JSON.stringify(params.map((v, i) => paramValue(v, [columns.get(String(i))], keys)), bigintSafe);
   if (typeof params === "object") {
     const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(params as Record<string, unknown>)) out[k] = positional(v, k, keys);
+    for (const [k, v] of Object.entries(params as Record<string, unknown>)) out[k] = paramValue(v, [k, columns.get(k.replace(/^[@:$]/, ""))], keys);
     return JSON.stringify(out, bigintSafe);
   }
   return JSON.stringify([params], bigintSafe);
