@@ -49,6 +49,7 @@ export interface UptimeCheckInput {
 /** A check with its newest result. "pending" until it first runs. */
 export interface UptimeCheck extends UptimeCheckInput {
   id: string;
+  /** When watching began: saved, then moved to the first run, so uptime never counts time before a run. */
   createdMs: number;
   state: "up" | "down" | "pending";
   lastRunMs: number | null;

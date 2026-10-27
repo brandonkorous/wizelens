@@ -13,7 +13,7 @@ import type { UptimeCheck } from "./check.js";
 import { parseCheckInput, shownHeaders, statusMatches } from "./input.js";
 import { dailyUptime, uptimeOver, uptimeWindows } from "./percent.js";
 import { uptimeTelemetry } from "./span.js";
-import { changeOf } from "./state.js";
+import { changeOf, lastRunOf } from "./state.js";
 
 const HOUR = 3_600_000;
 const check: UptimeCheck = {
@@ -61,6 +61,14 @@ describe("uptime percent", () => {
     expect(changeOf({ state: "up" }, fail)).toEqual({ state: "down", open: "HTTP 503", closeAtMs: null });
     expect(changeOf({ state: "down" }, fail).open).toBeNull();
     expect(changeOf({ state: "down" }, { ...fail, ok: true, error: null }).closeAtMs).toBe(5);
+  });
+
+  it("counts from the first run: a check that never passed is 0%, not the wait before its first run", () => {
+    const first = { startMs: 15_000, durationMs: 4, ok: false, status: 404, error: "Expected status 200-299, got 404", tlsExpiresMs: null, finalUrl: check.url };
+    const watched = { createdMs: lastRunOf({ createdMs: 2_000, lastRunMs: null }, first).createdMs, lastRunMs: 75_000 };
+    expect(watched.createdMs).toBe(15_000);
+    expect(uptimeOver(watched, [{ id: "i1", checkId: "ck1", startMs: 15_000, endMs: null, reason: "x" }], 0, 75_000, 75_000)).toBe(0);
+    expect(lastRunOf({ createdMs: 2_000, lastRunMs: 15_000 }, { ...first, startMs: 75_000 }).createdMs).toBe(2_000);
   });
 });
 
