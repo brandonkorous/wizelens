@@ -10,7 +10,7 @@ export type RollupKind =
   | "svc" | "svc.ep" | "svc.stream" | "req.stream" | "ep.call" | "ep.q" | "edge" | "bn.layer" | "bn.owner"
   | "ins" | "ins.ep"
   | "db" | "db.q" | "db.qd" | "db.qe" | "db.t" | "db.op"
-  | "err" | "err.g" | "err.ge" | "err.t" | "err.s" | "err.e"
+  | "err" | "err.g" | "err.ge" | "err.b" | "err.t" | "err.s" | "err.e"
   | "log" | "log.s" | "log.p"
   | "pv" | "pv.route" | "pv.m" | "pv.large" | "pv.g"
   | "react" | "rc" | "rc.route"
@@ -79,6 +79,8 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   err: spec(["critical"]),
   "err.g": spec(["critical", "bot"], { top: "newest", ids: 50 }),
   "err.ge": spec(),
+  /** Occurrences of an error group by browser (`group|Chrome on Windows`), from the user agent of the request or the error span. */
+  "err.b": spec(),
   "err.t": spec(),
   "err.s": spec(),
   "err.e": spec(),

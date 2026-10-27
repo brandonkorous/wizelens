@@ -8,7 +8,7 @@ Every screen in WizeLens, scored on **Design** and **Ease** as the personas open
 them. How and when to score is RULE #6 in [CLAUDE.md](CLAUDE.md); this file is
 where the numbers live.
 
-**Scored so far: 45 of 177 screens.** Update that line as rows fill in —
+**Scored so far: 46 of 177 screens.** Update that line as rows fill in —
 it is the denominator, and a rating file that does not show what it has not looked
 at is the same lie as an empty issue list.
 
@@ -107,7 +107,7 @@ is a `major` issue, not a rating.**
 | Trace › Logs | `#/traces/<id>/logs` | 8 | 7 → 8 | Service chip wraps to 2 lines in light at 1440; was: empty tab did not say Fastify's lines are left out #020 | P01 |
 | Trace › Errors | `#/traces/<id>/errors` | — | — | — | — |
 | Trace compare | `#/traces/<a>/compare/<b>` | 7 | 5 → 7 | Total adds render to the fetch without saying so; was: "Same request" list read 48 ms for 17 ms loads #015, waterfall overflowed at 360 #021 | P01 |
-| Error group | `#/errors/<group>` | — | — | — | — |
+| Error group | `#/errors/<group>` | 8 | 8 | "Chrome on Wind…" cut at 360 with the full name only on hover; was: Browsers always empty for a browser error #013 | P01 |
 | Service endpoint | `#/services/<svc>/endpoints/<ep>` | — | — | — | — |
 | Query shape | `#/database/queries/<sql>` | — | — | — | — |
 | Page route | `#/rendering/routes/<route>` | — | — | — | — |

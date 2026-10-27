@@ -28,7 +28,7 @@ export function BarList({ items, max, compact = false }: { items: BarItem[]; max
             className={`wl-bar-row${compact ? " wl-compact" : ""}${item.onClick ? " wl-clickable" : ""}`}
             {...(item.onClick ? pressable(item.onClick, "button") : {})}
           >
-            <span className="wl-truncate">{item.label}</span>
+            <span className="wl-truncate" title={typeof item.label === "string" ? item.label : undefined}>{item.label}</span>
             {compact && <span className="wl-num wl-muted">{item.share}</span>}
             <div className="wl-bar-track">
               <i style={{ width: `${width}%`, background: item.color }} />

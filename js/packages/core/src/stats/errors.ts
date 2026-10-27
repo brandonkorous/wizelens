@@ -80,7 +80,7 @@ function eventOf(trace: Trace, span: Span, row: RequestRow | null, critical: boo
     browser,
     frame,
     release: textAttr(span.attributes[ATTR_SERVICE_VERSION]),
-    userAgent: row?.userAgent ?? null,
+    userAgent: row?.userAgent ?? textAttr(span.attributes["user_agent.original"]),
     user: row?.user ?? null,
     tags: thirdParty ? [...(row?.tags ?? []), "third-party"] : (row?.tags ?? []),
   };

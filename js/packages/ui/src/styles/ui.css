@@ -55,7 +55,7 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-chart-empty { display: grid; place-items: center; color: var(--wl-muted); font-size: 13px; }
 
 .wl-bars { display: flex; flex-direction: column; gap: 14px; }
-.wl-bar-row { display: grid; grid-template-columns: minmax(90px, 30%) minmax(0, 1fr) auto; align-items: center; gap: 12px; font-size: 14px; }
+.wl-bar-row { display: grid; grid-template-columns: minmax(90px, 45%) minmax(0, 1fr) auto; align-items: center; gap: 12px; font-size: 14px; }
 .wl-bar-row.wl-clickable { cursor: pointer; border-radius: 6px; }
 .wl-bar-row.wl-clickable:hover .wl-truncate { color: var(--wl-accent-text); text-decoration: underline; }
 .wl-bar-row.wl-compact { grid-template-columns: minmax(80px, 34%) 44px minmax(0, 1fr); gap: 10px; }
