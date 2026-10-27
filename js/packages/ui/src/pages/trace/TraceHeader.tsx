@@ -7,11 +7,18 @@ import { ServiceChip } from "./tabParts";
 
 const pillClass = (code: number) => (code >= 500 ? "wl-pill-err" : code >= 400 ? "wl-pill-warn" : "wl-pill-ok");
 
+/** All queries, and the part that ran after the response, which the bar below leaves out. */
+function dbFact(timing: Timing): ReactNode {
+  const after = timing.serverMs === null ? 0 : timing.dbMs - timing.dbInMs;
+  if (after < 0.05) return fmtMs(timing.dbMs);
+  return <>{fmtMs(timing.dbMs)}<br /><span className="wl-muted wl-small">{fmtMs(after)} after the response</span></>;
+}
+
 function Stats({ trace, timing }: { trace: Trace; timing: Timing }) {
-  const items: [string, string][] = [
+  const items: [string, ReactNode][] = [
     ["Total", fmtMs(timing.totalMs)],
     ["Server", fmtMs(timing.serverMs)],
-    ["Database", fmtMs(timing.dbMs)],
+    ["Database", dbFact(timing)],
     ["Render", fmtMs(timing.renderMs)],
     ["Started", fmtClock(trace.startMs)],
     ["Spans", String(trace.spanCount)],

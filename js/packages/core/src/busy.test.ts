@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { busyMs, busyWithin, totalMs } from "./busy.js";
-import { traceTiming } from "./health.js";
+import { timingSegments, traceTiming } from "./health.js";
 import { makeSpan } from "./testing/fixtures.js";
 
 const at = (startMs: number, durationMs: number) => ({ startMs, durationMs });
@@ -40,5 +40,17 @@ describe("work after an aborted request", () => {
     const t = traceTiming({ spans: [server, inside, after], durationMs: 150 });
     expect(t.server).toMatchObject({ dbMs: 60, codeMs: 40 });
     expect(busyWithin([after], 0, 100)).toBe(10);
+  });
+});
+
+describe("a query that runs on after the response", () => {
+  it("splits the header bar by the time inside the request, as the timeline does", () => {
+    const server = makeSpan({ category: "http.server", kind: "server", service: "api", startMs: 0, durationMs: 100 });
+    const inside = makeSpan({ category: "db", service: "api", startMs: 10, durationMs: 50 });
+    const after = makeSpan({ category: "db", service: "api", startMs: 90, durationMs: 60 });
+    const t = traceTiming({ spans: [server, inside, after], durationMs: 150 });
+    expect(t).toMatchObject({ dbMs: 110, dbInMs: 60 });
+    expect(timingSegments(t)).toEqual({ server: 40, db: 60, render: 0, other: 0 });
+    expect(timingSegments(t).server).toBe(t.server!.codeMs);
   });
 });
