@@ -37,7 +37,7 @@ function ServicesBody({ m }: { m: ServicesModel }) {
         <Panel title={`Services (${m.rows.length})`} flush>
           <ServiceTable rows={m.rows} selectedKey={selected?.row.key ?? null} />
         </Panel>
-        {selected && <ServiceDetail detail={selected} />}
+        {selected && <ServiceDetail detail={selected} window={m.meta.window} />}
       </div>
       <RegistryPanel />
       <Panel title="Dependencies">

@@ -26,6 +26,12 @@ describe("browser spans", () => {
     expect(scriptOptions(tag)).toMatchObject({ service: "api (browser)" });
   });
 
+  it("carry the user agent on errors and page views, not on fetches", () => {
+    expect(browserSpan({ ...input, type: "error" }).attributes["user_agent.original"]).toBe(navigator.userAgent);
+    expect(browserSpan({ ...input, type: "pageview" }).attributes["user_agent.original"]).toBe(navigator.userAgent);
+    expect(browserSpan(input).attributes["user_agent.original"]).toBeUndefined();
+  });
+
   it("know a crawler's renderer and a driven browser", () => {
     expect(isBotBrowser({ userAgent: "Mozilla/5.0 (compatible; Googlebot/2.1) Chrome/130.0 Safari/537.36" })).toBe(true);
     expect(isBotBrowser({ userAgent: "Mozilla/5.0 Chrome/155.0 Safari/537.36", webdriver: true })).toBe(true);

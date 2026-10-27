@@ -8,6 +8,7 @@ import { Empty, Panel } from "../../ui/Panel";
 import { RegistryHosts } from "./RegistryHosts";
 import { ServiceInfra } from "./ServiceInfra";
 import { LatencyPanel, ServiceCards, TrafficPanel } from "./ServiceCharts";
+import { useSendGaps } from "./useSendGaps";
 import { ServiceHeader, useHostGroups } from "./ServiceHeader";
 import { ErrorsPanel, LogsPanel, RuntimePanel, SlowestPanel } from "./ServiceOwned";
 import { EdgesPanel, EndpointsPanel } from "./ServiceTables";
@@ -31,13 +32,14 @@ function NoService({ id }: { id: string }) {
 function ServiceBody({ m, row }: { m: ServicePageModel; row: ServiceRow }) {
   const { updatedMs } = useData();
   const groups = useHostGroups(row.name, m.owned);
+  const gaps = useSendGaps(row.name, m.meta.window);
   return (
     <>
       <ServiceHeader row={row} groups={groups} />
       <ServiceCards m={m} row={row} />
       <div className="wl-grid wl-grid-2-even">
-        <TrafficPanel m={m} row={row} />
-        <LatencyPanel m={m} />
+        <TrafficPanel m={m} row={row} gaps={gaps} />
+        <LatencyPanel m={m} gaps={gaps} />
       </div>
       {WITH_ENDPOINTS.has(row.kind) && <EndpointsPanel m={m} row={row} />}
       {m.owned && (

@@ -23,6 +23,8 @@ export interface ErrorPageModel {
   chart: { count: Series; critical: Series; prev: Series };
   /** Endpoints where it happened, most first. */
   endpoints: { endpoint: string; count: number }[];
+  /** Browsers it happened in over the range ("Chrome on Windows"), most first; empty for data sent before they were counted. */
+  browsers: { value: string; count: number }[];
   /** The newest occurrences that were requests (with user and browser), newest first. */
   requests: RequestItem[];
   /** The newest occurrences as traces, for errors outside requests (browser errors). */
@@ -46,6 +48,7 @@ export const errorPage: PageDef<ErrorPageModel> = {
       groupNeed("g", "err.g", "cur", { top: true, ids: true, ...keysOf(group) }),
       groupNeed("g.prev", "err.g", "prev", keysOf(group)),
       groupNeed("ge", "err.ge", "cur", { filter: { prefix: joinKey(group, "") } }),
+      groupNeed("b", "err.b", "cur", { filter: { prefix: joinKey(group, "") } }),
       seriesNeed("chart", "err.g", "cur", CHART_BUCKETS, keysOf(group)),
       seriesNeed("chart.prev", "err.g", "prev", CHART_BUCKETS, keysOf(group)),
       groupNeed("life", "err.g", "all", keysOf(group)),
@@ -68,6 +71,7 @@ export const errorPage: PageDef<ErrorPageModel> = {
       starts: bucketStarts(d.window, CHART_BUCKETS),
       chart: { count: counts(chart), critical: counter(chart, 0), prev: counts(seriesOf(d, "chart.prev", CHART_BUCKETS)) },
       endpoints: ge.map((r) => ({ endpoint: splitKey(r.key)[1]!, count: r.agg.n })),
+      browsers: [...rowsOf(d, "b")].sort(byDesc((r) => r.agg.n)).map((r) => ({ value: splitKey(r.key)[1]!, count: r.agg.n })),
       requests: listOf<RequestItem>(d, "requests").items,
       traces: listOf<TraceItem>(d, "traces").items,
       issue: row ? (issueInfos(d, [row.key])[row.key] ?? null) : null,

@@ -5,28 +5,30 @@ import { apiSend } from "../../data/api";
 import { useHost } from "../../data/host";
 import { act, useApi } from "../../data/useApi";
 import { fmtCount } from "../../format";
-import { endpointHref, hrefTo, navigate, newAlertHref } from "../../routes";
+import { endpointHref, navigate, newAlertHref } from "../../routes";
 import { Badge } from "../../ui/Badges";
 import { DetailHead } from "../../ui/DetailHead";
 import { useAsk } from "../../ui/Dialog";
 import { Empty, Panel } from "../../ui/Panel";
+import type { ChartOutage } from "../../ui/OutageBands";
 import { TimeChart } from "../../ui/TimeChart";
 import { SloForm } from "./SloForm";
+import { chartOutages, SloOutages, useSloOutages } from "./SloOutages";
 import { budgetTone, fmtBudget, fmtBurn, fmtSli, sloGoal, useSlosApi } from "./sloTypes";
 
 /** Google's fast-burn page: 14.4× over an hour spends 2% of a 30-day budget. */
 const FAST_BURN = "14.4";
 
-function Charts({ r }: { r: SloReport }) {
+function Charts({ r, outages }: { r: SloReport; outages: ChartOutage[] }) {
   const s = r.status;
   const pct = (v: number) => `${Math.round(v)}%`;
   return (
     <div className="wl-grid wl-grid-2-even">
       <Panel title="Error Budget Left (0% once spent)">
-        <TimeChart starts={s.starts} format={pct} zoom={false} releases={false} lines={[{ label: "Budget left", values: s.budgetSeries.map((v) => (v === null ? null : Math.max(0, v * 100))), color: "var(--wl-blue)" }, { label: "Spent", values: s.starts.map(() => 0), color: "var(--wl-red)", dashed: true }]} />
+        <TimeChart starts={s.starts} format={pct} zoom={false} releases={false} outages={outages} lines={[{ label: "Budget left", values: s.budgetSeries.map((v) => (v === null ? null : Math.max(0, v * 100))), color: "var(--wl-blue)" }, { label: "Spent", values: s.starts.map(() => 0), color: "var(--wl-red)", dashed: true }]} />
       </Panel>
       <Panel title="Good Requests">
-        <TimeChart starts={s.starts} format={(v) => fmtSli(v, r.slo.target)} zoom={false} lines={[{ label: "Good", values: s.sliSeries, color: "var(--wl-green)" }, { label: "Target", values: s.starts.map(() => r.slo.target), color: "var(--wl-red)", dashed: true }]} />
+        <TimeChart starts={s.starts} format={(v) => fmtSli(v, r.slo.target)} zoom={false} outages={outages} lines={[{ label: "Good", values: s.sliSeries, color: "var(--wl-green)" }, { label: "Target", values: s.starts.map(() => r.slo.target), color: "var(--wl-red)", dashed: true }]} />
       </Panel>
     </div>
   );
@@ -35,6 +37,7 @@ function Charts({ r }: { r: SloReport }) {
 function Body({ r, url, canWrite, reload }: { r: SloReport; url: string; canWrite: boolean; reload: () => void }) {
   const [editing, setEditing] = useState(false);
   const alerts = useHost().has("alerts");
+  const outages = useSloOutages(r);
   const s = r.status;
   const stats: [string, ReactNode][] = [["Goal", sloGoal(r.slo)], ["Now", fmtSli(s.sli, r.slo.target)], ["Requests", fmtCount(s.total)], ["Burn now", `${fmtBurn(r.burn1h)} (1 h), ${fmtBurn(r.burn6h)} (6 h)`]];
   const save = async (input: SloInput) => {
@@ -59,9 +62,9 @@ function Body({ r, url, canWrite, reload }: { r: SloReport; url: string; canWrit
   return (
     <>
       <DetailHead back={["#/slos", "All SLOs"]} icon={Target} title={r.slo.name} badge={<Badge tone={budgetTone(s.budgetLeft)}>{s.budgetLeft !== null && s.budgetLeft > 0 ? `${fmtBudget(s.budgetLeft)} of budget left` : fmtBudget(s.budgetLeft)}</Badge>} actions={actions} stats={[...stats, ["Covers", <a key="s" href={scope}>{r.slo.endpoint || r.slo.service}</a>]]} />
-      <p className="wl-muted wl-small">Counts the requests {r.slo.service} answered. While it is down it answers none, so an outage spends no budget here: an <a href={hrefTo("uptime")}>uptime check</a> catches it.</p>
+      <SloOutages r={r} outages={outages} />
       {editing && <SloForm title={`Edit "${r.slo.name}"`} initial={r.slo} onSave={save} onCancel={() => setEditing(false)} />}
-      <Charts r={r} />
+      <Charts r={r} outages={chartOutages(outages)} />
     </>
   );
 }

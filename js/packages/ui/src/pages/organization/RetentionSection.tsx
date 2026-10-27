@@ -45,6 +45,8 @@ function OrgRetention({ org }: { org: OrgWithProjects }) {
 /** Log lines of a cloud project: their own days, or like its traces. */
 interface LogDays {
   value: number | null;
+  /** The plan's longest retention: logs may outlast traces, never the plan. */
+  max: number;
   onChange: (days: number | null) => void;
 }
 
@@ -62,7 +64,7 @@ function RetentionRow({ name, url, canEdit, host, logs }: { name: string; url: s
     <tr>
       <td>{dialog}<strong>{name}</strong>{error && <div className="wl-text-error wl-small" role="alert">{error}</div>}</td>
       <td>{canEdit ? <DaysSelect label={`Traces kept in ${name}`} value={data.settings.retentionDays ?? null} max={data.defaults.retentionDays} fallback={`Like the ${host} (${days(data.defaults.retentionDays)})`} onChange={(d) => void setTraces(d)} /> : days(kept)}</td>
-      {logs && <td>{canEdit ? <DaysSelect label={`Logs kept in ${name}`} value={logs.value} max={400} fallback={`Like traces (${days(kept)})`} onChange={(d) => void setLogs(d)} /> : logs.value === null ? `Like traces (${days(kept)})` : days(logs.value)}</td>}
+      {logs && <td>{canEdit ? <DaysSelect label={`Logs kept in ${name}`} value={logs.value} max={logs.max} fallback={`Like traces (${days(kept)})`} onChange={(d) => void setLogs(d)} /> : logs.value === null ? `Like traces (${days(kept)})` : days(logs.value)}</td>}
     </tr>
   );
 }
@@ -70,9 +72,11 @@ function RetentionRow({ name, url, canEdit, host, logs }: { name: string; url: s
 /** Every project's retention in one table: traces on every host, logs too on the cloud. */
 function ProjectsRetention({ org }: { org: OrgWithProjects | null }) {
   const sp = useSettingsProjects();
+  const usage = useUsage(org?.id ?? null).data;
+  const logMax = usage?.billing ? usage.maxRetentionDays : 400;
   const [error, setError] = useState<string | null>(null);
   const setLogs = (id: string, d: number | null) => void act(() => apiSend("PATCH", `./api/orgs/${org!.id}/projects/${id}`, { logRetentionDays: d }), () => void loadAccount()).then(setError);
-  const logsOf = (id: string): LogDays | undefined => (org ? { value: org.projects.find((p) => p.id === id)?.logRetentionDays ?? null, onChange: (d) => setLogs(id, d) } : undefined);
+  const logsOf = (id: string): LogDays | undefined => (org ? { value: org.projects.find((p) => p.id === id)?.logRetentionDays ?? null, max: logMax, onChange: (d) => setLogs(id, d) } : undefined);
   const shown = usePagedRows(sp.options, { noun: "projects", key: "retention" });
   if (sp.options.length === 0) return <Panel><Empty title="No projects yet" /></Panel>;
   return (
@@ -93,7 +97,7 @@ function ProjectsRetention({ org }: { org: OrgWithProjects | null }) {
 
 /** How long data is kept, all in one place: the organization's longest (cloud), then each project's traces and logs. */
 export function RetentionSection({ org }: { org: OrgWithProjects | null }) {
-  const where = org ? "Older data is deleted within minutes. A project never keeps traces longer than the organization; its logs can have their own days." : "Older data is deleted within minutes. A project's days apply to its traces and logs, and are never longer than the hub's.";
+  const where = org ? "Older data is deleted within minutes. A project never keeps traces longer than the organization. Its logs can have their own days, up to what the plan allows." : "Older data is deleted within minutes. A project's days apply to its traces and logs, and are never longer than the hub's.";
   return (
     <>
       <SectionHead title="Data retention" description={`How long traces and logs are kept. ${where}`} />

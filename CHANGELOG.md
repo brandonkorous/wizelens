@@ -38,6 +38,13 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   - **HUD and traces.** The HUD shows the page's own status and names calls by their route; a call's trace opens
     where its browser half lives; a cross-origin API span sits inside the fetch that joined its trace; the HUD can
     sit bottom left.
+  - **Trace timing.** "Server code" counts only the database time inside the request, so it matches the timeline;
+    database time after the response shows as "N ms after the response".
+  - **Email addresses are masked in any text** (SQL params, log lines, attributes) as `[redacted:email]`, in Node
+    and .NET alike. `enduser.*` attributes keep theirs.
+  - **A project's logs never outlast the plan.** Log days above the plan answer 402 with the plan that allows them
+    (Free 14, Team 30, Business 90, Enterprise up to 400), and a downgrade lowers them.
+  - **Bar lists fit the name column to the names,** up to 45% of the row, so short names keep wide bars.
 
 ### Added
 
@@ -75,6 +82,13 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - **Rename a project** from Organization › Projects; the audit log keeps the old name.
 - **The React and Next.js page of the site has a Next.js setup button,** and the docs say which setting names a
   service's environment.
+- **Uptime outages on the SLO page.** A banner lists the outages in the window, and both SLO charts draw them as red
+  bands, so a time a service answered nothing never reads as a time it did well.
+- **Errors by browser.** Browser errors and page views carry `user_agent.original`; an error group lists every
+  occurrence by browser ("Chrome on Windows"), with a "Not recorded" row for older SDKs.
+- **A time a service sent nothing is a red band, not zero requests.** The cloud keeps the minutes each service sent
+  anything (a batch or a heartbeat). On Services and a service's page, two or more silent minutes draw a
+  "not sending" band and break the request line. `GET api/projects/<id>/service-gaps` lists them. Migration 29.
 
 ## [0.3.0-alpha.13] — Settings by task, and numbers that match reality
 

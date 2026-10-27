@@ -8,7 +8,7 @@ Every screen in WizeLens, scored on **Design** and **Ease** as the personas open
 them. How and when to score is RULE #6 in [CLAUDE.md](CLAUDE.md); this file is
 where the numbers live.
 
-**Scored so far: 45 of 177 screens.** Update that line as rows fill in —
+**Scored so far: 46 of 177 screens.** Update that line as rows fill in —
 it is the denominator, and a rating file that does not show what it has not looked
 at is the same lie as an empty issue list.
 
@@ -107,7 +107,7 @@ is a `major` issue, not a rating.**
 | Trace › Logs | `#/traces/<id>/logs` | 8 | 7 → 8 | Service chip wraps to 2 lines in light at 1440; was: empty tab did not say Fastify's lines are left out #020 | P01 |
 | Trace › Errors | `#/traces/<id>/errors` | — | — | — | — |
 | Trace compare | `#/traces/<a>/compare/<b>` | 7 | 5 → 7 | Total adds render to the fetch without saying so; was: "Same request" list read 48 ms for 17 ms loads #015, waterfall overflowed at 360 #021 | P01 |
-| Error group | `#/errors/<group>` | — | — | — | — |
+| Error group | `#/errors/<group>` | 8 | 8 | "Chrome on Wind…" cut at 360 with the full name only on hover; was: Browsers always empty for a browser error #013 | P01 |
 | Service endpoint | `#/services/<svc>/endpoints/<ep>` | — | — | — | — |
 | Query shape | `#/database/queries/<sql>` | — | — | — | — |
 | Page route | `#/rendering/routes/<route>` | — | — | — | — |
@@ -178,10 +178,10 @@ is a `major` issue, not a rating.**
 | Query shape | `#/database/queries/<sql>` | 8 | 8 | at 360 the SQL wraps to 7 lines before the numbers; the copy button is under the text, not beside it | P02 |
 | Page route | `#/rendering/routes/<route>` | — | — | — | — |
 | User | `#/users/<user>` | — | — | — | — |
-| Service | `#/services/<svc>` | 8 | 8 | at 360 the facts (kind, hosts, version…) fill the first screen before a number; was: top bar #046 | P02 |
+| Service | `#/services/<svc>` | 8 | 8 → 9 | at 360 the facts (kind, hosts, version…) fill the first screen before a number; the not-sending band shares the Errors pink; was: a send gap drew as 0 requests #043 | P02 |
 | Problem | `#/problems/<id>` | — | — | — | — |
 | Alert rule | `#/alerts/<id>` | 8 | 8 | the line starts on the day the rule was made, so most of the 7-day chart is blank with no word on why; was: link said traces and opened queries #036, lost after two-step sign-in #035 | P02 |
-| SLO | `#/slos/<id>` | 8 | 6 | an outage spends no budget here; the page now says so (#038, decision); the budget chart is a flat line at 0 once spent | P02 |
+| SLO | `#/slos/<id>` | 8 | 6 → 8 | the budget chart is a flat line at 0 once spent; a 2-minute outage is a 3 px band on a 30-day chart, so the list carries it; was: an outage spent no budget and nothing showed it (#038) | P02 |
 | Dashboard | `#/dashboards/<id>` | — | — | — | — |
 | Shared page (signed out) | `#/shared/<token>` | — | — | — | — |
 | Status page | `#/status/<slug>` | — | — | — | — |

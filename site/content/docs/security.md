@@ -53,7 +53,11 @@ A06 Insecure Design and A08 Integrity Failures need a design review, not traffic
 
 Before anything is stored, WizeLens replaces secrets found inside any value with a typed marker: `[redacted:jwt]`,
 `[redacted:signed-token]` (a signed ticket such as `v1.eyJ….sig`), `[redacted:aws-key]`, `[redacted:private-key]`, `[redacted:stripe-key]`, `[redacted:github-token]`,
-`[redacted:slack-token]`, `[redacted:google-key]`, and `[redacted:card]`. The **secret leak** rule reads the markers. A
+`[redacted:slack-token]`, `[redacted:google-key]`, and `[redacted:card]`. The **secret leak** rule reads the markers.
+
+Email addresses are hidden the same way, as `[redacted:email]`, wherever they appear: a log line, an error message,
+a SQL value, a header. The one exception is the user you set with `enduser.id` (and other `enduser.*` keys), so the
+Users page can still group requests by person. A
 `Set-Cookie` header keeps each cookie's name and flags (`sid=[redacted]; Path=/; Secure; HttpOnly`), and URL queries keep
 their keys (`token=[redacted]`), so the cookie and URL rules still work.
 

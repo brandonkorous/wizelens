@@ -1,13 +1,13 @@
 # 005 — The card-move trace shows the API's own time as 1.7 ms in the header and 2.4 ms in the timeline
 
-**Status:** open
+**Status:** fixed
 **Severity:** minor
 **Found by:** P01 · kanNINJA web team · act 5 (numbers at the edges)
 **Surface:** Dashboard › Trace (header split bar and Timeline)
 **Filed:** 2026-10-26
-**Fixed:** —
-**Confirmed by:** —
-**Blocked on:** decision
+**Fixed:** 2026-10-27
+**Confirmed by:** re-ran P01 act 5 — kanNINJA refreshed, Dani dragged a card to In the shop and opened the move from the HUD: the header reads "Server code 4.3 ms" and the timeline "IN POST /api/v1/boards/:boardId/cards/:cardId/move 18 ms · self 4.3 ms"; Database reads "14 ms" with "0.96 ms after the response" under it (the `SELECT integration_connections` that runs after the answer) (Dashboard · in-app › Trace)
+**Blocked on:** — (decided 2026-10-27: option 1)
 
 ## What happened
 
@@ -48,6 +48,13 @@ queries. `traceTiming` already has the clipped value as `server.codeMs` (its own
    job looks like slow server work.
 
 ## The fix
+
+Brandon chose option 1.
+
+- `core/src/health.ts`: `Timing.dbInMs`, the query wall time while the first server span was open (all services).
+  `timingSegments` splits the bar by it, so Server code is the same number as the timeline's self.
+- `TraceHeader.tsx`: the Database fact keeps every query and adds "N ms after the response" when some ran after it.
+- `busy.test.ts`: a query that runs past the response splits the bar as the timeline does.
 
 ## Confirmed by
 

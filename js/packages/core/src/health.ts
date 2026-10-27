@@ -45,6 +45,8 @@ export interface Timing {
   serverMs: number | null;
   /** Wall time with a query running, in all services. Queries that run together count once. */
   dbMs: number;
+  /** Wall time with a query running while the first server span was open, in all services. dbMs when there is none. */
+  dbInMs: number;
   /** All query durations added up. More than dbMs when queries run together. */
   dbTotalMs: number;
   dbCount: number;
@@ -93,6 +95,7 @@ export function traceTiming(trace: Pick<Trace, "spans" | "durationMs">): Timing 
     totalMs: browser ? browser.durationMs + (renderMs ?? 0) : (rootMs ?? trace.durationMs),
     serverMs: rootMs,
     dbMs: busyMs(db),
+    dbInMs: root ? busyWithin(db, root.startMs, root.startMs + rootMs!) : busyMs(db),
     dbTotalMs: totalMs(db),
     dbCount: db.length,
     dbSlowestMs: Math.max(0, ...db.map((s) => s.durationMs)),
@@ -103,7 +106,7 @@ export function traceTiming(trace: Pick<Trace, "spans" | "durationMs">): Timing 
 }
 
 /** Bar parts for a stacked Server / Database / Render bar. They add up to `totalMs`. */
-export function timingSegments(t: Pick<Timing, "totalMs" | "serverMs" | "dbMs" | "renderMs">): {
+export function timingSegments(t: Pick<Timing, "totalMs" | "serverMs" | "dbMs" | "renderMs"> & { dbInMs?: number }): {
   server: number;
   db: number;
   render: number;
@@ -111,8 +114,9 @@ export function timingSegments(t: Pick<Timing, "totalMs" | "serverMs" | "dbMs" |
 } {
   const total = Math.max(t.totalMs, 0);
   const render = Math.min(t.renderMs ?? 0, total);
-  // Database time can come from other services, so it is not always inside the first server span.
-  const serverAll = Math.min(Math.max(t.serverMs ?? 0, t.dbMs), total - render);
-  const db = Math.min(t.dbMs, serverAll);
+  // Queries after the response (an audit write) are not time the user waited; other services' queries can sit outside the span.
+  const dbIn = t.dbInMs ?? t.dbMs;
+  const serverAll = Math.min(Math.max(t.serverMs ?? 0, dbIn), total - render);
+  const db = Math.min(dbIn, serverAll);
   return { server: serverAll - db, db, render, other: Math.max(0, total - serverAll - render) };
 }

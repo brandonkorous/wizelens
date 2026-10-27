@@ -19,18 +19,22 @@ internal static partial class ValuePatterns
         new("github-token", t => t.Contains("gh", StringComparison.Ordinal) || t.Contains("github_pat_", StringComparison.Ordinal), GitHubToken()),
         new("slack-token", t => t.Contains("xox", StringComparison.Ordinal), SlackToken()),
         new("google-key", t => t.Contains("AIza", StringComparison.Ordinal), GoogleKey()),
+        new("email", t => t.Contains('@'), Email()),
         new("card", t => FourDigits().IsMatch(t), Card()),
     ];
 
     public static string Marker(string kind) => $"[redacted:{kind}]";
 
-    /// <summary>The text with every secret found by pattern replaced by its marker. The card pattern skips values of count and id keys.</summary>
+    /// <summary>An end user id or name is often an email on purpose: the Users page groups by it.</summary>
+    private static bool KeepsEmail(string key) => key.StartsWith("enduser.", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The text with every secret and email found by pattern replaced by its marker. Cards skip count and id keys; emails skip <c>enduser.*</c>.</summary>
     public static string RedactText(string text, string key = "")
     {
         var output = text;
         foreach (var p in Patterns)
         {
-            if (!p.Hint(output) || p.Kind == "card" && key.Length > 0 && CardNumbers.IsNumericKey(key)) continue;
+            if (!p.Hint(output) || p.Kind == "card" && key.Length > 0 && CardNumbers.IsNumericKey(key) || p.Kind == "email" && KeepsEmail(key)) continue;
             var whole = output;
             output = p.Re.Replace(output, m => p.Kind != "card" || IsCardAt(m, whole) ? Marker(p.Kind) : m.Value);
         }
@@ -70,6 +74,9 @@ internal static partial class ValuePatterns
 
     [GeneratedRegex(@"\bAIza[0-9A-Za-z_-]{35}(?![0-9A-Za-z_-])", Ascii)]
     private static partial Regex GoogleKey();
+
+    [GeneratedRegex(@"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b", Ascii)]
+    private static partial Regex Email();
 
     [GeneratedRegex(@"\b\d(?:[ -]?\d){12,18}\b", Ascii)]
     private static partial Regex Card();

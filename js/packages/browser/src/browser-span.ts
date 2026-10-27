@@ -32,6 +32,10 @@ export function isBotBrowser(nav: { userAgent?: string; webdriver?: boolean } | 
   return !!nav && (nav.webdriver === true || isBotUserAgent(nav.userAgent));
 }
 
+/** The user agent, on page views and errors only: which browser broke, without a copy on every fetch. */
+const agentAttrs = (type: BrowserSpanType): Attributes =>
+  (type === "error" || type === "pageview") && typeof navigator !== "undefined" && navigator.userAgent ? { "user_agent.original": navigator.userAgent.slice(0, 500) } : {};
+
 let bot: boolean | undefined;
 const botAttrs = (): Attributes => ((bot ??= isBotBrowser()) ? { [ATTR_BROWSER_BOT]: true } : {});
 
@@ -93,6 +97,7 @@ export function browserSpan(i: BrowserSpanInput): Span {
       ...(release ? { [VERSION_ATTR]: release } : {}),
       ...browserAppAttrs(),
       ...botAttrs(),
+      ...agentAttrs(i.type),
       ...(user ? { [ATTR_ENDUSER]: user } : {}),
       ...(userName ? { [ATTR_USER_NAME]: userName } : {}),
     },

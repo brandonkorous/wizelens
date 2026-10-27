@@ -202,7 +202,7 @@ interface SamplingInfo {
 | http.client | `http.request.method`, `url.full`, `server.address`, `server.port`, `http.response.status_code` |
 | db | A span is `db` when it has any of `db.system.name`, `db.system`, `db.query.text`, `db.operation.name`, `db.collection.name` (some libraries, such as Better Auth, send only the operation and the table). `db.system.name` (e.g. `sqlite`, `postgresql`, `microsoft.sql_server`), `db.query.text`, `db.operation.name`, `db.collection.name`, `db.namespace`, `db.response.returned_rows`, `wizelens.db.parameters` (JSON string, redacted), `wizelens.db.adapter` (`ado.net`, `efcore`, `pg`, `mysql2`, `better-sqlite3`, `node-sqlite`, `prisma`, `typeorm`, `drizzle`, ...). An ORM span (Prisma, TypeORM) hides the driver spans under it, so a query is counted once. |
 | exception event | `exception.type`, `exception.message`, `exception.stacktrace`; browser errors also `wizelens.error.frame` (see "Source maps") |
-| browser (all) | `wizelens.browser.type` (`fetch` when absent, `pageview`, `react`, `error`), `wizelens.browser.session` (per-tab id, kept in sessionStorage key `wizelens.session`), `wizelens.browser.route` (path shape of the page), `url.full`, `service.version` (the app release, when the app or its build plugin sets it) |
+| browser (all) | `wizelens.browser.type` (`fetch` when absent, `pageview`, `react`, `error`), `wizelens.browser.session` (per-tab id, kept in sessionStorage key `wizelens.session`), `wizelens.browser.route` (path shape of the page), `url.full`, `service.version` (the app release, when the app or its build plugin sets it), `user_agent.original` (on `pageview` and `error` spans) |
 | browser fetch | `http.request.method`, `http.response.status_code`, `wizelens.browser.page`, `wizelens.browser.render_ms` (ms from the response to the next paint; absent when not measured), `wizelens.browser.cancelled` (aborted, cut off as the page was hidden or closed, or offline: no error, no exception), `wizelens.browser.prefetch` (a Next.js router prefetch: `_rsc=`, `RSC: 1`, or `Next-Router-Prefetch: 1`; never an error). Neither counts in the Web App row. |
 | browser pageview | Own trace per page view. Span start = navigation start (or route change), duration = render time. `wizelens.browser.navigation` (`load` / `spa`), `wizelens.page.ttfb_ms`, `.ssr_ms` (responseStart − requestStart), `.client_render_ms` (FCP − responseEnd), `.fcp_ms`, `.lcp_ms`, `.cls`, `.inp_ms`, `.load_ms`, `.hydration_ms` (first React commit), `.render_ms`, `.image_ms` (slowest image), `.images`, `.large_images` (images bigger than shown and not lazy) |
 | browser react | In the page view's trace. `wizelens.react.commits`, `wizelens.react.components` = JSON `{ name, renders, actualMs, selfMs, wasted, context }[]` since the last report |
@@ -380,9 +380,11 @@ Redaction keeps the evidence the security rules need (`docs/redact-vectors.json`
 - **Values by pattern.** Every string value (attributes, event attributes, log messages and attributes) has these
   replaced with a typed marker: `[redacted:jwt]`, `[redacted:signed-token]` (a base64 JSON part and a signature, such as
   `v1.eyJ….sig` WebSocket tickets), `[redacted:aws-key]`, `[redacted:private-key]`,
-  `[redacted:stripe-key]`, `[redacted:github-token]`, `[redacted:slack-token]`, `[redacted:google-key]`, and
-  `[redacted:card]` (13 to 19 digits, spaces or dashes allowed, first digit 3 to 6, Luhn valid). The patterns are
-  `VALUE_PATTERNS` in `core/src/redact-values.ts`.
+  `[redacted:stripe-key]`, `[redacted:github-token]`, `[redacted:slack-token]`, `[redacted:google-key]`,
+  `[redacted:email]` (an email address anywhere in the text; values of `enduser.*` keys keep theirs, so Users can group
+  by them), and `[redacted:card]` (13 to 19 digits, spaces or dashes allowed, first digit 3 to 6, Luhn valid). The
+  patterns are `VALUE_PATTERNS` in `core/src/redact-values.ts`. An email is personal data, not a secret: the secret
+  leak rule does not count it.
 - **SQL parameters** are redacted by their name or by the column the SQL binds them to (compared with, set to, or
   inserted into), so `"t"."token" = $1` hides the first value. Placeholders are `$1`, `?`, `%s` (by position) and
   `@name`, `:name`, `%(name)s` (by name). A column matches a redact key or `email`. The parser is `paramColumns` in
@@ -1100,8 +1102,9 @@ retention, and the audit log.
 | POST / DELETE | `api/orgs/{org}/keys[/{id}]` | Admin. The secret is in the answer once |
 | GET | `api/orgs/{org}/audit?offset=&before=`, `…/audit/count` | Admin |
 | GET | `api/info`, `api/traces`, `api/traces/{id}`, `api/services` — all with `?project=` (or `?project=all&org=`) | Member or read key. `api/traces/{id}` joins other projects (see "Traces across projects"); `project=all` reads every project the caller may (see "All projects") |
-| PATCH | `api/orgs/{org}/projects/{p}` | Admin. `{ logRetentionDays }`: 1 to 400, or null to follow the organization. Answers the project (with `logRetentionDays`) and writes `project.update` to the audit log |
+| PATCH | `api/orgs/{org}/projects/{p}` | Admin. `{ logRetentionDays }`: 1 to 400, or null to follow the organization; more days than the plan keeps answers 402 with the plan it needs. Answers the project (with `logRetentionDays`) and writes `project.update` to the audit log |
 | POST | `api/projects/{p}/services/forget` | Admin. Forgets offline hosts; each service keeps its newest host. Answers `{ removed }` and writes `service.forget` to the audit log |
+| GET | `api/projects/{p}/service-gaps?service=&from=&to=&env=` | Viewer or read key. `{ gaps: [{ startMs, endMs }] }`: times of 2 minutes or more the service sent nothing, not even a heartbeat (`endMs` null while it still sends nothing). The cloud keeps one row per service and minute it sent anything, as long as the project keeps traces |
 | GET | `api/models/{page}?project=&range=&env=&…` | Member or read key. See "Page models". `metrics` is a page too. `project=all&org=`: every project the caller may read (see "All projects") |
 | GET | `api/orgs/{org}/alerts`, `/issues`, `/slos`, `/uptime`, `/shares` | Member or read key: every readable project's rows, each with `projectId` and `project` (its label). Changes stay on `api/projects/{project}/…` |
 | POST | `api/orgs/{org}/issues` | Member who can write: a labeled error group's change lands in its project; an insight's in every project the caller may write |

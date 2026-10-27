@@ -10,8 +10,8 @@
 .wl-rq-copy { display: inline-flex; align-items: center; min-width: 0; max-width: 100%; color: var(--wl-accent-text); }
 .wl-rq-timing-head { display: flex; align-items: baseline; justify-content: space-between; }
 .wl-rq-timing-head strong { font-variant-numeric: tabular-nums; }
-.wl-rq-side .wl-bars { gap: 6px; }
-.wl-rq-side .wl-bar-row { grid-template-columns: minmax(96px, 36%) minmax(0, 1fr) auto; font-size: 13px; }
+.wl-rq-side .wl-bars { gap: 6px 12px; grid-template-columns: fit-content(36%) minmax(0, 1fr) auto; }
+.wl-rq-side .wl-bar-row { font-size: 13px; }
 .wl-rq-side .wl-bar-track { height: 10px; }
 .wl-rq-full { margin-top: 18px; }
 .wl-rq-headers { grid-template-columns: minmax(110px, 40%) minmax(0, 1fr); font-size: 12.5px; }

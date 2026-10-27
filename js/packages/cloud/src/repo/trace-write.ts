@@ -5,6 +5,7 @@ import type { Db, Queryable } from "../db/db.js";
 import { runStatements, stateOf, type TraceStateRow } from "../settle.js";
 import { LOG_DAYS_SQL } from "./log-retention.js";
 import { pruneMetricRollups, writeMetricRollups } from "./metric-write.js";
+import { noteMinute } from "./service-minutes.js";
 import { KEEP_DAYS } from "./settings.js";
 
 const CHUNK = 200;
@@ -49,6 +50,7 @@ export async function writeService(q: Queryable, projectId: string, w: HubWrite,
      ON CONFLICT (project_id, service, environment, host) DO UPDATE SET via = EXCLUDED.via, info = EXCLUDED.info, last_seen = EXCLUDED.last_seen`,
     [projectId, s.service, s.environment ?? "", s.host ?? "", w.via, JSON.stringify(s), now],
   );
+  await noteMinute(q, projectId, s.service, s.environment ?? "", now);
 }
 
 /** Save one batch for one project: registry and telemetry, in the caller's transaction (Postgres small mode, and tests). */

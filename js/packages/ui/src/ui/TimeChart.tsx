@@ -4,6 +4,7 @@ import { fmtBucket, fmtTick } from "../format";
 import { setWindowPref } from "../data/period";
 import { useReleases } from "../data/releases";
 import { areaPath, linePath, maxOf, niceMax, ticksOf } from "./chartMath";
+import { type ChartOutage, OutageBands } from "./OutageBands";
 import { releaseIndex, ReleaseMarks } from "./ReleaseMarks";
 
 const spanOf = (starts: readonly number[]) => (starts.length > 1 ? starts[starts.length - 1]! - starts[0]! : 0);
@@ -35,6 +36,8 @@ export interface TimeChartProps {
   releases?: boolean;
   /** Fill under every line, not only the first. */
   areas?: boolean;
+  /** Times something was down, drawn as red bands. */
+  outages?: readonly ChartOutage[];
 }
 
 const PAD = { left: 44, right: 8, top: 10, bottom: 26 };
@@ -202,6 +205,7 @@ export function TimeChart(props: TimeChartProps) {
     <div className="wl-chart" ref={ref}>
       <svg width={width} height={height} className={zoom.on ? "wl-chart-zoom" : undefined} onMouseMove={onMove} onMouseDown={onDown} onMouseUp={zoom.finish} onMouseLeave={() => (setHover(null), zoom.setDrag(null))} role="img" aria-label={series.map((s) => s.label).join(", ")}>
         <Axes p={props} f={f} width={width} />
+        <OutageBands outages={props.outages ?? []} starts={props.starts} at={(i) => PAD.left + f.slot * i} top={PAD.top} base={f.base} />
         <Plot p={props} f={f} />
         <ReleaseMarks releases={releases} starts={props.starts} at={(i) => PAD.left + f.slot * i} top={PAD.top} base={f.base} />
         {zoom.band && <rect className="wl-chart-band" x={zoom.band.x} y={PAD.top} width={zoom.band.w} height={f.base - PAD.top} />}

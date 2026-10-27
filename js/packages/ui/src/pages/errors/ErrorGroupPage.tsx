@@ -46,14 +46,22 @@ function Cards({ m }: { m: ErrorPageModel }) {
   );
 }
 
+/** The occurrences no browser was recorded for (sent before browsers were counted), as their own bar, never left out. */
+function withUnrecorded(list: { value: string; count: number }[], total: number): { value: string; count: number }[] {
+  const missing = total - list.reduce((sum, b) => sum + b.count, 0);
+  return missing > 0 ? [...list, { value: "Not recorded", count: missing }] : list;
+}
+
 function Breakdown({ m }: { m: ErrorPageModel }) {
   const bars = (list: { value: string; count: number }[]) => list.slice(0, 8).map((x) => ({ key: x.value, label: x.value, value: x.count, display: fmtCount(x.count) }));
+  // Every occurrence in the range; data sent before browsers were counted falls back to the newest 50 requests.
+  const browsers = m.browsers.length ? { title: "Browsers", list: withUnrecorded(m.browsers, m.group?.count ?? 0) } : { title: "Browsers (newest 50)", list: countBy(m.requests, (r) => (r.userAgent ? shortAgent(r.userAgent) : null)) };
   const endpoints = m.endpoints.map((e) => ({ key: e.endpoint, label: e.endpoint, value: e.count, display: fmtCount(e.count), onClick: () => navigate(hrefTo("requests", [], { endpoint: e.endpoint, status: "failed" })) }));
   return (
     <div className="wl-grid wl-grid-3">
       <Panel title="Endpoints">{endpoints.length ? <BarList items={endpoints} /> : <Empty>No endpoint recorded.</Empty>}</Panel>
       <Panel title={`Users Affected (${fmtCount(m.users.count)})`}>{m.users.count ? <BarList items={m.users.top.map((u) => ({ key: u.user, label: u.user, value: u.count, display: fmtCount(u.count), onClick: () => navigate(userHref(u.user)) }))} /> : <Empty>No user was signed in, or the app does not send <code>enduser.id</code>.</Empty>}</Panel>
-      <Panel title="Browsers (newest 50)">{m.requests.some((r) => r.userAgent) ? <BarList items={bars(countBy(m.requests, (r) => (r.userAgent ? shortAgent(r.userAgent) : null)))} /> : <Empty>No user agent recorded.</Empty>}</Panel>
+      <Panel title={browsers.title}>{browsers.list.length ? <BarList items={bars(browsers.list)} /> : <Empty>No user agent recorded.</Empty>}</Panel>
     </div>
   );
 }

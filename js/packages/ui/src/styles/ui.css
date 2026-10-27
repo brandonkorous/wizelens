@@ -54,11 +54,11 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-chart-tip strong { display: block; margin-bottom: 4px; }
 .wl-chart-empty { display: grid; place-items: center; color: var(--wl-muted); font-size: 13px; }
 
-.wl-bars { display: flex; flex-direction: column; gap: 14px; }
-.wl-bar-row { display: grid; grid-template-columns: minmax(90px, 30%) minmax(0, 1fr) auto; align-items: center; gap: 12px; font-size: 14px; }
+.wl-bars { display: grid; grid-template-columns: fit-content(45%) minmax(0, 1fr) auto; gap: 14px 12px; }
+.wl-bar-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; font-size: 14px; }
 .wl-bar-row.wl-clickable { cursor: pointer; border-radius: 6px; }
 .wl-bar-row.wl-clickable:hover .wl-truncate { color: var(--wl-accent-text); text-decoration: underline; }
-.wl-bar-row.wl-compact { grid-template-columns: minmax(80px, 34%) 44px minmax(0, 1fr); gap: 10px; }
+.wl-bars.wl-compact { grid-template-columns: fit-content(34%) 44px minmax(0, 1fr); gap: 14px 10px; }
 .wl-bar-track { height: 16px; border-radius: 4px; background: var(--wl-surface-2); overflow: hidden; }
 .wl-bar-track i { display: block; height: 100%; border-radius: 4px; background: var(--wl-accent); }
 .wl-bar-row .wl-value { min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; color: var(--wl-fg-2); }
@@ -184,6 +184,9 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-dhead-actions .wl-issue-actions { margin: 0; font-size: 13px; font-weight: 400; }
 .wl-alert-problem { display: block; width: max-content; max-width: 100%; margin-top: 4px; font-size: 13px; }
 .wl-release-line { stroke: var(--wl-accent); stroke-width: 1.25; stroke-dasharray: 3 3; opacity: 0.8; }
+.wl-outage-band { fill: var(--wl-red); opacity: 0.18; }
+.wl-outage-list { margin: 6px 0 0; padding-left: 18px; }
+.wl-banner > p { margin: 0; }
 .wl-release-label { fill: var(--wl-accent-text); font-size: 10px; font-weight: 600; }
 .wl-chart-tip .wl-chart-tip-release { color: var(--wl-accent-text); }
 .wl-btn.wl-btn-sm { height: 32px; padding: 0 12px; font-size: 13px; font-weight: 550; letter-spacing: 0; }

@@ -1,5 +1,6 @@
 // Error and log facts: the err* kinds (exceptions by group, type, service, endpoint) and log* (lines by level).
 import { type ErrorEvent, errorEvents } from "../stats/errors.js";
+import { shortAgent } from "../user-agent.js";
 import { isLooseTraceId } from "../loose.js";
 import { logPattern, patternIdOf } from "../stats/log-patterns.js";
 import { type LogRow } from "../stats/logs.js";
@@ -16,8 +17,10 @@ function eventContributions(e: ErrorEvent, user: string | null): Contribution[] 
   const at = e.timeMs;
   const critical = { c: [e.critical ? 1 : 0, e.bot ? 1 : 0] };
   const users = user ? [contribution("err.u", joinKey(e.key, user), at)] : [];
+  const browsers = e.userAgent ? [contribution("err.b", joinKey(e.key, shortAgent(e.userAgent)), at)] : [];
   return [
     ...users,
+    ...browsers,
     contribution("err", "", at, critical),
     contribution("err.g", e.key, at, { ...critical, top: { rank: at, data: capStack(e) } }),
     contribution("err.ge", joinKey(e.key, e.endpoint), at),

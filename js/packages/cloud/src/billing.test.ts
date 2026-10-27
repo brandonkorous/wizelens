@@ -89,6 +89,20 @@ describe("billing on: plans", () => {
     expect((await owner.call<Me & { orgs: { retentionDays: number }[] }>("GET", "api/me")).body.orgs[0]!.retentionDays).toBe(14);
   });
 
+  it("keeps a project's logs no longer than the plan allows, and a downgrade lowers them", async () => {
+    let url: string;
+    ({ cloud, url } = await startCloud(await billedOptions(fakeStripe())));
+    const { owner, orgId, projectId } = await setupOwner(cloud, url);
+    const logDays = (d: number | null) => owner.call<{ plan: string }>("PATCH", `api/orgs/${orgId}/projects/${projectId}`, { logRetentionDays: d });
+    const kept = async () => (await cloud.app.db.query<{ d: number | null }>("SELECT log_retention_days AS d FROM projects WHERE id = $1", [projectId]))[0]!.d;
+    const free = await logDays(30);
+    expect([free.status, free.body.plan]).toEqual([402, "team"]);
+    await setPlan(cloud.app.db, orgId, { plan: "business" }, "test", Date.now());
+    expect((await logDays(90)).status).toBe(200);
+    await setPlan(cloud.app.db, orgId, { plan: "free" }, "test", Date.now());
+    expect(await kept()).toBe(14);
+  });
+
 });
 
 describe("billing on: limits", () => {
