@@ -4,7 +4,7 @@
 **Author:** Brandon Korous
 **Last Updated:** 2026-10-26
 
-**Status:** in progress
+**Status:** done
 **Run:** 2026-10-26 (America/Los_Angeles, UTC-7), Claude driving Chrome
 **Role:** developer · in-app dashboard + HUD (Node API + Next.js web)
 
@@ -14,8 +14,8 @@
 | --- | --- |
 | kanNINJA email | `p01.dani@kanninja.test` |
 | Password | `Lantern-Orchard-42!` |
-| kanNINJA clan | — |
-| Board URL | — |
+| kanNINJA clan | `Brennan & Okafor Joinery — Ops` |
+| Board URL | http://localhost:3000/dojo/c2be23b0-868c-407f-bd45-adc4592e8a7a/board |
 | WizeLens dashboards | http://localhost:3000/_wizelens · http://localhost:3001/_wizelens |
 
 Fill these in as soon as signup gives them to you. A run nobody can revisit is a
@@ -290,21 +290,21 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 
 | | Result |
 | --- | --- |
-| Acts completed | |
-| Issues filed | |
-| Issues fixed and confirmed | |
-| Issues blocked, and on what | |
-| Screens scored | |
-| **Not checked** | |
+| Acts completed | 8 done (1–6, 9, 11) · 2 partly (7: found, not closed in-app; 10: #019 open) · 1 moved to P02 (8: the in-app host keeps no issue states) |
+| Issues filed | 23 (#001–#023) |
+| Issues fixed and confirmed | 20 — every one re-run as Dani on the screen that found it |
+| Issues blocked, and on what | #005 decision (own-code time after the response), #013 scope (browser errors carry no user agent), #019 decision (emails inside longer values reach the agent) |
+| Screens scored | 19 of 169: 4 site, 13 in-app dashboard, 2 HUD — light, dark and 360 px (site light only: it has no dark theme) |
+| **Not checked** | Query shape page (opened in act 6, no score sheet); Error group detail (the sheet caught the Errors list); Problems, Rendering, Metrics, Services, Security, Users, Settings (not opened by Dani); labels, members and due-date times on cards (kanNINJA date fields take days only); minutes from install to first trace (see below) |
 
 ### The numbers
 
 | Record | Result |
 | --- | --- |
-| Minutes from install to the first trace | |
-| Speed at real volume (64 cards, 100+ requests) | |
-| SQL calls in one board load (hand count vs. dashboard) | |
-| Spans in the act 5 trace (hand sum vs. total) | |
+| Minutes from install to the first trace | not checked: the upgrade used local tarballs and a `.next` rebuild, so no clean clock from `npm install` |
+| Speed at real volume (64 cards, 100+ requests) | 64 cards, 1,354 requests, 1,400 traces, 4,738 SQL. Lists page past the first; filters answer as Dani types (#014). Not timed with a clock |
+| SQL calls in one board load (hand count vs. dashboard) | 7 by hand = QUERIES 7 = "SQL 7" tab = "7 queries · 7 unique"; row times 10.83 ms = DATABASE 11 ms |
+| Spans in the act 5 trace (hand sum vs. total) | fetch 40 + render 30 = 70 ms = TOTAL 70 ms; SQL 6.62 = Database 6.6 ms; own code 1.7 vs 2.4 ms (#005) |
 
 ---
 
@@ -335,3 +335,16 @@ sentence is often the defect.
 **Act 10.** Connect said "AI access (MCP) Off" with no way on (#018, fixed: the row now names `enableMcp: true` and links the docs). With it on, an MCP client at `http://localhost:3001/_wizelens/mcp` listed 16 tools; `list_traces q=sign-up` found the request and `get_trace` returned it. Dani's own act-1 sign-up still holds the password hash, session token and email in clear, because it was stored before #008. Siobhán O'Callaghan then signed up through the kanNINJA screen (Necessary-only cookies, `p01.siobhan@kanninja.test`): in her trace every `email`, `password` and `token` column value is `[redacted]`, the `set-cookie` keeps only the cookie name, and `Lantern` appears nowhere. Her address is still in `auth_verifications.identifier` (`email-verification-otp-…`) and in kanNINJA's dev-mailer log line (#019). Every tool call wrote `[wizelens] mcp tool=… args=…` to the API log, as the docs promise. Turned off, the row read Off and the client got `MCP is disabled. Set enableMcp: true.`
 
 **Act 11.** Logs search for the move's trace id `d75088eb…` showed "Log Patterns (52)" (unfiltered) above "Log Lines (0)" with an unrelated hint, and the trace's Logs tab said no lines, while the API terminal had `incoming request` / `request completed` for it (#020: the Node add-on drops those two Fastify lines by design, undocumented). After the fix the search says the patterns ignore text, the trace wrote no lines, and links it; the tab names the Fastify lines. kanNINJA writes few lines in requests: of 2,000 kept API traces only the two sign-ups hold one. Siobhán's sign-up `6cb9c75b…`: the same `[email:dev] RESEND_API_KEY unset…` line at 11:32:10 PM in Logs and at +77 ms in the trace.
+
+**Standing checks.** Machine clock America/Los_Angeles (UTC-7).
+- *Wrong moves:* 5,000-character list name (act 7: 400, in Errors with stack). Double-click "Create board": kanNINJA made two boards, and Requests shows both `POST /api/v1/boards 201` at 10:14:51 PM (11 ms, 10 ms) — WizeLens shows what happened; the double is kanNINJA's. Resolve the wrong group: moved to P02 (act 8).
+- *Reload and deep link:* F5 on a trace's SQL tab keeps "SQL 7". `http://localhost:3001/_wizelens/#/database` opens straight on Database. The compare link opens on the same comparison in a new window.
+- *Dates:* card 1 due 10/31, card 2 due 11/01 — kanNINJA's date field takes a day only, so 23:59 and 06:00 cannot be typed. Saves at 11:42:29 PM and 11:42:34 PM; Requests shows the same times. kanNINJA stores midnight UTC; the board still reads 10/31/2026 (a kanNINJA note for Brandon).
+- *Numbers at the edges:* see The numbers above.
+- *The other side:* Siobhán, in her own fresh window, opened Dani's trace link and compare link and landed on the same trace and the same compare.
+- *Without a mouse:* act 6, home → Database → slowest query, after #009; focus ring visible all the way.
+- *Somebody else's data:* search "Harrow & Vance" → 0 requests, traces, spans and logs. API trace `4e2ef6e9…` pasted into the web dashboard opens the merged trace (both services are Dani's app; by design).
+
+**Scoring.** Every screen Dani used, captured light 1440, dark 1440 and dark 360. At 360 four screens scrolled sideways (#021) and every time chart's labels overlapped (#022); the HUD details cut the method and overlapped its axis (#023). All fixed and re-measured: 0 px sideways on 14 screens, no overlapping labels. Response bodies "Off" had the same gap as #018; fixed in the same component.
+
+**Deliverable check.** On the latest version · one trace per click · the board load's 7 SQL · the N+1 named and linked · a compare link · the HUD reads the page — all present. The error is found with its stack but not closed in-app (P02 closes one on the cloud). AI access works and hides passwords, hashes and tokens; two emails inside longer values remain (#019, Brandon's decision).
