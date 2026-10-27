@@ -43,7 +43,7 @@ export function AuditSection({ orgId, org }: { orgId: string; org: OrgData | nul
   const filter = new URLSearchParams({ ...(action ? { action } : {}), ...(actor ? { actor } : {}) }).toString();
   const { rows, info, error } = useAuditPage(orgId, filter);
   const columns: Column<AuditEntry>[] = [
-    { key: "time", header: "When", cell: (a) => <span title={fmtDateTime(a.timeMs)}>{fmtAgo(a.timeMs)}</span>, className: "wl-nowrap" },
+    { key: "time", header: "When", cell: (a) => <>{fmtDateTime(a.timeMs)}<br /><span className="wl-muted wl-small">{fmtAgo(a.timeMs)}</span></>, className: "wl-nowrap" },
     { key: "who", header: "Who", cell: (a) => actorText(a.actor, names), className: "wl-nowrap" },
     { key: "what", header: "What", cell: (a) => <strong>{actionText(a.action)}</strong>, className: "wl-nowrap" },
     { key: "detail", header: "Detail", cell: (a) => <span className="wl-muted">{detailText(a.detail, names)}</span>, className: "wl-wrap" },
