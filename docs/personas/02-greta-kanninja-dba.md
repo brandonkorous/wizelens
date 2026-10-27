@@ -245,6 +245,8 @@ She sets data retention to 14 days and reads what that means for the data she ha
 **Done when:** the screen says in plain words what is kept and what is deleted,
 and the audit log records the change.
 
+**Outcome:** done after #044 and #045. Organization › Data retention: Days 30 → 14. The question: "Keep 14 days instead of 30 days? Traces and logs in every project from before Oct 13, 2026 are deleted within minutes. They cannot be brought back." (Keep 30 days / Keep 14 days). Her oldest data is from Oct 27, 2026 (she set up today), so by hand nothing is deleted now; the screen does not say how old her oldest data is. After saving, the top bar reads "Cloud · kept 14 days" at once (#044) and kanninja-production shows "Like the organization (14 days)" for traces and "Like traces (14 days)" for logs. The page now says logs can keep their own days (#045; the list offers up to 400). Audit log: "Changed the organization · keep data 14 days", with the date and time.
+
 ---
 
 ## What only this persona proves
@@ -333,3 +335,5 @@ sentence is often the defect.
 **Act 9.** The "Role" list in the invite form is a wrapped label, fine for screen readers. The alert page as Dani lists "Resolved · Error rate is not measured (no longer above 2%)" from act 7: true words, but "resolved" on no data is worth a look (not filed).
 
 **Act 10.** The cloud does not say anywhere that a revoked key is still being used to send; only the app's own log says so (in #043, optional part).
+
+**Act 11.** Not checked: data really being deleted after 14 days (her data is less than a day old). Whether logs should be capped at the organization's days is a decision (#045).
