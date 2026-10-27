@@ -380,9 +380,11 @@ Redaction keeps the evidence the security rules need (`docs/redact-vectors.json`
 - **Values by pattern.** Every string value (attributes, event attributes, log messages and attributes) has these
   replaced with a typed marker: `[redacted:jwt]`, `[redacted:signed-token]` (a base64 JSON part and a signature, such as
   `v1.eyJ….sig` WebSocket tickets), `[redacted:aws-key]`, `[redacted:private-key]`,
-  `[redacted:stripe-key]`, `[redacted:github-token]`, `[redacted:slack-token]`, `[redacted:google-key]`, and
-  `[redacted:card]` (13 to 19 digits, spaces or dashes allowed, first digit 3 to 6, Luhn valid). The patterns are
-  `VALUE_PATTERNS` in `core/src/redact-values.ts`.
+  `[redacted:stripe-key]`, `[redacted:github-token]`, `[redacted:slack-token]`, `[redacted:google-key]`,
+  `[redacted:email]` (an email address anywhere in the text; values of `enduser.*` keys keep theirs, so Users can group
+  by them), and `[redacted:card]` (13 to 19 digits, spaces or dashes allowed, first digit 3 to 6, Luhn valid). The
+  patterns are `VALUE_PATTERNS` in `core/src/redact-values.ts`. An email is personal data, not a secret: the secret
+  leak rule does not count it.
 - **SQL parameters** are redacted by their name or by the column the SQL binds them to (compared with, set to, or
   inserted into), so `"t"."token" = $1` hides the first value. Placeholders are `$1`, `?`, `%s` (by position) and
   `@name`, `:name`, `%(name)s` (by name). A column matches a redact key or `email`. The parser is `paramColumns` in

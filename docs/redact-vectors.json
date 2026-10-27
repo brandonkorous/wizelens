@@ -16,7 +16,9 @@
     { "key": "http.request.header.traceparent", "value": "00-0af7651916cd43dd8448eb211c80319c-4111111111111111-01", "want": "00-0af7651916cd43dd8448eb211c80319c-4111111111111111-01" },
     { "key": "http.request.header.baggage", "value": "sentry-environment=production,sentry-sample_rand=0.4111111111111111", "want": "sentry-environment=production,sentry-sample_rand=0.4111111111111111" },
     { "key": "user.password", "value": 1234, "want": "[redacted]" },
-    { "key": "note", "value": null, "want": null }
+    { "key": "note", "value": null, "want": null },
+    { "key": "enduser.id", "value": "p01.dani@kanninja.test", "want": "p01.dani@kanninja.test" },
+    { "key": "http.request.header.from", "value": "p01.dani@kanninja.test", "want": "[redacted:email]" }
   ],
   "text": [
     { "in": "nothing secret here", "out": "nothing secret here" },
@@ -39,7 +41,10 @@
     { "in": "pay 2223 0031 2200 3222 now", "out": "pay [redacted:card] now" },
     { "in": "sample_rand=0.4111111111111111", "out": "sample_rand=0.4111111111111111" },
     { "in": "remaining_count: 4111111111111111", "out": "remaining_count: 4111111111111111" },
-    { "in": "no brand 6000000000000007 or 5000000000000009", "out": "no brand 6000000000000007 or 5000000000000009" }
+    { "in": "no brand 6000000000000007 or 5000000000000009", "out": "no brand 6000000000000007 or 5000000000000009" },
+    { "in": "INSERT identifier email-verification-otp-p01.siobhan@kanninja.test", "out": "INSERT identifier [redacted:email]" },
+    { "in": "[mail] to: p01.siobhan@kanninja.test, subject: Verify your email", "out": "[mail] to: [redacted:email], subject: Verify your email" },
+    { "in": "installed @wizeworks/lens-core@0.3.0-alpha.13 and react@18.3.1", "out": "installed @wizeworks/lens-core@0.3.0-alpha.13 and react@18.3.1" }
   ],
   "params": [
     { "sql": "select \"id\" from \"auth_sessions\" where \"auth_sessions\".\"token\" = $1 limit $2", "params": ["AIJDisnqGFxkte6iHIaCitQ357eUDfdn", 1], "want": ["[redacted]", 1] },

@@ -1,13 +1,13 @@
 # 019 — An email inside a longer value reaches the agent
 
-**Status:** open
+**Status:** fixed
 **Severity:** major
 **Found by:** P01 · kanNINJA web team · act 10
 **Surface:** Every stored value (SQL parameters, attributes, log lines) → MCP `get_trace`, dashboards, exports
 **Filed:** 2026-10-26
-**Fixed:** —
-**Confirmed by:** —
-**Blocked on:** decision — should WizeLens mask email addresses in all text by default?
+**Fixed:** 2026-10-27
+**Confirmed by:** re-ran P01 act 10 — kanNINJA refreshed, a new teammate (`p01.tomas.obriain@…`) signed up and reached "Check your email"; on the API dashboard (`localhost:3001/_wizelens`) the trace `POST /api/auth/*` (5e42e3dd…) shows `insert into "auth_verifications"` with params `["Boz…","[redacted:email]",…]` and the Logs tab `[email:dev] RESEND_API_KEY unset — not sending. to: [redacted:email]` (Dashboard · in-app › Trace › SQL and Logs). The `enduser.id` exception is proved by the shared vectors only: kanNINJA sends no `enduser.id`, so Users was empty (not checked on screen)
+**Blocked on:** — (decided 2026-10-27: option B)
 
 ## What happened
 
@@ -44,6 +44,16 @@ keep it opt-in with a setting; (D) leave as is and document it.
 - The 6-digit code in the log line is kanNINJA's dev mailer printing it on purpose when `RESEND_API_KEY` is unset.
 
 ## The fix
+
+Brandon chose B: hide email addresses in all text, except values of `enduser.*` keys.
+
+- `core/src/redact-values.ts`: an `email` value pattern (`[redacted:email]`); `redactText` skips it for `enduser.*` keys.
+  The kind is `ValueKind`, not `SecretKind`: the secret leak rule ignores it, as an email is personal data, not a leak.
+- `dotnet/.../Storage/ValuePatterns.cs`: the same pattern and the same `enduser.*` exception (no local .NET: CI runs it).
+- `docs/redact-vectors.json`: the two act-10 strings, a package spec with `@` versions that must stay, `enduser.id` kept,
+  a `from` header hidden.
+- `docs/CONTRACT.md` and `site/content/docs/security.md` name the marker and the exception.
+- Search for a customer's address in Logs no longer finds it. That is the cost Brandon accepted with B.
 
 ## Confirmed by
 

@@ -6,8 +6,11 @@ export { isCardNumber, isNumericKey, luhnValid } from "./redact-card.js";
 /** The kinds of secret found by pattern. */
 export type SecretKind = "jwt" | "signed-token" | "aws-key" | "private-key" | "stripe-key" | "github-token" | "slack-token" | "google-key" | "card";
 
+/** What a value pattern hides: a secret, or an email address (personal data, not a leak finding). */
+export type ValueKind = SecretKind | "email";
+
 interface ValuePattern {
-  kind: SecretKind;
+  kind: ValueKind;
   /** A cheap test first: the regex runs only when the text holds this. */
   hint: (text: string) => boolean;
   re: RegExp;
@@ -25,22 +28,26 @@ export const VALUE_PATTERNS: readonly ValuePattern[] = [
   { kind: "github-token", hint: (t) => t.includes("gh") || t.includes("github_pat_"), re: /\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{40,})\b/g },
   { kind: "slack-token", hint: has("xox"), re: /\bxox[abprs]-[A-Za-z0-9-]{10,}\b/g },
   { kind: "google-key", hint: has("AIza"), re: /\bAIza[0-9A-Za-z_-]{35}(?![0-9A-Za-z_-])/g },
+  { kind: "email", hint: has("@"), re: /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b/g },
   { kind: "card", hint: (t) => /\d{4}/.test(t), re: /\b\d(?:[ -]?\d){12,18}\b/g },
 ];
 
 /** The marker a secret of this kind becomes. */
-export const secretMarker = (kind: SecretKind): string => `[redacted:${kind}]`;
+export const secretMarker = (kind: ValueKind): string => `[redacted:${kind}]`;
 
 /** Markers in a text, as `[redacted:kind]` finds them. */
 export const MARKER_RE = /\[redacted:([a-z-]+)\]/g;
 
 const isCardAt = (m: string, at: number, text: string): boolean => isCardNumber(m) && !numericContext(text, at, m.length);
 
-/** The text with every secret found by pattern replaced by its marker. The card pattern skips values of count and id keys. */
+/** An end user id or name is often an email on purpose: the Users page groups by it. */
+const keepsEmail = (key: string): boolean => key.toLowerCase().startsWith("enduser.");
+
+/** The text with every secret and email found by pattern replaced by its marker. Cards skip count and id keys; emails skip `enduser.*`. */
 export function redactText(text: string, key = ""): string {
   let out = text;
   for (const p of VALUE_PATTERNS) {
-    if (!p.hint(out) || (p.kind === "card" && key && isNumericKey(key))) continue;
+    if (!p.hint(out) || (p.kind === "card" && key && isNumericKey(key)) || (p.kind === "email" && keepsEmail(key))) continue;
     p.re.lastIndex = 0;
     out = out.replace(p.re, (m: string, at: number, whole: string) => (p.kind !== "card" || isCardAt(m, at, whole) ? secretMarker(p.kind) : m));
   }
