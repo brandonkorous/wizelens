@@ -8,7 +8,7 @@ Every screen in WizeLens, scored on **Design** and **Ease** as the personas open
 them. How and when to score is RULE #6 in [CLAUDE.md](CLAUDE.md); this file is
 where the numbers live.
 
-**Scored so far: 46 of 177 screens.** Update that line as rows fill in —
+**Scored so far: 47 of 177 screens.** Update that line as rows fill in —
 it is the denominator, and a rating file that does not show what it has not looked
 at is the same lie as an empty issue list.
 
@@ -63,7 +63,8 @@ judgment exists somewhere findable rather than not at all.
 
 - **Hub-only screens.** `wizelens-hub` (the self-hosted collector) serves the same dashboard with a hub capability set. Neither persona runs a hub, so the hub is not a host in this roster.
 - **Hosts and Kubernetes with real infra data.** Both need the infra collector on a cluster; nothing in this run sends it. The rows exist on the cloud list and stay `—`.
-- **.NET, Python, Java and Go add-ons.** Brandon has no local .NET; these personas run Node and Next.js only.
+- **Python, Java and Go add-ons.** No persona runs them. (.NET is P03's: eShopOnWeb on .NET 8, from 2026-10-27; its
+  dashboard is the same screens as the in-app list, re-scored under "in-app on .NET" and not counted twice.)
 
 They are not listed below and are not scored. **If a persona ever reaches one, that
 is a `major` issue, not a rating.**
@@ -114,6 +115,13 @@ is a `major` issue, not a rating.**
 | User | `#/users/<user>` | — | — | — | — |
 | Service | `#/services/<svc>` | — | — | — | — |
 | Problem | `#/problems/<id>` | — | — | — | — |
+
+### Dashboard · in-app on .NET (eShop, /_wizelens) — same screens as the in-app list, not counted again
+
+| Screen | Key | Design | Ease | Gap to 10 | Persona |
+| --- | --- | --- | --- | --- | --- |
+| Overview | `#/` | 8 | 8 | an EF Core database name reads "microsoft.s…" (full name on hover only); at 360 the six stat cards stack one per row before the first chart; was: Services card hid Status #052, Apdex cut "target 500 ms" #053, axis 0, 38, 75, 113, 150 #054 | P03 |
+| Requests | `#/requests` | 8 | 8 | the request panel says "Rendering –" while the HUD showed "Render 75 ms" for the same page (act 6); at 360 the filters fill the first screen; was: 17 file rows per page load buried the pages #055 | P03 |
 
 ### Dashboard · cloud — 70 screens
 
@@ -224,7 +232,7 @@ Sign in, Create account, two-factor and invite were opened by P02 (acts 1, 7 and
 | angular | `/angular` | — | — | — | — |
 | changelog | `/changelog` | 8 | 8 | light only; 20 version chips before any content at 360px | P01 |
 | cloud | `/cloud` | — | — | — | — |
-| dotnet | `/dotnet` | — | — | — | — |
+| dotnet | `/dotnet` | 8 | 8 | the Program.cs code box is empty for the first seconds; the package version is not on the page (NuGet picks it); light only (no dark theme on the site); was: "Requires .NET 10 or newer" #051 | P03 |
 | go | `/go` | — | — | — | — |
 | java | `/java` | — | — | — | — |
 | license | `/license` | — | — | — | — |

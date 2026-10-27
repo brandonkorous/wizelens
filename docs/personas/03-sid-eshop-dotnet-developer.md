@@ -4,8 +4,8 @@
 **Author:** Brandon Korous
 **Last Updated:** 2026-10-27
 
-**Status:** not started
-**Run:** — (America/Los_Angeles, UTC-7 until 2026-11-01, then UTC-8), Claude driving Chrome
+**Status:** in progress
+**Run:** 2026-10-27, from 10:20 (America/Los_Angeles, UTC-7 until 2026-11-01, then UTC-8), Claude driving Chrome
 **Role:** .NET developer · in-app dashboard served by WizeLens.AspNetCore + the HUD on Razor pages
 
 ## Account
@@ -138,7 +138,10 @@ From http://localhost:5190/, Sid looks for ASP.NET Core and reads what it needs.
 **Done when:** Sid has the exact package name, the version, and the lines to add to
 `Program.cs`, all from the site, and knows which .NET versions it supports.
 
-**Outcome:** —
+**Outcome:** left the site at first, then done. The first paragraph of `/dotnet/` ended "Requires .NET 10 or newer."
+and his store is `net8.0` (#051, decided: support .NET 8). After the fix the page reads "Runs on .NET 8, 9 and 10";
+"Set it up" leads to the ASP.NET Core docs with `dotnet add package WizeLens.AspNetCore --prerelease` and the two
+lines for `Program.cs`. The package version is not on the page; NuGet picks it (`0.3.0-alpha.13`).
 
 ### Act 2 — install it into eShop, on .NET 8
 
@@ -147,7 +150,10 @@ He adds the package to Web and PublicApi as the docs say and builds.
 **Done when:** both projects build and run on `net8.0` with WizeLens in them, and
 the minutes from `dotnet add package` to the first trace are recorded.
 
-**Outcome:** —
+**Outcome:** done. `dotnet add package` in `src/Web` and `src/PublicApi`, `WizeLens.EntityFrameworkCore` in
+`src/Infrastructure` (`UseSqlServer(...).UseWizeLens()`), the two lines in both `Program.cs` files. eShop stays on
+`net8.0` and builds with 0 errors (NU1902/NU1903 warnings are eShop's own packages). About 3 minutes from
+`dotnet add package` to the first trace, with the .NET 8 build of this branch from a local feed.
 
 ### Act 3 — the first trace
 
@@ -156,7 +162,13 @@ He opens the store home page and then the dashboard.
 **Done when:** the home page request is in the dashboard with its EF Core SQL
 against SQL Server, and Sid can say what the dashboard is for in one sentence.
 
-**Outcome:** —
+**Outcome:** done. The store home page is `GET /` in Requests: 288 ms, 4 SQL (11 ms); its trace has 7 spans across
+Web and the browser: `pageview /` 372 ms, `Handler GET /` 237 ms, `SELECT Catalog` ×2, `SELECT CatalogBrands`,
+`SELECT CatalogTypes`. The Overview names `microsoft.sql_server · Microsoft.eShopOnWeb.CatalogDb` as a service.
+In one sentence, Sid: "it shows each page my store served, with the SQL it ran and where the time went."
+Found and fixed on the way: #052 (Services card hid Status), #053 (Apdex card cut "target 500 ms"), #054 (chart
+axis 0, 38, 75, 113, 150), #055 (17 file requests per page buried the pages).
+Open for act 6: the request panel says "Rendering –" while the HUD showed "Render 75 ms" for the same page.
 
 ### Act 4 — make real data
 
@@ -297,3 +309,10 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 ---
 
 ## Run log
+
+- 10:20 Act 1. Home → ".NET" → `/dotnet/`: "Requires .NET 10 or newer." Filed #051; Brandon chose A (support .NET 8).
+- 10:45 #051 built: net8.0 + net10.0 packages, 513 tests pass on each. The site and docs say 8, 9 and 10.
+- 10:47 Act 2–3. eShop on .NET 8 with WizeLens from a local feed; the HUD on the home page (391 ms, 4 SQL);
+  the dashboard at `/_wizelens`. Filed #052, #053 at 1440; fixed, re-proved in light, dark, 360.
+- 10:56 Filed #054 (axis steps); fixed: 0, 50, 100, 150.
+- 10:58 Requests: 202 rows, page 1 all files. Filed #055; fixed in .NET and Node; re-proved 11:04.
