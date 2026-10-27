@@ -1,5 +1,5 @@
 import { useData } from "../../data/hooks";
-import { hrefTo } from "../../routes";
+import { checksHref } from "../../routes";
 import { Empty, Panel } from "../../ui/Panel";
 import { SectionHead } from "../../ui/Sections";
 import { SourceSettings } from "./SourceSettings";
@@ -16,13 +16,12 @@ export function ServerSetup() {
   const data = useData();
   const mode = data.info?.mode;
   const text = serverText(mode);
-  const where = mode === "cloud" ? "organization" : "settings";
   return (
     <>
       <SectionHead title={text.label} description={text.description} />
       {mode !== "in-app" && (
         <p className="wl-muted wl-settings-note">
-          Each project changes its own thresholds and hidden keys under <a href={hrefTo(where, ["checks"])}>Thresholds and hidden keys</a>.
+          Each project changes its own thresholds and hidden keys under <a href={checksHref(mode)}>Thresholds and hidden keys</a>.
         </p>
       )}
       {data.sources.length === 0 ? (

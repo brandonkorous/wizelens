@@ -5,7 +5,8 @@ import { StatCard } from "../../ui/StatCard";
 import { OperationsPanel, SlowQueriesPanel } from "./DbCharts";
 import { DbFilters } from "./DbFilters";
 import { QueryPage } from "./QueryPage";
-import { decodeParam, hrefTo, useRoute } from "../../routes";
+import { checksHref, decodeParam, hrefTo, useRoute } from "../../routes";
+import { useData } from "../../data/hooks";
 import { TableHotspotsPanel, TopQueriesPanel } from "./DbTables";
 import { InsightCards } from "./InsightCards";
 import type { DatabaseModel } from "@wizeworks/lens-core";
@@ -26,6 +27,16 @@ function DbStatCards({ stats }: { stats: DatabaseModel }) {
   );
 }
 
+/** The slow query limit in effect, and where to change it. */
+function SlowLimit({ slowMs }: { slowMs: number }) {
+  const mode = useData().info?.mode;
+  return (
+    <span className="wl-muted">
+      Slow means ≥ {fmtMs(slowMs)} · <a href={checksHref(mode)}>Change</a>
+    </span>
+  );
+}
+
 /** All queries, or one query's page at `#/database/queries/<query>`. */
 export function DatabasePage() {
   const [part, query] = useRoute().params;
@@ -36,7 +47,9 @@ export function AllQueries() {
   const { model: stats, loading, error } = usePageModel("database");
   return (
     <div className="wl-db-page">
-      <PageHeader title="Database" subtitle="SQL visibility, query performance, and optimization opportunities across your stack." />
+      <PageHeader title="Database" subtitle="SQL visibility, query performance, and optimization opportunities across your stack.">
+        {stats && <SlowLimit slowMs={stats.slowMs} />}
+      </PageHeader>
       <ModelState model={stats} loading={loading} error={error} what="queries" />
       {stats && <DatabaseBody stats={stats} />}
     </div>

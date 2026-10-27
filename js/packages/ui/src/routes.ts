@@ -60,6 +60,9 @@ export function parseRoute(hash: string): Route {
 }
 
 /** Link to a page. Empty query values are left out. */
+/** Where a project's slow query and N+1 limits are changed: a settings page, or the add-on options for an in-app dashboard. */
+export const checksHref = (mode: string | undefined): string => (mode === "in-app" || !mode ? hrefTo("connect", ["options"]) : hrefTo(mode === "cloud" ? "organization" : "settings", ["checks"]));
+
 export function hrefTo(page: PageId, params: string[] = [], query: Record<string, string | number | null | undefined> = {}): string {
   const base = page === "trace" ? "traces" : page === "overview" ? "" : page;
   const path = [base, ...params].filter(Boolean).join("/");
