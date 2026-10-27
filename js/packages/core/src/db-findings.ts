@@ -18,12 +18,18 @@ export const repeatableQueries = (t: Trace): Span[] => dbSpans(t).filter((s) => 
 // Placeholders: ? (JDBC, sanitized text), $1 (Postgres), %s and %(name)s (Python), :name, @name.
 const PLACEHOLDER_RE = /\?|\$\d+|%s|%\(\w+\)s|(?<![:\w]):[A-Za-z_]\w*|@[A-Za-z_]\w*/;
 
+/** Captured parameters, unless one was redacted: two redacted values may differ, so they tell nothing. */
+const paramsOf = (s: Span): string | null => {
+  const p = s.attributes["wizelens.db.parameters"];
+  return typeof p === "string" && !p.includes("[redacted") ? p : null;
+};
+
 /** What tells two runs of the same query apart: the captured parameters, else the values fingerprint, else nothing. */
-export const valuesOf = (s: Span): string => String(s.attributes["wizelens.db.parameters"] ?? s.attributes[ATTR_DB_FINGERPRINT] ?? "");
+export const valuesOf = (s: Span): string => String(paramsOf(s) ?? s.attributes[ATTR_DB_FINGERPRINT] ?? "");
 
 /** No captured parameters or fingerprint, and placeholders or a NoSQL call (its text never has values): two may differ, so never duplicates. */
 export const hasUnknownParams = (s: Span): boolean =>
-  s.attributes["wizelens.db.parameters"] == null && s.attributes[ATTR_DB_FINGERPRINT] == null && (isNoSqlSpan(s) || PLACEHOLDER_RE.test(queryText(s)));
+  paramsOf(s) === null && s.attributes[ATTR_DB_FINGERPRINT] == null && (isNoSqlSpan(s) || PLACEHOLDER_RE.test(queryText(s)));
 
 /** Slow queries that run at the same time, at least this many, are one wait, not many slow queries. */
 export const WAIT_MIN_QUERIES = 3;

@@ -32,7 +32,7 @@ function dbAttributes(info: DbCallInfo, sql: string, params: unknown, redactKeys
   const collection = info.collection ?? parsed.collection;
   if (collection) attributes["db.collection.name"] = collection;
   if (info.namespace) attributes["db.namespace"] = info.namespace;
-  const p = redactParams(params, redactKeys);
+  const p = redactParams(params, redactKeys, sql);
   if (p !== null) attributes["wizelens.db.parameters"] = p;
   return info.attributes ? { ...info.attributes, ...attributes } : attributes;
 }

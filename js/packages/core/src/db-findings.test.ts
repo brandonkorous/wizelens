@@ -24,6 +24,13 @@ describe("session statements", () => {
   });
 });
 
+describe("redacted parameters", () => {
+  it("never make two runs look the same", () => {
+    const lookups = [1, 2].map((i) => query("SELECT * FROM users WHERE email = $1", i * 10, 1, '["[redacted]"]'));
+    expect(kinds(lookups)).toEqual([]);
+  });
+});
+
 describe("slow queries that run together", () => {
   it("become one database wait", () => {
     const slow = ["a", "b", "c", "d"].map((t) => query(`SELECT * FROM ${t}`, 10, 1300));

@@ -1,4 +1,5 @@
 import { redactText, skipsValuePatterns } from "./redact-values.js";
+import { paramColumns, SQL_PARAM_KEYS } from "./redact-sql-params.js";
 import type { AttributeValue, Attributes } from "./types.js";
 
 export const REDACTED = "[redacted]";
@@ -94,13 +95,22 @@ export function toAttributeValue(value: unknown): AttributeValue {
 
 const bigintSafe = (_k: string, v: unknown) => (typeof v === "bigint" ? v.toString() : v);
 
-/** DB parameters as the `wizelens.db.parameters` JSON string; sensitive names redacted, positional kept. */
-export function redactParams(params: unknown, keys: readonly string[] = DEFAULT_REDACT_KEYS): string | null {
+/** One positional value: redacted when its column is sensitive, else with secrets found by pattern replaced. */
+function positional(value: unknown, column: string | undefined, keys: readonly string[]): unknown {
+  if (column && isSensitiveKey(column, [...keys, ...SQL_PARAM_KEYS])) return REDACTED;
+  return typeof value === "string" ? redactText(value) : value;
+}
+
+/** DB parameters as the `wizelens.db.parameters` JSON string; sensitive names redacted, positional ones by the column `sql` binds them to. */
+export function redactParams(params: unknown, keys: readonly string[] = DEFAULT_REDACT_KEYS, sql = ""): string | null {
   if (params === undefined || params === null) return null;
-  if (Array.isArray(params)) return JSON.stringify(params, bigintSafe);
+  if (Array.isArray(params)) {
+    const columns = paramColumns(sql);
+    return JSON.stringify(params.map((v, i) => positional(v, columns.get(i), keys)), bigintSafe);
+  }
   if (typeof params === "object") {
     const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(params as Record<string, unknown>)) out[k] = isSensitiveKey(k, keys) ? REDACTED : v;
+    for (const [k, v] of Object.entries(params as Record<string, unknown>)) out[k] = positional(v, k, keys);
     return JSON.stringify(out, bigintSafe);
   }
   return JSON.stringify([params], bigintSafe);
