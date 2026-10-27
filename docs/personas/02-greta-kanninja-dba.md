@@ -4,8 +4,8 @@
 **Author:** Brandon Korous
 **Last Updated:** 2026-10-26
 
-**Status:** not started
-**Run:** —
+**Status:** in progress
+**Run:** 2026-10-27
 **Role:** system and database admin · WizeLens Cloud (organization owner)
 
 ## Account
@@ -14,8 +14,8 @@
 | --- | --- |
 | Cloud email | `p02.greta@kanninja.test` |
 | Password | `Lantern-Orchard-42!` |
-| Organization | — |
-| Project | — |
+| Organization | `Lindqvist-Ochoa Ops — kanNINJA` |
+| Project | `kanninja-production` |
 | Cloud URL | http://localhost:5970/ |
 
 Fill these in as soon as signup gives them to you. A run nobody can revisit is a
@@ -145,12 +145,16 @@ verifies her email and turns on 2FA before anything else.
 **Done when:** she is signed in, her email is verified (the link came from the
 cloud's mail log), and 2FA is on.
 
+**Outcome:** done, with one difference by design: this cloud has no mail service, so it does not confirm addresses (its start banner says so) and no verify link was sent. Signed up at 00:36 (America/Los_Angeles) as p02.greta@kanninja.test; two-step sign-in On, 10 backup codes; sign-in now asks "Enter the 6-digit code from your app" and the code lets her in. The mail log has "Two-step sign-in is on for WizeLens".
+
 ### Act 2 — the organization, the project, the keys
 
 She names the org and project, and makes one sending key per service.
 
 **Done when:** two keys exist with her names, and the screen told her exactly
 which env variables kanNINJA needs.
+
+**Outcome:** done after #025 and #026. Org `Lindqvist-Ochoa Ops — kanNINJA`, project `kanninja-production` (renamed from My app), two ingest keys `kanninja-backend (API pods)` and `kanninja-frontend (web pods)`, both in kanninja-production. The key dialog says "Copy it now: it is not shown again. Set it as WIZELENS_HUB_TOKEN on the app"; Connect's step 2 lists WIZELENS_HUB, WIZELENS_HUB_TOKEN, WIZELENS_RELEASE and now the environment setting.
 
 ### Act 3 — point kanNINJA at the cloud
 
@@ -159,6 +163,8 @@ restarts both, and loads one board.
 
 **Done when:** the cloud's Overview shows both services and the board load is one
 trace with its SQL. Record minutes from sign-up to this first trace.
+
+**Outcome:** done. Overview lists kanninja-backend, kanninja-frontend and postgresql. The board load is one trace, `#/traces/391b74ba94001478b1bd52e3a277f525`: services browser + kanninja-backend, fetch 338 ms → GET /api/v1/boards/:boardId 21 ms → 7 SQL (Database 12 ms). Sign-up 00:36:46 → first board load 00:56:25 (America/Los_Angeles): 20 minutes, including fixes #025 and #026. Environment reads `development`: kanNINJA runs its dev servers here (NODE_ENV=development); not changed.
 
 ### Act 4 — the slowest queries in production
 
@@ -293,3 +299,9 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 Written act by act **as you go**, not reconstructed at the end. Each entry: what
 you did, what you saw, what you decided. Quote the exact words on screen — the
 sentence is often the defect.
+
+**Act 1.** Before the run, the neighbour was set up through the UI: the setup link made Imogen Harrow-Vance (p00.harrow@harrowvance.test) the first account; org renamed to `Harrow & Vance Studio`, project `hv-bookings`, ingest key `hv-bookings-api`, and a small Node service of that name sent 13 traces with SQL on `hv_bookings` and log lines naming the studio (neighbour trace `82e5317a0665a2a7b2b4726c742fa781`). On the way, Make a sending key started on `My app` while the top bar said `hv-bookings`: filed #024 (major), fixed, re-proved. Greta: home → Cloud → Pricing. Both "Start free" buttons go to https://app.wizelens.com; the local cloud on :5970 stands in for it. Signed out, the cloud page asks for traces and services and gets two 400s in the console (invisible on screen; noted, not filed). "Create an account" → name, email, password → straight onto an empty Overview of "Greta Lindqvist-Ochoa's team" / "My app". Account › Sign-in and security › Two-step sign-in › Turn on → password → a key to type ("Cannot scan?") and 10 backup codes → a code from the app → "Two-step sign-in On". Signed out and in: password, then "Two-step sign-in · Enter the 6-digit code from your app · Trust this device for 14 days".
+
+**Act 2.** Organization › General: name saved. Projects: the `My app` row had Access, Clear data and Delete, no rename: filed #025 (major), fixed (Rename on each row, PATCH takes a name, audit "Renamed a project · was My app"), re-proved. Connect › Make a sending key: the form started on kanninja-production (the one project; #024 fixed earlier). Both keys made with Expires "Never" — Greta rotates by hand every 90 days. The setup answer "Environment production" had no home: Connect and the Configuration docs never said which setting names a service's environment: filed #026 (copy), fixed in both, re-read.
+
+**Act 3.** Each key went into its service's env file (`backend/.env`, `frontend/.env.local`, both git-ignored) as WIZELENS_HUB=http://localhost:5970 and WIZELENS_HUB_TOKEN; both services restarted. Dani loaded the board once. Overview: "Total Requests 16 · SQL Queries 36 · Apdex 0.75 Fair"; both services "Degraded" from first-compile times (1.7 s, dev server). Recent Requests shows the realtime call with its whole `?ticket=v1.eyJ…` value — a signed ticket holding Dani's profile id and name: kept for act 6. Traces → `/api/v1/boards/c2be23b0…` → Open trace: TOTAL 658 ms = fetch 338 + render 321 (rounding), 9 spans, 7 queries.
