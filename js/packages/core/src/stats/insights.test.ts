@@ -16,6 +16,12 @@ describe("insight groups", () => {
     expect(n1.shape).toBe("SELECT * FROM orders WHERE customer_id = @id");
   });
 
+  it("says the count is an average only when it is one", () => {
+    const n1 = (ts: number[]) => insightGroups(ts.map(nPlusOne)).find((g) => g.kind === "n+1-db")!.description;
+    expect(n1([1000])).toContain("runs 6 times per request in GET /api/customers.");
+    expect(n1([1000, 2000])).toContain("runs 6 times per request on average in GET /api/customers.");
+  });
+
   it("counts the same in every headline: distinct insights, not requests", () => {
     const traces = [nPlusOne(1000), nPlusOne(2000), nPlusOne(3000)];
     const groups = insightGroups(traces);
