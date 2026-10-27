@@ -27,7 +27,7 @@ afterEach(() => {
 const click = (el: FakeElement) => el.fire("click");
 const buttonTitled = (title: string) => findAll(root, (el) => el.nodeName === "BUTTON" && el.getAttribute("title") === title)[0]!;
 const foot = () => one(root, "wl-foot").textContent;
-const call = (id: string, path: string, over = {}) => row({ id, path, url: `http://app.test${path}`, traceId: `t-${id}`, server: serverStats({ insights: 0 }), ...over });
+const call = (id: string, path: string, over = {}) => row({ id, path, url: `http://app.test${path}`, traceId: `t-${id}`, server: serverStats({ name: `GET ${path}`, insights: 0 }), ...over });
 
 it("shows the page, with nothing counted yet", () => {
   hud.start();

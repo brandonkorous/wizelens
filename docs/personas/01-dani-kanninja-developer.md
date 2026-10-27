@@ -4,8 +4,8 @@
 **Author:** Brandon Korous
 **Last Updated:** 2026-10-26
 
-**Status:** not started
-**Run:** —
+**Status:** in progress
+**Run:** 2026-10-26 (America/Los_Angeles, UTC-7), Claude driving Chrome
 **Role:** developer · in-app dashboard + HUD (Node API + Next.js web)
 
 ## Account
@@ -145,6 +145,8 @@ Dani opens wizelens.com, reads the home page and the Next.js page, and looks for
 **Done when:** Dani has the exact install command and the version from the site,
 and can say in one sentence what WizeLens will show them.
 
+**Outcome:** done. Install command `npm install @wizeworks/lens-node` (+ `@wizeworks/lens-react`), newest version 0.3.0-alpha.13 (from /changelog). One sentence: "it shows the SQL and the API call behind each click, in one timeline". Issue #001 fixed on the way.
+
 ### Act 2 — upgrade kanNINJA from alpha.10
 
 Dani follows the site's Next.js and Node docs for an app that already has
@@ -153,6 +155,8 @@ WizeLens: bump the packages, keep `instrumentation.ts`, keep the Fastify plugin.
 **Done when:** both services start, both dashboards open, and the version each
 dashboard shows matches the site.
 
+**Outcome:** done. Both services started on the local 0.3.0-alpha.13 build; http://localhost:3001/_wizelens and http://localhost:3000/_wizelens open, each shows "v0.3.0-alpha.13" at the foot of the menu and "In-app · kanninja-backend / kanninja-frontend · kept 24 h" in the top bar.
+
 ### Act 3 — make real data: the board
 
 Dani signs up to kanNINJA as `p01.dani@kanninja.test`, makes the clan and the
@@ -160,6 +164,8 @@ board above, and enters the cards. This is the traffic WizeLens will see.
 
 **Done when:** the board shows 64+ cards across 6 lists; `/_wizelens` on both
 services shows the requests that made them.
+
+**Outcome:** done. Account p01.dani@kanninja.test (code read from the API log), clan "Brennan & Okafor Joinery — Ops", board at /dojo/c2be23b0-868c-407f-bd45-adc4592e8a7a with 6 lists and 64 cards (16 typed as written, 48 numbered). Labels, due dates and members were not set (kanNINJA screens, not WizeLens). #002 found and fixed.
 
 ### Act 4 — read the HUD on the board
 
@@ -291,3 +297,9 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 Written act by act **as you go**, not reconstructed at the end. Each entry: what
 you did, what you saw, what you decided. Quote the exact words on screen — the
 sentence is often the defect.
+
+**Act 1.** Home → Platforms → "React and Next.js" → "Set it up" landed on the React (Vite) guide, not Next.js: filed #001, fixed (hero now has React setup + Next.js setup), re-proved. The home page's live demo first showed only the logo on a black box; on reload it played (dev server compiling on first hit), so not filed. Version from /changelog: the first chip is 0.3.0-alpha.13. The site has no dark theme; site screens scored light only.
+
+**Act 2.** The upgrade was done by pointing kanNINJA at the local tarballs (same as `npm install` of the newest version) and deleting `.next` once, as /docs/nextjs says. Both dashboards opened empty with "No requests in this range — Use your app and requests show up here."
+
+**Act 3.** Signup in the real Chrome was blocked by a password-manager extension popup on every field; switched to a clean headless Chromium (Playwright, America/Los_Angeles). HUD read "GET /dashboard 201" after making the board: filed #002, fixed, re-proved. The re-run's double-click on "Open dojo" made TWO boards — a kanNINJA defect, not WizeLens (reported to Brandon, not fixed here). After 64 cards on one page the HUD read 2228 SQL, 325 Fetch, 13 Insights.

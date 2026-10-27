@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { row, serverStats } from "../test-hud.js";
 import { MAX_CALLS, PageLog } from "./page-log.js";
 import { addUp, ROUTE_LOAD_MS, summarizePage } from "./page-summary.js";
-import { pageRows, ticksFor } from "./waterfall.js";
+import { callName, pageRows, ticksFor } from "./waterfall.js";
 
 const call = (id: string, startMs: number, over = {}) => row({ id, startMs, durationMs: 100, renderMs: 0, traceId: `t-${id}`, path: `/api/${id}`, server: serverStats({ insights: 0 }), ...over });
 const noLoad = () => null;
@@ -81,9 +81,16 @@ describe("pageRows", () => {
     expect(rows.map((r) => [r.name, r.kind, r.href ?? null])).toEqual([
       ["GET /orders (page)", "browser", "#/traces/t1"],
       ["First paint", "render", null],
-      ["GET /api/b · 4 SQL", "error", "#/traces/t-b"],
+      ["GET /api/orders · 4 SQL", "error", "#/traces/t-b"],
     ]);
     expect(pageRows([], null, { startMs: 0, renderMs: 25 }, () => null)[0]).toMatchObject({ name: "Route render", durationMs: 25 });
+  });
+
+  it("names a call by its server route, else by its path with another origin's host last", () => {
+    const api = "http://localhost:3001/api/v1/boards/c2be23b0-868c-407f-bd45-adc4592e8a7a/members";
+    expect(callName(call("m", 0, { path: api, server: serverStats({ name: "GET /api/v1/boards/:id/members" }) }))).toBe("GET /api/v1/boards/:id/members");
+    expect(callName(call("m", 0, { path: api, server: undefined }))).toBe("GET /api/v1/boards/c2be23b0-868c-407f-bd45-adc4592e8a7a/members · localhost:3001");
+    expect(callName(call("o", 0, { path: "/orders?tab=2", server: undefined }))).toBe("GET /orders?tab=2");
   });
 
   it("puts round ticks on the time axis", () => {
