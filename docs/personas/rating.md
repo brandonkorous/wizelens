@@ -181,7 +181,7 @@ is a `major` issue, not a rating.**
 | Service | `#/services/<svc>` | 8 | 8 | at 360 the facts (kind, hosts, version…) fill the first screen before a number; was: top bar #046 | P02 |
 | Problem | `#/problems/<id>` | — | — | — | — |
 | Alert rule | `#/alerts/<id>` | 8 | 8 | the line starts on the day the rule was made, so most of the 7-day chart is blank with no word on why; was: link said traces and opened queries #036, lost after two-step sign-in #035 | P02 |
-| SLO | `#/slos/<id>` | 8 | 6 | an outage spends no budget here; the page now says so (#038, decision); the budget chart is a flat line at 0 once spent | P02 |
+| SLO | `#/slos/<id>` | 8 | 6 → 8 | the budget chart is a flat line at 0 once spent; a 2-minute outage is a 3 px band on a 30-day chart, so the list carries it; was: an outage spent no budget and nothing showed it (#038) | P02 |
 | Dashboard | `#/dashboards/<id>` | — | — | — | — |
 | Shared page (signed out) | `#/shared/<token>` | — | — | — | — |
 | Status page | `#/status/<slug>` | — | — | — | — |

@@ -1,13 +1,13 @@
 # 038 — The API was down for two minutes and my SLO did not move
 
-**Status:** open
+**Status:** fixed
 **Severity:** major
 **Found by:** P02 · kanNINJA ops · act 8
 **Surface:** Cloud › SLOs › one SLO
 **Filed:** 2026-10-27
-**Fixed:** —
-**Confirmed by:** —
-**Blocked on:** decision
+**Fixed:** 2026-10-27
+**Confirmed by:** re-ran P02 act 8 — cloud rebuilt and restarted; Greta opened `Board API: 99.5% of requests succeed (30 days)` from SLOs: a warning banner reads "Uptime saw 5 outages in this window. These minutes spend no budget here: while kanninja-backend is down it answers no requests…" and lists "kanNINJA API health — every 60 s down Oct 27, 2026, 3:10 AM for 2 min: ECONNREFUSED at http://localhost:3001/api/health…" (her act 8 outage; the other four are the 3:05 AM 404 and kanNINJA restarts during the fixes); both charts carry red bands (10 drawn). Seen in light, dark and at 360 px, no sideways scroll (Cloud › SLOs › one SLO)
+**Blocked on:** — (decided 2026-10-27: option C)
 
 ## What Greta saw
 
@@ -41,3 +41,13 @@ How an outage should count against a request SLO:
 - **C.** Keep the math; draw the uptime incidents of the service's checks on the SLO's charts, and say "No
   requests seen 3:10–3:12 AM while Uptime said down". **Recommended**: honest, no change in what the number means.
 - **D.** Keep the sentence only.
+
+## Fix
+
+Brandon chose C: keep the math, show the outages.
+
+- `core/src/uptime/outages.ts` `outagesIn`: the project's uptime incidents that overlap the SLO window (test: `outages.test.ts`).
+- `ui/src/ui/OutageBands.tsx`: red bands on `TimeChart` (`outages` prop), at least 3 px wide so a short outage still shows.
+- `ui/src/pages/slos/SloOutages.tsx`: the banner and the list (the 5 newest, then "N earlier on Uptime"); with no
+  outage the old one-line note stays.
+- Checks are not tied to a service, so the page shows every check of the project, each by its name.

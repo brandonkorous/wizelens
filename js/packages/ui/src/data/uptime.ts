@@ -31,6 +31,9 @@ function basesOf(cloud: boolean): { list: string | null; item: (projectId?: stri
   return { list: `./api/uptime${project ? `?project=${encodeURIComponent(project)}` : ""}`, item: () => "./api/uptime" };
 }
 
+/** Where the project's checks and incidents are read; null on the cloud before a project is picked. */
+export const uptimeListUrl = (cloud: boolean): string | null => basesOf(cloud).list;
+
 /** The project's checks and incidents, and the changes the person may make. */
 export function useUptime(): UptimeApi {
   const cloud = useHost().has("accounts");

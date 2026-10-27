@@ -184,6 +184,9 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-dhead-actions .wl-issue-actions { margin: 0; font-size: 13px; font-weight: 400; }
 .wl-alert-problem { display: block; width: max-content; max-width: 100%; margin-top: 4px; font-size: 13px; }
 .wl-release-line { stroke: var(--wl-accent); stroke-width: 1.25; stroke-dasharray: 3 3; opacity: 0.8; }
+.wl-outage-band { fill: var(--wl-red); opacity: 0.18; }
+.wl-outage-list { margin: 6px 0 0; padding-left: 18px; }
+.wl-banner > p { margin: 0; }
 .wl-release-label { fill: var(--wl-accent-text); font-size: 10px; font-weight: 600; }
 .wl-chart-tip .wl-chart-tip-release { color: var(--wl-accent-text); }
 .wl-btn.wl-btn-sm { height: 32px; padding: 0 12px; font-size: 13px; font-weight: 550; letter-spacing: 0; }
