@@ -41,7 +41,7 @@ export const EMPTY_RULE: RuleDraft = {
 /** Only the fields a rule keeps, from a draft or a kept rule. */
 export const draftOf = (r: RuleDraft): RuleDraft => Object.fromEntries(Object.keys(EMPTY_RULE).map((k) => [k, r[k as keyof RuleDraft]])) as unknown as RuleDraft;
 
-/** The draft ready to send: metric rules drop the scope, trace rules drop the metric fields, and empty channels go. */
+/** The draft ready to send: metric rules drop the scope, trace rules drop the metric fields, and empty channels go. Submit stops an email channel with no member first. */
 function cleaned(r: RuleDraft): RuleDraft {
   const none = { metricName: "", metricStat: "" as const, metricService: "" };
   const metric =
@@ -58,6 +58,7 @@ export function AlertForm({ initial, title, lead, onSave, onCancel }: { initial:
   const set = <K extends keyof RuleDraft>(k: K) => (v: RuleDraft[K]) => setR((x) => ({ ...x, [k]: v }));
   const submit = (e: FormEvent) => {
     e.preventDefault();
+    if (r.channels.some((c) => c.kind === "email" && c.to.length === 0)) return setError("Tick at least one member under “Email to members”, or remove that channel.");
     void onSave(cleaned(r)).then(setError);
   };
   return (

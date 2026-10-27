@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { MAX_ALERT_CHANNELS } from "@wizeworks/lens-core";
 import { currentProject, useAccount } from "../../data/account";
@@ -43,14 +44,15 @@ function MemberEmails({ to, onChange }: { to: string[]; onChange: (to: string[])
 
 const blank = (kind: Channel["kind"]): Channel => (kind === "email" ? { kind, to: [] } : kind === "pagerduty" ? { kind, routingKey: "" } : { kind, url: "" });
 
-/** One channel: its kind, and its URL, routing key, or members. */
-function ChannelRow({ channel, onChange, onRemove }: { channel: Channel; onChange: (c: Channel) => void; onRemove: () => void }) {
+/** One channel: its kind, and its URL, routing key, or members. Email starts with the person making the rule. */
+function ChannelRow({ channel, onChange, onRemove, autoFocus }: { channel: Channel; onChange: (c: Channel) => void; onRemove: () => void; autoFocus: boolean }) {
   const cloud = useHost().has("accounts");
-  const pick = (kind: Channel["kind"]) => onChange(kind === channel.kind ? channel : blank(kind));
+  const me = useAccount()?.user?.email.toLowerCase();
+  const pick = (kind: Channel["kind"]) => onChange(kind === channel.kind ? channel : kind === "email" && me ? { kind, to: [me] } : blank(kind));
   return (
     <div className="wl-alert-channel">
       <FormRow>
-        <Select label="Send to" value={channel.kind} options={cloud ? ALL_KINDS : URL_KINDS} onChange={pick} />
+        <Select label="Send to" value={channel.kind} options={cloud ? ALL_KINDS : URL_KINDS} onChange={pick} autoFocus={autoFocus} />
         {"url" in channel && <Field label="URL" type="url" required value={channel.url} onChange={(e) => onChange({ ...channel, url: e.target.value })} placeholder={PLACEHOLDER[channel.kind]} />}
         {channel.kind === "pagerduty" && <Field label="Routing key" required value={channel.routingKey} onChange={(e) => onChange({ kind: "pagerduty", routingKey: e.target.value })} placeholder="The integration key of a PagerDuty service" />}
         <button type="button" className="wl-icon-btn wl-alert-channel-remove" aria-label="Remove this channel" onClick={onRemove}>
@@ -62,18 +64,19 @@ function ChannelRow({ channel, onChange, onRemove }: { channel: Channel; onChang
   );
 }
 
-/** Where the notice goes: up to five channels. None keeps it on the dashboard only. */
+/** Where the notice goes: up to five channels. None keeps it on the dashboard only. A new channel takes the focus. */
 export function ChannelFields({ channels, onChange }: { channels: Channel[]; onChange: (c: Channel[]) => void }) {
+  const [added, setAdded] = useState(-1);
   const set = (i: number) => (c: Channel) => onChange(channels.map((x, j) => (j === i ? c : x)));
   return (
     <div className="wl-alert-channels">
       <div className="wl-section-title">Notify</div>
       {channels.length === 0 && <p className="wl-muted wl-small">No channels: the alert shows on the dashboard and in the bell only.</p>}
       {channels.map((c, i) => (
-        <ChannelRow key={i} channel={c} onChange={set(i)} onRemove={() => onChange(channels.filter((_, j) => j !== i))} />
+        <ChannelRow key={i} channel={c} onChange={set(i)} onRemove={() => onChange(channels.filter((_, j) => j !== i))} autoFocus={i === added} />
       ))}
       {channels.length < MAX_ALERT_CHANNELS && (
-        <button type="button" className="wl-btn" onClick={() => onChange([...channels, blank("slack")])}>
+        <button type="button" className="wl-btn" onClick={() => (setAdded(channels.length), onChange([...channels, blank("slack")]))}>
           <Plus aria-hidden="true" /> Add a channel
         </button>
       )}
