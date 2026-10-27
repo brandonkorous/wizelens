@@ -59,3 +59,13 @@ describe("detail pages", () => {
     expect(m.loads.length).toBeGreaterThan(0);
   });
 });
+
+describe("query spread", () => {
+  it("gives each query shape a p95, on the list and on its page, within the histogram's 2%", () => {
+    const q = run("database", { size: "200" }).queries.find((x) => x.count >= 3)!;
+    const runs = dbCalls(scenarioTraces()).filter((c) => c.query === q.query).map((c) => c.durationMs).sort((x, y) => x - y);
+    const exact = runs[Math.ceil(0.95 * runs.length) - 1]!;
+    expect(q.p95Ms! / exact).toBeCloseTo(1, 1);
+    expect(run("query", { q: q.query }).totals?.p95Ms).toBe(q.p95Ms);
+  });
+});

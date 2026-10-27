@@ -1199,6 +1199,8 @@ Pages read small tables built from the stored traces, never the traces themselve
   are rebuilt from its spans and logs, and the rollups get its new contribution minus the old one (kept as JSON in
   `traces.contrib`). `settled_ms` is set to the `updated_ms` that was read, so a late span settles the trace again. Representatives,
   first and last times, and ids are display fields and are never taken back out.
+- **Query spread** (`FACTS_VERSION` 14): `db.q` and `db.qd` keep histograms, so the Database list, its CSV, and the Query page show
+  each query shape's p95 next to its average and max.
 - **One version fact** (`FACTS_VERSION` 8): the `svc.v` kind (traces per service and version, added in 7 for Problems) is
   gone; Problems reads `rel` below, so one release fact feeds markers, compare versions, and "new release" causes.
 - **Releases** (`FACTS_VERSION` 5): `rel` counts each span that starts work in its service (no parent, or a parent in another

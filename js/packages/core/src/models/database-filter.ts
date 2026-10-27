@@ -44,7 +44,7 @@ export function queryListNeed(f: QueryFilter, p: ModelParams): GroupNeed {
   const contains = [f.q, f.table].filter(Boolean);
   const filter = { ...(byDatabase(f) ? { parts: [f.operation || null, f.database || null, null] } : {}), ...(contains.length ? { contains } : {}) };
   const order = { by: SORT_BY[f.sort], desc: true, limit: size, offset: (page - 1) * size };
-  return groupNeed("db.q", byDatabase(f) ? "db.qd" : "db.q", "cur", { top: true, filter, order, ...scoped(f.service || undefined) });
+  return groupNeed("db.q", byDatabase(f) ? "db.qd" : "db.q", "cur", { top: true, hist: true, filter, order, ...scoped(f.service || undefined) });
 }
 
 /** The query text of a `db.q` or `db.qd` key. */

@@ -1,6 +1,7 @@
 // The page of one query shape: count and time over time, the services and endpoints that run it, and the traces that ran it.
 import { type Agg, avgOfAgg } from "../scale/agg.js";
 import type { QueryTop } from "../scale/facts-db.js";
+import { histPercentile } from "../scale/hist.js";
 import type { TraceItem } from "../scale/facts-lists.js";
 import { splitKey } from "../scale/kinds.js";
 import type { PageDef } from "../scale/needs.js";
@@ -12,6 +13,8 @@ import { avgs, byDesc, counter, counts, groupNeed, listNeed, listOf, type Row, r
 export interface QueryTotals {
   count: number;
   avgMs: number | null;
+  /** Null when the runs were stored without their spread. */
+  p95Ms: number | null;
   totalMs: number;
   slow: number;
   errors: number;
@@ -42,7 +45,7 @@ export interface QueryPageModel {
   traces: TraceItem[];
 }
 
-const totalsOf = (a: Agg): QueryTotals | null => (a.n ? { count: a.n, avgMs: avgOfAgg(a), totalMs: a.sum, slow: a.c[0] ?? 0, errors: a.err } : null);
+const totalsOf = (a: Agg): QueryTotals | null => (a.n ? { count: a.n, avgMs: avgOfAgg(a), p95Ms: a.hist ? histPercentile(a.hist, a.n, 95) : null, totalMs: a.sum, slow: a.c[0] ?? 0, errors: a.err } : null);
 
 /** A per-service row ("service", query) or a per-endpoint row ("api:service", endpoint, query). */
 function useOf(r: Row, byEndpoint: boolean): QueryUse {
@@ -58,8 +61,8 @@ export const queryPage: PageDef<QueryPageModel> = {
     const keys = { filter: { keys: [q] } };
     return uniqueNeeds([
       ...META_NEEDS,
-      groupNeed("q", "db.q", "cur", { top: true, ids: true, ...keys }),
-      groupNeed("q.prev", "db.q", "prev", keys),
+      groupNeed("q", "db.q", "cur", { top: true, ids: true, hist: true, ...keys }),
+      groupNeed("q.prev", "db.q", "prev", { hist: true, ...keys }),
       seriesNeed("chart", "db.q", "cur", CHART_BUCKETS, keys),
       seriesNeed("chart.prev", "db.q", "prev", CHART_BUCKETS, keys),
       groupNeed("svc", "db.q@svc", "cur", { filter: { parts: [null, q] } }),

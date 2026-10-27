@@ -31,6 +31,7 @@ const QUERIES: CsvColumns<QueryRow> = [
   ["system", (q) => q.system],
   ["count", (q) => q.count],
   ["avg_ms", (q) => round2(q.avgMs)],
+  ["p95_ms", (q) => (q.p95Ms === null ? "" : round2(q.p95Ms))],
   ["max_ms", (q) => round2(q.maxMs)],
   ["total_ms", (q) => round2(q.totalMs)],
   ["slow", (q) => q.slow],

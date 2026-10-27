@@ -2,7 +2,7 @@ import { queryText } from "../analysis.js";
 import { isNoSqlSpan, noSqlOperation } from "../nosql.js";
 import { isErrorSpan } from "../trace.js";
 import type { Span, Trace } from "../types.js";
-import { avgOf, groupBy, memoByObject, normalizeQuery, sumOf } from "./common.js";
+import { avgOf, groupBy, memoByObject, normalizeQuery, percentileOf, sumOf } from "./common.js";
 import { requestOf } from "./requests.js";
 
 /** One database call, with the request it belongs to. */
@@ -87,6 +87,8 @@ export interface QueryRow {
   count: number;
   avgMs: number;
   maxMs: number;
+  /** Null when the runs were stored without their spread. */
+  p95Ms: number | null;
   totalMs: number;
   slow: number;
   errors: number;
@@ -112,6 +114,7 @@ export function queryRows(calls: readonly DbCall[], slowMs: number): QueryRow[] 
         count: list.length,
         avgMs: sumOf(durations) / list.length,
         maxMs: slowest.durationMs,
+        p95Ms: percentileOf(durations, 95),
         totalMs: sumOf(durations),
         slow: list.filter((c) => c.durationMs >= slowMs).length,
         errors: list.filter((c) => c.error).length,
