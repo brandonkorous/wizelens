@@ -284,6 +284,16 @@ link Greta forwards and sees the same rule, read-only.
 `p00.harrow`; paste a trace id from the neighbour's `hv-bookings-api` into the
 address bar; open the project switcher and check that only her project is listed.
 
+### Standing checks: results
+
+- **Wrong moves.** Wrong key revoked (act 10, #042, #043). Double-click Save: two rules (#031, fixed); "Save SLO" twice made one. Cancel an invite after it was accepted: the accepted invite leaves Pending invites the moment Dani joins, so there is nothing to cancel and her access stays; her used link says "This invite link is not valid any more."
+- **Reload and deep link.** F5 on the query page of `select … from "auth_sessions" where "auth_sessions"."token" = $?`: same address, same numbers (464 runs, p95 7.1 ms). The alert email link while signed out (act 7, #035, fixed). The query link opened by Dani in a fresh window: the same query page; signed out: Sign in, with the address kept.
+- **Dates.** Machine in America/Los_Angeles (PDT, UTC-7). Outage 10:09:42–10:11:53 UTC shows as "Oct 27, 2026, 3:10 AM · 2 min" (first failed run): right. The 30-day SLO chart starts Sep 27 (Oct 27 − 30): right. Retention 14 days names "before Oct 13, 2026" (Oct 27 − 14; the run happened on 2026-10-27, not 10-26): right. Not checked: anything across the 2026-11-01 DST change. 7-day charts label Oct 20–Oct 25 and leave today unlabelled at the right edge (noted).
+- **Numbers at the edges.** SLO: 511 requests, 7 failed = 98.63%; budget 0.005 × 511 = 2.555, spent 7 ÷ 2.555 = 2.7× — the screen says 98.6% and 2.7× (act 8). Uptime 2 of 2 failed = 0% after #037. Not checked by hand: the 25% error rate the rule fired at during the act 8 outage.
+- **The other side.** Dani as viewer opened the alert rule: same rule, chart and notices, no buttons (act 9).
+- **Without a mouse.** Rule 1 made keyboard-only from Overview (act 7).
+- **Somebody else's data.** Search over 30 days for `Harrow & Vance`, `hv-bookings`, `p00.harrow`: 0 requests, traces, spans and logs each; control search `realtime-ticket`: 99 requests. Neighbour trace `82e5317a0665a2a7b2b4726c742fa781`: "This trace is no longer stored." (does not say it exists). Switcher, as Greta and as Dani: one organization, one project. No leak.
+
 ---
 
 ## Verification
