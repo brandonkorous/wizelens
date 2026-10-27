@@ -28,5 +28,7 @@ export type Stack = {
   highlightsTitle: string;
   highlights: Highlight[];
   docs: { label: string; href: string }[];
+  /** How many of the first docs are setup guides, one hero button each. Default 1. */
+  setups?: number;
   shot?: Shot;
 };

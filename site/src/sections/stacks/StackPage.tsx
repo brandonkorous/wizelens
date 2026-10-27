@@ -17,6 +17,22 @@ const rise = (delay = 0) => ({
   transition: { duration: 0.7, delay, ease: EASE },
 });
 
+/** One button per setup guide; a stack with one guide also offers the quick start. */
+function SetupButtons({ stack }: { stack: Stack }) {
+  const setups = stack.docs.slice(0, stack.setups ?? 1);
+  if (setups.length === 1) {
+    return (
+      <>
+        <a href={setups[0]!.href} className="wl-btn wl-btn-primary">Set it up <ArrowRight /></a>
+        <a href={LINKS.start} className="wl-btn wl-btn-ghost">Quick start</a>
+      </>
+    );
+  }
+  return setups.map((d, i) => (
+    <a key={d.href} href={d.href} className={`wl-btn ${i === 0 ? "wl-btn-primary" : "wl-btn-ghost"}`}>{d.label} <ArrowRight /></a>
+  ));
+}
+
 function Hero({ stack }: { stack: Stack }) {
   return (
     <section className="wl-st-hero">
@@ -25,8 +41,7 @@ function Hero({ stack }: { stack: Stack }) {
         <div className="wl-st-intro wl-rise" style={riseDelay(0.35)}>
           <p className="wl-lede">{stack.lede}</p>
           <div className="wl-hero-cta">
-            <a href={stack.docs[0]!.href} className="wl-btn wl-btn-primary">Set it up <ArrowRight /></a>
-            <a href={LINKS.start} className="wl-btn wl-btn-ghost">Quick start</a>
+            <SetupButtons stack={stack} />
           </div>
         </div>
         <dl className="wl-st-facts">
