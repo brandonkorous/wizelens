@@ -223,6 +223,8 @@ compare link for the team.
 
 **Done when:** the compare link opens in a new window on the same comparison.
 
+**Outcome:** done after #014, #015, #016 and #017. The link `#/traces/903f5c7f…/compare/03698c2c…` opens in a new window on the same comparison: Total 20 ms / 21 ms, 7 queries each, kanninja-backend 7.8 → 9.7 ms.
+
 ### Act 10 — let the AI agent read it, safely
 
 Dani turns on AI access for the API's dashboard and checks what an agent would
@@ -323,3 +325,5 @@ sentence is often the defect.
 **Act 7.** Rename `Waiting on client` to a 5,000-character paste of Mrs O'Sullivan's email: kanNINJA kept the edit box open with no message and threw an unhandled "Validation failed" (a kanNINJA gap for Brandon). The HUD went red, 400, "1 Error". The second tab could not reach the last card in `Done`: the HUD bar covered its menu and the list could not scroll further: filed #011, fixed with "Show WizeLens bottom left" in HUD Settings, re-proved (card deleted, Done 10 → 9). Tab A removed the card live, so the deleted card was opened from its kept link instead: "This kata is sealed. You may not have access, or the kata no longer exists." with HTTP 200, 2 SQL, no failed call (kanNINJA could answer 404). Errors had the rename error with stack; no Resolve and no reason: filed #012, fixed with a line that says Resolve and Ignore are on the hub and in the cloud, with a How link. "Browsers: No user agent recorded" on a browser error: filed #013, blocked on scope (needs the user agent in the error facts, a ClickHouse change). The other Errors rows (ENOENT `.next/routes-manifest.json`, "Jest worker …") are from my own web-server restarts, not Dani's app.
 
 **Act 8.** Act 8 needs Resolve and Reopen. The in-app host has no `issues` capability (CONTRACT.md: hub and cloud only); since #012 the screen says so. Moved to P02.
+
+**Act 9.** First pass compared two `GET /api/v1/realtime` traces: the Traces search did not filter as Dani typed (#014), and Dani took the unchanged top row. With the search fixed, the list showed the board's four calls, but each path filled nine lines (#016) and the board load sat below the fold. Compare's "Same request, newest" listed the board loads at 48–52 ms while the list said 17 ms: the page and API are cross-origin, so the API span had no parent and the clock fix never ran (#015). After the fixes, the menu reads 21 / 18 / 19 ms, and the two 315–321 ms loads in it are real (the fetch waited; the API answered in 10 ms). At 360 px the page scrolled 64 px sideways from the pager (#017, every paged list). Six 404s seen in the console on the first (realtime) compare did not come back on the board-load compare; not reproduced, not filed. Compare's Total adds the page render to the fetch, by design.
