@@ -174,6 +174,8 @@ of attack: count, avg, p95, the requests that ran it.
 **Done when:** she can name the query that costs the most and link to it; a hand
 count from three traces agrees with the count on screen.
 
+**Outcome:** done after #027. Costliest shape: `select … from "auth_users" where "auth_users"."id" = $?` — 44 runs, 121 ms total, avg 2.8 ms, p95 4.3 ms, max 41 ms, 0 slow, 0 errors. Link: `#/database/queries/select%20%22id%22…%20%3D%20%24%3F` (Database › Most total time › first row). Hand count from three of its traces (`/api/v1/clans` bfdc5069…, `/api/v1/boards/:boardId/clans` deb81183…, `…/realtime-ticket` 94707237…): 1 run each on the SQL tab; the Query page's Endpoints table gives 6 runs each for the two clans endpoints over 6 board loads = 1 per load. Agrees.
+
 ### Act 5 — her thresholds
 
 She sets slow query to 250 ms and N+1 to 8, and checks that Insights and Problems
@@ -305,3 +307,5 @@ sentence is often the defect.
 **Act 2.** Organization › General: name saved. Projects: the `My app` row had Access, Clear data and Delete, no rename: filed #025 (major), fixed (Rename on each row, PATCH takes a name, audit "Renamed a project · was My app"), re-proved. Connect › Make a sending key: the form started on kanninja-production (the one project; #024 fixed earlier). Both keys made with Expires "Never" — Greta rotates by hand every 90 days. The setup answer "Environment production" had no home: Connect and the Configuration docs never said which setting names a service's environment: filed #026 (copy), fixed in both, re-read.
 
 **Act 3.** Each key went into its service's env file (`backend/.env`, `frontend/.env.local`, both git-ignored) as WIZELENS_HUB=http://localhost:5970 and WIZELENS_HUB_TOKEN; both services restarted. Dani loaded the board once. Overview: "Total Requests 16 · SQL Queries 36 · Apdex 0.75 Fair"; both services "Degraded" from first-compile times (1.7 s, dev server). Recent Requests shows the realtime call with its whole `?ticket=v1.eyJ…` value — a signed ticket holding Dani's profile id and name: kept for act 6. Traces → `/api/v1/boards/c2be23b0…` → Open trace: TOTAL 658 ms = fetch 338 + render 321 (rounding), 9 spans, 7 queries.
+
+**Act 4.** Sorted by "Most total time" (the Order select, URL keeps `sort=total`). First look: the row and the Query page gave Avg and Max only — no p95, the number her act asks for: #027, fixed (histograms for `db.q`/`db.qd`, FACTS_VERSION 14, P95 column + CSV + Query page head), cloud restarted, stats rebuilt from stored traces without loss. The costliest shape is the auth lookup that every API request does (Better Auth session → user), 7 of 7 endpoints — so the fix for kanNINJA is caching the session user per request, not an index (lookups are by primary key, 2.8 ms each). The trace's SQL tab shows the session token param as `[redacted]` and the user id param in clear.
