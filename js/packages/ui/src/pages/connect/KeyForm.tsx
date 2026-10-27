@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from "react";
+import { currentProject, useAccount } from "../../data/account";
 import { apiSend } from "../../data/api";
 import { CopyButton } from "../../ui/Badges";
 import { Check, Field, FormRow, SelectField } from "../../ui/Field";
@@ -63,7 +64,10 @@ function keyBody(kind: Kind, name: string, picked: string[], scopes: string[], e
 export function KeyForm({ orgId, data, kinds, reload, onClose }: { orgId: string; data: OrgData; kinds: readonly Kind[]; reload: () => void; onClose: () => void }) {
   const [kind, setKind] = useState<Kind>(kinds[0]!);
   const [name, setName] = useState("");
-  const [picked, setPicked] = useState<string[]>(data.projects[0] ? [data.projects[0].id] : []);
+  // Starts on the project the dashboard shows now; under "All projects", on the first.
+  const here = currentProject(useAccount())?.project?.id;
+  const start = data.projects.find((p) => p.id === here) ?? data.projects[0];
+  const [picked, setPicked] = useState<string[]>(start ? [start.id] : []);
   const [scopes, setScopes] = useState<string[]>(SCOPES[kinds[0]!].map(([s]) => s));
   const [expires, setExpires] = useState("");
   const [origins, setOrigins] = useState("");
