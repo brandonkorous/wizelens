@@ -114,7 +114,8 @@ span.wl-count{cursor:default}span.wl-count:hover{background:none;color:var(--wl-
 .wl-wf{display:grid;grid-template-columns:minmax(120px,34%) 64px minmax(0,1fr);align-items:center;font-size:12px}
 .wl-wf>*{min-height:24px;display:flex;align-items:center}
 .wl-wf-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px}
-.wl-wf-name span,.wl-wf-name a{overflow:hidden;text-overflow:ellipsis}
+.wl-wf-name a,.wl-wf-name>span{display:flex;min-width:0}
+.wl-wf-head{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}.wl-wf-tail{flex:0 0 auto;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .wl-wf-name a{color:inherit;text-decoration:none}.wl-wf-name a:hover{text-decoration:underline}
 .wl-wf-at{justify-content:flex-end;padding-right:12px;color:var(--wl-main-muted);font-variant-numeric:tabular-nums}
 .wl-wf-track{position:relative;height:24px}

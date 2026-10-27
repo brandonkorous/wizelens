@@ -6,7 +6,7 @@
 **Surface:** HUD › details panel (Calls)
 **Filed:** 2026-10-26
 **Fixed:** 2026-10-26
-**Confirmed by:** re-ran P01 act 4 — opened the HUD details on the Q4 Workshop board; calls read GET /api/v1/boards/:boardId/members, …/clans, …/realtime-ticket
+**Confirmed by:** re-ran P01 act 5 — in the HUD details on the board the rows read `GET /api/… /members · 6 SQL`, `GET /api/v1/b… /clans · 5 SQL`, `POST /api/v1/… /move · 7 SQL`
 **Blocked on:** —
 
 ## What happened
@@ -55,12 +55,21 @@ cut, not the host. Tests: `page-summary.test.ts` "names a call by its server rou
 test calls now carry their own route names. Siblings: the card, the details title and the tab title show
 the page (same origin), so they keep `method + path`.
 
+**Second part (the first proof was wrong).** The first proof read the rows' text, not the screen. On screen
+the 165 px name column still cut both `GET /api/v1/boards/:boardId/members` and `…/clans` to
+`GET /api/v1/boards/:boardI…`. Now `splitName` splits a row name before the last path segment; the head
+shrinks with an ellipsis (`.wl-wf-head`) and the tail (`/members · 6 SQL`) stays (`.wl-wf-tail`). Test:
+`page-summary.test.ts` "splits a name before its last path segment…".
+
 ## Confirmed by
 
 > Re-ran P01 act 4: reloaded the board, opened the HUD details. **Calls · 5** read
 > `GET /api/v1/boards/:boardId · 7 SQL`, `POST /api/v1/boards/:boardId/realtime-ticket · 5 SQL`,
 > `GET /api/v1/boards/:boardId/members · 6 SQL`, `GET /api/v1/boards/:boardId/clans · 5 SQL`,
-> `GET /api/v1/clans · 4 SQL`. Each links to its own trace.
+> `GET /api/v1/clans · 4 SQL`. Each links to its own trace. (Text only: the screen still cut them — see above.)
+>
+> Re-ran P01 act 5 after the second part: the details showed 12 calls; each row ends in its own segment —
+> `/:boardId · 7 SQL`, `/realtime-ticket · 5 SQL`, `/members · 6 SQL`, `/clans · 5 SQL`, `/move · 7 SQL`.
 
 ## Rating effect
 

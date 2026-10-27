@@ -66,7 +66,18 @@ export function ticksFor(total: number): number[] {
   return ticks;
 }
 
-const rowName = (r: WfRow) => (r.href ? h("a", { href: r.href, target: "_blank", rel: "noreferrer" }, r.name) : h("span", null, r.name));
+/** Splits a name before the last segment of its path, so a cut keeps "/members · 6 SQL" and drops the middle. */
+export function splitName(name: string): [string, string] {
+  const end = name.search(/ · | \(/);
+  const cut = (end < 0 ? name : name.slice(0, end)).lastIndexOf("/");
+  return cut <= 0 ? [name, ""] : [name.slice(0, cut), name.slice(cut)];
+}
+
+const rowName = (r: WfRow) => {
+  const [head, tail] = splitName(r.name);
+  const parts = [h("span", { class: "wl-wf-head" }, head), tail ? h("span", { class: "wl-wf-tail" }, tail) : null];
+  return r.href ? h("a", { href: r.href, target: "_blank", rel: "noreferrer" }, parts) : h("span", null, parts);
+};
 
 /** The timeline: `rows` on a shared time axis that starts at `origin`. */
 export function waterfall(rows: WfRow[], origin: number): HTMLElement {

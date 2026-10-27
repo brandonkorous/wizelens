@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { row, serverStats } from "../test-hud.js";
 import { MAX_CALLS, PageLog } from "./page-log.js";
 import { addUp, ROUTE_LOAD_MS, summarizePage } from "./page-summary.js";
-import { callName, pageRows, ticksFor } from "./waterfall.js";
+import { callName, pageRows, splitName, ticksFor } from "./waterfall.js";
 
 const call = (id: string, startMs: number, over = {}) => row({ id, startMs, durationMs: 100, renderMs: 0, traceId: `t-${id}`, path: `/api/${id}`, server: serverStats({ insights: 0 }), ...over });
 const noLoad = () => null;
@@ -91,6 +91,13 @@ describe("pageRows", () => {
     expect(callName(call("m", 0, { path: api, server: serverStats({ name: "GET /api/v1/boards/:id/members" }) }))).toBe("GET /api/v1/boards/:id/members");
     expect(callName(call("m", 0, { path: api, server: undefined }))).toBe("GET /api/v1/boards/c2be23b0-868c-407f-bd45-adc4592e8a7a/members · localhost:3001");
     expect(callName(call("o", 0, { path: "/orders?tab=2", server: undefined }))).toBe("GET /orders?tab=2");
+  });
+
+  it("splits a name before its last path segment, so a cut keeps the end", () => {
+    expect(splitName("GET /api/v1/boards/:boardId/members · 6 SQL")).toEqual(["GET /api/v1/boards/:boardId", "/members · 6 SQL"]);
+    expect(splitName("GET /a/b · localhost:3001 · 2 SQL")).toEqual(["GET /a", "/b · localhost:3001 · 2 SQL"]);
+    expect(splitName("GET /orders (page)")).toEqual(["GET ", "/orders (page)"]);
+    expect(splitName("Route render")).toEqual(["Route render", ""]);
   });
 
   it("puts round ticks on the time axis", () => {
