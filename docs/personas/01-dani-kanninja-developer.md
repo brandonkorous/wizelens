@@ -194,6 +194,8 @@ From the board-load trace Dani opens the SQL tab, then Database and Insights.
 dashboard's count agrees; the slowest query and any N+1 are named and link to
 the query shape.
 
+**Outcome:** done after #008, #009 and #010. Board-load trace e96bbb3f…: 7 SQL rows counted by hand = QUERIES 7 = tab "SQL 7" = "7 queries · 7 unique"; row times sum 10.83 ms = DATABASE 11 ms. Slowest query (`select … from "auth_users" where "auth_users"."email" = $?`, 7.2 ms avg) opens its shape page from Database, keyboard only, in 20 keys. Insights names the N+1 (`update "cards" set "order_index" = $? …`) and links to its example trace.
+
 ### Act 7 — break it, then find the break
 
 Dani renames list `Waiting on client` to a 5,000-character paste, then opens a
@@ -202,6 +204,8 @@ card that another tab already deleted. Whatever errors, they find it.
 **Done when:** each error is in Errors with its stack and request, and Dani
 marks the real one resolved.
 
+**Outcome:** partly done. The 5,000-character rename was refused (400) and is in Errors as "ApiClientError: Validation failed · /dojo/{}/board · Web App · 6", with its stack (`api-client.ts:38:15`) and the HUD showing 400 and "1 Error" at once. The deleted card made no error to find: kanNINJA answers its old link with a 200 "This kata is sealed" page. Marking it resolved is not possible in-app; the screen now says so and where (#012). Browsers on the error page stay empty for browser errors (#013, blocked on scope).
+
 ### Act 8 — the mistake Dani has to undo
 
 Dani resolves the wrong error group (the 4xx, not the 500), notices, and wants
@@ -209,6 +213,8 @@ it back.
 
 **Done when:** the wrong group is unresolved again and the real one stays
 resolved, and the list says which is which.
+
+**Outcome:** not run in-app: the in-app dashboard keeps no issue states, so there is nothing to resolve or undo (see #012). The same wrong move — resolve the 4xx group, notice, reopen it — is done by P02 on the cloud.
 
 ### Act 9 — the before / after
 
@@ -311,3 +317,9 @@ sentence is often the defect.
 **Act 4.** HUD details listed every call as "GET http://localhost:3001/a…": filed #003, fixed by naming calls by their server route, re-read — the TEXT was right but on screen the 165 px column still cut /members and /clans. Second fix keeps the last path segment in view; proven on screen in act 5. The details panel stays open across reloads and covers the right third of the board; it got in the way of a drag once (noted, not filed: closing it is one click).
 
 **Act 5.** First link opened the API's dashboard with only the API half (8 spans): filed #004 (major), fixed with one rule for where spans go and where links point, re-proved. Span hand sum: fetch 40 + render 30 = 70 = TOTAL; SQL 6.62 = Database 6.6; but Server code 1.7 vs timeline self 2.4 — the last query ends 0.67 ms after the response: filed #005, blocked on a decision. Moving card 1 BACK into Measured (10 cards) cost 18 SQL vs 7 forward — kanNINJA re-numbers the target list one UPDATE per card. The trace page named it: "N+1 query: ran 10 times · update \"cards\" set \"order_index\" = $1 where \"cards\".\"id\" = $2 · 43 ms" (a kanNINJA finding for Brandon; WizeLens did its job).
+
+**Act 6.** The SQL tab showed the live session token in `params: ["AIJDis…"]` for `"auth_sessions"."token" = $1`: filed #008 (major), fixed in TS by reading which column each placeholder binds to (named placeholders too, shared vectors in docs/redact-vectors.json), the Go, Python and .NET port is tracked in #008; re-read: row 1 now `["[redacted]"]`, rows 2–3 keep the user id (`"auth_users"."id"`, not a secret). Without a mouse, Tab skipped every query row on Database (60 Tabs, only the Endpoint links): filed #009, fixed with one `pressable` helper for table rows, list items and map shapes; re-proved, ring visible. Insights said "runs 7 times per request" while the trace Dani knew said 10 — 7 is 99 repeats ÷ 14 requests: filed #010 (minor), now "7 times per request on average".
+
+**Act 7.** Rename `Waiting on client` to a 5,000-character paste of Mrs O'Sullivan's email: kanNINJA kept the edit box open with no message and threw an unhandled "Validation failed" (a kanNINJA gap for Brandon). The HUD went red, 400, "1 Error". The second tab could not reach the last card in `Done`: the HUD bar covered its menu and the list could not scroll further: filed #011, fixed with "Show WizeLens bottom left" in HUD Settings, re-proved (card deleted, Done 10 → 9). Tab A removed the card live, so the deleted card was opened from its kept link instead: "This kata is sealed. You may not have access, or the kata no longer exists." with HTTP 200, 2 SQL, no failed call (kanNINJA could answer 404). Errors had the rename error with stack; no Resolve and no reason: filed #012, fixed with a line that says Resolve and Ignore are on the hub and in the cloud, with a How link. "Browsers: No user agent recorded" on a browser error: filed #013, blocked on scope (needs the user agent in the error facts, a ClickHouse change). The other Errors rows (ENOENT `.next/routes-manifest.json`, "Jest worker …") are from my own web-server restarts, not Dani's app.
+
+**Act 8.** Act 8 needs Resolve and Reopen. The in-app host has no `issues` capability (CONTRACT.md: hub and cloud only); since #012 the screen says so. Moved to P02.
