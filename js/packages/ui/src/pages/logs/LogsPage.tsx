@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Bell, FileText, OctagonX, TriangleAlert } from "lucide-react";
 import { fmtCount } from "../../format";
-import { hrefTo } from "../../routes";
+import { hrefTo, useRoute } from "../../routes";
 import { Pager } from "../../ui/Controls";
 import { urlPaging } from "../../ui/paging";
 import { LiveToggle } from "../../ui/LiveToggle";
@@ -32,14 +32,27 @@ function LogStatCards({ stats }: { stats: LogsModel }) {
   );
 }
 
+const TRACE_ID = /^[0-9a-f]{32}$/i;
+
+/** Why no line matched: a trace id that wrote none says so and links the trace. */
+function NoLines({ q }: { q: string }) {
+  if (!TRACE_ID.test(q)) return <Empty title="No matching log lines">Try a lower level, another service, or a wider time range.</Empty>;
+  return (
+    <Empty title="No log lines in this trace">
+      The request wrote no log lines at these levels. <a href={hrefTo("traces", [q.toLowerCase()])}>Open the trace</a>
+    </Empty>
+  );
+}
+
 function LogTable({ stats }: { stats: LogsModel }) {
   const { rows, page, pageSize, matching } = stats;
   const [open, setOpen] = useState<string | null>(null);
   const toggle = (key: string) => setOpen(open === key ? null : key);
   const tagsOf = useRowTags("logs", rows, logRow);
+  const q = useRoute().query.get("q")?.trim() ?? "";
   return (
     <Panel title={`Log Lines (${fmtCount(matching)})`} flush action={<ExportButton page="logs" disabled={matching === 0} />}>
-      <Table columns={withTags(LOG_COLUMNS, "message", tagsOf)} rows={rows} rowKey={(r) => r.key} selectedKey={open} onRowClick={(r) => toggle(r.key)} detail={(r) => <LogDetail row={r} />} empty={<Empty title="No matching log lines">Try a lower level, another service, or a wider time range.</Empty>} />
+      <Table columns={withTags(LOG_COLUMNS, "message", tagsOf)} rows={rows} rowKey={(r) => r.key} selectedKey={open} onRowClick={(r) => toggle(r.key)} detail={(r) => <LogDetail row={r} />} empty={<NoLines q={q} />} />
       <Pager page={page} pageSize={pageSize} total={matching} noun="lines" {...urlPaging()} />
     </Panel>
   );

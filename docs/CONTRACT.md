@@ -522,6 +522,9 @@ at least `keepSlowMs` long. Otherwise it is dropped. A held trace whose root nev
 after the choice follow it; an error after a drop keeps the rest of the trace. Sampling applies to the store, the SQLite
 file, and the hub sends alike.
 
+The Node add-on does not keep Fastify's own per-request pino lines ("incoming request" and "request completed" at info or
+below): the server span already holds the method, path, status, and time. Lines the app writes with `request.log` are kept.
+
 ## Logs outside a request (v0.10)
 
 A log line written while no span is current (startup, background jobs, timers) is kept as a **loose** line when the add-on's

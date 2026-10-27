@@ -13,7 +13,7 @@ interface Props {
 
 export function LogsTab({ trace, onSelect }: Props) {
   const shown = usePagedRows(trace.logs, { noun: "lines", key: "tracelogs", reset: trace.traceId });
-  if (trace.logs.length === 0) return <Empty>No logs were written during this request.</Empty>;
+  if (trace.logs.length === 0) return <Empty>No logs were written during this request. Fastify's own "incoming request" and "request completed" lines are not kept: the timeline shows the request.</Empty>;
   return (
     <>
       <div className="wl-table-wrap">
