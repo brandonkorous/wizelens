@@ -114,8 +114,7 @@ export function timingSegments(t: Pick<Timing, "totalMs" | "serverMs" | "dbMs" |
 } {
   const total = Math.max(t.totalMs, 0);
   const render = Math.min(t.renderMs ?? 0, total);
-  // Database time can come from other services, so it is not always inside the first server span.
-  // A query after the response (an audit write, a cache fill) is not part of the time the user waited.
+  // Queries after the response (an audit write) are not time the user waited; other services' queries can sit outside the span.
   const dbIn = t.dbInMs ?? t.dbMs;
   const serverAll = Math.min(Math.max(t.serverMs ?? 0, dbIn), total - render);
   const db = Math.min(dbIn, serverAll);
