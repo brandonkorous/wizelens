@@ -7,6 +7,7 @@
 **Filed:** 2026-10-27
 **Fixed:** 2026-10-27
 **Confirmed by:** re-shot all 26 cloud screens Greta opened, as Greta, in light 1440, dark 1440 and light 360: sideways overflow 0 on every one (was 13–135px at 1440, 34–128px at 360); at 1440 the bar reads "kanninja-prod… 2/3", "Last 7 days" and "Greta Lind…" (Cloud › every page)
+**Confirmed by (P01, RULE #7):** kanNINJA refreshed with the new ui; as Dani in `localhost:3000/_wizelens` opened Overview, a `/board` trace from Traces, the newest error with "View full error", and Database, in light 1440 and dark 360: page overflow 0 and the top bar inside the window on all four (Dashboard · in-app)
 **Blocked on:** —
 
 ## What Greta saw
