@@ -107,8 +107,8 @@ function markStream(span: OtelSpan, res: ServerResponse, tap: ResponseTap, start
 
 function finishSpan(span: OtelSpan, res: ServerResponse, tap: ResponseTap, method: string, routeOf: RouteOf, startedAt: number): void {
   const stream = markStream(span, res, tap, startedAt);
-  // A close before the response finished: the client left, and no status was ever sent. A stream ends that way on purpose.
-  if (!res.writableFinished && !stream) span.setAttribute(ATTR_REQUEST_ABORTED, true);
+  // A close before any status was sent: the client left with no answer. Once a status is out, it is the answer; a stream ends early on purpose.
+  if (!res.writableFinished && !res.headersSent && !stream) span.setAttribute(ATTR_REQUEST_ABORTED, true);
   if (res.headersSent) span.setAttribute("http.response.status_code", res.statusCode);
   const route = routeOf();
   if (route) {
