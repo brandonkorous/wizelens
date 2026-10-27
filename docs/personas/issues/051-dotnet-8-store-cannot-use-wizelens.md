@@ -1,12 +1,12 @@
 # 051 — My store is on .NET 8 and cannot move, so WizeLens is out before I start
 
-**Status:** open
+**Status:** fixed
 **Severity:** major
 **Found by:** P03 · Ashgrove & Peña Outdoor Supply · act 1
 **Surface:** Site › .NET (`/dotnet/`), and the WizeLens.AspNetCore package
 **Filed:** 2026-10-27
-**Fixed:** —
-**Confirmed by:** —
+**Fixed:** 2026-10-27
+**Confirmed by:** P03 · acts 1–3 · site /dotnet/, eShop on .NET 8
 **Blocked on:** — (decided 2026-10-27: option A)
 
 ## What happened
@@ -80,4 +80,8 @@ Brandon chose A (2026-10-27).
 
 ## Confirmed by
 
-—
+2026-10-27, P03 Sid: `/dotnet/` reads "Runs on .NET 8, 9 and 10"; the ASP.NET Core docs page says the same.
+`dotnet add package WizeLens.AspNetCore --prerelease` in eShop `src/Web` and `src/PublicApi` (both `net8.0`, from
+a local feed of this branch's packages) restored with no error; `WizeLens.EntityFrameworkCore` in
+`src/Infrastructure` too. eShop built with 0 errors, ran, and `https://localhost:5001/_wizelens/` showed the store
+home request with its 4 SQL queries against SQL Server, and the HUD on the Razor page.
