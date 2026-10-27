@@ -233,6 +233,8 @@ see for the sign-up request.
 **Done when:** the agent's view has no password, session token, or raw email in
 SQL, headers or logs; and Dani can turn it off again.
 
+**Outcome:** partly done. On, read and off all work from the screen after #018. The agent's view of a fresh sign-up has no password, hash or session token; two raw emails remain inside longer values — #019, blocked on a decision.
+
 ### Act 11 — logs for the move
 
 Dani wants the API's own log lines for the card move from act 5.
@@ -327,3 +329,5 @@ sentence is often the defect.
 **Act 8.** Act 8 needs Resolve and Reopen. The in-app host has no `issues` capability (CONTRACT.md: hub and cloud only); since #012 the screen says so. Moved to P02.
 
 **Act 9.** First pass compared two `GET /api/v1/realtime` traces: the Traces search did not filter as Dani typed (#014), and Dani took the unchanged top row. With the search fixed, the list showed the board's four calls, but each path filled nine lines (#016) and the board load sat below the fold. Compare's "Same request, newest" listed the board loads at 48–52 ms while the list said 17 ms: the page and API are cross-origin, so the API span had no parent and the clock fix never ran (#015). After the fixes, the menu reads 21 / 18 / 19 ms, and the two 315–321 ms loads in it are real (the fetch waited; the API answered in 10 ms). At 360 px the page scrolled 64 px sideways from the pager (#017, every paged list). Six 404s seen in the console on the first (realtime) compare did not come back on the board-load compare; not reproduced, not filed. Compare's Total adds the page render to the fetch, by design.
+
+**Act 10.** Connect said "AI access (MCP) Off" with no way on (#018, fixed: the row now names `enableMcp: true` and links the docs). With it on, an MCP client at `http://localhost:3001/_wizelens/mcp` listed 16 tools; `list_traces q=sign-up` found the request and `get_trace` returned it. Dani's own act-1 sign-up still holds the password hash, session token and email in clear, because it was stored before #008. Siobhán O'Callaghan then signed up through the kanNINJA screen (Necessary-only cookies, `p01.siobhan@kanninja.test`): in her trace every `email`, `password` and `token` column value is `[redacted]`, the `set-cookie` keeps only the cookie name, and `Lantern` appears nowhere. Her address is still in `auth_verifications.identifier` (`email-verification-otp-…`) and in kanNINJA's dev-mailer log line (#019). Every tool call wrote `[wizelens] mcp tool=… args=…` to the API log, as the docs promise. Turned off, the row read Off and the client got `MCP is disabled. Set enableMcp: true.`
