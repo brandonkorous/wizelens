@@ -45,6 +45,14 @@ describe("summarizePage", () => {
     expect(s.server + s.db + s.render + s.other).toBeCloseTo(180);
   });
 
+  it("shows the page's own status unless a call failed", () => {
+    const log = new PageLog("http://app.test/dashboard", 0);
+    log.take([row({ id: "document-t0", startMs: 0, durationMs: 120, renderMs: 60 }), call("made", 10, { status: 201 })]);
+    expect(summarizePage(log.current, noLoad, 500).req.status).toBe(200);
+    log.take([call("broke", 20, { status: 502 }), call("missing", 30, { status: 404 })]);
+    expect(summarizePage(log.current, noLoad, 500).req.status).toBe(502);
+  });
+
   it("times a route change by the calls that loaded it, and takes the worst health", () => {
     const log = new PageLog("http://app.test/", 0);
     log.take([call("poll", 100, { path: "/api/status?x=1" }), call("poll2", 400, { path: "/api/status?x=2" })]);
