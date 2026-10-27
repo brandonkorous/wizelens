@@ -5,7 +5,7 @@ import { SearchInput, Select } from "../../ui/Controls";
 import { ServiceSelect } from "../../ui/ServiceSelect";
 import { useSearchText } from "../../ui/useSearchText";
 
-const SORTS: [string, string][] = [["avg", "Slowest"], ["count", "Most frequent"], ["total", "Most total time"]];
+const SORTS: [string, string][] = [["avg", "Slowest"], ["count", "Most frequent"], ["total", "Most total time"], ["slow", "Most slow runs"]];
 
 const withCurrent = (list: string[], current: string) => (current && !list.includes(current) ? [current, ...list] : list);
 const pairs = (list: string[]): [string, string][] => list.map((v) => [v, v]);

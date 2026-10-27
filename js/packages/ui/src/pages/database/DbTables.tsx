@@ -40,7 +40,7 @@ function queryColumns(slowMs: number): Column<QueryRow>[] {
   ];
 }
 
-const QUERY_TITLE = { avg: "Slowest Queries", count: "Most Frequent Queries", total: "Queries by Total Time" } as const;
+const QUERY_TITLE = { avg: "Slowest Queries", count: "Most Frequent Queries", total: "Queries by Total Time", slow: "Queries With the Most Slow Runs" } as const;
 
 /** One page of the query shapes that match the filter, in its order. A row opens the query's page. */
 export function TopQueriesPanel({ stats }: { stats: DatabaseModel }) {
