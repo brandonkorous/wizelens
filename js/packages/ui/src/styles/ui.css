@@ -175,7 +175,7 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-dhead-name { min-width: 0; word-break: break-word; }
 .wl-dhead-name.wl-mono { font-size: 17px; }
 .wl-dhead-badge { font-size: 14px; font-weight: 600; letter-spacing: 0; }
-.wl-dhead-actions { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; letter-spacing: 0; }
+.wl-dhead-actions { margin-left: auto; display: inline-flex; flex-wrap: wrap; max-width: 100%; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; letter-spacing: 0; }
 .wl-dhead .wl-stats { margin-bottom: 0; }
 .wl-dpage .wl-cell-wide { max-width: 420px; }
 .wl-dpage .wl-cell-wide span { display: block; }
