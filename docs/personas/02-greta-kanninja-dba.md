@@ -194,6 +194,8 @@ She opens the sign-up and sign-in traces from P01 and searches the cloud for
 **Done when:** no password or session token appears anywhere; email addresses in
 SQL parameters are hidden, or she knows exactly where to turn that on.
 
+**Outcome:** done after #029. Dani signed in twice (one typo `…-41!`, then right). Search for `p01.dani@kanninja.test` and for `Lantern-Orchard`: Requests 0 · Traces 0 · Spans 0 · Logs 0. Both sign-in traces (`d7c0e4ec…`, `be0c2829…`) on the SQL tab: the email lookup reads `params: ["[redacted]"]`, the new session's token reads `[redacted]`, the password hash column is selected but no result rows are kept. The realtime ticket (a signed pass with Dani's profile id and name) was in clear in every request URL — #029, fixed: now `ticket=v1.[redacted:signed-token]` with default settings, and Security › A09 flags it for kanNINJA.
+
 ### Act 7 — wake me up
 
 She makes the two alert rules, then makes them fire (P01's 5,000-character list
@@ -313,3 +315,5 @@ sentence is often the defect.
 **Act 4.** Sorted by "Most total time" (the Order select, URL keeps `sort=total`). First look: the row and the Query page gave Avg and Max only — no p95, the number her act asks for: #027, fixed (histograms for `db.q`/`db.qd`, FACTS_VERSION 14, P95 column + CSV + Query page head), cloud restarted, stats rebuilt from stored traces without loss. The costliest shape is the auth lookup that every API request does (Better Auth session → user), 7 of 7 endpoints — so the fix for kanNINJA is caching the session user per request, not an index (lookups are by primary key, 2.8 ms each). The trace's SQL tab shows the session token param as `[redacted]` and the user id param in clear.
 
 **Act 5.** Greta looked for the limit on Database first; only chart labels named it (#028, fixed: a Change link by the limit). The thresholds page says changes apply to new data only — the 14-call N+1 came after the save. No query reached 250 ms (the slowest is 41 ms), so "Slow 0" is right and was not provoked. The in-app HUD still uses its own default 5 (it showed the same N+1 as "ran 14 times"); the two limits are separate on purpose, but nothing on either screen says so — noted, not filed.
+
+**Act 6.** Email hiding is on by default (SQL values bound to an `email` column); nothing on the Thresholds page says so — she learned it from the trace, not the settings. Still in clear and deliberately not filed here: the session insert's `ip_address` (127.0.0.1) and `user_agent`, and user ids. IP addresses are personal data in the EU; they belong with the open #019 decision (what personal data to mask by default). The ticket values stored before the fix stay as they were (they expire in about 95 s).
