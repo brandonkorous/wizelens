@@ -4,7 +4,7 @@
 **Author:** Brandon Korous
 **Last Updated:** 2026-10-26
 
-**Status:** in progress
+**Status:** done
 **Run:** 2026-10-27
 **Role:** system and database admin · WizeLens Cloud (organization owner)
 
@@ -236,7 +236,7 @@ the old frontend key.
 data stop, made a new key, put it in the env, and the gap in the data is under a
 minute and visible as a gap, not as "0 errors".
 
-**Outcome:** partly done: the warning after #042; the gap shows as 0 on the request chart, #043 (blocked on scope). Revoke on `kanninja-backend (API pods)` asked "It was used 26s ago, so something still uses it. … To replace it with no gap, use Rotate instead."; she revoked anyway at 10:29:40 UTC. Seen stopping: Services › kanninja-backend "Offline", last seen 1m ago; the API log said "The hub at http://localhost:5970 refused the key (401). Check WIZELENS_HUB_TOKEN …". New key `kanninja-backend (API pods)`, expires in 90 days, made 10:33:06 ("Copy it now: it is not shown again. Set it as WIZELENS_HUB_TOKEN on the app."), set in backend/.env, API restarted; first new request 10:33:28 (22 s after the key). Gap in data: 10:29:40–10:33:28 = 3 min 48 s, NOT under a minute (the run took that long between revoke and the new key). Latency Over Time shows a break; Requests Over Time draws 0 through it (#043).
+**Outcome:** partly done: the warning after #042; the gap shows as 0 on the request chart, #043 (blocked on scope). Revoke on `kanninja-backend (API pods)` asked "It was used 26s ago, so something still uses it. … To replace it with no gap, use Rotate instead."; she revoked anyway at 10:29:40 UTC. Seen stopping: Services › kanninja-backend "Offline", last seen 1m ago; the API log said "The hub at http://localhost:5970 refused the key (401). Check WIZELENS_HUB_TOKEN …". New key `kanninja-backend (API pods)`, expires in 90 days, made 10:33:06 ("Copy it now: it is not shown again. Set it as WIZELENS_HUB_TOKEN on the app."), set in backend/.env, API restarted; first new request 10:33:28 (22 s after the key). Gap in data: 10:29:40–10:33:28 = 3 min 48 s, NOT under a minute (the run took that long between revoke and the new key). Latency Over Time shows a break; Requests Over Time draws 0 through it (#043). Later the same day she did the job she meant: Rotate on `kanninja-frontend (web pods)` ("The old secret keeps working for 24 hours"), the new secret into `frontend/.env.local`, web app restarted, the new secret used 40 s later, then the old one revoked: no gap. The log names both steps (#048).
 
 ### Act 11 — retention
 
@@ -302,21 +302,21 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 
 | | Result |
 | --- | --- |
-| Acts completed | |
-| Issues filed | |
-| Issues fixed and confirmed | |
-| Issues blocked, and on what | |
-| Screens scored | |
-| **Not checked** | |
+| Acts completed | 11 of 11 with a recorded outcome: 1–7, 9 and 11 done; 8 done for uptime, its SLO part blocked on a decision (#038); 10 partly done (warning fixed, gap 3 min 48 s not under a minute, gap drawn as 0 #043); the rotation done right afterwards with no gap |
+| Issues filed | 26: #024–#049 (blocker 0, major 10, minor 11, design 3, copy 2). #050 was found by the P01 regression check at the end of this run |
+| Issues fixed and confirmed | 24 of 26, each with a confirmation line from the screen; the shared ones also re-proved in P01's in-app dashboard (#027 #028 #029 #034 #036 #044 #046 #047 #049) |
+| Issues blocked, and on what | #038 decision (how an outage counts against a request SLO; recommend C). #043 scope (per-minute "last seen" history, to draw a key gap as a gap). #045 is fixed in words, but whether logs may outlive the organization's days is Brandon's call |
+| Screens scored | 26 cloud screens in light 1440, dark 1440 and 360 (rating.md: 45 of 177 scored overall). Scoring found #046–#049. Sign in, Create account, two-factor and invite seen in light only: not scored |
+| **Not checked** | an N+1 of 5–7 against the limit 8 (act 5); the 25% error rate by hand (act 7); anything across the 2026-11-01 DST change; data really deleted after 14 days (act 11); a real inbox (no mail service, so the cloud log only); #031 and #039 in P01's in-app dashboard (it has no such form) |
 
 ### The numbers
 
 | Record | Result |
 | --- | --- |
-| Minutes from cloud sign-up to the first kanNINJA trace | |
-| Speed at real volume (100+ requests, 2 services) | |
-| Alerts fired / emails logged | |
-| SLO budget (hand vs. screen) | |
+| Minutes from cloud sign-up to the first kanNINJA trace | 20 (00:36:46 → 00:56:25 America/Los_Angeles), including fixes #025 and #026 |
+| Speed at real volume (100+ requests, 2 services) | 1,036 requests, 1,095 traces, 2 services and the browser: first row on Requests 49 ms, Services 48, Database 96, Errors 110, Traces 205; Requests page 2 of 70 in 68 ms (local cloud on PGlite, one machine) |
+| Alerts fired / emails logged | 2 rules fired (error rate at 100% and at 25%; slow SQL once) / every fire and resolve mail is in the cloud log, and each link opens its rule |
+| SLO budget (hand vs. screen) | 511 requests, 7 failed: 98.63% and 7 ÷ 2.555 = 2.7× by hand; 98.6% and 2.7× on screen. The 2-minute outage spent nothing (#038) |
 
 ---
 
@@ -347,3 +347,7 @@ sentence is often the defect.
 **Act 10.** The cloud does not say anywhere that a revoked key is still being used to send; only the app's own log says so (in #043, optional part).
 
 **Act 11.** Not checked: data really being deleted after 14 days (her data is less than a day old). Whether logs should be capped at the organization's days is a decision (#045).
+
+**Scoring.** 26 screens shot as Greta in light 1440, dark 1440 and 360, side by side. At 360 the alert, SLO and key tables broke words into single letters (#047) and the error page ran its buttons off the screen (#049); the audit log said "Revoked a key" with no name (#048). All three fixed and re-shot. The screen list (gen-screens.mjs) had no row for the uptime check and service pages she used; it now counts every detail page (169 → 177). A new error after a web-app restart, `TypeError: RequestInit: Expected signal ("AbortSignal {}") …`, is Next.js's own dev telemetry: it passes its own AbortSignal ponyfill to Node's fetch and hides the failure. WizeLens records it truly; not ours, not filed.
+
+**RULE #7.** The shared fixes were re-proved in P01's in-app dashboard, with kanNINJA refreshed to the new core, node and ui. On the API's own dashboard the hidden ticket held, but the live-updates WebSocket read "Aborted 6.06 s" each time Dani left a board: #050, filed as P01, fixed, re-proved (now "101 · 0.80 ms").
