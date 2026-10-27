@@ -1,5 +1,5 @@
 import { ExternalLink, X } from "lucide-react";
-import { endpointDoc, type EndpointStat, type ServiceDetailModel, type ServiceEdge, type ServiceRow } from "@wizeworks/lens-core";
+import { endpointDoc, type EndpointStat, type ServiceDetailModel, type ServiceEdge, type ServiceRow, type TimeWindow } from "@wizeworks/lens-core";
 import { useGroupTags } from "../../data/tagMatch";
 import { TagChips } from "../../ui/TagChips";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
@@ -7,6 +7,7 @@ import { setQuery } from "../../routes";
 import { Empty, KeyValues, Panel } from "../../ui/Panel";
 import { TimeChart } from "../../ui/TimeChart";
 import { KIND_LABEL, KindName, serviceHref, StatusText } from "./serviceParts";
+import { blankInGaps, useSendGaps } from "./useSendGaps";
 
 function EndpointList({ items, row }: { items: EndpointStat[]; row: ServiceRow }) {
   const kind = row.kind;
@@ -62,8 +63,9 @@ function EdgeList({ title, edges, side }: { title: string; edges: ServiceEdge[];
 }
 
 /** A quick look at one service: numbers, traffic over time, busiest endpoints, who it talks to, and a link to its full page. */
-export function ServiceDetail({ detail }: { detail: ServiceDetailModel }) {
+export function ServiceDetail({ detail, window }: { detail: ServiceDetailModel; window: TimeWindow }) {
   const { row, endpoints: items, incoming, outgoing } = detail;
+  const gaps = useSendGaps(row.name, window);
   const title = (
     <div className="wl-side-head">
       <h2><KindName row={row} /></h2>
@@ -77,7 +79,7 @@ export function ServiceDetail({ detail }: { detail: ServiceDetailModel }) {
         <ExternalLink aria-hidden="true" /> View full service
       </a>
       <div className="wl-section-title">Traffic</div>
-      <TimeChart starts={detail.starts} bars={[{ label: "Requests", values: detail.traffic, color: "var(--wl-blue)" }]} height={140} />
+      <TimeChart starts={detail.starts} bars={[{ label: "Requests", values: blankInGaps(detail.traffic, detail.starts, gaps), color: "var(--wl-blue)" }]} height={140} outages={gaps} />
       <div className="wl-section-title">{row.kind === "database" ? "Busiest queries" : "Busiest endpoints"}</div>
       <EndpointList items={items} row={row} />
       <EdgeList title="Called by" edges={incoming} side="from" />

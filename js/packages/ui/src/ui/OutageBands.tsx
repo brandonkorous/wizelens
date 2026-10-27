@@ -1,6 +1,6 @@
 import { fmtDateTime } from "../format";
 
-/** A time a thing was down, drawn as a red band across the chart. */
+/** A time a thing was down or not sending, drawn as a red band across the chart. */
 export interface ChartOutage {
   startMs: number;
   /** Null while it is still down. */
@@ -33,7 +33,7 @@ export function OutageBands({ outages, starts, at, top, base }: OutageBandsProps
         const x2 = at(clampedIndex(starts, o.endMs ?? Date.now()));
         return (
           <g key={`${o.label}-${o.startMs}`}>
-            <title>{`${o.label}: down ${fmtDateTime(o.startMs)}${o.endMs === null ? ", still down" : ` to ${fmtDateTime(o.endMs)}`}`}</title>
+            <title>{`${o.label}: ${fmtDateTime(o.startMs)}${o.endMs === null ? " until now" : ` to ${fmtDateTime(o.endMs)}`}`}</title>
             <rect className="wl-outage-band" x={Math.min(x1, x2 - 3)} y={top} width={Math.max(3, x2 - x1)} height={base - top} />
           </g>
         );

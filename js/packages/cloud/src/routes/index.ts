@@ -26,6 +26,7 @@ import { projectRoutes } from "./projects.js";
 import { scimRoutes } from "./scim.js";
 import { searchRoutes } from "./search.js";
 import { statusRoutes } from "./status.js";
+import { serviceGapRoutes } from "./service-gaps.js";
 import { uptimeRoutes } from "./uptime.js";
 import { sourceMapRoutes } from "./sourcemaps.js";
 import { tagRoutes } from "./tags.js";
@@ -56,6 +57,7 @@ export function allRoutes(): Router<Ctx> {
   savedRoutes(r);
   shareRoutes(r);
   uptimeRoutes(r);
+  serviceGapRoutes(r);
   statusRoutes(r);
   mcpRoutes(r);
   appRoutes(r);

@@ -3,6 +3,7 @@ import type { CloudApp } from "./app.js";
 import { sendUsageNotices } from "./billing/notices.js";
 import { pruneAuthRows } from "./repo/auth-prune.js";
 import { pruneAlertValues } from "./repo/alert-events.js";
+import { pruneServiceMinutes } from "./repo/service-minutes.js";
 import { pruneServices } from "./repo/services.js";
 import { sendDigests } from "./notify/digest.js";
 import { checkHealth } from "./notify/health.js";
@@ -47,6 +48,7 @@ export function startJobs(app: CloudApp): () => void {
   const stops = [
     every("retention", HOUSEKEEPING_MS, () => app.telemetry.prune(now())),
     every("services", HOUSEKEEPING_MS, () => pruneServices(app.db, now())),
+    every("service minutes", HOUSEKEEPING_MS, () => pruneServiceMinutes(app.db, now())),
     every("settle", SETTLE_MS, async () => {
       const defaultFacts = { slowQueryMs: app.config.slowQueryMs, nPlusOneThreshold: app.config.nPlusOneThreshold };
       const o = { defaultRetentionDays: app.config.retentionDays, defaultFacts, onSettled: (p: string) => app.changes.emit(p) };

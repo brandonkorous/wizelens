@@ -5,7 +5,9 @@ import { Panel } from "../../ui/Panel";
 import { ApdexCard } from "../../ui/ApdexCard";
 import { StatCard } from "../../ui/StatCard";
 import { StreamsCard } from "../../ui/StreamsCard";
+import type { ChartOutage } from "../../ui/OutageBands";
 import { TimeChart } from "../../ui/TimeChart";
+import { blankInGaps } from "./useSendGaps";
 
 /** What a service row counts, by kind. */
 export const COUNT_LABEL: Record<ServiceKind, string> = { api: "Requests", web: "Requests", worker: "Messages Handled", queue: "Messages Sent", database: "Queries", external: "Calls" };
@@ -31,31 +33,34 @@ export function ServiceCards({ m, row }: { m: ServicePageModel; row: ServiceRow 
 }
 
 /** Traffic as a line, failures as bars. */
-export function TrafficPanel({ m, row }: { m: ServicePageModel; row: ServiceRow }) {
+export function TrafficPanel({ m, row, gaps }: { m: ServicePageModel; row: ServiceRow; gaps: ChartOutage[] }) {
   const label = COUNT_LABEL[row.kind];
+  const blank = (v: (number | null)[]) => blankInGaps(v, m.starts, gaps);
   return (
     <Panel title={`${label} Over Time`}>
       <TimeChart
         starts={m.starts}
-        lines={[{ label, values: m.chart.requests, color: "var(--wl-blue)" }, { label: compareSeriesLabel(m.meta.compare), values: m.chart.prevRequests, color: "var(--wl-slate)", dashed: true }]}
-        bars={[{ label: "Errors", values: m.chart.errors, color: ERROR_BARS }]}
+        lines={[{ label, values: blank(m.chart.requests), color: "var(--wl-blue)" }, { label: compareSeriesLabel(m.meta.compare), values: m.chart.prevRequests, color: "var(--wl-slate)", dashed: true }]}
+        bars={[{ label: "Errors", values: blank(m.chart.errors), color: ERROR_BARS }]}
         height={220}
         separateBarScale
         format={fmtCount}
+        outages={gaps}
       />
+      {gaps.length > 0 && <p className="wl-muted wl-small">Red bands: {row.name} sent nothing, not even a heartbeat (it stopped, or its key was refused). Its {label.toLowerCase()} there are unknown, not zero.</p>}
     </Panel>
   );
 }
 
 /** Average and p95 latency per bucket. */
-export function LatencyPanel({ m }: { m: ServicePageModel }) {
+export function LatencyPanel({ m, gaps }: { m: ServicePageModel; gaps: ChartOutage[] }) {
   const lines = [
     { label: "p95", values: m.chart.p95Ms, color: "var(--wl-orange)" },
     { label: "Average", values: m.chart.avgMs, color: "var(--wl-blue)" },
   ];
   return (
     <Panel title="Latency Over Time">
-      <TimeChart starts={m.starts} lines={lines} height={220} format={(v) => fmtMs(v)} />
+      <TimeChart starts={m.starts} lines={lines} height={220} format={(v) => fmtMs(v)} outages={gaps} />
     </Panel>
   );
 }

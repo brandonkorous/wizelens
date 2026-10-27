@@ -39,9 +39,9 @@ BEGIN
   END IF;
 END $$;`;
 
-const policy = (t: string) => `
+export const orgPolicy = (t: string): string => `
 GRANT SELECT ON ${t} TO wl_reader;
 ALTER TABLE ${t} ENABLE ROW LEVEL SECURITY;
 CREATE POLICY wl_org ON ${t} FOR SELECT TO wl_reader USING (org_id = current_setting('wl.org'));`;
 
-export const READER_MIGRATION = [READER, ...ORG_TABLES.map(policy)].join("\n");
+export const READER_MIGRATION = [READER, ...ORG_TABLES.map(orgPolicy)].join("\n");

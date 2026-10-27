@@ -20,6 +20,7 @@ import { ORGS_MIGRATION, READER_MIGRATION } from "./schema-orgs.js";
 import { PACKAGES_MIGRATION } from "./schema-packages.js";
 import { BROWSER_KEYS_MIGRATION } from "./schema-keys.js";
 import { PAGING_MIGRATION } from "./schema-paging.js";
+import { SEEN_MIGRATION } from "./schema-seen.js";
 
 // Cloud schema, one entry per version. Never edit a shipped entry: add a new one (docs/CONTRACT.md, "Cloud storage").
 export const MIGRATIONS: readonly string[] = [
@@ -243,6 +244,7 @@ CREATE INDEX ix_metric_1h_time ON metric_1h (project_id, bucket_ms);
   PACKAGES_MIGRATION,
   BROWSER_KEYS_MIGRATION,
   PAGING_MIGRATION,
+  SEEN_MIGRATION,
 ];
 
 export const MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS wizelens_migrations (version INTEGER PRIMARY KEY, applied_ms DOUBLE PRECISION NOT NULL)`;

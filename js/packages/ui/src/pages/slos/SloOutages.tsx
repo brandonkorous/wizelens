@@ -16,7 +16,7 @@ export function useSloOutages(r: SloReport): UptimeIncidentView[] {
   return outagesIn(data.incidents, from, data.nowMs);
 }
 
-export const chartOutages = (list: readonly UptimeIncidentView[]): ChartOutage[] => list.map((i) => ({ startMs: i.startMs, endMs: i.endMs, label: i.checkName }));
+export const chartOutages = (list: readonly UptimeIncidentView[]): ChartOutage[] => list.map((i) => ({ startMs: i.startMs, endMs: i.endMs, label: `${i.checkName} down` }));
 
 /** Outages listed by name; the rest are on Uptime. */
 const SHOWN = 5;
