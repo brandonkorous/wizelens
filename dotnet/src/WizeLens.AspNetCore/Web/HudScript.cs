@@ -71,6 +71,6 @@ internal static class HudScript
     {
         public byte[] Bytes { get; } = bytes;
 
-        public string ETag { get; } = "\"" + Convert.ToHexStringLower(SHA256.HashData(bytes))[..16] + "\"";
+        public string ETag { get; } = "\"" + Hex.Lower(SHA256.HashData(bytes))[..16] + "\"";
     }
 }

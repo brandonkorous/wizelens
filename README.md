@@ -12,7 +12,7 @@ See inside every request — from the React click down to the SQL query, across 
 The spirit of **Glimpse**, rebuilt for 2026: OpenTelemetry-native, microservice-aware, and readable by AI agents (only when you allow it).
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-2563eb.svg)](LICENSE)
-[![.NET 10](https://img.shields.io/badge/.NET-10-512bd4.svg)](https://dotnet.microsoft.com/)
+[![.NET 8 | 10](https://img.shields.io/badge/.NET-8%20%7C%2010-512bd4.svg)](https://dotnet.microsoft.com/)
 [![Node 22.13+](https://img.shields.io/badge/node-%E2%89%A522.13-3c873a.svg)](https://nodejs.org/)
 [![React 18+](https://img.shields.io/badge/react-%E2%89%A518-149eca.svg)](https://react.dev/)
 [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-native-f5a800.svg)](https://opentelemetry.io/)
@@ -57,7 +57,7 @@ dotnet add package WizeLens.AspNetCore --prerelease
 npm install @wizeworks/lens-node @wizeworks/lens-react
 ```
 
-### ASP.NET Core (.NET 10)
+### ASP.NET Core (.NET 8, 9 or 10)
 
 ```csharp
 using WizeLens;
@@ -421,7 +421,7 @@ Hooks: `useWizeLens()` and `useWizeLensRequests()`.
 
 A React shop → a .NET gateway (EF Core + SQLite) → a Node orders API (`node:sqlite`). The gateway has a deliberate N+1 so you have something to find.
 
-**Needs:** .NET 10 SDK, Node 22.13+ (24 recommended), pnpm 10.
+**Needs:** .NET 10 SDK (and the .NET 8 runtime to run the tests on 8), Node 22.13+ (24 recommended), pnpm 10.
 
 ```bash
 pnpm install

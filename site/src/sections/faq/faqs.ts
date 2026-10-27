@@ -32,6 +32,6 @@ export const FAQS: Faq[] = [
   },
   {
     q: "What does WizeLens work with?",
-    a: "ASP.NET Core on .NET 10, Node 22.13 or newer (Express, Fastify, Koa, Hono, NestJS, Next.js), and React 18 or newer, Vue, Angular, Svelte, or any page in the browser. Java (Spring and more, through the OpenTelemetry agent), Python (FastAPI, Flask, Django), and Go (net/http) through OpenTelemetry. Databases through EF Core, Dapper, ADO.NET, Prisma, Drizzle, TypeORM, pg, mysql2, SQLite, Redis, MongoDB, Elasticsearch, JDBC, SQLAlchemy, and database/sql. gRPC, RabbitMQ, Kafka, Azure Service Bus, BullMQ, and Amazon SQS. Any other language can send OpenTelemetry to the hub.",
+    a: "ASP.NET Core on .NET 8, 9, or 10, Node 22.13 or newer (Express, Fastify, Koa, Hono, NestJS, Next.js), and React 18 or newer, Vue, Angular, Svelte, or any page in the browser. Java (Spring and more, through the OpenTelemetry agent), Python (FastAPI, Flask, Django), and Go (net/http) through OpenTelemetry. Databases through EF Core, Dapper, ADO.NET, Prisma, Drizzle, TypeORM, pg, mysql2, SQLite, Redis, MongoDB, Elasticsearch, JDBC, SQLAlchemy, and database/sql. gRPC, RabbitMQ, Kafka, Azure Service Bus, BullMQ, and Amazon SQS. Any other language can send OpenTelemetry to the hub.",
   },
 ];

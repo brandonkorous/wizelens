@@ -17,7 +17,7 @@ var app = builder.Build();
 app.UseWizeLens();                // early in the pipeline
 ```
 
-Open `https://localhost:<port>/_wizelens`. Requires .NET 10. No access to the code? A startup hook adds the same with no
+Open `https://localhost:<port>/_wizelens`. Runs on .NET 8, 9 and 10. No access to the code? On .NET 10, a startup hook adds the same with no
 code: see [Install with no code change](/docs/auto-install/).
 
 App not built on `WebApplication`? Call `app.UseWizeLens()` early, then `endpoints.MapWizeLens()` inside `UseEndpoints` to map

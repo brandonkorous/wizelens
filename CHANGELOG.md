@@ -48,6 +48,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **ASP.NET Core on .NET 8 and 9.** Every WizeLens .NET package is built for .NET 8 and .NET 10 (.NET 9 apps use the
+  .NET 8 build). On .NET 8, WizeLens publishes the runtime numbers .NET 9 has built in (CPU, memory, heap, GC pause
+  time, thread pool), under the same names, so the runtime panel is the same. CI runs the .NET tests on both. The
+  no-code startup hook is still the .NET 10 build.
 - **Sales tax and VAT on cloud plans, through Stripe Tax.** Checkout asks for the billing address and an optional
   business tax ID, and Stripe adds the right tax on top of the plan and the extra GB. `stripe-setup` gives every
   product the tax code for business SaaS and every price an "exclusive" tax behavior (it adds them to products and

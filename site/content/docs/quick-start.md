@@ -10,7 +10,7 @@ they only send: see [Production](/docs/production/).
 
 ## 1. Add it to your API
 
-### ASP.NET Core (.NET 10)
+### ASP.NET Core (.NET 8, 9 or 10)
 
 ```bash
 dotnet add package WizeLens.AspNetCore --prerelease

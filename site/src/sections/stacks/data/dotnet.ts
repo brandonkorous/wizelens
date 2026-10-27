@@ -4,14 +4,14 @@ export const DOTNET: Stack = {
   slug: "dotnet",
   name: ".NET",
   title: "WizeLens for ASP.NET Core",
-  seoTitle: "WizeLens for ASP.NET Core: a modern Glimpse for .NET 10",
+  seoTitle: "WizeLens for ASP.NET Core: a modern Glimpse for .NET 8, 9 and 10",
   seoDescription: "See inside every ASP.NET Core request: EF Core and ADO.NET queries, HttpClient and gRPC calls, logs, and errors on one timeline, with N+1 queries found for you.",
   headline: ["Every ASP.NET Core", "request, opened up."],
-  lede: "Two lines in Program.cs. Then every request shows its routing, handler, EF Core and ADO.NET queries, HttpClient and gRPC calls, messages, logs, and exceptions, on one timeline at /_wizelens. Requires .NET 10 or newer.",
+  lede: "Two lines in Program.cs. Then every request shows its routing, handler, EF Core and ADO.NET queries, HttpClient and gRPC calls, messages, logs, and exceptions, on one timeline at /_wizelens. Runs on .NET 8, 9 and 10.",
   facts: [
     { value: "2 lines", label: "in Program.cs" },
     { value: "0 code", label: "for Npgsql, SqlClient, and MySqlConnector" },
-    { value: ".NET 10", label: "built for it" },
+    { value: ".NET 8–10", label: "LTS and current" },
   ],
   file: "Program.cs",
   code: [
@@ -52,7 +52,7 @@ export const DOTNET: Stack = {
     { title: "Survives dotnet watch.", body: "Traces live in a small SQLite file next to your app, so a restart does not wipe them. If the file cannot be written, WizeLens keeps working in memory." },
     { title: "Wrap any connection.", body: "Dapper or a provider WizeLens does not know? Wrap the connection and every command is captured.", code: "new ProfiledDbConnection(new SqliteConnection(cs))" },
     { title: "Errors and slow traces stay.", body: "Sample with WIZELENS_SAMPLE_RATE and WizeLens still keeps every trace with an error or a span of 1 second or more.", code: "o.Sampling.Rate = 0.1" },
-    { title: "No code at all? One variable.", body: "The startup hook does what AddWizeLens and UseWizeLens do, with no change to the app. A Kubernetes webhook can set it for you.", code: "DOTNET_STARTUP_HOOKS=…/WizeLens.AutoInstrumentation.dll" },
+    { title: "No code at all? One variable.", body: "On .NET 10, the startup hook does what AddWizeLens and UseWizeLens do, with no change to the app. A Kubernetes webhook can set it for you.", code: "DOTNET_STARTUP_HOOKS=…/WizeLens.AutoInstrumentation.dll" },
     { title: "Never in production by accident.", body: "WizeLens is on in Development only. Turn it on anywhere else with WIZELENS_ENABLED=true: it sends to your cloud and serves nothing anyone can read." },
   ],
   docs: [

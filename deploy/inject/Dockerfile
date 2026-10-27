@@ -15,7 +15,7 @@ COPY dotnet ./dotnet
 COPY --from=node /src/js/packages/ui/dist ./js/packages/ui/dist
 COPY --from=node /src/js/packages/browser/dist ./js/packages/browser/dist
 WORKDIR /src/dotnet/src/WizeLens.AutoInstrumentation
-RUN dotnet publish -c Release -o publish && rm -f publish/*.pdb
+RUN dotnet publish -c Release -f net10.0 -o publish && rm -f publish/*.pdb
 
 FROM node:24-alpine
 LABEL org.opencontainers.image.title="WizeLens inject" \
