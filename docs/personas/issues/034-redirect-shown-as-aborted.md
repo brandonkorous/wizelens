@@ -7,6 +7,7 @@
 **Filed:** 2026-10-27
 **Fixed:** 2026-10-27
 **Confirmed by:** re-ran P02 act 7 — kanNINJA refreshed with the fixed agent, database stopped again, Dani opened the board 3 times: Requests › Failed lists the three new `GET /dojo/c2be23b0-…` rows as **307** (2:42:46, 2:42:56, 2:43:04 AM PDT), the same status the trace page shows; the four from before the fix still say Aborted. `node` tests 289 pass
+**Confirmed by (P01, RULE #7):** Requests › `status:307` on `localhost:3000/_wizelens` lists the `/dojo/c2be23b0-…` sign-in redirects as 307 (3:09:57, 3:09:48, 2:43:04, 2:42:56 AM) (Dashboard · in-app › Requests)
 **Blocked on:** —
 
 ## What Greta saw

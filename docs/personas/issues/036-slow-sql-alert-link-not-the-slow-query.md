@@ -7,6 +7,7 @@
 **Filed:** 2026-10-27
 **Fixed:** 2026-10-27
 **Confirmed by:** re-ran P02 act 7 — opened the slow-SQL rule from its email link: the link under the chart reads "View the slow queries" and opens Database with the sort "Most slow runs", the panel "Queries With the Most Slow Runs", and `auth_sessions` by token (max 634 ms, 2 slow) first (Cloud › Alerts › one rule → Database). core tests 454 pass
+**Confirmed by (P01, RULE #7):** Database on `localhost:3000/_wizelens`, sort "Most slow runs" (`sort=slow`): `auth_sessions` by token first (Dashboard · in-app › Database)
 **Blocked on:** —
 
 ## What Greta saw

@@ -7,6 +7,7 @@
 **Filed:** 2026-10-27
 **Fixed:** 2026-10-27
 **Confirmed by:** re-ran P02 act 6 — Greta emptied More hidden keys (defaults only), Dani loaded the board, and Overview › Recent Requests read `/api/v1/realtime?ticket=v1.[redacted:signed-token]`. Security › A09 now lists "Signed token in span data in GET /api/v1/realtime" (High). TS 454 tests and .NET 39 redaction/security tests pass on the shared vectors.
+**Confirmed by (P01, RULE #7):** Dani opened the Q4 Workshop board; the API's own dashboard (`localhost:3001/_wizelens`) Requests › realtime reads `/api/v1/realtime?ticket=v1.[redacted:signed-token]` (Dashboard · in-app › Requests). That check found #050
 **Blocked on:** —
 
 ## What Greta saw

@@ -7,6 +7,7 @@
 **Filed:** 2026-10-27
 **Fixed:** 2026-10-27
 **Confirmed by:** re-ran P02 act 11 — set 30 (no question, top bar "Cloud · kept 30 days"), then 14: "Keep 14 days instead of 30 days? Traces and logs in every project from before Oct 13, 2026 are deleted within minutes. They cannot be brought back." with Keep 30 days / Keep 14 days; after Keep 14 days the top bar read "Cloud · kept 14 days" with no reload; audit log "Changed the organization · keep data 14 days" (Cloud › Organization › Data retention)
+**Confirmed by (P01, RULE #7):** the in-app top bar on `localhost:3000/_wizelens` still reads "In-app · kanninja-frontend · kept 24 h" after the info re-read change (Dashboard · in-app › every page)
 **Blocked on:** —
 
 ## What Greta saw

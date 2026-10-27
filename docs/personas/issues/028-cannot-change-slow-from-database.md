@@ -7,6 +7,7 @@
 **Filed:** 2026-10-27
 **Fixed:** 2026-10-27
 **Confirmed by:** re-ran P02 act 5 — Database head now reads "Slow means ≥ 250 ms · Change"; Change opens `#/organization/checks` with 250 and 8 filled in. Fits on one line at 360px.
+**Confirmed by (P01, RULE #7):** Database on `localhost:3000/_wizelens` reads "Slow means ≥ 100 ms · Change"; Change opens `#/connect/options`, the in-app home of the limits (Dashboard · in-app › Database)
 **Blocked on:** —
 
 ## What Greta saw

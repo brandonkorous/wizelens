@@ -7,6 +7,7 @@
 **Filed:** 2026-10-27
 **Fixed:** 2026-10-27
 **Confirmed by:** re-ran P02 act 4 on the cloud after a restart (stats rebuilt to facts 14) — Database › Most total time now heads `Query Avg P95 Max Count Total Time`; the `auth_users` by-id row reads 2.8 ms · 4.3 ms · 41 ms · 44 · 121 ms, and its Query page head reads RUNS 44 · AVERAGE 2.8 ms · P95 4.3 ms. Same numbers on both screens.
+**Confirmed by (P01, RULE #7):** kanNINJA refreshed; Database on `localhost:3000/_wizelens` heads Query · Avg · **P95** · Max · Count, and the `auth_sessions` query page shows P95 (Dashboard · in-app › Database, Query shape)
 **Blocked on:** —
 
 ## What Greta saw
