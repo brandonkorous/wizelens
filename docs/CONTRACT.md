@@ -562,7 +562,9 @@ lines by `service␟level␟pattern␟origin` (`r` or `o`), with the newest line
   than 10 s, the add-on moves the posted span starts, event times, and log times by the difference. Without `sentAt`,
   times are kept.
 - Building a trace, a span that starts before its parent in the same service starts with its parent. A server span that
-  starts outside the call from another service that started it is moved inside that call.
+  starts outside the call from another service that started it is moved inside that call. A server span with no parent counts as
+  started by the one browser call in another service whose `url.full` path is its `url.path`: a cross-origin fetch sends no
+  `traceparent` and joins the server's trace from `X-WizeLens-Trace`. Only the clock uses this; the parent links stay as sent.
 
 ## MCP tools (read-only, phase 1)
 
