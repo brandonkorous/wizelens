@@ -5,7 +5,9 @@ import { useHost } from "../../data/host";
 import { usePageModel } from "../../data/models";
 import { type UptimeApi, useUptime } from "../../data/uptime";
 import { useRoute } from "../../routes";
+import { type AskOptions, useAsk } from "../../ui/Dialog";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
+import { deleteCheck } from "./uptimeParts";
 import { CheckDetail } from "./CheckDetail";
 import { CheckForm } from "./CheckForm";
 import { IncidentsPanel } from "./IncidentsPanel";
@@ -42,12 +44,12 @@ function useNote(): [string | null, (err: string | null, ok?: string) => void] {
   return [note, (err, ok) => setNote(err ?? ok ?? null)];
 }
 
-/** Row actions: run now, edit, and delete, each with a note after. */
-function actionsOf(api: UptimeApi, onEdit: (c: UptimeCheckView) => void, setNote: (err: string | null, ok?: string) => void) {
+/** Row actions: run now, edit, and delete (after asking), each with a note after. */
+function actionsOf(api: UptimeApi, onEdit: (c: UptimeCheckView) => void, setNote: (err: string | null, ok?: string) => void, confirm: (o: AskOptions) => Promise<boolean>) {
   return {
     onRun: (c: UptimeCheckView) => void api.runNow(c.id).then((e) => setNote(e, `Ran ${c.name}.`)),
     onEdit,
-    onDelete: (c: UptimeCheckView) => void api.remove(c.id).then((e) => setNote(e, `Deleted ${c.name}.`)),
+    onDelete: async (c: UptimeCheckView) => (await confirm(deleteCheck(c.name))) && void api.remove(c.id).then((e) => setNote(e, `Deleted ${c.name}.`)),
   };
 }
 
@@ -58,7 +60,8 @@ function UptimeList() {
   const [editing, setEditing] = useState<UptimeCheckView | "new" | null>(null);
   const [note, setNote] = useNote();
   const checks = api.data?.checks ?? [];
-  const actions = actionsOf(api, setEditing, setNote);
+  const { dialog, confirm } = useAsk();
+  const actions = actionsOf(api, setEditing, setNote, confirm);
   const save = async (draft: Parameters<UptimeApi["save"]>[0]) => {
     const err = await api.save(draft, editing === "new" || !editing ? undefined : editing.id, target.id ?? undefined);
     if (!err) setEditing(null);
@@ -75,6 +78,7 @@ function UptimeList() {
   return (
     <>
       <PageHeader title="Uptime" subtitle={SUBTITLE}>{add}</PageHeader>
+      {dialog}
       {api.error && <div className="wl-banner wl-banner-error">{api.error}</div>}
       {note && <div className="wl-banner wl-banner-info">{note}</div>}
       <CertWarnings checks={checks} nowMs={api.data?.nowMs ?? Date.now()} />

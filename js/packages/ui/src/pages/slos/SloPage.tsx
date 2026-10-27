@@ -8,6 +8,7 @@ import { fmtCount } from "../../format";
 import { endpointHref, navigate, newAlertHref } from "../../routes";
 import { Badge } from "../../ui/Badges";
 import { DetailHead } from "../../ui/DetailHead";
+import { useAsk } from "../../ui/Dialog";
 import { Empty, Panel } from "../../ui/Panel";
 import { TimeChart } from "../../ui/TimeChart";
 import { SloForm } from "./SloForm";
@@ -41,13 +42,17 @@ function Body({ r, url, canWrite, reload }: { r: SloReport; url: string; canWrit
     if (!err) setEditing(false);
     return err;
   };
-  const remove = () => void act(() => apiSend("DELETE", url), () => navigate("#/slos"));
+  const { dialog, confirm } = useAsk();
+  const remove = async () =>
+    (await confirm({ title: `Delete ${r.slo.name}?`, body: "Its budget history and any alert on its burn rate stop working.", confirmLabel: "Delete SLO", danger: true })) &&
+    void act(() => apiSend("DELETE", url), () => navigate("#/slos"));
   const alertHref = newAlertHref({ metric: "slo", sloId: r.slo.id, op: ">", threshold: FAST_BURN, windowMs: "3600000", name: `${r.slo.name} burns fast` });
   const actions = (
     <>
       {alerts && <a className="wl-btn wl-btn-sm" href={alertHref}><BellPlus aria-hidden="true" /> Alert on burn rate</a>}
       {canWrite && <button type="button" className="wl-btn wl-btn-sm" onClick={() => setEditing(true)}>Edit</button>}
-      {canWrite && <button type="button" className="wl-link-btn wl-text-error" onClick={remove}>Delete</button>}
+      {canWrite && <button type="button" className="wl-link-btn wl-text-error" onClick={() => void remove()}>Delete</button>}
+      {dialog}
     </>
   );
   const scope = r.slo.endpoint ? endpointHref(`api:${r.slo.service}`, r.slo.endpoint) : `#/services/api%3A${encodeURIComponent(r.slo.service)}`;

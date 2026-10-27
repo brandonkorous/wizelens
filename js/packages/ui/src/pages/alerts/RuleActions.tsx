@@ -4,6 +4,7 @@ import { apiSend } from "../../data/api";
 import { fmtDateTime } from "../../format";
 import { Badge, DotText } from "../../ui/Badges";
 import { Select } from "../../ui/Controls";
+import { useAsk } from "../../ui/Dialog";
 import type { AlertRule } from "./alertTypes";
 import type { InProject } from "../../data/projectScope";
 
@@ -36,9 +37,11 @@ export interface RuleActionsProps {
   onDelete?: () => void;
 }
 
-/** Acknowledge, mute or unmute, turn on or off, test, edit, and delete. */
+/** Acknowledge, mute or unmute, turn on or off, test, edit, and delete (after asking). */
 export function RuleActions({ rule, url, onDone, onEdit, onDelete }: RuleActionsProps) {
   const [busy, setBusy] = useState(false);
+  const { dialog, confirm } = useAsk();
+  const remove = async () => (await confirm({ title: `Delete ${rule.name}?`, body: "It stops checking and sends nothing more. This cannot be undone.", confirmLabel: "Delete alert", danger: true })) && onDelete?.();
   const run = (method: "POST" | "PATCH", path: string, body?: unknown, note?: (x: unknown) => string) => {
     setBusy(true);
     void apiSend(method, url(path, (rule as InProject<AlertRule>).projectId), body).then(
@@ -59,7 +62,8 @@ export function RuleActions({ rule, url, onDone, onEdit, onDelete }: RuleActions
       <button type="button" className="wl-link-btn" disabled={busy} onClick={() => run("PATCH", id, { enabled: !rule.enabled })}>{rule.enabled ? "Turn off" : "Turn on"}</button>
       <button type="button" className="wl-link-btn" disabled={busy} onClick={() => run("POST", `${id}/test`, undefined, (x) => `Test sent: ${(x as { delivery: string }).delivery}`)}>Test</button>
       {onEdit && <button type="button" className="wl-link-btn" onClick={onEdit}>Edit</button>}
-      {onDelete && <button type="button" className="wl-link-btn wl-text-error" onClick={onDelete}>Delete</button>}
+      {onDelete && <button type="button" className="wl-link-btn wl-text-error" onClick={() => void remove()}>Delete</button>}
+      {dialog}
     </span>
   );
 }
