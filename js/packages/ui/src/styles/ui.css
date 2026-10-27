@@ -115,6 +115,7 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-input { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid var(--wl-line-strong); border-radius: 9px; background: var(--wl-surface); color: var(--wl-muted); flex: 1; min-width: 200px; }
 .wl-input input { flex: 1; min-width: 0; border: 0; background: none; color: var(--wl-fg); font: inherit; outline: none; }
 .wl-input svg { width: 17px; height: 17px; }
+.wl-input:focus-within { outline: 2px solid var(--wl-accent); outline-offset: 2px; }
 .wl-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border: 1px solid var(--wl-line-strong); border-radius: 9px; background: var(--wl-surface); color: var(--wl-fg); font: inherit; font-weight: 550; cursor: pointer; white-space: nowrap; }
 .wl-btn:hover { background: var(--wl-surface-2); text-decoration: none; }
 .wl-btn:disabled { opacity: 0.55; cursor: default; }

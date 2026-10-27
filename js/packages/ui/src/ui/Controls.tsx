@@ -24,7 +24,7 @@ export function SearchInput({ value, onChange, placeholder }: { value: string; o
   return (
     <label className="wl-input">
       <Search aria-hidden="true" />
-      <input type="search" value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+      <input type="search" value={value} placeholder={placeholder} aria-label={placeholder.replace(/…$/, "")} onChange={(e) => onChange(e.target.value)} />
     </label>
   );
 }
