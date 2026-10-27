@@ -5,7 +5,6 @@ using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using WizeLens.Capture;
-using WizeLens.Model;
 
 namespace WizeLens.Data;
 
@@ -83,18 +82,9 @@ public static partial class DbActivity
         };
     }
 
-    internal static string ParametersJson(DbCommand command)
-    {
-        var values = new Dictionary<string, object?>();
-        foreach (DbParameter parameter in command.Parameters)
-        {
-            var key = string.IsNullOrEmpty(parameter.ParameterName) ? $"p{values.Count}" : parameter.ParameterName;
-            values[key] = WizeLensRuntime.Redactor.IsSensitive(key)
-                ? Storage.Redactor.Redacted
-                : AttributeValue.Normalize(parameter.Value);
-        }
-        return JsonSerializer.Serialize(values);
-    }
+    /// <summary>The parameters by name; a value is redacted by its name or by the column the command text binds it to.</summary>
+    internal static string ParametersJson(DbCommand command) => JsonSerializer.Serialize(SqlParams.Redact(
+        WizeLensRuntime.Redactor, command.CommandText ?? "", command.Parameters.Cast<DbParameter>().Select(p => ((string?)p.ParameterName, p.Value))));
 
     internal static string? OperationName(string sql)
     {

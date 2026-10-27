@@ -1,4 +1,7 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using Microsoft.Data.Sqlite;
+using WizeLens.Data;
 using WizeLens.Storage;
 using Xunit;
 
@@ -39,5 +42,34 @@ public class RedactVectorTests
         {
             Assert.Equal(c.GetProperty("out").GetString(), ValuePatterns.RedactText(Text(c.GetProperty("in"))));
         }
+    }
+
+    /// <summary>The vector's parameters as (name, value); an array has no names, so it is stored as p0, p1….</summary>
+    private static (string? Name, object? Value)[] Parameters(JsonElement e) => e.ValueKind == JsonValueKind.Array
+        ? [.. e.EnumerateArray().Select(v => ((string?)null, ValueOf(v)))]
+        : [.. e.EnumerateObject().Select(p => ((string?)p.Name, ValueOf(p.Value)))];
+
+    private static JsonNode? Stored(JsonElement want) => want.ValueKind == JsonValueKind.Array
+        ? new JsonObject(want.EnumerateArray().Select((v, i) => KeyValuePair.Create($"p{i}", JsonNode.Parse(v.GetRawText()))))
+        : JsonNode.Parse(want.GetRawText());
+
+    [Fact]
+    public void Redacts_sql_values_by_their_name_or_the_column_they_are_bound_to()
+    {
+        foreach (var c in Vectors.Value.GetProperty("params").EnumerateArray())
+        {
+            var sql = c.GetProperty("sql").GetString()!;
+            var got = JsonNode.Parse(JsonSerializer.Serialize(SqlParams.Redact(Redactor, sql, Parameters(c.GetProperty("params")))));
+            Assert.True(JsonNode.DeepEquals(Stored(c.GetProperty("want")), got), $"{sql}: {got?.ToJsonString()}");
+        }
+    }
+
+    [Fact]
+    public void A_command_redacts_values_bound_to_sensitive_columns()
+    {
+        using var command = new SqliteCommand("select * from users where email = @e and id = @id");
+        command.Parameters.AddWithValue("@e", "nia@example.test");
+        command.Parameters.AddWithValue("@id", 7);
+        Assert.Equal("""{"@e":"[redacted]","@id":7}""", DbActivity.ParametersJson(command));
     }
 }

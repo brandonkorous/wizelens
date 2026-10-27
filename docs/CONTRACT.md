@@ -382,6 +382,10 @@ Redaction keeps the evidence the security rules need (`docs/redact-vectors.json`
   `[redacted:stripe-key]`, `[redacted:github-token]`, `[redacted:slack-token]`, `[redacted:google-key]`, and
   `[redacted:card]` (13 to 19 digits, spaces or dashes allowed, first digit 3 to 6, Luhn valid). The patterns are
   `VALUE_PATTERNS` in `core/src/redact-values.ts`.
+- **SQL parameters** are redacted by their name or by the column the SQL binds them to (compared with, set to, or
+  inserted into), so `"t"."token" = $1` hides the first value. Placeholders are `$1`, `?`, `%s` (by position) and
+  `@name`, `:name`, `%(name)s` (by name). A column matches a redact key or `email`. The parser is `paramColumns` in
+  `core/src/redact-sql-params.ts`; the `params` vectors run in the TS, .NET, Go, and Python tests.
 
 ## Packages
 
@@ -420,7 +424,8 @@ entries merge. `find_security_issues` adds `advisories` (`{ id, severity, fixed 
 
 - **Duplicate query**: ≥ 2 `db` spans in one trace with identical `db.query.text` AND identical `wizelens.db.parameters`.
   A span with placeholders in its text (`?`, `$1`, `%s`, `%(name)s`, `:name`, `@name`) and no `wizelens.db.parameters`
-  (the OpenTelemetry agents sanitize SQL) is never a duplicate: its values are unknown.
+  (the OpenTelemetry agents sanitize SQL) is never a duplicate: its values are unknown. Neither is one whose parameters
+  hold a redacted value.
 - **N+1 query**: ≥ 5 (configurable) `db` spans in one trace with identical `db.query.text` (params may differ).
 - **Session statements** (`SET`, `RESET`, `BEGIN`, `START TRANSACTION`, `COMMIT`, `END`, `ROLLBACK`, `SAVEPOINT`, `RELEASE`,
   `DISCARD`, `USE`) are never duplicates or N+1. Apps that set `SET LOCAL app.tenant_id` per query repeat them by design.
@@ -920,7 +925,7 @@ Trace `remotes` that point at a service which sends to the hub are hidden, so th
 - `url.path` that holds a query (from `http.target`) is split into `url.path` and `url.query`.
 - Captured headers: a list value is joined with `, `, and `_` in the name becomes `-` (`http.request.header.content-type`).
 - SQL parameters: `db.query.parameter.<key>` (Java agent) become `wizelens.db.parameters`, a JSON array when every key
-  is a position, else an object with sensitive names redacted; the per-key attributes are removed. Python's
+  is a position, else an object, redacted by name and column (see "Redaction"); the per-key attributes are removed. Python's
   `db.statement.parameters` (the `str()` of a tuple or dict) is read as JSON the same way, or kept as text (redacted
   whole when it names a secret). A value an SDK already set wins.
 - A `db` span whose parent in the same export is also a `db` span (an ORM over its driver, such as SQLAlchemy over

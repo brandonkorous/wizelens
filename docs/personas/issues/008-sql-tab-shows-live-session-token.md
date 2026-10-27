@@ -53,6 +53,14 @@ A redacted value no longer counts as "same parameters" in the duplicate-query ch
 two different emails never read as one duplicate. Tests: `redact-sql-params.test.ts`, `db-findings.test.ts`
 "redacted parameters". Not done: traces stored before the fix keep their values until they age out (24 h in-app).
 
+Every SDK, one rule: named placeholders too (`@name`, `:name`, `%(name)s`; `::type` casts skipped), and the 10
+`params` cases in `docs/redact-vectors.json` run in TS (`redact-vectors.test.ts`), Go (`go/sqlparams_test.go`),
+Python (`tests/test_sql_params.py`) and .NET (`RedactVectorTests.cs`). Go `ParamsJSON(query, args, s)` takes the
+SQL now (an exported signature change). .NET's duplicate check skips redacted parameters too
+(`TraceAnalysis.ParamsOf`). Results: go test ok; pytest 35 passed; dotnet test 513 passed, 0 failed. Not done:
+Python `executemany` row lists (TS has no rule for them either); Go and Python have no value patterns
+(`redactText`), so only the column and name rule applies there. CONTRACT.md "Redaction" states the rule.
+
 ## Confirmed by
 
 > Re-ran P01 act 6 after restarting both kanNINJA services on the new build: loaded the Q4 Workshop board,

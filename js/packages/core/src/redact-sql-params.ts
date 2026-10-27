@@ -30,10 +30,7 @@ function insertColumns(sql: string, out: Map<string, string>): void {
   });
 }
 
-/**
- * The column each parameter is compared with or set to, by key: the zero-based position for `$1`, `?` and `%s`,
- * the name for `@name`, `:name` and `%(name)s`. `"t"."token" = $1` gives "0" → token.
- */
+/** The column each parameter is compared with or set to, by position ("0" for `$1`, `?`, `%s`) or name: `"t"."token" = $1` gives "0" → token. */
 export function paramColumns(sql: string): Map<string, string> {
   const text = normalized(sql);
   const out = new Map<string, string>();

@@ -23,15 +23,17 @@ def test_dbapi_driver_spans_get_parameters(spans):
     try:
         db = sqlite3.connect(":memory:")
         cur = db.cursor()
-        cur.execute("create table orders (id integer, item text)")
+        cur.execute("create table orders (id integer, item text, email text)")
         cur.execute("select * from orders where id = ? and item = ?", (7, "pen"))
         assert db.execute("select count(*) from orders where id = ?", (8,)).fetchone() == (0,)
+        cur.execute("select id from orders where email = ?", ("nia@example.test",))
     finally:
         unwrap_connect(sqlite3, "connect")
     found = [s for s in spans.get_finished_spans() if s.attributes.get(PARAMS_ATTR)]
-    assert len(found) == 2
+    assert len(found) == 3
     assert found[0].attributes[PARAMS_ATTR] == '[7, "pen"]'
     assert found[1].attributes[PARAMS_ATTR] == "[8]"
+    assert found[2].attributes[PARAMS_ATTR] == '["[redacted]"]'
     assert found[0].attributes["db.statement"] == "select * from orders where id = ? and item = ?"
 
 
