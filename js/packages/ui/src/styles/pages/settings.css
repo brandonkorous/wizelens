@@ -3,7 +3,7 @@
 .wl-snippet { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; padding: 10px 0; border-top: 1px solid var(--wl-line); }
 .wl-snippet > .wl-muted { grid-column: 1 / -1; }
 .wl-snippet code { overflow-wrap: anywhere; }
-.wl-settings-sources { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 18px; align-items: start; }
+.wl-settings-sources { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: 18px; align-items: start; }
 .wl-settings-sources > .wl-panel + .wl-panel { margin-top: 0; }
 .wl-settings-mcp { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
 .wl-snippet:first-child { border-top: 0; padding-top: 0; }

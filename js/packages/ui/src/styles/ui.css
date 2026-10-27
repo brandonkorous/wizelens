@@ -12,8 +12,8 @@
 /* Panels stacked down a page (Account, Team) get the grid gap; panels in a grid already have it. */
 .wl-panel + .wl-panel { margin-top: 18px; }
 .wl-grid > .wl-panel + .wl-panel { margin-top: 0; }
-.wl-panel-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; min-height: 32px; }
-.wl-panel-head h2 { margin-right: auto; }
+.wl-panel-head { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; min-height: 32px; }
+.wl-panel-head h2 { margin-right: auto; min-width: 0; overflow-wrap: anywhere; }
 .wl-panel-flush .wl-panel-head { padding: 16px 20px 0; }
 .wl-view-all { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 550; white-space: nowrap; }
 .wl-view-all svg { width: 16px; height: 16px; }

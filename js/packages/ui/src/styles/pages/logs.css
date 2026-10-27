@@ -15,7 +15,7 @@
 .wl-log-share { display: inline-block; width: 72px; height: 6px; border-radius: 3px; background: var(--wl-surface-2); overflow: hidden; vertical-align: middle; }
 .wl-log-share > span { display: block; height: 100%; background: var(--wl-chart-bar); }
 /* Log metrics: one chart per saved search. */
-.wl-log-metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 14px; }
+.wl-log-metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: 14px; }
 .wl-log-metric { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 12px 14px; border: 1px solid var(--wl-line); border-radius: 10px; }
 .wl-log-metric header { display: flex; align-items: flex-start; gap: 12px; }
 .wl-log-metric-title { display: flex; flex-direction: column; min-width: 0; flex: 1; }

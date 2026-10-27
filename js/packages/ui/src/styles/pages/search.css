@@ -8,6 +8,6 @@
 .wl-search-page .wl-badge { text-transform: capitalize; }
 .wl-search-note { margin: 0; padding: 10px 20px 0; }
 .wl-search-bar { padding-bottom: 0; }
-.wl-search-bar .wl-tabbar { margin-bottom: 0; overflow: visible; border-bottom: 0; }
+.wl-search-bar .wl-tabbar { margin-bottom: 0; overflow: visible; flex-wrap: wrap; border-bottom: 0; }
 .wl-saved-searches { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 10px; }
 .wl-saved-searches .wl-filter-chip { text-decoration: none; }
