@@ -111,7 +111,7 @@ export function HubMenu({ registry, cloud }: { registry: HubRegistry | null; clo
   );
   return (
     <>
-      <Menu label={label} title="Organization, project, environment, and connected services">
+      <Menu label={label} title="Organization, project, environment, and connected services" buttonClass="wl-top-btn wl-top-shrink">
         {(close) => (
           <>
             <Choices title="Organization" values={orgs.map((o): [string, string] => [o.id, o.name])} value={cloud?.org?.id ?? ""} all={false} onPick={(v) => (pickOrg(orgs.find((o) => o.id === v)!), close())} />

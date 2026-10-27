@@ -24,7 +24,13 @@
 .wl-search-box kbd, .wl-kbd { margin-left: auto; padding: 1px 6px; border: 1px solid var(--wl-line-strong); border-radius: 5px; font: 11px var(--wl-sans); color: var(--wl-muted); background: var(--wl-surface-2); }
 .wl-top-btn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border: 1px solid var(--wl-line-strong); border-radius: 10px; background: var(--wl-surface); color: var(--wl-fg); cursor: pointer; white-space: nowrap; }
 .wl-top-btn:hover { background: var(--wl-surface-2); }
-.wl-top-btn svg { width: 17px; height: 17px; color: var(--wl-muted); }
+.wl-top-btn svg { flex: none; width: 17px; height: 17px; color: var(--wl-muted); }
+/* Only the project and the user name give up width, with an ellipsis; every other top bar item keeps its size. */
+.wl-topbar > :not(.wl-spacer, .wl-search-box) { flex: none; }
+.wl-topbar > .wl-menu-anchor:has(.wl-top-shrink) { flex: 0 1 auto; min-width: 0; }
+.wl-top-shrink { min-width: 0; max-width: 100%; }
+.wl-top-shrink .wl-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.wl-top-user .wl-label { max-width: 110px; }
 .wl-icon-btn { position: relative; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 10px; background: none; color: var(--wl-fg-2); cursor: pointer; }
 .wl-icon-btn:hover { background: var(--wl-surface-2); }
 .wl-icon-btn .wl-ping { position: absolute; top: 8px; right: 9px; width: 8px; height: 8px; border-radius: 50%; background: var(--wl-red); box-shadow: 0 0 0 2px var(--wl-bg); }
@@ -73,7 +79,7 @@
   .wl-shell { grid-template-columns: minmax(0, 1fr); }
   .wl-sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 58px; z-index: 30; flex-direction: row; border-right: 0; border-top: 1px solid var(--wl-line); }
   .wl-sidebar-brand, .wl-sidebar-foot { display: none; }
-  .wl-topbar { padding: 0 16px; gap: 8px; }
+  .wl-topbar { padding: 0 12px; gap: 4px; }
   .wl-top-btn .wl-label { display: none; }
   .wl-page { padding: 18px 16px 90px; }
   h1 { font-size: 24px; }
@@ -83,14 +89,17 @@
 .wl-scope-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 200px; height: 32px; padding: 0 10px 0 12px; border: 1px solid var(--wl-accent); border-radius: 999px; background: var(--wl-accent-soft); color: var(--wl-accent-text); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .wl-scope-chip:hover { background: var(--wl-surface-2); }
 .wl-search-box { flex: 1 1 auto; min-width: 44px; }
+.wl-search-box svg { flex: none; }
 .wl-search-box kbd { white-space: nowrap; }
-@media (min-width: 1101px) { .wl-search-box { min-width: 260px; } }
+@media (min-width: 1101px) { .wl-search-box { flex: 1 1 200px; min-width: 200px; } }
+@media (min-width: 721px) and (max-width: 1500px) { .wl-topbar { gap: 10px; } }
 @media (max-width: 1320px) { .wl-search-box kbd { display: none; } }
 @media (max-width: 1100px) { .wl-top-btn .wl-label, .wl-search-box kbd { display: none; } }
 @media (max-width: 720px) {
-  .wl-search-box { flex: 0 0 40px; justify-content: center; padding: 0; }
+  .wl-top-btn { padding: 0 9px; }
+  .wl-top-btn > svg:last-child:not(:first-child), .wl-top-btn .wl-chip-count { display: none; }
+  .wl-search-box { flex: 0 0 38px; justify-content: center; padding: 0; }
   .wl-search-box span { display: none; }
-  .wl-top-btn { padding: 0 10px; gap: 4px; }
 }
 .wl-nav-saved { padding-top: 0; border-top: 1px solid var(--wl-line); flex: 0 1 auto; }
 .wl-nav-saved a { padding: 7px 14px; font-size: 14px; }

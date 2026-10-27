@@ -21,7 +21,7 @@ export function EnvMenu({ sources }: { sources: Source[] }) {
     </>
   );
   return (
-    <Menu label={label} title={`Environment ${env}: connected services`}>
+    <Menu label={label} title={`Environment ${env}: connected services`} buttonClass="wl-top-btn wl-top-shrink">
       {() => (
         <>
           <div className="wl-menu-head">Connected services</div>
