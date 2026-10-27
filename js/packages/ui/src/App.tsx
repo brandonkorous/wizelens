@@ -146,13 +146,17 @@ function Shell() {
   const errors = serverErrors ?? localErrors;
   return (
     <div className="wl-shell">
+      {/* Keyboard users skip the menu; a button, as a #hash link would change the page. */}
+      <button type="button" className="wl-skip" onClick={() => document.getElementById("wl-content")?.focus()}>
+        Skip to content
+      </button>
       <Sidebar page={route.page} counts={{ errors }} dot={dot} />
       <div className="wl-main">
         <TopBar data={data} />
         <UpdateBanner />
         <EmailBanner />
         <UsageBanner />
-        <main className="wl-page">
+        <main id="wl-content" className="wl-page" tabIndex={-1}>
           <PageView route={route} />
         </main>
       </div>
