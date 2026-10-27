@@ -46,8 +46,9 @@ async function newKey(ctx: Ctx): Promise<void> {
   const origins = originsOf(kind, body.origins);
   const days = daysOf(body.expiresInDays);
   const expiresMs = days === null ? null : now(ctx) + days * DAY_MS;
-  const key = await createKey(ctx.app.db, org, kind, str(body, "name", false), ids, user.id, now(ctx), { scopes, expiresMs, origins });
-  await audit(ctx.app.db, org, `user:${user.id}`, "key.create", { keyId: key.id, kind, projectIds: ids, scopes, expiresMs, origins }, now(ctx));
+  const name = str(body, "name", false);
+  const key = await createKey(ctx.app.db, org, kind, name, ids, user.id, now(ctx), { scopes, expiresMs, origins });
+  await audit(ctx.app.db, org, `user:${user.id}`, "key.create", { keyId: key.id, name, kind, projectIds: ids, scopes, expiresMs, origins }, now(ctx));
   sendJson(ctx.res, 201, { ...key, expiresMs, origins });
 }
 
@@ -77,8 +78,10 @@ async function editOrigins(ctx: Ctx): Promise<void> {
 async function dropKey(ctx: Ctx): Promise<void> {
   const { org, key } = ctx.params as { org: string; key: string };
   const { user } = await requireOrg(ctx, org, "manage");
+  // The name goes in the log now: once revoked, the key is no longer listed to name it.
+  const found = (await keyInOrg(ctx.app.db, org, key)) ?? fail(404, "Key not found.");
   if (!(await revokeKey(ctx.app.db, org, key, now(ctx)))) fail(404, "Key not found.");
-  await audit(ctx.app.db, org, `user:${user.id}`, "key.revoke", { keyId: key }, now(ctx));
+  await audit(ctx.app.db, org, `user:${user.id}`, "key.revoke", { keyId: key, name: found.name, kind: found.kind }, now(ctx));
   sendJson(ctx.res, 200, { ok: true });
 }
 

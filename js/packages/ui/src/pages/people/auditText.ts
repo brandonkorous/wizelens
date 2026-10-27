@@ -114,7 +114,8 @@ const project = (id: unknown, names: Names) => (typeof id === "string" ? (names.
 /** The useful facts of an entry, in words. Ids become names; the organization id and raw lines are left out. */
 export function detailText(d: Record<string, unknown>, names: Names): string {
   const parts: string[] = [];
-  if (typeof d.keyId === "string" && names.keys.has(d.keyId)) parts.push(names.keys.get(d.keyId)!);
+  if (typeof d.keyId === "string" && typeof d.name !== "string" && names.keys.has(d.keyId)) parts.push(names.keys.get(d.keyId)!);
+  if (Array.isArray(d.keyNames)) parts.push(d.keyNames.join(", "));
   if (typeof d.app === "string") parts.push(`with ${d.app}`);
   if (d.allProjects === true) parts.push("all projects");
   if (typeof d.userEmail === "string") parts.push(`for ${d.userEmail}`);

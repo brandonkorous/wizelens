@@ -38,6 +38,16 @@ describe("cloud accounts", () => {
     expect(audit).toEqual(expect.arrayContaining(["member.invite", "member.join", "org.create"]));
   });
 
+  it("refuses changes without the dashboard header", async () => {
+    let url: string;
+    ({ cloud, url } = await startCloud());
+    const { owner, orgId } = await setupOwner(cloud, url);
+    expect((await owner.call("POST", `api/orgs/${orgId}/projects`, { name: "X" }, { "X-WizeLens-Client": "" })).status).toBe(403);
+    expect((await owner.call("POST", "api/auth/sign-out", {}, { "X-WizeLens-Client": "" })).status).toBe(403);
+  });
+});
+
+describe("cloud audit log", () => {
   it("names the cancelled invite in the audit log", async () => {
     let url: string;
     ({ cloud, url } = await startCloud());
@@ -48,12 +58,14 @@ describe("cloud accounts", () => {
     expect(log.find((a) => a.action === "invite.cancel")?.detail).toMatchObject({ email: "sio@acme.io", role: "member" });
   });
 
-  it("refuses changes without the dashboard header", async () => {
+  it("names a revoked key in the audit log, though the key is no longer listed", async () => {
     let url: string;
     ({ cloud, url } = await startCloud());
-    const { owner, orgId } = await setupOwner(cloud, url);
-    expect((await owner.call("POST", `api/orgs/${orgId}/projects`, { name: "X" }, { "X-WizeLens-Client": "" })).status).toBe(403);
-    expect((await owner.call("POST", "api/auth/sign-out", {}, { "X-WizeLens-Client": "" })).status).toBe(403);
+    const { owner, orgId, projectId } = await setupOwner(cloud, url);
+    const made = (await owner.call<{ id: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", name: "orders API (pods)", projectIds: [projectId] })).body;
+    expect((await owner.call("DELETE", `api/orgs/${orgId}/keys/${made.id}`)).status).toBe(200);
+    const log = (await owner.call<{ action: string; detail: Record<string, unknown> }[]>("GET", `api/orgs/${orgId}/audit`)).body;
+    expect(log.find((a) => a.action === "key.revoke")?.detail).toMatchObject({ name: "orders API (pods)", kind: "ingest" });
   });
 });
 
