@@ -93,11 +93,11 @@ describe("pageRows", () => {
     expect(callName(call("o", 0, { path: "/orders?tab=2", server: undefined }))).toBe("GET /orders?tab=2");
   });
 
-  it("splits a name before its last path segment, so a cut keeps the end", () => {
-    expect(splitName("GET /api/v1/boards/:boardId/members · 6 SQL")).toEqual(["GET /api/v1/boards/:boardId", "/members · 6 SQL"]);
-    expect(splitName("GET /a/b · localhost:3001 · 2 SQL")).toEqual(["GET /a", "/b · localhost:3001 · 2 SQL"]);
-    expect(splitName("GET /orders (page)")).toEqual(["GET ", "/orders (page)"]);
-    expect(splitName("Route render")).toEqual(["Route render", ""]);
+  it("splits a name into method, middle and last path segment, so a cut keeps both ends", () => {
+    expect(splitName("GET /api/v1/boards/:boardId/members · 6 SQL")).toEqual(["GET ", "/api/v1/boards/:boardId", "/members · 6 SQL"]);
+    expect(splitName("POST /a/b · localhost:3001 · 2 SQL")).toEqual(["POST ", "/a", "/b · localhost:3001 · 2 SQL"]);
+    expect(splitName("GET /orders (page)")).toEqual(["GET ", "", "/orders (page)"]);
+    expect(splitName("Route render")).toEqual(["", "Route render", ""]);
   });
 
   it("puts round ticks on the time axis", () => {

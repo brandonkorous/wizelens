@@ -66,16 +66,18 @@ export function ticksFor(total: number): number[] {
   return ticks;
 }
 
-/** Splits a name before the last segment of its path, so a cut keeps "/members · 6 SQL" and drops the middle. */
-export function splitName(name: string): [string, string] {
+/** Splits a name into its method, its path's middle and its last segment, so a cut keeps "GET" and "/members · 6 SQL" and drops the middle. */
+export function splitName(name: string): [string, string, string] {
   const end = name.search(/ · | \(/);
   const cut = (end < 0 ? name : name.slice(0, end)).lastIndexOf("/");
-  return cut <= 0 ? [name, ""] : [name.slice(0, cut), name.slice(cut)];
+  const [head, tail] = cut <= 0 ? [name, ""] : [name.slice(0, cut), name.slice(cut)];
+  const method = tail ? (/^[A-Z]+ /.exec(head)?.[0] ?? "") : "";
+  return [method, head.slice(method.length), tail];
 }
 
 const rowName = (r: WfRow) => {
-  const [head, tail] = splitName(r.name);
-  const parts = [h("span", { class: "wl-wf-head" }, head), tail ? h("span", { class: "wl-wf-tail" }, tail) : null];
+  const [method, head, tail] = splitName(r.name);
+  const parts = [method ? h("span", { class: "wl-wf-method" }, method) : null, head ? h("span", { class: "wl-wf-head" }, head) : null, tail ? h("span", { class: "wl-wf-tail" }, tail) : null];
   return r.href ? h("a", { href: r.href, target: "_blank", rel: "noreferrer" }, parts) : h("span", null, parts);
 };
 
