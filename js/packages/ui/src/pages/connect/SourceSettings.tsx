@@ -21,8 +21,24 @@ function statusOf(s: Source): ReactNode {
   return <DotText tone="danger" colorText>Unreachable{s.error ? ` (${s.error})` : ""}</DotText>;
 }
 
+const AI_DOCS = "https://wizelens.com/docs/ai-access/#on-your-own-machine";
+
+/** The switch that turns MCP on for this kind of service, as the docs write it. */
+function mcpSwitch(info: ServiceInfo): string | null {
+  if (info.mode === "hub") return "--mcp";
+  if (info.runtime.startsWith(".NET")) return "o.EnableMcp = true";
+  return info.runtime.startsWith("node") ? "enableMcp: true" : null;
+}
+
 function mcpRow(s: Source, info: ServiceInfo): ReactNode {
-  if (!info.mcp) return onOff(false);
+  const turnOn = mcpSwitch(info);
+  if (!info.mcp)
+    return (
+      <span>
+        {onOff(false)} {turnOn && <>Turn it on with <code className="wl-mono wl-small">{turnOn}</code>. </>}
+        <a href={AI_DOCS} target="_blank" rel="noreferrer">How</a>
+      </span>
+    );
   const url = `${s.endpoint}/mcp`;
   return (
     <span>
