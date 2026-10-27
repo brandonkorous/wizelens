@@ -6,6 +6,7 @@ import type { Attributes, Trace } from "../types.js";
 
 export const SECRET_LABELS: Record<SecretKind, string> = {
   jwt: "JWT",
+  "signed-token": "Signed token",
   "aws-key": "AWS key",
   "private-key": "Private key",
   "stripe-key": "Stripe key",

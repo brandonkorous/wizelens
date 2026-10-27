@@ -21,6 +21,8 @@
   "text": [
     { "in": "nothing secret here", "out": "nothing secret here" },
     { "in": ["auth ok for ", "eyJhbGciOiJIUzI1NiJ9", ".", "eyJzdWIiOiIxMjM0NTY3ODkwIn0", ".", "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c", " done"], "out": "auth ok for [redacted:jwt] done" },
+    { "in": ["GET /api/v1/realtime?ticket=v1.", "eyJib2FyZElkIjoiYi0xIn0", ".", "c2lnbmF0dXJlLW9mLXRoZS10aWNrZXQ"], "out": "GET /api/v1/realtime?ticket=v1.[redacted:signed-token]" },
+    { "in": "cursor eyJpZCI6MTJ9 stays", "out": "cursor eyJpZCI6MTJ9 stays" },
     { "in": ["key=", "AKIA", "QWERTYUIOPASDFGH", " region=us-east-1"], "out": "key=[redacted:aws-key] region=us-east-1" },
     { "in": ["using ", "sk_", "live_", "abcdefghijklmnop1234", " now"], "out": "using [redacted:stripe-key] now" },
     { "in": ["hook ", "whsec_", "abcdefghijklmnopqrstuv"], "out": "hook [redacted:stripe-key]" },

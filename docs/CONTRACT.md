@@ -378,7 +378,8 @@ Redaction keeps the evidence the security rules need (`docs/redact-vectors.json`
 - **`set-cookie`** keeps each cookie's name and flags: `sid=[redacted]; Path=/; Secure; HttpOnly`.
 - **`url.query` and `url.full`** keep every key and lose the values of sensitive keys: `token=[redacted]`.
 - **Values by pattern.** Every string value (attributes, event attributes, log messages and attributes) has these
-  replaced with a typed marker: `[redacted:jwt]`, `[redacted:aws-key]`, `[redacted:private-key]`,
+  replaced with a typed marker: `[redacted:jwt]`, `[redacted:signed-token]` (a base64 JSON part and a signature, such as
+  `v1.eyJ….sig` WebSocket tickets), `[redacted:aws-key]`, `[redacted:private-key]`,
   `[redacted:stripe-key]`, `[redacted:github-token]`, `[redacted:slack-token]`, `[redacted:google-key]`, and
   `[redacted:card]` (13 to 19 digits, spaces or dashes allowed, first digit 3 to 6, Luhn valid). The patterns are
   `VALUE_PATTERNS` in `core/src/redact-values.ts`.
