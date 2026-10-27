@@ -4,7 +4,7 @@ import { Select } from "../../ui/Controls";
 import { Check, Field, FormRow } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
 import { useOnce } from "../../ui/useOnce";
-import { REMINDS, WINDOWS } from "./alertTypes";
+import { METRIC_HINTS, REMINDS, WINDOWS } from "./alertTypes";
 import { ChannelFields } from "./ChannelFields";
 import { AboveNormalNote, LineFields } from "./LineFields";
 import { LogRuleFields } from "./LogRuleFields";
@@ -76,6 +76,7 @@ export function AlertForm({ initial, title, lead, onSave, onCancel }: { initial:
           <LineFields r={r} set={set} />
           <Select label="Over the last" value={String(r.windowMs)} options={WINDOWS} onChange={(v) => set("windowMs")(Number(v))} />
         </FormRow>
+        {METRIC_HINTS[r.metric] && <p className="wl-muted wl-small">{METRIC_HINTS[r.metric]}</p>}
         {r.op === "above_normal" && <AboveNormalNote />}
         {r.metric === "metric" ? <MetricRuleFields r={r} set={set} /> : r.metric === "slo" ? <SloFields r={r} set={set} /> : r.metric === "log_count" ? <LogRuleFields search={r.logSearch ?? {}} onChange={set("logSearch")} /> : <ScopeFields r={r} set={set} />}
         <FormRow>
