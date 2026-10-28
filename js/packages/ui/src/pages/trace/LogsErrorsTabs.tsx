@@ -3,6 +3,7 @@ import { fmtMs } from "../../format";
 import { usePagedRows } from "../../ui/PagedRows";
 import { Empty } from "../../ui/Panel";
 import { ErrorStack } from "../errors/ResolvedStack";
+import { shortCategory } from "../logs/LogParts";
 import { ServiceChip } from "./tabParts";
 import { pressable } from "../../ui/pressable";
 
@@ -37,7 +38,7 @@ export function LogsTab({ trace, onSelect }: Props) {
                 <td>
                   <ServiceChip service={l.service} services={trace.services} />
                 </td>
-                <td className="wl-muted wl-small">{l.category}</td>
+                <td className="wl-muted wl-small" title={l.category}>{shortCategory(l.category)}</td>
                 <td className="wl-wrap">{l.message}</td>
               </tr>
             ))}

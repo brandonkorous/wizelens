@@ -36,7 +36,7 @@
 .wl-svc-page .wl-svc-mid { max-width: 180px; }
 .wl-svc-page .wl-svc-ep-name span, .wl-svc-page .wl-svc-wide span, .wl-svc-page .wl-svc-mid span { display: block; }
 .wl-svc-logs .wl-log-cat { max-width: 160px; color: var(--wl-muted); font-size: 13px; }
-.wl-svc-logs .wl-log-cat span { display: block; }
+.wl-svc-logs .wl-log-cat > * { display: block; max-width: 100%; text-align: left; }
 .wl-svc-logs .wl-log-msg { min-width: 260px; word-break: break-word; }
 .wl-svc-logs .wl-log-trace { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .wl-svc-logs .wl-badge { text-transform: capitalize; }
