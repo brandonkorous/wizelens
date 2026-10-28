@@ -178,7 +178,14 @@ and places Orders 1 and 2.
 **Done when:** all 12 products are in the catalog as typed, both orders are placed,
 and Order 2's total reads $0.03 in eShop.
 
-**Outcome:** —
+**Outcome:** done, with eShop limits. Products 4, 6 and 12 failed first: their names are over eShop's 50-character
+`Catalog.Name`. WizeLens Errors showed the `SqlException` with its SQL, params and logs, so Sid shortened them
+(ids 501–511, 522–524). eShop seeds only 12 items, so Basket A is 24 lines (1–4 each), $2,866.14, not 27. Order 1:
+Basket A, $2,866.14, 19:06:27; eShop's checkout has no address form and ships to its hardcoded "123 Main St., Kent,
+OH", so the Three Rivers address could not be used (an eShop limit). Order 2: 3 × Gift Card $0.01 = **$0.03** in
+the basket, the order list and the order detail. "[ PAY NOW ]" sat under the HUD at the page end: #061, fixed
+(and its follow-up, a ResizeObserver loop error, fixed). Fixed on the way: #056 (INSERT read as SET), #057 (HTTP 500
+text).
 
 ### Act 5 — what does the basket page cost?
 
@@ -187,7 +194,9 @@ He loads `/Basket` with Basket A (27 lines) and reads its SQL.
 **Done when:** Sid counts the SQL calls by hand, the count matches the dashboard,
 and any repeated query shape is named by the dashboard's insight (or it says none).
 
-**Outcome:** —
+**Outcome:** done. `/Basket` runs 3 SQL, all unique: basket + items JOIN, Catalog `IN OPENJSON`, and a `COALESCE SUM`
+count. Hand count 3 = dashboard 3; no N+1, no insight. Slowest #1 0.49 ms. Emails in params read
+`[redacted:email]`. Keyboard-only part: not checked in this act (see standing checks).
 
 ### Act 6 — the HUD on a Razor page
 
@@ -196,7 +205,9 @@ He turns the HUD on and reloads `/Basket`.
 **Done when:** the HUD names the page, Server and DB add up to the calls it lists,
 and each call opens its trace.
 
-**Outcome:** —
+**Outcome:** done after #058, #059, #060. The HUD names `GET /Basket`; HUD and trace agree at 368 / 252 / 14 / 106 ms;
+the call row opens its trace in a new tab. A trace opened at once from the HUD can show "Render –" until the
+browser's page view arrives; Refresh fills it (not filed: the data arrives seconds later by design).
 
 ### Act 7 — one admin save
 
@@ -205,7 +216,11 @@ In the Blazor admin he edits product 1's price to 279.99 and saves.
 **Done when:** one trace holds the browser fetch, PublicApi's PUT and its SQL; or
 the run records exactly where the chain breaks.
 
-**Outcome:** —
+**Outcome:** done after #063. First save (19:11, trace `c4d7e159…`): two half traces — the store's dashboard held only
+`fetch /api/catalog-items`, the API's only the PUT and its SQL; nothing said so. Now the store's trace says where the
+server part is and links to it; Sid added `TrustedRemotes = ["https://localhost:5099"]`, and the 19:17 save
+(`a1b1f438…`) is one trace: fetch 136 ms → PUT 133 ms → Handler 104 ms → `SELECT Catalog` 43 ms, `UPDATE Catalog`
+4.2 ms. Product 1 reads 279.99 in the admin. Also #064 (a duration label over the service dot), fixed.
 
 ### Act 8 — the mistake he has to undo
 
@@ -215,7 +230,12 @@ Basket A and in Order 1, then opens his basket and his order history.
 **Done when:** whatever eShop does (error or not) is visible in WizeLens with its
 request, and Sid can tell from the dashboard which page broke and why.
 
-**Outcome:** —
+**Outcome:** done after #065, #066, #067. The delete (`c937f8b5…`, one joined trace: fetch → DELETE → `DELETE Catalog`
+17 ms) worked. Order 1 still lists its lines (eShop keeps copies). `/Basket` now answers 500
+(`InvalidOperationException` at `BasketViewModelService.cs:60`: a basket line whose product is gone — an eShop bug,
+left as is). Before the fixes WizeLens said only "HTTP 500" and the error page had no HUD. Now the HUD is on the error
+page (red, 500, 1 Error), the trace's error is the exception with its stack, the title reads `pageview /Basket` 500,
+and the SQL tab shows the Catalog query ran with `[523]` and returned nothing: page and cause, from the dashboard.
 
 ### Act 9 — logs for one checkout
 
@@ -224,7 +244,10 @@ He places Order 2 again and looks for its log lines.
 **Done when:** the `ILogger` lines of that checkout are in Logs, in the trace's Logs
 tab, and nothing secret is in them.
 
-**Outcome:** —
+**Outcome:** done after #062. Order 2 again at 19:07:14: Logs → "Updating quantity" finds
+`Services.BasketService · Updating quantity of item ID:26 to 3. · POST /Basket/Checkout`; the trace's Logs tab
+(`2bf17f57…`) has the same line. Nothing secret in it. The category used to run over the message (#062, fixed). The
+checkout POST shows 9 SQL with 2 "same query, same params" duplicates named.
 
 ### Act 10 — nothing secret
 
