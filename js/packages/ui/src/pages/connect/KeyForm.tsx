@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useOnce } from "../../ui/useOnce";
 import { currentProject, useAccount } from "../../data/account";
 import { apiSend } from "../../data/api";
@@ -6,6 +6,7 @@ import { CopyButton } from "../../ui/Badges";
 import { Check, Field, FormRow, SelectField } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
 import type { ApiKey, OrgData } from "../organization/orgTypes";
+import { hereUrl, Snippet } from "./Snippet";
 
 export type Kind = ApiKey["kind"];
 
@@ -29,19 +30,32 @@ export const SCOPES: Record<Kind, [string, string][]> = {
 const WHERE: Record<Kind, string> = {
   ingest: "Set it as WIZELENS_HUB_TOKEN on the app.",
   read: "Send it as Authorization: Bearer <key> to /_wizelens/mcp.",
-  browser: "It is public: it goes in your page code, as endpoint={cloudEndpoint(key)} or <script data-key=\"key\">.",
+  browser: "It is public: it is safe in a page. Put this tag in every page, before </body>:",
 };
 
 const EXPIRY: [string, string][] = [["", "Never"], ["30", "In 30 days"], ["90", "In 90 days"], ["180", "In 180 days"], ["365", "In 1 year"]];
 
-/** The new secret, shown once, with where it goes. */
-export function NewSecret({ kind, secret, note }: { kind: Kind; secret: string; note?: string }) {
+const CDN = "https://cdn.jsdelivr.net/npm/@wizeworks/lens-browser/dist/wizelens.iife.js";
+
+/** The whole script tag for a browser key; a cloud other than WizeLens Cloud names its own address. */
+export function scriptTag(key: string, cloud: string): string {
+  const at = cloud === "https://app.wizelens.com" ? "" : ` data-endpoint="${cloud}"`;
+  return `<script src="${CDN}" data-key="${key}"${at} data-hud="false"></script>`;
+}
+
+/** The new secret, shown once, with where it goes; a browser key comes with its script tag. */
+export function NewSecret({ kind, secret, note, name }: { kind: Kind; secret: string; note?: string; name?: string }) {
+  // On a phone the box lands under the form: bring it up so the key is seen.
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => box.current?.scrollIntoView({ block: "nearest" }), [secret]);
   return (
-    <div className="wl-share-link">
+    <div className="wl-share-link" ref={box}>
+      {name && <strong>{name}</strong>}
       <code className="wl-mono wl-small">{secret}</code> <CopyButton text={secret} label="Copy key" />
       <span className="wl-muted wl-small">
         Copy it now: it is not shown again. {WHERE[kind]} {note}
       </span>
+      {kind === "browser" && <Snippet label="Script tag" text={scriptTag(secret, hereUrl())} />}
     </div>
   );
 }
@@ -73,6 +87,7 @@ export function KeyForm({ orgId, data, kinds, reload, onClose }: { orgId: string
   const [expires, setExpires] = useState("");
   const [origins, setOrigins] = useState("");
   const [secret, setSecret] = useState<string | null>(null);
+  const [made, setMade] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { busy, once } = useOnce();
   const toggle = (id: string, on: boolean) => setPicked((p) => (kind !== "read" ? [id] : on ? [...p, id] : p.filter((x) => x !== id)));
@@ -80,7 +95,7 @@ export function KeyForm({ orgId, data, kinds, reload, onClose }: { orgId: string
   const create = (e: FormEvent) => {
     e.preventDefault();
     once(() => apiSend<{ token: string }>("POST", `./api/orgs/${orgId}/keys`, keyBody(kind, name, picked, scopes, expires, origins)).then(
-      (k) => (setSecret(k.token), setName(""), setError(null), reload()),
+      (k) => (setSecret(k.token), setMade(name), setName(""), setError(null), reload()),
       (err: unknown) => setError(err instanceof Error ? err.message : String(err)),
     ));
   };
@@ -104,7 +119,7 @@ export function KeyForm({ orgId, data, kinds, reload, onClose }: { orgId: string
           </fieldset>
         )}
         <ScopeChecks kind={kind} scopes={scopes} onChange={setScopes} />
-        {secret && <NewSecret kind={kind} secret={secret} />}
+        {secret && <NewSecret kind={kind} secret={secret} name={made} />}
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
         <div className="wl-form-actions">
           <button type="button" className="wl-btn" onClick={onClose}>{secret ? "Done" : "Cancel"}</button>

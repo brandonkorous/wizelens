@@ -1,22 +1,12 @@
 import { useState } from "react";
 import type { ServiceInfo } from "@wizeworks/lens-core";
 import { hrefTo } from "../../routes";
-import { CopyButton } from "../../ui/Badges";
 import { Panel } from "../../ui/Panel";
 import { AddButton, SectionHead } from "../../ui/Sections";
 import { canManage } from "../organization/orgTypes";
 import type { OrgCtx } from "../organization/useOrg";
 import { KeyForm, SENDING } from "./KeyForm";
-
-function Snippet({ label, text }: { label: string; text: string }) {
-  return (
-    <div className="wl-snippet">
-      <span className="wl-muted wl-small">{label}</span>
-      <code className="wl-mono wl-small">{text}</code>
-      <CopyButton text={text} label={`Copy: ${label}`} />
-    </div>
-  );
-}
+import { hereUrl, Snippet } from "./Snippet";
 
 /** Without a release, errors, release markers, and version compares have nothing to name; the add-on reads it from this variable. */
 const ReleaseSnippet = () => <Snippet label="Its release, such as the git commit (errors and release markers name it)" text="WIZELENS_RELEASE=$GIT_SHA" />;
@@ -109,7 +99,7 @@ function SendsToHub({ hub }: { hub: string }) {
 
 /** The steps to send a service's data here: a hub needs its address, the cloud a key too; in-app, where it sends. */
 export function SetupSteps({ info, ctx }: { info: ServiceInfo | null; ctx: OrgCtx | null }) {
-  const base = new URL("../", window.location.href).href.replace(/\/$/, "");
+  const base = hereUrl();
   if (info?.mode === "hub") return <HubSteps hubUrl={base} />;
   if (info?.mode === "cloud") return <CloudSteps url={base} ctx={ctx} />;
   return info?.hub ? <SendsToHub hub={info.hub} /> : null;
