@@ -4,7 +4,7 @@
 **Author:** Brandon Korous
 **Last Updated:** 2026-10-27
 
-**Status:** in progress
+**Status:** done
 **Run:** 2026-10-27, from 10:20 (America/Los_Angeles, UTC-7 until 2026-11-01, then UTC-8), Claude driving Chrome
 **Role:** .NET developer · in-app dashboard served by WizeLens.AspNetCore + the HUD on Razor pages
 
@@ -333,20 +333,20 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 
 | | Result |
 | --- | --- |
-| Acts completed | — |
-| Issues filed | — |
-| Issues fixed and confirmed | — |
-| Issues blocked, and on what | — |
-| Screens scored | — |
-| **Not checked** | — |
+| Acts completed | 11 of 11 |
+| Issues filed | 29: #051–#079 |
+| Issues fixed and confirmed | 29 of 29, each re-proved on the screen that found it; shared fixes re-proved on P01 or P02 (RULE #7) |
+| Issues blocked, and on what | none |
+| Screens scored | in-app on .NET: Overview, Requests, Traces, Trace › Timeline, Trace › SQL, Errors, Logs, Database, Services (same screens as the in-app list, not counted again); cloud: Trace › SQL, Shared page, Create account (new), Services, Search, Trace › Timeline (P02 rows updated); the HUD card and details on a Razor page. 47 → 50 of 177 |
+| **Not checked** | an order at 23:59 on 2026-10-31 (the run is on 10-27; the order times were read against the clock instead); a browser app that names itself on the trace chips (#078: eShop and kanNINJA both send unnamed); eShop's own basket table is 61 px too wide at 360 (eShop's page, not WizeLens) |
 
 ### The numbers
 
 | Record | Result |
 | --- | --- |
-| Minutes from `dotnet add package` to the first trace | — |
-| Basket page SQL (hand vs. screen) | — |
-| Admin save: services and spans in one trace | — |
+| Minutes from `dotnet add package` to the first trace | about 3 (10:45 → 10:47), with the .NET 8 build from a local feed; before that, .NET 8 support itself (#051) took 25 minutes |
+| Basket page SQL (hand vs. screen) | 3 by hand = 3 in Requests, in the trace's SQL tab, and on the HUD ("3 SQL") |
+| Admin save: services and spans in one trace | one trace after #063: 2 services (Web App, PublicApi), 5 spans (fetch → PUT → Handler → `SELECT Catalog`, `UPDATE Catalog`) |
 
 ---
 
@@ -358,3 +358,14 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
   the dashboard at `/_wizelens`. Filed #052, #053 at 1440; fixed, re-proved in light, dark, 360.
 - 10:56 Filed #054 (axis steps); fixed: 0, 50, 100, 150.
 - 10:58 Requests: 202 rows, page 1 all files. Filed #055; fixed in .NET and Node; re-proved 11:04.
+- 11:06 Acts 1–3 written up. Run paused.
+- 18:48–19:32 Acts 4–9 (real data, the basket's SQL, the HUD on `/Basket`, the admin save, the delete, one checkout's
+  logs). Filed and fixed #056–#067.
+- 19:37–20:01 Acts 10–11 (nothing secret; the cloud copy, keys, share link, neighbours). Fixed #068–#072.
+- 20:08 Standing checks: keyboard only through act 5 after #073; two tabs as Zoë (one basket line, qty 2); F5 on
+  `/sql`; a trace link in a new window; `#/database` from the address bar; dates against eShop's order page (PDT).
+- 20:18–20:37 Scored every screen in light, dark and 360. Filed and fixed #074–#078 on the way.
+- 20:53 The HUD on `/Basket` at 360, light and dark: fits; filed and fixed #079.
+- 20:55 Wrong move as Zoë: Pay Now ($39.00), Back, then Pay Now again. Back reopens Checkout with "Basket is empty"
+  and no Pay Now button, so eShop made one order. Requests shows GET 20:54:58, one POST 20:54:59 (302, 9 SQL), and
+  the GET after Back at 20:55:00.

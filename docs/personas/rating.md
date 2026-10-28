@@ -228,8 +228,8 @@ Sign in, two-factor and invite were opened by P02 (acts 1, 7 and 9) in light at 
 
 | Screen | Key | Design | Ease | Gap to 10 | Persona |
 | --- | --- | --- | --- | --- | --- |
-| HUD card | `bottom corner of the app` | 8 | 7 → 8 | on a light page the card is dark and its panels light; Next.js' dev "N" button covers the SQL count bottom left; was: covered the last card #011 | P01 |
-| HUD details panel | `HUD › details` | 6 → 8 | 8 | on a phone the full call name is only in a hover title, which touch cannot open; was: method cut and axis labels overlapped at 360 #023 | P01 |
+| HUD card | `bottom corner of the app` | 8 | 7 → 8 | on a light page the card is dark and its panels light; Next.js' dev "N" button covers the SQL count bottom left; was: covered the last card #011; on eShop at 360 the card fits and shows no route name | P01, P03 |
+| HUD details panel | `HUD › details` | 6 → 8 | 8 | on a phone the full call name is only in a hover title, which touch cannot open; was: method cut and axis labels overlapped at 360 #023; was: "Calls · 0" above the page row #079 | P01, P03 |
 
 ### Site · wizelens.com — 19 screens
 
