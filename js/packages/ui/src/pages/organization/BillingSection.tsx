@@ -56,6 +56,11 @@ export function BillingSection({ org }: { org: OrgWithProjects }) {
         action={paid && <ManageBilling orgId={org.id} />}
       />
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
+      {paid && (
+        <p className="wl-muted wl-settings-note">
+          Manage billing opens Stripe for your card, address, and invoices. Stripe lists two subscriptions: the {usage.plan.name} plan, and extra data, billed on the 1st for any GB above the {usage.includedGb ?? 0} GB included. To stop paying, use Move to Free below; extra data alone cannot be canceled while the plan runs.
+        </p>
+      )}
       {usage && <UsagePanel usage={usage} />}
       {usage && <PlanCards usage={usage} orgId={org.id} manage />}
       {usage && paid && org.role === "owner" && <SpendCap key={String(usage.spendCapUsd)} orgId={org.id} usage={usage} reload={reload} />}
