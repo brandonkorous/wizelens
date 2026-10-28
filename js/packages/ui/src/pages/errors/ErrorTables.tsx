@@ -35,6 +35,21 @@ const groupColumns = (issues: Record<string, IssueInfo>): Column<ErrorGroup>[] =
   { key: "count", header: "Count", num: true, sort: (g) => g.count, cell: (g) => fmtCount(g.count) },
 ];
 
+/** An empty list: a filter hid them, only resolved or ignored ones failed, or nothing failed. */
+function NoGroups({ stats, filtered }: { stats: ErrorsModel; filtered: boolean }) {
+  if (filtered) return <Empty title="No matching exceptions">Try another filter or a wider time range.</Empty>;
+  const closed = stats.cards.exceptions;
+  if (stats.filter.status !== "unresolved" || closed === 0) return <Empty title="No exceptions">Nothing failed in this time range.</Empty>;
+  return (
+    <Empty title="No unresolved exceptions">
+      {fmtCount(closed)} {closed === 1 ? "exception in this range is" : "exceptions in this range are"} resolved or ignored.{" "}
+      <button type="button" className="wl-link-btn" onClick={() => setQuery({ status: "all", page: null })}>
+        Show all statuses
+      </button>
+    </Empty>
+  );
+}
+
 /** One page of the exception groups that match the filter. A row shows its details. */
 export function RecentExceptionsPanel({ stats, selected }: { stats: ErrorsModel; selected: string | null }) {
   const filtered = isErrorFiltered(stats.filter);
@@ -51,7 +66,7 @@ export function RecentExceptionsPanel({ stats, selected }: { stats: ErrorsModel;
         rowKey={(g) => g.key}
         selectedKey={selected}
         onRowClick={(g) => setQuery({ group: g.key })}
-        empty={<Empty title={filtered ? "No matching exceptions" : "No exceptions"}>{filtered ? "Try another filter or a wider time range." : "Nothing failed in this time range."}</Empty>}
+        empty={<NoGroups stats={stats} filtered={filtered} />}
       />
       <Pager page={stats.page} pageSize={stats.size} total={stats.groupCount} noun="groups" {...urlPaging()} />
     </Panel>
