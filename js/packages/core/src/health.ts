@@ -72,13 +72,17 @@ const byStart = (a: Span, b: Span) => a.startMs - b.startMs;
 
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? Math.max(0, v) : null);
 
-/** A full page load (a server page, not a fetch): first paint from navigation start, and the part after the first byte, as the HUD counts them. */
-function pageLoadOf(spans: readonly Span[]): { paintMs: number; renderMs: number } | null {
+/** A full page load (not a fetch): first paint from navigation start and the part after the first byte, as the HUD counts them; and when its main content showed. */
+function pageLoadOf(spans: readonly Span[]): { paintMs: number; renderMs: number; ttfbMs: number; readyMs: number | null } | null {
   const view = spans.find((s) => browserTypeOf(s) === "pageview" && s.attributes[ATTR_BROWSER_NAVIGATION] === "load");
   const paint = num(view?.attributes[ATTR_PAGE.fcpMs]);
   const ttfb = num(view?.attributes[ATTR_PAGE.ttfbMs]);
-  return paint === null || ttfb === null ? null : { paintMs: paint, renderMs: Math.max(0, paint - ttfb) };
+  const ready = num(view?.attributes[ATTR_PAGE.renderMs]);
+  return paint === null || ttfb === null ? null : { paintMs: paint, renderMs: Math.max(0, paint - ttfb), ttfbMs: ttfb, readyMs: ready };
 }
+
+/** With no server in the trace, a page load lasts until its main content showed, the time every list shows for it. */
+const readyOf = (load: ReturnType<typeof pageLoadOf>, root: Span | undefined): number | null => (load && !root ? load.readyMs : null);
 
 /** Where the time of one request went. */
 export function traceTiming(trace: Pick<Trace, "spans" | "durationMs">): Timing {
@@ -88,7 +92,8 @@ export function traceTiming(trace: Pick<Trace, "spans" | "durationMs">): Timing 
   // A stream's request time is its first byte: the minutes it stays open are not.
   const rootMs = root ? requestMsOf(root) : null;
   const db = trace.spans.filter((s) => s.category === "db");
-  const renderMs = browser ? num(browser.attributes[ATTR_BROWSER_RENDER_MS]) : (load?.renderMs ?? null);
+  const ready = readyOf(load, root);
+  const renderMs = browser ? num(browser.attributes[ATTR_BROWSER_RENDER_MS]) : ready !== null ? Math.max(0, ready - load!.ttfbMs) : (load?.renderMs ?? null);
 
   let server: Timing["server"] = null;
   if (root) {
@@ -102,7 +107,7 @@ export function traceTiming(trace: Pick<Trace, "spans" | "durationMs">): Timing 
 
   return {
     // Without a browser call the request is its entry server span: later spans (a cached page's renders) are not in it.
-    totalMs: browser ? browser.durationMs + (renderMs ?? 0) : load ? Math.max(load.paintMs, rootMs ?? 0) : (rootMs ?? trace.durationMs),
+    totalMs: browser ? browser.durationMs + (renderMs ?? 0) : ready !== null ? Math.max(ready, load!.paintMs) : load ? Math.max(load.paintMs, rootMs ?? 0) : (rootMs ?? trace.durationMs),
     serverMs: rootMs,
     dbMs: busyMs(db),
     dbInMs: root ? busyWithin(db, root.startMs, root.startMs + rootMs!) : busyMs(db),

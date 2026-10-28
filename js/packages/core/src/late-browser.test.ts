@@ -38,4 +38,10 @@ describe("late browser spans", () => {
     const row = requestRows([buildTrace(T, [view, root], [], [])])[0]!;
     expect(row).toMatchObject({ durationMs: 85, renderMs: 74, networkMs: 7 });
   });
+
+  it("time a page load with no server traced until its main content showed, as the lists do", () => {
+    const attributes = { [ATTR_BROWSER_TYPE]: "pageview", [ATTR_BROWSER_NAVIGATION]: "load", [ATTR_PAGE.ttfbMs]: 2, [ATTR_PAGE.fcpMs]: 1560, [ATTR_PAGE.renderMs]: 6140 };
+    const view = makeSpan({ traceId: T, category: "browser", service: "browser", startMs: 1_700_000_000_000, durationMs: 6140, attributes });
+    expect(traceTiming({ spans: [view], durationMs: 6140 })).toMatchObject({ totalMs: 6140, serverMs: null, renderMs: 6138 });
+  });
 });

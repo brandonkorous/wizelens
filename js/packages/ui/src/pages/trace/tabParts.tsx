@@ -29,6 +29,7 @@ const BADGE: Partial<Record<Finding["kind"], string>> = {
   "n+1-http": "N+1",
   "slow-query": "SLOW",
   "db-wait": "WAIT",
+  "slow-page": "SLOW",
   "sql-injection": "SQLI",
   ssrf: "SSRF",
   "plain-http": "HTTP",

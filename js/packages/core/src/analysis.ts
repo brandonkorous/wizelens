@@ -1,5 +1,6 @@
 import type { Span, Trace } from "./types.js";
 import { findSlowQueries, hasUnknownParams, queryText, repeatableQueries, valuesOf } from "./db-findings.js";
+import { findSlowPages } from "./page-findings.js";
 import { errorSpansOf } from "./trace.js";
 import { findSecurity, type TraceSecurityKind } from "./security/index.js";
 
@@ -8,7 +9,7 @@ export { dbSpans, findSlowQueries, hasUnknownParams, isSessionStatement, queryTe
 /** Kinds that cost time: the Insights page lists them. */
 export type InsightFindingKind = "duplicate-query" | "n+1-db" | "n+1-http" | "slow-query" | "db-wait";
 
-export type FindingKind = InsightFindingKind | "error" | TraceSecurityKind;
+export type FindingKind = InsightFindingKind | "error" | "slow-page" | TraceSecurityKind;
 
 export interface Finding {
   kind: FindingKind;
@@ -188,5 +189,6 @@ export function analyzeTrace(trace: Trace, options: AnalysisOptions = {}): Findi
     ...findDuplicateQueries(trace),
     ...findSlowQueries(trace, options.slowQueryMs ?? ANALYSIS_DEFAULTS.slowQueryMs),
     ...findSecurity(trace),
+    ...findSlowPages(trace),
   ];
 }
