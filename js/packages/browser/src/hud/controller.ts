@@ -13,6 +13,7 @@ import { dashboardLink, traceIdOf, watchTrace } from "./parts.js";
 import { type HudSettings, type Panel, readSettings, subscribeStored, writeLeft, writeLive, writeMinimized, writePanel } from "./storage.js";
 import { type HudActions, hudView } from "./view.js";
 import { pageRows } from "./waterfall.js";
+import { keepRoomFor } from "./room.js";
 
 // Traces loaded for the details panel: the page's own, and its calls with errors or insights.
 const MAX_TRACES = 10;
@@ -58,6 +59,7 @@ export class HudController implements HudActions {
       watchRoutes(() => this.#navigate()),
       () => monitor.stop(),
       () => typeof removeEventListener === "function" && removeEventListener("keydown", onKey),
+      keepRoomFor(() => (this.#root as ParentNode).querySelector?.<HTMLElement>(".wl-card, .wl-mini") ?? null),
     ];
     this.#vitals = monitor.getSnapshot();
     this.#take();
