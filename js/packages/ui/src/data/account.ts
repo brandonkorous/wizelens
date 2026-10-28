@@ -130,10 +130,23 @@ interface AuthFail {
   message?: string;
 }
 
-/** Run one Better Auth call; its error becomes an AuthError with the server's message. */
+const TAKEN = "This email already has an account. Sign in, or use another email.";
+/** Better Auth messages in the words a customer uses. Codes not listed keep the server's message. */
+const PLAIN: Record<string, string> = {
+  INVALID_TOKEN: "This link is old or was already used.",
+  TOKEN_EXPIRED: "This link has expired.",
+  INVALID_CODE: "That code is not right. Use the newest code from your app.",
+  INVALID_BACKUP_CODE: "That backup code is not right, or it was used before.",
+  INVALID_OTP: "That code is not right.",
+  INVALID_EMAIL_OR_PASSWORD: "The email or the password is not right.",
+  USER_ALREADY_EXISTS: TAKEN,
+  USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: TAKEN,
+};
+
+/** Run one Better Auth call; its error becomes an AuthError with a plain message. */
 export async function auth<T>(run: (c: AuthClient) => Promise<{ data: T; error: AuthFail | null }>): Promise<NonNullable<T>> {
   const { data, error } = await run(await authClient());
-  if (error) throw new AuthError(error.status, error.code ?? "", error.message || error.statusText || `HTTP ${error.status}`);
+  if (error) throw new AuthError(error.status, error.code ?? "", PLAIN[error.code ?? ""] ?? (error.message || error.statusText || `HTTP ${error.status}`));
   return data as NonNullable<T>;
 }
 
