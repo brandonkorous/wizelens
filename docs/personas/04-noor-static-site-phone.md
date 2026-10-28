@@ -136,7 +136,7 @@ opens the site.
 **Done when:** WizeLens refuses it or warns her in words she understands, and she
 learns which key belongs in a page. Record exactly what she saw, and where.
 
-**Outcome:** —
+**Outcome:** done after #084. With the ingest key in the tag, the site opened normally and nothing arrived. Before #084 the cloud answered the page with a bare 405 and said nothing anywhere: no line on the key, no email, an Overview that only said nothing had arrived. Now the cloud refuses it with "This is a secret key: it must never be in a page. Rotate it, and send from pages with a browser key (wl_bk_)." (in the browser console), Connect › Sending keys shows a red box and a **Seen in a page** badge on `brandonk.dev — first try`, and the team got the email "WizeLens saw the secret key brandonk.dev — first try in a public page on http://localhost:4173 and refused its data. Rotate it now, and put a browser key in pages." (in the cloud log). She rotated it from the row; the dialog said the old secret stops at once because it was in a public page, and the badge went away. What she learned, in the screen's words: secret keys never go in a page; pages use a browser key.
 
 ### Act 4 — the right key, and the first visits
 
@@ -146,7 +146,7 @@ three sizes.
 **Done when:** the cloud shows her page views by page and by device, and the
 minutes from the script tag to the first page view are recorded.
 
-**Outcome:** —
+**Outcome:** done after #085–#089. The browser key went into the tag at 21:25:42; the first visits were at about 21:26 and showed in the cloud at once: about 1 minute from the tag to the first page view. Visits: 12 pages on the phone (390 px), 8 on the tablet (768 px), 8 on the desktop, then 1 and 2 more on the phone, and after #087 the same 12 / 8 / 8 again: 59 by hand, and Overview says "59 page views arrived" (#085: before, it said nothing had arrived). Rendering lists the 13 routes (12 pages and the 404). Its first-byte card was "SSR", a server word for a static site (#086: now "Server Response"). **By device** (#087, new) says Phone 282 ms (12) · Tablet 301 ms (8) · Desktop 434 ms (8): only the 28 visits made with this branch's browser script carry a device, because the published CDN script (0.3.0-alpha.13) is older than the user agent on page views (see #087). On her phone, Rendering was drawn 1160 px wide with three of the five bottom tabs off the screen (#088); the RULE #7 check on Greta then found a service chip pushing her account button off the screen (#089). Both fixed.
 
 ### Act 5 — which page is slow on a phone?
 
@@ -256,9 +256,9 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 
 | Record | Result |
 | --- | --- |
-| Minutes from the script tag to the first page view | — |
-| Page views (hand vs. screen) | — |
-| Phone share (hand vs. screen) | — |
+| Minutes from the script tag to the first page view | about 1 (tag 21:25:42, first visits about 21:26) |
+| Page views (hand vs. screen) | 59 vs. 59 (Overview) |
+| Phone share (hand vs. screen) | 27 of 59 = 46% of all visits; the screen counts devices only on the 28 visits whose script sent the browser: 12 of 28 = 43%, and 12 by hand |
 
 ---
 
@@ -268,3 +268,6 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 - 21:03 #081 (Copy button over the code on a phone) fixed
 - about 21:04 signed up as p04.noor@haddadstudio.test on the phone; #082 (empty Overview, no way to start) fixed 21:06
 - 21:08–21:14 org and project renamed; browser and ingest keys made; #083 (no ready script tag) fixed 21:14; two spare browser keys revoked
+- 21:15 act 3: the ingest key in the tag, refused without a word; #084 fixed 21:25; key rotated
+- 21:25:42 act 4: the browser key in the tag; 29 page views from 3 sizes by 21:28; #085 (Overview said nothing arrived) fixed 21:30; #086 (SSR on a static site) fixed 21:34
+- 21:36–21:53 #087 (no split by device) fixed; 28 more visits with this branch's script at 21:44; #088 (Rendering 1160 px wide on a phone) and #089 (service chip pushes the account button off, found on P02) fixed 21:53
