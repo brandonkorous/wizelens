@@ -33,13 +33,14 @@ function accountScreen(route: Route, account: AccountState): ReactNode {
     case "forgot-password":
       return <ForgotPassword state={account} />;
     case "reset-password":
-      return <ResetPassword token={token} />;
+      return <ResetPassword key={token} token={token} />;
     case "verify-email":
-      return <VerifyEmail token={token} mail={account.mail} />;
+      // Keyed by the token: a second link pasted into the same tab starts over, not stays on the first.
+      return <VerifyEmail key={token} token={token} mail={account.mail} />;
     case "invite":
-      return <InviteScreen id={token} state={account} />;
+      return <InviteScreen key={token} id={token} state={account} />;
     case "delete-account":
-      return <DeleteAccount token={token} state={account} deleted={route.query.has("done")} />;
+      return <DeleteAccount key={token} token={token} state={account} deleted={route.query.has("done")} />;
     case "oauth":
     case "oauth-consent":
       return <OAuthScreen route={route} state={account} />;
