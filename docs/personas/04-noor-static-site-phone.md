@@ -184,7 +184,7 @@ She adds both uptime checks and the alert, then the site is stopped for 3 minute
 **Done when:** the checks go red, the alert fires, its email is in the cloud log,
 and both recover when the site is back.
 
-**Outcome:** —
+**Outcome:** done after #099–#102. On her phone she added `Home page — every 1 min` (expects `Brandon`) and `Contact page — São Paulo client's favourite`, then the home check again: it saved a twin with no word (#100: now "already checks GET http://localhost:4173/. Edit that check, or give this one another name."). The home check went Down with the site up: her name is written by JavaScript, and the reason did not say so (#099: now it does, and points at the page title); she changed the text to `BK Personal Brand` and it went Up. There was no alert for a site being down at all (#101): Uptime now has **Alert me when one fails**, which opened New alert on "Uptime checks failing" above 0 over 5 minutes; she named it `Site down → Noor's phone (email)` and ticked herself. First outage 22:59:56–23:02:48: both checks Down, incidents of 2 min, but the alert had already fired at 22:58 on the fixed "Brandon" failure (#101, second part: now each check's newest run) and its email said "2026-10-28 05:59 UTC" (#102: now her own zone, saved from her browser). Second outage 23:08:43–23:11:11: incidents at 11:08 PM for 3 min; Firing at 23:09, "Uptime checks failing is 2 (above 0)", email "When: Oct 27, 2026, 11:09 PM PDT"; Resolved at 23:12 with its email. Mail is not set up on this cloud, so both emails are in the cloud log, and the Alerts list says "email: mail is not set up (see the cloud log)".
 
 ### Act 9 — the HUD on her own phone
 
@@ -273,6 +273,7 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 - 21:55–21:58 act 5: 18 visits as a slow phone (slow 4G, CPU ×4)
 - 21:59–22:16 #090 (no reason, no device on a page's screen), #091 (Total 1.56 s for a 6.14 s load), #092 (trace 714 px wide on a phone) fixed; #089 again at 360
 - 22:18 act 6: the broken line built in; Rémy's form fails on the phone; #093–#095 fixed 22:26
+- 22:47–23:13 act 8: two checks, one alert, two outages; #099–#102 fixed and confirmed
 - 22:33–22:45 act 7: #097 and #098 fixed and confirmed (Greta re-checked for #098)
 - 22:27–22:33 build key made; plugin added; #096 fixed 22:29; source line shown 22:30; line fixed, 1.0.2 built, errors resolved
 - 21:36–21:53 #087 (no split by device) fixed; 28 more visits with this branch's script at 21:44; #088 (Rendering 1160 px wide on a phone) and #089 (service chip pushes the account button off, found on P02) fixed 21:53
