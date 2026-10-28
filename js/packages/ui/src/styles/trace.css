@@ -84,7 +84,7 @@
 .wl-insight-info, .wl-insight-warning { border-left: 3px solid var(--wl-amber); }
 .wl-insight-error { border-left: 3px solid var(--wl-error); }
 .wl-insight .wl-fbadge { margin-left: 0; }
-.wl-insight-title { font-weight: 600; white-space: nowrap; }
+.wl-insight .wl-insight-title { font-weight: 600; white-space: nowrap; }
 .wl-insight-shape { font-family: var(--wl-mono); font-size: 12px; color: var(--wl-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .wl-insight-ms { font-variant-numeric: tabular-nums; color: var(--wl-muted); }
 
