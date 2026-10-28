@@ -64,7 +64,8 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-bar-track i { display: block; height: 100%; border-radius: 4px; background: var(--wl-accent); }
 .wl-bar-row .wl-value { min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; color: var(--wl-fg-2); }
 
-.wl-table-wrap { overflow-x: auto; }
+/* Positioned, so a hidden screen-reader label in a wide table stays in this scroll box instead of stretching the page. */
+.wl-table-wrap { overflow-x: auto; position: relative; }
 .wl-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .wl-table th { padding: 10px 12px; border-bottom: 1px solid var(--wl-line); color: var(--wl-fg-2); font-weight: 550; text-align: left; white-space: nowrap; }
 .wl-table th button { border: 0; background: none; padding: 0; cursor: pointer; font-weight: 550; display: inline-flex; align-items: center; gap: 4px; }
