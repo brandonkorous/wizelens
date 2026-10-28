@@ -18,4 +18,21 @@ public class ServerErrorStatusTests
         Assert.Equal(SpanStatuses.Error, request.Status);
         Assert.Equal("HTTP 500", request.StatusMessage);
     }
+
+    [Fact]
+    public async Task An_exception_the_developer_page_caught_is_still_on_the_request()
+    {
+        // eShop: UseWizeLens early, UseDeveloperExceptionPage inside it; the page answers 500 and the exception never reaches WizeLens.
+        await using var app = await TestApp.StartAsync(a =>
+        {
+            a.UseDeveloperExceptionPage();
+            a.MapGet("/basket", string () => throw new InvalidOperationException("Sequence contains no matching element"));
+        });
+        var trace = await app.TraceAsync(await app.Client.GetAsync("/basket"));
+
+        var request = Assert.Single(trace.Spans, s => s.Category == SpanCategories.HttpServer);
+        Assert.Equal(SpanStatuses.Error, request.Status);
+        Assert.Equal("Sequence contains no matching element", request.StatusMessage);
+        Assert.Contains(request.Events, e => e.Name == "exception" && e.Attributes["exception.type"]?.ToString() == "System.InvalidOperationException");
+    }
 }

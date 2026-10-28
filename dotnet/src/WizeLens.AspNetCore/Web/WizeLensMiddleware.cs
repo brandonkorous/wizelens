@@ -95,6 +95,7 @@ internal sealed class WizeLensMiddleware(RequestDelegate next, WizeLensOptions o
         finally
         {
             if (bodies is not null) await bodies.FinishAsync(activity!, failure is null);
+            if (activity is not null && failure is null) CaughtException.Record(activity, context);
             if (activity is not null) RequestEnricher.Enrich(activity, context, failure);
             // Images, fonts, scripts and style sheets would bury the pages; a failed one stays.
             if (activity is not null && !options.TraceStaticFiles && StaticFileRequests.IsServedFile(context, failure)) activity.SetCustomProperty(WizeLensContext.IgnoreProperty, true);
