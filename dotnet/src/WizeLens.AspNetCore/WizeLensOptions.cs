@@ -73,6 +73,9 @@ public sealed class WizeLensOptions
     /// <summary>Access token for the hub. Default: the WIZELENS_HUB_TOKEN variable.</summary>
     public string? HubToken { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_HUB_TOKEN");
 
+    /// <summary>Other WizeLens services on another origin that browser calls go to, like <c>https://localhost:5099</c> for an API on its own port: their part of a call joins its trace here. Default: the comma-separated WIZELENS_TRUSTED_REMOTES variable.</summary>
+    public List<string> TrustedRemotes { get; set; } = [.. (Environment.GetEnvironmentVariable("WIZELENS_TRUSTED_REMOTES") ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
+
     /// <summary>The project this service belongs to, so a shared hub can group it. Default: the WIZELENS_PROJECT variable.</summary>
     public string? Project { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_PROJECT");
 

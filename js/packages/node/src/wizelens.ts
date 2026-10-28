@@ -22,6 +22,7 @@ import type { MetricStore } from "./metrics/store.js";
 import { SqlitePersister } from "./persist.js";
 import { createErrorMiddleware, expected, recordException, setUser, tag } from "./request-api.js";
 import { TraceStore } from "./store.js";
+import { trustedOrigins } from "./client-spans.js";
 import { hudOn, isEnabled, servesDashboard } from "./mode.js";
 import { localMapLoader } from "./sourcemaps.js";
 import { createTracing, installGlobals } from "./tracing.js";
@@ -88,7 +89,8 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const hub = connectHub(options, store, info, dashboard ? selfEndpoints : null, metrics?.store ?? null);
   const enableMcp = dashboard && !!options.enableMcp;
   const hudBundle = dashboard ? resolveHudBundle() : null;
-  const deps = { basePath, store, redactKeys, uiDir, enableMcp, mcp, info, getTrace, selfEndpoints, dashboard, sourceMaps, tags, hudBundle };
+  const trustedRemotes = trustedOrigins(options.trustedRemotes);
+  const deps = { basePath, store, redactKeys, uiDir, enableMcp, mcp, info, getTrace, selfEndpoints, trustedRemotes, dashboard, sourceMaps, tags, hudBundle };
   const handler = createHandler({ ...deps, metrics: metrics?.store ?? null });
   const capture = {
     tracer: tracing.tracer,

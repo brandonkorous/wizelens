@@ -26,6 +26,7 @@ Pass options to `builder.Services.AddWizeLens(o => { ... })`.
 | `TraceStaticFiles` | `WIZELENS_STATIC_FILES`, else `false` | Trace files served as they are (images, fonts, scripts) that succeed. A missing file is always traced. |
 | `ReportPackages` | `true`, or `false` when `WIZELENS_PACKAGES=false` | With a hub or the cloud set, send the app's NuGet package names and versions once at start, for the known-vulnerability check on the [Security](/docs/security/#known-vulnerable-packages) page. |
 | `HubUrl` / `HubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a hub or the cloud. |
+| `TrustedRemotes` | `WIZELENS_TRUSTED_REMOTES` (comma-separated) | APIs on another origin that the browser calls, like `https://localhost:5099`: their part of a call joins its trace here. |
 | `Project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
 | `Release` | `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else the entry assembly's informational version | The app's version, kept on every span (`service.version`) for release markers, version compares, and [Problems](/docs/problems/). |
 | `Sampling.Rate` | `WIZELENS_SAMPLE_RATE`, else `1` | Share of traces kept (0 to 1). |
@@ -71,6 +72,7 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | `logToConsole` | `false` | Lines you write with `wizelens.logger` also go to the console. |
 | `uiDir` | the dashboard build in the package | Serve the dashboard from another folder. |
 | `hub` / `hubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a hub or the cloud. |
+| `trustedRemotes` | `WIZELENS_TRUSTED_REMOTES` (comma-separated) | APIs on another origin that the browser calls, like `https://localhost:5099`: their part of a call joins its trace here. |
 | `project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
 | `release` | `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else `npm_package_version` | The app's version, kept on every span (`service.version`) for release markers, version compares, and [Problems](/docs/problems/). |
 | `sampling` | `{ rate: WIZELENS_SAMPLE_RATE ?? 1, keepErrors: true, keepSlowMs: 1000 }` | See [Sampling](/docs/sampling/). |

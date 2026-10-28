@@ -34,7 +34,10 @@ endpoint the page is set up with: from `wl-endpoint` (page load) or `X-WizeLens-
 span (and the logs of that trace) to `{remote}/api/client-spans` when the remote is on the page's own origin, and to its own
 endpoint otherwise. A server that gets a browser span whose `wizelens.browser.remote` is on the request's `Origin` (same
 origin, http or https) adds it to the trace's `remotes`, unless it is one of its own endpoints; a remote on any other origin
-is ignored, so a page cannot point federation at a URL of its choice.
+is ignored, so a page cannot point federation at a URL of its choice, unless the developer trusts that origin
+(`TrustedRemotes` in .NET, `trustedRemotes` in Node, or the comma-separated `WIZELENS_TRUSTED_REMOTES`; each entry counts by
+its origin), for an API on its own port. A trace page whose trace has no server span but a browser span with an http(s)
+`wizelens.browser.remote` says that the server part is there, links to it, and names the option (in-app dashboards only).
 
 gRPC uses the same key as metadata: a gRPC server sends `x-wizelens-endpoint` in its response headers (merged into any
 headers the handler sends) and in its trailers, and a gRPC client reads either one into `remotes`.
@@ -855,6 +858,7 @@ It serves the same dashboard at `/_wizelens/`, the same read API, OTLP/HTTP, and
 | Hub URL | `HubUrl` | `hub` | `WIZELENS_HUB` (for example `http://localhost:5960`) |
 | Hub token | `HubToken` | `hubToken` | `WIZELENS_HUB_TOKEN` |
 | Project | `Project` | `project` | `WIZELENS_PROJECT` |
+| Trusted remotes | `TrustedRemotes` | `trustedRemotes` | `WIZELENS_TRUSTED_REMOTES` (comma-separated, for example `https://localhost:5099`) |
 | On or off | `Enabled` | `enabled` | `WIZELENS_ENABLED` (`true`/`1`/`on`/`yes`, `false`/`0`/`off`/`no`) |
 | Dashboard | `Dashboard` | `dashboard` | `WIZELENS_DASHBOARD` (same words) |
 | HUD on served pages | `Hud` | `hud` | `WIZELENS_HUD` (same words; default on, only while the dashboard is served) |

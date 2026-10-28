@@ -365,6 +365,7 @@ Guardrails:
 | `SlowQueryMs` | `100` | Queries at or above this are slow. |
 | `CaptureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
 | `HubUrl` / `HubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a local hub. |
+| `TrustedRemotes` | `WIZELENS_TRUSTED_REMOTES` (comma-separated) | APIs on another origin that the browser calls, like `https://localhost:5099`: their part of a call joins its trace here. |
 | `Project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
 | `Sampling.Rate` | `WIZELENS_SAMPLE_RATE`, else `1` | Share of traces kept (0 to 1). Traces with an error or a slow span are kept at any rate. |
 | `Logs.Outside` / `Logs.MinLevel` / `Logs.SampleRate` | `true` / `Information` / `1` (or `WIZELENS_LOGS_OUTSIDE`, `WIZELENS_LOGS_MIN_LEVEL`, `WIZELENS_LOGS_SAMPLE_RATE`) | Log lines written outside a request (startup, jobs, timers): on or off, the lowest level, and the share below `Warning` kept. |
@@ -396,6 +397,7 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 | `slowQueryMs` / `nPlusOneThreshold` | `100` / `5` | Analysis thresholds. |
 | `captureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
 | `hub` / `hubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a local hub. |
+| `trustedRemotes` | `WIZELENS_TRUSTED_REMOTES` (comma-separated) | APIs on another origin that the browser calls, like `https://localhost:5099`: their part of a call joins its trace here. |
 | `project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
 | `sampling` | `{ rate: WIZELENS_SAMPLE_RATE ?? 1, keepErrors: true, keepSlowMs: 1000 }` | Keep a share of traces, plus every trace with an error or a slow server-side span. |
 | `logs` | `{ outside: true, minLevel: "info", sampleRate: 1 }` (or the `WIZELENS_LOGS_*` variables) | Log lines written outside a request: on or off, the lowest level, and the share below `"warn"` kept. |

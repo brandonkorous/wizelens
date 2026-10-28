@@ -5,6 +5,7 @@ import { useHost } from "../../data/host";
 import { hrefTo } from "../../routes";
 import { Empty, Panel } from "../../ui/Panel";
 import { FindingList } from "./FindingList";
+import { ServerElsewhere } from "./ServerElsewhere";
 import { ShareButton } from "./ShareButton";
 import { CompareButton, DownloadButton } from "./TraceTools";
 import { TraceHeader } from "./TraceHeader";
@@ -68,6 +69,7 @@ export function TraceBody({ trace, view, loading = false, onRefresh, shared = fa
   return (
     <div className="wl-detail">
       <TraceHeader trace={trace} timing={timing} health={health} loading={loading} onRefresh={onRefresh} backHref={shared ? null : hrefTo("traces", [], { trace: trace.traceId })} actions={shared ? actions : <>{actions}<TagThisTrace trace={trace} /></>} tags={shared ? null : <TraceTags trace={trace} />} />
+      <ServerElsewhere trace={trace} />
       <div id="wl-insights">
         <FindingList findings={findings} onSelect={onFinding} />
       </div>

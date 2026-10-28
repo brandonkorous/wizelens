@@ -91,14 +91,26 @@ export function sanitizeClientLog(raw: unknown, redactKeys: readonly string[], s
   return { traceId: l.traceId, log };
 }
 
-/** The server a browser span says answered it. Kept only on the page's own origin, so a page cannot point the federation at any URL it likes. */
-export function remoteOf(span: Span, origin: string | undefined): string | null {
+/** The server a browser span says answered it. Kept on the page's own origin or a trusted one, so a page cannot point the federation at any URL it likes. */
+export function remoteOf(span: Span, origin: string | undefined, trusted: ReadonlySet<string> = new Set()): string | null {
   const remote = span.attributes[ATTR_BROWSER_REMOTE];
   if (typeof remote !== "string" || !origin) return null;
   try {
     const url = new URL(remote);
-    return url.origin === origin && /^https?:$/.test(url.protocol) ? url.href.replace(/\/+$/, "") : null;
+    return (url.origin === origin || trusted.has(url.origin)) && /^https?:$/.test(url.protocol) ? url.href.replace(/\/+$/, "") : null;
   } catch {
     return null;
   }
+}
+
+/** The origins of the `trustedRemotes` option, else of the comma-separated WIZELENS_TRUSTED_REMOTES variable. Bad entries are left out. */
+export function trustedOrigins(list: readonly string[] | undefined, env = process.env.WIZELENS_TRUSTED_REMOTES): Set<string> {
+  const origins = (list ?? env?.split(",") ?? []).map((e) => {
+    try {
+      return new URL(e.trim()).origin;
+    } catch {
+      return "null";
+    }
+  });
+  return new Set(origins.filter((o) => o !== "null"));
 }

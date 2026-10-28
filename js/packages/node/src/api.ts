@@ -27,6 +27,8 @@ export interface ApiDeps {
   metrics?: MetricStore | null;
   /** This service's own endpoints: never a remote of its own traces. */
   selfEndpoints: ReadonlySet<string>;
+  /** Origins besides the page's whose WizeLens may hold the server part of a browser call (an API on its own port). */
+  trustedRemotes?: ReadonlySet<string>;
   /** False is send-only: only the browser span intake answers. */
   dashboard: boolean;
   /** Build folders and dev servers to read source maps from; null when off. */
@@ -71,7 +73,7 @@ async function receiveClientSpans(d: ApiDeps, req: Req, res: ServerResponse): Pr
     if (d.sourceMaps) await annotateErrorFrames(clean, d.sourceMaps);
     for (const span of clean) {
       d.store.addSpan(span);
-      const remote = remoteOf(span, origin);
+      const remote = remoteOf(span, origin, d.trustedRemotes);
       if (remote && !d.selfEndpoints.has(remote)) d.store.addRemote(span.traceId, remote);
     }
     const logs = Array.isArray(body?.logs) ? body.logs.slice(0, MAX_CLIENT_LOGS) : [];
