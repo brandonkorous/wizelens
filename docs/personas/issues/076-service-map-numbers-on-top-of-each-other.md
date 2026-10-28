@@ -33,10 +33,10 @@ line. The click area rule now wins over the red line rule, so a failing line is 
 
 ## Confirmed by
 
-2026-10-27 20:44, https://localhost:5001/_wizelens/#/services, light and dark: "112 · p95 4.0 ms" (Web → Identity)
+2026-10-27, by 20:31, https://localhost:5001/_wizelens/#/services, light and dark: "112 · p95 4.0 ms" (Web → Identity)
 and "171 · p95 5.9 ms · 2.34% failed" (PublicApi → CatalogDb) sit one above the other, both readable; "96 · p95 1.12 s ·
 4.17% failed" sits in the gap clear of the Web box; the red lines are thin and do not cross any number. Page width at
 360: 360 (the map scrolls inside its panel).
 
-RULE #7, 2026-10-27 20:47, P02 Greta's cloud Services (30 days): "74 · p95 55 ms · 9.46% failed" and "5 · p95 5.0 ms ·
+RULE #7, 2026-10-27, by 20:31, P02 Greta's cloud Services (30 days): "74 · p95 55 ms · 9.46% failed" and "5 · p95 5.0 ms ·
 40% failed" read clearly, one above the other. That map showed a different defect (#077).

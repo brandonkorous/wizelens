@@ -30,6 +30,6 @@ choice of the product: "System" is one of the three themes, not the default).
 
 ## Confirmed by
 
-2026-10-27 20:26, signed out, dark theme: Create account is dark (white text on the dark card, blue button); the
+2026-10-27, by 20:23, signed out, dark theme: Create account is dark (white text on the dark card, blue button); the
 shared link of act 7's save (`93fafe0b…`) is dark with the same trace and SQL. Light still light. RULE #7: P02 Greta's
 signed-in Overview in the cloud: dark when dark, light when light.

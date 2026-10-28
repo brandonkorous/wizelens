@@ -31,6 +31,6 @@ per such call), and its numbers sit just under that lane.
 
 ## Confirmed by
 
-2026-10-27 20:55, cloud Services as Greta, last 30 days, light and dark: Web App → kanninja-backend is a grey line
+2026-10-27, by 20:32, cloud Services as Greta, last 30 days, light and dark: Web App → kanninja-backend is a grey line
 that dips under the kanninja-frontend box and rises into kanninja-backend, labelled "373 · p95 346 ms" under the
 frontend box. The other four lines and numbers are unchanged.

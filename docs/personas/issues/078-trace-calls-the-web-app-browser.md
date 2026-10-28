@@ -31,8 +31,8 @@ The trace uses the same name as the rest of the dashboard: "Web App", or "shop (
 
 ## Confirmed by
 
-2026-10-27 21:03, cloud, Sid, trace `2d67f137…` (fetch /api/catalog-items): header Services reads "PublicApi" and "Web
+2026-10-27, by 20:36, cloud, Sid, trace `2d67f137…` (fetch /api/catalog-items): header Services reads "PublicApi" and "Web
 App"; the SQL tab chips read "PublicApi", "Web App", "PublicApi", "PublicApi".
 
-RULE #7, 2026-10-27 21:05, P02 Greta: Requests › Web App › first row › View full trace (`de171041…`): Services reads
+RULE #7, 2026-10-27, by 20:36, P02 Greta: Requests › Web App › first row › View full trace (`de171041…`): Services reads
 "Web App".

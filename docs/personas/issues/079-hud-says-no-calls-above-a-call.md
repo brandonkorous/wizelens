@@ -31,9 +31,9 @@ with no fetches ("Calls · 1").
 
 ## Confirmed by
 
-2026-10-27 21:31, `https://localhost:5001/Basket` as Zoë, 1440 light: the details read "Calls · 1", then
+2026-10-27, by 20:53, `https://localhost:5001/Basket` as Zoë, 1440 light: the details read "Calls · 1", then
 "GET /Basket/{handler?} (page) · 3 SQL" 13 ms and "First paint" 119 ms; the card still reads "0 Fetch". 360 dark: the
 same, "Calls · 1" over the page row; the panel fits the screen (the page's extra 61 px is eShop's own basket table).
 
-RULE #7, 2026-10-27 21:36, P01's board in kanNINJA (packages refreshed): "Calls · 6" over six call rows and one
+RULE #7, 2026-10-27, by 20:53, P01's board in kanNINJA (packages refreshed): "Calls · 6" over six call rows and one
 "Route render" row.
