@@ -7,6 +7,7 @@
   .wl-stat-foot { grid-column: 1; }
   .wl-stat-label { font-size: 13px; }
   .wl-stat-value { font-size: 22px; }
+  .wl-delta-none { display: none; }
   .wl-filters { gap: 10px; padding: 12px; }
   .wl-filters-toggle { display: inline-flex; flex: none; }
   .wl-filters:not(.wl-filters-open) > :is(.wl-select, .wl-check, .wl-btn:not(.wl-filters-toggle)) { display: none; }
