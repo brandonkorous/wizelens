@@ -5,6 +5,7 @@ using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using WizeLens.Capture;
+using WizeLens.Web;
 
 namespace WizeLens.Data;
 
@@ -84,7 +85,7 @@ public static partial class DbActivity
 
     /// <summary>The parameters by name; a value is redacted by its name or by the column the command text binds it to.</summary>
     internal static string ParametersJson(DbCommand command) => JsonSerializer.Serialize(SqlParams.Redact(
-        WizeLensRuntime.Redactor, command.CommandText ?? "", command.Parameters.Cast<DbParameter>().Select(p => ((string?)p.ParameterName, p.Value))));
+        WizeLensRuntime.Redactor, command.CommandText ?? "", command.Parameters.Cast<DbParameter>().Select(p => ((string?)p.ParameterName, p.Value))), WizeLensJson.Text);
 
     internal static string? OperationName(string sql)
     {
