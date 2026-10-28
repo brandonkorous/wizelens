@@ -87,6 +87,11 @@ except owners is signed out at once; after that a password, a passkey, a passwor
 refused for them. Owners keep their password and two-step sign-in, to get in when the provider is down. Someone who made a
 password account before, and never confirmed its email, is linked on their first single sign-on, and that password ends.
 
+With OpenID Connect, the cloud renews each person's single sign-on every 5 minutes. When the provider refuses (you turned
+the person off, or their provider session ended), all their WizeLens sessions and their connected AI apps in your
+organization end, and the audit log says so. A provider that does not answer signs nobody out. SAML has no renewal: use
+SCIM, or remove the person under **People & access → Members**.
+
 Under **People & access → User sync (SCIM)**, an admin makes a token and pastes it with the SCIM base URL
 (`<public-url>/_wizelens/api/auth/scim/v2`) into Okta, Entra ID, or another identity provider. People it creates join as
 members, and people it deactivates leave the organization (owners stay). Admins set roles in WizeLens. On the hosted

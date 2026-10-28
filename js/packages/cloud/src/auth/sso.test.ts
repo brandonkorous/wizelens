@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Cloud } from "../server.js";
 import { Client, invite, joinWithInvite, type Me, PASSWORD, setupOwner, startCloud } from "../test/cloud.js";
 import { type IdpUser, startIdp } from "../test/idp.js";
+import { recheckSso } from "./sso-recheck.js";
 
 let cloud: Cloud;
 let idp: Awaited<ReturnType<typeof startIdp>> | undefined;
@@ -142,5 +143,21 @@ describe("requiring single sign-on for a domain", () => {
   it("needs the domain proven first", async () => {
     const { owner, orgId } = await withIdp({ sub: "u1", email: "sam@acme.io", name: "Sam" }, false);
     expect((await owner.call("PATCH", `api/orgs/${orgId}/sso/acme`, { required: true })).status).toBe(409);
+  });
+});
+
+describe("a person their identity provider turned off", () => {
+  it("is signed out at the next check, and kept signed in while the provider is down", async () => {
+    const { url, orgId } = await withIdp({ sub: "u-9", email: "vic@acme.io", name: "Vic" });
+    const { c } = await ssoSignIn(url, "vic@acme.io");
+    const signedIn = async () => (await c.call<Me>("GET", "api/me")).body.signedIn;
+    expect([await recheckSso(cloud.app), await signedIn()]).toEqual([0, true]);
+    idp!.setMode("down");
+    expect([await recheckSso(cloud.app), await signedIn()]).toEqual([0, true]);
+    idp!.setMode("disabled");
+    expect([await recheckSso(cloud.app), await signedIn()]).toEqual([1, false]);
+    expect(await recheckSso(cloud.app)).toBe(0);
+    const [line] = await cloud.app.db.query<{ actor: string; detail: string }>("SELECT actor, detail FROM audit WHERE org_id = $1 AND action = 'sso.signed_out'", [orgId]);
+    expect([line?.actor, JSON.parse(line?.detail ?? "{}").sessions]).toEqual(["system", 1]);
   });
 });

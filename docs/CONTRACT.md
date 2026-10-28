@@ -1066,6 +1066,10 @@ retention, and the audit log.
   at the domain whose email was never confirmed is linked on its SSO sign-in (Better Auth `resolveUser`), marked confirmed,
   and loses its password and passkeys (owners keep theirs). Audit `sso.require`. `--dns-servers` points the domain proof at
   private DNS.
+  **Renewal** (`auth/sso-recheck.ts`, job every 5 minutes): each OIDC account with a live session renews its refresh token at
+  the provider's token endpoint (an `--sso-origins` origin; client_secret_basic or _post). `400 invalid_grant` ends all the
+  person's sessions, their OAuth grants in the provider's organization, and the stored tokens (audit `sso.signed_out`,
+  actor `system`); any other answer changes nothing. SAML sign-ins are not renewed.
 - **Leaving**: an account cannot be deleted while it is the last owner of an organization with other members. Organizations it is
   alone in are deleted with their data. An owner deletes an organization with `DELETE api/orgs/{org}` and the password.
 - **Keys** (only their SHA-256 hash is stored; the prefix tells what they are):

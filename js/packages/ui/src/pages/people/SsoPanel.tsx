@@ -112,7 +112,7 @@ export function SsoSection({ orgId }: { orgId: string }) {
   const add = gate.allowed && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setAdding(true)}><Plus aria-hidden="true" /> Add provider</button>;
   return (
     <>
-      <SectionHead title="Single sign-on" description="People with an email at a proven domain sign in with your identity provider (OpenID Connect or SAML). New people join as members." action={add} />
+      <SectionHead title="Single sign-on" description="People with an email at a proven domain sign in with your identity provider (OpenID Connect or SAML). New people join as members. With OpenID Connect, someone you turn off there is signed out here within 5 minutes." action={add} />
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
       {!gate.allowed && <PlanPrompt feature="sso" plan={gate.plan} />}
       {adding && <SsoForm orgId={orgId} reload={reload} onClose={() => setAdding(false)} />}
