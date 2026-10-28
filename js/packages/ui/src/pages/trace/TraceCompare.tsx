@@ -27,7 +27,7 @@ function linesOf(a: Trace, b: Trace): Line[] {
     { label: "Render", a: ta.renderMs ?? 0, b: tb.renderMs ?? 0, ms: true },
     { label: "Spans", a: a.spanCount, b: b.spanCount, ms: false },
     { label: "Queries", a: a.dbCount, b: b.dbCount, ms: false },
-    { label: "HTTP calls", a: a.httpClientCount, b: b.httpClientCount, ms: false },
+    { label: "HTTP calls out", a: a.httpClientCount, b: b.httpClientCount, ms: false },
     { label: "Errors", a: a.errorCount, b: b.errorCount, ms: false },
   ];
 }

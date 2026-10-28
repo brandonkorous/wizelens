@@ -24,7 +24,7 @@ function Stats({ trace, timing }: { trace: Trace; timing: Timing }) {
     ["Started", fmtClock(trace.startMs)],
     ["Spans", String(trace.spanCount)],
     ["Queries", String(trace.dbCount)],
-    ["HTTP calls", String(trace.httpClientCount)],
+    ["HTTP calls out", String(trace.httpClientCount)],
   ];
   return (
     <dl className="wl-stats">
