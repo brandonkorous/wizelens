@@ -1,5 +1,5 @@
 import { type HubService, mergeTraces, type ServiceInfo, type Trace } from "@wizeworks/lens-core";
-import { ApiError } from "./api";
+import { ApiError, noteStatus } from "./api";
 import { getScope, type Scope } from "./prefs";
 import { projectQuery } from "./projectScope";
 
@@ -28,6 +28,7 @@ export const normalizeEndpoint = (url: string): string => url.replace(/[?#].*$/,
 
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+  noteStatus(res.status);
   if (!res.ok) throw new ApiError(res.status, res.status === 404 ? "not-found" : res.status === 401 ? "sign-in needed" : `HTTP ${res.status}`);
   return (await res.json()) as T;
 }

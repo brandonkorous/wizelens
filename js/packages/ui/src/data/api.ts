@@ -10,7 +10,14 @@ export class ApiError extends Error {
 
 const TIMEOUT_MS = 20_000;
 
+let refused: () => void = () => undefined;
+/** Called when the server says "sign in" (401): the account code checks who is signed in, so a lost session shows the sign-in form. */
+export const onRefused = (fn: () => void): void => void (refused = fn);
+/** Note an answer's status; every dashboard call passes through here. */
+export const noteStatus = (status: number): void => void (status === 401 && refused());
+
 async function parse<T>(res: Response): Promise<T> {
+  noteStatus(res.status);
   const text = await res.text();
   const body = text ? (JSON.parse(text) as unknown) : undefined;
   if (!res.ok) throw new ApiError(res.status, (body as { error?: string } | undefined)?.error ?? `HTTP ${res.status}`);

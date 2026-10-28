@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import type { OrgRole } from "@wizeworks/lens-core";
-import { apiFetch, apiSend } from "./api";
+import { apiFetch, apiSend, onRefused } from "./api";
 import type { AuthClient } from "./auth-client";
 import { getScope, setOrgScope, setProjectScope } from "./prefs";
 import { ALL_PROJECTS } from "./projectScope";
@@ -91,6 +91,9 @@ export async function loadAccount(): Promise<AccountState> {
   if (state.signedIn) provider.reloadInfo();
   return state;
 }
+
+// A session that ends while a page is open: the first refused call reloads who is signed in, and the sign-in form shows.
+onRefused(() => void (state?.signedIn && loadAccount()));
 
 /** A new organization, owned by you, with a first project. The dashboard switches to it. */
 export async function createOrg(name: string): Promise<void> {
