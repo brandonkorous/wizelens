@@ -130,6 +130,7 @@
 .wl-k-http-server { background: var(--wl-k-server); } .wl-k-internal { background: var(--wl-k-internal); } .wl-k-db { background: var(--wl-k-db); }
 .wl-k-messaging { background: var(--wl-k-messaging); } .wl-k-http-client { background: var(--wl-k-client); } .wl-k-browser { background: var(--wl-k-browser); } .wl-k-render { background: var(--wl-k-render); }
 .wl-wf-dur { position: absolute; top: 5px; font-size: 10.5px; color: var(--wl-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.wl-wf-dur-in { background: var(--wl-surface); color: var(--wl-fg); padding: 0 5px; border-radius: 4px; box-shadow: 0 0 0 1px var(--wl-line); }
 
 /* Span panel */
 .wl-span-panel { border-left: 1px solid var(--wl-line); padding: 12px 14px 18px; background: var(--wl-surface); min-width: 0; overflow-wrap: anywhere; max-height: 78vh; overflow-y: auto; position: sticky; top: 52px; }

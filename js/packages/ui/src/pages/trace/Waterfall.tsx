@@ -96,7 +96,7 @@ function WaterfallRow(p: RowProps) {
           <span key={t} className="wl-wf-grid" style={{ left: `${t * 100}%` }} />
         ))}
         <span className={`wl-wf-bar wl-k-${span.category.replace(".", "-")}`} style={{ left: `${left}%`, width: `${width}%` }} />
-        <span className="wl-wf-dur" style={left + width > 82 ? { right: `${100 - left + 0.5}%` } : { left: `calc(${left + width}% + 6px)` }}>
+        <span className={`wl-wf-dur${durPlace(left, width) === "in" ? " wl-wf-dur-in" : ""}`} style={durStyle(left, width)}>
           {fmtMs(span.durationMs)}
           {hasChildren && p.selfMs < span.durationMs - 0.5 && <span className="wl-wf-self"> · self {fmtMs(p.selfMs)}</span>}
         </span>
@@ -104,6 +104,11 @@ function WaterfallRow(p: RowProps) {
     </div>
   );
 }
+
+// The duration goes after the bar, else before it, else (a bar from start to end) on its end, so it never runs into the name column.
+const durPlace = (left: number, width: number): "after" | "before" | "in" => (left + width <= 82 ? "after" : left >= 18 ? "before" : "in");
+const durStyle = (left: number, width: number) =>
+  ({ after: { left: `calc(${left + width}% + 6px)` }, before: { right: `${100 - left + 0.5}%` }, in: { right: `calc(${100 - left - width}% + 4px)` } })[durPlace(left, width)];
 
 export interface WaterfallProps {
   trace: Trace;
