@@ -1,6 +1,7 @@
 import {
   ATTR_BROWSER_REMOTE,
   type Attributes,
+  browserTypeOf,
   type LogLevel,
   type LogRecord,
   redactAttributes,
@@ -72,6 +73,13 @@ export function sanitizeClientSpan(raw: unknown, redactKeys: readonly string[], 
     attributes: toAttributes(s.attributes, redactKeys),
     events: toEvents(s.events, redactKeys, shiftMs),
   };
+}
+
+/** A page view or browser error with no browser named: the visitor's own request names it (older page scripts send none). */
+export function withVisitorAgent(span: Span, userAgent: string | undefined): Span {
+  const type = browserTypeOf(span);
+  if (!userAgent || (type !== "pageview" && type !== "error") || typeof span.attributes["user_agent.original"] === "string") return span;
+  return { ...span, attributes: { ...span.attributes, "user_agent.original": userAgent.slice(0, 500) } };
 }
 
 /** Validate and redact one browser log line, moved by `shiftMs`. Returns null when it has no valid trace. */

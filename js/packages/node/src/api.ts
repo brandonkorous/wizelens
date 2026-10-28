@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { annotateErrorFrames, answerResolve, HEADER_HOP, type MapLoader, type ServiceInfo, SOURCEMAPS_RESOLVE_PATH, type Span, type TagRule, type Trace, type TraceSummary } from "@wizeworks/lens-core";
-import { browserClockOffset, remoteOf, sanitizeClientLog, sanitizeClientSpan } from "./client-spans.js";
+import { browserClockOffset, remoteOf, sanitizeClientLog, sanitizeClientSpan, withVisitorAgent } from "./client-spans.js";
 import { isHudScript, serveHudScript } from "./hud-bundle.js";
 import { firstHeader, readJson, sendJson, setCors } from "./http-util.js";
 import { handleMcp, type McpDataSource } from "./mcp.js";
@@ -68,7 +68,8 @@ async function receiveClientSpans(d: ApiDeps, req: Req, res: ServerResponse): Pr
     const shiftMs = browserClockOffset(body?.sentAt, Date.now());
     const spans = Array.isArray(body?.spans) ? body.spans.slice(0, MAX_CLIENT_SPANS) : [];
     const origin = firstHeader(req.headers.origin);
-    const clean = spans.map((raw) => sanitizeClientSpan(raw, d.redactKeys, shiftMs)).filter((s): s is Span => s !== null);
+    const agent = firstHeader(req.headers["user-agent"]);
+    const clean = spans.map((raw) => sanitizeClientSpan(raw, d.redactKeys, shiftMs)).filter((s): s is Span => s !== null).map((s) => withVisitorAgent(s, agent));
     // Browser errors group by their original frame: add it now, while the maps are at hand.
     if (d.sourceMaps) await annotateErrorFrames(clean, d.sourceMaps);
     for (const span of clean) {

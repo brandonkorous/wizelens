@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { ATTR_BROWSER_APP } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_APP, ATTR_BROWSER_TYPE } from "@wizeworks/lens-core";
 import { originAllowed, originOf, originsFor } from "./repo/key-origins.js";
 import { browserWrite } from "./routes/browser.js";
 import type { Cloud } from "./server.js";
@@ -134,5 +134,14 @@ describe("the browser app a key's data shows under", () => {
     const w = browserWrite({ spans: [pageView(), named], logs: [{ traceId: T1, timeMs: Date.now(), level: "info", category: "console", message: "hi", attributes: {} }] }, [], Date.now(), "site");
     expect(w.spans.map((s) => s.attributes[ATTR_BROWSER_APP])).toEqual(["site", "shop-web"]);
     expect(w.logs.map((l) => l.log.attributes[ATTR_BROWSER_APP])).toEqual(["site"]);
+  });
+
+  it("names the visitor's browser from the request when an older page script does not", () => {
+    const PHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) Mobile/15E148";
+    const view = pageView({ attributes: { [ATTR_BROWSER_TYPE]: "pageview" } });
+    const own = pageView({ spanId: "4".repeat(16), attributes: { [ATTR_BROWSER_TYPE]: "pageview", "user_agent.original": "Firefox" } });
+    const fetchSpan = pageView({ spanId: "5".repeat(16), attributes: { [ATTR_BROWSER_TYPE]: "fetch" } });
+    const w = browserWrite({ spans: [view, own, fetchSpan] }, [], Date.now(), "site", PHONE);
+    expect(w.spans.map((s) => s.attributes["user_agent.original"])).toEqual([PHONE, "Firefox", undefined]);
   });
 });

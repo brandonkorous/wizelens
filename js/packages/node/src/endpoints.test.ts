@@ -28,10 +28,11 @@ afterAll(async () => {
   await remote.close();
 });
 
+const PHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) Mobile/15E148";
 const postSpans = (spans: unknown[]) =>
   fetch(`${app.base}/_wizelens/api/client-spans`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "User-Agent": PHONE },
     body: JSON.stringify({ spans }),
   });
 
@@ -76,11 +77,12 @@ async function recordsExceptions(): Promise<void> {
 
 async function acceptsBrowserSpans(): Promise<void> {
   const traceId = newTraceId();
-  const span = { ...fakeSpan(traceId, Date.now(), { token: "t" }), service: "browser", category: "browser" };
+  const span = { ...fakeSpan(traceId, Date.now(), { token: "t", "wizelens.browser.type": "pageview" }), service: "browser", category: "browser" };
   expect((await postSpans([span, { bad: true }])).status).toBe(204);
   const t = await getJson<Trace>(`${app.base}/_wizelens/api/traces/${traceId}`);
   expect(t.spans).toHaveLength(1);
   expect(t.spans[0]!.attributes.token).toBe("[redacted]");
+  expect(t.spans[0]!.attributes["user_agent.original"]).toBe(PHONE);
 }
 
 async function servesTheRest(): Promise<void> {
