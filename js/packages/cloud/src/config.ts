@@ -56,6 +56,8 @@ export interface CloudOptions extends BillingOptions {
   checkPwnedPasswords?: boolean;
   /** Identity provider origins for OIDC single sign-on, for example https://acme.okta.com. The cloud fetches OIDC settings only from these. */
   ssoOrigins?: string[];
+  /** DNS servers for the single sign-on domain proof (TXT records), when the domain is on private DNS. Default: the system's. */
+  dnsServers?: string[];
   redactKeys?: string[];
   /** A database call this slow or slower counts as slow, in ms. Default 100. Projects can set their own. */
   slowQueryMs?: number;
@@ -70,7 +72,7 @@ export interface CloudOptions extends BillingOptions {
   jobs?: boolean;
 }
 
-type Optional = "stripeSecretKey" | "stripeWebhookSecret" | "stripePrices" | "stripeClient" | "uiDir" | "clickhouseUrl" | "publicUrl" | "mcpUrl" | "smtpUrl" | "resendApiKey" | "resendWebhookSecret" | "mailReplyTo" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords" | "pagerDutyUrl";
+type Optional = "stripeSecretKey" | "stripeWebhookSecret" | "stripePrices" | "stripeClient" | "uiDir" | "clickhouseUrl" | "publicUrl" | "mcpUrl" | "smtpUrl" | "resendApiKey" | "resendWebhookSecret" | "mailReplyTo" | "sendMail" | "authSecret" | "setupToken" | "checkPwnedPasswords" | "pagerDutyUrl" | "dnsServers";
 export type CloudConfig = Required<Omit<CloudOptions, Optional>> & Pick<CloudOptions, Optional> & { secureCookies: boolean; billing: BillingConfig };
 
 /** Mail links must use the public address: a link built from the request's Host header could point anywhere. */

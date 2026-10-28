@@ -44,6 +44,7 @@ const ACTIONS: Record<string, string> = {
   "sso.update": "Changed an identity provider",
   "sso.delete": "Removed an identity provider",
   "sso.verify": "Proved a single sign-on domain",
+  "sso.require": "Changed who may use a password",
   "mcp.call": "AI agent read data",
   "app.connect": "Connected an app",
   "app.disconnect": "Disconnected an app",
@@ -130,6 +131,7 @@ export function detailText(d: Record<string, unknown>, names: Names): string {
   if (typeof d.from === "string" && typeof d.to === "string") parts.push(`was ${d.from}`);
   if (Array.isArray(d.projectIds)) parts.push(`for ${d.projectIds.map((id) => project(id, names)).join(", ")}`);
   if (typeof d.providerId === "string") parts.push(d.providerId);
+  if (typeof d.required === "boolean") parts.push(d.required ? `single sign-on required for ${String(d.domain)}, ${Number(d.signedOut) || 0} signed out` : `passwords allowed again for ${String(d.domain)}`);
   if (typeof d.retentionDays === "number") parts.push(`keep data ${d.retentionDays} days`);
   if (typeof d.logRetentionDays === "number") parts.push(`keep logs ${d.logRetentionDays} days`);
   if (d.logRetentionDays === null) parts.push("logs follow the organization");

@@ -82,6 +82,11 @@ Sign-in works once you prove the email domain with a DNS TXT record; new people 
 confirmed email, and the sign-in page shows **Sign in with SSO**. OIDC needs the provider's origin in `--sso-origins`, so
 the cloud fetches from no other place. SAML needs none.
 
+Tick **Require single sign-on** on a proven provider to make it the only way in for its domain. Everyone at the domain
+except owners is signed out at once; after that a password, a passkey, a password reset, or a new password account is
+refused for them. Owners keep their password and two-step sign-in, to get in when the provider is down. Someone who made a
+password account before, and never confirmed its email, is linked on their first single sign-on, and that password ends.
+
 Under **People & access → User sync (SCIM)**, an admin makes a token and pastes it with the SCIM base URL
 (`<public-url>/_wizelens/api/auth/scim/v2`) into Okta, Entra ID, or another identity provider. People it creates join as
 members, and people it deactivates leave the organization (owners stay). Admins set roles in WizeLens. On the hosted
@@ -312,6 +317,7 @@ keys. Every organization is unlimited, and `--retention-days` sets history as be
 | `--setup-token <text>` | `WIZELENS_CLOUD_SETUP_TOKEN` | random: the first account's token, printed at start while no account exists |
 | `--check-pwned-passwords`, `--no-check-pwned-passwords` | `WIZELENS_CLOUD_CHECK_PWNED=1\|0` | on with Postgres, off with PGlite: refuse breached passwords |
 | `--sso-origins <list>` | `WIZELENS_CLOUD_SSO_ORIGINS` | none: OIDC provider origins, comma separated, such as `https://acme.okta.com`. SAML needs none |
+| `--dns-servers <list>` | `WIZELENS_CLOUD_DNS_SERVERS` | the system's: DNS servers for the single sign-on domain proof, such as `10.0.0.2` or `127.0.0.1:5354`, when the domain is on private DNS |
 | `--stripe-secret-key <key>` | `WIZELENS_CLOUD_STRIPE_SECRET_KEY` | none: billing is off and every organization is unlimited. With it (`sk_…` or `rk_…`), plans and limits apply and new organizations start on Free |
 | `--stripe-webhook-secret <s>` | `WIZELENS_CLOUD_STRIPE_WEBHOOK_SECRET` | none; required with a Stripe key. The webhook goes to `<public-url>/_wizelens/api/auth/stripe/webhook` |
 | `--stripe-prices <json>` | `WIZELENS_CLOUD_STRIPE_PRICES` | none; required with a Stripe key. The price and meter ids `stripe-setup` prints |

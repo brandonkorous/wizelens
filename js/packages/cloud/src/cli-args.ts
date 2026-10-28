@@ -51,6 +51,9 @@ Usage: wizelens-cloud [options]
   --sso-origins <list>      Identity provider origins for OIDC single   (WIZELENS_CLOUD_SSO_ORIGINS)
                             sign-on, comma separated, for example
                             https://acme.okta.com. SAML needs none.
+  --dns-servers <list>      DNS servers for the single sign-on domain   (WIZELENS_CLOUD_DNS_SERVERS)
+                            proof, such as 10.0.0.2 or 10.0.0.2:5353,
+                            when your domain is on private DNS.
   --stripe-secret-key <key> Turns billing on (sk_... or rk_...).       (WIZELENS_CLOUD_STRIPE_SECRET_KEY)
                             Without it, every organization is unlimited.
   --stripe-webhook-secret <s>  The Stripe webhook's whsec_ secret.     (WIZELENS_CLOUD_STRIPE_WEBHOOK_SECRET)
@@ -92,6 +95,7 @@ const OPTIONS = {
   "check-pwned-passwords": { type: "boolean" },
   "no-check-pwned-passwords": { type: "boolean" },
   "sso-origins": { type: "string" },
+  "dns-servers": { type: "string" },
   "stripe-secret-key": { type: "string" },
   "stripe-webhook-secret": { type: "string" },
   "stripe-prices": { type: "string" },
@@ -130,6 +134,7 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CloudOp
     setupToken: text(a["setup-token"], env.WIZELENS_CLOUD_SETUP_TOKEN),
     checkPwnedPasswords: pwnedOf(a, env),
     ssoOrigins: list(text(a["sso-origins"], env.WIZELENS_CLOUD_SSO_ORIGINS)),
+    dnsServers: list(text(a["dns-servers"], env.WIZELENS_CLOUD_DNS_SERVERS)),
     stripeSecretKey: text(a["stripe-secret-key"], env.WIZELENS_CLOUD_STRIPE_SECRET_KEY),
     stripeWebhookSecret: text(a["stripe-webhook-secret"], env.WIZELENS_CLOUD_STRIPE_WEBHOOK_SECRET),
     stripePrices: text(a["stripe-prices"], env.WIZELENS_CLOUD_STRIPE_PRICES),

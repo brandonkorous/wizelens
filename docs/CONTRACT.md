@@ -1060,6 +1060,12 @@ retention, and the audit log.
   fetches OIDC settings, tokens, and keys only from origins in `--sso-origins` (SAML needs none). Removing a provider removes its
   sign-ins (trigger `sso_providers_accounts_go`). Changes are in the audit log (`sso.create`, `sso.update`, `sso.delete`,
   `sso.verify`), without secrets. SSO sign-in skips our two-step codes: the identity provider does that part.
+  **Require single sign-on** (`PATCH api/orgs/:org/sso/:provider {required}`, managers, Business, proven domain only; column
+  `sso_providers.sso_required`): non-owners at the domain lose their sessions, and password sign-in, sign-up, password reset,
+  and any session made outside the provider's routes are refused (`SSO_REQUIRED`); owners keep their password. An account
+  at the domain whose email was never confirmed is linked on its SSO sign-in (Better Auth `resolveUser`), marked confirmed,
+  and loses its password and passkeys (owners keep theirs). Audit `sso.require`. `--dns-servers` points the domain proof at
+  private DNS.
 - **Leaving**: an account cannot be deleted while it is the last owner of an organization with other members. Organizations it is
   alone in are deleted with their data. An owner deletes an organization with `DELETE api/orgs/{org}` and the password.
 - **Keys** (only their SHA-256 hash is stored; the prefix tells what they are):

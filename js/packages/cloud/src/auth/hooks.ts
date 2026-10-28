@@ -7,6 +7,7 @@ import type { AuthDeps } from "./deps.js";
 import { emailChangeOf } from "./email-token.js";
 import { isLegacyHash } from "./password.js";
 import { rememberPasskey, securityAfter } from "./security-notices.js";
+import { guardPasswordWays, noteRequired } from "./sso-required.js";
 import { pruneProjectRoles } from "../repo/project-roles.js";
 
 type Mw = Parameters<typeof createAuthMiddleware>[0];
@@ -139,6 +140,8 @@ export function authHooks(deps: AuthDeps): BetterAuthOptions["hooks"] {
   return {
     before: createAuthMiddleware(async (ctx) => {
       await billingGuard(deps, ctx);
+      await guardPasswordWays(deps.db, ctx.path, (ctx.body ?? {}) as Record<string, unknown>);
+      await noteRequired(deps.db, ctx.path, ctx.request);
       return guard(ctx);
     }),
     after: createAuthMiddleware(async (ctx) => {

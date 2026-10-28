@@ -14,3 +14,8 @@ BEGIN
 END $$;
 CREATE TRIGGER sso_providers_accounts_go AFTER DELETE ON sso_providers FOR EACH ROW EXECUTE FUNCTION wl_sso_accounts_go();
 `;
+
+// "Require single sign-on": people at the provider's domain sign in only through it (auth/sso-required.ts).
+export const SSO_REQUIRED_MIGRATION = `
+ALTER TABLE sso_providers ADD COLUMN sso_required BOOLEAN NOT NULL DEFAULT FALSE;
+`;

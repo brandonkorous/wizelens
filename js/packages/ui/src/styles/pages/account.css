@@ -31,6 +31,8 @@
 .wl-sso-head .wl-link-btn { margin-left: auto; }
 .wl-sso-proof { display: grid; gap: 8px; }
 .wl-sso-proof p { margin: 0; }
+.wl-sso-required { display: grid; gap: 6px; border-top: 1px solid var(--wl-line); padding-top: 10px; }
+.wl-sso-required p { margin: 0; }
 
 .wl-panel-danger { border-color: var(--wl-error); }
 .wl-panel-danger .wl-panel-head h2 { color: var(--wl-error); }

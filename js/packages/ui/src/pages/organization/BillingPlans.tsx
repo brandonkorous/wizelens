@@ -7,7 +7,7 @@ import { Panel } from "../../ui/Panel";
 const PERKS: Record<string, string[]> = {
   free: ["Unlimited users", "Alerts, MCP, and share links", "Stops at the included data"],
   team: ["Everything in Free", "Extra data billed per GB, no hard stop", "Optional spend cap"],
-  business: ["Everything in Team", "SAML and OIDC single sign-on", "SCIM provisioning and audit log export"],
+  business: ["Everything in Team", "SAML and OIDC single sign-on, required if you choose", "SCIM provisioning and audit log export"],
   enterprise: ["Data, retention, and SLA set with us", "Data residency and BAA", "Up to 400 days of data"],
 };
 

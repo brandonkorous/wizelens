@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { setServers } from "node:dns";
+import { syncBuiltinESMExports } from "node:module";
 import { optionsFromArgs, USAGE } from "./cli-args.js";
 import { type Cloud, CLOUD_VERSION, createCloud } from "./server.js";
 import { copyMain } from "./copy-cli.js";
@@ -22,6 +24,8 @@ async function main(): Promise<void> {
   if (process.argv[2] === "stripe-setup") return stripeSetupMain(process.argv.slice(3), process.env);
   const options = optionsFromArgs(process.argv.slice(2), process.env);
   if (options === "help") return void process.stdout.write(USAGE);
+  // setServers swaps node:dns's resolver; the sync passes it to code that already imported node:dns/promises (Better Auth's domain proof).
+  if (options.dnsServers?.length) (setServers(options.dnsServers), syncBuiltinESMExports());
   const cloud = await createCloud(options);
   const url = await cloud.listen();
   const db = cloud.app.db.kind === "postgres" ? "Postgres" : `PGlite (${cloud.app.config.database})`;

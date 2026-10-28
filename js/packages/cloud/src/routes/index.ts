@@ -24,6 +24,7 @@ import { orgRoutes } from "./orgs.js";
 import { projectImportRoutes } from "./project-import.js";
 import { projectRoutes } from "./projects.js";
 import { scimRoutes } from "./scim.js";
+import { ssoRoutes } from "./sso.js";
 import { searchRoutes } from "./search.js";
 import { statusRoutes } from "./status.js";
 import { serviceGapRoutes } from "./service-gaps.js";
@@ -64,5 +65,6 @@ export function allRoutes(): Router<Ctx> {
   sourceMapRoutes(r);
   billingRoutes(r);
   scimRoutes(r);
+  ssoRoutes(r);
   return r;
 }

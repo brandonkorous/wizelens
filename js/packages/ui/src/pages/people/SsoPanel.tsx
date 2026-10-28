@@ -9,6 +9,7 @@ import { Empty, Panel } from "../../ui/Panel";
 import { SectionHead } from "../../ui/Sections";
 import { PlanPrompt, useFeature } from "../organization/PlanPrompt";
 import { SsoForm } from "./SsoForm";
+import { RequireSso, useRequired } from "./SsoRequired";
 
 /** One provider as Better Auth lists it (secrets never come back). */
 interface Provider {
@@ -78,7 +79,7 @@ function DomainProof({ p, reload }: { p: Provider; reload: () => void }) {
   );
 }
 
-function ProviderItem({ p, reload }: { p: Provider; reload: () => void }) {
+function ProviderItem({ p, reload, required }: { p: Provider; reload: () => void; required: { on: boolean; reload: () => void } }) {
   const [error, setError] = useState<string | null>(null);
   const { dialog, confirm } = useAsk();
   const remove = async () =>
@@ -95,6 +96,7 @@ function ProviderItem({ p, reload }: { p: Provider; reload: () => void }) {
         </div>
         <SetupUrls p={p} />
         <DomainProof p={p} reload={reload} />
+        {p.domainVerified && p.organizationId && <RequireSso orgId={p.organizationId} providerId={p.providerId} domain={p.domain} required={required.on} reload={required.reload} />}
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
       </div>
     </Panel>
@@ -104,6 +106,7 @@ function ProviderItem({ p, reload }: { p: Provider; reload: () => void }) {
 /** Owners and admins: single sign-on for this organization. New people from the domain join as members. */
 export function SsoSection({ orgId }: { orgId: string }) {
   const { list, error, reload } = useProviders(orgId);
+  const req = useRequired(orgId);
   const [adding, setAdding] = useState(false);
   const gate = useFeature(orgId, "sso");
   const add = gate.allowed && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setAdding(true)}><Plus aria-hidden="true" /> Add provider</button>;
@@ -114,7 +117,7 @@ export function SsoSection({ orgId }: { orgId: string }) {
       {!gate.allowed && <PlanPrompt feature="sso" plan={gate.plan} />}
       {adding && <SsoForm orgId={orgId} reload={reload} onClose={() => setAdding(false)} />}
       {gate.allowed && list && list.length === 0 && <Panel><Empty title="No identity provider yet">Add Okta, Entra ID, Google Workspace, Auth0, Keycloak, or any SAML 2.0 provider.</Empty></Panel>}
-      {list?.map((p) => <ProviderItem key={p.providerId} p={p} reload={reload} />)}
+      {list?.map((p) => <ProviderItem key={p.providerId} p={p} reload={reload} required={{ on: req.isRequired(p.providerId), reload: req.reload }} />)}
     </>
   );
 }

@@ -3,6 +3,7 @@ import type { BetterAuthPlugin } from "better-auth";
 import { audit } from "../repo/audit.js";
 import type { AuthDeps } from "./deps.js";
 import { ssoSchema } from "./schema-names.js";
+import { linkAtRequiredDomain } from "./sso-required.js";
 
 /** The DNS record that proves a domain: `_wizelens-sso-<providerId>.<domain>` TXT `<token>`. */
 export const SSO_TOKEN_PREFIX = "wizelens-sso";
@@ -37,6 +38,7 @@ export function ssoPlugin(deps: AuthDeps): BetterAuthPlugin {
     schema: ssoSchema,
     providersLimit: 20,
     domainVerification: { enabled: true, tokenPrefix: SSO_TOKEN_PREFIX },
+    resolveUser: (input, { database }) => linkAtRequiredDomain(input.providerId, input.providerUser.email, database),
     organizationProvisioning: {
       defaultRole: "member",
       getRole: async ({ user, provider }) => {
