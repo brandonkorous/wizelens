@@ -38,6 +38,7 @@ export * from "./headlines.js";
 export * from "./insight-groups.js";
 export * from "./render-rows.js";
 export * from "./render-devices.js";
+export * from "./route-devices.js";
 export * from "./service-rows.js";
 export * from "./overview.js";
 export * from "./requests.js";

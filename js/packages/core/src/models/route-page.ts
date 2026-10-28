@@ -7,6 +7,7 @@ import type { PageDef, PageData } from "../scale/needs.js";
 import { bucketStarts } from "../stats/common.js";
 import { CHART_BUCKETS } from "./database.js";
 import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
+import { type RouteDevice, routeDeviceNeeds, routeDevicesOf } from "./route-devices.js";
 import { aggByKey, avgs, byDesc, counts, groupNeed, listNeed, listOf, rowsOf, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
 
 export interface RoutePageModel {
@@ -22,6 +23,8 @@ export interface RoutePageModel {
   components: { name: string; count: number }[];
   /** The newest page loads of the route. */
   loads: TraceItem[];
+  /** The route on each device that opened it, with where the time went. */
+  devices: RouteDevice[];
 }
 
 const byMeasure = <T>(f: (k: RouteMeasure) => T): Record<RouteMeasure, T> => Object.fromEntries(ROUTE_MEASURES.map((k) => [k, f(k)])) as Record<RouteMeasure, T>;
@@ -47,6 +50,7 @@ export const routePage: PageDef<RoutePageModel> = {
       seriesNeed("views.prev", "pv.route", "prev", CHART_BUCKETS, keys),
       seriesNeed("m.series", "pv.m", "cur", CHART_BUCKETS, { ...measures, split: true }),
       groupNeed("rc", "rc.route", "cur", { filter: { parts: [null, route] } }),
+      ...routeDeviceNeeds(route),
     ]);
   },
   followUp(_ctx, first) {
@@ -69,6 +73,7 @@ export const routePage: PageDef<RoutePageModel> = {
       chart: chartOf(d, route),
       components: [...rowsOf(d, "rc")].sort(byDesc((r) => r.agg.n)).map((r) => ({ name: splitKey(r.key)[0]!, count: r.agg.n })),
       loads: listOf<TraceItem>(d, "loads").items,
+      devices: routeDevicesOf(d),
     };
   },
 };

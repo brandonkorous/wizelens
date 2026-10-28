@@ -12,7 +12,7 @@ export type RollupKind =
   | "db" | "db.q" | "db.qd" | "db.qe" | "db.t" | "db.op"
   | "err" | "err.g" | "err.ge" | "err.b" | "err.t" | "err.s" | "err.e"
   | "log" | "log.s" | "log.p"
-  | "pv" | "pv.route" | "pv.m" | "pv.large" | "pv.g" | "pv.dev"
+  | "pv" | "pv.route" | "pv.m" | "pv.large" | "pv.g" | "pv.dev" | "pv.dm"
   | "react" | "rc" | "rc.route"
   | "rel"
   | "usr" | "err.u" | "ins.u" | "ep.u"
@@ -95,6 +95,8 @@ const BASE_SPEC: Record<Exclude<RollupKind, ScopedKind>, KindSpec> = {
   "pv.g": spec([], { hist: true }),
   /** Render time per `route␟device` (Phone, Tablet, Desktop). */
   "pv.dev": spec([], { hist: true }),
+  /** Phases per `route␟device␟measure` (ttfb, fcp, ready, image, large), for where a page's time went on each device. */
+  "pv.dm": spec(),
   react: spec(),
   rc: spec(["renders", "actualMs", "selfMs", "wasted", "context"], { ints: [0, 3, 4], top: "newest" }),
   "rc.route": spec(),
