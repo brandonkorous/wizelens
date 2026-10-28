@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { requestOf, type TagRule, type Trace, type TraceListItem } from "@wizeworks/lens-core";
 export { tracePath } from "@wizeworks/lens-core";
-import { fmtCount, fmtMs, shortId, shortPath } from "../../format";
+import { fmtCount, fmtDateTime, fmtMs, fmtTime, shortId, shortPath } from "../../format";
 import { hrefTo, setQuery, useRoute } from "../../routes";
 import { Dot, toneOfHealth, type Tone } from "../../ui/Badges";
 import { Pager } from "../../ui/Controls";
@@ -36,6 +36,7 @@ function TraceRow({ item, selected, tags }: { item: TraceListItem; selected: boo
           </a>
         </div>
       </td>
+      <td className="wl-nowrap wl-muted" title={fmtDateTime(item.startMs)}>{fmtTime(item.startMs)}</td>
       <td className="wl-num">{fmtMs(item.durationMs)}</td>
       <td className="wl-num">
         <Dot tone={item.health ? toneOfHealth(item.health) : item.status === "error" ? "danger" : "success"} title={item.status} />
@@ -67,6 +68,7 @@ export function RecentTraces({ items, total, page, size, selectedId }: RecentTra
             <thead>
               <tr>
                 <th>Path · trace ID</th>
+                <th>Time</th>
                 <th className="wl-num">Duration</th>
                 <th className="wl-num">Status</th>
               </tr>

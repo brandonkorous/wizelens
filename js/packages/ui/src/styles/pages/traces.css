@@ -1,5 +1,5 @@
 /* Traces page: recent list, per-layer timeline, bottlenecks, critical spans. */
-.wl-traces-top { grid-template-columns: minmax(300px, 0.85fr) minmax(0, 2fr); align-items: start; }
+.wl-traces-top { grid-template-columns: minmax(380px, 1fr) minmax(0, 1.6fr); align-items: start; }
 @media (max-width: 1200px) { .wl-traces-top { grid-template-columns: minmax(0, 1fr); } }
 .wl-traces-top .wl-input { margin-bottom: 8px; }
 .wl-recent-traces .wl-table td, .wl-recent-traces .wl-table th { padding: 9px 8px; }
