@@ -18,7 +18,7 @@ import { TEAM_MIGRATION } from "./schema-team.js";
 import { SAVED_MOVE_MIGRATION } from "./schema-saved-move.js";
 import { ORGS_MIGRATION, READER_MIGRATION } from "./schema-orgs.js";
 import { PACKAGES_MIGRATION } from "./schema-packages.js";
-import { BROWSER_KEYS_MIGRATION } from "./schema-keys.js";
+import { BROWSER_KEYS_MIGRATION, KEY_EXPOSED_MIGRATION } from "./schema-keys.js";
 import { PAGING_MIGRATION } from "./schema-paging.js";
 import { SEEN_MIGRATION } from "./schema-seen.js";
 
@@ -245,6 +245,7 @@ CREATE INDEX ix_metric_1h_time ON metric_1h (project_id, bucket_ms);
   BROWSER_KEYS_MIGRATION,
   PAGING_MIGRATION,
   SEEN_MIGRATION,
+  KEY_EXPOSED_MIGRATION,
 ];
 
 export const MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS wizelens_migrations (version INTEGER PRIMARY KEY, applied_ms DOUBLE PRECISION NOT NULL)`;

@@ -79,11 +79,25 @@ describe("the browser intake", () => {
     expect((await post({ spans: [pageView()] }, "https://evil.example")).status).toBe(403);
     const ingest = (await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", projectIds: [projectId] })).body.token;
     const asIngest = await fetch(`${url}/_wizelens/b/${ingest}/api/client-spans`, { method: "POST", headers: { Origin: SHOP }, body: "{}" });
-    expect(asIngest.status).toBe(405);
+    expect(asIngest.status).toBe(401);
     const elsewhere = await fetch(`${url}/_wizelens/api/ingest`, { method: "POST", headers: { Authorization: `Bearer ${made.token}` }, body: "{}" });
     expect(elsewhere.status).toBe(401);
     const read = await fetch(`${url}/_wizelens/api/traces?project=${projectId}`, { headers: { Authorization: `Bearer ${made.token}` } });
     expect(read.status).toBe(401);
+  });
+
+  it("refuses a secret key in a page, and tells its owners once an hour", async () => {
+    const { url, owner, orgId, projectId } = await setup();
+    const made = (await owner.call<{ id: string; token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", name: "site — first try", projectIds: [projectId] })).body;
+    const send = () => fetch(`${url}/_wizelens/b/${made.token}/api/client-spans`, { method: "POST", headers: { Origin: SHOP }, body: "{}" });
+    const res = await send();
+    expect(res.status).toBe(401);
+    expect(await res.text()).toMatch(/secret key: it must never be in a page/);
+    await send();
+    const lines = await owner.call<{ action: string; detail: { keyId: string; origin: string } }[]>("GET", `api/orgs/${orgId}/audit?action=key.exposed`);
+    expect(lines.body.map((l) => [l.action, l.detail.keyId, l.detail.origin])).toEqual([["key.exposed", made.id, SHOP]]);
+    const org = await owner.call<{ keys: { id: string; exposed: { origin: string } | null }[] }>("GET", `api/orgs/${orgId}`);
+    expect(org.body.keys.find((k) => k.id === made.id)?.exposed?.origin).toBe(SHOP);
   });
 
   it("needs sites to make a key, and lets them change in place", async () => {

@@ -12,11 +12,18 @@ import { hiddenProjects, listProjectRoles } from "../repo/project-roles.js";
 import { orgDeletionNotice } from "../notify/team.js";
 import { deleteOrgEverything, listMembers, pendingInvites, setRetention } from "../repo/orgs.js";
 import { listKeys, listProjects } from "../repo/projects.js";
+import { exposedKeys } from "../repo/key-exposed.js";
 import { orgProjectIds } from "../repo/trace-join.js";
 import { clearProjects } from "../telemetry/index.js";
 
 // Members, roles, and invites change through Better Auth (`api/auth/organization/*`). These routes add what it does not have.
 const now = (ctx: Ctx) => ctx.app.config.now();
+
+/** The organization's keys, each with the last time a public page sent with it when it is a secret key. */
+async function keysWithExposure(db: Ctx["app"]["db"], orgId: string) {
+  const seen = await exposedKeys(db, orgId);
+  return (await listKeys(db, orgId)).map((k) => ({ ...k, exposed: seen.get(k.id) ?? null }));
+}
 
 async function overview(ctx: Ctx): Promise<void> {
   const { role, user } = await requireOrg(ctx, ctx.params.org!, "read");
@@ -29,7 +36,7 @@ async function overview(ctx: Ctx): Promise<void> {
     members: await listMembers(db, id),
     projects: (await listProjects(db, id)).filter((p) => !hidden.has(p.id)),
     invites: manage ? await pendingInvites(db, id) : [],
-    keys: manage ? await listKeys(db, id) : [],
+    keys: manage ? await keysWithExposure(db, id) : [],
     projectRoles: manage ? await listProjectRoles(db, id) : [],
   });
 }

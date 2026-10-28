@@ -6,12 +6,13 @@ import type { Ctx } from "../app.js";
 import { clientIp } from "../auth/bridge.js";
 import { fail } from "../http/http.js";
 import type { RateLimiter } from "../http/limiter.js";
+import { noteExposed } from "../repo/key-exposed.js";
 import { originAllowed } from "../repo/key-origins.js";
 import { keyByToken } from "../repo/projects.js";
 import { counted, type IngestKey, overLimit, save } from "./ingest.js";
 
-/** `b/<browser key>/api/client-spans` below `/_wizelens/`: the path a page's sender posts to. */
-const PATH = /^b\/(wl_bk_[A-Za-z0-9_-]{16,64})\/api\/client-spans$/;
+/** `b/<browser key>/api/client-spans` below `/_wizelens/`: the path a page's sender posts to. A secret key there is caught, not ignored. */
+const PATH = /^b\/(wl_(?:bk|ik|rk)_[A-Za-z0-9_-]{16,64})\/api\/client-spans$/;
 const MAX_ITEMS = 500;
 const MAX_BROWSER_BODY = Math.min(MAX_BODY, 1024 * 1024);
 
@@ -36,7 +37,11 @@ const corsHeaders = (origin: string) => ({
 /** The live browser key for the token, when the page's site is one of its sites. Sets the CORS headers for that site. */
 async function browserKey(ctx: Ctx, token: string): Promise<IngestKey> {
   const key = await keyByToken(ctx.app.db, token, ctx.app.config.now());
-  if (!key || key.kind !== "browser") return fail(401, "This browser key is not valid, or it expired.");
+  if (key && key.kind !== "browser") {
+    await noteExposed(ctx.app.db, key, ctx.req.headers.origin, ctx.app.config.now());
+    return fail(401, "This is a secret key: it must never be in a page. Rotate it, and send from pages with a browser key (wl_bk_).");
+  }
+  if (!key) return fail(401, "This browser key is not valid, or it expired.");
   const origin = ctx.req.headers.origin;
   if (!originAllowed(key.origins, origin)) return fail(403, "This site may not send with this browser key. Add it to the key's sites.");
   for (const [name, value] of Object.entries(corsHeaders(origin!))) ctx.res.setHeader(name, value);

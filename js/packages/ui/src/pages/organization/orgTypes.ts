@@ -24,6 +24,8 @@ export interface ApiKey {
   rotatedFrom: string | null;
   /** Browser keys: the sites whose pages may send with it. */
   origins: string[] | null;
+  /** A secret key a public page sent with: the page's site and when. The cloud refused that data. */
+  exposed?: { origin: string | null; timeMs: number } | null;
 }
 
 /** A member's or viewer's own role on one project; "none" hides the project from them. */

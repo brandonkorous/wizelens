@@ -41,6 +41,24 @@ function Expiry({ k, now }: { k: ApiKey; now: number }) {
   return days <= 14 ? <Badge tone="warning">{days <= 1 ? "In a day" : `In ${days} days`}</Badge> : <span title={fmtDate(k.expiresMs)}>{fmtDate(k.expiresMs)}</span>;
 }
 
+/** A secret a public page sent with that still works: once rotated or expired, there is nothing left to do. */
+const leaked = (k: ApiKey, now: number) => !!k.exposed && (k.expiresMs === null || k.expiresMs > now);
+
+/** Secret keys a public page sent with: the cloud refused the data; the key must be rotated. */
+function ExposedKeys({ keys, now }: { keys: ApiKey[]; now: number }) {
+  const seen = keys.filter((k) => leaked(k, now));
+  if (!seen.length) return null;
+  return (
+    <div className="wl-banner wl-banner-error wl-panel-banner" role="alert">
+      {seen.map((k) => (
+        <p key={k.id}>
+          <strong>{k.name}</strong> is a secret key, and a public page{k.exposed!.origin ? ` on ${k.exposed!.origin}` : ""} sent with it {fmtAgo(k.exposed!.timeMs)}. WizeLens refused that data. Rotate the key, and put a browser key in pages.
+        </p>
+      ))}
+    </div>
+  );
+}
+
 function EmptyKeys({ reading }: { reading: boolean }) {
   return reading ? <Empty title="No read keys yet">Make one for each AI agent or script that reads data.</Empty> : <Empty title="No sending keys yet">Make an ingest key for each app that sends data.</Empty>;
 }
@@ -67,15 +85,16 @@ export function KeysPanel({ orgId, data, kinds, reload }: { orgId: string; data:
   const revoke = async (k: ApiKey) =>
     (await confirm({ title: `Revoke ${k.name}?`, body: revokeText(k, Date.now()), confirmLabel: "Revoke key", danger: true })) &&
     void act(() => apiSend("DELETE", `./api/orgs/${orgId}/keys/${k.id}`), reload).then(setError);
+  // A secret seen in a public page stops at once: anyone could have copied it.
   const rotate = async (k: ApiKey) =>
-    (await confirm({ title: `Rotate ${k.name}?`, body: "You get a new secret for the same key. The old secret keeps working for 24 hours, so you can update the apps that use it.", confirmLabel: "Rotate key" })) &&
-    void act(async () => setRotated({ kind: k.kind, ...(await apiSend<{ token: string; oldExpiresMs: number }>("POST", `./api/orgs/${orgId}/keys/${k.id}/rotate`, { graceHours: 24 })) }), reload).then(setError);
+    (await confirm({ title: `Rotate ${k.name}?`, body: k.exposed ? "You get a new secret for the same key. The old secret was in a public page, so it stops at once." : "You get a new secret for the same key. The old secret keeps working for 24 hours, so you can update the apps that use it.", confirmLabel: "Rotate key" })) &&
+    void act(async () => setRotated({ kind: k.kind, ...(await apiSend<{ token: string; oldExpiresMs: number }>("POST", `./api/orgs/${orgId}/keys/${k.id}/rotate`, { graceHours: k.exposed ? 0 : 24 })) }), reload).then(setError);
   const editSites = async (k: ApiKey) => {
     const origins = await prompt({ title: `Sites for ${k.name}`, body: "Only pages on these sites may send with this key. The key itself stays the same.", confirmLabel: "Save sites", input: { label: "Sites", initial: (k.origins ?? []).join(" ") } });
     if (origins !== null) void act(() => apiSend("PATCH", `./api/orgs/${orgId}/keys/${k.id}`, { origins }), reload).then(setError);
   };
   const columns: Column<ApiKey>[] = [
-    { key: "name", header: "Key", cell: (k) => <span className="wl-who"><strong>{k.name}</strong><small className="wl-mono">{k.prefix}…</small></span> },
+    { key: "name", header: "Key", cell: (k) => <span className="wl-who"><strong>{k.name}</strong><small className="wl-mono">{k.prefix}…</small>{leaked(k, now) && <Badge tone="danger">Seen in a page</Badge>}</span> },
     ...(kinds.length > 1 ? [{ key: "kind", header: "Kind", cell: (k: ApiKey) => <Badge tone="info">{KIND_LABEL[k.kind]}</Badge> }] : []),
     { key: "projects", header: "Projects", cell: (k) => k.projectIds.map((id) => names.get(id) ?? "Deleted project").join(", "), className: "wl-wrap" },
     { key: "scopes", header: "May", cell: (k) => scopesText(k), className: "wl-wrap" },
@@ -104,6 +123,7 @@ export function KeysPanel({ orgId, data, kinds, reload }: { orgId: string; data:
         </div>
       )}
       <KeysBulk orgId={orgId} picked={all.filter((k) => picked.includes(k.id))} names={names} clear={clear} reload={reload} onDone={(err, ok) => (setError(err), setNote(ok))} />
+      <ExposedKeys keys={all} now={now} />
       {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
       {note && <p className="wl-panel-note" role="status">{note}</p>}
       {rotated && (
