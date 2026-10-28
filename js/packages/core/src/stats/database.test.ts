@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeRequest } from "../testing/fixtures.js";
-import { dbCalls, dbSummary, operationRows, queryRows, tableRows } from "./database.js";
+import { dbCalls, dbSummary, operationRows, queryRows, sqlVerb, tableRows } from "./database.js";
 
 const traces = [
   makeRequest({ route: "/api/orders", queries: [{ sql: "SELECT * FROM orders WHERE id = 1", ms: 150 }, { sql: "UPDATE orders SET paid = 1", ms: 10 }] }),
@@ -30,5 +30,12 @@ describe("database stats", () => {
     expect(ops.map((o) => o.operation)).toEqual(["SELECT", "INSERT", "UPDATE", "DELETE", "OTHER"]);
     expect(ops[0]).toMatchObject({ count: 3, totalMs: 204 });
     expect(ops[1]).toMatchObject({ count: 0, avgMs: null });
+  });
+
+  it("names the verb after leading comments and session SETs (EF Core on SQL Server)", () => {
+    expect(sqlVerb("SET IMPLICIT_TRANSACTIONS OFF;\r\nSET NOCOUNT ON;\r\nINSERT INTO [Catalog] ([Name]) VALUES (@p0);")).toBe("INSERT");
+    expect(sqlVerb("-- tag\nselect 1")).toBe("SELECT");
+    expect(sqlVerb("SET search_path = x")).toBe("SET");
+    expect(sqlVerb("")).toBeUndefined();
   });
 });

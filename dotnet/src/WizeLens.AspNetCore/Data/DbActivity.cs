@@ -98,7 +98,8 @@ public static partial class DbActivity
         return match.Success ? match.Groups[1].Value.Trim('"', '[', ']', '`') : null;
     }
 
-    [GeneratedRegex(@"^\s*(?:--[^\n]*\n\s*)*(\w+)", RegexOptions.CultureInvariant)]
+    // Skips leading comments and session SETs: EF Core on SQL Server starts every save with "SET NOCOUNT ON;".
+    [GeneratedRegex(@"^\s*(?:--[^\n]*\n\s*)*(?:SET\s[^;]*;\s*)*(\w+)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex OperationRegex();
 
     [GeneratedRegex(@"\b(?:FROM|INTO|UPDATE|JOIN)\s+([""\[`]?[\w.]+[""\]`]?)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]

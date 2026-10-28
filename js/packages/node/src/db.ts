@@ -1,5 +1,5 @@
 import { type Attributes as OtelAttributes, type Context, context, createContextKey, ROOT_CONTEXT, SpanKind, trace, type Tracer } from "@opentelemetry/api";
-import { redactParams } from "@wizeworks/lens-core";
+import { redactParams, sqlVerb } from "@wizeworks/lens-core";
 import { CATEGORY_ATTR } from "./processor.js";
 import { recordOn } from "./spans.js";
 import type { DbCallInfo } from "./types.js";
@@ -10,7 +10,7 @@ const INSIDE_DB = createContextKey("wizelens.db.inside");
 const ADAPTER_LABEL = createContextKey("wizelens.db.adapter-label");
 
 export function parseSql(sql: string): { operation: string; collection: string | undefined } {
-  const operation = (/^\s*(\w+)/.exec(sql)?.[1] ?? "QUERY").toUpperCase();
+  const operation = sqlVerb(sql) ?? "QUERY";
   const collection = /\b(?:FROM|INTO|UPDATE|JOIN)\s+["`[]?([\w.]+)/i.exec(sql)?.[1];
   return { operation, collection };
 }
