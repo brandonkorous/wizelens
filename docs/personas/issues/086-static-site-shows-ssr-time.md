@@ -17,14 +17,14 @@ false for her site, and it suggests a server she does not have.
 
 ## What should have happened
 
-The number is real, but it is the server's time to send the first byte (\`responseStart − requestStart\`): the file
+The number is real, but it is the server's time to send the first byte (`responseStart − requestStart`): the file
 host on a static site, the server render on an SSR app. The label says that, true for every site.
 
 ## Where it lives
 
-The labels: \`core/src/models/rendering.ts\` and \`core/src/stats/rendering.ts\` ("Server-side rendering (SSR)"),
-\`ui/src/pages/rendering/RenderingPage.tsx\`, \`RenderTables.tsx\` and \`RoutePage.tsx\` ("SSR Time", "Avg SSR Time").
-The measure is \`browser/src/pageview.ts\` \`loadTimings\`.
+The labels: `core/src/models/rendering.ts` and `core/src/stats/rendering.ts` ("Server-side rendering (SSR)"),
+`ui/src/pages/rendering/RenderingPage.tsx`, `RenderTables.tsx` and `RoutePage.tsx` ("SSR Time", "Avg SSR Time").
+The measure is `browser/src/pageview.ts` `loadTimings`.
 
 ## The fix
 
