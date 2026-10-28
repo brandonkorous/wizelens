@@ -113,6 +113,9 @@ function PageView({ route }: { route: Route }) {
 }
 
 export function App() {
+  // On <html> above the sign-in gate, so signed-out pages and shared links follow the theme too.
+  const [theme] = useTheme();
+  useEffect(() => applyTheme(theme), [theme]);
   return (
     <AuthGate>
       <Shell />
@@ -124,9 +127,7 @@ function Shell() {
   const route = useRoute();
   const data = useData();
   const win = useWindowed();
-  const [theme] = useTheme();
   const dot = useHealthDot();
-  useEffect(() => applyTheme(theme), [theme]);
   const [zone] = useTimeZonePref();
   const [clock] = useClockPref();
   // Set before children render, so every time on the page uses the choice.
