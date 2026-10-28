@@ -108,10 +108,19 @@ public static class WizeLensExtensions
         services.AddSingleton(sp => new MetricStore(sp.GetRequiredService<WizeLensOptions>().MetricsMaxAge, MetricStore.DefaultMaxPoints));
     }
 
+    /// <summary>Off only by the production default while a hub is set: say so, or the service sends nothing without a word.</summary>
+    private static void WarnOffWithHub(IApplicationBuilder app, WizeLensOptions options)
+    {
+        if (options.NormalizedHubUrl is not { } hub || options.Enabled is not null || Environment.GetEnvironmentVariable("WIZELENS_ENABLED") is not null) return;
+        app.ApplicationServices.GetService<ILoggerFactory>()?.CreateLogger("WizeLens")
+            .LogWarning("WizeLens is off outside Development, so nothing is sent to {Hub}. Set WIZELENS_ENABLED=true to send.", hub);
+    }
+
     /// <summary>Adds the middleware and maps <c>/_wizelens</c> (UI, API, MCP); call it early; does nothing when disabled or already added.</summary>
     public static IApplicationBuilder UseWizeLens(this IApplicationBuilder app)
     {
         var options = app.ApplicationServices.GetRequiredService<WizeLensOptions>();
+        if (!options.IsEnabled) WarnOffWithHub(app, options);
         if (!options.IsEnabled || options.PipelineAdded) return app;
         options.PipelineAdded = true;
 

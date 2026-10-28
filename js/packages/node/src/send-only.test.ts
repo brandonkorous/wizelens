@@ -77,6 +77,17 @@ describe("mode defaults", () => {
     expect([isEnabled({ serviceName: "x" }), servesDashboard({ serviceName: "x", enabled: true })]).toEqual([false, false]);
   });
 
+  it("says so when production keeps it off while a hub is set", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(createWizeLens({ serviceName: "x", hub: "http://localhost:5970" }).enabled).toBe(false);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Set WIZELENS_ENABLED=true"));
+    warn.mockClear();
+    createWizeLens({ serviceName: "x", hub: "http://localhost:5970", enabled: false });
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
   it("reads WIZELENS_ENABLED and WIZELENS_DASHBOARD, and options win over them", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("WIZELENS_ENABLED", "true");
