@@ -6,7 +6,7 @@
 **Surface:** Cloud › Errors › one error › Stack Trace (any browser error without a source map)
 **Filed:** 2026-10-27
 **Fixed:** 2026-10-27
-**Confirmed by:** re-ran P04 act 6 at 22:26 on the phone: under "No source map found" the box says "This line is in your built, minified code. A source map turns it back into your own file and line. Add the WizeLens plugin to your build (for Vite: wizelensSourceMaps() in vite.config.ts), and each build sends its maps. Source maps, step by step". She followed it (#096 on the way), and at 22:31 the stack showed `src/pages/Contact.tsx:33:59` with the line that threw.
+**Confirmed by:** re-ran P04 act 6 at 22:26 on the phone: under "No source map found" the box says "This line is in your built, minified code. A source map turns it back into your own file and line. Add the WizeLens plugin to your build (for Vite: wizelensSourceMaps() in vite.config.ts), and each build sends its maps. Source maps, step by step". She followed it (#096 on the way), and at 22:30 the stack showed `src/pages/Contact.tsx:33:59` with the line that threw.
 **Blocked on:** —
 
 ## What happened

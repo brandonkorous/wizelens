@@ -166,7 +166,7 @@ rebuilt, and she visits it from the phone.
 she can see the line in her own source (or the screen tells her what to upload to
 see it).
 
-**Outcome:** —
+**Outcome:** done after #093–#096. The nephew's line: the "Message sent" greeting reads the visitor's second name, `formData.name.split(" ")[1].trim()`. Rémy (phone, slow 4G) typed only "Rémy": the button stayed on "Sending…" for good and the page threw "Cannot read properties of undefined (reading 'trim')". Errors on her phone listed it on `/contact`; its page said Browsers "Chrome on Android" (#094: now "Chrome on Android (phone)"). The stack was `index-CBBz6Uwe.js:226:34855` with "No source map found" and no next step (#095: now a box says what a source map is and what to add, with the docs link). The error also brought two requests her site never made, the script reading its own map (#093), so Errors said "Error Rate 0%". She followed the box: a new ingest key `brandonk.dev — source maps (build)` in Connect › Sending keys, `npm install -D @wizeworks/lens-cli`, `wizelensSourceMaps()` in vite.config.ts, version 1.0.1; the build uploaded the map and left it in `dist` to be deployed (#096: now deleted after upload). Rémy's next try showed `src/pages/Contact.tsx:33:59` with the line itself. She fixed it (`formData.name.trim().split(" ")[0]`), built 1.0.2, Rémy's form said "Message sent!", and she resolved both error groups from the phone.
 
 ### Act 7 — the screens that assume a server
 
@@ -272,4 +272,6 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 - 21:25:42 act 4: the browser key in the tag; 29 page views from 3 sizes by 21:28; #085 (Overview said nothing arrived) fixed 21:30; #086 (SSR on a static site) fixed 21:34
 - 21:55–21:58 act 5: 18 visits as a slow phone (slow 4G, CPU ×4)
 - 21:59–22:16 #090 (no reason, no device on a page's screen), #091 (Total 1.56 s for a 6.14 s load), #092 (trace 714 px wide on a phone) fixed; #089 again at 360
+- 22:18 act 6: the broken line built in; Rémy's form fails on the phone; #093–#095 fixed 22:26
+- 22:27–22:33 build key made; plugin added; #096 fixed 22:29; source line shown 22:30; line fixed, 1.0.2 built, errors resolved
 - 21:36–21:53 #087 (no split by device) fixed; 28 more visits with this branch's script at 21:44; #088 (Rendering 1160 px wide on a phone) and #089 (service chip pushes the account button off, found on P02) fixed 21:53
