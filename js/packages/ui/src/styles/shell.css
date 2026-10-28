@@ -103,6 +103,9 @@
   /* The service chip goes last, so when the buttons do not all fit it takes its own line and every button stays on screen. */
   .wl-topbar { flex-wrap: wrap; align-content: center; row-gap: 10px; height: auto; min-height: var(--wl-topbar-h); padding-block: 14px; }
   .wl-topbar > .wl-scope-chip { order: 1; }
+  /* A menu under a small button would open off the screen: it spans the top bar instead. */
+  .wl-topbar .wl-menu-anchor { position: static; }
+  .wl-topbar .wl-menu { left: 8px; right: 8px; min-width: 0; }
 }
 /* A 360 px phone: tighter gaps keep every top bar button on the first line. */
 @media (max-width: 380px) { .wl-topbar { gap: 2px; padding-inline: 8px; } }
