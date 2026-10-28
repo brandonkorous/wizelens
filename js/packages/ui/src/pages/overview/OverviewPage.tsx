@@ -1,3 +1,4 @@
+import { PagesOnly } from "../../ui/PagesOnly";
 import { usePageModel } from "../../data/models";
 import { useHost } from "../../data/host";
 import { hrefTo } from "../../routes";
@@ -14,14 +15,6 @@ import { TimingPanel } from "./TimingPanel";
 import "../../styles/pages/overview.css";
 
 /** No requests in the range: a site with no server has page views only, and they are under Rendering. */
-function PagesOnly({ views }: { views: number }) {
-  return (
-    <div className="wl-banner wl-banner-info">
-      {fmtCount(views)} page {views === 1 ? "view" : "views"} arrived, and no server requests. Request, SQL, and Apdex numbers need a WizeLens server SDK. See your pages and their load times under <a href={hrefTo("rendering")}>Rendering</a>.
-    </div>
-  );
-}
-
 /** On the cloud, an empty range says so first and points to the setup steps: a new account has nothing yet. */
 function NothingYet() {
   if (!useHost().has("accounts")) return null;
@@ -40,7 +33,7 @@ export function OverviewPage() {
       <ModelState model={model} loading={loading} error={error} what="traces" />
       {model && (
         <>
-          {model.empty && (model.pageViews > 0 ? <PagesOnly views={model.pageViews} /> : <NothingYet />)}
+          {model.empty && (model.meta.pageViews > 0 ? <PagesOnly views={model.meta.pageViews} what="overview" /> : <NothingYet />)}
           <OverviewCards m={model} />
           <div className="wl-grid wl-ov-top">
             <ActivityPanel m={model} />

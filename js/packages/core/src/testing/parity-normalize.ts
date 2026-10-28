@@ -55,7 +55,6 @@ const TIES: Record<string, (m: Obj) => void> = {
     delete (m.activity as Obj).prevRequests;
     delete m.freshErrors;
     delete m.apdex;
-    delete m.pageViews;
   },
   requests: (m) => {
     // Service options carry display names now ("Web App", not "browser").
@@ -100,7 +99,7 @@ export function normalizeModel(page: string, model: unknown): Obj {
   const m = copy(model) as Obj;
   if (m.meta && typeof m.meta === "object") {
     // Settling and sampling vary by host; custom windows and compare are new since the legacy models.
-    for (const k of ["settling", "sampled", "custom", "compare", "releases"]) delete (m.meta as Obj)[k];
+    for (const k of ["settling", "sampled", "custom", "compare", "releases", "pageViews"]) delete (m.meta as Obj)[k];
   }
   stripRequests(m);
   TIES[page]?.(m);

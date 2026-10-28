@@ -28,6 +28,8 @@ export interface ModelMeta {
   sampled: Sampled | null;
   /** Traces still waiting for their stats; null or 0 when the stats are complete. */
   settling: number | null;
+  /** Page views in the window: a site with no server sends only these, so empty server screens can say why. */
+  pageViews: number;
   /** True for a custom from–to window. */
   custom: boolean;
   compare: Compare;
@@ -36,7 +38,7 @@ export interface ModelMeta {
 }
 
 /** What every page needs for its meta: whether the window before had traces, and the releases. */
-export const META_NEEDS: readonly Need[] = [groupNeed("meta.prev", "trace", "prev"), releasesNeed("meta.rel")];
+export const META_NEEDS: readonly Need[] = [groupNeed("meta.prev", "trace", "prev"), releasesNeed("meta.rel"), groupNeed("meta.pv", "pv", "cur")];
 
 export const metaOf = (d: PageData): ModelMeta => ({
   range: d.range,
@@ -48,6 +50,7 @@ export const metaOf = (d: PageData): ModelMeta => ({
   settling: d.settling ?? null,
   custom: !!d.custom,
   compare: d.compare ?? "previous",
+  pageViews: totalOf(d, "meta.pv").n,
   releases: releasesOf(d, "meta.rel").filter((r) => r.firstMs >= d.window.from && r.firstMs < d.window.to),
 });
 

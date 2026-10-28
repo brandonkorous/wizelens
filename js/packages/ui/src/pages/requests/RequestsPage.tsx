@@ -1,3 +1,4 @@
+import { PagesOnly } from "../../ui/PagesOnly";
 import { useState } from "react";
 import { filterFromQuery, requestOf, type RequestItem } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
@@ -42,6 +43,7 @@ export function RequestsPage() {
         <LiveToggle paused={paused} onChange={setPaused} />
       </PageHeader>
       <ModelState model={model} loading={loading} error={error} what="requests" />
+      {model && model.total === 0 && !model.filtered && <PagesOnly views={model.meta.pageViews} what="requests" />}
       <RequestFilters filter={filter} methods={model?.options.methods ?? []} services={model?.options.services ?? []} />
       {model && <RequestsCards headlines={model.headlines} compareLabel={model.meta.compareLabel} empty={model.total === 0} />}
       {/* The table has the full width until a request is picked; then the details open beside it. */}

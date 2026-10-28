@@ -1,3 +1,4 @@
+import { PagesOnly } from "../../ui/PagesOnly";
 import { Clock, Database, Lightbulb, TriangleAlert } from "lucide-react";
 import { fmtCount, fmtMs } from "../../format";
 import { PageHeader } from "../../ui/Panel";
@@ -51,6 +52,7 @@ export function AllQueries() {
         {stats && <SlowLimit slowMs={stats.slowMs} />}
       </PageHeader>
       <ModelState model={stats} loading={loading} error={error} what="queries" />
+      {stats && stats.summary.queries === 0 && <PagesOnly views={stats.meta.pageViews} what="sql" />}
       {stats && <DatabaseBody stats={stats} />}
     </div>
   );
