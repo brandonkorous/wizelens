@@ -1,4 +1,5 @@
 import type { Trace, TraceView } from "@wizeworks/lens-core";
+import { dashboardOf } from "../cloud.js";
 import type { RequestView } from "../hud-model.js";
 import type { RecordedRequest, Recorder } from "../recorder-types.js";
 import { type Child, h } from "./dom.js";
@@ -6,7 +7,7 @@ import { iconClose, iconExternal } from "./icons.js";
 
 /** Dashboard link for the request: one part of its trace page, or the request list when the server has no trace. */
 export function dashboardLink(recorder: Recorder, req: RecordedRequest | null, view?: TraceView): string {
-  return req?.profiled ? recorder.traceLink(req.traceId, view) : `${recorder.endpointUrl}/`;
+  return req?.profiled ? recorder.traceLink(req.traceId, view) : dashboardOf(recorder.endpointUrl);
 }
 
 /** The trace id to load for the details panel: a finished request the server profiled. */

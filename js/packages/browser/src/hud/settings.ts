@@ -1,5 +1,6 @@
 import type { Recorder } from "../recorder-types.js";
 import { h } from "./dom.js";
+import { dashboardOf } from "../cloud.js";
 import { dashLink, panelBar } from "./parts.js";
 
 export interface SettingsActions {
@@ -27,7 +28,7 @@ export function settings(recorder: Recorder, s: { live: boolean; left: boolean }
         "dl",
         { class: "wl-kv" },
         h("dt", null, "Slow request"),
-        h("dd", null, `${slowMs} ms or more. Set it with the `, h("code", { class: "wl-mono" }, "slowMs"), " option."),
+        h("dd", null, `${slowMs} ms or more. Set it with `, h("code", { class: "wl-mono" }, "slowMs"), ", or ", h("code", { class: "wl-mono" }, "data-slow-ms"), " on the script tag."),
         h("dt", null, "Endpoint"),
         h("dd", { class: "wl-mono" }, recorder.endpointUrl),
         h("dt", null, "Session"),
@@ -37,7 +38,7 @@ export function settings(recorder: Recorder, s: { live: boolean; left: boolean }
         "div",
         { class: "wl-row-btns" },
         h("button", { type: "button", class: "wl-btn", onClick: () => a.clear() }, "Clear this page's calls"),
-        dashLink(`${recorder.endpointUrl}/`, "Open the dashboard", "wl-btn"),
+        dashLink(dashboardOf(recorder.endpointUrl), "Open the dashboard", "wl-btn"),
       ),
     ),
   );

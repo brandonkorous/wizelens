@@ -90,6 +90,29 @@ it("stays hidden and send-only when the read API does not answer, or answers wit
   expect(urls("/api/traces")).toEqual([]);
 });
 
+it("shows the HUD in this browser only after ?wizelens-hud=on, keeps it on later pages, and hides it after off", async () => {
+  const cloud = "https://lens.test/_wizelens/b/wl_bk_site";
+  const first = lens.initWizeLens({ ...OPTIONS, endpoint: cloud });
+  await settle();
+  expect(huds()).toHaveLength(0);
+  await first.shutdown();
+  vi.stubGlobal("location", new URL("https://site.test/?wizelens-hud=on"));
+  const mine = lens.initWizeLens({ ...OPTIONS, endpoint: cloud });
+  await settle();
+  expect(huds()).toHaveLength(1);
+  expect(urls("/api/info")).toEqual([]);
+  expect(urls("/api/traces")).toEqual([]);
+  await mine.shutdown();
+  vi.stubGlobal("location", new URL("https://site.test/contact"));
+  const later = lens.initWizeLens({ ...OPTIONS, endpoint: cloud });
+  expect(huds()).toHaveLength(1);
+  await later.shutdown();
+  vi.stubGlobal("location", new URL("https://site.test/?wizelens-hud=off"));
+  lens.initWizeLens({ ...OPTIONS, endpoint: cloud });
+  await settle();
+  expect(huds()).toHaveLength(0);
+});
+
 it("lets readServer set by the caller win over the HUD", async () => {
   lens.initWizeLens({ ...OPTIONS, hud: true, readServer: false });
   await settle();

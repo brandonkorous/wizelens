@@ -40,7 +40,7 @@ const CDN = "https://cdn.jsdelivr.net/npm/@wizeworks/lens-browser/dist/wizelens.
 /** The whole script tag for a browser key; a cloud other than WizeLens Cloud names its own address. */
 export function scriptTag(key: string, cloud: string): string {
   const at = cloud === "https://app.wizelens.com" ? "" : ` data-endpoint="${cloud}"`;
-  return `<script src="${CDN}" data-key="${key}"${at} data-hud="false"></script>`;
+  return `<script src="${CDN}" data-key="${key}"${at}></script>`;
 }
 
 /** The new secret, shown once, with where it goes; a browser key comes with its script tag. */
@@ -56,6 +56,11 @@ export function NewSecret({ kind, secret, note, name }: { kind: Kind; secret: st
         Copy it now: it is not shown again. {WHERE[kind]} {note}
       </span>
       {kind === "browser" && <Snippet label="Script tag" text={scriptTag(secret, hereUrl())} />}
+      {kind === "browser" && (
+        <span className="wl-muted wl-small">
+          To see the HUD on your own phone or computer, open your site once with <code>?wizelens-hud=on</code> at the end of the address. Visitors never see it; <code>?wizelens-hud=off</code> hides it again.
+        </span>
+      )}
     </div>
   );
 }

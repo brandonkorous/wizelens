@@ -79,6 +79,10 @@ app.use(WizeLens, { endpoint: "/_wizelens", router, hud: false }); // Vue
   data-endpoint="/_wizelens" data-hud="true" data-slow-ms="800"></script>
 ```
 
+**Just for you.** With `auto`, add `?wizelens-hud=on` to any page's address: this browser shows the HUD on every page
+from then on, and nobody else does. `?wizelens-hud=off` hides it again. It is how a site that sends to the cloud with a
+browser key gets a HUD: that key reads nothing back, so the HUD shows this browser's own page and calls.
+
 ## One HUD per page
 
 A page has one WizeLens and one HUD. The script a server put in the page waits for the page's `load` event, and does
