@@ -3,6 +3,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 import { clockIn } from "./clock.js";
+import { projectQuiet } from "./emails-health.js";
+import { passwordChanged } from "./emails-security.js";
+import { teamChanges } from "./emails-team.js";
 import { SAMPLES, writePreviews } from "./preview.js";
 import { renderMail } from "./templates.js";
 import { theme } from "./theme.js";
@@ -36,6 +39,14 @@ it("shows an alert's time in the reader's zone, and UTC when the zone is unknown
   const ms = Date.UTC(2026, 9, 28, 5, 59);
   expect(clockIn(ms, "America/Los_Angeles")).toBe("Oct 27, 2026, 10:59 PM PDT");
   expect(clockIn(ms, "Mars/Olympus")).toBe("Oct 28, 2026, 5:59 AM UTC");
+});
+
+it("gives team, health, and security times in the reader's zone too", async () => {
+  const ms = Date.UTC(2026, 9, 28, 5, 59);
+  const la = "Oct 27, 2026, 10:59 PM PDT";
+  expect((await renderMail("a@x.io", teamChanges("Studio", [{ text: "A change.", timeMs: ms }], "u", "s", "America/Los_Angeles"))).text).toContain(la);
+  expect((await renderMail("a@x.io", projectQuiet("Site", "Studio", ms, ms + 7_200_000, "u", "s", "America/Los_Angeles"))).text).toContain(la);
+  expect((await renderMail("a@x.io", passwordChanged({ account: "a", forgot: "f", timeZone: "America/Los_Angeles" }, ms))).text).toContain(la);
 });
 
 it("writes a preview of every email", async () => {
