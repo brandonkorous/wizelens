@@ -57,6 +57,11 @@ export function AuthCard({ title, intro, children }: { title: string; intro?: Re
   );
 }
 
+/** When the cloud cannot send email: the person who runs it reads the link from its log. */
+export const NoMailCard = ({ back }: { back: ReactNode }) => (
+  <AuthCard title="Ask for the link" intro="This cloud cannot send email. Ask the person who runs it: the link is in the cloud's log.">{back}</AuthCard>
+);
+
 function FieldInput({ f }: { f: Field }) {
   if (f.type === "checkbox") {
     return (

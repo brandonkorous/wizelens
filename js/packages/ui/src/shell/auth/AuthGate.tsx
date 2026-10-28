@@ -35,7 +35,7 @@ function accountScreen(route: Route, account: AccountState): ReactNode {
     case "reset-password":
       return <ResetPassword token={token} />;
     case "verify-email":
-      return <VerifyEmail token={token} />;
+      return <VerifyEmail token={token} mail={account.mail} />;
     case "invite":
       return <InviteScreen id={token} state={account} />;
     case "delete-account":
