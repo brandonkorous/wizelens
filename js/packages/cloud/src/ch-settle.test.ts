@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, it } from "vitest";
+import { isListedTrace } from "@wizeworks/lens-core";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { CH_LIMIT, CH_URL, type ChTest, chSettle, chTest, chWrite } from "./test/ch.js";
 
@@ -18,8 +19,8 @@ describe.skipIf(!CH_URL)("ClickHouse settle", () => {
     const other = chSettle(t);
     await chSettle(t);
     const page = await t.store.search(t.scope, { kind: "traces", node: null, window: { from: 0, to: SCENARIO_NOW + 60_000 }, limit: 200, cursor: null });
-    // Log-only traces have no trace row; every trace with spans must be there.
-    const withSpans = traces.filter((tr) => tr.spans.length).map((tr) => tr.traceId);
+    // Log-only traces and uptime runs have no trace row; every listed trace must be there.
+    const withSpans = traces.filter(isListedTrace).map((tr) => tr.traceId);
     expect(new Set(page.items.map((i) => (i as { traceId: string }).traceId))).toEqual(new Set(withSpans));
     await other;
   }, CH_LIMIT);
