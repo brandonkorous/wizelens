@@ -37,7 +37,7 @@ function Stats({ trace, timing }: { trace: Trace; timing: Timing }) {
         <dt>Services</dt>
         <dd className="wl-chips">
           {trace.services.map((s) => (
-            <ServiceChip key={s} service={s} services={trace.services} />
+            <ServiceChip key={s} service={s} trace={trace} />
           ))}
         </dd>
       </div>

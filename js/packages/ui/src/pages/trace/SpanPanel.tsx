@@ -66,7 +66,7 @@ function Facts({ span, trace }: { span: Span; trace: Trace }) {
     <dl className="wl-sp-facts">
       <dt>Service</dt>
       <dd>
-        <ServiceChip service={span.service} services={trace.services} />
+        <ServiceChip service={span.service} trace={trace} />
       </dd>
       <dt>Kind</dt>
       <dd>

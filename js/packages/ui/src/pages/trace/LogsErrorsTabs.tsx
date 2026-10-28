@@ -36,7 +36,7 @@ export function LogsTab({ trace, onSelect }: Props) {
                   <span className={`wl-lvl wl-lvl-${l.level}`}>{l.level}</span>
                 </td>
                 <td>
-                  <ServiceChip service={l.service} services={trace.services} />
+                  <ServiceChip service={l.service} trace={trace} />
                 </td>
                 <td className="wl-muted wl-small" title={l.category}>{shortCategory(l.category)}</td>
                 <td className="wl-wrap">{l.message}</td>
@@ -69,7 +69,7 @@ export function ErrorsTab({ trace, onSelect }: Props) {
       {errors.map((e) => (
         <li key={e.spanId} className="wl-error-item" {...pressable(() => onSelect(e.spanId))}>
           <div className="wl-error-head">
-            <ServiceChip service={e.service} services={trace.services} />
+            <ServiceChip service={e.service} trace={trace} />
             <strong>{e.type ?? "Error"}</strong>
             <span className="wl-muted">in {e.name}</span>
           </div>
