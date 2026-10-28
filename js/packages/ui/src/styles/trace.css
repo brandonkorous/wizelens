@@ -176,7 +176,9 @@
   .wl-split.wl-with-panel { grid-template-columns: 1fr; }
   .wl-span-panel { border-left: 0; border-top: 1px solid var(--wl-line); position: static; max-height: none; }
   .wl-wf-row { grid-template-columns: minmax(150px, 45%) 1fr; }
-  .wl-insight { grid-template-columns: auto 1fr auto; }
+  /* The title wraps in a column that may shrink, so a long problem stays inside a phone's screen. */
+  .wl-insight { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .wl-insight .wl-insight-title { white-space: normal; overflow-wrap: anywhere; }
   .wl-insight-shape { grid-column: 1 / -1; }
 }
 
