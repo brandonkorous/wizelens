@@ -175,7 +175,7 @@ She opens Overview, Requests, Traces, Database, Services and Logs.
 **Done when:** each one shows her browser data or says plainly that it needs a server
 SDK, with a link to how. Nothing reads as broken or empty without a reason.
 
-**Outcome:** —
+**Outcome:** done after #097 and #098. On her phone (390, last 15 min, 3 page views): Overview already said "3 page views arrived, and no server requests…"; Requests, Database, and Services showed only "No data" cards (#097: each now says what arrived, what it is missing, "To add one: Setup steps", and where her pages are). Traces lists her page loads (each a trace with its paint and image timing); Logs lists the browser errors her pages send, and "No log lines in this time range" when there are none. No screen was wider than 390. On the way: the red Errors badge still said 2 after she resolved both groups (#098: it counts open groups only, in the chosen service and period; re-proved on Greta, 8 → 2, matching her Errors page).
 
 ### Act 8 — tell me when it is down
 
@@ -273,5 +273,6 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 - 21:55–21:58 act 5: 18 visits as a slow phone (slow 4G, CPU ×4)
 - 21:59–22:16 #090 (no reason, no device on a page's screen), #091 (Total 1.56 s for a 6.14 s load), #092 (trace 714 px wide on a phone) fixed; #089 again at 360
 - 22:18 act 6: the broken line built in; Rémy's form fails on the phone; #093–#095 fixed 22:26
+- 22:33–22:45 act 7: #097 and #098 fixed and confirmed (Greta re-checked for #098)
 - 22:27–22:33 build key made; plugin added; #096 fixed 22:29; source line shown 22:30; line fixed, 1.0.2 built, errors resolved
 - 21:36–21:53 #087 (no split by device) fixed; 28 more visits with this branch's script at 21:44; #088 (Rendering 1160 px wide on a phone) and #089 (service chip pushes the account button off, found on P02) fixed 21:53
