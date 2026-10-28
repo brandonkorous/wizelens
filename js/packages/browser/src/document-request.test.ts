@@ -1,52 +1,32 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { TIMING_START, TIMING_TRACE } from "@wizeworks/lens-core";
-import { documentRequest } from "./document-request.js";
+import { afterEach, expect, it, vi } from "vitest";
+import { whenPainted } from "./document-request.js";
 
-const TRACE = "0af7651916cd43dd8448eb211c80319c";
+type Listener = (list: { getEntries(): PerformanceEntryList }) => void;
+let emit: (entries: object[]) => void = () => {};
+let disconnected = false;
 
-function stubNavigation(serverTiming: { name: string; description: string }[], paint?: number, transferSize = 1200): void {
-  const nav = { startTime: 0, responseStart: 42, domContentLoadedEventEnd: 90, responseStatus: 200, serverTiming, transferSize };
-  vi.stubGlobal("location", new URL("http://app.test/orders?page=2"));
-  vi.stubGlobal("performance", {
-    timeOrigin: 1_700_000_000_000,
-    getEntriesByType: (t: string) => (t === "navigation" ? [nav] : []),
-    getEntriesByName: (n: string) => (n === "first-contentful-paint" && paint !== undefined ? [{ startTime: paint }] : []),
-  });
+class FakeObserver {
+  static supportedEntryTypes = ["paint"];
+  constructor(private readonly listener: Listener) {
+    emit = (entries) => this.listener({ getEntries: () => entries as PerformanceEntryList });
+  }
+  observe() {}
+  disconnect() {
+    disconnected = true;
+  }
 }
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe("documentRequest", () => {
-  it("makes the page's own request a HUD row when a WizeLens server traced it", () => {
-    stubNavigation([{ name: TIMING_TRACE, description: TRACE }], 70);
-    expect(documentRequest()).toMatchObject({
-      method: "GET",
-      path: "/orders?page=2",
-      status: 200,
-      durationMs: 42,
-      renderMs: 28,
-      traceId: TRACE,
-      profiled: true,
-      startMs: 1_700_000_000_000,
-    });
-  });
-
-  it("uses DOMContentLoaded when the page has not painted yet", () => {
-    stubNavigation([{ name: TIMING_TRACE, description: TRACE }]);
-    expect(documentRequest()?.renderMs).toBe(48);
-  });
-
-  it("starts its own trace for a page opened long after the server answered, or from a cache", () => {
-    stubNavigation([{ name: TIMING_TRACE, description: TRACE }, { name: TIMING_START, description: String(1_700_000_000_000 - 6 * 60_000) }]);
-    expect(documentRequest()).toBeNull();
-    stubNavigation([{ name: TIMING_TRACE, description: TRACE }, { name: TIMING_START, description: String(1_700_000_000_000 - 60_000) }]);
-    expect(documentRequest()?.traceId).toBe(TRACE);
-    stubNavigation([{ name: TIMING_TRACE, description: TRACE }], undefined, 0);
-    expect(documentRequest()).toBeNull();
-  });
-
-  it("gives nothing for a page no WizeLens server traced", () => {
-    stubNavigation([]);
-    expect(documentRequest()).toBeNull();
-  });
+it("reports the page's render time once its first paint lands, measured from the first byte", () => {
+  vi.stubGlobal("PerformanceObserver", FakeObserver);
+  vi.stubGlobal("performance", { getEntriesByType: () => [{ startTime: 0, responseStart: 306 }] });
+  const seen: number[] = [];
+  whenPainted((ms) => seen.push(ms));
+  emit([{ name: "first-paint", startTime: 400 }]);
+  expect(seen).toEqual([]);
+  emit([{ name: "first-contentful-paint", startTime: 416 }]);
+  emit([{ name: "first-contentful-paint", startTime: 500 }]);
+  expect(seen).toEqual([110]);
+  expect(disconnected).toBe(true);
 });
