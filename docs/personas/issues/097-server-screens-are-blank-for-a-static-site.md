@@ -6,7 +6,7 @@
 **Surface:** Requests, Database, Services (Overview already had it)
 **Filed:** 2026-10-27
 **Fixed:** 2026-10-27
-**Confirmed by:** re-ran P04 act 7 at 22:41 on her phone (390, last 15 min, 3 page views): Overview, Requests, Database, and Services each open with "3 page views arrived, and no …", what sends that data, "To add one: Setup steps", and the Rendering link. Traces lists her page loads and Logs her browser errors, so they need no line.
+**Confirmed by:** re-ran P04 act 7 at 22:36 on her phone (390, last 15 min, 3 page views): Overview, Requests, Database, and Services each open with "3 page views arrived, and no …", what sends that data, "To add one: Setup steps", and the Rendering link. Traces lists her page loads and Logs her browser errors, so they need no line.
 
 ## What happened
 
