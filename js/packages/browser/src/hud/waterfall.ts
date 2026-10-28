@@ -66,10 +66,15 @@ export function ticksFor(total: number): number[] {
   return ticks;
 }
 
+// A last segment that is only a route parameter ("/{handler?}", "/:id") names nothing alone: the tail keeps the segment before it.
+const PARAM_TAIL = /\/(?:\{[^}/]*\}|:\w+)$/;
+
 /** Splits a name into its method, its path's middle and its last segment, so a cut keeps "GET" and "/members · 6 SQL" and drops the middle. */
 export function splitName(name: string): [string, string, string] {
   const end = name.search(/ · | \(/);
-  const cut = (end < 0 ? name : name.slice(0, end)).lastIndexOf("/");
+  const path = end < 0 ? name : name.slice(0, end);
+  let cut = path.lastIndexOf("/");
+  if (cut > 0 && PARAM_TAIL.test(path)) cut = path.lastIndexOf("/", cut - 1);
   const [head, tail] = cut <= 0 ? [name, ""] : [name.slice(0, cut), name.slice(cut)];
   const method = tail ? (/^[A-Z]+ /.exec(head)?.[0] ?? "") : "";
   return [method, head.slice(method.length), tail];

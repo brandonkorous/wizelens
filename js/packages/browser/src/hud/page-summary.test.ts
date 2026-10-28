@@ -98,6 +98,8 @@ describe("pageRows", () => {
     expect(splitName("POST /a/b · localhost:3001 · 2 SQL")).toEqual(["POST ", "/a", "/b · localhost:3001 · 2 SQL"]);
     expect(splitName("GET /orders (page)")).toEqual(["GET ", "", "/orders (page)"]);
     expect(splitName("Route render")).toEqual(["", "Route render", ""]);
+    expect(splitName("GET /Basket/{handler?} (page) · 3 SQL")).toEqual(["GET ", "", "/Basket/{handler?} (page) · 3 SQL"]);
+    expect(splitName("PUT /api/catalog-items/:id · 2 SQL")).toEqual(["PUT ", "/api", "/catalog-items/:id · 2 SQL"]);
   });
 
   it("puts round ticks on the time axis", () => {
