@@ -5,7 +5,7 @@ import { pendingOAuth } from "../../data/oauth";
 import { useData } from "../../data/provider";
 import { SharedTrace } from "../../pages/shared/SharedTrace";
 import { StatusPage } from "../../pages/status/StatusPage";
-import { type Route, useRoute } from "../../routes";
+import { hrefTo, navigate, type Route, useRoute } from "../../routes";
 import { AuthScreen, SetupScreen } from "./AuthScreen";
 import { InviteScreen } from "./InviteScreen";
 import { NoOrgScreen } from "./NoOrgScreen";
@@ -24,6 +24,8 @@ const Splash = () => (
 function accountScreen(route: Route, account: AccountState): ReactNode {
   const token = route.query.get("token") ?? "";
   switch (route.page) {
+    case "sign-up":
+      return account.signedIn ? null : <AuthScreen state={account} start="signup" />;
     case "setup":
       return account.needsSetup ? <SetupScreen token={token} state={account} /> : null;
     case "two-factor":
@@ -60,6 +62,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const signedIn = !!account?.signedIn;
   useEffect(() => {
     if (signedIn && !isOAuthPage(route.page) && route.page !== "two-factor") pendingOAuth.set(null);
+    if (signedIn && route.page === "sign-up") navigate(hrefTo("overview"));
   }, [signedIn, route.page]);
   if (route.page === "shared") return <SharedTrace token={route.params[0] ?? ""} />;
   if (route.page === "status") return <StatusPage token={route.params[0] ?? ""} />;

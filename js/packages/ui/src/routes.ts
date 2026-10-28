@@ -34,7 +34,7 @@ export type PageId =
   | AuthPageId;
 
 /** Account screens that open signed in or not (cloud only): links from emails and the sign-in steps. */
-export type AuthPageId = "setup" | "two-factor" | "forgot-password" | "reset-password" | "verify-email" | "invite" | "delete-account" | "oauth" | "oauth-consent";
+export type AuthPageId = "sign-up" | "setup" | "two-factor" | "forgot-password" | "reset-password" | "verify-email" | "invite" | "delete-account" | "oauth" | "oauth-consent";
 
 export interface Route {
   page: PageId;
@@ -43,7 +43,7 @@ export interface Route {
   query: URLSearchParams;
 }
 
-export const AUTH_PAGES: readonly AuthPageId[] = ["setup", "two-factor", "forgot-password", "reset-password", "verify-email", "invite", "delete-account", "oauth", "oauth-consent"];
+export const AUTH_PAGES: readonly AuthPageId[] = ["sign-up", "setup", "two-factor", "forgot-password", "reset-password", "verify-email", "invite", "delete-account", "oauth", "oauth-consent"];
 const PAGES: readonly PageId[] = ["overview", "problems", "search", "requests", "traces", "database", "rendering", "errors", "logs", "metrics", "hosts", "kubernetes", "services", "insights", "security", "settings", "connect", "people", "organization", "alerts", "slos", "dashboards", "users", "uptime", "team", "shared", "status", "account", ...AUTH_PAGES];
 const TRACE_ID = /^[0-9a-f]{32}$/;
 

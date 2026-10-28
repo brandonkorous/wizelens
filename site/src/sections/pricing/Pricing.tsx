@@ -8,7 +8,7 @@ import { Faq } from "@/sections/faq/Faq";
 import { Calculator } from "./Calculator";
 import { PRICING_FAQS } from "./faqs";
 import { PlanCards } from "./PlanCards";
-import { APP_URL } from "./plans";
+import { START_URL } from "./plans";
 import { TotalCost } from "./TotalCost";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -28,7 +28,7 @@ function Hero() {
           <div className="wl-cloud-intro wl-rise" style={riseDelay(0.35)}>
             <p className="wl-lede">Every plan of WizeLens Cloud has unlimited users, alerts, uptime checks, share links, and MCP for your AI agents. You pay for the data you send. Running it yourself is free.</p>
             <div className="wl-hero-cta">
-              <a href={APP_URL} className="wl-btn wl-btn-primary">Start free <ArrowRight /></a>
+              <a href={START_URL} className="wl-btn wl-btn-primary">Start free <ArrowRight /></a>
               <a href="#plans" className="wl-btn wl-btn-ghost">See the plans</a>
             </div>
           </div>

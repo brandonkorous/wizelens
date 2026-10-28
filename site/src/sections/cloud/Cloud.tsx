@@ -8,6 +8,7 @@ import { Compare } from "./Compare";
 import { OpsFeatures } from "./OpsFeatures";
 import { TeamDemo } from "./TeamDemo";
 import { TeamFeatures } from "./TeamFeatures";
+import { START_URL } from "../pricing/plans";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -31,7 +32,7 @@ function Hero() {
           <div className="wl-cloud-intro wl-rise" style={riseDelay(0.35)}>
             <p className="wl-lede">WizeLens Cloud is the dashboard you already know, with accounts, single sign-on, history, alerts, uptime checks, share links, and AI access you can scope. Start free at app.wizelens.com, or run it yourself on your own Postgres, with ClickHouse when you grow.</p>
             <div className="wl-hero-cta">
-              <a href="https://app.wizelens.com" className="wl-btn wl-btn-primary">Start free <ArrowRight /></a>
+              <a href={START_URL} className="wl-btn wl-btn-primary">Start free <ArrowRight /></a>
               <a href="/pricing/" className="wl-btn wl-btn-ghost">See pricing</a>
             </div>
             <CopyCommand command="npx @wizeworks/lens-cloud" />
