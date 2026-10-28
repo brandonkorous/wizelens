@@ -119,4 +119,14 @@ describe("audit log", () => {
     expect(csv.body.match(/project\.create/g)).toHaveLength(3);
     expect(csv.body.split("\n")[1]).toMatch(/^\d{4}-\d\d-\d\dT[\d:.]+Z,Olive,owner@acme\.io,project\.create,project P2,/);
   });
+
+  it("is read and exported by a viewer, an auditor's usual role, and the export is logged as theirs", async () => {
+    const { url, owner, orgId } = await start();
+    const hannah = await joinWithInvite(url, await invite(owner, orgId, "hannah@acme.io", "viewer"), "hannah@acme.io", "Hannah");
+    expect((await hannah.call<unknown[]>("GET", `api/orgs/${orgId}/audit?limit=5`)).body.length).toBeGreaterThan(0);
+    expect((await hannah.call("GET", `api/orgs/${orgId}/audit/count`)).status).toBe(200);
+    const csv = await hannah.call<string>("GET", `api/orgs/${orgId}/audit/export?format=csv`);
+    expect(csv.status).toBe(200);
+    expect(csv.body.split("\n")[1]).toMatch(/,Hannah,hannah@acme\.io,audit\.export,/);
+  });
 });

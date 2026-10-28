@@ -1104,7 +1104,7 @@ retention, and the audit log.
   is linked only when its email is confirmed and it is already a member or at the organization's proven SSO domain.
   Changes write `scim.user.*` and `scim.group.*` (actor `scim:<token id>`); tokens write `scim.token.create` and `.revoke`.
 - **Audit log**: org changes, member and invite changes (also those through Better Auth), keys, projects, shares, and every MCP tool
-  call, with who did it.
+  call, with who did it. Every role reads and exports it; each export is logged.
 
 ### Endpoints (below `/_wizelens/`)
 
@@ -1116,7 +1116,7 @@ retention, and the audit log.
 | POST / GET / PATCH / DELETE | `api/orgs`, `api/orgs/{org}` | Signed in; read: any member; name and retention: admin; delete (with `password`): owner |
 | POST / DELETE | `api/orgs/{org}/projects[/{id}]`, `…/{id}/clear` (deletes data only) | Admin |
 | POST / DELETE | `api/orgs/{org}/keys[/{id}]` | Admin. The secret is in the answer once |
-| GET | `api/orgs/{org}/audit?offset=&before=`, `…/audit/count` | Admin |
+| GET | `api/orgs/{org}/audit?offset=&before=`, `…/audit/count`, `…/audit/facets` | Any role (an auditor is often a viewer) |
 | GET | `api/info`, `api/traces`, `api/traces/{id}`, `api/services` — all with `?project=` (or `?project=all&org=`) | Member or read key. `api/traces/{id}` joins other projects (see "Traces across projects"); `project=all` reads every project the caller may (see "All projects") |
 | PATCH | `api/orgs/{org}/projects/{p}` | Admin. `{ logRetentionDays }`: 1 to 400, or null to follow the organization; more days than the plan keeps answers 402 with the plan it needs. Answers the project (with `logRetentionDays`) and writes `project.update` to the audit log |
 | POST | `api/projects/{p}/services/forget` | Admin. Forgets offline hosts; each service keeps its newest host. Answers `{ removed }` and writes `service.forget` to the audit log |
@@ -1149,7 +1149,7 @@ retention, and the audit log.
 | GET / DELETE | `api/orgs/{org}/apps[/{id}]` | Admin: every app connected in the organization, or end one |
 | GET | `api/orgs/{org}/usage` | Any member: `{ billing, plan, includedGb, maxRetentionDays, month, monthGb, days[{ day, gb, bytes, spans, logs, points }], overageUsd, projectedGb, projectedOverageUsd, spendCapUsd, blocked, reason, subscription, plans[] }` (see "Plans and billing") |
 | PATCH | `api/orgs/{org}/billing` | Owner, billing on, Team or Business: `{ spendCapUsd: whole dollars or null }` |
-| GET | `api/orgs/{org}/audit/export?format=csv\|json` | Admin, plan with audit export (402 otherwise): the whole log as a download; writes `audit.export`. Columns `time_utc, who, who_email, action, about, detail`: people by name and email (also former members), projects and keys by name |
+| GET | `api/orgs/{org}/audit/export?format=csv\|json` | Any role, plan with audit export (402 otherwise): the whole log as a download; writes `audit.export`. Columns `time_utc, who, who_email, action, about, detail`: people by name and email (also former members), projects and keys by name |
 | GET / POST / DELETE | `api/orgs/{org}/scim`, `…/scim/tokens[/{id}]` | Admin: `{ allowed, plan?, baseUrl, tokens }`; a new `wl_sc_…` token is in the answer once (402 without SCIM on the plan) |
 | * | `api/auth/scim/v2/*` | SCIM 2.0 (Better Auth's SCIM plugin): `Users`, `Groups`, `ServiceProviderConfig`, `Schemas`, `ResourceTypes`, with `Authorization: Bearer wl_sc_…` (no dashboard header) |
 | * | `api/auth/subscription/*` | Better Auth's Stripe plugin, billing on: `upgrade`, `cancel`, `restore`, `list`, `billing-portal`, each with `customerType: "organization"` and `referenceId` (owner or admin); `success` (Stripe's redirect back) |

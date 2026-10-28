@@ -30,9 +30,9 @@ function aboutOf(e: AuditEntry, projects: Map<string, string>): string {
   return parts.join("; ");
 }
 
-/** The audit log as CSV or JSON (Business and Enterprise), with the log's filter (`action`, `actor`, `before`, `from`). The export itself goes in the log too. */
+/** The audit log as CSV or JSON (Business and Enterprise), for every role: an auditor is often a viewer, with the log's filter (`action`, `actor`, `before`, `from`). The export itself goes in the log too. */
 export async function auditExport(ctx: Ctx): Promise<void> {
-  const { user } = await requireOrg(ctx, ctx.params.org!, "manage");
+  const { user } = await requireOrg(ctx, ctx.params.org!, "read");
   await requireFeature(ctx.app, ctx.params.org!, "auditExport");
   const format = ctx.url.searchParams.get("format") === "json" ? "json" : "csv";
   const filter = auditFilterOf(ctx.url.searchParams);

@@ -84,7 +84,7 @@ const AUDIT_PAGE = 100;
 
 /** `GET api/orgs/:org/audit`: newest first, `limit` (1 to 500) at a time; page with `offset`, or back with `before` = the last time. */
 async function auditLog(ctx: Ctx): Promise<void> {
-  await requireOrg(ctx, ctx.params.org!, "manage");
+  await requireOrg(ctx, ctx.params.org!, "read");
   const p = ctx.url.searchParams;
   const limit = Math.min(500, Math.max(1, Number(p.get("limit")) || AUDIT_PAGE));
   const offset = Math.max(0, Math.floor(Number(p.get("offset")) || 0));
@@ -93,12 +93,12 @@ async function auditLog(ctx: Ctx): Promise<void> {
 
 /** `GET api/orgs/:org/audit/count`: `{ total }` lines that match the same filter. */
 async function auditCount(ctx: Ctx): Promise<void> {
-  await requireOrg(ctx, ctx.params.org!, "manage");
+  await requireOrg(ctx, ctx.params.org!, "read");
   sendJson(ctx.res, 200, { total: await countAudit(ctx.app.db, ctx.params.org!, auditFilterOf(ctx.url.searchParams)) });
 }
 
 async function auditFacetsOf(ctx: Ctx): Promise<void> {
-  await requireOrg(ctx, ctx.params.org!, "manage");
+  await requireOrg(ctx, ctx.params.org!, "read");
   sendJson(ctx.res, 200, await auditFacets(ctx.app.db, ctx.params.org!));
 }
 
