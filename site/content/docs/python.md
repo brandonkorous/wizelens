@@ -27,7 +27,7 @@ The insights work on what the instrumentations send: N+1 queries, N+1 HTTP calls
 
 ## What the package adds
 
-| | Plain OpenTelemetry | With `wizelens` |
+| What | Plain OpenTelemetry | With `wizelens` |
 |---|---|---|
 | Where it sends | You set `OTEL_EXPORTER_OTLP_ENDPOINT` | `WIZELENS_HUB`, else `http://localhost:5960` |
 | Sampling | Head sampling: errors can be dropped | Keeps every trace with an error or a slow span |

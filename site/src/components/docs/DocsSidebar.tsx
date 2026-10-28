@@ -21,7 +21,7 @@ export function DocsSidebar() {
           <MenuIcon open={open} /> Menu
         </button>
       </div>
-      <nav className="wl-docs-groups" aria-label="Docs">
+      <nav className="wl-docs-groups" aria-label="Docs pages">
         {DOC_GROUPS.map((g) => (
           <div key={g.title} className="wl-docs-group">
             <h2>{g.title}</h2>

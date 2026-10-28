@@ -33,7 +33,7 @@ export function Compare() {
         </div>
         <div className="wl-compare" role="table" aria-label="In your app, the local hub, and WizeLens Cloud compared">
           <div className="wl-compare-row wl-compare-head" role="row">
-            <span role="columnheader" />
+            <span role="columnheader"><span className="wl-sr-only">Feature</span></span>
             {COLS.map((c) => <b key={c} role="columnheader">{c}</b>)}
           </div>
           {ROWS.map((r, i) => (

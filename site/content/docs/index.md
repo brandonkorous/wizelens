@@ -35,7 +35,7 @@ render problems, security risks from the OWASP Top 10, and services running abov
 
 ## Three ways to run it
 
-| | Where the data lives | For |
+| Where it runs | Where the data lives | For |
 |---|---|---|
 | **In your app** | A small SQLite file per service: the newest 2,000 traces or 24 hours | One developer, one machine |
 | **[The local hub](/docs/hub/)** | One SQLite file for every service, 7 days | A whole system on your machine or team network |
