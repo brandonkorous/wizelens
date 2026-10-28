@@ -30,13 +30,15 @@ export class WizeLensSourceMapsPlugin {
 
   apply(compiler: Compiler): void {
     const production = compiler.options.mode === "production";
-    if (production && !compiler.options.devtool) compiler.options.devtool = "hidden-source-map";
+    // Maps the plugin turned on are deleted once uploaded, so they are not deployed; maps the site asked for stay.
+    const ownMaps = production && !compiler.options.devtool;
+    if (ownMaps) compiler.options.devtool = "hidden-source-map";
     const release = pluginRelease(this.#o, compiler.context);
     if (release && compiler.webpack) new compiler.webpack.DefinePlugin({ [RELEASE_GLOBAL]: JSON.stringify(release), "process.env.WIZELENS_RELEASE": JSON.stringify(release) }).apply(compiler);
     if (!production) return;
     compiler.hooks.afterEmit.tapPromise(NAME, async (compilation) => {
       const dir = compilation.outputOptions.path ?? compiler.options.output.path;
-      if (compilation.errors.length === 0 && dir) await uploadAfterBuild(dir, release, this.#o, this.#extra);
+      if (compilation.errors.length === 0 && dir) await uploadAfterBuild(dir, release, this.#o, { deleteAfterUpload: this.#o.deleteAfterUpload ?? ownMaps, ...this.#extra });
     });
   }
 }

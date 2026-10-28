@@ -28,6 +28,8 @@ export function wizelensSourceMaps(o: PluginOptions = {}) {
   let outDir = "dist";
   let skip = false;
   let failed = false;
+  // Maps the plugin turned on are deleted once uploaded, so they are not deployed; maps the site asked for stay.
+  let ownMaps = false;
   return {
     name: "wizelens-sourcemaps",
     enforce: "post" as const,
@@ -35,6 +37,7 @@ export function wizelensSourceMaps(o: PluginOptions = {}) {
       release = pluginRelease(o, resolve(config.root ?? process.cwd()));
       const define = release ? { [RELEASE_GLOBAL]: JSON.stringify(release), "import.meta.env.WIZELENS_RELEASE": JSON.stringify(release) } : {};
       if (env.command !== "build") return { define };
+      ownMaps = !config.build?.sourcemap;
       return { define, build: { sourcemap: config.build?.sourcemap || ("hidden" as const) } };
     },
     configResolved(c: ResolvedConfig) {
@@ -50,7 +53,7 @@ export function wizelensSourceMaps(o: PluginOptions = {}) {
     async closeBundle(this: PluginContext | void) {
       const name = this && "environment" in this ? this.environment?.name : undefined;
       if (skip || failed || (name !== undefined && name !== "client")) return;
-      await uploadAfterBuild(outDir, release, o);
+      await uploadAfterBuild(outDir, release, o, { deleteAfterUpload: o.deleteAfterUpload ?? ownMaps });
     },
   };
 }
