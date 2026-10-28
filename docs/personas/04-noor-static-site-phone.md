@@ -4,7 +4,7 @@
 **Author:** Brandon Korous
 **Last Updated:** 2026-10-27
 
-**Status:** in progress
+**Status:** done
 **Run:** 2026-10-27, from 21:00 (America/Los_Angeles, UTC-7), Claude driving Chrome in phone emulation (390 × 844, touch) unless an act says otherwise
 **Role:** front-end only · the browser script tag, no server SDK · WizeLens Cloud on a phone
 
@@ -237,6 +237,29 @@ needed, tap targets at least 44 px.
 `Ashgrove`; paste a P02 trace id and a P02 project id into her address bar. Expect
 nothing.
 
+**Outcomes (2026-10-27 to 10-28, phone clock America/Los_Angeles):**
+
+- *Wrong moves.* The secret key in the page: act 3, #084. The same uptime check twice: act 8. Deleting the browser
+  key her live site used: the dialog warned well, the site kept working, its visits were refused, and the cloud
+  told nobody (#111: now a warning on Sending keys and a team email, gone once a new key sends). She made a new
+  key, put it in the site, rebuilt, and visits arrived at once. The team email gave UTC times (#112).
+- *Reload and deep link.* Reload kept the screen. The shared link opened in a fresh browser (act 10). A deep link to
+  one error while signed out showed the sign-in form, and signing in landed on that error. A session that ended with
+  a page open led to "Sign in, or send a read key" with no way to sign in (#115: now the sign-in form, then back to
+  the same page).
+- *Dates.* Outage times against the phone clock (#102). A visit at 23:58 read as "today" after midnight (#110).
+  Security and team emails gave UTC (#112).
+- *Numbers at the edges.* Rendering (1 h): 8 views, then 7 sent by hand (5 phone, 2 desktop) = 15, then 3 more = 18.
+  The route table matched page by page each time. The device table did not move for views from the CDN script
+  (#113); after the fix it moved by exactly 2 phone and 1 desktop.
+- *The other side.* Rémy on the shared link, act 10.
+- *Without a mouse.* Thumbs only at 390 and 360. Nothing needs hover. Most controls were under 44 px: the top bar,
+  tick boxes, row actions, sort headers (#114: all 44 px on touch; the theme moved into the account menu so the top
+  bar fits at 360). The Alerts tables squeezed names to one word per line (#116). Keyboard alone: not checked (her
+  instance of this check is thumbs).
+- *Somebody else's data.* Nothing found for `kanninja`, `Harrow & Vance` or `Ashgrove`; Greta's project id and
+  trace id showed nothing of Greta's. No leak.
+
 ---
 
 ## Verification
@@ -245,12 +268,12 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 
 | | Result |
 | --- | --- |
-| Acts completed | — |
-| Issues filed | — |
-| Issues fixed and confirmed | — |
-| Issues blocked, and on what | — |
-| Screens scored | — |
-| **Not checked** | — |
+| Acts completed | 10 of 10 |
+| Issues filed | 37: #080–#116 |
+| Issues fixed and confirmed | 37, each re-run on her phone; shared fixes re-checked on P02 Greta. #112's team-email time is proved by test and re-checked on screen in P05 (she works alone, so no team email of another person reached her) |
+| Issues blocked, and on what | none |
+| Screens scored | 16 cloud screens in light and dark at 390 and 360: Overview, Connect › setup, Connect › Sending keys, Rendering, Page route, Errors, Error group, Requests, Traces, Trace › Timeline, Search, Alerts, Uptime, Uptime check, Shared page, HUD card |
+| **Not checked** | Sign in and Create account were seen only in light (no score from P04); the site's docs pages were seen at 390 only; a keyboard-only job; the HUD details panel on her site |
 
 ### The numbers
 
@@ -259,6 +282,8 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 | Minutes from the script tag to the first page view | about 1 (tag 21:25:42, first visits about 21:26) |
 | Page views (hand vs. screen) | 59 vs. 59 (Overview) |
 | Phone share (hand vs. screen) | 27 of 59 = 46% of all visits; the screen counts devices only on the 28 visits whose script sent the browser: 12 of 28 = 43%, and 12 by hand |
+| Page views at the edges (00:25–00:30) | by hand 8 → 15 → 18; Rendering's route table 8 → 15 → 18, page by page |
+| Phone share at the edges | 7 views from the CDN script: 0 in the device table (#113); after the fix, 2 phone + 1 desktop sent, and the table moved by exactly 2 and 1 |
 
 ---
 
@@ -279,3 +304,8 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 - 22:33–22:45 act 7: #097 and #098 fixed and confirmed (Greta re-checked for #098)
 - 22:27–22:33 build key made; plugin added; #096 fixed 22:29; source line shown 22:30; line fixed, 1.0.2 built, errors resolved
 - 21:36–21:53 #087 (no split by device) fixed; 28 more visits with this branch's script at 21:44; #088 (Rendering 1160 px wide on a phone) and #089 (service chip pushes the account button off, found on P02) fixed 21:53
+- 00:14–00:24 standing check, the live key revoked: #111 (nobody told) and #112 (emails in UTC) fixed and confirmed; new browser key in the site, visits arrive
+- 00:25–00:31 numbers at the edges: page views match by hand; #113 (device split missed the CDN script's views) fixed and confirmed
+- 00:32–00:39 thumbs: #114 (controls under 44 px; then the top bar wrapped at 360) fixed and confirmed
+- 00:40–00:46 scoring sweep in light and dark at 390 and 360: #115 (session ends, "send a read key" dead end) and #116 (Alerts tables squeezed) fixed and confirmed
+- 00:47 scores written in rating.md; Status done

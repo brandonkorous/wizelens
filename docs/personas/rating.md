@@ -8,7 +8,7 @@ Every screen in WizeLens, scored on **Design** and **Ease** as the personas open
 them. How and when to score is RULE #6 in [CLAUDE.md](CLAUDE.md); this file is
 where the numbers live.
 
-**Scored so far: 50 of 177 screens.** Update that line as rows fill in —
+**Scored so far: 52 of 177 screens.** Update that line as rows fill in —
 it is the denominator, and a rating file that does not show what it has not looked
 at is the same lie as an empty issue list.
 
@@ -134,15 +134,15 @@ is a `major` issue, not a rating.**
 
 | Screen | Key | Design | Ease | Gap to 10 | Persona |
 | --- | --- | --- | --- | --- | --- |
-| Overview | `#/` | 8 | 7 | at 360 the six stat cards stack one per row before the first chart; "No data for previous 7 days" on every card while the org is a day old; was: top bar ran off the screen #046 | P02 |
+| Overview | `#/` | 8 | 7 | at 360 the six stat cards stack one per row before the first chart; "No data for previous 7 days" on every card while the org is a day old; was: top bar ran off the screen #046; P04 (static site, phone): two script reads stored before #093 count as "Total Requests 2" for 24 h and hide the "N page views arrived" note until they age out | P02, P04 |
 | Problems | `#/problems` | — | — | — | — |
-| Search | `#/search` | 8 | 7 | runs only on Enter, unlike the list boxes beside it; was: top bar ran off the screen #046; a bare word does not look inside SQL params (`@wizelens.db.parameters:*Peña*` does) | P02, P03 |
-| Requests | `#/requests` | 8 | 8 | at 360 the filters fill the first screen; Path cuts long ids at 1440; was: top bar #046 | P02 |
-| Traces | `#/traces` | 7 | 7 | list panel is a third of the width at 1440; at 360 the list starts below four stat cards; was: top bar #046 | P02 |
-| Errors | `#/errors` | 8 | 7 | at 360 five menus and two boxes fill the first screen; the details panel starts below the fold at 1440; was: top bar #046 | P02 |
+| Search | `#/search` | 8 | 7 | runs only on Enter, unlike the list boxes beside it; was: top bar ran off the screen #046; a bare word does not look inside SQL params (`@wizelens.db.parameters:*Peña*` does); P04: on a static site "Requests (0)" is the first tab while Traces holds her 117 | P02, P03, P04 |
+| Requests | `#/requests` | 8 | 8 · 360: 6 | at 360 the filters fill the first screen; Path cuts long ids at 1440; was: top bar #046; P04 at 360: six filters fill the first screen; on a static site its only rows are two script reads stored before #093 | P02, P04 |
+| Traces | `#/traces` | 7 | 7 | list panel is a third of the width at 1440; at 360 the list starts below four stat cards; was: top bar #046; P04: no time column, on a phone or a desktop | P02, P04 |
+| Errors | `#/errors` | 8 | 7 · 360: 6 | at 360 five menus and two boxes fill the first screen; the details panel starts below the fold at 1440; was: top bar #046; P04 at 360: seven filters fill the first screen and the counts start below it | P02, P04 |
 | Logs | `#/logs` | — | — | — | — |
 | Database | `#/database` | 8 | 8 | query text cut at 1440 with no wrap toggle; at 360 the filters fill the first screen; was: top bar #046 | P02 |
-| Rendering | `#/rendering` | — | — | — | — |
+| Rendering | `#/rendering` | 8 | 8 | the device table leaves out views with no known device and does not say how many (old views only); "Hydration –" on a static site; was: no split by device #087, 1160 px wide #088, views from the CDN script missing from the split #113 | P04 |
 | Metrics | `#/metrics` | — | — | — | — |
 | Services | `#/services` | 8 | 7 | `localhost:3001` (the web app's calls to the API) is listed as its own Unhealthy service beside `kanninja-backend`, the same API; two tables name the same services; was: top bar #046; was: map numbers on top of each other #076, a call hidden behind a box #077 | P02, P03 |
 | Hosts | `#/hosts` | — | — | — | — |
@@ -150,16 +150,16 @@ is a `major` issue, not a rating.**
 | Insights | `#/insights` | — | — | — | — |
 | Security | `#/security` | — | — | — | — |
 | Users | `#/users` | — | — | — | — |
-| Alerts | `#/alerts` | 7 → 8 | 7 | five controls on every rule row (Mute, Turn off, Test, Edit, Delete); was: Rule column one letter wide at 360 #047, top bar #046 | P02 |
-| Uptime | `#/uptime` | 8 | 8 | "Average of the checks that are on" is cut at 1440; at 360 the checks table starts below four cards | P02 |
+| Alerts | `#/alerts` | 7 → 8 | 7 | five controls on every rule row (Mute, Turn off, Test, Edit, Delete); was: Rule column one letter wide at 360 #047, top bar #046; P04 at 360: the rule's actions need a sideways swipe; was: names one word per line #116 | P02, P04 |
+| Uptime | `#/uptime` | 8 | 8 | "Average of the checks that are on" is cut at 1440; at 360 the checks table starts below four cards; P04: was: outage times in UTC #102, and #099–#101 | P02, P04 |
 | SLOs | `#/slos` | 7 → 8 | 8 | Apdex targets share the page with SLOs as a second idea with no heading link between them; was: Goal column one letter wide at 360 #047 | P02 |
 | Dashboards | `#/dashboards` | — | — | — | — |
 | Connect | `#/connect` | — | — | — | — |
 | People & access | `#/people` | — | — | — | — |
 | Organization | `#/organization` | — | — | — | — |
-| Connect › setup | `#/connect/setup` | 8 | 8 | env lines are small mono at 360 and wrap mid-value; copy buttons sit far right of the value | P02 |
+| Connect › setup | `#/connect/setup` | 8 | 8 | env lines are small mono at 360 and wrap mid-value; copy buttons sit far right of the value; P04 at 360: the tab row cuts "Sending keys" with no sign that it scrolls; was: no static-site path #080, Copy over the code #081, no ready script tag #083 | P02, P04 |
 | Connect › server | `#/connect/server` | — | — | — | — |
-| Connect › Sending keys | `#/connect/keys` | 7 → 8 | 8 | during a rotate the old and new secrets are two rows with one name, told apart only by "In a day"; was: Projects column split letters at 360 #047, revoke said nothing about use #042 | P02 |
+| Connect › Sending keys | `#/connect/keys` | 7 → 8 · 360: 7 | 8 | during a rotate the old and new secrets are two rows with one name, told apart only by "In a day"; was: Projects column split letters at 360 #047, revoke said nothing about use #042; P04 at 360: the Projects column is cut and long key names take three lines; was: a revoked key still in her site and nobody told #111, buttons under 44 px #114 | P02, P04 |
 | Connect › AI read keys | `#/connect/read-keys` | — | — | — | — |
 | Organization › Projects | `#/organization/projects` | 8 | 8 | at 360 Rename, Access, Clear data and Delete sit off to the right inside the table scroll | P02 |
 | Organization › Data retention | `#/organization/retention` | 8 | 8 | the hint under Days is small muted text; was: shortening asked nothing and showed old days #044, logs vs traces rule unclear #045 | P02 |
@@ -181,7 +181,7 @@ is a `major` issue, not a rating.**
 | Account › Delete account | `#/account/delete` | — | — | — | — |
 | Account › Security | `#/account/security` | 8 | 8 | "Turn off" two-step is a solid red button beside "New backup codes" | P02 |
 | Connect › options | `#/connect/options` | — | — | — | — |
-| Trace › Timeline | `#/traces/<id>` | 8 | 7 | a browser-only trace reads "Network and other 4.84 s" with one span bar and no word on what took the time; at 360 the tabs scroll; was: the browser chip read "browser" #078 | P02, P03 |
+| Trace › Timeline | `#/traces/<id>` | 8 | 7 | a browser-only trace reads "Network and other 4.84 s" with one span bar and no word on what took the time; at 360 the tabs scroll; was: the browser chip read "browser" #078; P04: was: 714 px wide on a phone #092 | P02, P03, P04 |
 | Trace › SQL | `#/traces/<id>/sql` | 8 | 8 | an UPDATE's params run three lines of small mono with no wrap toggle; at 360 the facts fill the first screen before the queries; was: SecurityStamp shown #068, accents escaped #072 | P03 |
 | Trace › HTTP | `#/traces/<id>/http` | — | — | — | — |
 | Trace › Messages | `#/traces/<id>/messages` | — | — | — | — |
@@ -191,14 +191,14 @@ is a `major` issue, not a rating.**
 | Error group | `#/errors/<group>` | 7 → 8 | 7 | Next.js's own failed telemetry call (dev only) shows as a kanninja-frontend error, true but noise; was: buttons ran off the screen at 360 #049 | P02 |
 | Service endpoint | `#/services/<svc>/endpoints/<ep>` | — | — | — | — |
 | Query shape | `#/database/queries/<sql>` | 8 | 8 | at 360 the SQL wraps to 7 lines before the numbers; the copy button is under the text, not beside it | P02 |
-| Page route | `#/rendering/routes/<route>` | — | — | — | — |
+| Page route | `#/rendering/routes/<route>` | 8 | 8 | at 360 the route title in monospace breaks mid-word; was: no device and no reason #090, "Total 1.56 s" for a 6.14 s load #091 | P04 |
 | User | `#/users/<user>` | — | — | — | — |
 | Service | `#/services/<svc>` | 8 | 8 → 9 | at 360 the facts (kind, hosts, version…) fill the first screen before a number; the not-sending band shares the Errors pink; was: a send gap drew as 0 requests #043 | P02 |
 | Problem | `#/problems/<id>` | — | — | — | — |
 | Alert rule | `#/alerts/<id>` | 8 | 8 | the line starts on the day the rule was made, so most of the 7-day chart is blank with no word on why; was: link said traces and opened queries #036, lost after two-step sign-in #035 | P02 |
 | SLO | `#/slos/<id>` | 8 | 6 → 8 | the budget chart is a flat line at 0 once spent; a 2-minute outage is a 3 px band on a 30-day chart, so the list carries it; was: an outage spent no budget and nothing showed it (#038) | P02 |
 | Dashboard | `#/dashboards/<id>` | — | — | — | — |
-| Shared page (signed out) | `#/shared/<token>` | 8 | 8 | at 360 "link works until Nov 3, 2026" wraps under the logo and the tabs scroll sideways; was: stayed light in dark mode #075 | P03 |
+| Shared page (signed out) | `#/shared/<token>` | 8 | 8 | at 360 "link works until Nov 3, 2026" wraps under the logo and the tabs scroll sideways; was: stayed light in dark mode #075; P04: was: titled "WizeLens" #106, links that led to sign-in #107 | P03, P04 |
 | Status page | `#/status/<slug>` | — | — | — | — |
 | Uptime check | `#/uptime/<id>` | 8 | 8 | on day one the 30-day card reads the same as 24 h and does not say how much is measured; was: counted from before the first run #037 | P02 |
 | Host | `#/hosts/<name>` | — | — | — | — |
@@ -228,7 +228,7 @@ Sign in, two-factor and invite were opened by P02 (acts 1, 7 and 9) in light at 
 
 | Screen | Key | Design | Ease | Gap to 10 | Persona |
 | --- | --- | --- | --- | --- | --- |
-| HUD card | `bottom corner of the app` | 8 | 7 → 8 | on a light page the card is dark and its panels light; Next.js' dev "N" button covers the SQL count bottom left; was: covered the last card #011; on eShop at 360 the card fits and shows no route name | P01, P03 |
+| HUD card | `bottom corner of the app` | 8 | 7 → 8 | on a light page the card is dark and its panels light; Next.js' dev "N" button covers the SQL count bottom left; was: covered the last card #011; on eShop at 360 the card fits and shows no route name; P04 (static site, 360): Server and Database read "—" with nothing to explain why; was: on for every visitor of her site #103 (now `?wizelens-hud=on`) | P01, P03, P04 |
 | HUD details panel | `HUD › details` | 6 → 8 | 8 | on a phone the full call name is only in a hover title, which touch cannot open; was: method cut and axis labels overlapped at 360 #023; was: "Calls · 0" above the page row #079 | P01, P03 |
 
 ### Site · wizelens.com — 19 screens
