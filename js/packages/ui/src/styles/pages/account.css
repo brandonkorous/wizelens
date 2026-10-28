@@ -43,3 +43,6 @@
   .wl-banner-thin { padding: 8px 16px; }
   .wl-totp-qr { width: 144px; height: 144px; }
 }
+.wl-noorg-invites { display: grid; gap: 8px; margin-top: 12px; text-align: left; }
+.wl-noorg-invite { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--wl-line); border-radius: var(--wl-radius); color: var(--wl-fg); }
+.wl-noorg-invite strong { font-weight: 600; }

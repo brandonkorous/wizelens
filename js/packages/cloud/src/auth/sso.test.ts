@@ -80,6 +80,16 @@ describe("signing in with SSO", () => {
     expect(actions.map((a) => a.action)).toEqual(expect.arrayContaining(["sso.create", "member.join"]));
   });
 
+  it("leaves an invited person to their invite, and shows it to them once the email is proven", async () => {
+    const { url, owner, orgId } = await withIdp({ sub: "u3", email: "sam@acme.io", name: "Sam" });
+    expect((await invite(owner, orgId, "sam@acme.io", "viewer")).length).toBeGreaterThan(0);
+    const { c } = await ssoSignIn(url, "sam@acme.io");
+    expect((await c.call<Me>("GET", "api/me")).body.orgs).toEqual([]);
+    expect((await c.call<{ orgName: string; role: string }[]>("GET", "api/me/invites")).body).toEqual([expect.objectContaining({ role: "viewer" })]);
+    await cloud.app.db.query("UPDATE users SET email_verified = FALSE WHERE email = 'sam@acme.io'");
+    expect((await c.call<unknown[]>("GET", "api/me/invites")).body).toEqual([]);
+  });
+
   it("makes no account for an email outside the provider's domain", async () => {
     const { url } = await withIdp({ sub: "u2", email: "eve@evil.io", name: "Eve" });
     const { c } = await ssoSignIn(url, "sam@acme.io");
