@@ -1434,7 +1434,9 @@ JSON of `teamMonthly`, `teamAnnual`, `businessMonthly`, `businessAnnual`, `overa
   per organization and day (`identifier: wl-<org>-<day>`, `usage_reports`), so a rerun never bills twice. When the plan ends,
   finished days are reported, then the usage subscription is canceled with a final invoice.
 - **Commands**: `wizelens-cloud stripe-setup` makes the products, prices (lookup keys `wizelens_team_monthly`, …,
-  `wizelens_gb_overage`), the meter, and the webhook, and prints the options. `wizelens-cloud plan set <org> <plan>
+  `wizelens_gb_overage`), the meter, and the webhook, sets the default customer portal (plan switches between the Team
+  and Business prices, cancel at period end, card, address, tax ID, invoices; `billing/stripe-portal.ts`), and prints the
+  options. A switch to a plan with fewer days or features asks first and lists what stops (`lossOf`). `wizelens-cloud plan set <org> <plan>
   [--gb N] [--retention-days N]` sets a plan by hand (audit actor `cli`).
 
 ### Cloud storage

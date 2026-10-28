@@ -20,7 +20,10 @@ async function parse<T>(res: Response): Promise<T> {
   noteStatus(res.status);
   const text = await res.text();
   const body = text ? (JSON.parse(text) as unknown) : undefined;
-  if (!res.ok) throw new ApiError(res.status, (body as { error?: string } | undefined)?.error ?? `HTTP ${res.status}`);
+  // Our routes answer `error`; Better Auth's (plans, members, sign-on) answer `message`.
+  const said = body as { error?: unknown; message?: unknown } | undefined;
+  const why = typeof said?.error === "string" ? said.error : typeof said?.message === "string" ? said.message : "";
+  if (!res.ok) throw new ApiError(res.status, why || `HTTP ${res.status}`);
   return body as T;
 }
 

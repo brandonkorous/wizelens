@@ -68,6 +68,8 @@ function setupFake(tax = "active") {
   const products: FakeProduct[] = [];
   const prices: FakePrice[] = [];
   const hooks: { url: string }[] = [];
+  // Stripe's default portal: no plan switches until stripe-setup turns them on.
+  const portal = { id: "bpc_1", features: { subscription_update: { enabled: false, products: [] as { product: string; prices: string[] }[] }, subscription_cancel: { enabled: false } } };
   const list = <T>(rows: T[]) => async function* () { yield* rows; };
   const client = {
     billing: { meters: { list: () => list(meters)(), create: async (p: { event_name: string }) => (made.push("meter"), meters.push({ id: "mtr_1", event_name: p.event_name }), meters[0]) } },
@@ -83,8 +85,14 @@ function setupFake(tax = "active") {
     },
     tax: { settings: { retrieve: async () => ({ status: tax }) } },
     webhookEndpoints: { list: () => list(hooks)(), create: async (p: { url: string }) => (made.push("webhook"), hooks.push(p), { secret: "whsec_new" }) },
+    billingPortal: {
+      configurations: {
+        list: async () => ({ data: [portal] }),
+        update: async (_id: string, p: { features: unknown }) => (made.push("portal"), (portal.features = p.features as typeof portal.features), portal),
+      },
+    },
   };
-  return { client: client as unknown as StripeClient, made, products, prices };
+  return { client: client as unknown as StripeClient, made, products, prices, portal };
 }
 
 describe("stripe-setup", () => {
@@ -99,6 +107,8 @@ describe("stripe-setup", () => {
     expect(f.prices.find((p) => p.lookup_key === "wizelens_team_annual")!.params).toMatchObject({ unit_amount: 29000, recurring: { interval: "year" } });
     expect(f.products.every((p) => p.tax_code === TAX_CODE) && f.prices.every((p) => p.tax_behavior === "exclusive")).toBe(true);
     expect(first.taxReady).toBe(true);
+    expect(f.portal.features.subscription_update).toMatchObject({ enabled: true, products: [{ product: "prod_team", prices: [first.prices.teamMonthly, first.prices.teamAnnual] }, { product: "prod_business" }] });
+    expect(f.made).toContain("portal");
     const count = f.made.length;
     const out: string[] = [];
     await stripeSetupMain(["--public-url", "https://app.wizelens.com"], {}, (l) => out.push(l), f.client);

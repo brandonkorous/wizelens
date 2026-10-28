@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
-import { cancelPlan, choosePlan, fmtGb, fmtUsd, type PlanView, type Usage } from "../../data/billing";
+import { cancelPlan, choosePlan, type Feature, fmtGb, fmtUsd, type PlanView, type Usage } from "../../data/billing";
 import { errorText } from "../../data/account";
+import { useAsk } from "../../ui/Dialog";
 import { Panel } from "../../ui/Panel";
 
 const PERKS: Record<string, string[]> = {
@@ -17,15 +18,30 @@ function price(p: PlanView, annual: boolean): string {
   return annual ? `${fmtUsd(p.annualUsd! / 12)}/mo` : `${fmtUsd(p.monthlyUsd)}/mo`;
 }
 
-function PlanAction({ p, usage, orgId, annual, busy, run }: { p: PlanView; usage: Usage; orgId: string; annual: boolean; busy: boolean; run: (f: () => Promise<void>) => void }) {
+const LOST: Record<Feature, string> = {
+  sso: "Single sign-on settings lock: people sign in with it as now, but you cannot change it or require it.",
+  scim: "SCIM provisioning stops.",
+  auditExport: "Audit log export stops; the log itself stays.",
+};
+
+/** What a lower plan takes away, in her words; null when nothing is lost. */
+export function lossOf(usage: Usage, p: PlanView): string[] | null {
+  const lost = (Object.keys(LOST) as Feature[]).filter((f) => usage.plan.features[f] && !p.features[f]).map((f) => LOST[f]);
+  if (p.maxRetentionDays < usage.maxRetentionDays) lost.unshift(`Data is kept ${p.maxRetentionDays} days, not ${usage.maxRetentionDays}: older traces and logs are deleted.`);
+  return lost.length ? lost : null;
+}
+
+type Run = (f: () => Promise<void>, p: PlanView) => void;
+
+function PlanAction({ p, usage, orgId, annual, busy, run }: { p: PlanView; usage: Usage; orgId: string; annual: boolean; busy: boolean; run: Run }) {
   const current = usage.plan.id === p.id;
   const paidNow = usage.plan.id === "team" || usage.plan.id === "business";
   if (current) return <span className="wl-badge wl-badge-info">Current plan</span>;
   if (p.id === "enterprise") return <a className="wl-btn" href="mailto:hello@wizelens.com?subject=WizeLens%20Enterprise">Talk to us</a>;
-  if (p.id === "free") return paidNow ? <button type="button" className="wl-btn" disabled={busy} onClick={() => run(() => cancelPlan(orgId))}>Move to Free</button> : null;
+  if (p.id === "free") return paidNow ? <button type="button" className="wl-btn" disabled={busy} onClick={() => run(() => cancelPlan(orgId), p)}>Move to Free</button> : null;
   const id = p.id as "team" | "business";
   return (
-    <button type="button" className="wl-btn wl-btn-primary" disabled={busy} onClick={() => run(() => choosePlan(orgId, id, annual))}>
+    <button type="button" className="wl-btn wl-btn-primary" disabled={busy} onClick={() => run(() => choosePlan(orgId, id, annual), p)}>
       {paidNow ? `Switch to ${p.name}` : `Choose ${p.name}`}
     </button>
   );
@@ -36,7 +52,11 @@ export function PlanCards({ usage, orgId, manage }: { usage: Usage; orgId: strin
   const [annual, setAnnual] = useState(usage.subscription?.interval === "year");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const run = (f: () => Promise<void>) => {
+  const { dialog, confirm } = useAsk();
+  const run: Run = async (f, p) => {
+    const lost = lossOf(usage, p);
+    const body = lost && <ul className="wl-plan-loss">{lost.map((t) => <li key={t}>{t}</li>)}<li>Stripe shows the new price next.</li></ul>;
+    if (lost && !(await confirm({ title: `Move to ${p.name}?`, body, confirmLabel: `Continue to ${p.name}`, danger: true }))) return;
     setBusy(true);
     f().catch((e: unknown) => (setError(errorText(e)), setBusy(false)));
   };
@@ -60,6 +80,7 @@ export function PlanCards({ usage, orgId, manage }: { usage: Usage; orgId: strin
           </article>
         ))}
       </div>
+      {dialog}
       <p className="wl-muted wl-small">Extra data on Team and Business, per month: $0.30 a GB for the first 500 GB above the included GB, $0.20 up to 2 TB, then $0.10. Never a seat fee.</p>
     </Panel>
   );

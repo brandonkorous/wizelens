@@ -331,12 +331,14 @@ keys. Every organization is unlimited, and `--retention-days` sets history as be
 To turn billing on, run `wizelens-cloud stripe-setup --stripe-secret-key sk_… --public-url https://lens.example.com`
 once. It makes the Team and Business products with monthly and yearly prices, the `wizelens_gb` meter with its
 graduated price, and the webhook (with the events `checkout.session.completed` and `customer.subscription.created`,
-`.updated`, and `.deleted`), then prints the three options to deploy with. A rerun reuses what exists. Organizations that
+`.updated`, and `.deleted`), and sets the Stripe customer portal so people can switch between Team and Business,
+cancel at the period end, and change their card and address. Then it prints the three options to deploy with. A rerun
+reuses what exists. Organizations that
 existed before billing was turned on stay unlimited until you move them.
 
 Plans charge tax through Stripe Tax: Checkout asks for the billing address and an optional business tax ID, and tax is
 added on top of the price. Before the first Checkout, add the head office address in the Stripe Dashboard (Tax >
-Settings) and save the customer portal settings once (Settings > Billing > Customer portal). `stripe-setup` says when
+Settings). `stripe-setup` says when
 Stripe Tax is not active yet. Stripe collects tax only where you add a registration; until then it tracks your sales and
 tells you when you pass a threshold.
 
