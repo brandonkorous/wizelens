@@ -39,7 +39,8 @@ export function VerifyEmail({ token, mail }: { token: string; mail: boolean }) {
   if (!token) return <SendNewLink error="This link is not complete." mail={mail} />;
   if (error?.expired) return <SendNewLink error={error.text} mail={mail} />;
   if (error) return <AuthCard title="This link did not work" intro={error.text}>{HOME}</AuthCard>;
-  if (result === "changing") return <AuthCard title="One more step" intro="Now open the link we sent to your new email. It finishes the change.">{HOME}</AuthCard>;
+  const next = mail ? "Now open the link we sent to your new email." : "Now open the second link, for your new email. This cloud cannot send email: ask the person who runs it, the link is in the cloud's log.";
+  if (result === "changing") return <AuthCard title="One more step" intro={`${next} It finishes the change.`}>{HOME}</AuthCard>;
   return <AuthCard title={result === "done" ? "Email confirmed" : "Confirming your email…"} />;
 }
 
