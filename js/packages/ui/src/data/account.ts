@@ -131,6 +131,8 @@ interface AuthFail {
 }
 
 const TAKEN = "This email already has an account. Sign in, or use another email.";
+/** The cloud's sign-in limits last 5 minutes at most (cloud `rateLimitOptions`). */
+const TOO_MANY = "Too many tries in a short time. Wait up to 5 minutes, then try again.";
 /** Better Auth messages in the words a customer uses. Codes not listed keep the server's message. */
 const PLAIN: Record<string, string> = {
   INVALID_TOKEN: "This link is old or was already used.",
@@ -146,8 +148,9 @@ const PLAIN: Record<string, string> = {
 /** Run one Better Auth call; its error becomes an AuthError with a plain message. */
 export async function auth<T>(run: (c: AuthClient) => Promise<{ data: T; error: AuthFail | null }>): Promise<NonNullable<T>> {
   const { data, error } = await run(await authClient());
-  if (error) throw new AuthError(error.status, error.code ?? "", PLAIN[error.code ?? ""] ?? (error.message || error.statusText || `HTTP ${error.status}`));
-  return data as NonNullable<T>;
+  if (!error) return data as NonNullable<T>;
+  const text = error.status === 429 ? TOO_MANY : PLAIN[error.code ?? ""];
+  throw new AuthError(error.status, error.code ?? "", text ?? (error.message || error.statusText || `HTTP ${error.status}`));
 }
 
 /** Better Auth wants a sign-in from the last 15 minutes for this. */
