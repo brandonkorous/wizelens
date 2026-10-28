@@ -12,6 +12,10 @@
   --wl-accent: #2563eb;
   --wl-accent-soft: #eaf1ff;
   --wl-accent-text: #1d4ed8;
+  /* Filled buttons: the same in both themes, so white text keeps 4.5:1 or more. */
+  --wl-accent-fill: #2563eb;
+  --wl-error-fill: #dc2626;
+  --wl-on-fill: #ffffff;
   --wl-ok: #16a34a;
   --wl-ok-soft: #e8f7ee;
   --wl-warn: #c2410c;
