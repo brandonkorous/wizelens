@@ -13,6 +13,7 @@ const FINDING_LABEL: Record<FindingKind, string> = {
   "duplicate-query": "Duplicate",
   "slow-query": "Slow query",
   "db-wait": "Database wait",
+  "slow-page": "Slow page",
   ...SECURITY_LABELS,
 };
 
