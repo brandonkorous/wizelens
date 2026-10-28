@@ -11,6 +11,7 @@ import { ErrorStack } from "./ResolvedStack";
 import { useGroupTags } from "../../data/tagMatch";
 import { TagChips } from "../../ui/TagChips";
 import { TagThis } from "../../ui/TagThis";
+import { useOpenFocus } from "../../ui/useOpenFocus";
 
 type Tab = "stack" | "context" | "tags";
 
@@ -63,10 +64,11 @@ export const errorScopes = (g: ErrorGroup) => [errorScope(g), ...(g.latest.metho
 function GroupDetails({ group, info }: { group: ErrorGroup; info: IssueInfo | undefined }) {
   const [tab, setTab] = useState<Tab>("stack");
   const tags = useGroupTags()("errors", errorGroupDoc(group));
+  const title = useOpenFocus<HTMLHeadingElement>(group.key);
   return (
     <>
       <div className="wl-side-head">
-        <h2 className="wl-err-title">
+        <h2 ref={title} tabIndex={-1} className="wl-err-title">
           {group.type}: {group.message}
         </h2>
         <Badge tone={isBotOnly(group) ? "neutral" : "danger"}>{errorGroupLabel(group)}</Badge>

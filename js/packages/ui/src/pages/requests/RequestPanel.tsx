@@ -9,6 +9,7 @@ import { PanelHeaders, PanelResponse } from "./PanelHttp";
 import { PanelOverview } from "./PanelOverview";
 import { PanelTrace } from "./PanelTrace";
 import { rootServer, statusText } from "./spanInfo";
+import { useOpenFocus } from "../../ui/useOpenFocus";
 
 type Tab = "overview" | "headers" | "response" | "trace";
 
@@ -20,10 +21,11 @@ const TABS: [Tab, string][] = [
 ];
 
 function Head({ r }: { r: RequestItem }) {
+  const title = useOpenFocus<HTMLHeadingElement>(r.traceId);
   return (
     <>
       <div className="wl-side-head">
-        <h2 className="wl-truncate" title={`${r.method} ${r.path}`}>
+        <h2 ref={title} tabIndex={-1} className="wl-truncate" title={`${r.method} ${r.path}`}>
           {r.method} {r.path}
         </h2>
         <button type="button" className="wl-icon-btn wl-rq-close" onClick={() => setQuery({ trace: null })} aria-label="Close request details">
