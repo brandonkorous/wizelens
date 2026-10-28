@@ -60,7 +60,7 @@ function Charts({ c, model }: { c: UptimeCheckView; model: UptimeModel | null })
         {card("24h", "Uptime (24 h)")}
         {card("7d", "Uptime (7 days)")}
         {card("30d", "Uptime (30 days)")}
-        <StatCard icon={Clock} label="Avg Response" value={fmtMs(s?.avgMs)} change={null} upIsGood={false} compareLabel="" note={`${fmtCount(s?.runs ?? 0)} runs, ${fmtCount(s?.failures ?? 0)} failed`} series={s?.avgMsSeries} />
+        <StatCard icon={Clock} label="Avg Response" value={fmtMs(s?.avgMs)} change={null} upIsGood={false} compareLabel="" note={`${fmtCount(s?.runs ?? 0)} ${s?.runs === 1 ? "run" : "runs"}, ${fmtCount(s?.failures ?? 0)} failed`} series={s?.avgMsSeries} />
       </div>
       <Panel title="Response Time">
         {model && s ? (

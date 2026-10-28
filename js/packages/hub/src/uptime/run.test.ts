@@ -27,6 +27,7 @@ const app: RequestListener = (req, res) => {
   if (req.url === "/old") return void res.writeHead(301, { Location: "/health" }).end();
   if (req.url === "/slow") return void setTimeout(() => res.end("late"), 3000);
   if (req.url === "/down") return void res.writeHead(503).end("busy");
+  if (req.url === "/spa") return void res.writeHead(200, { "Content-Type": "text/html" }).end('<title>BK</title><div id="root"></div><script type="module" src="/a.js"></script>');
   res.writeHead(200, { "Content-Type": "text/plain" }).end(`ok from ${req.headers["x-probe"] ?? "nobody"}`);
 };
 
@@ -41,7 +42,8 @@ describe("runCheck", () => {
   it("fails on a wrong status, missing text, or a timeout", async () => {
     const base = await serve(app);
     expect(await runCheck(check({ url: `${base}/down` }), { allowPrivate: true })).toMatchObject({ ok: false, status: 503, error: "Expected status 200-299, got 503 (failed twice in a row)" });
-    expect((await runCheck(check({ url: `${base}/health`, expectBody: "nope" }), { allowPrivate: true })).error).toMatch(/does not contain "nope"/);
+    expect((await runCheck(check({ url: `${base}/health`, expectBody: "nope" }), { allowPrivate: true })).error).toMatch(/does not contain "nope" \(failed/);
+    expect((await runCheck(check({ url: `${base}/spa`, expectBody: "Brandon" }), { allowPrivate: true })).error).toMatch(/does not contain "Brandon"\. This page builds its text with JavaScript/);
     const slow = await runCheck(check({ url: `${base}/slow`, timeoutMs: 1000 }), { allowPrivate: true, confirm: false });
     expect(slow).toMatchObject({ ok: false, status: null, error: `Timed out after 1 s at ${base}/slow (waiting for the first byte)` });
     expect(slow.hops).toEqual([expect.objectContaining({ url: `${base}/slow`, status: null, ttfbMs: null, connectMs: expect.any(Number) })]);

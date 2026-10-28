@@ -85,11 +85,16 @@ async function follow(check: UptimeCheckInput, o: RunOptions, signal: AbortSigna
   }
 }
 
+// A page whose text a script writes: an empty root element (React, Vue, Svelte, Next.js) and a script.
+const SCRIPT_SHELL = /<div id="(root|app|__next|svelte)"[^>]*>\s*<\/div>/i;
+const SHELL_HINT = ". This page builds its text with JavaScript, and a check reads only the HTML the server sends. Look for text in that HTML, such as the page title";
+
 /** Why a response fails the check, or null when it passes. */
 function verdict(check: UptimeCheckInput, h: Hop): string | null {
   if (!statusMatches(check.expectStatus, h.status)) return `Expected status ${check.expectStatus}, got ${h.status}`;
-  if (check.expectBody && !h.body.includes(check.expectBody)) return `The response does not contain "${check.expectBody.slice(0, 80)}"`;
-  return null;
+  if (!check.expectBody || h.body.includes(check.expectBody)) return null;
+  const shell = SCRIPT_SHELL.test(h.body) && /<script/i.test(h.body);
+  return `The response does not contain "${check.expectBody.slice(0, 80)}"${shell ? SHELL_HINT : ""}`;
 }
 
 const errorText = (err: unknown, timeoutMs: number): string => {
