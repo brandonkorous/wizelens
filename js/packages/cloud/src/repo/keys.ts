@@ -126,3 +126,9 @@ export async function keyByToken(q: Queryable, token: string, now: number): Prom
   if (!row.lastUsedMs || now - row.lastUsedMs > 60_000) await q.query("UPDATE api_keys SET last_used_ms = $1 WHERE id = $2", [now, row.id]);
   return { ...toKey(row), orgId: row.org_id };
 }
+
+/** A revoked browser key with this secret, so a page that still sends with it can be told apart from a wrong key. */
+export async function revokedBrowserKey(q: Queryable, token: string): Promise<{ id: string; orgId: string; name: string; origins: string[] } | undefined> {
+  const [row] = await q.query<{ id: string; org_id: string; name: string; origins: string | null }>("SELECT id, org_id, name, origins FROM api_keys WHERE token_hash = $1 AND kind = 'browser' AND revoked_ms IS NOT NULL", [hashToken(token)]);
+  return row && { id: row.id, orgId: row.org_id, name: row.name, origins: row.origins ? (JSON.parse(row.origins) as string[]) : [] };
+}

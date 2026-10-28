@@ -12,7 +12,7 @@ import { hiddenProjects, listProjectRoles } from "../repo/project-roles.js";
 import { orgDeletionNotice } from "../notify/team.js";
 import { deleteOrgEverything, listMembers, pendingInvites, setRetention } from "../repo/orgs.js";
 import { listKeys, listProjects } from "../repo/projects.js";
-import { exposedKeys } from "../repo/key-exposed.js";
+import { exposedKeys, revokedInUse } from "../repo/key-exposed.js";
 import { orgProjectIds } from "../repo/trace-join.js";
 import { clearProjects } from "../telemetry/index.js";
 
@@ -37,6 +37,7 @@ async function overview(ctx: Ctx): Promise<void> {
     projects: (await listProjects(db, id)).filter((p) => !hidden.has(p.id)),
     invites: manage ? await pendingInvites(db, id) : [],
     keys: manage ? await keysWithExposure(db, id) : [],
+    revokedInUse: manage ? await revokedInUse(db, id, now(ctx)) : [],
     projectRoles: manage ? await listProjectRoles(db, id) : [],
   });
 }

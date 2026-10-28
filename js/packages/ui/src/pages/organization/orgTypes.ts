@@ -52,8 +52,17 @@ export interface OrgData {
   projects: Project[];
   invites: Invite[];
   keys: ApiKey[];
+  /** Revoked browser keys a site still sent with in the last 7 days. Empty for members and viewers. */
+  revokedInUse?: RevokedInUse[];
   /** Empty for members and viewers. */
   projectRoles: ProjectRoleRow[];
+}
+
+export interface RevokedInUse {
+  keyId: string;
+  name: string;
+  origin: string | null;
+  timeMs: number;
 }
 
 export const ROLE_LABEL: Record<Role, string> = { viewer: "Viewer", member: "Member", admin: "Admin", owner: "Owner" };

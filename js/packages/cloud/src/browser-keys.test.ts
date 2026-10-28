@@ -103,6 +103,20 @@ describe("the browser intake, guarding keys", () => {
     expect(org.body.keys.find((k) => k.id === made.id)?.exposed?.origin).toBe(SHOP);
   });
 
+  it("tells the owners, once an hour, when a site still sends with a revoked browser key", async () => {
+    const { owner, orgId, made, post } = await setup();
+    expect((await owner.call("DELETE", `api/orgs/${orgId}/keys/${made.id}`)).status).toBeLessThan(300);
+    const res = await post({ spans: [pageView()] });
+    expect(res.status).toBe(401);
+    expect(await res.text()).toMatch(/was revoked/);
+    await post({ spans: [pageView()] });
+    expect((await post({ spans: [pageView()] }, "https://evil.example")).status).toBe(401);
+    const lines = await owner.call<{ detail: { keyId: string; origin: string } }[]>("GET", `api/orgs/${orgId}/audit?action=key.revoked_use`);
+    expect(lines.body.map((l) => [l.detail.keyId, l.detail.origin])).toEqual([[made.id, SHOP]]);
+    const org = await owner.call<{ revokedInUse: { keyId: string; name: string; origin: string }[] }>("GET", `api/orgs/${orgId}`);
+    expect(org.body.revokedInUse).toMatchObject([{ keyId: made.id, name: "site", origin: SHOP }]);
+  });
+
   it("needs sites to make a key, and lets them change in place", async () => {
     const { owner, orgId, projectId, made, post } = await setup();
     expect((await browserKey(owner, orgId, projectId, [])).status).toBe(400);

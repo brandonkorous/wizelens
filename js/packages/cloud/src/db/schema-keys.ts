@@ -7,3 +7,8 @@ ALTER TABLE api_keys ADD COLUMN origins TEXT;
 export const KEY_EXPOSED_MIGRATION = `
 CREATE INDEX ix_audit_key_exposed ON audit (org_id, time_ms) WHERE action = 'key.exposed';
 `;
+
+// A revoked browser key a site still sends with: its audit lines, found per organization the same way.
+export const KEY_REVOKED_USE_MIGRATION = `
+CREATE INDEX ix_audit_key_revoked_use ON audit (org_id, time_ms) WHERE action = 'key.revoked_use';
+`;

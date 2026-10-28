@@ -6,7 +6,8 @@ import type { Ctx } from "../app.js";
 import { clientIp } from "../auth/bridge.js";
 import { fail } from "../http/http.js";
 import type { RateLimiter } from "../http/limiter.js";
-import { noteExposed } from "../repo/key-exposed.js";
+import { noteExposed, noteRevokedUse } from "../repo/key-exposed.js";
+import { revokedBrowserKey } from "../repo/keys.js";
 import { originAllowed } from "../repo/key-origins.js";
 import { keyByToken } from "../repo/projects.js";
 import { counted, type IngestKey, overLimit, save } from "./ingest.js";
@@ -34,6 +35,14 @@ const corsHeaders = (origin: string) => ({
   Vary: "Origin",
 });
 
+/** No live key: a revoked browser key its own sites still send with is noted, so its owners learn the site needs a new tag. */
+async function noKey(ctx: Ctx, token: string, origin: string | undefined): Promise<never> {
+  const gone = await revokedBrowserKey(ctx.app.db, token);
+  if (!gone || !originAllowed(gone.origins, origin)) return fail(401, "This browser key is not valid, or it expired.");
+  await noteRevokedUse(ctx.app.db, gone, origin, ctx.app.config.now());
+  return fail(401, "This browser key was revoked. Put the script tag of a new browser key in this site.");
+}
+
 /** The live browser key for the token, when the page's site is one of its sites. Sets the CORS headers for that site. */
 async function browserKey(ctx: Ctx, token: string): Promise<IngestKey> {
   const key = await keyByToken(ctx.app.db, token, ctx.app.config.now());
@@ -41,8 +50,8 @@ async function browserKey(ctx: Ctx, token: string): Promise<IngestKey> {
     await noteExposed(ctx.app.db, key, ctx.req.headers.origin, ctx.app.config.now());
     return fail(401, "This is a secret key: it must never be in a page. Rotate it, and send from pages with a browser key (wl_bk_).");
   }
-  if (!key) return fail(401, "This browser key is not valid, or it expired.");
   const origin = ctx.req.headers.origin;
+  if (!key) return noKey(ctx, token, origin);
   if (!originAllowed(key.origins, origin)) return fail(403, "This site may not send with this browser key. Add it to the key's sites.");
   for (const [name, value] of Object.entries(corsHeaders(origin!))) ctx.res.setHeader(name, value);
   return key;

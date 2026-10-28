@@ -9,7 +9,7 @@ import { ListFilter, matchesText, useSelection } from "../../ui/Selection";
 import { type Column, Table } from "../../ui/Table";
 import { KeysBulk } from "./KeysBulk";
 import { type Kind, NewSecret, SCOPES } from "./KeyForm";
-import type { ApiKey, OrgData } from "../organization/orgTypes";
+import type { ApiKey, OrgData, RevokedInUse as RevokedInUseRow } from "../organization/orgTypes";
 
 export { KeyForm } from "./KeyForm";
 
@@ -53,6 +53,24 @@ function ExposedKeys({ keys, now }: { keys: ApiKey[]; now: number }) {
       {seen.map((k) => (
         <p key={k.id}>
           <strong>{k.name}</strong> is a secret key, and a public page{k.exposed!.origin ? ` on ${k.exposed!.origin}` : ""} sent with it {fmtAgo(k.exposed!.timeMs)}. WizeLens refused that data. Rotate the key, and put a browser key in pages.
+        </p>
+      ))}
+    </div>
+  );
+}
+
+/** A site sent with a live browser key after its last try with the revoked one: the new tag is in. */
+const replaced = (r: RevokedInUseRow, keys: ApiKey[]) => keys.some((k) => k.kind === "browser" && (k.lastUsedMs ?? 0) > r.timeMs && (!r.origin || (k.origins ?? []).includes(r.origin)));
+
+/** Revoked browser keys a site still sends with: its visits are refused until the site has a new key's tag. */
+function RevokedInUse({ list, keys }: { list: RevokedInUseRow[]; keys: ApiKey[] }) {
+  const open = list.filter((r) => !replaced(r, keys));
+  if (!open.length) return null;
+  return (
+    <div className="wl-banner wl-banner-warning wl-panel-banner" role="status">
+      {open.map((r) => (
+        <p key={r.keyId}>
+          <strong>{r.name}</strong> was revoked, but a page{r.origin ? ` on ${r.origin}` : ""} still sent with it {fmtAgo(r.timeMs)}. WizeLens refuses that data, so those visits are not recorded. Make a browser key for that site and put its script tag in its pages.
         </p>
       ))}
     </div>
@@ -124,6 +142,7 @@ export function KeysPanel({ orgId, data, kinds, reload }: { orgId: string; data:
       )}
       <KeysBulk orgId={orgId} picked={all.filter((k) => picked.includes(k.id))} names={names} clear={clear} reload={reload} onDone={(err, ok) => (setError(err), setNote(ok))} />
       <ExposedKeys keys={all} now={now} />
+      {kinds.includes("browser") && <RevokedInUse list={data.revokedInUse ?? []} keys={all} />}
       {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
       {note && <p className="wl-panel-note" role="status">{note}</p>}
       {rotated && (
