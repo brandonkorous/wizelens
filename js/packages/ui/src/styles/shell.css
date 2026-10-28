@@ -104,6 +104,8 @@
   .wl-topbar { flex-wrap: wrap; align-content: center; row-gap: 10px; height: auto; min-height: var(--wl-topbar-h); padding-block: 14px; }
   .wl-topbar > .wl-scope-chip { order: 1; }
 }
+/* A 360 px phone: tighter gaps keep every top bar button on the first line. */
+@media (max-width: 380px) { .wl-topbar { gap: 2px; padding-inline: 8px; } }
 .wl-nav-saved { padding-top: 0; border-top: 1px solid var(--wl-line); flex: 0 1 auto; }
 .wl-nav-saved a { padding: 7px 14px; font-size: 14px; }
 .wl-nav-head { margin: 12px 26px 4px; color: var(--wl-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }

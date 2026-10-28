@@ -31,3 +31,7 @@ has one fixed-height row, so the chip (`ui/ServiceSelect.tsx` `ServiceChip`) tak
 `ui/src/styles/shell.css`, at 720 px and below: the top bar may wrap, and the service chip goes last (`order: 1`),
 so it takes a second line only when the buttons do not all fit. The bar grows to fit; nothing below it uses its
 height on a phone.
+
+Second confirmation, 22:10: the wrap let the account button drop to a second line at 360 px when the buttons were 1 px
+too wide. A 360 px phone now gets tighter gaps (`@media (max-width: 380px)`); at 360 the account button is on the first
+line at x = 315 for Noor (no chip) and for Greta (with the chip on its own line).
