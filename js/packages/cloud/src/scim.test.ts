@@ -36,8 +36,12 @@ describe("SCIM provisioning", () => {
     const off = await scim(url, token, "PATCH", `Users/${id}`, { schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"], Operations: [{ op: "replace", path: "active", value: false }] });
     expect(off.status).toBe(200);
     expect(await members(owner, orgId)).toEqual(["owner@acme.io"]);
-    const actions = (await owner.call<{ action: string }[]>("GET", `api/orgs/${orgId}/audit`)).body.map((a) => a.action);
-    expect(actions).toEqual(expect.arrayContaining(["scim.token.create", "scim.user.create", "scim.user.update"]));
+    const log = (await owner.call<{ action: string; detail: Record<string, unknown> }[]>("GET", `api/orgs/${orgId}/audit`)).body;
+    expect(log.map((a) => a.action)).toEqual(expect.arrayContaining(["scim.token.create", "scim.user.create", "scim.user.update"]));
+    expect(log.find((a) => a.action === "scim.user.update")?.detail).toMatchObject({ userName: "ann@acme.io", active: false });
+    expect((await scim(url, token, "DELETE", `Users/${id}`)).status).toBe(204);
+    const del = (await owner.call<{ action: string; detail: Record<string, unknown> }[]>("GET", `api/orgs/${orgId}/audit`)).body.find((a) => a.action === "scim.user.delete");
+    expect(del?.detail).toMatchObject({ userName: "ann@acme.io", id });
   });
 
   it("refuses a revoked token, and tokens of an organization whose plan has no SCIM", async () => {
