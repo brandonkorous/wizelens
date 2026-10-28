@@ -2,6 +2,7 @@ import { Building2, ChevronDown, LogOut, Settings2, SlidersHorizontal, UserRound
 import { currentProject, signOut, useAccount } from "../data/account";
 import { hrefTo } from "../routes";
 import { Menu } from "./Menu";
+import { ThemeItem } from "./TopMenus";
 
 /** The signed-in person: their account and preferences, their organization, and sign out. */
 export function UserMenu() {
@@ -32,6 +33,7 @@ export function UserMenu() {
               <Building2 size={16} aria-hidden="true" /> {org.name}
             </a>
           )}
+          <ThemeItem />
           <button type="button" className="wl-menu-item" onClick={() => void signOut()}>
             <LogOut size={16} aria-hidden="true" /> Sign out
           </button>

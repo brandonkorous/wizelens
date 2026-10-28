@@ -2,6 +2,7 @@
 @media (pointer: coarse) {
   .wl-top-btn, .wl-icon-btn, .wl-search-box { height: 44px; min-width: 44px; }
   .wl-btn { height: 44px; }
+  .wl-menu-item { min-height: 44px; }
   .wl-table th button { min-height: 44px; }
   .wl-table .wl-link-btn { min-height: 44px; padding: 0 8px; }
   .wl-table .wl-link-btn + .wl-link-btn { margin-left: 4px; }

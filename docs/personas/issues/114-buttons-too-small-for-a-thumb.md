@@ -25,12 +25,18 @@ On a touch screen every control is at least 44 px on its short side, or has a 44
 - New `ui/src/styles/touch.css`, loaded last: under `@media (pointer: coarse)` the top bar buttons, search, ordinary
   buttons, sort headers and row actions are 44 px high, and row actions have room between them.
 - `ui/src/ui/Table.tsx` `PickBox`: the tick box sits in a `wl-pick-hit` label, a 44 × 44 area on touch screens;
-  the box itself is 20 px there. A mouse sees the old sizes.
+  the box itself is 20 px there. A mouse sees the old sizes. Menu rows are 44 px on touch too.
+- At 360 the larger buttons pushed the account button to a second line (8 × 44 px does not fit). On the cloud, on
+  screens up to 720 px, the theme button leaves the top bar and is a row in the account menu ("Theme: dark (tap for
+  system)", `ThemeItem` in `shell/TopMenus.tsx`). Without accounts (an app's own dashboard) it stays in the bar.
 
 ## Confirmation
 
 - 00:35, Noor's phone at 360: every control on Uptime measured 44 px high (top bar 44 × 44, "Edit" 41 × 44 with
   4 px before "Delete", sort headers 44). A tap 14 px right of a row's tick box ticked it: "1 check selected", and
   the page stayed on Uptime.
+- 00:38, 360: Errors' top bar is one line again; the account menu lists "Theme: dark (tap for system)", and a tap
+  changed the theme to system.
+- Rule 7, 00:39: Greta at 1440 still has the theme button in her top bar and no theme row in her account menu.
 - Rule 7, 00:36: Greta at 1440 with a mouse ticked a key on Connect › Sending keys; the sizes stay 40 px buttons and
   a 16 px box.

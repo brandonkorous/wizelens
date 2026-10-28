@@ -95,8 +95,11 @@
 @media (min-width: 721px) and (max-width: 1500px) { .wl-topbar { gap: 10px; } }
 @media (max-width: 1320px) { .wl-search-box kbd { display: none; } }
 @media (max-width: 1100px) { .wl-top-btn .wl-label, .wl-search-box kbd { display: none; } }
+.wl-menu-item.wl-phone-only { display: none; }
 @media (max-width: 720px) {
   .wl-top-btn { padding: 0 9px; }
+  .wl-icon-btn.wl-hide-phone { display: none; }
+  .wl-menu-item.wl-phone-only { display: flex; }
   .wl-top-btn > svg:last-child:not(:first-child), .wl-top-btn .wl-chip-count { display: none; }
   .wl-search-box { flex: 0 0 38px; justify-content: center; padding: 0; }
   .wl-search-box span { display: none; }
