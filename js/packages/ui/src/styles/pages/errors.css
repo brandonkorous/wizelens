@@ -32,6 +32,7 @@
 
 /* Browser stacks after source maps: frames with a few lines of source, and the raw stack one click away. */
 .wl-stack-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.wl-map-hint { margin: 0 0 12px; padding: 10px 12px; border-radius: 8px; background: var(--wl-accent-soft); color: var(--wl-fg); }
 .wl-seg { display: inline-flex; padding: 2px; border: 1px solid var(--wl-line); border-radius: 8px; background: var(--wl-surface-2); }
 .wl-seg button { padding: 4px 12px; border: 0; border-radius: 6px; background: none; color: var(--wl-muted); font: 600 12px var(--wl-sans); cursor: pointer; }
 .wl-seg button.wl-active { background: var(--wl-surface); color: var(--wl-fg); box-shadow: 0 1px 2px rgb(0 0 0 / 8%); }
