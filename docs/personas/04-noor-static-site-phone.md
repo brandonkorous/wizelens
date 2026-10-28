@@ -4,8 +4,8 @@
 **Author:** Brandon Korous
 **Last Updated:** 2026-10-27
 
-**Status:** not started
-**Run:** — (America/Los_Angeles), Claude driving Chrome in phone emulation (390 × 844, touch) unless an act says otherwise
+**Status:** in progress
+**Run:** 2026-10-27, from 21:00 (America/Los_Angeles, UTC-7), Claude driving Chrome in phone emulation (390 × 844, touch) unless an act says otherwise
 **Role:** front-end only · the browser script tag, no server SDK · WizeLens Cloud on a phone
 
 ## Account

@@ -14,6 +14,7 @@ const PLATFORMS: MenuItem[] = [
   { href: "/vue/", label: "Vue", note: "Every fetch linked to its server trace" },
   { href: "/angular/", label: "Angular", note: "HttpClient calls joined to their traces" },
   { href: "/svelte/", label: "Svelte and SvelteKit", note: "Page views, vitals, and errors" },
+  { href: "/docs/browser/#static-sites", label: "Static sites", note: "One script tag, no server" },
   { href: "/java/", label: "Java", note: "The OpenTelemetry agent, no code change" },
   { href: "/python/", label: "Python", note: "FastAPI, Flask, and Django" },
   { href: "/go/", label: "Go", note: "net/http, database/sql, and slog" },
