@@ -159,7 +159,8 @@ export function buildTrace(
     services: [...services].sort(),
     rootMethod: attrString(root, "http.request.method"),
     rootUrl: attrString(root, "url.path") ?? attrString(root, "url.full"),
-    rootStatusCode: attrNumber(root, "http.response.status_code"),
+    // A page load's root is the browser's page view, which has no status: the page's server span has it.
+    rootStatusCode: attrNumber(root, "http.response.status_code") ?? attrNumber(entryServerSpan(sortedSpans), "http.response.status_code"),
     spans: sortedSpans,
     logs: sortedLogs,
     remotes: [...new Set(remotes)],

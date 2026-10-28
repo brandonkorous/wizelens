@@ -22,8 +22,11 @@ public class PageLoadTimingTests
             Attributes = new() { ["wizelens.browser.type"] = "pageview", ["wizelens.browser.navigation"] = "load", ["wizelens.page.ttfb_ms"] = 11.0, ["wizelens.page.fcp_ms"] = 85.0 },
         };
 
-        var row = RequestItems.Of(WizeLens.Storage.TraceBuilder.Build(T, [view, server], [], []))!;
+        var trace = WizeLens.Storage.TraceBuilder.Build(T, [view, server], [], []);
+        var row = RequestItems.Of(trace)!;
 
+        // The page view is the root and has no status; the trace takes the server's (a 500 page shows 500).
+        Assert.Equal(("pageview /Basket", 200), (trace.RootName, trace.RootStatusCode));
         Assert.Equal(85, row.DurationMs);
         Assert.Equal(74, row.RenderMs);
         Assert.Equal(7, row.NetworkMs);
