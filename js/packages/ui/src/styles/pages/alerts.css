@@ -1,6 +1,7 @@
 .wl-alert-state { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .wl-alert-actions { flex-wrap: wrap; gap: 4px 12px; }
 .wl-alert-actions .wl-select { height: 28px; }
+@media (max-width: 720px) { .wl-alert-actions { flex-wrap: nowrap; } }
 .wl-alert-channels { display: grid; gap: 10px; margin: 6px 0 12px; justify-items: start; }
 .wl-alert-channel { width: 100%; padding: 10px 12px; border: 1px solid var(--wl-line); border-radius: 9px; }
 .wl-alert-channel .wl-form-row { align-items: end; }

@@ -29,7 +29,7 @@ function ruleColumns(canWrite: boolean, url: Url, onDone: (note?: string) => voi
     { key: "state", header: "State", cell: (r) => <RuleState rule={r} /> },
     { key: "value", header: "Last value", num: true, cell: (r) => fmtValue(r, r.lastValue) },
     { key: "to", header: "Sends to", cell: (r) => r.channels.map(channelLabel).join(", ") || "Dashboard only" },
-    ...(canWrite ? [{ key: "actions", header: "", cell: (r: AlertRule) => <RuleActions rule={r} url={url} onDone={onDone} onEdit={() => onEdit(r)} onDelete={() => onDelete(r)} /> }] : []),
+    ...(canWrite ? [{ key: "actions", header: "", className: "wl-nowrap", cell: (r: AlertRule) => <RuleActions rule={r} url={url} onDone={onDone} onEdit={() => onEdit(r)} onDelete={() => onDelete(r)} /> }] : []),
   ];
 }
 
@@ -39,7 +39,7 @@ export const EVENT_LABEL = { fired: "Fired", resolved: "Resolved", remind: "Remi
 export const eventColumns = (withRule: boolean): Column<AlertEvent>[] => [
   { key: "time", header: "When", cell: (e) => fmtAgo(e.timeMs), className: "wl-nowrap" },
   { key: "kind", header: "", cell: (e) => <Badge tone={EVENT_TONE[e.kind]}>{EVENT_LABEL[e.kind]}</Badge> },
-  ...(withRule ? [{ key: "rule", header: "Alert", cell: (e: AlertEvent) => e.ruleName }] : []),
+  ...(withRule ? [{ key: "rule", header: "Alert", cell: (e: AlertEvent) => e.ruleName, className: "wl-wrap" }] : []),
   { key: "message", header: "Message", cell: (e) => <>{e.message}{e.problem && <a className="wl-alert-problem" href={e.problem.url.slice(e.problem.url.indexOf("#"))} onClick={(ev) => ev.stopPropagation()}>Problem: {e.problem.title}</a>}</>, className: "wl-wrap" },
   { key: "delivery", header: "Delivery", cell: (e) => <span className="wl-muted wl-small">{e.delivery}</span>, className: "wl-wrap" },
 ];

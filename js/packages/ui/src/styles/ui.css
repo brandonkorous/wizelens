@@ -79,6 +79,8 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-table .wl-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .wl-table .wl-wrap { overflow-wrap: anywhere; min-width: 12ch; }
 .wl-table .wl-nowrap { white-space: nowrap; }
+/* A phone: text columns keep a readable width, and the table scrolls sideways instead of one word per line. */
+@media (max-width: 720px) { .wl-table .wl-wrap { min-width: 22ch; } .wl-table td > strong:only-child { display: inline-block; min-width: 14ch; } }
 /* A fill column takes the free width, and its .wl-truncate text ends in "…" instead of widening the table. */
 .wl-table td.wl-fill { width: 100%; max-width: 0; min-width: 14ch; }
 .wl-table td.wl-fill .wl-cell-icon, .wl-table td.wl-fill .wl-tagged { display: flex; min-width: 0; }
