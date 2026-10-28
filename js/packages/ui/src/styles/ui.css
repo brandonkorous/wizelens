@@ -76,7 +76,7 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-table tbody tr.wl-selected td { background: var(--wl-selected); }
 .wl-table tbody tr.wl-row-detail td { background: var(--wl-surface-2); padding-top: 4px; padding-bottom: 14px; }
 .wl-table .wl-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.wl-table .wl-wrap { overflow-wrap: break-word; min-width: 12ch; }
+.wl-table .wl-wrap { overflow-wrap: anywhere; min-width: 12ch; }
 .wl-table .wl-nowrap { white-space: nowrap; }
 /* A fill column takes the free width, and its .wl-truncate text ends in "…" instead of widening the table. */
 .wl-table td.wl-fill { width: 100%; max-width: 0; min-width: 14ch; }
