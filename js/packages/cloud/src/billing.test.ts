@@ -103,6 +103,19 @@ describe("billing on: plans", () => {
     expect(await kept()).toBe(14);
   });
 
+  it("gives the new plan's days on upgrade when the organization kept the most, and keeps a shorter choice", async () => {
+    let url: string;
+    ({ cloud, url } = await startCloud(await billedOptions(fakeStripe())));
+    const { owner, orgId } = await setupOwner(cloud, url);
+    const days = async () => (await owner.call<Me & { orgs: { retentionDays: number }[] }>("GET", "api/me")).body.orgs[0]!.retentionDays;
+    await setPlan(cloud.app.db, orgId, { plan: "business" }, "test", Date.now());
+    expect(await days()).toBe(90);
+    await setPlan(cloud.app.db, orgId, { plan: "team" }, "test", Date.now());
+    expect(await days()).toBe(30);
+    expect((await owner.call("PATCH", `api/orgs/${orgId}`, { retentionDays: 7 })).status).toBe(200);
+    await setPlan(cloud.app.db, orgId, { plan: "business" }, "test", Date.now());
+    expect(await days()).toBe(7);
+  });
 });
 
 describe("billing on: limits", () => {
