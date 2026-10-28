@@ -202,7 +202,7 @@ She makes a read-only link to the slow page's view and sends it to Rémy.
 **Done when:** the link opens on a phone, signed out, shows only that view, and
 cannot be used to see anything else in her org.
 
-**Outcome:** —
+**Outcome:** done after #104–#107. Looking for the slow page, Rendering on the last hour was empty and told her to paste React code with `endpoint="/_wizelens"`, which sends nothing to the cloud (#104: now it names the browser key's tag and links to Setup steps). In Rendering › By device (24 h) she tapped `/blog/future-of-devsecops-from-pipelines-to-platforms` (Phone 6.14 s, "Very slow"), then Share this page: the box opened half off the screen (#105: all five top-bar menus that did so now span the bar at 390 and 360). She picked For 7 days and Make a link, and copied it. Rémy opened it on his phone with no account, in a fresh browser: the route's view, "On each device" with the phone at 6.14 s and the reason, and the header "as of Oct 27, 2026, 11:56 PM · link works until Nov 3, 2026", but titled "WizeLens", not her site (#106: now "Brandon K. — personal site (Vite) · …"). Its "All routes" link, like the action links on any shared page, led to a sign-in form (#107: now no link leaves a shared page). From the same browser, `#/errors`, `#/overview?org=<her org>` and `#/rendering` each showed "Sign in to WizeLens" and nothing of hers. Rule 7: Greta's menus (390 and 1440), her shared Errors link, and her signed-in links were re-checked.
 
 ---
 
@@ -275,6 +275,7 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 - 22:18 act 6: the broken line built in; Rémy's form fails on the phone; #093–#095 fixed 22:26
 - 22:47–23:13 act 8: two checks, one alert, two outages; #099–#102 fixed and confirmed
 - 23:14–23:36 act 9: HUD for her own browser only; #103 fixed and confirmed (Greta re-checked Connect's tag)
+- 23:37–00:02 act 10 (a restart of the machine at about 23:47 stopped the cloud and the site; both started again, no data lost): link for Rémy; #104–#107 fixed and confirmed
 - 22:33–22:45 act 7: #097 and #098 fixed and confirmed (Greta re-checked for #098)
 - 22:27–22:33 build key made; plugin added; #096 fixed 22:29; source line shown 22:30; line fixed, 1.0.2 built, errors resolved
 - 21:36–21:53 #087 (no split by device) fixed; 28 more visits with this branch's script at 21:44; #088 (Rendering 1160 px wide on a phone) and #089 (service chip pushes the account button off, found on P02) fixed 21:53
