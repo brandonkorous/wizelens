@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { parseTraceparent } from "@wizeworks/lens-core";
 import { setBrowserUser } from "./browser-span.js";
+import { OWN_CALL } from "./fetch-patch.js";
 import { asWizeLens, currentWizeLens, initWizeLens } from "./lens.js";
 import { settle, spansOf, stubDom, stubServer } from "./test-dom.js";
 import { type Call, postedSpans } from "./test-env.js";
@@ -45,6 +46,14 @@ it("traces fetch calls, reads nothing back without the HUD, and returns the runn
   const tp = parseTraceparent(new Headers(call.init?.headers).get("traceparent"))!;
   expect(spansOf(postedSpans(calls), "fetch")[0]).toMatchObject({ traceId: tp.traceId, name: "fetch /api/orders" });
   expect(calls.some((c) => c.url.includes("/api/traces"))).toBe(false);
+});
+
+it("does not count its own source map reads as the page's requests", async () => {
+  const lens = initWizeLens(OPTIONS);
+  await fetch("http://app.test/assets/index.js", { [OWN_CALL]: true } as RequestInit);
+  await fetch("http://app.test/api/orders");
+  await lens.shutdown();
+  expect(spansOf(postedSpans(calls), "fetch").map((s) => s.attributes["url.full"])).toEqual(["http://app.test/api/orders"]);
 });
 
 it("sends one page view per path, from the History API or from pageView", async () => {

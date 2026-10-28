@@ -1,13 +1,17 @@
 import { annotateErrorFrames, cachedLoader, fetchMapLoader, type MapLoader, type Span } from "@wizeworks/lens-core";
+import { OWN_CALL } from "./fetch-patch.js";
 import type { Sender } from "./sender.js";
 
 /** Longest wait for a map before the error is sent without its frame. */
 const FRAME_WAIT_MS = 3000;
 
+/** A fetch the request tracing leaves out: reading a map is not one of the page's requests. */
+const ownFetch: typeof fetch = (input, init) => globalThis.fetch(input, { ...init, [OWN_CALL]: true } as RequestInit);
+
 /** Maps of this page's own scripts: in dev the server serves them, so errors group by source with no upload. */
 export function pageMapLoader(): MapLoader {
   const allow = (u: URL) => typeof location !== "undefined" && u.origin === location.origin;
-  return cachedLoader(fetchMapLoader({ allow, maxBytes: 16 * 1024 * 1024, timeoutMs: FRAME_WAIT_MS }), { max: 10, hitMs: 30_000 });
+  return cachedLoader(fetchMapLoader({ fetch: ownFetch, allow, maxBytes: 16 * 1024 * 1024, timeoutMs: FRAME_WAIT_MS }), { max: 10, hitMs: 30_000 });
 }
 
 /** Send an error span; with a loader, hold it until its group frame is added. A page hide sends it as it is. */
