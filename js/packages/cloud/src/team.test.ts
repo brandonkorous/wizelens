@@ -72,6 +72,9 @@ describe("API keys", () => {
     expect((await new Client(url).call("GET", `api/models/overview?project=${projectId}&range=24h`, undefined, { Authorization: `Bearer ${mcpOnly}` })).status).toBe(401);
     const short = await make({ kind: "read", expiresInDays: 30 });
     expect(short.body.expiresMs).toBeGreaterThan(Date.now() + 29 * DAY);
+    const until = Date.now() + 64 * DAY;
+    expect((await make({ kind: "read", expiresMs: until })).body.expiresMs).toBe(until);
+    expect((await make({ kind: "read", expiresMs: Date.now() - DAY })).status).toBe(400);
     const rotated = await owner.call<{ token: string; oldExpiresMs: number }>("POST", `api/orgs/${orgId}/keys/${short.body.id}/rotate`, { graceHours: 0 });
     const read = (token: string) => new Client(url).call("GET", `api/models/overview?project=${projectId}&range=24h`, undefined, { Authorization: `Bearer ${token}` });
     expect((await read(rotated.body.token)).status).toBe(200);

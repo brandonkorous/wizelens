@@ -33,7 +33,10 @@ const WHERE: Record<Kind, string> = {
   browser: "It is public: it is safe in a page. Put this tag in every page, before </body>:",
 };
 
-const EXPIRY: [string, string][] = [["", "Never"], ["30", "In 30 days"], ["90", "In 90 days"], ["180", "In 180 days"], ["365", "In 1 year"]];
+const EXPIRY: [string, string][] = [["", "Never"], ["30", "In 30 days"], ["90", "In 90 days"], ["180", "In 180 days"], ["365", "In 1 year"], ["date", "On a date"]];
+
+/** The end of a picked day (YYYY-MM-DD) on this computer's clock, so a key "expiring 2026-12-31" works all that day. */
+const endOfDay = (day: string) => new Date(`${day}T23:59:59.999`).getTime();
 
 const CDN = "https://cdn.jsdelivr.net/npm/@wizeworks/lens-browser/dist/wizelens.iife.js";
 
@@ -75,8 +78,9 @@ function ScopeChecks({ kind, scopes, onChange }: { kind: Kind; scopes: string[];
 }
 
 /** The body that makes a key. Ingest and browser keys send to one project; a browser key also lists its sites. */
-function keyBody(kind: Kind, name: string, picked: string[], scopes: string[], expires: string, origins: string) {
-  const base = { kind, name, projectIds: kind === "read" ? picked : picked.slice(0, 1), scopes, expiresInDays: expires ? Number(expires) : null };
+function keyBody(kind: Kind, name: string, picked: string[], scopes: string[], expires: string, day: string, origins: string) {
+  const expiry = expires === "date" ? { expiresMs: day ? endOfDay(day) : null } : { expiresInDays: expires ? Number(expires) : null };
+  const base = { kind, name, projectIds: kind === "read" ? picked : picked.slice(0, 1), scopes, ...expiry };
   return kind === "browser" ? { ...base, origins } : base;
 }
 
@@ -90,6 +94,7 @@ export function KeyForm({ orgId, data, kinds, reload, onClose }: { orgId: string
   const [picked, setPicked] = useState<string[]>(start ? [start.id] : []);
   const [scopes, setScopes] = useState<string[]>(SCOPES[kinds[0]!].map(([s]) => s));
   const [expires, setExpires] = useState("");
+  const [day, setDay] = useState("");
   const [origins, setOrigins] = useState("");
   const [secret, setSecret] = useState<string | null>(null);
   const [made, setMade] = useState("");
@@ -99,7 +104,7 @@ export function KeyForm({ orgId, data, kinds, reload, onClose }: { orgId: string
   const pickKind = (k: Kind) => (setKind(k), setPicked((p) => p.slice(0, 1)), setScopes(SCOPES[k].map(([s]) => s)));
   const create = (e: FormEvent) => {
     e.preventDefault();
-    once(() => apiSend<{ token: string }>("POST", `./api/orgs/${orgId}/keys`, keyBody(kind, name, picked, scopes, expires, origins)).then(
+    once(() => apiSend<{ token: string }>("POST", `./api/orgs/${orgId}/keys`, keyBody(kind, name, picked, scopes, expires, day, origins)).then(
       (k) => (setSecret(k.token), setMade(name), setName(""), setError(null), reload()),
       (err: unknown) => setError(err instanceof Error ? err.message : String(err)),
     ));
@@ -113,6 +118,7 @@ export function KeyForm({ orgId, data, kinds, reload, onClose }: { orgId: string
           <Field label="Name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="orders-api" hint="Name it after the app or agent that uses it." />
           {kind !== "read" && <SelectField label="Project" value={picked[0] ?? ""} options={projects} onChange={(id) => setPicked([id])} />}
           <SelectField label="Expires" value={expires} options={EXPIRY} onChange={setExpires} hint="It stops working then. Rotate it before." />
+          {expires === "date" && <Field label="Last day it works" type="date" required value={day} min={new Date().toLocaleDateString("en-CA")} onChange={(e) => setDay(e.target.value)} hint="It stops at the end of this day, your time." />}
         </FormRow>
         {kind === "browser" && (
           <Field label="Sites" required value={origins} onChange={(e) => setOrigins(e.target.value)} placeholder="https://shop.example.com" hint="Only pages on these sites may send with it. Put a space or comma between sites; https://*.example.com takes its subdomains." />
