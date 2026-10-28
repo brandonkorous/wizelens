@@ -8,6 +8,7 @@ export * from "./errors.js";
 export * from "./rendering.js";
 export * from "./traces.js";
 export * from "./services.js";
+export { isLocalAddress } from "./in-cluster.js";
 export * from "./messaging.js";
 export * from "./logs.js";
 export * from "./period.js";

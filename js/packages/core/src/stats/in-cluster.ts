@@ -16,3 +16,11 @@ export const externalName = (host: string): string => (isInClusterHost(host) ? `
 
 /** A Services row of an in-cluster call: the app's own dependency, which follows the app's traffic and is no anomaly of its own. */
 export const isClusterDependency = (row: { kind: string; detail: string | null } | null): boolean => row?.kind === "external" && isInClusterHost(row.detail);
+
+/** True for localhost, a loopback, or a private network address: a service on the same machine or network, not an outside one. */
+export function isLocalAddress(host: string | null | undefined): boolean {
+  if (!host) return false;
+  const h = host.startsWith("[") ? host.slice(1, host.indexOf("]")).toLowerCase() : hostname(host);
+  if (h === "localhost" || h.endsWith(".localhost") || h === "::1" || /^127\./.test(h)) return true;
+  return /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h);
+}

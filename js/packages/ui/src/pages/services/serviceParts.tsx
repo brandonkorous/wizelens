@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import { Box, Cog, Database, Globe, Inbox, Monitor } from "lucide-react";
-import { type ServiceKind, type ServiceRow, type ServiceStatus, serviceDoc } from "@wizeworks/lens-core";
+import { isLocalAddress, type ServiceKind, type ServiceRow, type ServiceStatus, serviceDoc } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
 import { decodeParam, hrefTo, setQuery } from "../../routes";
 import { DotText, type Tone } from "../../ui/Badges";
@@ -41,7 +41,9 @@ export function KindName({ row }: { row: ServiceRow }) {
   return (
     <span className="wl-cell-icon" title={KIND_LABEL[row.kind]}>
       <Icon size={18} aria-hidden={true} />
-      {row.name}
+      {row.kind === "external" && isLocalAddress(row.detail) ? (
+        <span className="wl-who">{row.name}<small>Local address: no service you trace answered these calls</small></span>
+      ) : row.name}
     </span>
   );
 }
