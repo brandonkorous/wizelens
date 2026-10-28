@@ -141,7 +141,7 @@ function Shell() {
   useEffect(() => {
     document.title = data.info ? `WizeLens · ${data.info.service}` : "WizeLens";
   }, [data.info]);
-  // The same number as "Total Exceptions" on the Errors page: from the host when it computes stats, else from the loaded traces.
+  // Exceptions in open error groups, from the host when it computes stats; else every exception in the loaded traces.
   const serverErrors = useServerErrorCount();
   const localErrors = useMemo(() => (serverErrors === null ? errorEvents(win.traces).length : 0), [serverErrors, win.traces]);
   const errors = serverErrors ?? localErrors;

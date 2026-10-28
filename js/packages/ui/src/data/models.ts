@@ -123,7 +123,11 @@ export async function loadPageModel<P extends PageName>(page: P, query: Record<s
 /** The sidebar error count from the host (0 until it loads) on hosts that compute stats; null elsewhere, where the browser counts. */
 export function useServerErrorCount(): number | null {
   const server = useHost().has("serverStats");
-  const badges = useServerModel("badges", NO_PARAMS, server);
+  // The same scope and period as the Errors page, so the badge and its "Unresolved" list agree.
+  const [service] = useServiceScope();
+  const period = usePeriodParams();
+  const params = useMemo(() => withScope("badges", NO_PARAMS, service, period), [service, period]);
+  const badges = useServerModel("badges", params, server);
   return server ? (badges.model?.errors ?? 0) : null;
 }
 
