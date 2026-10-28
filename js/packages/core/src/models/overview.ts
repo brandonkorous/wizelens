@@ -15,7 +15,7 @@ import { apdexNeed, apdexOverall } from "./apdex-rows.js";
 import { issueInfos, lifeNeed } from "./error-issues.js";
 import { errorGroupOf } from "./errors.js";
 import { insightIssues } from "./insights.js";
-import { aggByKey, avgs, counts, groupNeed, listNeed, listOf, rowsOf, type Series, seriesNeed, seriesOf, uniqueNeeds } from "./read.js";
+import { aggByKey, avgs, counts, groupNeed, listNeed, listOf, rowsOf, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
 import { edgeNeeds, edgesOfRows, serviceNeeds, serviceRowsOf } from "./service-rows.js";
 
 export interface TimingPart {
@@ -30,6 +30,8 @@ export interface TimingPart {
 export interface OverviewModel {
   meta: ModelMeta;
   empty: boolean;
+  /** Page views in the range: a site with no server sends these and no requests. */
+  pageViews: number;
   headlines: RequestHeadlines;
   /** Distinct insights, the same number the Insights page lists. */
   insightsFound: Headline;
@@ -109,6 +111,7 @@ export const overviewPage: PageDef<OverviewModel> = {
       ...META_NEEDS,
       ...headlineNeeds("h", "req", undefined, service),
       seriesNeed("activity", "req", "cur", ACTIVITY_BUCKETS, one),
+      groupNeed("pv.cur", "pv", "cur"),
       seriesNeed("activity.prev", "req", "prev", ACTIVITY_BUCKETS, one),
       groupNeed("timing", "req.part", "cur", { hist: true, ...one }),
       ...serviceNeeds("cur"),
@@ -127,6 +130,7 @@ export const overviewPage: PageDef<OverviewModel> = {
     return {
       meta: metaOf(d),
       empty: headlines.total.value === 0,
+      pageViews: totalOf(d, "pv.cur").n,
       headlines,
       insightsFound: insightHeadline(groups, insightGroupsOf(d, "prev"), d.window),
       activity: activityOf(d),
