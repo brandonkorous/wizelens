@@ -22,7 +22,7 @@ export function useTrace(traceId: string): TraceState {
     setLoading(true);
     provider.loadTrace(traceId)
       .then((t) => (setLoaded(t), setError(null)))
-      .catch((e: unknown) => setError(String(e).includes("not-found") ? "This trace is no longer stored. It may have been dropped." : String(e)))
+      .catch((e: unknown) => setError(String(e).includes("not-found") ? "This trace is not in this project, or it is no longer stored." : String(e)))
       .finally(() => setLoading(false));
   }, [traceId]);
   useEffect(() => {

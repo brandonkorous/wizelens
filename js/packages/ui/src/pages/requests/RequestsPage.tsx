@@ -17,7 +17,7 @@ import "../../styles/pages/requests.css";
 function NoSelection() {
   return (
     <Panel className="wl-rq-side wl-rq-hint">
-      <p className="wl-muted">This request is no longer stored.</p>
+      <p className="wl-muted">This request is not in this project, or it is no longer stored.</p>
     </Panel>
   );
 }
