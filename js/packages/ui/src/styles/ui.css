@@ -222,3 +222,5 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-list-filter svg { width: 16px; height: 16px; }
 .wl-project-picker-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
 .wl-project-picker-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px 14px; max-height: 240px; overflow: auto; padding: 2px; }
+.wl-key-phone { display: none; }
+@media (max-width: 640px) { .wl-key-phone { display: block; overflow-wrap: anywhere; } }

@@ -110,10 +110,9 @@ export async function revokeKey(q: Queryable, orgId: string, keyId: string, now:
   return rows.length > 0;
 }
 
-/** A new secret with the same name, kind, projects, scopes, sites, and lifetime. The old one keeps working for `graceMs`, so apps can switch. */
+/** A new secret with the same name, kind, projects, scopes, sites, and end date (a rotate never stretches access). The old one keeps working for `graceMs`, so apps can switch. */
 export async function rotateKey(q: Queryable, orgId: string, old: ApiKey, by: string, now: number, graceMs: number) {
-  const life = old.expiresMs === null ? null : old.expiresMs - old.createdMs;
-  const key = await createKey(q, orgId, old.kind, old.name, old.projectIds, by, now, { scopes: old.scopes, expiresMs: life === null ? null : now + life, rotatedFrom: old.id, origins: old.origins });
+  const key = await createKey(q, orgId, old.kind, old.name, old.projectIds, by, now, { scopes: old.scopes, expiresMs: old.expiresMs, rotatedFrom: old.id, origins: old.origins });
   const until = Math.min(old.expiresMs ?? Infinity, now + graceMs);
   await q.query("UPDATE api_keys SET expires_ms = $1 WHERE id = $2", [until, old.id]);
   return { ...key, oldExpiresMs: until };

@@ -80,7 +80,7 @@ describe("API keys", () => {
     expect((await read(rotated.body.token)).status).toBe(200);
     expect((await read(short.body.token)).status).toBe(401);
     const keys = (await owner.call<{ keys: { rotatedFrom: string | null; expiresMs: number | null }[] }>("GET", `api/orgs/${orgId}`)).body.keys;
-    expect(keys.find((k) => k.rotatedFrom === short.body.id)!.expiresMs).toBeGreaterThan(Date.now() + 29 * DAY);
+    expect(keys.find((k) => k.rotatedFrom === short.body.id)!.expiresMs).toBe(short.body.expiresMs);
   });
 });
 

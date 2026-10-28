@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { apiSend } from "../../data/api";
 import { act } from "../../data/useApi";
-import { fmtAgo, fmtDate } from "../../format";
+import { fmtAgo, fmtDate, fmtTime } from "../../format";
 import { Badge } from "../../ui/Badges";
 import { useAsk } from "../../ui/Dialog";
 import { Empty, Panel } from "../../ui/Panel";
@@ -39,6 +39,28 @@ function Expiry({ k, now }: { k: ApiKey; now: number }) {
   if (k.expiresMs <= now) return <Badge tone="danger">Expired</Badge>;
   const days = Math.ceil((k.expiresMs - now) / DAY_MS);
   return days <= 14 ? <Badge tone="warning">{days <= 1 ? "In a day" : `In ${days} days`}</Badge> : <span title={fmtDate(k.expiresMs)}>{fmtDate(k.expiresMs)}</span>;
+}
+
+/** "ends Dec 31, 2026", "never ends", or "expired", for the phone line. */
+function endsText(k: ApiKey, now: number): string {
+  if (k.expiresMs === null) return "never ends";
+  return k.expiresMs <= now ? "expired" : `ends ${fmtDate(k.expiresMs)}`;
+}
+
+/** The key's name and prefix; during a rotate, which secret is new and which is old; on a phone, the other columns in one line. */
+function KeyName({ k, all, now, phone }: { k: ApiKey; all: ApiKey[]; now: number; phone: string }) {
+  const replaced = all.some((o) => o.rotatedFrom === k.id) && k.expiresMs !== null && k.expiresMs > now;
+  const fresh = !!k.rotatedFrom && all.some((o) => o.id === k.rotatedFrom && o.expiresMs !== null && o.expiresMs > now);
+  return (
+    <span className="wl-who">
+      <strong>{k.name}</strong>
+      <small className="wl-mono">{k.prefix}…</small>
+      {fresh && <Badge tone="info">New secret</Badge>}
+      {replaced && <Badge tone="warning">Old secret, stops {fmtTime(k.expiresMs!, now)}</Badge>}
+      {leaked(k, now) && <Badge tone="danger">Seen in a page</Badge>}
+      <small className="wl-key-phone">{phone}</small>
+    </span>
+  );
 }
 
 /** A secret a public page sent with that still works: once rotated or expired, there is nothing left to do. */
@@ -105,20 +127,22 @@ export function KeysPanel({ orgId, data, kinds, reload }: { orgId: string; data:
     void act(() => apiSend("DELETE", `./api/orgs/${orgId}/keys/${k.id}`), reload).then(setError);
   // A secret seen in a public page stops at once: anyone could have copied it.
   const rotate = async (k: ApiKey) =>
-    (await confirm({ title: `Rotate ${k.name}?`, body: k.exposed ? "You get a new secret for the same key. The old secret was in a public page, so it stops at once." : "You get a new secret for the same key. The old secret keeps working for 24 hours, so you can update the apps that use it.", confirmLabel: "Rotate key" })) &&
+    (await confirm({ title: `Rotate ${k.name}?`, body: k.exposed ? "You get a new secret for the same key, with the same end date. The old secret was in a public page, so it stops at once." : "You get a new secret for the same key, with the same end date. The old secret keeps working for 24 hours, so you can update the apps that use it.", confirmLabel: "Rotate key" })) &&
     void act(async () => setRotated({ kind: k.kind, ...(await apiSend<{ token: string; oldExpiresMs: number }>("POST", `./api/orgs/${orgId}/keys/${k.id}/rotate`, { graceHours: k.exposed ? 0 : 24 })) }), reload).then(setError);
   const editSites = async (k: ApiKey) => {
     const origins = await prompt({ title: `Sites for ${k.name}`, body: "Only pages on these sites may send with this key. The key itself stays the same.", confirmLabel: "Save sites", input: { label: "Sites", initial: (k.origins ?? []).join(" ") } });
     if (origins !== null) void act(() => apiSend("PATCH", `./api/orgs/${orgId}/keys/${k.id}`, { origins }), reload).then(setError);
   };
+  const projectsOf = (k: ApiKey) => k.projectIds.map((id) => names.get(id) ?? "Deleted project").join(", ");
+  const phoneLine = (k: ApiKey) => [kinds.length > 1 ? KIND_LABEL[k.kind] : "", projectsOf(k), `used ${k.lastUsedMs ? fmtAgo(k.lastUsedMs) : "never"}`, endsText(k, now)].filter(Boolean).join(" · ");
   const columns: Column<ApiKey>[] = [
-    { key: "name", header: "Key", cell: (k) => <span className="wl-who"><strong>{k.name}</strong><small className="wl-mono">{k.prefix}…</small>{leaked(k, now) && <Badge tone="danger">Seen in a page</Badge>}</span> },
-    ...(kinds.length > 1 ? [{ key: "kind", header: "Kind", cell: (k: ApiKey) => <Badge tone="info">{KIND_LABEL[k.kind]}</Badge> }] : []),
-    { key: "projects", header: "Projects", cell: (k) => k.projectIds.map((id) => names.get(id) ?? "Deleted project").join(", "), className: "wl-wrap" },
-    { key: "scopes", header: "May", cell: (k) => scopesText(k), className: "wl-wrap" },
-    { key: "made", header: "Created", cell: (k) => fmtDate(k.createdMs), className: "wl-nowrap" },
-    { key: "used", header: "Last used", cell: (k) => (k.lastUsedMs ? fmtAgo(k.lastUsedMs) : "Never"), className: "wl-nowrap" },
-    { key: "ends", header: "Expires", cell: (k) => <Expiry k={k} now={now} />, className: "wl-nowrap" },
+    { key: "name", header: "Key", cell: (k) => <KeyName k={k} all={all} now={now} phone={phoneLine(k)} /> },
+    ...(kinds.length > 1 ? [{ key: "kind", header: "Kind", cell: (k: ApiKey) => <Badge tone="info">{KIND_LABEL[k.kind]}</Badge>, hideSm: true }] : []),
+    { key: "projects", header: "Projects", cell: projectsOf, className: "wl-wrap", hideSm: true },
+    { key: "scopes", header: "May", cell: (k) => scopesText(k), className: "wl-wrap", hideSm: true },
+    { key: "made", header: "Created", cell: (k) => fmtDate(k.createdMs), className: "wl-nowrap", hideSm: true },
+    { key: "used", header: "Last used", cell: (k) => (k.lastUsedMs ? fmtAgo(k.lastUsedMs) : "Never"), className: "wl-nowrap", hideSm: true },
+    { key: "ends", header: "Expires", cell: (k) => <Expiry k={k} now={now} />, className: "wl-nowrap", hideSm: true },
     {
       key: "x",
       header: "",

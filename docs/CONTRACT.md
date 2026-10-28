@@ -642,7 +642,7 @@ Hub start options: `--slow-query-ms`, `--n-plus-one`, `--redact-keys`; cloud: `-
   Only members and viewers; owners and admins keep their org role. `none` hides the project from lists, joins, apps,
   digests, and MCP. `GET api/orgs/:org` adds `projectRoles` for managers; `api/me` gives each project's `role`.
 - **Keys:** `expiresInDays` (1 to 3650), or `expiresMs` (an exact time after now and within 3650 days, for a picked date), and `scopes` (ingest: traces, logs, metrics; read: api, mcp) on create;
-  `POST api/orgs/:org/keys/:key/rotate` with `graceHours` (0 to 168, default 24) returns the new secret and `oldExpiresMs`.
+  `POST api/orgs/:org/keys/:key/rotate` with `graceHours` (0 to 168, default 24) returns the new secret (same end date as the old key) and `oldExpiresMs`.
 - **Audit:** `GET api/orgs/:org/audit?limit=&offset=&before=&from=&action=&actor=` (`action` ending in "." is a group),
   `GET api/orgs/:org/audit/count` (`{ total }` for the same filter), `GET api/orgs/:org/audit/facets`,
   and `GET api/orgs/:org/audit/export?format=csv|json` with the same filter (plan gated).
