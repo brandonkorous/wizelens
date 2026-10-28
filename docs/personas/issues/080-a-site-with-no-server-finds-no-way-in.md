@@ -35,6 +35,6 @@ code follows.
 
 ## Confirmed by
 
-2026-10-27, by 21:20, 390 px phone, light: home → Menu → "Static sites" lands on the Static sites heading, with the
+2026-10-27, by 21:01, 390 px phone, light: home → Menu → "Static sites" lands on the Static sites heading, with the
 script tag as the first code block and the key words right under it. The quick start shows the "No server?" line
 above step 1. RULE #7, desktop 1440, light and dark: the Platforms menu lists Static sites among the ten.
