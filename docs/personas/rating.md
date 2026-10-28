@@ -8,7 +8,7 @@ Every screen in WizeLens, scored on **Design** and **Ease** as the personas open
 them. How and when to score is RULE #6 in [CLAUDE.md](CLAUDE.md); this file is
 where the numbers live.
 
-**Scored so far: 47 of 177 screens.** Update that line as rows fill in —
+**Scored so far: 50 of 177 screens.** Update that line as rows fill in —
 it is the denominator, and a rating file that does not show what it has not looked
 at is the same lie as an empty issue list.
 
@@ -122,6 +122,13 @@ is a `major` issue, not a rating.**
 | --- | --- | --- | --- | --- | --- |
 | Overview | `#/` | 8 | 8 | an EF Core database name reads "microsoft.s…" (full name on hover only); at 360 the six stat cards stack one per row before the first chart; was: Services card hid Status #052, Apdex cut "target 500 ms" #053, axis 0, 38, 75, 113, 150 #054 | P03 |
 | Requests | `#/requests` | 8 | 8 | the request panel says "Rendering –" while the HUD showed "Render 75 ms" for the same page (act 6); at 360 the filters fill the first screen; was: 17 file rows per page load buried the pages #055 | P03 |
+| Traces | `#/traces` | 8 | 7 | the preview bar colors the database part red on a trace where nothing failed; at 360 four stat cards and the filters come before the list | P03 |
+| Trace › Timeline | `#/traces/<id>` | 8 | 8 | spans under 1 ms are slivers; at 360 the facts stack two per row and the tabs start below the first screen; was: the browser chip read "browser" #078 | P03 |
+| Trace › SQL | `#/traces/<id>/sql` | 8 | 8 | an UPDATE's params run three lines of small mono at 1440 with no wrap toggle; was: SecurityStamp shown #068, accents escaped #072 | P03 |
+| Errors | `#/errors` | 8 | 7 | at 360 four menus, a search box and two ticks fill the first screen; "No data for previous day" on every card on day one | P03 |
+| Logs | `#/logs` | 7 | 6 | the log lines start below four cards, a chart and an empty "Log Metrics" box, at 1440 and at 360 | P03 |
+| Database | `#/database` | 8 | 8 | Rows Returned reads "–" for EF Core (a note says why); at 360 the filters come first; was: insight badges ran off the screen #074 | P03 |
+| Services | `#/services` | 8 | 8 | 506 of Web App's 603 calls are Blazor's own `_framework` downloads; database names are cut to "microsoft.sql_serv…" on the map; was: map numbers on top of each other #076, a call hidden behind a box #077 | P03 |
 
 ### Dashboard · cloud — 70 screens
 
@@ -129,7 +136,7 @@ is a `major` issue, not a rating.**
 | --- | --- | --- | --- | --- | --- |
 | Overview | `#/` | 8 | 7 | at 360 the six stat cards stack one per row before the first chart; "No data for previous 7 days" on every card while the org is a day old; was: top bar ran off the screen #046 | P02 |
 | Problems | `#/problems` | — | — | — | — |
-| Search | `#/search` | 8 | 7 | runs only on Enter, unlike the list boxes beside it; was: top bar ran off the screen #046 | P02 |
+| Search | `#/search` | 8 | 7 | runs only on Enter, unlike the list boxes beside it; was: top bar ran off the screen #046; a bare word does not look inside SQL params (`@wizelens.db.parameters:*Peña*` does) | P02, P03 |
 | Requests | `#/requests` | 8 | 8 | at 360 the filters fill the first screen; Path cuts long ids at 1440; was: top bar #046 | P02 |
 | Traces | `#/traces` | 7 | 7 | list panel is a third of the width at 1440; at 360 the list starts below four stat cards; was: top bar #046 | P02 |
 | Errors | `#/errors` | 8 | 7 | at 360 five menus and two boxes fill the first screen; the details panel starts below the fold at 1440; was: top bar #046 | P02 |
@@ -137,7 +144,7 @@ is a `major` issue, not a rating.**
 | Database | `#/database` | 8 | 8 | query text cut at 1440 with no wrap toggle; at 360 the filters fill the first screen; was: top bar #046 | P02 |
 | Rendering | `#/rendering` | — | — | — | — |
 | Metrics | `#/metrics` | — | — | — | — |
-| Services | `#/services` | 8 | 7 | `localhost:3001` (the web app's calls to the API) is listed as its own Unhealthy service beside `kanninja-backend`, the same API; two tables name the same services; was: top bar #046 | P02 |
+| Services | `#/services` | 8 | 7 | `localhost:3001` (the web app's calls to the API) is listed as its own Unhealthy service beside `kanninja-backend`, the same API; two tables name the same services; was: top bar #046; was: map numbers on top of each other #076, a call hidden behind a box #077 | P02, P03 |
 | Hosts | `#/hosts` | — | — | — | — |
 | Kubernetes | `#/kubernetes` | — | — | — | — |
 | Insights | `#/insights` | — | — | — | — |
@@ -174,8 +181,8 @@ is a `major` issue, not a rating.**
 | Account › Delete account | `#/account/delete` | — | — | — | — |
 | Account › Security | `#/account/security` | 8 | 8 | "Turn off" two-step is a solid red button beside "New backup codes" | P02 |
 | Connect › options | `#/connect/options` | — | — | — | — |
-| Trace › Timeline | `#/traces/<id>` | 8 | 7 | a browser-only trace reads "Network and other 4.84 s" with one span bar and no word on what took the time; at 360 the tabs scroll | P02 |
-| Trace › SQL | `#/traces/<id>/sql` | — | — | — | — |
+| Trace › Timeline | `#/traces/<id>` | 8 | 7 | a browser-only trace reads "Network and other 4.84 s" with one span bar and no word on what took the time; at 360 the tabs scroll; was: the browser chip read "browser" #078 | P02, P03 |
+| Trace › SQL | `#/traces/<id>/sql` | 8 | 8 | an UPDATE's params run three lines of small mono with no wrap toggle; at 360 the facts fill the first screen before the queries; was: SecurityStamp shown #068, accents escaped #072 | P03 |
 | Trace › HTTP | `#/traces/<id>/http` | — | — | — | — |
 | Trace › Messages | `#/traces/<id>/messages` | — | — | — | — |
 | Trace › Logs | `#/traces/<id>/logs` | — | — | — | — |
@@ -191,7 +198,7 @@ is a `major` issue, not a rating.**
 | Alert rule | `#/alerts/<id>` | 8 | 8 | the line starts on the day the rule was made, so most of the 7-day chart is blank with no word on why; was: link said traces and opened queries #036, lost after two-step sign-in #035 | P02 |
 | SLO | `#/slos/<id>` | 8 | 6 → 8 | the budget chart is a flat line at 0 once spent; a 2-minute outage is a 3 px band on a 30-day chart, so the list carries it; was: an outage spent no budget and nothing showed it (#038) | P02 |
 | Dashboard | `#/dashboards/<id>` | — | — | — | — |
-| Shared page (signed out) | `#/shared/<token>` | — | — | — | — |
+| Shared page (signed out) | `#/shared/<token>` | 8 | 8 | at 360 "link works until Nov 3, 2026" wraps under the logo and the tabs scroll sideways; was: stayed light in dark mode #075 | P03 |
 | Status page | `#/status/<slug>` | — | — | — | — |
 | Uptime check | `#/uptime/<id>` | 8 | 8 | on day one the 30-day card reads the same as 24 h and does not say how much is measured; was: counted from before the first run #037 | P02 |
 | Host | `#/hosts/<name>` | — | — | — | — |
@@ -203,7 +210,7 @@ is a `major` issue, not a rating.**
 | Screen | Key | Design | Ease | Gap to 10 | Persona |
 | --- | --- | --- | --- | --- | --- |
 | Sign in | `(signed out)` | — | — | — | — |
-| Create account | `(signed out)` | — | — | — | — |
+| Create account | `(signed out)` | 8 | 8 | the card says nothing about what the account is for; "I have an account" is small link text; was: stayed light in dark mode #075 | P03 |
 | No organization yet | `(signed out)` | — | — | — | — |
 | setup | `#/setup` | — | — | — | — |
 | two-factor | `#/two-factor` | — | — | — | — |
@@ -215,7 +222,7 @@ is a `major` issue, not a rating.**
 | oauth | `#/oauth` | — | — | — | — |
 | oauth-consent | `#/oauth-consent` | — | — | — | — |
 
-Sign in, Create account, two-factor and invite were opened by P02 (acts 1, 7 and 9) in light at 1440 only, so they are not scored (RULE #6).
+Sign in, two-factor and invite were opened by P02 (acts 1, 7 and 9) in light at 1440 only, so they are not scored (RULE #6). P03 scored Create account in all three views.
 
 ### HUD (in the app's own page) — 2 screens
 
