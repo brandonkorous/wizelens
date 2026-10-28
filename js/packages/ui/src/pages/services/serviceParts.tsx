@@ -48,14 +48,17 @@ export function KindName({ row }: { row: ServiceRow }) {
   );
 }
 
+// On a phone the numbers go on one line under the name, so the table needs no sideways swipe.
+const phoneLine = (r: ServiceRow) => `${fmtCount(r.requests)} ${r.kind === "database" ? "queries" : "requests"} · ${fmtPct(r.errorRate)} errors · avg ${fmtMs(r.avgMs)}`;
+
 const COLUMNS: Column<ServiceRow>[] = [
-  { key: "name", header: "Service", cell: (r) => <KindName row={r} />, sort: (r) => r.name },
+  { key: "name", header: "Service", cell: (r) => <span className="wl-who"><KindName row={r} /><small className="wl-phone-line">{phoneLine(r)}</small></span>, sort: (r) => r.name },
   { key: "status", header: "Status", cell: (r) => <StatusText status={r.status} />, sort: (r) => r.errorRate },
-  { key: "requests", header: "Requests", num: true, cell: (r) => fmtCount(r.requests), sort: (r) => r.requests },
-  { key: "errors", header: "Errors", num: true, cell: (r) => fmtCount(r.errors), sort: (r) => r.errors },
-  { key: "rate", header: "Error rate", num: true, cell: (r) => fmtPct(r.errorRate), sort: (r) => r.errorRate },
-  { key: "avg", header: "Avg latency", num: true, cell: (r) => fmtMs(r.avgMs), sort: (r) => r.avgMs ?? 0 },
-  { key: "p95", header: "p95", num: true, cell: (r) => fmtMs(r.p95Ms), sort: (r) => r.p95Ms ?? 0 },
+  { key: "requests", header: "Requests", num: true, hideSm: true, cell: (r) => fmtCount(r.requests), sort: (r) => r.requests },
+  { key: "errors", header: "Errors", num: true, hideSm: true, cell: (r) => fmtCount(r.errors), sort: (r) => r.errors },
+  { key: "rate", header: "Error rate", num: true, hideSm: true, cell: (r) => fmtPct(r.errorRate), sort: (r) => r.errorRate },
+  { key: "avg", header: "Avg latency", num: true, hideSm: true, cell: (r) => fmtMs(r.avgMs), sort: (r) => r.avgMs ?? 0 },
+  { key: "p95", header: "p95", num: true, hideSm: true, cell: (r) => fmtMs(r.p95Ms), sort: (r) => r.p95Ms ?? 0 },
 ];
 
 /** Every service, database, and outside host. A click opens its details. */
