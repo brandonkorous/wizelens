@@ -49,7 +49,7 @@ export function BillingSection({ org }: { org: OrgWithProjects }) {
   const { data: usage, error, reload } = useUsage(org.id);
   const [capNote, setCapNote] = useState<string | null>(null);
   const paid = usage?.plan.id === "team" || usage?.plan.id === "business";
-  const status = usage?.subscription?.status === "past_due" ? " The last payment failed; Stripe retries it, and the plan stays until the retries end." : "";
+  const status = usage?.subscription?.status === "past_due" ? " The last payment failed. Everything keeps working while Stripe tries again. To fix it, choose Manage billing, add or pick a card that works, then press Pay failed amount." : "";
   return (
     <>
       <SectionHead
