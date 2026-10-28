@@ -59,8 +59,24 @@ export function headerValue<V extends { arrayValue?: { values?: V[] } }>(v: V | 
   return (v.arrayValue.values ?? []).map((x) => String(one(x) ?? "")).join(", ");
 }
 
-/** `http.target` holds the path and the query: split them into `url.path` and `url.query`. */
-export function splitTarget(a: Attributes): void {
+/** Django's server spans: the path only in `http.url`, and a route with no leading slash (the .NET add-on adds one too). */
+function serverPath(a: Attributes): void {
+  const full = a["url.full"];
+  if (a["url.path"] === undefined && typeof full === "string") {
+    try {
+      const u = new URL(full);
+      a["url.path"] = u.pathname + u.search;
+    } catch {
+      // Not a full address: the span's name stays its path.
+    }
+  }
+  const route = a["http.route"];
+  if (typeof route === "string" && route && !route.startsWith("/")) a["http.route"] = `/${route}`;
+}
+
+/** `http.target` holds the path and the query: split them into `url.path` and `url.query`. A server span fills a missing path first. */
+export function splitTarget(a: Attributes, server = false): void {
+  if (server) serverPath(a);
   const path = a["url.path"];
   if (typeof path !== "string") return;
   const q = path.indexOf("?");

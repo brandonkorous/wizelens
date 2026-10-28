@@ -65,7 +65,7 @@ export function toSpan(s: OtlpSpan, service: string, redactKeys: readonly string
   if (!traceId || !spanId) return null;
   const kind = kindOf(s.kind);
   const raw = attributesOf(s.attributes);
-  splitTarget(raw);
+  splitTarget(raw, kind === "server");
   foldDbParams(raw, redactKeys);
   const attributes = redactAttributes({ ...resource, ...raw }, redactKeys);
   const category = categoryOf(kind, attributes);
