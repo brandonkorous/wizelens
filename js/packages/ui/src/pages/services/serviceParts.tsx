@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import { Box, Cog, Database, Globe, Inbox, Monitor } from "lucide-react";
-import { type ServiceKind, type ServiceRow, type ServiceStatus, serviceDoc } from "@wizeworks/lens-core";
+import { isLocalAddress, type ServiceKind, type ServiceRow, type ServiceStatus, serviceDoc } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
 import { decodeParam, hrefTo, setQuery } from "../../routes";
 import { DotText, type Tone } from "../../ui/Badges";
@@ -41,19 +41,24 @@ export function KindName({ row }: { row: ServiceRow }) {
   return (
     <span className="wl-cell-icon" title={KIND_LABEL[row.kind]}>
       <Icon size={18} aria-hidden={true} />
-      {row.name}
+      {row.kind === "external" && isLocalAddress(row.detail) ? (
+        <span className="wl-who">{row.name}<small>Local address: no service you trace answered these calls</small></span>
+      ) : row.name}
     </span>
   );
 }
 
+// On a phone the numbers go on one line under the name, so the table needs no sideways swipe.
+const phoneLine = (r: ServiceRow) => `${fmtCount(r.requests)} ${r.kind === "database" ? "queries" : "requests"} · ${fmtPct(r.errorRate)} errors · avg ${fmtMs(r.avgMs)}`;
+
 const COLUMNS: Column<ServiceRow>[] = [
-  { key: "name", header: "Service", cell: (r) => <KindName row={r} />, sort: (r) => r.name },
+  { key: "name", header: "Service", cell: (r) => <span className="wl-who"><KindName row={r} /><small className="wl-phone-line">{phoneLine(r)}</small></span>, sort: (r) => r.name },
   { key: "status", header: "Status", cell: (r) => <StatusText status={r.status} />, sort: (r) => r.errorRate },
-  { key: "requests", header: "Requests", num: true, cell: (r) => fmtCount(r.requests), sort: (r) => r.requests },
-  { key: "errors", header: "Errors", num: true, cell: (r) => fmtCount(r.errors), sort: (r) => r.errors },
-  { key: "rate", header: "Error rate", num: true, cell: (r) => fmtPct(r.errorRate), sort: (r) => r.errorRate },
-  { key: "avg", header: "Avg latency", num: true, cell: (r) => fmtMs(r.avgMs), sort: (r) => r.avgMs ?? 0 },
-  { key: "p95", header: "p95", num: true, cell: (r) => fmtMs(r.p95Ms), sort: (r) => r.p95Ms ?? 0 },
+  { key: "requests", header: "Requests", num: true, hideSm: true, cell: (r) => fmtCount(r.requests), sort: (r) => r.requests },
+  { key: "errors", header: "Errors", num: true, hideSm: true, cell: (r) => fmtCount(r.errors), sort: (r) => r.errors },
+  { key: "rate", header: "Error rate", num: true, hideSm: true, cell: (r) => fmtPct(r.errorRate), sort: (r) => r.errorRate },
+  { key: "avg", header: "Avg latency", num: true, hideSm: true, cell: (r) => fmtMs(r.avgMs), sort: (r) => r.avgMs ?? 0 },
+  { key: "p95", header: "p95", num: true, hideSm: true, cell: (r) => fmtMs(r.p95Ms), sort: (r) => r.p95Ms ?? 0 },
 ];
 
 /** Every service, database, and outside host. A click opens its details. */

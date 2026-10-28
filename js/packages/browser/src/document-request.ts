@@ -1,5 +1,6 @@
 import type { RecordedRequest } from "./recorder-types.js";
 import { documentTrace } from "./server-timing.js";
+import { observe } from "./vitals.js";
 
 type Navigation = PerformanceNavigationTiming & { responseStatus?: number };
 
@@ -39,3 +40,19 @@ export function pageLoadRequest(): RecordedRequest | null {
 
 /** The request that rendered this page, as a HUD row, when a WizeLens server traced it (its Server-Timing). */
 export const documentRequest = (): RecordedRequest | null => (documentTrace() ? pageLoadRequest() : null);
+
+/** Calls back once with the page's render time (first paint after the first byte) when the browser reports its first paint. Returns a stop function. */
+export function whenPainted(callback: (renderMs: number) => void): () => void {
+  const nav = (typeof performance === "undefined" ? undefined : performance.getEntriesByType?.("navigation")[0]) as Navigation | undefined;
+  if (!nav) return () => {};
+  let done = false;
+  let stop = () => {};
+  stop = observe("paint", (entries) => {
+    const fcp = entries.find((e) => e.name === "first-contentful-paint");
+    if (!fcp || done) return;
+    done = true;
+    stop();
+    callback(Math.max(0, fcp.startTime - nav.responseStart));
+  });
+  return () => stop();
+}

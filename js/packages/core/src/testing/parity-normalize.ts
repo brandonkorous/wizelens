@@ -67,8 +67,8 @@ const TIES: Record<string, (m: Obj) => void> = {
     for (const k of ["exact", "category", "traceId", "pattern", "origin", "user"]) delete f[k];
   },
   rendering: (m) => {
-    // The route count and paging are new; the legacy model had none.
-    for (const k of ["routeCount", "routePaging", "componentPaging"]) delete m[k];
+    // The route count, paging, and the device table are new; the legacy model had none.
+    for (const k of ["routeCount", "routePaging", "componentPaging", "devices"]) delete m[k];
   },
   database: (m) => {
     // The table count, the filter, paging, and database options are new; the legacy model had none.
@@ -99,7 +99,7 @@ export function normalizeModel(page: string, model: unknown): Obj {
   const m = copy(model) as Obj;
   if (m.meta && typeof m.meta === "object") {
     // Settling and sampling vary by host; custom windows and compare are new since the legacy models.
-    for (const k of ["settling", "sampled", "custom", "compare", "releases"]) delete (m.meta as Obj)[k];
+    for (const k of ["settling", "sampled", "custom", "compare", "releases", "pageViews"]) delete (m.meta as Obj)[k];
   }
   stripRequests(m);
   TIES[page]?.(m);

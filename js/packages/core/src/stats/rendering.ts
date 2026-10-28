@@ -1,6 +1,7 @@
 import { ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_ROUTE, ATTR_PAGE, browserTypeOf } from "../attributes.js";
 import { withoutBotBrowser } from "../bots.js";
 import type { Span, Trace } from "../types.js";
+import { type Device, deviceOf } from "../user-agent.js";
 import { avgOf, groupBy, type Impact, percentileOf } from "./common.js";
 import type { InsightGroup } from "./insights.js";
 import { type ComponentRow, componentRows } from "./rendering-components.js";
@@ -27,6 +28,7 @@ export interface PageView {
   imageMs: number | null;
   images: number | null;
   largeImages: number | null;
+  device: Device | null;
 }
 
 const num = (s: Span, key: string): number | null => {
@@ -67,6 +69,7 @@ export function pageViewOf(s: Span): PageView {
     imageMs: num(s, ATTR_PAGE.imageMs),
     images: num(s, ATTR_PAGE.images),
     largeImages: num(s, ATTR_PAGE.largeImages),
+    device: deviceOf(typeof s.attributes["user_agent.original"] === "string" ? s.attributes["user_agent.original"] : null),
   };
 }
 
@@ -166,7 +169,7 @@ export function renderPhases(views: readonly PageView[], stat: PhaseStat): Rende
     return stat === "avg" ? avgOf(list) : percentileOf(list, 75);
   };
   return [
-    { key: "ssr", label: "Server-side rendering (SSR)", value: pick("ssrMs"), kind: "ms" },
+    { key: "ssr", label: "Server response (server render, or the file host)", value: pick("ssrMs"), kind: "ms" },
     { key: "client", label: "Client render", value: pick("clientRenderMs"), kind: "ms" },
     { key: "hydration", label: "Hydration", value: pick("hydrationMs"), kind: "ms" },
     { key: "images", label: "Image loading", value: pick("imageMs"), kind: "ms" },

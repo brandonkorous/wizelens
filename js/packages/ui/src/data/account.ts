@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import type { OrgRole } from "@wizeworks/lens-core";
-import { apiFetch, apiSend } from "./api";
+import { apiFetch, apiSend, onRefused } from "./api";
 import type { AuthClient } from "./auth-client";
 import { getScope, setOrgScope, setProjectScope } from "./prefs";
 import { ALL_PROJECTS } from "./projectScope";
@@ -67,6 +67,10 @@ function orgOf(s: AccountState): OrgWithProjects | undefined {
   return orgs.find((o) => o.id === org) ?? orgs.find((o) => o.projects.some((p) => p.id === project)) ?? orgs[0];
 }
 
+// A link named a project this person cannot open, so another is shown; the shell says so until they close the note.
+let missedProject = false;
+export const closeMissedProject = () => ((missedProject = false), emit());
+
 /** Keep the chosen project when it is still ours and in the shown organization; else all of its projects (one: that one). */
 function pickProject(s: AccountState): void {
   const org = orgOf(s);
@@ -74,6 +78,7 @@ function pickProject(s: AccountState): void {
   if (getScope().org !== org.id) setOrgScope(org.id);
   const project = getScope().project;
   if (project === ALL_PROJECTS ? org.projects.length > 0 : org.projects.some((p) => p.id === project)) return;
+  if (project && project !== ALL_PROJECTS) missedProject = true;
   setProjectScope(org.projects.length === 1 ? org.projects[0]!.id : ALL_PROJECTS);
 }
 
@@ -91,6 +96,9 @@ export async function loadAccount(): Promise<AccountState> {
   if (state.signedIn) provider.reloadInfo();
   return state;
 }
+
+// A session that ends while a page is open: the first refused call reloads who is signed in, and the sign-in form shows.
+onRefused(() => void (state?.signedIn && loadAccount()));
 
 /** A new organization, owned by you, with a first project. The dashboard switches to it. */
 export async function createOrg(name: string): Promise<void> {
@@ -159,6 +167,14 @@ export const pendingInvite = {
     }
   },
 };
+
+/** True while the note "that link's project is not yours" is open. */
+export function useMissedProject(): boolean {
+  return useSyncExternalStore(
+    (l) => (listeners.add(l), () => listeners.delete(l)),
+    () => missedProject,
+  );
+}
 
 export function useAccount(): AccountState | null {
   return useSyncExternalStore(

@@ -72,7 +72,7 @@ export function dbTip(req: RecordedRequest, view: RequestView, href: string | nu
   const bars = srv?.dbDurations.slice(0, 40) ?? [];
   return [
     tipHead("Database", view.dbMs, view.totalMs),
-    h("div", { class: "wl-tip-sub" }, srv ? (srv.dbCount === 1 ? "1 query" : `${srv.dbCount} queries`) : "No data yet", scope && ` · ${scope}`),
+    h("div", { class: "wl-tip-sub" }, srv ? (srv.dbCount === 1 ? "1 query" : `${srv.dbCount} queries`) : req.profiled ? "Loading server data…" : "No server data for this request.", scope && ` · ${scope}`),
     bars.length > 0 && spark(bars),
     srv && srv.dbCount > 0 && dbRows(srv),
     tipLink("View all queries", href),

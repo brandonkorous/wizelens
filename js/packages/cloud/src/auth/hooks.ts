@@ -7,7 +7,9 @@ import type { AuthDeps } from "./deps.js";
 import { emailChangeOf } from "./email-token.js";
 import { isLegacyHash } from "./password.js";
 import { rememberPasskey, securityAfter } from "./security-notices.js";
+import { guardPasswordWays, noteRequired } from "./sso-required.js";
 import { pruneProjectRoles } from "../repo/project-roles.js";
+import { clearRemoved, noteRemoved } from "./sso-join.js";
 
 type Mw = Parameters<typeof createAuthMiddleware>[0];
 type HookCtx = Parameters<Mw>[0];
@@ -34,11 +36,11 @@ const SSO_AUDITED: Record<string, string> = {
 };
 /** The organization of the provider a request changes, found before the change (a deleted provider is gone after). */
 const ssoOrgOf = new WeakMap<object, string>();
-/** The email of a member being removed, found before the row is gone, so the notice can name them. */
+/** The email of a member being removed or given a new role, found first, so the log and the notice can name them. */
 const removedEmailOf = new WeakMap<object, string>();
 
 async function rememberRemoved(ctx: HookCtx, body: Record<string, unknown>): Promise<void> {
-  const target = str(body.memberIdOrEmail);
+  const target = str(body.memberIdOrEmail) ?? str(body.memberId);
   if (!ctx.request || !target) return;
   if (target.includes("@")) return void removedEmailOf.set(ctx.request, target);
   const [row] = await ctx.context.adapter.findMany<{ userId: string }>({ model: "member", where: [{ field: "id", value: target }], limit: 1 });
@@ -97,7 +99,7 @@ const guard: Mw = async (ctx) => {
   if (ROLE_PATHS.has(ctx.path) && body.role !== undefined && !isOrgRole(body.role)) throw new APIError("BAD_REQUEST", { message: "Pick one role: owner, admin, member, or viewer." });
   if (NEEDS_ORG.has(ctx.path) && !str(body.organizationId)) throw new APIError("BAD_REQUEST", { message: "Send organizationId." });
   if (ctx.path === "/delete-user" && !str(body.password) && !str(body.token)) throw new APIError("BAD_REQUEST", { message: "Enter your password." });
-  if (ctx.path === "/organization/remove-member") await rememberRemoved(ctx, body);
+  if (ctx.path === "/organization/remove-member" || ctx.path === "/organization/update-member-role") await rememberRemoved(ctx, body);
 };
 
 /** A successful sign-in with an old hash stores a new one. */
@@ -123,6 +125,15 @@ async function auditOrgChange(deps: AuthDeps, ctx: HookCtx): Promise<void> {
   const detail = { ...Object.fromEntries(Object.entries((ctx.body ?? {}) as Record<string, unknown>).filter(([k]) => !SECRET_KEYS.includes(k))), ...(removed ? { memberEmail: removed } : {}), ...cancelledInvite(ctx) };
   await audit(deps.db, orgId, actor ? `user:${actor}` : "system", action, detail, Date.now());
   await pruneProjectRoles(deps.db, orgId);
+  await trackRemoval(deps, ctx, orgId, removed || undefined);
+}
+
+/** Who was removed or left stays out of single sign-on's joining; an accepted invite or an added member lets them back. */
+async function trackRemoval(deps: AuthDeps, ctx: HookCtx, orgId: string, removed: string | undefined): Promise<void> {
+  const session = await getSessionFromCtx(ctx);
+  if (ctx.path === "/organization/remove-member" && removed) await noteRemoved(deps.db, orgId, removed, Date.now());
+  if (ctx.path === "/organization/leave" && session) await noteRemoved(deps.db, orgId, session.user.email, Date.now());
+  if (ctx.path === "/organization/accept-invitation" && session) await clearRemoved(deps.db, orgId, session.user.id);
 }
 
 async function auditSsoChange(deps: AuthDeps, ctx: HookCtx): Promise<void> {
@@ -139,6 +150,8 @@ export function authHooks(deps: AuthDeps): BetterAuthOptions["hooks"] {
   return {
     before: createAuthMiddleware(async (ctx) => {
       await billingGuard(deps, ctx);
+      await guardPasswordWays(deps.db, ctx.path, (ctx.body ?? {}) as Record<string, unknown>);
+      await noteRequired(deps.db, ctx.path, ctx.request);
       return guard(ctx);
     }),
     after: createAuthMiddleware(async (ctx) => {

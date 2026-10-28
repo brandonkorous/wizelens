@@ -1,8 +1,9 @@
 import type { Stripe } from "stripe";
 import type { StripeClient, StripePrices } from "./options.js";
 import { OVERAGE_TIERS, PLANS } from "./plans.js";
+import { portalOf } from "./stripe-portal.js";
 
-// `wizelens-cloud stripe-setup`: products, prices, meter, and webhook, made once; reruns reuse them (lookup key, event name, URL) and add a missing tax code or tax behavior.
+// `wizelens-cloud stripe-setup`: products, prices, meter, webhook, and portal settings, made once; reruns reuse them (lookup key, event name, URL) and add a missing tax code or tax behavior.
 
 export const METER_EVENT = "wizelens_gb";
 export const WEBHOOK_EVENTS: Stripe.WebhookEndpointCreateParams.EnabledEvent[] = ["checkout.session.completed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"];
@@ -90,6 +91,7 @@ export async function stripeSetup(client: StripeClient, publicUrl?: string): Pro
     }
     ids[k] = hit?.id ?? (await client.prices.create({ ...params[k], lookup_key: lookup })).id;
   }
+  await portalOf(client, [{ product: products.team, prices: [ids.teamMonthly, ids.teamAnnual] }, { product: products.business, prices: [ids.businessMonthly, ids.businessAnnual] }], made);
   const webhookUrl = publicUrl ? `${publicUrl.replace(/\/+$/, "")}/_wizelens/api/auth/stripe/webhook` : undefined;
   const webhookSecret = webhookUrl ? await webhookOf(client, webhookUrl, made) : undefined;
   const taxReady = (await client.tax.settings.retrieve()).status === "active";

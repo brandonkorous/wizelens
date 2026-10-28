@@ -21,11 +21,21 @@ async function formOf(req: IncomingMessage): Promise<URLSearchParams> {
   return new URLSearchParams(text);
 }
 
-/** A tiny OIDC identity provider for tests: discovery, authorize (signs `user` straight in), token with an RS256 ID token, and JWKS. */
+/** How the test IdP answers a refresh: renews it, refuses it (the person was turned off), or is down. */
+export type IdpMode = "ok" | "disabled" | "down";
+
+/** A tiny OIDC identity provider for tests: discovery, authorize (signs `user` straight in), token with an RS256 ID token and a refresh token, refresh, and JWKS. */
 export async function startIdp(user: IdpUser, clientId: string) {
   const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
   const jwk = { ...publicKey.export({ format: "jwk" }), kid: "k1", alg: "RS256", use: "sig" };
   const codes = new Set<string>();
+  const refreshes = new Set<string>();
+  let mode: IdpMode = "ok";
+  const tokens = () => {
+    const refresh = randomUUID();
+    refreshes.add(refresh);
+    return { access_token: randomUUID(), token_type: "Bearer", expires_in: 300, refresh_token: refresh, id_token: idToken() };
+  };
   let issuer = "";
   const idToken = () => {
     const now = Math.floor(Date.now() / 1000);
@@ -47,11 +57,16 @@ export async function startIdp(user: IdpUser, clientId: string) {
       res.writeHead(302, { Location: back.toString() });
       return res.end();
     }
-    const code = (await formOf(req)).get("code") ?? "";
-    if (url.pathname !== "/token" || !codes.delete(code)) return void res.writeHead(400).end();
-    json(res, { access_token: randomUUID(), token_type: "Bearer", expires_in: 300, id_token: idToken() });
+    const form = await formOf(req);
+    if (url.pathname === "/token" && form.get("grant_type") === "refresh_token") {
+      if (mode === "down") return void res.writeHead(503).end();
+      if (mode === "disabled" || !refreshes.delete(form.get("refresh_token") ?? "")) return void res.writeHead(400, { "Content-Type": "application/json" }).end('{"error":"invalid_grant"}');
+      return json(res, tokens());
+    }
+    if (url.pathname !== "/token" || !codes.delete(form.get("code") ?? "")) return void res.writeHead(400).end();
+    json(res, tokens());
   });
   await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
   issuer = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  return { issuer, close: () => new Promise<void>((done) => server.close(() => done())) };
+  return { issuer, setMode: (m: IdpMode) => void (mode = m), close: () => new Promise<void>((done) => server.close(() => done())) };
 }

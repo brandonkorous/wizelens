@@ -3,7 +3,7 @@ import type { EmailContent } from "../mail/content.js";
 import { projectBack, projectQuiet } from "../mail/emails-health.js";
 import { renderMail } from "../mail/templates.js";
 import { stopUrl } from "../mail/unsubscribe.js";
-import { managersOf } from "../repo/mail-prefs.js";
+import { managersOf, zonesOf } from "../repo/mail-prefs.js";
 import { tenantScope } from "../telemetry/store.js";
 
 const HOUR = 3_600_000;
@@ -26,8 +26,10 @@ async function busy(app: CloudApp, p: ProjectRow, lastMs: number): Promise<boole
   return (await app.telemetry.activeHours(tenantScope(p.org_id, [p.id]), lastMs - 72 * HOUR, lastMs)) >= BUSY_HOURS;
 }
 
-async function tell(app: CloudApp, p: ProjectRow, make: (stop: string) => EmailContent): Promise<void> {
-  for (const m of await managersOf(app.db, p.org_id, "health", app.mailer.live)) app.mailer.send(renderMail(m.email, make(stopUrl(app, m.id, "health"))));
+async function tell(app: CloudApp, p: ProjectRow, make: (stop: string, timeZone?: string) => EmailContent): Promise<void> {
+  const people = await managersOf(app.db, p.org_id, "health", app.mailer.live);
+  const zones = await zonesOf(app.db, people.map((m) => m.email));
+  for (const m of people) app.mailer.send(renderMail(m.email, make(stopUrl(app, m.id, "health"), zones.get(m.email.toLowerCase()))));
 }
 
 /** Check one project. The first look only records its state, so an upgrade sends nothing for projects already quiet. */
@@ -42,7 +44,7 @@ async function checkProject(app: CloudApp, p: ProjectRow, now: number): Promise<
   );
   if (p.quiet === null || saved.length === 0) return;
   const url = `${app.baseUrl()}/_wizelens/#/?project=${encodeURIComponent(p.id)}`;
-  if (quiet) await tell(app, p, (stop) => projectQuiet(p.name, p.org, p.last_ms!, now, url, stop));
+  if (quiet) await tell(app, p, (stop, zone) => projectQuiet(p.name, p.org, p.last_ms!, now, url, stop, zone));
   else await tell(app, p, (stop) => projectBack(p.name, p.org, now - (p.changed_ms ?? now) + QUIET_MS, url, stop));
 }
 

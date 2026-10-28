@@ -6,6 +6,7 @@ import { hrefTo, setQuery, traceHref, userHref } from "../../routes";
 import { Badge, CopyButton, ImpactBadge } from "../../ui/Badges";
 import { IssueActions, IssueBadge } from "../../ui/IssueControls";
 import { KeyValues, Panel } from "../../ui/Panel";
+import { useOpenFocus } from "../../ui/useOpenFocus";
 import { adviceFor, AREA_LABEL } from "./advice";
 
 /** The requests of an endpoint that had insights, or the route on the Rendering page. */
@@ -43,11 +44,12 @@ function UsersLine({ users }: { users: UsersAffected }) {
 
 export function InsightDetail({ group, info, users, now }: { group: InsightGroup; info: IssueInfo | undefined; users: UsersAffected | null; now: number }) {
   const advice = adviceFor(group);
+  const title = useOpenFocus<HTMLHeadingElement>(group.key);
   const example = group.area === "render" ? traceHref(group.exampleTraceId) : traceHref(group.exampleTraceId, "insights");
   return (
     <Panel className="wl-insight-detail">
       <div className="wl-side-head">
-        <h2>{group.title}</h2>
+        <h2 ref={title} tabIndex={-1}>{group.title}</h2>
         <button type="button" className="wl-icon-btn" onClick={() => setQuery({ key: null })} aria-label="Close">
           <X size={18} />
         </button>

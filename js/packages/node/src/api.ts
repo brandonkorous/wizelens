@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { annotateErrorFrames, answerResolve, HEADER_HOP, type MapLoader, type ServiceInfo, SOURCEMAPS_RESOLVE_PATH, type Span, type TagRule, type Trace, type TraceSummary } from "@wizeworks/lens-core";
-import { browserClockOffset, remoteOf, sanitizeClientLog, sanitizeClientSpan } from "./client-spans.js";
+import { browserClockOffset, remoteOf, sanitizeClientLog, sanitizeClientSpan, withVisitorAgent } from "./client-spans.js";
 import { isHudScript, serveHudScript } from "./hud-bundle.js";
 import { firstHeader, readJson, sendJson, setCors } from "./http-util.js";
 import { handleMcp, type McpDataSource } from "./mcp.js";
@@ -27,6 +27,8 @@ export interface ApiDeps {
   metrics?: MetricStore | null;
   /** This service's own endpoints: never a remote of its own traces. */
   selfEndpoints: ReadonlySet<string>;
+  /** Origins besides the page's whose WizeLens may hold the server part of a browser call (an API on its own port). */
+  trustedRemotes?: ReadonlySet<string>;
   /** False is send-only: only the browser span intake answers. */
   dashboard: boolean;
   /** Build folders and dev servers to read source maps from; null when off. */
@@ -66,12 +68,13 @@ async function receiveClientSpans(d: ApiDeps, req: Req, res: ServerResponse): Pr
     const shiftMs = browserClockOffset(body?.sentAt, Date.now());
     const spans = Array.isArray(body?.spans) ? body.spans.slice(0, MAX_CLIENT_SPANS) : [];
     const origin = firstHeader(req.headers.origin);
-    const clean = spans.map((raw) => sanitizeClientSpan(raw, d.redactKeys, shiftMs)).filter((s): s is Span => s !== null);
+    const agent = firstHeader(req.headers["user-agent"]);
+    const clean = spans.map((raw) => sanitizeClientSpan(raw, d.redactKeys, shiftMs)).filter((s): s is Span => s !== null).map((s) => withVisitorAgent(s, agent));
     // Browser errors group by their original frame: add it now, while the maps are at hand.
     if (d.sourceMaps) await annotateErrorFrames(clean, d.sourceMaps);
     for (const span of clean) {
       d.store.addSpan(span);
-      const remote = remoteOf(span, origin);
+      const remote = remoteOf(span, origin, d.trustedRemotes);
       if (remote && !d.selfEndpoints.has(remote)) d.store.addRemote(span.traceId, remote);
     }
     const logs = Array.isArray(body?.logs) ? body.logs.slice(0, MAX_CLIENT_LOGS) : [];

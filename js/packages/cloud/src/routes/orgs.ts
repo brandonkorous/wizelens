@@ -12,11 +12,18 @@ import { hiddenProjects, listProjectRoles } from "../repo/project-roles.js";
 import { orgDeletionNotice } from "../notify/team.js";
 import { deleteOrgEverything, listMembers, pendingInvites, setRetention } from "../repo/orgs.js";
 import { listKeys, listProjects } from "../repo/projects.js";
+import { exposedKeys, revokedInUse } from "../repo/key-exposed.js";
 import { orgProjectIds } from "../repo/trace-join.js";
 import { clearProjects } from "../telemetry/index.js";
 
 // Members, roles, and invites change through Better Auth (`api/auth/organization/*`). These routes add what it does not have.
 const now = (ctx: Ctx) => ctx.app.config.now();
+
+/** The organization's keys, each with the last time a public page sent with it when it is a secret key. */
+async function keysWithExposure(db: Ctx["app"]["db"], orgId: string) {
+  const seen = await exposedKeys(db, orgId);
+  return (await listKeys(db, orgId)).map((k) => ({ ...k, exposed: seen.get(k.id) ?? null }));
+}
 
 async function overview(ctx: Ctx): Promise<void> {
   const { role, user } = await requireOrg(ctx, ctx.params.org!, "read");
@@ -29,7 +36,8 @@ async function overview(ctx: Ctx): Promise<void> {
     members: await listMembers(db, id),
     projects: (await listProjects(db, id)).filter((p) => !hidden.has(p.id)),
     invites: manage ? await pendingInvites(db, id) : [],
-    keys: manage ? await listKeys(db, id) : [],
+    keys: manage ? await keysWithExposure(db, id) : [],
+    revokedInUse: manage ? await revokedInUse(db, id, now(ctx)) : [],
     projectRoles: manage ? await listProjectRoles(db, id) : [],
   });
 }
@@ -76,7 +84,7 @@ const AUDIT_PAGE = 100;
 
 /** `GET api/orgs/:org/audit`: newest first, `limit` (1 to 500) at a time; page with `offset`, or back with `before` = the last time. */
 async function auditLog(ctx: Ctx): Promise<void> {
-  await requireOrg(ctx, ctx.params.org!, "manage");
+  await requireOrg(ctx, ctx.params.org!, "read");
   const p = ctx.url.searchParams;
   const limit = Math.min(500, Math.max(1, Number(p.get("limit")) || AUDIT_PAGE));
   const offset = Math.max(0, Math.floor(Number(p.get("offset")) || 0));
@@ -85,12 +93,12 @@ async function auditLog(ctx: Ctx): Promise<void> {
 
 /** `GET api/orgs/:org/audit/count`: `{ total }` lines that match the same filter. */
 async function auditCount(ctx: Ctx): Promise<void> {
-  await requireOrg(ctx, ctx.params.org!, "manage");
+  await requireOrg(ctx, ctx.params.org!, "read");
   sendJson(ctx.res, 200, { total: await countAudit(ctx.app.db, ctx.params.org!, auditFilterOf(ctx.url.searchParams)) });
 }
 
 async function auditFacetsOf(ctx: Ctx): Promise<void> {
-  await requireOrg(ctx, ctx.params.org!, "manage");
+  await requireOrg(ctx, ctx.params.org!, "read");
   sendJson(ctx.res, 200, await auditFacets(ctx.app.db, ctx.params.org!));
 }
 

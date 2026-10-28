@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { ATTR_BROWSER_APP } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_APP, ATTR_BROWSER_TYPE } from "@wizeworks/lens-core";
 import { originAllowed, originOf, originsFor } from "./repo/key-origins.js";
 import { browserWrite } from "./routes/browser.js";
 import type { Cloud } from "./server.js";
@@ -79,11 +79,42 @@ describe("the browser intake", () => {
     expect((await post({ spans: [pageView()] }, "https://evil.example")).status).toBe(403);
     const ingest = (await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", projectIds: [projectId] })).body.token;
     const asIngest = await fetch(`${url}/_wizelens/b/${ingest}/api/client-spans`, { method: "POST", headers: { Origin: SHOP }, body: "{}" });
-    expect(asIngest.status).toBe(405);
+    expect(asIngest.status).toBe(401);
     const elsewhere = await fetch(`${url}/_wizelens/api/ingest`, { method: "POST", headers: { Authorization: `Bearer ${made.token}` }, body: "{}" });
     expect(elsewhere.status).toBe(401);
     const read = await fetch(`${url}/_wizelens/api/traces?project=${projectId}`, { headers: { Authorization: `Bearer ${made.token}` } });
     expect(read.status).toBe(401);
+  });
+
+});
+
+describe("the browser intake, guarding keys", () => {
+  it("refuses a secret key in a page, and tells its owners once an hour", async () => {
+    const { url, owner, orgId, projectId } = await setup();
+    const made = (await owner.call<{ id: string; token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", name: "site — first try", projectIds: [projectId] })).body;
+    const send = () => fetch(`${url}/_wizelens/b/${made.token}/api/client-spans`, { method: "POST", headers: { Origin: SHOP }, body: "{}" });
+    const res = await send();
+    expect(res.status).toBe(401);
+    expect(await res.text()).toMatch(/secret key: it must never be in a page/);
+    await send();
+    const lines = await owner.call<{ action: string; detail: { keyId: string; origin: string } }[]>("GET", `api/orgs/${orgId}/audit?action=key.exposed`);
+    expect(lines.body.map((l) => [l.action, l.detail.keyId, l.detail.origin])).toEqual([["key.exposed", made.id, SHOP]]);
+    const org = await owner.call<{ keys: { id: string; exposed: { origin: string } | null }[] }>("GET", `api/orgs/${orgId}`);
+    expect(org.body.keys.find((k) => k.id === made.id)?.exposed?.origin).toBe(SHOP);
+  });
+
+  it("tells the owners, once an hour, when a site still sends with a revoked browser key", async () => {
+    const { owner, orgId, made, post } = await setup();
+    expect((await owner.call("DELETE", `api/orgs/${orgId}/keys/${made.id}`)).status).toBeLessThan(300);
+    const res = await post({ spans: [pageView()] });
+    expect(res.status).toBe(401);
+    expect(await res.text()).toMatch(/was revoked/);
+    await post({ spans: [pageView()] });
+    expect((await post({ spans: [pageView()] }, "https://evil.example")).status).toBe(401);
+    const lines = await owner.call<{ detail: { keyId: string; origin: string } }[]>("GET", `api/orgs/${orgId}/audit?action=key.revoked_use`);
+    expect(lines.body.map((l) => [l.detail.keyId, l.detail.origin])).toEqual([[made.id, SHOP]]);
+    const org = await owner.call<{ revokedInUse: { keyId: string; name: string; origin: string }[] }>("GET", `api/orgs/${orgId}`);
+    expect(org.body.revokedInUse).toMatchObject([{ keyId: made.id, name: "site", origin: SHOP }]);
   });
 
   it("needs sites to make a key, and lets them change in place", async () => {
@@ -103,5 +134,14 @@ describe("the browser app a key's data shows under", () => {
     const w = browserWrite({ spans: [pageView(), named], logs: [{ traceId: T1, timeMs: Date.now(), level: "info", category: "console", message: "hi", attributes: {} }] }, [], Date.now(), "site");
     expect(w.spans.map((s) => s.attributes[ATTR_BROWSER_APP])).toEqual(["site", "shop-web"]);
     expect(w.logs.map((l) => l.log.attributes[ATTR_BROWSER_APP])).toEqual(["site"]);
+  });
+
+  it("names the visitor's browser from the request when an older page script does not", () => {
+    const PHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) Mobile/15E148";
+    const view = pageView({ attributes: { [ATTR_BROWSER_TYPE]: "pageview" } });
+    const own = pageView({ spanId: "4".repeat(16), attributes: { [ATTR_BROWSER_TYPE]: "pageview", "user_agent.original": "Firefox" } });
+    const fetchSpan = pageView({ spanId: "5".repeat(16), attributes: { [ATTR_BROWSER_TYPE]: "fetch" } });
+    const w = browserWrite({ spans: [view, own, fetchSpan] }, [], Date.now(), "site", PHONE);
+    expect(w.spans.map((s) => s.attributes["user_agent.original"])).toEqual([PHONE, "Firefox", undefined]);
   });
 });

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Upload } from "lucide-react";
 import { checkSearch, type SearchItems, SEARCH_KINDS, type SearchKind, type SearchSummary, searchScope, usesTags } from "@wizeworks/lens-core";
 import { downloadCsv, objectsToCsv } from "../../data/csv";
@@ -96,12 +97,16 @@ function SavedSearches() {
 export function SearchPage() {
   const { query } = useRoute();
   const q = query.get("q") ?? "";
-  const kind = isKind(query.get("kind")) ? (query.get("kind") as SearchKind) : "requests";
+  const asked = isKind(query.get("kind")) ? (query.get("kind") as SearchKind) : null;
   const [range] = useRange();
   const server = useHost().has("search");
+  const [picked, setPicked] = useState<SearchKind>("requests");
+  const kind = asked ?? picked;
   const s = useSearch({ q, kind, range, limit: PAGE }, server);
   const invalid = s.failure?.type === "invalid" ? s.failure : null;
   const summary = useSearchSummary(q, kind, range, server);
+  // With no tab in the URL, open the first one with hits: a static site has traces and logs but no requests.
+  useEffect(() => void (summary && setPicked(TABS.find(([k]) => (summary.counts[k]?.n ?? 0) > 0)?.[0] ?? "requests")), [summary]);
   const tabs = TABS.map(([k, label]): [SearchKind, string] => [k, summary ? `${label} (${countText(summary.counts[k])})` : label]);
   const parsed = checkSearch(q);
   const scopes = q.trim() && parsed.ok && parsed.node && !usesTags(parsed.node) ? [searchScope(q.trim())] : [];
@@ -111,8 +116,8 @@ export function SearchPage() {
         <TagThis scopes={scopes} />
       </PageHeader>
       <section className="wl-panel wl-search-bar">
-        <QueryBar value={q} onSubmit={(next) => setQuery({ q: next || null })} range={range} server={server} serverError={invalid} />
-        <TabBar tabs={tabs} value={kind} onChange={(k) => setQuery({ kind: k === "requests" ? null : k })} />
+        <QueryBar value={q} live onSubmit={(next) => setQuery({ q: next || null })} range={range} server={server} serverError={invalid} />
+        <TabBar tabs={tabs} value={kind} onChange={(k) => setQuery({ kind: k })} />
         <SavedSearches />
       </section>
       {summary && <ResultsOverTime summary={summary} kind={kind} />}

@@ -51,8 +51,14 @@ export const isUtc = (): boolean => timeFormat.utc;
 
 const opts = (o: Intl.DateTimeFormatOptions): Intl.DateTimeFormatOptions => ({ ...o, ...(o.hour ? { hour12: timeFormat.hour12 } : {}), ...(timeFormat.utc ? { timeZone: "UTC" } : {}) });
 
-/** "8:42:17 PM". */
-export const fmtTime = (epochMs: number): string => new Date(epochMs).toLocaleTimeString("en-US", opts({ hour: "numeric", minute: "2-digit", second: "2-digit" }));
+const dayOf = (epochMs: number): string => new Date(epochMs).toLocaleDateString("en-US", opts({ year: "numeric", month: "numeric", day: "numeric" }));
+
+/** "8:42:17 PM" today; "Oct 27, 8:42:17 PM" on another day, so yesterday's times do not read as today's. */
+export function fmtTime(epochMs: number, now = Date.now()): string {
+  const time = new Date(epochMs).toLocaleTimeString("en-US", opts({ hour: "numeric", minute: "2-digit", second: "2-digit" }));
+  if (dayOf(epochMs) === dayOf(now)) return time;
+  return `${new Date(epochMs).toLocaleDateString("en-US", opts({ month: "short", day: "numeric" }))}, ${time}`;
+}
 
 /** "Oct 15, 2026". */
 export const fmtDate = (epochMs: number): string => new Date(epochMs).toLocaleDateString("en-US", opts({ month: "short", day: "numeric", year: "numeric" }));

@@ -3,6 +3,7 @@ import { ArrowLeft, RefreshCw } from "lucide-react";
 import { type Health, type Timing, timingSegments, type Trace } from "@wizeworks/lens-core";
 import { fmtClock, fmtMs } from "../../format";
 import { CopyButton } from "../../ui/Badges";
+import { type Part, pageParts } from "./pageSplit";
 import { ServiceChip } from "./tabParts";
 
 const pillClass = (code: number) => (code >= 500 ? "wl-pill-err" : code >= 400 ? "wl-pill-warn" : "wl-pill-ok");
@@ -23,7 +24,7 @@ function Stats({ trace, timing }: { trace: Trace; timing: Timing }) {
     ["Started", fmtClock(trace.startMs)],
     ["Spans", String(trace.spanCount)],
     ["Queries", String(trace.dbCount)],
-    ["HTTP calls", String(trace.httpClientCount)],
+    ["HTTP calls out", String(trace.httpClientCount)],
   ];
   return (
     <dl className="wl-stats">
@@ -37,7 +38,7 @@ function Stats({ trace, timing }: { trace: Trace; timing: Timing }) {
         <dt>Services</dt>
         <dd className="wl-chips">
           {trace.services.map((s) => (
-            <ServiceChip key={s} service={s} services={trace.services} />
+            <ServiceChip key={s} service={s} trace={trace} />
           ))}
         </dd>
       </div>
@@ -45,10 +46,12 @@ function Stats({ trace, timing }: { trace: Trace; timing: Timing }) {
   );
 }
 
-function SplitBar({ timing, failed }: { timing: Timing; failed: boolean }) {
+/** Server, database, render and the rest; for a page load with no server of yours, the browser's own split. */
+function SplitBar({ trace, timing, failed }: { trace: Trace; timing: Timing; failed: boolean }) {
   const seg = timingSegments(timing);
   const share = (ms: number) => `${(ms / Math.max(timing.totalMs, 0.001)) * 100}%`;
-  const parts: [string, string, number][] = [
+  const page = timing.serverMs === null ? pageParts(trace, timing.totalMs) : null;
+  const parts: Part[] = page?.parts ?? [
     [failed ? "wl-c-error" : "wl-c-server", "Server code", seg.server],
     ["wl-c-db", "Database", seg.db],
     ["wl-c-render", "Render", seg.render],
@@ -57,8 +60,8 @@ function SplitBar({ timing, failed }: { timing: Timing; failed: boolean }) {
   return (
     <>
       <div className="wl-split-bar" aria-hidden="true">
-        {parts.map(([cls, , ms]) => (
-          <i key={cls} className={cls} style={{ width: share(ms) }} />
+        {parts.map(([cls, label, ms]) => (
+          <i key={label} className={cls} style={{ width: share(ms) }} />
         ))}
       </div>
       <div className="wl-legend">
@@ -68,6 +71,7 @@ function SplitBar({ timing, failed }: { timing: Timing; failed: boolean }) {
           </span>
         ))}
       </div>
+      {page && <p className="wl-muted wl-small">{page.note}</p>}
     </>
   );
 }
@@ -112,7 +116,7 @@ export function TraceHeader({ trace, timing, health, loading, onRefresh, backHre
       </div>
       {tags}
       <Stats trace={trace} timing={timing} />
-      <SplitBar timing={timing} failed={health === "critical"} />
+      <SplitBar trace={trace} timing={timing} failed={health === "critical"} />
       <div className="wl-muted wl-small wl-mono">
         <CopyButton text={trace.traceId} label="Copy trace id" />
         trace {trace.traceId}

@@ -2,12 +2,12 @@
 
 **Version:** 1.0
 **Author:** Brandon Korous
-**Last Updated:** 2026-10-26
+**Last Updated:** 2026-10-27
 
 Binding for anything under `docs/personas/`. Where it is silent, the repo's root
 `CLAUDE.md` applies.
 
-This folder is not documentation about testing. It **is** the test: 2 real
+This folder is not documentation about testing. It **is** the test: 5 real
 WizeLens users, each with a person behind them, each set up from nothing and
 operated until their job works or breaks. A persona file is both the **script** and
 the **log** — you read it to know what to do, and you write to it as you do it.
@@ -125,7 +125,7 @@ The same applies inside a run: a count that would not load is unknown, not zero.
 
 ## RULE #5 — the spine is verified once, then trusted
 
-Every persona walks the same first stretch: wizelens.com → docs → install in kanNINJA → the first trace on `/_wizelens` → the HUD on a real kanNINJA page. **P01 is the deep baseline**
+Every persona walks the same first stretch: wizelens.com → docs → install in kanNINJA → the first trace on `/_wizelens` → the HUD on a real kanNINJA page. **P01 is the deep baseline** (P03 walks the same stretch in eShopOnWeb on .NET, and P04 in a static site with the script tag; there the spine itself is under test, because its code is different)
 and verifies it properly, act by act, in the data.
 
 The rest walk it at speed and report spine behaviour only where it **differs** — a
@@ -168,9 +168,9 @@ rather than sitting in a table as a number.
 rather than a final opinion. Screens no persona reached stay `—`; an unrated screen
 is unrated, never assumed fine (RULE #4).
 
-## RULE #7 — the 2 are neighbours, and fixes travel
+## RULE #7 — the 5 are neighbours, and fixes travel
 
-The two personas share one machine but not one account. P01 works in kanNINJA's in-app dashboard; P02 owns a WizeLens Cloud organization, and a neighbour organization ("Harrow & Vance Studio", made in setup with its own project and traces) lives on the same cloud. On the cloud the database row policies and the org stamp are what keep neighbours apart, so this is the first time they meet real neighbours in the data.
+The five personas share one machine but not one account. P01 works in kanNINJA's in-app dashboard; P03 in eShop's; P02, P03, P04 and P05 each own a WizeLens Cloud organization on the same cloud, and a neighbour organization ("Harrow & Vance Studio", made in setup with its own project and traces) lives on the same cloud. On the cloud the database row policies and the org stamp are what keep neighbours apart, so this is the first time they meet real neighbours in the data.
 
 ### Every persona tries to see somebody else's data
 
@@ -206,14 +206,14 @@ list is the definition of done: if an item on it is missing, stock, or still
 wearing template copy, the run is not finished. Enumerate before you start;
 re-check before you say done.
 
-### What "fully featured" means, on every one of the 2
+### What "fully featured" means, on every one of the 5
 
 Not "traces show up". Each persona leaves with a setup a stranger on their team could take over tomorrow: it captures what that persona needs (requests, SQL, browser, errors, logs), it answers the question they came with and the answer is **linkable** (a URL to a trace, a query, a rule), nothing secret is visible in it (passwords, tokens, emails in SQL), and the parts they set up are named in their own words, not `test` or `key 1`.
 
-### The 2 must not be one working WizeLens setup 2 times
+### The 5 must not be one working WizeLens setup 5 times
 
-Different structures, different looks, different feature mixes. 2 that are the
-same template with swapped nouns have tested one path 2 times and told you
+Different structures, different looks, different feature mixes. 5 that are the
+same template with swapped nouns have tested one path 5 times and told you
 nothing.
 
 ---
@@ -251,7 +251,7 @@ anything needs hover to be discoverable.
 
 ## What every run records
 
-- **The core promise, measured:** minutes from `npm install` to the first trace on `/_wizelens` (P01), and minutes from cloud sign-up to the first kanNINJA trace in the cloud (P02)
+- **The core promise, measured:** minutes from `npm install` to the first trace on `/_wizelens` (P01), and minutes from cloud sign-up to the first kanNINJA trace in the cloud (P02), from `dotnet add package` to the first trace (P03), from the script tag to the first page view (P04), and from "Buy" to an active plan (P05)
 - How the lists felt at real volume: a board of 60+ cards, 100+ requests in Requests, a page past the first in every long table
 - What the account should have moved: trace count, SQL count on one board load, the N+1 the insight names, the alert that fired, the emails that were sent
 
@@ -266,12 +266,16 @@ anything needs hover to be discoverable.
 | kanNINJA API (Fastify) | 3001 | the API; its own dashboard at `http://localhost:3001/_wizelens` |
 | WizeLens Cloud (local) | 5970 | P02's cloud, `js/packages/cloud/dist/cli.js` on a PGlite folder in the scratchpad |
 | kanNINJA database (PGlite) | 5433 | local Postgres wire server, one connection, data in the scratchpad |
+| eShop Web / PublicApi (P03) | 5001 / 5099 (https) | eShopOnWeb in `G:/code/@wizeworks/persona-apps/eshoponweb`, SQL Server LocalDB |
+| Static site (P04) | 4173 | a copy of personal-type in `G:/code/@wizeworks/persona-apps/personal-type`, `vite preview` |
+| Keycloak (P05) | 8080 | Docker, realm `kvcu` |
+| Stripe CLI (P05) | — | `stripe listen` forwards test-mode webhooks to the cloud |
 
 **Start at the WizeLens site home page (http://localhost:5190/) every time.** Landing straight on `/signup` skips
 attribution, the first-touch payload, and the entire reason the marketing site
 exists.
 
-**Claude started every process of this exercise in its own kanNINJA worktree (`G:/code/@wizeworks/kanninja/v2-persona`) and its own scratchpad, so Claude may restart those. Never touch Brandon's own kanNINJA checkout (`kanninja/v2`) or any other app on this machine**
+**Claude started every process of this exercise in its own kanNINJA worktree (`G:/code/@wizeworks/kanninja/v2-persona`), its own copies in `G:/code/@wizeworks/persona-apps/`, its own Keycloak container and its own scratchpad, so Claude may restart those. Never touch Brandon's own kanNINJA checkout (`kanninja/v2`) or any other app on this machine**
 
 ## Accounts
 
@@ -280,7 +284,7 @@ starting from nothing.
 
 | Field | Convention |
 | --- | --- |
-| Email | `p0N.firstname@kanninja.test` |
+| Email | `p0N.firstname@<the persona's own domain>.test`, as written in the persona file |
 | Password | `Lantern-Orchard-42!` (local only) |
 | Organization / project name | exactly the name in the persona file, apostrophes included |
 
@@ -352,7 +356,7 @@ Fixing what the run finds is the job (RULE #3). These are the edges of it:
 - **A fix bigger than the surface under test.** File it, mark `Blocked on: scope`,
   say what it would take, and keep the run moving.
 - **Running a migration.** WizeLens cloud migrations ship in `js/packages/cloud/src/db` and run when the cloud starts; author the file and test it on a fresh PGlite folder, never on a shared database
-- **Restarting the dev server.** Claude started every process of this exercise in its own kanNINJA worktree (`G:/code/@wizeworks/kanninja/v2-persona`) and its own scratchpad, so Claude may restart those. Never touch Brandon's own kanNINJA checkout (`kanninja/v2`) or any other app on this machine
+- **Restarting the dev server.** Claude started every process of this exercise in its own kanNINJA worktree (`G:/code/@wizeworks/kanninja/v2-persona`), its own copies in `G:/code/@wizeworks/persona-apps/`, its own Keycloak container and its own scratchpad, so Claude may restart those. Never touch Brandon's own kanNINJA checkout (`kanninja/v2`) or any other app on this machine
 - **Committing or pushing.** Commit the persona files and every fix on this branch, one commit per fix. Push and open ONE pull request at the end of the exercise (the repo's one-PR-per-plan rule). Never commit the kanNINJA worktree's test-only edits (`.env`, tarball overrides)
 - **Resizing the browser window.** Check 360px in device emulation or an iframe,
   never by resizing somebody's actual window.
@@ -376,14 +380,14 @@ Fixing what the run finds is the job (RULE #3). These are the edges of it:
 
 ## Definition of done — the whole exercise
 
-- All 2 persona files at `Status: done`, every act with a recorded outcome
+- All 5 persona files at `Status: done`, every act with a recorded outcome
 - Every defect in `issues/` carrying a status, and every `fixed` one carrying a
   confirmation line naming the screen it was re-proved on
 - [rating.md](rating.md) scored for every screen the runs opened, each with a gap
   to 10, and the unreached ones still visibly `—`
-- **2 complete, working WizeLens setups** — every item in every persona's inventory built,
-  working, and looking like its own thing rather than one template 2 times
+- **5 complete, working WizeLens setups** — every item in every persona's inventory built,
+  working, and looking like its own thing rather than one template 5 times
 
-2 scripts and no runs is nothing. 1 runs and one stock persona is
-an unfinished deliverable that reads as finished. 2 runs with a hundred logged
+5 scripts and no runs is nothing. 4 runs and one stock persona is
+an unfinished deliverable that reads as finished. 5 runs with a hundred logged
 defects and no fixes is a survey, which is not what this is.

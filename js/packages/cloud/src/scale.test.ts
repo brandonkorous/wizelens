@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { isLooseTraceId } from "@wizeworks/lens-core";
+import { isListedTrace } from "@wizeworks/lens-core";
 import { pageParity } from "../../core/src/testing/scale-pages.js";
 import { scenarioTraces } from "../../core/src/testing/scenario.js";
 import { cloudExecutor, cloudSettling } from "./scale-exec.js";
@@ -23,7 +23,7 @@ describe("cloud stats tables", () => {
     expect(await cloudSettling(s.db, tenantScope(s.orgId, [s.projectId]))).toBeNull();
     const [row] = await s.db.query<{ n: number }>("SELECT count(*)::int AS n FROM fact_traces WHERE project_id = $1", [s.projectId]);
     // Lines outside a request (loose batches) are not traces to list.
-    expect(row!.n).toBe(traces.filter((t) => !isLooseTraceId(t.traceId)).length);
+    expect(row!.n).toBe(traces.filter(isListedTrace).length);
     expect(settleMs).toBeGreaterThan(0);
   });
 

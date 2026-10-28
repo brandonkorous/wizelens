@@ -1,8 +1,8 @@
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { Box, Cog, Database, ExternalLink, Globe, Inbox, Monitor, Paintbrush, Share2 } from "lucide-react";
-import { type LayerKind, type Trace, type TraceLayer, traceDurationOf, traceLayers } from "@wizeworks/lens-core";
+import { ATTR_REACT_COMPONENTS, type LayerKind, type Trace, type TraceLayer, traceDurationOf, traceLayers } from "@wizeworks/lens-core";
 import { fmtDateTime, fmtMs } from "../../format";
-import { traceHref } from "../../routes";
+import { hrefTo, traceHref } from "../../routes";
 import { Badge, CopyButton, Dot, toneOfStatus } from "../../ui/Badges";
 import { niceMax } from "../../ui/chartMath";
 import { Empty, Panel } from "../../ui/Panel";
@@ -51,13 +51,22 @@ function TimelineHead({ trace }: { trace: Trace }) {
       <span className="wl-mono">{`${trace.rootMethod ?? ""} ${tracePath(trace)}`.trim()}</span>
       {code != null && <Badge tone={toneOfStatus(code)}>{code}</Badge>}
       <span className="wl-chip">{fmtMs(traceDurationOf(trace))}</span>
-      <span className="wl-chip">{trace.spanCount} spans</span>
+      <span className="wl-chip">{trace.spanCount} {trace.spanCount === 1 ? "span" : "spans"}</span>
       <span className="wl-muted">{fmtDateTime(trace.startMs)}</span>
       <a className="wl-view-all" href={traceHref(trace.traceId)}>
         Open trace <ExternalLink size={14} aria-hidden="true" />
       </a>
     </div>
   );
+}
+
+/** Why a trace has no layers: no spans, only React render counts, or no timed work. */
+function nothingToDraw(trace: Trace): ReactNode {
+  if (trace.spanCount === 0) return "This trace has no spans.";
+  if (trace.spans.length > 0 && trace.spans.every((s) => s.attributes[ATTR_REACT_COMPONENTS] != null)) {
+    return <>This trace holds React render counts, not timed work. <a href={hrefTo("rendering")}>Rendering</a> lists them under Component Hotspots.</>;
+  }
+  return "This trace has no timed work to draw here. Open trace shows its spans.";
 }
 
 /** One trace as a timeline per layer: browser, network, routing, handler, services, databases, render. */
@@ -77,15 +86,17 @@ export function LayerTimeline({ trace }: { trace: Trace | null }) {
     <Panel title={title}>
       <TimelineHead trace={trace} />
       <div className="wl-layers">
-        <div className="wl-layer-row wl-layer-axis" aria-hidden="true">
-          <div />
-          <div className="wl-layer-track">
-            {ticksOf(max).map((t) => (
-              <span key={t} style={{ left: `${(t / max) * 100}%` }}>{fmtMs(t)}</span>
-            ))}
+        {layers.length > 0 && (
+          <div className="wl-layer-row wl-layer-axis" aria-hidden="true">
+            <div />
+            <div className="wl-layer-track">
+              {ticksOf(max).map((t) => (
+                <span key={t} style={{ left: `${(t / max) * 100}%` }}>{fmtMs(t)}</span>
+              ))}
+            </div>
           </div>
-        </div>
-        {layers.length === 0 ? <Empty>This trace has no spans.</Empty> : layers.map((l) => <LayerRow key={l.key} layer={l} max={max} />)}
+        )}
+        {layers.length === 0 ? <Empty>{nothingToDraw(trace)}</Empty> : layers.map((l) => <LayerRow key={l.key} layer={l} max={max} />)}
       </div>
     </Panel>
   );

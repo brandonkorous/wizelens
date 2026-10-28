@@ -11,6 +11,7 @@ import { ErrorStack } from "./ResolvedStack";
 import { useGroupTags } from "../../data/tagMatch";
 import { TagChips } from "../../ui/TagChips";
 import { TagThis } from "../../ui/TagThis";
+import { useOpenFocus } from "../../ui/useOpenFocus";
 
 type Tab = "stack" | "context" | "tags";
 
@@ -63,10 +64,11 @@ export const errorScopes = (g: ErrorGroup) => [errorScope(g), ...(g.latest.metho
 function GroupDetails({ group, info }: { group: ErrorGroup; info: IssueInfo | undefined }) {
   const [tab, setTab] = useState<Tab>("stack");
   const tags = useGroupTags()("errors", errorGroupDoc(group));
+  const title = useOpenFocus<HTMLHeadingElement>(group.key);
   return (
     <>
       <div className="wl-side-head">
-        <h2 className="wl-err-title">
+        <h2 ref={title} tabIndex={-1} className="wl-err-title">
           {group.type}: {group.message}
         </h2>
         <Badge tone={isBotOnly(group) ? "neutral" : "danger"}>{errorGroupLabel(group)}</Badge>
@@ -100,10 +102,12 @@ function GroupDetails({ group, info }: { group: ErrorGroup; info: IssueInfo | un
   );
 }
 
-/** The chosen group, or a note when a linked group is not in this range. The pager steps through the listed groups. */
-export function ErrorDetailsPanel({ groups, group, linked, issues }: { groups: ErrorGroup[]; group: ErrorGroup | null; linked: boolean; issues: Record<string, IssueInfo> }) {
+/** The chosen group, or a note when a linked group is not in this range (never while it is still loading). The pager steps through the listed groups. */
+export function ErrorDetailsPanel({ groups, group, linked, loading, issues }: { groups: ErrorGroup[]; group: ErrorGroup | null; linked: boolean; loading: boolean; issues: Record<string, IssueInfo> }) {
   const index = group ? groups.findIndex((g) => g.key === group.key) : -1;
-  const empty = linked ? (
+  const empty = linked && loading ? (
+    <Empty title="Loading this error…" />
+  ) : linked ? (
     <Empty title="This error is not in the selected time range">Pick a longer time range at the top, or pick another exception.</Empty>
   ) : (
     <Empty title="No error selected">Pick an exception to see its details.</Empty>

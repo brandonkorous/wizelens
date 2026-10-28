@@ -1,8 +1,9 @@
 import { sso } from "@better-auth/sso";
 import type { BetterAuthPlugin } from "better-auth";
-import { audit } from "../repo/audit.js";
 import type { AuthDeps } from "./deps.js";
 import { ssoSchema } from "./schema-names.js";
+import { joinViaSso } from "./sso-join.js";
+import { linkAtRequiredDomain } from "./sso-required.js";
 
 /** The DNS record that proves a domain: `_wizelens-sso-<providerId>.<domain>` TXT `<token>`. */
 export const SSO_TOKEN_PREFIX = "wizelens-sso";
@@ -31,19 +32,17 @@ export async function ssoTrusts(db: Finder, providerId: string, email: string): 
   return !!p?.organizationId && p.domainVerified === true && !!at && domains.includes(at);
 }
 
-/** Organization SSO with OIDC or SAML. Sign-in works once the domain is proven in DNS; new people join that organization as members. */
+/** Organization SSO with OIDC or SAML. Sign-in works once the domain is proven in DNS; new people join that organization as members, removed people do not. */
 export function ssoPlugin(deps: AuthDeps): BetterAuthPlugin {
   return sso({
     schema: ssoSchema,
     providersLimit: 20,
     domainVerification: { enabled: true, tokenPrefix: SSO_TOKEN_PREFIX },
-    organizationProvisioning: {
-      defaultRole: "member",
-      getRole: async ({ user, provider }) => {
-        if (provider.organizationId) await audit(deps.db, provider.organizationId, `user:${user.id}`, "member.join", { via: "sso", providerId: provider.providerId }, Date.now());
-        return "member";
-      },
-    },
+    resolveUser: (input, { database }) => linkAtRequiredDomain(input.providerId, input.providerUser.email, database),
+    // Our own join step, so a removed person is not added back (auth/sso-join.ts).
+    organizationProvisioning: { disabled: true },
+    provisionUserOnEveryLogin: true,
+    provisionUser: ({ user, provider }) => joinViaSso(deps.db, provider.organizationId, provider.providerId, user, Date.now()),
     saml: { enableInResponseToValidation: true, allowIdpInitiated: false, requireTimestamps: true, clockSkew: 2 * 60_000, algorithms: { onDeprecated: "reject" } },
   }) as unknown as BetterAuthPlugin;
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { type IssueState, issueStatesOf } from "../issues.js";
 import { memoryExecutor } from "../scale/memory.js";
 import type { Need } from "../scale/needs.js";
 import { pageContext } from "../scale/run.js";
@@ -56,14 +57,30 @@ describe("page models", () => {
     const errors = run("errors");
     expect(errors.groups[0]).toMatchObject({ type: "TimeoutError", count: 1 });
     expect(errors.cards.exceptions).toBe(1);
-    expect(run("badges")).toEqual({ errors: 1 });
   });
-
 
   it("selects a service and fills its detail", () => {
     const m = run("services", { service: "api" });
     expect(m.selected?.row.name).toBe("api");
     expect(m.selected?.endpoints.length).toBeGreaterThan(0);
+  });
+});
+
+describe("sidebar badge", () => {
+  it("counts the open errors of the service in scope", () => {
+    expect(run("badges")).toEqual({ errors: 1 });
+    expect(run("badges", { service: "Web App" })).toEqual({ errors: 0 });
+  });
+
+  it("leaves resolved and ignored errors out of the sidebar count, until they come back", () => {
+    const key = run("errors").groups[0]!.key;
+    const badge = (state: Omit<IssueState, "kind" | "key" | "assignee">) => {
+      const ctx = { ...pageContext("24h", NOW, {}, { slowQueryMs: 100 }), issues: issueStatesOf([{ kind: "error", key, assignee: null, ...state }]) };
+      return runPageSync("badges", ctx, ex).errors;
+    };
+    expect(badge({ status: "resolved", untilMs: null, resolvedMs: NOW, updatedMs: NOW })).toBe(0);
+    expect(badge({ status: "ignored", untilMs: null, resolvedMs: null, updatedMs: NOW })).toBe(0);
+    expect(badge({ status: "resolved", untilMs: null, resolvedMs: NOW - 48 * 3_600_000, updatedMs: NOW })).toBe(1);
   });
 });
 

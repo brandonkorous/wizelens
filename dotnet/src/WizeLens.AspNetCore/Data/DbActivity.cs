@@ -5,6 +5,7 @@ using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using WizeLens.Capture;
+using WizeLens.Web;
 
 namespace WizeLens.Data;
 
@@ -84,7 +85,7 @@ public static partial class DbActivity
 
     /// <summary>The parameters by name; a value is redacted by its name or by the column the command text binds it to.</summary>
     internal static string ParametersJson(DbCommand command) => JsonSerializer.Serialize(SqlParams.Redact(
-        WizeLensRuntime.Redactor, command.CommandText ?? "", command.Parameters.Cast<DbParameter>().Select(p => ((string?)p.ParameterName, p.Value))));
+        WizeLensRuntime.Redactor, command.CommandText ?? "", command.Parameters.Cast<DbParameter>().Select(p => ((string?)p.ParameterName, p.Value))), WizeLensJson.Text);
 
     internal static string? OperationName(string sql)
     {
@@ -98,7 +99,8 @@ public static partial class DbActivity
         return match.Success ? match.Groups[1].Value.Trim('"', '[', ']', '`') : null;
     }
 
-    [GeneratedRegex(@"^\s*(?:--[^\n]*\n\s*)*(\w+)", RegexOptions.CultureInvariant)]
+    // Skips leading comments and session SETs: EF Core on SQL Server starts every save with "SET NOCOUNT ON;".
+    [GeneratedRegex(@"^\s*(?:--[^\n]*\n\s*)*(?:SET\s[^;]*;\s*)*(\w+)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex OperationRegex();
 
     [GeneratedRegex(@"\b(?:FROM|INTO|UPDATE|JOIN)\s+([""\[`]?[\w.]+[""\]`]?)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]

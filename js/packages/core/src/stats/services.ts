@@ -5,6 +5,7 @@ import { externalName } from "./in-cluster.js";
 import { isUptimeSpan } from "../uptime/check.js";
 import { browserAppOf, webAppName, webRowKey } from "../web-app.js";
 import { isFailedAnswer } from "../trace.js";
+import { adoptedBy } from "../skew.js";
 import type { Span, Trace } from "../types.js";
 import { avgOf, groupBy, percentileOf, percentOf } from "./common.js";
 import { isConsumer, isProducer, queueOf } from "./messaging.js";
@@ -134,6 +135,8 @@ export interface EdgeCall {
 export function edgeCallsOf(t: Trace): EdgeCall[] {
   const calls: EdgeCall[] = [];
   const byParent = new Map(t.spans.filter((s) => s.category === "http.server" && s.parentSpanId).map((s) => [s.parentSpanId!, s]));
+  // A cross-origin fetch: the server span has no parent, but the trace screen nests it under the call by its path.
+  for (const [id, call] of adoptedBy(t.spans)) byParent.set(call.spanId, t.spans.find((s) => s.spanId === id)!);
   for (const s of t.spans) {
     const message = messagingEdge(s);
     if (message) calls.push({ ...message, span: s });

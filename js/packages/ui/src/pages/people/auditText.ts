@@ -5,6 +5,10 @@ export interface AuditEntry {
   action: string;
   detail: Record<string, unknown>;
   timeMs: number;
+  /** The person or key that did it, by name, also after they left. */
+  who?: { name: string; email?: string };
+  /** The person `detail.userId` names. */
+  subject?: { name: string; email?: string };
 }
 
 /** Each audit action in words. Unknown actions show as they are. */
@@ -44,6 +48,9 @@ const ACTIONS: Record<string, string> = {
   "sso.update": "Changed an identity provider",
   "sso.delete": "Removed an identity provider",
   "sso.verify": "Proved a single sign-on domain",
+  "sso.require": "Changed who may use a password",
+  "sso.signed_out": "Signed out: the identity provider ended their sign-in",
+  "sso.join_refused": "Not added back: removed people need a new invite",
   "mcp.call": "AI agent read data",
   "app.connect": "Connected an app",
   "app.disconnect": "Disconnected an app",
@@ -89,9 +96,13 @@ export const GROUP_LABEL: Record<string, string> = {
   scim: "SCIM",
 };
 
-/** Names for the ids an entry can hold: people, keys, and projects. */
-export function namesOf(data: OrgData | null) {
+/** Names for the ids an entry can hold: people (members, then those the lines name), keys, and projects. */
+export function namesOf(data: OrgData | null, rows: AuditEntry[] = []) {
   const people = new Map((data?.members ?? []).map((m) => [m.userId, m.name]));
+  for (const r of rows) {
+    if (r.actor.startsWith("user:") && r.who && !people.has(r.actor.slice(5))) people.set(r.actor.slice(5), `${r.who.name} (former member)`);
+    if (typeof r.detail.userId === "string" && r.subject && !people.has(r.detail.userId)) people.set(r.detail.userId, `${r.subject.name} (former member)`);
+  }
   const keys = new Map((data?.keys ?? []).map((k) => [k.id, k.name]));
   const projects = new Map((data?.projects ?? []).map((p) => [p.id, p.name]));
   return { people, keys, projects };
@@ -109,6 +120,7 @@ export function actorText(actor: string, names: Names): string {
   return "WizeLens";
 }
 
+const count = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 const project = (id: unknown, names: Names) => (typeof id === "string" ? (names.projects.get(id) ?? "deleted project") : null);
 
 /** The useful facts of an entry, in words. Ids become names; the organization id and raw lines are left out. */
@@ -123,13 +135,16 @@ export function detailText(d: Record<string, unknown>, names: Names): string {
   if (typeof d.title === "string") parts.push(d.title);
   if (typeof d.url === "string") parts.push(d.url);
   if (typeof d.email === "string") parts.push(d.email);
+  if (typeof d.memberEmail === "string") parts.push(d.memberEmail);
   if (typeof d.role === "string") parts.push(d.role === "none" ? "no access" : `as ${d.role}`);
   if (typeof d.kind === "string") parts.push(`${d.kind} key`);
   const p = project(d.projectId, names);
   if (p && p !== d.name) parts.push(`project ${p}`);
   if (typeof d.from === "string" && typeof d.to === "string") parts.push(`was ${d.from}`);
   if (Array.isArray(d.projectIds)) parts.push(`for ${d.projectIds.map((id) => project(id, names)).join(", ")}`);
+  if (typeof d.userId === "string" && typeof d.sessions === "number") parts.push(`${names.people.get(d.userId) ?? "a former member"}: ${count(d.sessions, "session")} and ${count(Number(d.connectedApps) || 0, "connected app")} ended`);
   if (typeof d.providerId === "string") parts.push(d.providerId);
+  if (typeof d.required === "boolean") parts.push(d.required ? `single sign-on required for ${String(d.domain)}, ${Number(d.signedOut) || 0} signed out` : `passwords allowed again for ${String(d.domain)}`);
   if (typeof d.retentionDays === "number") parts.push(`keep data ${d.retentionDays} days`);
   if (typeof d.logRetentionDays === "number") parts.push(`keep logs ${d.logRetentionDays} days`);
   if (d.logRetentionDays === null) parts.push("logs follow the organization");

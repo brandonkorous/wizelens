@@ -24,6 +24,24 @@ const ROUTE_VALUE: Record<RouteMeasure, (v: PageView) => number | null> = {
   ssrRender: (v) => (v.ssrMs === null ? null : v.renderMs),
 };
 
+/** Per-device phases of a route (`pv.dm`): first byte, first text, ready (LCP, else load), slowest image, large images. */
+export const DEVICE_MEASURES = ["ttfb", "fcp", "ready", "image", "large"] as const;
+export type DeviceMeasure = (typeof DEVICE_MEASURES)[number];
+
+const DEVICE_VALUE: Record<DeviceMeasure, (v: PageView) => number | null> = {
+  ttfb: (v) => v.ttfbMs,
+  fcp: (v) => v.fcpMs,
+  ready: (v) => v.renderMs,
+  image: (v) => v.imageMs,
+  large: (v) => v.largeImages,
+};
+
+const deviceContributions = (v: PageView, at: number): Contribution[] =>
+  !v.device ? [] : DEVICE_MEASURES.flatMap((m) => {
+    const value = DEVICE_VALUE[m](v);
+    return value === null ? [] : [contribution("pv.dm", joinKey(v.route, v.device!, m), at, { sum: value })];
+  });
+
 const PHASE_VALUE: Record<PagePhase, (v: PageView) => number | null> = {
   render: (v) => v.renderMs,
   ssr: (v) => v.ssrMs,
@@ -40,6 +58,8 @@ function viewContributions(v: PageView): Contribution[] {
     const value = ROUTE_VALUE[m](v);
     if (value !== null) out.push(contribution("pv.m", joinKey(v.route, m), at, { sum: value }));
   }
+  if (v.device && v.renderMs !== null) out.push(contribution("pv.dev", joinKey(v.route, v.device), at, { sum: v.renderMs, values: [v.renderMs] }));
+  out.push(...deviceContributions(v, at));
   if (v.largeImages !== null) out.push(contribution("pv.large", v.route, at, { sum: v.largeImages, values: [v.largeImages] }));
   for (const p of PAGE_PHASES) {
     const value = PHASE_VALUE[p](v);

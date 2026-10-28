@@ -12,7 +12,7 @@ describe("errors by browser", () => {
     const ex = { name: "exception", timeMs: 5, attributes: { "exception.type": "ApiClientError", "exception.message": "Validation failed" } };
     const err = makeSpan({ traceId: "e".repeat(32), category: "browser", service: "browser", status: "error", attributes: { [ATTR_BROWSER_TYPE]: "error", "user_agent.original": SAFARI }, events: [ex] });
     const facts = errorFacts(buildTrace(err.traceId, [err], [], []));
-    expect(facts.filter((c) => c.kind === "err.b").map((c) => splitKey(c.key)[1])).toEqual(["Safari on iOS"]);
+    expect(facts.filter((c) => c.kind === "err.b").map((c) => splitKey(c.key)[1])).toEqual(["Safari on iOS (phone)"]);
   });
 
   it("adds no browser row when nothing names one", () => {

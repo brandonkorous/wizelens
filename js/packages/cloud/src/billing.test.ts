@@ -2,6 +2,7 @@ import { getMigrations } from "better-auth/db/migration";
 import { afterEach, describe, expect, it } from "vitest";
 import { dayOf } from "./billing/usage.js";
 import { overageCents } from "./billing/plans.js";
+import { monthProgress } from "./billing/summary.js";
 import { optionsFromArgs } from "./cli-args.js";
 import { setPlan } from "./repo/billing.js";
 import type { Cloud } from "./server.js";
@@ -25,6 +26,13 @@ const useGb = (orgId: string, gb: number, day = dayOf(Date.now())) =>
 describe("plans", () => {
   it("bills extra GB in graduated tiers on the GB above the included GB", () => {
     expect([overageCents(0), overageCents(-3), overageCents(10), overageCents(500), overageCents(600), overageCents(2000), overageCents(2100)]).toEqual([0, 0, 300, 15000, 17000, 45000, 46000]);
+  });
+
+  it("projects a month that started mid-way from its first day with data, counting at least one day", () => {
+    const now = Date.parse("2026-10-28T10:00:00Z");
+    expect(monthProgress(now)).toEqual({ elapsed: 27 + 10 / 24, total: 31 });
+    expect(monthProgress(now, "2026-10-28")).toEqual({ elapsed: 1, total: 4 });
+    expect(monthProgress(now, "2026-10-20")).toEqual({ elapsed: 8 + 10 / 24, total: 12 });
   });
 });
 
@@ -103,6 +111,19 @@ describe("billing on: plans", () => {
     expect(await kept()).toBe(14);
   });
 
+  it("gives the new plan's days on upgrade when the organization kept the most, and keeps a shorter choice", async () => {
+    let url: string;
+    ({ cloud, url } = await startCloud(await billedOptions(fakeStripe())));
+    const { owner, orgId } = await setupOwner(cloud, url);
+    const days = async () => (await owner.call<Me & { orgs: { retentionDays: number }[] }>("GET", "api/me")).body.orgs[0]!.retentionDays;
+    await setPlan(cloud.app.db, orgId, { plan: "business" }, "test", Date.now());
+    expect(await days()).toBe(90);
+    await setPlan(cloud.app.db, orgId, { plan: "team" }, "test", Date.now());
+    expect(await days()).toBe(30);
+    expect((await owner.call("PATCH", `api/orgs/${orgId}`, { retentionDays: 7 })).status).toBe(200);
+    await setPlan(cloud.app.db, orgId, { plan: "business" }, "test", Date.now());
+    expect(await days()).toBe(7);
+  });
 });
 
 describe("billing on: limits", () => {

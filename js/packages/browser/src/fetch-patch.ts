@@ -5,6 +5,11 @@ import { type Answer, type Call, type FetchContext, finishCall, isWizeLensCall, 
 
 export type { FetchContext } from "./request-span.js";
 
+/** Marks the script's own fetches (reading the page's source maps): they are not the page's requests. */
+export const OWN_CALL = Symbol.for("wizelens.ownCall");
+
+const isOwnCall = (init: RequestInit | undefined): boolean => !!init && (init as Record<symbol, unknown>)[OWN_CALL] === true;
+
 function requestUrl(input: RequestInfo | URL, base: string): URL {
   if (typeof input === "string") return new URL(input, base);
   if (input instanceof URL) return input;
@@ -36,7 +41,7 @@ export function patchFetch(orig: typeof fetch, ctx: FetchContext): typeof fetch 
     } catch {
       return orig(input, init);
     }
-    if (isWizeLensCall(url, ctx.endpoint)) return orig(input, init);
+    if (isWizeLensCall(url, ctx.endpoint) || isOwnCall(init)) return orig(input, init);
     const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
     const call = startCall(ctx, "fetch", url, method, isPrefetch(url, headersOf(input, init)));
     const nextInit = withTraceparent(ctx, call, input, init);

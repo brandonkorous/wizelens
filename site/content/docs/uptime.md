@@ -45,7 +45,8 @@ Every run is also a request of the `wizelens-uptime` service, written like the r
 
 - Requests, Errors, Logs, Search, and the Services page show runs. Search `service:wizelens-uptime`.
 - A failed run is an error (`UptimeCheckFailed`) with an error log line. A certificate near its end adds a warning line.
-- Alert rules see them too. In the cloud, an error-rate alert in the check's environment tells you when checks fail.
+- To be told when a site is down, press **Alert me when one fails** on Uptime. It opens a new alert on **Uptime checks
+  failing** above 0 over 5 minutes; add where to send it and save.
 
 ## Where checks run
 

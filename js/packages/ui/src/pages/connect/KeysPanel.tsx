@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { apiSend } from "../../data/api";
 import { act } from "../../data/useApi";
-import { fmtAgo, fmtDate } from "../../format";
+import { fmtAgo, fmtDate, fmtTime } from "../../format";
 import { Badge } from "../../ui/Badges";
 import { useAsk } from "../../ui/Dialog";
 import { Empty, Panel } from "../../ui/Panel";
@@ -9,7 +9,7 @@ import { ListFilter, matchesText, useSelection } from "../../ui/Selection";
 import { type Column, Table } from "../../ui/Table";
 import { KeysBulk } from "./KeysBulk";
 import { type Kind, NewSecret, SCOPES } from "./KeyForm";
-import type { ApiKey, OrgData } from "../organization/orgTypes";
+import type { ApiKey, OrgData, RevokedInUse as RevokedInUseRow } from "../organization/orgTypes";
 
 export { KeyForm } from "./KeyForm";
 
@@ -41,6 +41,64 @@ function Expiry({ k, now }: { k: ApiKey; now: number }) {
   return days <= 14 ? <Badge tone="warning">{days <= 1 ? "In a day" : `In ${days} days`}</Badge> : <span title={fmtDate(k.expiresMs)}>{fmtDate(k.expiresMs)}</span>;
 }
 
+/** "ends Dec 31, 2026", "never ends", or "expired", for the phone line. */
+function endsText(k: ApiKey, now: number): string {
+  if (k.expiresMs === null) return "never ends";
+  return k.expiresMs <= now ? "expired" : `ends ${fmtDate(k.expiresMs)}`;
+}
+
+/** The key's name and prefix; during a rotate, which secret is new and which is old; on a phone, the other columns in one line. */
+function KeyName({ k, all, now, phone }: { k: ApiKey; all: ApiKey[]; now: number; phone: string }) {
+  const replaced = all.some((o) => o.rotatedFrom === k.id) && k.expiresMs !== null && k.expiresMs > now;
+  const fresh = !!k.rotatedFrom && all.some((o) => o.id === k.rotatedFrom && o.expiresMs !== null && o.expiresMs > now);
+  return (
+    <span className="wl-who">
+      <strong>{k.name}</strong>
+      <small className="wl-mono">{k.prefix}…</small>
+      {fresh && <Badge tone="info">New secret</Badge>}
+      {replaced && <Badge tone="warning">Old secret, stops {fmtTime(k.expiresMs!, now)}</Badge>}
+      {leaked(k, now) && <Badge tone="danger">Seen in a page</Badge>}
+      <small className="wl-phone-line">{phone}</small>
+    </span>
+  );
+}
+
+/** A secret a public page sent with that still works: once rotated or expired, there is nothing left to do. */
+const leaked = (k: ApiKey, now: number) => !!k.exposed && (k.expiresMs === null || k.expiresMs > now);
+
+/** Secret keys a public page sent with: the cloud refused the data; the key must be rotated. */
+function ExposedKeys({ keys, now }: { keys: ApiKey[]; now: number }) {
+  const seen = keys.filter((k) => leaked(k, now));
+  if (!seen.length) return null;
+  return (
+    <div className="wl-banner wl-banner-error wl-panel-banner" role="alert">
+      {seen.map((k) => (
+        <p key={k.id}>
+          <strong>{k.name}</strong> is a secret key, and a public page{k.exposed!.origin ? ` on ${k.exposed!.origin}` : ""} sent with it {fmtAgo(k.exposed!.timeMs)}. WizeLens refused that data. Rotate the key, and put a browser key in pages.
+        </p>
+      ))}
+    </div>
+  );
+}
+
+/** A site sent with a live browser key after its last try with the revoked one: the new tag is in. */
+const replaced = (r: RevokedInUseRow, keys: ApiKey[]) => keys.some((k) => k.kind === "browser" && (k.lastUsedMs ?? 0) > r.timeMs && (!r.origin || (k.origins ?? []).includes(r.origin)));
+
+/** Revoked browser keys a site still sends with: its visits are refused until the site has a new key's tag. */
+function RevokedInUse({ list, keys }: { list: RevokedInUseRow[]; keys: ApiKey[] }) {
+  const open = list.filter((r) => !replaced(r, keys));
+  if (!open.length) return null;
+  return (
+    <div className="wl-banner wl-banner-warning wl-panel-banner" role="status">
+      {open.map((r) => (
+        <p key={r.keyId}>
+          <strong>{r.name}</strong> was revoked, but a page{r.origin ? ` on ${r.origin}` : ""} still sent with it {fmtAgo(r.timeMs)}. WizeLens refuses that data, so those visits are not recorded. Make a browser key for that site and put its script tag in its pages.
+        </p>
+      ))}
+    </div>
+  );
+}
+
 function EmptyKeys({ reading }: { reading: boolean }) {
   return reading ? <Empty title="No read keys yet">Make one for each AI agent or script that reads data.</Empty> : <Empty title="No sending keys yet">Make an ingest key for each app that sends data.</Empty>;
 }
@@ -67,21 +125,24 @@ export function KeysPanel({ orgId, data, kinds, reload }: { orgId: string; data:
   const revoke = async (k: ApiKey) =>
     (await confirm({ title: `Revoke ${k.name}?`, body: revokeText(k, Date.now()), confirmLabel: "Revoke key", danger: true })) &&
     void act(() => apiSend("DELETE", `./api/orgs/${orgId}/keys/${k.id}`), reload).then(setError);
+  // A secret seen in a public page stops at once: anyone could have copied it.
   const rotate = async (k: ApiKey) =>
-    (await confirm({ title: `Rotate ${k.name}?`, body: "You get a new secret for the same key. The old secret keeps working for 24 hours, so you can update the apps that use it.", confirmLabel: "Rotate key" })) &&
-    void act(async () => setRotated({ kind: k.kind, ...(await apiSend<{ token: string; oldExpiresMs: number }>("POST", `./api/orgs/${orgId}/keys/${k.id}/rotate`, { graceHours: 24 })) }), reload).then(setError);
+    (await confirm({ title: `Rotate ${k.name}?`, body: k.exposed ? "You get a new secret for the same key, with the same end date. The old secret was in a public page, so it stops at once." : "You get a new secret for the same key, with the same end date. The old secret keeps working for 24 hours, so you can update the apps that use it.", confirmLabel: "Rotate key" })) &&
+    void act(async () => setRotated({ kind: k.kind, ...(await apiSend<{ token: string; oldExpiresMs: number }>("POST", `./api/orgs/${orgId}/keys/${k.id}/rotate`, { graceHours: k.exposed ? 0 : 24 })) }), reload).then(setError);
   const editSites = async (k: ApiKey) => {
     const origins = await prompt({ title: `Sites for ${k.name}`, body: "Only pages on these sites may send with this key. The key itself stays the same.", confirmLabel: "Save sites", input: { label: "Sites", initial: (k.origins ?? []).join(" ") } });
     if (origins !== null) void act(() => apiSend("PATCH", `./api/orgs/${orgId}/keys/${k.id}`, { origins }), reload).then(setError);
   };
+  const projectsOf = (k: ApiKey) => k.projectIds.map((id) => names.get(id) ?? "Deleted project").join(", ");
+  const phoneLine = (k: ApiKey) => [kinds.length > 1 ? KIND_LABEL[k.kind] : "", projectsOf(k), `used ${k.lastUsedMs ? fmtAgo(k.lastUsedMs) : "never"}`, endsText(k, now)].filter(Boolean).join(" · ");
   const columns: Column<ApiKey>[] = [
-    { key: "name", header: "Key", cell: (k) => <span className="wl-who"><strong>{k.name}</strong><small className="wl-mono">{k.prefix}…</small></span> },
-    ...(kinds.length > 1 ? [{ key: "kind", header: "Kind", cell: (k: ApiKey) => <Badge tone="info">{KIND_LABEL[k.kind]}</Badge> }] : []),
-    { key: "projects", header: "Projects", cell: (k) => k.projectIds.map((id) => names.get(id) ?? "Deleted project").join(", "), className: "wl-wrap" },
-    { key: "scopes", header: "May", cell: (k) => scopesText(k), className: "wl-wrap" },
-    { key: "made", header: "Created", cell: (k) => fmtDate(k.createdMs), className: "wl-nowrap" },
-    { key: "used", header: "Last used", cell: (k) => (k.lastUsedMs ? fmtAgo(k.lastUsedMs) : "Never"), className: "wl-nowrap" },
-    { key: "ends", header: "Expires", cell: (k) => <Expiry k={k} now={now} />, className: "wl-nowrap" },
+    { key: "name", header: "Key", cell: (k) => <KeyName k={k} all={all} now={now} phone={phoneLine(k)} /> },
+    ...(kinds.length > 1 ? [{ key: "kind", header: "Kind", cell: (k: ApiKey) => <Badge tone="info">{KIND_LABEL[k.kind]}</Badge>, hideSm: true }] : []),
+    { key: "projects", header: "Projects", cell: projectsOf, className: "wl-wrap", hideSm: true },
+    { key: "scopes", header: "May", cell: (k) => scopesText(k), className: "wl-wrap", hideSm: true },
+    { key: "made", header: "Created", cell: (k) => fmtDate(k.createdMs), className: "wl-nowrap", hideSm: true },
+    { key: "used", header: "Last used", cell: (k) => (k.lastUsedMs ? fmtAgo(k.lastUsedMs) : "Never"), className: "wl-nowrap", hideSm: true },
+    { key: "ends", header: "Expires", cell: (k) => <Expiry k={k} now={now} />, className: "wl-nowrap", hideSm: true },
     {
       key: "x",
       header: "",
@@ -104,6 +165,8 @@ export function KeysPanel({ orgId, data, kinds, reload }: { orgId: string; data:
         </div>
       )}
       <KeysBulk orgId={orgId} picked={all.filter((k) => picked.includes(k.id))} names={names} clear={clear} reload={reload} onDone={(err, ok) => (setError(err), setNote(ok))} />
+      <ExposedKeys keys={all} now={now} />
+      {kinds.includes("browser") && <RevokedInUse list={data.revokedInUse ?? []} keys={all} />}
       {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
       {note && <p className="wl-panel-note" role="status">{note}</p>}
       {rotated && (

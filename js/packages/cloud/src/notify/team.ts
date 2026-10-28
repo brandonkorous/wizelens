@@ -2,7 +2,7 @@ import type { CloudApp } from "../app.js";
 import { orgDeleted, roleChanged, teamChanges } from "../mail/emails-team.js";
 import { renderMail } from "../mail/templates.js";
 import { stopUrl } from "../mail/unsubscribe.js";
-import { managersOf } from "../repo/mail-prefs.js";
+import { managersOf, zonesOf } from "../repo/mail-prefs.js";
 import { type AuditRow, describe, NOTICED, namesOf, type Names } from "./team-describe.js";
 
 const BATCH = 200;
@@ -35,9 +35,11 @@ async function noticeOrg(app: CloudApp, orgId: string, rows: AuditRow[], names: 
   if (!o) return;
   for (const row of rows.filter((r) => r.action === "member.role")) await tellRoleChange(app, row, o.name);
   const changes = await Promise.all(rows.map(async (r) => ({ actor: r.actor, text: await describe(r, names), timeMs: r.time_ms })));
-  for (const m of await managersOf(app.db, orgId, "team", app.mailer.live)) {
+  const people = await managersOf(app.db, orgId, "team", app.mailer.live);
+  const zones = await zonesOf(app.db, people.map((m) => m.email));
+  for (const m of people) {
     const theirs = changes.filter((c) => c.actor !== `user:${m.id}`);
-    if (theirs.length) app.mailer.send(renderMail(m.email, teamChanges(o.name, theirs, peopleLink(app, orgId, "audit"), stopUrl(app, m.id, "team"))));
+    if (theirs.length) app.mailer.send(renderMail(m.email, teamChanges(o.name, theirs, peopleLink(app, orgId, "audit"), stopUrl(app, m.id, "team"), zones.get(m.email.toLowerCase()))));
   }
 }
 

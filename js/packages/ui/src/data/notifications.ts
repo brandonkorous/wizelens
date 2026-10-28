@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { apiFetch, apiSend } from "./api";
 
 export type DigestPeriod = "daily" | "weekly" | "monthly";
@@ -20,6 +21,8 @@ export interface Notifications {
   health: boolean;
   digests: boolean;
   timeZone: string;
+  /** False until the person picks a zone or this app sends the browser's. */
+  zoneSet: boolean;
   digestHour: number;
   projects: DigestRow[];
 }
@@ -38,4 +41,14 @@ export const browserZone = (): string => Intl.DateTimeFormat().resolvedOptions()
 export function zones(current: string): string[] {
   const all = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
   return all.includes(current) ? all : [current, ...all];
+}
+
+/** On a cloud host, send this browser's zone once, so alert emails show her own clock until she picks a zone. */
+export function useZoneOnce(on: boolean): void {
+  useEffect(() => {
+    if (!on) return;
+    void loadNotifications()
+      .then((n) => (n.zoneSet ? null : saveNotifications({ timeZone: browserZone() })))
+      .catch(() => {});
+  }, [on]);
 }

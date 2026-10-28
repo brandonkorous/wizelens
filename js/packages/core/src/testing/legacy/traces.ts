@@ -3,6 +3,7 @@ import { series } from "../../stats/common.js";
 import { insightGroups } from "../../stats/insights.js";
 import { requestOf } from "../../stats/requests.js";
 import { type Bottleneck, bottlenecks, type CriticalSpan, criticalSpans, traceCards, type TraceCards, traceDurationOf } from "../../stats/traces.js";
+import { isUptimeSpan } from "../../uptime/check.js";
 import type { Trace } from "../../types.js";
 import { type ModelInput, type ModelMeta, metaOf } from "./input.js";
 
@@ -54,17 +55,20 @@ function matches(t: Trace, q: string): boolean {
   return !q || t.traceId.startsWith(q) || tracePath(t).toLowerCase().includes(q) || t.services.some((s) => s.toLowerCase().includes(q));
 }
 
+/** Traces the list and its cards show: not WizeLens's own uptime checks. */
+const listed = (traces: readonly Trace[]): Trace[] => traces.filter((t) => !t.spans.some(isUptimeSpan));
+
 /** The Traces page. Params: q (search), trace (selected id). */
 export function tracesModel(i: ModelInput): TracesModel {
   const q = (i.params.q ?? "").trim().toLowerCase();
-  const found = i.traces.filter((t) => matches(t, q));
+  const found = listed(i.traces).filter((t) => matches(t, q));
   const wanted = i.params.trace;
   const selected = (wanted && (i.traces.find((t) => t.traceId === wanted) ?? i.prevTraces.find((t) => t.traceId === wanted))) || i.traces[0] || null;
   return {
     meta: metaOf(i),
     cards: {
-      cur: traceCards(i.traces, i.window, BUCKETS),
-      prev: traceCards(i.prevTraces, i.prev, BUCKETS),
+      cur: traceCards(listed(i.traces), i.window, BUCKETS),
+      prev: traceCards(listed(i.prevTraces), i.prev, BUCKETS),
       insights: insightGroups(i.traces).length,
       prevInsights: i.prevTraces.length ? insightGroups(i.prevTraces).length : null,
       insightSeries: series(i.requests, (r) => r.startMs, i.window, BUCKETS, "sum", (r) => r.insights),

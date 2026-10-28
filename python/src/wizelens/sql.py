@@ -46,10 +46,10 @@ def params_json(params: Any, settings: Settings, statement: Any = "") -> Optiona
     columns = param_columns(statement if isinstance(statement, str) else "")
     if isinstance(params, dict):
         named = {str(k): v for k, v in params.items()}
-        return json.dumps({k: _value(v, (k, columns.get(unsigiled(k))), settings) for k, v in named.items()})
+        return json.dumps({k: _value(v, (k, columns.get(unsigiled(k))), settings) for k, v in named.items()}, ensure_ascii=False)
     if isinstance(params, (list, tuple)):
-        return json.dumps([_value(v, (columns.get(str(i)),), settings) for i, v in enumerate(params)])
-    return json.dumps([_plain(params)])
+        return json.dumps([_value(v, (columns.get(str(i)),), settings) for i, v in enumerate(params)], ensure_ascii=False)
+    return json.dumps([_plain(params)], ensure_ascii=False)
 
 
 def record_parameters(params: Any, span: Any = None, settings: Optional[Settings] = None, statement: str = "") -> None:

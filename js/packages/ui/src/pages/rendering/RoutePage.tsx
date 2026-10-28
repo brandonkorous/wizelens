@@ -12,6 +12,7 @@ import { type Column } from "../../ui/Table";
 import { TaggedTable } from "../../ui/TaggedTable";
 import { traceRow } from "../../data/tagMatch";
 import { TimeChart } from "../../ui/TimeChart";
+import { RouteDevices } from "./RouteDevices";
 import "../../styles/pages/rendering.css";
 
 const LOAD_COLUMNS: Column<TraceItem>[] = [
@@ -29,7 +30,7 @@ function Cards({ m }: { m: RoutePageModel }) {
       <StatCard icon={Eye} label="Page Views" value={fmtCount(m.views)} {...common} change={m.meta.hasPrev ? percentChange(m.views, m.prevViews) : null} upIsGood series={m.chart.views} />
       <StatCard icon={Gauge} label="Avg Render Time" value={fmtMs(a.render)} {...common} series={m.chart.render} />
       <StatCard icon={Zap} label="Avg LCP" value={fmtMs(a.lcp)} {...common} series={m.chart.lcp} />
-      <StatCard icon={Server} label="Avg SSR Time" value={fmtMs(a.ssr)} {...common} series={m.chart.ssr} />
+      <StatCard icon={Server} label="Avg Server Response" value={fmtMs(a.ssr)} {...common} series={m.chart.ssr} />
     </div>
   );
 }
@@ -57,6 +58,7 @@ function Body({ m }: { m: RoutePageModel }) {
   const components = m.components.slice(0, 12).map((c) => ({ key: c.name, label: <span className="wl-mono">{c.name}</span>, value: c.count, display: fmtCount(c.count), color: c.count === top ? "var(--wl-blue)" : "color-mix(in srgb, var(--wl-blue) 55%, transparent)" }));
   return (
     <>
+      <RouteDevices devices={m.devices} />
       <Cards m={m} />
       <Charts m={m} />
       <div className="wl-grid wl-grid-2-even">

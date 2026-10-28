@@ -10,3 +10,6 @@ export function cloudEndpoint(key: string, cloudUrl: string = CLOUD_URL): string
 
 /** True for a cloud browser-key endpoint. Posts there go as plain text, a simple request, so the browser makes no CORS check first. */
 export const isCloudBrowserEndpoint = (endpoint: string): boolean => BROWSER_PATH.test(endpoint);
+
+/** Where "Open the dashboard" goes: the cloud's dashboard for a browser key (it only sends), else the endpoint's own. */
+export const dashboardOf = (endpoint: string): string => `${isCloudBrowserEndpoint(endpoint) ? endpoint.replace(/\/b\/[^/]+$/, "") : endpoint}/`;

@@ -36,8 +36,10 @@ and gets a `traceparent` header so the called service joins the same trace. Wize
 off with `instrumentFetch: false` or `instrumentHttp: false`. Express routing time is traced too. Open
 `http://localhost:<port>/_wizelens`.
 
-Health checks (kube-probe, GoogleHC, ELB-HealthChecker, and Google uptime checks) and CORS preflights are not traced, so
-they never bury real visits.
+Health checks (kube-probe, GoogleHC, ELB-HealthChecker, and Google uptime checks), CORS preflights, and files served as
+they are (images, fonts, scripts, style sheets from `express.static` or any handler with no route) are not traced, so
+they never bury real visits. A missing file (404) and an HTML page are still traced. `traceStaticFiles: true` or
+`WIZELENS_STATIC_FILES=true` traces every file.
 
 **NestJS.** `instrumentNest` adds the request capture for Express or Fastify, a global interceptor, and a hook on Nest's
 exception handlers. Requests are named by their route template with the global prefix and version (`GET /api/v1/orders/:id`)

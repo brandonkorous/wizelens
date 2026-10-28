@@ -1,3 +1,4 @@
+import { FilterPanel } from "../../ui/FilterPanel";
 import { RotateCcw } from "lucide-react";
 import { isLooseTraceId, type LogLevel, LOG_LEVELS, type LogRow, type LogsModel, VOLUME_GROUPS } from "@wizeworks/lens-core";
 import { fmtTime } from "../../format";
@@ -23,7 +24,7 @@ const LEVEL_OPTIONS: [string, string][] = [["trace", "All levels"], ["debug", "D
 export function LogFilters({ stats }: { stats: LogsModel }) {
   const { filter, services } = stats;
   return (
-    <section className="wl-panel wl-filters">
+    <FilterPanel active={[filter.minLevel !== "trace" && filter.minLevel, filter.service, filter.exact, filter.origin]}>
       <Select label="Minimum level" value={filter.minLevel} options={LEVEL_OPTIONS} onChange={(v) => setQuery({ level: v === "trace" ? null : v, page: null, patpage: null })} />
       <ServiceSelect value={filter.service} services={services} />
       <ListQueryBar value={filter.query} placeholder="Messages, categories, or trace IDs; or level:error service:api" />
@@ -34,7 +35,7 @@ export function LogFilters({ stats }: { stats: LogsModel }) {
       </button>
       <FilterChips chips={[["Category", "category", filter.category ?? ""], ["Trace", "trace", filter.traceId ?? ""], ["Pattern", "pattern", filter.pattern ?? ""], ["User", "user", filter.user ?? ""]]} />
 
-    </section>
+    </FilterPanel>
   );
 }
 
@@ -60,11 +61,14 @@ export function LogVolumePanel({ stats }: { stats: LogsModel }) {
   );
 }
 
+/** A .NET or Java category ("Microsoft.eShopWeb.ApplicationCore.Services.BasketService") by its last two parts, which name it: "Services.BasketService". */
+export const shortCategory = (category: string): string => (/\s/.test(category) ? category : category.split(".").slice(-2).join("."));
+
 export const LOG_COLUMNS: Column<LogRow>[] = [
   { key: "time", header: "Time", className: "wl-nowrap", sort: (r) => r.timeMs, cell: (r) => fmtTime(r.timeMs) },
   { key: "level", header: "Level", sort: (r) => LOG_LEVELS.indexOf(r.level), cell: (r) => <LevelBadge level={r.level} /> },
   { key: "service", header: "Service", className: "wl-nowrap", cell: (r) => r.service },
-  { key: "category", header: "Category", className: "wl-log-cat", cell: (r) => <button type="button" className="wl-link-btn wl-truncate" title={`Only ${r.category}`} onClick={(e) => (e.stopPropagation(), setQuery({ category: r.category, page: null }))}>{r.category}</button> },
+  { key: "category", header: "Category", className: "wl-log-cat", cell: (r) => <button type="button" className="wl-link-btn wl-truncate" title={`Only ${r.category}`} onClick={(e) => (e.stopPropagation(), setQuery({ category: r.category, page: null }))}>{shortCategory(r.category)}</button> },
   { key: "message", header: "Message", className: "wl-log-msg", cell: (r) => r.message },
   { key: "trace", header: "Request", className: "wl-log-trace", cell: (r) => (isLooseTraceId(r.traceId) ? <span className="wl-muted">Outside a request</span> : <a href={traceHref(r.traceId, "logs")} title={r.traceId} onClick={(e) => e.stopPropagation()}>{r.traceName}</a>) },
 ];

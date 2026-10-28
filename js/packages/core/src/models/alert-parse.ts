@@ -48,7 +48,7 @@ async function metricPart(b: Record<string, unknown>, hooks: AlertParseHooks): P
     return problem ?? { metric: "slo", ...NO_METRIC, sloId };
   }
   if (b.metric === "log_count") return { metric: "log_count", ...NO_METRIC, logSearch: cleanSearchParams(b.logSearch) };
-  if (b.metric !== "metric") return isAlertMetric(b.metric) ? { metric: b.metric, ...NO_METRIC } : "Pick a metric: error_rate, p95_ms, avg_ms, requests, new_errors, slow_queries, log_count, new_security_risks, metric, or slo.";
+  if (b.metric !== "metric") return isAlertMetric(b.metric) ? { metric: b.metric, ...NO_METRIC } : "Pick a metric: error_rate, p95_ms, avg_ms, requests, new_errors, slow_queries, log_count, new_security_risks, uptime_failing, metric, or slo.";
   const name = text(b.metricName, MAX_METRIC_NAME + 1);
   if (!name || name.length > MAX_METRIC_NAME) return "Set metricName to the metric to watch, for example process.cpu.utilization.";
   const stat = b.metricStat ?? "avg";

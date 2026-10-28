@@ -1,3 +1,4 @@
+import { useScrollHint } from "../../ui/useScrollHint";
 import type { Finding, Trace, TraceView } from "@wizeworks/lens-core";
 import { HttpTab } from "./HttpTab";
 import { MessagesTab } from "./MessagesTab";
@@ -42,9 +43,10 @@ function TabBody(p: TraceTabsProps) {
 /** Timeline, SQL, HTTP, logs, and errors of one trace, with the span panel beside them. */
 export function TraceTabs(p: TraceTabsProps) {
   const span = p.trace.spans.find((s) => s.spanId === p.selected) ?? null;
+  const tabs = useScrollHint<HTMLElement>(p.tab);
   return (
     <section className="wl-panel wl-panel-flush">
-      <nav className="wl-tabs" role="tablist">
+      <nav ref={tabs} className="wl-tabs" role="tablist">
         {counts(p.trace).map(([key, label, count]) => (
           <button
             key={key}

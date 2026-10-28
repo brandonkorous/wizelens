@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { HeartPulse, Plus } from "lucide-react";
+import { Bell, HeartPulse, Plus } from "lucide-react";
 import type { UptimeCheckView } from "@wizeworks/lens-core";
 import { useHost } from "../../data/host";
 import { usePageModel } from "../../data/models";
 import { type UptimeApi, useUptime } from "../../data/uptime";
-import { useRoute } from "../../routes";
+import { hrefTo, useRoute } from "../../routes";
 import { type AskOptions, useAsk } from "../../ui/Dialog";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { deleteCheck } from "./uptimeParts";
@@ -20,7 +20,10 @@ import { ImportButton } from "../../ui/Sections";
 import "../../styles/pages/uptime.css";
 import { useTargetProject } from "../../ui/ProjectSelect";
 
-const SUBTITLE = "Checks that call your sites and APIs on a schedule, from this host. Results are requests of the wizelens-uptime service.";
+/** A new alert that fires when any check fails, filled in on the Alerts page. */
+const ALERT_HREF = hrefTo("alerts", [], { new: "1", name: "A site is down", metric: "uptime_failing", op: ">", threshold: "0", windowMs: "300000" });
+
+const SUBTITLE = "Checks that call your sites and APIs on a schedule, from this host. Their results stay on this page, apart from your app's requests and traces.";
 
 /** The Uptime page on hosts that run checks; elsewhere a note. One check opens at `#/uptime/<id>`. */
 export function UptimePage() {
@@ -69,8 +72,10 @@ function UptimeList() {
   };
   const [importing, setImporting] = useState(false);
   const bulk = useChecksBulk(api, checks, setNote);
+  const alerts = useHost().has("alerts");
   const add = api.canWrite && (
     <>
+      {alerts && <a className="wl-btn" href={ALERT_HREF}><Bell aria-hidden="true" /> Alert me when one fails</a>}
       <ImportButton label="Import URLs" onOpen={() => setImporting(true)} />
       <button type="button" className="wl-btn wl-btn-primary" onClick={() => setEditing("new")}><Plus aria-hidden="true" /> New check</button>
     </>

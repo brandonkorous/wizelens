@@ -1,9 +1,10 @@
+import { clockIn } from "./clock.js";
 import { type EmailContent, list, text } from "./content.js";
 
-const clock = (ms: number) => `${new Date(ms).toISOString().slice(0, 16).replace("T", " ")} UTC`;
+const clock = (ms: number, timeZone?: string) => clockIn(ms, timeZone);
 
 /** Changes in one organization since the last notice, for its owners and admins. */
-export function teamChanges(org: string, changes: { text: string; timeMs: number }[], url: string, stop: string): EmailContent {
+export function teamChanges(org: string, changes: { text: string; timeMs: number }[], url: string, stop: string, timeZone?: string): EmailContent {
   const one = changes.length === 1;
   return {
     kind: "team",
@@ -11,7 +12,7 @@ export function teamChanges(org: string, changes: { text: string; timeMs: number
     preview: changes[0]!.text,
     heading: `Changes in ${org}.`,
     tone: "neutral",
-    blocks: [list(one ? "What changed" : `${changes.length} changes`, changes.map((c) => ({ text: c.text, meta: clock(c.timeMs) })))],
+    blocks: [list(one ? "What changed" : `${changes.length} changes`, changes.map((c) => ({ text: c.text, meta: clock(c.timeMs, timeZone) })))],
     action: { label: "Open the audit log", url },
     footer: `You get this because you are an owner or admin of ${org}.`,
     unsubscribe: { label: "Stop team change emails", url: stop },

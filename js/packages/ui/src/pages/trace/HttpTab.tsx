@@ -23,7 +23,7 @@ function HttpRow({ span, props, kinds }: { span: Span; props: TabProps; kinds: R
         {target} <FindingBadges kinds={kinds.get(span.spanId)} />
       </td>
       <td>
-        <ServiceChip service={span.service} services={props.trace.services} />
+        <ServiceChip service={span.service} trace={props.trace} />
       </td>
       <td className={`wl-num${typeof status === "number" && status >= 400 ? " wl-text-error" : ""}`}>{status ?? "–"}</td>
       <td className="wl-num">{fmtMs(span.durationMs)}</td>

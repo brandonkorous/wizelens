@@ -7,7 +7,10 @@ import { percentOf, previousWindow, TIME_RANGES, type TimeRange } from "../stats
 import { rawService } from "../stats/errors.js";
 import type { ModelParams } from "./input.js";
 import { logFilterOf, logListFilterOf } from "./logs.js";
-import { groupNeed, listNeed, listOf, rowsOf, totalOf } from "./read.js";
+import { groupNeed, listNeed, listOf, rowsOf, seriesNeed, totalOf } from "./read.js";
+
+/** Slices of an uptime alert's window: a check's newest run is in the last slice that has runs. */
+const UPTIME_SLICES = 60;
 
 /** What an alert rule watches. */
 export const ALERT_METRICS = {
@@ -19,6 +22,7 @@ export const ALERT_METRICS = {
   slow_queries: { label: "Slow queries", unit: "" },
   log_count: { label: "Log lines", unit: "" },
   new_security_risks: { label: "New security risks", unit: "" },
+  uptime_failing: { label: "Uptime checks failing", unit: "" },
 } as const;
 
 export type AlertMetric = keyof typeof ALERT_METRICS;
@@ -50,6 +54,7 @@ export function alertScopeProblem(metric: AlertMetric, scope: AlertScope): strin
   if (scope.endpoint && metric === "slow_queries") return "Slow queries are counted per service, not per endpoint.";
   if (scope.endpoint && metric === "new_security_risks") return "Security risks are counted per service, not per endpoint.";
   if ((scope.service || scope.endpoint) && metric === "log_count") return "A log alert picks its service in the log search.";
+  if ((scope.service || scope.endpoint) && metric === "uptime_failing") return "An uptime alert watches every check of the project.";
   return null;
 }
 
@@ -66,6 +71,7 @@ function endpointNeeds(metric: AlertMetric, service: string, endpoint: string): 
 /** What an alert metric reads: request, error group, or database rollups of the window (and the one before, for "new"), or the lines of a log search. */
 export function alertNeeds(metric: AlertMetric, scope: AlertScope = {}, search: ModelParams = {}): Need[] {
   if (metric === "log_count") return [listNeed("logs", "logs", "cur", { filter: logListFilterOf(logFilterOf(search)), limit: 0, count: true })];
+  if (metric === "uptime_failing") return [seriesNeed("up", "up.chk", "cur", UPTIME_SLICES, { split: true })];
   const service = scope.service || undefined;
   if (service && scope.endpoint) return endpointNeeds(metric, service, scope.endpoint);
   const one = service ? { service } : {};
@@ -106,6 +112,11 @@ export function alertValueOf(metric: AlertMetric, d: NeedResults): number | null
     case "new_security_risks": {
       const before = new Set(rowsOf(d, "sec.prev").map((r) => r.key));
       return rowsOf(d, "sec.cur").filter((r) => !before.has(r.key)).length;
+    }
+    case "uptime_failing": {
+      // Checks whose newest run in the window failed, so a check that is back up no longer counts; no runs is no data.
+      const newest = Object.values(d.series.up?.byKey ?? {}).flatMap((slices) => slices.findLast((a) => a.n > 0) ?? []);
+      return newest.length ? newest.filter((a) => a.err > 0).length : null;
     }
   }
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { row, serverStats } from "../test-hud.js";
 import { MAX_CALLS, PageLog } from "./page-log.js";
 import { addUp, ROUTE_LOAD_MS, summarizePage } from "./page-summary.js";
-import { callName, pageRows, splitName, ticksFor } from "./waterfall.js";
+import { callCount, callName, pageRows, splitName, ticksFor } from "./waterfall.js";
 
 const call = (id: string, startMs: number, over = {}) => row({ id, startMs, durationMs: 100, renderMs: 0, traceId: `t-${id}`, path: `/api/${id}`, server: serverStats({ insights: 0 }), ...over });
 const noLoad = () => null;
@@ -86,6 +86,12 @@ describe("pageRows", () => {
     expect(pageRows([], null, { startMs: 0, renderMs: 25 }, () => null)[0]).toMatchObject({ name: "Route render", durationMs: 25 });
   });
 
+  it("counts the page's own request as a call, and no paint row", () => {
+    const lead = row({ id: "document-t0", path: "/Basket", startMs: 0, durationMs: 40, renderMs: 150, server: undefined });
+    expect(callCount(pageRows([lead], lead, null, () => null))).toBe(1);
+    expect(callCount(pageRows([], null, { startMs: 0, renderMs: 25 }, () => null))).toBe(0);
+  });
+
   it("names a call by its server route, else by its path with another origin's host last", () => {
     const api = "http://localhost:3001/api/v1/boards/c2be23b0-868c-407f-bd45-adc4592e8a7a/members";
     expect(callName(call("m", 0, { path: api, server: serverStats({ name: "GET /api/v1/boards/:id/members" }) }))).toBe("GET /api/v1/boards/:id/members");
@@ -98,6 +104,8 @@ describe("pageRows", () => {
     expect(splitName("POST /a/b · localhost:3001 · 2 SQL")).toEqual(["POST ", "/a", "/b · localhost:3001 · 2 SQL"]);
     expect(splitName("GET /orders (page)")).toEqual(["GET ", "", "/orders (page)"]);
     expect(splitName("Route render")).toEqual(["", "Route render", ""]);
+    expect(splitName("GET /Basket/{handler?} (page) · 3 SQL")).toEqual(["GET ", "", "/Basket/{handler?} (page) · 3 SQL"]);
+    expect(splitName("PUT /api/catalog-items/:id · 2 SQL")).toEqual(["PUT ", "/api", "/catalog-items/:id · 2 SQL"]);
   });
 
   it("puts round ticks on the time axis", () => {

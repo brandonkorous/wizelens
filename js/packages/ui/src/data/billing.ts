@@ -28,6 +28,8 @@ export interface Usage {
   days: { day: string; gb: number; spans: number; logs: number; points: number }[];
   overageUsd: number;
   projectedGb: number;
+  /** The first day with data this month ("2026-10-28"): the projection runs from there at that rate. */
+  projectedFrom: string | null;
   projectedOverageUsd: number;
   spendCapUsd: number | null;
   /** Why ingest is stopped now, or null. */
@@ -63,5 +65,12 @@ export async function cancelPlan(orgId: string): Promise<void> {
 
 export const setSpendCap = (orgId: string, usd: number | null) => apiSend("PATCH", `./api/orgs/${orgId}/billing`, { spendCapUsd: usd });
 
-export const fmtGb = (gb: number) => (gb >= 100 ? `${Math.round(gb).toLocaleString()} GB` : `${(Math.round(gb * 100) / 100).toLocaleString()} GB`);
+/** GB as billed (1,000,000,000 bytes); under 1 GB in MB, so data that was sent never reads as "0 GB". */
+export function fmtGb(gb: number): string {
+  if (gb >= 100) return `${Math.round(gb).toLocaleString()} GB`;
+  if (gb <= 0 || gb >= 1) return `${(Math.round(gb * 100) / 100).toLocaleString()} GB`;
+  const mb = gb * 1000;
+  if (mb < 0.1) return "under 0.1 MB";
+  return `${(mb < 10 ? Math.round(mb * 10) / 10 : Math.round(mb)).toLocaleString()} MB`;
+}
 export const fmtUsd = (usd: number) => `$${usd.toLocaleString(undefined, { minimumFractionDigits: usd % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;

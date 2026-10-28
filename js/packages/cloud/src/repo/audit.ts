@@ -1,11 +1,20 @@
 import { newId } from "../auth/crypto.js";
 import type { Queryable } from "../db/db.js";
 
+export interface AuditName {
+  name: string;
+  email?: string;
+}
+
 export interface AuditEntry {
   actor: string;
   action: string;
   detail: Record<string, unknown>;
   timeMs: number;
+  /** The person or key that did it, by name, also after they left or the key was revoked. */
+  who?: AuditName;
+  /** The person `detail.userId` names. */
+  subject?: AuditName;
 }
 
 /** Keep one line of who did what. Every MCP call and every change to members, keys, and projects writes one. */
@@ -50,7 +59,22 @@ export async function listAudit(q: Queryable, orgId: string, limit: number, f: A
     `SELECT actor, action, detail, time_ms FROM audit WHERE ${where} ORDER BY time_ms DESC, id LIMIT $${args.push(limit)} OFFSET $${args.push(offset)}`,
     args,
   );
-  return rows.map((r) => ({ actor: r.actor, action: r.action, detail: JSON.parse(r.detail) as Record<string, unknown>, timeMs: r.time_ms }));
+  return withNames(q, rows.map((r) => ({ actor: r.actor, action: r.action, detail: JSON.parse(r.detail) as Record<string, unknown>, timeMs: r.time_ms })));
+}
+
+/** Add the names of the people and keys the lines hold, read from users and keys, not from today's members. */
+async function withNames(q: Queryable, rows: AuditEntry[]): Promise<AuditEntry[]> {
+  const ids = (kind: string) => [...new Set(rows.flatMap((r) => [r.actor.startsWith(`${kind}:`) ? r.actor.slice(kind.length + 1) : null, kind === "user" ? r.detail.userId : null]).filter((v): v is string => typeof v === "string"))];
+  const users = ids("user");
+  const keys = ids("key");
+  const people = new Map((users.length ? await q.query<{ id: string; name: string; email: string }>("SELECT id, name, email FROM users WHERE id = ANY($1)", [users]) : []).map((u) => [u.id, { name: u.name, email: u.email }]));
+  const keyNames = new Map((keys.length ? await q.query<{ id: string; name: string }>("SELECT id, name FROM api_keys WHERE id = ANY($1)", [keys]) : []).map((k) => [k.id, { name: k.name }]));
+  return rows.map((r) => {
+    const [kind, id = ""] = r.actor.split(":");
+    const who = kind === "user" ? people.get(id) : kind === "key" ? keyNames.get(id) : undefined;
+    const subject = typeof r.detail.userId === "string" ? people.get(r.detail.userId) : undefined;
+    return { ...r, ...(who ? { who } : {}), ...(subject ? { subject } : {}) };
+  });
 }
 
 /** How many lines match the filter. */

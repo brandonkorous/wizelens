@@ -49,6 +49,22 @@ function statusOf(r: ResolvedStack, release: string | null, resolved: boolean): 
   return `No source map found${release ? ` for release ${release}` : ""}. Showing the raw stack.`;
 }
 
+const MAPS_DOCS = "https://wizelens.com/docs/source-maps/#in-production-upload-at-build-time";
+
+/** What to add so the stack shows the site's own files and lines. */
+function MapHint() {
+  return (
+    <p className="wl-map-hint">
+      This line is in your built, minified code. A source map turns it back into your own file and line. Add the WizeLens
+      plugin to your build (for Vite: <code className="wl-mono">wizelensSourceMaps()</code> in vite.config.ts), and each
+      build sends its maps.{" "}
+      <a href={MAPS_DOCS} target="_blank" rel="noreferrer">
+        Source maps, step by step
+      </a>
+    </p>
+  );
+}
+
 /** A browser error's stack after source maps, with a few lines of source per frame; the raw stack one click away. */
 export function ErrorStack({ event }: { event: StackSource }) {
   const r = useResolvedStack(event);
@@ -69,6 +85,7 @@ export function ErrorStack({ event }: { event: StackSource }) {
         </div>
         <span className="wl-muted wl-small">{statusOf(r, event.release, resolved)}</span>
       </div>
+      {!resolved && !r.loading && !r.error && <MapHint />}
       {view === "raw" || !resolved ? (
         <StackTrace event={event} />
       ) : (

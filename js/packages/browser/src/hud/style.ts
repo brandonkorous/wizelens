@@ -38,6 +38,7 @@ export const HUD_CSS = `
 .wl-pill.wl-p-info{--wl-p:var(--wl-blue)}.wl-pill.wl-p-ok{--wl-p:#16A34A}.wl-pill.wl-p-warn{--wl-p:#EA580C}.wl-pill.wl-p-err{--wl-p:var(--wl-red)}
 .wl-pill.wl-p-none{--wl-p:#4A505A;color:var(--wl-fg)}
 .wl-iconbtn{display:grid;place-items:center;width:28px;height:28px;border-radius:7px;color:var(--wl-muted)}
+@media (pointer:coarse){.wl-iconbtn{width:44px;height:44px}}
 .wl-iconbtn:hover{background:var(--wl-raised);color:var(--wl-fg)}
 .wl-iconbtn.wl-on{color:var(--wl-fg)}
 .wl-chev svg{transition:transform .15s}.wl-chev.wl-open svg{transform:rotate(180deg)}
@@ -159,7 +160,7 @@ span.wl-count{cursor:default}span.wl-count:hover{background:none;color:var(--wl-
 .wl-lvl-warn{color:#C2410C;background:color-mix(in srgb,var(--wl-orange) 16%,transparent)}
 .wl-lvl-error,.wl-lvl-critical{color:var(--wl-red);background:color-mix(in srgb,var(--wl-red) 14%,transparent)}
 .wl-row-btns{display:flex;flex-wrap:wrap;gap:8px}
-.wl-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:7px;border:1px solid var(--wl-main-line) !important;color:var(--wl-main-fg) !important;font-size:12.5px}
+.wl-hud .wl-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:7px;border:1px solid var(--wl-main-line) !important;color:var(--wl-main-fg) !important;font-size:12.5px}
 .wl-btn:hover{background:var(--wl-main-2) !important}
 .wl-switch{display:flex;align-items:center;gap:10px;padding:12px 0 8px;font-size:13px;cursor:pointer}
 .wl-switch input{width:16px;height:16px;accent-color:var(--wl-blue)}

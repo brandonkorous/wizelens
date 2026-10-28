@@ -56,7 +56,7 @@ export interface TraceSummary {
   rootMethod: string | null;
   /** `url.path`, else `url.full`, of the root span. */
   rootUrl: string | null;
-  /** `http.response.status_code` of the root span. */
+  /** `http.response.status_code` of the root span, else of the entry server span (a page load's root is its page view). */
   rootStatusCode: number | null;
 }
 

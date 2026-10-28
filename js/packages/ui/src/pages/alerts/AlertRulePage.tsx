@@ -36,12 +36,13 @@ function tracesHref(rule: AlertRule, from: number, to: number): string | null {
   if (rule.metric === "new_errors") return hrefTo("errors", [], { ...scope, new: "1" });
   if (rule.metric === "slow_queries") return hrefTo("database", [], { ...scope, sort: "slow" });
   if (rule.metric === "new_security_risks") return hrefTo("security", [], scope);
+  if (rule.metric === "uptime_failing") return hrefTo("uptime");
   if (rule.metric === "error_rate") return hrefTo("requests", [], { ...scope, status: "failed" });
   return hrefTo("requests", [], { ...scope, sort: "duration" });
 }
 
 /** What the link behind the chart opens, in the words of that page. */
-const LINK_LABELS: Partial<Record<AlertRule["metric"], string>> = { slo: "Open the SLO", new_errors: "View the errors", slow_queries: "View the slow queries", new_security_risks: "View the risks" };
+const LINK_LABELS: Partial<Record<AlertRule["metric"], string>> = { slo: "Open the SLO", new_errors: "View the errors", slow_queries: "View the slow queries", new_security_risks: "View the risks", uptime_failing: "Open Uptime" };
 
 /** The window the page shows: the custom one at the top, or the chosen range up to now. */
 function useShownWindow(): { from: number; to: number } {

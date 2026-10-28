@@ -34,6 +34,7 @@ and sends a notice when it crosses your line. Rules are checked every minute. Op
 | Slow queries | | Slow queries in the window, per service |
 | Log lines | | Lines that match a log search |
 | New security risks | | Security risks in the window that the window before did not have, per service |
+| Uptime checks failing | | Uptime checks whose newest run in the window failed; it clears when they pass again |
 | A metric (CPU, memory, your own) | | One OpenTelemetry metric |
 | An SLO's burn rate | × | How fast an SLO spends its error budget |
 

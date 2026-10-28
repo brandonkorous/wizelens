@@ -48,6 +48,24 @@ function mcpRow(s: Source, info: ServiceInfo): ReactNode {
   );
 }
 
+// The option behind a row, as .NET and Node name it; the in-app dashboard shows settings, the code sets them.
+const SET_WITH: Record<string, [string, string]> = {
+  Storage: ["Storage", "storage"],
+  "Max traces": ["MaxTraces", "maxTraces"],
+  "Keeps data for": ["MaxAge", "maxAgeMs"],
+  Sampling: ["Sampling.Rate", "sampling.rate"],
+  "Slow query": ["SlowQueryMs", "slowQueryMs"],
+  "N+1 threshold": ["NPlusOneThreshold", "nPlusOneThreshold"],
+};
+
+/** A row's value, plus the option that changes it for this service's stack. */
+function withOption(info: ServiceInfo, row: string, value: ReactNode): ReactNode {
+  const names = SET_WITH[row];
+  const name = !names || info.mode !== "in-app" ? undefined : info.runtime.startsWith(".NET") ? names[0] : info.runtime.startsWith("node") ? names[1] : undefined;
+  if (value === null || !name) return value;
+  return <span>{value} <span className="wl-muted wl-small">· set with <code className="wl-mono">{name}</code></span></span>;
+}
+
 // How many traces the service keeps, so counts on the other pages are read right.
 function samplingText(info: ServiceInfo): string {
   const sm = info.sampling;
@@ -77,7 +95,7 @@ function infoRows(s: Source, info: ServiceInfo): [ReactNode, ReactNode][] {
     ["AI access (MCP)", mcpRow(s, info)],
     ["Response bodies", info.captureResponseBody === undefined ? null : info.captureResponseBody ? onOff(true) : offHint(info, BODIES)],
   ];
-  return rows.filter((r): r is [ReactNode, ReactNode] => r[1] !== null);
+  return rows.filter((r): r is [ReactNode, ReactNode] => r[1] !== null).map(([k, v]) => [k, withOption(info, k as string, v)]);
 }
 
 export function SourceSettings({ source }: { source: Source }) {

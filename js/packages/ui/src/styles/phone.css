@@ -1,0 +1,20 @@
+/* A phone puts the numbers first: stat cards two to a row, and filters behind one button (ui/FilterPanel.tsx). */
+.wl-filters-toggle { display: none; }
+@media (max-width: 720px) {
+  .wl-grid-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .wl-stat { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 2px; padding: 12px 14px; }
+  .wl-stat-icon { display: none; }
+  .wl-stat-foot { grid-column: 1; }
+  .wl-stat-label { font-size: 13px; }
+  .wl-stat-value { font-size: 22px; }
+  .wl-delta-none { display: none; }
+  .wl-filters { gap: 10px; padding: 12px; }
+  .wl-filters-toggle { display: inline-flex; flex: none; }
+  .wl-filters:not(.wl-filters-open) > :is(.wl-select, .wl-check, .wl-btn:not(.wl-filters-toggle)) { display: none; }
+  .wl-filters > :is(.wl-query, .wl-input) { order: -1; flex: 1 1 0; min-width: 0; }
+  .wl-filters-open > .wl-select { flex: 1 1 calc(50% - 5px); min-width: 0; }
+}
+/* A row of tabs that scrolls sideways fades at the edge that hides more (ui/useScrollHint.ts). */
+[data-more="right"] { mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+[data-more="left"] { mask-image: linear-gradient(to left, #000 calc(100% - 40px), transparent); }
+[data-more="left right"] { mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); }

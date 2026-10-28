@@ -20,8 +20,9 @@ import { ALL_PROJECTS } from "../../data/projectScope";
 const statusOf = (g: ServiceGroup) => (g.online > 0 ? "Online" : presenceOf(g.newest));
 const hostsText = (g: ServiceGroup) => (g.instances.length === 1 ? "1" : `${fmtCount(g.online)} of ${fmtCount(g.instances.length)} online`);
 
-function columns(now: number): Column<ServiceGroup>[] {
-  return [
+// Project shows only when some row names one (All projects, or a shared hub): in one project every row would read "–".
+function columns(now: number, withProject: boolean): Column<ServiceGroup>[] {
+  const all: Column<ServiceGroup>[] = [
     { key: "service", header: "Service", cell: (g) => <strong>{g.service}</strong>, sort: (g) => g.service },
     { key: "status", header: "Status", cell: (g) => <DotText tone={g.online > 0 ? "success" : "neutral"}>{statusOf(g)}</DotText>, sort: (g) => (g.online > 0 ? 0 : 1) },
     { key: "project", header: "Project", cell: (g) => g.project ?? "–", sort: (g) => g.project ?? "" },
@@ -31,6 +32,7 @@ function columns(now: number): Column<ServiceGroup>[] {
     { key: "runtime", header: "Runtime", cell: (g) => <span className="wl-muted wl-small">{g.newest.runtime ?? "–"}</span>, className: "wl-hide-sm" },
     { key: "seen", header: "Last seen", cell: (g) => fmtAgo(g.newest.lastSeenMs, now), sort: (g) => -g.newest.lastSeenMs },
   ];
+  return withProject ? all : all.filter((c) => c.key !== "project");
 }
 
 /** "Forget offline hosts" for cloud admins: old pods leave the list; each service keeps its newest host. */
@@ -76,7 +78,7 @@ export function RegistryPanel() {
     <>
       <Panel title={title} flush action={action}>
         {forget.note && <div className="wl-banner wl-banner-info wl-panel-banner">{forget.note}</div>}
-        <Table paging={{ noun: "services", key: "registry" }} columns={columns(updatedMs)} rows={groups} rowKey={(g) => g.key} onRowClick={(g) => setOpen(g.key === open ? null : g.key)} selectedKey={open} defaultSort={{ key: "status", desc: false }} empty={<Empty title="No service has sent data yet"><a href="#/connect">Connect one</a>.</Empty>} />
+        <Table paging={{ noun: "services", key: "registry" }} columns={columns(updatedMs, groups.some((g) => !!g.project))} rows={groups} rowKey={(g) => g.key} onRowClick={(g) => setOpen(g.key === open ? null : g.key)} selectedKey={open} defaultSort={{ key: "status", desc: false }} empty={<Empty title="No service has sent data yet"><a href="#/connect">Connect one</a>.</Empty>} />
         {forget.dialog}
       </Panel>
       {selected && <RegistryHosts key={selected.key} group={selected} now={updatedMs} onClose={() => setOpen(null)} />}

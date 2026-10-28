@@ -14,7 +14,7 @@ public static class TraceIds
     public static bool IsLoose(string traceId) => traceId.StartsWith(LoosePrefix, StringComparison.Ordinal);
 
     /// <summary>A new loose batch id: the prefix and 16 random hex digits.</summary>
-    internal static string NewLoose() => LoosePrefix + Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(8));
+    internal static string NewLoose() => LoosePrefix + Hex.Lower(RandomNumberGenerator.GetBytes(8));
 }
 
 /// <summary>Loose batches: lines outside a request, grouped per 5 minutes, with their own cap so they never push out requests.</summary>

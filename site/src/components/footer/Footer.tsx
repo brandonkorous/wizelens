@@ -22,6 +22,7 @@ const COLUMNS = [
       { label: "Vue", href: "/vue/" },
       { label: "Angular", href: "/angular/" },
       { label: "Svelte", href: "/svelte/" },
+      { label: "Static sites", href: "/docs/browser/#static-sites" },
       { label: "Java", href: "/java/" },
       { label: "Python", href: "/python/" },
       { label: "Go", href: "/go/" },

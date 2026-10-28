@@ -18,7 +18,7 @@
 .wl-view-all { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 550; white-space: nowrap; }
 .wl-view-all svg { width: 16px; height: 16px; }
 
-.wl-stat { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 6px 12px; padding: 18px 20px; }
+.wl-stat { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 6px 12px; padding: 18px 20px; container-type: inline-size; }
 .wl-stat-icon { width: 34px; height: 34px; color: var(--wl-accent); }
 a.wl-stat-link { color: inherit; text-decoration: none; }
 a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl-shadow-pop); }
@@ -26,10 +26,11 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-stat-label { font-size: 14px; color: var(--wl-fg-2); }
 .wl-stat-value { font-size: 26px; font-weight: 720; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.2; }
 .wl-stat-foot { grid-column: 2; display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+/* Six cards in a row leave the text column ~80 px; the change line then takes the card width under the icon. */
+@container (max-width: 200px) { .wl-stat-foot { grid-column: 1 / -1; } }
 /* The trend runs along the bottom of the card, so the change text never shares its width. */
 .wl-stat-spark { grid-column: 1 / -1; height: 28px; margin: 2px -4px -6px; }
 .wl-stat-spark svg { display: block; width: 100%; height: 28px; }
-.wl-delta span { white-space: nowrap; }
 .wl-delta { display: flex; flex-direction: column; font-size: 13px; }
 .wl-delta b { display: inline-flex; align-items: center; gap: 3px; font-weight: 650; }
 .wl-delta b svg { width: 14px; height: 14px; }
@@ -63,7 +64,8 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-bar-track i { display: block; height: 100%; border-radius: 4px; background: var(--wl-accent); }
 .wl-bar-row .wl-value { min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; color: var(--wl-fg-2); }
 
-.wl-table-wrap { overflow-x: auto; }
+/* Positioned, so a hidden screen-reader label in a wide table stays in this scroll box instead of stretching the page. */
+.wl-table-wrap { overflow-x: auto; position: relative; }
 .wl-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .wl-table th { padding: 10px 12px; border-bottom: 1px solid var(--wl-line); color: var(--wl-fg-2); font-weight: 550; text-align: left; white-space: nowrap; }
 .wl-table th button { border: 0; background: none; padding: 0; cursor: pointer; font-weight: 550; display: inline-flex; align-items: center; gap: 4px; }
@@ -75,10 +77,16 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-table tbody tr.wl-selected td { background: var(--wl-selected); }
 .wl-table tbody tr.wl-row-detail td { background: var(--wl-surface-2); padding-top: 4px; padding-bottom: 14px; }
 .wl-table .wl-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.wl-table .wl-wrap { overflow-wrap: break-word; min-width: 12ch; }
+.wl-table .wl-wrap { overflow-wrap: anywhere; min-width: 12ch; }
 .wl-table .wl-nowrap { white-space: nowrap; }
+/* A phone: text columns keep a readable width, and the table scrolls sideways instead of one word per line. */
+@media (max-width: 720px) { .wl-table .wl-wrap { min-width: 22ch; } .wl-table td > strong:only-child { display: inline-block; min-width: 14ch; } }
+/* A fill column takes the free width, and its .wl-truncate text ends in "…" instead of widening the table. */
+.wl-table td.wl-fill { width: 100%; max-width: 0; min-width: 14ch; }
+.wl-table td.wl-fill .wl-cell-icon, .wl-table td.wl-fill .wl-tagged { display: flex; min-width: 0; }
+.wl-table td.wl-fill > .wl-truncate { display: block; }
 .wl-cell-icon { display: inline-flex; align-items: center; gap: 10px; }
-.wl-cell-icon svg { width: 18px; height: 18px; color: var(--wl-fg-2); }
+.wl-cell-icon svg { width: 18px; height: 18px; color: var(--wl-fg-2); flex: none; }
 .wl-user-id { font-size: 12px; }
 
 .wl-badge { display: inline-flex; align-items: center; justify-content: center; padding: 1px 9px; border-radius: 6px; font-size: 12.5px; font-weight: 600; line-height: 20px; white-space: nowrap; }
@@ -214,3 +222,6 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-list-filter svg { width: 16px; height: 16px; }
 .wl-project-picker-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
 .wl-project-picker-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px 14px; max-height: 240px; overflow: auto; padding: 2px; }
+/* Under a row's name on a phone: what the hidden columns hold. */
+.wl-phone-line { display: none; }
+@media (max-width: 640px) { .wl-phone-line { display: block; overflow-wrap: anywhere; } }

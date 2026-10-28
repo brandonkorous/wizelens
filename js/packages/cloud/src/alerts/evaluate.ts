@@ -25,6 +25,7 @@ import type { CloudApp } from "../app.js";
 import { alertMail } from "../mail/templates.js";
 import { addEvent } from "../repo/alert-events.js";
 import { enabledRules, saveEvaluation } from "../repo/alerts.js";
+import { zonesOf } from "../repo/mail-prefs.js";
 import { sloById } from "../repo/slos.js";
 import { memberEmails } from "../repo/users.js";
 import { projectRetentionMs, projectScopeOf } from "../scale-exec.js";
@@ -93,9 +94,10 @@ async function measure(app: CloudApp, rule: AlertRule, now: number): Promise<num
 async function outboxOf(app: CloudApp, projectId: string): Promise<Outbox> {
   const [p] = await app.db.query<{ org_id: string }>("SELECT org_id FROM projects WHERE id = $1", [projectId]);
   const members = new Set(p ? await memberEmails(app.db, p.org_id, app.mailer.live) : []);
+  const zones = await zonesOf(app.db, [...members]);
   const email = (to: readonly string[], n: Notice) => {
     const ok = to.filter((e) => members.has(e));
-    for (const addr of ok) app.mailer.send(alertMail(addr, n));
+    for (const addr of ok) app.mailer.send(alertMail(addr, n, zones.get(addr.toLowerCase())));
     const note = app.mailer.live ? `sent to ${ok.length}` : "mail is not set up (see the cloud log)";
     return `email: ${note}${ok.length < to.length ? `, ${to.length - ok.length} no longer members` : ""}`;
   };

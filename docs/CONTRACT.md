@@ -34,7 +34,10 @@ endpoint the page is set up with: from `wl-endpoint` (page load) or `X-WizeLens-
 span (and the logs of that trace) to `{remote}/api/client-spans` when the remote is on the page's own origin, and to its own
 endpoint otherwise. A server that gets a browser span whose `wizelens.browser.remote` is on the request's `Origin` (same
 origin, http or https) adds it to the trace's `remotes`, unless it is one of its own endpoints; a remote on any other origin
-is ignored, so a page cannot point federation at a URL of its choice.
+is ignored, so a page cannot point federation at a URL of its choice, unless the developer trusts that origin
+(`TrustedRemotes` in .NET, `trustedRemotes` in Node, or the comma-separated `WIZELENS_TRUSTED_REMOTES`; each entry counts by
+its origin), for an API on its own port. A trace page whose trace has no server span but a browser span with an http(s)
+`wizelens.browser.remote` says that the server part is there, links to it, and names the option (in-app dashboards only).
 
 gRPC uses the same key as metadata: a gRPC server sends `x-wizelens-endpoint` in its response headers (merged into any
 headers the handler sends) and in its trailers, and a gRPC client reads either one into `remotes`.
@@ -387,8 +390,8 @@ Redaction keeps the evidence the security rules need (`docs/redact-vectors.json`
   leak rule does not count it.
 - **SQL parameters** are redacted by their name or by the column the SQL binds them to (compared with, set to, or
   inserted into), so `"t"."token" = $1` hides the first value. Placeholders are `$1`, `?`, `%s` (by position) and
-  `@name`, `:name`, `%(name)s` (by name). A column matches a redact key or `email`. The parser is `paramColumns` in
-  `core/src/redact-sql-params.ts`; the `params` vectors run in the TS, .NET, Go, and Python tests.
+  `@name`, `:name`, `%(name)s` (by name). A column matches a redact key, `email`, or `securitystamp` /
+  `security_stamp` (ASP.NET Identity's SecurityStamp). The parser is `paramColumns` in `core/src/redact-sql-params.ts`; the `params` vectors run in the TS, .NET, Go, and Python tests.
 
 ## Packages
 
@@ -638,8 +641,8 @@ Hub start options: `--slow-query-ms`, `--n-plus-one`, `--redact-keys`; cloud: `-
 - **Project roles:** `PUT api/orgs/:org/projects/:project/roles/:user` with `role` none, viewer, member, admin, or null.
   Only members and viewers; owners and admins keep their org role. `none` hides the project from lists, joins, apps,
   digests, and MCP. `GET api/orgs/:org` adds `projectRoles` for managers; `api/me` gives each project's `role`.
-- **Keys:** `expiresInDays` (1 to 3650) and `scopes` (ingest: traces, logs, metrics; read: api, mcp) on create;
-  `POST api/orgs/:org/keys/:key/rotate` with `graceHours` (0 to 168, default 24) returns the new secret and `oldExpiresMs`.
+- **Keys:** `expiresInDays` (1 to 3650), or `expiresMs` (an exact time after now and within 3650 days, for a picked date), and `scopes` (ingest: traces, logs, metrics; read: api, mcp) on create;
+  `POST api/orgs/:org/keys/:key/rotate` with `graceHours` (0 to 168, default 24) returns the new secret (same end date as the old key) and `oldExpiresMs`.
 - **Audit:** `GET api/orgs/:org/audit?limit=&offset=&before=&from=&action=&actor=` (`action` ending in "." is a group),
   `GET api/orgs/:org/audit/count` (`{ total }` for the same filter), `GET api/orgs/:org/audit/facets`,
   and `GET api/orgs/:org/audit/export?format=csv|json` with the same filter (plan gated).
@@ -855,6 +858,7 @@ It serves the same dashboard at `/_wizelens/`, the same read API, OTLP/HTTP, and
 | Hub URL | `HubUrl` | `hub` | `WIZELENS_HUB` (for example `http://localhost:5960`) |
 | Hub token | `HubToken` | `hubToken` | `WIZELENS_HUB_TOKEN` |
 | Project | `Project` | `project` | `WIZELENS_PROJECT` |
+| Trusted remotes | `TrustedRemotes` | `trustedRemotes` | `WIZELENS_TRUSTED_REMOTES` (comma-separated, for example `https://localhost:5099`) |
 | On or off | `Enabled` | `enabled` | `WIZELENS_ENABLED` (`true`/`1`/`on`/`yes`, `false`/`0`/`off`/`no`) |
 | Dashboard | `Dashboard` | `dashboard` | `WIZELENS_DASHBOARD` (same words) |
 | HUD on served pages | `Hud` | `hud` | `WIZELENS_HUD` (same words; default on, only while the dashboard is served) |
@@ -1052,10 +1056,22 @@ retention, and the audit log.
   A provider belongs to one organization and signs nobody in until its email domain is proven: a DNS TXT record
   `_wizelens-sso-<providerId>.<domain>` with the token from `sso/request-domain-verification`, checked by `sso/verify-domain`.
   New accounts come only for emails at exactly that domain (the sign-up gate checks it, also with `--signup invite`); they start
-  confirmed and join the organization as members. An existing account links only when its own email is confirmed. The cloud
+  confirmed and join the organization as members, on any sign-in while they are not in it (`auth/sso-join.ts`). Someone
+  removed from it, or who left, is kept out (table `sso_removed`, audit `sso.join_refused`) until they accept a new invite;
+  a pending invite is left to the invite. An existing account links only when its own email is confirmed. The cloud
   fetches OIDC settings, tokens, and keys only from origins in `--sso-origins` (SAML needs none). Removing a provider removes its
   sign-ins (trigger `sso_providers_accounts_go`). Changes are in the audit log (`sso.create`, `sso.update`, `sso.delete`,
   `sso.verify`), without secrets. SSO sign-in skips our two-step codes: the identity provider does that part.
+  **Require single sign-on** (`PATCH api/orgs/:org/sso/:provider {required}`, managers, Business, proven domain only; column
+  `sso_providers.sso_required`): non-owners at the domain lose their sessions, and password sign-in, sign-up, password reset,
+  and any session made outside the provider's routes are refused (`SSO_REQUIRED`); owners keep their password. An account
+  at the domain whose email was never confirmed is linked on its SSO sign-in (Better Auth `resolveUser`), marked confirmed,
+  and loses its password and passkeys (owners keep theirs). Audit `sso.require`. `--dns-servers` points the domain proof at
+  private DNS.
+  **Renewal** (`auth/sso-recheck.ts`, job every 5 minutes): each OIDC account with a live session renews its refresh token at
+  the provider's token endpoint (an `--sso-origins` origin; client_secret_basic or _post). `400 invalid_grant` ends all the
+  person's sessions, their OAuth grants in the provider's organization, and the stored tokens (audit `sso.signed_out`,
+  actor `system`); any other answer changes nothing. SAML sign-ins are not renewed.
 - **Leaving**: an account cannot be deleted while it is the last owner of an organization with other members. Organizations it is
   alone in are deleted with their data. An owner deletes an organization with `DELETE api/orgs/{org}` and the password.
 - **Keys** (only their SHA-256 hash is stored; the prefix tells what they are):
@@ -1088,7 +1104,7 @@ retention, and the audit log.
   is linked only when its email is confirmed and it is already a member or at the organization's proven SSO domain.
   Changes write `scim.user.*` and `scim.group.*` (actor `scim:<token id>`); tokens write `scim.token.create` and `.revoke`.
 - **Audit log**: org changes, member and invite changes (also those through Better Auth), keys, projects, shares, and every MCP tool
-  call, with who did it.
+  call, with who did it. Every role reads and exports it; each export is logged.
 
 ### Endpoints (below `/_wizelens/`)
 
@@ -1100,7 +1116,7 @@ retention, and the audit log.
 | POST / GET / PATCH / DELETE | `api/orgs`, `api/orgs/{org}` | Signed in; read: any member; name and retention: admin; delete (with `password`): owner |
 | POST / DELETE | `api/orgs/{org}/projects[/{id}]`, `…/{id}/clear` (deletes data only) | Admin |
 | POST / DELETE | `api/orgs/{org}/keys[/{id}]` | Admin. The secret is in the answer once |
-| GET | `api/orgs/{org}/audit?offset=&before=`, `…/audit/count` | Admin |
+| GET | `api/orgs/{org}/audit?offset=&before=`, `…/audit/count`, `…/audit/facets` | Any role (an auditor is often a viewer) |
 | GET | `api/info`, `api/traces`, `api/traces/{id}`, `api/services` — all with `?project=` (or `?project=all&org=`) | Member or read key. `api/traces/{id}` joins other projects (see "Traces across projects"); `project=all` reads every project the caller may (see "All projects") |
 | PATCH | `api/orgs/{org}/projects/{p}` | Admin. `{ logRetentionDays }`: 1 to 400, or null to follow the organization; more days than the plan keeps answers 402 with the plan it needs. Answers the project (with `logRetentionDays`) and writes `project.update` to the audit log |
 | POST | `api/projects/{p}/services/forget` | Admin. Forgets offline hosts; each service keeps its newest host. Answers `{ removed }` and writes `service.forget` to the audit log |
@@ -1133,7 +1149,7 @@ retention, and the audit log.
 | GET / DELETE | `api/orgs/{org}/apps[/{id}]` | Admin: every app connected in the organization, or end one |
 | GET | `api/orgs/{org}/usage` | Any member: `{ billing, plan, includedGb, maxRetentionDays, month, monthGb, days[{ day, gb, bytes, spans, logs, points }], overageUsd, projectedGb, projectedOverageUsd, spendCapUsd, blocked, reason, subscription, plans[] }` (see "Plans and billing") |
 | PATCH | `api/orgs/{org}/billing` | Owner, billing on, Team or Business: `{ spendCapUsd: whole dollars or null }` |
-| GET | `api/orgs/{org}/audit/export?format=csv\|json` | Admin, plan with audit export (402 otherwise): the whole log as a download; writes `audit.export` |
+| GET | `api/orgs/{org}/audit/export?format=csv\|json` | Any role, plan with audit export (402 otherwise): the whole log as a download; writes `audit.export`. Columns `time_utc, who, who_email, action, about, detail`: people by name and email (also former members), projects and keys by name |
 | GET / POST / DELETE | `api/orgs/{org}/scim`, `…/scim/tokens[/{id}]` | Admin: `{ allowed, plan?, baseUrl, tokens }`; a new `wl_sc_…` token is in the answer once (402 without SCIM on the plan) |
 | * | `api/auth/scim/v2/*` | SCIM 2.0 (Better Auth's SCIM plugin): `Users`, `Groups`, `ServiceProviderConfig`, `Schemas`, `ResourceTypes`, with `Authorization: Bearer wl_sc_…` (no dashboard header) |
 | * | `api/auth/subscription/*` | Better Auth's Stripe plugin, billing on: `upgrade`, `cancel`, `restore`, `list`, `billing-portal`, each with `customerType: "organization"` and `referenceId` (owner or admin); `success` (Stripe's redirect back) |
@@ -1355,9 +1371,9 @@ contain; not with HEAD), `intervalMin` (1 to 60), `timeoutMs` (1 to 60 s), `env`
   `http.response.status_code`, `wizelens.uptime.check_id`, `wizelens.uptime.check_name`, `wizelens.uptime.ok`, and with TLS
   `tls.server.not_after` and `wizelens.uptime.tls_days_left`. A failed run has status `error`, the reason as `statusMessage`, and
   an error log line (no `exception` event); a certificate within 14 days of its end (`TLS_WARN_DAYS`) adds a warn log line.
-  Runs are not app traffic: requests, services, errors, and Problems skip every span with `wizelens.uptime.check_id` (also
+  Runs are not app traffic: requests, the Traces list and its cards, services, errors, and Problems skip every span with `wizelens.uptime.check_id` (also
   runs written before as `http.server` spans). The `up` (all checks) and `up.chk` (by check id) stats feed the `uptime` page;
-  Search and Logs still find runs.
+  Search (its Spans and Logs tabs) and Logs still find runs, and a run opens by its trace link (`FACTS_VERSION` 19).
 - **Incidents**: a run that fails after a passing (or pending) one opens an incident with the reason; the next passing run closes
   it at its start. Turning a check off closes its open incident. Uptime for 24 h, 7 days, and 30 days is the share of time since
   the check was made not covered by incidents, so it does not depend on trace retention. Incidents are kept 90 days.
@@ -1418,7 +1434,9 @@ JSON of `teamMonthly`, `teamAnnual`, `businessMonthly`, `businessAnnual`, `overa
   per organization and day (`identifier: wl-<org>-<day>`, `usage_reports`), so a rerun never bills twice. When the plan ends,
   finished days are reported, then the usage subscription is canceled with a final invoice.
 - **Commands**: `wizelens-cloud stripe-setup` makes the products, prices (lookup keys `wizelens_team_monthly`, …,
-  `wizelens_gb_overage`), the meter, and the webhook, and prints the options. `wizelens-cloud plan set <org> <plan>
+  `wizelens_gb_overage`), the meter, and the webhook, sets the default customer portal (plan switches between the Team
+  and Business prices, cancel at period end, card, address, tax ID, invoices; `billing/stripe-portal.ts`), and prints the
+  options. A switch to a plan with fewer days or features asks first and lists what stops (`lossOf`). `wizelens-cloud plan set <org> <plan>
   [--gb N] [--retention-days N]` sets a plan by hand (audit actor `cli`).
 
 ### Cloud storage

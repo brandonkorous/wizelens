@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using WizeLens.Hub;
 
 namespace WizeLens.Tests;
@@ -97,6 +98,31 @@ public class SendOnlyTests
         var options = app.Services.GetRequiredService<WizeLensOptions>();
         Assert.Equal((true, false, WizeLensStorage.Memory), (options.IsEnabled, options.ServesDashboard, options.StorageKind));
         Assert.Equal(HttpStatusCode.NotFound, (await app.GetTestClient().GetAsync("/_wizelens/api/info")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Says_so_when_production_keeps_it_off_with_a_hub_set()
+    {
+        var lines = new List<string>();
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Production" });
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders().AddProvider(new LineLogger(lines));
+        builder.Services.AddWizeLens(o => o.HubUrl = "http://localhost:5970");
+        await using var app = builder.Build();
+        app.UseWizeLens();
+        await app.StartAsync();
+
+        Assert.False(app.Services.GetRequiredService<WizeLensOptions>().IsEnabled);
+        Assert.Contains(lines, l => l.Contains("Set WIZELENS_ENABLED=true", StringComparison.Ordinal));
+    }
+
+    private sealed class LineLogger(List<string> lines) : ILoggerProvider, ILogger
+    {
+        public ILogger CreateLogger(string categoryName) => this;
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) => lines.Add(formatter(state, exception));
+        public void Dispose() { }
     }
 
     [Theory]

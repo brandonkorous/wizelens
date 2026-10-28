@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Net.Http.Json;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using WizeLens.Capture;
@@ -13,6 +14,9 @@ namespace WizeLens.Web;
 internal static class WizeLensJson
 {
     public static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web);
+
+    /// <summary>For JSON shown as text (SQL params, Mongo commands): "Peña —" stays as typed, not "Peña —". The UI escapes it on render.</summary>
+    public static readonly JsonSerializerOptions Text = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 }
 
 /// <summary>Learns about downstream services from the <c>X-WizeLens-Endpoint</c> response header.</summary>

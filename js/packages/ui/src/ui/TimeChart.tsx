@@ -83,7 +83,7 @@ function Axes({ p, f, width }: { p: TimeChartProps; f: Frame; width: number }) {
   const every = Math.max(1, Math.ceil(p.starts.length / fit));
   return (
     <g>
-      {ticksOf(f.max, f.max <= 4 && Number.isInteger(f.max) ? f.max : 4).map((t) => (
+      {ticksOf(f.max, f.max <= 4 && Number.isInteger(f.max) ? f.max : undefined).map((t) => (
         <g key={t}>
           <line className="wl-chart-grid" x1={PAD.left} x2={width - PAD.right} y1={f.y(t)} y2={f.y(t)} />
           <text className="wl-chart-axis" x={PAD.left - 8} y={f.y(t) + 4} textAnchor="end">{fmt(t)}</text>

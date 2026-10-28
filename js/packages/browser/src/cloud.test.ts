@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { CLOUD_URL, cloudEndpoint, isCloudBrowserEndpoint } from "./cloud.js";
+import { CLOUD_URL, cloudEndpoint, dashboardOf, isCloudBrowserEndpoint } from "./cloud.js";
 import { createRecorder } from "./recorder.js";
 import { scriptOptions } from "./script.js";
 import { createSender } from "./sender.js";
@@ -44,4 +44,9 @@ it("reads nothing back from the cloud", async () => {
 it("starts a script tag with data-key on the cloud", () => {
   expect(scriptOptions(tag({ "data-key": KEY }))).toMatchObject({ endpoint: cloudEndpoint(KEY) });
   expect(scriptOptions(tag({ "data-key": KEY, "data-endpoint": "https://lens.example.com" }))).toMatchObject({ endpoint: cloudEndpoint(KEY, "https://lens.example.com") });
+});
+
+it("opens the cloud's dashboard from a browser key, and the endpoint's own otherwise", () => {
+  expect(dashboardOf(cloudEndpoint("wl_bk_site", "http://localhost:5970"))).toBe("http://localhost:5970/_wizelens/");
+  expect(dashboardOf("https://shop.test/_wizelens")).toBe("https://shop.test/_wizelens/");
 });

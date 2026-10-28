@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { W3CTraceContextPropagator } from "@opentelemetry/core";
-import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS, type TagRule, tagsFromOptions } from "@wizeworks/lens-core";
+import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS, envFlag, type TagRule, tagsFromOptions } from "@wizeworks/lens-core";
 import { createHandler } from "./api.js";
 import { createMiddleware } from "./capture.js";
 import { addCleanup, partsOf, registerParts, runCleanups } from "./adapters/registry.js";
@@ -22,6 +22,7 @@ import type { MetricStore } from "./metrics/store.js";
 import { SqlitePersister } from "./persist.js";
 import { createErrorMiddleware, expected, recordException, setUser, tag } from "./request-api.js";
 import { TraceStore } from "./store.js";
+import { trustedOrigins } from "./client-spans.js";
 import { hudOn, isEnabled, servesDashboard } from "./mode.js";
 import { localMapLoader } from "./sourcemaps.js";
 import { createTracing, installGlobals } from "./tracing.js";
@@ -88,7 +89,8 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const hub = connectHub(options, store, info, dashboard ? selfEndpoints : null, metrics?.store ?? null);
   const enableMcp = dashboard && !!options.enableMcp;
   const hudBundle = dashboard ? resolveHudBundle() : null;
-  const deps = { basePath, store, redactKeys, uiDir, enableMcp, mcp, info, getTrace, selfEndpoints, dashboard, sourceMaps, tags, hudBundle };
+  const trustedRemotes = trustedOrigins(options.trustedRemotes);
+  const deps = { basePath, store, redactKeys, uiDir, enableMcp, mcp, info, getTrace, selfEndpoints, trustedRemotes, dashboard, sourceMaps, tags, hudBundle };
   const handler = createHandler({ ...deps, metrics: metrics?.store ?? null });
   const capture = {
     tracer: tracing.tracer,
@@ -97,6 +99,7 @@ function buildParts(options: WizeLensOptions, basePath: string) {
     selfEndpoints,
     w3c: new W3CTraceContextPropagator(),
     captureResponseBody: !!options.captureResponseBody,
+    traceStaticFiles: options.traceStaticFiles ?? envFlag(process.env.WIZELENS_STATIC_FILES) ?? false,
     handler,
     hudTag: hudTagFor(dashboard && hudOn(options), hudBundle, basePath, undefined, { service: `${service} (browser)`, release: releaseOf(options) }),
   };

@@ -1,4 +1,4 @@
-import { isErrorSpan, isSecurityKind, type Finding, type Span, type Trace } from "@wizeworks/lens-core";
+import { displayService, isErrorSpan, isSecurityKind, spanServiceName, type Finding, type Span, type Trace } from "@wizeworks/lens-core";
 import { serviceSlot } from "../../format";
 
 /** What every span tab gets: the trace, its findings, and the selection. */
@@ -29,6 +29,7 @@ const BADGE: Partial<Record<Finding["kind"], string>> = {
   "n+1-http": "N+1",
   "slow-query": "SLOW",
   "db-wait": "WAIT",
+  "slow-page": "SLOW",
   "sql-injection": "SQLI",
   ssrf: "SSRF",
   "plain-http": "HTTP",
@@ -58,6 +59,9 @@ export function rowClass(span: Span, p: Pick<TabProps, "selected" | "highlight">
     .trim();
 }
 
-export function ServiceChip({ service, services }: { service: string; services: readonly string[] }) {
-  return <span className={`wl-chip wl-svc wl-svc-${serviceSlot(service, services)}`}>{service}</span>;
+/** A service as the rest of the dashboard names it: a browser span by its app ("Web App" when it has none). */
+export function ServiceChip({ service, trace }: { service: string; trace: Trace }) {
+  const web = service === "browser" ? trace.spans.find((s) => s.service === "browser") : undefined;
+  const shown = web ? spanServiceName(web) : displayService(service);
+  return <span className={`wl-chip wl-svc wl-svc-${serviceSlot(service, trace.services)}`}>{shown}</span>;
 }

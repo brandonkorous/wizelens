@@ -10,13 +10,14 @@ import { PlanCards } from "./BillingPlans";
 import { UsagePanel } from "./BillingUsage";
 
 /** Owners stop extra data at a monthly limit; past it, ingest pauses like the Free cap. Empty means no limit. */
-function SpendCap({ orgId, usage, reload }: { orgId: string; usage: Usage; reload: () => void }) {
+// The note lives in BillingSection: saving reloads the usage, and the new cap remounts this form.
+function SpendCap({ orgId, usage, reload, note, setNote }: { orgId: string; usage: Usage; reload: () => void; note: string | null; setNote: (n: string | null) => void }) {
   const [value, setValue] = useState(usage.spendCapUsd === null ? "" : String(usage.spendCapUsd));
-  const [note, setNote] = useState<string | null>(null);
   const save = (e: FormEvent) => {
     e.preventDefault();
     const usd = value.trim() === "" ? null : Number(value);
-    void act(() => setSpendCap(orgId, usd), reload).then((err) => setNote(err ?? "Saved."));
+    const done = usd === null ? "Saved. No limit: extra data is billed as it is used." : `Saved. Extra data stops at $${usd} a month; after that new data is refused until the 1st.`;
+    void act(() => setSpendCap(orgId, usd), reload).then((err) => setNote(err ?? done));
   };
   return (
     <Panel title="Spend cap">
@@ -46,8 +47,9 @@ function ManageBilling({ orgId }: { orgId: string }) {
 /** Owners and admins on a cloud with billing: the plan, this month's data, plans to change to, the Stripe portal, and the spend cap. */
 export function BillingSection({ org }: { org: OrgWithProjects }) {
   const { data: usage, error, reload } = useUsage(org.id);
+  const [capNote, setCapNote] = useState<string | null>(null);
   const paid = usage?.plan.id === "team" || usage?.plan.id === "business";
-  const status = usage?.subscription?.status === "past_due" ? " The last payment failed; Stripe retries it, and the plan stays until the retries end." : "";
+  const status = usage?.subscription?.status === "past_due" ? " The last payment failed. Everything keeps working while Stripe tries again. To fix it, choose Manage billing, add or pick a card that works, then press Pay failed amount." : "";
   return (
     <>
       <SectionHead
@@ -56,9 +58,14 @@ export function BillingSection({ org }: { org: OrgWithProjects }) {
         action={paid && <ManageBilling orgId={org.id} />}
       />
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
+      {paid && (
+        <p className="wl-muted wl-settings-note">
+          Manage billing opens Stripe for your card, address, and invoices. Stripe lists two subscriptions: the {usage.plan.name} plan, and extra data, billed on the 1st for any GB above the {usage.includedGb ?? 0} GB included. To stop paying, use Move to Free below; extra data alone cannot be canceled while the plan runs.
+        </p>
+      )}
       {usage && <UsagePanel usage={usage} />}
       {usage && <PlanCards usage={usage} orgId={org.id} manage />}
-      {usage && paid && org.role === "owner" && <SpendCap key={String(usage.spendCapUsd)} orgId={org.id} usage={usage} reload={reload} />}
+      {usage && paid && org.role === "owner" && <SpendCap key={String(usage.spendCapUsd)} orgId={org.id} usage={usage} reload={reload} note={capNote} setNote={setCapNote} />}
     </>
   );
 }

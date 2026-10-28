@@ -1,3 +1,4 @@
+import { PagesOnly } from "../../ui/PagesOnly";
 import { Box, Database, Gauge, TriangleAlert } from "lucide-react";
 import { percentChange, type ServicesModel } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
@@ -53,6 +54,7 @@ export function AllServices() {
     <>
       <PageHeader title="Services" subtitle="Every service and database in your stack, how healthy it is, and what it talks to." />
       <ModelState model={model} loading={loading} error={error} what="services" />
+      {model && model.summary.served === 0 && model.summary.databases === 0 && <PagesOnly views={model.meta.pageViews} what="services" />}
       {model && <ServicesBody m={model} />}
     </>
   );

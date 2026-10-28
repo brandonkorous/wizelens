@@ -39,6 +39,15 @@ internal static class HandlerSpan
         using var activity = Source.StartActivity(name, ActivityKind.Internal);
         activity?.SetTag(LayerAttribute, HandlerLayer);
         // The exception is recorded once, on the request span, so errors are not counted twice.
-        await inner(context).ConfigureAwait(false);
+        try
+        {
+            await inner(context).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // Kept for the request span: an exception page inside WizeLens answers 500 and the exception never reaches it.
+            context.Items[CaughtException.ItemKey] = ex;
+            throw;
+        }
     }
 }

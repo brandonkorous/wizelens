@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { createServer, type IncomingMessage } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
@@ -38,6 +38,17 @@ describe("vite plugin", () => {
     expect(seen).toHaveLength(0);
     await plugin.closeBundle.call({ environment: { name: "client" } });
     expect(seen).toEqual(["/_wizelens/api/sourcemaps?release=1.0.0&file=assets%2Fa.js"]);
+  });
+
+  it("deletes the maps it turned on once they are uploaded, and keeps maps the site asked for", async () => {
+    for (const [build, kept] of [[undefined, false], [{ sourcemap: true }, true]] as const) {
+      const root = folder();
+      const plugin = wizelensSourceMaps({ url, release: "1.0.1", log: () => {} });
+      plugin.config({ root, build }, { command: "build" });
+      plugin.configResolved({ root, command: "build", build: { outDir: "." } });
+      await plugin.closeBundle.call({ environment: { name: "client" } });
+      expect(existsSync(join(root, "assets", "a.js.map"))).toBe(kept);
+    }
   });
 
   it("warns instead of failing the build, unless asked", async () => {

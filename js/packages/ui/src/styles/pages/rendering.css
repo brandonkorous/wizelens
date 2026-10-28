@@ -5,3 +5,17 @@
 .wl-render-setup .wl-tabbar { margin: 4px 0 12px; }
 .wl-phases { display: flex; flex-direction: column; gap: 14px; }
 .wl-phases p { margin: 0; }
+/* By device: the view count sits under the time, and a long path breaks at its slashes and dashes, not per letter. */
+.wl-dev-cell { display: inline-flex; flex-direction: column; align-items: flex-end; white-space: nowrap; }
+.wl-break { overflow-wrap: anywhere; word-break: normal; }
+/* A route on each device: a card per device, side by side on wide screens, stacked on a phone. */
+.wl-rdev-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.wl-rdev { padding: 14px 16px; border: 1px solid var(--wl-line); border-radius: var(--wl-radius); }
+.wl-rdev-note { margin: -4px 0 14px; color: var(--wl-muted); }
+.wl-rdev h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; color: var(--wl-fg); font-size: 16px; font-weight: 650; letter-spacing: normal; text-transform: none; }
+.wl-rdev h3 small { font-size: 14px; font-weight: 500; }
+.wl-rdev p { margin: 0 0 10px; }
+.wl-rdev-steps { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 0 0 10px; }
+.wl-rdev-steps dt { color: var(--wl-muted); }
+.wl-rdev-steps dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.wl-rdev .wl-rdev-cause { margin: 0; }

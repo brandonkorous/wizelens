@@ -17,9 +17,11 @@ export interface SubscriptionInfo {
 }
 
 /** Days gone this month (at least one) and days in it, in UTC. */
-export function monthProgress(nowMs: number): { elapsed: number; total: number } {
+/** Days counted so far (at least one) and days to the month's end, both from the first day with data ("2026-10-28"), else the 1st. */
+export function monthProgress(nowMs: number, firstDay?: string): { elapsed: number; total: number } {
   const d = new Date(nowMs);
-  const start = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
+  const first = firstDay ? Date.parse(`${firstDay}T00:00:00Z`) : NaN;
+  const start = Math.max(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1), Number.isNaN(first) ? 0 : first);
   const end = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1);
   return { elapsed: Math.max(1, (nowMs - start) / DAY_MS), total: (end - start) / DAY_MS };
 }
@@ -44,7 +46,9 @@ export async function usageSummary(app: CloudApp, orgId: string) {
   const { limits } = state;
   const included = limits.includedGb;
   const days = (await usageDays(app.db, orgId, monthOf(now))).map((d) => ({ ...d, gb: round(d.bytes / BYTES_PER_GB, 4) }));
-  const { elapsed, total } = monthProgress(now);
+  // A month that started mid-way is projected from its first day with data, not from the 1st.
+  const projectedFrom = days[0]?.day ?? null;
+  const { elapsed, total } = monthProgress(now, projectedFrom ?? undefined);
   const projectedGb = (state.monthGb / elapsed) * total;
   const cost = (gb: number) => (limits.plan.overage && included !== null ? overageCents(gb - included) / 100 : 0);
   return {
@@ -53,10 +57,11 @@ export async function usageSummary(app: CloudApp, orgId: string) {
     includedGb: included,
     maxRetentionDays: limits.maxRetentionDays,
     month: monthOf(now),
-    monthGb: round(state.monthGb),
+    monthGb: round(state.monthGb, 4),
     days,
     overageUsd: round(cost(state.monthGb), 2),
-    projectedGb: round(projectedGb, 1),
+    projectedGb: round(projectedGb, 4),
+    projectedFrom,
     projectedOverageUsd: round(cost(projectedGb), 2),
     spendCapUsd: state.billing.spendCapCents === null ? null : state.billing.spendCapCents / 100,
     blocked: state.blocked,

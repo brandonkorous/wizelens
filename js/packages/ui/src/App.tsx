@@ -9,6 +9,7 @@ import { UsersPage } from "./pages/users/UsersPage";
 import { AuthGate } from "./shell/auth/AuthGate";
 import { useData, useWindowed } from "./data/hooks";
 import { useHost } from "./data/host";
+import { useZoneOnce } from "./data/notifications";
 import { useServerErrorCount } from "./data/models";
 import { applyTheme, useTheme } from "./data/prefs";
 import { useViewInUrl } from "./data/urlState";
@@ -34,6 +35,7 @@ import { UptimePage } from "./pages/uptime/UptimePage";
 import { AUTH_PAGES, type AuthPageId, legacyHref, type PageId, replaceHref, type Route, useRoute } from "./routes";
 import { releaseMissing } from "./data/release";
 import { EmailBanner } from "./shell/EmailBanner";
+import { MissedProjectBanner } from "./shell/MissedProjectBanner";
 import { UsageBanner } from "./shell/UsageBanner";
 import { Sidebar } from "./shell/Sidebar";
 import { TopBar } from "./shell/TopBar";
@@ -113,6 +115,9 @@ function PageView({ route }: { route: Route }) {
 }
 
 export function App() {
+  // On <html> above the sign-in gate, so signed-out pages and shared links follow the theme too.
+  const [theme] = useTheme();
+  useEffect(() => applyTheme(theme), [theme]);
   return (
     <AuthGate>
       <Shell />
@@ -124,9 +129,9 @@ function Shell() {
   const route = useRoute();
   const data = useData();
   const win = useWindowed();
-  const [theme] = useTheme();
   const dot = useHealthDot();
-  useEffect(() => applyTheme(theme), [theme]);
+  // Signed in on the cloud: emails use this browser's zone until the person picks one.
+  useZoneOnce(useHost().has("accounts"));
   const [zone] = useTimeZonePref();
   const [clock] = useClockPref();
   // Set before children render, so every time on the page uses the choice.
@@ -140,7 +145,7 @@ function Shell() {
   useEffect(() => {
     document.title = data.info ? `WizeLens · ${data.info.service}` : "WizeLens";
   }, [data.info]);
-  // The same number as "Total Exceptions" on the Errors page: from the host when it computes stats, else from the loaded traces.
+  // Exceptions in open error groups, from the host when it computes stats; else every exception in the loaded traces.
   const serverErrors = useServerErrorCount();
   const localErrors = useMemo(() => (serverErrors === null ? errorEvents(win.traces).length : 0), [serverErrors, win.traces]);
   const errors = serverErrors ?? localErrors;
@@ -155,6 +160,7 @@ function Shell() {
         <TopBar data={data} />
         <UpdateBanner />
         <EmailBanner />
+        <MissedProjectBanner />
         <UsageBanner />
         <main id="wl-content" className="wl-page" tabIndex={-1}>
           <PageView route={route} />

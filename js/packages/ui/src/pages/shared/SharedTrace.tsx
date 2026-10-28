@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
 import { mergeTraces, type Trace } from "@wizeworks/lens-core";
 import { apiFetch } from "../../data/api";
 import { fmtDate, fmtDateTime } from "../../format";
@@ -6,6 +6,11 @@ import { Logo } from "../../shell/Logo";
 import { Empty, Panel } from "../../ui/Panel";
 import { TraceBody } from "../trace/TraceDetailPage";
 import { SharedPage } from "./SharedPage";
+
+/** A link into the app would ask the reader to sign in: on a shared page it does nothing. */
+const stayHere = (e: MouseEvent) => {
+  if (e.target instanceof Element && e.target.closest('a[href^="#/"]')) e.preventDefault();
+};
 
 type Link = { trace: Trace; expiresMs: number } | { page: string; title: string; params: Record<string, string>; model: unknown; createdMs: number; expiresMs: number };
 
@@ -28,7 +33,7 @@ export function SharedTrace({ token }: { token: string }) {
         </span>
         <span className="wl-muted wl-small">{state ? `${what} · link works until ${fmtDate(state.expiresMs)}` : what}</span>
       </header>
-      <main className="wl-page">
+      <main className="wl-page" onClickCapture={stayHere}>
         {!state ? <Panel><Empty title={error ? "This link does not work" : "Loading…"}>{error}</Empty></Panel> : "trace" in state ? <TraceBody trace={state.trace} shared /> : <SharedPage page={state.page} params={state.params} model={state.model} />}
       </main>
     </div>

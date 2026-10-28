@@ -6,6 +6,7 @@ import { hrefTo, setQuery, traceHref, userHref } from "../../routes";
 import { Badge, CopyButton, ImpactBadge } from "../../ui/Badges";
 import { IssueActions, IssueBadge } from "../../ui/IssueControls";
 import { KeyValues, Panel } from "../../ui/Panel";
+import { useOpenFocus } from "../../ui/useOpenFocus";
 import { SECURITY_ADVICE } from "./advice";
 
 const OWASP_NAME = Object.fromEntries(OWASP_CATEGORIES.map((c) => [c.id, c.name]));
@@ -68,10 +69,11 @@ function Advisories({ group }: { group: SecurityGroup }) {
 
 export function SecurityDetail({ group, info, users, now }: { group: SecurityGroup; info: IssueInfo | undefined; users: UsersAffected | null; now: number }) {
   const advice = SECURITY_ADVICE[group.kind];
+  const title = useOpenFocus<HTMLHeadingElement>(group.key);
   return (
     <Panel className="wl-insight-detail">
       <div className="wl-side-head">
-        <h2>{group.title}</h2>
+        <h2 ref={title} tabIndex={-1}>{group.title}</h2>
         <button type="button" className="wl-icon-btn" onClick={() => setQuery({ key: null })} aria-label="Close">
           <X size={18} />
         </button>

@@ -51,6 +51,19 @@ async function invitePreview(ctx: Ctx): Promise<void> {
   sendJson(ctx.res, 200, row);
 }
 
+/** Invites waiting for the signed-in person's email, once the email is proven (confirmed, or by single sign-on). */
+async function myInvites(ctx: Ctx): Promise<void> {
+  const s = await sessionOf(ctx);
+  if (!s) return fail(401, "Sign in first.");
+  if (!s.user.emailVerified) return sendJson(ctx.res, 200, []);
+  const rows = await ctx.app.db.query<{ id: string; orgName: string; role: string; inviter: string }>(
+    `SELECT i.id, o.name AS "orgName", i.role, u.name AS inviter FROM invites i JOIN orgs o ON o.id = i.org_id JOIN users u ON u.id = i.inviter_id
+     WHERE lower(i.email) = lower($1) AND i.status = 'pending' AND i.expires_at > now() ORDER BY i.created_at DESC`,
+    [s.user.email],
+  );
+  sendJson(ctx.res, 200, rows);
+}
+
 export function meRoutes(r: Router<Ctx>): void {
-  r.on("GET", "api/me", me).on("GET", "api/invites/:id", invitePreview);
+  r.on("GET", "api/me", me).on("GET", "api/me/invites", myInvites).on("GET", "api/invites/:id", invitePreview);
 }

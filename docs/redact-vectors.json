@@ -47,6 +47,8 @@
     { "in": "installed @wizeworks/lens-core@0.3.0-alpha.13 and react@18.3.1", "out": "installed @wizeworks/lens-core@0.3.0-alpha.13 and react@18.3.1" }
   ],
   "params": [
+    { "sql": "insert into AspNetUsers (Id, ConcurrencyStamp, SecurityStamp, UserName) values ($1, $2, $3, $4)", "params": ["4db247d5", "71a4cded", ["7J3UR6J4", "IQPY4ETQ"], "zoe"], "want": ["4db247d5", "71a4cded", "[redacted]", "zoe"] },
+    { "sql": "update users set security_stamp = $1 where id = $2", "params": [["QZ7XK2M4", "LP0R9TWV"], 7], "want": ["[redacted]", 7] },
     { "sql": "select \"id\" from \"auth_sessions\" where \"auth_sessions\".\"token\" = $1 limit $2", "params": ["AIJDisnqGFxkte6iHIaCitQ357eUDfdn", 1], "want": ["[redacted]", 1] },
     { "sql": "select * from users where email = ? and age > ?", "params": ["nia@example.test", 30], "want": ["[redacted]", 30] },
     { "sql": "select * from t where note = '?' and name like %s", "params": ["Nia's"], "want": ["Nia's"] },

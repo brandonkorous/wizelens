@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using MongoDB.Bson;
 using WizeLens.Data;
+using WizeLens.Web;
 
 namespace WizeLens.MongoDB;
 
@@ -38,9 +39,9 @@ internal static class MongoQuery
         {
             if (Noise.Contains(element.Name)) continue;
             if (text.Length > 1) text.Append(',');
-            text.Append(JsonSerializer.Serialize(element.Name)).Append(':');
+            text.Append(JsonSerializer.Serialize(element.Name, WizeLensJson.Text)).Append(':');
             var isCollection = element.Name == commandName || commandName == "getMore" && element.Name == "collection";
-            if (isCollection && element.Value is BsonString name) text.Append(JsonSerializer.Serialize(name.Value));
+            if (isCollection && element.Value is BsonString name) text.Append(JsonSerializer.Serialize(name.Value, WizeLensJson.Text));
             else Write(text, element.Value);
         }
         return text.Append('}').ToString();
@@ -84,7 +85,7 @@ internal static class MongoQuery
         {
             if (!first) text.Append(',');
             first = false;
-            text.Append(JsonSerializer.Serialize(element.Name)).Append(':');
+            text.Append(JsonSerializer.Serialize(element.Name, WizeLensJson.Text)).Append(':');
             Write(text, element.Value);
         }
         text.Append('}');

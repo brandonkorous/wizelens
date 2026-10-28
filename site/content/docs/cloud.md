@@ -79,8 +79,19 @@ with audit export) follows the same filters, and is itself in the log.
 
 Owners and admins connect OIDC (Okta, Entra ID, Google, Auth0, Keycloak) or SAML 2.0 under **People & access → Single sign-on**.
 Sign-in works once you prove the email domain with a DNS TXT record; new people from that domain join as members, with a
-confirmed email, and the sign-in page shows **Sign in with SSO**. OIDC needs the provider's origin in `--sso-origins`, so
+confirmed email, and the sign-in page shows **Sign in with SSO**. Someone you remove (or who leaves) is not added back by
+their next sign-in; invite them again to let them in. OIDC needs the provider's origin in `--sso-origins`, so
 the cloud fetches from no other place. SAML needs none.
+
+Tick **Require single sign-on** on a proven provider to make it the only way in for its domain. Everyone at the domain
+except owners is signed out at once; after that a password, a passkey, a password reset, or a new password account is
+refused for them. Owners keep their password and two-step sign-in, to get in when the provider is down. Someone who made a
+password account before, and never confirmed its email, is linked on their first single sign-on, and that password ends.
+
+With OpenID Connect, the cloud renews each person's single sign-on every 5 minutes. When the provider refuses (you turned
+the person off, or their provider session ended), all their WizeLens sessions and their connected AI apps in your
+organization end, and the audit log says so. A provider that does not answer signs nobody out. SAML has no renewal: use
+SCIM, or remove the person under **People & access → Members**.
 
 Under **People & access → User sync (SCIM)**, an admin makes a token and pastes it with the SCIM base URL
 (`<public-url>/_wizelens/api/auth/scim/v2`) into Okta, Entra ID, or another identity provider. People it creates join as
@@ -312,6 +323,7 @@ keys. Every organization is unlimited, and `--retention-days` sets history as be
 | `--setup-token <text>` | `WIZELENS_CLOUD_SETUP_TOKEN` | random: the first account's token, printed at start while no account exists |
 | `--check-pwned-passwords`, `--no-check-pwned-passwords` | `WIZELENS_CLOUD_CHECK_PWNED=1\|0` | on with Postgres, off with PGlite: refuse breached passwords |
 | `--sso-origins <list>` | `WIZELENS_CLOUD_SSO_ORIGINS` | none: OIDC provider origins, comma separated, such as `https://acme.okta.com`. SAML needs none |
+| `--dns-servers <list>` | `WIZELENS_CLOUD_DNS_SERVERS` | the system's: DNS servers for the single sign-on domain proof, such as `10.0.0.2` or `127.0.0.1:5354`, when the domain is on private DNS |
 | `--stripe-secret-key <key>` | `WIZELENS_CLOUD_STRIPE_SECRET_KEY` | none: billing is off and every organization is unlimited. With it (`sk_…` or `rk_…`), plans and limits apply and new organizations start on Free |
 | `--stripe-webhook-secret <s>` | `WIZELENS_CLOUD_STRIPE_WEBHOOK_SECRET` | none; required with a Stripe key. The webhook goes to `<public-url>/_wizelens/api/auth/stripe/webhook` |
 | `--stripe-prices <json>` | `WIZELENS_CLOUD_STRIPE_PRICES` | none; required with a Stripe key. The price and meter ids `stripe-setup` prints |
@@ -319,12 +331,14 @@ keys. Every organization is unlimited, and `--retention-days` sets history as be
 To turn billing on, run `wizelens-cloud stripe-setup --stripe-secret-key sk_… --public-url https://lens.example.com`
 once. It makes the Team and Business products with monthly and yearly prices, the `wizelens_gb` meter with its
 graduated price, and the webhook (with the events `checkout.session.completed` and `customer.subscription.created`,
-`.updated`, and `.deleted`), then prints the three options to deploy with. A rerun reuses what exists. Organizations that
+`.updated`, and `.deleted`), and sets the Stripe customer portal so people can switch between Team and Business,
+cancel at the period end, and change their card and address. Then it prints the three options to deploy with. A rerun
+reuses what exists. Organizations that
 existed before billing was turned on stay unlimited until you move them.
 
 Plans charge tax through Stripe Tax: Checkout asks for the billing address and an optional business tax ID, and tax is
 added on top of the price. Before the first Checkout, add the head office address in the Stripe Dashboard (Tax >
-Settings) and save the customer portal settings once (Settings > Billing > Customer portal). `stripe-setup` says when
+Settings). `stripe-setup` says when
 Stripe Tax is not active yet. Stripe collects tax only where you add a registration; until then it tracks your sales and
 tells you when you pass a threshold.
 

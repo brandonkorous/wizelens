@@ -104,4 +104,5 @@ export const channelLabel = (c: AlertChannel): string => ({ webhook: "Webhook", 
 export const METRIC_HINTS: Partial<Record<string, string>> = {
   error_rate: "Counts requests that recorded an error, or answered 500 or more. A plain 4xx is the caller's mistake and does not count.",
   slow_queries: "Counts queries at or over the slow limit shown on Database.",
+  uptime_failing: "Counts the checks on Uptime whose newest run failed. It clears when they pass again.",
 };

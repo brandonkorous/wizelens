@@ -20,6 +20,17 @@ export function daysOf(raw: unknown): number | null {
   return n;
 }
 
+/** When the key stops: an exact time (`expiresMs`, for a date the person picked), else `expiresInDays` from now, else never. */
+export function expiryOf(body: Record<string, unknown>, at: number): number | null {
+  if (body.expiresMs === undefined || body.expiresMs === null) {
+    const days = daysOf(body.expiresInDays);
+    return days === null ? null : at + days * DAY_MS;
+  }
+  const ms = Number(body.expiresMs);
+  if (!Number.isInteger(ms) || ms <= at || ms > at + MAX_DAYS * DAY_MS) fail(400, `A key expires on a date after today and within ${MAX_DAYS} days, or never.`);
+  return ms;
+}
+
 /** Run a check that throws a message for people; the message becomes a 400. */
 function checked<T>(check: () => T, fallback: string): T {
   try {
@@ -44,8 +55,7 @@ async function newKey(ctx: Ctx): Promise<void> {
   if (ids.length === 0 || (kind !== "read" && ids.length !== 1)) fail(400, "Pick one project for an ingest or browser key, or one or more for a read key.");
   const scopes = scopesOf(kind, body.scopes);
   const origins = originsOf(kind, body.origins);
-  const days = daysOf(body.expiresInDays);
-  const expiresMs = days === null ? null : now(ctx) + days * DAY_MS;
+  const expiresMs = expiryOf(body, now(ctx));
   const name = str(body, "name", false);
   const key = await createKey(ctx.app.db, org, kind, name, ids, user.id, now(ctx), { scopes, expiresMs, origins });
   await audit(ctx.app.db, org, `user:${user.id}`, "key.create", { keyId: key.id, name, kind, projectIds: ids, scopes, expiresMs, origins }, now(ctx));

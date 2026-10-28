@@ -15,7 +15,7 @@ import { apdexNeed, apdexOverall } from "./apdex-rows.js";
 import { issueInfos, lifeNeed } from "./error-issues.js";
 import { errorGroupOf } from "./errors.js";
 import { insightIssues } from "./insights.js";
-import { aggByKey, avgs, counts, groupNeed, listNeed, listOf, rowsOf, type Series, seriesNeed, seriesOf, uniqueNeeds } from "./read.js";
+import { aggByKey, avgs, counts, groupNeed, listNeed, listOf, rowsOf, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
 import { edgeNeeds, edgesOfRows, serviceNeeds, serviceRowsOf } from "./service-rows.js";
 
 export interface TimingPart {

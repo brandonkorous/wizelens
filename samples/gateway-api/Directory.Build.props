@@ -2,5 +2,8 @@
     <Import Project="..\..\dotnet\Directory.Build.props" />
     <PropertyGroup>
         <IsPackable>false</IsPackable>
+        <!-- An app, not a library: one framework. -->
+        <TargetFrameworks></TargetFrameworks>
+        <TargetFramework>net10.0</TargetFramework>
     </PropertyGroup>
 </Project>

@@ -95,12 +95,23 @@
 @media (min-width: 721px) and (max-width: 1500px) { .wl-topbar { gap: 10px; } }
 @media (max-width: 1320px) { .wl-search-box kbd { display: none; } }
 @media (max-width: 1100px) { .wl-top-btn .wl-label, .wl-search-box kbd { display: none; } }
+.wl-menu-item.wl-phone-only { display: none; }
 @media (max-width: 720px) {
   .wl-top-btn { padding: 0 9px; }
+  .wl-icon-btn.wl-hide-phone { display: none; }
+  .wl-menu-item.wl-phone-only { display: flex; }
   .wl-top-btn > svg:last-child:not(:first-child), .wl-top-btn .wl-chip-count { display: none; }
   .wl-search-box { flex: 0 0 38px; justify-content: center; padding: 0; }
   .wl-search-box span { display: none; }
+  /* The service chip goes last, so when the buttons do not all fit it takes its own line and every button stays on screen. */
+  .wl-topbar { flex-wrap: wrap; align-content: center; row-gap: 10px; height: auto; min-height: var(--wl-topbar-h); padding-block: 14px; }
+  .wl-topbar > .wl-scope-chip { order: 1; }
+  /* A menu under a small button would open off the screen: it spans the top bar instead. */
+  .wl-topbar .wl-menu-anchor { position: static; }
+  .wl-topbar .wl-menu { left: 8px; right: 8px; min-width: 0; }
 }
+/* A 360 px phone: tighter gaps keep every top bar button on the first line. */
+@media (max-width: 380px) { .wl-topbar { gap: 2px; padding-inline: 8px; } }
 .wl-nav-saved { padding-top: 0; border-top: 1px solid var(--wl-line); flex: 0 1 auto; }
 .wl-nav-saved a { padding: 7px 14px; font-size: 14px; }
 .wl-nav-head { margin: 12px 26px 4px; color: var(--wl-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }

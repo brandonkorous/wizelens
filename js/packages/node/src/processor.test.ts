@@ -51,4 +51,14 @@ describe("StoreSpanProcessor", () => {
     expect(added.map((s) => s.attributes["service.version"])).toEqual(["2.0.0", "1.0.0", undefined]);
   });
 
+  it("drops a framework's own telemetry call, and keeps the app's calls", () => {
+    const added: Span[] = [];
+    const store = { addSpan: (s: Span) => void added.push(s) } as unknown as TraceStore;
+    const p = new StoreSpanProcessor(store, "web", []);
+    p.onEnd({ ...readable({}), name: "fetch POST https://telemetry.nextjs.org/api/v1/record" } as unknown as ReadableSpan);
+    p.onEnd(readable({ "url.full": "https://telemetry.nextjs.org/api/v1/record" }));
+    p.onEnd(readable({ "url.full": "https://api.kanninja.test/boards" }));
+    expect(added).toHaveLength(1);
+  });
+
 });

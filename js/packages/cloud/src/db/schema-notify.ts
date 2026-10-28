@@ -23,3 +23,9 @@ CREATE TABLE project_health (
   project_id TEXT NOT NULL PRIMARY KEY REFERENCES projects (id) ON DELETE CASCADE, quiet BOOLEAN NOT NULL, changed_ms DOUBLE PRECISION NOT NULL
 );
 `;
+
+// A time zone the person picked, or their browser sent once; until then the app sends the browser's zone.
+export const ZONE_SET_MIGRATION = `
+ALTER TABLE mail_prefs ADD COLUMN zone_set BOOLEAN NOT NULL DEFAULT FALSE;
+UPDATE mail_prefs SET zone_set = TRUE WHERE time_zone <> 'UTC';
+`;

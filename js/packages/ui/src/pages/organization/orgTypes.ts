@@ -24,6 +24,8 @@ export interface ApiKey {
   rotatedFrom: string | null;
   /** Browser keys: the sites whose pages may send with it. */
   origins: string[] | null;
+  /** A secret key a public page sent with: the page's site and when. The cloud refused that data. */
+  exposed?: { origin: string | null; timeMs: number } | null;
 }
 
 /** A member's or viewer's own role on one project; "none" hides the project from them. */
@@ -50,8 +52,17 @@ export interface OrgData {
   projects: Project[];
   invites: Invite[];
   keys: ApiKey[];
+  /** Revoked browser keys a site still sent with in the last 7 days. Empty for members and viewers. */
+  revokedInUse?: RevokedInUse[];
   /** Empty for members and viewers. */
   projectRoles: ProjectRoleRow[];
+}
+
+export interface RevokedInUse {
+  keyId: string;
+  name: string;
+  origin: string | null;
+  timeMs: number;
 }
 
 export const ROLE_LABEL: Record<Role, string> = { viewer: "Viewer", member: "Member", admin: "Admin", owner: "Owner" };

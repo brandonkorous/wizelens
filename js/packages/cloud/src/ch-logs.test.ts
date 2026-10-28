@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from "vitest";
-import { isLooseTraceId, type Trace } from "@wizeworks/lens-core";
+import { isListedTrace, isLooseTraceId, type Trace } from "@wizeworks/lens-core";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { CH_LIMIT, CH_URL, type ChTest, chSettle, chTest, chWrite } from "./test/ch.js";
 import { chClient } from "./telemetry/ch/http.js";
@@ -7,7 +7,7 @@ import { chClient } from "./telemetry/ch/http.js";
 const DAY = 86_400_000;
 const traces = scenarioTraces().slice(0, 33);
 const loose = traces.find((t) => isLooseTraceId(t.traceId))!;
-const traced = traces.find((t) => !isLooseTraceId(t.traceId) && t.logs.length > 0)!;
+const traced = traces.find((t) => isListedTrace(t) && t.logs.length > 0)!;
 const opened: ChTest[] = [];
 afterAll(async () => Promise.all(opened.map((t) => t.drop())));
 

@@ -9,6 +9,7 @@ import { logRows } from "../stats/logs.js";
 import { traceListItem } from "../testing/legacy/traces.js";
 import { relErr, sumKind, totalOf } from "../testing/scale-util.js";
 import { scenarioTraces } from "../testing/scenario.js";
+import { isUptimeSpan } from "../uptime/check.js";
 import { type Agg, avgOfAgg } from "./agg.js";
 import { traceFacts } from "./facts.js";
 import { histMax, histPercentile } from "./hist.js";
@@ -72,7 +73,7 @@ describe("list facts", () => {
       const f = traceFacts(t);
       const row = requestOf(t);
       expect(f.request).toEqual(row ? { ...row, findings: undefined } : null);
-      if (isLooseTraceId(t.traceId)) expect(f.trace).toBeNull();
+      if (isLooseTraceId(t.traceId) || t.spans.some(isUptimeSpan)) expect(f.trace).toBeNull();
       else expect(f.trace).toMatchObject({ ...traceListItem(t), startMs: t.startMs, spanCount: t.spanCount });
       expect(f.logs).toEqual(logRows([t]));
       expect(f.critical).toEqual(criticalSpans([t], 5));

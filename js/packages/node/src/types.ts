@@ -53,6 +53,8 @@ export interface WizeLensOptions {
   audit?: (line: string) => void;
   /** Keep the first 16 KB of text and JSON response bodies. Default false. */
   captureResponseBody?: boolean;
+  /** Trace files served as they are (images, fonts, scripts) that succeed. Default false; WIZELENS_STATIC_FILES=true turns it on. */
+  traceStaticFiles?: boolean;
   /** Send the hub the names and versions of the installed packages once at start, for the known-vulnerability check. Default true; WIZELENS_PACKAGES=false turns it off. */
   reportPackages?: boolean;
   /** Queries at or over this many ms are slow. Default 100. */
@@ -67,6 +69,8 @@ export interface WizeLensOptions {
   hub?: string;
   /** Access token for the hub. Default: the WIZELENS_HUB_TOKEN variable. */
   hubToken?: string;
+  /** Other WizeLens services on another origin that browser calls go to, like "https://localhost:5099" for an API on its own port: their part of a call joins its trace here. Default: the comma-separated WIZELENS_TRUSTED_REMOTES variable. */
+  trustedRemotes?: string[];
   /** Keep only part of the traces, for busy services. Default: all, or the WIZELENS_SAMPLE_RATE variable. */
   sampling?: SamplingOptions;
   /** Where browser stacks find their source maps: build folders and dev servers on this machine (default). False turns it off. */

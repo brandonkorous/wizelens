@@ -1,7 +1,7 @@
 // Which column each SQL parameter is bound to, so its value can be redacted by that column's name.
 
-/** Column names whose values are never kept in SQL parameters, besides the redact keys: personal data. */
-export const SQL_PARAM_KEYS: readonly string[] = ["email"];
+/** Column names whose values are never kept in SQL parameters, besides the redact keys: personal data, and ASP.NET Identity's SecurityStamp (it signs a user's sign-in cookies). */
+export const SQL_PARAM_KEYS: readonly string[] = ["email", "securitystamp", "security_stamp"];
 
 const bare = (ident: string): string => ident.replace(/[`"[\]]/g, "").split(".").pop()!.trim();
 

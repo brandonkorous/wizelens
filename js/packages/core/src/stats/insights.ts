@@ -78,7 +78,8 @@ function impactOf(kind: Hit["kind"], occurrences: number, totalMs: number, avgMs
 export function insightHits(r: RequestRow): InsightHit[] {
   const hits: InsightHit[] = [];
   for (const f of r.findings) {
-    if (f.kind === "error" || isSecurityKind(f.kind)) continue;
+    // A slow page is a route insight (Rendering), not a request one.
+    if (f.kind === "error" || f.kind === "slow-page" || isSecurityKind(f.kind)) continue;
     const shape = f.kind === "n+1-http" ? f.shape : normalizeQuery(f.shape);
     hits.push({ kind: f.kind as InsightFindingKind, shape, count: f.count, totalMs: f.totalMs, endpoint: r.endpoint, startMs: r.startMs, traceId: r.traceId });
   }

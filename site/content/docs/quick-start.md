@@ -8,9 +8,12 @@ they only send: see [Production](/docs/production/).
 
 > **Alpha:** the packages are prereleases on NuGet and npm. Expect changes between versions.
 
+> **No server?** A static site (Vite, Astro, a Next.js export, plain HTML on a CDN) needs one script tag and a browser
+> key from the cloud. See [Static sites](/docs/browser/#static-sites).
+
 ## 1. Add it to your API
 
-### ASP.NET Core (.NET 10)
+### ASP.NET Core (.NET 8, 9 or 10)
 
 ```bash
 dotnet add package WizeLens.AspNetCore --prerelease

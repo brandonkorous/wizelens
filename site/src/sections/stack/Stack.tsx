@@ -40,7 +40,7 @@ export function Stack() {
         <div className="wl-head wl-head-split">
           <h2 className="wl-h2">Works with what you already run.</h2>
           <p className="wl-lede">
-            .NET 10, Node 22.13, and React 18 or newer, plus Vue, Angular, and Svelte in the browser, and Java, Python, and
+            .NET 8, Node 22.13, and React 18 or newer, plus Vue, Angular, and Svelte in the browser, and Java, Python, and
             Go through OpenTelemetry. Anything else that speaks OpenTelemetry can send to the hub or the cloud.
           </p>
         </div>

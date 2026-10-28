@@ -26,8 +26,9 @@ export const linksOf = (deps: Pick<AuthDeps, "publicUrl">): security.SecurityLin
 
 /** One security notice to the person's address now. */
 export async function sendSecurity(deps: AuthDeps, userId: string, content: (l: security.SecurityLinks) => EmailContent, to?: string): Promise<void> {
-  const [u] = to ? [{ email: to }] : await deps.db.query<{ email: string }>("SELECT email FROM users WHERE id = $1", [userId]);
-  if (u) deps.mailer.send(renderMail(u.email, content(linksOf(deps))));
+  const [u] = await deps.db.query<{ email: string; time_zone: string | null }>("SELECT u.email, p.time_zone FROM users u LEFT JOIN mail_prefs p ON p.user_id = u.id WHERE u.id = $1", [userId]);
+  const email = to ?? u?.email;
+  if (email) deps.mailer.send(renderMail(email, content({ ...linksOf(deps), timeZone: u?.time_zone ?? undefined })));
 }
 
 /** A sign-in on a browser and system this person never used gets a notice. The first device (sign-up) does not. */

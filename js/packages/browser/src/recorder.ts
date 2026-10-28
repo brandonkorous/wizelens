@@ -3,7 +3,7 @@ import { watchLeaving } from "./fetch-failure.js";
 import { type FetchContext, patchFetch } from "./fetch-patch.js";
 import { isCloudBrowserEndpoint } from "./cloud.js";
 import type { Recorder, RecorderOptions } from "./recorder-types.js";
-import { documentRequest } from "./document-request.js";
+import { documentRequest, whenPainted } from "./document-request.js";
 import { createInstaller, createRequestStore, type RequestStore } from "./request-store.js";
 import { injectedRelease } from "./error-frames.js";
 import { createSender, type Sender, spanHome } from "./sender.js";
@@ -60,6 +60,8 @@ function showDocument(store: RequestStore, data: ServerData, delayMs: number): v
   if (!doc) return;
   store.upsert(doc);
   setTimeout(() => void data.loadServerStats(doc.traceId), delayMs);
+  // First paint can land after this runs, when the row counted DOM-ready instead: correct it then.
+  whenPainted((renderMs) => store.patch(doc.id, { renderMs }));
 }
 
 // Send queued spans before the page goes away, so a refresh does not lose them.

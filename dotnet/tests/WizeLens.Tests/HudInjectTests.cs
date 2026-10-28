@@ -110,18 +110,31 @@ public class HudInjectTests
     }
 
     [Fact]
-    public async Task Leaves_json_404_and_fragments_alone()
+    public async Task Leaves_json_a_redirect_page_and_fragments_alone()
     {
         await using var app = await StartAsync(a =>
         {
             a.MapGet("/json", () => Results.Json(new { html = Page }));
-            a.MapGet("/missing", () => Html(Page, 404));
+            a.MapGet("/moved", () => Html(Page, 302));
             a.MapGet("/fragment", () => Html("<li>one</li><li>two</li>"));
         });
         Assert.DoesNotContain("data-source", await GetAsync(app, "/json"));
-        var missing = await app.Client.GetAsync("/missing");
-        Assert.Equal((HttpStatusCode.NotFound, Page), (missing.StatusCode, await missing.Content.ReadAsStringAsync()));
+        var moved = await app.Client.GetAsync("/moved");
+        Assert.Equal((HttpStatusCode.Redirect, Page), (moved.StatusCode, await moved.Content.ReadAsStringAsync()));
         Assert.Equal("<li>one</li><li>two</li>", await GetAsync(app, "/fragment"));
+    }
+
+    [Theory]
+    [InlineData(404)]
+    [InlineData(500)]
+    public async Task Puts_the_tag_on_an_error_page(int status)
+    {
+        // eShop's developer exception page: the HUD is wanted most on the page that failed.
+        await using var app = await StartAsync(a => a.MapGet("/broken", () => Html(Page, status)));
+        var answer = await app.Client.GetAsync("/broken");
+        Assert.Equal(status, (int)answer.StatusCode);
+        var text = await answer.Content.ReadAsStringAsync();
+        Assert.Contains("data-source=\"inject\" defer></script></body>", text);
     }
 
     [Fact]

@@ -1,6 +1,7 @@
 import { evaluateAll } from "./alerts/evaluate.js";
 import type { CloudApp } from "./app.js";
 import { sendUsageNotices } from "./billing/notices.js";
+import { recheckSso } from "./auth/sso-recheck.js";
 import { pruneAuthRows } from "./repo/auth-prune.js";
 import { pruneAlertValues } from "./repo/alert-events.js";
 import { pruneServiceMinutes } from "./repo/service-minutes.js";
@@ -24,6 +25,8 @@ const UPTIME_MS = 15_000;
 const USAGE_MS = 60_000;
 const REPORT_MS = 10 * 60_000;
 const PACKAGES_MS = 5 * 60_000;
+/** How often single sign-on people are checked with their identity provider: a leaver loses access within this time. */
+const SSO_RECHECK_MS = 5 * 60_000;
 
 /** Run `job` now and then every `everyMs`. A failed run logs and waits for the next one. */
 function every(name: string, everyMs: number, job: () => Promise<unknown>): () => void {
@@ -42,7 +45,7 @@ function every(name: string, everyMs: number, job: () => Promise<unknown>): () =
   return () => (clearInterval(timer), clearTimeout(first));
 }
 
-/** Background work: retention, old services, stats, rollups, sessions, alert rules, team and health notices, digests, uptime checks, usage, and the Stripe meter. Returns a function that stops it. */
+/** Background work: retention, old services, stats, rollups, sessions, single sign-on checks, alert rules, team and health notices, digests, uptime checks, usage, and the Stripe meter. Returns a function that stops it. */
 export function startJobs(app: CloudApp): () => void {
   const now = app.config.now;
   const stops = [
@@ -56,6 +59,7 @@ export function startJobs(app: CloudApp): () => void {
     }),
     every("rollups", ROLLUP_PRUNE_MS, () => app.telemetry.pruneRollups(now())),
     every("sessions", HOUSEKEEPING_MS, () => pruneAuthRows(app.db)),
+    every("single sign-on", SSO_RECHECK_MS, () => recheckSso(app)),
     every("alerts", app.config.alertIntervalMs, () => evaluateAll(app)),
     every("alert values", HOUSEKEEPING_MS, () => pruneAlertValues(app.db, now())),
     every("team notices", NOTICE_MS, async () => {

@@ -45,7 +45,12 @@ export async function setPlan(q: Queryable, orgId: string, change: PlanChange, a
   const days = custom ? (change.retentionDays ?? before.planRetentionDays) : null;
   if (before.plan === change.plan && before.planGb === gb && before.planRetentionDays === days) return false;
   const max = limitsOf({ plan: change.plan, planGb: gb, planRetentionDays: days }, true).maxRetentionDays;
-  await q.query("UPDATE orgs SET plan = $1, plan_gb = $2, plan_retention_days = $3, retention_days = LEAST(retention_days, $4) WHERE id = $5", [change.plan, gb, days, max, orgId]);
+  const oldMax = limitsOf(before, true).maxRetentionDays;
+  // At the old plan's longest, the organization gets the new plan's longest (Business promises 90 days); a shorter choice stays.
+  await q.query(
+    "UPDATE orgs SET plan = $1, plan_gb = $2, plan_retention_days = $3, retention_days = CASE WHEN retention_days >= $6 THEN $4 ELSE LEAST(retention_days, $4) END WHERE id = $5",
+    [change.plan, gb, days, max, orgId, oldMax],
+  );
   await q.query("UPDATE projects SET log_retention_days = LEAST(log_retention_days, $1) WHERE org_id = $2 AND log_retention_days IS NOT NULL", [max, orgId]);
   if (change.plan !== "team" && change.plan !== "business") await q.query("UPDATE orgs SET spend_cap_cents = NULL WHERE id = $1", [orgId]);
   await audit(q, orgId, actor, "plan.change", { from: before.plan, plan: change.plan, ...(custom ? { gb, retentionDays: days } : {}) }, now);

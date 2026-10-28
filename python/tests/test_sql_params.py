@@ -26,3 +26,9 @@ def test_param_columns_read_every_style():
     assert param_columns("select * from users where api_key = %(k)s") == {"k": "api_key"}
     assert param_columns("INSERT INTO [Users] ([Name], [Email]) VALUES (@p0, @p1)") == {"p0": "Name", "p1": "Email"}
     assert param_columns("select * from t where a=:x and b like:y") == {"x": "a"}
+
+
+def test_params_keep_letters_as_typed():
+    # Persona #072: "Peña Ridge 2-Person Tent — 3-season" must not read "Peña ... —".
+    text = params_json(["Peña Ridge 2-Person Tent — 3-season"], SETTINGS, "update catalog set name = ?")
+    assert "Peña Ridge 2-Person Tent — 3-season" in text

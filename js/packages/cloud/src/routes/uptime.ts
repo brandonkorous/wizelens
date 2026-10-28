@@ -1,4 +1,4 @@
-import { parseCheckInput, shownHeaders, UPTIME_LIMITS, type UptimeCheck, type UptimeCheckInput, uptimeList } from "@wizeworks/lens-core";
+import { parseCheckInput, sameCheckProblem, shownHeaders, UPTIME_LIMITS, type UptimeCheck, type UptimeCheckInput, uptimeList } from "@wizeworks/lens-core";
 import type { Ctx } from "../app.js";
 import { type ProjectAccess, requireProject } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson } from "../http/http.js";
@@ -11,12 +11,14 @@ const shown = (c: UptimeCheck | undefined) => c && { ...c, headers: shownHeaders
 /** The URL as the audit log keeps it: no query string. */
 const urlOf = (url: string) => url.split("?")[0]!;
 
-/** A check from the body, with the same rules as the hub, and an address the cloud may call. */
-async function inputOf(ctx: Ctx, current?: UptimeCheckInput): Promise<UptimeCheckInput> {
+/** A check from the body, with the same rules as the hub, an address the cloud may call, and not one the project has. */
+async function inputOf(ctx: Ctx, projectId: string, current?: UptimeCheck): Promise<UptimeCheckInput> {
   const parsed = parseCheckInput(await readJsonBody(ctx.req), current);
   if (!parsed.ok) return fail(400, parsed.error);
   const problem = await checkUrlProblem(parsed.input.url, ctx.app.config.allowPrivateWebhooks);
   if (problem) fail(400, `${parsed.input.url}: ${problem}`);
+  const twin = sameCheckProblem(await listChecks(ctx.app.db, ctx.app.secrets, projectId), parsed.input, current?.id);
+  if (twin) fail(409, twin);
   return parsed.input;
 }
 
@@ -30,7 +32,7 @@ async function list(ctx: Ctx): Promise<void> {
 async function create(ctx: Ctx): Promise<void> {
   const { project, actor } = await requireProject(ctx, ctx.params.project!, "write");
   if ((await countChecks(ctx.app.db, project.id)) >= UPTIME_LIMITS.maxChecks) fail(400, `A project runs at most ${UPTIME_LIMITS.maxChecks} checks.`);
-  const input = await inputOf(ctx);
+  const input = await inputOf(ctx, project.id);
   const now = ctx.app.config.now();
   const id = await createCheck(ctx.app.db, ctx.app.secrets, project.id, input, actor, now);
   await audit(ctx.app.db, project.orgId, actor, "uptime.create", { projectId: project.id, checkId: id, name: input.name, url: urlOf(input.url) }, now);
@@ -47,7 +49,7 @@ async function writable(ctx: Ctx) {
 
 async function change(ctx: Ctx): Promise<void> {
   const { project, actor, check } = await writable(ctx);
-  const input = await inputOf(ctx, check);
+  const input = await inputOf(ctx, project.id, check);
   const now = ctx.app.config.now();
   await updateCheck(ctx.app.db, ctx.app.secrets, check, input, now);
   await audit(ctx.app.db, project.orgId, actor, "uptime.update", { projectId: project.id, checkId: check.id, name: input.name, url: urlOf(input.url), enabled: input.enabled }, now);

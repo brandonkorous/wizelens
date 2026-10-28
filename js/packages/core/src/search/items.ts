@@ -1,5 +1,4 @@
 // What a search returns per kind, and the documents of one trace, so every host searches the same things.
-import { isLooseTraceId } from "../loose.js";
 import { requestItemOf, type RequestItem, type TraceItem, traceItemOf } from "../scale/facts-lists.js";
 import { type LogRow, logRows } from "../stats/logs.js";
 import { requestOf } from "../stats/requests.js";
@@ -7,6 +6,7 @@ import type { SpanCategory, SpanKind, SpanStatus, Trace } from "../types.js";
 import type { SearchKind } from "./ast.js";
 import { logDoc, requestDoc, spanDoc, traceDoc, traceErrorTexts } from "./docs.js";
 import type { SearchDoc } from "./match.js";
+import { isListedTrace } from "../uptime/check.js";
 
 /** A span as a search result. */
 export interface SpanItem {
@@ -68,7 +68,7 @@ function requestEntries(t: Trace, env?: string): DocEntry<"requests">[] {
 /** The documents of `kind` in one trace. */
 export function docEntries<K extends SearchKind>(t: Trace, kind: K, env?: string): DocEntry<K>[] {
   if (kind === "requests") return requestEntries(t, env) as DocEntry<K>[];
-  if (kind === "traces") return isLooseTraceId(t.traceId) ? [] : [{ kind, timeMs: t.startMs, owner: "", doc: traceDoc(t, env), item: () => traceItemOf(t) as SearchItems[K] }];
+  if (kind === "traces") return !isListedTrace(t) ? [] : [{ kind, timeMs: t.startMs, owner: "", doc: traceDoc(t, env), item: () => traceItemOf(t) as SearchItems[K] }];
   if (kind === "logs") {
     return logRows([t]).map((row) => ({ kind, timeMs: row.timeMs, owner: logOwner(row), doc: logDoc(row, env), item: () => row as SearchItems[K] }));
   }

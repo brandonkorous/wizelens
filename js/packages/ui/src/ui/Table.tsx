@@ -15,6 +15,8 @@ export interface Column<T> {
   className?: string;
   /** Makes the column sortable by this value. */
   sort?: (row: T) => number | string;
+  /** Hidden on a phone, where another cell repeats what it holds. */
+  hideSm?: boolean;
 }
 
 export interface TableProps<T> {
@@ -49,7 +51,11 @@ export interface TableSelect {
 function PickBox({ checked, some = false, label, onChange }: { checked: boolean; some?: boolean; label: string; onChange: (on: boolean) => void }) {
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => void (ref.current && (ref.current.indeterminate = some && !checked)), [some, checked]);
-  return <input ref={ref} type="checkbox" className="wl-pick" checked={checked} aria-label={label} onClick={(e) => e.stopPropagation()} onChange={(e) => onChange(e.target.checked)} />;
+  return (
+    <label className="wl-pick-hit" onClick={(e) => e.stopPropagation()}>
+      <input ref={ref} type="checkbox" className="wl-pick" checked={checked} aria-label={label} onChange={(e) => onChange(e.target.checked)} />
+    </label>
+  );
 }
 
 /** The header box: every row shown, some, or none. */
@@ -93,7 +99,7 @@ function useSorted<T>(rows: readonly T[], columns: Column<T>[], sort: { key: str
 }
 
 function HeaderCell<T>({ col, sort, onSort }: { col: Column<T>; sort: { key: string; desc: boolean } | null; onSort: (key: string) => void }) {
-  const cls = col.num ? "wl-num" : undefined;
+  const cls = [col.num ? "wl-num" : "", col.hideSm ? "wl-hide-sm" : ""].join(" ").trim() || undefined;
   if (!col.sort) return <th className={cls}>{col.header}</th>;
   const active = sort?.key === col.key;
   const Arrow = active && sort?.desc ? ArrowDown : ArrowUp;
@@ -135,7 +141,7 @@ function TableBody<T>({ columns, shown, rowKey, onRowClick, selectedKey, detail,
                 <tr className={cls || undefined} {...(onRowClick ? pressable(() => onRowClick(row)) : {})}>
                   {select && <PickOne id={key} select={select} />}
                   {columns.map((c) => (
-                    <td key={c.key} className={[c.num ? "wl-num" : "", c.className ?? ""].join(" ").trim() || undefined}>
+                    <td key={c.key} className={[c.num ? "wl-num" : "", c.hideSm ? "wl-hide-sm" : "", c.className ?? ""].join(" ").trim() || undefined}>
                       {c.cell(row)}
                     </td>
                   ))}

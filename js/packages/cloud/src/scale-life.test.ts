@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isLooseTraceId } from "@wizeworks/lens-core";
+import { isListedTrace } from "@wizeworks/lens-core";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { pruneByRetention } from "./repo/trace-write.js";
 import { cloudSettling } from "./scale-exec.js";
@@ -38,7 +38,7 @@ describe("cloud stats over time", () => {
     await pruneRollups(s.db, now, true);
     const kept = traces.filter((t) => t.startMs >= now - DAY);
     expect(dropped).toBe(traces.length - kept.length);
-    expect(await count(s, "fact_traces")).toBe(kept.filter((t) => !isLooseTraceId(t.traceId)).length);
+    expect(await count(s, "fact_traces")).toBe(kept.filter(isListedTrace).length); // uptime runs are kept, not listed
     // The 5 min tier still holds days 1 and 2, so this checks the subtraction, not only the pruning.
     expect(await parity(s, kept, ["15m", "1h", "6h", "24h"])).toEqual([]);
     await s.db.close();

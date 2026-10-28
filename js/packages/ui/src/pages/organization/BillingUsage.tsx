@@ -43,14 +43,33 @@ function DayBars({ month, days }: { month: string; days: Usage["days"] }) {
   );
 }
 
-/** The month so far, the projection to month end, and what extra data costs. */
+/** The 1st of the month after `month` ("2026-10"), when extra data is billed. */
+const firstOfNext = (month: string) => {
+  const [y, m] = month.split("-").map(Number) as [number, number];
+  return new Date(Date.UTC(y, m, 1)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+};
+
+/** " (at the rate since Oct 28)" when this month's data started after the 1st. */
+const since = (day: string | null) =>
+  day && !day.endsWith("-01") ? ` (at the rate since ${new Date(`${day}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })})` : "";
+
+/** The next two charges, each with its date: extra data on the 1st, the plan on its renewal day. */
+function chargeFacts(usage: Usage): [string, string][] {
+  const sub = usage.subscription;
+  const price = sub?.interval === "year" ? usage.plan.annualUsd : usage.plan.monthlyUsd;
+  const out: [string, string][] = [];
+  if (usage.plan.overage) out.push(["Extra data so far", fmtUsd(usage.overageUsd)], [`Projected extra data, billed ${firstOfNext(usage.month)}`, fmtUsd(usage.projectedOverageUsd)]);
+  if (sub?.periodEndMs && sub.cancelAtPeriodEnd) out.push(["Plan ends", fmtDate(sub.periodEndMs)]);
+  else if (sub?.periodEndMs && price !== null) out.push([`${usage.plan.name} plan, billed ${fmtDate(sub.periodEndMs)}`, fmtUsd(price)]);
+  return out;
+}
+
+/** The month so far, the projection to month end, and the coming charges. */
 export function UsagePanel({ usage }: { usage: Usage }) {
   const extra = usage.plan.overage;
-  const sub = usage.subscription;
   const facts: [string, string][] = [
-    ["Projected by month end", `${fmtGb(usage.projectedGb)}${!extra && usage.includedGb !== null && usage.projectedGb > usage.includedGb ? ` (stops at ${fmtGb(usage.includedGb)})` : ""}`],
-    ...(extra ? ([["Extra data so far", fmtUsd(usage.overageUsd)], ["Projected extra data", fmtUsd(usage.projectedOverageUsd)]] as [string, string][]) : []),
-    ...(sub?.periodEndMs ? ([[sub.cancelAtPeriodEnd ? "Plan ends" : "Renews", fmtDate(sub.periodEndMs)]] as [string, string][]) : []),
+    [`Projected by month end${since(usage.projectedFrom)}`, `${fmtGb(usage.projectedGb)}${!extra && usage.includedGb !== null && usage.projectedGb > usage.includedGb ? ` (stops at ${fmtGb(usage.includedGb)})` : ""}`],
+    ...chargeFacts(usage),
   ];
   return (
     <Panel title={`Usage in ${monthName(usage.month)}`}>

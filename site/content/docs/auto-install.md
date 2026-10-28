@@ -36,6 +36,8 @@ graphql 16's ES build, and `import "node:sqlite"`. Node 22.15 and newer have the
 
 ## ASP.NET Core
 
+The startup hook is built for .NET 10. On .NET 8 or 9, add the `WizeLens.AspNetCore` package instead ([ASP.NET Core](/docs/aspnet-core/)).
+
 ```bash
 DOTNET_STARTUP_HOOKS=/opt/wizelens/dotnet/WizeLens.AutoInstrumentation.dll dotnet MyApp.dll
 ```

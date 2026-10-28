@@ -25,8 +25,8 @@ internal static class TraceBuilder
             RootName = root?.Name ?? "",
             RootMethod = root?.Attr("http.request.method"),
             RootUrl = root?.Attr("url.path") ?? root?.Attr("url.full"),
-            RootStatusCode = root?.Attributes.GetValueOrDefault("http.response.status_code") is { } code
-                && AttributeValue.AsDouble(code) is { } number ? (int)number : null,
+            // A page load's root is the browser's page view, which has no status: the page's server span has it.
+            RootStatusCode = StatusOf(root) ?? StatusOf(RequestParts.EntryServerSpan(spanList)),
             Service = root?.Service ?? logList.FirstOrDefault()?.Service ?? "",
             SpanCount = spanList.Count,
             DbCount = spanList.Count(s => s.Category == SpanCategories.Db),
@@ -61,4 +61,7 @@ internal static class TraceBuilder
             .Select(g => g.First());
         return Build(traceId, list.SelectMany(t => t.Spans), logs, list.SelectMany(t => t.Remotes));
     }
+
+    private static int? StatusOf(Span? span) =>
+        span?.Attributes.GetValueOrDefault("http.response.status_code") is { } code && AttributeValue.AsDouble(code) is { } number ? (int)number : null;
 }

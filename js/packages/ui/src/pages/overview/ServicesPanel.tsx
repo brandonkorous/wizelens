@@ -23,6 +23,7 @@ function columns(range: TimeRange | null): Column<ServiceRow>[] {
     {
       key: "name",
       header: "Service",
+      className: "wl-fill",
       cell: (s) => {
         const Icon = KIND_ICON[s.kind];
         return (

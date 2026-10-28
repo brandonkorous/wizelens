@@ -8,6 +8,7 @@ import { Empty, KeyValues, Panel } from "../../ui/Panel";
 import { TimeChart } from "../../ui/TimeChart";
 import { KIND_LABEL, KindName, serviceHref, StatusText } from "./serviceParts";
 import { blankInGaps, useSendGaps } from "./useSendGaps";
+import { useOpenFocus } from "../../ui/useOpenFocus";
 
 function EndpointList({ items, row }: { items: EndpointStat[]; row: ServiceRow }) {
   const kind = row.kind;
@@ -66,9 +67,10 @@ function EdgeList({ title, edges, side }: { title: string; edges: ServiceEdge[];
 export function ServiceDetail({ detail, window }: { detail: ServiceDetailModel; window: TimeWindow }) {
   const { row, endpoints: items, incoming, outgoing } = detail;
   const gaps = useSendGaps(row.name, window);
+  const heading = useOpenFocus<HTMLHeadingElement>(row.key);
   const title = (
     <div className="wl-side-head">
-      <h2><KindName row={row} /></h2>
+      <h2 ref={heading} tabIndex={-1}><KindName row={row} /></h2>
       <button type="button" className="wl-icon-btn" onClick={() => setQuery({ service: null })} aria-label="Close details"><X size={18} /></button>
     </div>
   );

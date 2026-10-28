@@ -25,10 +25,15 @@ export const OPERATIONS = ["SELECT", "INSERT", "UPDATE", "DELETE", "OTHER"] as c
 export type Operation = (typeof OPERATIONS)[number];
 
 const TABLE_RE = /\b(?:FROM|INTO|UPDATE|JOIN)\s+["`[]?([\w.]+)/i;
+/** Leading comments and session SETs are skipped: EF Core on SQL Server starts every save with "SET NOCOUNT ON;". */
+const VERB_RE = /^\s*(?:--[^\n]*\n\s*)*(?:SET\s[^;]*;\s*)*(\w+)/i;
+
+/** The statement's first verb, upper-case ("INSERT"); undefined for empty SQL. */
+export const sqlVerb = (sql: string): string | undefined => VERB_RE.exec(sql)?.[1]?.toUpperCase();
 
 /** SELECT, INSERT, UPDATE, DELETE, or OTHER, from db.operation.name or the first SQL word. NoSQL commands map to the closest one. */
 export function operationOf(span: Span): Operation {
-  const raw = span.attributes["db.operation.name"] ?? /^\s*(\w+)/.exec(queryText(span))?.[1] ?? "";
+  const raw = span.attributes["db.operation.name"] ?? sqlVerb(queryText(span)) ?? "";
   if (isNoSqlSpan(span)) return noSqlOperation(String(raw));
   const op = String(raw).toUpperCase();
   return (OPERATIONS as readonly string[]).includes(op) ? (op as Operation) : "OTHER";

@@ -58,12 +58,24 @@ export function ModeBadge() {
 const NEXT: Record<Theme, Theme> = { light: "dark", dark: "system", system: "light" };
 const THEME_ICON = { light: Sun, dark: Moon, system: Monitor };
 
-export function ThemeToggle() {
+/** `className` "wl-hide-phone" when the account menu carries the theme on phones (see ThemeItem). */
+export function ThemeToggle({ className = "" }: { className?: string }) {
   const [theme, setTheme] = useTheme();
   const Icon = THEME_ICON[theme];
   return (
-    <button type="button" className="wl-icon-btn" onClick={() => setTheme(NEXT[theme])} title={`Theme: ${theme}. Click for ${NEXT[theme]}.`} aria-label={`Theme: ${theme}`}>
+    <button type="button" className={`wl-icon-btn ${className}`.trim()} onClick={() => setTheme(NEXT[theme])} title={`Theme: ${theme}. Click for ${NEXT[theme]}.`} aria-label={`Theme: ${theme}`}>
       <Icon size={20} aria-hidden="true" />
+    </button>
+  );
+}
+
+/** The theme in the account menu, on phones only: the top bar has no room for its own button there. */
+export function ThemeItem() {
+  const [theme, setTheme] = useTheme();
+  const Icon = THEME_ICON[theme];
+  return (
+    <button type="button" className="wl-menu-item wl-phone-only" onClick={() => setTheme(NEXT[theme])}>
+      <Icon size={16} aria-hidden="true" /> Theme: {theme} (tap for {NEXT[theme]})
     </button>
   );
 }

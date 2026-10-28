@@ -29,7 +29,7 @@ public static partial class QueryShape
     public static string Fingerprint(string raw)
     {
         var hash = HMACSHA256.HashData(Secret, Encoding.UTF8.GetBytes(raw));
-        return Convert.ToHexStringLower(hash.AsSpan(0, 8));
+        return Hex.Lower(hash.AsSpan(0, 8));
     }
 
     /// <summary>The <c>wizelens.db.parameters</c> JSON for a query whose values are hidden: <c>{"fingerprint":"…"}</c>, or <c>{}</c>.</summary>

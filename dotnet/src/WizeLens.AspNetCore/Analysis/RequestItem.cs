@@ -54,6 +54,21 @@ public static class RequestItems
         return double.IsNaN(parsed) || parsed == 0 ? null : parsed;
     }
 
+    private static bool Num(Span? span, string key, out double value)
+    {
+        var ok = JsText.IsNumber(AttributeValue.Normalize(span?.Attributes.GetValueOrDefault(key)), out value) && double.IsFinite(value);
+        value = Math.Max(0, value);
+        return ok;
+    }
+
+    // A full page load (a server page, not a fetch): first paint from navigation start, and render from the first byte, as the HUD counts them.
+    private static (double PaintMs, double RenderMs)? PageLoadOf(Trace t)
+    {
+        var view = t.Spans.FirstOrDefault(s => RequestParts.BrowserTypeOf(s) == "pageview" && Str(s, "wizelens.browser.navigation") == "load");
+        if (!Num(view, "wizelens.page.fcp_ms", out var paint) || !Num(view, "wizelens.page.ttfb_ms", out var ttfb)) return null;
+        return (paint, Math.Max(0, paint - ttfb));
+    }
+
     /// <summary>The request row of a trace, or null when the trace is not a request (a page view, a job).</summary>
     public static RequestItem? Of(Trace t)
     {
@@ -62,9 +77,11 @@ public static class RequestItems
         if (server is null && fetch is null) return null;
         var db = t.Spans.Where(s => s.Category == SpanCategories.Db).ToList();
         var clients = t.Spans.Where(s => s.Category == SpanCategories.HttpClient).ToList();
-        var render = AttributeValue.Normalize(fetch?.Attributes.GetValueOrDefault("wizelens.browser.render_ms"));
-        double? renderMs = JsText.IsNumber(render, out var r) && double.IsFinite(r) ? Math.Max(0, r) : null;
-        var totalMs = fetch is not null ? fetch.DurationMs + (renderMs ?? 0) : t.DurationMs;
+        var load = fetch is null ? PageLoadOf(t) : null;
+        double? renderMs = fetch is not null ? (Num(fetch, "wizelens.browser.render_ms", out var r) ? r : null) : load?.RenderMs;
+        var totalMs = fetch is not null ? fetch.DurationMs + (renderMs ?? 0) : load is { } l ? Math.Max(l.PaintMs, server?.DurationMs ?? 0) : t.DurationMs;
+        var networkMs = server is null ? (double?)null : fetch is not null ? Math.Max(0, fetch.DurationMs - server.DurationMs)
+            : load is { } v ? Math.Max(0, v.PaintMs - v.RenderMs - server.DurationMs) : null;
         var errors = t.Spans.Count(RequestParts.IsErrorSpan);
         var insights = RequestParts.InsightCount(t);
         var (method, path, endpoint) = IdentityOf(server, fetch);
@@ -75,7 +92,7 @@ public static class RequestItems
             t.TraceId, fetch?.StartMs ?? server?.StartMs ?? t.StartMs, method, path, endpoint, status, expected,
             AttributeValue.Normalize(server?.Attributes.GetValueOrDefault("wizelens.request.aborted")) is true,
             totalMs, server?.DurationMs, RequestParts.BusyMs(db), db.Count, clients.Count, RequestParts.BusyMs(clients), renderMs,
-            fetch is not null && server is not null ? Math.Max(0, fetch.DurationMs - server.DurationMs) : null,
+            networkMs,
             server?.Service ?? "browser", [.. t.Services], errors, insights, RequestParts.HealthOf(status, expected, errors > 0, totalMs, insights),
             Str(server, "user_agent.original"), Str(server, "client.address"), Str(server, "enduser.id"), Str(server, "wizelens.request.id"), TagsOf(server));
     }

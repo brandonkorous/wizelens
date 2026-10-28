@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { Cloud } from "../server.js";
-import { Client, invite, joinWithInvite, type Me, setupOwner, startCloud } from "../test/cloud.js";
+import { Client, invite, joinWithInvite, type Me, PASSWORD, setupOwner, startCloud } from "../test/cloud.js";
 import { type IdpUser, startIdp } from "../test/idp.js";
+import { recheckSso } from "./sso-recheck.js";
 
 let cloud: Cloud;
 let idp: Awaited<ReturnType<typeof startIdp>> | undefined;
@@ -80,6 +81,34 @@ describe("signing in with SSO", () => {
     expect(actions.map((a) => a.action)).toEqual(expect.arrayContaining(["sso.create", "member.join"]));
   });
 
+});
+
+describe("SSO with invites and removals", () => {
+  it("leaves an invited person to their invite, and shows it to them once the email is proven", async () => {
+    const { url, owner, orgId } = await withIdp({ sub: "u3", email: "sam@acme.io", name: "Sam" });
+    expect((await invite(owner, orgId, "sam@acme.io", "viewer")).length).toBeGreaterThan(0);
+    const { c } = await ssoSignIn(url, "sam@acme.io");
+    expect((await c.call<Me>("GET", "api/me")).body.orgs).toEqual([]);
+    expect((await c.call<{ orgName: string; role: string }[]>("GET", "api/me/invites")).body).toEqual([expect.objectContaining({ role: "viewer" })]);
+    await cloud.app.db.query("UPDATE users SET email_verified = FALSE WHERE email = 'sam@acme.io'");
+    expect((await c.call<unknown[]>("GET", "api/me/invites")).body).toEqual([]);
+  });
+
+  it("does not add back a person an owner removed, until they accept a new invite", async () => {
+    const { url, owner, orgId } = await withIdp({ sub: "u4", email: "sam@acme.io", name: "Sam" });
+    await ssoSignIn(url, "sam@acme.io");
+    expect((await owner.call("POST", "api/auth/organization/remove-member", { memberIdOrEmail: "sam@acme.io", organizationId: orgId })).status).toBe(200);
+    const { c } = await ssoSignIn(url, "sam@acme.io");
+    expect((await c.call<Me>("GET", "api/me")).body.orgs).toEqual([]);
+    const refused = await cloud.app.db.query("SELECT 1 FROM audit WHERE org_id = $1 AND action = 'sso.join_refused'", [orgId]);
+    expect(refused.length).toBe(1);
+    const id = await invite(owner, orgId, "sam@acme.io", "viewer");
+    expect((await c.call("POST", "api/auth/organization/accept-invitation", { invitationId: id })).status).toBe(200);
+    await ssoSignIn(url, "sam@acme.io");
+    expect((await c.call<Me>("GET", "api/me")).body.orgs.map((o) => [o.id, o.role])).toEqual([[orgId, "viewer"]]);
+    expect((await cloud.app.db.query("SELECT 1 FROM sso_removed")).length).toBe(0);
+  });
+
   it("makes no account for an email outside the provider's domain", async () => {
     const { url } = await withIdp({ sub: "u2", email: "eve@evil.io", name: "Eve" });
     const { c } = await ssoSignIn(url, "sam@acme.io");
@@ -95,5 +124,58 @@ describe("signing in with SSO", () => {
     expect((await cloud.app.db.query("SELECT 1 FROM accounts WHERE provider_id = 'acme'")).length).toBe(0);
     const actions = await cloud.app.db.query<{ action: string }>("SELECT action FROM audit WHERE org_id = $1", [orgId]);
     expect(actions.map((a) => a.action)).toContain("sso.delete");
+  });
+});
+
+describe("requiring single sign-on for a domain", () => {
+  it("refuses passwords at the domain, signs people out, and keeps the owner's way back in", async () => {
+    const { url, owner, orgId } = await withIdp({ sub: "u1", email: "sam@acme.io", name: "Sam" });
+    const vic = await joinWithInvite(url, await invite(owner, orgId, "vic@acme.io", "member"), "vic@acme.io");
+    expect((await vic.call("PATCH", `api/orgs/${orgId}/sso/acme`, { required: true })).status).toBe(403);
+    const on = await owner.call<{ signedOut: number }>("PATCH", `api/orgs/${orgId}/sso/acme`, { required: true });
+    expect([on.status, on.body.signedOut]).toEqual([200, 1]);
+    expect((await vic.call<Me>("GET", "api/me")).body.signedIn).toBe(false);
+    const again = await new Client(url).call<{ message: string }>("POST", "api/auth/sign-in/email", { email: "vic@acme.io", password: PASSWORD });
+    expect([again.status, again.body.message]).toEqual([403, expect.stringMatching(/People at acme.io sign in with single sign-on/)]);
+    expect((await new Client(url).call("POST", "api/auth/sign-up/email", { email: "new@acme.io", password: PASSWORD, name: "New" })).status).toBe(403);
+    expect((await new Client(url).call("POST", "api/auth/request-password-reset", { email: "vic@acme.io" })).status).toBe(403);
+    expect((await new Client(url).call("POST", "api/auth/sign-in/email", { email: "owner@acme.io", password: PASSWORD })).status).toBe(200);
+    expect((await ssoSignIn(url, "sam@acme.io")).status).toBe(302);
+    expect((await owner.call<{ providerId: string; required: boolean }[]>("GET", `api/orgs/${orgId}/sso`)).body).toEqual([{ providerId: "acme", required: true }]);
+    const lines = await cloud.app.db.query<{ detail: string }>("SELECT detail FROM audit WHERE org_id = $1 AND action = 'sso.require'", [orgId]);
+    expect(JSON.parse(lines[0]!.detail)).toMatchObject({ domain: "acme.io", required: true, signedOut: 1 });
+  });
+
+  it("links an account whose email was never confirmed, and ends its unproven password", async () => {
+    const { url, owner, orgId } = await withIdp({ sub: "u2", email: "vic@acme.io", name: "Vic" });
+    await joinWithInvite(url, await invite(owner, orgId, "vic@acme.io", "member"), "vic@acme.io");
+    await cloud.app.db.query("UPDATE users SET email_verified = FALSE WHERE email = 'vic@acme.io'");
+    const signedIn = async () => (await (await ssoSignIn(url, "vic@acme.io")).c.call<Me>("GET", "api/me")).body.signedIn;
+    expect(await signedIn()).toBe(false);
+    expect((await owner.call("PATCH", `api/orgs/${orgId}/sso/acme`, { required: true })).status).toBe(200);
+    expect(await signedIn()).toBe(true);
+    const ways = await cloud.app.db.query<{ provider_id: string }>("SELECT a.provider_id FROM accounts a JOIN users u ON u.id = a.user_id WHERE u.email = 'vic@acme.io'");
+    expect(ways.map((w) => w.provider_id)).toEqual(["acme"]);
+  });
+
+  it("needs the domain proven first", async () => {
+    const { owner, orgId } = await withIdp({ sub: "u1", email: "sam@acme.io", name: "Sam" }, false);
+    expect((await owner.call("PATCH", `api/orgs/${orgId}/sso/acme`, { required: true })).status).toBe(409);
+  });
+});
+
+describe("a person their identity provider turned off", () => {
+  it("is signed out at the next check, and kept signed in while the provider is down", async () => {
+    const { url, orgId } = await withIdp({ sub: "u-9", email: "vic@acme.io", name: "Vic" });
+    const { c } = await ssoSignIn(url, "vic@acme.io");
+    const signedIn = async () => (await c.call<Me>("GET", "api/me")).body.signedIn;
+    expect([await recheckSso(cloud.app), await signedIn()]).toEqual([0, true]);
+    idp!.setMode("down");
+    expect([await recheckSso(cloud.app), await signedIn()]).toEqual([0, true]);
+    idp!.setMode("disabled");
+    expect([await recheckSso(cloud.app), await signedIn()]).toEqual([1, false]);
+    expect(await recheckSso(cloud.app)).toBe(0);
+    const [line] = await cloud.app.db.query<{ actor: string; detail: string }>("SELECT actor, detail FROM audit WHERE org_id = $1 AND action = 'sso.signed_out'", [orgId]);
+    expect([line?.actor, JSON.parse(line?.detail ?? "{}").sessions]).toEqual(["system", 1]);
   });
 });

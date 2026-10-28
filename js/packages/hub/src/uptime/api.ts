@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { parseCheckInput, shownHeaders, UPTIME_LIMITS, type UptimeCheck, uptimeList } from "@wizeworks/lens-core";
+import { parseCheckInput, sameCheckProblem, shownHeaders, UPTIME_LIMITS, type UptimeCheck, uptimeList } from "@wizeworks/lens-core";
 import { sendJson } from "@wizeworks/lens-node/kit";
 import type { ApiContext } from "../api.js";
 import { parseJson, readBody } from "../body.js";
@@ -35,6 +35,8 @@ async function create(c: ApiContext, req: IncomingMessage, res: ServerResponse):
   const parsed = parseCheckInput(body);
   if (!parsed.ok) return sendJson(res, 400, { error: parsed.error });
   const project = typeof body.project === "string" ? body.project.slice(0, 100) : "";
+  const twin = sameCheckProblem(listChecks(db, project), parsed.input);
+  if (twin) return sendJson(res, 409, { error: twin });
   const id = createCheck(db, project, parsed.input, c.o.now());
   sendJson(res, 201, shown(checkById(db, id)));
 }
@@ -45,6 +47,8 @@ async function change(c: ApiContext, id: string, req: IncomingMessage, res: Serv
   if (!current) return sendJson(res, 404, { error: "Check not found." });
   const parsed = parseCheckInput(await bodyOf(req), current);
   if (!parsed.ok) return sendJson(res, 400, { error: parsed.error });
+  const twin = sameCheckProblem(listChecks(db, current.project), parsed.input, id);
+  if (twin) return sendJson(res, 409, { error: twin });
   updateCheck(db, current, parsed.input, c.o.now());
   sendJson(res, 200, shown(checkById(db, id)));
 }

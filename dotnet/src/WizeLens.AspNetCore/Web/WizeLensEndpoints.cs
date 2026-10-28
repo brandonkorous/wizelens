@@ -22,7 +22,8 @@ internal static partial class WizeLensEndpoints
     public static void Map(IEndpointRouteBuilder endpoints, WizeLensOptions options)
     {
         var group = endpoints.MapGroup(options.NormalizedBasePath).ExcludeFromDescription();
-        group.MapPost(ClientSpansPath, AddClientSpansAsync);
+        var trusted = ClientRemote.Origins(options.TrustedRemotes);
+        group.MapPost(ClientSpansPath, (HttpContext context, TraceStore store) => AddClientSpansAsync(context, store, trusted));
         // Send-only: nothing here can be read, so traces never leave the service except to the hub.
         if (!options.ServesDashboard) return;
         group.MapGet("api/info", ServiceInfo.Create);
@@ -51,7 +52,7 @@ internal static partial class WizeLensEndpoints
         return trace is null ? Results.NotFound() : Results.Json(trace, WizeLensJson.Options);
     }
 
-    private static async Task<IResult> AddClientSpansAsync(HttpContext context, TraceStore store)
+    private static async Task<IResult> AddClientSpansAsync(HttpContext context, TraceStore store, IReadOnlySet<string> trusted)
     {
         ClientSpansRequest? body;
         try
@@ -68,7 +69,7 @@ internal static partial class WizeLensEndpoints
         {
             if (!Normalize(span, offset)) continue;
             store.AddSpan(WizeLensRuntime.Redactor.Redact(span));
-            var remote = ClientRemote.Of(span, origin);
+            var remote = ClientRemote.Of(span, origin, trusted);
             if (remote is not null) store.AddRemote(span.TraceId, remote);
         }
         ClientLogs.Add(store, body?.Logs, offset);

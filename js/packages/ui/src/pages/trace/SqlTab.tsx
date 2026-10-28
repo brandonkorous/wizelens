@@ -36,7 +36,7 @@ export function SqlTab(props: TabProps) {
           <li key={s.spanId} className={`wl-sql-item ${rowClass(s, props)}`} {...pressable(() => onSelect(s.spanId))}>
             <div className="wl-sql-meta">
               <span className="wl-muted">#{i + 1}</span>
-              <ServiceChip service={s.service} services={trace.services} />
+              <ServiceChip service={s.service} trace={trace} />
               <span className="wl-muted">{String(s.attributes["db.system.name"] ?? "")}</span>
               {s.attributes["wizelens.db.adapter"] != null && <span className="wl-muted">via {String(s.attributes["wizelens.db.adapter"])}</span>}
               <FindingBadges kinds={badges.get(s.spanId)} />

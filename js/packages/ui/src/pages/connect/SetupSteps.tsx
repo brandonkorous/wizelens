@@ -1,35 +1,29 @@
 import { useState } from "react";
 import type { ServiceInfo } from "@wizeworks/lens-core";
 import { hrefTo } from "../../routes";
-import { CopyButton } from "../../ui/Badges";
 import { Panel } from "../../ui/Panel";
 import { AddButton, SectionHead } from "../../ui/Sections";
 import { canManage } from "../organization/orgTypes";
 import type { OrgCtx } from "../organization/useOrg";
 import { KeyForm, SENDING } from "./KeyForm";
-
-function Snippet({ label, text }: { label: string; text: string }) {
-  return (
-    <div className="wl-snippet">
-      <span className="wl-muted wl-small">{label}</span>
-      <code className="wl-mono wl-small">{text}</code>
-      <CopyButton text={text} label={`Copy: ${label}`} />
-    </div>
-  );
-}
+import { hereUrl, Snippet } from "./Snippet";
 
 /** Without a release, errors, release markers, and version compares have nothing to name; the add-on reads it from this variable. */
 const ReleaseSnippet = () => <Snippet label="Its release, such as the git commit (errors and release markers name it)" text="WIZELENS_RELEASE=$GIT_SHA" />;
 // The environment picker lists what each service reports: the framework's own setting, as the docs say.
-const EnvSnippet = () => <Snippet label="Its environment (Node: NODE_ENV; .NET: ASPNETCORE_ENVIRONMENT; OpenTelemetry: deployment.environment.name)" text="NODE_ENV=production" />;
+const EnvSnippet = () => (
+  <>
+    <Snippet label="Its environment (Node: NODE_ENV; .NET: ASPNETCORE_ENVIRONMENT; OpenTelemetry: deployment.environment.name)" text="NODE_ENV=production" />
+    <Snippet label="In production the add-on is off until this is set; then it sends only and serves no dashboard" text="WIZELENS_ENABLED=true" />
+  </>
+);
 
 /** The last step on every host: restart, then find the service on the Services page. */
-function RestartStep({ n, cloud }: { n: number; cloud: boolean }) {
+function RestartStep({ n }: { n: number }) {
   return (
     <Panel title={`${n}. Restart the service`}>
       <p className="wl-settings-note">
         It shows on the <a href={hrefTo("services")}>Services</a> page within a minute.
-        {cloud && " In production, also set WIZELENS_ENABLED=true: the service then sends only and serves nothing."}
       </p>
     </Panel>
   );
@@ -48,7 +42,7 @@ function HubSteps({ hubUrl }: { hubUrl: string }) {
         <Snippet label="Any OpenTelemetry app (OTLP/HTTP)" text={`OTEL_EXPORTER_OTLP_ENDPOINT=${hubUrl}`} />
         <Snippet label="OTLP project (optional)" text="OTEL_RESOURCE_ATTRIBUTES=service.namespace=my-project" />
       </Panel>
-      <RestartStep n={2} cloud={false} />
+      <RestartStep n={2} />
     </>
   );
 }
@@ -84,7 +78,7 @@ function CloudSteps({ url, ctx }: { url: string; ctx: OrgCtx | null }) {
         <Snippet label="Any OpenTelemetry app (OTLP/HTTP)" text={`OTEL_EXPORTER_OTLP_ENDPOINT=${url}`} />
         <Snippet label="OTLP key" text="OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer wl_ik_..." />
       </Panel>
-      <RestartStep n={3} cloud />
+      <RestartStep n={3} />
     </>
   );
 }
@@ -109,7 +103,7 @@ function SendsToHub({ hub }: { hub: string }) {
 
 /** The steps to send a service's data here: a hub needs its address, the cloud a key too; in-app, where it sends. */
 export function SetupSteps({ info, ctx }: { info: ServiceInfo | null; ctx: OrgCtx | null }) {
-  const base = new URL("../", window.location.href).href.replace(/\/$/, "");
+  const base = hereUrl();
   if (info?.mode === "hub") return <HubSteps hubUrl={base} />;
   if (info?.mode === "cloud") return <CloudSteps url={base} ctx={ctx} />;
   return info?.hub ? <SendsToHub hub={info.hub} /> : null;

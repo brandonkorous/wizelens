@@ -47,7 +47,7 @@ export function TopBar({ data }: { data: DataSnapshot }) {
       <SaveView />
       <SharePage />
       <Notifications traces={data.traces} now={data.updatedMs} />
-      <ThemeToggle />
+      <ThemeToggle className={projects ? "wl-hide-phone" : ""} />
       {projects && <UserMenu />}
       {searching && <SearchPalette traces={data.traces} onClose={() => setSearching(false)} />}
     </header>

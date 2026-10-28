@@ -9,6 +9,7 @@ import { StatCard } from "../../ui/StatCard";
 import { useSearchText } from "../../ui/useSearchText";
 import { PhasePanel, RouteChartPanel } from "./RenderCharts";
 import { ComponentTable, RouteTable } from "./RenderTables";
+import { DeviceTable } from "./DeviceTable";
 import type { RenderingModel } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
 import { ModelState } from "../../ui/ModelState";
@@ -20,7 +21,7 @@ function Cards({ data }: { data: RenderingModel }) {
   return (
     <div className="wl-grid wl-grid-stats">
       <StatCard icon={Gauge} label="Avg. Render Time" value={fmtMs(cards.render.value)} change={cards.render.change} upIsGood={false} compareLabel={compareLabel} series={cards.render.series} />
-      <StatCard icon={Server} label="SSR Time" value={fmtMs(cards.ssr.value)} change={cards.ssr.change} upIsGood={false} compareLabel={compareLabel} series={cards.ssr.series} />
+      <StatCard icon={Server} label="Server Response" value={fmtMs(cards.ssr.value)} change={cards.ssr.change} upIsGood={false} compareLabel={compareLabel} series={cards.ssr.series} />
       <StatCard icon={Zap} label="Hydration Time" value={fmtMs(cards.hydration.value)} change={cards.hydration.change} upIsGood={false} compareLabel={compareLabel} series={cards.hydration.series} />
       <StatCard icon={TriangleAlert} danger label="Component Issues" value={fmtCount(cards.issues.value)} change={cards.issues.change} upIsGood={false} compareLabel={compareLabel} series={cards.issues.series} />
     </div>
@@ -59,6 +60,7 @@ export function AllRendering() {
             <RouteChartPanel m={data} />
             <PhasePanel m={data} />
           </div>
+          <DeviceTable devices={data.devices} />
           <RenderSearch />
           <div className="wl-grid">
             <RouteTable routes={data.routes} paging={data.routePaging} />

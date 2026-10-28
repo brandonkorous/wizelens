@@ -25,7 +25,7 @@ function sectionsOf({ current, ctx }: OrgState): Section[] {
     manage && { id: "scim", label: "User sync (SCIM)", icon: IdCard, render: () => <ScimSection key={org.id} orgId={org.id} plan={org.plan ?? ""} /> },
     manage && { id: "apps", label: "Connected apps", icon: Plug, render: () => <><SectionHead title="Connected apps" description={APPS} /><AppsPanel key={org.id} list={`./api/orgs/${org.id}/apps`} team /></> },
     { id: "links", label: "Shared links", icon: Link2, render: () => <SharesSection orgId={org.id} project={project} /> },
-    manage && { id: "audit", label: "Audit log", icon: FileClock, render: () => <AuditSection orgId={org.id} org={ctx?.data ?? null} /> },
+    { id: "audit", label: "Audit log", icon: FileClock, render: () => <AuditSection orgId={org.id} org={ctx?.data ?? null} /> },
   ];
   return list.filter((s): s is Section => !!s);
 }

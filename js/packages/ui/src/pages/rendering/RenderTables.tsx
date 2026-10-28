@@ -19,7 +19,7 @@ const ROUTE_COLUMNS: Column<RouteRow>[] = [
   { key: "route", header: "Route", cell: (r) => <span className="wl-mono">{r.route}</span>, sort: (r) => r.route },
   { key: "views", header: "Page Views", num: true, cell: (r) => fmtCount(r.views), sort: (r) => r.views },
   { key: "render", header: hint("Avg. Render Time", "Full page loads and in-app route changes"), num: true, cell: (r) => fmtMs(r.avgRenderMs), sort: (r) => r.avgRenderMs ?? -1 },
-  { key: "ssr", header: hint("SSR Time", LOADS_ONLY), num: true, cell: (r) => fmtMs(r.avgSsrMs), sort: (r) => r.avgSsrMs ?? -1 },
+  { key: "ssr", header: hint("Server Response", `${LOADS_ONLY}: the server's time to send the first byte`), num: true, cell: (r) => fmtMs(r.avgSsrMs), sort: (r) => r.avgSsrMs ?? -1 },
   { key: "hydration", header: hint("Hydration Time", LOADS_ONLY), num: true, cell: (r) => fmtMs(r.avgHydrationMs), sort: (r) => r.avgHydrationMs ?? -1 },
   { key: "lcp", header: hint("LCP", "Largest Contentful Paint. " + LOADS_ONLY), num: true, cell: (r) => fmtMs(r.avgLcpMs), sort: (r) => r.avgLcpMs ?? -1 },
   { key: "images", header: hint("Large Images", "Images larger than they are shown"), num: true, cell: (r) => (r.largeImages ? fmtCount(r.largeImages) : "–"), sort: (r) => r.largeImages },

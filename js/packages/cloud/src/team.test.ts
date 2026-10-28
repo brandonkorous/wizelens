@@ -72,12 +72,15 @@ describe("API keys", () => {
     expect((await new Client(url).call("GET", `api/models/overview?project=${projectId}&range=24h`, undefined, { Authorization: `Bearer ${mcpOnly}` })).status).toBe(401);
     const short = await make({ kind: "read", expiresInDays: 30 });
     expect(short.body.expiresMs).toBeGreaterThan(Date.now() + 29 * DAY);
+    const until = Date.now() + 64 * DAY;
+    expect((await make({ kind: "read", expiresMs: until })).body.expiresMs).toBe(until);
+    expect((await make({ kind: "read", expiresMs: Date.now() - DAY })).status).toBe(400);
     const rotated = await owner.call<{ token: string; oldExpiresMs: number }>("POST", `api/orgs/${orgId}/keys/${short.body.id}/rotate`, { graceHours: 0 });
     const read = (token: string) => new Client(url).call("GET", `api/models/overview?project=${projectId}&range=24h`, undefined, { Authorization: `Bearer ${token}` });
     expect((await read(rotated.body.token)).status).toBe(200);
     expect((await read(short.body.token)).status).toBe(401);
     const keys = (await owner.call<{ keys: { rotatedFrom: string | null; expiresMs: number | null }[] }>("GET", `api/orgs/${orgId}`)).body.keys;
-    expect(keys.find((k) => k.rotatedFrom === short.body.id)!.expiresMs).toBeGreaterThan(Date.now() + 29 * DAY);
+    expect(keys.find((k) => k.rotatedFrom === short.body.id)!.expiresMs).toBe(short.body.expiresMs);
   });
 });
 
@@ -112,7 +115,18 @@ describe("audit log", () => {
     expect(facets.actions).toContain("project.create");
     expect((await page(`actor=${encodeURIComponent(facets.actors[0]!)}`)).body.length).toBeGreaterThan(0);
     const csv = await owner.call<string>("GET", `api/orgs/${orgId}/audit/export?format=csv&action=project.create`);
-    expect(csv.body.split("\n")[0]).toBe("time,actor,action,detail");
+    expect(csv.body.split("\n")[0]).toBe("time_utc,who,who_email,action,about,detail");
     expect(csv.body.match(/project\.create/g)).toHaveLength(3);
+    expect(csv.body.split("\n")[1]).toMatch(/^\d{4}-\d\d-\d\dT[\d:.]+Z,Olive,owner@acme\.io,project\.create,project P2,/);
+  });
+
+  it("is read and exported by a viewer, an auditor's usual role, and the export is logged as theirs", async () => {
+    const { url, owner, orgId } = await start();
+    const hannah = await joinWithInvite(url, await invite(owner, orgId, "hannah@acme.io", "viewer"), "hannah@acme.io", "Hannah");
+    expect((await hannah.call<unknown[]>("GET", `api/orgs/${orgId}/audit?limit=5`)).body.length).toBeGreaterThan(0);
+    expect((await hannah.call("GET", `api/orgs/${orgId}/audit/count`)).status).toBe(200);
+    const csv = await hannah.call<string>("GET", `api/orgs/${orgId}/audit/export?format=csv`);
+    expect(csv.status).toBe(200);
+    expect(csv.body.split("\n")[1]).toMatch(/,Hannah,hannah@acme\.io,audit\.export,/);
   });
 });

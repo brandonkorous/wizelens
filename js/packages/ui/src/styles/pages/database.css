@@ -16,7 +16,7 @@
 .wl-impact-medium { background: var(--wl-amber-soft); color: var(--wl-amber-text); }
 .wl-impact-low { background: var(--wl-accent-soft); color: var(--wl-accent-text); }
 .wl-insight-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.wl-insight-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.wl-insight-title { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .wl-insight-title strong { font-size: 15px; }
 .wl-insight-text { font-size: 13.5px; color: var(--wl-muted); line-height: 1.5; overflow-wrap: anywhere; }
 .wl-insight-go { width: 20px; height: 20px; margin-top: 2px; color: var(--wl-fg-2); }

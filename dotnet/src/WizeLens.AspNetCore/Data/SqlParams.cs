@@ -8,8 +8,8 @@ namespace WizeLens.Data;
 /// <summary>Which column each SQL parameter is bound to, so its value can be redacted by that column's name; the same rule as core/src/redact-sql-params.ts.</summary>
 internal static partial class SqlParams
 {
-    /// <summary>Column names whose values are never kept in SQL parameters, besides the redact keys: personal data.</summary>
-    public static readonly string[] SqlParamKeys = ["email"];
+    /// <summary>Column names whose values are never kept in SQL parameters, besides the redact keys: personal data, and ASP.NET Identity's SecurityStamp (it signs a user's sign-in cookies).</summary>
+    public static readonly string[] SqlParamKeys = ["email", "securitystamp", "security_stamp"];
 
     private static readonly Redactor Personal = new(SqlParamKeys);
 

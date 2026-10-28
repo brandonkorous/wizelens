@@ -1,5 +1,5 @@
 import { GitCompare } from "lucide-react";
-import { selfTimes, type Trace, traceTiming } from "@wizeworks/lens-core";
+import { browserTypeOf, selfTimes, type Trace, traceTiming } from "@wizeworks/lens-core";
 import { fmtCount, fmtMs, shortId } from "../../format";
 import { traceHref } from "../../routes";
 import { DetailHead } from "../../ui/DetailHead";
@@ -15,16 +15,19 @@ interface Line {
   ms: boolean;
 }
 
+/** A trace that starts with a browser call counts its render in Total (core traceTiming), so the label says so. */
+const fromBrowser = (t: Trace) => t.spans.some((s) => browserTypeOf(s) === "fetch");
+
 function linesOf(a: Trace, b: Trace): Line[] {
   const [ta, tb] = [traceTiming(a), traceTiming(b)];
   return [
-    { label: "Total", a: ta.totalMs, b: tb.totalMs, ms: true },
+    { label: fromBrowser(a) || fromBrowser(b) ? "Total (call + render)" : "Total", a: ta.totalMs, b: tb.totalMs, ms: true },
     { label: "Server", a: ta.serverMs ?? 0, b: tb.serverMs ?? 0, ms: true },
     { label: "Database", a: ta.dbMs, b: tb.dbMs, ms: true },
     { label: "Render", a: ta.renderMs ?? 0, b: tb.renderMs ?? 0, ms: true },
     { label: "Spans", a: a.spanCount, b: b.spanCount, ms: false },
     { label: "Queries", a: a.dbCount, b: b.dbCount, ms: false },
-    { label: "HTTP calls", a: a.httpClientCount, b: b.httpClientCount, ms: false },
+    { label: "HTTP calls out", a: a.httpClientCount, b: b.httpClientCount, ms: false },
     { label: "Errors", a: a.errorCount, b: b.errorCount, ms: false },
   ];
 }

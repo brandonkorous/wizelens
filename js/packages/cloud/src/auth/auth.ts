@@ -10,6 +10,7 @@ import { advancedOptions, AUTH_BASE_PATH, passwordAuth, rateLimitOptions, sessio
 import { authPlugins } from "./plugins.js";
 import { securityDbHooks } from "./security-notices.js";
 import { afterSignup, confirmSsoEmail } from "./signup.js";
+import { guardSession, type HookCtx } from "./sso-required.js";
 
 const ALWAYS_OFF = ["/sign-in/social", "/link-social", "/get-access-token", "/refresh-token", "/account-info", "/delete-user/callback", "/update-session"];
 /** OAuth routes the cloud does not use: apps register themselves, and grants (repo/grants.ts) hold every consent. */
@@ -45,7 +46,9 @@ const disabledPaths = (deps: AuthDeps) => [
 /** Sign-up (first organization, SSO email) and security notices (new device, two-step sign-in, changed email). */
 function databaseHooksOf(deps: AuthDeps, createOrg: (userId: string, name: string) => Promise<{ id: string }>): BetterAuthOptions["databaseHooks"] {
   const notices = securityDbHooks(deps);
-  return { session: notices.session, user: { create: { before: confirmSsoEmail, after: afterSignup(deps, createOrg) }, update: notices.user?.update } };
+  const before = async (s: { userId: string }, ctx: unknown) => void (await guardSession(s.userId, ctx as HookCtx | null));
+  const session = { create: { ...notices.session?.create, before } };
+  return { session, user: { create: { before: confirmSsoEmail, after: afterSignup(deps, createOrg) }, update: notices.user?.update } };
 }
 
 function build(deps: AuthDeps, createOrg: (userId: string, name: string) => Promise<{ id: string }>) {
