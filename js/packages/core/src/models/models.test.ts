@@ -78,9 +78,9 @@ describe("sidebar badge", () => {
       const ctx = { ...pageContext("24h", NOW, {}, { slowQueryMs: 100 }), issues: issueStatesOf([{ kind: "error", key, assignee: null, ...state }]) };
       return runPageSync("badges", ctx, ex).errors;
     };
-    expect(badge({ status: "resolved", untilMs: null, resolvedMs: NOW })).toBe(0);
-    expect(badge({ status: "ignored", untilMs: null, resolvedMs: null })).toBe(0);
-    expect(badge({ status: "resolved", untilMs: null, resolvedMs: NOW - 48 * 3_600_000 })).toBe(1);
+    expect(badge({ status: "resolved", untilMs: null, resolvedMs: NOW, updatedMs: NOW })).toBe(0);
+    expect(badge({ status: "ignored", untilMs: null, resolvedMs: null, updatedMs: NOW })).toBe(0);
+    expect(badge({ status: "resolved", untilMs: null, resolvedMs: NOW - 48 * 3_600_000, updatedMs: NOW })).toBe(1);
   });
 });
 

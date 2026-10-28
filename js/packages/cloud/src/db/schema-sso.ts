@@ -20,8 +20,7 @@ export const SSO_REQUIRED_MIGRATION = `
 ALTER TABLE sso_providers ADD COLUMN sso_required BOOLEAN NOT NULL DEFAULT FALSE;
 `;
 
-// People an owner or admin removed (or who left): single sign-on does not add them back until they are invited (auth/sso-join.ts).
-// Removals already in the audit log count too, for people not back in.
+// People removed (or who left), audit log removals included: SSO does not add them back until invited (auth/sso-join.ts).
 export const SSO_REMOVED_MIGRATION = `
 CREATE TABLE sso_removed (
   org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE, user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,

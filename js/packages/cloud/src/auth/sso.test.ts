@@ -81,6 +81,9 @@ describe("signing in with SSO", () => {
     expect(actions.map((a) => a.action)).toEqual(expect.arrayContaining(["sso.create", "member.join"]));
   });
 
+});
+
+describe("SSO with invites and removals", () => {
   it("leaves an invited person to their invite, and shows it to them once the email is proven", async () => {
     const { url, owner, orgId } = await withIdp({ sub: "u3", email: "sam@acme.io", name: "Sam" });
     expect((await invite(owner, orgId, "sam@acme.io", "viewer")).length).toBeGreaterThan(0);

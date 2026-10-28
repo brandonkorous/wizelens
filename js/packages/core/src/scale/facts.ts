@@ -6,7 +6,7 @@ import type { LogRow } from "../stats/logs.js";
 import { requestUserName, requestWith } from "../stats/requests.js";
 import { type CriticalSpan, traceDurationOf } from "../stats/traces.js";
 import type { Trace } from "../types.js";
-import { isUptimeSpan } from "../uptime/check.js";
+import { isListedTrace } from "../uptime/check.js";
 import { type Contribution, contribution, withServices } from "./agg.js";
 import { dbFacts } from "./facts-db.js";
 import { errorFacts, logFacts } from "./facts-errors.js";
@@ -61,7 +61,7 @@ function buildFacts(trace: Trace, o: FactOptions): TraceFacts {
   const logs = traceLogRows(trace);
   const loose = isLooseTraceId(trace.traceId);
   // An uptime check is WizeLens's own probe: the Uptime page shows it, the Traces list and its cards do not (as Requests).
-  const listed = !loose && !trace.spans.some(isUptimeSpan);
+  const listed = isListedTrace(trace);
   const contributions = [
     ...(listed ? traceContributions(trace) : []),
     ...(row ? requestContributions(row, requestUserName(trace)) : []),

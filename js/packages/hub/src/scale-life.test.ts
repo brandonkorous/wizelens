@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterAll, describe, expect, it } from "vitest";
-import { isLooseTraceId, logKey, type Trace } from "@wizeworks/lens-core";
+import { isListedTrace, isLooseTraceId, logKey, type Trace } from "@wizeworks/lens-core";
 import { scenarioTraces } from "../../core/src/testing/scenario.js";
 import { hubExecutor, hubSettling } from "./scale-exec.js";
 import { clockStore, parity, settleAll, writeTraces } from "./test/scale.js";
@@ -80,8 +80,8 @@ describe("hub stats over time", () => {
     const gen = store.settleGen;
     expect(store.prune()).toBe(traces.filter((t) => !isLooseTraceId(t.traceId)).length - 150);
     expect(store.settleGen).toBe(gen + 1);
-    expect(count(store.db, "fact_traces")).toBe(150);
     const kept = [...traces.filter((t) => !isLooseTraceId(t.traceId)).slice(0, 150), ...traces.filter((t) => isLooseTraceId(t.traceId))]; // loose batches go by age only
+    expect(count(store.db, "fact_traces")).toBe(kept.filter(isListedTrace).length); // uptime runs are kept, not listed
     expect(await parity(hubExecutor(store), kept, undefined, DISPLAY)).toEqual([]);
   });
 

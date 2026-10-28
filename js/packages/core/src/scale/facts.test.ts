@@ -79,7 +79,7 @@ describe("trace facts", () => {
 
   it("leave an uptime check out of the trace list and its counts", () => {
     const t = traces.find((x) => !isLooseTraceId(x.traceId))!;
-    const probe = { ...t, spans: t.spans.map((s, i) => (i === 0 ? { ...s, category: "uptime" } : s)) };
+    const probe = { ...t, spans: t.spans.map((s, i) => (i === 0 ? { ...s, category: "uptime" as const } : s)) };
     expect(traceFacts(t).trace).not.toBeNull();
     expect(traceFacts(probe).trace).toBeNull();
     expect(traceFacts(probe).contributions.some((c) => c.kind === "trace")).toBe(false);
