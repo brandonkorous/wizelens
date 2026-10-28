@@ -52,10 +52,11 @@ internal sealed class HudMiddleware(RequestDelegate next, WizeLensOptions option
         MediaTypeHeaderValue.TryParseList(request.Headers.Accept, out var types)
         && types.Any(t => t.MediaType.Equals("text/html", StringComparison.OrdinalIgnoreCase) && t.Quality != 0);
 
-    /// <summary>A 200 <c>text/html</c> answer with no <c>Content-Encoding</c>: a compressed body is left alone.</summary>
+    /// <summary>A 200, 4xx or 5xx <c>text/html</c> answer (an error page wants the HUD most) with no <c>Content-Encoding</c>: a compressed body is left alone.</summary>
     internal static bool IsFullPage(HttpResponse response)
     {
-        if (response.StatusCode != StatusCodes.Status200OK) return false;
+        var status = response.StatusCode;
+        if (status != StatusCodes.Status200OK && status is < 400 or >= 600) return false;
         if (!string.IsNullOrEmpty(response.Headers.ContentEncoding.ToString())) return false;
         return MediaTypeHeaderValue.TryParse(response.ContentType, out var type)
             && type.MediaType.Equals("text/html", StringComparison.OrdinalIgnoreCase);

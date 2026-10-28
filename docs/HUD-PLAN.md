@@ -46,7 +46,8 @@ dashboard.
 true; `WIZELENS_HUD=false` turns it off), a response gets
 `<script src="{base}/wizelens.js" data-endpoint="{base}" data-hud="true" data-source="inject" defer></script>` right
 before its last `</body>` when all of these hold:
-- the request is a `GET`, and the answer is `200` with `Content-Type: text/html`;
+- the request is a `GET`, and the answer is `200`, `4xx` or `5xx` (an error page wants the HUD most) with
+  `Content-Type: text/html`;
 - the answer has no `Content-Encoding` (a compressed body is left alone);
 - the path is not under `{base}`;
 - the body has a `</body>` (fragments, such as htmx partials, are left alone).

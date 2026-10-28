@@ -41,9 +41,11 @@ function bytesOf(chunk: unknown, encoding: BufferEncoding | undefined): Buffer |
 
 const textOf = (value: unknown): string => (Array.isArray(value) ? value.join(",") : value == null ? "" : String(value));
 
-/** A 200 answer with an HTML type and no Content-Encoding (a compressed body is left alone). */
+/** A page (200) or an error page (4xx, 5xx: where the HUD is wanted most), with an HTML type and no Content-Encoding (a compressed body is left alone). */
+export const pageStatus = (status: unknown): boolean => typeof status === "number" && (status === 200 || (status >= 400 && status < 600));
+
 function qualifies(status: unknown, header: (name: string) => unknown): boolean {
-  if (status !== 200 || textOf(header("content-encoding")).trim()) return false;
+  if (!pageStatus(status) || textOf(header("content-encoding")).trim()) return false;
   return /^\s*text\/html\s*(;|$)/i.test(textOf(header("content-type")));
 }
 
@@ -148,7 +150,7 @@ export function askForPlainPage(req: IncomingMessage): void {
   for (let i = raw.length - 2; i >= 0; i -= 2) if (raw[i]!.toLowerCase() === "accept-encoding") raw.splice(i, 2);
 }
 
-/** Put `tag` before the last `</body>` of a full HTML page answered 200 to a GET. Any doubt leaves the answer as the app wrote it. */
+/** Put `tag` before the last `</body>` of a full HTML page (or error page) answered to a GET. Any doubt leaves the answer as the app wrote it. */
 export function injectHud(req: IncomingMessage, res: ServerResponse, tag: string): void {
   const marked = res as ServerResponse & { [WRAPPED]?: true };
   if (req.method !== "GET" || marked[WRAPPED]) return;

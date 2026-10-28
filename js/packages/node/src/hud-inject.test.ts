@@ -90,6 +90,15 @@ describe("the HUD tag with any write", () => {
   });
 });
 
+describe("error pages", () => {
+  it("a 404 or a 500 page gets the tag: the HUD is wanted most on the page that failed", async () => {
+    for (const status of [404, 500]) {
+      const got = await page((res) => ((res.statusCode = status), html(res), res.end(PAGE)));
+      expect(got.text).toBe(WITH_TAG);
+    }
+  });
+});
+
 describe("answers left as they are", () => {
   it("a gzip body", async () => {
     const zipped = gzipSync(PAGE);
@@ -98,11 +107,11 @@ describe("answers left as they are", () => {
     expect(got.length).toBe(String(zipped.length));
   });
 
-  it("JSON, a 404 page, and a fragment without </body>", async () => {
+  it("JSON, a redirect page, and a fragment without </body>", async () => {
     const json = await page((res) => res.writeHead(200, { "content-type": "application/json" }).end('{"body":"</body>"}'));
     expect(json.text).toBe('{"body":"</body>"}');
-    const missing = await page((res) => ((res.statusCode = 404), html(res), res.end(PAGE)));
-    expect(missing.text).toBe(PAGE);
+    const moved = await page((res) => ((res.statusCode = 302), res.setHeader("Location", "/"), html(res), res.end(PAGE)), {}, { redirect: "manual" });
+    expect(moved.text).toBe(PAGE);
     const fragment = await page((res) => (html(res), res.setHeader("Content-Length", 12), res.end("<li>one</li>")));
     expect(fragment.text).toBe("<li>one</li>");
     expect(fragment.length).toBe("12");
