@@ -17,7 +17,7 @@ function Bar({ v, i }: { v: Vendor; i: number }) {
       <div className="wl-tc-name"><b>{v.name}</b><strong className="wl-num">{v.total}</strong></div>
       <div className="wl-tc-track">
         {v.parts.map((p, j) => (
-          <motion.i key={p.kind} className={`wl-tc-${p.kind}`} title={p.label} aria-label={p.label}
+          <motion.i key={p.kind} className={`wl-tc-${p.kind}`} role="img" title={p.label} aria-label={p.label}
             initial={{ width: 0 }} whileInView={{ width: `${Math.max(0.6, (p.value / MAX_K) * 100)}%` }}
             viewport={{ once: true, amount: 0.8 }} transition={{ duration: 0.9, delay: i * 0.15 + j * 0.25, ease: [0.22, 1, 0.36, 1] }}>
             {p.kind !== "range" && p.value >= 25 ? `$${p.value}K` : ""}
