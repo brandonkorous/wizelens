@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link2 } from "lucide-react";
+import { currentProject, useAccount } from "../data/account";
 import { apiSend } from "../data/api";
 import { useHost, useRange } from "../data/host";
 import { getPeriod, periodParams } from "../data/period";
@@ -30,11 +31,13 @@ function ShareForm({ target }: { target: { page: string; params: Record<string, 
   const [days, setDays] = useState("7");
   const [url, setUrl] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  // The link's header names the project, so the person it is sent to knows whose numbers these are.
+  const title = currentProject(useAccount())?.project?.name ?? "WizeLens";
   const make = () => {
     const { window, compare } = getPeriod();
     const scope = getScope();
     const params = { ...Object.fromEntries(route.query), ...periodParams(window, compare), ...(scope.service ? { service: scope.service } : {}), ...target.params };
-    const body = { page: target.page, range, params, env: scope.env, title: document.title.replace(/ · .*$/, ""), days: Number(days) };
+    const body = { page: target.page, range, params, env: scope.env, title, days: Number(days) };
     void apiSend<{ url: string }>("POST", `./api/projects/${encodeURIComponent(scope.project)}/shares`, body).then(
       (r) => setUrl(r.url),
       (e: unknown) => setNote(e instanceof Error ? e.message : String(e)),
