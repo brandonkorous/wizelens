@@ -21,13 +21,17 @@ export function keepRoomFor(card: () => HTMLElement | null): () => void {
     if (room.style.height !== px) room.style.height = px;
     if (room.parentNode !== document.body || room.nextSibling) document.body.append(room);
   };
-  const observer = new ResizeObserver(update);
+  // Resize the room on the next frame, not inside the observer's own callback: that would be a ResizeObserver loop error.
+  let frame = 0;
+  const later = () => (frame ||= requestAnimationFrame(() => ((frame = 0), update())));
+  const observer = new ResizeObserver(later);
   observer.observe(document.body);
-  const timer = setInterval(update, 1000);
+  const timer = setInterval(later, 1000);
   update();
   return () => {
     observer.disconnect();
     clearInterval(timer);
+    cancelAnimationFrame(frame);
     room.remove();
   };
 }

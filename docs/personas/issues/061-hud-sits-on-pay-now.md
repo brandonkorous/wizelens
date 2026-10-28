@@ -49,3 +49,8 @@ it with the HUD. Test: `room.test.ts`. The open details panel still covers what 
 2026-10-27 19:07, P03 Sid, `/Basket/Checkout` with Basket A, details closed, End: `[ PAY NOW ]` at y = 532 in a
 900 px window, eShop's footer below it, the HUD card below the footer; `elementFromPoint` at the button's centre is
 the button (`INPUT`). Room block 169 px.
+
+Follow-up the same day: the first version resized the room inside the ResizeObserver callback, and the browser
+reported "ResizeObserver loop completed with undelivered notifications" 11 times as a Web App error (Errors page,
+19:06–19:07). The room now resizes on the next frame. Re-checked 19:10: five store pages with the HUD, End on each,
+no new error (the count stays 11, last 19:07:14).
