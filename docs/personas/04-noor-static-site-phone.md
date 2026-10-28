@@ -193,7 +193,7 @@ She turns on the HUD for her own visits and opens the home page.
 **Done when:** the HUD fits a 390 px screen, says what the page cost, and can be
 moved or closed with a thumb; or the docs say a script-tag site has no HUD.
 
-**Outcome:** —
+**Outcome:** done after #103. Her tag from Connect had `data-hud="false"`, and "auto" never shows the HUD with a browser key; the only way in was `data-hud="true"`, which shows it to every visitor of her portfolio. Now she opens `http://localhost:4173/?wizelens-hud=on` once: at 23:26 the HUD on her 390 px phone (4G) read "1,372 ms Total … 1,367 ms Render", 358 px wide; /services showed it with no switch in the address; a visitor's browser had none; `?wizelens-hud=off` hid it. By thumb: its buttons were 28 px and are now 44 px on touch; Settings › "Show WizeLens bottom left", Minimize (a 46 px dot) and open again all worked at 390 and 360; "Open the dashboard" went to the send address (blank) and now opens the cloud. Server and Database say "No server data for this request." on a site with no server. Rule 7: Greta made a browser key on Connect at 23:36, read the new tag (no `data-hud`) and the HUD note, and revoked it.
 
 ### Act 10 — a link for the client
 
@@ -274,6 +274,7 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 - 21:59–22:16 #090 (no reason, no device on a page's screen), #091 (Total 1.56 s for a 6.14 s load), #092 (trace 714 px wide on a phone) fixed; #089 again at 360
 - 22:18 act 6: the broken line built in; Rémy's form fails on the phone; #093–#095 fixed 22:26
 - 22:47–23:13 act 8: two checks, one alert, two outages; #099–#102 fixed and confirmed
+- 23:14–23:36 act 9: HUD for her own browser only; #103 fixed and confirmed (Greta re-checked Connect's tag)
 - 22:33–22:45 act 7: #097 and #098 fixed and confirmed (Greta re-checked for #098)
 - 22:27–22:33 build key made; plugin added; #096 fixed 22:29; source line shown 22:30; line fixed, 1.0.2 built, errors resolved
 - 21:36–21:53 #087 (no split by device) fixed; 28 more visits with this branch's script at 21:44; #088 (Rendering 1160 px wide on a phone) and #089 (service chip pushes the account button off, found on P02) fixed 21:53

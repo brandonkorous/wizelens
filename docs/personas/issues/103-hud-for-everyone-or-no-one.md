@@ -6,7 +6,7 @@
 **Surface:** the HUD on a site with a browser key; Connect › Sending keys (script tag); docs HUD and Browser
 **Filed:** 2026-10-27
 **Fixed:** 2026-10-27
-**Confirmed by:** at 23:26 on a 390 px phone (4G), Noor opened `http://localhost:4173/?wizelens-hud=on`: the HUD read "1,372 ms Total … 1,367 ms Render" and fit (358 px). /services in the same browser, with no switch in the address, showed it too. A visitor's browser on /services had no HUD. `?wizelens-hud=off` hid it again. By thumb: the HUD buttons are 44×44, Settings › "Show WizeLens bottom left", Minimize (46×46 dot) and open again all worked at 390 and 360; "Open the dashboard" went to `http://localhost:5970/_wizelens/`.
+**Confirmed by:** at 23:26 on a 390 px phone (4G), Noor opened `http://localhost:4173/?wizelens-hud=on`: the HUD read "1,372 ms Total … 1,367 ms Render" and fit (358 px). /services in the same browser, with no switch in the address, showed it too. A visitor's browser on /services had no HUD. `?wizelens-hud=off` hid it again. By thumb: the HUD buttons are 44×44, Settings › "Show WizeLens bottom left", Minimize (46×46 dot) and open again all worked at 390 and 360; "Open the dashboard" went to `http://localhost:5970/_wizelens/`. Rule 7: at 23:36 Greta (P02) made a browser key on Connect; its tag had no `data-hud` and the HUD note showed; she revoked it.
 
 ## What happened
 
