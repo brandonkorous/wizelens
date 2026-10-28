@@ -3,7 +3,7 @@ import { ATTR_ENDUSER, ATTR_REQUEST_ABORTED, ATTR_REQUEST_ID, ATTR_USER_NAME, AT
 import { busyMs } from "../busy.js";
 import { endpointName } from "../endpoint.js";
 import { REDACTED } from "../redact.js";
-import { type Health, healthOf, insightsOf, traceTiming } from "../health.js";
+import { type Health, healthOf, insightsOf, type Timing, traceTiming } from "../health.js";
 import { isStreamSpan } from "../stream.js";
 import { isUptimeSpan } from "../uptime/check.js";
 import { browserAppOf } from "../web-app.js";
@@ -110,6 +110,13 @@ function identityOf(server: Span | undefined, fetch: Span | undefined): { method
   return { method, path, endpoint: endpointOf(method, server, path) };
 }
 
+/** Time between the browser and the server: a fetch minus its server span, or a page load's first paint minus render and server. */
+function networkOf(timing: Timing, server: Span | undefined, fetch: Span | undefined): number | null {
+  if (!server) return null;
+  if (fetch) return Math.max(0, fetch.durationMs - server.durationMs);
+  return timing.renderMs === null ? null : Math.max(0, timing.totalMs - timing.renderMs - (timing.serverMs ?? server.durationMs));
+}
+
 function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | null {
   // An uptime check run is not app traffic: the Uptime page has it.
   if (trace.spans.some(isUptimeSpan)) return null;
@@ -144,7 +151,7 @@ function buildRow(trace: Trace, analysis: AnalysisOptions = {}): RequestRow | nu
     fetchCount: clients.length,
     fetchMs: busyMs(clients),
     renderMs: timing.renderMs,
-    networkMs: fetch && server ? Math.max(0, fetch.durationMs - server.durationMs) : null,
+    networkMs: networkOf(timing, server, fetch),
     service: server?.service ?? "browser",
     services: trace.services,
     app: browserAppOf(fetch),

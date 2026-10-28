@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ATTR_BROWSER_TYPE, buildTrace, requestRows, type Span, traceTiming } from "./index.js";
+import { ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_TYPE, ATTR_PAGE, buildTrace, requestRows, type Span, traceTiming } from "./index.js";
 import { makeSpan } from "./testing/fixtures.js";
 
 const T = "5".repeat(32);
@@ -28,5 +28,14 @@ describe("late browser spans", () => {
     const root = server(1_700_000_000_000);
     const late = makeSpan({ traceId: T, category: "internal", startMs: root.startMs + 60_000, durationMs: 10, parentSpanId: root.spanId });
     expect(traceTiming({ spans: [root, late], durationMs: 60_010 }).totalMs).toBe(4);
+  });
+
+  it("time a server page load as the HUD does: first paint, and render from the first byte to it", () => {
+    const root = server(1_700_000_000_000);
+    const view = makeSpan({ traceId: T, category: "browser", service: "browser", startMs: root.startMs - 5, durationMs: 85, attributes: { [ATTR_BROWSER_TYPE]: "pageview", [ATTR_BROWSER_NAVIGATION]: "load", [ATTR_PAGE.ttfbMs]: 11, [ATTR_PAGE.fcpMs]: 85 } });
+    const timing = traceTiming({ spans: [view, root], durationMs: 85 });
+    expect(timing).toMatchObject({ totalMs: 85, serverMs: 4, renderMs: 74 });
+    const row = requestRows([buildTrace(T, [view, root], [], [])])[0]!;
+    expect(row).toMatchObject({ durationMs: 85, renderMs: 74, networkMs: 7 });
   });
 });
