@@ -38,10 +38,10 @@ export function AuditSection({ orgId, org }: { orgId: string; org: OrgData | nul
   const [actor, setActorText] = useState("");
   const setAction = (v: string) => (setActionText(v), setQuery({ auditpage: null }));
   const setActor = (v: string) => (setActorText(v), setQuery({ auditpage: null }));
-  const names = namesOf(org);
-  const facets = useFacets(orgId, names);
   const filter = new URLSearchParams({ ...(action ? { action } : {}), ...(actor ? { actor } : {}) }).toString();
   const { rows, info, error } = useAuditPage(orgId, filter);
+  const names = namesOf(org, rows);
+  const facets = useFacets(orgId, names);
   const columns: Column<AuditEntry>[] = [
     { key: "time", header: "When", cell: (a) => <>{fmtDateTime(a.timeMs)}<br /><span className="wl-muted wl-small">{fmtAgo(a.timeMs)}</span></>, className: "wl-nowrap" },
     { key: "who", header: "Who", cell: (a) => actorText(a.actor, names), className: "wl-nowrap" },

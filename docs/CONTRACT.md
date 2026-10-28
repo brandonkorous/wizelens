@@ -1149,7 +1149,7 @@ retention, and the audit log.
 | GET / DELETE | `api/orgs/{org}/apps[/{id}]` | Admin: every app connected in the organization, or end one |
 | GET | `api/orgs/{org}/usage` | Any member: `{ billing, plan, includedGb, maxRetentionDays, month, monthGb, days[{ day, gb, bytes, spans, logs, points }], overageUsd, projectedGb, projectedOverageUsd, spendCapUsd, blocked, reason, subscription, plans[] }` (see "Plans and billing") |
 | PATCH | `api/orgs/{org}/billing` | Owner, billing on, Team or Business: `{ spendCapUsd: whole dollars or null }` |
-| GET | `api/orgs/{org}/audit/export?format=csv\|json` | Admin, plan with audit export (402 otherwise): the whole log as a download; writes `audit.export` |
+| GET | `api/orgs/{org}/audit/export?format=csv\|json` | Admin, plan with audit export (402 otherwise): the whole log as a download; writes `audit.export`. Columns `time_utc, who, who_email, action, about, detail`: people by name and email (also former members), projects and keys by name |
 | GET / POST / DELETE | `api/orgs/{org}/scim`, `…/scim/tokens[/{id}]` | Admin: `{ allowed, plan?, baseUrl, tokens }`; a new `wl_sc_…` token is in the answer once (402 without SCIM on the plan) |
 | * | `api/auth/scim/v2/*` | SCIM 2.0 (Better Auth's SCIM plugin): `Users`, `Groups`, `ServiceProviderConfig`, `Schemas`, `ResourceTypes`, with `Authorization: Bearer wl_sc_…` (no dashboard header) |
 | * | `api/auth/subscription/*` | Better Auth's Stripe plugin, billing on: `upgrade`, `cancel`, `restore`, `list`, `billing-portal`, each with `customerType: "organization"` and `referenceId` (owner or admin); `success` (Stripe's redirect back) |

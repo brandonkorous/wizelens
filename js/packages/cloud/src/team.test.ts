@@ -115,7 +115,8 @@ describe("audit log", () => {
     expect(facets.actions).toContain("project.create");
     expect((await page(`actor=${encodeURIComponent(facets.actors[0]!)}`)).body.length).toBeGreaterThan(0);
     const csv = await owner.call<string>("GET", `api/orgs/${orgId}/audit/export?format=csv&action=project.create`);
-    expect(csv.body.split("\n")[0]).toBe("time,actor,action,detail");
+    expect(csv.body.split("\n")[0]).toBe("time_utc,who,who_email,action,about,detail");
     expect(csv.body.match(/project\.create/g)).toHaveLength(3);
+    expect(csv.body.split("\n")[1]).toMatch(/^\d{4}-\d\d-\d\dT[\d:.]+Z,Olive,owner@acme\.io,project\.create,project P2,/);
   });
 });

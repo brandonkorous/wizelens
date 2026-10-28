@@ -5,6 +5,10 @@ export interface AuditEntry {
   action: string;
   detail: Record<string, unknown>;
   timeMs: number;
+  /** The person or key that did it, by name, also after they left. */
+  who?: { name: string; email?: string };
+  /** The person `detail.userId` names. */
+  subject?: { name: string; email?: string };
 }
 
 /** Each audit action in words. Unknown actions show as they are. */
@@ -92,9 +96,13 @@ export const GROUP_LABEL: Record<string, string> = {
   scim: "SCIM",
 };
 
-/** Names for the ids an entry can hold: people, keys, and projects. */
-export function namesOf(data: OrgData | null) {
+/** Names for the ids an entry can hold: people (members, then those the lines name), keys, and projects. */
+export function namesOf(data: OrgData | null, rows: AuditEntry[] = []) {
   const people = new Map((data?.members ?? []).map((m) => [m.userId, m.name]));
+  for (const r of rows) {
+    if (r.actor.startsWith("user:") && r.who && !people.has(r.actor.slice(5))) people.set(r.actor.slice(5), `${r.who.name} (former member)`);
+    if (typeof r.detail.userId === "string" && r.subject && !people.has(r.detail.userId)) people.set(r.detail.userId, `${r.subject.name} (former member)`);
+  }
   const keys = new Map((data?.keys ?? []).map((k) => [k.id, k.name]));
   const projects = new Map((data?.projects ?? []).map((p) => [p.id, p.name]));
   return { people, keys, projects };
@@ -127,6 +135,7 @@ export function detailText(d: Record<string, unknown>, names: Names): string {
   if (typeof d.title === "string") parts.push(d.title);
   if (typeof d.url === "string") parts.push(d.url);
   if (typeof d.email === "string") parts.push(d.email);
+  if (typeof d.memberEmail === "string") parts.push(d.memberEmail);
   if (typeof d.role === "string") parts.push(d.role === "none" ? "no access" : `as ${d.role}`);
   if (typeof d.kind === "string") parts.push(`${d.kind} key`);
   const p = project(d.projectId, names);

@@ -6,7 +6,7 @@
 **Surface:** People & access › Members (Remove), Single sign-on
 **Filed:** 2026-10-28
 **Fixed:** 2026-10-28
-**Confirmed by:** P05 Marisol, Lars Øberg (temp03, 360 dark touch), Kalani (temp04), Hannah, 03:24; P02 Greta 03:25
+**Confirmed by:** P05 Marisol, Lars Øberg (temp03, 360 dark touch), Mei-Lin Chau (temp04), Hannah, 03:24; P02 Greta 03:25
 
 ## What happened
 
@@ -38,6 +38,6 @@ Better Auth's SSO plugin adds anyone who signs in through the organization's pro
 - 03:21:46 Marisol removed Ngozi again; Ngozi's SSO sign-in: "You are not in an organization … open an invite link from your
   team." Audit: "Not added back: removed people need a new invite · p05.temp02@… · kvcu".
 - Local backfill (same SQL as the migration): Priya and temps 01, 02, 04, 05; not temp03, who was back in.
-- 03:24:11 Marisol removed Lars Øberg (temp03) again. His SSO sign-in at 360, dark, touch, and Kalani's (temp04, removed only
+- 03:24:11 Marisol removed Lars Øberg (temp03) again. His SSO sign-in at 360, dark, touch, and Mei-Lin Chau's (temp04, removed only
   before the fix): both "You are not in an organization"; two audit rows.
 - Hannah (still a member) signed in with SSO at 03:24 straight to the org. Rule 7, 03:25: Greta's org opens unchanged.

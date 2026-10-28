@@ -45,6 +45,8 @@ it("tells a member when their own role changes", async () => {
   const members = (await owner.call<{ members: { memberId: string; email: string }[] }>("GET", `api/orgs/${orgId}`)).body.members;
   const vic = members.find((m) => m.email === "vic@acme.io")!;
   expect((await owner.call("POST", "api/auth/organization/update-member-role", { memberId: vic.memberId, role: "member", organizationId: orgId })).status).toBe(200);
+  const [row] = await cloud.app.db.query<{ detail: string }>("SELECT detail FROM audit WHERE org_id = $1 AND action = 'member.role'", [orgId]);
+  expect(JSON.parse(row!.detail)).toMatchObject({ memberEmail: "vic@acme.io", role: "member" });
   await sendTeamNotices(cloud.app);
   await until(() => subjects(box, "vic@acme.io").includes(`Your role in ${org} is now member`));
 });

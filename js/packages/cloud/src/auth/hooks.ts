@@ -36,11 +36,11 @@ const SSO_AUDITED: Record<string, string> = {
 };
 /** The organization of the provider a request changes, found before the change (a deleted provider is gone after). */
 const ssoOrgOf = new WeakMap<object, string>();
-/** The email of a member being removed, found before the row is gone, so the notice can name them. */
+/** The email of a member being removed or given a new role, found first, so the log and the notice can name them. */
 const removedEmailOf = new WeakMap<object, string>();
 
 async function rememberRemoved(ctx: HookCtx, body: Record<string, unknown>): Promise<void> {
-  const target = str(body.memberIdOrEmail);
+  const target = str(body.memberIdOrEmail) ?? str(body.memberId);
   if (!ctx.request || !target) return;
   if (target.includes("@")) return void removedEmailOf.set(ctx.request, target);
   const [row] = await ctx.context.adapter.findMany<{ userId: string }>({ model: "member", where: [{ field: "id", value: target }], limit: 1 });
@@ -99,7 +99,7 @@ const guard: Mw = async (ctx) => {
   if (ROLE_PATHS.has(ctx.path) && body.role !== undefined && !isOrgRole(body.role)) throw new APIError("BAD_REQUEST", { message: "Pick one role: owner, admin, member, or viewer." });
   if (NEEDS_ORG.has(ctx.path) && !str(body.organizationId)) throw new APIError("BAD_REQUEST", { message: "Send organizationId." });
   if (ctx.path === "/delete-user" && !str(body.password) && !str(body.token)) throw new APIError("BAD_REQUEST", { message: "Enter your password." });
-  if (ctx.path === "/organization/remove-member") await rememberRemoved(ctx, body);
+  if (ctx.path === "/organization/remove-member" || ctx.path === "/organization/update-member-role") await rememberRemoved(ctx, body);
 };
 
 /** A successful sign-in with an old hash stores a new one. */
