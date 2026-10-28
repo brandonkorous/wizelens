@@ -36,3 +36,5 @@ At a credit union that is a leaver with access to member data.
   and showed the sign-in page at 02:56:40: **about 3 min 45 s, at most 5 min**. Her next sign-in: Keycloak "Account is
   disabled, contact your administrator." Keys: members make none; connected apps: 0, both in the audit row.
 - Hannah (SSO) stayed signed in through the checks (02:58). Rule 7: P02 Greta (password) signs in to her org unchanged (02:58).
+- Dmitri (SSO, still enabled) signed in at 02:58:50 and was still signed in at 03:02:34, after the 03:01 check renewed his
+  sign-in: a working person is never signed out by the check.
