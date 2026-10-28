@@ -84,3 +84,10 @@ export function parseCheckInput(raw: unknown, current?: UptimeCheckInput): Input
 /** Headers as an API shows them: secret-looking values replaced by "[redacted]". */
 export const shownHeaders = (headers: Record<string, string>): Record<string, string> =>
   Object.fromEntries(Object.entries(headers).map(([k, v]) => [k, isSensitiveKey(k) || /^(x-)?api-?key$/i.test(k) ? REDACTED : v]));
+
+/** Why a new or changed check repeats one the project has (same name, method, and URL), or null. `id` is the check being changed. */
+export function sameCheckProblem(checks: readonly (UptimeCheckInput & { id: string })[], input: UptimeCheckInput, id?: string): string | null {
+  const key = (c: UptimeCheckInput) => `${c.name.trim().toLowerCase()} ${c.method} ${c.url}`;
+  const twin = checks.find((c) => c.id !== id && key(c) === key(input));
+  return twin ? `"${twin.name}" already checks ${twin.method} ${twin.url}. Edit that check, or give this one another name.` : null;
+}
