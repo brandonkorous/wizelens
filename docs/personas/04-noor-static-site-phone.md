@@ -155,7 +155,7 @@ She looks for the slowest page on phones and why.
 **Done when:** she can name the page, the number, and the reason in one sentence
 she would say to Rémy, without opening a word she does not know.
 
-**Outcome:** —
+**Outcome:** done after #090–#092. Rémy's phone was played by 18 visits on slow 4G with a 4× slower CPU (12 pages, then 6 again), all 18 arrived (77 in all). Rendering › By device, phones first by time: `/blog/future-of-devsecops-from-pipelines-to-platforms`, Phone 6.14 s (tablet 640 ms, desktop 1.20 s). Tapping it opened the route page, which mixed all devices into "Avg Render Time 1.71 s" and gave no reason (#090). Now its **On each device** card says Very slow, ready in 6.14 s, and: "The text shows at 1.56 s, but the main content shows only at 6.14 s. Its pictures hold it up: the slowest took 4.54 s to download. 1 picture is bigger than the screen needs." Its newest page load said TOTAL 1.56 s and "No problems found" (#091: now 6.14 s and a **Slow page** problem), and on the phone that screen was 714 px wide once the problem showed (#092). Her sentence for Rémy: "On a phone the DevSecOps blog post takes about 6 seconds: the words show in a second and a half, but its big picture takes four and a half seconds to download, and it is bigger than a phone needs." Words she did not know: none on the route page; the trace page still says "Spans" and "pageview".
 
 ### Act 6 — what broke on the contact page?
 
@@ -270,4 +270,6 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 - 21:08–21:14 org and project renamed; browser and ingest keys made; #083 (no ready script tag) fixed 21:14; two spare browser keys revoked
 - 21:15 act 3: the ingest key in the tag, refused without a word; #084 fixed 21:25; key rotated
 - 21:25:42 act 4: the browser key in the tag; 29 page views from 3 sizes by 21:28; #085 (Overview said nothing arrived) fixed 21:30; #086 (SSR on a static site) fixed 21:34
+- 21:55–21:58 act 5: 18 visits as a slow phone (slow 4G, CPU ×4)
+- 21:59–22:16 #090 (no reason, no device on a page's screen), #091 (Total 1.56 s for a 6.14 s load), #092 (trace 714 px wide on a phone) fixed; #089 again at 360
 - 21:36–21:53 #087 (no split by device) fixed; 28 more visits with this branch's script at 21:44; #088 (Rendering 1160 px wide on a phone) and #089 (service chip pushes the account button off, found on P02) fixed 21:53
