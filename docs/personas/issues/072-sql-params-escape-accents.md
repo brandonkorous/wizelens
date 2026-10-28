@@ -33,3 +33,7 @@ Tests: `ParametersTextTests` (.NET) and `test_params_keep_letters_as_typed` (Pyt
 
 2026-10-27 19:59, P03 saved product 1 in the admin (trace `2d67f137…`). SQL tab on https://localhost:5099/_wizelens and
 in the cloud: `"@p3":"Peña Ridge 2-Person Tent — 3-season, 1.9 kg"`.
+
+2026-10-27 20:14, cloud Search: `@wizelens.db.parameters:*Peña*` finds that save (1 request, 1 trace, 1 span); the four
+saves stored before the fix keep their escaped text and are not found by it. A bare word (`Peña`, `Ridge`) does not
+look inside SQL params on any save.
