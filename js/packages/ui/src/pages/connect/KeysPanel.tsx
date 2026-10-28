@@ -58,7 +58,7 @@ function KeyName({ k, all, now, phone }: { k: ApiKey; all: ApiKey[]; now: number
       {fresh && <Badge tone="info">New secret</Badge>}
       {replaced && <Badge tone="warning">Old secret, stops {fmtTime(k.expiresMs!, now)}</Badge>}
       {leaked(k, now) && <Badge tone="danger">Seen in a page</Badge>}
-      <small className="wl-key-phone">{phone}</small>
+      <small className="wl-phone-line">{phone}</small>
     </span>
   );
 }

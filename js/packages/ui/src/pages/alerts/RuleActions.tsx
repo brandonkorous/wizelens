@@ -9,7 +9,16 @@ import type { AlertRule } from "./alertTypes";
 import type { InProject } from "../../data/projectScope";
 
 const HOUR = 3_600_000;
-const MUTES: [string, string][] = [["", "Mute…"], [String(HOUR), "For 1 hour"], [String(4 * HOUR), "For 4 hours"], [String(24 * HOUR), "For 1 day"], ["-1", "Until I unmute"]];
+const MUTES: [string, string][] = [[String(HOUR), "Mute for 1 hour"], [String(4 * HOUR), "Mute for 4 hours"], [String(24 * HOUR), "Mute for 1 day"], ["-1", "Mute until I unmute"]];
+
+/** The rarer actions of a rule, in one picker: mute (when not muted), turn on or off, test, delete. */
+const moreOptions = (rule: AlertRule, muted: boolean): [string, string][] => [
+  ["", "More…"],
+  ...(muted ? [] : MUTES),
+  ["toggle", rule.enabled ? "Turn off" : "Turn on"],
+  ["test", "Send a test"],
+  ["delete", "Delete…"],
+];
 
 /** Off, muted, firing (and acknowledged), or OK. */
 export function RuleState({ rule }: { rule: AlertRule }) {
@@ -37,7 +46,7 @@ export interface RuleActionsProps {
   onDelete?: () => void;
 }
 
-/** Acknowledge, mute or unmute, turn on or off, test, edit, and delete (after asking). */
+/** The urgent action (Acknowledge, Unmute) and Edit on the row; mute, turn off, test and delete under More. */
 export function RuleActions({ rule, url, onDone, onEdit, onDelete }: RuleActionsProps) {
   const [busy, setBusy] = useState(false);
   const { dialog, confirm } = useAsk();
@@ -51,18 +60,18 @@ export function RuleActions({ rule, url, onDone, onEdit, onDelete }: RuleActions
   };
   const id = `/${encodeURIComponent(rule.id)}`;
   const muted = isMuted(rule, Date.now());
+  const more = (v: string) => {
+    if (v === "toggle") return run("PATCH", id, { enabled: !rule.enabled }, () => (rule.enabled ? `${rule.name} is off.` : `${rule.name} is on.`));
+    if (v === "test") return run("POST", `${id}/test`, undefined, (x) => `Test sent: ${(x as { delivery: string }).delivery}`);
+    if (v === "delete") return void remove();
+    if (v) run("POST", `${id}/mute`, { untilMs: v === "-1" ? -1 : Date.now() + Number(v) });
+  };
   return (
     <span className="wl-row-actions wl-alert-actions" onClick={(e) => e.stopPropagation()}>
       {rule.state === "firing" && rule.ackMs === null && <button type="button" className="wl-link-btn" disabled={busy} onClick={() => run("POST", `${id}/ack`)}>Acknowledge</button>}
-      {muted ? (
-        <button type="button" className="wl-link-btn" disabled={busy} onClick={() => run("POST", `${id}/mute`, { untilMs: null })}>Unmute</button>
-      ) : (
-        <Select small label="Mute" value="" options={MUTES} onChange={(v) => v && run("POST", `${id}/mute`, { untilMs: v === "-1" ? -1 : Date.now() + Number(v) })} />
-      )}
-      <button type="button" className="wl-link-btn" disabled={busy} onClick={() => run("PATCH", id, { enabled: !rule.enabled })}>{rule.enabled ? "Turn off" : "Turn on"}</button>
-      <button type="button" className="wl-link-btn" disabled={busy} onClick={() => run("POST", `${id}/test`, undefined, (x) => `Test sent: ${(x as { delivery: string }).delivery}`)}>Test</button>
+      {muted && <button type="button" className="wl-link-btn" disabled={busy} onClick={() => run("POST", `${id}/mute`, { untilMs: null })}>Unmute</button>}
       {onEdit && <button type="button" className="wl-link-btn" onClick={onEdit}>Edit</button>}
-      {onDelete && <button type="button" className="wl-link-btn wl-text-error" onClick={() => void remove()}>Delete</button>}
+      <Select small label={`More actions for ${rule.name}`} value="" options={moreOptions(rule, muted).filter(([v]) => v !== "delete" || onDelete)} onChange={more} />
       {dialog}
     </span>
   );

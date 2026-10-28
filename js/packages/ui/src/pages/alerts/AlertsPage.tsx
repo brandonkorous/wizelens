@@ -21,15 +21,19 @@ import { useRuleTargets } from "./ruleTargets";
 
 type Url = (path?: string) => string;
 
+const sendsTo = (r: AlertRule) => r.channels.map(channelLabel).join(", ") || "Dashboard only";
+/** On a phone, the rule, its last value, and where it sends, under its name. */
+const phoneLine = (r: AlertRule) => `${ruleText(r)} · last ${fmtValue(r, r.lastValue)} · ${sendsTo(r)}`;
+
 function ruleColumns(canWrite: boolean, url: Url, onDone: (note?: string) => void, onEdit: (r: AlertRule) => void, onDelete: (r: AlertRule) => void): Column<AlertRule>[] {
   return [
-    { key: "name", header: "Alert", cell: (r) => <strong>{r.name}</strong> },
+    { key: "name", header: "Alert", cell: (r) => <span className="wl-who"><strong>{r.name}</strong><small className="wl-phone-line">{phoneLine(r)}</small></span> },
     ...projectColumn<AlertRule>(),
-    { key: "rule", header: "Rule", className: "wl-wrap", cell: (r) => ruleText(r) },
+    { key: "rule", header: "Rule", className: "wl-wrap", cell: (r) => ruleText(r), hideSm: true },
     { key: "state", header: "State", cell: (r) => <RuleState rule={r} /> },
-    { key: "value", header: "Last value", num: true, cell: (r) => fmtValue(r, r.lastValue) },
-    { key: "to", header: "Sends to", cell: (r) => r.channels.map(channelLabel).join(", ") || "Dashboard only" },
-    ...(canWrite ? [{ key: "actions", header: "", className: "wl-nowrap", cell: (r: AlertRule) => <RuleActions rule={r} url={url} onDone={onDone} onEdit={() => onEdit(r)} onDelete={() => onDelete(r)} /> }] : []),
+    { key: "value", header: "Last value", num: true, cell: (r) => fmtValue(r, r.lastValue), hideSm: true },
+    { key: "to", header: "Sends to", cell: sendsTo, hideSm: true },
+    ...(canWrite ? [{ key: "actions", header: "", className: "wl-cell-actions", cell: (r: AlertRule) => <RuleActions rule={r} url={url} onDone={onDone} onEdit={() => onEdit(r)} onDelete={() => onDelete(r)} /> }] : []),
   ];
 }
 
