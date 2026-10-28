@@ -23,7 +23,7 @@ import { useTargetProject } from "../../ui/ProjectSelect";
 /** A new alert that fires when any check fails, filled in on the Alerts page. */
 const ALERT_HREF = hrefTo("alerts", [], { new: "1", name: "A site is down", metric: "uptime_failing", op: ">", threshold: "0", windowMs: "300000" });
 
-const SUBTITLE = "Checks that call your sites and APIs on a schedule, from this host. Results are requests of the wizelens-uptime service.";
+const SUBTITLE = "Checks that call your sites and APIs on a schedule, from this host. Their results stay on this page, apart from your app's requests and traces.";
 
 /** The Uptime page on hosts that run checks; elsewhere a note. One check opens at `#/uptime/<id>`. */
 export function UptimePage() {

@@ -6,6 +6,7 @@ import type { LogRow } from "../stats/logs.js";
 import { requestUserName, requestWith } from "../stats/requests.js";
 import { type CriticalSpan, traceDurationOf } from "../stats/traces.js";
 import type { Trace } from "../types.js";
+import { isUptimeSpan } from "../uptime/check.js";
 import { type Contribution, contribution, withServices } from "./agg.js";
 import { dbFacts } from "./facts-db.js";
 import { errorFacts, logFacts } from "./facts-errors.js";
@@ -19,7 +20,7 @@ import { securityFacts } from "./facts-security.js";
 import { uptimeFacts } from "./facts-uptime.js";
 
 /** Bump when fact semantics change: hosts then rebuild their facts and rollups. */
-export const FACTS_VERSION = 18;
+export const FACTS_VERSION = 19;
 /** A trace waits a few seconds for its stats on purpose; only one written longer ago than this counts as stats running behind. */
 export const SETTLE_BEHIND_MS = 60_000;
 /** Slow query threshold that hosts fix when a trace settles; the same as `analyzeTrace`'s default. */
@@ -43,7 +44,7 @@ export interface TraceFacts {
   startMs: number;
   /** Null when the trace is not a request (a page view, a job). */
   request: RequestItem | null;
-  /** Null for the lines outside a request (a loose trace), which are not a trace to list. */
+  /** Null for the lines outside a request (a loose trace) and for an uptime check: neither is a trace to list. */
   trace: TraceItem | null;
   logs: LogRow[];
   critical: CriticalSpan[];
@@ -59,8 +60,10 @@ function buildFacts(trace: Trace, o: FactOptions): TraceFacts {
   const row = requestWith(trace, o);
   const logs = traceLogRows(trace);
   const loose = isLooseTraceId(trace.traceId);
+  // An uptime check is WizeLens's own probe: the Uptime page shows it, the Traces list and its cards do not (as Requests).
+  const listed = !loose && !trace.spans.some(isUptimeSpan);
   const contributions = [
-    ...(loose ? [] : traceContributions(trace)),
+    ...(listed ? traceContributions(trace) : []),
     ...(row ? requestContributions(row, requestUserName(trace)) : []),
     ...serviceFacts(trace),
     ...endpointFacts(trace),
@@ -76,7 +79,7 @@ function buildFacts(trace: Trace, o: FactOptions): TraceFacts {
     traceId: trace.traceId,
     startMs: trace.startMs,
     request: row ? requestItemOf(row) : null,
-    trace: loose ? null : traceItemOf(trace),
+    trace: listed ? traceItemOf(trace) : null,
     logs,
     critical: traceCritical(trace, o.criticalPerTrace),
     contributions,

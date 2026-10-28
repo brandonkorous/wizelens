@@ -1371,9 +1371,9 @@ contain; not with HEAD), `intervalMin` (1 to 60), `timeoutMs` (1 to 60 s), `env`
   `http.response.status_code`, `wizelens.uptime.check_id`, `wizelens.uptime.check_name`, `wizelens.uptime.ok`, and with TLS
   `tls.server.not_after` and `wizelens.uptime.tls_days_left`. A failed run has status `error`, the reason as `statusMessage`, and
   an error log line (no `exception` event); a certificate within 14 days of its end (`TLS_WARN_DAYS`) adds a warn log line.
-  Runs are not app traffic: requests, services, errors, and Problems skip every span with `wizelens.uptime.check_id` (also
+  Runs are not app traffic: requests, the Traces list and its cards, services, errors, and Problems skip every span with `wizelens.uptime.check_id` (also
   runs written before as `http.server` spans). The `up` (all checks) and `up.chk` (by check id) stats feed the `uptime` page;
-  Search and Logs still find runs.
+  Search and Logs still find runs, and a run opens by its trace link (`FACTS_VERSION` 19).
 - **Incidents**: a run that fails after a passing (or pending) one opens an incident with the reason; the next passing run closes
   it at its start. Turning a check off closes its open incident. Uptime for 24 h, 7 days, and 30 days is the share of time since
   the check was made not covered by incidents, so it does not depend on trace retention. Incidents are kept 90 days.

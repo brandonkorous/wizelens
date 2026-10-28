@@ -8,7 +8,9 @@ import { timingParts } from "../testing/legacy/overview.js";
 import { applyFilter, DURATION_OPTIONS, STATUS_OPTIONS } from "../testing/legacy/request-filter.js";
 import { relErr, sumKind, totalOf } from "../testing/scale-util.js";
 import { SCENARIO_NOW, scenarioTraces } from "../testing/scenario.js";
+import { isUptimeSpan } from "../uptime/check.js";
 import { type Agg, avgOfAgg, emptyAgg, mergeAgg } from "./agg.js";
+import { traceFacts } from "./facts.js";
 import { histPercentile } from "./hist.js";
 import { KEY_SEP, KIND_SPEC, type RollupKind, splitKey } from "./kinds.js";
 import { keyMatches } from "./needs.js";
@@ -68,10 +70,19 @@ describe("request facts", () => {
 
 describe("trace facts", () => {
   it("counts traces, spans, and slow traces", () => {
-    // Lines outside a request are not a trace.
-    const cards = traceCards(traces.filter((t) => !isLooseTraceId(t.traceId)), { from: 0, to: SCENARIO_NOW + 1 }, 4);
+    // Lines outside a request and uptime checks are not a trace to list.
+    const listed = traces.filter((t) => !isLooseTraceId(t.traceId) && !t.spans.some(isUptimeSpan));
+    const cards = traceCards(listed, { from: 0, to: SCENARIO_NOW + 1 }, 4);
     const a = totalOf(traces, "trace");
     expect([a.n, a.sum / a.n, a.c[0]]).toEqual([cards.count, cards.avgSpans, cards.slow]);
+  });
+
+  it("leave an uptime check out of the trace list and its counts", () => {
+    const t = traces.find((x) => !isLooseTraceId(x.traceId))!;
+    const probe = { ...t, spans: t.spans.map((s, i) => (i === 0 ? { ...s, category: "uptime" } : s)) };
+    expect(traceFacts(t).trace).not.toBeNull();
+    expect(traceFacts(probe).trace).toBeNull();
+    expect(traceFacts(probe).contributions.some((c) => c.kind === "trace")).toBe(false);
   });
 });
 
