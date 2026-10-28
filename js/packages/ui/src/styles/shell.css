@@ -100,6 +100,9 @@
   .wl-top-btn > svg:last-child:not(:first-child), .wl-top-btn .wl-chip-count { display: none; }
   .wl-search-box { flex: 0 0 38px; justify-content: center; padding: 0; }
   .wl-search-box span { display: none; }
+  /* The service chip goes last, so when the buttons do not all fit it takes its own line and every button stays on screen. */
+  .wl-topbar { flex-wrap: wrap; align-content: center; row-gap: 10px; height: auto; min-height: var(--wl-topbar-h); padding-block: 14px; }
+  .wl-topbar > .wl-scope-chip { order: 1; }
 }
 .wl-nav-saved { padding-top: 0; border-top: 1px solid var(--wl-line); flex: 0 1 auto; }
 .wl-nav-saved a { padding: 7px 14px; font-size: 14px; }
