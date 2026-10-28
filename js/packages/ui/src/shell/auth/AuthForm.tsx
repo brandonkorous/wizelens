@@ -48,12 +48,12 @@ function CardHead({ title, intro }: { title: string; intro?: ReactNode }) {
 /** One centered card with a message and optional actions. */
 export function AuthCard({ title, intro, children }: { title: string; intro?: ReactNode; children?: ReactNode }) {
   return (
-    <div className="wl-auth">
+    <main className="wl-auth">
       <div className="wl-auth-card">
         <CardHead title={title} intro={intro} />
         {children}
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -88,7 +88,7 @@ export function AuthForm({ title, intro, fields, submit, onSubmit, secondary, fo
       .finally(() => setBusy(false));
   };
   return (
-    <div className="wl-auth">
+    <main className="wl-auth">
       <form className="wl-auth-card" onSubmit={send}>
         <CardHead title={title} intro={intro} />
         {fields.map((f) => (
@@ -101,7 +101,7 @@ export function AuthForm({ title, intro, fields, submit, onSubmit, secondary, fo
         {secondary}
         {footer && <div className="wl-auth-foot">{footer}</div>}
       </form>
-    </div>
+    </main>
   );
 }
 

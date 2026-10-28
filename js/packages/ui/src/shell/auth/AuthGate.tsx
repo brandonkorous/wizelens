@@ -15,9 +15,9 @@ import { ForgotPassword, ResetPassword } from "./PasswordScreens";
 import { TwoFactorScreen } from "./TwoFactorScreen";
 
 const Splash = () => (
-  <div className="wl-auth">
+  <main className="wl-auth">
     <p className="wl-muted">Loading WizeLens…</p>
-  </div>
+  </main>
 );
 
 /** Account screens that open signed in or not: links from emails, setup, and the second sign-in step. Null: not one of them. */
