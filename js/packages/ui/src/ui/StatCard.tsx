@@ -21,7 +21,8 @@ export interface StatCardProps {
 }
 
 function Change({ change, upIsGood, compareLabel }: Pick<StatCardProps, "change" | "upIsGood" | "compareLabel">) {
-  if (change === null) return <div className="wl-delta"><b className="wl-flat">No data</b><span>{compareLabel.replace(/^vs\. /, "for ")}</span></div>;
+  // No earlier data: say so once, quietly, and not as "No data" beside a number that has some.
+  if (change === null) return <div className="wl-delta"><span>{compareLabel.replace(/^vs\. /, "Nothing to compare in the ")}</span></div>;
   const flat = Math.abs(change) < 0.5;
   const good = change > 0 === upIsGood;
   const Arrow = change >= 0 ? ArrowUp : ArrowDown;
