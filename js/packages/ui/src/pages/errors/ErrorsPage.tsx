@@ -38,12 +38,12 @@ export function AllErrors() {
     <div className="wl-errors-page">
       <PageHeader title="Errors" subtitle="Investigate exceptions, failures, and request-level problems across your stack." />
       <ModelState model={model} loading={loading} error={error} what="errors" />
-      {model && <ErrorsBody stats={model} />}
+      {model && <ErrorsBody stats={model} loading={loading} />}
     </div>
   );
 }
 
-function ErrorsBody({ stats }: { stats: ErrorsModel }) {
+function ErrorsBody({ stats, loading }: { stats: ErrorsModel; loading: boolean }) {
   const linked = useRoute().query.get("group");
   const group = linked ? stats.selected : (stats.groups[0] ?? null);
   const selected = group?.key ?? null;
@@ -60,7 +60,7 @@ function ErrorsBody({ stats }: { stats: ErrorsModel }) {
           <RecentExceptionsPanel stats={stats} selected={selected} />
           <ErrorsByServicePanel stats={stats} />
         </div>
-        <ErrorDetailsPanel groups={stats.groups} group={group} linked={!!linked} issues={stats.issues} />
+        <ErrorDetailsPanel groups={stats.groups} group={group} linked={!!linked} loading={loading} issues={stats.issues} />
       </div>
     </>
   );

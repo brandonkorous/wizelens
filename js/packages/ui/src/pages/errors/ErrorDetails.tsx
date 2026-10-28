@@ -102,10 +102,12 @@ function GroupDetails({ group, info }: { group: ErrorGroup; info: IssueInfo | un
   );
 }
 
-/** The chosen group, or a note when a linked group is not in this range. The pager steps through the listed groups. */
-export function ErrorDetailsPanel({ groups, group, linked, issues }: { groups: ErrorGroup[]; group: ErrorGroup | null; linked: boolean; issues: Record<string, IssueInfo> }) {
+/** The chosen group, or a note when a linked group is not in this range (never while it is still loading). The pager steps through the listed groups. */
+export function ErrorDetailsPanel({ groups, group, linked, loading, issues }: { groups: ErrorGroup[]; group: ErrorGroup | null; linked: boolean; loading: boolean; issues: Record<string, IssueInfo> }) {
   const index = group ? groups.findIndex((g) => g.key === group.key) : -1;
-  const empty = linked ? (
+  const empty = linked && loading ? (
+    <Empty title="Loading this error…" />
+  ) : linked ? (
     <Empty title="This error is not in the selected time range">Pick a longer time range at the top, or pick another exception.</Empty>
   ) : (
     <Empty title="No error selected">Pick an exception to see its details.</Empty>
