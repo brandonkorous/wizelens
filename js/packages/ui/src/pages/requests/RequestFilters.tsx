@@ -1,3 +1,4 @@
+import { FilterPanel } from "../../ui/FilterPanel";
 import { setQuery } from "../../routes";
 import { Select } from "../../ui/Controls";
 import { ListQueryBar } from "../../ui/ListQueryBar";
@@ -18,7 +19,7 @@ export function RequestFilters({ filter, methods, services }: RequestFiltersProp
   const reset = () => setQuery({ ...Object.fromEntries(FILTER_KEYS.map((k) => [k, null])), page: null });
   const withCurrent = (list: string[], current: string) => (current && !list.includes(current) ? [...list, current] : list);
   return (
-    <section className="wl-panel wl-filters">
+    <FilterPanel active={[filter.method, filter.status, filter.duration, filter.service, filter.insights === "1"]}>
       <Select label="Method" value={filter.method} onChange={set("method")} options={[["", "All Methods"], ...withCurrent(methods, filter.method).map((m): [string, string] => [m, m])]} />
       <Select label="Status" value={filter.status} onChange={set("status")} options={STATUS_OPTIONS} />
       <Select label="Duration" value={filter.duration} onChange={set("duration")} options={DURATION_OPTIONS} />
@@ -29,6 +30,6 @@ export function RequestFilters({ filter, methods, services }: RequestFiltersProp
         Reset
       </button>
       <FilterChips chips={[["Endpoint", "endpoint", filter.endpoint], ["User", "user", filter.user]]} />
-    </section>
+    </FilterPanel>
   );
 }

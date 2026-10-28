@@ -1,3 +1,4 @@
+import { FilterPanel } from "../../ui/FilterPanel";
 import { RotateCcw } from "lucide-react";
 import { DURATION_OPTIONS, type TraceFilter } from "@wizeworks/lens-core";
 import { setQuery } from "../../routes";
@@ -12,7 +13,7 @@ export function TraceFilters({ filter }: { filter: TraceFilter }) {
   const set = (key: string) => (value: string) => setQuery({ [key]: value || null, page: null });
   const reset = () => setQuery({ status: null, duration: null, sort: null, q: null, page: null });
   return (
-    <section className="wl-panel wl-filters">
+    <FilterPanel active={[filter.service, filter.status, filter.duration]}>
       <ServiceSelect value={filter.service} />
       <Select label="Status" value={filter.status} onChange={set("status")} options={STATUSES} />
       <Select label="Duration" value={filter.duration} onChange={set("duration")} options={DURATION_OPTIONS} />
@@ -20,6 +21,6 @@ export function TraceFilters({ filter }: { filter: TraceFilter }) {
       <button type="button" className="wl-btn" onClick={reset}>
         <RotateCcw aria-hidden="true" /> Reset
       </button>
-    </section>
+    </FilterPanel>
   );
 }

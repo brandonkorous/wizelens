@@ -1,3 +1,4 @@
+import { FilterPanel } from "../../ui/FilterPanel";
 import { RotateCcw } from "lucide-react";
 import { type DatabaseModel, OPERATIONS } from "@wizeworks/lens-core";
 import { setQuery } from "../../routes";
@@ -18,7 +19,7 @@ export function DbFilters({ stats }: { stats: DatabaseModel }) {
   const tables = withCurrent(stats.tables.map((t) => t.table), f.table);
   const reset = () => setQuery({ q: null, table: null, operation: null, database: null, sort: null, page: null, tblpage: null });
   return (
-    <section className="wl-panel wl-filters">
+    <FilterPanel active={[f.service, f.database, f.operation, f.table]}>
       <ServiceSelect value={f.service} />
       <Select label="Database" value={f.database} onChange={set("database")} options={[["", "All Databases"], ...pairs(withCurrent(stats.databases, f.database))]} />
       <Select label="Operation" value={f.operation} onChange={set("operation")} options={[["", "All Operations"], ...pairs([...OPERATIONS])]} />
@@ -28,6 +29,6 @@ export function DbFilters({ stats }: { stats: DatabaseModel }) {
       <button type="button" className="wl-btn" onClick={reset}>
         <RotateCcw aria-hidden="true" /> Reset
       </button>
-    </section>
+    </FilterPanel>
   );
 }

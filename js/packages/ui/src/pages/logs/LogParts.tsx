@@ -1,3 +1,4 @@
+import { FilterPanel } from "../../ui/FilterPanel";
 import { RotateCcw } from "lucide-react";
 import { isLooseTraceId, type LogLevel, LOG_LEVELS, type LogRow, type LogsModel, VOLUME_GROUPS } from "@wizeworks/lens-core";
 import { fmtTime } from "../../format";
@@ -23,7 +24,7 @@ const LEVEL_OPTIONS: [string, string][] = [["trace", "All levels"], ["debug", "D
 export function LogFilters({ stats }: { stats: LogsModel }) {
   const { filter, services } = stats;
   return (
-    <section className="wl-panel wl-filters">
+    <FilterPanel active={[filter.minLevel !== "trace" && filter.minLevel, filter.service, filter.exact, filter.origin]}>
       <Select label="Minimum level" value={filter.minLevel} options={LEVEL_OPTIONS} onChange={(v) => setQuery({ level: v === "trace" ? null : v, page: null, patpage: null })} />
       <ServiceSelect value={filter.service} services={services} />
       <ListQueryBar value={filter.query} placeholder="Messages, categories, or trace IDs; or level:error service:api" />
@@ -34,7 +35,7 @@ export function LogFilters({ stats }: { stats: LogsModel }) {
       </button>
       <FilterChips chips={[["Category", "category", filter.category ?? ""], ["Trace", "trace", filter.traceId ?? ""], ["Pattern", "pattern", filter.pattern ?? ""], ["User", "user", filter.user ?? ""]]} />
 
-    </section>
+    </FilterPanel>
   );
 }
 

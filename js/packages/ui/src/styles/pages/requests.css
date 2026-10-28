@@ -36,5 +36,5 @@
 
 @media (max-width: 1400px) { .wl-rq-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 1200px) { .wl-rq-side { position: static; max-height: none; } }
-@media (max-width: 720px) { .wl-rq-cards { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 720px) { .wl-rq-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
 .wl-rq-pick { font-weight: 400; }

@@ -1,3 +1,4 @@
+import { FilterPanel } from "../../ui/FilterPanel";
 import { RotateCcw } from "lucide-react";
 import type { ErrorsModel } from "@wizeworks/lens-core";
 import { setQuery } from "../../routes";
@@ -26,7 +27,7 @@ export function ErrorFilters({ stats }: { stats: ErrorsModel }) {
   const releases = withCurrent(stats.releases.map((r) => r.version), f.release);
   const flag = (key: string) => (e: { target: { checked: boolean } }) => setQuery({ [key]: e.target.checked ? "1" : null, page: null, group: null });
   return (
-    <section className="wl-panel wl-filters">
+    <FilterPanel active={[f.service, stats.hasIssues && f.status !== "unresolved" && f.status, f.release, f.type, f.endpoint, f.critical, f.fresh]}>
       <ServiceSelect value={f.service} services={stats.services.map((s) => s.service)} />
       {stats.hasIssues && <Select label="Status" value={f.status} onChange={(v) => setQuery({ status: v === "unresolved" ? null : v, page: null, group: null })} options={STATUSES} />}
       {releases.length > 0 && <Select label="Release" value={f.release} onChange={set("release")} options={[["", "Any Release"], ...releases.map((v): [string, string] => [v, `New in ${v}`])]} />}
@@ -40,6 +41,6 @@ export function ErrorFilters({ stats }: { stats: ErrorsModel }) {
       <button type="button" className="wl-btn" onClick={reset}>
         <RotateCcw aria-hidden="true" /> Reset
       </button>
-    </section>
+    </FilterPanel>
   );
 }
