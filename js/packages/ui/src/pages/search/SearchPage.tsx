@@ -116,7 +116,7 @@ export function SearchPage() {
         <TagThis scopes={scopes} />
       </PageHeader>
       <section className="wl-panel wl-search-bar">
-        <QueryBar value={q} onSubmit={(next) => setQuery({ q: next || null })} range={range} server={server} serverError={invalid} />
+        <QueryBar value={q} live onSubmit={(next) => setQuery({ q: next || null })} range={range} server={server} serverError={invalid} />
         <TabBar tabs={tabs} value={kind} onChange={(k) => setQuery({ kind: k })} />
         <SavedSearches />
       </section>
