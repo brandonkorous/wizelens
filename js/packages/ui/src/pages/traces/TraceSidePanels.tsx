@@ -14,8 +14,8 @@ const LAYER_COLOR: Record<LayerKind | "owner", string> = {
   handler: "var(--wl-green)",
   service: "var(--wl-blue)",
   queue: "var(--wl-violet)",
-  database: "var(--wl-red)",
-  external: "var(--wl-orange)",
+  database: "var(--wl-k-db)",
+  external: "var(--wl-k-client)",
   render: "#38bdf8",
   owner: "var(--wl-blue)",
 };
