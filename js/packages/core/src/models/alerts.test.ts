@@ -32,7 +32,7 @@ it("fires on breaches, and on silence only for low traffic", () => {
   expect(alertMessage("requests", ">", null, 5, "test")).toBe("Requests is not measured (alerts when above 5)");
 });
 
-it("counts the uptime checks that failed in the window, and nothing without runs", () => {
+it("counts the uptime checks whose newest run failed, and nothing without runs", () => {
   const check = (id: string): UptimeCheck => ({
     id, name: id, url: "http://localhost:4173/", method: "GET", headers: {}, expectStatus: "200-299", expectBody: "", intervalMin: 1,
     timeoutMs: 5000, env: "", enabled: true, createdMs: 0, state: "up", lastRunMs: 0, lastDurationMs: 1, lastStatus: 200, lastError: null, tlsExpiresMs: null,
@@ -44,6 +44,7 @@ it("counts the uptime checks that failed in the window, and nothing without runs
   };
   expect(value("uptime_failing", [run("home", false, 20_000), run("home", false, 10_000), run("contact", true, 15_000)])).toBe(1);
   expect(value("uptime_failing", [run("home", true, 20_000), run("contact", true, 15_000)])).toBe(0);
+  expect(value("uptime_failing", [run("home", false, 40_000), run("home", true, 10_000)])).toBe(0);
   expect(value("uptime_failing", [ok])).toBeNull();
   expect(alertMessage("uptime_failing", ">", 2, 0)).toBe("Uptime checks failing is 2 (above 0)");
 });
