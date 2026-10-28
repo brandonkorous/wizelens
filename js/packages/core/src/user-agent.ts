@@ -11,11 +11,13 @@ export function deviceOf(ua: string | null | undefined): Device | null {
   return /Mobi|iPhone|Android/.test(ua) ? "Phone" : "Desktop";
 }
 
-/** "Chrome on Windows" from a user agent; the start of it when it is not a known browser. */
+/** "Chrome on Windows", or "Chrome on Android (phone)" with the device Rendering uses; the start of it when it is not a known browser. */
 export function shortAgent(ua: string | null | undefined): string {
   if (!ua) return "Unknown device";
   const browser = BROWSERS.find(([r]) => r.test(ua))?.[1];
   const system = SYSTEMS.find(([r]) => r.test(ua))?.[1];
-  if (browser) return system ? `${browser} on ${system}` : browser;
+  const device = deviceOf(ua);
+  const on = device === "Phone" || device === "Tablet" ? ` (${device.toLowerCase()})` : "";
+  if (browser) return system ? `${browser} on ${system}${on}` : `${browser}${on}`;
   return ua.length > 40 ? `${ua.slice(0, 40)}…` : ua;
 }
