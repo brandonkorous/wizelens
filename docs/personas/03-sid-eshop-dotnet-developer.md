@@ -283,7 +283,7 @@ WIZELENS_HUB_TOKEN; both restarted. Services: Web App, Web, PublicApi and both S
 project (2 of 2 online)", .NET 8.0.33. Found and fixed on the way: no Web App → PublicApi line on the map (#069), the
 endpoint table ran past its panel (#070), a Project column of dashes (#071). Act 7's admin save in the cloud
 (`93fafe0b…`): fetch → PUT → SELECT + UPDATE, one trace. Share → 7 days → Create link; a signed-out browser opened it
-and saw the same trace and SQL (the contractor's view). The product name there read `Peña … —` (#072,
+and saw the same trace and SQL (the contractor's view). The product name there read `Pe\u00F1a … \u2014` (#072,
 fixed in .NET and Python). Neighbours: Search for `Harrow & Vance`, `kanninja` and `hv_bookings` finds nothing;
 Greta's board trace `391b74ba…` and the Harrow & Vance trace `82e5317a…`, by link and by Ctrl K, say "This trace is no
 longer stored", the same as a trace that never existed. No leak.
