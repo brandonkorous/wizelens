@@ -54,6 +54,9 @@ export function pageRows(calls: readonly RecordedRequest[], lead: RecordedReques
   return rows;
 }
 
+/** How many calls the rows list: the page's own request and each call after it, not the paint rows. */
+export const callCount = (rows: readonly WfRow[]): number => rows.filter((r) => r.kind !== "render").length;
+
 function niceStep(raw: number): number {
   const pow = 10 ** Math.floor(Math.log10(Math.max(raw, 0.001)));
   return [1, 2, 5, 10].map((m) => m * pow).find((s) => s >= raw) ?? 10 * pow;

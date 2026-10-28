@@ -4,7 +4,7 @@ import type { PageStats } from "../page.js";
 import { type Child, h } from "./dom.js";
 import { dashLink, panelBar, stackBar, statusPill } from "./parts.js";
 import type { HudSnapshot } from "./page-summary.js";
-import { waterfall, type WfRow } from "./waterfall.js";
+import { callCount, waterfall, type WfRow } from "./waterfall.js";
 
 const FINDING_LABEL: Record<FindingKind, string> = {
   error: "Error",
@@ -88,7 +88,7 @@ function calls(m: DetailsModel): Child[] {
   const { snap, rows } = m;
   const hidden = Math.max(0, rows.length - CALL_ROWS) + snap.dropped;
   return [
-    h("h3", null, `Calls · ${snap.view.fetch ?? 0}`),
+    h("h3", null, `Calls · ${callCount(rows) + snap.dropped}`),
     hidden > 0 && h("p", { class: "wl-muted" }, `${plural(hidden, "earlier call")} not shown.`),
     waterfall(rows.slice(-CALL_ROWS), snap.req.startMs),
   ];
