@@ -17,7 +17,7 @@
 .wl-prose blockquote { margin: 24px 0; padding: 14px 18px; border-left: 3px solid var(--wl-blue); border-radius: 0 10px 10px 0; background: var(--wl-accent-soft); color: var(--wl-fg); }
 .wl-prose blockquote p { margin: 0; }
 
-.wl-prose :not(pre) > code { padding: 2px 6px; border-radius: 6px; background: var(--wl-surface-2); border: 1px solid var(--wl-line); font-size: 0.86em; color: var(--wl-fg); white-space: break-spaces; }
+.wl-prose :not(pre) > code { padding: 2px 6px; border-radius: 6px; background: var(--wl-surface-2); border: 1px solid var(--wl-line); font-size: 0.86em; color: var(--wl-fg); white-space: break-spaces; overflow-wrap: anywhere; }
 .wl-pre { position: relative; }
 .wl-prose pre { margin: 0; padding: 18px 92px 18px 20px; border-radius: 14px; background: var(--wl-night) !important; font-size: 13.5px; line-height: 1.7; overflow-x: auto; scrollbar-width: thin; }
 .wl-prose pre code { font-size: inherit; }
