@@ -19,7 +19,8 @@ describe("parity: alert values", () => {
       const ctx = alertContext(windowMs, SCENARIO_NOW);
       const cur = traces.filter((t) => inWindow(t.startMs, ctx.window));
       const prev = traces.filter((t) => inWindow(t.startMs, ctx.prev));
-      for (const metric of (Object.keys(ALERT_METRICS) as AlertMetric[]).filter((m) => m !== "log_count")) {
+      // Log and uptime alerts are newer than the legacy values; their own tests cover them.
+      for (const metric of (Object.keys(ALERT_METRICS) as AlertMetric[]).filter((m) => m !== "log_count" && m !== "uptime_failing")) {
         const want = alertValue(metric, cur, prev, 100);
         const got = computePageSync(alertPage(metric), ctx, ex);
         if (want === null || got === null) expect([metric, windowMs, got]).toEqual([metric, windowMs, want]);

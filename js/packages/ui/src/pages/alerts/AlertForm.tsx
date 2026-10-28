@@ -48,7 +48,7 @@ function cleaned(r: RuleDraft): RuleDraft {
   const metric =
     r.metric === "metric" ? { metricStat: r.metricStat || "avg", service: "", endpoint: "", sloId: "" } : r.metric === "slo" ? { ...none, service: "", endpoint: "" } : { ...none, sloId: "", endpoint: r.service ? r.endpoint : "" };
   const channels = r.channels.filter((c) => (c.kind === "email" ? c.to.length > 0 : c.kind === "pagerduty" ? c.routingKey.trim() !== "" : c.url.trim() !== ""));
-  const logs = r.metric === "log_count" ? { service: "", endpoint: "", logSearch: r.logSearch ?? {} } : { logSearch: {} };
+  const logs = r.metric === "log_count" ? { service: "", endpoint: "", logSearch: r.logSearch ?? {} } : r.metric === "uptime_failing" ? { service: "", endpoint: "", logSearch: {} } : { logSearch: {} };
   return { ...draftOf(r), ...metric, ...logs, channels };
 }
 
@@ -78,7 +78,7 @@ export function AlertForm({ initial, title, lead, onSave, onCancel }: { initial:
         </FormRow>
         {METRIC_HINTS[r.metric] && <p className="wl-muted wl-small">{METRIC_HINTS[r.metric]}</p>}
         {r.op === "above_normal" && <AboveNormalNote />}
-        {r.metric === "metric" ? <MetricRuleFields r={r} set={set} /> : r.metric === "slo" ? <SloFields r={r} set={set} /> : r.metric === "log_count" ? <LogRuleFields search={r.logSearch ?? {}} onChange={set("logSearch")} /> : <ScopeFields r={r} set={set} />}
+        {r.metric === "metric" ? <MetricRuleFields r={r} set={set} /> : r.metric === "slo" ? <SloFields r={r} set={set} /> : r.metric === "log_count" ? <LogRuleFields search={r.logSearch ?? {}} onChange={set("logSearch")} /> : r.metric === "uptime_failing" ? null : <ScopeFields r={r} set={set} />}
         <FormRow>
           <Select label="Remind while firing" value={String(r.remindMs)} options={REMINDS} onChange={(v) => set("remindMs")(Number(v))} />
           <Check label="On" checked={r.enabled} onChange={(e) => set("enabled")(e.target.checked)} />
