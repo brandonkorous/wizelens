@@ -55,6 +55,7 @@ const TIES: Record<string, (m: Obj) => void> = {
     delete (m.activity as Obj).prevRequests;
     delete m.freshErrors;
     delete m.apdex;
+    delete m.pageViews;
   },
   requests: (m) => {
     // Service options carry display names now ("Web App", not "browser").
@@ -67,8 +68,8 @@ const TIES: Record<string, (m: Obj) => void> = {
     for (const k of ["exact", "category", "traceId", "pattern", "origin", "user"]) delete f[k];
   },
   rendering: (m) => {
-    // The route count and paging are new; the legacy model had none.
-    for (const k of ["routeCount", "routePaging", "componentPaging"]) delete m[k];
+    // The route count, paging, and the device table are new; the legacy model had none.
+    for (const k of ["routeCount", "routePaging", "componentPaging", "devices"]) delete m[k];
   },
   database: (m) => {
     // The table count, the filter, paging, and database options are new; the legacy model had none.

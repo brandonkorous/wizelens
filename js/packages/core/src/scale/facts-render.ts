@@ -40,6 +40,7 @@ function viewContributions(v: PageView): Contribution[] {
     const value = ROUTE_VALUE[m](v);
     if (value !== null) out.push(contribution("pv.m", joinKey(v.route, m), at, { sum: value }));
   }
+  if (v.device && v.renderMs !== null) out.push(contribution("pv.dev", joinKey(v.route, v.device), at, { sum: v.renderMs, values: [v.renderMs] }));
   if (v.largeImages !== null) out.push(contribution("pv.large", v.route, at, { sum: v.largeImages, values: [v.largeImages] }));
   for (const p of PAGE_PHASES) {
     const value = PHASE_VALUE[p](v);

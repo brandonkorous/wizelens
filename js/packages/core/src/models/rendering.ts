@@ -6,6 +6,7 @@ import type { ComponentRow, PhaseStat, RenderPhase, RouteRow } from "../stats/re
 import { META_NEEDS, type ModelMeta, metaOf } from "./input.js";
 import { IMPACT_RANK, type PageInfo, pagedRows, type SortValue } from "./paged.js";
 import { aggByKey, avgs, counts, groupNeed, type Series, seriesNeed, seriesOf, totalOf, uniqueNeeds } from "./read.js";
+import { type DeviceTable, deviceNeeds, deviceTableOf } from "./render-devices.js";
 import { componentNeeds, componentRowsOf, routeNeeds, routeRowsOf, viewsOf } from "./render-rows.js";
 
 export const RENDER_BUCKETS = 24;
@@ -32,6 +33,8 @@ export interface RenderingModel {
   chart: { avg: Series; p75: Series; views: Series };
   phases: Record<PhaseStat, RenderPhase[]>;
   cards: { render: RenderCard; ssr: RenderCard; hydration: RenderCard; issues: RenderCard };
+  /** Views and render time per page on phones, tablets, and desktops. */
+  devices: DeviceTable;
 }
 
 const PHASES: { key: string; phase: string; label: string; kind: RenderPhase["kind"] }[] = [
@@ -107,6 +110,7 @@ const firstNeeds = (): Need[] => [
   seriesNeed("cards", "pv.g", "cur", RENDER_BUCKETS, { split: true, filter: { keys: ["render", "ssr", "hydration"] } }),
   seriesNeed("p75", "pv.g", "cur", RENDER_BUCKETS, { hist: true, filter: { keys: ["render"] } }),
   seriesNeed("views", "pv", "cur", RENDER_BUCKETS),
+  ...deviceNeeds("cur"),
 ];
 
 /** The Rendering page. Params: q (text in a route or component name); rtpage, rtsize, rtsort for routes; cmppage, cmpsize, cmpsort for components. */
@@ -139,6 +143,7 @@ export const renderingPage: PageDef<RenderingModel> = {
       chart: { avg: avgs(seriesOf(d, "cards", RENDER_BUCKETS, "render")), p75: seriesOf(d, "p75", RENDER_BUCKETS).map((a) => p75(a)), views: counts(seriesOf(d, "views", RENDER_BUCKETS)) },
       phases: { avg: phasesOf(d, "avg"), p75: phasesOf(d, "p75") },
       cards: { render: metricCard(d, "render"), ssr: metricCard(d, "ssr"), hydration: metricCard(d, "hydration"), issues: issuesCard(d, withIssues) },
+      devices: deviceTableOf(d, "cur"),
     };
   },
 };

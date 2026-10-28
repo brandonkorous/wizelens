@@ -11,6 +11,7 @@ export interface PageViewFixture {
   navigation?: "load" | "spa";
   page?: Partial<Record<keyof typeof ATTR_PAGE, number>>;
   components?: ReactComponentStat[] | string;
+  userAgent?: string;
 }
 
 /** One page view trace, with an optional React render report. */
@@ -19,6 +20,7 @@ export function makePageView(f: PageViewFixture = {}): Trace {
   const startMs = f.startMs ?? 1_700_000_000_000;
   const route = f.route ?? "/";
   const attributes: Attributes = { [ATTR_BROWSER_TYPE]: "pageview", [ATTR_BROWSER_ROUTE]: route, [ATTR_BROWSER_NAVIGATION]: f.navigation ?? "load", "url.full": `http://app.test${route}` };
+  if (f.userAgent) attributes["user_agent.original"] = f.userAgent;
   for (const [k, v] of Object.entries(f.page ?? {})) attributes[ATTR_PAGE[k as keyof typeof ATTR_PAGE]] = v;
   const spans = [makeSpan({ traceId, category: "browser", service: "browser", startMs, durationMs: f.page?.renderMs ?? 100, name: `pageview ${route}`, attributes })];
   if (f.components !== undefined) {

@@ -9,6 +9,7 @@ import { StatCard } from "../../ui/StatCard";
 import { useSearchText } from "../../ui/useSearchText";
 import { PhasePanel, RouteChartPanel } from "./RenderCharts";
 import { ComponentTable, RouteTable } from "./RenderTables";
+import { DeviceTable } from "./DeviceTable";
 import type { RenderingModel } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
 import { ModelState } from "../../ui/ModelState";
@@ -59,6 +60,7 @@ export function AllRendering() {
             <RouteChartPanel m={data} />
             <PhasePanel m={data} />
           </div>
+          <DeviceTable devices={data.devices} />
           <RenderSearch />
           <div className="wl-grid">
             <RouteTable routes={data.routes} paging={data.routePaging} />
