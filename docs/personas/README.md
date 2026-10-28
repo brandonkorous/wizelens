@@ -40,9 +40,9 @@ and half the cloud's screens do not exist in-app at all.
 | --- | --- | --- | --- | --- |
 | P01 | [Dani Okonkwo-Brennan](01-dani-kanninja-developer.md) | developer | in-app dashboard + HUD | done |
 | P02 | [Greta Lindqvist-Ochoa](02-greta-kanninja-dba.md) | system and database admin | WizeLens Cloud | done |
-| P03 | [Sid Ramaswamy-Kowalczyk](03-sid-eshop-dotnet-developer.md) | .NET developer | in-app dashboard served by the .NET SDK + HUD on Razor pages | not started |
-| P04 | [Noor Haddad-Pellegrini](04-noor-static-site-phone.md) | front-end only, on a phone | WizeLens Cloud, browser script tag | not started |
-| P05 | [Marisol Teixeira-Wójcik](05-marisol-credit-union-admin.md) | team admin | WizeLens Cloud: SSO, people, billing | done 2026-10-28 |
+| P03 | [Sid Ramaswamy-Kowalczyk](03-sid-eshop-dotnet-developer.md) | .NET developer | in-app dashboard served by the .NET SDK + HUD on Razor pages | done |
+| P04 | [Noor Haddad-Pellegrini](04-noor-static-site-phone.md) | front-end only, on a phone | WizeLens Cloud, browser script tag | done |
+| P05 | [Marisol Teixeira-Wójcik](05-marisol-credit-union-admin.md) | team admin | WizeLens Cloud: SSO, people, billing | done |
 
 ## What each one is the only proof of
 
