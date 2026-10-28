@@ -25,9 +25,9 @@ function LogStatCards({ stats }: { stats: LogsModel }) {
   return (
     <div className="wl-grid wl-grid-stats">
       <StatCard icon={FileText} label="Log Lines" value={fmtCount(cards.total)} change={change.total} series={sparks.total} {...common} />
-      <StatCard icon={TriangleAlert} label="Warnings" href={hrefTo("logs", [], { level: "warn", exact: "1" })} value={fmtCount(cards.warnings)} change={change.warnings} series={sparks.warnings} {...common} />
-      <StatCard icon={OctagonX} label="Errors" href={hrefTo("logs", [], { level: "error" })} value={fmtCount(cards.errors)} change={change.errors} series={sparks.errors} danger {...common} />
-      <StatCard icon={Bell} label="Critical" href={hrefTo("logs", [], { level: "critical" })} value={fmtCount(cards.critical)} change={change.critical} series={sparks.critical} danger {...common} />
+      <StatCard icon={TriangleAlert} label="Warning Lines" href={hrefTo("logs", [], { level: "warn", exact: "1" })} value={fmtCount(cards.warnings)} change={change.warnings} series={sparks.warnings} {...common} />
+      <StatCard icon={OctagonX} label="Error Lines" href={hrefTo("logs", [], { level: "error" })} value={fmtCount(cards.errors)} change={change.errors} series={sparks.errors} danger {...common} />
+      <StatCard icon={Bell} label="Critical Lines" href={hrefTo("logs", [], { level: "critical" })} value={fmtCount(cards.critical)} change={change.critical} series={sparks.critical} danger {...common} />
     </div>
   );
 }
@@ -70,11 +70,11 @@ export function LogsPage() {
       {stats && (
         <>
           <LogStatCards stats={stats} />
-          <LogVolumePanel stats={stats} />
-          <LogMetricsPanel />
           <LogFilters stats={stats} />
-          <LogPatternsPanel />
+          <LogMetricsPanel />
           <LogTable stats={stats} />
+          <LogVolumePanel stats={stats} />
+          <LogPatternsPanel />
         </>
       )}
     </div>

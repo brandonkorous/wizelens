@@ -44,6 +44,9 @@ export function LogMetricsPanel() {
       {canWrite && !saving && <button type="button" className="wl-link-btn" onClick={() => setSaving(true)}><Save aria-hidden="true" /> Save this search</button>}
     </span>
   );
+  if (charts.length === 0 && !saving && !error && !note) {
+    return <section className="wl-panel wl-log-metrics-slim"><span className="wl-muted wl-small">Save this search to chart its lines over time here.</span>{action}</section>;
+  }
   return (
     <Panel title="Log Metrics" action={action} className="wl-log-metrics">
       {saving && <SaveForm params={params} cloud={host.has("accounts")} onSave={(name, shared) => save(name, params, shared)} onDone={() => setSaving(false)} />}
