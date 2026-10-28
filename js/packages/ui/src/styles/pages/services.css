@@ -15,9 +15,11 @@
 .wl-dep-label .wl-dot { margin-left: auto; }
 .wl-dep-edge path { stroke: var(--wl-line-strong); stroke-width: 1.5; }
 .wl-dep-edge.wl-failing path { stroke: var(--wl-red); }
-.wl-dep-edge text { font-size: 11px; fill: var(--wl-muted); font-variant-numeric: tabular-nums; }
+.wl-dep-label-box { pointer-events: none; }
+.wl-dep-label-box rect { fill: var(--wl-surface); }
+.wl-dep-label-box text { font-size: 11px; fill: var(--wl-muted); font-variant-numeric: tabular-nums; }
 .wl-dep-edge { cursor: pointer; }
-.wl-dep-edge .wl-dep-hit { stroke: transparent; stroke-width: 12; }
+.wl-dep-edge path.wl-dep-hit { stroke: transparent; stroke-width: 12; }
 .wl-dep-edge:hover path:first-of-type { stroke: var(--wl-accent); }
 
 .wl-svc-full { margin-top: 14px; }
