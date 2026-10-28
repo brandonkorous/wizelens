@@ -61,12 +61,14 @@ it("sends the weekly digest on Monday morning, once, with the week's numbers", a
 
 it("follows each person's choices: daily on, weekly off, and the time zone", async () => {
   const { box, owner, projectId, clock } = await withTraffic();
-  const set = await owner.call<{ projects: { projectId: string; daily: boolean; weekly: boolean }[] }>("PATCH", "api/me/notifications", {
+  expect((await owner.call<{ zoneSet: boolean }>("GET", "api/me/notifications")).body.zoneSet).toBe(false);
+  const set = await owner.call<{ zoneSet: boolean; projects: { projectId: string; daily: boolean; weekly: boolean }[] }>("PATCH", "api/me/notifications", {
     timeZone: "America/Los_Angeles",
     projects: [{ projectId, daily: true, weekly: false }],
   });
   expect(set.status).toBe(200);
   expect(set.body.projects[0]).toMatchObject({ daily: true, weekly: false });
+  expect(set.body.zoneSet).toBe(true);
   await sendDigests(cloud.app);
   await new Promise((r) => setTimeout(r, 100));
   expect(box.sent.filter((m) => m.kind === "digest")).toHaveLength(0);

@@ -19,4 +19,4 @@ export const resetPasswordMail = (to: string, url: string) => renderMail(to, ema
 export const changeEmailMail = (to: string, newEmail: string, url: string) => renderMail(to, emails.changeEmail(newEmail, url));
 export const deleteAccountMail = (to: string, url: string) => renderMail(to, emails.deleteAccount(url));
 export const inviteMail = (to: string, inviter: string, org: string, role: string, url: string) => renderMail(to, emails.invite(inviter, org, role, url));
-export const alertMail = (to: string, notice: Notice) => renderMail(to, emails.alert(notice));
+export const alertMail = (to: string, notice: Notice, timeZone?: string) => renderMail(to, emails.alert(notice, timeZone));

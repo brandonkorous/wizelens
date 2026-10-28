@@ -9,6 +9,7 @@ import { UsersPage } from "./pages/users/UsersPage";
 import { AuthGate } from "./shell/auth/AuthGate";
 import { useData, useWindowed } from "./data/hooks";
 import { useHost } from "./data/host";
+import { useZoneOnce } from "./data/notifications";
 import { useServerErrorCount } from "./data/models";
 import { applyTheme, useTheme } from "./data/prefs";
 import { useViewInUrl } from "./data/urlState";
@@ -128,6 +129,8 @@ function Shell() {
   const data = useData();
   const win = useWindowed();
   const dot = useHealthDot();
+  // Signed in on the cloud: emails use this browser's zone until the person picks one.
+  useZoneOnce(useHost().has("accounts"));
   const [zone] = useTimeZonePref();
   const [clock] = useClockPref();
   // Set before children render, so every time on the page uses the choice.

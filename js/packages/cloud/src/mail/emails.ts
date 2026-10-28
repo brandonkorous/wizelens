@@ -1,4 +1,5 @@
 import type { Notice } from "@wizeworks/lens-hub/kit";
+import { clockIn } from "./clock.js";
 import { type EmailContent, facts, note, text } from "./content.js";
 
 // Every email the cloud sends, as content only. The words follow the README's voice: plain, short, concrete.
@@ -52,8 +53,9 @@ const lineRows = (n: Notice): [string, string][] => (n.baseline ? [["Normal", nu
 
 const problemBlocks = (n: Notice) => (n.problem ? [note(`Part of a problem: ${n.problem.title}.${n.problem.cause ? ` Suspected cause: ${n.problem.cause}` : ""}`)] : []);
 
-export function alert(n: Notice): EmailContent {
-  const when = `${new Date(n.timeMs).toISOString().slice(0, 16).replace("T", " ")} UTC`;
+/** An alert notice; "When" is in the reader's time zone. */
+export function alert(n: Notice, timeZone?: string): EmailContent {
+  const when = clockIn(n.timeMs, timeZone);
   return {
     kind: "alert",
     subject: `${VERB[n.state]}: ${n.rule} (${n.project})`,
