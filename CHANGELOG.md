@@ -11,8 +11,8 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   instead of sending them all. Before, one burst could pass ClickHouse's limit of 1000 queries at a time
   (`TOO_MANY_SIMULTANEOUS_QUERIES`) and add to its memory use. Set `WIZELENS_CLOUD_CLICKHOUSE_CONCURRENCY` to change
   the number.
-- **Fixes from two persona runs on kanNINJA** (a developer on the in-app dashboard, a database admin on the cloud;
-  `docs/personas/`). Each one was found on screen and re-proved there.
+- **Fixes from three persona runs** (a developer on kanNINJA's in-app dashboard, a database admin on the cloud, and a
+  .NET developer on eShopOnWeb with SQL Server; `docs/personas/`). Each one was found on screen and re-proved there.
   - **Requests tell the truth about how they ended.** A redirect the browser followed shows its 307, not "Aborted".
     A WebSocket that closes when the visitor leaves (`@fastify/websocket`) shows as a 101 stream, and only the time
     to the 101 counts as request time, so it no longer pushes up a service's average and p95.
@@ -45,6 +45,23 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   - **A project's logs never outlast the plan.** Log days above the plan answer 402 with the plan that allows them
     (Free 14, Team 30, Business 90, Enterprise up to 400), and a downgrade lowers them.
   - **Bar lists fit the name column to the names,** up to 45% of the row, so short names keep wide bars.
+  - **.NET and EF Core on SQL Server.** An EF Core save is named INSERT, not SET. A 500 with no exception says
+    "HTTP 500", and an exception the developer page or `UseExceptionHandler` caught stays on the request. SQL values
+    bound to a SecurityStamp column are redacted in every SDK, and SQL values keep accents and dashes as typed in .NET
+    and Python.
+  - **Server pages and the HUD.** A Razor page load shows its render and network time, and the HUD updates render
+    when the first paint lands. HUD call rows keep the page name when the route ends in `{handler?}`. The HUD makes
+    room at the end of the page, so the last button scrolls above it, and it shows on 4xx and 5xx pages too. Its
+    Calls heading counts the calls it lists, the page's own request included.
+  - **One trace across two origins.** Trusted remotes join an API on another origin to the browser's trace, and the
+    trace page says where the server part is. That browser call is an edge on the Services map, and a page load's
+    trace takes its status from the server span under it.
+  - **Pages read right.** Files served as they are (images, fonts, scripts) no longer bury the pages. The Overview
+    Services card keeps Status in view; stat card notes wrap; chart axes step in round numbers. .NET log categories
+    are readable. Long names wrap inside table cells. The Services map keeps every number readable and shows a call
+    that skips a box. The trace page names the browser "Web App" like every other page. A detail panel opened from a
+    row takes focus and gives it back. Signed-out pages and shared links follow the chosen theme. Database insight
+    cards fit a phone.
 
 ### Added
 
