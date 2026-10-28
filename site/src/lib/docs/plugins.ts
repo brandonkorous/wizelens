@@ -29,6 +29,8 @@ export function rehypeLinks() {
   return (tree: Root) => {
     visit(tree, "element", (node: Element) => {
       if (node.tagName === "img") Object.assign(node.properties, { loading: "lazy", decoding: "async" });
+      // A table scrolls sideways when it must, so the keyboard can reach it too.
+      if (node.tagName === "table") node.properties.tabIndex = 0;
       if (node.tagName !== "a" || typeof node.properties.href !== "string") return;
       node.properties.href = mapHref(node.properties.href);
       if (/^https?:/.test(node.properties.href)) node.properties.rel = ["noreferrer"];

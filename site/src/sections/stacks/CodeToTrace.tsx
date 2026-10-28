@@ -67,7 +67,7 @@ export function CodeToTrace({ stack }: { stack: Stack }) {
     <div className="wl-ct" ref={box}>
       <div className="wl-ct-code">
         <div className="wl-ct-bar"><span>{stack.file}</span></div>
-        <pre>
+        <pre tabIndex={0}>
           {stack.code.map((line, i) => (
             <span key={i} className={`wl-ct-line${i < typed ? " wl-ct-typed" : ""}${i === source ? " wl-ct-now" : ""}`}>
               {tokenize(line).map((t, j) => <span key={j} className={`wl-tk-${t.kind}`}>{t.text}</span>)}
