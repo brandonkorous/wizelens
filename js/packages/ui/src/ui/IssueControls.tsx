@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { IssueInfo, IssueKind } from "@wizeworks/lens-core";
+import { currentProject, useAccount } from "../data/account";
 import { changeIssue, useIssueMembers } from "../data/issues";
 import { useHost } from "../data/host";
 import { Badge } from "./Badges";
@@ -33,7 +34,9 @@ export function IssueActions({ kind, issueKey, info }: IssueActionsProps) {
   const host = useHost();
   const cloud = host.has("accounts");
   const [note, setNote] = useState<string | null>(null);
+  const here = currentProject(useAccount());
   const [resolve, ignore] = WORDS[kind];
+  if ((here?.project?.role ?? here?.org.role) === "viewer") return <p className="wl-issue-actions wl-muted wl-small">You can read this. A member, admin or owner can {resolve.toLowerCase()}, {ignore.toLowerCase()} or assign it.</p>;
   if (!host.has("issues")) return <p className="wl-issue-actions">{resolve} and {ignore} are on the hub and in the cloud, which keep these states. <a href={STATES_DOCS} target="_blank" rel="noreferrer">How</a></p>;
   if (!on) return null;
   const run = async (action: "resolve" | "ignore" | "reopen" | "assign", extra = {}) => setNote(await changeIssue(cloud, kind, issueKey, action, extra));
