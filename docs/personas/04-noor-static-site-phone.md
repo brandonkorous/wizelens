@@ -117,7 +117,7 @@ site with no server.
 **Done when:** she has the exact script tag and knows which key to put in it, from
 the site, without opening a server SDK page.
 
-**Outcome:** —
+**Outcome:** done after #080 and #081. From the home page at 390 px: Menu → Platforms → **Static sites** ("One script tag, no server") opens Docs › Browser › Static sites. The script tag is first, "before `</body>`", then the words she needs: the browser key (`wl_bk_`) is public; never put an ingest key (`wl_ik_`) in a page. The quick start now says "No server?" before step 1 and links there. No server SDK page opened. Before #080 the menu and the quick start had no static path at all; before #081 the Copy button covered the first line of the tag on a phone.
 
 ### Act 2 — sign up and make a browser key, on her phone
 
@@ -126,7 +126,7 @@ She creates a cloud account, the org and the project, and a browser key.
 **Done when:** the key exists with her name for it, and the screen told her plainly
 that this key is safe to put in a public page.
 
-**Outcome:** —
+**Outcome:** done after #082 and #083. Sign-up on the phone took four fields and went straight to an empty Overview, with an organization "Noor Haddad-Pellegrini's team" and a project "My app" made for her. The Overview now says "Nothing has arrived in this range. New here? … Setup steps" (#082); before, it showed only zeros and Connect was two taps away under More. Renamed under More › Organization: the org to `Haddad Studio — Client Sites` ("Saved.") and the project to `Brandon K. — personal site (Vite)` (Rename dialog: "Keys, data, alerts, and links stay as they are."). Connect › Sending keys › New sending key › **Browser: a site with no WizeLens server sends page data**, name `brandonk.dev — public site (script tag)`, Sites `http://localhost:4173`. The box says "It is public: it is safe in a page. Put this tag in every page, before </body>:" and gives the whole tag with her key and this cloud's address (#083; before, it gave `endpoint={cloudEndpoint(key)}` code words and no `src`). Two keys made before #083 were revoked from the list. Also made, from Setup steps with the default kind, the ingest key `brandonk.dev — first try`, for act 3.
 
 ### Act 3 — the wrong key first
 
@@ -263,3 +263,8 @@ Filled in at the end, honestly, **including what was skipped** (RULE #4).
 ---
 
 ## Run log
+
+- 21:00 act 1 at 390 px from the site home page; #080 (no static path in the menu or quick start) fixed 21:01
+- 21:03 #081 (Copy button over the code on a phone) fixed
+- about 21:04 signed up as p04.noor@haddadstudio.test on the phone; #082 (empty Overview, no way to start) fixed 21:06
+- 21:08–21:14 org and project renamed; browser and ingest keys made; #083 (no ready script tag) fixed 21:14; two spare browser keys revoked
