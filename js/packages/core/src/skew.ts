@@ -23,8 +23,8 @@ const pathOf = (url: unknown): string | null => {
   }
 };
 
-// A cross-origin fetch sends no traceparent, so the server span has no parent; the page joins its trace from X-WizeLens-Trace.
-function adoptedBy(spans: readonly Span[], ids: Set<string>): Map<string, Span> {
+/** Server span id → the browser call that made it. A cross-origin fetch sends no traceparent, so the server span has no parent; the page joins its trace from X-WizeLens-Trace. */
+export function adoptedBy(spans: readonly Span[], ids: ReadonlySet<string> = new Set(spans.map((s) => s.spanId))): Map<string, Span> {
   const roots = spans.filter((s) => !s.parentSpanId || !ids.has(s.parentSpanId));
   const out = new Map<string, Span>();
   for (const server of roots.filter((s) => s.category === "http.server")) {
