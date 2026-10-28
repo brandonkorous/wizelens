@@ -390,8 +390,8 @@ Redaction keeps the evidence the security rules need (`docs/redact-vectors.json`
   leak rule does not count it.
 - **SQL parameters** are redacted by their name or by the column the SQL binds them to (compared with, set to, or
   inserted into), so `"t"."token" = $1` hides the first value. Placeholders are `$1`, `?`, `%s` (by position) and
-  `@name`, `:name`, `%(name)s` (by name). A column matches a redact key or `email`. The parser is `paramColumns` in
-  `core/src/redact-sql-params.ts`; the `params` vectors run in the TS, .NET, Go, and Python tests.
+  `@name`, `:name`, `%(name)s` (by name). A column matches a redact key, `email`, or `securitystamp` /
+  `security_stamp` (ASP.NET Identity's SecurityStamp). The parser is `paramColumns` in `core/src/redact-sql-params.ts`; the `params` vectors run in the TS, .NET, Go, and Python tests.
 
 ## Packages
 

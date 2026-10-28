@@ -6,8 +6,8 @@ import itertools
 import re
 from typing import Dict, Tuple
 
-# Column names whose values are never kept in SQL parameters, besides the redact keys: personal data.
-SQL_PARAM_KEYS: Tuple[str, ...] = ("email",)
+# Column names whose values are never kept in SQL parameters, besides the redact keys: personal data, and ASP.NET Identity's SecurityStamp (it signs a user's sign-in cookies).
+SQL_PARAM_KEYS: Tuple[str, ...] = ("email", "securitystamp", "security_stamp")
 
 # One placeholder: $1, @name, :name (not a :: cast), %(name)s; `?` and `%s` are numbered first.
 _PLACEHOLDER = r"(?:\$(\d+)|(?<![:\w])[@:]([A-Za-z_]\w*)|%\((\w+)\)s)"

@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-// SQLParamKeys are column names whose values are never kept in SQL parameters, besides the redact keys: personal data.
-var SQLParamKeys = []string{"email"}
+// SQLParamKeys are column names whose values are never kept in SQL parameters, besides the redact keys: personal data, and ASP.NET Identity's SecurityStamp (it signs a user's sign-in cookies).
+var SQLParamKeys = []string{"email", "securitystamp", "security_stamp"}
 
 // One placeholder: $1, @name, :name (not a :: cast, checked in keyOf), %(name)s; `?` and `%s` are numbered first.
 const placeholder = `(?:\$(\d+)|([@:])([A-Za-z_]\w*)|%\((\w+)\)s)`
