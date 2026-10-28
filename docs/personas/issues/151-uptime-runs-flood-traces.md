@@ -29,3 +29,4 @@ Errors and Problems skip uptime runs, but the Traces list and its cards did not:
 - 09:36, after the cloud restart and rebuild: "Traces (2,253)" and "Selected Traces 2,253" (were 3,772); no
   `wizelens-uptime` row on the first page; the top rows are kanninja-backend's own `/api/health` route from 11:42 PM.
 - 09:38, the run `b2b85c7d…` opens by its link: "GET kanNINJA API health — every 60 s", 1 span.
+- Search's Traces tab leaves runs out by the same rule (`isListedTrace` in `uptime/check.ts`); runs are still found on Spans and Logs.
