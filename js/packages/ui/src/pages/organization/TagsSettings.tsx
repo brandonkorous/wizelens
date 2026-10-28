@@ -25,7 +25,7 @@ function builtInColumns(editable: boolean, onToggle: (t: TagRule) => void): Colu
   return [
     { key: "tag", header: "Tag", cell: (t) => <TagChip tag={t} /> },
     { key: "what", header: "Shows on", className: "wl-wrap", cell: (t) => BUILT_IN_HELP[t.name] ?? <span className="wl-tag-query">{t.query}</span> },
-    { key: "on", header: "On", cell: (t) => <Check label={t.enabled ? "On" : "Off"} checked={t.enabled} disabled={!editable} onChange={() => onToggle(t)} /> },
+    { key: "on", header: "On", cell: (t) => <Check label={t.enabled ? "On" : "Off"} aria-label={`${t.name}: ${t.enabled ? "On" : "Off"}`} checked={t.enabled} disabled={!editable} onChange={() => onToggle(t)} /> },
   ];
 }
 
