@@ -11,8 +11,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   instead of sending them all. Before, one burst could pass ClickHouse's limit of 1000 queries at a time
   (`TOO_MANY_SIMULTANEOUS_QUERIES`) and add to its memory use. Set `WIZELENS_CLOUD_CLICKHOUSE_CONCURRENCY` to change
   the number.
-- **Fixes from three persona runs** (a developer on kanNINJA's in-app dashboard, a database admin on the cloud, and a
-  .NET developer on eShopOnWeb with SQL Server; `docs/personas/`). Each one was found on screen and re-proved there.
+- **Fixes from five persona runs** (a developer on kanNINJA's in-app dashboard, a database admin on the cloud, a
+  .NET developer on eShopOnWeb with SQL Server, a front-end developer with a static site on her phone, and a credit
+  union's admin running people, single sign-on and billing; `docs/personas/`). Each one was found on screen and
+  re-proved there.
   - **Requests tell the truth about how they ended.** A redirect the browser followed shows its 307, not "Aborted".
     A WebSocket that closes when the visitor leaves (`@fastify/websocket`) shows as a 101 stream, and only the time
     to the 101 counts as request time, so it no longer pushes up a service's average and p95.
@@ -62,6 +64,39 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
     that skips a box. The trace page names the browser "Web App" like every other page. A detail panel opened from a
     row takes focus and gives it back. Signed-out pages and shared links follow the chosen theme. Database insight
     cards fit a phone.
+  - **Static sites on a phone.** Pages with no server say so: no "SSR Time", no blank Requests, Database and
+    Services, and Rendering shows views by phone, tablet and desktop, the published page script's views included. A
+    slow page says why. One page load reads the same total everywhere and fits a phone. An error names the device;
+    "No source map found" says what to do, and the Vite plugin no longer ships the maps. The Errors badge counts open
+    errors of the chosen service. `?wizelens-hud=on` turns a static site's HUD on for your browser only.
+  - **Uptime.** A text check on a JavaScript page says why it fails; one URL cannot be checked twice; an alert can say
+    "my site is down". Alert, team, project health and security emails give the time in your zone. Uptime runs stay
+    out of the Traces list and its counts, as they do from Requests and Errors (facts version 19: each host rebuilds
+    its stats once on start).
+  - **Keys.** When a site still sends with a revoked browser key, Sending keys names the site and owners get an email.
+    A key can end on a chosen day, and a rotate
+    keeps that day. During a rotate the new and old secrets are labeled, and the old one says when it stops.
+  - **People, single sign-on and access.** Single sign-on can be the only way in, the owner keeping a password for
+    when the provider is down. An invited person who signs in with SSO lands in the org. A person turned off in the
+    identity provider loses their open tab within 5 minutes, and a removed person is not let back in by SSO. A link to
+    a project you cannot see says so. A read-only role sees no change buttons, and every role reads and exports the
+    audit log, which names people by name and email.
+  - **Billing.** Buying a plan gives its days at once. Billing shows MB used, the month's projection and each coming
+    charge with its date; a spend cap says it is saved; a declined card shows a banner on every page with "Update the
+    card"; switching plans lists what you lose. Stripe's two subscriptions (the plan and extra data) are explained.
+  - **Sending from a server.** The setup steps include `WIZELENS_ENABLED=true`, and a production app with a hub set
+    but WizeLens off says so in its log (Node and .NET). Next.js's own dev telemetry call is no longer an app error. A local address in Services
+    says that no traced service answered.
+  - **Lists and phones.** Search, like the list boxes, runs as you type. Traces show when each happened, paint
+    database time amber (red is for failures), and give the list half the width. Error details stay in view and come
+    right after the list on narrow screens. On a phone, filters sit behind one button, stat cards drop "Nothing to
+    compare", and Alerts, Sending keys and Services rows put their numbers on one line, with no sideways swipe. Alert
+    rows keep the urgent action and Edit, the rest under More. Scrolling tab rows show that they scroll; buttons are
+    big enough for a thumb.
+  - **Plainer words.** Number cards with nothing to compare say so quietly. Logs counts "Error Lines". Compare's
+    Total says it adds the render. A page load with no server of yours splits its time by the browser's own clock.
+    The trace header says "HTTP calls out". Local Connect names the option behind each setting. Shared links carry the
+    site's name and no sign-in links; times after midnight show the date.
 
 ### Added
 
