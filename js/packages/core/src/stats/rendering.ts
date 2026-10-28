@@ -166,7 +166,7 @@ export function renderPhases(views: readonly PageView[], stat: PhaseStat): Rende
     return stat === "avg" ? avgOf(list) : percentileOf(list, 75);
   };
   return [
-    { key: "ssr", label: "Server-side rendering (SSR)", value: pick("ssrMs"), kind: "ms" },
+    { key: "ssr", label: "Server response (server render, or the file host)", value: pick("ssrMs"), kind: "ms" },
     { key: "client", label: "Client render", value: pick("clientRenderMs"), kind: "ms" },
     { key: "hydration", label: "Hydration", value: pick("hydrationMs"), kind: "ms" },
     { key: "images", label: "Image loading", value: pick("imageMs"), kind: "ms" },

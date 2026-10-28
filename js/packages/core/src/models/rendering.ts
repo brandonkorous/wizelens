@@ -35,7 +35,7 @@ export interface RenderingModel {
 }
 
 const PHASES: { key: string; phase: string; label: string; kind: RenderPhase["kind"] }[] = [
-  { key: "ssr", phase: "ssr", label: "Server-side rendering (SSR)", kind: "ms" },
+  { key: "ssr", phase: "ssr", label: "Server response (server render, or the file host)", kind: "ms" },
   { key: "client", phase: "client", label: "Client render", kind: "ms" },
   { key: "hydration", phase: "hydration", label: "Hydration", kind: "ms" },
   { key: "images", phase: "image", label: "Image loading", kind: "ms" },

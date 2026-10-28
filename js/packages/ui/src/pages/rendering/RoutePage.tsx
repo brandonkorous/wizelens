@@ -29,7 +29,7 @@ function Cards({ m }: { m: RoutePageModel }) {
       <StatCard icon={Eye} label="Page Views" value={fmtCount(m.views)} {...common} change={m.meta.hasPrev ? percentChange(m.views, m.prevViews) : null} upIsGood series={m.chart.views} />
       <StatCard icon={Gauge} label="Avg Render Time" value={fmtMs(a.render)} {...common} series={m.chart.render} />
       <StatCard icon={Zap} label="Avg LCP" value={fmtMs(a.lcp)} {...common} series={m.chart.lcp} />
-      <StatCard icon={Server} label="Avg SSR Time" value={fmtMs(a.ssr)} {...common} series={m.chart.ssr} />
+      <StatCard icon={Server} label="Avg Server Response" value={fmtMs(a.ssr)} {...common} series={m.chart.ssr} />
     </div>
   );
 }
