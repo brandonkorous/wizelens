@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import type { TagInput, TagRule } from "@wizeworks/lens-core";
+import { currentProject, useAccount } from "../../data/account";
 import { useHost } from "../../data/host";
+import { isAllProjects } from "../../data/projectScope";
 import { createTag, deleteTag, setTagEnabled, updateTag, useTags } from "../../data/tags";
 import { act } from "../../data/useApi";
 import { useAsk } from "../../ui/Dialog";
@@ -27,6 +29,14 @@ function builtInColumns(editable: boolean, onToggle: (t: TagRule) => void): Colu
     { key: "what", header: "Shows on", className: "wl-wrap", cell: (t) => BUILT_IN_HELP[t.name] ?? <span className="wl-tag-query">{t.query}</span> },
     { key: "on", header: "On", cell: (t) => <Check label={t.enabled ? "On" : "Off"} aria-label={`${t.name}: ${t.enabled ? "On" : "Off"}`} checked={t.enabled} disabled={!editable} onChange={() => onToggle(t)} /> },
   ];
+}
+
+/** Why the list reads as it does: in the app tags are code; in the cloud they belong to one project; some roles only read them. */
+function whyText(mode: string, editable: boolean, project: string | null, all: boolean): string {
+  if (mode === "in-app") return "Set in this service's code.";
+  if (all) return "Each project has its own tags. Pick one project in the project menu to see, add, or change its tags.";
+  const whose = project ? `These are the tags of ${project}; each project has its own. ` : "";
+  return whose + (editable ? "Anything that matches a tag's search shows the tag, on old and new data alike." : "Your role can see tags but not change them.");
 }
 
 function ruleColumns(editable: boolean, onEdit: (t: TagRule) => void, onDelete: (t: TagRule) => void): Column<TagRule>[] {
@@ -58,6 +68,7 @@ function InCodeNote() {
 /** The tag rules of the project (or hub, or service): built-in tags to turn off, and rules to add, change, and delete. */
 export function TagsSettings() {
   const host = useHost();
+  const account = useAccount();
   const tags = useTags();
   const { confirm, dialog } = useAsk();
   const [editing, setEditing] = useState<TagRule | "new" | null>(null);
@@ -74,7 +85,7 @@ export function TagsSettings() {
   const save = (t: TagInput) => act(() => (editing === "new" ? createTag(t) : updateTag((editing as TagRule).id, t)), () => setEditing(null));
   const full = own.length >= (list?.max ?? 50);
   const add = editable && !editing && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setEditing("new")} disabled={full} title={full ? `Up to ${list?.max} tags` : undefined}><Plus aria-hidden="true" /> New tag</button>;
-  const why = host.mode === "in-app" ? "Set in this service's code." : editable ? "Anything that matches a tag's search shows the tag, on old and new data alike." : "Your role can see tags but not change them.";
+  const why = whyText(host.mode, editable, currentProject(account)?.project?.name ?? null, host.has("accounts") && isAllProjects());
   return (
     <>
       <SectionHead title="Tags" description={`Name a search, and everything it finds wears that name in every list. Search for it with tag:name. ${why}`} action={add} />
