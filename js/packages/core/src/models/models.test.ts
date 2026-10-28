@@ -57,6 +57,17 @@ describe("page models", () => {
     const errors = run("errors");
     expect(errors.groups[0]).toMatchObject({ type: "TimeoutError", count: 1 });
     expect(errors.cards.exceptions).toBe(1);
+  });
+
+  it("selects a service and fills its detail", () => {
+    const m = run("services", { service: "api" });
+    expect(m.selected?.row.name).toBe("api");
+    expect(m.selected?.endpoints.length).toBeGreaterThan(0);
+  });
+});
+
+describe("sidebar badge", () => {
+  it("counts the open errors of the service in scope", () => {
     expect(run("badges")).toEqual({ errors: 1 });
     expect(run("badges", { service: "Web App" })).toEqual({ errors: 0 });
   });
@@ -70,13 +81,6 @@ describe("page models", () => {
     expect(badge({ status: "resolved", untilMs: null, resolvedMs: NOW })).toBe(0);
     expect(badge({ status: "ignored", untilMs: null, resolvedMs: null })).toBe(0);
     expect(badge({ status: "resolved", untilMs: null, resolvedMs: NOW - 48 * 3_600_000 })).toBe(1);
-  });
-
-
-  it("selects a service and fills its detail", () => {
-    const m = run("services", { service: "api" });
-    expect(m.selected?.row.name).toBe("api");
-    expect(m.selected?.endpoints.length).toBeGreaterThan(0);
   });
 });
 

@@ -86,6 +86,9 @@ describe("the browser intake", () => {
     expect(read.status).toBe(401);
   });
 
+});
+
+describe("the browser intake, guarding keys", () => {
   it("refuses a secret key in a page, and tells its owners once an hour", async () => {
     const { url, owner, orgId, projectId } = await setup();
     const made = (await owner.call<{ id: string; token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", name: "site — first try", projectIds: [projectId] })).body;
