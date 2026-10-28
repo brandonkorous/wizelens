@@ -1,6 +1,7 @@
 import type { ComponentType, ReactNode } from "react";
 import { Plus, Upload } from "lucide-react";
 import { hrefTo, type PageId } from "../routes";
+import { useScrollHint } from "./useScrollHint";
 
 export interface Section {
   id: string;
@@ -14,10 +15,11 @@ export interface Section {
 /** A settings-style page: a list of sections on the left (a strip of tabs on small screens), one section shown at a time. Each is its own URL. */
 export function SectionLayout({ page, sections, active }: { page: PageId; sections: Section[]; active: string | undefined }) {
   const current = sections.find((s) => s.id === active) ?? sections[0];
+  const nav = useScrollHint<HTMLElement>(current?.id ?? "");
   if (!current) return null;
   return (
     <div className="wl-sections">
-      <nav className="wl-sections-nav" aria-label="Sections">
+      <nav ref={nav} className="wl-sections-nav" aria-label="Sections">
         {sections.map((s) => (
           <a key={s.id} href={hrefTo(page, [s.id])} className={s === current ? "wl-active" : ""} aria-current={s === current ? "page" : undefined}>
             <s.icon aria-hidden={true} />
