@@ -37,7 +37,7 @@ internal static class RequestEnricher
         activity.DisplayName = $"{request.Method} {route ?? request.Path.Value}";
         var expected = RequestParts.IsOn(activity.GetTagItem(RequestParts.ExpectedAttribute)) || RequestParts.IsOn(context.Response.Headers[RequestParts.ExpectedHeader].ToString());
         if (expected) activity.SetTag(RequestParts.ExpectedAttribute, true);
-        if (statusCode >= 500 && !expected && activity.Status != ActivityStatusCode.Error) activity.SetStatus(ActivityStatusCode.Error);
+        if (statusCode >= 500 && !expected && activity.Status != ActivityStatusCode.Error) activity.SetStatus(ActivityStatusCode.Error, $"HTTP {statusCode}");
         MarkStream(activity, context.Response, statusCode);
         AddClient(activity, context);
         AddHeaders(activity, RequestHeaderPrefix, request.Headers);
