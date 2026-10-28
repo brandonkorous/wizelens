@@ -67,6 +67,10 @@ function orgOf(s: AccountState): OrgWithProjects | undefined {
   return orgs.find((o) => o.id === org) ?? orgs.find((o) => o.projects.some((p) => p.id === project)) ?? orgs[0];
 }
 
+// A link named a project this person cannot open, so another is shown; the shell says so until they close the note.
+let missedProject = false;
+export const closeMissedProject = () => ((missedProject = false), emit());
+
 /** Keep the chosen project when it is still ours and in the shown organization; else all of its projects (one: that one). */
 function pickProject(s: AccountState): void {
   const org = orgOf(s);
@@ -74,6 +78,7 @@ function pickProject(s: AccountState): void {
   if (getScope().org !== org.id) setOrgScope(org.id);
   const project = getScope().project;
   if (project === ALL_PROJECTS ? org.projects.length > 0 : org.projects.some((p) => p.id === project)) return;
+  if (project && project !== ALL_PROJECTS) missedProject = true;
   setProjectScope(org.projects.length === 1 ? org.projects[0]!.id : ALL_PROJECTS);
 }
 
@@ -162,6 +167,14 @@ export const pendingInvite = {
     }
   },
 };
+
+/** True while the note "that link's project is not yours" is open. */
+export function useMissedProject(): boolean {
+  return useSyncExternalStore(
+    (l) => (listeners.add(l), () => listeners.delete(l)),
+    () => missedProject,
+  );
+}
 
 export function useAccount(): AccountState | null {
   return useSyncExternalStore(

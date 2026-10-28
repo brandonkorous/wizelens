@@ -35,6 +35,7 @@ import { UptimePage } from "./pages/uptime/UptimePage";
 import { AUTH_PAGES, type AuthPageId, legacyHref, type PageId, replaceHref, type Route, useRoute } from "./routes";
 import { releaseMissing } from "./data/release";
 import { EmailBanner } from "./shell/EmailBanner";
+import { MissedProjectBanner } from "./shell/MissedProjectBanner";
 import { UsageBanner } from "./shell/UsageBanner";
 import { Sidebar } from "./shell/Sidebar";
 import { TopBar } from "./shell/TopBar";
@@ -159,6 +160,7 @@ function Shell() {
         <TopBar data={data} />
         <UpdateBanner />
         <EmailBanner />
+        <MissedProjectBanner />
         <UsageBanner />
         <main id="wl-content" className="wl-page" tabIndex={-1}>
           <PageView route={route} />
