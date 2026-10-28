@@ -257,7 +257,15 @@ and reads every SQL param and log line of that sign-up.
 **Done when:** no password hash, security stamp, token or email shows in clear
 (emails as `[redacted:email]`), in the in-app dashboard and in the cloud.
 
-**Outcome:** —
+**Outcome:** done after #068. eShop's register form asks for email and password only, so Zoë's name has no field
+(eShop's form, not ours). Sign-up trace `06b4a6b3…` (in-app SQL tab): the email and the password hash were redacted,
+but `@p12`, the SecurityStamp, was in clear: #068, fixed in all four SDKs. Re-proved with a password change (Identity
+writes a new stamp): `UPDATE [AspNetUsers]` reads `@p11` `[redacted]`, hash `[redacted]`, both emails
+`[redacted:email]`, in-app (`0d449743…`) and, after act 11, in the cloud (`7b96fb56…`). Log lines: "User created a new
+account with password." and "User changed their password successfully." — nothing secret. The other side: Zoë's
+order history (`13da9f66…`) is her own request: `enduser.id` names her and her buyer id param reads
+`[redacted:email]`. `enduser.id` keeps the email by design (CONTRACT: Users groups by it); it is an attribute of
+the request, not a SQL param or log line.
 
 ### Act 11 — send a copy to the cloud
 
@@ -267,7 +275,18 @@ one ingest key per service, and points both services at it.
 **Done when:** both services and the browser show on the cloud's Services page,
 and act 7's trace link works in the cloud too.
 
-**Outcome:** —
+**Outcome:** done after #069–#072. Site home → Cloud → "Start free" (points at app.wizelens.com; the local cloud on
+:5970 stands in). "Create an account" → name, email, password → an empty Overview. Organization › General: renamed
+to `Ashgrove & Peña`; Projects › Rename: `Ashgrove & Peña — Online Store`. Connect › Make a sending key, twice:
+`eShop Web` and `eShop PublicApi`, Ingest, Never expires. Each went into its service's start as WIZELENS_HUB and
+WIZELENS_HUB_TOKEN; both restarted. Services: Web App, Web, PublicApi and both SQL Server databases; "Sending to this
+project (2 of 2 online)", .NET 8.0.33. Found and fixed on the way: no Web App → PublicApi line on the map (#069), the
+endpoint table ran past its panel (#070), a Project column of dashes (#071). Act 7's admin save in the cloud
+(`93fafe0b…`): fetch → PUT → SELECT + UPDATE, one trace. Share → 7 days → Create link; a signed-out browser opened it
+and saw the same trace and SQL (the contractor's view). The product name there read `Peña … —` (#072,
+fixed in .NET and Python). Neighbours: Search for `Harrow & Vance`, `kanninja` and `hv_bookings` finds nothing;
+Greta's board trace `391b74ba…` and the Harrow & Vance trace `82e5317a…`, by link and by Ctrl K, say "This trace is no
+longer stored", the same as a trace that never existed. No leak.
 
 ---
 
