@@ -14,6 +14,7 @@ import "./styles/pages/cloud.css";
 import "./styles/pages/account.css";
 import "./styles/pages/billing.css";
 import "./styles/layout.css";
+import "./styles/touch.css";
 
 provider.start();
 startReleaseChecks();

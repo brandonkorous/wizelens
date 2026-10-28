@@ -1,0 +1,10 @@
+/* Touch screens: every control at least 44 px high, so a thumb hits the one it aims at. */
+@media (pointer: coarse) {
+  .wl-top-btn, .wl-icon-btn, .wl-search-box { height: 44px; min-width: 44px; }
+  .wl-btn { height: 44px; }
+  .wl-table th button { min-height: 44px; }
+  .wl-table .wl-link-btn { min-height: 44px; padding: 0 8px; }
+  .wl-table .wl-link-btn + .wl-link-btn { margin-left: 4px; }
+  .wl-pick-hit { display: inline-grid; place-items: center; width: 44px; height: 44px; margin: -12px; cursor: pointer; }
+  .wl-pick { width: 20px; height: 20px; }
+}

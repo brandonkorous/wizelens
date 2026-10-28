@@ -49,7 +49,11 @@ export interface TableSelect {
 function PickBox({ checked, some = false, label, onChange }: { checked: boolean; some?: boolean; label: string; onChange: (on: boolean) => void }) {
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => void (ref.current && (ref.current.indeterminate = some && !checked)), [some, checked]);
-  return <input ref={ref} type="checkbox" className="wl-pick" checked={checked} aria-label={label} onClick={(e) => e.stopPropagation()} onChange={(e) => onChange(e.target.checked)} />;
+  return (
+    <label className="wl-pick-hit" onClick={(e) => e.stopPropagation()}>
+      <input ref={ref} type="checkbox" className="wl-pick" checked={checked} aria-label={label} onChange={(e) => onChange(e.target.checked)} />
+    </label>
+  );
 }
 
 /** The header box: every row shown, some, or none. */
