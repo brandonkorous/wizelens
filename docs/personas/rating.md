@@ -2,13 +2,13 @@
 
 **Version:** 1.0
 **Author:** Brandon Korous
-**Last Updated:** 2026-10-26
+**Last Updated:** 2026-10-28
 
 Every screen in WizeLens, scored on **Design** and **Ease** as the personas open
 them. How and when to score is RULE #6 in [CLAUDE.md](CLAUDE.md); this file is
 where the numbers live.
 
-**Scored so far: 52 of 177 screens.** Update that line as rows fill in —
+**Scored so far: 54 of 177 screens.** Update that line as rows fill in —
 it is the denominator, and a rating file that does not show what it has not looked
 at is the same lie as an empty issue list.
 
@@ -165,15 +165,15 @@ is a `major` issue, not a rating.**
 | Organization › Data retention | `#/organization/retention` | 8 | 8 | the hint under Days is small muted text; was: shortening asked nothing and showed old days #044, logs vs traces rule unclear #045 | P02 |
 | Organization › Thresholds and hidden keys | `#/organization/checks` | 8 | 8 | hints under the two numbers are small muted text | P02 |
 | Organization › Tags | `#/organization/tags` | — | — | — | — |
-| Organization › Billing | `#/organization/billing` | — | — | — | — |
+| Organization › Billing | `#/organization/billing` | 8 | 8 | with one day of data the chart is one lone bar and the usage bar looks empty; at 360 the section tabs cut "Billing" at the edge; was: GB showed 0.00 #132, cap note lost #133, failed payment silent #134, plan switch errors and no loss list #136 | P05 |
 | Organization › General | `#/organization/general` | 8 | 8 | "Delete this organization" sits right under the name box (the typed name and password guard it) | P02 |
 | People & access › Members | `#/people/members` | 8 | 8 | at 360 "Member since" moves into the table scroll | P02 |
 | People & access › Project access | `#/people/access` | — | — | — | — |
-| People & access › Single sign-on | `#/people/sso` | — | — | — | — |
+| People & access › Single sign-on | `#/people/sso` | 8 | 8 | the 5-minute sign-out promise is in body text only, no status per person; was: a removed person came back by SSO #135 | P05 |
 | People & access › User sync (SCIM) | `#/people/scim` | — | — | — | — |
 | People & access › Connected apps | `#/people/apps` | — | — | — | — |
 | People & access › Shared links | `#/people/links` | — | — | — | — |
-| People & access › Audit log | `#/people/audit` | 7 → 8 | 8 | at 360 What and Detail move into the table scroll; was: revoked key unnamed #048, cancelled invite unnamed #040, no "how long ago" #041 | P02 |
+| People & access › Audit log | `#/people/audit` | 7 → 8 | 8 | at 360 What and Detail move into the table scroll; 29 Tab stops to reach it; was: revoked key unnamed #048, cancelled invite unnamed #040, no "how long ago" #041, export named no one #137, viewers shut out #138 | P02, P05 |
 | Account › Profile | `#/account/profile` | — | — | — | — |
 | Account › Devices | `#/account/devices` | — | — | — | — |
 | Account › Preferences | `#/account/preferences` | — | — | — | — |
