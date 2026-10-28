@@ -19,3 +19,17 @@ CREATE TRIGGER sso_providers_accounts_go AFTER DELETE ON sso_providers FOR EACH 
 export const SSO_REQUIRED_MIGRATION = `
 ALTER TABLE sso_providers ADD COLUMN sso_required BOOLEAN NOT NULL DEFAULT FALSE;
 `;
+
+// People an owner or admin removed (or who left): single sign-on does not add them back until they are invited (auth/sso-join.ts).
+// Removals already in the audit log count too, for people not back in.
+export const SSO_REMOVED_MIGRATION = `
+CREATE TABLE sso_removed (
+  org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE, user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  removed_ms DOUBLE PRECISION NOT NULL, PRIMARY KEY (org_id, user_id)
+);
+INSERT INTO sso_removed (org_id, user_id, removed_ms)
+SELECT a.org_id, u.id, max(a.time_ms) FROM audit a
+JOIN users u ON lower(u.email) = lower(COALESCE(a.detail::jsonb ->> 'memberEmail', a.detail::jsonb ->> 'memberIdOrEmail'))
+WHERE a.action = 'member.remove' AND NOT EXISTS (SELECT 1 FROM members m WHERE m.org_id = a.org_id AND m.user_id = u.id)
+GROUP BY a.org_id, u.id;
+`;

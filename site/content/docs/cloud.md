@@ -79,7 +79,8 @@ with audit export) follows the same filters, and is itself in the log.
 
 Owners and admins connect OIDC (Okta, Entra ID, Google, Auth0, Keycloak) or SAML 2.0 under **People & access → Single sign-on**.
 Sign-in works once you prove the email domain with a DNS TXT record; new people from that domain join as members, with a
-confirmed email, and the sign-in page shows **Sign in with SSO**. OIDC needs the provider's origin in `--sso-origins`, so
+confirmed email, and the sign-in page shows **Sign in with SSO**. Someone you remove (or who leaves) is not added back by
+their next sign-in; invite them again to let them in. OIDC needs the provider's origin in `--sso-origins`, so
 the cloud fetches from no other place. SAML needs none.
 
 Tick **Require single sign-on** on a proven provider to make it the only way in for its domain. Everyone at the domain

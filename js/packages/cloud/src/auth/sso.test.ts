@@ -91,6 +91,21 @@ describe("signing in with SSO", () => {
     expect((await c.call<unknown[]>("GET", "api/me/invites")).body).toEqual([]);
   });
 
+  it("does not add back a person an owner removed, until they accept a new invite", async () => {
+    const { url, owner, orgId } = await withIdp({ sub: "u4", email: "sam@acme.io", name: "Sam" });
+    await ssoSignIn(url, "sam@acme.io");
+    expect((await owner.call("POST", "api/auth/organization/remove-member", { memberIdOrEmail: "sam@acme.io", organizationId: orgId })).status).toBe(200);
+    const { c } = await ssoSignIn(url, "sam@acme.io");
+    expect((await c.call<Me>("GET", "api/me")).body.orgs).toEqual([]);
+    const refused = await cloud.app.db.query("SELECT 1 FROM audit WHERE org_id = $1 AND action = 'sso.join_refused'", [orgId]);
+    expect(refused.length).toBe(1);
+    const id = await invite(owner, orgId, "sam@acme.io", "viewer");
+    expect((await c.call("POST", "api/auth/organization/accept-invitation", { invitationId: id })).status).toBe(200);
+    await ssoSignIn(url, "sam@acme.io");
+    expect((await c.call<Me>("GET", "api/me")).body.orgs.map((o) => [o.id, o.role])).toEqual([[orgId, "viewer"]]);
+    expect((await cloud.app.db.query("SELECT 1 FROM sso_removed")).length).toBe(0);
+  });
+
   it("makes no account for an email outside the provider's domain", async () => {
     const { url } = await withIdp({ sub: "u2", email: "eve@evil.io", name: "Eve" });
     const { c } = await ssoSignIn(url, "sam@acme.io");

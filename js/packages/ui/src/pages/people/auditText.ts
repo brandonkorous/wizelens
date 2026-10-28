@@ -46,6 +46,7 @@ const ACTIONS: Record<string, string> = {
   "sso.verify": "Proved a single sign-on domain",
   "sso.require": "Changed who may use a password",
   "sso.signed_out": "Signed out: the identity provider ended their sign-in",
+  "sso.join_refused": "Not added back: removed people need a new invite",
   "mcp.call": "AI agent read data",
   "app.connect": "Connected an app",
   "app.disconnect": "Disconnected an app",

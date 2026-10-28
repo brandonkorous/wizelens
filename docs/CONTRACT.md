@@ -1056,7 +1056,9 @@ retention, and the audit log.
   A provider belongs to one organization and signs nobody in until its email domain is proven: a DNS TXT record
   `_wizelens-sso-<providerId>.<domain>` with the token from `sso/request-domain-verification`, checked by `sso/verify-domain`.
   New accounts come only for emails at exactly that domain (the sign-up gate checks it, also with `--signup invite`); they start
-  confirmed and join the organization as members. An existing account links only when its own email is confirmed. The cloud
+  confirmed and join the organization as members, on any sign-in while they are not in it (`auth/sso-join.ts`). Someone
+  removed from it, or who left, is kept out (table `sso_removed`, audit `sso.join_refused`) until they accept a new invite;
+  a pending invite is left to the invite. An existing account links only when its own email is confirmed. The cloud
   fetches OIDC settings, tokens, and keys only from origins in `--sso-origins` (SAML needs none). Removing a provider removes its
   sign-ins (trigger `sso_providers_accounts_go`). Changes are in the audit log (`sso.create`, `sso.update`, `sso.delete`,
   `sso.verify`), without secrets. SSO sign-in skips our two-step codes: the identity provider does that part.

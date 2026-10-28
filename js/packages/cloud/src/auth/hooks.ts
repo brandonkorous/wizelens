@@ -9,6 +9,7 @@ import { isLegacyHash } from "./password.js";
 import { rememberPasskey, securityAfter } from "./security-notices.js";
 import { guardPasswordWays, noteRequired } from "./sso-required.js";
 import { pruneProjectRoles } from "../repo/project-roles.js";
+import { clearRemoved, noteRemoved } from "./sso-join.js";
 
 type Mw = Parameters<typeof createAuthMiddleware>[0];
 type HookCtx = Parameters<Mw>[0];
@@ -124,6 +125,15 @@ async function auditOrgChange(deps: AuthDeps, ctx: HookCtx): Promise<void> {
   const detail = { ...Object.fromEntries(Object.entries((ctx.body ?? {}) as Record<string, unknown>).filter(([k]) => !SECRET_KEYS.includes(k))), ...(removed ? { memberEmail: removed } : {}), ...cancelledInvite(ctx) };
   await audit(deps.db, orgId, actor ? `user:${actor}` : "system", action, detail, Date.now());
   await pruneProjectRoles(deps.db, orgId);
+  await trackRemoval(deps, ctx, orgId, removed || undefined);
+}
+
+/** Who was removed or left stays out of single sign-on's joining; an accepted invite or an added member lets them back. */
+async function trackRemoval(deps: AuthDeps, ctx: HookCtx, orgId: string, removed: string | undefined): Promise<void> {
+  const session = await getSessionFromCtx(ctx);
+  if (ctx.path === "/organization/remove-member" && removed) await noteRemoved(deps.db, orgId, removed, Date.now());
+  if (ctx.path === "/organization/leave" && session) await noteRemoved(deps.db, orgId, session.user.email, Date.now());
+  if (ctx.path === "/organization/accept-invitation" && session) await clearRemoved(deps.db, orgId, session.user.id);
 }
 
 async function auditSsoChange(deps: AuthDeps, ctx: HookCtx): Promise<void> {
