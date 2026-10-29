@@ -18,7 +18,7 @@ function EmailRow({ account, user }: { account: AccountState; user: AccountUser 
     <div className="wl-form">
       <p className="wl-account-line">
         <span className="wl-muted">Email</span> <strong>{user.email}</strong>{" "}
-        {!open && <button type="button" className="wl-link-btn" onClick={() => setOpen(true)}>Change</button>}
+        {!open && <button type="button" className="wl-btn wl-btn-sm" onClick={() => setOpen(true)}>Change email</button>}
       </p>
       {open && (
         <form onSubmit={change}>

@@ -21,7 +21,7 @@ function PasswordButton({ a, label, title, danger = false, onPassword }: { a: Ac
   };
   return (
     <>
-      <button type="button" className={`wl-btn${danger ? " wl-btn-danger" : ""}`} disabled={a.busy} onClick={() => void ask()}>{label}</button>
+      <button type="button" className={`wl-btn${danger ? " wl-text-error" : ""}`} disabled={a.busy} onClick={() => void ask()}>{label}</button>
       {dialog}
     </>
   );

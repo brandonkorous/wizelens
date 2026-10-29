@@ -2,7 +2,8 @@
 .wl-auth-check, .wl-check { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--wl-fg-2); cursor: pointer; }
 .wl-auth-check input, .wl-check input { width: 16px; height: 16px; margin: 0; accent-color: var(--wl-accent); }
 .wl-form-row > .wl-check { min-height: 40px; }
-.wl-auth-links { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; }
+/* One link a line, each a full tap target, so the card's ways out are easy to hit and read. */
+.wl-auth-links { display: grid; justify-items: center; gap: 2px; font-size: 15px; }
 .wl-auth-card > .wl-btn { width: 100%; }
 .wl-auth-card > .wl-link-btn { justify-self: center; font-size: 13px; }
 .wl-banner-thin { margin: 0; padding: 8px 24px; border-radius: 0; font-size: 13px; }

@@ -10,8 +10,10 @@ const HOURS = Array.from({ length: 24 }, (_, h) => h);
 const hourText = (h: number) => `${h.toString().padStart(2, "0")}:00`;
 
 function DigestTable({ rows, disabled, onChange }: { rows: DigestRow[]; disabled: boolean; onChange: (row: DigestRow, period: DigestPeriod, on: boolean) => void }) {
+  // The organization is named only when the projects come from more than one.
+  const orgs = new Set(rows.map((r) => r.org)).size > 1;
   const columns: Column<DigestRow>[] = [
-    { key: "project", header: "Project", cell: (r) => <><b>{r.project}</b> <span className="wl-muted wl-small">{r.org}</span></> },
+    { key: "project", header: "Project", cell: (r) => <><b>{r.project}</b>{orgs && <> <span className="wl-muted wl-small">{r.org}</span></>}</> },
     ...PERIODS.map(([p, label]): Column<DigestRow> => ({
       key: p,
       header: label,

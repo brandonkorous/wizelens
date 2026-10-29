@@ -85,11 +85,11 @@ function SignUp({ state, back }: { state: AccountState; back: ReactNode }) {
     if (state.mail) return setDone(true);
     await loadAccount();
   };
-  return <AuthForm title="Create your account" fields={[NAME, EMAIL, NEW_PASSWORD]} submit="Create account" onSubmit={create} footer={back} />;
+  return <AuthForm title="Create your account" intro="One account holds your organization: its projects, the people you invite, and the traces, logs, and errors your apps send." fields={[NAME, EMAIL, NEW_PASSWORD]} submit="Create account" onSubmit={create} footer={back} />;
 }
 
 /** Signed out: sign in (also by SSO), or (when the cloud allows open sign-up) make an account. A failed SSO shows its reason. */
-export function AuthScreen({ state, intro, start }: { state: AccountState; intro?: ReactNode; start?: "signup" }) {
+export function AuthScreen({ state, title, intro, start }: { state: AccountState; title?: string; intro?: ReactNode; start?: "signup" }) {
   const [mode, setMode] = useState<"login" | "signup" | "sso">(start && state.signup === "open" ? "signup" : "login");
   const [ssoError] = useState(takeSsoError);
   if (state.needsSetup) return <SetupScreen token="" state={state} />;
@@ -98,5 +98,5 @@ export function AuthScreen({ state, intro, start }: { state: AccountState; intro
   if (mode === "sso") return <SsoSignIn footer={<LinkButton onClick={() => setMode("login")}>Sign in another way</LinkButton>} />;
   const footer = state.signup === "open" ? <LinkButton onClick={() => setMode("signup")}>Create an account</LinkButton> : <span>Need access? Ask your team for an invite link.</span>;
   const top = ssoError ? <span className="wl-text-error" role="alert">{ssoError}</span> : intro;
-  return <SignIn state={state} intro={top} footer={footer} onSso={() => setMode("sso")} />;
+  return <SignIn state={state} title={title} intro={top} footer={footer} onSso={() => setMode("sso")} />;
 }

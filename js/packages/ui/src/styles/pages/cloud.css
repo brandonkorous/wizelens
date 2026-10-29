@@ -1,15 +1,15 @@
 /* Cloud screens: sign-in, forms, sharing, and the shared trace page. */
 .wl-auth { display: grid; place-items: center; min-height: 100vh; padding: 24px 16px; background: var(--wl-bg); }
-.wl-auth-card { display: grid; gap: 14px; width: min(400px, 100%); padding: 28px; border: 1px solid var(--wl-line); border-radius: 16px; background: var(--wl-surface); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08); }
+.wl-auth-card { display: grid; gap: 16px; width: min(440px, 100%); padding: 32px; border: 1px solid var(--wl-line); border-radius: 16px; background: var(--wl-surface); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08); }
 .wl-auth-card h1 { margin: 4px 0 0; font-size: 22px; }
 .wl-auth-card p { margin: 0; }
 .wl-auth-field, .wl-field { display: grid; gap: 6px; min-width: 0; font-size: 13px; font-weight: 600; color: var(--wl-fg-2); }
 .wl-auth-field input, .wl-field input { height: 40px; padding: 0 12px; border: 1px solid var(--wl-line-strong); border-radius: 9px; background: var(--wl-surface); color: var(--wl-fg); font: inherit; font-weight: 400; }
 .wl-auth-field input:focus, .wl-field input:focus { outline: 2px solid var(--wl-accent); outline-offset: 1px; }
-.wl-field small { font-weight: 400; }
+.wl-field small { font-size: 13px; font-weight: 400; line-height: 1.45; color: var(--wl-muted); }
 .wl-field textarea { min-height: 96px; padding: 10px 12px; border: 1px solid var(--wl-line-strong); border-radius: 9px; background: var(--wl-surface); color: var(--wl-fg); font: 400 12px/1.5 var(--wl-mono); resize: vertical; }
 .wl-field textarea:focus { outline: 2px solid var(--wl-accent); outline-offset: 1px; }
-.wl-auth-foot { text-align: center; font-size: 13px; color: var(--wl-muted); }
+.wl-auth-foot { text-align: center; font-size: 15px; color: var(--wl-fg-2); }
 .wl-btn-primary { background: var(--wl-accent-fill); border-color: var(--wl-accent-fill); color: var(--wl-on-fill); justify-content: center; }
 .wl-btn-primary:hover { filter: brightness(1.08); background: var(--wl-accent-fill); }
 .wl-btn-primary:disabled { opacity: 0.6; cursor: default; }
@@ -31,7 +31,7 @@
 /* A shared page has no way into the app: its reader has no account there. Action links go; cards stay as cards. */
 .wl-shared main a[href^="#/"] { cursor: default; }
 .wl-shared main a[href^="#/"]:is(.wl-btn, .wl-back, .wl-view-all, .wl-more) { display: none; }
-.wl-shared-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; border-bottom: 1px solid var(--wl-line); background: var(--wl-surface); }
+.wl-shared-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 14px 24px; border-bottom: 1px solid var(--wl-line); background: var(--wl-surface); }
 @media (max-width: 640px) {
   .wl-shared-head { padding: 12px 16px; }
   .wl-auth-card { padding: 22px 18px; }
