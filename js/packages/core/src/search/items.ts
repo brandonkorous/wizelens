@@ -4,7 +4,7 @@ import { type LogRow, logRows } from "../stats/logs.js";
 import { requestOf } from "../stats/requests.js";
 import type { SpanCategory, SpanKind, SpanStatus, Trace } from "../types.js";
 import type { SearchKind } from "./ast.js";
-import { logDoc, requestDoc, spanDoc, traceDoc, traceErrorTexts } from "./docs.js";
+import { logDoc, requestDoc, spanDoc, traceDoc, traceErrorTexts, traceParamTexts } from "./docs.js";
 import type { SearchDoc } from "./match.js";
 import { isListedTrace } from "../uptime/check.js";
 
@@ -62,7 +62,7 @@ function requestEntries(t: Trace, env?: string): DocEntry<"requests">[] {
   const row = requestOf(t);
   if (!row) return [];
   const item = requestItemOf(row);
-  return [{ kind: "requests", timeMs: item.startMs, owner: "", doc: requestDoc(item, t.spans.map((s) => s.attributes), env, traceErrorTexts(t)), item: () => item }];
+  return [{ kind: "requests", timeMs: item.startMs, owner: "", doc: requestDoc(item, t.spans.map((s) => s.attributes), env, [...traceErrorTexts(t), ...traceParamTexts(t)]), item: () => item }];
 }
 
 /** The documents of `kind` in one trace. */

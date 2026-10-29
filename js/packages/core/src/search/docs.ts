@@ -58,7 +58,7 @@ export function traceDoc(t: Trace, env?: string): SearchDoc {
   const errors = traceErrorTexts(t);
   return {
     kind: "traces",
-    text: lower([t.rootName, t.rootUrl, ...t.services, ...errors]),
+    text: lower([t.rootName, t.rootUrl, ...t.services, ...errors, ...traceParamTexts(t)]),
     fields: {
       service: t.services.length ? t.services : [t.service], env, trace: t.traceId, name: t.rootName, method: t.rootMethod, path: pathOnly(t.rootUrl),
       status: t.rootStatusCode, outcome: t.status, duration: t.durationMs, error: t.status === "error" || t.errorCount > 0,
@@ -70,13 +70,21 @@ export function traceDoc(t: Trace, env?: string): SearchDoc {
 /** Error texts of a trace's spans, for free words on requests and traces. */
 export const traceErrorTexts = (t: Trace): (string | null)[] => t.spans.flatMap(errorTexts);
 
-/** A request row; pass its trace's span attributes and error texts when the host has them. Its endpoint is "METHOD route"; path drops the query. */
-export function requestDoc(r: RequestItem, attrs: readonly Attributes[] = [], env?: string, errors: readonly (string | null)[] = []): SearchDoc {
+const PARAMS_MAX = 4000;
+
+/** SQL parameter values of a trace's queries, for free words on requests and traces: each once, capped so a query loop stays small. */
+export function traceParamTexts(t: Trace): string[] {
+  const all = [...new Set(t.spans.map((s) => str(s.attributes, "wizelens.db.parameters")).filter((v): v is string => !!v))].join(" ");
+  return all ? [all.slice(0, PARAMS_MAX)] : [];
+}
+
+/** A request row; pass its trace's span attributes and texts (errors, SQL parameters) when the host has them. Its endpoint is "METHOD route"; path drops the query. */
+export function requestDoc(r: RequestItem, attrs: readonly Attributes[] = [], env?: string, texts: readonly (string | null)[] = []): SearchDoc {
   const failed = isFailed(r);
   const route = r.endpoint.slice(r.endpoint.indexOf(" ") + 1);
   return {
     kind: "requests",
-    text: lower([r.path, r.endpoint, r.user, r.requestId, r.clientAddress, ...r.tags, ...errors]),
+    text: lower([r.path, r.endpoint, r.user, r.requestId, r.clientAddress, ...r.tags, ...texts]),
     fields: {
       service: [r.service, ...r.services], env, trace: r.traceId, method: r.method, path: pathOnly(r.path), route, status: r.status,
       outcome: failed ? "error" : "ok", duration: r.durationMs, user: r.user, error: failed,

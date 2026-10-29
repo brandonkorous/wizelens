@@ -5,7 +5,7 @@ import { logRows } from "../stats/logs.js";
 import { makeRequest } from "../testing/fixtures.js";
 import { SEARCH_LIMITS } from "./ast.js";
 import { checkSearch } from "./check.js";
-import { logDoc, requestDoc, spanDoc, traceDoc } from "./docs.js";
+import { logDoc, requestDoc, spanDoc, traceDoc, traceParamTexts } from "./docs.js";
 import { lex } from "./lex.js";
 import { compileSearch } from "./match.js";
 import { parseSearch } from "./parse.js";
@@ -61,6 +61,12 @@ describe("search language", () => {
     expect(hit("status:502 duration:>0 error:true route:/api/pay")(requestDoc(item))).toBe(true);
     expect(hit("@tenant.id:12")(requestDoc(item))).toBe(false);
     expect(hit("@tenant.id:12")(requestDoc(item, pay.spans.map((s) => s.attributes)))).toBe(true);
+  });
+
+  it("finds requests and traces by a value one of their queries was sent", () => {
+    expect(hit("card_8841")(traceDoc(pay))).toBe(true);
+    expect(hit("card_8841")(requestDoc(requestItemOf(requestOf(pay)!), [], undefined, traceParamTexts(pay)))).toBe(true);
+    expect(hit("card_8841")(requestDoc(requestItemOf(requestOf(pay)!)))).toBe(false);
   });
 });
 
