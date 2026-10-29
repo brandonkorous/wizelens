@@ -165,7 +165,7 @@
 .wl-ct-err-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto 28px; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; background: var(--wl-surface); }
 .wl-ct-err-row span { font-family: var(--wl-mono); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wl-ct-err-row i { font-style: normal; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--wl-line-strong); }
-.wl-ct-err-row em { font-style: normal; font-size: 11px; text-align: center; color: var(--wl-muted); }
+.wl-ct-err-row em { font-style: normal; font-size: 12.5px; text-align: center; color: var(--wl-muted); }
 .wl-ct-err-row .wl-ct-st-done { background: var(--wl-ink); border-color: var(--wl-ink); color: var(--wl-on-ink); }
 .wl-ct-err-row .wl-ct-st-back { background: var(--wl-red); border-color: var(--wl-red); color: var(--wl-white); }
 .wl-ct-err-row .wl-ct-st-mute { color: var(--wl-muted); }

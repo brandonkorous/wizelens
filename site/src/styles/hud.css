@@ -33,7 +33,7 @@
 .wl-hud-ins-head { display: flex; align-items: center; gap: 8px; }
 .wl-hud-ins-head b { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .wl-hud-ins-ms { margin-left: auto; color: var(--wl-hud-muted); font-size: 12px; white-space: nowrap; }
-.wl-hud-ins code { display: block; margin-top: 3px; color: var(--wl-hud-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wl-hud-ins code { display: block; margin-top: 3px; color: var(--wl-hud-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wl-hud-tag { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; white-space: nowrap; text-transform: uppercase; }
 .wl-hud-tag-warning { background: #3a2414; color: #fb923c; }
 .wl-hud-tag-opportunity { background: #2f2710; color: #f4c542; }

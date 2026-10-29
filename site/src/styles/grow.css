@@ -33,7 +33,7 @@
 .wl-grow-team span:nth-child(2) b { background: var(--wl-blue); }
 .wl-grow-team span:nth-child(3) b { background: #0b7a68; color: var(--wl-white); }
 .wl-grow-team span:nth-child(4) b { background: var(--wl-slate); }
-.wl-grow-team i { font-style: normal; font-size: 11px; color: var(--wl-muted); }
+.wl-grow-team i { font-style: normal; font-size: 12.5px; color: var(--wl-muted); }
 .wl-grow-alert { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--wl-line); background: var(--wl-surface); box-shadow: var(--wl-shadow); }
 .wl-grow-alert .wl-dot { margin-top: 5px; }
 .wl-grow-alert b { display: block; font-size: 13px; }
