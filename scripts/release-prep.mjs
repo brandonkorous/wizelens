@@ -43,6 +43,8 @@ function packages() {
   edit("dotnet/Directory.Build.props", /<Version>[^<]+<\/Version>/, `<Version>${version}</Version>`);
   edit("deploy/inject/chart/Chart.yaml", /^version: .+$/m, `version: ${version}`);
   edit("deploy/inject/chart/Chart.yaml", /^appVersion: .+$/m, `appVersion: "${version}"`);
+  // The collector chart's appVersion is the OpenTelemetry Collector image it runs, so only its version moves.
+  edit("deploy/helm/wizelens-collector/Chart.yaml", /^version: .+$/m, `version: ${version}`);
 }
 
 function main() {

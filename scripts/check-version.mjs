@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Checks that every npm package, the .NET packages, and the inject chart carry the same version (and, with an argument, that version and its changelog section).
+// Checks that every npm package, the .NET packages, and both Helm charts carry the same version (and, with an argument, that version and its changelog section).
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,9 +21,15 @@ function dotnetVersion() {
 }
 
 function chartVersions() {
-  const chart = readFileSync(join(ROOT, "deploy", "inject", "chart", "Chart.yaml"), "utf8");
-  const field = (name) => new RegExp(`^${name}:\\s*"?([^"\\s]+)"?`, "m").exec(chart)?.[1] ?? "(none)";
-  return [["wizelens-inject chart version", field("version")], ["wizelens-inject chart appVersion", field("appVersion")]];
+  const read = (...path) => readFileSync(join(ROOT, "deploy", ...path, "Chart.yaml"), "utf8");
+  const field = (chart, name) => new RegExp(`^${name}:\\s*"?([^"\\s]+)"?`, "m").exec(chart)?.[1] ?? "(none)";
+  const inject = read("inject", "chart");
+  const collector = read("helm", "wizelens-collector");
+  return [
+    ["wizelens-inject chart version", field(inject, "version")],
+    ["wizelens-inject chart appVersion", field(inject, "appVersion")],
+    ["wizelens-collector chart version", field(collector, "version")],
+  ];
 }
 
 const all = [...npmVersions(), dotnetVersion(), ...chartVersions()];
