@@ -210,9 +210,13 @@
   .wl-trace-head .wl-trace-actions { order: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 12px; gap: 6px; }
   .wl-trace-head .wl-trace-actions .wl-btn { min-width: 0; height: 40px; padding: 0 6px; gap: 5px; font-size: 13px; }
   .wl-wf-axis .wl-wf-tick:is(:nth-child(2), :nth-child(4)) { display: none; }
-  /* The name gets its own line under the kind tag, with a smaller indent per level. */
-  .wl-wf-row { grid-template-columns: minmax(0, 55%) 1fr; }
-  .wl-wf-label { flex-wrap: wrap; gap: 2px 6px; padding-left: calc(4px + var(--wl-depth, 0) * 6px); }
-  .wl-wf-name { order: 3; flex-basis: 100%; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
-  .wl-wf-row:not(.wl-wf-axis) { padding: 3px 0; }
+  /* Each span is its name, then a time track as wide as the screen, so a 0.3 ms query is a bar, not a sliver. */
+  .wl-wf-row { grid-template-columns: minmax(0, 1fr); }
+  .wl-wf-axis .wl-wf-label { display: none; }
+  .wl-wf-label { padding-left: calc(4px + var(--wl-depth, 0) * 8px); }
+  .wl-wf-name { flex: 1 1 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+  .wl-wf-row:not(.wl-wf-axis) { padding-top: 4px; }
+  .wl-wf-row:not(.wl-wf-axis) .wl-wf-track { height: 20px; }
+  .wl-wf-row:not(.wl-wf-axis) .wl-wf-bar { top: 5px; }
+  .wl-wf-row:not(.wl-wf-axis) .wl-wf-dur { top: 2px; }
 }
