@@ -154,7 +154,7 @@ project. The star shows on the hub and the cloud.
 
 On the cloud, the link button makes a read-only link to the page you are on: Overview, Requests, Errors, Database, Logs,
 Insights, Security, Rendering, Services, Traces, and the page of one error, service, endpoint, query, or route. Pick
-**For 1 day**, **For 7 days**, or **For 30 days**, then **Make a link**. The numbers are kept as they are now and do not
+**For 1 day**, **For 7 days**, or **For 30 days**, add who it is for if you like, then **Make a link**. The numbers are kept as they are now and do not
 change. Anyone with the link can open it. A link belongs to one project, so it is not offered under All projects. See
 and revoke links under **People & access → Shared links**.
 

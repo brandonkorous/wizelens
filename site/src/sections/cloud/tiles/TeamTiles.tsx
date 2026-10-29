@@ -10,7 +10,7 @@ export function RolesArt({ seen }: { seen: boolean }) {
   return (
     <div className="wl-ct-roles">
       <div className="wl-ct-roles-row wl-ct-roles-head">
-        <span />
+        <span>Can</span>
         {ROLES.map((r) => <b key={r}>{r}</b>)}
       </div>
       {CAN.map((c, i) => (

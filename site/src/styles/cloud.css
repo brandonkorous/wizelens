@@ -62,6 +62,7 @@
 .wl-ct-roles-head { background: none; font-size: 12px; color: var(--wl-muted); }
 .wl-ct-roles-head b { font-weight: 600; text-align: center; }
 .wl-ct-roles-row i { justify-self: center; width: 14px; height: 14px; border-radius: 50%; }
+@media (max-width: 480px) { .wl-ct-roles-row { grid-template-columns: minmax(0, 1fr) repeat(4, minmax(0, 0.8fr)); gap: 2px; padding: 7px 6px; } }
 .wl-yes { background: var(--wl-green); }
 .wl-no { background: var(--wl-line); }
 

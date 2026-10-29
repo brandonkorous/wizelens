@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { ArrowRight } from "@/components/ui/icons";
-import { APP_URL, PLANS, SALES_MAIL, TIERS, gbText, money, yearlyPrice, type Plan } from "./plans";
+import { PLANS, SALES_MAIL, TIERS, gbText, money, START_URL, yearlyPrice, type Plan } from "./plans";
 
 const EVERY = [
   "Unlimited users",
@@ -24,8 +24,8 @@ function Price({ p, yearly }: { p: Plan; yearly: boolean }) {
 
 function Action({ p }: { p: Plan }) {
   if (p.id === "enterprise") return <a href={SALES_MAIL} className="wl-btn wl-btn-ghost">Talk to us <ArrowRight /></a>;
-  if (p.id === "free") return <a href={APP_URL} className="wl-btn wl-btn-primary">Start free <ArrowRight /></a>;
-  return <a href={APP_URL} className="wl-btn wl-btn-ghost wl-pl-up">Start free, upgrade in the app</a>;
+  if (p.id === "free") return <a href={START_URL} className="wl-btn wl-btn-primary">Start free <ArrowRight /></a>;
+  return <a href={START_URL} className="wl-btn wl-btn-ghost wl-pl-up">Start free, upgrade in the app</a>;
 }
 
 function Card({ p, yearly, i }: { p: Plan; yearly: boolean; i: number }) {

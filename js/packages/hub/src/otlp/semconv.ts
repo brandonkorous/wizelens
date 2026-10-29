@@ -1,42 +1,8 @@
-import type { AttributeValue, Attributes } from "@wizeworks/lens-core";
-
-// Older semantic-convention names (what the Java, Python, and Go agents still send by default), mapped to the current ones.
-export const ALIASES: Record<string, string> = {
-  "http.method": "http.request.method",
-  "http.status_code": "http.response.status_code",
-  "http.url": "url.full",
-  "http.target": "url.path",
-  "http.scheme": "url.scheme",
-  "http.user_agent": "user_agent.original",
-  "http.client_ip": "client.address",
-  "http.flavor": "network.protocol.version",
-  "http.request_content_length": "http.request.body.size",
-  "http.response_content_length": "http.response.body.size",
-  "db.statement": "db.query.text",
-  "db.system": "db.system.name",
-  "db.name": "db.namespace",
-  "db.operation": "db.operation.name",
-  "db.sql.table": "db.collection.name",
-  "db.mongodb.collection": "db.collection.name",
-  "db.cassandra.table": "db.collection.name",
-  "db.cosmosdb.container": "db.collection.name",
-  "net.peer.name": "server.address",
-  "net.peer.port": "server.port",
-  "net.host.name": "server.address",
-  "net.host.port": "server.port",
-  "net.sock.peer.addr": "network.peer.address",
-  "net.sock.peer.port": "network.peer.port",
-  "messaging.operation": "messaging.operation.type",
-  "messaging.destination": "messaging.destination.name",
-  "code.function": "code.function.name",
-  "code.filepath": "code.file.path",
-  "code.lineno": "code.line.number",
-  "deployment.environment": "deployment.environment.name",
-};
+import { type AttributeValue, type Attributes, SEMCONV_ALIASES } from "@wizeworks/lens-core";
 
 /** Copy older names to the current ones when the current one is missing. First alias wins. */
 export function applyAliases(out: Attributes): Attributes {
-  for (const [old, current] of Object.entries(ALIASES)) {
+  for (const [old, current] of Object.entries(SEMCONV_ALIASES)) {
     if (out[old] !== undefined && out[current] === undefined) out[current] = out[old]!;
   }
   return out;
@@ -59,8 +25,32 @@ export function headerValue<V extends { arrayValue?: { values?: V[] } }>(v: V | 
   return (v.arrayValue.values ?? []).map((x) => String(one(x) ?? "")).join(", ");
 }
 
-/** `http.target` holds the path and the query: split them into `url.path` and `url.query`. */
-export function splitTarget(a: Attributes): void {
+/** Django's server spans: the path only in `http.url`, and a route with no leading slash (the .NET add-on adds one too). */
+function serverPath(a: Attributes): void {
+  const full = a["url.full"];
+  if (a["url.path"] === undefined && typeof full === "string") {
+    try {
+      const u = new URL(full);
+      a["url.path"] = u.pathname + u.search;
+    } catch {
+      // Not a full address: the span's name stays its path.
+    }
+  }
+  const route = a["http.route"];
+  if (typeof route === "string" && route && !route.startsWith("/")) a["http.route"] = `/${route}`;
+}
+
+/** A server span named by its method and a route with no leading slash ("GET report") takes the slashed route, as its route does. */
+export function serverName(name: string, a: Attributes): string {
+  const route = a["http.route"];
+  const method = a["http.request.method"];
+  if (typeof route !== "string" || typeof method !== "string" || !route.startsWith("/")) return name;
+  return name === `${method} ${route.slice(1)}` ? `${method} ${route}` : name;
+}
+
+/** `http.target` holds the path and the query: split them into `url.path` and `url.query`. A server span fills a missing path first. */
+export function splitTarget(a: Attributes, server = false): void {
+  if (server) serverPath(a);
   const path = a["url.path"];
   if (typeof path !== "string") return;
   const q = path.indexOf("?");

@@ -5,6 +5,7 @@ import { act } from "../data/useApi";
 import { useHost } from "../data/host";
 import { createTag, useTags } from "../data/tags";
 import { CopyButton } from "./Badges";
+import { CodeBox } from "./StackBox";
 import { ScopePicker, TagForm } from "./TagForm";
 import "../styles/tags.css";
 
@@ -25,10 +26,10 @@ function InCode({ scopes, onClose }: { scopes: readonly TagScope[]; onClose: () 
       {scopes.length > 1 && <ScopePicker scopes={scopes} picked={picked} onPick={setPicked} />}
       <p>Tags here come from the <code>tags</code> option in the app&apos;s code. Add this rule, then restart the service.</p>
       <strong>Node</strong>
-      <pre className="wl-tag-code">{code.node}</pre>
+      <CodeBox text={code.node} label="Node code" className="wl-tag-code" />
       <CopyButton text={code.node} label="Copy for Node" asLink />
       <strong>.NET</strong>
-      <pre className="wl-tag-code">{code.dotnet}</pre>
+      <CodeBox text={code.dotnet} label=".NET code" className="wl-tag-code" />
       <CopyButton text={code.dotnet} label="Copy for .NET" asLink />
       <div className="wl-dialog-actions">
         <button type="button" className="wl-btn" onClick={onClose}>Close</button>

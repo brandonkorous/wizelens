@@ -91,7 +91,7 @@ function serviceColumns(): Column<ServiceErrorRow>[] {
     { key: "exceptions", header: "Exceptions", num: true, sort: (s) => s.exceptions, cell: (s) => fmtCount(s.exceptions) },
     { key: "rate", header: "Error Rate", num: true, sort: (s) => s.errorRate, cell: (s) => (s.requests ? fmtPct(s.errorRate) : "–") },
     { key: "trend", header: "Trend", cell: (s) => <Sparkline values={s.trend} width={110} height={24} color="var(--wl-red)" /> },
-    { key: "change", header: "", num: true, cell: (s) => <Change now={s.exceptions} before={s.prevExceptions} /> },
+    { key: "change", header: "", srHeader: "Change", num: true, cell: (s) => <Change now={s.exceptions} before={s.prevExceptions} /> },
   ];
 }
 

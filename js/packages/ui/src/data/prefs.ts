@@ -93,10 +93,11 @@ export const getScope = (): Scope => ({
   org: memory.get(SCOPE.org) ?? read(SCOPE.org) ?? "",
 });
 
-/** Pick the project outside React, for example after sign-in. */
+/** Pick the project. A service picked in another project is not in this one, so the service filter is cleared. */
 export function setProjectScope(id: string): void {
-  memory.set(SCOPE.project, id);
-  write(SCOPE.project, id);
+  if (id === (memory.get(SCOPE.project) ?? read(SCOPE.project) ?? "")) return;
+  writePref(SCOPE.service, "");
+  writePref(SCOPE.project, id);
 }
 
 /** Pick the organization outside React. */

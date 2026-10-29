@@ -19,6 +19,14 @@ opentelemetry-bootstrap -a install          # instrumentations for the libraries
 OTEL_SERVICE_NAME=orders-api opentelemetry-instrument uvicorn app:app
 ```
 
+For Django, name the settings in the environment and turn off the reloader. Without `DJANGO_SETTINGS_MODULE`, the
+instrumentation loads Django first and it stops with "You must set settings.ALLOWED_HOSTS". Under Gunicorn or
+uWSGI, run `opentelemetry-instrument gunicorn shop.wsgi` the same way.
+
+```bash
+DJANGO_SETTINGS_MODULE=shop.settings OTEL_SERVICE_NAME=shop opentelemetry-instrument python manage.py runserver --noreload
+```
+
 `opentelemetry-instrument` finds the `wizelens` package on its own: it is an OpenTelemetry distro and configurator.
 Do not also install `opentelemetry-distro`. If you must, set `OTEL_PYTHON_DISTRO=wizelens` and
 `OTEL_PYTHON_CONFIGURATOR=wizelens`.
@@ -27,7 +35,7 @@ The insights work on what the instrumentations send: N+1 queries, N+1 HTTP calls
 
 ## What the package adds
 
-| | Plain OpenTelemetry | With `wizelens` |
+| What | Plain OpenTelemetry | With `wizelens` |
 |---|---|---|
 | Where it sends | You set `OTEL_EXPORTER_OTLP_ENDPOINT` | `WIZELENS_HUB`, else `http://localhost:5960` |
 | Sampling | Head sampling: errors can be dropped | Keeps every trace with an error or a slow span |
@@ -48,7 +56,7 @@ Add one line for your framework, then set `WIZELENS_CAPTURE_BODY=true`:
 |---|---|
 | FastAPI, Starlette | `app.add_middleware(WizeLensMiddleware)` (`from wizelens import WizeLensMiddleware`) |
 | Flask | `capture_flask(app)` (`from wizelens import capture_flask`) |
-| Django | Add `"wizelens.frameworks.WizeLensDjangoMiddleware"` to `MIDDLEWARE`, after the OpenTelemetry one |
+| Django | Add `"wizelens.frameworks.WizeLensDjangoMiddleware"` to `MIDDLEWARE` (the instrumentation puts its own first) |
 
 Text and JSON bodies are kept, up to 16 KB each. JSON keys that look like secrets are redacted.
 

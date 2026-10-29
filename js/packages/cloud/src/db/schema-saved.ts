@@ -19,3 +19,6 @@ ALTER TABLE saved_items ALTER COLUMN org_id SET NOT NULL;
 ALTER TABLE saved_items ALTER COLUMN project_id DROP NOT NULL;
 CREATE INDEX ix_saved_items_org ON saved_items (org_id);
 `;
+
+/** Who a shared link is for, as its maker wrote it, so a list of links can be told apart. */
+export const SHARE_NOTE_MIGRATION = `ALTER TABLE shares ADD COLUMN note TEXT NOT NULL DEFAULT '';`;

@@ -13,6 +13,10 @@ const avgOf = (values: (number | null)[]) => {
 export function UptimeCards({ checks, model }: { checks: readonly UptimeCheckView[]; model: UptimeModel | null }) {
   const on = checks.filter((c) => c.enabled);
   const up = on.filter((c) => c.state === "up").length;
+  const down = on.filter((c) => c.state === "down").length;
+  const pending = on.length - up - down;
+  // A check that has not run yet is not down: say which it is.
+  const upNote = [down ? `${down} down` : "", pending ? `${pending} not run yet` : ""].filter(Boolean).join(", ") || "All up";
   const t = model?.totals;
   const hasPrev = !!model?.meta.hasPrev;
   const change = (a: number | null | undefined, b: number | null | undefined) => (hasPrev && a != null ? percentChange(a, b ?? 0) : null);
@@ -20,7 +24,7 @@ export function UptimeCards({ checks, model }: { checks: readonly UptimeCheckVie
   const failRate = (model?.checks ?? []).length ? model!.starts.map((_, i) => model!.checks.reduce((s, c) => s + (c.failSeries[i] ?? 0), 0)) : undefined;
   return (
     <div className="wl-grid wl-grid-stats">
-      <StatCard icon={CircleCheck} label="Checks Up" value={on.length ? `${up} of ${on.length}` : "–"} change={null} upIsGood compareLabel="" note={on.length - up > 0 ? `${on.length - up} not up` : "All up"} />
+      <StatCard icon={CircleCheck} label="Checks Up" value={on.length ? `${up} of ${on.length}` : "–"} change={null} upIsGood compareLabel="" note={upNote} />
       <StatCard icon={HeartPulse} label="Uptime (24 h)" value={fmtUptime(avgOf(on.map((c) => c.uptime["24h"])))} change={null} upIsGood compareLabel="" note="Average of the checks that are on" />
       <StatCard icon={Clock} label="Avg Response" value={fmtMs(t?.avgMs)} change={change(t?.avgMs, t?.prevAvgMs)} upIsGood={false} compareLabel={compareLabel} />
       <StatCard icon={TriangleAlert} label="Failed Runs" value={fmtCount(t?.failures ?? 0)} change={change(t?.failures, t?.prevFailures)} upIsGood={false} compareLabel={compareLabel} series={failRate} danger />

@@ -35,8 +35,23 @@ async function providerOrg(ctx: HookCtx, providerId: string | undefined): Promis
 
 const SCIM_CHANGE = /^\/scim\/v2\/(Users|Groups)(\/[^/]+)?$/;
 const VERB: Record<string, string> = { POST: "create", PUT: "update", PATCH: "update", DELETE: "delete" };
+/** The id in a SCIM path: `ctx.path` is the route pattern (`/Users/:userId`), so read the route's values. */
+const scimId = (ctx: HookCtx): string | undefined => Object.values((ctx.params ?? {}) as Record<string, unknown>).map(str).find(Boolean);
 
-/** Each change an identity provider makes through SCIM goes to the organization's audit log. */
+type Named = { userName?: string; displayName?: string };
+/** A deleted SCIM user's names, read before the delete runs; keyed by the request. */
+const deleting = new WeakMap<Request, Named>();
+
+/** Before a SCIM delete of a person, keep their names: the audit line is written after they are gone. */
+export async function rememberScimDelete(deps: AuthDeps, ctx: HookCtx): Promise<void> {
+  const m = SCIM_CHANGE.exec(ctx.path);
+  const id = scimId(ctx);
+  if (ctx.request?.method !== "DELETE" || m?.[1] !== "Users" || !id) return;
+  const [row] = await deps.db.query<{ user_name: string; display_name: string }>("SELECT user_name, display_name FROM scim_users WHERE id = $1", [id]);
+  if (row) deleting.set(ctx.request, { userName: row.user_name, displayName: row.display_name });
+}
+
+/** Each change an identity provider makes through SCIM goes to the organization's audit log, naming the person and whether they were turned off. */
 export async function auditScim(deps: AuthDeps, ctx: HookCtx): Promise<void> {
   const verb = VERB[ctx.request?.method ?? ""];
   const m = SCIM_CHANGE.exec(ctx.path);
@@ -46,6 +61,11 @@ export async function auditScim(deps: AuthDeps, ctx: HookCtx): Promise<void> {
   if (!token) return;
   const kind = m[1] === "Users" ? "user" : "group";
   const body = (ctx.body ?? {}) as Record<string, unknown>;
-  const detail = { resource: kind, id: m[2]?.slice(1), userName: str(body.userName), displayName: str(body.displayName), tokenId: token.id };
+  const back = (ctx.context.returned ?? {}) as Record<string, unknown>;
+  const gone = ctx.request ? deleting.get(ctx.request) : undefined;
+  const userName = str(body.userName) ?? str(back.userName) ?? gone?.userName;
+  const displayName = str(body.displayName) ?? str(back.displayName) ?? gone?.displayName;
+  const active = verb === "update" && typeof back.active === "boolean" ? back.active : undefined;
+  const detail = { resource: kind, id: scimId(ctx) ?? str(back.id), userName, displayName, active, tokenId: token.id };
   await audit(deps.db, token.orgId, `scim:${token.id}`, `scim.${kind}.${verb}`, detail, Date.now());
 }

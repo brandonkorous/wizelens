@@ -49,6 +49,9 @@ function Pods({ d }: { d: Detail }) {
 
 function Body({ d, now }: { d: Detail; now: number }) {
   const r = d.row;
+  // The share is the fullest disk's, so its bytes and mount must be that disk's too.
+  const fullest = d.fileSystems[0];
+  const diskNote = fullest ? `${fmtUsed(fullest.used, fullest.total)} on ${fullest.mount}` : fmtUsed(r.diskUsed, r.diskTotal);
   const facts: [string, ReactNode][] = [["OS", r.os || DASH], ["CPUs", r.cores ? fmtCores(r.cores) : DASH], ["Load (1 min)", r.load1?.toFixed(2) ?? DASH], ["Last seen", fmtAgo(r.lastSeenMs, now)]];
   if (r.cluster) facts.push(["Cluster", r.cluster]);
   if (r.node) facts.push(["Kubernetes", <a key="n" href={nodeHref(r.name)}>Node page</a>]);
@@ -58,7 +61,7 @@ function Body({ d, now }: { d: Detail; now: number }) {
       <div className="wl-grid wl-grid-stats">
         <InfraCard icon={Cpu} label="CPU" value={fmtShare(r.cpu)} note={r.cores ? `of ${fmtCores(r.cores)}` : "busy"} danger={(r.cpu ?? 0) >= 0.9} />
         <InfraCard icon={MemoryStick} label="Memory" value={fmtShare(r.mem)} note={fmtUsed(r.memUsed, r.memTotal)} danger={(r.mem ?? 0) >= 0.9} />
-        <InfraCard icon={HardDrive} label="Fullest Disk" value={fmtShare(r.disk)} note={fmtUsed(r.diskUsed, r.diskTotal)} danger={(r.disk ?? 0) >= 0.9} />
+        <InfraCard icon={HardDrive} label="Fullest Disk" value={fmtShare(r.disk)} note={diskNote} danger={(r.disk ?? 0) >= 0.9} />
         <InfraCard icon={Network} label="Network" value={fmtRate((r.netIn ?? 0) + (r.netOut ?? 0))} note={`${fmtRate(r.netIn)} in, ${fmtRate(r.netOut)} out`} />
       </div>
       <Charts d={d} />

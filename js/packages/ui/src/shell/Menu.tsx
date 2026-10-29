@@ -4,6 +4,7 @@ export interface MenuProps {
   /** Button content. */
   label: ReactNode;
   /** Accessible name of the button. */
+  /** The tooltip; also the name when the button shows only an icon. Words in the button are its name. */
   title: string;
   buttonClass?: string;
   /** Runs when the menu opens. */
@@ -32,7 +33,7 @@ export function Menu({ label, title, buttonClass = "wl-top-btn", onOpen, childre
   };
   return (
     <div className="wl-menu-anchor" ref={ref}>
-      <button type="button" className={buttonClass} aria-haspopup="true" aria-expanded={open} title={title} aria-label={title} onClick={toggle}>
+      <button type="button" className={buttonClass} aria-haspopup="true" aria-expanded={open} title={title} onClick={toggle}>
         {label}
       </button>
       {open && <div className="wl-menu" role="menu">{children(() => setOpen(false))}</div>}

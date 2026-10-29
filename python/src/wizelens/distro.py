@@ -26,6 +26,11 @@ class WizeLensDistro(BaseDistro):
         # FastAPI's per-message "http send" and "http receive" spans are noise in WizeLens.
         if entry_point.name == "fastapi":
             kwargs.setdefault("exclude_spans", ["receive", "send"])
+        # Django logs a 4xx after the span closes; keeping the span on the request ties that line to it.
+        if entry_point.name == "django":
+            from .request_logs import keep_span
+
+            kwargs.setdefault("request_hook", keep_span)
         super().load_instrumentor(entry_point, **kwargs)
 
 

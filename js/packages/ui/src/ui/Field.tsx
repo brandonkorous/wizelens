@@ -1,40 +1,49 @@
-import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
+import { type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes, useId } from "react";
+
+/** A field is named by its label alone; its hint describes it, so a screen reader reads the name first. */
+function useFieldIds(hint: ReactNode) {
+  const id = useId();
+  return { label: `${id}-label`, hint: hint ? `${id}-hint` : undefined };
+}
 
 /** A labeled text, number, email, or URL input for small forms. */
 export function Field({ label, hint, narrow = false, ...input }: { label: string; hint?: ReactNode; narrow?: boolean } & InputHTMLAttributes<HTMLInputElement>) {
+  const ids = useFieldIds(hint);
   return (
     <label className={`wl-field${narrow ? " wl-field-narrow" : ""}`}>
-      <span>{label}</span>
-      <input {...input} />
-      {hint && <small className="wl-muted">{hint}</small>}
+      <span id={ids.label}>{label}</span>
+      <input aria-labelledby={ids.label} aria-describedby={ids.hint} {...input} />
+      {hint && <small id={ids.hint} className="wl-muted">{hint}</small>}
     </label>
   );
 }
 
 /** A labeled box for long text, for example a certificate. */
 export function TextArea({ label, hint, ...area }: { label: string; hint?: ReactNode } & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const ids = useFieldIds(hint);
   return (
     <label className="wl-field">
-      <span>{label}</span>
-      <textarea {...area} />
-      {hint && <small className="wl-muted">{hint}</small>}
+      <span id={ids.label}>{label}</span>
+      <textarea aria-labelledby={ids.label} aria-describedby={ids.hint} {...area} />
+      {hint && <small id={ids.hint} className="wl-muted">{hint}</small>}
     </label>
   );
 }
 
 /** A labeled drop-down for small forms, so it lines up with the fields beside it. */
 export function SelectField<T extends string>({ label, value, options, onChange, hint }: { label: string; value: T; options: [T, string][]; onChange: (v: T) => void; hint?: ReactNode }) {
+  const ids = useFieldIds(hint);
   return (
     <label className="wl-field">
-      <span>{label}</span>
-      <select className="wl-select" value={value} onChange={(e) => onChange(e.target.value as T)}>
+      <span id={ids.label}>{label}</span>
+      <select className="wl-select" aria-labelledby={ids.label} aria-describedby={ids.hint} value={value} onChange={(e) => onChange(e.target.value as T)}>
         {options.map(([v, text]) => (
           <option key={v} value={v}>
             {text}
           </option>
         ))}
       </select>
-      {hint && <small className="wl-muted">{hint}</small>}
+      {hint && <small id={ids.hint} className="wl-muted">{hint}</small>}
     </label>
   );
 }

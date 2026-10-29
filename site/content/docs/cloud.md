@@ -252,7 +252,8 @@ disk, and network per host, and nodes, pods, restarts, and out-of-memory kills. 
 ## Share links
 
 A share link opens one trace, or one page as it was when you made the link, read-only, for anyone with the link, for 1 to
-30 days. Use the link button in the top bar on a page. You can revoke it. Nothing else is reachable with it. It shows the parts of the trace its maker may read; after the maker leaves the organization, only the
+30 days. Use **Share** on a trace, or the link button in the top bar on a page. **Who is it for?** takes a name, a
+client, or a ticket, so your team can tell links apart. See and revoke them under **People & access → Shared links**. Nothing else is reachable with it. It shows the parts of the trace its maker may read; after the maker leaves the organization, only the
 shared project's part.
 
 ## Your account

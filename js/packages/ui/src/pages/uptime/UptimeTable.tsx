@@ -42,7 +42,7 @@ function actionColumn(p: TableProps): Column<UptimeCheckView>[] {
       <button type="button" className="wl-link-btn wl-text-error" onClick={() => p.onDelete(c)}>Delete</button>
     </span>
   );
-  return [{ key: "actions", header: "", cell }];
+  return [{ key: "actions", header: "", className: "wl-cell-actions", cell }];
 }
 
 function columns(p: TableProps): Column<UptimeCheckView>[] {

@@ -1,5 +1,6 @@
 // Frozen copy of the metrics page model from before metric rollups, for parity tests. Test-only: excluded from the build.
 import type { Sampled } from "../legacy/input.js";
+import { SEMCONV_ALIASES } from "../../semconv.js";
 import { bucketStarts, type TimeRange, type TimeWindow, windowOf } from "../../stats/common.js";
 import type { Attributes } from "../../types.js";
 import { fmtMetric, METRIC_AREAS, type MetricArea, metricAreaOf } from "../../metrics/format.js";
@@ -128,8 +129,9 @@ function groupValue(p: MetricPoint, groupBy: string): string {
   return v === null || v === undefined ? "(none)" : String(v);
 }
 
-function seriesLabel(attrs: Attributes, service: string, showService: boolean): string {
-  const parts = Object.entries(attrs).map(([k, v]) => `${k}=${v}`);
+// Line names follow the live model: only the attributes that differ between series (persona #179).
+function seriesLabel(attrs: Attributes, service: string, showService: boolean, varying: ReadonlySet<string>): string {
+  const parts = Object.entries(attrs).filter(([k]) => varying.has(k) && !(SEMCONV_ALIASES[k] && SEMCONV_ALIASES[k]! in attrs)).map(([k, v]) => `${k}=${v}`);
   if (showService) parts.unshift(service);
   return parts.join(" · ") || service;
 }
@@ -138,8 +140,10 @@ function seriesLabel(attrs: Attributes, service: string, showService: boolean): 
 function linesOf(series: SeriesMap, w: TimeWindow, groupBy: string, stat: HistogramStat): { lines: MetricLine[]; hidden: number } {
   const groups = new Map<string, MetricPoint[][]>();
   const showService = new Set([...series.values()].map((s) => s[0]!.service)).size > 1;
+  const firsts = [...series.values()].map((s) => s[0]!.attributes);
+  const varying = new Set([...new Set(firsts.flatMap((a) => Object.keys(a)))].filter((k) => new Set(firsts.map((a) => String(a[k] ?? ""))).size > 1));
   for (const s of series.values()) {
-    const label = groupBy ? groupValue(s[0]!, groupBy) : seriesLabel(s[0]!.attributes, s[0]!.service, showService);
+    const label = groupBy ? groupValue(s[0]!, groupBy) : seriesLabel(s[0]!.attributes, s[0]!.service, showService, varying);
     const list = groups.get(label);
     if (list) list.push(s);
     else groups.set(label, [s]);

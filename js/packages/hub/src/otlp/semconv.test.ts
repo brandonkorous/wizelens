@@ -15,6 +15,15 @@ describe("older semantic-convention names", () => {
     expect(s?.attributes).toMatchObject({ "http.request.method": "GET", "url.path": "/orders", "url.query": "page=2", "user_agent.original": "curl", "server.address": "api" });
   });
 
+  it("take a Django server span's path from http.url and give its route a leading slash", () => {
+    const attrs = [str("http.method", "GET"), str("http.url", "http://shop:5302/invoice/1?lang=cs"), str("http.route", "invoice/<int:order_id>")];
+    const s = toSpan({ ...ids, kind: 2, name: "GET invoice/<int:order_id>", attributes: attrs }, "py", []);
+    expect(s?.attributes).toMatchObject({ "url.path": "/invoice/1", "url.query": "lang=cs", "http.route": "/invoice/<int:order_id>" });
+    expect(s?.name).toBe("GET /invoice/<int:order_id>");
+    const client = toSpan({ ...ids, kind: 3, attributes: [str("http.method", "GET"), str("http.url", "http://pay/charge")] }, "py", []);
+    expect(client?.attributes["url.path"]).toBeUndefined();
+  });
+
   it("map the Java agent's db.sql.table to db.collection.name", () => {
     const s = toSpan({ ...ids, kind: 3, attributes: [str("db.system", "postgresql"), str("db.sql.table", "orders")] }, "java", []);
     expect(s?.attributes["db.collection.name"]).toBe("orders");

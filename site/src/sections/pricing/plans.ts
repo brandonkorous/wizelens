@@ -1,5 +1,7 @@
 // The cloud's plans and prices, as docs/BILLING-PLAN.md sets them. The cloud's own copy is cloud/src/billing/plans.ts.
 export const APP_URL = "https://app.wizelens.com";
+/** "Start free" opens the cloud on its sign-up form. */
+export const START_URL = `${APP_URL}/_wizelens/#/sign-up`;
 export const SALES_MAIL = "mailto:hello@wizelens.com?subject=WizeLens%20Enterprise";
 
 export type PlanId = "free" | "team" | "business" | "enterprise";

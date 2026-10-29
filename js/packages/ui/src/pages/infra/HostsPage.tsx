@@ -3,7 +3,7 @@ import type { HostRow, HostsModel } from "@wizeworks/lens-core";
 import { useData } from "../../data/hooks";
 import { useInfraModel } from "../../data/infra";
 import { fmtAgo, fmtCount } from "../../format";
-import { setQuery, useRoute } from "../../routes";
+import { navigate, setQuery, useRoute } from "../../routes";
 import { SearchInput } from "../../ui/Controls";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
@@ -59,7 +59,7 @@ function AllHosts() {
         <>
           <Cards m={m} />
           <Panel title="All Hosts" flush>
-            <Table paging={{ noun: "hosts", key: "hosts", reset: q }} columns={columns(updatedMs)} rows={m.hosts} rowKey={(h) => h.name} defaultSort={{ key: "name", desc: false }} empty={<Empty title="No hosts match">Clear the search to see every host.</Empty>} />
+            <Table paging={{ noun: "hosts", key: "hosts", reset: q }} columns={columns(updatedMs)} rows={m.hosts} rowKey={(h) => h.name} onRowClick={(h) => navigate(hostHref(h.name))} defaultSort={{ key: "name", desc: false }} empty={<Empty title="No hosts match">Clear the search to see every host.</Empty>} />
           </Panel>
         </>
       )}

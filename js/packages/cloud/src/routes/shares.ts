@@ -19,9 +19,11 @@ const SNAPSHOT_MAX = 2_000_000;
 export interface Share {
   id: string;
   traceId: string;
-  /** For a page link: the page and its title. Empty for a trace link. */
+  /** For a page link: the page and its title. A trace link has no page; its title is the trace's request. */
   page: string;
   title: string;
+  /** Who the link is for, as its maker wrote it; empty when not given. */
+  note: string;
   createdMs: number;
   expiresMs: number;
   views: number;
@@ -46,22 +48,25 @@ async function create(ctx: Ctx): Promise<void> {
   const days = Number(body.days ?? 7);
   if (!Number.isInteger(days) || days < 1 || days > 30) fail(400, "A link lasts 1 to 30 days.");
   const traceId = body.page ? "" : str(body, "traceId");
-  if (traceId && !(await ctx.app.telemetry.trace(projectScope(project), traceId))) fail(404, "Trace not found.");
-  const shot = body.page ? await snapshotOf(ctx, project, body) : { page: "", title: "", snapshot: null, params: "{}" };
+  const trace = traceId ? await ctx.app.telemetry.trace(projectScope(project), traceId) : undefined;
+  if (traceId && !trace) fail(404, "Trace not found.");
+  const named = trace?.rootMethod && trace.rootUrl ? `${trace.rootMethod} ${trace.rootUrl}` : (trace?.rootName ?? "");
+  const shot = body.page ? await snapshotOf(ctx, project, body) : { page: "", title: named.slice(0, 200), snapshot: null, params: "{}" };
+  const note = typeof body.note === "string" ? body.note.trim().slice(0, 120) : "";
   const now = ctx.app.config.now();
   const token = newToken("share");
   await ctx.app.db.query(
-    "INSERT INTO shares (id, project_id, trace_id, token_hash, created_by, created_ms, expires_ms, page, title, snapshot, params) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
-    [newId(), project.id, traceId, hashToken(token), actor, now, now + days * DAY_MS, shot.page, shot.title, shot.snapshot, shot.params],
+    "INSERT INTO shares (id, project_id, trace_id, token_hash, created_by, created_ms, expires_ms, page, title, snapshot, params, note) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+    [newId(), project.id, traceId, hashToken(token), actor, now, now + days * DAY_MS, shot.page, shot.title, shot.snapshot, shot.params, note],
   );
-  await audit(ctx.app.db, project.orgId, actor, "share.create", { projectId: project.id, ...(traceId ? { traceId } : { page: shot.page }), days }, now);
+  await audit(ctx.app.db, project.orgId, actor, "share.create", { projectId: project.id, ...(traceId ? { traceId } : { page: shot.page }), title: shot.title, ...(note ? { note } : {}), days }, now);
   sendJson(ctx.res, 201, { url: `${ctx.app.baseUrl(ctx.req)}/_wizelens/#/shared/${token}`, expiresMs: now + days * DAY_MS });
 }
 
 /** A project's links that still open, newest first. */
 export const liveShares = (q: Queryable, projectId: string, now: number): Promise<Share[]> =>
   q.query<Share>(
-    `SELECT id, trace_id AS "traceId", page, title, created_ms AS "createdMs", expires_ms AS "expiresMs", views FROM shares
+    `SELECT id, trace_id AS "traceId", page, title, note, created_ms AS "createdMs", expires_ms AS "expiresMs", views FROM shares
      WHERE project_id = $1 AND revoked_ms IS NULL AND expires_ms > $2 ORDER BY created_ms DESC`,
     [projectId, now],
   );

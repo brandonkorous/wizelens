@@ -21,14 +21,15 @@ async function withTrace() {
 
 it("shares one trace by link, and stops when revoked", async () => {
   const { url, owner, projectId } = await withTrace();
-  const made = await owner.call<{ url: string }>("POST", `api/projects/${projectId}/shares`, { traceId: T1, days: 3 });
+  const made = await owner.call<{ url: string }>("POST", `api/projects/${projectId}/shares`, { traceId: T1, days: 3, note: "Jiří Dvořák (Ostrava Bikes)" });
   expect(made.status).toBe(201);
   const token = made.body.url.split("/shared/")[1]!;
   const stranger = new Client(url);
   expect((await stranger.call<{ trace: { traceId: string } }>("GET", `api/shared/${token}`)).body.trace.traceId).toBe(T1);
   expect((await stranger.call("GET", `api/traces/${T1}?project=${projectId}`)).status).toBe(401);
-  const [share] = (await owner.call<{ id: string; views: number }[]>("GET", `api/projects/${projectId}/shares`)).body;
-  expect(share!.views).toBe(1);
+  const [share] = (await owner.call<{ id: string; views: number; title: string; note: string }[]>("GET", `api/projects/${projectId}/shares`)).body;
+  expect(share).toMatchObject({ views: 1, note: "Jiří Dvořák (Ostrava Bikes)" });
+  expect(share!.title).not.toBe("");
   await owner.call("DELETE", `api/projects/${projectId}/shares/${share!.id}`);
   expect((await stranger.call("GET", `api/shared/${token}`)).status).toBe(404);
 });

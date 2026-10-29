@@ -158,7 +158,10 @@ export function detailText(d: Record<string, unknown>, names: Names): string {
   if (typeof d.plan === "string") parts.push(`${typeof d.from === "string" ? `${d.from} to ` : ""}${d.plan}`);
   if (d.capUsd !== undefined) parts.push(d.capUsd === null ? "no cap" : `$${String(d.capUsd)} a month`);
   if (typeof d.reason === "string") parts.push(d.reason === "cap" ? "spend cap reached" : "Free plan data used up");
+  if (typeof d.displayName === "string" && d.resource === "user") parts.push(d.displayName);
   if (typeof d.userName === "string") parts.push(d.userName);
+  if (d.active === false) parts.push("turned off, so removed from the organization");
+  if (d.active === true) parts.push("turned on");
   if (typeof d.format === "string") parts.push(d.format.toUpperCase());
   if (typeof d.removed === "number") parts.push(`${d.removed} ${d.removed === 1 ? "host" : "hosts"}`);
   if (typeof d.line === "string" && parts.length === 0) parts.push(d.line);

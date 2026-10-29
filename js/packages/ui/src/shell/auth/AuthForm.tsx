@@ -48,14 +48,19 @@ function CardHead({ title, intro }: { title: string; intro?: ReactNode }) {
 /** One centered card with a message and optional actions. */
 export function AuthCard({ title, intro, children }: { title: string; intro?: ReactNode; children?: ReactNode }) {
   return (
-    <div className="wl-auth">
+    <main className="wl-auth">
       <div className="wl-auth-card">
         <CardHead title={title} intro={intro} />
         {children}
       </div>
-    </div>
+    </main>
   );
 }
+
+/** When the cloud cannot send email: the person who runs it reads the link from its log. */
+export const NoMailCard = ({ back }: { back: ReactNode }) => (
+  <AuthCard title="Ask for the link" intro="This cloud cannot send email. Ask the person who runs it: the link is in the cloud's log.">{back}</AuthCard>
+);
 
 function FieldInput({ f }: { f: Field }) {
   if (f.type === "checkbox") {
@@ -88,7 +93,7 @@ export function AuthForm({ title, intro, fields, submit, onSubmit, secondary, fo
       .finally(() => setBusy(false));
   };
   return (
-    <div className="wl-auth">
+    <main className="wl-auth">
       <form className="wl-auth-card" onSubmit={send}>
         <CardHead title={title} intro={intro} />
         {fields.map((f) => (
@@ -101,7 +106,7 @@ export function AuthForm({ title, intro, fields, submit, onSubmit, secondary, fo
         {secondary}
         {footer && <div className="wl-auth-foot">{footer}</div>}
       </form>
-    </div>
+    </main>
   );
 }
 

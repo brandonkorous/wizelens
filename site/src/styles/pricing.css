@@ -13,7 +13,8 @@
 .wl-pc-row strong { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; white-space: nowrap; }
 .wl-pc-row small { font-size: 14px; font-weight: 500; color: var(--wl-muted); letter-spacing: 0; }
 .wl-pc-best { border-color: var(--wl-blue); box-shadow: 0 0 0 1px var(--wl-blue); }
-.wl-pc-off { opacity: 0.55; }
+.wl-pc-off { background: var(--wl-paper); }
+.wl-pc-off b, .wl-pc-off strong { color: var(--wl-muted); }
 .wl-pc-split { display: grid; gap: 10px; padding-top: 6px; }
 .wl-pc-bar { display: flex; gap: 2px; height: 12px; border-radius: 999px; overflow: hidden; background: var(--wl-line); }
 .wl-pc-bar i { flex-basis: 0; min-width: 0; transition: flex-grow 0.4s var(--wl-ease); }

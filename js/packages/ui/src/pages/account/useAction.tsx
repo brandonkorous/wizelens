@@ -37,11 +37,11 @@ export function useAction(): Action {
   return { busy, error, note, stale, run, setNote };
 }
 
-/** "For safety, sign in again first." with a button that signs out, so the person can sign in again. */
-export function FreshNotice() {
+/** "For safety, sign in again first." (or `text`) with a button that signs out, so the person can sign in again. */
+export function FreshNotice({ text = "For safety, sign in again first." }: { text?: string }) {
   return (
     <div className="wl-banner wl-banner-info" role="status">
-      For safety, sign in again first.{" "}
+      {text}{" "}
       <button type="button" className="wl-link-btn" onClick={() => void signOut()}>Sign out and sign in again</button>
     </div>
   );

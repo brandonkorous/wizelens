@@ -2,7 +2,7 @@ import type { BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getSessionFromCtx, isAPIError } from "better-auth/api";
 import { isOrgRole } from "@wizeworks/lens-core";
 import { audit } from "../repo/audit.js";
-import { auditScim, billingGuard } from "./billing-hooks.js";
+import { auditScim, billingGuard, rememberScimDelete } from "./billing-hooks.js";
 import type { AuthDeps } from "./deps.js";
 import { emailChangeOf } from "./email-token.js";
 import { isLegacyHash } from "./password.js";
@@ -152,6 +152,7 @@ export function authHooks(deps: AuthDeps): BetterAuthOptions["hooks"] {
       await billingGuard(deps, ctx);
       await guardPasswordWays(deps.db, ctx.path, (ctx.body ?? {}) as Record<string, unknown>);
       await noteRequired(deps.db, ctx.path, ctx.request);
+      await rememberScimDelete(deps, ctx);
       return guard(ctx);
     }),
     after: createAuthMiddleware(async (ctx) => {

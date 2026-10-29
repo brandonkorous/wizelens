@@ -8,7 +8,7 @@ export async function LegalPage({ slug }: { slug: LegalSlug }) {
   return (
     <main className="wl-docs wl-legal">
       <div className="wl-docs-grid">
-        <nav className="wl-legal-nav" aria-label="Legal">
+        <nav className="wl-legal-nav" aria-label="Legal pages">
           {LEGAL_PAGES.map((p) => (
             <a key={p.slug} href={`/${p.slug}/`} className={p.slug === slug ? "wl-on" : undefined} aria-current={p.slug === slug ? "page" : undefined}>{p.title}</a>
           ))}

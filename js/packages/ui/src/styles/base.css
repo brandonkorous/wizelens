@@ -4,6 +4,8 @@ html, body { margin: 0; }
 body { background: var(--wl-bg); color: var(--wl-fg); font: 14px/1.45 var(--wl-sans); -webkit-font-smoothing: antialiased; }
 a { color: var(--wl-accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
+/* A link inside a sentence is underlined, so it does not depend on color alone. */
+:is(p, li, dd, .wl-muted, .wl-small, .wl-empty-body, .wl-settings-note, .wl-banner) a:not([class]) { text-decoration: underline; text-underline-offset: 2px; }
 button { font: inherit; color: inherit; }
 h1 { font-size: 30px; line-height: 1.15; margin: 0; font-weight: 750; letter-spacing: -0.02em; }
 h2 { font-size: 17px; margin: 0; font-weight: 680; letter-spacing: -0.01em; }

@@ -5,6 +5,7 @@ import { setQuery } from "../routes";
 import { Pager } from "./Controls";
 import { sortQuery, type TablePaging, urlPaging, useTablePaging } from "./paging";
 import { pressable } from "./pressable";
+import { useScrollFocus } from "./scrollFocus";
 
 export interface Column<T> {
   key: string;
@@ -17,6 +18,8 @@ export interface Column<T> {
   sort?: (row: T) => number | string;
   /** Hidden on a phone, where another cell repeats what it holds. */
   hideSm?: boolean;
+  /** What a screen reader hears for a blank header; "Actions" when not set. */
+  srHeader?: string;
 }
 
 export interface TableProps<T> {
@@ -99,8 +102,8 @@ function useSorted<T>(rows: readonly T[], columns: Column<T>[], sort: { key: str
 }
 
 function HeaderCell<T>({ col, sort, onSort }: { col: Column<T>; sort: { key: string; desc: boolean } | null; onSort: (key: string) => void }) {
-  const cls = [col.num ? "wl-num" : "", col.hideSm ? "wl-hide-sm" : ""].join(" ").trim() || undefined;
-  if (!col.sort) return <th className={cls}>{col.header}</th>;
+  const cls = [col.num ? "wl-num" : "", col.hideSm ? "wl-hide-sm" : "", col.className?.includes("wl-cell-actions") ? "wl-cell-actions" : ""].join(" ").trim() || undefined;
+  if (!col.sort) return <th className={cls}>{col.header === "" ? <span className="wl-sr-only">{col.srHeader ?? "Actions"}</span> : col.header}</th>;
   const active = sort?.key === col.key;
   const Arrow = active && sort?.desc ? ArrowDown : ArrowUp;
   return (
@@ -120,8 +123,10 @@ interface BodyProps<T> extends TableProps<T> {
 }
 
 function TableBody<T>({ columns, shown, rowKey, onRowClick, selectedKey, detail, select, sort, onSort }: BodyProps<T>) {
+  const wrap = useRef<HTMLDivElement>(null);
+  useScrollFocus(wrap, "table, scrolls sideways");
   return (
-    <div className="wl-table-wrap">
+    <div className="wl-table-wrap" ref={wrap}>
       <table className="wl-table">
         <thead>
           <tr>

@@ -17,7 +17,7 @@
 .wl-prose blockquote { margin: 24px 0; padding: 14px 18px; border-left: 3px solid var(--wl-blue); border-radius: 0 10px 10px 0; background: var(--wl-accent-soft); color: var(--wl-fg); }
 .wl-prose blockquote p { margin: 0; }
 
-.wl-prose :not(pre) > code { padding: 2px 6px; border-radius: 6px; background: var(--wl-surface-2); border: 1px solid var(--wl-line); font-size: 0.86em; color: var(--wl-fg); white-space: break-spaces; }
+.wl-prose :not(pre) > code { padding: 2px 6px; border-radius: 6px; background: var(--wl-surface-2); border: 1px solid var(--wl-line); font-size: 0.86em; color: var(--wl-fg); white-space: break-spaces; overflow-wrap: anywhere; }
 .wl-pre { position: relative; }
 .wl-prose pre { margin: 0; padding: 18px 92px 18px 20px; border-radius: 14px; background: var(--wl-night) !important; font-size: 13.5px; line-height: 1.7; overflow-x: auto; scrollbar-width: thin; }
 .wl-prose pre code { font-size: inherit; }
@@ -31,6 +31,12 @@
 .wl-prose th { font-size: 13.5px; font-weight: 650; color: var(--wl-fg); border-bottom-color: var(--wl-line-strong); white-space: nowrap; }
 .wl-prose td code { white-space: nowrap; }
 .wl-prose tr:hover td { background: var(--wl-paper); }
+/* On a phone, code and headers in a table wrap so every column fits the screen; no column gets narrower than a short word. */
+@media (max-width: 720px) {
+  .wl-prose th, .wl-prose td { padding: 8px 10px; min-width: 7em; }
+  .wl-prose th { white-space: normal; overflow-wrap: break-word; }
+  .wl-prose td code { white-space: normal; overflow-wrap: anywhere; }
+}
 
 @media (hover: none) {
   .wl-pre-copy { opacity: 1; }

@@ -1,7 +1,7 @@
 import { Check, ChevronDown, Layers, Plus } from "lucide-react";
 import { displayService, groupServices, type ServiceGroup } from "@wizeworks/lens-core";
 import { type OrgWithProjects, pickOrg } from "../data/account";
-import { useEnvScope, useProjectScope, useServiceScope } from "../data/prefs";
+import { setProjectScope, useEnvScope, useProjectScope, useServiceScope } from "../data/prefs";
 import { ALL_PROJECTS } from "../data/projectScope";
 import { useSetService } from "../ui/ServiceSelect";
 import { type HubRegistry, inScope, presenceOf } from "../data/sources";
@@ -93,7 +93,7 @@ function labelOf(cloud: CloudChoices | undefined, project: string, env: string):
 /** Filters (organization, project, environment) and the services sending data. */
 export function HubMenu({ registry, cloud }: { registry: HubRegistry | null; cloud?: CloudChoices }) {
   const [env, setEnv] = useEnvScope();
-  const [project, setProject] = useProjectScope();
+  const [project] = useProjectScope();
   const services = groupServices((registry?.services ?? []).filter((s) => inScope(s, { env, project }, !cloud)));
   const online = services.filter((g) => g.online > 0).length;
   const pairs = (list: string[]) => list.map((v): [string, string] => [v, v]);
@@ -120,7 +120,7 @@ export function HubMenu({ registry, cloud }: { registry: HubRegistry | null; clo
                 <Plus size={14} aria-hidden="true" /> New organization
               </button>
             )}
-            <Choices title="Project" values={cloud?.projects ?? pairs(registry?.projects ?? [])} value={project} all={!cloud} onPick={(v) => (setProject(v), close())} />
+            <Choices title="Project" values={cloud?.projects ?? pairs(registry?.projects ?? [])} value={project} all={!cloud} onPick={(v) => (setProjectScope(v), close())} />
             <Choices title="Environment" values={pairs(registry?.environments ?? [])} value={env} onPick={(v) => (setEnv(v), close())} />
             <ServiceChoices services={services} close={close} />
           </>

@@ -6,6 +6,7 @@ import { ErrorStack } from "../errors/ResolvedStack";
 import { shortCategory } from "../logs/LogParts";
 import { ServiceChip } from "./tabParts";
 import { pressable } from "../../ui/pressable";
+import { StackBox } from "../../ui/StackBox";
 
 interface Props {
   trace: Trace;
@@ -74,7 +75,7 @@ export function ErrorsTab({ trace, onSelect }: Props) {
             <span className="wl-muted">in {e.name}</span>
           </div>
           <div className="wl-error-msg">{e.message}</div>
-          {e.stack && spans.get(e.spanId)?.category === "browser" ? <BrowserStack span={spans.get(e.spanId)!} /> : e.stack && <pre className="wl-code wl-stack">{e.stack}</pre>}
+          {e.stack && spans.get(e.spanId)?.category === "browser" ? <BrowserStack span={spans.get(e.spanId)!} /> : e.stack && <StackBox text={e.stack} />}
         </li>
       ))}
     </ul>

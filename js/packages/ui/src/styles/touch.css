@@ -9,4 +9,5 @@
   .wl-table .wl-link-btn + .wl-link-btn { margin-left: 4px; }
   .wl-pick-hit { display: inline-grid; place-items: center; width: 44px; height: 44px; margin: -12px; cursor: pointer; }
   .wl-pick { width: 20px; height: 20px; }
+  .wl-auth .wl-link-btn, .wl-auth-card a, .wl-auth-foot a { display: inline-flex; align-items: center; min-height: 44px; }
 }

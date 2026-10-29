@@ -89,8 +89,8 @@ function SignUp({ state, back }: { state: AccountState; back: ReactNode }) {
 }
 
 /** Signed out: sign in (also by SSO), or (when the cloud allows open sign-up) make an account. A failed SSO shows its reason. */
-export function AuthScreen({ state, intro }: { state: AccountState; intro?: ReactNode }) {
-  const [mode, setMode] = useState<"login" | "signup" | "sso">("login");
+export function AuthScreen({ state, intro, start }: { state: AccountState; intro?: ReactNode; start?: "signup" }) {
+  const [mode, setMode] = useState<"login" | "signup" | "sso">(start && state.signup === "open" ? "signup" : "login");
   const [ssoError] = useState(takeSsoError);
   if (state.needsSetup) return <SetupScreen token="" state={state} />;
   const back = <LinkButton onClick={() => setMode("login")}>I have an account</LinkButton>;

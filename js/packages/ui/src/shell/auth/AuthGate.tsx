@@ -5,7 +5,7 @@ import { pendingOAuth } from "../../data/oauth";
 import { useData } from "../../data/provider";
 import { SharedTrace } from "../../pages/shared/SharedTrace";
 import { StatusPage } from "../../pages/status/StatusPage";
-import { type Route, useRoute } from "../../routes";
+import { hrefTo, navigate, type Route, useRoute } from "../../routes";
 import { AuthScreen, SetupScreen } from "./AuthScreen";
 import { InviteScreen } from "./InviteScreen";
 import { NoOrgScreen } from "./NoOrgScreen";
@@ -15,15 +15,17 @@ import { ForgotPassword, ResetPassword } from "./PasswordScreens";
 import { TwoFactorScreen } from "./TwoFactorScreen";
 
 const Splash = () => (
-  <div className="wl-auth">
+  <main className="wl-auth">
     <p className="wl-muted">Loading WizeLens…</p>
-  </div>
+  </main>
 );
 
 /** Account screens that open signed in or not: links from emails, setup, and the second sign-in step. Null: not one of them. */
 function accountScreen(route: Route, account: AccountState): ReactNode {
   const token = route.query.get("token") ?? "";
   switch (route.page) {
+    case "sign-up":
+      return account.signedIn ? null : <AuthScreen state={account} start="signup" />;
     case "setup":
       return account.needsSetup ? <SetupScreen token={token} state={account} /> : null;
     case "two-factor":
@@ -31,13 +33,14 @@ function accountScreen(route: Route, account: AccountState): ReactNode {
     case "forgot-password":
       return <ForgotPassword state={account} />;
     case "reset-password":
-      return <ResetPassword token={token} />;
+      return <ResetPassword key={token} token={token} />;
     case "verify-email":
-      return <VerifyEmail token={token} />;
+      // Keyed by the token: a second link pasted into the same tab starts over, not stays on the first.
+      return <VerifyEmail key={token} token={token} mail={account.mail} />;
     case "invite":
-      return <InviteScreen id={token} state={account} />;
+      return <InviteScreen key={token} id={token} state={account} />;
     case "delete-account":
-      return <DeleteAccount token={token} state={account} deleted={route.query.has("done")} />;
+      return <DeleteAccount key={token} token={token} state={account} deleted={route.query.has("done")} />;
     case "oauth":
     case "oauth-consent":
       return <OAuthScreen route={route} state={account} />;
@@ -60,6 +63,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const signedIn = !!account?.signedIn;
   useEffect(() => {
     if (signedIn && !isOAuthPage(route.page) && route.page !== "two-factor") pendingOAuth.set(null);
+    if (signedIn && route.page === "sign-up") navigate(hrefTo("overview"));
   }, [signedIn, route.page]);
   if (route.page === "shared") return <SharedTrace token={route.params[0] ?? ""} />;
   if (route.page === "status") return <StatusPage token={route.params[0] ?? ""} />;

@@ -8,7 +8,7 @@ import { fmtLength } from "./uptimeParts";
 
 function columns(nowMs: number, withCheck: boolean): Column<UptimeIncidentView>[] {
   return [
-    { key: "state", header: "", cell: (i) => (i.endMs === null ? <Badge tone="danger">Ongoing</Badge> : <Badge tone="success">Resolved</Badge>) },
+    { key: "state", header: "", srHeader: "State", cell: (i) => (i.endMs === null ? <Badge tone="danger">Ongoing</Badge> : <Badge tone="success">Resolved</Badge>) },
     ...(withCheck ? [{ key: "check", header: "Check", cell: (i: UptimeIncidentView) => <a href={hrefTo("uptime", [i.checkId])}>{i.checkName}</a> }] : []),
     { key: "start", header: "Started", className: "wl-nowrap", sort: (i) => i.startMs, cell: (i) => fmtDateTime(i.startMs) },
     { key: "length", header: "Down For", num: true, sort: (i) => incidentMs(i, nowMs), cell: (i) => fmtLength(incidentMs(i, nowMs)) },

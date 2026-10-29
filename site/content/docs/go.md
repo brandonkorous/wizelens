@@ -26,7 +26,7 @@ http.ListenAndServe(":8080", wizelens.Handler(mux, "inventory")) // server spans
 
 | Call | What it is |
 |---|---|
-| `Start` | Tracer and logger providers with OTLP over HTTP to `WIZELENS_HUB`, W3C trace context, and sampling that keeps every trace with an error or a slow span |
+| `Start` | Tracer, logger, and meter providers with OTLP over HTTP to `WIZELENS_HUB`, W3C trace context, and sampling that keeps every trace with an error or a slow span. Metrics go every 30 seconds: request and query times from the calls below, and Go runtime memory, goroutines, and GC goal |
 | `OpenDB`, `DBOptions` | [otelsql](https://github.com/XSAM/otelsql) with one span per query, named by its first word, plus `wizelens.db.parameters` |
 | `Handler`, `Capture` | [otelhttp](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp) plus request and response headers and, with `WIZELENS_CAPTURE_BODY=true`, request and response bodies |
 | `Transport` | otelhttp's client transport |
@@ -41,6 +41,7 @@ http.ListenAndServe(":8080", wizelens.Handler(mux, "inventory")) // server spans
 | `WithServiceName("inventory")` | The service name when `OTEL_SERVICE_NAME` is not set |
 | `WithSettings(s)` | Use these settings instead of the `WIZELENS_*` variables. Start from `wizelens.SettingsFromEnv()` and change fields |
 | `WithExporters(spans, logs)` | Send spans and logs to these exporters instead of OTLP, for tests or another backend. Either may be `nil` |
+| `WithMetricReader(r)` | Read metrics with this reader (such as `sdkmetric.NewManualReader()`) instead of sending them by OTLP |
 
 ```go
 s := wizelens.SettingsFromEnv()

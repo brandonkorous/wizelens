@@ -56,7 +56,9 @@ function Filters({ issues, releases }: { issues: boolean; releases: string[] }) 
 function scanNote({ scan }: SecurityModel, now: number): string | null {
   if (!scan) return null;
   if (!scan.packages) return "No service has reported its packages yet. WizeLens SDKs send them at start.";
-  return `${fmtCount(scan.packages)} package versions from ${fmtCount(scan.services)} services are checked against OSV${scan.checkedMs ? `, last ${fmtAgo(scan.checkedMs, now)}` : ""}.`;
+  const count = (n: number, one: string) => `${fmtCount(n)} ${one}${n === 1 ? "" : "s"}`;
+  const verb = scan.packages === 1 ? "is" : "are";
+  return `${count(scan.packages, "package version")} from ${count(scan.services, "service")} ${verb} checked against OSV${scan.checkedMs ? `, last ${fmtAgo(scan.checkedMs, now)}` : ""}.`;
 }
 
 function SecurityBody({ m, wanted }: { m: SecurityModel; wanted: string | null }) {

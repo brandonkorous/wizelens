@@ -47,7 +47,7 @@
 .wl-h-info { background: var(--wl-h-info); } .wl-h-success { background: var(--wl-h-success); } .wl-h-opportunity { background: var(--wl-h-opportunity); }
 .wl-h-warning { background: var(--wl-h-warning); } .wl-h-critical { background: var(--wl-h-critical); } .wl-h-neutral { background: var(--wl-h-neutral); }
 .wl-pill { display: inline-block; min-width: 40px; padding: 1px 8px; border-radius: 6px; color: #fff; font-size: 12px; font-weight: 650; text-align: center; font-family: var(--wl-sans); }
-.wl-pill-ok { background: #16a34a; } .wl-pill-warn { background: #ea580c; } .wl-pill-err { background: var(--wl-red); } .wl-pill-none { background: var(--wl-slate); }
+.wl-pill-ok { background: #15803d; } .wl-pill-warn { background: #c2410c; } .wl-pill-err { background: var(--wl-error-fill); } .wl-pill-none { background: var(--wl-slate); }
 
 /* Trace header */
 .wl-detail > * + * { margin-top: 16px; }

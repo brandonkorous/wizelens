@@ -1,4 +1,5 @@
 import type { HubSender, HubService } from "./hub.js";
+import { UPTIME_SERVICE } from "./uptime/check.js";
 
 /** A host (pod) offline this long is old: the registry hides it unless asked. */
 export const OLD_INSTANCE_MS = 24 * 60 * 60_000;
@@ -23,10 +24,11 @@ export const groupKeyOf = (s: HubSender): string => `${s.project ?? ""}|${s.serv
 /** True for a host that has been offline longer than `OLD_INSTANCE_MS`. */
 export const isOldInstance = (s: HubService, now: number): boolean => !s.online && now - s.lastSeenMs > OLD_INSTANCE_MS;
 
-/** Registry rows grouped by service, so many pods of one app make one row. Groups keep the order of their newest host. */
+/** Registry rows grouped by service, so many pods of one app make one row. Groups keep the order of their newest host. The uptime runner is not an app: it is left out. */
 export function groupServices(list: readonly HubService[]): ServiceGroup[] {
   const byKey = new Map<string, HubService[]>();
   for (const s of list) {
+    if (s.service === UPTIME_SERVICE) continue;
     const key = groupKeyOf(s);
     const rows = byKey.get(key);
     if (rows) rows.push(s);

@@ -8,6 +8,8 @@ import { getScope } from "../data/prefs";
 import { decodeParam, type Route, useRoute } from "../routes";
 import { CopyButton } from "../ui/Badges";
 import { Select } from "../ui/Controls";
+import { Field } from "../ui/Field";
+import { fmtDate } from "../format";
 import { Menu } from "./Menu";
 import { isAllProjects } from "../data/projectScope";
 
@@ -29,7 +31,8 @@ function ShareForm({ target }: { target: { page: string; params: Record<string, 
   const route = useRoute();
   const [range] = useRange();
   const [days, setDays] = useState("7");
-  const [url, setUrl] = useState<string | null>(null);
+  const [made, setMade] = useState<{ url: string; expiresMs: number } | null>(null);
+  const [forWhom, setForWhom] = useState("");
   const [note, setNote] = useState<string | null>(null);
   // The link's header names the project, so the person it is sent to knows whose numbers these are.
   const title = currentProject(useAccount())?.project?.name ?? "WizeLens";
@@ -37,9 +40,9 @@ function ShareForm({ target }: { target: { page: string; params: Record<string, 
     const { window, compare } = getPeriod();
     const scope = getScope();
     const params = { ...Object.fromEntries(route.query), ...periodParams(window, compare), ...(scope.service ? { service: scope.service } : {}), ...target.params };
-    const body = { page: target.page, range, params, env: scope.env, title, days: Number(days) };
-    void apiSend<{ url: string }>("POST", `./api/projects/${encodeURIComponent(scope.project)}/shares`, body).then(
-      (r) => setUrl(r.url),
+    const body = { page: target.page, range, params, env: scope.env, title, days: Number(days), note: forWhom };
+    void apiSend<{ url: string; expiresMs: number }>("POST", `./api/projects/${encodeURIComponent(scope.project)}/shares`, body).then(
+      setMade,
       (e: unknown) => setNote(e instanceof Error ? e.message : String(e)),
     );
   };
@@ -47,7 +50,9 @@ function ShareForm({ target }: { target: { page: string; params: Record<string, 
     <div className="wl-save-view">
       <p className="wl-muted wl-small">A read-only link to this page as it is now: its numbers are kept and do not change. Anyone with the link can open it.</p>
       <Select label="How long" value={days} options={DAYS} onChange={setDays} />
-      {url ? <span className="wl-share-url"><code className="wl-truncate">{url}</code><CopyButton text={url} label="Copy link" /></span> : <button type="button" className="wl-btn wl-btn-primary" onClick={make}>Make a link</button>}
+      <Field label="Who is it for?" hint={"A name, a client, or a ticket. Only your team sees it, in Shared links."} value={forWhom} maxLength={120} onChange={(e) => setForWhom(e.target.value)} />
+      {made ? <span className="wl-share-url"><code className="wl-truncate">{made.url}</code><CopyButton text={made.url} label="Copy link" /></span> : <button type="button" className="wl-btn wl-btn-primary" onClick={make}>Make a link</button>}
+      {made && <span className="wl-muted wl-small">Works until {fmtDate(made.expiresMs)}. Revoke it under People & access, Shared links.</span>}
       {note && <p className="wl-text-error wl-small">{note}</p>}
     </div>
   );
