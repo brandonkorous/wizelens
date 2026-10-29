@@ -65,9 +65,12 @@
   .wl-st-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 @media (max-width: 680px) {
-  .wl-st-facts { grid-template-columns: minmax(0, 1fr); }
+  /* A phone shows each fact as one row, so the demo comes up sooner. */
+  .wl-st-facts { grid-template-columns: minmax(0, 1fr); margin-top: 36px; }
   .wl-st-facts > div + div { padding-left: 0; border-left: 0; border-top: 1px solid var(--wl-line); }
-  .wl-st-facts > div { padding-bottom: 18px; }
+  .wl-st-facts > div { display: flex; align-items: baseline; gap: 12px; padding: 12px 0; }
+  .wl-st-facts dt { flex: none; font-size: 22px; }
+  .wl-st-facts dd { margin: 0; }
   .wl-st-grid, .wl-st-highs { grid-template-columns: minmax(0, 1fr); }
   .wl-st-high:nth-child(even) { padding-left: 0; border-left: 0; }
   .wl-ct-row { grid-template-columns: minmax(0, 1fr) 50px; }
