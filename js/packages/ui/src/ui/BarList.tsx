@@ -21,7 +21,8 @@ export function BarList({ items, max, compact = false }: { items: BarItem[]; max
   return (
     <div className={`wl-bars${compact ? " wl-compact" : ""}`}>
       {items.map((item, idx) => {
-        const width = top > 0 ? Math.max(1.5, (item.value / top) * 100) : 0;
+        // A zero gets no bar: a sliver would read as a small value.
+        const width = top > 0 && item.value > 0 ? Math.max(1.5, (item.value / top) * 100) : 0;
         return (
           <div
             key={item.key ?? idx}
