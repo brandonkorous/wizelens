@@ -58,7 +58,7 @@ function Body({ view }: { view: StatusPageView }) {
           <ul className="wl-status-incidents">
             {view.incidents.map((i) => (
               <li key={`${i.checkName}-${i.startMs}`}>
-                <strong>{i.checkName}</strong> {i.endMs === null ? "is down" : "was down"} <span className="wl-muted">since {fmtDateTime(i.startMs)}{i.endMs === null ? "" : `, for ${fmtLength(i.endMs - i.startMs)}`}</span>
+                <strong>{i.checkName}</strong> {i.endMs === null ? "is down" : "was down"} <span className="wl-muted">{i.endMs === null ? `since ${fmtDateTime(i.startMs)}` : `for ${fmtLength(i.endMs - i.startMs)}, from ${fmtDateTime(i.startMs)}`}</span>
               </li>
             ))}
           </ul>
