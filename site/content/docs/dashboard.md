@@ -137,7 +137,7 @@ A copied link, or the link in an alert notice, opens exactly what you saw.
 
 On the cloud, the project menu lists your organization's projects, with **All projects** first when there is more than
 one. All projects shows every project you may read on one screen, with totals that add up. With more than one
-organization, the same menu picks the organization. See [All projects](/docs/cloud/#all-projects).
+organization, the same menu picks the organization. See [All projects](/docs/teams/#all-projects).
 
 The hub lists its projects and environments, each with **All projects** and **All environments** first.
 
