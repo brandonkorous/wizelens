@@ -111,7 +111,7 @@ function lastValue(series: Series, stat: HistogramStat, service?: string): numbe
 function infoOf(name: string, series: Series, stat: HistogramStat): MetricInfo {
   const latest = series.reduce((a, b) => (b.total.lastMs > a.total.lastMs ? b : a));
   const display = displayOf(latest);
-  const displayUnit = displayUnitOf(latest.unit, display);
+  const displayUnit = displayUnitOf(latest.unit, display, name);
   const spark = lineOf(merged(series, "spark"), stat);
   const last = lastValue(series, stat);
   const services = [...new Set(series.map((s) => s.service))].sort();
@@ -207,7 +207,7 @@ function runtimeOf(names: Map<string, MetricSeriesData[]>, services: readonly st
       if (!name) return [];
       const series = names.get(name)!;
       const b = merged(series, "spark", service);
-      const unit = displayUnitOf(series[0]!.unit, b.display);
+      const unit = displayUnitOf(series[0]!.unit, b.display, name);
       const spark = lineOf(b, def.stat ?? "p95");
       const last = lastValue(series, def.stat ?? "p95", service);
       return [{ key: def.key, label: def.label, metric: name, unit, last, lastText: fmtMetric(last, unit), spark }];

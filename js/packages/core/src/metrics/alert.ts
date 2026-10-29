@@ -73,10 +73,10 @@ export const metricAlertValue = (points: readonly MetricPoint[], w: TimeWindow, 
   metricAlertValueOf(metricAlertDataOf(points, w), stat);
 
 /** The unit a metric alert value is in. */
-export function metricAlertUnit(sample: Pick<MetricPoint, "kind" | "monotonic" | "unit">, stat: MetricAlertStat): string {
+export function metricAlertUnit(sample: Pick<MetricPoint, "kind" | "monotonic" | "unit"> & { name?: string }, stat: MetricAlertStat): string {
   const display = displayOf(sample);
-  if (stat === "rate" && display !== "rate") return display === "percentiles" ? "/s" : displayUnitOf(sample.unit, "rate");
-  return displayUnitOf(sample.unit, display);
+  if (stat === "rate" && display !== "rate") return display === "percentiles" ? "/s" : displayUnitOf(sample.unit, "rate", sample.name);
+  return displayUnitOf(sample.unit, display, sample.name);
 }
 
 /** "http.server.request.duration p95 is 420 ms (above 300 ms)". */

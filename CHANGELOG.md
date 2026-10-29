@@ -2,6 +2,17 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- **A Kubernetes cluster's data all arrives.** The cluster collector sends one resource per pod, node and workload
+  in each export, and the hub and cloud saved each one on its own: on a 77-pod cluster that took longer than the
+  exporter waits, so only a few pods' phases arrived and nodes showed "0 of 3 ready". An export's infrastructure
+  resources are now saved together, with each point keeping its pod and node.
+- **Counts in unit "1" are numbers, not percents.** OpenTelemetry's unit "1" means any plain number, so page faults
+  showed as "418,452,848,767%". Only a metric named as a share (utilization, ratio, fraction) shows as a percent now.
+
 ## [0.3.0-alpha.14] — A steadier ClickHouse, and every screen checked
 
 ### Fixed
