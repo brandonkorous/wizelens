@@ -51,7 +51,7 @@ function SloList() {
     if (!err) setAdding(false);
     return err;
   };
-  const add = api.canWrite && !adding && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setAdding(true)}><Plus aria-hidden="true" /> New SLO</button>;
+  const add = api.canWrite && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setAdding(true)}><Plus aria-hidden="true" /> New SLO</button>;
   return (
     <>
       <PageHeader title="SLOs" subtitle="How much of your traffic must succeed, or be fast enough, and how much error budget is left.">
@@ -60,8 +60,7 @@ function SloList() {
         {add}
       </PageHeader>
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
-      {adding && target.field}
-      {adding && <SloForm title="New SLO" initial={EMPTY_SLO} onSave={save} onCancel={() => setAdding(false)} />}
+      {adding && <SloForm title="New SLO" lead={target.field} initial={EMPTY_SLO} onSave={save} onCancel={() => setAdding(false)} />}
       <Panel title="Objectives" flush>
         <Table paging={{ noun: "SLOs", key: "slos" }} columns={[COLUMNS[0]!, ...projectColumn<SloReport>(), ...COLUMNS.slice(1)]} rows={data?.slos ?? []} rowKey={(r) => r.slo.id} onRowClick={(r) => navigate(sloHref(r.slo.id, (r as InProject<typeof r>).projectId))} empty={<Empty title="No SLOs yet"><Target aria-hidden="true" /> Add one to track an error budget for a service or an endpoint.</Empty>} />
       </Panel>

@@ -219,5 +219,7 @@
 @media (max-width: 680px) {
   .wl-cloud-bento { grid-template-areas: "ro" "pa" "ss" "ac" "ke" "sh" "em" "hi" "re" "au"; }
   .wl-cloud-ops { grid-template-areas: "al" "pr" "up" "sl" "er" "se" "sc" "ho"; }
+  /* Folded tiles are as tall as their title and first sentence. */
+  .wl-cloud-bento, .wl-cloud-ops { grid-auto-rows: auto; gap: 12px; }
   .wl-ct-k8s-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

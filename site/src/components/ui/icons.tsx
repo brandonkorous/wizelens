@@ -50,10 +50,12 @@ export function PlayIcon({ className }: IconProps) {
   );
 }
 
-export function ChevronIcon({ dir, className }: IconProps & { dir: "left" | "right" }) {
+const CHEVRONS = { left: "M12 4l-6 6 6 6", right: "M8 4l6 6-6 6", down: "M4 8l6 6 6-6" };
+
+export function ChevronIcon({ dir, className }: IconProps & { dir: keyof typeof CHEVRONS }) {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <path d={dir === "left" ? "M12 4l-6 6 6 6" : "M8 4l6 6-6 6"} />
+      <path d={CHEVRONS[dir]} />
     </svg>
   );
 }

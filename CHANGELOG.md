@@ -6,6 +6,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Fixed
 
+- **New SLO opens in a window.** New SLO and Edit open over the page like a new alert, with the project first and the
+  fields in two even columns. Under Target, a line says what the target allows ("about 43 min of full outage in 30
+  days"). Every form in a window now has the same space between its rows.
+- **The cloud page is shorter on a phone.** Each feature tile shows its title and first sentence. Show more opens
+  the rest and its live demo.
+
 - **Search finds SQL parameter values.** A plain word in Search now also matches the values a query ran with, so
   an order id or an email finds the span that used it. Spans saved before this update match once they are searched
   by attribute (`@wizelens.db.parameters:*value*`).
