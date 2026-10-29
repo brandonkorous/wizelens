@@ -17,7 +17,7 @@ function columns(now: number): Column<HostRow>[] {
     { key: "name", header: "Host", cell: (h) => <a href={hostHref(h.name)}><strong>{h.name}</strong></a>, sort: (h) => h.name },
     { key: "cpu", header: "CPU", cell: (h) => <UsageBar share={h.cpu} />, sort: (h) => h.cpu ?? -1 },
     { key: "mem", header: "Memory", cell: (h) => <UsageBar share={h.mem} />, sort: (h) => h.mem ?? -1 },
-    { key: "disk", header: "Disk", cell: (h) => <UsageBar share={h.disk} />, sort: (h) => h.disk ?? -1, className: "wl-hide-sm" },
+    { key: "disk", header: "Disk", cell: (h) => <UsageBar share={h.disk} />, sort: (h) => h.disk ?? -1 },
     { key: "net", header: "Network In / Out", cell: (h) => `${fmtRate(h.netIn)} / ${fmtRate(h.netOut)}`, sort: (h) => (h.netIn ?? 0) + (h.netOut ?? 0), className: "wl-hide-sm" },
     {
       key: "services",
