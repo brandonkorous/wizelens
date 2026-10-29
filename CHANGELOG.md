@@ -102,9 +102,27 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   it, an "On this page" button returns to the section list, and the auto-install page opens with a "Pick a way" table.
 - **The site's stack pages and story come up sooner.** A stack page's facts are one row each on a phone, so its code
   demo starts near the top of the second screen, and the story's first chapter shows on the first screen at 1440.
+- **The HUD shows calls made before it started.** A page's first fetch calls, made before the HUD loaded, now show
+  with their server names, SQL and timing. The route shows on a phone, Server and Database say "Not traced" on a
+  page with no WizeLens server, and the HUD moves up so the Next.js dev badge stays clear.
+- **Errors from a dev server rebuilding are grey.** ENOENT on `.next/` files and Jest worker errors read "Dev server",
+  never count as critical, and fire no alert. An error type shows once when the message already starts with it.
+- **Database hides a column the driver cannot fill.** With EF Core or SqlClient, Table Hotspots drops Rows Returned and
+  says why. A bar list no longer draws a sliver for zero.
+- **The SLO chart keeps moving after the budget is spent.** It shows the budget used, and rises past 100% when over.
+- **Email links open the right organization.** Usage emails name the organization, and Organization and People pages
+  follow a link's organization. The "link was for a project you cannot open" note no longer shows after someone
+  else signed out of the same browser.
+- **The node auto install no longer says it is off in production while it sends to a hub.**
+- **Connect reads well on a phone.** Settings sit beside their labels, and Add-on options shows all 20 at once.
+- **Stack pages are shorter on a phone.** Each capture list flows as one line of text.
 
 ### Added
 
+- **Connect says whether the hub takes the data.** "Sends to" shows "Sending · last batch …", or why nothing gets
+  there (no key, a refused key, a limit, no answer) and what to change, for Node and .NET (`hubSend` in the info API).
+- **Single sign-on shows each person.** Under the provider, everyone who signs in with it, with what the last
+  5-minute check said: confirmed, no answer, signed out by the provider, or not signed in.
 - **Preferences follow your account.** Theme, default range, time zone and clock are saved to the account in the
   cloud, so every browser you sign in on uses them (`GET api/me` and `PATCH api/me/prefs`).
 - **The Messages tab names each message.** A RabbitMQ message shows its routing key (such as
