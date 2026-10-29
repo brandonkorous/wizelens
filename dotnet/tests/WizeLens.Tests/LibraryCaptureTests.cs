@@ -45,7 +45,7 @@ public class LibraryCaptureTests
         await client.SayHelloAsync(new HelloRequest { Name = "ada" });
         await Assert.ThrowsAsync<RpcException>(async () => await client.SayHelloAsync(new HelloRequest { Name = "missing" }));
 
-        var spans = app.Store.All().SelectMany(t => t.Spans).Where(s => s.Attr("rpc.system") == "grpc").ToList();
+        var spans = await app.SpansAsync(s => s.Attr("rpc.system") == "grpc", 4);
         var servers = spans.Where(s => s.Category == SpanCategories.HttpServer).ToList();
         var clients = spans.Where(s => s.Category == SpanCategories.HttpClient).ToList();
         Assert.Equal(2, servers.Count);
