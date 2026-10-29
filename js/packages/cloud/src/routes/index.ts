@@ -20,6 +20,7 @@ import { shareRoutes } from "./shares.js";
 import { dataRoutes } from "./data.js";
 import { modelRoutes } from "./models.js";
 import { notifyRoutes } from "./notify.js";
+import { uiPrefsRoutes } from "./ui-prefs.js";
 import { orgRoutes } from "./orgs.js";
 import { projectImportRoutes } from "./project-import.js";
 import { projectRoutes } from "./projects.js";
@@ -37,6 +38,7 @@ export function allRoutes(): Router<Ctx> {
   const r = new Router<Ctx>();
   meRoutes(r);
   notifyRoutes(r);
+  uiPrefsRoutes(r);
   orgRoutes(r);
   projectImportRoutes(r);
   projectRoutes(r);

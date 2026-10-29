@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import type { OrgRole } from "@wizeworks/lens-core";
+import { type AccountPrefs, seedAccountPrefs } from "./accountPrefs";
 import { apiFetch, apiSend, onRefused } from "./api";
 import type { AuthClient } from "./auth-client";
 import { getScope, setOrgScope, setProjectScope } from "./prefs";
@@ -55,6 +56,8 @@ export interface AccountState {
   blockingOrgs?: string[];
   /** Organizations this person is alone in: they are deleted with the account. */
   soloOrgs?: string[];
+  /** The Preferences page's choices kept on the account. */
+  prefs?: AccountPrefs;
 }
 
 const listeners = new Set<() => void>();
@@ -94,6 +97,7 @@ export function pickOrg(org: OrgWithProjects): void {
 export async function loadAccount(): Promise<AccountState> {
   state = await apiFetch<AccountState>("./api/me");
   if (state.signedIn) pickProject(state);
+  if (state.signedIn) seedAccountPrefs(state.prefs);
   emit();
   if (state.signedIn) provider.reloadInfo();
   return state;

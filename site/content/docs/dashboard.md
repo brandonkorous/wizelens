@@ -74,7 +74,8 @@ Lists open a page of their own for each service, endpoint, error group, query, p
 the list behind them: Error Rate opens the failed requests.
 
 Your own preferences (theme, default time range, time zone, and clock) are under **Account → Preferences** in the user
-menu on the cloud, and under **Settings → Preferences** on a hub or in-app. They are saved in this browser.
+menu on the cloud, and under **Settings → Preferences** on a hub or in-app. The cloud saves them to your account, so every
+browser you sign in on uses them. A hub or in-app dashboard saves them in this browser.
 
 ## Connect
 
