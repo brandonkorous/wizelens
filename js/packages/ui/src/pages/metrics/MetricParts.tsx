@@ -8,6 +8,9 @@ import { Sparkline } from "../../ui/Sparkline";
 
 export const LINE_COLORS = ["var(--wl-blue)", "var(--wl-green)", "var(--wl-orange)", "var(--wl-red)", "var(--wl-k-db)", "var(--wl-k-messaging)", "var(--wl-k-render)", "var(--wl-amber)", "var(--wl-k-browser)", "var(--wl-slate)"];
 
+/** A trend from the first bucket with data, so a metric seen for an hour fills the line instead of a stub at its right edge. */
+const sinceFirst = (values: (number | null)[]) => values.slice(Math.max(0, values.findIndex((v) => v !== null)));
+
 const AREA_LABEL: Record<MetricArea, string> = { runtime: "Runtime", http: "HTTP", database: "Database", messaging: "Messaging", rpc: "RPC", custom: "Your metrics" };
 
 /** CPU, memory, heap, and more per service, from the well-known runtime metrics. */
@@ -23,7 +26,7 @@ export function RuntimeStrip({ model, selected }: { model: MetricsModel; selecte
               <button key={s.key} type="button" className={`wl-metric-tile${selected === s.metric ? " wl-active" : ""}`} onClick={() => setQuery({ metric: s.metric, service, group: null })} title={s.metric}>
                 <span>{s.label}</span>
                 <strong>{s.lastText}</strong>
-                <Sparkline values={s.spark} width={96} height={24} />
+                <Sparkline values={sinceFirst(s.spark)} width={96} height={24} />
               </button>
             ))}
           </div>
@@ -62,7 +65,7 @@ function MetricRow({ m, active }: { m: MetricInfo; active: boolean }) {
           </em>
         </span>
         <span className="wl-metric-last">{m.lastText}</span>
-        <Sparkline values={m.spark} width={72} height={22} />
+        <Sparkline values={sinceFirst(m.spark)} width={72} height={22} />
       </button>
     </li>
   );
