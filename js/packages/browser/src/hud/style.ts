@@ -48,6 +48,7 @@ export const HUD_CSS = `
 .wl-metric{display:flex;flex-direction:column;width:100%;padding:4px 6px;margin:0 -6px;border-radius:8px;text-align:left}
 .wl-metric:hover{background:var(--wl-raised)}
 .wl-val{font-size:17px;font-weight:650;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wl-val.wl-val-none{font-size:13px;font-weight:500;line-height:22px;color:var(--wl-muted)}
 .wl-lbl{font-size:12px;color:var(--wl-muted)}
 .wl-v-db{color:var(--wl-amber)}
 .wl-bar{display:flex;height:6px;border-radius:3px;overflow:hidden;background:#3A3F47}
