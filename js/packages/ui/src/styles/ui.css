@@ -123,6 +123,8 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-text-tone-success { color: var(--wl-ok); }
 .wl-text-tone-warning { color: var(--wl-amber-text); }
 .wl-chip { display: inline-flex; align-items: center; padding: 3px 11px; border-radius: 999px; font-size: 13px; background: var(--wl-surface-2); color: var(--wl-fg-2); }
+/* A service chip in a desktop table stays on one line; in a phone card it may wrap. */
+@media (min-width: 561px) { .wl-table td > .wl-chip.wl-svc { white-space: nowrap; } }
 .wl-chip-blue { background: var(--wl-accent-soft); color: var(--wl-accent-text); }
 .wl-chip-green { background: var(--wl-ok-soft); color: var(--wl-ok); }
 .wl-chip-red { background: var(--wl-error-soft); color: var(--wl-error); }
