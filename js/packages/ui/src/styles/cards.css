@@ -28,6 +28,10 @@
   .wl-table-cards tbody td.wl-cell-pick:empty { display: none; }
   .wl-table-cards tbody td.wl-cell-pick:empty + td { grid-column: 1 / -1; }
   .wl-table-cards tbody td:last-child { padding-bottom: 12px; }
+  /* A prose column reads as a paragraph: its label on top, its text left-aligned under it. */
+  .wl-table-cards tbody td.wl-wrap { display: block; text-align: left; }
+  .wl-table-cards tbody td.wl-wrap[data-label]::before { max-width: none; margin-bottom: 2px; }
+  :where(.wl-table-cards tbody td.wl-wrap)::before { display: block; }
   .wl-table-cards tbody td.wl-cell-actions { position: static; justify-content: flex-end; box-shadow: none; }
   .wl-table-cards tbody td.wl-cell-actions .wl-row-actions { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; gap: 8px 18px; white-space: normal; }
   .wl-table-cards tbody td.wl-hide-sm { display: none; }
