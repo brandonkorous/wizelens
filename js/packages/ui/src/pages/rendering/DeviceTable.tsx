@@ -4,9 +4,9 @@ import { navigate, routeHref } from "../../routes";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 
-/** "1.0 s · 2 views", or a dash where that device never opened the page. */
+/** "1.0 s · 2 views", or "No views" where that device never opened the page. */
 function Cell({ c }: { c: DeviceCell | null }) {
-  if (!c) return <span className="wl-muted">–</span>;
+  if (!c) return <span className="wl-muted">No views</span>;
   return (
     <span className="wl-dev-cell">
       {fmtMs(c.avgMs)} <small className="wl-muted">{fmtCount(c.views)} {c.views === 1 ? "view" : "views"}</small>
@@ -47,7 +47,7 @@ export function DeviceTable({ devices, total }: { devices: Devices; total: numbe
         {DEVICES.map((dev, i) => (
           <span key={dev}>
             {i > 0 && " · "}
-            {dev} {all[dev] ? `${fmtMs(all[dev].avgMs)} (${fmtCount(all[dev].views)})` : "–"}
+            {dev} {all[dev] ? `${fmtMs(all[dev].avgMs)} (${fmtCount(all[dev].views)})` : "no views"}
           </span>
         ))}
         {unknown > 0 && <span> · {fmtCount(unknown)} {unknown === 1 ? "view" : "views"} with no known device, not in the table</span>}
