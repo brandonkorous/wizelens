@@ -6,6 +6,7 @@ import { usePageModel } from "../../data/models";
 import { useUptime } from "../../data/uptime";
 import { hrefTo, navigate } from "../../routes";
 import { Empty, Panel } from "../../ui/Panel";
+import { breakable } from "../../ui/breakable";
 import { StatCard } from "../../ui/StatCard";
 import { TimeChart } from "../../ui/TimeChart";
 import { useAsk } from "../../ui/Dialog";
@@ -20,7 +21,7 @@ const FAIL_BARS = "color-mix(in srgb, var(--wl-red) 45%, transparent)";
 
 function statsRows(c: UptimeCheckView, nowMs: number): [string, ReactNode][] {
   return [
-    ["URL", <code key="u">{c.method} {c.url}</code>],
+    ["URL", <code key="u">{c.method} {breakable(c.url)}</code>],
     ["Runs", c.intervalMin === 1 ? "Every minute" : `Every ${c.intervalMin} minutes`],
     ["Expects", `${c.expectStatus}${c.expectBody ? ` and "${c.expectBody}"` : ""}`],
     ["Last check", c.lastRunMs ? `${fmtAgo(c.lastRunMs, nowMs)} · ${c.lastStatus ?? "no answer"} · ${fmtMs(c.lastDurationMs)}` : "Not yet"],
@@ -54,7 +55,7 @@ function Header({ c, nowMs, actions }: { c: UptimeCheckView; nowMs: number; acti
 const WINDOW_MS = { "24h": 86_400_000, "7d": 7 * 86_400_000, "30d": 30 * 86_400_000 } as const;
 
 /** How long a young check has run, for a window it has not filled yet ("6 h", "3 days"). */
-const ranFor = (ms: number) => (ms < 86_400_000 ? `${Math.max(1, Math.round(ms / 3_600_000))} h` : `${Math.round(ms / 86_400_000)} days`);
+const ranFor = (ms: number) => (ms < 3_600_000 ? `${Math.max(1, Math.round(ms / 60_000))} min` : ms < 86_400_000 ? `${Math.round(ms / 3_600_000)} h` : `${Math.round(ms / 86_400_000)} days`);
 
 function windowNote(c: UptimeCheckView, w: keyof typeof WINDOW_MS, nowMs: number): string {
   if (c.uptime[w] === null) return "No runs yet";
