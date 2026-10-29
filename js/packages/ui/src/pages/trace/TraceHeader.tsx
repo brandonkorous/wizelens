@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { type Health, type Timing, timingSegments, type Trace } from "@wizeworks/lens-core";
-import { fmtClock, fmtMs } from "../../format";
+import { fmtClock, fmtDate, fmtMs } from "../../format";
 import { CopyButton } from "../../ui/Badges";
 import { type Part, pageParts } from "./pageSplit";
 import { ServiceChip } from "./tabParts";
@@ -21,7 +21,7 @@ function Stats({ trace, timing }: { trace: Trace; timing: Timing }) {
     ["Server", fmtMs(timing.serverMs)],
     ["Database", dbFact(timing)],
     ["Render", fmtMs(timing.renderMs)],
-    ["Started", fmtClock(trace.startMs)],
+    ["Started", <>{fmtClock(trace.startMs)}<br /><span className="wl-muted wl-small">{fmtDate(trace.startMs)}</span></>],
     ["Spans", String(trace.spanCount)],
     ["Queries", String(trace.dbCount)],
     ["HTTP calls out", String(trace.httpClientCount)],
