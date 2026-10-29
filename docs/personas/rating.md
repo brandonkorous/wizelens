@@ -8,7 +8,7 @@ Every screen in WizeLens, scored on **Design** and **Ease** as the personas open
 them. How and when to score is RULE #6 in [CLAUDE.md](CLAUDE.md); this file is
 where the numbers live.
 
-**Scored so far: 167 of 177 screens.** (2026-10-28: the runner's "dark" set only the browser's scheme while the dashboard keeps its own saved theme, so dark checks before 09:30 that day may have been light; every screen re-scored that day was checked again in true dark.) Update that line as rows fill in —
+**Scored so far: 169 of 177 screens.** (2026-10-28: the runner's "dark" set only the browser's scheme while the dashboard keeps its own saved theme, so dark checks before 09:30 that day may have been light; every screen re-scored that day was checked again in true dark.) Update that line as rows fill in —
 it is the denominator, and a rating file that does not show what it has not looked
 at is the same lie as an empty issue list.
 
@@ -62,7 +62,7 @@ judgment exists somewhere findable rather than not at all.
 ## Screens deliberately excluded
 
 - **Hub-only screens.** `wizelens-hub` (the self-hosted collector) serves the same dashboard with a hub capability set. Neither persona runs a hub, so the hub is not a host in this roster.
-- **Hosts and Kubernetes with real infra data.** Both need the infra collector on a cluster; nothing in this run sends it. The rows exist on the cloud list and stay `—`.
+- **Hosts with real infra data.** Needs the host collector on a machine. Kubernetes was scored on 2026-10-29 with sparx's production AKS (3 nodes, about 90 live pods).
 - **Python, Java and Go add-ons.** No persona runs them. (.NET is P03's: eShopOnWeb on .NET 8, from 2026-10-27; its
   dashboard is the same screens as the in-app list, re-scored under "in-app on .NET" and not counted twice.)
 
@@ -148,7 +148,7 @@ P06 scored 20 of these on P03's eShop in four views (1440 and 360, light and dar
 | Metrics | `#/metrics` | 7 | 7 | at 360 35 metric names wrap at every dot (system. / disk. / operatio / ns) in a narrow column; a metric opens only from the list, no chart until picked; was: no Go metrics #185, line names spilled #179 | P06 |
 | Services | `#/services` | 8 → 9 | 7 → 8 | two tables name the same services (health, then who sends); was: `localhost:3001` unexplained #144, a sideways swipe at 360 #152, map numbers on top of each other #076, a call behind a box #077, top bar #046; re-scored 2026-10-28 in light, true dark and 360 | P02, P03 |
 | Hosts | `#/hosts` | 8 | 8 | at 360 the host name wraps to four lines (lmd- / vm- / ubuntu- / 03) and the table cuts Disk and later; was: row click did nothing #187 | P06 |
-| Kubernetes | `#/kubernetes` | 8 | 8 | empty here (no cluster), names the chart and links its docs; was: offered the host recipe #188, link by color only #192 | P06 |
+| Kubernetes | `#/kubernetes` | 8 | 8 | on sparx's 3-node AKS: the Pods card counts 132 while the table pages 185 (it keeps Gone pods); was: nodes 0 of 3 ready and most pods Unknown #202, bars broken #204, the host recipe #188, link by color only #192 | P06 |
 | Insights | `#/insights` | 8 | 8 | at 360 the table cuts each insight's text at the right edge | P06 |
 | Security | `#/security` | 8 | 8 | at 360 the OWASP grid is ten cards before the two risks; the risk table cuts at the right; was: from 1 services #180 | P06 |
 | Users | `#/users` | 8 | 8 | empty here (Django sends no enduser.id), and says which attribute fills it | P06 |
@@ -204,10 +204,10 @@ P06 scored 20 of these on P03's eShop in four views (1440 and 360, light and dar
 | Status page | `#/status/<slug>` | 8 | 9 | at 360 "Uptime by" sits in two lines beside the title; day bars have no date until hover, and a phone has no hover; was: link only from the check #182, bar colors #183 | P06 |
 | Uptime check | `#/uptime/<id>` | 8 | 8 | on day one the 30-day card reads the same as 24 h and does not say how much is measured; was: counted from before the first run #037 | P02 |
 | Host | `#/hosts/<name>` | 8 | 8 | at 360 File Systems' size wraps to four lines (62.3 / MB of / 126 / MB); was: disk card mixed two disks #186 | P06 |
-| Kubernetes node | `#/kubernetes/node/<name>` | — | — | — | — |
-| Kubernetes pod | `#/kubernetes/pod/<ns>/<name>` | — | — | — | — |
+| Kubernetes node | `#/kubernetes/node/<name>` | 8 | 8 | Pods card 94 while the table says 139 (Gone pods); every row repeats this node's name; CPU axis mixes "1.00 cores" and "0 millicores"; at 360 the pod table cuts at CPU and hides Memory; empty cells mix – and — | P06 |
+| Kubernetes pod | `#/kubernetes/pod/<ns>/<name>` | 8 | 8 | CPU chart scales to 1 core, so a 2-millicore pod is a flat line on the floor; no link to this pod's logs or traces; at 360 Containers and Services side-scroll | P06 |
 
-P06 scored the rest of this group in four views (User on P03's cloud org, which has eShop's signed-in users). Not scored: Problem detail (no org had a problem to open; Problems was still learning), Kubernetes node and pod (no cluster: every kubectl context on the test machine is production).
+P06 scored the rest of this group in four views (User on P03's cloud org, which has eShop's signed-in users). Not scored: Problem detail (no org had a problem to open; Problems was still learning), Kubernetes node and pod at first (no cluster); scored 2026-10-29 on sparx's production AKS once the WizeLens collector went on it (sparx #145).
 
 ### Cloud · account screens — 12 screens
 
