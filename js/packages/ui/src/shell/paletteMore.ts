@@ -1,6 +1,6 @@
 // Ctrl+K hits beyond requests and logs: error groups, queries, insights, metrics, alerts, SLOs, and saved items.
 import { useEffect, useState } from "react";
-import type { MetricsModel, SavedItem, SloReport, TimeRange } from "@wizeworks/lens-core";
+import { errorText, type MetricsModel, type SavedItem, type SloReport, type TimeRange } from "@wizeworks/lens-core";
 import { apiFetch } from "../data/api";
 import { useHost } from "../data/host";
 import { loadPageModel } from "../data/models";
@@ -33,7 +33,7 @@ async function hitsFor(q: string, range: TimeRange, server: boolean, u: Urls): P
     u.saved ? quiet(apiFetch<{ items: SavedItem[] }>(u.saved)) : null,
   ]);
   return [
-    ...(errors?.groups ?? []).slice(0, EACH).map((g): SearchHit => ({ key: `eg${g.key}`, kind: "error", title: `${g.type}: ${g.message}`, detail: `Error group · ${g.service}`, href: errorHref(g.key) })),
+    ...(errors?.groups ?? []).slice(0, EACH).map((g): SearchHit => ({ key: `eg${g.key}`, kind: "error", title: errorText(g), detail: `Error group · ${g.service}`, href: errorHref(g.key) })),
     ...(db?.queries ?? []).slice(0, EACH).map((x): SearchHit => ({ key: `q${x.key}`, kind: "query", title: x.query, detail: `Query · ${x.count} runs`, href: queryHref(x.query) })),
     ...(insights?.groups ?? []).slice(0, EACH).map((g): SearchHit => ({ key: `i${g.key}`, kind: "insight", title: g.title, detail: g.shape, href: hrefTo("insights", [], { key: g.key }) })),
     ...(security?.groups ?? []).slice(0, EACH).map((g): SearchHit => ({ key: `s${g.key}`, kind: "security", title: g.title, detail: `${g.owasp} · ${g.shape}`, href: hrefTo("security", [], { key: g.key }) })),

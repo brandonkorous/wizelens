@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Bell, Boxes, Bug, Users } from "lucide-react";
-import { countBy, type ErrorGroup, errorGroupDoc, errorGroupLabel, type ErrorPageModel, isBotOnly, percentChange, type RequestItem } from "@wizeworks/lens-core";
+import { countBy, type ErrorGroup, errorGroupDoc, errorGroupLabel, type ErrorPageModel, errorText, isNoise, percentChange, type RequestItem } from "@wizeworks/lens-core";
 import { traceRow, useGroupTags } from "../../data/tagMatch";
 import { TagChips } from "../../ui/TagChips";
 import { TaggedTable } from "../../ui/TaggedTable";
@@ -77,7 +77,7 @@ function Body({ m }: { m: ErrorPageModel }) {
   const stats: [string, ReactNode][] = [["Service", <a key="s" href={serviceHref(g.service)}>{g.service}</a>], ["Type", breakable(g.type)], ["First seen", fmtDateTime(m.issue?.firstSeenMs || g.firstSeenMs)], ["Last seen", fmtDateTime(g.lastSeenMs)]];
   const badge = (
     <>
-      <Badge tone={isBotOnly(g) ? "neutral" : "danger"}>{errorGroupLabel(g)}</Badge> <IssueBadge info={m.issue ?? undefined} /> <TagChips tags={tags} />
+      <Badge tone={isNoise(g) ? "neutral" : "danger"}>{errorGroupLabel(g)}</Badge> <IssueBadge info={m.issue ?? undefined} /> <TagChips tags={tags} />
     </>
   );
   const bars = [
@@ -86,7 +86,7 @@ function Body({ m }: { m: ErrorPageModel }) {
   ];
   return (
     <>
-      <DetailHead back={[hrefTo("errors", [], { service: g.service }), "All errors"]} icon={Bug} title={`${g.type}: ${g.message}`} badge={badge} actions={<><IssueActions kind="error" issueKey={g.key} info={m.issue ?? undefined} /><AlertOnThis fields={alertFields(g)} /><TagThis scopes={errorScopes(g)} /></>} stats={stats} />
+      <DetailHead back={[hrefTo("errors", [], { service: g.service }), "All errors"]} icon={Bug} title={errorText(g)} badge={badge} actions={<><IssueActions kind="error" issueKey={g.key} info={m.issue ?? undefined} /><AlertOnThis fields={alertFields(g)} /><TagThis scopes={errorScopes(g)} /></>} stats={stats} />
       <Cards m={m} />
       <Panel title="Occurrences Over Time">
         <TimeChart starts={m.starts} stackBars bars={bars} lines={[{ label: compareSeriesLabel(m.meta.compare), values: m.chart.prev, color: "var(--wl-slate)", dashed: true }]} />

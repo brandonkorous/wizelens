@@ -1,5 +1,5 @@
 // Panels only your own services (APIs and workers) have: errors, slow requests, logs, and runtime metrics.
-import { type ErrorGroup, errorGroupDoc, isFailed, type LogRow, type RequestItem, type ServicePageModel } from "@wizeworks/lens-core";
+import { type ErrorGroup, errorGroupDoc, errorText, isFailed, type LogRow, type RequestItem, type ServicePageModel } from "@wizeworks/lens-core";
 import { useData } from "../../data/hooks";
 import { useMetricsModel } from "../../data/metrics";
 import { fmtAgo, fmtCount, fmtMs } from "../../format";
@@ -18,7 +18,7 @@ const pathOf = (endpoint: string) => endpoint.replace(/^[A-Z]+ /, "");
 
 function errorColumns(now: number): Column<ErrorGroup>[] {
   return [
-    { key: "error", header: "Error", className: "wl-svc-wide", cell: (g) => <span className="wl-truncate" title={`${g.type}: ${g.message}`}>{g.type}: {g.message}</span> },
+    { key: "error", header: "Error", className: "wl-svc-wide", cell: (g) => <span className="wl-truncate" title={errorText(g)}>{errorText(g)}</span> },
     { key: "endpoint", header: "Endpoint", className: "wl-svc-mid", cell: (g) => <span className="wl-truncate" title={g.endpoint}>{pathOf(g.endpoint)}</span> },
     { key: "seen", header: "Last Seen", className: "wl-nowrap", sort: (g) => g.lastSeenMs, cell: (g) => fmtAgo(g.lastSeenMs, now) },
     { key: "count", header: "Count", num: true, sort: (g) => g.count, cell: (g) => fmtCount(g.count) },

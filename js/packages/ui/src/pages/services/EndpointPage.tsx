@@ -1,5 +1,5 @@
 import { Gauge, Timer, TriangleAlert, Waypoints } from "lucide-react";
-import { endpointDoc, type EndpointPageModel, type EndpointPart, endpointScope, type ErrorGroup, errorGroupDoc, isFailed, percentChange, type RequestItem, serviceScope } from "@wizeworks/lens-core";
+import { endpointDoc, type EndpointPageModel, type EndpointPart, endpointScope, type ErrorGroup, errorGroupDoc, errorText, isFailed, percentChange, type RequestItem, serviceScope } from "@wizeworks/lens-core";
 import { traceRow, useGroupTags } from "../../data/tagMatch";
 import { TagChips } from "../../ui/TagChips";
 import { GroupTaggedTable, TaggedTable } from "../../ui/TaggedTable";
@@ -35,7 +35,7 @@ const REQUEST_COLUMNS: Column<RequestItem>[] = [
 ];
 
 const errorColumns = (now: number): Column<ErrorGroup>[] => [
-  { key: "error", header: "Error", className: "wl-cell-wide", cell: (g) => <span className="wl-truncate" title={g.message}>{g.type}: {g.message}</span> },
+  { key: "error", header: "Error", className: "wl-cell-wide", cell: (g) => <span className="wl-truncate" title={errorText(g)}>{errorText(g)}</span> },
   { key: "seen", header: "Last Seen", className: "wl-nowrap", sort: (g) => g.lastSeenMs, cell: (g) => fmtAgo(g.lastSeenMs, now) },
   { key: "count", header: "Count", num: true, sort: (g) => g.count, cell: (g) => fmtCount(g.count) },
 ];

@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, Database, ExternalLink, Monitor, Server } from "lucide-react";
-import { endpointScope, type ErrorGroup, errorGroupDoc, errorGroupLabel, errorScope, isBotOnly, type IssueInfo, serviceScope } from "@wizeworks/lens-core";
+import { endpointScope, type ErrorGroup, errorGroupDoc, errorGroupLabel, errorScope, errorText, isDevServer, isNoise, type IssueInfo, serviceScope } from "@wizeworks/lens-core";
 import { fmtCount, fmtDateTime } from "../../format";
 import { errorHref, hrefTo, setQuery } from "../../routes";
 import { Badge } from "../../ui/Badges";
@@ -70,11 +70,12 @@ function GroupDetails({ group, info }: { group: ErrorGroup; info: IssueInfo | un
     <>
       <div className="wl-side-head">
         <h2 ref={title} tabIndex={-1} className="wl-err-title">
-          {breakable(group.type)}: {group.message}
+          {errorText(group) === group.message ? group.message : <>{breakable(group.type)}: {group.message}</>}
         </h2>
-        <Badge tone={isBotOnly(group) ? "neutral" : "danger"}>{errorGroupLabel(group)}</Badge>
+        <Badge tone={isNoise(group) ? "neutral" : "danger"}>{errorGroupLabel(group)}</Badge>
         <IssueBadge info={info} />
       </div>
+      {isDevServer(group) && <p className="wl-muted wl-small">From the dev server rebuilding or restarting (its own build files), not from your app's code.</p>}
       <div className="wl-err-tagline">
         <TagChips tags={tags} />
         <TagThis scopes={errorScopes(group)} />

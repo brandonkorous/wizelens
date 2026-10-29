@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, Box, Monitor } from "lucide-react";
-import { type ErrorGroup, errorGroupDoc, type ErrorsModel, type IssueInfo, isErrorFiltered, isWebAppName, percentChange, type ServiceErrorRow } from "@wizeworks/lens-core";
+import { type ErrorGroup, errorGroupDoc, errorGroupLabel, type ErrorsModel, errorText, type IssueInfo, isErrorFiltered, isNoise, isWebAppName, percentChange, type ServiceErrorRow } from "@wizeworks/lens-core";
 import { fmtCount, fmtPct, fmtTime } from "../../format";
 import { setQuery } from "../../routes";
 import { DotText } from "../../ui/Badges";
@@ -24,12 +24,12 @@ const groupColumns = (issues: Record<string, IssueInfo>): Column<ErrorGroup>[] =
     header: "Status",
     cell: (g) => (
       <span className="wl-err-status">
-        <DotText tone="danger" colorText>{g.critical ? "Critical" : "Error"}</DotText>
+        <DotText tone={isNoise(g) ? "neutral" : "danger"} colorText>{errorGroupLabel(g)}</DotText>
         <IssueBadge info={issues[g.key]} />
       </span>
     ),
   },
-  { key: "error", header: "Error", className: "wl-err-text", cell: (g) => <span className="wl-truncate" title={`${g.type}: ${g.message}`}>{g.type}: {g.message}</span> },
+  { key: "error", header: "Error", className: "wl-err-text", cell: (g) => <span className="wl-truncate" title={errorText(g)}>{errorText(g)}</span> },
   { key: "endpoint", header: "Endpoint", className: "wl-err-endpoint", cell: (g) => <span className="wl-truncate" title={g.endpoint}>{pathOf(g.endpoint)}</span> },
   { key: "service", header: "Service", className: "wl-nowrap", cell: (g) => g.service },
   { key: "count", header: "Count", num: true, sort: (g) => g.count, cell: (g) => fmtCount(g.count) },

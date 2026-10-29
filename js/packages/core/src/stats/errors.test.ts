@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { makeRequest } from "../testing/fixtures.js";
 import { messageShape } from "./error-keys.js";
-import { errorEvents, errorGroups, errorRateOf, errorsByService, errorTypeCounts } from "./errors.js";
+import { errorEvents, errorGroupLabel, errorGroups, errorRateOf, errorsByService, errorText, errorTypeCounts, isNoise } from "./errors.js";
 import { filterLogs, levelCounts, logRows } from "./logs.js";
 import { requestRows } from "./requests.js";
 
@@ -39,6 +39,11 @@ describe("error stats", () => {
     Object.assign(t.spans[0]!, { status: "error", statusMessage: null });
     expect(errorEvents([t])[0]).toMatchObject({ type: "HttpError", message: "HTTP 500", status: 500 });
   });
+
+  it("never counts a dev server rebuilding as critical, so no alert fires for it", () => {
+    const t = makeRequest({ startMs: 4500, status: 500, error: { type: "Error", message: "ENOENT: no such file or directory, open '/app/.next/routes-manifest.json'" } });
+    expect(errorEvents([t])[0]).toMatchObject({ status: 500, critical: false });
+  });
 });
 
 describe("log stats", () => {
@@ -55,5 +60,28 @@ describe("log stats", () => {
     expect(filterLogs(rows, { minLevel: "warn", service: "", query: "" })).toHaveLength(1);
     expect(filterLogs(rows, { minLevel: "trace", service: "api", query: "FOUND" })).toHaveLength(1);
     expect(levelCounts(rows)).toMatchObject({ info: 1, error: 1, warn: 0 });
+  });
+});
+
+describe("errorGroupLabel", () => {
+  const group = (message: string, over = {}) => ({ message, bots: 0, count: 3, critical: true, ...over });
+
+  it("names a dev server's own build files Dev server, in grey, even on a failed page", () => {
+    const enoent = group("ENOENT: no such file or directory, open 'C:\\kanninja\\apps\\web\\.next\\routes-manifest.json'");
+    expect([errorGroupLabel(enoent), isNoise(enoent)]).toEqual(["Dev server", true]);
+    expect(errorGroupLabel(group("Jest worker encountered 2 child process exceptions, exceeding retry limit"))).toBe("Dev server");
+  });
+
+  it("says an error's type once when its message already starts with it", () => {
+    expect(errorText({ type: "ENOENT", message: "ENOENT: no such file or directory" })).toBe("ENOENT: no such file or directory");
+    expect(errorText({ type: "HttpError", message: "HTTP 503" })).toBe("HttpError: HTTP 503");
+    expect(errorText({ type: "", message: "Validation failed" })).toBe("Validation failed");
+  });
+
+  it("keeps the app's own errors critical or plain, and bots bot-only", () => {
+    expect(errorGroupLabel(group("Validation failed: Waiting on client"))).toBe("Critical");
+    expect(errorGroupLabel(group("Card not found", { critical: false }))).toBe("Error");
+    expect(errorGroupLabel(group("/wp-login.php not found", { critical: false, bots: 3 }))).toBe("Bot-only");
+    expect(isNoise(group("ENOENT: no such file or directory, open '/srv/uploads/next/logo.png'"))).toBe(false);
   });
 });

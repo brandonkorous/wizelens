@@ -1,4 +1,5 @@
 // Suspected causes of a problem: a new release, a new error group, a slower or busier query, or a service further down the calls.
+import { errorText } from "../stats/errors.js";
 import type { ServiceEdge, ServiceKind } from "../stats/services.js";
 import type { AnomalyMetric } from "./baseline.js";
 import { overBy } from "./baseline.js";
@@ -94,7 +95,7 @@ const QUERY_WHAT: Record<AnomalyMetric, string> = { error_rate: "fails more than
 /** A cause in one sentence, for cards, notices, and AI tools. */
 export function causeText(c: SuspectedCause): string {
   if (c.kind === "release") return `${c.service} ${c.version} was released as it started.`;
-  if (c.kind === "error") return `A new error in ${c.service}: ${c.type}: ${c.message}`;
+  if (c.kind === "error") return `A new error in ${c.service}: ${errorText(c)}`;
   if (c.kind === "query") return `A query on ${c.database} ${QUERY_WHAT[c.metric]} normal: ${c.query}`;
   return `${c.service}, further down the calls, is above normal too.`;
 }

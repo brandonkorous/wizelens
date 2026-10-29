@@ -26,7 +26,7 @@ export interface ErrorEvent {
   method: string | null;
   path: string | null;
   status: number | null;
-  /** The request failed with a 5xx, or a critical log line was written; never for a third-party browser error or a bot. */
+  /** The request failed with a 5xx, or a critical log line was written; never for a third-party browser error, a bot, or a dev server rebuilding. */
   critical: boolean;
   /** The request came from a bot or scanner (user agent, or a path such as /.env). */
   bot: boolean;
@@ -75,7 +75,7 @@ function eventOf(trace: Trace, span: Span, row: RequestRow | null, critical: boo
     method: row?.method ?? null,
     path: row?.path ?? (typeof route === "string" ? route : null),
     status: row?.status ?? null,
-    critical: critical && !thirdParty && !bot,
+    critical: critical && !thirdParty && !bot && !DEV_SERVER.test(info.message),
     bot,
     browser,
     frame,
@@ -122,8 +122,21 @@ export interface ErrorGroup {
 /** A group seen only from bots and scanners: not critical, and named "bot-only" so it does not read as a real failure. */
 export const isBotOnly = (g: Pick<ErrorGroup, "bots" | "count">): boolean => g.bots > 0 && g.bots >= g.count;
 
-/** The word a group's badge shows: critical, bot-only, or plain error. */
-export const errorGroupLabel = (g: Pick<ErrorGroup, "bots" | "count" | "critical">): string => (g.critical ? "Critical" : isBotOnly(g) ? "Bot-only" : "Error");
+/** "Type: message", with the type said once when the message already starts with it ("ENOENT: no such file…"). */
+export const errorText = (e: { type: string | null; message: string }): string => (!e.type || e.message.startsWith(`${e.type}:`) ? e.message : `${e.type}: ${e.message}`);
+
+// A dev server's own files while it rebuilds or restarts (Next.js `.next/` files, its Jest workers).
+const DEV_SERVER = /[\\/]\.next[\\/]|Jest worker encountered/;
+
+/** A group from a dev server rebuilding or restarting, not from the app's code: named "Dev server" so it does not read as an app failure. */
+export const isDevServer = (g: Pick<ErrorGroup, "message">): boolean => DEV_SERVER.test(g.message);
+
+/** True when a group's badge is grey: bot-only or dev-server noise. */
+export const isNoise = (g: Pick<ErrorGroup, "bots" | "count" | "message">): boolean => isBotOnly(g) || isDevServer(g);
+
+/** The word a group's badge shows: dev server, critical, bot-only, or plain error. */
+export const errorGroupLabel = (g: Pick<ErrorGroup, "bots" | "count" | "critical" | "message">): string =>
+  isDevServer(g) ? "Dev server" : g.critical ? "Critical" : isBotOnly(g) ? "Bot-only" : "Error";
 
 /** Groups, newest first. `events` must be newest first. */
 export function errorGroups(events: readonly ErrorEvent[]): ErrorGroup[] {
