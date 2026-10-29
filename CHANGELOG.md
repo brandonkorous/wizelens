@@ -6,6 +6,22 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Fixed
 
+- **Search finds SQL parameter values.** A plain word in Search now also matches the values a query ran with, so
+  an order id or an email finds the span that used it. Spans saved before this update match once they are searched
+  by attribute (`@wizelens.db.parameters:*value*`).
+- **A trace's SQL is easier to read.** A query taller than about nine lines folds to five with "Show the whole
+  query", and each parameter shows its name, the column it is compared with, and its value, so a hidden value reads
+  "BuyerId [redacted:email]" instead of a line of JSON.
+- **Names wrap instead of being cut on a phone.** A list's name column now uses the card's full width; database
+  names on the Overview wrap at their dots; sizes keep their number and unit together; and long text in a list
+  (a tag's description, an audit detail) reads as a paragraph under its label.
+- **On a phone the dependency map is a list.** Each call reads "Web App → Web, 10 calls, p95 103 ms" and links to
+  the service it calls. Trace compare keeps its numbers as a small table headed A, B and B − A, and a chart with
+  more than four lines shows four names and "Show all".
+- **Empty states say what is true.** Uptime with no checks no longer says "All up" over four dashes; Problems with
+  nothing to show drops its four zero cards; a device that never opened a page says "No views"; a request with no
+  page view says why Rendering is empty; a page view says why it has no method or status; Rendering says why
+  hydration is empty; and a service's "not sending" bands are grey, not the error color.
 - **A Kubernetes cluster's data all arrives.** The cluster collector sends one resource per pod, node and workload
   in each export, and the hub and cloud saved each one on its own: on a 77-pod cluster that took longer than the
   exporter waits, so only a few pods' phases arrived and nodes showed "0 of 3 ready". An export's infrastructure
