@@ -9,12 +9,14 @@ import "./styles/base.css";
 import "./styles/shell.css";
 import "./styles/nav.css";
 import "./styles/ui.css";
+import "./styles/detail.css";
 import "./styles/trace.css";
 import "./styles/pages/cloud.css";
 import "./styles/pages/account.css";
 import "./styles/pages/billing.css";
 import "./styles/layout.css";
 import "./styles/phone.css";
+import "./styles/cards.css";
 import "./styles/touch.css";
 
 provider.start();

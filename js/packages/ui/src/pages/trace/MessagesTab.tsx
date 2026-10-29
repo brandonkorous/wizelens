@@ -12,7 +12,7 @@ export function MessagesTab({ trace, onSelect }: { trace: Trace; onSelect: (span
   return (
     <>
       <div className="wl-table-wrap">
-        <table className="wl-table">
+        <table className="wl-table wl-table-cards">
           <thead>
             <tr>
               <th>Operation</th>
@@ -28,10 +28,10 @@ export function MessagesTab({ trace, onSelect }: { trace: Trace; onSelect: (span
                 <td>
                   <span className="wl-cat wl-cat-messaging">{m.operation}</span>
                 </td>
-                <td className="wl-mono">{m.queue}</td>
-                <td>{m.service}</td>
-                <td className="wl-mono wl-muted">{m.messageId ?? "–"}</td>
-                <td className="wl-num">{fmtMs(m.durationMs)}</td>
+                <td data-label="Queue" className="wl-mono">{m.queue}</td>
+                <td data-label="Service">{m.service}</td>
+                <td data-label="Message id" className="wl-mono wl-muted">{m.messageId ?? "–"}</td>
+                <td data-label="Duration" className="wl-num">{fmtMs(m.durationMs)}</td>
               </tr>
             ))}
           </tbody>

@@ -8,7 +8,7 @@
 .wl-code-ok { color: var(--wl-ok); }
 .wl-code-warn { color: var(--wl-warn); }
 .wl-code-err { color: var(--wl-error); }
-.wl-svc { border-color: transparent; }
+.wl-svc { border-color: transparent; white-space: nowrap; }
 .wl-svc-0 { color: var(--wl-s0); background: color-mix(in srgb, var(--wl-s0) 14%, transparent); }
 .wl-svc-1 { color: var(--wl-s1); background: color-mix(in srgb, var(--wl-s1) 14%, transparent); }
 .wl-svc-2 { color: var(--wl-s2); background: color-mix(in srgb, var(--wl-s2) 14%, transparent); }
@@ -125,7 +125,7 @@
 .wl-wf-tick:first-child { transform: none; }
 .wl-wf-tick:last-child { transform: translateX(-100%); }
 .wl-wf-grid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--wl-line); }
-.wl-wf-bar { position: absolute; top: 8px; height: 10px; border-radius: 3px; min-width: 2px; opacity: 0.9; }
+.wl-wf-bar { position: absolute; top: 8px; height: 10px; border-radius: 3px; min-width: 4px; opacity: 0.9; }
 .wl-wf-row.wl-selected .wl-wf-bar, .wl-wf-row:hover .wl-wf-bar { opacity: 1; }
 .wl-wf-row.wl-error .wl-wf-bar { background: var(--wl-error); }
 .wl-k-http-server { background: var(--wl-k-server); } .wl-k-internal { background: var(--wl-k-internal); } .wl-k-db { background: var(--wl-k-db); }
@@ -190,3 +190,5 @@
 .wl-compare { position: relative; display: inline-flex; }
 .wl-compare-menu { width: 300px; }
 .wl-compare-input { width: 100%; height: 34px; margin-bottom: 4px; padding: 0 10px; border: 1px solid var(--wl-line-strong); border-radius: 8px; background: var(--wl-surface); color: var(--wl-fg); font: 13px var(--wl-mono); }
+/* A phone's track is too short for five labels: start, middle and end stay. */
+@media (max-width: 560px) { .wl-wf-axis .wl-wf-tick:is(:nth-child(2), :nth-child(4)) { display: none; } }

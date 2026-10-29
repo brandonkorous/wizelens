@@ -17,6 +17,7 @@ function Cell({ c }: { c: DeviceCell | null }) {
 const deviceColumn = (dev: Device): Column<DeviceRow> => ({
   key: dev,
   header: <span title="Average render time, and how many views">{dev}</span>,
+  label: dev,
   num: true,
   cell: (r) => <Cell c={r.cells[dev]} />,
   sort: (r) => r.cells[dev]?.avgMs ?? -1,
@@ -34,9 +35,11 @@ const columns = (site: string | null): Column<DeviceRow>[] => [
 ];
 
 /** Each page's render time on phones, tablets, and desktops, the slowest on a phone first. */
-export function DeviceTable({ devices }: { devices: Devices }) {
+export function DeviceTable({ devices, total }: { devices: Devices; total: number }) {
   const all = devices.all.cells;
   const site = oneSite(devices.routes);
+  // Views from before the device was recorded (or with no screen size) are not in any column; say how many.
+  const unknown = total - DEVICES.reduce((t, dev) => t + (all[dev]?.views ?? 0), 0);
   return (
     <Panel flush title="By device">
       <p className="wl-panel-note">
@@ -47,6 +50,7 @@ export function DeviceTable({ devices }: { devices: Devices }) {
             {dev} {all[dev] ? `${fmtMs(all[dev].avgMs)} (${fmtCount(all[dev].views)})` : "–"}
           </span>
         ))}
+        {unknown > 0 && <span> · {fmtCount(unknown)} {unknown === 1 ? "view" : "views"} with no known device, not in the table</span>}
       </p>
       <Table columns={columns(site)} rows={devices.routes} rowKey={(r) => r.route} defaultSort={{ key: "Phone", desc: true }} onRowClick={(r) => navigate(routeHref(r.route))} empty={<Empty title="No page views with a known device in this range" />} />
     </Panel>

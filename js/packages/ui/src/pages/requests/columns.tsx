@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { isFailed, type RequestItem, type Sort, type SortKey } from "@wizeworks/lens-core";
-import { fmtMs, fmtTime } from "../../format";
+import { fmtMs, fmtTime, shortPath } from "../../format";
 import { CountBadge, DotText, toneOfStatus } from "../../ui/Badges";
 import type { Column } from "../../ui/Table";
 
@@ -21,16 +21,16 @@ const durationCell = (r: RequestItem) => <span className={isFailed(r) ? "wl-text
 export function requestColumns(sort: Sort, onSort: (k: SortKey) => void): Column<RequestItem>[] {
   const h = (label: string, k: SortKey) => <SortHeader label={label} k={k} sort={sort} onSort={onSort} />;
   return [
-    { key: "time", header: h("Time", "time"), cell: (r) => fmtTime(r.startMs), className: "wl-nowrap" },
-    { key: "path", header: h("Path", "path"), cell: (r) => <span className="wl-rq-path wl-truncate" title={r.path}>{r.path}</span> },
-    { key: "method", header: h("Method", "method"), cell: (r) => r.method },
-    { key: "status", header: h("Status", "status"), cell: (r) => <DotText tone={toneOfStatus(r.status)} colorText={(r.status ?? 0) >= 500 && !r.expected}>{r.aborted ? "Aborted" : (r.status ?? "…")}</DotText> },
-    { key: "duration", header: h("Duration", "duration"), cell: durationCell, className: "wl-nowrap" },
-    { key: "sql", header: h("SQL", "sql"), cell: (r) => r.dbCount },
-    { key: "db", header: h("DB Time", "db"), cell: (r) => (r.dbCount ? fmtMs(r.dbMs) : "–"), className: "wl-nowrap" },
-    { key: "errors", header: h("Errors", "errors"), cell: (r) => <CountBadge n={r.errors} /> },
-    { key: "fetch", header: h("Fetch", "fetch"), cell: (r) => (r.fetchCount ? fmtMs(r.fetchMs) : "–"), className: "wl-nowrap" },
-    { key: "service", header: h("Service", "service"), cell: (r) => r.service, className: "wl-nowrap" },
-    { key: "insights", header: h("Insights", "insights"), cell: (r) => <CountBadge n={r.insights} /> },
+    { key: "time", header: h("Time", "time"), label: "Time", cell: (r) => fmtTime(r.startMs), className: "wl-nowrap" },
+    { key: "path", header: h("Path", "path"), label: "Path", cardTitle: true, cell: (r) => <span className="wl-rq-path wl-truncate" title={r.path}>{shortPath(r.path)}</span> },
+    { key: "method", header: h("Method", "method"), label: "Method", cell: (r) => r.method },
+    { key: "status", header: h("Status", "status"), label: "Status", cell: (r) => <DotText tone={toneOfStatus(r.status)} colorText={(r.status ?? 0) >= 500 && !r.expected}>{r.aborted ? "Aborted" : (r.status ?? "…")}</DotText> },
+    { key: "duration", header: h("Duration", "duration"), label: "Duration", cell: durationCell, className: "wl-nowrap" },
+    { key: "sql", header: h("SQL", "sql"), label: "SQL", cell: (r) => r.dbCount },
+    { key: "db", header: h("DB Time", "db"), label: "DB Time", cell: (r) => (r.dbCount ? fmtMs(r.dbMs) : "–"), className: "wl-nowrap" },
+    { key: "errors", header: h("Errors", "errors"), label: "Errors", cell: (r) => <CountBadge n={r.errors} /> },
+    { key: "fetch", header: h("Fetch", "fetch"), label: "Fetch", cell: (r) => (r.fetchCount ? fmtMs(r.fetchMs) : "–"), className: "wl-nowrap" },
+    { key: "service", header: h("Service", "service"), label: "Service", cell: (r) => r.service, className: "wl-nowrap" },
+    { key: "insights", header: h("Insights", "insights"), label: "Insights", cell: (r) => <CountBadge n={r.insights} /> },
   ];
 }

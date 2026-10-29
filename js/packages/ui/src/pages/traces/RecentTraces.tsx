@@ -36,9 +36,9 @@ function TraceRow({ item, selected, tags }: { item: TraceListItem; selected: boo
           </a>
         </div>
       </td>
-      <td className="wl-nowrap wl-muted" title={fmtDateTime(item.startMs)}>{fmtTime(item.startMs)}</td>
-      <td className="wl-num">{fmtMs(item.durationMs)}</td>
-      <td className="wl-num">
+      <td data-label="Time" className="wl-nowrap wl-muted" title={fmtDateTime(item.startMs)}>{fmtTime(item.startMs)}</td>
+      <td data-label="Duration" className="wl-num">{fmtMs(item.durationMs)}</td>
+      <td data-label="Status" className="wl-num">
         <Dot tone={item.health ? toneOfHealth(item.health) : item.status === "error" ? "danger" : "success"} title={item.status} />
       </td>
     </tr>
@@ -64,7 +64,7 @@ export function RecentTraces({ items, total, page, size, selectedId }: RecentTra
         <Empty>{query && total === 0 ? "No traces match." : "No traces in this time range yet."}</Empty>
       ) : (
         <div className="wl-table-wrap wl-recent-traces">
-          <table className="wl-table">
+          <table className="wl-table wl-table-cards">
             <thead>
               <tr>
                 <th>Path · trace ID</th>

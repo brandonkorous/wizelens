@@ -1,0 +1,35 @@
+/* A phone reads a table as cards: a row is a card, its first cell the title, every other cell its column's name and value. Nothing scrolls sideways. */
+@media (max-width: 560px) {
+  .wl-table-wrap:has(> .wl-table-cards) { overflow-x: visible; }
+  .wl-table-cards, .wl-table-cards tbody { display: block; }
+  .wl-table-cards thead tr { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 8px 14px; border-bottom: 1px solid var(--wl-line); }
+  .wl-table-cards thead th { padding: 0; border: 0; font-size: 13px; }
+  /* The head bar holds the sort buttons and the pick-all box; with neither it is not drawn. */
+  .wl-table-cards thead tr:not(:has([aria-sort], .wl-cell-pick :is(input, button))) { display: none; }
+  .wl-table-cards thead th:not([aria-sort]):not(.wl-cell-pick) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .wl-table-cards tbody tr { display: grid; grid-template-columns: auto minmax(0, 1fr); border-bottom: 1px solid var(--wl-line); }
+  .wl-table-cards tbody tr:last-child { border-bottom: 0; }
+  .wl-table-cards tbody td { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-width: 0; max-width: none; width: auto; padding: 3px 14px; border: 0; text-align: right; overflow-wrap: anywhere; white-space: normal; }
+  .wl-table-cards tbody td[data-label]::before { content: attr(data-label); flex: none; max-width: 45%; color: var(--wl-muted); font-size: 13px; text-align: left; }
+  /* The title: the first cell, beside the tick box when there is one. */
+  .wl-table-cards tbody td:first-child, .wl-table-cards tbody td.wl-cell-pick + td { justify-content: flex-start; padding-top: 12px; font-weight: 550; text-align: left; }
+  .wl-table-cards tbody td:first-child::before, .wl-table-cards tbody td.wl-cell-pick + td::before { display: none; }
+  /* A column may name itself the title (Table's cardTitle); then the first cell is a plain line again. */
+  .wl-table-cards tbody td.wl-card-title { order: -1; justify-content: flex-start; padding-top: 12px; font-weight: 550; text-align: left; }
+  .wl-table-cards tbody td.wl-card-title::before { display: none; }
+  .wl-table-cards tbody tr:has(.wl-card-title) td:first-child:not(.wl-card-title) { justify-content: space-between; padding-top: 3px; font-weight: 400; text-align: right; }
+  .wl-table-cards tbody tr:has(.wl-card-title) td:first-child:not(.wl-card-title)::before { display: block; }
+  .wl-table-cards tbody td.wl-cell-pick { grid-column: 1; padding-right: 0; }
+  .wl-table-cards tbody td.wl-cell-pick + td { grid-column: 2; }
+  /* A row that cannot be picked (your own) has no box; its title takes the whole line. */
+  .wl-table-cards tbody td.wl-cell-pick:empty { display: none; }
+  .wl-table-cards tbody td.wl-cell-pick:empty + td { grid-column: 1 / -1; }
+  .wl-table-cards tbody td:last-child { padding-bottom: 12px; }
+  .wl-table-cards tbody td.wl-cell-actions { position: static; justify-content: flex-end; box-shadow: none; }
+  .wl-table-cards tbody td.wl-cell-actions .wl-row-actions { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; gap: 8px 18px; white-space: normal; }
+  .wl-table-cards tbody td.wl-hide-sm { display: none; }
+  .wl-table-cards tbody td :is(.wl-wrap, .wl-truncate), .wl-table-cards tbody td > strong:only-child { min-width: 0; }
+  .wl-panel-flush .wl-table-cards tbody td { padding-left: 20px; padding-right: 20px; }
+  .wl-panel-flush .wl-table-cards thead tr { padding: 8px 20px; }
+  .wl-table-cards tbody tr.wl-row-detail td { display: block; padding: 4px 14px 14px; text-align: left; }
+}

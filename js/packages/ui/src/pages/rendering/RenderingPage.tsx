@@ -60,7 +60,7 @@ export function AllRendering() {
             <RouteChartPanel m={data} />
             <PhasePanel m={data} />
           </div>
-          <DeviceTable devices={data.devices} />
+          <DeviceTable devices={data.devices} total={data.views} />
           <RenderSearch />
           <div className="wl-grid">
             <RouteTable routes={data.routes} paging={data.routePaging} />

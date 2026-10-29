@@ -19,7 +19,7 @@ export function LogsTab({ trace, onSelect }: Props) {
   return (
     <>
       <div className="wl-table-wrap">
-        <table className="wl-table">
+        <table className="wl-table wl-table-cards">
           <thead>
             <tr>
               <th className="wl-num">At</th>
@@ -33,14 +33,14 @@ export function LogsTab({ trace, onSelect }: Props) {
             {shown.rows.map((l, i) => (
               <tr key={i} className={l.spanId ? "wl-clickable" : undefined} {...(l.spanId ? pressable(() => onSelect(l.spanId!)) : {})}>
                 <td className="wl-num wl-muted">+{fmtMs(l.timeMs - trace.startMs)}</td>
-                <td>
+                <td data-label="Level">
                   <span className={`wl-lvl wl-lvl-${l.level}`}>{l.level}</span>
                 </td>
-                <td>
+                <td data-label="Service">
                   <ServiceChip service={l.service} trace={trace} />
                 </td>
-                <td className="wl-muted wl-small" title={l.category}>{shortCategory(l.category)}</td>
-                <td className="wl-wrap">{l.message}</td>
+                <td data-label="Category" className="wl-muted wl-small" title={l.category}>{shortCategory(l.category)}</td>
+                <td data-label="Message" className="wl-wrap">{l.message}</td>
               </tr>
             ))}
           </tbody>
