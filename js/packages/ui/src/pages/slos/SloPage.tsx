@@ -24,8 +24,8 @@ function Charts({ r, outages }: { r: SloReport; outages: ChartOutage[] }) {
   const pct = (v: number) => `${Math.round(v)}%`;
   return (
     <div className="wl-grid wl-grid-2-even">
-      <Panel title="Error Budget Left (0% once spent)">
-        <TimeChart starts={s.starts} format={pct} zoom={false} releases={false} outages={outages} lines={[{ label: "Budget left", values: s.budgetSeries.map((v) => (v === null ? null : Math.max(0, v * 100))), color: "var(--wl-blue)" }, { label: "Spent", values: s.starts.map(() => 0), color: "var(--wl-red)", dashed: true }]} />
+      <Panel title="Error Budget Used (over 100% is over budget)">
+        <TimeChart starts={s.starts} format={pct} zoom={false} releases={false} outages={outages} lines={[{ label: "Budget used", values: s.budgetSeries.map((v) => (v === null ? null : (1 - v) * 100)), color: "var(--wl-blue)" }, { label: "All of it", values: s.starts.map(() => 100), color: "var(--wl-red)", dashed: true }]} />
       </Panel>
       <Panel title="Good Requests">
         <TimeChart starts={s.starts} format={(v) => fmtSli(v, r.slo.target)} zoom={false} outages={outages} lines={[{ label: "Good", values: s.sliSeries, color: "var(--wl-green)" }, { label: "Target", values: s.starts.map(() => r.slo.target), color: "var(--wl-red)", dashed: true }]} />
