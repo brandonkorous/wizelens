@@ -20,6 +20,10 @@
 }
 /* On a small phone the cards stay short, so the list starts on the first screen; the change line still says up or down. */
 @media (max-width: 560px) {
+  /* A narrow table stays a table: tighter cells, and headers may wrap. */
+  .wl-table-narrow :is(th, td) { padding: 8px; }
+  .wl-table-narrow th { white-space: normal; }
+  .wl-cmp-id { display: none; }
   .wl-stat { padding: 10px 12px; }
   .wl-stat-value { font-size: 20px; }
   .wl-stat-spark { display: none; }

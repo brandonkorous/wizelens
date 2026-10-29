@@ -46,6 +46,8 @@ export interface TableProps<T> {
   paging?: TablePaging;
   /** Sorted and paged by the server: `rows` is the page it sent. Header clicks and page buttons go to the URL. */
   served?: { info: PageInfo; noun: string };
+  /** A few short columns that fit a phone: it stays a table there instead of becoming cards. */
+  narrow?: boolean;
 }
 
 export interface TableSelect {
@@ -129,12 +131,12 @@ interface BodyProps<T> extends TableProps<T> {
   onSort: (key: string) => void;
 }
 
-function TableBody<T>({ columns, shown, rowKey, onRowClick, selectedKey, detail, select, sort, onSort }: BodyProps<T>) {
+function TableBody<T>({ columns, shown, rowKey, onRowClick, selectedKey, detail, select, sort, onSort, narrow }: BodyProps<T>) {
   const wrap = useRef<HTMLDivElement>(null);
   useScrollFocus(wrap, "table, scrolls sideways");
   return (
     <div className="wl-table-wrap" ref={wrap}>
-      <table className="wl-table wl-table-cards">
+      <table className={`wl-table${narrow ? " wl-table-narrow" : " wl-table-cards"}`}>
         <thead>
           <tr>
             {select && <PickAll keys={shown.map(rowKey).filter((k) => select.pickable?.(k) ?? true)} select={select} />}
