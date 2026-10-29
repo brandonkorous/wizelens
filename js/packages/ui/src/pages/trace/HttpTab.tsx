@@ -57,6 +57,7 @@ export function HttpTab(props: TabProps) {
           </tbody>
         </table>
       </div>
+      {spans.some((s) => s.category === "browser") && <p className="wl-chart-note">A page view (WEB) has no method or status: the browser does not report them for the page itself.</p>}
       {shown.pager}
     </>
   );

@@ -68,7 +68,7 @@ export function ComponentTable({ components, paging, hasReact }: { components: C
     <Empty title="No component renders in this range" />
   ) : (
     <Empty title="No React render data">
-      Add <code className="wl-mono">import "@wizeworks/lens-react/install";</code> as the first line of main.tsx. Component timings work in React development builds.
+      No page in this range sent React render data, so this table stays empty for apps built without React. In a React app, add <code className="wl-mono">import "@wizeworks/lens-react/install";</code> as the first line of main.tsx. Component timings work in React development builds.
     </Empty>
   );
   return (

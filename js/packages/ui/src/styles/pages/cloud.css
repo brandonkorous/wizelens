@@ -6,7 +6,7 @@
 .wl-auth-field, .wl-field { display: grid; gap: 6px; min-width: 0; font-size: 13px; font-weight: 600; color: var(--wl-fg-2); }
 .wl-auth-field input, .wl-field input { height: 40px; padding: 0 12px; border: 1px solid var(--wl-line-strong); border-radius: 9px; background: var(--wl-surface); color: var(--wl-fg); font: inherit; font-weight: 400; }
 .wl-auth-field input:focus, .wl-field input:focus { outline: 2px solid var(--wl-accent); outline-offset: 1px; }
-.wl-field small { font-size: 13px; font-weight: 400; line-height: 1.45; color: var(--wl-muted); }
+.wl-field small { font-size: 14px; font-weight: 400; line-height: 1.45; color: var(--wl-fg-2); }
 .wl-field textarea { min-height: 96px; padding: 10px 12px; border: 1px solid var(--wl-line-strong); border-radius: 9px; background: var(--wl-surface); color: var(--wl-fg); font: 400 12px/1.5 var(--wl-mono); resize: vertical; }
 .wl-field textarea:focus { outline: 2px solid var(--wl-accent); outline-offset: 1px; }
 .wl-auth-foot { text-align: center; font-size: 15px; color: var(--wl-fg-2); }
@@ -15,7 +15,8 @@
 .wl-btn-primary:disabled { opacity: 0.6; cursor: default; }
 
 .wl-form { display: grid; gap: 12px; margin-bottom: 14px; }
-.wl-form-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.wl-form-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 18px 12px; }
+.wl-form-row + .wl-form-row { margin-top: 18px; }
 .wl-form-row > .wl-field { flex: 1 1 200px; }
 .wl-row-actions { display: inline-flex; gap: 12px; white-space: nowrap; }
 

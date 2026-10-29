@@ -75,7 +75,7 @@ function Body({ m }: { m: RoutePageModel }) {
 export function RoutePage({ route }: { route: string }) {
   const { model: m, loading, error } = usePageModel("route", { route });
   const layout = m?.averages.cls;
-  const stats: [string, string][] = m && m.views ? [["Page views", fmtCount(m.views)], ["Hydration", fmtMs(m.averages.hydration)], ["Layout shift", layout === null || layout === undefined ? "–" : layout.toFixed(2)]] : [];
+  const stats: [string, string][] = m && m.views ? [["Page views", fmtCount(m.views)], ["Hydration", m.averages.hydration == null ? "None: no UI framework seen" : fmtMs(m.averages.hydration)], ["Layout shift", layout === null || layout === undefined ? "–" : layout.toFixed(2)]] : [];
   return (
     <div className="wl-dpage">
       <ModelState model={m} loading={loading} error={error} what="this route" />
