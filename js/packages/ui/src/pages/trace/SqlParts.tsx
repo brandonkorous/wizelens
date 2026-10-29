@@ -1,17 +1,19 @@
-import { type MouseEvent, useState } from "react";
+import { type MouseEvent, useLayoutEffect, useRef, useState } from "react";
 import { paramColumns } from "@wizeworks/lens-core";
 
-/** Past this many characters a query folds to its first lines until opened. */
-const LONG = 360;
+/** A query taller than this (about 9 lines) folds to its first 5 until opened. */
+const TALL = 180;
 
-/** A query's text; a long one shows its first lines and a button to open the rest. */
+/** A query's text; a tall one shows its first lines and a button to open the rest. */
 export function SqlText({ sql }: { sql: string }) {
   const [open, setOpen] = useState(false);
-  const long = sql.length > LONG;
+  const [long, setLong] = useState(false);
+  const ref = useRef<HTMLPreElement>(null);
+  useLayoutEffect(() => setLong((ref.current?.scrollHeight ?? 0) > TALL), [sql]);
   const flip = (e: MouseEvent) => (e.stopPropagation(), setOpen(!open));
   return (
     <>
-      <pre className={`wl-code wl-sql${long && !open ? " wl-sql-folded" : ""}`}>{sql}</pre>
+      <pre ref={ref} className={`wl-code wl-sql${long && !open ? " wl-sql-folded" : ""}`}>{sql}</pre>
       {long && (
         <button type="button" className="wl-link-btn wl-sql-more" aria-expanded={open} onClick={flip}>
           {open ? "Show less" : "Show the whole query"}
@@ -47,7 +49,7 @@ export function SqlParams({ raw, sql }: { raw: string; sql: string }) {
         const column = columns.get(name.replace(/^[@:$]/, ""));
         return (
           <div key={name}>
-            <dt className="wl-mono">{name}{column && <span> · {column}</span>}</dt>
+            <dt className="wl-mono">{name}{column && <span> · {column}</span>}</dt>{" "}
             <dd className="wl-mono">{shown(value)}</dd>
           </div>
         );
