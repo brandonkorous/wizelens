@@ -23,7 +23,7 @@ function ProjectPicks({ projects, picked, toggle }: { projects: { id: string; na
 const WhatItGets = ({ name, returnHost }: { name: string; returnHost: string }) => (
   <ul className="wl-consent-list">
     <li>{name} can read traces, logs, errors, metrics, and reports. It cannot change anything.</li>
-    <li>It keeps access until you remove it under Account, Connected apps. Every call goes to the audit log.</li>
+    <li>It keeps access until you remove it under Account → My apps. Every call goes to the audit log.</li>
     <li>After you allow, you go back to <b>{returnHost}</b>.</li>
   </ul>
 );

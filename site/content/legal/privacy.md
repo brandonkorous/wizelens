@@ -1,7 +1,7 @@
 ---
 title: Privacy
 description: What this site collects (nothing), what the WizeLens software sends, what WizeLens Cloud at app.wizelens.com keeps, and the choices you have.
-updated: October 21, 2026
+updated: October 28, 2026
 ---
 
 This policy covers the website at wizelens.com, the WizeLens software, and WizeLens Cloud at app.wizelens.com. It is written
@@ -50,7 +50,7 @@ If you self-host WizeLens Cloud for your team, you are responsible for the data 
 - **Breached-password check.** When you set a password, the first 5 characters of its hash go to Have I Been Pwned, so a known
   breached password is refused. The password itself never leaves the cloud.
 - **Connected apps.** An AI app that signs in with OAuth reads only the projects you pick, until you remove it under
-  Account → Connected apps. The audit log records every call it makes.
+  Account → My apps. The audit log records every call it makes.
 - **The audit log.** Changes to your organization, and who made them, are kept in its audit log.
 - **Deleting.** You can delete your account. An owner can delete an organization, which deletes its projects, their
   telemetry, and its audit log.
