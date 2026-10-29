@@ -61,7 +61,9 @@
 .wl-modal-close:focus:not(:focus-visible) { outline: none; }
 .wl-dialog.wl-modal:focus { outline: none; }
 .wl-dialog.wl-modal::backdrop { backdrop-filter: blur(2px); }
-.wl-modal-body > form { display: grid; padding: 0; }
+/* In a window, the form's own gap spaces every row, hint, and note the same; nothing in it adds a margin of its own. */
+.wl-modal-body > form { display: grid; gap: 18px; padding: 0; }
+.wl-modal-body > form > *, .wl-modal-body > form > .wl-form-row + .wl-form-row { margin-top: 0; margin-bottom: 0; }
 .wl-modal-body > .wl-form { margin-bottom: 0; }
 .wl-modal-body .wl-form-actions { margin-top: 4px; }
 .wl-modal-body > .wl-modal-lead { margin-top: 0; }
