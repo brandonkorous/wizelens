@@ -1,11 +1,12 @@
 import { CopyButton } from "../../ui/Badges";
+import { breakable } from "../../ui/breakable";
 
 /** One line to copy, with what it is above it. */
 export function Snippet({ label, text }: { label: string; text: string }) {
   return (
     <div className="wl-snippet">
       <span className="wl-muted wl-small">{label}</span>
-      <code className="wl-mono wl-small">{text}</code>
+      <code className="wl-mono wl-small">{breakable(text)}</code>
       <CopyButton text={text} label={`Copy: ${label}`} />
     </div>
   );
