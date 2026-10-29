@@ -67,6 +67,17 @@ it("records network errors", async () => {
   undo();
 });
 
+it("leaves out Blazor's own runtime downloads", async () => {
+  globalThis.fetch = (async () => new Response("")) as typeof fetch;
+  const recorder = createRecorder({ flushIntervalMs: 60_000 });
+  const undo = recorder.install();
+  await fetch("/_framework/BlazorAdmin.wasm");
+  await fetch("/admin/_framework/blazor.boot.json");
+  await fetch("/api/catalog-items");
+  expect(recorder.getSnapshot().map((r) => r.path)).toEqual(["/api/catalog-items"]);
+  undo();
+});
+
 it("marks a 5xx fetch span as an error", async () => {
   const calls: Call[] = [];
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
