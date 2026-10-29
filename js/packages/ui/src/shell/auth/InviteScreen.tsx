@@ -57,13 +57,13 @@ export function InviteScreen({ id, state }: { id: string; state: AccountState })
   const [invite, setInvite] = useState<InvitePreview | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
-    if (!id) return setError("This invite link is not complete.");
+    if (!id) return setError("This invite link is not complete. Ask your team for a new one.");
     pendingInvite.set(id);
     apiFetch<InvitePreview>(`./api/invites/${encodeURIComponent(id)}`).then(setInvite, (e: unknown) => setError(errorText(e)));
   }, [id]);
   if (error) {
     return (
-      <AuthCard title="This invite link does not work" intro={`${error} Ask your team for a new one.`}>
+      <AuthCard title="This invite link does not work" intro={error}>
         <a className="wl-btn" href={hrefTo("overview")} onClick={() => pendingInvite.set(null)}>Go to WizeLens</a>
       </AuthCard>
     );
