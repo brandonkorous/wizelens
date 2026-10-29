@@ -18,6 +18,8 @@
 .wl-errors-page .wl-err-text { max-width: 260px; }
 .wl-errors-page .wl-err-endpoint { max-width: 180px; }
 .wl-errors-page .wl-err-text span, .wl-errors-page .wl-err-endpoint span { display: block; }
+/* In a phone card the message and endpoint use the card's full width. */
+@media (max-width: 560px) { .wl-errors-page :is(.wl-err-text, .wl-err-endpoint) { max-width: none; } }
 .wl-err-change { display: inline-flex; align-items: center; gap: 3px; font-weight: 600; }
 .wl-err-change svg { width: 14px; height: 14px; }
 

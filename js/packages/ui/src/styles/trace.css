@@ -115,7 +115,7 @@
 .wl-wf-row.wl-error .wl-wf-name { color: var(--wl-error); }
 .wl-wf-axis { cursor: default; min-height: 22px; border-bottom: 1px solid var(--wl-line); margin-bottom: 4px; border-radius: 0; }
 .wl-wf-axis:hover { background: none; }
-.wl-wf-label { display: flex; align-items: center; gap: 6px; min-width: 0; padding-right: 10px; }
+.wl-wf-label { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 0 10px 0 calc(8px + var(--wl-depth, 0) * 14px); }
 .wl-wf-caret, .wl-wf-caret-space { width: 14px; flex: none; }
 .wl-wf-caret { border: 0; background: none; color: var(--wl-muted); cursor: pointer; padding: 0; font-size: 11px; }
 .wl-wf-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--wl-mono); min-width: 0; }
@@ -188,7 +188,7 @@
   /* The title wraps in a column that may shrink, so a long problem stays inside a phone's screen. */
   .wl-insight { grid-template-columns: auto minmax(0, 1fr) auto; }
   .wl-insight .wl-insight-title { white-space: normal; overflow-wrap: anywhere; }
-  .wl-insight-shape { grid-column: 1 / -1; }
+  .wl-insight-shape { grid-column: 1 / -1; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; white-space: normal; overflow-wrap: anywhere; }
 }
 
 .wl-wf-bar-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 10px; }
@@ -199,4 +199,11 @@
 .wl-compare-menu { width: 300px; }
 .wl-compare-input { width: 100%; height: 34px; margin-bottom: 4px; padding: 0 10px; border: 1px solid var(--wl-line-strong); border-radius: 8px; background: var(--wl-surface); color: var(--wl-fg); font: 13px var(--wl-mono); }
 /* A phone's track is too short for five labels: start, middle and end stay. */
-@media (max-width: 560px) { .wl-wf-axis .wl-wf-tick:is(:nth-child(2), :nth-child(4)) { display: none; } }
+@media (max-width: 560px) {
+  .wl-wf-axis .wl-wf-tick:is(:nth-child(2), :nth-child(4)) { display: none; }
+  /* The name gets its own line under the kind tag, with a smaller indent per level. */
+  .wl-wf-row { grid-template-columns: minmax(0, 55%) 1fr; }
+  .wl-wf-label { flex-wrap: wrap; gap: 2px 6px; padding-left: calc(4px + var(--wl-depth, 0) * 6px); }
+  .wl-wf-name { order: 3; flex-basis: 100%; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+  .wl-wf-row:not(.wl-wf-axis) { padding: 3px 0; }
+}

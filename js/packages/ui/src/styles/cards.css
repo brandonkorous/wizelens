@@ -38,6 +38,11 @@
   .wl-table-cards tbody td :is(.wl-wrap, .wl-truncate), .wl-table-cards tbody td > strong:only-child { min-width: 0; }
   /* A dot and its name (service, status) may wrap in a card; on a desktop row it stays on one line. */
   .wl-table-cards tbody td .wl-dot-text { min-width: 0; white-space: normal; }
+  /* A cut cell wraps to three lines in a card, so a long name or message is read, not guessed. */
+  .wl-table-cards tbody td .wl-truncate { max-width: none; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; white-space: normal; overflow-wrap: anywhere; }
+  /* A path cut in the middle on a desktop shows whole in a card. */
+  .wl-table-cards tbody td .wl-mid { display: inline; max-width: none; white-space: normal; overflow-wrap: anywhere; }
+  .wl-table-cards tbody td .wl-mid > span { overflow: visible; }
   .wl-panel-flush .wl-table-cards tbody td { padding-left: 20px; padding-right: 20px; }
   .wl-panel-flush .wl-table-cards thead tr { padding: 8px 20px; }
   .wl-table-cards tbody tr.wl-row-detail td { display: block; padding: 4px 14px 14px; text-align: left; }
