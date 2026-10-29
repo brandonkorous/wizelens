@@ -73,6 +73,9 @@ const plain = (v: number) => (Number.isInteger(v) ? String(v) : Math.abs(v) < 1 
 
 export const fmtValue = (r: AlertRule, v: number | null) => (v === null ? "–" : `${plain(v)}${unitOf(r) === "%" || unitOf(r) === "×" ? unitOf(r) : unitOf(r) ? ` ${unitOf(r)}` : ""}`);
 
+/** The last value, or why there is none: not checked yet, or no data in the last window. */
+export const lastValueText = (r: AlertRule) => (r.lastValue !== null ? fmtValue(r, r.lastValue) : r.lastEvalMs === null ? "Not checked yet" : "No data to check");
+
 /** "Error rate", or "process.cpu.utilization average (api)"; with its scope. */
 export function ruleLabel(r: AlertRule): string {
   if (r.metric === "metric") return `${r.metricName} ${METRIC_ALERT_STATS[r.metricStat || "avg"].toLowerCase()}${r.metricService ? ` (${r.metricService})` : ""}`;

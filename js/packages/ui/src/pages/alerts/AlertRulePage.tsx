@@ -11,7 +11,7 @@ import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { Table } from "../../ui/Table";
 import { TimeChart } from "../../ui/TimeChart";
 import { eventColumns } from "./AlertsPage";
-import { type AlertRuleData, channelLabel, eventPaging, fmtValue, ruleText, useAlertsApi, windowLabel, withEventPage } from "./alertTypes";
+import { type AlertRuleData, channelLabel, eventPaging, fmtValue, lastValueText, ruleText, useAlertsApi, windowLabel, withEventPage } from "./alertTypes";
 import { RuleActions, RuleState } from "./RuleActions";
 
 const BUCKETS = 60;
@@ -67,7 +67,7 @@ function Body({ d, api, reload }: { d: AlertRuleData; api: ReturnType<typeof use
   const first = d.values.reduce((m, v) => Math.min(m, v.timeMs), Infinity);
   // Checks start when the rule was made; say so, or a mostly blank chart looks like lost data.
   const late = first !== Infinity && first - w.from > (w.to - w.from) / 10;
-  const stats: [string, ReactNode][] = [["Rule", ruleText(r)], ["Last value", fmtValue(r, r.lastValue)], ["Checked", r.lastEvalMs ? fmtDateTime(r.lastEvalMs) : "Not yet"], ["Sends to", r.channels.map(channelLabel).join(", ") || "Dashboard only"]];
+  const stats: [string, ReactNode][] = [["Rule", ruleText(r)], ["Last value", lastValueText(r)], ["Checked", r.lastEvalMs ? fmtDateTime(r.lastEvalMs) : "Not yet"], ["Sends to", r.channels.map(channelLabel).join(", ") || "Dashboard only"]];
   const actions = api.canWrite ? <RuleActions rule={r} url={api.url} onDone={(n) => (setNote(n ?? null), reload())} /> : undefined;
   return (
     <>
