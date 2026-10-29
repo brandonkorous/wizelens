@@ -173,7 +173,7 @@ button.wl-select { display: inline-flex; align-items: center; max-width: 100%; t
 .wl-side-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 6px; }
 .wl-side-head h2 { margin-right: auto; word-break: break-word; }
 .wl-side-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; color: var(--wl-muted); font-size: 13px; margin-bottom: 14px; }
-.wl-kv { display: grid; grid-template-columns: minmax(96px, 38%) minmax(0, 1fr); gap: 7px 14px; margin: 0; font-size: 13.5px; }
+.wl-kv { display: grid; grid-template-columns: minmax(96px, min(38%, 220px)) minmax(0, 1fr); gap: 7px 14px; margin: 0; font-size: 13.5px; }
 .wl-kv dt { color: var(--wl-fg-2); }
 .wl-kv dd { margin: 0; min-width: 0; word-break: break-word; }
 .wl-section-title { margin: 18px 0 10px; font-size: 15px; font-weight: 680; }

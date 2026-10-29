@@ -36,15 +36,15 @@ const code = (text: string) => (text === "–" ? <span className="wl-muted">–<
 
 const COLUMNS: Column<Option>[] = [
   { key: "setting", header: "Setting", cell: (o) => o.setting },
-  { key: "dotnet", header: ".NET: AddWizeLens(o => …)", cell: (o) => code(o.dotnet) },
-  { key: "node", header: "Node: createWizeLens({ … })", cell: (o) => code(o.node) },
-  { key: "env", header: "Environment variable", cell: (o) => code(o.env) },
+  { key: "dotnet", header: ".NET: AddWizeLens(o => …)", label: ".NET", cell: (o) => code(o.dotnet) },
+  { key: "node", header: "Node: createWizeLens({ … })", label: "Node", cell: (o) => code(o.node) },
+  { key: "env", header: "Environment variable", label: "Variable", cell: (o) => code(o.env) },
 ];
 
 export function OptionsReference() {
   return (
     <Panel flush>
-      <Table paging={{ noun: "options", key: "options" }} columns={COLUMNS} rows={OPTIONS} rowKey={(o) => o.setting} />
+      <Table columns={COLUMNS} rows={OPTIONS} rowKey={(o) => o.setting} />
     </Panel>
   );
 }
