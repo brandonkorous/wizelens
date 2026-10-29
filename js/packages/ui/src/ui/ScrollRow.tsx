@@ -32,7 +32,10 @@ export function useScrollRow<T extends HTMLElement>(active: string) {
     el.addEventListener("wheel", touch, { passive: true });
     const seen = new ResizeObserver(center);
     for (const node of [el, ...el.children]) seen.observe(node);
-    return () => (el.removeEventListener("scroll", mark), el.removeEventListener("pointerdown", touch), el.removeEventListener("wheel", touch), seen.disconnect());
+    // Items that arrive later (tabs a plan or role adds) push the active one along, so they are watched too.
+    const added = new MutationObserver(() => ([...el.children].forEach((node) => seen.observe(node)), center()));
+    added.observe(el, { childList: true });
+    return () => (el.removeEventListener("scroll", mark), el.removeEventListener("pointerdown", touch), el.removeEventListener("wheel", touch), seen.disconnect(), added.disconnect());
   }, [active]);
   const step = useCallback((dir: -1 | 1) => ((touched.current = true), ref.current?.scrollBy({ left: dir * ref.current.clientWidth * 0.7, behavior: "smooth" })), []);
   return { ref, more, step };
