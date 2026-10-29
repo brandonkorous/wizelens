@@ -190,6 +190,8 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-issue-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 6px 0 12px; }
 .wl-issue-actions .wl-btn { height: 32px; padding: 0 12px; font-size: 13px; }
 .wl-dhead-actions .wl-issue-actions { margin: 0; font-size: 13px; font-weight: 400; }
+/* A page header's links and buttons wrap to a second line on a phone, never past the card's edge. */
+.wl-dhead-actions .wl-row-actions { flex-wrap: wrap; white-space: normal; row-gap: 8px; }
 .wl-alert-problem { display: block; width: max-content; max-width: 100%; margin-top: 4px; font-size: 13px; }
 .wl-release-line { stroke: var(--wl-accent); stroke-width: 1.25; stroke-dasharray: 3 3; opacity: 0.8; }
 .wl-outage-band { fill: var(--wl-red); opacity: 0.18; }
