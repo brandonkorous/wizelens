@@ -154,7 +154,7 @@ export function DependencyMap({ rows, edges, selectedKey }: { rows: ServiceRow[]
   const height = Math.max(boxes, ...[...ys.values()].map((y) => y + 4));
   return (
     <div className="wl-dep-map">
-      <svg width={width} height={height + 8} viewBox={`0 -4 ${width} ${height + 8}`} role="img" aria-label="Service dependency map">
+      <svg width={width} height={height + 8} viewBox={`0 -4 ${width} ${height + 8}`} role="group" aria-label="Service dependency map">
         {edges.map((e) => {
           const a = nodes.get(e.from);
           const b = nodes.get(e.to);
