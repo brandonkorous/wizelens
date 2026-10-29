@@ -2,6 +2,7 @@ import type { InsightGroup, IssueInfo, PageInfo } from "@wizeworks/lens-core";
 import { fmtAgo, fmtCount, fmtMs } from "../../format";
 import { setQuery } from "../../routes";
 import { ImpactBadge } from "../../ui/Badges";
+import { breakable } from "../../ui/breakable";
 import { useIssueBulk } from "../../ui/IssueBulk";
 import { IssueBadge } from "../../ui/IssueControls";
 import { Empty } from "../../ui/Panel";
@@ -16,13 +17,14 @@ function columns(now: number, compact: boolean, issues: Record<string, IssueInfo
     {
       key: "title",
       header: "Insight",
+      cardTitle: true,
       cell: (g) => (
         <div className="wl-insight-cell">
           <strong>
             {g.title} <IssueBadge kind="insight" info={issues[g.key]} />
           </strong>
           <span className="wl-muted wl-small">{g.description}</span>
-          <code className="wl-mono wl-small wl-truncate">{g.shape}</code>
+          <code className="wl-mono wl-small wl-clamp-2" title={g.shape}>{g.shape}</code>
         </div>
       ),
       sort: (g) => g.title,
@@ -30,7 +32,7 @@ function columns(now: number, compact: boolean, issues: Record<string, IssueInfo
     !compact && { key: "area", header: "Area", cell: (g) => AREA_LABEL[g.area], sort: (g) => g.area },
     { key: "seen", header: "Seen in", num: true, cell: (g) => fmtCount(g.occurrences), sort: (g) => g.occurrences },
     !compact && { key: "time", header: "Time", num: true, cell: (g) => fmtMs(g.totalMs), sort: (g) => g.totalMs },
-    !compact && { key: "endpoints", header: "Endpoints", cell: (g) => <span className="wl-mono wl-small">{g.endpoints[0] ?? "–"}{g.endpoints.length > 1 ? ` +${g.endpoints.length - 1}` : ""}</span> },
+    !compact && { key: "endpoints", header: "Endpoints", cell: (g) => <span className="wl-mono wl-small">{g.endpoints[0] ? breakable(g.endpoints[0]) : "–"}{g.endpoints.length > 1 ? ` +${g.endpoints.length - 1}` : ""}</span> },
     { key: "last", header: "Last seen", cell: (g) => <span className="wl-nowrap">{fmtAgo(g.lastSeenMs, now)}</span>, sort: (g) => g.lastSeenMs },
   ];
   return all.filter((c): c is Column<InsightGroup> => !!c);

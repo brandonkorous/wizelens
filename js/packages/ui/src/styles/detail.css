@@ -1,0 +1,29 @@
+/* Detail pages (an error, an endpoint, a query, a route): a header panel with a back link, then panels down the page. */
+.wl-dpage > .wl-panel { margin: 0 0 18px; }
+.wl-dpage .wl-panel-flush .wl-table th:first-child, .wl-dpage .wl-panel-flush .wl-table td:first-child { padding-left: 20px; }
+.wl-dpage .wl-panel-flush .wl-table th:last-child, .wl-dpage .wl-panel-flush .wl-table td:last-child { padding-right: 20px; }
+.wl-dpage .wl-row-actions { align-items: center; }
+.wl-dhead { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; }
+.wl-dhead > .wl-back, .wl-dhead > .wl-stats { grid-column: 1 / -1; }
+.wl-dhead > .wl-dhead-actions { grid-column: 2; grid-row: 2; align-self: center; justify-content: flex-end; }
+.wl-dhead .wl-back { display: flex; width: max-content; }
+.wl-dhead-title { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 22px; }
+.wl-dhead-title > svg { flex: none; color: var(--wl-fg-2); }
+.wl-dhead-name { min-width: 0; word-break: break-word; }
+.wl-dhead-name.wl-mono { font-size: 17px; word-break: normal; overflow-wrap: break-word; }
+.wl-dhead > .wl-dhead-more { display: none; grid-column: 1 / -1; justify-self: start; }
+@media (max-width: 720px) {
+  .wl-dhead-name.wl-clamped { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+  .wl-dhead > .wl-dhead-more { display: inline-flex; margin-top: 4px; font-size: 14px; }
+}
+.wl-dhead-badge { font-size: 14px; font-weight: 600; letter-spacing: 0; }
+.wl-dhead-actions { margin-left: auto; display: inline-flex; flex-wrap: wrap; max-width: 100%; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; letter-spacing: 0; }
+.wl-dhead .wl-stats { margin-bottom: 0; }
+.wl-dpage .wl-cell-wide { max-width: 420px; }
+.wl-dpage .wl-cell-wide span { display: block; }
+.wl-issue-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 6px 0 12px; }
+.wl-issue-actions .wl-btn { height: 32px; padding: 0 12px; font-size: 13px; }
+.wl-dhead-actions .wl-issue-actions { margin: 0; font-size: 13px; font-weight: 400; }
+/* A page header's links and buttons wrap to a second line on a phone, never past the card's edge. */
+.wl-dhead-actions .wl-row-actions { flex-wrap: wrap; white-space: normal; row-gap: 8px; }
+.wl-alert-problem { display: block; width: max-content; max-width: 100%; margin-top: 4px; font-size: 13px; }

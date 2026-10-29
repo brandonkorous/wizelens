@@ -18,15 +18,15 @@ function HttpRow({ span, props, kinds }: { span: Span; props: TabProps; kinds: R
       <td>
         <span className={`wl-cat wl-cat-${span.category.replace(".", "-")}`}>{direction(span)}</span>
       </td>
-      <td className="wl-mono">{String(a["http.request.method"] ?? "")}</td>
-      <td className="wl-mono wl-wrap">
+      <td data-label="Method" className="wl-mono">{String(a["http.request.method"] ?? "")}</td>
+      <td data-label="URL / route" className="wl-mono wl-wrap">
         {target} <FindingBadges kinds={kinds.get(span.spanId)} />
       </td>
-      <td>
+      <td data-label="Service">
         <ServiceChip service={span.service} trace={props.trace} />
       </td>
-      <td className={`wl-num${typeof status === "number" && status >= 400 ? " wl-text-error" : ""}`}>{status ?? "–"}</td>
-      <td className="wl-num">{fmtMs(span.durationMs)}</td>
+      <td data-label="Status" className={`wl-num${typeof status === "number" && status >= 400 ? " wl-text-error" : ""}`}>{status ?? "–"}</td>
+      <td data-label="Duration" className="wl-num">{fmtMs(span.durationMs)}</td>
     </tr>
   );
 }
@@ -39,7 +39,7 @@ export function HttpTab(props: TabProps) {
   return (
     <>
       <div className="wl-table-wrap">
-        <table className="wl-table">
+        <table className="wl-table wl-table-cards">
           <thead>
             <tr>
               <th>Direction</th>
@@ -57,6 +57,7 @@ export function HttpTab(props: TabProps) {
           </tbody>
         </table>
       </div>
+      {spans.some((s) => s.category === "browser") && <p className="wl-chart-note">A page view (WEB) has no method or status: the browser does not report them for the page itself.</p>}
       {shown.pager}
     </>
   );

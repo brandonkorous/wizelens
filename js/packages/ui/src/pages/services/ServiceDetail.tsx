@@ -16,7 +16,7 @@ function EndpointList({ items, row }: { items: EndpointStat[]; row: ServiceRow }
   const tagsOf = (e: EndpointStat) => (kind === "api" || kind === "worker" ? groupTags("endpoints", endpointDoc(row.name, e.name)) : []);
   if (items.length === 0) return <Empty>Nothing recorded in this range.</Empty>;
   return (
-    <table className="wl-table wl-svc-endpoints">
+    <table className="wl-table wl-table-cards wl-svc-endpoints">
       <thead>
         <tr>
           <th>{kind === "database" ? "Query" : kind === "external" ? "Call" : "Endpoint"}</th>
@@ -32,8 +32,8 @@ function EndpointList({ items, row }: { items: EndpointStat[]; row: ServiceRow }
               {e.errors > 0 && <span className="wl-text-error"> · {e.errors} failed</span>}
               <TagChips tags={tagsOf(e)} />
             </td>
-            <td className="wl-num">{fmtCount(e.count)}</td>
-            <td className="wl-num">{fmtMs(e.avgMs)}</td>
+            <td data-label="Count" className="wl-num">{fmtCount(e.count)}</td>
+            <td data-label="Avg" className="wl-num">{fmtMs(e.avgMs)}</td>
           </tr>
         ))}
       </tbody>

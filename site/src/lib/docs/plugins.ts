@@ -38,6 +38,32 @@ export function rehypeLinks() {
   };
 }
 
+const rowsOf = (node: Element, tag: string) => node.children.filter((c): c is Element => c.type === "element" && c.tagName === tag);
+
+const WBR: ElementContent = { type: "element", tagName: "wbr", properties: {}, children: [] };
+
+// Text in a table cell may break after a dot, slash, underscore, or equals sign, so a long setting or package wraps at its parts, not mid-word.
+function breakAtParts(el: Element) {
+  el.children = el.children.flatMap((c): ElementContent[] =>
+    c.type !== "text" ? [c] : c.value.split(/(?<=[./_=])/).flatMap((value, i): ElementContent[] => (i === 0 ? [{ type: "text", value }] : [WBR, { type: "text", value }])),
+  );
+}
+
+// A table of three or more columns becomes cards on a phone: each cell carries its column's name (prose.css).
+export function rehypeTables() {
+  return (tree: Root) => {
+    visit(tree, "element", (table: Element) => {
+      if (table.tagName !== "table") return;
+      visit(table, "element", (el: Element) => void (el.tagName !== "table" && el.tagName !== "pre" && breakAtParts(el)));
+      const [head] = rowsOf(table, "thead").flatMap((t) => rowsOf(t, "tr"));
+      const names = head ? rowsOf(head, "th").map((th) => toString(th).trim()) : [];
+      if (names.length < 3) return;
+      table.properties.className = ["wl-cards"];
+      for (const tr of rowsOf(table, "tbody").flatMap((b) => rowsOf(b, "tr"))) rowsOf(tr, "td").forEach((td, i) => (td.properties.dataLabel = names[i] ?? ""));
+    });
+  };
+}
+
 // Collects h2 and h3 for the page outline, and adds a small anchor link to each.
 export function rehypeHeadings() {
   return (tree: Root, file: VFile) => {

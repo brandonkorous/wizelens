@@ -43,9 +43,10 @@ or **Enter** picks a suggestion. A search with a mistake is marked where it is w
 | `-health` or `NOT health` | Leaves out what has the word |
 | `(a OR b) c` | Parentheses group parts |
 
-Free words read the path, endpoint, user, request id, client address, tags, and error text of a request; the root name,
-URL, services, and errors of a trace; the name, URL, SQL text, and error text of a span; and the message, category, and
-trace name of a log line.
+Free words read the path, endpoint, user, request id, client address, tags, error text, and SQL parameter values of a
+request; the root name, URL, services, errors, and SQL parameter values of a trace; the name, URL, SQL text, SQL parameter
+values, and error text of a span; and the message, category, and trace name of a log line. So a customer's name finds the
+request that looked it up.
 
 Put a backslash before a character to take it literally, or put it in quotes. An address such as `https://shop.test/cart`
 is read as text.

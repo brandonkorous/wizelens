@@ -1,6 +1,8 @@
-import type { NodeRow, PodRow, WorkloadRow } from "@wizeworks/lens-core";
+import { useState } from "react";
+import { GONE, type NodeRow, type PodRow, type WorkloadRow } from "@wizeworks/lens-core";
 import { fmtAgo, fmtCount } from "../../format";
 import { Badge, DotText, type Tone } from "../../ui/Badges";
+import { Check } from "../../ui/Field";
 import { Empty } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 import { DASH, fmtBytes, fmtCores, UsageBar } from "./infraParts";
@@ -68,6 +70,19 @@ const POD_COLUMNS: Column<PodRow>[] = [
   },
 ];
 
-export function PodsTable({ rows, empty = "No pods match these filters." }: { rows: PodRow[]; empty?: string }) {
-  return <Table paging={{ noun: "pods", key: "pods" }} columns={POD_COLUMNS} rows={rows} rowKey={(p) => p.key} defaultSort={{ key: "name", desc: false }} empty={<Empty title="No pods">{empty}</Empty>} />;
+/** The pods that still run, as the Pods card counts them, with a box to show the gone ones too. On a node's page the Node column goes. */
+export function PodsTable({ rows, empty = "No pods match these filters.", onNode = false }: { rows: PodRow[]; empty?: string; onNode?: boolean }) {
+  const [withGone, setWithGone] = useState(false);
+  const gone = rows.filter((p) => p.phase === GONE).length;
+  const columns = onNode ? POD_COLUMNS.filter((c) => c.key !== "node") : POD_COLUMNS;
+  return (
+    <>
+      {gone > 0 && (
+        <div className="wl-table-note">
+          <Check label={`Also show ${fmtCount(gone)} gone ${gone === 1 ? "pod" : "pods"} (stopped reporting in this range)`} checked={withGone} onChange={(e) => setWithGone(e.target.checked)} />
+        </div>
+      )}
+      <Table paging={{ noun: "pods", key: "pods" }} columns={columns} rows={withGone ? rows : rows.filter((p) => p.phase !== GONE)} rowKey={(p) => p.key} defaultSort={{ key: "name", desc: false }} empty={<Empty title="No pods">{empty}</Empty>} />
+    </>
+  );
 }

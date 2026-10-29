@@ -6,6 +6,22 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Fixed
 
+- **Search finds SQL parameter values.** A plain word in Search now also matches the values a query ran with, so
+  an order id or an email finds the span that used it. Spans saved before this update match once they are searched
+  by attribute (`@wizelens.db.parameters:*value*`).
+- **A trace's SQL is easier to read.** A query taller than about nine lines folds to five with "Show the whole
+  query", and each parameter shows its name, the column it is compared with, and its value, so a hidden value reads
+  "BuyerId [redacted:email]" instead of a line of JSON.
+- **Names wrap instead of being cut on a phone.** A list's name column now uses the card's full width; database
+  names on the Overview wrap at their dots; sizes keep their number and unit together; and long text in a list
+  (a tag's description, an audit detail) reads as a paragraph under its label.
+- **On a phone the dependency map is a list.** Each call reads "Web App → Web, 10 calls, p95 103 ms" and links to
+  the service it calls. Trace compare keeps its numbers as a small table headed A, B and B − A, and a chart with
+  more than four lines shows four names and "Show all".
+- **Empty states say what is true.** Uptime with no checks no longer says "All up" over four dashes; Problems with
+  nothing to show drops its four zero cards; a device that never opened a page says "No views"; a request with no
+  page view says why Rendering is empty; a page view says why it has no method or status; Rendering says why
+  hydration is empty; and a service's "not sending" bands are grey, not the error color.
 - **A Kubernetes cluster's data all arrives.** The cluster collector sends one resource per pod, node and workload
   in each export, and the hub and cloud saved each one on its own: on a 77-pod cluster that took longer than the
   exporter waits, so only a few pods' phases arrived and nodes showed "0 of 3 ready". An export's infrastructure
@@ -15,6 +31,86 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   show the amount (such as 140 MB), with the bar and its share of the limit beside it.
 - **Counts in unit "1" are numbers, not percents.** OpenTelemetry's unit "1" means any plain number, so page faults
   showed as "418,452,848,767%". Only a metric named as a share (utilization, ratio, fraction) shows as a percent now.
+- **Every drop-down is the same drop-down.** Form and filter drop-downs opened the system's own list, often dark
+  on a light page, while the top bar's menus used the dashboard's look. All of them now open one list in the
+  dashboard's colors in both themes, with the arrow keys, Home, End, typing a letter to jump, Enter and Escape.
+- **The alert form's fields line up.** Metric, Condition, Over the last and Remind while firing had no label on
+  screen, so they sat higher than the labeled fields beside them. Each now has its label, and the on switch reads
+  "Rule is on" and lines up with the drop-down beside it. The SLO, dashboard panel and log rule forms got the same fix.
+- **Tables read as cards on a phone.** Under 560 px wide, every table row becomes a card: its name on top, then
+  each value beside its column's name, with the row's buttons wrapping under them. Nothing is cut at the right edge
+  or needs a sideways swipe. The docs' wide tables do the same.
+- **A phone shows the numbers first.** Stat cards are shorter, facts under a title go two to a line, a detail page's
+  buttons sit under its numbers, a long query or route title shows three lines with "Show all", and Security folds
+  away the OWASP categories with no risks. Security and Insights filters sit behind the one Filters button.
+- **Metrics always shows a chart.** The first metric opens when none is picked, metric names break at the dots only
+  where they must, and on a phone the chart sits above the list and a tap scrolls to it. The axis shows plain
+  numbers with the unit said once, the summary says when it adds up several lines, and units read as words
+  ("work item", not "{work_item}").
+- **Kubernetes counts match.** Pods that stopped reporting in the range are left out of the pod tables, with a box to
+  show them, so the table and the Pods card agree. A node's pod table drops the node column, and the CPU axis
+  reads in millicores when the values are small. Each service row links to its traces and logs.
+- **The site has a dark theme.** wizelens.com and its docs follow the device's light or dark setting, in the same
+  colors as the dashboard's dark theme. A long docs or legal page has an "On this page" list under its title on a
+  phone or tablet, and the changelog's version chips sit on one line with arrow buttons.
+- **Tab rows on a phone have arrow buttons.** When a row of tabs is wider than the screen (a trace's tabs, a panel's
+  tabs, the settings sections), a left or right arrow button shows at the edge that hides more. A tap moves the row
+  along; no fade hides the last tab.
+- **A dead invite link says what happened.** An invite that was used, expired or withdrawn now names the
+  organization, says which of the three it was, and names who to ask for a new one, instead of "not found".
+- **Counts read as words.** Whole counts show as numbers with separators, and a unit in braces is said in the
+  plural when the count is not one: "3 work items", "5 threads", "1 thread".
+- **Charts leave gaps empty.** A line chart with missing points no longer fills the gap under it, so a pause in
+  data looks like a pause.
+- **Long paths keep their end.** On Requests and the Overview a long path cuts in the middle and keeps its last
+  step, such as "/Identit… /Login?ReturnUrl=…". Database shows three lines of each query in its list.
+- **Phones show lists sooner.** Bottleneck names wrap in their bars instead of pushing the page wide, the Logs
+  save-search line is one short row, and labels, stack traces and small text are at least 12 px.
+- **Clearer small screens.** The trace timeline shows start, middle and end on a phone so labels do not overlap; a
+  chart legend keeps each name on one line; the status page names a day when you tap its bar; a new uptime check
+  says how much of 7 or 30 days it has measured; an alert's chart says why it starts on the rule's first check; the
+  HUD's call list shows full names on a phone; Rendering says how many views had no known device; and the sign-in pages have larger links, one a line, with a way back
+  from every card.
+- **Phone cards show whole values.** A cut cell wraps inside its card, a trace's findings fold to two with "Show
+  all", its numbers come before its buttons, and a link to a trace tab opens with that tab in view. Card labels use
+  the text font, a sort row starts with "Sort by", and a list you can pick from has a "Select all" box.
+- **Long names break at their parts.** A stack trace wraps at folders and dots, an insight's endpoint at its
+  slashes, a setup line after `=` and `/`, an uptime check's URL at its slashes, and a pod's workload at its slash.
+  Docs tables do the same with settings and package names, so `otel.exporter.otlp.endpoint` breaks at its dots.
+- **Charts fit their numbers.** A line chart scales to its own top instead of at least 1, so a pod using 2 millicores
+  fills its chart, and a single point shows as a dot. Metric trend lines start at their first value. A host's CPU
+  chart keeps its 0 to 100% axis.
+- **Clearer values where data is missing.** An alert that has not run says "Not checked yet" or "No data to check";
+  a host with no network data says so instead of 0 B/s; a shared link with no note says "Not named"; and a failed
+  5xx request with no exception is named "HttpError: HTTP 503" instead of "Error: error".
+- **Times and days are named.** A trace shows the date under its start time, a status page bar names its UTC day
+  (and a phone says to tap a bar), and a new uptime check counts the time it has measured in minutes.
+- **On a phone a trace timeline row is its name over a full-width track,** so short spans still show as bars.
+- **Hosts and Kubernetes read better on a phone.** Host cards show Disk next to CPU and Memory, and a pod links to
+  the requests it served. Millicore axis ticks no longer repeat.
+- **The read-key intro shows its header as code** (`Authorization: Bearer <key>`), and setup snippets keep each
+  value whole.
+- **Tab rows keep the open tab in view** after counts, fonts, or tabs that a plan adds load in.
+- **Billing's daily chart is easier to read.** Each day is a slot you can tap to see its numbers, the first and last
+  dates sit under it, and a usage bar with a little use still shows a sliver and its share.
+- **Blazor's own downloads are not app calls.** The browser add-on no longer records Blazor's `_framework` downloads as
+  calls your app made.
+- **Each Services table says what it lists**, database boxes on the dependency map lead with the database name,
+  service chips stay on one line in desktop tables, and an empty Hydration Time card says no UI framework was seen.
+- **Delete account names the organizations that go with it.**
+- **Docs on a phone.** The docs search box drops its Ctrl K hint, the Errors page explains only the filters that need
+  it, an "On this page" button returns to the section list, and the auto-install page opens with a "Pick a way" table.
+- **The site's stack pages and story come up sooner.** A stack page's facts are one row each on a phone, so its code
+  demo starts near the top of the second screen, and the story's first chapter shows on the first screen at 1440.
+
+### Added
+
+- **Preferences follow your account.** Theme, default range, time zone and clock are saved to the account in the
+  cloud, so every browser you sign in on uses them (`GET api/me` and `PATCH api/me/prefs`).
+- **The Messages tab names each message.** A RabbitMQ message shows its routing key (such as
+  `OrderStartedIntegrationEvent`) beside its queue, service and message id.
+- **Members from your identity provider are marked.** A person SCIM added reads "From your identity provider
+  (SCIM)", and removing them warns that the provider adds them back at its next sync while they are active there.
 
 ## [0.3.0-alpha.14] — A steadier ClickHouse, and every screen checked
 

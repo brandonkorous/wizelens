@@ -2,9 +2,9 @@
 .wl-install { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(40px, 6vw, 88px); align-items: center; }
 .wl-install-copy { display: grid; gap: 28px; }
 .wl-install-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
-.wl-install-tabs button { position: relative; height: 42px; padding: 0 16px; border: 1px solid var(--wl-line-strong); border-radius: 999px; background: var(--wl-white); font-size: 15px; font-weight: 550; cursor: pointer; color: var(--wl-fg-2); }
-.wl-install-tabs button.wl-on { border-color: var(--wl-charcoal); color: var(--wl-white); }
-.wl-install-pill { position: absolute; inset: -1px; border-radius: 999px; background: var(--wl-charcoal); }
+.wl-install-tabs button { position: relative; height: 42px; padding: 0 16px; border: 1px solid var(--wl-line-strong); border-radius: 999px; background: var(--wl-surface); font-size: 15px; font-weight: 550; cursor: pointer; color: var(--wl-fg-2); }
+.wl-install-tabs button.wl-on { border-color: var(--wl-ink); color: var(--wl-on-ink); }
+.wl-install-pill { position: absolute; inset: -1px; border-radius: 999px; background: var(--wl-ink); }
 .wl-install-label { position: relative; }
 .wl-install-note { font-size: 15.5px; color: var(--wl-muted); min-height: 48px; }
 

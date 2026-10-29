@@ -2,9 +2,10 @@
 .wl-auth-check, .wl-check { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--wl-fg-2); cursor: pointer; }
 .wl-auth-check input, .wl-check input { width: 16px; height: 16px; margin: 0; accent-color: var(--wl-accent); }
 .wl-form-row > .wl-check { min-height: 40px; }
-.wl-auth-links { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; }
+/* One link a line, each a full tap target, so the card's ways out are easy to hit and read. */
+.wl-auth-links { display: grid; justify-items: center; gap: 2px; font-size: 15px; }
 .wl-auth-card > .wl-btn { width: 100%; }
-.wl-auth-card > .wl-link-btn { justify-self: center; font-size: 13px; }
+.wl-auth-card > .wl-link-btn { justify-self: center; font-size: 15px; }
 .wl-banner-thin { margin: 0; padding: 8px 24px; border-radius: 0; font-size: 13px; }
 
 .wl-account-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; margin: 0; }
@@ -34,7 +35,8 @@
 .wl-sso-required { display: grid; gap: 6px; border-top: 1px solid var(--wl-line); padding-top: 10px; }
 .wl-sso-required p { margin: 0; }
 
-.wl-panel-danger { border-color: var(--wl-error); }
+/* A danger panel stands apart from the everyday settings above it. */
+.wl-panel-danger { margin-top: 32px; border-color: var(--wl-error); }
 .wl-panel-danger .wl-panel-head h2 { color: var(--wl-error); }
 .wl-btn-danger { border-color: var(--wl-error-fill); background: var(--wl-error-fill); color: var(--wl-on-fill); }
 .wl-btn-danger:hover { filter: brightness(1.06); background: var(--wl-error-fill); }

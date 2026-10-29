@@ -6,6 +6,8 @@ export interface ChartOutage {
   /** Null while it is still down. */
   endMs: number | null;
   label: string;
+  /** "gap": a service sent nothing (grey); otherwise a check was down (red). */
+  tone?: "gap";
 }
 
 export interface OutageBandsProps {
@@ -34,7 +36,7 @@ export function OutageBands({ outages, starts, at, top, base }: OutageBandsProps
         return (
           <g key={`${o.label}-${o.startMs}`}>
             <title>{`${o.label}: ${fmtDateTime(o.startMs)}${o.endMs === null ? " until now" : ` to ${fmtDateTime(o.endMs)}`}`}</title>
-            <rect className="wl-outage-band" x={Math.min(x1, x2 - 3)} y={top} width={Math.max(3, x2 - x1)} height={base - top} />
+            <rect className={`wl-outage-band${o.tone === "gap" ? " wl-outage-gap" : ""}`} x={Math.min(x1, x2 - 3)} y={top} width={Math.max(3, x2 - x1)} height={base - top} />
           </g>
         );
       })}

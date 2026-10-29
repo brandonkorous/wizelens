@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { Box, Cpu, Layers, MemoryStick, RotateCcw, Server } from "lucide-react";
-import type { ContainerRow, NodeDetail, PodDetail } from "@wizeworks/lens-core";
+import { type ContainerRow, type NodeDetail, type PodDetail, quoteText } from "@wizeworks/lens-core";
 import { useData } from "../../data/hooks";
 import { useInfraModel } from "../../data/infra";
 import { fmtAgo, fmtCount } from "../../format";
 import { hrefTo } from "../../routes";
+import { breakable } from "../../ui/breakable";
 import { DotText } from "../../ui/Badges";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
@@ -14,10 +15,17 @@ import { hostHref, nodeHref, workloadHref } from "./links";
 
 const BACK = hrefTo("kubernetes");
 
+/** CPU on one scale: cores when the line reaches a core, millicores below, so the axis never mixes the two. */
+function coresScale(values: readonly (number | null)[]): (v: number) => string {
+  const top = Math.max(0, ...values.map((v) => v ?? 0));
+  // Under 10 millicores the half steps keep one decimal, so ticks never repeat (0.5, 1, 1.5, not 1, 1, 2).
+  return top >= 0.995 ? (v) => `${Number(v.toFixed(2))} cores` : (v) => `${top < 0.01 ? Number((v * 1000).toFixed(1)) : Math.round(v * 1000)} millicores`;
+}
+
 function Charts({ d }: { d: NodeDetail | PodDetail }) {
   return (
     <div className="wl-grid wl-grid-3">
-      <LinePanel title="CPU Over Time" starts={d.buckets} lines={[{ label: "CPU", values: d.cpu, color: "var(--wl-blue)" }]} format={(v) => fmtCores(v)} />
+      <LinePanel title="CPU Over Time" starts={d.buckets} lines={[{ label: "CPU", values: d.cpu, color: "var(--wl-blue)" }]} format={coresScale(d.cpu)} />
       <LinePanel title="Memory Over Time" starts={d.buckets} lines={[{ label: "Working set", values: d.memory, color: "var(--wl-green)" }]} format={fmtBytes} />
       <LinePanel title="Network Over Time" starts={d.buckets} lines={[{ label: "In", values: d.netIn, color: "var(--wl-blue)" }, { label: "Out", values: d.netOut, color: "var(--wl-orange)" }]} format={fmtRate} />
     </div>
@@ -52,7 +60,7 @@ function NodeBody({ d, now }: { d: NodeDetail; now: number }) {
       </div>
       <Charts d={d} />
       <Panel title="Pods" flush>
-        <PodsTable rows={d.pods} empty="No pods on this node in this range." />
+        <PodsTable rows={d.pods} onNode empty="No pods on this node in this range." />
       </Panel>
       <ServicesPanel services={d.services} now={now} empty="No service reports a pod on this node as where it runs." />
     </>
@@ -78,8 +86,9 @@ const CONTAINER_COLUMNS: Column<ContainerRow>[] = [
 
 function PodBody({ d, now }: { d: PodDetail; now: number }) {
   const r = d.row;
-  const facts: [string, ReactNode][] = [["Namespace", r.namespace || DASH], ["Node", r.node ? <a key="n" href={nodeHref(r.node)}>{r.node}</a> : DASH], ["Workload", r.workload ? <a key="w" href={workloadHref(`${r.namespace}/${r.workload}`)}>{r.workload}</a> : DASH], ["Last seen", fmtAgo(r.lastSeenMs, now)]];
+  const facts: [string, ReactNode][] = [["Namespace", r.namespace || DASH], ["Node", r.node ? <a key="n" href={nodeHref(r.node)}>{r.node}</a> : DASH], ["Workload", r.workload ? <a key="w" href={workloadHref(`${r.namespace}/${r.workload}`)}>{breakable(r.workload)}</a> : DASH], ["Last seen", fmtAgo(r.lastSeenMs, now)]];
   if (r.cluster) facts.unshift(["Cluster", r.cluster]);
+  facts.push(["Requests", <a key="q" href={hrefTo("search", [], { q: `@k8s.pod.name:${quoteText(r.name)}`, kind: "requests" })}>Requests this pod served</a>]);
   return (
     <>
       <InfraHead back={BACK} backLabel="Kubernetes" icon={Box} title={r.name} status={<Phase phase={r.phase} />} facts={facts} />

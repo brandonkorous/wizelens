@@ -29,7 +29,7 @@ export function OverviewPage() {
   const { model, loading, error } = usePageModel("overview");
   return (
     <>
-      <PageHeader title="Overview" subtitle="Recent request-level diagnostics across your stack." />
+      <PageHeader title="Overview" subtitle="Requests, errors, and speed." />
       <ModelState model={model} loading={loading} error={error} what="traces" />
       {model && (
         <>

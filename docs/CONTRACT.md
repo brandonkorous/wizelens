@@ -1110,7 +1110,8 @@ retention, and the audit log.
 
 | Method | Path | Who |
 |---|---|---|
-| GET | `api/me` | Anyone: `{ signedIn, needsSetup, signup, mail, sso, billing, user?, sessionId?, orgs?[] with projects and plan, blockingOrgs? }`. `sso`: some provider has a proven domain. `billing`: the cloud bills through Stripe; off, every `plan` is `unlimited` |
+| GET | `api/me` | Anyone: `{ signedIn, needsSetup, signup, mail, sso, billing, user?, sessionId?, orgs?[] with projects and plan, blockingOrgs?, soloOrgs?, prefs? }`. `sso`: some provider has a proven domain. `billing`: the cloud bills through Stripe; off, every `plan` is `unlimited`. `soloOrgs`: organizations deleted with the account. `prefs`: the Preferences page's `theme`, `range`, `tz`, and `clock` |
+| PATCH | `api/me/prefs` | Signed in: keep the Preferences choices sent (`theme` light, dark, or system; `range` a time range; `tz` local or utc; `clock` 12 or 24) on the account; answers all of them. Another value is a 400 |
 | GET | `api/invites/{id}` | Anyone with the link: `{ orgName, email, role, inviter }` |
 | * | `api/auth/*` | Better Auth: sign-up, sign-in (email, passkey), `two-factor/*`, sessions, password, email, `delete-user`, `organization/*` (invite, accept, roles, remove, leave), `sign-in/sso`, `sso/*` (register with `organizationId`, providers, update, delete, domain proof; owner or admin). Send `organizationId` on every `organization/*` change |
 | POST / GET / PATCH / DELETE | `api/orgs`, `api/orgs/{org}` | Signed in; read: any member; name and retention: admin; delete (with `password`): owner |

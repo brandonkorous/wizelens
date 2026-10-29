@@ -1,6 +1,7 @@
 /* Requests page: cards, table cells, and the request side panel. */
 .wl-rq-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.wl-rq-path { display: inline-block; max-width: min(420px, 28vw); vertical-align: middle; }
+.wl-rq-path, .wl-mid.wl-rq-path { max-width: min(420px, 28vw); vertical-align: middle; }
+.wl-rq-path.wl-truncate { display: inline-block; }
 
 .wl-rq-side { position: sticky; top: calc(var(--wl-topbar-h) + 16px); max-height: calc(100vh - var(--wl-topbar-h) - 32px); overflow-y: auto; }
 .wl-rq-hint { display: grid; place-items: center; min-height: 220px; text-align: center; }

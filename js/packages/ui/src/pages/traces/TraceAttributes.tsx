@@ -27,16 +27,16 @@ export function TraceAttributes({ trace, sources }: { trace: Trace | null; sourc
   const ua = server?.attributes["user_agent.original"];
   const rows: [string, ReactNode][] = [
     ["Trace ID", <span className="wl-mono wl-small">{trace.traceId}</span>],
-    ["Parent ID", root?.parentSpanId ?? "—"],
+    ["Parent ID", root?.parentSpanId ?? "–"],
     ["Span Count", trace.spanCount],
     ["Start Time", `${fmtDate(trace.startMs)} ${fmtTime(trace.startMs)}`],
     ["Duration", fmtMs(traceDurationOf(trace))],
     ["Status", <DotText tone={traceTone(trace)}>{statusText(trace)}</DotText>],
-    ["Method", trace.rootMethod ?? "—"],
+    ["Method", trace.rootMethod ?? "–"],
     ["Path", tracePath(trace)],
-    ["User Agent", ua == null ? "—" : String(ua)],
-    ["Environment", info?.environment ?? "—"],
-    ["Host", info?.host ?? "—"],
+    ["User Agent", ua == null ? "–" : String(ua)],
+    ["Environment", info?.environment ?? "–"],
+    ["Host", info?.host ?? "–"],
   ];
   return (
     <Panel title="Trace Attributes" action={<CopyButton text={JSON.stringify({ traceId: trace.traceId, rootName: trace.rootName, services: trace.services }, null, 2)} label="Copy attributes" />}>

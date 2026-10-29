@@ -10,6 +10,9 @@ export const OWN_CALL = Symbol.for("wizelens.ownCall");
 
 const isOwnCall = (init: RequestInit | undefined): boolean => !!init && (init as Record<symbol, unknown>)[OWN_CALL] === true;
 
+/** Blazor fetches its own runtime (.wasm, .dll, .pdb, boot json) from `_framework/`: the framework's files, not the app's calls. */
+const isFrameworkFile = (url: URL): boolean => url.pathname.includes("/_framework/");
+
 function requestUrl(input: RequestInfo | URL, base: string): URL {
   if (typeof input === "string") return new URL(input, base);
   if (input instanceof URL) return input;
@@ -41,7 +44,7 @@ export function patchFetch(orig: typeof fetch, ctx: FetchContext): typeof fetch 
     } catch {
       return orig(input, init);
     }
-    if (isWizeLensCall(url, ctx.endpoint) || isOwnCall(init)) return orig(input, init);
+    if (isWizeLensCall(url, ctx.endpoint) || isOwnCall(init) || isFrameworkFile(url)) return orig(input, init);
     const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
     const call = startCall(ctx, "fetch", url, method, isPrefetch(url, headersOf(input, init)));
     const nextInit = withTraceparent(ctx, call, input, init);

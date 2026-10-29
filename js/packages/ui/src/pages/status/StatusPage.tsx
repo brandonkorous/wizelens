@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { type PointerEvent, useEffect, useState } from "react";
 import { STATUS_DAYS, type StatusCheckView, type StatusPageView } from "@wizeworks/lens-core";
 import { apiFetch } from "../../data/api";
-import { fmtDate, fmtDateTime } from "../../format";
+import { fmtDateTime } from "../../format";
 import { Logo } from "../../shell/Logo";
 import { DotText } from "../../ui/Badges";
 import { Empty, Panel } from "../../ui/Panel";
@@ -10,15 +10,27 @@ import "../../styles/pages/uptime.css";
 
 const REFRESH_MS = 60_000;
 const DAY_MS = 86_400_000;
+/** Each bar is a UTC day, so its date is the UTC date, whatever the viewer's zone. */
+const utcDay = (ms: number) => new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
+/** One bar a day. A touch or a pointer on a bar names its day under the bars, since a phone has no hover title. */
 function DayBars({ days, nowMs }: { days: (number | null)[]; nowMs: number }) {
+  const [picked, setPicked] = useState<number | null>(null);
   const first = Math.floor(nowMs / DAY_MS) * DAY_MS - (STATUS_DAYS - 1) * DAY_MS;
+  const textOf = (i: number) => `${utcDay(first + i * DAY_MS)} (UTC): ${days[i] === null ? "no data" : fmtUptime(days[i]!)}`;
+  const pick = (e: PointerEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setPicked(Math.min(days.length - 1, Math.max(0, Math.floor(((e.clientX - r.left) / r.width) * days.length))));
+  };
   return (
-    <div className="wl-status-bars" role="img" aria-label={`Uptime per day for the last ${STATUS_DAYS} days`}>
-      {days.map((d, i) => (
-        <span key={i} className={`wl-status-bar wl-tone-${toneOfUptime(d)}`} title={`${fmtDate(first + i * DAY_MS)}: ${d === null ? "no data" : fmtUptime(d)}`} />
-      ))}
-    </div>
+    <>
+      <div className="wl-status-bars" role="img" aria-label={`Uptime per day for the last ${STATUS_DAYS} days`} onPointerDown={pick} onPointerMove={(e) => e.buttons > 0 && pick(e)}>
+        {days.map((d, i) => (
+          <span key={i} className={`wl-status-bar wl-tone-${toneOfUptime(d)}${picked === i ? " wl-picked" : ""}`} title={textOf(i)} />
+        ))}
+      </div>
+      {picked !== null ? <p className="wl-status-day" aria-live="polite">{textOf(picked)}</p> : <p className="wl-status-hint wl-muted wl-small">Tap a bar to see its day.</p>}
+    </>
   );
 }
 

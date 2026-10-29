@@ -2,6 +2,7 @@ import type { Stack } from "../types";
 
 export const ANGULAR: Stack = {
   slug: "angular",
+  release: true,
   name: "Angular",
   title: "WizeLens for Angular",
   seoTitle: "WizeLens for Angular: every HttpClient call linked to its server trace",

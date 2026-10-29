@@ -3,7 +3,7 @@
 .wl-stack-group { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 24px; padding: 24px 0; border-bottom: 1px solid var(--wl-line-strong); }
 .wl-stack-group h3 { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; padding-top: 7px; }
 .wl-stack-group ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
-.wl-chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: 999px; background: var(--wl-white); border: 1px solid var(--wl-line); font-size: 15px; font-weight: 550; }
+.wl-chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: 999px; background: var(--wl-surface); border: 1px solid var(--wl-line); font-size: 15px; font-weight: 550; }
 .wl-chip-dot { width: 8px; height: 8px; border-radius: 50%; }
 
 @media (max-width: 760px) {

@@ -13,10 +13,13 @@
 .wl-usage-facts div { padding: 10px 12px; border-radius: 10px; background: var(--wl-surface-2); }
 .wl-usage-facts dt { font-size: 12px; color: var(--wl-muted); }
 .wl-usage-facts dd { margin: 2px 0 0; font-size: 16px; font-weight: 650; font-variant-numeric: tabular-nums; }
-.wl-usage-days { display: flex; align-items: flex-end; gap: 3px; height: 56px; margin-bottom: 8px; }
-.wl-usage-days span { flex: 1 1 0; display: flex; align-items: flex-end; height: 100%; min-width: 3px; }
-.wl-usage-days i { display: block; width: 100%; border-radius: 2px 2px 0 0; background: var(--wl-chart-bar); }
-.wl-usage-days span:hover i { background: var(--wl-accent); }
+.wl-usage-days { display: flex; align-items: flex-end; gap: 3px; height: 56px; margin-bottom: 6px; }
+.wl-usage-days span { flex: 1 1 0; display: flex; align-items: flex-end; height: 100%; min-width: 3px; border-radius: 2px 2px 0 0; background: var(--wl-surface-2); cursor: pointer; }
+.wl-usage-days span.wl-picked { outline: 2px solid var(--wl-fg); outline-offset: 1px; }
+.wl-usage-axis { display: flex; justify-content: space-between; gap: 12px; }
+.wl-usage-day { margin: 6px 0 12px; }
+.wl-usage-days i { display: block; width: 100%; border-radius: 2px 2px 0 0; background: var(--wl-accent); opacity: 0.85; }
+.wl-usage-days span:hover i, .wl-usage-days span.wl-picked i { opacity: 1; }
 
 .wl-segmented { display: inline-flex; padding: 2px; border: 1px solid var(--wl-line-strong); border-radius: 9px; background: var(--wl-surface-2); }
 .wl-segmented button { padding: 5px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--wl-fg-2); font: inherit; font-size: 13px; cursor: pointer; }

@@ -53,7 +53,7 @@ export function SharesSection({ orgId, project }: { orgId: string; project: { id
     void act(() => del(s), reload);
   const columns: Column<Share>[] = [
     { key: "link", header: "Link", cell: (s) => <LinkCell s={s} /> },
-    { key: "for", header: "For", cell: (s) => s.note || "–" },
+    { key: "for", header: "For", cell: (s) => s.note || <span className="wl-muted">Not named</span> },
     ...(project ? [] : [{ key: "project", header: "Project", cell: (s: Share) => s.project ?? "" }]),
     { key: "made", header: "Shared", cell: (s) => fmtAgo(s.createdMs), className: "wl-nowrap" },
     { key: "ends", header: "Works until", cell: (s) => fmtDate(s.expiresMs), className: "wl-nowrap" },

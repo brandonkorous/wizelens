@@ -3,8 +3,7 @@ import { Plus, X } from "lucide-react";
 import { type DashChartType, type DashPanel, MAX_PANEL_METRICS } from "@wizeworks/lens-core";
 import { useMetricDetails } from "../../data/metricDetails";
 import { useMetricsModel } from "../../data/metrics";
-import { Select } from "../../ui/Controls";
-import { Field, FormRow } from "../../ui/Field";
+import { Field, FormRow, SelectField } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
 
 const TYPES: [DashChartType, string][] = [["line", "Lines"], ["area", "Areas"], ["bar", "Stacked bars"], ["number", "Numbers"], ["table", "Table"]];
@@ -24,9 +23,9 @@ function FilterFields({ p, set }: { p: DashPanel; set: (x: Partial<DashPanel>) =
   const add = (value: string) => set({ where: [...p.where.split(",").filter(Boolean), `${key}=${value}`].join(",") });
   return (
     <FormRow>
-      <Select label="Split lines by" value={p.group} options={[["", "Nothing (one line per series)"], ...(d?.groupKeys ?? []).map((k): [string, string] => [k, `By ${k}`])]} onChange={(g) => set({ group: g })} />
-      <Select label="Filter key" value={key} options={[["", "Filter by…"], ...keys.map((k): [string, string] => [k, k])]} onChange={setKey} />
-      {key && <Select label="Filter value" value="" options={[["", "Pick a value…"], ...(d?.values[key] ?? []).map((v): [string, string] => [v, v])]} onChange={(v) => v && (add(v), setKey(""))} />}
+      <SelectField label="Split lines by" value={p.group} options={[["", "Nothing (one line per series)"], ...(d?.groupKeys ?? []).map((k): [string, string] => [k, `By ${k}`])]} onChange={(g) => set({ group: g })} />
+      <SelectField label="Filter key" value={key} options={[["", "Filter by…"], ...keys.map((k): [string, string] => [k, k])]} onChange={setKey} />
+      {key && <SelectField label="Filter value" value="" options={[["", "Pick a value…"], ...(d?.values[key] ?? []).map((v): [string, string] => [v, v])]} onChange={(v) => v && (add(v), setKey(""))} />}
       <Field label="Only (key=value, comma-separated)" value={p.where} onChange={(e) => set({ where: e.target.value })} placeholder="All series" />
     </FormRow>
   );
@@ -47,13 +46,13 @@ export function PanelEditor({ initial, onSave, onCancel }: { initial: DashPanel;
       <form className="wl-form" onSubmit={submit}>
         <FormRow>
           <Field label="Title (optional)" value={p.title} onChange={(e) => set({ title: e.target.value })} placeholder="CPU by service" />
-          <Select label="Draw as" value={p.type} options={TYPES} onChange={(t) => set({ type: t })} />
-          <Select label="Width" value={String(p.width)} options={WIDTHS} onChange={(w) => set({ width: w === "2" ? 2 : 1 })} />
+          <SelectField label="Draw as" value={p.type} options={TYPES} onChange={(t) => set({ type: t })} />
+          <SelectField label="Width" value={String(p.width)} options={WIDTHS} onChange={(w) => set({ width: w === "2" ? 2 : 1 })} />
         </FormRow>
         {p.metrics.map((m, i) => (
           <FormRow key={i}>
             <Field label={`Metric ${i + 1}`} required list={NAMES_ID} value={m.name} onChange={(e) => setMetric(i, { name: e.target.value })} placeholder="process.cpu.utilization" />
-            <Select label="Statistic" value={m.stat} options={STATS} onChange={(s) => setMetric(i, { stat: s as DashPanel["metrics"][number]["stat"] })} />
+            <SelectField label="Statistic" value={m.stat} options={STATS} onChange={(s) => setMetric(i, { stat: s as DashPanel["metrics"][number]["stat"] })} />
             {p.metrics.length > 1 && <button type="button" className="wl-icon-btn" aria-label="Remove this metric" onClick={() => set({ metrics: p.metrics.filter((_, j) => j !== i) })}><X size={16} /></button>}
           </FormRow>
         ))}

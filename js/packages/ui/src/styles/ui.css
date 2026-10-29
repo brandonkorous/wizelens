@@ -50,6 +50,20 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-chart-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 22px; margin-top: 10px; font-size: 13px; color: var(--wl-fg-2); min-width: 0; }
 .wl-chart-legend span { display: inline-flex; align-items: center; gap: 7px; min-width: 0; overflow-wrap: anywhere; }
 .wl-chart-legend i { flex: none; width: 11px; height: 11px; border-radius: 3px; }
+.wl-chart-legend .wl-legend-text { display: inline; }
+/* A sentence under a chart that says why part of it is blank. */
+.wl-chart-note { margin: 10px 0 0; font-size: 14px; color: var(--wl-fg-2); }
+/* A line about the table above or below it: why a cell is empty, or what is left out. */
+.wl-table-note { margin: 0; padding: 10px 20px; border-bottom: 1px solid var(--wl-line); color: var(--wl-fg-2); font-size: 14px; }
+.wl-legend-more { display: none; }
+/* On a phone a long line name stays on one line; the chart's tip and the title show it whole. */
+@media (max-width: 560px) {
+  .wl-chart-legend { justify-content: flex-start; gap: 4px 14px; font-size: 12px; }
+  .wl-chart-legend > span { max-width: 100%; }
+  .wl-chart-legend .wl-legend-text { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wl-legend-folded > span:nth-of-type(n + 5) { display: none; }
+  .wl-legend-more { display: inline; font-size: 13px; }
+}
 .wl-chart-tip { position: absolute; z-index: 5; pointer-events: none; min-width: 140px; padding: 8px 10px; background: var(--wl-surface); border: 1px solid var(--wl-line); border-radius: 8px; box-shadow: var(--wl-shadow-pop); font-size: 12px; }
 .wl-chart-tip div { display: flex; justify-content: space-between; gap: 12px; }
 .wl-chart-tip strong { display: block; margin-bottom: 4px; }
@@ -86,6 +100,7 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-table td.wl-fill .wl-cell-icon, .wl-table td.wl-fill .wl-tagged { display: flex; min-width: 0; }
 .wl-table td.wl-fill > .wl-truncate { display: block; }
 .wl-cell-icon { display: inline-flex; align-items: center; gap: 10px; }
+.wl-cell-name { min-width: 0; overflow-wrap: anywhere; }
 .wl-cell-icon svg { width: 18px; height: 18px; color: var(--wl-fg-2); flex: none; }
 .wl-user-id { font-size: 12px; }
 
@@ -108,6 +123,8 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-text-tone-success { color: var(--wl-ok); }
 .wl-text-tone-warning { color: var(--wl-amber-text); }
 .wl-chip { display: inline-flex; align-items: center; padding: 3px 11px; border-radius: 999px; font-size: 13px; background: var(--wl-surface-2); color: var(--wl-fg-2); }
+/* A service chip in a desktop table stays on one line; in a phone card it may wrap. */
+@media (min-width: 561px) { .wl-table td > .wl-chip.wl-svc { white-space: nowrap; } }
 .wl-chip-blue { background: var(--wl-accent-soft); color: var(--wl-accent-text); }
 .wl-chip-green { background: var(--wl-ok-soft); color: var(--wl-ok); }
 .wl-chip-red { background: var(--wl-error-soft); color: var(--wl-error); }
@@ -120,6 +137,16 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-filter-chip:hover { border-color: var(--wl-accent); }
 .wl-select { height: 40px; padding: 0 34px 0 12px; border: 1px solid var(--wl-line-strong); border-radius: 9px; background-color: var(--wl-surface); background-image: linear-gradient(45deg, transparent 50%, var(--wl-muted) 50%), linear-gradient(135deg, var(--wl-muted) 50%, transparent 50%); background-position: right 17px center, right 12px center; background-size: 5px 5px; background-repeat: no-repeat; color: var(--wl-fg); font: inherit; appearance: none; cursor: pointer; min-width: 140px; }
 .wl-select.wl-small { height: 32px; min-width: 0; font-size: 13px; }
+button.wl-select { display: inline-flex; align-items: center; max-width: 100%; text-align: left; font-weight: 400; }
+.wl-select-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wl-select:disabled { opacity: 0.6; cursor: default; }
+.wl-select[aria-expanded="true"] { border-color: var(--wl-accent); }
+/* The one drop-down list: the dashboard's own surface and ink in both themes, never the system's. */
+.wl-listbox { z-index: 60; margin: 0; padding: 6px; list-style: none; overflow: auto; background: var(--wl-surface); border: 1px solid var(--wl-line); border-radius: 12px; box-shadow: var(--wl-shadow-pop); color: var(--wl-fg); font: 400 13px/1.4 var(--wl-sans); }
+.wl-option { display: flex; align-items: center; gap: 10px; min-height: 34px; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+.wl-option.wl-active { background: var(--wl-surface-2); }
+.wl-option[aria-selected="true"] { color: var(--wl-accent-text); font-weight: 600; }
+.wl-option svg { width: 14px; height: 14px; margin-left: auto; flex: none; }
 .wl-input { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid var(--wl-line-strong); border-radius: 9px; background: var(--wl-surface); color: var(--wl-muted); flex: 1; min-width: 200px; }
 .wl-input input { flex: 1; min-width: 0; border: 0; background: none; color: var(--wl-fg); font: inherit; outline: none; }
 .wl-input svg { width: 17px; height: 17px; }
@@ -162,7 +189,7 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-banner-warning { background: var(--wl-warn-soft); color: var(--wl-warn); }
 .wl-link-btn { border: 0; background: none; padding: 0; color: var(--wl-accent); cursor: pointer; font: inherit; }
 .wl-link-btn:hover { text-decoration: underline; }
-.wl-link-btn.wl-text-error { color: var(--wl-error); }
+.wl-link-btn.wl-text-error, .wl-btn.wl-text-error { color: var(--wl-error); }
 .wl-update-later { margin-left: 14px; color: var(--wl-accent-text); opacity: 0.8; }
 @media (max-width: 640px) { .wl-hide-sm { display: none; } }
 
@@ -172,29 +199,9 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 @keyframes wl-live-pulse { to { box-shadow: 0 0 0 7px transparent; } }
 @media (prefers-reduced-motion: reduce) { .wl-live-dot { animation: none; } }
 
-/* Detail pages (an error, an endpoint, a query, a route): a header panel with a back link, then panels down the page. */
-.wl-dpage > .wl-panel { margin: 0 0 18px; }
-.wl-dpage .wl-panel-flush .wl-table th:first-child, .wl-dpage .wl-panel-flush .wl-table td:first-child { padding-left: 20px; }
-.wl-dpage .wl-panel-flush .wl-table th:last-child, .wl-dpage .wl-panel-flush .wl-table td:last-child { padding-right: 20px; }
-.wl-dpage .wl-row-actions { align-items: center; }
-.wl-dhead .wl-back { display: flex; width: max-content; }
-.wl-dhead-title { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 22px; }
-.wl-dhead-title > svg { flex: none; color: var(--wl-fg-2); }
-.wl-dhead-name { min-width: 0; word-break: break-word; }
-.wl-dhead-name.wl-mono { font-size: 17px; }
-.wl-dhead-badge { font-size: 14px; font-weight: 600; letter-spacing: 0; }
-.wl-dhead-actions { margin-left: auto; display: inline-flex; flex-wrap: wrap; max-width: 100%; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; letter-spacing: 0; }
-.wl-dhead .wl-stats { margin-bottom: 0; }
-.wl-dpage .wl-cell-wide { max-width: 420px; }
-.wl-dpage .wl-cell-wide span { display: block; }
-.wl-issue-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 6px 0 12px; }
-.wl-issue-actions .wl-btn { height: 32px; padding: 0 12px; font-size: 13px; }
-.wl-dhead-actions .wl-issue-actions { margin: 0; font-size: 13px; font-weight: 400; }
-/* A page header's links and buttons wrap to a second line on a phone, never past the card's edge. */
-.wl-dhead-actions .wl-row-actions { flex-wrap: wrap; white-space: normal; row-gap: 8px; }
-.wl-alert-problem { display: block; width: max-content; max-width: 100%; margin-top: 4px; font-size: 13px; }
 .wl-release-line { stroke: var(--wl-accent); stroke-width: 1.25; stroke-dasharray: 3 3; opacity: 0.8; }
 .wl-outage-band { fill: var(--wl-red); opacity: 0.18; }
+.wl-outage-band.wl-outage-gap { fill: var(--wl-muted); opacity: 0.22; }
 .wl-outage-list { margin: 6px 0 0; padding-left: 18px; }
 .wl-banner > p { margin: 0; }
 .wl-release-label { fill: var(--wl-accent-text); font-size: 10px; font-weight: 600; }

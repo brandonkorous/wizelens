@@ -13,8 +13,43 @@
   .wl-filters:not(.wl-filters-open) > :is(.wl-select, .wl-check, .wl-btn:not(.wl-filters-toggle)) { display: none; }
   .wl-filters > :is(.wl-query, .wl-input) { order: -1; flex: 1 1 0; min-width: 0; }
   .wl-filters-open > .wl-select { flex: 1 1 calc(50% - 5px); min-width: 0; }
+  .wl-form-row-half > .wl-field { flex-basis: 100%; }
+  .wl-form-row > .wl-check { margin-top: 0; }
+  /* A detail page's numbers come before its buttons. */
+  .wl-dhead > .wl-dhead-actions { grid-column: 1 / -1; grid-row: auto; order: 1; justify-content: flex-start; margin: 14px 0 0; }
 }
-/* A row of tabs that scrolls sideways fades at the edge that hides more (ui/useScrollHint.ts). */
-[data-more="right"] { mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
-[data-more="left"] { mask-image: linear-gradient(to left, #000 calc(100% - 40px), transparent); }
-[data-more="left right"] { mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); }
+/* On a small phone the cards stay short, so the list starts on the first screen; the change line still says up or down. */
+@media (max-width: 560px) {
+  /* A narrow table stays a table: tighter cells, and headers may wrap. */
+  .wl-table-narrow :is(th, td) { padding: 8px; }
+  .wl-table-narrow th { white-space: normal; }
+  .wl-cmp-id { display: none; }
+  .wl-stat { padding: 10px 12px; }
+  .wl-stat-value { font-size: 20px; }
+  .wl-stat-spark { display: none; }
+  /* Facts under a title go two to a line, so they take half the height. */
+  .wl-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+  .wl-stats dd { overflow-wrap: anywhere; }
+  /* Errors and Database: the lists people act on come before the two charts. */
+  :is(.wl-errors-page, .wl-db-page) { display: flex; flex-direction: column; }
+  :is(.wl-errors-page, .wl-db-page) > .wl-grid-2 { order: 1; }
+  /* Bar lists: the name takes its own line in full, the bar and number go under it. */
+  .wl-bars { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
+  .wl-bars.wl-compact { grid-template-columns: auto minmax(0, 1fr); }
+  .wl-bar-row { row-gap: 4px; }
+  .wl-bar-row > .wl-truncate { grid-column: 1 / -1; white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+  .wl-bar-row > .wl-truncate .wl-dot-text { white-space: normal; overflow-wrap: anywhere; }
+}
+/* A row of tabs that scrolls sideways shows an arrow button at each edge that hides more (ui/ScrollRow.tsx). */
+.wl-scroll-row { position: relative; min-width: 0; }
+/* The arrows say there is more, so the row's own scroll bar is hidden. */
+.wl-scroll-row > :not(.wl-scroll-btn) { scrollbar-width: none; }
+.wl-scroll-row > :not(.wl-scroll-btn)::-webkit-scrollbar { display: none; }
+.wl-scroll-btn { position: absolute; top: 0; bottom: 0; z-index: 2; display: grid; place-items: center; width: 40px; padding: 0; border: 0; background: var(--wl-surface); color: var(--wl-fg); cursor: pointer; }
+.wl-scroll-left { left: 0; border-right: 1px solid var(--wl-line); box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.25); }
+.wl-scroll-right { right: 0; border-left: 1px solid var(--wl-line); box-shadow: -6px 0 8px -6px rgba(0, 0, 0, 0.25); }
+.wl-scroll-btn svg { width: 20px; height: 20px; }
+.wl-scroll-btn:hover { background: var(--wl-surface-2); }
+.wl-tabbar-row { margin-bottom: 14px; }
+.wl-tabbar-row > .wl-tabbar { margin-bottom: 0; }
+.wl-sections-row { align-self: stretch; }

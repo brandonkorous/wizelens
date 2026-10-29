@@ -124,6 +124,7 @@ span.wl-count{cursor:default}span.wl-count:hover{background:none;color:var(--wl-
 .wl-wf-track i{position:absolute;top:7px;height:10px;min-width:2px;border-radius:3px}
 .wl-wf-axis{position:relative;height:18px;color:var(--wl-main-muted);font-size:10.5px;border-bottom:1px solid var(--wl-main-line)}
 .wl-wf-axis span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
+@media (max-width:480px){.wl-wf{grid-template-columns:56px minmax(0,1fr)}.wl-wf>div:first-child{display:none}.wl-wf-name{grid-column:1/-1;white-space:normal;padding-top:6px}.wl-wf-name a,.wl-wf-name>span{flex-wrap:wrap}.wl-wf-head,.wl-wf-tail{overflow:visible;overflow-wrap:anywhere;min-width:0}.wl-wf-at{justify-content:flex-start}}
 .wl-wf-axis span:first-child{transform:none}.wl-wf-axis span:last-child:not(:first-child){transform:translateX(-100%)}
 .wl-wf-axis{container-type:inline-size}@container (max-width:240px){.wl-wf-axis span:not(:first-child):not(:last-child){display:none}}
 .wl-wf-grid{position:absolute;top:0;bottom:0;width:1px;background:var(--wl-main-line)}

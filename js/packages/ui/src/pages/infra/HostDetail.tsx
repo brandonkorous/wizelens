@@ -23,7 +23,7 @@ function Charts({ d }: { d: Detail }) {
   return (
     <>
       <div className="wl-grid wl-grid-2-even">
-        <LinePanel title="CPU Over Time" starts={s} lines={[{ label: "Busy", values: d.cpu, color: "var(--wl-blue)" }]} format={fmtShare} />
+        <LinePanel title="CPU Over Time" starts={s} lines={[{ label: "Busy", values: d.cpu, color: "var(--wl-blue)" }]} format={fmtShare} top={1} />
         <LinePanel title="Memory Over Time" starts={s} lines={[{ label: "Used", values: d.memory, color: "var(--wl-green)" }]} format={fmtBytes} />
       </div>
       <div className="wl-grid wl-grid-2-even">
@@ -62,7 +62,7 @@ function Body({ d, now }: { d: Detail; now: number }) {
         <InfraCard icon={Cpu} label="CPU" value={fmtShare(r.cpu)} note={r.cores ? `of ${fmtCores(r.cores)}` : "busy"} danger={(r.cpu ?? 0) >= 0.9} />
         <InfraCard icon={MemoryStick} label="Memory" value={fmtShare(r.mem)} note={fmtUsed(r.memUsed, r.memTotal)} danger={(r.mem ?? 0) >= 0.9} />
         <InfraCard icon={HardDrive} label="Fullest Disk" value={fmtShare(r.disk)} note={diskNote} danger={(r.disk ?? 0) >= 0.9} />
-        <InfraCard icon={Network} label="Network" value={fmtRate((r.netIn ?? 0) + (r.netOut ?? 0))} note={`${fmtRate(r.netIn)} in, ${fmtRate(r.netOut)} out`} />
+        <InfraCard icon={Network} label="Network" value={r.netIn === null && r.netOut === null ? DASH : fmtRate((r.netIn ?? 0) + (r.netOut ?? 0))} note={r.netIn === null && r.netOut === null ? "No network data from this host" : `${fmtRate(r.netIn)} in, ${fmtRate(r.netOut)} out`} />
       </div>
       <Charts d={d} />
       <ServicesPanel services={d.services} now={now} empty="No WizeLens or OpenTelemetry service reports this host (or a pod on it) as where it runs." />

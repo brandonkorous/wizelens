@@ -6,6 +6,7 @@ import { useServiceScope } from "../../data/prefs";
 import { setQuery, useRoute } from "../../routes";
 import { SearchInput, Select } from "../../ui/Controls";
 import { FilterChips } from "../../ui/FilterChips";
+import { FilterPanel } from "../../ui/FilterPanel";
 import { ServiceSelect } from "../../ui/ServiceSelect";
 import { useSearchText } from "../../ui/useSearchText";
 import { ModelState } from "../../ui/ModelState";
@@ -36,7 +37,7 @@ function Filters({ issues, releases }: { issues: boolean; releases: string[] }) 
   const [scope] = useServiceScope();
   const [text, setText] = useSearchText(q.get("q") ?? "", { page: null });
   return (
-    <Panel className="wl-filters">
+    <FilterPanel active={[q.get("service") ?? scope, q.get("status"), q.get("release"), q.get("area"), q.get("impact")]}>
       <ServiceSelect value={q.get("service") ?? scope} />
       {issues && <Select label="Status" value={q.get("status") ?? "unresolved"} onChange={(v) => setQuery({ status: v === "unresolved" ? null : v, key: null, page: null })} options={STATUSES} />}
       {releases.length > 0 && <Select label="Release" value={q.get("release") ?? ""} onChange={(v) => setQuery({ release: v || null, key: null, page: null })} options={[["", "Any Release"], ...releases.map((v): [string, string] => [v, `New in ${v}`])]} />}
@@ -44,7 +45,7 @@ function Filters({ issues, releases }: { issues: boolean; releases: string[] }) 
       <Select label="Impact" value={q.get("impact") ?? "all"} onChange={(v) => setQuery({ impact: v === "all" ? null : v, page: null })} options={[["all", "All Impacts"], ["high", "High"], ["medium", "Medium"], ["low", "Low"]]} />
       <SearchInput value={text} onChange={setText} placeholder="Search by query, endpoint, route, or component…" />
       <FilterChips chips={[["Endpoint", "endpoint", q.get("endpoint") ?? ""]]} />
-    </Panel>
+    </FilterPanel>
   );
 }
 

@@ -55,7 +55,7 @@ function RetentionRow({ name, url, canEdit, host, logs }: { name: string; url: s
   const { data, reload } = useApi<SettingsReply>(url);
   const [error, setError] = useState<string | null>(null);
   const { dialog, confirm } = useAsk();
-  if (!data) return <tr><td><strong>{name}</strong></td><td colSpan={logs ? 2 : 1} className="wl-muted">Loading…</td></tr>;
+  if (!data) return <tr><td><strong>{name}</strong></td><td colSpan={logs ? 2 : 1} className="wl-muted" data-label="Kept">Loading…</td></tr>;
   const kept = data.effective.retentionDays;
   const shorter = async (items: string, from: number, to: number) => to >= from || (await confirm(shortenAsk(`${items} in ${name}`, from, to)));
   const setTraces = async (d: number | null) => (await shorter("Traces", kept, d ?? data.defaults.retentionDays)) && void act(() => apiSend("PUT", url, settingsBody(data.settings, { retentionDays: d })), reload).then(setError);
@@ -63,8 +63,8 @@ function RetentionRow({ name, url, canEdit, host, logs }: { name: string; url: s
   return (
     <tr>
       <td>{dialog}<strong>{name}</strong>{error && <div className="wl-text-error wl-small" role="alert">{error}</div>}</td>
-      <td>{canEdit ? <DaysSelect label={`Traces kept in ${name}`} value={data.settings.retentionDays ?? null} max={data.defaults.retentionDays} fallback={`Like the ${host} (${days(data.defaults.retentionDays)})`} onChange={(d) => void setTraces(d)} /> : days(kept)}</td>
-      {logs && <td>{canEdit ? <DaysSelect label={`Logs kept in ${name}`} value={logs.value} max={logs.max} fallback={`Like traces (${days(kept)})`} onChange={(d) => void setLogs(d)} /> : logs.value === null ? `Like traces (${days(kept)})` : days(logs.value)}</td>}
+      <td data-label="Traces kept">{canEdit ? <DaysSelect label={`Traces kept in ${name}`} value={data.settings.retentionDays ?? null} max={data.defaults.retentionDays} fallback={`Like the ${host} (${days(data.defaults.retentionDays)})`} onChange={(d) => void setTraces(d)} /> : days(kept)}</td>
+      {logs && <td data-label="Logs kept">{canEdit ? <DaysSelect label={`Logs kept in ${name}`} value={logs.value} max={logs.max} fallback={`Like traces (${days(kept)})`} onChange={(d) => void setLogs(d)} /> : logs.value === null ? `Like traces (${days(kept)})` : days(logs.value)}</td>}
     </tr>
   );
 }
@@ -83,7 +83,7 @@ function ProjectsRetention({ org }: { org: OrgWithProjects | null }) {
     <Panel title="Each project" flush>
       {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
       <div className="wl-table-wrap">
-        <table className="wl-table">
+        <table className="wl-table wl-table-cards">
           <thead><tr><th>Project</th><th>Traces kept</th>{org && <th>Logs kept</th>}</tr></thead>
           <tbody>
             {shown.rows.map(([id, name]) => <RetentionRow key={id} name={name} url={sp.url(id)} canEdit={sp.canEdit(id)} host={org ? "organization" : "hub"} logs={logsOf(id)} />)}

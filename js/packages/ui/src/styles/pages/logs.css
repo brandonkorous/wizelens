@@ -6,6 +6,8 @@
 .wl-logs-page .wl-log-cat > * { display: block; max-width: 100%; text-align: left; }
 .wl-logs-page .wl-log-msg { min-width: 260px; word-break: break-word; }
 .wl-logs-page .wl-log-trace { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+/* In a phone card the category and request use the full line, ending at the right like the other values. */
+@media (max-width: 560px) { .wl-logs-page .wl-table-cards :is(.wl-log-cat, .wl-log-trace) { max-width: none; } .wl-logs-page .wl-table-cards .wl-log-cat > * { text-align: right; } }
 .wl-logs-page .wl-badge { text-transform: capitalize; }
 .wl-log-detail { display: flex; flex-direction: column; gap: 10px; max-width: 900px; font-size: 13px; }
 .wl-log-detail .wl-kv { font-family: var(--wl-mono); font-size: 12.5px; }
@@ -26,5 +28,11 @@
 .wl-log-metrics-slim { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 18px; padding: 10px 16px; font-size: 13px; }
 .wl-log-metrics-slim .wl-row-actions { display: flex; flex-wrap: wrap; gap: 14px; }
 .wl-log-metrics-slim svg { width: 14px; height: 14px; vertical-align: -2px; }
+/* On a phone the two actions share one line and the hint goes, so the lines start sooner. */
+@media (max-width: 560px) {
+  .wl-log-metrics-slim { padding: 4px 12px; }
+  .wl-log-metrics-slim > .wl-muted { display: none; }
+  .wl-log-metrics-slim .wl-row-actions { flex-wrap: nowrap; gap: 4px 18px; }
+}
 .wl-log-save { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-bottom: 14px; }
 .wl-log-save .wl-field { flex: 1; min-width: 220px; }

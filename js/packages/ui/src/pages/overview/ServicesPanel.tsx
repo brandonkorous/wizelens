@@ -7,6 +7,7 @@ import { hrefTo, navigate } from "../../routes";
 import { DotText, type Tone } from "../../ui/Badges";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
+import { breakable } from "../../ui/breakable";
 import { serviceHref } from "../services/serviceParts";
 
 const KIND_ICON: Record<ServiceKind, typeof Box> = { api: Box, web: Monitor, worker: Cog, queue: Inbox, database: Database, external: Globe };
@@ -29,7 +30,7 @@ function columns(range: TimeRange | null): Column<ServiceRow>[] {
         return (
           <span className="wl-cell-icon" title={s.detail ?? s.name}>
             <Icon aria-hidden="true" />
-            <span className="wl-truncate">{s.name}</span>
+            <span className="wl-cell-name">{breakable(s.name)}</span>
           </span>
         );
       },

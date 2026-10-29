@@ -3,9 +3,10 @@ import type { Release } from "@wizeworks/lens-core";
 import { fmtBucket, fmtTick } from "../format";
 import { setWindowPref } from "../data/period";
 import { useReleases } from "../data/releases";
-import { areaPath, linePath, maxOf, niceMax, ticksOf } from "./chartMath";
+import { areaPath, linePath, lonePoints, maxOf, niceMax, ticksOf } from "./chartMath";
 import { type ChartOutage, OutageBands } from "./OutageBands";
 import { releaseIndex, ReleaseMarks } from "./ReleaseMarks";
+import { ChartLegend } from "./ChartLegend";
 
 const spanOf = (starts: readonly number[]) => (starts.length > 1 ? starts[starts.length - 1]! - starts[0]! : 0);
 
@@ -26,10 +27,14 @@ export interface TimeChartProps {
   height?: number;
   /** Format for the axis and the tooltip. */
   format?: (v: number) => string;
+  /** A shorter format for the value axis only, when the unit is said once beside the chart. */
+  axisFormat?: (v: number) => string;
   /** Bars use their own scale, so a few big counts don't flatten the line. */
   separateBarScale?: boolean;
   /** Bars sit on top of each other instead of side by side. */
   stackBars?: boolean;
+  /** The axis reaches at least this high, as a share chart's 1 (100%). */
+  top?: number;
   /** Drag across the chart to show that span (a custom time range). On unless false. */
   zoom?: boolean;
   /** Release markers (versions that first sent data in the window). On unless false. */
@@ -62,31 +67,39 @@ interface Frame {
   max: number;
   slot: number;
   base: number;
+  /** Room left of the plot for the value labels: the longest label, about 7 px a letter at 12 px, at most 40% of the chart. */
+  left: number;
 }
+
+const fmtOf = (p: TimeChartProps) => p.axisFormat ?? p.format ?? ((v: number) => String(Math.round(v)));
+const ticksFor = (max: number) => ticksOf(max, max <= 4 && Number.isInteger(max) ? max : undefined);
 
 function frameOf(p: TimeChartProps, width: number, height: number): Frame {
   const n = Math.max(1, p.starts.length);
-  const slot = (width - PAD.left - PAD.right) / n;
   const lineMax = niceMax(maxOf((p.lines ?? []).map((s) => s.values)));
   const barMax = niceMax(maxOf(p.stackBars ? [stackTotals(p)] : (p.bars ?? []).map((s) => s.values)));
-  const max = p.separateBarScale || !p.lines?.length ? (p.lines?.length ? lineMax : barMax) : Math.max(lineMax, barMax);
+  // A chart with no bars must not take the empty bar scale's floor of 1, or 0.3 cores draws on a 0 to 1 axis.
+  const max = Math.max(p.top ?? 0, !p.lines?.length ? barMax : p.separateBarScale || !p.bars?.length ? lineMax : Math.max(lineMax, barMax));
   const base = height - PAD.bottom;
   const span = base - PAD.top;
   const barScale = p.separateBarScale ? barMax : max;
-  return { x: (i) => PAD.left + slot * (i + 0.5), y: (v) => base - (v / max) * span, yBar: (v) => base - (v / barScale) * span * (p.separateBarScale ? 0.85 : 1), max, slot, base };
+  const longest = Math.max(0, ...ticksFor(max).map((t) => fmtOf(p)(t).length));
+  const left = Math.min(Math.round(width * 0.4), Math.max(PAD.left, longest * 7 + 12));
+  const slot = (width - left - PAD.right) / n;
+  return { left, x: (i) => left + slot * (i + 0.5), y: (v) => base - (v / max) * span, yBar: (v) => base - (v / barScale) * span * (p.separateBarScale ? 0.85 : 1), max, slot, base };
 }
 
 function Axes({ p, f, width }: { p: TimeChartProps; f: Frame; width: number }) {
-  const fmt = p.format ?? ((v: number) => String(Math.round(v)));
+  const fmt = fmtOf(p);
   // As many time labels as fit (a label like "11:55 PM" needs about 72 px), from 2 up to 6.
-  const fit = Math.max(2, Math.min(6, Math.floor((width - PAD.left - PAD.right) / 72)));
+  const fit = Math.max(2, Math.min(6, Math.floor((width - f.left - PAD.right) / 72)));
   const every = Math.max(1, Math.ceil(p.starts.length / fit));
   return (
     <g>
-      {ticksOf(f.max, f.max <= 4 && Number.isInteger(f.max) ? f.max : undefined).map((t) => (
+      {ticksFor(f.max).map((t) => (
         <g key={t}>
-          <line className="wl-chart-grid" x1={PAD.left} x2={width - PAD.right} y1={f.y(t)} y2={f.y(t)} />
-          <text className="wl-chart-axis" x={PAD.left - 8} y={f.y(t) + 4} textAnchor="end">{fmt(t)}</text>
+          <line className="wl-chart-grid" x1={f.left} x2={width - PAD.right} y1={f.y(t)} y2={f.y(t)} />
+          <text className="wl-chart-axis" x={f.left - 8} y={f.y(t) + 4} textAnchor="end">{fmt(t)}</text>
         </g>
       ))}
       {p.starts.map((s, i) => i % every === 0 && (
@@ -133,6 +146,7 @@ function Plot({ p, f }: { p: TimeChartProps; f: Frame }) {
         <g key={s.label}>
           {(si === 0 || p.areas) && !s.dashed && <path d={areaPath(s.values, f.x, f.y, f.base)} fill={s.color} opacity={p.areas ? 0.18 : 0.08} />}
           <path d={linePath(s.values, f.x, f.y)} fill="none" stroke={s.color} strokeWidth={s.dashed ? 1.5 : 2} strokeLinejoin="round" strokeDasharray={s.dashed ? "4 4" : undefined} opacity={s.dashed ? 0.7 : 1} />
+          {!s.dashed && lonePoints(s.values).map((i) => <circle key={i} cx={f.x(i)} cy={f.y(s.values[i]!)} r={3} fill={s.color} />)}
         </g>
       ))}
     </g>
@@ -189,7 +203,7 @@ export function TimeChart(props: TimeChartProps) {
   const zoom = useZoom(props, f);
   const all = useReleases();
   const releases = props.releases === false ? [] : all;
-  const indexAt = (e: MouseEvent<SVGSVGElement>) => Math.floor((e.clientX - e.currentTarget.getBoundingClientRect().left - PAD.left) / f.slot);
+  const indexAt = (e: MouseEvent<SVGSVGElement>) => Math.floor((e.clientX - e.currentTarget.getBoundingClientRect().left - f.left) / f.slot);
   const onMove = (e: MouseEvent<SVGSVGElement>) => {
     const i = indexAt(e);
     const inside = i >= 0 && i < props.starts.length;
@@ -205,21 +219,14 @@ export function TimeChart(props: TimeChartProps) {
     <div className="wl-chart" ref={ref}>
       <svg width={width} height={height} className={zoom.on ? "wl-chart-zoom" : undefined} onMouseMove={onMove} onMouseDown={onDown} onMouseUp={zoom.finish} onMouseLeave={() => (setHover(null), zoom.setDrag(null))} role="img" aria-label={series.map((s) => s.label).join(", ")}>
         <Axes p={props} f={f} width={width} />
-        <OutageBands outages={props.outages ?? []} starts={props.starts} at={(i) => PAD.left + f.slot * i} top={PAD.top} base={f.base} />
+        <OutageBands outages={props.outages ?? []} starts={props.starts} at={(i) => f.left + f.slot * i} top={PAD.top} base={f.base} />
         <Plot p={props} f={f} />
-        <ReleaseMarks releases={releases} starts={props.starts} at={(i) => PAD.left + f.slot * i} top={PAD.top} base={f.base} />
+        <ReleaseMarks releases={releases} starts={props.starts} at={(i) => f.left + f.slot * i} top={PAD.top} base={f.base} />
         {zoom.band && <rect className="wl-chart-band" x={zoom.band.x} y={PAD.top} width={zoom.band.w} height={f.base - PAD.top} />}
         {hover !== null && <line x1={f.x(hover)} x2={f.x(hover)} y1={PAD.top} y2={f.base} stroke="var(--wl-line-strong)" />}
       </svg>
       {hover !== null && <Tip p={props} i={hover} left={Math.min(f.x(hover) + 12, width - 160)} releases={releases} />}
-      <div className="wl-chart-legend">
-        {series.map((s) => (
-          <span key={s.label}>
-            <i className={s.dashed ? "wl-legend-dashed" : undefined} style={{ background: s.dashed ? undefined : s.color, borderColor: s.color }} />
-            {s.label}
-          </span>
-        ))}
-      </div>
+      <ChartLegend series={series} />
     </div>
   );
 }

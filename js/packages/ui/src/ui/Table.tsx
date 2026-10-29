@@ -20,7 +20,14 @@ export interface Column<T> {
   hideSm?: boolean;
   /** What a screen reader hears for a blank header; "Actions" when not set. */
   srHeader?: string;
+  /** The column's name beside each value on a phone, when the header is not plain text. */
+  label?: string;
+  /** On a phone this cell, not the first, is the card's title. */
+  cardTitle?: boolean;
 }
+
+/** The name a phone shows beside a cell's value; none for the actions column. */
+const labelOf = <T,>(c: Column<T>): string | undefined => c.label ?? (typeof c.header === "string" && c.header !== "" ? c.header : undefined);
 
 export interface TableProps<T> {
   columns: Column<T>[];
@@ -39,6 +46,8 @@ export interface TableProps<T> {
   paging?: TablePaging;
   /** Sorted and paged by the server: `rows` is the page it sent. Header clicks and page buttons go to the URL. */
   served?: { info: PageInfo; noun: string };
+  /** A few short columns that fit a phone: it stays a table there instead of becoming cards. */
+  narrow?: boolean;
 }
 
 export interface TableSelect {
@@ -122,12 +131,12 @@ interface BodyProps<T> extends TableProps<T> {
   onSort: (key: string) => void;
 }
 
-function TableBody<T>({ columns, shown, rowKey, onRowClick, selectedKey, detail, select, sort, onSort }: BodyProps<T>) {
+function TableBody<T>({ columns, shown, rowKey, onRowClick, selectedKey, detail, select, sort, onSort, narrow }: BodyProps<T>) {
   const wrap = useRef<HTMLDivElement>(null);
   useScrollFocus(wrap, "table, scrolls sideways");
   return (
     <div className="wl-table-wrap" ref={wrap}>
-      <table className="wl-table">
+      <table className={`wl-table${narrow ? " wl-table-narrow" : " wl-table-cards"}`}>
         <thead>
           <tr>
             {select && <PickAll keys={shown.map(rowKey).filter((k) => select.pickable?.(k) ?? true)} select={select} />}
@@ -146,7 +155,7 @@ function TableBody<T>({ columns, shown, rowKey, onRowClick, selectedKey, detail,
                 <tr className={cls || undefined} {...(onRowClick ? pressable(() => onRowClick(row)) : {})}>
                   {select && <PickOne id={key} select={select} />}
                   {columns.map((c) => (
-                    <td key={c.key} className={[c.num ? "wl-num" : "", c.hideSm ? "wl-hide-sm" : "", c.className ?? ""].join(" ").trim() || undefined}>
+                    <td key={c.key} data-label={labelOf(c)} className={[c.num ? "wl-num" : "", c.hideSm ? "wl-hide-sm" : "", c.cardTitle ? "wl-card-title" : "", c.className ?? ""].join(" ").trim() || undefined}>
                       {c.cell(row)}
                     </td>
                   ))}

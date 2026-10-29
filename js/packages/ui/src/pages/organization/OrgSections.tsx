@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
-import type { OrgWithProjects } from "../../data/account";
+import { type OrgWithProjects, useAccount } from "../../data/account";
+import { kept } from "../../data/accountPrefs";
 import { useHost, useRange } from "../../data/host";
 import { type ClockChoice, type TimeZoneChoice, useClockPref, useTimeZonePref } from "../../data/period";
 import { type Theme, useTheme } from "../../data/prefs";
@@ -22,24 +23,25 @@ const THEMES: [Theme, string][] = [
 const ZONES: [TimeZoneChoice, string][] = [["local", "My computer's time zone"], ["utc", "UTC"]];
 const CLOCKS: [ClockChoice, string][] = [["12", "12-hour (2:05 PM)"], ["24", "24-hour (14:05)"]];
 
-/** How the dashboard looks and opens for you, saved in this browser. */
+/** How the dashboard looks and opens for you: on the account when signed in to a cloud, else in this browser. */
 export function PreferencesSection() {
   const [theme, setTheme] = useTheme();
   const [range, setRange] = useRange();
   const [zone, setZone] = useTimeZonePref();
   const [clock, setClock] = useClockPref();
+  const signedIn = useAccount()?.signedIn === true;
   const ranges = useHost().ranges.map((r): [TimeRange, string] => [r, TIME_RANGES[r].label]);
   return (
     <>
-      <SectionHead title="Preferences" description="How the dashboard looks and opens for you. Saved in this browser only." />
+      <SectionHead title="Preferences" description={`How the dashboard looks and opens for you. ${signedIn ? "Saved to your account: every browser you sign in on uses them." : "Saved in this browser only."}`} />
       <Panel>
         <FormRow>
-          <SelectField label="Theme" value={theme} options={THEMES} onChange={setTheme} />
-          <SelectField label="Default time range" value={range} options={ranges} onChange={setRange} hint="Pages open with this range." />
+          <SelectField label="Theme" value={theme} options={THEMES} onChange={kept("theme", setTheme)} />
+          <SelectField label="Default time range" value={range} options={ranges} onChange={kept("range", setRange)} hint="Pages open with this range." />
         </FormRow>
         <FormRow>
-          <SelectField label="Time zone" value={zone} options={ZONES} onChange={setZone} hint="Times and charts show in this zone." />
-          <SelectField label="Clock" value={clock} options={CLOCKS} onChange={setClock} />
+          <SelectField label="Time zone" value={zone} options={ZONES} onChange={kept("tz", setZone)} hint="Times and charts show in this zone." />
+          <SelectField label="Clock" value={clock} options={CLOCKS} onChange={kept("clock", setClock)} />
         </FormRow>
       </Panel>
     </>

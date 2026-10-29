@@ -6,6 +6,7 @@ import { usePageModel } from "../../data/models";
 import { useUptime } from "../../data/uptime";
 import { hrefTo, navigate } from "../../routes";
 import { Empty, Panel } from "../../ui/Panel";
+import { breakable } from "../../ui/breakable";
 import { StatCard } from "../../ui/StatCard";
 import { TimeChart } from "../../ui/TimeChart";
 import { useAsk } from "../../ui/Dialog";
@@ -20,7 +21,7 @@ const FAIL_BARS = "color-mix(in srgb, var(--wl-red) 45%, transparent)";
 
 function statsRows(c: UptimeCheckView, nowMs: number): [string, ReactNode][] {
   return [
-    ["URL", <code key="u">{c.method} {c.url}</code>],
+    ["URL", <code key="u">{c.method} {breakable(c.url)}</code>],
     ["Runs", c.intervalMin === 1 ? "Every minute" : `Every ${c.intervalMin} minutes`],
     ["Expects", `${c.expectStatus}${c.expectBody ? ` and "${c.expectBody}"` : ""}`],
     ["Last check", c.lastRunMs ? `${fmtAgo(c.lastRunMs, nowMs)} · ${c.lastStatus ?? "no answer"} · ${fmtMs(c.lastDurationMs)}` : "Not yet"],
@@ -51,9 +52,22 @@ function Header({ c, nowMs, actions }: { c: UptimeCheckView; nowMs: number; acti
   );
 }
 
-function Charts({ c, model }: { c: UptimeCheckView; model: UptimeModel | null }) {
+const WINDOW_MS = { "24h": 86_400_000, "7d": 7 * 86_400_000, "30d": 30 * 86_400_000 } as const;
+
+/** How long a young check has run, for a window it has not filled yet ("6 h", "3 days"). */
+const ranFor = (ms: number) => (ms < 3_600_000 ? `${Math.max(1, Math.round(ms / 60_000))} min` : ms < 86_400_000 ? `${Math.round(ms / 3_600_000)} h` : `${Math.round(ms / 86_400_000)} days`);
+
+function windowNote(c: UptimeCheckView, w: keyof typeof WINDOW_MS, nowMs: number): string {
+  if (c.uptime[w] === null) return "No runs yet";
+  const tone = toneOfUptime(c.uptime[w]) === "success" ? "On target" : "Below 99.9%";
+  const age = nowMs - c.createdMs;
+  // A check younger than the window has not filled it, so the card says how much it covers.
+  return age < WINDOW_MS[w] ? `${tone} · ${ranFor(age)} measured so far` : tone;
+}
+
+function Charts({ c, model, nowMs }: { c: UptimeCheckView; model: UptimeModel | null; nowMs: number }) {
   const s = statsOf(model, c.id);
-  const card = (w: "24h" | "7d" | "30d", label: string) => <StatCard icon={HeartPulse} label={label} value={fmtUptime(c.uptime[w])} change={null} upIsGood compareLabel="" note={c.uptime[w] === null ? "No runs yet" : toneOfUptime(c.uptime[w]) === "success" ? "On target" : "Below 99.9%"} danger={toneOfUptime(c.uptime[w]) === "danger"} />;
+  const card = (w: keyof typeof WINDOW_MS, label: string) => <StatCard icon={HeartPulse} label={label} value={fmtUptime(c.uptime[w])} change={null} upIsGood compareLabel="" note={windowNote(c, w, nowMs)} danger={toneOfUptime(c.uptime[w]) === "danger"} />;
   return (
     <>
       <div className="wl-grid wl-grid-stats">
@@ -101,7 +115,7 @@ export function CheckDetail({ id }: { id: string }) {
       <Header c={c} nowMs={api.data.nowMs} actions={actions} />
       {note && <div className="wl-banner wl-banner-info">{note}</div>}
       {editing && <CheckForm initial={c} onSave={save} onCancel={() => setEditing(false)} />}
-      <Charts c={c} model={model} />
+      <Charts c={c} model={model} nowMs={api.data.nowMs} />
       <IncidentsPanel incidents={api.data.incidents.filter((i) => i.checkId === id)} nowMs={api.data.nowMs} withCheck={false} />
     </div>
   );

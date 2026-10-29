@@ -4,6 +4,7 @@ import { endpointScope, type ErrorGroup, errorGroupDoc, errorGroupLabel, errorSc
 import { fmtCount, fmtDateTime } from "../../format";
 import { errorHref, hrefTo, setQuery } from "../../routes";
 import { Badge } from "../../ui/Badges";
+import { breakable } from "../../ui/breakable";
 import { IssueActions, IssueBadge } from "../../ui/IssueControls";
 import { Empty, KeyValues, Panel, TabBar } from "../../ui/Panel";
 import { ErrorTags, RequestContext } from "./ErrorDetailTabs";
@@ -69,7 +70,7 @@ function GroupDetails({ group, info }: { group: ErrorGroup; info: IssueInfo | un
     <>
       <div className="wl-side-head">
         <h2 ref={title} tabIndex={-1} className="wl-err-title">
-          {group.type}: {group.message}
+          {breakable(group.type)}: {group.message}
         </h2>
         <Badge tone={isBotOnly(group) ? "neutral" : "danger"}>{errorGroupLabel(group)}</Badge>
         <IssueBadge info={info} />

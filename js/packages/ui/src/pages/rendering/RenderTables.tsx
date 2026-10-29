@@ -18,11 +18,11 @@ const hint = (text: string, title: string) => <span title={title}>{text}</span>;
 const ROUTE_COLUMNS: Column<RouteRow>[] = [
   { key: "route", header: "Route", cell: (r) => <span className="wl-mono">{r.route}</span>, sort: (r) => r.route },
   { key: "views", header: "Page Views", num: true, cell: (r) => fmtCount(r.views), sort: (r) => r.views },
-  { key: "render", header: hint("Avg. Render Time", "Full page loads and in-app route changes"), num: true, cell: (r) => fmtMs(r.avgRenderMs), sort: (r) => r.avgRenderMs ?? -1 },
-  { key: "ssr", header: hint("Server Response", `${LOADS_ONLY}: the server's time to send the first byte`), num: true, cell: (r) => fmtMs(r.avgSsrMs), sort: (r) => r.avgSsrMs ?? -1 },
-  { key: "hydration", header: hint("Hydration Time", LOADS_ONLY), num: true, cell: (r) => fmtMs(r.avgHydrationMs), sort: (r) => r.avgHydrationMs ?? -1 },
-  { key: "lcp", header: hint("LCP", "Largest Contentful Paint. " + LOADS_ONLY), num: true, cell: (r) => fmtMs(r.avgLcpMs), sort: (r) => r.avgLcpMs ?? -1 },
-  { key: "images", header: hint("Large Images", "Images larger than they are shown"), num: true, cell: (r) => (r.largeImages ? fmtCount(r.largeImages) : "–"), sort: (r) => r.largeImages },
+  { key: "render", label: "Avg. Render Time", header: hint("Avg. Render Time", "Full page loads and in-app route changes"), num: true, cell: (r) => fmtMs(r.avgRenderMs), sort: (r) => r.avgRenderMs ?? -1 },
+  { key: "ssr", label: "Server Response", header: hint("Server Response", `${LOADS_ONLY}: the server's time to send the first byte`), num: true, cell: (r) => fmtMs(r.avgSsrMs), sort: (r) => r.avgSsrMs ?? -1 },
+  { key: "hydration", label: "Hydration Time", header: hint("Hydration Time", LOADS_ONLY), num: true, cell: (r) => fmtMs(r.avgHydrationMs), sort: (r) => r.avgHydrationMs ?? -1 },
+  { key: "lcp", label: "LCP", header: hint("LCP", "Largest Contentful Paint. " + LOADS_ONLY), num: true, cell: (r) => fmtMs(r.avgLcpMs), sort: (r) => r.avgLcpMs ?? -1 },
+  { key: "images", label: "Large Images", header: hint("Large Images", "Images larger than they are shown"), num: true, cell: (r) => (r.largeImages ? fmtCount(r.largeImages) : "–"), sort: (r) => r.largeImages },
   { key: "cls", header: "Layout Shift", num: true, cell: (r) => (r.avgCls === null ? "–" : r.avgCls.toFixed(2)), sort: (r) => r.avgCls ?? -1 },
   {
     key: "issue",
@@ -68,7 +68,7 @@ export function ComponentTable({ components, paging, hasReact }: { components: C
     <Empty title="No component renders in this range" />
   ) : (
     <Empty title="No React render data">
-      Add <code className="wl-mono">import "@wizeworks/lens-react/install";</code> as the first line of main.tsx. Component timings work in React development builds.
+      No page in this range sent React render data, so this table stays empty for apps built without React. In a React app, add <code className="wl-mono">import "@wizeworks/lens-react/install";</code> as the first line of main.tsx. Component timings work in React development builds.
     </Empty>
   );
   return (

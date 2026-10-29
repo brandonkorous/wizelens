@@ -7,7 +7,7 @@
 .wl-tour-progress { position: absolute; left: 0; right: 0; top: -2px; height: 2px; background: var(--wl-blue); transform-origin: 0 50%; }
 .wl-tour-frame { border-radius: var(--wl-radius); border: 1px solid var(--wl-line); background: var(--wl-paper); overflow: hidden; box-shadow: var(--wl-shadow-pop); }
 .wl-tour-bar { display: flex; align-items: center; height: 46px; padding: 0 16px; border-bottom: 1px solid var(--wl-line); }
-.wl-tour-shot { position: relative; aspect-ratio: 1538 / 784; background: var(--wl-white); }
+.wl-tour-shot { position: relative; aspect-ratio: 1538 / 784; background: var(--wl-surface); }
 .wl-tour-shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
 
 @media (max-width: 960px) {

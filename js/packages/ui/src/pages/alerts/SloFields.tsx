@@ -1,6 +1,5 @@
 import { useApi } from "../../data/useApi";
-import { Select } from "../../ui/Controls";
-import { FormRow } from "../../ui/Field";
+import { FormRow, SelectField } from "../../ui/Field";
 import { type SlosData, useSlosApi } from "../slos/sloTypes";
 import type { RuleDraft } from "./AlertForm";
 
@@ -12,7 +11,7 @@ export function SloFields({ r, set }: { r: RuleDraft; set: <K extends keyof Rule
   return (
     <>
       <FormRow>
-        <Select label="SLO" value={r.sloId} options={options} onChange={set("sloId")} />
+        <SelectField label="SLO" value={r.sloId} options={options} onChange={set("sloId")} />
       </FormRow>
       <p className="wl-muted wl-small">A burn rate of 1 spends the error budget exactly over the SLO's window. 14.4 over 1 hour spends 2% of a 30-day budget: a page. 6 over 6 hours is a ticket.</p>
     </>

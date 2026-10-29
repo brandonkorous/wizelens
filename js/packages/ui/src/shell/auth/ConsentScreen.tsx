@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { type AccountState, currentProject, errorText, isNotFresh, signOut } from "../../data/account";
 import { allowApp, finishConsent, oauthRequest, type PublicClient, publicClient } from "../../data/oauth";
+import { Dropdown } from "../../ui/Dropdown";
 import { AuthCard } from "./AuthForm";
 
 type Scope = "all" | "some";
@@ -88,12 +89,10 @@ export function ConsentScreen({ query, state }: { query: string; state: AccountS
     <AuthCard title={`Connect ${name}`} intro={`${name} wants to read your WizeLens data. Choose what it may see.`}>
       <WhatItGets name={name} returnHost={returnHost} />
       {orgs.length > 1 && (
-        <label className="wl-auth-field">
-          <span>Organization</span>
-          <select className="wl-select" value={org.id} onChange={(e) => pickOrg(e.target.value)}>
-            {orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-          </select>
-        </label>
+        <div className="wl-auth-field">
+          <span id="wl-consent-org">Organization</span>
+          <Dropdown value={org.id} options={orgs.map((o): [string, string] => [o.id, o.name])} onChange={pickOrg} labelledBy="wl-consent-org" />
+        </div>
       )}
       <fieldset className="wl-consent-scope">
         <legend>Projects in {org.name}</legend>

@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { hrefTo } from "../../routes";
 import { CopyButton } from "../../ui/Badges";
+import { breakable } from "../../ui/breakable";
 import { AddButton, ImportButton, SectionHead } from "../../ui/Sections";
 import { ImportProjectsForm } from "../organization/ImportProjects";
 import { canManage } from "../organization/orgTypes";
@@ -49,9 +50,9 @@ export function ReadKeysSection({ ctx }: { ctx: OrgCtx }) {
   const mcp = `${new URL("../", window.location.href).href.replace(/\/$/, "")}/_wizelens/mcp`;
   const description = (
     <>
-      Read keys let an AI agent or a script read the projects you pick, read-only. Send one as Authorization: Bearer &lt;key&gt; to{" "}
-      <code className="wl-mono">{mcp}</code> <CopyButton text={mcp} label="Copy the MCP address" />. People who connect an AI app with their own sign-in show under{" "}
-      <a href={hrefTo("people", ["apps"])}>Connected apps</a>.
+      Read keys let an AI agent or a script read the projects you pick, read-only. People who connect an AI app with their own sign-in show under{" "}
+      <a href={hrefTo("people", ["apps"])}>Connected apps</a>. Send a key as <code className="wl-mono">Authorization: Bearer &lt;key&gt;</code> to{" "}
+      <code className="wl-mono">{breakable(mcp)}</code> <CopyButton text={mcp} label="Copy the MCP address" />
     </>
   );
   return <KeysOf ctx={ctx} kinds={READING} title="AI read keys" description={description} newLabel="New read key" />;

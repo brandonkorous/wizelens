@@ -81,7 +81,8 @@ describe("inputs and format", () => {
   });
 
   it("formats units", () => {
-    expect([fmtMetric(0.256, "1"), fmtMetric(1536, "By/s"), fmtMetric(0.0042, "s"), fmtMetric(12, "{request}/s"), fmtMetric(null, "s")]).toEqual(["25.6%", "1.50 KB/s", "4.20 ms", "12.0 request/s", "—"]);
+    expect([fmtMetric(0.256, "1"), fmtMetric(1536, "By/s"), fmtMetric(0.0042, "s"), fmtMetric(12, "{request}/s"), fmtMetric(null, "s"), fmtMetric(3, "{work_item}")]).toEqual(["25.6%", "1.50 KB/s", "4.20 ms", "12 requests/s", "–", "3 work items"]);
+    expect([fmtMetric(1, "{thread}"), fmtMetric(0.012, "{match_attempt}/s"), fmtMetric(2.5, "{bytes}"), fmtMetric(4, "{cpu}"), fmtMetric(50, "Hz")]).toEqual(["1 thread", "0.012 match attempts/s", "2.50 bytes", "4 cpus", "50 Hz"]);
     expect([metricAreaOf("dotnet.gc.collections"), metricAreaOf("kestrel.active_connections"), metricAreaOf("orders.placed")]).toEqual(["runtime", "http", "custom"]);
   });
 

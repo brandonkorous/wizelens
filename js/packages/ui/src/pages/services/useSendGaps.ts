@@ -14,7 +14,7 @@ export function useSendGaps(name: string, window: TimeWindow): ChartOutage[] {
   const on = useHost().has("accounts") && !isAllProjects();
   const query = `?service=${encodeURIComponent(rawService(name))}&from=${Math.floor(window.from)}&to=${Math.ceil(window.to)}`;
   const { data } = useApi<{ gaps: SendGap[] }>(on ? cloudResource("service-gaps", query) : null);
-  return (data?.gaps ?? []).map((g) => ({ startMs: g.startMs, endMs: g.endMs, label: `${name} not sending` }));
+  return (data?.gaps ?? []).map((g) => ({ startMs: g.startMs, endMs: g.endMs, label: `${name} not sending`, tone: "gap" as const }));
 }
 
 /** The series with no value in buckets wholly inside a gap: the line breaks there, not drops to zero. */

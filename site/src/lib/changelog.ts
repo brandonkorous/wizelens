@@ -15,6 +15,13 @@ function idOf(version: string): string {
   return version.toLowerCase() === "unreleased" ? "unreleased" : `v${version.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`;
 }
 
+// The newest released version ("0.3.0-alpha.14"), for pages that name the current release.
+export async function latestVersion(): Promise<string | null> {
+  const raw = await readFile(SOURCE, "utf8");
+  for (const m of raw.matchAll(/^## \[([^\]]+)\]/gm)) if (m[1]!.toLowerCase() !== "unreleased") return m[1]!;
+  return null;
+}
+
 // Reads CHANGELOG.md from the repo and splits it into one entry per release, newest first; groups stay h3.
 export async function loadReleases(): Promise<Release[]> {
   const raw = await readFile(SOURCE, "utf8");

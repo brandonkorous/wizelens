@@ -30,5 +30,7 @@ export type Stack = {
   docs: { label: string; href: string }[];
   /** How many of the first docs are setup guides, one hero button each. Default 1. */
   setups?: number;
+  /** Its packages (npm, NuGet) carry the WizeLens release number, so the page names the latest release. */
+  release?: true;
   shot?: Shot;
 };

@@ -16,7 +16,7 @@ import "../../styles/pages/dashboards.css";
 const COLUMNS: Column<SavedItem>[] = [
   { key: "name", header: "Dashboard", cell: (d) => <strong>{d.name}</strong> },
   { key: "charts", header: "Charts", num: true, cell: (d) => d.panels.length },
-  { key: "shared", header: "", srHeader: "Shared with", cell: (d) => (d.shared ? <Badge tone="info">Shared</Badge> : <Badge tone="neutral">Only you</Badge>) },
+  { key: "shared", header: "", srHeader: "Shared with", cell: (d) => (d.shared ? <Badge tone="info">Shared with the team</Badge> : <Badge tone="neutral">Only you</Badge>) },
   { key: "by", header: "Made by", cell: (d) => d.ownerName || "–" },
   { key: "updated", header: "Changed", className: "wl-nowrap", cell: (d) => fmtAgo(d.updatedMs) },
 ];

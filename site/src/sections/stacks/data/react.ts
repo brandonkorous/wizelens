@@ -2,6 +2,7 @@ import type { Stack } from "../types";
 
 export const REACT: Stack = {
   slug: "react",
+  release: true,
   name: "React and Next.js",
   title: "WizeLens for React and Next.js",
   seoTitle: "WizeLens for React and Next.js: from the click to the database",

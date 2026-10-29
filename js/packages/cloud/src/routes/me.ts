@@ -1,5 +1,6 @@
 import type { Ctx } from "../app.js";
-import { blockingOrgs, ownedOrgs } from "../auth/delete-user.js";
+import { blockingOrgs, ownedOrgs, soloOrgs } from "../auth/delete-user.js";
+import { uiPrefsOf } from "../repo/ui-prefs.js";
 import { sessionOf } from "../auth/principal.js";
 import { fail, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
@@ -37,18 +38,25 @@ async function me(ctx: Ctx): Promise<void> {
   const base = { signedIn: !!s, needsSetup: (await userCount(ctx.app.db)) === 0, signup: ctx.app.config.signup, mail: ctx.app.mailer.live, sso: await ssoReady(ctx), billing: ctx.app.billing.on };
   if (!s) return sendJson(ctx.res, 200, base);
   const owned = await ownedOrgs(ctx.app.db, s.user.id);
-  sendJson(ctx.res, 200, { ...base, user: s.user, sessionId: s.sessionId, orgs: await orgsWithProjects(ctx, s.user.id), blockingOrgs: blockingOrgs(owned).map((o) => o.name) });
+  sendJson(ctx.res, 200, { ...base, user: s.user, sessionId: s.sessionId, orgs: await orgsWithProjects(ctx, s.user.id), blockingOrgs: blockingOrgs(owned).map((o) => o.name), soloOrgs: soloOrgs(owned).map((o) => o.name), prefs: await uiPrefsOf(ctx.app.db, s.user.id) });
 }
 
 /** Who sent an invite and for which email, so the sign-up form can show it. The id is the link's secret. */
 async function invitePreview(ctx: Ctx): Promise<void> {
-  const [row] = await ctx.app.db.query<{ orgName: string; email: string; role: string; inviter: string }>(
-    `SELECT o.name AS "orgName", i.email, i.role, u.name AS inviter FROM invites i JOIN orgs o ON o.id = i.org_id JOIN users u ON u.id = i.inviter_id
-     WHERE i.id = $1 AND i.status = 'pending' AND i.expires_at > now()`,
+  const [row] = await ctx.app.db.query<{ orgName: string; email: string; role: string; inviter: string; status: string; live: boolean }>(
+    `SELECT o.name AS "orgName", i.email, i.role, u.name AS inviter, i.status, i.expires_at > now() AS live
+     FROM invites i JOIN orgs o ON o.id = i.org_id JOIN users u ON u.id = i.inviter_id WHERE i.id = $1`,
     [ctx.params.id!],
   );
-  if (!row) return fail(404, "This invite link is not valid any more.");
-  sendJson(ctx.res, 200, row);
+  if (!row) return fail(404, "This invite link is not valid any more. Ask your team for a new one.");
+  if (row.status !== "pending" || !row.live) return fail(410, deadInvite(row));
+  sendJson(ctx.res, 200, { orgName: row.orgName, email: row.email, role: row.role, inviter: row.inviter });
+}
+
+/** Why an invite stopped working, and who can send a new one. */
+function deadInvite(row: { orgName: string; inviter: string; status: string }): string {
+  const why = row.status === "accepted" ? "was already used" : row.status === "pending" ? "expired (invites last 7 days)" : "was withdrawn";
+  return `This invite to ${row.orgName} ${why}. Ask ${row.inviter} for a new one.`;
 }
 
 /** Invites waiting for the signed-in person's email, once the email is proven (confirmed, or by single sign-on). */

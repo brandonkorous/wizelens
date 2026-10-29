@@ -22,6 +22,7 @@ import { TimeChart } from "../../ui/TimeChart";
 import { serviceHref } from "../services/serviceParts";
 import { ErrorStack } from "./ResolvedStack";
 import { errorScopes } from "./ErrorDetails";
+import { breakable } from "../../ui/breakable";
 import "../../styles/pages/errors.css";
 
 const OCCURRENCE_COLUMNS: Column<RequestItem>[] = [
@@ -73,7 +74,7 @@ const alertFields = (g: ErrorGroup): Record<string, string> =>
 function Body({ m }: { m: ErrorPageModel }) {
   const g = m.group!;
   const tags = useGroupTags()("errors", errorGroupDoc(g));
-  const stats: [string, ReactNode][] = [["Service", <a key="s" href={serviceHref(g.service)}>{g.service}</a>], ["Type", g.type], ["First seen", fmtDateTime(m.issue?.firstSeenMs || g.firstSeenMs)], ["Last seen", fmtDateTime(g.lastSeenMs)]];
+  const stats: [string, ReactNode][] = [["Service", <a key="s" href={serviceHref(g.service)}>{g.service}</a>], ["Type", breakable(g.type)], ["First seen", fmtDateTime(m.issue?.firstSeenMs || g.firstSeenMs)], ["Last seen", fmtDateTime(g.lastSeenMs)]];
   const badge = (
     <>
       <Badge tone={isBotOnly(g) ? "neutral" : "danger"}>{errorGroupLabel(g)}</Badge> <IssueBadge info={m.issue ?? undefined} /> <TagChips tags={tags} />

@@ -53,6 +53,18 @@ internal sealed class TestApp : IAsyncDisposable
         return trace!;
     }
 
+    /// <summary>The kept spans that match, once <paramref name="count"/> have arrived: a server span can end just after its client has the answer.</summary>
+    public async Task<List<Span>> SpansAsync(Func<Span, bool> match, int count)
+    {
+        var until = DateTime.UtcNow.AddSeconds(5);
+        while (true)
+        {
+            var spans = Store.All().SelectMany(t => t.Spans).Where(match).ToList();
+            if (spans.Count >= count || DateTime.UtcNow > until) return spans;
+            await Task.Delay(20);
+        }
+    }
+
     public static Span Root(Trace trace) => Assert.Single(trace.Spans, s => s.Category == SpanCategories.HttpServer);
 
     public async ValueTask DisposeAsync() => await App.DisposeAsync();

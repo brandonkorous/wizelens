@@ -1,6 +1,7 @@
 import { ChevronDown, ExternalLink, Monitor, Moon, Sun } from "lucide-react";
 import type { Source } from "../data/sources";
 import { fmtKept, MODE_LABEL, useHost } from "../data/host";
+import { kept } from "../data/accountPrefs";
 import { type Theme, useTheme } from "../data/prefs";
 import { Menu } from "./Menu";
 
@@ -60,7 +61,8 @@ const THEME_ICON = { light: Sun, dark: Moon, system: Monitor };
 
 /** `className` "wl-hide-phone" when the account menu carries the theme on phones (see ThemeItem). */
 export function ThemeToggle({ className = "" }: { className?: string }) {
-  const [theme, setTheme] = useTheme();
+  const [theme, set] = useTheme();
+  const setTheme = kept("theme", set);
   const Icon = THEME_ICON[theme];
   return (
     <button type="button" className={`wl-icon-btn ${className}`.trim()} onClick={() => setTheme(NEXT[theme])} title={`Theme: ${theme}. Click for ${NEXT[theme]}.`} aria-label={`Theme: ${theme}`}>
@@ -71,7 +73,8 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
 
 /** The theme in the account menu, on phones only: the top bar has no room for its own button there. */
 export function ThemeItem() {
-  const [theme, setTheme] = useTheme();
+  const [theme, set] = useTheme();
+  const setTheme = kept("theme", set);
   const Icon = THEME_ICON[theme];
   return (
     <button type="button" className="wl-menu-item wl-phone-only" onClick={() => setTheme(NEXT[theme])}>

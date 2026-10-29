@@ -20,16 +20,18 @@
 .wl-sections-body > .wl-banner { margin-bottom: 18px; }
 @media (max-width: 900px) {
   .wl-sections { grid-template-columns: minmax(0, 1fr); gap: 18px; }
-  .wl-sections-nav { position: static; display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+  .wl-sections-nav { position: static; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
   .wl-sections-nav a { flex: none; padding: 7px 12px; border: 1px solid var(--wl-line); background: var(--wl-surface); }
   .wl-sections-nav .wl-chip-count { margin-left: 0; }
 }
 
 /* Form rows: every field, drop-down, and button lines up at the top; hints hang below their own field. */
 .wl-form-row { align-items: flex-start; }
-.wl-form-row > .wl-btn { margin-top: 25px; }
+.wl-form-row > .wl-btn, .wl-form-row > .wl-check { margin-top: 25px; }
+.wl-form-row > .wl-check { min-height: 40px; }
 .wl-form-row > .wl-field-narrow { flex: 0 1 180px; }
-.wl-field select { font-weight: 400; width: 100%; }
+.wl-form-row-half > .wl-field { flex: 0 1 calc(50% - 6px); min-width: 200px; }
+.wl-field .wl-select { width: 100%; }
 .wl-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 
 /* A form that opens from a section's button, above the list it adds to. */

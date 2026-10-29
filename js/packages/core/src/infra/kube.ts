@@ -58,7 +58,9 @@ const HOST_NAMES = new Set<string>(Object.values(HOST));
 
 function chartsOf(d: MetricData, list: readonly Series[], cpu: readonly string[], mem: string, net: string): Charts {
   const io = (dir: string) => mergeLines(named(list, net).filter((s) => directionOf(s) === dir).map(lineOf));
-  return { buckets: bucketStarts(d.window, METRIC_BUCKETS), cpu: mergeLines(named(list, cpu).map(lineOf)), memory: mergeLines(named(list, mem).map(lineOf)), netIn: io("receive"), netOut: io("transmit") };
+  // Usage and the older utilization name both count cores; a collector that sends both must not show double.
+  const cpuName = cpu.find((n) => named(list, [n]).length > 0);
+  return { buckets: bucketStarts(d.window, METRIC_BUCKETS), cpu: mergeLines(cpuName ? named(list, [cpuName]).map(lineOf) : []), memory: mergeLines(named(list, mem).map(lineOf)), netIn: io("receive"), netOut: io("transmit") };
 }
 
 function summaryOf(nodes: readonly NodeRow[], listed: readonly PodRow[], workloads: readonly WorkloadRow[]): KubeSummary {

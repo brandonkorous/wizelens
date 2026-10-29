@@ -33,6 +33,12 @@ describe("messaging stats", () => {
     expect(layers.find((l) => l.key === "service:billing")?.totalMs).toBe(15);
     expect(messageRows(sendAndHandle().spans).map((m) => m.operation)).toEqual(["send", "process"]);
   });
+
+  it("names the message by its RabbitMQ routing key, and leaves it empty without one", () => {
+    const t = sendAndHandle();
+    t.spans.find((s) => s.kind === "producer")!.attributes["messaging.rabbitmq.destination.routing_key"] = "OrderStartedIntegrationEvent";
+    expect(messageRows(t.spans).map((m) => m.message)).toEqual(["OrderStartedIntegrationEvent", null]);
+  });
 });
 
 describe("gRPC requests", () => {

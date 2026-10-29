@@ -1,12 +1,14 @@
 /* Stack pages: hero, code-to-trace demo, capture grid, highlights, and the next steps. */
 .wl-st-hero { padding: clamp(128px, 15vw, 176px) 0 56px; }
 .wl-st-title { max-width: 14ch; }
+.wl-st-release { margin: 12px 0 0; font-size: 15px; color: var(--wl-fg-2); }
+.wl-st-release a { color: var(--wl-accent-text); font-family: var(--wl-mono); }
 .wl-st-intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: end; margin-top: 36px; }
 .wl-st-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 64px 0 0; border-top: 1px solid var(--wl-line-strong); }
 .wl-st-facts > div { padding: 22px 24px 0 0; }
 .wl-st-facts > div + div { padding-left: 24px; border-left: 1px solid var(--wl-line); }
 .wl-st-facts dt { font-size: clamp(28px, 3.4vw, 40px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.1; }
-.wl-st-facts dd { margin: 6px 0 0; font-size: 15px; color: var(--wl-muted); }
+.wl-st-facts dd { margin: 6px 0 0; font-size: 15px; color: var(--wl-fg-2); }
 
 .wl-st-demo { padding: 24px 0 clamp(88px, 12vw, 140px); }
 .wl-ct { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); border-radius: var(--wl-radius); background: var(--wl-night); color: var(--wl-night-fg); overflow: hidden; box-shadow: var(--wl-shadow-pop); }
@@ -14,9 +16,10 @@
 .wl-ct-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 48px; padding: 0 12px 0 20px; border-bottom: 1px solid var(--wl-night-line); font: 13px var(--wl-mono); color: var(--wl-night-muted); }
 .wl-ct-bar span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wl-ct pre { margin: 0; padding: 22px 0; font-size: 13.5px; line-height: 1.85; overflow-x: auto; scrollbar-width: none; }
-.wl-ct-line { display: block; padding: 0 20px; white-space: pre; opacity: 0; border-left: 3px solid transparent; transition: opacity 0.25s, background 0.3s, border-color 0.3s; }
+/* Lines not typed yet show faint, so the box is never empty while the demo waits. */
+.wl-ct-line { display: block; padding: 0 20px; white-space: pre; opacity: 0.3; border-left: 3px solid transparent; transition: opacity 0.25s, background 0.3s, border-color 0.3s; }
 .wl-ct-typed { opacity: 1; }
-.wl-ct-now { background: rgba(37, 99, 235, 0.18); border-left-color: var(--wl-blue); }
+.wl-ct-now { background: rgba(37, 99, 235, 0.18); border-left-color: var(--wl-accent-text); }
 .wl-ct-trace { min-width: 0; }
 .wl-ct-rows { display: grid; gap: 4px; padding: 18px 20px 24px; }
 .wl-ct-row { display: grid; grid-template-columns: minmax(0, 1.3fr) 58px minmax(0, 1fr); gap: 12px; align-items: center; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: var(--wl-night-muted); transition: color 0.4s, background 0.3s; }
@@ -34,7 +37,7 @@
 .wl-ct-replay svg { width: 14px; height: 14px; }
 
 .wl-st-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.wl-st-card { padding: 26px; border-radius: var(--wl-radius); background: var(--wl-white); border: 1px solid var(--wl-line); }
+.wl-st-card { padding: 26px; border-radius: var(--wl-radius); background: var(--wl-surface); border: 1px solid var(--wl-line); }
 .wl-st-card ul { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 9px; }
 .wl-st-card li { position: relative; padding-left: 20px; font-size: 15.5px; color: var(--wl-fg-2); }
 .wl-st-card li::before { content: ""; position: absolute; left: 2px; top: 9px; width: 8px; height: 8px; border-radius: 50%; background: var(--wl-green); }
@@ -51,7 +54,7 @@
 .wl-st-others { display: flex; flex-wrap: wrap; gap: 10px; }
 .wl-st-docs { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--wl-night-line); }
 .wl-st-docs a { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; border-bottom: 1px solid var(--wl-night-line); font-size: 18px; font-weight: 600; transition: color 0.2s; }
-.wl-st-docs a:hover { color: var(--wl-blue); }
+.wl-st-docs a:hover { color: var(--wl-accent-text); }
 .wl-st-docs svg { width: 18px; height: 18px; }
 
 @media (max-width: 960px) {
@@ -62,9 +65,12 @@
   .wl-st-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 @media (max-width: 680px) {
-  .wl-st-facts { grid-template-columns: minmax(0, 1fr); }
+  /* A phone shows each fact as one row, so the demo comes up sooner. */
+  .wl-st-facts { grid-template-columns: minmax(0, 1fr); margin-top: 36px; }
   .wl-st-facts > div + div { padding-left: 0; border-left: 0; border-top: 1px solid var(--wl-line); }
-  .wl-st-facts > div { padding-bottom: 18px; }
+  .wl-st-facts > div { display: flex; align-items: baseline; gap: 12px; padding: 12px 0; }
+  .wl-st-facts dt { flex: none; font-size: 22px; }
+  .wl-st-facts dd { margin: 0; }
   .wl-st-grid, .wl-st-highs { grid-template-columns: minmax(0, 1fr); }
   .wl-st-high:nth-child(even) { padding-left: 0; border-left: 0; }
   .wl-ct-row { grid-template-columns: minmax(0, 1fr) 50px; }

@@ -22,7 +22,7 @@ export function Modal({ title, onClose, closeLabel = "Close", wide = false, chil
     const el = ref.current;
     el?.showModal();
     // Start in the first field; with none, on the window itself, so no button shows a focus ring.
-    (el?.querySelector<HTMLElement>(".wl-modal-body :is(input:not([type=hidden]), select, textarea)") ?? el)?.focus();
+    (el?.querySelector<HTMLElement>(".wl-modal-body :is(input:not([type=hidden]), select, textarea, [role=combobox])") ?? el)?.focus();
     // Escape asks the owner to close, through the dialog's own cancel event; the owner may say no.
     const cancel = (e: Event) => (e.preventDefault(), closeRef.current?.());
     el?.addEventListener("cancel", cancel);

@@ -22,7 +22,7 @@ export function ForgotPassword({ state }: { state: AccountState }) {
 /** Choose a new password from the emailed link. Every session of the account ends. */
 export function ResetPassword({ token }: { token: string }) {
   const [done, setDone] = useState(false);
-  if (!token) return <AuthCard title="This link is not complete" intro="Ask for a new link."><a className="wl-btn" href={hrefTo("forgot-password")}>Send a new link</a></AuthCard>;
+  if (!token) return <AuthCard title="This link is not complete" intro="Ask for a new link."><a className="wl-btn wl-btn-primary" href={hrefTo("forgot-password")}>Send a new link</a><span className="wl-auth-links">{BACK}</span></AuthCard>;
   if (done) return <AuthCard title="Password changed" intro="Every device that was signed in is now signed out. Sign in with the new password."><a className="wl-btn wl-btn-primary" href={hrefTo("overview")}>Sign in</a></AuthCard>;
   const reset = async (v: Record<string, string>) => {
     if (v.password !== v.again) throw new Error("The two passwords are not the same.");

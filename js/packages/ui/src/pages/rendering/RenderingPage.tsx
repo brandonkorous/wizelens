@@ -22,7 +22,7 @@ function Cards({ data }: { data: RenderingModel }) {
     <div className="wl-grid wl-grid-stats">
       <StatCard icon={Gauge} label="Avg. Render Time" value={fmtMs(cards.render.value)} change={cards.render.change} upIsGood={false} compareLabel={compareLabel} series={cards.render.series} />
       <StatCard icon={Server} label="Server Response" value={fmtMs(cards.ssr.value)} change={cards.ssr.change} upIsGood={false} compareLabel={compareLabel} series={cards.ssr.series} />
-      <StatCard icon={Zap} label="Hydration Time" value={fmtMs(cards.hydration.value)} change={cards.hydration.change} upIsGood={false} compareLabel={compareLabel} series={cards.hydration.series} />
+      <StatCard icon={Zap} label="Hydration Time" value={fmtMs(cards.hydration.value)} change={cards.hydration.change} upIsGood={false} compareLabel={compareLabel} series={cards.hydration.series} note={cards.hydration.value === null ? "None: no UI framework seen" : undefined} />
       <StatCard icon={TriangleAlert} danger label="Component Issues" value={fmtCount(cards.issues.value)} change={cards.issues.change} upIsGood={false} compareLabel={compareLabel} series={cards.issues.series} />
     </div>
   );
@@ -60,7 +60,7 @@ export function AllRendering() {
             <RouteChartPanel m={data} />
             <PhasePanel m={data} />
           </div>
-          <DeviceTable devices={data.devices} />
+          <DeviceTable devices={data.devices} total={data.views} />
           <RenderSearch />
           <div className="wl-grid">
             <RouteTable routes={data.routes} paging={data.routePaging} />

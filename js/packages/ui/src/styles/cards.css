@@ -1,0 +1,54 @@
+/* A phone reads a table as cards: a row is a card, its first cell the title, every other cell its column's name and value. Nothing scrolls sideways. */
+@media (max-width: 560px) {
+  .wl-table-wrap:has(> .wl-table-cards) { overflow-x: visible; }
+  .wl-table-cards, .wl-table-cards :is(thead, tbody) { display: block; }
+  .wl-table-cards thead tr { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 8px 14px; border-bottom: 1px solid var(--wl-line); }
+  .wl-table-cards thead th { padding: 0; border: 0; font-size: 13px; }
+  /* The head bar holds the sort buttons and the pick-all box; with neither it is not drawn. */
+  .wl-table-cards thead tr:not(:has([aria-sort], .wl-cell-pick :is(input, button))) { display: none; }
+  /* The pick-all box says what it does: on a card list there is no column for it to head. */
+  .wl-table-cards thead th.wl-cell-pick { width: auto; }
+  .wl-table-cards thead .wl-pick-hit:has(input) { display: inline-flex; align-items: center; gap: 8px; width: auto; padding-right: 12px; color: var(--wl-fg-2); font-weight: 500; cursor: pointer; }
+  .wl-table-cards thead .wl-pick-hit:has(input)::after { content: "Select all"; }
+  .wl-table-cards thead th:nth-child(1 of [aria-sort])::before { content: "Sort by"; margin-right: 12px; color: var(--wl-muted); font-weight: 400; }
+  .wl-table-cards thead th:not([aria-sort]):not(.wl-cell-pick) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .wl-table-cards tbody tr { display: grid; grid-template-columns: auto minmax(0, 1fr); border-bottom: 1px solid var(--wl-line); }
+  .wl-table-cards tbody tr:last-child { border-bottom: 0; }
+  .wl-table-cards tbody td { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-width: 0; max-width: none; width: auto; padding: 3px 14px; border: 0; text-align: right; overflow-wrap: anywhere; white-space: normal; }
+  /* The desktop fill column's max-width: 0 must not pin a card's cell to its 14ch floor. */
+  .wl-table-cards tbody td.wl-fill { max-width: none; width: auto; }
+  .wl-table-cards tbody td[data-label]::before { content: attr(data-label); flex: none; max-width: 45%; color: var(--wl-muted); font: 400 13px/1.45 var(--wl-sans); text-align: left; overflow-wrap: normal; }
+  /* The title: the first cell, beside the tick box when there is one. */
+  .wl-table-cards tbody td:first-child, .wl-table-cards tbody td.wl-cell-pick + td { justify-content: flex-start; padding-top: 12px; font-weight: 550; text-align: left; }
+  .wl-table-cards tbody td:first-child::before, .wl-table-cards tbody td.wl-cell-pick + td::before { display: none; }
+  /* A column may name itself the title (Table's cardTitle); then the first cell is a plain line again. */
+  .wl-table-cards tbody td.wl-card-title { order: -1; justify-content: flex-start; padding-top: 12px; font-weight: 550; text-align: left; }
+  .wl-table-cards tbody td.wl-card-title::before { display: none; }
+  .wl-table-cards tbody tr:has(.wl-card-title) td:first-child:not(.wl-card-title) { justify-content: space-between; padding-top: 3px; font-weight: 400; text-align: right; }
+  .wl-table-cards tbody tr:has(.wl-card-title) td:first-child:not(.wl-card-title)::before { display: block; }
+  .wl-table-cards tbody td.wl-cell-pick { grid-column: 1; padding-right: 0; }
+  .wl-table-cards tbody td.wl-cell-pick + td { grid-column: 2; }
+  .wl-table-cards tbody tr:has(.wl-card-title) td.wl-cell-pick + td:not(.wl-card-title) { padding-top: 3px; font-weight: 400; }
+  /* A row that cannot be picked (your own) has no box; its title takes the whole line. */
+  .wl-table-cards tbody td.wl-cell-pick:empty { display: none; }
+  .wl-table-cards tbody td.wl-cell-pick:empty + td { grid-column: 1 / -1; }
+  .wl-table-cards tbody td:last-child { padding-bottom: 12px; }
+  /* A prose column reads as a paragraph: its label on top, its text left-aligned under it. */
+  .wl-table-cards tbody td.wl-wrap { display: block; text-align: left; }
+  .wl-table-cards tbody td.wl-wrap[data-label]::before { max-width: none; margin-bottom: 2px; }
+  :where(.wl-table-cards tbody td.wl-wrap)::before { display: block; }
+  .wl-table-cards tbody td.wl-cell-actions { position: static; justify-content: flex-end; box-shadow: none; }
+  .wl-table-cards tbody td.wl-cell-actions .wl-row-actions { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; gap: 8px 18px; white-space: normal; }
+  .wl-table-cards tbody td.wl-hide-sm { display: none; }
+  .wl-table-cards tbody td :is(.wl-wrap, .wl-truncate), .wl-table-cards tbody td > strong:only-child { min-width: 0; }
+  /* A dot and its name (service, status) may wrap in a card; on a desktop row it stays on one line. */
+  .wl-table-cards tbody td .wl-dot-text { min-width: 0; white-space: normal; }
+  /* A cut cell wraps to three lines in a card, so a long name or message is read, not guessed. */
+  .wl-table-cards tbody td .wl-truncate { max-width: none; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; white-space: normal; overflow-wrap: anywhere; }
+  /* A path cut in the middle on a desktop shows whole in a card. */
+  .wl-table-cards tbody td .wl-mid { display: inline; max-width: none; white-space: normal; overflow-wrap: anywhere; }
+  .wl-table-cards tbody td .wl-mid > span { overflow: visible; }
+  .wl-panel-flush .wl-table-cards tbody td { padding-left: 20px; padding-right: 20px; }
+  .wl-panel-flush .wl-table-cards thead tr { padding: 8px 20px; }
+  .wl-table-cards tbody tr.wl-row-detail td { display: block; padding: 4px 14px 14px; text-align: left; }
+}

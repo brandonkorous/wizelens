@@ -15,13 +15,14 @@ function columns(now: number, compact: boolean, issues: Record<string, IssueInfo
     {
       key: "title",
       header: "Risk",
+      cardTitle: true,
       cell: (g) => (
         <div className="wl-insight-cell">
           <strong>
             {g.title} <IssueBadge kind="insight" info={issues[g.key]} />
           </strong>
           <span className="wl-muted wl-small">{g.description}</span>
-          <code className="wl-mono wl-small wl-truncate">{g.shape}</code>
+          <code className="wl-mono wl-small wl-clamp-2" title={g.shape}>{g.shape}</code>
         </div>
       ),
       sort: (g) => g.title,

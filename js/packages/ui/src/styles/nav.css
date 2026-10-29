@@ -18,7 +18,7 @@
 @media (max-width: 720px) {
   .wl-sidebar > .wl-nav-main, .wl-sidebar > .wl-nav-saved { display: none; }
   .wl-phonebar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; padding: 0 4px; }
-  .wl-phonebar a, .wl-phonebar button { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0; padding: 0; border: 0; background: none; color: var(--wl-fg-2); font: inherit; font-size: 11px; font-weight: 500; cursor: pointer; }
+  .wl-phonebar a, .wl-phonebar button { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0; padding: 0; border: 0; background: none; color: var(--wl-fg-2); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; }
   .wl-phonebar a:hover { text-decoration: none; }
   .wl-phonebar .wl-active { color: var(--wl-accent-text); font-weight: 600; }
   .wl-phonebar svg { width: 22px; height: 22px; }

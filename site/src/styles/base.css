@@ -22,7 +22,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .wl-h3 { font-size: 21px; line-height: 1.25; font-weight: 650; letter-spacing: -0.015em; }
 .wl-lede { font-size: clamp(18px, 1.6vw, 21px); line-height: 1.5; color: var(--wl-fg-2); max-width: 36em; }
 .wl-night .wl-lede { color: var(--wl-night-muted); }
-.wl-blue { color: var(--wl-blue); }
+.wl-blue { color: var(--wl-accent-text); }
 .wl-muted { color: var(--wl-muted); }
 .wl-head { display: grid; gap: 24px; margin-bottom: clamp(48px, 7vw, 88px); }
 .wl-head-split { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: end; gap: 48px; }

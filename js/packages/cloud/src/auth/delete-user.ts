@@ -22,12 +22,15 @@ export const ownedOrgs = (q: Queryable, userId: string): Promise<OwnedOrg[]> =>
 /** Organizations that would be left without an owner: they block deleting the account. */
 export const blockingOrgs = (orgs: readonly OwnedOrg[]) => orgs.filter((o) => o.owners === 1 && o.members > 1);
 
+/** Organizations the person is alone in: they are deleted with the account. */
+export const soloOrgs = (orgs: readonly OwnedOrg[]) => orgs.filter((o) => o.members === 1);
+
 /** Before an account goes: refuse while it is the last owner of a team; delete the organizations it is alone in, with their data. */
 export function beforeDeleteUser(db: Db) {
   return async (user: { id: string }): Promise<void> => {
     const orgs = await ownedOrgs(db, user.id);
     const blocked = blockingOrgs(orgs);
     if (blocked.length) throw new APIError("BAD_REQUEST", { message: `Make someone else an owner of ${blocked.map((o) => o.name).join(", ")} first, or delete it.` });
-    for (const o of orgs.filter((x) => x.members === 1)) await db.tx((q) => deleteOrgEverything(q, o.id));
+    for (const o of soloOrgs(orgs)) await db.tx((q) => deleteOrgEverything(q, o.id));
   };
 }

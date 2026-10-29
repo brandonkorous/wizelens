@@ -7,19 +7,26 @@ a:hover { text-decoration: underline; }
 /* A link inside a sentence is underlined, so it does not depend on color alone. */
 :is(p, li, dd, .wl-muted, .wl-small, .wl-empty-body, .wl-settings-note, .wl-banner) a:not([class]) { text-decoration: underline; text-underline-offset: 2px; }
 button { font: inherit; color: inherit; }
+small { font-size: max(12px, 0.85em); }
 h1 { font-size: 30px; line-height: 1.15; margin: 0; font-weight: 750; letter-spacing: -0.02em; }
 h2 { font-size: 17px; margin: 0; font-weight: 680; letter-spacing: -0.01em; }
 h3 { font-size: 12px; margin: 16px 0 6px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--wl-muted); font-weight: 650; }
 :focus-visible { outline: 2px solid var(--wl-accent); outline-offset: 2px; }
 .wl-mono { font-family: var(--wl-mono); }
 .wl-muted { color: var(--wl-muted); }
-.wl-small { font-size: 12px; }
+.wl-small { font-size: 13px; }
+.wl-mono.wl-small { font-size: 12px; }
 .wl-num { font-variant-numeric: tabular-nums; }
 .wl-text-error { color: var(--wl-error); }
 .wl-text-ok { color: var(--wl-ok); }
 .wl-text-warn { color: var(--wl-warn); }
 .wl-spacer { flex: 1; }
 .wl-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.wl-clamp-2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; white-space: normal; overflow-wrap: anywhere; min-width: 0; }
+/* MidPath: the head gives way first; the last step keeps up to most of the width. */
+.wl-mid { display: inline-flex; min-width: 0; max-width: 100%; white-space: nowrap; vertical-align: middle; }
+.wl-mid-head { min-width: 2ch; overflow: hidden; text-overflow: ellipsis; }
+.wl-mid-tail { flex: none; max-width: 75%; overflow: hidden; text-overflow: ellipsis; }
 .wl-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .wl-brand-blades { fill: var(--wl-blades); }
 .wl-brand-lens { color: var(--wl-lens); }

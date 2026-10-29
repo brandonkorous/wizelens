@@ -2,6 +2,7 @@ import type { Stack } from "../types";
 
 export const SVELTE: Stack = {
   slug: "svelte",
+  release: true,
   name: "Svelte",
   title: "WizeLens for Svelte and SvelteKit",
   seoTitle: "WizeLens for SvelteKit: from the server render to the page view",

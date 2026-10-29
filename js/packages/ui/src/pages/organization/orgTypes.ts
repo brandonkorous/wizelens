@@ -7,6 +7,8 @@ export interface Member {
   name: string;
   role: Role;
   sinceMs: number;
+  /** Added by the identity provider (SCIM): it adds them back while they are active there. */
+  synced?: boolean;
 }
 
 export interface ApiKey {

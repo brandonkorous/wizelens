@@ -4,8 +4,12 @@ description: Every WizeLens package, for .NET, Node, the browser, Java, Python, 
 updated: October 21, 2026
 ---
 
-Every WizeLens package, for .NET, Node, the browser, Java, Python, Go, the hub, and the cloud, is open source under the MIT
-License:
+In plain words: you can use, copy, change, and share the software, for free, in any project, including paid ones. Keep the
+copyright notice and the license text with it. The software comes with no warranty.
+
+The license does not give you the right to use the WizeLens names or logo as your own. See [Terms of use](/terms/#names-and-logos).
+
+## The packages
 
 | Package | Platform |
 |---|---|
@@ -16,10 +20,5 @@ License:
 | `com.wizelens:wizelens` | Java |
 | `wizelens` | Python |
 | `github.com/brandonkorous/wizelens/go` | Go |
-
-In plain words: you can use, copy, change, and share the software, for free, in any project, including paid ones. Keep the
-copyright notice and the license text with it. The software comes with no warranty.
-
-The license does not give you the right to use the WizeLens names or logo as your own. See [Terms of use](/terms/#names-and-logos).
 
 ## The license text

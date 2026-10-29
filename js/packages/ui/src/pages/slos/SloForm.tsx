@@ -2,8 +2,7 @@ import { type FormEvent, useState } from "react";
 import { useOnce } from "../../ui/useOnce";
 import type { SloInput } from "@wizeworks/lens-core";
 import { usePageModel } from "../../data/models";
-import { Select } from "../../ui/Controls";
-import { Field, FormRow } from "../../ui/Field";
+import { Field, FormRow, SelectField } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
 
 export const EMPTY_SLO: SloInput = { name: "", service: "", endpoint: "", kind: "success", target: 99.9, thresholdMs: 500, windowDays: 30 };
@@ -40,10 +39,10 @@ export function SloForm({ initial, title, onSave, onCancel }: { initial: SloInpu
           </datalist>
         </FormRow>
         <FormRow>
-          <Select label="Good means" value={s.kind} options={KINDS} onChange={set("kind")} />
+          <SelectField label="Good means" value={s.kind} options={KINDS} onChange={set("kind")} />
           {s.kind === "latency" && <Field label="Within (ms)" type="number" min={1} required value={s.thresholdMs} onChange={(e) => set("thresholdMs")(Number(e.target.value))} />}
           <Field label="Target (%)" type="number" step="any" min={0} max={99.999} required value={s.target} onChange={(e) => set("target")(Number(e.target.value))} />
-          <Select label="Window" value={String(s.windowDays)} options={WINDOWS} onChange={(v) => set("windowDays")(Number(v) as 7 | 30)} />
+          <SelectField label="Window" value={String(s.windowDays)} options={WINDOWS} onChange={(v) => set("windowDays")(Number(v) as 7 | 30)} />
         </FormRow>
         {error && <div className="wl-banner wl-banner-error">{error}</div>}
         <FormRow>

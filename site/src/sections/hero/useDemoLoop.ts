@@ -41,7 +41,7 @@ export function useDemoLoop(stage: RefObject<HTMLElement | null>, active: boolea
       later(() => setLoading(false), MOVE_MS + 520);
       later(() => run(k + 1), STEP_MS);
     };
-    later(() => run(index + 1), 2400);
+    later(() => run(index + 1), 1600);
     return () => timers.forEach((t) => window.clearTimeout(t));
     // The loop restarts only when the stage comes into or leaves view.
   }, [active]);

@@ -34,6 +34,8 @@ export const DOC_GROUPS: DocGroup[] = [
       { slug: "several-services", title: "Several services" },
       { slug: "hub", title: "The local hub" },
       { slug: "cloud", title: "WizeLens Cloud" },
+      { slug: "teams", title: "Teams and access" },
+      { slug: "plans", title: "Plans and billing" },
       { slug: "kubernetes", title: "Hosts and Kubernetes" },
       { slug: "production", title: "Production" },
       { slug: "auto-install", title: "No code change" },

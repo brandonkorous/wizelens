@@ -35,18 +35,16 @@ page. The arrows step to the previous and next group.
 
 ## Filters
 
-| Filter | Choices |
+**Service**, **Error type**, and **Endpoint** each narrow the list to one value. **Search** finds text in the type or
+message, and **Order** picks Most recent or Most frequent. These need a word more:
+
+| Filter | What it does |
 |---|---|
-| **Service** | All Services, or one service |
 | **Status** | Unresolved (the default), Resolved, Ignored, or All Statuses. Hub and cloud. |
-| **Release** | Any Release, or **New in** a version: groups first seen while that version was the newest. Shows once you pick a service. |
-| **Error type** | All Types, or one type |
-| **Endpoint** | All Endpoints, or one endpoint |
-| **Order** | Most recent, or Most frequent |
-| Search | Text in the type or message |
-| **Critical only** | Only critical groups |
+| **Release** | **New in** a version: groups first seen while that version was the newest. Shows once you pick a service. |
+| **Critical only** | Only groups whose requests answered 5xx or wrote a critical log line |
 | **New only** | Only groups first seen in this time range |
-| User | A user chip, from a user's page or a link |
+| User | A user chip, from a user's page or a link. Remove the chip to see everyone again. |
 
 **Reset** clears them all. Filters are in the address bar, so a filtered list can be shared. Pick a service in the top bar
 to filter every page by it.

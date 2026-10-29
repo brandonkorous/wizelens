@@ -90,6 +90,7 @@ export function PanelOverview({ r }: { r: RequestItem }) {
         <strong>{fmtMs(r.durationMs)}</strong>
       </div>
       <BarList items={timingItems(r)} max={r.durationMs} />
+      {r.renderMs === null && <p className="wl-chart-note">Rendering and Network come from the browser&apos;s page view. None is joined to this request: an API call, a redirect, or a page loaded without the browser add-on. A page view with its own trace shows under Traces.</p>}
       <a className="wl-btn wl-btn-primary-outline wl-rq-full" href={traceHref(r.traceId)}>
         <ExternalLink aria-hidden="true" /> View full trace
       </a>

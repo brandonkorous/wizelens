@@ -7,11 +7,11 @@ export const GO: Stack = {
   seoTitle: "WizeLens for Go: tracing for net/http, database/sql, and slog",
   seoDescription: "One Go module sets up OpenTelemetry for WizeLens: net/http and database/sql spans with SQL parameters, slog lines in their trace, and N+1 queries found.",
   headline: ["Every Go request,", "in a few lines."],
-  lede: "Go has no agent, so the WizeLens module sets up the OpenTelemetry SDK and the contrib instrumentation in a few lines. It adds what they leave out: SQL parameters, request and response headers, and bodies. Spans and logs go to your hub or the cloud over OTLP. Requires Go 1.26 or newer.",
+  lede: "Go has no agent, so the WizeLens module sets up the OpenTelemetry SDK and the contrib instrumentation in a few lines. It adds what they leave out: SQL parameters, request and response headers, and bodies. Spans and logs go to your hub or the cloud over OTLP.",
   facts: [
     { value: "1 module", label: "the OpenTelemetry SDK and contrib, set up" },
     { value: "5 calls", label: "Start, OpenDB, Transport, Logger, Handler" },
-    { value: "v0.1.0", label: "out now with go get" },
+    { value: "Go 1.26+", label: "v0.1.0, out now with go get" },
   ],
   file: "main.go",
   code: [

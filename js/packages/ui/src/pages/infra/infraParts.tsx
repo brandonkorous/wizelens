@@ -2,6 +2,7 @@ import type { ComponentType, ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { fmtMetric, type InfraService } from "@wizeworks/lens-core";
 import { fmtAgo } from "../../format";
+import { hrefTo } from "../../routes";
 import { DotText } from "../../ui/Badges";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
@@ -19,10 +20,13 @@ export function fmtCores(v: number | null | undefined): string {
   return `${v >= 10 ? v.toFixed(0) : v.toFixed(2)} cores`;
 }
 
+/** A size whose number and unit never part at a line end ("62.3 MB", not "62.3 / MB"). */
+const keep = (bytes: number) => fmtBytes(bytes).replace(" ", " ");
+
 /** "used of total" with the share, for memory and disks. */
 export function fmtUsed(used: number | null, total: number | null): string {
   if (used === null) return DASH;
-  return total ? `${fmtBytes(used)} of ${fmtBytes(total)}` : fmtBytes(used);
+  return total ? `${keep(used)} of ${keep(total)}` : keep(used);
 }
 
 /** A share as a small bar and a number (the share, or `text` with the share in its title); red past 90%, orange past 75%. */
@@ -83,11 +87,11 @@ export function InfraHead({ back, backLabel, icon: Icon, title, status, facts }:
 }
 
 /** One chart panel over the page's buckets. */
-export function LinePanel({ title, starts, lines, format }: { title: string; starts: number[]; lines: ChartSeries[]; format: (v: number) => string }) {
+export function LinePanel({ title, starts, lines, format, top }: { title: string; starts: number[]; lines: ChartSeries[]; format: (v: number) => string; top?: number }) {
   const empty = lines.every((l) => l.values.every((v) => v === null));
   return (
     <Panel title={title}>
-      {empty ? <Empty title="No data in this range" /> : <TimeChart starts={starts} lines={lines} height={200} format={format} />}
+      {empty ? <Empty title="No data in this range" /> : <TimeChart starts={starts} lines={lines} height={200} format={format} top={top} />}
     </Panel>
   );
 }
@@ -100,6 +104,7 @@ function serviceColumns(now: number): Column<InfraService>[] {
     { key: "version", header: "Version", cell: (s) => s.version || DASH, className: "wl-hide-sm" },
     { key: "status", header: "Status", cell: (s) => <DotText tone={s.online ? "success" : "neutral"}>{s.online ? "Online" : "Offline"}</DotText>, sort: (s) => (s.online ? 0 : 1) },
     { key: "seen", header: "Last seen", cell: (s) => fmtAgo(s.lastSeenMs, now), sort: (s) => -s.lastSeenMs },
+    { key: "see", header: "", srHeader: "Its traces and logs", className: "wl-cell-actions", cell: (s) => <span className="wl-row-actions"><a href={hrefTo("traces", [], { service: s.service })}>Traces</a><a href={hrefTo("logs", [], { service: s.service })}>Logs</a></span> },
   ];
 }
 

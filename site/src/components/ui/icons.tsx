@@ -49,3 +49,11 @@ export function PlayIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function ChevronIcon({ dir, className }: IconProps & { dir: "left" | "right" }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d={dir === "left" ? "M12 4l-6 6 6 6" : "M8 4l6 6-6 6"} />
+    </svg>
+  );
+}

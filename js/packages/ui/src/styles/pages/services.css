@@ -6,6 +6,16 @@
 .wl-svc-edges li { display: flex; justify-content: space-between; gap: 10px; }
 
 .wl-dep-map { overflow-x: auto; padding: 4px 2px; }
+.wl-dep-list { display: none; list-style: none; margin: 0; padding: 0; }
+.wl-dep-list li { display: grid; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--wl-line); }
+.wl-dep-list li:last-child { border-bottom: 0; }
+.wl-dep-list a { color: var(--wl-fg); font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+.wl-dep-list span { color: var(--wl-fg-2); font-size: 14px; }
+.wl-dep-list .wl-failing span { color: var(--wl-error); }
+@media (max-width: 560px) {
+  .wl-dep-map > svg { display: none; }
+  .wl-dep-list { display: block; }
+}
 .wl-dep-node { cursor: pointer; }
 .wl-dep-node rect { fill: var(--wl-surface); stroke: var(--wl-line-strong); }
 .wl-dep-node:hover rect { stroke: var(--wl-accent); }
@@ -13,6 +23,8 @@
 .wl-dep-label { display: flex; align-items: center; gap: 8px; height: 100%; font-size: 13.5px; color: var(--wl-fg); }
 .wl-dep-label svg { flex: none; color: var(--wl-fg-2); }
 .wl-dep-label .wl-dot { margin-left: auto; }
+.wl-dep-name { display: grid; min-width: 0; line-height: 1.25; }
+.wl-dep-name .wl-muted { font-size: 11px; }
 .wl-dep-edge path { stroke: var(--wl-line-strong); stroke-width: 1.5; }
 .wl-dep-edge.wl-failing path { stroke: var(--wl-red); }
 .wl-dep-label-box { pointer-events: none; }
@@ -41,6 +53,12 @@
 .wl-svc-logs .wl-log-cat > * { display: block; max-width: 100%; text-align: left; }
 .wl-svc-logs .wl-log-msg { min-width: 260px; word-break: break-word; }
 .wl-svc-logs .wl-log-trace { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+/* In a phone card capped cells use the full line, ending at the right like the other values. */
+@media (max-width: 560px) {
+  .wl-svc-page .wl-table-cards :is(.wl-svc-ep-name, .wl-svc-wide, .wl-svc-mid), .wl-svc-logs .wl-table-cards :is(.wl-log-cat, .wl-log-trace) { max-width: none; }
+  .wl-svc-logs .wl-table-cards .wl-log-msg { min-width: 0; }
+  .wl-svc-logs .wl-table-cards .wl-log-cat > * { text-align: right; }
+}
 .wl-svc-logs .wl-badge { text-transform: capitalize; }
 .wl-svc-page .wl-row-actions { align-items: center; }
 .wl-svc-runtime .wl-metric-tile svg { display: block; width: 100%; height: 28px; }

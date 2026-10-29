@@ -32,6 +32,8 @@ function CountCard({ icon: Icon, label, value, foot, danger = false }: { icon: C
 
 function Cards({ m }: { m: ProblemsModel }) {
   const normal = m.baseline.mode === "week" ? "same hour, earlier weeks" : "same hour, earlier days";
+  // Four zeros say nothing the empty list below does not.
+  if (!m.ongoing && !m.total && !m.anomalies && !m.services) return null;
   return (
     <div className="wl-grid wl-grid-stats">
       <CountCard icon={Siren} label="Ongoing" value={m.ongoing} foot="still above normal now" danger />

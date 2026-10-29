@@ -68,7 +68,7 @@ export function Pricing() {
       <PlanCards />
       <TotalCost />
       <SelfHost />
-      <Faq items={PRICING_FAQS} lede={<>Plans and billing in the <a href="/docs/cloud/#plans-and-billing">cloud docs</a>.</>} />
+      <Faq items={PRICING_FAQS} lede={<>Plans and billing in the <a href="/docs/plans/">cloud docs</a>.</>} />
     </main>
   );
 }

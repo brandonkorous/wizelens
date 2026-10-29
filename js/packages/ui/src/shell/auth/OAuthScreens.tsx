@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import type { AccountState } from "../../data/account";
 import { pendingOAuth, resumeAuthorize } from "../../data/oauth";
-import type { Route } from "../../routes";
+import { hrefTo, type Route } from "../../routes";
 import { AuthCard } from "./AuthForm";
 import { AuthScreen } from "./AuthScreen";
 import { ConsentScreen } from "./ConsentScreen";
@@ -24,7 +24,11 @@ function Resume({ query }: { query: string }) {
   return <AuthCard title="One moment…" intro="Taking you to the next step." />;
 }
 
-const Expired = () => <AuthCard title="This link has expired" intro="Go back to the app you were connecting, and connect it again." />;
+const Expired = () => (
+  <AuthCard title="This link has expired" intro="Go back to the app you were connecting, and connect it again. Nothing was shared.">
+    <a className="wl-btn wl-btn-primary" href={hrefTo("overview")}>Open WizeLens</a>
+  </AuthCard>
+);
 
 /** `#/oauth` (sign in, then go on) and `#/oauth-consent` (pick what the app may read). */
 export function OAuthScreen({ route, state }: { route: Route; state: AccountState }) {

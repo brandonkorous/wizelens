@@ -11,7 +11,7 @@ import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 import { AlertForm, draftOf, EMPTY_RULE, type RuleDraft } from "./AlertForm";
 import { AlertRulePage } from "./AlertRulePage";
-import { type AlertEvent, type AlertRule, type AlertsData, channelLabel, eventPaging, fmtValue, ruleText, useAlertsApi, withEventPage } from "./alertTypes";
+import { type AlertEvent, type AlertRule, type AlertsData, channelLabel, eventPaging, lastValueText, ruleText, useAlertsApi, withEventPage } from "./alertTypes";
 import { RuleActions, RuleState } from "./RuleActions";
 import "../../styles/pages/alerts.css";
 import { type InProject } from "../../data/projectScope";
@@ -23,7 +23,7 @@ type Url = (path?: string) => string;
 
 const sendsTo = (r: AlertRule) => r.channels.map(channelLabel).join(", ") || "Dashboard only";
 /** On a phone, the rule, its last value, and where it sends, under its name. */
-const phoneLine = (r: AlertRule) => `${ruleText(r)} · last ${fmtValue(r, r.lastValue)} · ${sendsTo(r)}`;
+const phoneLine = (r: AlertRule) => `${ruleText(r)} · ${r.lastValue !== null ? "last " : ""}${lastValueText(r).toLowerCase()} · ${sendsTo(r)}`;
 
 function ruleColumns(canWrite: boolean, url: Url, onDone: (note?: string) => void, onEdit: (r: AlertRule) => void, onDelete: (r: AlertRule) => void): Column<AlertRule>[] {
   return [
@@ -31,7 +31,7 @@ function ruleColumns(canWrite: boolean, url: Url, onDone: (note?: string) => voi
     ...projectColumn<AlertRule>(),
     { key: "rule", header: "Rule", className: "wl-wrap", cell: (r) => ruleText(r), hideSm: true },
     { key: "state", header: "State", cell: (r) => <RuleState rule={r} /> },
-    { key: "value", header: "Last value", num: true, cell: (r) => fmtValue(r, r.lastValue), hideSm: true },
+    { key: "value", header: "Last value", num: true, cell: (r) => lastValueText(r), hideSm: true },
     { key: "to", header: "Sends to", cell: sendsTo, hideSm: true },
     ...(canWrite ? [{ key: "actions", header: "", className: "wl-cell-actions", cell: (r: AlertRule) => <RuleActions rule={r} url={url} onDone={onDone} onEdit={() => onEdit(r)} onDelete={() => onDelete(r)} /> }] : []),
   ];

@@ -42,7 +42,7 @@ function Board({ d, url, editable, reload }: { d: SavedItem; url: string; editab
   );
   return (
     <>
-      <DetailHead back={["#/dashboards", "All dashboards"]} icon={LayoutDashboard} title={d.name} badge={d.shared ? <Badge tone="info">Shared</Badge> : undefined} actions={actions} stats={[["Charts", String(d.panels.length)], ...(d.ownerName ? [["Made by", d.ownerName] as [string, string]] : [])]} />
+      <DetailHead back={["#/dashboards", "All dashboards"]} icon={LayoutDashboard} title={d.name} badge={d.shared ? <Badge tone="info">Shared with the team</Badge> : undefined} actions={actions} stats={[["Charts", String(d.panels.length)], ...(d.ownerName ? [["Made by", d.ownerName] as [string, string]] : [])]} />
       {note && <div className="wl-banner wl-banner-error">{note}</div>}
       {editing !== null && <PanelEditor initial={editing === "new" ? EMPTY_PANEL : d.panels[editing]!} onSave={put} onCancel={() => setEditing(null)} />}
       {d.panels.length === 0 && editing === null && <Panel><Empty title="No charts yet">Add a chart: one or more metrics, drawn as lines, areas, bars, numbers, or a table.</Empty></Panel>}

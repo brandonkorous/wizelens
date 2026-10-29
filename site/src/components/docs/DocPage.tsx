@@ -3,6 +3,7 @@ import { ArrowRight } from "@/components/ui/icons";
 import { loadDoc } from "@/lib/docs/content";
 import { docHref, neighbors } from "@/lib/docs/nav";
 import { Article } from "./Article";
+import { PageJump } from "./PageJump";
 import { Toc } from "./Toc";
 
 function PrevNext({ slug }: { slug: string }) {
@@ -30,6 +31,7 @@ export async function DocPage({ slug }: { slug: string }) {
           <h1>{doc.title}</h1>
           {doc.description && <p className="wl-docs-desc">{doc.description}</p>}
         </header>
+        <PageJump headings={doc.headings} />
         <Article html={doc.html} />
         <PrevNext slug={slug} />
       </article>

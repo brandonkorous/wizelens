@@ -27,8 +27,8 @@ function Intro() {
 
   useEffect(() => {
     if (reduced) return;
-    const a = animate(open, 1, { duration: 1.3, delay: 0.25, ease: [0.65, 0, 0.35, 1] });
-    const b = animate(fade, 0, { duration: 0.7, delay: 1.45, ease: [0.22, 1, 0.36, 1], onComplete: () => setDone(true) });
+    const a = animate(open, 1, { duration: 0.9, delay: 0.1, ease: [0.65, 0, 0.35, 1] });
+    const b = animate(fade, 0, { duration: 0.5, delay: 0.85, ease: [0.22, 1, 0.36, 1], onComplete: () => setDone(true) });
     return () => { a.stop(); b.stop(); };
   }, [open, fade, reduced]);
 

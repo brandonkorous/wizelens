@@ -77,6 +77,7 @@ export function RegistryPanel() {
   return (
     <>
       <Panel title={title} flush action={action}>
+        <p className="wl-panel-note">The apps with WizeLens that send here: whether each is online now, where it runs, and when it last sent.</p>
         {forget.note && <div className="wl-banner wl-banner-info wl-panel-banner">{forget.note}</div>}
         <Table paging={{ noun: "services", key: "registry" }} columns={columns(updatedMs, groups.some((g) => !!g.project))} rows={groups} rowKey={(g) => g.key} onRowClick={(g) => setOpen(g.key === open ? null : g.key)} selectedKey={open} defaultSort={{ key: "status", desc: false }} empty={<Empty title="No service has sent data yet"><a href="#/connect">Connect one</a>.</Empty>} />
         {forget.dialog}

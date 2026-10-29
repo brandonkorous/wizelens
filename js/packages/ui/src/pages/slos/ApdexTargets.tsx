@@ -20,7 +20,7 @@ export function ApdexTargets({ targets, url, canWrite, onSaved }: { targets: Tar
     );
   };
   return (
-    <Panel title="Apdex Targets" action={canWrite && <button type="button" className="wl-btn wl-btn-sm" onClick={save}>Save targets</button>}>
+    <Panel title="Apdex Targets" className="wl-apdex-panel" action={canWrite && <button type="button" className="wl-btn wl-btn-sm" onClick={save}>Save targets</button>}>
       <p className="wl-muted wl-small">Requests at or under the target are satisfied, under four times it tolerable, and slower or failed ones frustrated. Empty uses {DEFAULT_APDEX_MS} ms.</p>
       <div className="wl-apdex-targets">
         {names.map((n) => (

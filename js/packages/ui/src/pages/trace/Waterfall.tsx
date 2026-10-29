@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useMemo, useState } from "react";
+import { type CSSProperties, type KeyboardEvent, useMemo, useState } from "react";
 import { isErrorSpan, selfTimes, type Span, type SpanCategory, type Trace } from "@wizeworks/lens-core";
 import { fmtMs, serviceSlot } from "../../format";
 import { Empty } from "../../ui/Panel";
@@ -63,7 +63,7 @@ interface RowProps {
 
 function Label({ row: { span, depth, hasChildren }, trace, collapsed, onToggle }: Pick<RowProps, "row" | "trace" | "collapsed" | "onToggle">) {
   return (
-    <div className="wl-wf-label" style={{ paddingLeft: `${8 + depth * 14}px` }} title={span.name}>
+    <div className="wl-wf-label" style={{ "--wl-depth": depth } as CSSProperties} title={span.name}>
       {hasChildren ? (
         <button type="button" className="wl-wf-caret" aria-label={collapsed ? "Expand" : "Collapse"} onClick={(e) => (e.stopPropagation(), onToggle(span.spanId))}>
           {collapsed ? "▸" : "▾"}

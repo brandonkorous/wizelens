@@ -16,7 +16,8 @@ function SendNewLink({ error, mail }: { error: string; mail: boolean }) {
     await auth((c) => c.sendVerificationEmail({ email: v.email! }));
     setSent(true);
   };
-  return <AuthForm title="This link does not work" intro={`${error.replace(/\.?$/, ".")} Send a new link.`} fields={[EMAIL]} submit="Send a new link" onSubmit={send} footer={<a href={hrefTo("overview")}>Back to sign in</a>} />;
+  // The reason is the title, so the card names the problem once.
+  return <AuthForm title={error.replace(/\.$/, "")} intro="Type your email, and we send a new link." fields={[EMAIL]} submit="Send a new link" onSubmit={send} footer={<a href={hrefTo("overview")}>Back to sign in</a>} />;
 }
 
 /** Opens the email link: it confirms the email and signs the person in. A change of email needs a second link, to the new address. */
@@ -48,7 +49,7 @@ export function VerifyEmail({ token, mail }: { token: string; mail: boolean }) {
 export function DeleteAccount({ token, state, deleted = false }: { token: string; state: AccountState; deleted?: boolean }) {
   const [done, setDone] = useState(deleted);
   if (done) return <AuthCard title="Account deleted" intro="Your account is deleted. Thank you for using WizeLens.">{HOME}</AuthCard>;
-  if (!state.signedIn) return <AuthScreen state={state} intro="Sign in to delete your account." />;
+  if (!state.signedIn) return <AuthScreen state={state} title="Sign in to delete your account" intro="Deleting needs you signed in, so no one else can do it from this link." />;
   if (!token) return <AuthCard title="This link is not complete" intro="Delete your account from the Account page.">{HOME}</AuthCard>;
   const remove = async () => {
     await auth((c) => c.deleteUser({ token }));

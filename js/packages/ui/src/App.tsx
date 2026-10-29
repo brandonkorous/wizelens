@@ -41,9 +41,11 @@ import { Sidebar } from "./shell/Sidebar";
 import { TopBar } from "./shell/TopBar";
 import { UpdateBanner, UpdateNeeded } from "./shell/UpdateBanner";
 
-/** A page loaded on first visit. If its file is gone (a new release), the page asks for a refresh instead of breaking. */
-const lazyPage = (load: () => Promise<ComponentType>) =>
-  lazy(() => load().then((Page) => ({ default: Page }), () => (releaseMissing(), { default: UpdateNeeded })));
+/** A page loaded on first visit. If its file is gone or holds another release's code, the page asks for a refresh instead of breaking. */
+const lazyPage = (load: () => Promise<ComponentType | undefined>) => {
+  const missing = (): { default: ComponentType } => (releaseMissing(), { default: UpdateNeeded });
+  return lazy(() => load().then((Page) => (Page ? { default: Page } : missing()), missing));
+};
 
 // Cloud-only pages load on first visit, so in-app and hub dashboards never download them.
 const PeoplePage = lazyPage(() => import("./pages/people/PeoplePage").then((m) => m.PeoplePage));

@@ -54,8 +54,8 @@ function Diff({ l }: { l: Line }) {
 
 const columns = (a: Trace, b: Trace, first: string): Column<Line>[] => [
   { key: "label", header: first, cell: (l) => l.label },
-  { key: "a", header: `A · ${shortId(a.traceId)}`, num: true, cell: (l) => fmt(l, l.a) },
-  { key: "b", header: `B · ${shortId(b.traceId)}`, num: true, cell: (l) => fmt(l, l.b) },
+  { key: "a", label: `A · ${shortId(a.traceId)}`, header: <>A<span className="wl-cmp-id"> · {shortId(a.traceId)}</span></>, num: true, cell: (l) => fmt(l, l.a) },
+  { key: "b", label: `B · ${shortId(b.traceId)}`, header: <>B<span className="wl-cmp-id"> · {shortId(b.traceId)}</span></>, num: true, cell: (l) => fmt(l, l.b) },
   { key: "diff", header: "B − A", num: true, cell: (l) => <Diff l={l} /> },
 ];
 
@@ -79,8 +79,8 @@ export function TraceCompare({ a, b }: { a: string; b: string }) {
     <div className="wl-dpage">
       {head}
       <div className="wl-grid wl-grid-2-even">
-        <Panel title="Numbers" flush><Table columns={columns(ta.trace, tb.trace, "")} rows={linesOf(ta.trace, tb.trace)} rowKey={(l) => l.label} /></Panel>
-        <Panel title="Self Time per Service" flush><Table paging={{ noun: "services", key: "services" }} columns={columns(ta.trace, tb.trace, "Service")} rows={serviceLines(ta.trace, tb.trace)} rowKey={(l) => l.label} /></Panel>
+        <Panel title="Numbers" flush><Table narrow columns={columns(ta.trace, tb.trace, "")} rows={linesOf(ta.trace, tb.trace)} rowKey={(l) => l.label} /></Panel>
+        <Panel title="Self Time per Service" flush><Table narrow paging={{ noun: "services", key: "services" }} columns={columns(ta.trace, tb.trace, "Service")} rows={serviceLines(ta.trace, tb.trace)} rowKey={(l) => l.label} /></Panel>
       </div>
       <Side trace={ta.trace} label="A" />
       <Side trace={tb.trace} label="B" />

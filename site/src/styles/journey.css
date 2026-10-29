@@ -11,14 +11,14 @@
 .wl-step-n { padding-top: 2px; font-size: 14px; font-weight: 600; }
 .wl-steps li.wl-step-past { color: var(--wl-fg-2); }
 .wl-steps li.wl-step-on { color: var(--wl-fg); }
-.wl-steps li.wl-step-on .wl-step-n { color: var(--wl-blue); }
+.wl-steps li.wl-step-on .wl-step-n { color: var(--wl-accent-text); }
 .wl-steps li.wl-step-on p { max-height: 120px; opacity: 1; margin-top: 6px; color: var(--wl-fg-2); }
 
 .wl-journey-visual { position: relative; padding: clamp(20px, 3vw, 32px); border-radius: var(--wl-radius); background: var(--wl-night); color: var(--wl-night-fg); }
 .wl-map { width: 100%; height: auto; overflow: visible; }
 .wl-map-rail { stroke: var(--wl-night-line); stroke-width: 2; stroke-dasharray: 3 5; }
 .wl-map-wire { stroke: var(--wl-blue); stroke-width: 2.5; fill: none; }
-.wl-map-pulse { fill: var(--wl-white); }
+.wl-map-pulse { fill: var(--wl-surface); }
 .wl-map-edge-label { fill: var(--wl-night-muted); font: 500 12px var(--wl-mono); }
 .wl-map-node rect { fill: var(--wl-night-2); stroke: var(--wl-night-line); stroke-width: 1.5; transition: stroke 0.4s, fill 0.4s; }
 .wl-map-label { fill: var(--wl-night-muted); font: 650 15px var(--wl-sans); transition: fill 0.4s; }
@@ -29,7 +29,7 @@
 .wl-map-lit .wl-map-status { fill: var(--wl-green); }
 
 .wl-tl { position: relative; margin-top: 28px; padding-top: 26px; border-top: 1px solid var(--wl-night-line); display: grid; gap: 10px; }
-.wl-tl-axis { position: relative; height: 14px; margin-left: 110px; font-size: 11px; color: var(--wl-night-muted); }
+.wl-tl-axis { position: relative; height: 14px; margin-left: 110px; font-size: 12px; color: var(--wl-night-muted); }
 .wl-tl-axis span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
 .wl-tl-axis span:first-child { transform: none; }
 .wl-tl-axis span:last-child { transform: translateX(-100%); }
