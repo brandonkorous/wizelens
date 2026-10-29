@@ -87,11 +87,11 @@ export function InfraHead({ back, backLabel, icon: Icon, title, status, facts }:
 }
 
 /** One chart panel over the page's buckets. */
-export function LinePanel({ title, starts, lines, format }: { title: string; starts: number[]; lines: ChartSeries[]; format: (v: number) => string }) {
+export function LinePanel({ title, starts, lines, format, top }: { title: string; starts: number[]; lines: ChartSeries[]; format: (v: number) => string; top?: number }) {
   const empty = lines.every((l) => l.values.every((v) => v === null));
   return (
     <Panel title={title}>
-      {empty ? <Empty title="No data in this range" /> : <TimeChart starts={starts} lines={lines} height={200} format={format} />}
+      {empty ? <Empty title="No data in this range" /> : <TimeChart starts={starts} lines={lines} height={200} format={format} top={top} />}
     </Panel>
   );
 }

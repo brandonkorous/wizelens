@@ -3,7 +3,7 @@ import type { Release } from "@wizeworks/lens-core";
 import { fmtBucket, fmtTick } from "../format";
 import { setWindowPref } from "../data/period";
 import { useReleases } from "../data/releases";
-import { areaPath, linePath, maxOf, niceMax, ticksOf } from "./chartMath";
+import { areaPath, linePath, lonePoints, maxOf, niceMax, ticksOf } from "./chartMath";
 import { type ChartOutage, OutageBands } from "./OutageBands";
 import { releaseIndex, ReleaseMarks } from "./ReleaseMarks";
 import { ChartLegend } from "./ChartLegend";
@@ -33,6 +33,8 @@ export interface TimeChartProps {
   separateBarScale?: boolean;
   /** Bars sit on top of each other instead of side by side. */
   stackBars?: boolean;
+  /** The axis reaches at least this high, as a share chart's 1 (100%). */
+  top?: number;
   /** Drag across the chart to show that span (a custom time range). On unless false. */
   zoom?: boolean;
   /** Release markers (versions that first sent data in the window). On unless false. */
@@ -76,7 +78,8 @@ function frameOf(p: TimeChartProps, width: number, height: number): Frame {
   const n = Math.max(1, p.starts.length);
   const lineMax = niceMax(maxOf((p.lines ?? []).map((s) => s.values)));
   const barMax = niceMax(maxOf(p.stackBars ? [stackTotals(p)] : (p.bars ?? []).map((s) => s.values)));
-  const max = p.separateBarScale || !p.lines?.length ? (p.lines?.length ? lineMax : barMax) : Math.max(lineMax, barMax);
+  // A chart with no bars must not take the empty bar scale's floor of 1, or 0.3 cores draws on a 0 to 1 axis.
+  const max = Math.max(p.top ?? 0, !p.lines?.length ? barMax : p.separateBarScale || !p.bars?.length ? lineMax : Math.max(lineMax, barMax));
   const base = height - PAD.bottom;
   const span = base - PAD.top;
   const barScale = p.separateBarScale ? barMax : max;
@@ -143,6 +146,7 @@ function Plot({ p, f }: { p: TimeChartProps; f: Frame }) {
         <g key={s.label}>
           {(si === 0 || p.areas) && !s.dashed && <path d={areaPath(s.values, f.x, f.y, f.base)} fill={s.color} opacity={p.areas ? 0.18 : 0.08} />}
           <path d={linePath(s.values, f.x, f.y)} fill="none" stroke={s.color} strokeWidth={s.dashed ? 1.5 : 2} strokeLinejoin="round" strokeDasharray={s.dashed ? "4 4" : undefined} opacity={s.dashed ? 0.7 : 1} />
+          {!s.dashed && lonePoints(s.values).map((i) => <circle key={i} cx={f.x(i)} cy={f.y(s.values[i]!)} r={3} fill={s.color} />)}
         </g>
       ))}
     </g>

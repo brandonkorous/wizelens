@@ -35,6 +35,9 @@ export function linePath(values: readonly (number | null)[], x: (i: number) => n
   return d;
 }
 
+/** Points with no value on either side: a line cannot draw them, so the chart marks each with a dot. */
+export const lonePoints = (values: readonly (number | null)[]): number[] => values.flatMap((v, i) => (v !== null && values[i - 1] == null && values[i + 1] == null ? [i] : []));
+
 /** Closed areas under a line, for the soft fill: one per run of values, so a gap with no data stays empty, like the line. */
 export function areaPath(values: readonly (number | null)[], x: (i: number) => number, y: (v: number) => number, base: number): string {
   let d = "";

@@ -23,7 +23,7 @@ function Charts({ d }: { d: Detail }) {
   return (
     <>
       <div className="wl-grid wl-grid-2-even">
-        <LinePanel title="CPU Over Time" starts={s} lines={[{ label: "Busy", values: d.cpu, color: "var(--wl-blue)" }]} format={fmtShare} />
+        <LinePanel title="CPU Over Time" starts={s} lines={[{ label: "Busy", values: d.cpu, color: "var(--wl-blue)" }]} format={fmtShare} top={1} />
         <LinePanel title="Memory Over Time" starts={s} lines={[{ label: "Used", values: d.memory, color: "var(--wl-green)" }]} format={fmtBytes} />
       </div>
       <div className="wl-grid wl-grid-2-even">
