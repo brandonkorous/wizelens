@@ -6,6 +6,10 @@
   .wl-table-cards thead th { padding: 0; border: 0; font-size: 13px; }
   /* The head bar holds the sort buttons and the pick-all box; with neither it is not drawn. */
   .wl-table-cards thead tr:not(:has([aria-sort], .wl-cell-pick :is(input, button))) { display: none; }
+  /* The pick-all box says what it does: on a card list there is no column for it to head. */
+  .wl-table-cards thead th.wl-cell-pick { width: auto; }
+  .wl-table-cards thead .wl-pick-hit:has(input) { display: inline-flex; align-items: center; gap: 8px; width: auto; padding-right: 12px; color: var(--wl-fg-2); font-weight: 500; cursor: pointer; }
+  .wl-table-cards thead .wl-pick-hit:has(input)::after { content: "Select all"; }
   .wl-table-cards thead th:not([aria-sort]):not(.wl-cell-pick) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .wl-table-cards tbody tr { display: grid; grid-template-columns: auto minmax(0, 1fr); border-bottom: 1px solid var(--wl-line); }
   .wl-table-cards tbody tr:last-child { border-bottom: 0; }
