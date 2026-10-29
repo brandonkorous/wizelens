@@ -24,7 +24,9 @@
 .wl-err-nav { display: flex; gap: 6px; }
 .wl-err-nav button { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--wl-line); border-radius: 8px; background: var(--wl-surface); cursor: pointer; }
 .wl-err-nav button:disabled { opacity: 0.45; cursor: default; }
-.wl-err-title { font-size: 17px; line-height: 1.35; overflow-wrap: anywhere; }
+.wl-err-title { font-size: 17px; line-height: 1.35; overflow-wrap: break-word; }
+/* On a phone the badges go under the error's name, so the name keeps the width. */
+@media (max-width: 560px) { .wl-errors-page .wl-side-head { flex-wrap: wrap; } .wl-errors-page .wl-side-head .wl-err-title { flex: 1 1 100%; } }
 .wl-err-occ { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 12px 0 14px; padding: 12px 0; border-top: 1px solid var(--wl-line); border-bottom: 1px solid var(--wl-line); }
 .wl-err-tabs { margin-top: 18px; }
 

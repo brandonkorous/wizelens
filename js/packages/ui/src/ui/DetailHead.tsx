@@ -1,5 +1,6 @@
 import { type ComponentType, type ReactNode, useState } from "react";
 import { ArrowLeft } from "lucide-react";
+import { breakable } from "./breakable";
 
 export interface DetailHeadProps {
   /** Where "back" goes and what it says, for example ["#/errors", "All errors"]. */
@@ -15,8 +16,6 @@ export interface DetailHeadProps {
   stats: [label: string, value: ReactNode][];
 }
 
-/** A code-font name that may break after / . ? & = and before spaces, never inside a word. */
-const breakable = (name: string) => name.split(/(?<=[/.?&=])/).map((part, i) => <span key={i}>{i > 0 && <wbr />}{part}</span>);
 
 /** A long code-font title shows three lines on a phone until "Show all" (detail.css). */
 const LONG = 120;
@@ -32,7 +31,7 @@ export function DetailHead({ back, icon: Icon, title, mono = false, badge, actio
       </a>
       <h1 className="wl-dhead-title">
         <Icon size={22} aria-hidden={true} />
-        <span className={`wl-dhead-name${mono ? " wl-mono" : ""}${long && !open ? " wl-clamped" : ""}`}>{mono && typeof title === "string" ? breakable(title) : title}</span>
+        <span className={`wl-dhead-name${mono ? " wl-mono" : ""}${long && !open ? " wl-clamped" : ""}`}>{typeof title === "string" ? breakable(title) : title}</span>
         {badge && <span className="wl-dhead-badge">{badge}</span>}
       </h1>
       {long && <button type="button" className="wl-link-btn wl-dhead-more" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? "Show less" : "Show all"}</button>}

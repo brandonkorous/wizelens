@@ -26,6 +26,14 @@
   /* Facts under a title go two to a line, so they take half the height. */
   .wl-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
   .wl-stats dd { overflow-wrap: anywhere; }
+  /* Errors and Database: the lists people act on come before the two charts. */
+  :is(.wl-errors-page, .wl-db-page) { display: flex; flex-direction: column; }
+  :is(.wl-errors-page, .wl-db-page) > .wl-grid-2 { order: 1; }
+  /* Bar lists: the name takes its own line in full, the bar and number go under it. */
+  .wl-bars { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
+  .wl-bars.wl-compact { grid-template-columns: auto minmax(0, 1fr); }
+  .wl-bar-row { row-gap: 4px; }
+  .wl-bar-row > .wl-truncate { grid-column: 1 / -1; white-space: normal; overflow: visible; overflow-wrap: anywhere; }
 }
 /* A row of tabs that scrolls sideways shows an arrow button at each edge that hides more (ui/ScrollRow.tsx). */
 .wl-scroll-row { position: relative; min-width: 0; }
