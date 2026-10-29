@@ -36,7 +36,14 @@
       "sc sc";
   }
 }
+.wl-tile-more { display: none; }
 @media (max-width: 680px) {
   .wl-bento { grid-template-columns: minmax(0, 1fr); grid-template-areas: "db" "rd" "er" "lg" "mt" "sv" "ck" "tg" "us" "up" "sl" "sm" "rx" "sc"; grid-auto-rows: auto; }
-  .wl-tile { padding: 22px; }
+  .wl-tile { padding: 22px; gap: 14px; }
+  /* A phone shows each tile's title and first sentence; Show more opens the rest and its live demo. */
+  .wl-tile:not(.wl-tile-open) :is(.wl-tile-rest, .wl-tile-art) { display: none; }
+  .wl-tile-more { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; min-height: 44px; margin: -8px 0 -10px; padding: 0; border: 0; background: none; color: var(--wl-accent-text); font: 600 15px var(--wl-sans); cursor: pointer; }
+  .wl-tile-more svg { width: 18px; height: 18px; transition: transform 0.2s; }
+  .wl-tile-open .wl-tile-more svg { transform: rotate(180deg); }
+  .wl-tile-night .wl-tile-more { color: var(--wl-night-fg); }
 }
