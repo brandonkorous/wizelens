@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, HeartPulse, Plus } from "lucide-react";
+import { Bell, Plus } from "lucide-react";
 import type { UptimeCheckView } from "@wizeworks/lens-core";
 import { useHost } from "../../data/host";
 import { usePageModel } from "../../data/models";
@@ -92,7 +92,7 @@ function UptimeList() {
       {importing && <ImportChecks api={api} lead={target.field} projectId={target.id ?? undefined} onClose={() => setImporting(false)} />}
       <Panel title="Checks" flush>
         {bulk.bar}
-        <ChecksTable select={bulk.select} checks={checks} model={model} nowMs={api.data?.nowMs ?? Date.now()} canWrite={api.canWrite} {...actions} empty={<Empty title="No checks yet"><HeartPulse aria-hidden="true" /> Add one to hear when a site or API stops answering.</Empty>} />
+        <ChecksTable select={bulk.select} checks={checks} model={model} nowMs={api.data?.nowMs ?? Date.now()} canWrite={api.canWrite} {...actions} empty={<Empty title="No checks yet">Add one to hear when a site or API stops answering.</Empty>} />
       </Panel>
       <IncidentsPanel incidents={api.data?.incidents ?? []} nowMs={api.data?.nowMs ?? Date.now()} />
       <StatusPagePanel />

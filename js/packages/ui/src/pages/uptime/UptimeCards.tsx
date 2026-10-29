@@ -15,13 +15,15 @@ export function UptimeCards({ checks, model }: { checks: readonly UptimeCheckVie
   const up = on.filter((c) => c.state === "up").length;
   const down = on.filter((c) => c.state === "down").length;
   const pending = on.length - up - down;
-  // A check that has not run yet is not down: say which it is.
-  const upNote = [down ? `${down} down` : "", pending ? `${pending} not run yet` : ""].filter(Boolean).join(", ") || "All up";
+  // A check that has not run yet is not down: say which it is. With none on, nothing is "all up".
+  const upNote = on.length === 0 ? "No checks are on" : [down ? `${down} down` : "", pending ? `${pending} not run yet` : ""].filter(Boolean).join(", ") || "All up";
   const t = model?.totals;
   const hasPrev = !!model?.meta.hasPrev;
   const change = (a: number | null | undefined, b: number | null | undefined) => (hasPrev && a != null ? percentChange(a, b ?? 0) : null);
   const compareLabel = model?.meta.compareLabel ?? "";
   const failRate = (model?.checks ?? []).length ? model!.starts.map((_, i) => model!.checks.reduce((s, c) => s + (c.failSeries[i] ?? 0), 0)) : undefined;
+  // With no checks, four dashes say nothing the empty list does not.
+  if (checks.length === 0) return null;
   return (
     <div className="wl-grid wl-grid-stats">
       <StatCard icon={CircleCheck} label="Checks Up" value={on.length ? `${up} of ${on.length}` : "–"} change={null} upIsGood compareLabel="" note={upNote} />
