@@ -1,5 +1,6 @@
 /* Hosts and Kubernetes pages: usage bars, name chips, and page spacing. */
 .wl-infra-page > .wl-panel, .wl-infra-page > .wl-grid, .wl-infra-page > .wl-banner { margin: 0 0 18px; }
+.wl-table-note { padding: 10px 20px; border-bottom: 1px solid var(--wl-line); }
 .wl-infra-page .wl-panel-flush .wl-table th:first-child, .wl-infra-page .wl-panel-flush .wl-table td:first-child { padding-left: 20px; }
 .wl-infra-page .wl-panel-flush .wl-table th:last-child, .wl-infra-page .wl-panel-flush .wl-table td:last-child { padding-right: 20px; }
 .wl-infra-page .wl-page-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }

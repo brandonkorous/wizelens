@@ -2,6 +2,7 @@ import type { ComponentType, ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { fmtMetric, type InfraService } from "@wizeworks/lens-core";
 import { fmtAgo } from "../../format";
+import { hrefTo } from "../../routes";
 import { DotText } from "../../ui/Badges";
 import { Empty, Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
@@ -100,6 +101,7 @@ function serviceColumns(now: number): Column<InfraService>[] {
     { key: "version", header: "Version", cell: (s) => s.version || DASH, className: "wl-hide-sm" },
     { key: "status", header: "Status", cell: (s) => <DotText tone={s.online ? "success" : "neutral"}>{s.online ? "Online" : "Offline"}</DotText>, sort: (s) => (s.online ? 0 : 1) },
     { key: "seen", header: "Last seen", cell: (s) => fmtAgo(s.lastSeenMs, now), sort: (s) => -s.lastSeenMs },
+    { key: "see", header: "", srHeader: "Its traces and logs", className: "wl-cell-actions", cell: (s) => <span className="wl-row-actions"><a href={hrefTo("traces", [], { service: s.service })}>Traces</a><a href={hrefTo("logs", [], { service: s.service })}>Logs</a></span> },
   ];
 }
 

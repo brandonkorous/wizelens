@@ -14,10 +14,16 @@ import { hostHref, nodeHref, workloadHref } from "./links";
 
 const BACK = hrefTo("kubernetes");
 
+/** CPU on one scale: cores when the line reaches a core, millicores below, so the axis never mixes the two. */
+function coresScale(values: readonly (number | null)[]): (v: number) => string {
+  const top = Math.max(0, ...values.map((v) => v ?? 0));
+  return top >= 0.995 ? (v) => `${Number(v.toFixed(2))} cores` : (v) => `${Math.round(v * 1000)} millicores`;
+}
+
 function Charts({ d }: { d: NodeDetail | PodDetail }) {
   return (
     <div className="wl-grid wl-grid-3">
-      <LinePanel title="CPU Over Time" starts={d.buckets} lines={[{ label: "CPU", values: d.cpu, color: "var(--wl-blue)" }]} format={(v) => fmtCores(v)} />
+      <LinePanel title="CPU Over Time" starts={d.buckets} lines={[{ label: "CPU", values: d.cpu, color: "var(--wl-blue)" }]} format={coresScale(d.cpu)} />
       <LinePanel title="Memory Over Time" starts={d.buckets} lines={[{ label: "Working set", values: d.memory, color: "var(--wl-green)" }]} format={fmtBytes} />
       <LinePanel title="Network Over Time" starts={d.buckets} lines={[{ label: "In", values: d.netIn, color: "var(--wl-blue)" }, { label: "Out", values: d.netOut, color: "var(--wl-orange)" }]} format={fmtRate} />
     </div>
@@ -52,7 +58,7 @@ function NodeBody({ d, now }: { d: NodeDetail; now: number }) {
       </div>
       <Charts d={d} />
       <Panel title="Pods" flush>
-        <PodsTable rows={d.pods} empty="No pods on this node in this range." />
+        <PodsTable rows={d.pods} onNode empty="No pods on this node in this range." />
       </Panel>
       <ServicesPanel services={d.services} now={now} empty="No service reports a pod on this node as where it runs." />
     </>
