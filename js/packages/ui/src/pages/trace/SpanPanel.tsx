@@ -5,6 +5,7 @@ import { endpointHref, errorHref, hrefTo, queryHref } from "../../routes";
 import { serviceHref } from "../services/serviceParts";
 import { SpanK8s } from "../infra/SpanK8s";
 import { ServiceChip } from "./tabParts";
+import { StackBox } from "../../ui/StackBox";
 
 function prettyParams(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
@@ -52,7 +53,7 @@ function EventCard({ event, trace }: { event: SpanEvent; trace: Trace }) {
           <div>
             <strong>{String(a["exception.type"] ?? "Error")}</strong>: {String(a["exception.message"] ?? "")}
           </div>
-          {a["exception.stacktrace"] && <pre className="wl-code wl-stack">{String(a["exception.stacktrace"])}</pre>}
+          {a["exception.stacktrace"] && <StackBox text={String(a["exception.stacktrace"])} />}
         </>
       ) : (
         <AttrTable entries={Object.entries(a)} />

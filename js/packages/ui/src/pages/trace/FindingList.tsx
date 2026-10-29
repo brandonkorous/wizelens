@@ -46,7 +46,7 @@ export function FindingList({ findings, onSelect }: { findings: Finding[]; onSel
       )}
       {security.length > 0 && (
         <section id="wl-security" className="wl-insights" aria-label="Security">
-          <h3 className="wl-insights-head">Security risks</h3>
+          <h2 className="wl-insights-head">Security risks</h2>
           {security.map((f, i) => <Row key={`${f.kind}-${i}`} f={f} onSelect={onSelect} />)}
         </section>
       )}
