@@ -53,7 +53,8 @@ const logs: LogSink = (entry) => {
 
 const parts: AdapterParts = { dbSpans, capture, logs, metrics: null, provider };
 
-const disabled = disabledWizeLens({ serviceName: "auto" }, DEFAULT_BASE_PATH);
+// A stand-in until an owner starts: it never says WizeLens is off.
+const disabled = disabledWizeLens({ serviceName: "auto" }, DEFAULT_BASE_PATH, true);
 
 /** The instance the auto hooks hand to the adapters. Every read goes to the current owner. */
 export const autoHandle: WizeLens = new Proxy(disabled, {
