@@ -169,5 +169,5 @@ span.wl-count{cursor:default}span.wl-count:hover{background:none;color:var(--wl-
 .wl-kv dt{color:var(--wl-main-muted)}.wl-kv dd{margin:0;min-width:0;word-break:break-all}
 
 @media (max-width:480px){.wl-stats.wl-stats-sm{grid-template-columns:repeat(2,minmax(0,1fr))}.wl-body{padding:4px 14px 14px}.wl-sum,.wl-page{padding-left:14px;padding-right:14px}}
-@media (max-width:480px){.wl-val{font-size:15px}.wl-card{padding:10px 12px 8px}.wl-req{display:none}}
+@media (max-width:480px){.wl-val{font-size:15px}.wl-card{padding:10px 12px 8px}}
 `;
