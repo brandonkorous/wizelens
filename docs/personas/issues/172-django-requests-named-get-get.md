@@ -26,10 +26,13 @@ the cloud alike.
 ## Fix
 
 A server span with no `url.path` takes it (and `url.query`) from `url.full`; a route with no leading slash gets one,
-as the .NET add-on already does. Client spans are left alone. Test: `semconv.test.ts`. Spans stored before the fix
+as the .NET add-on already does. A server span named by its method and that route ("GET report") takes the
+slashed route too, so trace titles match. Client spans are left alone. Test: `semconv.test.ts`. Spans stored before the fix
 keep their old names.
 
 ## Confirmation
 
 - 16:38, Ifeoma: new Ostrava requests read `/invoice/1`, `/report`, `/orders`, `/checkout`, `/bikes`; the tag preview
   reads "GET /invoice/1 GET /report …".
+- 17:00, Ifeoma: the shared trace showed "GET report" as its title (the span's name, a neighbour left behind). After the
+  name fix, a new trace's title reads "GET /invoice/<int:order_id>".

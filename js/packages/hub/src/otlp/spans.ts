@@ -2,7 +2,7 @@ import { type Attributes, isDbCall, redactAttributes, redactText, SPAN_RESOURCE_
 import type { HubWrite } from "../store.js";
 import { foldDbParams } from "./db-params.js";
 import { hideNestedDb } from "./nested.js";
-import { splitTarget } from "./semconv.js";
+import { serverName, splitTarget } from "./semconv.js";
 import { attributesOf, hexId, nanosToMs, type OtlpKeyValue, type OtlpResource, resourcePick, senderOf } from "./values.js";
 
 export interface OtlpSpan {
@@ -70,7 +70,8 @@ export function toSpan(s: OtlpSpan, service: string, redactKeys: readonly string
   const attributes = redactAttributes({ ...resource, ...raw }, redactKeys);
   const category = categoryOf(kind, attributes);
   const startMs = nanosToMs(s.startTimeUnixNano);
-  const name = String(s.name ?? "span").slice(0, 500);
+  const named = String(s.name ?? "span").slice(0, 500);
+  const name = kind === "server" ? serverName(named, raw) : named;
   return {
     traceId,
     spanId,

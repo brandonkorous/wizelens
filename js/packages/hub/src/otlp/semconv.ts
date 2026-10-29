@@ -74,6 +74,14 @@ function serverPath(a: Attributes): void {
   if (typeof route === "string" && route && !route.startsWith("/")) a["http.route"] = `/${route}`;
 }
 
+/** A server span named by its method and a route with no leading slash ("GET report") takes the slashed route, as its route does. */
+export function serverName(name: string, a: Attributes): string {
+  const route = a["http.route"];
+  const method = a["http.request.method"];
+  if (typeof route !== "string" || typeof method !== "string" || !route.startsWith("/")) return name;
+  return name === `${method} ${route.slice(1)}` ? `${method} ${route}` : name;
+}
+
 /** `http.target` holds the path and the query: split them into `url.path` and `url.query`. A server span fills a missing path first. */
 export function splitTarget(a: Attributes, server = false): void {
   if (server) serverPath(a);
