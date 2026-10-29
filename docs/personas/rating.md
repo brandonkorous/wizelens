@@ -8,7 +8,7 @@ Every screen in WizeLens, scored on **Design** and **Ease** as the personas open
 them. How and when to score is RULE #6 in [CLAUDE.md](CLAUDE.md); this file is
 where the numbers live.
 
-**Scored so far: 171 of 179 screens.** 2026-10-29, branch `feat/rating-nine`: average 8.66 (the lower axis per row), 118 rows at 9, 62 at 8, 0 at 7. (2026-10-28: the runner's "dark" set only the browser's scheme while the dashboard keeps its own saved theme, so dark checks before 09:30 that day may have been light; every screen re-scored that day was checked again in true dark.) Update that line as rows fill in —
+**Scored so far: 171 of 179 screens.** 2026-10-29, branch `feat/rating-nine`: average 8.67 (the lower axis per row), 120 rows at 9, 60 at 8, 0 at 7. (2026-10-28: the runner's "dark" set only the browser's scheme while the dashboard keeps its own saved theme, so dark checks before 09:30 that day may have been light; every screen re-scored that day was checked again in true dark.) Update that line as rows fill in —
 it is the denominator, and a rating file that does not show what it has not looked
 at is the same lie as an empty issue list.
 
@@ -176,11 +176,11 @@ P06 scored 20 of these on P03's eShop in four views (1440 and 360, light and dar
 | People & access › Connected apps | `#/people/apps` | 8 | 8 | at 360 Can read and Connected scroll under the Disconnect button; was: wrong menu path #176 | P06 |
 | People & access › Shared links | `#/people/links` | 8 | 8 | at 360 the link column shows GET /report and the id in three lines; was: links could not be told apart #178 | P06 |
 | People & access › Audit log | `#/people/audit` | 8 → 9 | 8 | 29 Tab stops to reach the log; was: at 360 What and Detail move into the table scroll; 29 Tab stops to reach it; revoked key unnamed #048, cancelled invite unnamed #040, no "how long ago" #041, export named no one #137, viewers shut out #138; What and Detail read in the card; re-scored 2026-10-29 at 360 light | P02, P05 |
-| Account › Profile | `#/account/profile` | 8 | 9 | one name box and the email; Change for email is small link text | P06 |
+| Account › Profile | `#/account/profile` | 8 → 9 | 9 | was: one name box and the email; Change for email is small link text; Change email is a real button; re-scored 2026-10-29 at 360 light | P06 |
 | Account › Devices | `#/account/devices` | 8 → 9 | 8 → 9 | was: one row here; at 360 Device wraps Chrome / on / Windows; hidden until a fresh sign-in #190; the device name is a whole line in its card; re-scored 2026-10-29 by the 360 scan | P06 |
 | Account › Preferences | `#/account/preferences` | 8 | 9 | says choices are saved in this browser only | P06 |
 | Account › Emails | `#/account/emails` | 7 → 9 | 8 → 9 | was: at 360 the per-project table squeezes names to one word a line and repeats the org under each; we sent on a cloud with no mail #168; each project is a card with Daily, Weekly and Monthly boxes; the org is named only when there are several; re-scored 2026-10-29 at 360 light | P06 |
-| Account › Delete account | `#/account/delete` | 8 | 8 | says why delete is blocked (only owner) and what to do first | P06 |
+| Account › Delete account | `#/account/delete` | 8 → 9 | 8 → 9 | was: says why delete is blocked (only owner) and what to do first; the panel and the confirm name each organization that goes with the account (Ashgrove & Peña); re-scored 2026-10-29 at 360 dark | P06 |
 | Account › Security | `#/account/security` | 8 → 9 | 8 → 9 | was: "Turn off" two-step is a solid red button beside "New backup codes"; Turn off is a plain button with red text, not a solid red one (in code; two-step is off for this account); re-scored 2026-10-29 | P02 |
 | Connect › options | `#/connect/options` | 8 → 9 | 8 → 9 | was: 20 options in pages of 15 at 360; Node names are on page 2 only by scrolling sideways; each option is a card with its Node and .NET names, on every page; re-scored 2026-10-29 by a 360 scan in light and dark of P03's data (no sideways scroll, no cut text, no capped card cells) and a look by eye | P06 |
 | Trace › Timeline | `#/traces/<id>` | 8 → 9 | 8 → 9 | was: at 360 the tabs scroll; a browser-only trace read "Network and other 4.84 s" #142, "HTTP CALLS 0" above "HTTP 1" #153, the browser chip #078, 714 px wide on a phone #092; re-scored 2026-10-28 in light, true dark and 360; the tab row has arrow buttons and keeps the open tab in view #221; re-scored 2026-10-29 at 360 light and dark | P02, P03, P04 |
