@@ -34,6 +34,7 @@
 /* On a phone, code and headers in a table wrap so every column fits the screen; no column gets narrower than a short word. */
 @media (max-width: 720px) {
   .wl-prose th, .wl-prose td { padding: 8px 10px; min-width: 7em; }
+  .wl-prose :is(th, td):first-child { min-width: 9em; }
   .wl-prose th { white-space: normal; overflow-wrap: break-word; }
   .wl-prose td code { white-space: normal; overflow-wrap: anywhere; }
 }
