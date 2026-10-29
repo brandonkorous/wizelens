@@ -121,6 +121,9 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **The collector chart is published.** `helm install wizelens-collector
+  oci://ghcr.io/brandonkorous/charts/wizelens-collector` installs the host and Kubernetes collector with no clone of
+  this repo. Each release pushes it beside the inject chart, at the same version; CI lints and renders it.
 - **ASP.NET Core on .NET 8 and 9.** Every WizeLens .NET package is built for .NET 8 and .NET 10 (.NET 9 apps use the
   .NET 8 build). On .NET 8, WizeLens publishes the runtime numbers .NET 9 has built in (CPU, memory, heap, GC pause
   time, thread pool), under the same names, so the runtime panel is the same. CI runs the .NET tests on both. The

@@ -9,7 +9,8 @@ a Helm chart for Kubernetes, and one config file for a plain host.
 
 ## Kubernetes
 
-The chart is in [`deploy/helm/wizelens-collector`](https://github.com/brandonkorous/wizelens/tree/main/deploy/helm/wizelens-collector).
+The chart is `oci://ghcr.io/brandonkorous/charts/wizelens-collector`, published with each release (source:
+[`deploy/helm/wizelens-collector`](https://github.com/brandonkorous/wizelens/tree/main/deploy/helm/wizelens-collector)).
 It runs two collectors:
 
 | Collector | Runs as | Reads |
@@ -20,8 +21,7 @@ It runs two collectors:
 Both add pod, namespace, node, and workload names (`k8sattributes`), and send to one endpoint.
 
 ```bash
-git clone https://github.com/brandonkorous/wizelens
-helm install wizelens-collector ./wizelens/deploy/helm/wizelens-collector \
+helm install wizelens-collector oci://ghcr.io/brandonkorous/charts/wizelens-collector \
   --namespace wizelens --create-namespace \
   --set endpoint=https://app.wizelens.com \
   --set ingestKey=wl_ik_... \

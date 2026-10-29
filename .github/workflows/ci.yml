@@ -186,10 +186,12 @@ jobs:
       - name: Webhook tests
         run: node --test "deploy/inject/webhook/*.test.mjs"
 
-      - name: Lint and render the Helm chart
+      - name: Lint and render the Helm charts
         run: |
           helm lint deploy/inject/chart --set hub=http://wizelens-hub.wizelens:5960
           helm template wl deploy/inject/chart --namespace wizelens --set namespaceLabels.team=shop > /dev/null
+          helm lint deploy/helm/wizelens-collector --set existingSecret.name=wizelens-ingest
+          helm template wl deploy/helm/wizelens-collector --namespace monitoring --set existingSecret.name=wizelens-ingest > /dev/null
 
       - name: Build the image
         run: docker build -f deploy/inject/Dockerfile -t wizelens-inject:ci .
