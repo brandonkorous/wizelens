@@ -17,6 +17,13 @@ const DISPLAY_NOTE = { value: "Value", rate: "Per second", percentiles: "Distrib
 /** What a new alert on the chart reads: the average, the rate, or p95. */
 const ALERT_STAT = { value: "avg", rate: "rate", percentiles: "p95" } as const;
 
+/** A word unit ("collection/s") makes long axis labels; then the axis shows the number and the unit is said once. */
+function axisOf(unit: string): { format: (v: number) => string; unit: string } | null {
+  const sample = fmtMetric(1, unit);
+  const at = sample.indexOf(" ");
+  return at < 0 ? null : { format: (v) => fmtMetric(v, unit).split(" ")[0]!, unit: sample.slice(at + 1) };
+}
+
 /** Lines to draw: one per group, or p50 / p95 / p99 for a histogram that is not split. */
 function seriesOf(d: MetricDetail): ChartSeries[] {
   if (d.percentiles && !d.groupBy) {
@@ -39,18 +46,24 @@ function Controls({ d }: { d: MetricDetail }) {
 function Summary({ d }: { d: MetricDetail }) {
   const f = (v: number | null) => fmtMetric(v, d.displayUnit);
   const label = d.percentiles ? ` (${d.stat})` : "";
+  // With several lines the numbers cover them all: rates add up, plain values are averaged.
+  const many = !d.percentiles && d.lines.length > 1;
   return (
-    <KeyValues
+    <>
+      {many && <p className="wl-metric-sum">{d.display === "rate" ? `These numbers add up all ${d.lines.length} lines.` : `These numbers are the average of all ${d.lines.length} lines.`}</p>}
+      <KeyValues
       rows={[
         [`Now${label}`, f(d.summary.last)],
         [`Lowest${label}`, f(d.summary.min)],
         [`Highest${label}`, f(d.summary.max)],
         [`Average${label}`, f(d.summary.avg)],
         ["Shown as", DISPLAY_NOTE[d.display]],
-        ["Unit", d.unit || "none"],
+        // OpenTelemetry writes a plain count's unit in braces ("{collection}"); show the word.
+        ["Unit", d.unit.replace(/[{}]/g, "").replace(/_/g, " ") || "none"],
         ["Services", d.services.join(", ")],
       ]}
-    />
+      />
+    </>
   );
 }
 
@@ -64,11 +77,13 @@ export function MetricChart({ detail }: { detail: MetricDetail | null }) {
     );
   }
   const d = detail;
+  const axis = axisOf(d.displayUnit);
   const bars = d.countRate ? [{ label: "Values per second", values: d.countRate, color: "var(--wl-chart-bar)" }] : undefined;
   return (
     <Panel title={<h2 className="wl-metric-title">{d.name}</h2>} action={<Controls d={d} />} className="wl-metric-chart">
       {d.description && <p className="wl-metric-desc">{d.description}</p>}
-      <TimeChart starts={d.buckets} lines={seriesOf(d)} bars={bars} separateBarScale format={formatterOf(d.displayUnit)} height={260} />
+      {axis && <p className="wl-metric-desc">Values in {axis.unit}</p>}
+      <TimeChart starts={d.buckets} lines={seriesOf(d)} bars={bars} separateBarScale format={formatterOf(d.displayUnit)} axisFormat={axis?.format} height={260} />
       {d.hidden > 0 && <p className="wl-metric-desc">{d.hidden} more lines are not shown. Split by another key to see them.</p>}
       <Summary d={d} />
     </Panel>

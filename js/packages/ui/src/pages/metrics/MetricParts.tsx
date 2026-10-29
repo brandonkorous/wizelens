@@ -34,6 +34,9 @@ export function RuntimeStrip({ model, selected }: { model: MetricsModel; selecte
 }
 
 /** A dotted metric name that may break after each dot, so the end ("p99", "count") always shows. */
+/** On a narrow screen the chart sits above the list; a pick scrolls back up to it. */
+const showChart = () => window.matchMedia("(max-width: 900px)").matches && document.querySelector(".wl-metric-chart")?.scrollIntoView({ behavior: "smooth", block: "start" });
+
 export function DottedName({ name }: { name: string }) {
   const parts = name.split(".");
   return (
@@ -51,7 +54,7 @@ export function DottedName({ name }: { name: string }) {
 function MetricRow({ m, active }: { m: MetricInfo; active: boolean }) {
   return (
     <li>
-      <button type="button" className={active ? "wl-active" : undefined} onClick={() => setQuery({ metric: m.name, group: null, stat: null })} title={m.description || m.name}>
+      <button type="button" className={active ? "wl-active" : undefined} onClick={() => (setQuery({ metric: m.name, group: null, stat: null }), showChart())} title={m.description || m.name}>
         <span className="wl-metric-name">
           <strong><DottedName name={m.name} /></strong>
           <em>

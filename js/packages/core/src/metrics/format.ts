@@ -26,11 +26,11 @@ function seconds(v: number): string {
 }
 
 /** "{request}" → "request". */
-const curly = (unit: string) => unit.replace(/\{([^}]*)\}/g, "$1");
+const curly = (unit: string) => unit.replace(/\{([^}]*)\}/g, (_, word: string) => word.replace(/_/g, " "));
 
 /** A value in its UCUM unit. Ratios ("1", "s/s") show as percent. */
 export function fmtMetric(value: number | null | undefined, unit: string): string {
-  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+  if (value === null || value === undefined || !Number.isFinite(value)) return "–";
   if (unit === "1" || unit === "s/s" || unit === "%") return `${num(unit === "%" ? value : value * 100)}%`;
   if (unit === "By") return bytes(value);
   if (unit === "By/s") return `${bytes(value)}/s`;

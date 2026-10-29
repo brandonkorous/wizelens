@@ -1,7 +1,7 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { fmtCount } from "../../format";
 import { type MetricsState, useMetricsModel } from "../../data/metrics";
-import { useRoute } from "../../routes";
+import { setQuery, useRoute } from "../../routes";
 import { Empty, PageHeader, Panel } from "../../ui/Panel";
 import { MetricChart } from "./MetricChart";
 import { MetricList, RuntimeStrip } from "./MetricParts";
@@ -39,6 +39,9 @@ export function MetricsPage() {
   const key = query.toString();
   const params = useMemo(() => Object.fromEntries(new URLSearchParams(key)), [key]);
   const model = state.model;
+  const first = model?.catalog[0]?.name;
+  // With none picked, the first metric opens, so the page always has a chart.
+  useEffect(() => void (!params.metric && first && setQuery({ metric: first })), [params.metric, first]);
   return (
     <div className="wl-metrics-page">
       <PageHeader title="Metrics" subtitle="CPU, memory, garbage collection, request times, and your own counters, per service." />
