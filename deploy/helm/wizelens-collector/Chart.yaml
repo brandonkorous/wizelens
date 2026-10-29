@@ -2,7 +2,7 @@ apiVersion: v2
 name: wizelens-collector
 description: OpenTelemetry Collector that sends host and Kubernetes metrics, and app traces, to a WizeLens hub or WizeLens Cloud.
 type: application
-version: 0.3.0-alpha.13
+version: 0.3.0-alpha.14
 appVersion: "0.137.0"
 home: https://wizelens.com/docs/kubernetes
 sources:
