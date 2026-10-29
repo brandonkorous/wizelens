@@ -1,4 +1,5 @@
 import { Article } from "@/components/docs/Article";
+import { PageJump } from "@/components/docs/PageJump";
 import { Toc } from "@/components/docs/Toc";
 import { LEGAL_PAGES, loadLegal, type LegalSlug } from "@/lib/legal";
 
@@ -19,6 +20,7 @@ export async function LegalPage({ slug }: { slug: LegalSlug }) {
             <p className="wl-docs-desc">{doc.description}</p>
             {doc.updated && <p className="wl-legal-date">Last updated {doc.updated}</p>}
           </header>
+          <PageJump headings={doc.headings} />
           <Article html={doc.html} />
         </article>
         <Toc headings={doc.headings} />

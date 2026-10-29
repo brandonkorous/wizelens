@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import { unified } from "unified";
-import { rehypeHeadings, rehypeLinks, rehypeSections, type Heading, type Section } from "./plugins";
+import { rehypeHeadings, rehypeLinks, rehypeSections, rehypeTables, type Heading, type Section } from "./plugins";
 
 export type Rendered = { html: string; headings: Heading[]; sections: Section[] };
 
@@ -18,6 +18,7 @@ const processor = unified()
   .use(remarkRehype)
   .use(rehypeSlug)
   .use(rehypeLinks)
+  .use(rehypeTables)
   .use(rehypeSections)
   .use(rehypeHeadings)
   .use(rehypeShiki, { theme: "github-dark-default", langs: LANGS, defaultLanguage: "text", fallbackLanguage: "text" })

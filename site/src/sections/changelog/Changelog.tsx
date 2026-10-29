@@ -1,5 +1,6 @@
 import { Article } from "@/components/docs/Article";
 import { loadReleases, type Release } from "@/lib/changelog";
+import { JumpRow } from "./JumpRow";
 import { ReleaseDot, ReleaseRail } from "./ReleaseRail";
 
 function Entry({ r, current }: { r: Release; current: boolean }) {
@@ -26,9 +27,9 @@ export async function Changelog() {
         <div className="wl-wrap">
           <h1 className="wl-display">Changelog.</h1>
           <p className="wl-lede">Every change to WizeLens, newest first. This page is built from CHANGELOG.md in the repo, so it always matches it.</p>
-          <nav className="wl-cl-jump" aria-label="Releases">
+          <JumpRow>
             {releases.map((r) => <a key={r.id} href={`#${r.id}`}>{r.id === "unreleased" ? "Unreleased" : r.version}</a>)}
-          </nav>
+          </JumpRow>
         </div>
       </section>
       <div className="wl-wrap">

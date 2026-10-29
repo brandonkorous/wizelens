@@ -21,8 +21,8 @@
 .wl-sc-axis { stroke: var(--wl-night-line); stroke-width: 1.5; }
 
 .wl-principles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
-.wl-principles li { display: grid; gap: 10px; align-content: start; padding: 24px; border-radius: var(--wl-radius); background: var(--wl-white); border: 1px solid var(--wl-line); }
-.wl-principles li > span { font-size: 14px; font-weight: 650; color: var(--wl-blue); }
+.wl-principles li { display: grid; gap: 10px; align-content: start; padding: 24px; border-radius: var(--wl-radius); background: var(--wl-surface); border: 1px solid var(--wl-line); }
+.wl-principles li > span { font-size: 14px; font-weight: 650; color: var(--wl-accent-text); }
 .wl-principles p { font-size: 15.5px; color: var(--wl-fg-2); }
 
 .wl-credits { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; align-items: start; }

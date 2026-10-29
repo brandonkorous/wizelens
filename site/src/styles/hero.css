@@ -12,17 +12,17 @@
 .wl-stage-hud .wl-hud-panel { flex: 0 1 auto; min-height: 0; }
 .wl-stage-hud .wl-hud-card { flex: none; }
 
-.wl-app { position: absolute; left: 28px; top: 28px; bottom: 28px; right: 28px; background: var(--wl-white); border: 1px solid var(--wl-line); border-radius: 16px; box-shadow: var(--wl-shadow); overflow: hidden; }
+.wl-app { position: absolute; left: 28px; top: 28px; bottom: 28px; right: 28px; background: var(--wl-surface); border: 1px solid var(--wl-line); border-radius: 16px; box-shadow: var(--wl-shadow); overflow: hidden; }
 .wl-app-bar { display: flex; align-items: center; height: 46px; padding: 0 16px; border-bottom: 1px solid var(--wl-line); background: var(--wl-paper); }
-.wl-app-url { padding: 5px 14px; border-radius: 999px; background: var(--wl-white); border: 1px solid var(--wl-line); font-size: 13px; color: var(--wl-muted); }
+.wl-app-url { padding: 5px 14px; border-radius: 999px; background: var(--wl-surface); border: 1px solid var(--wl-line); font-size: 13px; color: var(--wl-muted); }
 .wl-app-body { padding: 26px 28px; max-width: 640px; }
 .wl-app-title { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; }
 .wl-app-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 12px; }
-.wl-app-btn { height: 36px; padding: 0 14px; border-radius: 9px; border: 1px solid var(--wl-line-strong); background: var(--wl-white); font-size: 14px; font-weight: 550; cursor: default; transition: transform 0.15s, background 0.15s; }
+.wl-app-btn { height: 36px; padding: 0 14px; border-radius: 9px; border: 1px solid var(--wl-line-strong); background: var(--wl-surface); font-size: 14px; font-weight: 550; cursor: default; transition: transform 0.15s, background 0.15s; }
 .wl-app-btn-down { transform: scale(0.95); background: var(--wl-surface-2); }
-.wl-app-btn-danger { color: #c81e2c; }
+.wl-app-btn-danger { color: var(--wl-error); }
 .wl-app-status { height: 22px; font-size: 13.5px; color: var(--wl-muted); }
-.wl-app-status-err { color: #c81e2c; }
+.wl-app-status-err { color: var(--wl-error); }
 .wl-app-table { margin-top: 8px; border-top: 1px solid var(--wl-line); transition: opacity 0.2s; }
 .wl-app-table { position: relative; }
 .wl-app-loading::before { content: ""; position: absolute; left: 0; top: -1px; height: 2px; width: 100%; background: var(--wl-blue); transform-origin: 0 50%; animation: wl-load 0.5s var(--wl-ease) both; }

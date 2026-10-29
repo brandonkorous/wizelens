@@ -38,6 +38,22 @@ export function rehypeLinks() {
   };
 }
 
+const rowsOf = (node: Element, tag: string) => node.children.filter((c): c is Element => c.type === "element" && c.tagName === tag);
+
+// A table of three or more columns becomes cards on a phone: each cell carries its column's name (prose.css).
+export function rehypeTables() {
+  return (tree: Root) => {
+    visit(tree, "element", (table: Element) => {
+      if (table.tagName !== "table") return;
+      const [head] = rowsOf(table, "thead").flatMap((t) => rowsOf(t, "tr"));
+      const names = head ? rowsOf(head, "th").map((th) => toString(th).trim()) : [];
+      if (names.length < 3) return;
+      table.properties.className = ["wl-cards"];
+      for (const tr of rowsOf(table, "tbody").flatMap((b) => rowsOf(b, "tr"))) rowsOf(tr, "td").forEach((td, i) => (td.properties.dataLabel = names[i] ?? ""));
+    });
+  };
+}
+
 // Collects h2 and h3 for the page outline, and adds a small anchor link to each.
 export function rehypeHeadings() {
   return (tree: Root, file: VFile) => {

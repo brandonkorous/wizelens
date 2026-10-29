@@ -7,7 +7,7 @@
 .wl-prose h2 + *, .wl-prose h3 + * { margin-top: 12px; }
 .wl-anchor { margin-left: 10px; color: var(--wl-line-strong); font-weight: 500; opacity: 0; transition: opacity 0.2s; text-decoration: none !important; }
 .wl-prose h2:hover .wl-anchor, .wl-prose h3:hover .wl-anchor { opacity: 1; }
-.wl-prose a { color: var(--wl-accent-hover); text-decoration: underline; text-decoration-color: rgba(37, 99, 235, 0.3); text-underline-offset: 3px; }
+.wl-prose a { color: var(--wl-accent-text); text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); text-underline-offset: 3px; }
 .wl-prose a:hover { text-decoration-color: currentColor; }
 .wl-prose strong { color: var(--wl-fg); font-weight: 650; }
 .wl-prose ul, .wl-prose ol { padding-left: 22px; }
@@ -36,6 +36,18 @@
   .wl-prose th, .wl-prose td { padding: 8px 10px; min-width: 7em; }
   .wl-prose th { white-space: normal; overflow-wrap: break-word; }
   .wl-prose td code { white-space: normal; overflow-wrap: anywhere; }
+}
+/* A small phone shows a wide table as cards: the first cell is the title, each other cell has its column's name beside it. */
+@media (max-width: 560px) {
+  .wl-prose table.wl-cards, .wl-prose table.wl-cards tbody, .wl-prose table.wl-cards tr { display: block; }
+  .wl-prose table.wl-cards thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .wl-prose table.wl-cards tr { padding: 10px 0; border-bottom: 1px solid var(--wl-line); }
+  .wl-prose table.wl-cards tr:hover td { background: none; }
+  /* The label sits on its own line, so a value that mixes text, code and links stays one run of text. */
+  .wl-prose table.wl-cards td { display: block; min-width: 0; padding: 4px 0; border: 0; overflow-wrap: anywhere; }
+  .wl-prose table.wl-cards td::before { content: attr(data-label); display: block; font-size: 13px; font-weight: 600; color: var(--wl-muted); }
+  .wl-prose table.wl-cards td:first-child { display: block; font-weight: 600; color: var(--wl-fg); }
+  .wl-prose table.wl-cards td:first-child::before { content: none; }
 }
 
 @media (hover: none) {
