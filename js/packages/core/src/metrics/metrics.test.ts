@@ -54,6 +54,15 @@ describe("histograms", () => {
     expect(d.countRate!.find((v) => v !== null)).toBeCloseTo(120 / 60, 5);
     expect(d.percentiles!.p50.find((v) => v !== null)).toBeGreaterThan(0);
   });
+
+  it("names each line by the attributes that differ, not the ones every line shares", () => {
+    const same = { "http.request.method": "GET", "server.port": 5302 };
+    const a = { ...same, "http.target": "a", "url.path": "a" };
+    const b = { ...same, "http.target": "b", "url.path": "b" };
+    const pts = [hist(10, [5, 0, 0, 0], 5, a), hist(20, [5, 0, 0, 0], 4, a), hist(10, [9, 0, 0, 0], 5, b), hist(30, [9, 0, 0, 0], 4, b)];
+    const d = model(pts, { metric: "http.server.request.duration" }).selected!;
+    expect(d.lines.map((l) => l.label).sort()).toEqual(["url.path=a", "url.path=b"]);
+  });
 });
 
 describe("inputs and format", () => {

@@ -47,9 +47,9 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-chart svg { display: block; overflow: visible; }
 .wl-chart-axis { font-size: 12px; fill: var(--wl-muted); font-variant-numeric: tabular-nums; }
 .wl-chart-grid { stroke: var(--wl-chart-grid); }
-.wl-chart-legend { display: flex; justify-content: center; gap: 22px; margin-top: 10px; font-size: 13px; color: var(--wl-fg-2); }
-.wl-chart-legend span { display: inline-flex; align-items: center; gap: 7px; }
-.wl-chart-legend i { width: 11px; height: 11px; border-radius: 3px; }
+.wl-chart-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 22px; margin-top: 10px; font-size: 13px; color: var(--wl-fg-2); min-width: 0; }
+.wl-chart-legend span { display: inline-flex; align-items: center; gap: 7px; min-width: 0; overflow-wrap: anywhere; }
+.wl-chart-legend i { flex: none; width: 11px; height: 11px; border-radius: 3px; }
 .wl-chart-tip { position: absolute; z-index: 5; pointer-events: none; min-width: 140px; padding: 8px 10px; background: var(--wl-surface); border: 1px solid var(--wl-line); border-radius: 8px; box-shadow: var(--wl-shadow-pop); font-size: 12px; }
 .wl-chart-tip div { display: flex; justify-content: space-between; gap: 12px; }
 .wl-chart-tip strong { display: block; margin-bottom: 4px; }

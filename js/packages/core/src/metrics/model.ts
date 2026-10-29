@@ -6,6 +6,7 @@ import { metricDataOf } from "./memory.js";
 import { RUNTIME_METRICS } from "./runtime.js";
 import { type Buckets, displayOf, displayUnitOf, type HistogramStat, histStat, lineOf, type MetricDisplay, mergeBuckets } from "./series.js";
 import type { MetricKind, MetricPoint } from "./types.js";
+import { SEMCONV_ALIASES } from "../semconv.js";
 
 const MAX_LINES = 10;
 const STATS: readonly HistogramStat[] = ["p50", "p95", "p99", "avg"];
@@ -124,8 +125,17 @@ function groupValue(s: MetricSeriesData, groupBy: string): string {
   return v === null || v === undefined ? "(none)" : String(v);
 }
 
-function seriesLabel(s: MetricSeriesData, showService: boolean): string {
-  const parts = Object.entries(s.attributes).map(([k, v]) => `${k}=${v}`);
+/** The attribute keys whose values differ between series: only these tell the lines apart. */
+function varyingKeys(series: Series): Set<string> {
+  const keys = new Set(series.flatMap((s) => Object.keys(s.attributes)));
+  return new Set([...keys].filter((k) => new Set(series.map((s) => String(s.attributes[k] ?? ""))).size > 1));
+}
+
+/** An attribute worth naming a line by: it differs between series, and it is not an old name whose current name is there too. */
+const names = (attrs: Readonly<Record<string, unknown>>, varying: ReadonlySet<string>) => (k: string) => varying.has(k) && !(SEMCONV_ALIASES[k] && SEMCONV_ALIASES[k]! in attrs);
+
+function seriesLabel(s: MetricSeriesData, showService: boolean, varying: ReadonlySet<string>): string {
+  const parts = Object.entries(s.attributes).filter(([k]) => names(s.attributes, varying)(k)).map(([k, v]) => `${k}=${v}`);
   if (showService) parts.unshift(s.service);
   return parts.join(" · ") || s.service;
 }
@@ -134,8 +144,9 @@ function seriesLabel(s: MetricSeriesData, showService: boolean): string {
 function linesOf(series: Series, groupBy: string, stat: HistogramStat): { lines: MetricLine[]; hidden: number } {
   const groups = new Map<string, MetricSeriesData[]>();
   const showService = new Set(series.map((s) => s.service)).size > 1;
+  const varying = varyingKeys(series);
   for (const s of series) {
-    const label = groupBy ? groupValue(s, groupBy) : seriesLabel(s, showService);
+    const label = groupBy ? groupValue(s, groupBy) : seriesLabel(s, showService, varying);
     const list = groups.get(label);
     if (list) list.push(s);
     else groups.set(label, [s]);
