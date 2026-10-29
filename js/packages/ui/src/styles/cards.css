@@ -10,6 +10,7 @@
   .wl-table-cards thead th.wl-cell-pick { width: auto; }
   .wl-table-cards thead .wl-pick-hit:has(input) { display: inline-flex; align-items: center; gap: 8px; width: auto; padding-right: 12px; color: var(--wl-fg-2); font-weight: 500; cursor: pointer; }
   .wl-table-cards thead .wl-pick-hit:has(input)::after { content: "Select all"; }
+  .wl-table-cards thead th:nth-child(1 of [aria-sort])::before { content: "Sort by"; margin-right: 12px; color: var(--wl-muted); font-weight: 400; }
   .wl-table-cards thead th:not([aria-sort]):not(.wl-cell-pick) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .wl-table-cards tbody tr { display: grid; grid-template-columns: auto minmax(0, 1fr); border-bottom: 1px solid var(--wl-line); }
   .wl-table-cards tbody tr:last-child { border-bottom: 0; }
