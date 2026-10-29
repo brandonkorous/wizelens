@@ -7,6 +7,12 @@ Platform teams can turn WizeLens on for a service without a pull request to it. 
 when the process starts, and environment variables set it up. The [code install](/docs/node/) still works, and wins when
 both are there.
 
+| You run | Turn it on with | Needs |
+|---|---|---|
+| [Node](#node) | `NODE_OPTIONS="--import @wizeworks/lens-node/auto"` | Node 22.13 or newer; 22.15 for every hook |
+| [ASP.NET Core](#aspnet-core) | `DOTNET_STARTUP_HOOKS` set to the hook's file | .NET 10; on .NET 8 or 9, the package instead |
+| [Kubernetes](#kubernetes) | The label `wizelens.dev/inject` on a pod template | The `wizelens-inject` chart, once |
+
 ## Node
 
 ```bash
@@ -30,9 +36,13 @@ It hooks everything the add-on supports, as the app loads it:
 | Metrics | CPU, memory, heap, event loop, and GC |
 
 Nothing starts until the process serves a request or starts a server, so `npm`, build tools, and scripts that inherit
-`NODE_OPTIONS` stay untouched. Worker threads are skipped. On Node 22.13 and 22.14, the hooks that edit ES modules are
-off: Hono's ES build, the ES builds of `@azure/service-bus`, the Elasticsearch 9 transport, BullMQ, and the SQS client,
-graphql 16's ES build, and `import "node:sqlite"`. Node 22.15 and newer have them.
+`NODE_OPTIONS` stay untouched. Worker threads are skipped.
+
+### On Node 22.13 and 22.14
+
+The hooks that edit ES modules are off. That leaves out Hono's ES build, the ES builds of `@azure/service-bus`, the
+Elasticsearch 9 transport, BullMQ, and the SQS client, graphql 16's ES build, and `import "node:sqlite"`. Node 22.15 and
+newer have them all.
 
 ## ASP.NET Core
 
