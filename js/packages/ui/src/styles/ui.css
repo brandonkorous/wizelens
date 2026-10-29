@@ -97,6 +97,7 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-table td.wl-fill .wl-cell-icon, .wl-table td.wl-fill .wl-tagged { display: flex; min-width: 0; }
 .wl-table td.wl-fill > .wl-truncate { display: block; }
 .wl-cell-icon { display: inline-flex; align-items: center; gap: 10px; }
+.wl-cell-name { min-width: 0; overflow-wrap: anywhere; }
 .wl-cell-icon svg { width: 18px; height: 18px; color: var(--wl-fg-2); flex: none; }
 .wl-user-id { font-size: 12px; }
 
