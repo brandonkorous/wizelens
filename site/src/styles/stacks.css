@@ -75,5 +75,12 @@
   .wl-st-high:nth-child(even) { padding-left: 0; border-left: 0; }
   .wl-ct-row { grid-template-columns: minmax(0, 1fr) 50px; }
   .wl-ct-track { grid-column: 1 / -1; }
+  /* On a phone each list flows as one line of text ("Express · Fastify · …"), so nine lists do not stack one item per row. */
+  .wl-st-grid { gap: 12px; }
+  .wl-st-card { padding: 18px 20px; }
+  .wl-st-card ul { display: block; margin-top: 8px; line-height: 1.55; }
+  .wl-st-card li { display: inline; padding: 0; font-size: 16px; }
+  .wl-st-card li::before { display: none; }
+  .wl-st-card li:not(:last-child)::after { content: "\a0· "; color: var(--wl-fg-3, var(--wl-fg-2)); }
 }
 .wl-st-shot { display: block; width: 100%; height: auto; border-radius: var(--wl-radius-sm); border: 1px solid var(--wl-line); box-shadow: var(--wl-shadow-pop); }
