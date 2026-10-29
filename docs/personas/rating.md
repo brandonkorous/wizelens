@@ -8,7 +8,7 @@ Every screen in WizeLens, scored on **Design** and **Ease** as the personas open
 them. How and when to score is RULE #6 in [CLAUDE.md](CLAUDE.md); this file is
 where the numbers live.
 
-**Scored so far: 169 of 177 screens.** (2026-10-28: the runner's "dark" set only the browser's scheme while the dashboard keeps its own saved theme, so dark checks before 09:30 that day may have been light; every screen re-scored that day was checked again in true dark.) Update that line as rows fill in —
+**Scored so far: 169 of 177 screens.** 2026-10-29, branch `feat/rating-nine`: average 8.02 (the lower axis per row), 13 rows at 9, 156 at 8, 9 at 7. (2026-10-28: the runner's "dark" set only the browser's scheme while the dashboard keeps its own saved theme, so dark checks before 09:30 that day may have been light; every screen re-scored that day was checked again in true dark.) Update that line as rows fill in —
 it is the denominator, and a rating file that does not show what it has not looked
 at is the same lie as an empty issue list.
 
@@ -76,17 +76,17 @@ is a `major` issue, not a rating.**
 
 | Screen | Key | Design | Ease | Gap to 10 | Persona |
 | --- | --- | --- | --- | --- | --- |
-| Overview | `#/` | 8 | 7 → 9 | the subtitle takes two lines at 360 before the cards; was: "No data for previous day" on every card #139, cards pushed the first chart to 757 px at 360 #149, time axis overlapped at 360 #022; re-scored 2026-10-28 in light, true dark and 360 (cloud build, same screen) | P01 |
-| Problems | `#/problems` | 8 | 8 | empty while it learns (says it needs two days of data); at 360 four zero cards come before the empty list | P06 |
+| Overview | `#/` | 8 → 9 | 7 → 9 | was: the subtitle takes two lines at 360 before the cards; "No data for previous day" on every card #139, cards pushed the first chart to 757 px at 360 #149, time axis overlapped at 360 #022; re-scored 2026-10-28 in light, true dark and 360 (cloud build, same screen); subtitle one line, cards two to a line #215; re-scored 2026-10-29 at 1440 light, 360 light and dark | P01 |
+| Problems | `#/problems` | 8 → 9 | 8 → 9 | was: empty while it learns (says it needs two days of data); at 360 four zero cards come before the empty list; no zero cards while empty #215; re-scored 2026-10-29 at 360 light | P06 |
 | Search | `#/search` | 8 | 7 → 9 | a bare word does not look inside SQL params (`@wizelens.db.parameters:*x*` does); was: ran only on Enter #146, tabs and time axis overflowed at 360 #021 #022; re-scored 2026-10-28 in light, true dark and 360 | P01 |
 | Requests | `#/requests` | 8 | 8 | Path cuts the end of long ids at 1440, so /clans and /members look alike; at 360 the filters fill the first screen | P01 |
 | Traces | `#/traces` | 7 → 8 | 7 → 8 | at 360 four cards come before the list (it starts at 568 px, inside the first screen); was: list a third of the width #148, uptime runs filled the list #151, search waited for Enter #014, 9-line paths #016, cross-origin traces read long #015, pager overflowed #017; re-scored 2026-10-28 in light, true dark and 360 | P01 |
 | Errors | `#/errors` | 8 → 9 | 7 → 8 | dev-restart ENOENT noise counts with app errors; Resolve lives on the hub/cloud #012; was: details out of view and "not in the selected time range" while loading #147; re-scored 2026-10-28 in light, true dark and 360 | P01 |
 | Logs | `#/logs` | 7 → 8 | 7 → 8 | at 360 the lines start at 717 px, after cards, filters and the save line; was: "Errors 173" beside 65 exceptions (now "Error Lines"), unfiltered patterns #020; re-scored 2026-10-28 in light, true dark and 360 | P01 |
 | Database | `#/database` | 8 | 8 | query text cut at 1440 with no wrap toggle; at 360 the filters fill the first screen | P01 |
-| Rendering | `#/rendering` | 8 | 8 | at 360 By device page names wrap per letter group (/Baske / t) and Phone and Tablet are all dashes; Component Hotspots empty with a React-only hint on a .NET app | P06 |
+| Rendering | `#/rendering` | 8 → 9 | 8 → 9 | was: at 360 By device page names wrap per letter group (/Baske / t) and Phone and Tablet are all dashes; Component Hotspots empty with a React-only hint on a .NET app; names whole and "No views" #209 #215; Hotspots says it needs React data; re-scored 2026-10-29 at 360 light | P06 |
 | Metrics | `#/metrics` | 7 | 7 | at 360 22 metric names wrap at every dot in a narrow column (dotnet. / gc. / collections); a chart shows only after picking one, at the very bottom | P06 |
-| Services | `#/services` | 8 | 8 | at 360 the Services table cuts Status at the right edge and the dependency map shows one box and cut labels; was: map buttons hidden from screen readers #198 | P06 |
+| Services | `#/services` | 8 → 9 | 8 → 9 | was: at 360 the Services table cuts Status at the right edge and the dependency map shows one box and cut labels; map buttons hidden from screen readers #198; cards fit, the map is a call list #212; re-scored 2026-10-29 at 360 light and dark | P06 |
 | Insights | `#/insights` | 8 | 8 | Endpoints column cuts the route (/api/v1/boards/:boardId/cards/:c…); was: N+1 count read as exact #010 | P01 |
 | Security | `#/security` | 8 | 8 | at 360 the OWASP grid is ten cards before the six risks; the risk table cuts each risk's text at the right edge | P06 |
 | Users | `#/users` | 8 | 9 | at 360 only User and Requests show; Failed and Error rate scroll off the right | P06 |
@@ -102,12 +102,12 @@ is a `major` issue, not a rating.**
 | Settings › Preferences | `#/settings/preferences` | 8 | 9 | at 360 hint lines sit tight against the next label (Pages open with this range. / Time zone) | P06 |
 | Connect › options | `#/connect/options` | 8 | 8 | 20 options in pages of 15 at 360; the Node column is only reachable by scrolling the table sideways | P06 |
 | Trace › Timeline | `#/traces/<id>` | 8 | 8 | span bars under 1 ms are slivers; was: header actions overflowed at 360 #021 | P01 |
-| Trace › SQL | `#/traces/<id>/sql` | 8 | 8 | long SELECT lists wrap to 3 lines with no collapse; params shown redacted as [redacted] with no column name | P01 |
+| Trace › SQL | `#/traces/<id>/sql` | 8 → 9 | 8 → 9 | was: long SELECT lists wrap to 3 lines with no collapse; params shown redacted as [redacted] with no column name; tall queries fold, parameters name their column #211; re-scored 2026-10-29 at 1440 light, 360 light and dark | P01 |
 | Trace › HTTP | `#/traces/<id>/http` | 8 | 8 | the browser page view row has no method and no status (dash), with nothing saying why | P06 |
 | Trace › Messages | `#/traces/<id>/messages` | 8 | 8 | empty for eShop (no queue), says none were sent or handled | P06 |
 | Trace › Logs | `#/traces/<id>/logs` | 8 | 7 → 8 | Service chip wraps to 2 lines in light at 1440; was: empty tab did not say Fastify's lines are left out #020 | P01 |
 | Trace › Errors | `#/traces/<id>/errors` | 8 | 8 | empty for this request, says No errors in this request; the tab shows below a security finding card at 360 | P06 |
-| Trace compare | `#/traces/<a>/compare/<b>` | 7 → 8 | 7 → 8 | at 360 the Numbers table fills the first screen before the two sides; was: Total said nothing of render (now "Total (call + render)"), "HTTP calls" beside an HTTP tab of 1 #153, "Same request" read 48 ms #015, waterfall overflowed #021; re-scored 2026-10-28 in light, true dark and 360 | P01 |
+| Trace compare | `#/traces/<a>/compare/<b>` | 8 → 9 | 8 → 9 | was: at 360 the Numbers table fills the first screen before the two sides; Total said nothing of render (now "Total (call + render)"), "HTTP calls" beside an HTTP tab of 1 #153, "Same request" read 48 ms #015, waterfall overflowed #021; re-scored 2026-10-28 in light, true dark and 360; Numbers stays a table A, B, B − A #213; re-scored 2026-10-29 at 360 light and dark | P01 |
 | Error group | `#/errors/<group>` | 8 | 8 | "Chrome on Wind…" cut at 360 with the full name only on hover; was: Browsers always empty for a browser error #013 | P01 |
 | Service endpoint | `#/services/<svc>/endpoints/<ep>` | 8 | 8 | at 360 query text and Calls cut at the right edge; Errors lists two lines with no count | P06 |
 | Query shape | `#/database/queries/<sql>` | 8 | 8 | at 360 the SQL title runs five lines in large mono before any number; Endpoints and Newest Traces cut at the right | P06 |
@@ -122,11 +122,11 @@ P06 scored 20 of these on P03's eShop in four views (1440 and 360, light and dar
 
 | Screen | Key | Design | Ease | Gap to 10 | Persona |
 | --- | --- | --- | --- | --- | --- |
-| Overview | `#/` | 8 | 8 | an EF Core database name reads "microsoft.s…" (full name on hover only); at 360 the six stat cards stack one per row before the first chart; was: Services card hid Status #052, Apdex cut "target 500 ms" #053, axis 0, 38, 75, 113, 150 #054 | P03 |
-| Requests | `#/requests` | 8 | 8 | the request panel says "Rendering –" while the HUD showed "Render 75 ms" for the same page (act 6); at 360 the filters fill the first screen; was: 17 file rows per page load buried the pages #055 | P03 |
+| Overview | `#/` | 8 → 9 | 8 → 9 | was: an EF Core database name reads "microsoft.s…" (full name on hover only); at 360 the six stat cards stack one per row before the first chart; Services card hid Status #052, Apdex cut "target 500 ms" #053, axis 0, 38, 75, 113, 150 #054; names wrap whole #209; re-scored 2026-10-29 at 1440 light, 360 light and dark | P03 |
+| Requests | `#/requests` | 8 → 9 | 8 → 9 | was: the request panel says "Rendering –" while the HUD showed "Render 75 ms" for the same page (act 6); at 360 the filters fill the first screen; 17 file rows per page load buried the pages #055; the panel says why Rendering is empty #215; filters behind one button at 360; re-scored 2026-10-29 at 1440 light | P03 |
 | Traces | `#/traces` | 8 → 9 | 7 → 8 | at 360 four cards come before the list; was: database time painted red #148, uptime runs #151; re-scored 2026-10-28 in light, true dark and 360 | P03 |
 | Trace › Timeline | `#/traces/<id>` | 8 | 8 | spans under 1 ms are slivers; at 360 the facts stack two per row and the tabs start below the first screen; was: the browser chip read "browser" #078 | P03 |
-| Trace › SQL | `#/traces/<id>/sql` | 8 | 8 | an UPDATE's params run three lines of small mono at 1440 with no wrap toggle; was: SecurityStamp shown #068, accents escaped #072 | P03 |
+| Trace › SQL | `#/traces/<id>/sql` | 8 → 9 | 8 → 9 | was: an UPDATE's params run three lines of small mono at 1440 with no wrap toggle; SecurityStamp shown #068, accents escaped #072; parameters wrap as name · column value #211; re-scored 2026-10-29 at 1440 light, 360 light and dark | P03 |
 | Errors | `#/errors` | 8 | 7 → 8 | at 360 the two charts come before Recent Exceptions; was: menus filled the first screen (now behind one Filters button #119), "No data" on every card #139; re-scored 2026-10-28 in light, true dark and 360 | P03 |
 | Logs | `#/logs` | 7 → 8 | 6 → 8 | at 360 the lines start below the first screen; was: an empty "Log Metrics" box (now one line), the chart before the lines; re-scored 2026-10-28 in light, true dark and 360 | P03 |
 | Database | `#/database` | 8 | 8 | Rows Returned reads "–" for EF Core (a note says why); at 360 the filters come first; was: insight badges ran off the screen #074 | P03 |
@@ -137,7 +137,7 @@ P06 scored 20 of these on P03's eShop in four views (1440 and 360, light and dar
 | Screen | Key | Design | Ease | Gap to 10 | Persona |
 | --- | --- | --- | --- | --- | --- |
 | Overview | `#/` | 8 | 7 → 9 | P04's "Total Requests 2" note not checked again; was: "No data for previous 7 days" on every card #139, cards pushed the chart down at 360 #149, top bar ran off the screen #046; re-scored 2026-10-28 in light, true dark and 360 | P02, P04 |
-| Problems | `#/problems` | 8 | 8 | empty while it learns (says why and for how long); at 360 four zero cards come before the empty list | P06 |
+| Problems | `#/problems` | 8 → 9 | 8 → 9 | was: empty while it learns (says why and for how long); at 360 four zero cards come before the empty list; no zero cards while empty #215; re-scored 2026-10-29 at 360 light | P06 |
 | Search | `#/search` | 8 | 7 → 8 | a bare word does not look inside SQL params (`@wizelens.db.parameters:*Peña*` does); P04: on a static site "Requests (0)" is the first tab while Traces holds her 117; was: ran only on Enter #146, top bar #046; re-scored 2026-10-28 in light, true dark and 360 | P02, P03, P04 |
 | Requests | `#/requests` | 8 | 8 · 360: 6 | at 360 the filters fill the first screen; Path cuts long ids at 1440; was: top bar #046; P04 at 360: six filters fill the first screen; on a static site its only rows are two script reads stored before #093 | P02, P04 |
 | Traces | `#/traces` | 7 → 8 | 7 → 8 | at 360 four cards come before the list; was: list a third of the width #148, uptime runs filled the first page #151, empty preview said "1 spans… no spans" #148, top bar #046, no time column (now Time); re-scored 2026-10-28 in light, true dark and 360 | P02, P04 |
@@ -153,7 +153,7 @@ P06 scored 20 of these on P03's eShop in four views (1440 and 360, light and dar
 | Security | `#/security` | 8 | 8 | at 360 the OWASP grid is ten cards before the two risks; the risk table cuts at the right; was: from 1 services #180 | P06 |
 | Users | `#/users` | 8 | 8 | empty here (Django sends no enduser.id), and says which attribute fills it | P06 |
 | Alerts | `#/alerts` | 8 | 7 → 8 | at 360 the actions take a third of the row and long rule names wrap to four lines; was: five controls on every row #145, Rule column one letter wide #047, names one word per line #116, top bar #046; re-scored 2026-10-28 in light, true dark and 360 | P02, P04 |
-| Uptime | `#/uptime` | 8 | 8 | "Average of the checks that are on" is cut at 1440; at 360 the checks table starts below four cards; P04: was: outage times in UTC #102, and #099–#101 | P02, P04 |
+| Uptime | `#/uptime` | 8 → 9 | 8 | at 360 the checks table starts below four cards; was: "Average of the checks that are on" is cut at 1440; at 360 the checks table starts below four cards; P04: outage times in UTC #102, and #099–#101; no "All up" with no checks #208; note whole at 1440; re-scored 2026-10-29 at 1440 light | P02, P04 |
 | SLOs | `#/slos` | 7 → 8 | 8 | Apdex targets share the page with SLOs as a second idea with no heading link between them; was: Goal column one letter wide at 360 #047 | P02 |
 | Dashboards | `#/dashboards` | 8 | 8 | list has one dashboard; Shared badge has no word of who it is shared with at 360 | P06 |
 | Connect | `#/connect` | 8 | 8 | setup steps are long at 360 (four copy boxes); was: links by color only #192 | P06 |
@@ -163,10 +163,10 @@ P06 scored 20 of these on P03's eShop in four views (1440 and 360, light and dar
 | Connect › server | `#/connect/server` | 8 | 8 | the redacted-keys list is a cloud of chips with no grouping; was: green badge faint #193 | P06 |
 | Connect › Sending keys | `#/connect/keys` | 8 · 360: 7 → 8 | 8 → 9 | at 360 the tab row scrolls ("Server setup" cut at the left); was: rotate rows with one name #140, a rotate stretched the end date #141, Projects cut at 360 #140, revoke said nothing about use #042, revoked key nobody told #111, buttons under 44 px #114; re-scored 2026-10-28 in light, true dark and 360 | P02, P04 |
 | Connect › AI read keys | `#/connect/read-keys` | 8 | 8 | empty, says what a read key is for and links Connected apps | P06 |
-| Organization › Projects | `#/organization/projects` | 8 | 8 | at 360 Rename, Access, Clear data and Delete sit off to the right inside the table scroll | P02 |
+| Organization › Projects | `#/organization/projects` | 8 → 9 | 8 → 9 | was: at 360 Rename, Access, Clear data and Delete sit off to the right inside the table scroll; row buttons on one line #209; re-scored 2026-10-29 at 360 light | P02 |
 | Organization › Data retention | `#/organization/retention` | 8 | 8 | the hint under Days is small muted text; was: shortening asked nothing and showed old days #044, logs vs traces rule unclear #045 | P02 |
 | Organization › Thresholds and hidden keys | `#/organization/checks` | 8 | 8 | hints under the two numbers are small muted text | P02 |
-| Organization › Tags | `#/organization/tags` | 8 | 8 | at 360 built-in tags' switches sit at the edge with their label cut; was: said nothing of one project #173, switches all named On #171 | P06 |
+| Organization › Tags | `#/organization/tags` | 8 → 9 | 8 → 9 | was: at 360 built-in tags' switches sit at the edge with their label cut; said nothing of one project #173, switches all named On #171; switches whole, descriptions read as paragraphs; re-scored 2026-10-29 at 360 light and dark | P06 |
 | Organization › Billing | `#/organization/billing` | 8 | 8 | with one day of data the chart is one lone bar and the usage bar looks empty; at 360 the section tabs cut "Billing" at the edge; was: GB showed 0.00 #132, cap note lost #133, failed payment silent #134, plan switch errors and no loss list #136 | P05 |
 | Organization › General | `#/organization/general` | 8 | 8 | "Delete this organization" sits right under the name box (the typed name and password guard it) | P02 |
 | People & access › Members | `#/people/members` | 8 | 8 | at 360 "Member since" moves into the table scroll | P02 |
@@ -175,7 +175,7 @@ P06 scored 20 of these on P03's eShop in four views (1440 and 360, light and dar
 | People & access › User sync (SCIM) | `#/people/scim` | 8 | 8 | Free org: says it needs Business and links the upgrade; the real flow was proved on P05's org #175 | P06 |
 | People & access › Connected apps | `#/people/apps` | 8 | 8 | at 360 Can read and Connected scroll under the Disconnect button; was: wrong menu path #176 | P06 |
 | People & access › Shared links | `#/people/links` | 8 | 8 | at 360 the link column shows GET /report and the id in three lines; was: links could not be told apart #178 | P06 |
-| People & access › Audit log | `#/people/audit` | 7 → 8 | 8 | at 360 What and Detail move into the table scroll; 29 Tab stops to reach it; was: revoked key unnamed #048, cancelled invite unnamed #040, no "how long ago" #041, export named no one #137, viewers shut out #138 | P02, P05 |
+| People & access › Audit log | `#/people/audit` | 8 → 9 | 8 | 29 Tab stops to reach the log; was: at 360 What and Detail move into the table scroll; 29 Tab stops to reach it; revoked key unnamed #048, cancelled invite unnamed #040, no "how long ago" #041, export named no one #137, viewers shut out #138; What and Detail read in the card; re-scored 2026-10-29 at 360 light | P02, P05 |
 | Account › Profile | `#/account/profile` | 8 | 9 | one name box and the email; Change for email is small link text | P06 |
 | Account › Devices | `#/account/devices` | 8 | 8 | one row here; at 360 Device wraps Chrome / on / Windows; was: hidden until a fresh sign-in #190 | P06 |
 | Account › Preferences | `#/account/preferences` | 8 | 9 | says choices are saved in this browser only | P06 |
@@ -184,12 +184,12 @@ P06 scored 20 of these on P03's eShop in four views (1440 and 360, light and dar
 | Account › Security | `#/account/security` | 8 | 8 | "Turn off" two-step is a solid red button beside "New backup codes" | P02 |
 | Connect › options | `#/connect/options` | 8 | 8 | 20 options in pages of 15 at 360; Node names are on page 2 only by scrolling sideways | P06 |
 | Trace › Timeline | `#/traces/<id>` | 8 | 7 → 8 | at 360 the tabs scroll; was: a browser-only trace read "Network and other 4.84 s" #142, "HTTP CALLS 0" above "HTTP 1" #153, the browser chip #078, 714 px wide on a phone #092; re-scored 2026-10-28 in light, true dark and 360 | P02, P03, P04 |
-| Trace › SQL | `#/traces/<id>/sql` | 8 | 8 | an UPDATE's params run three lines of small mono with no wrap toggle; at 360 the facts fill the first screen before the queries; was: SecurityStamp shown #068, accents escaped #072 | P03 |
+| Trace › SQL | `#/traces/<id>/sql` | 8 → 9 | 8 | at 360 the trace's facts and buttons fill the first screen before the tabs; was: an UPDATE's params run three lines of small mono with no wrap toggle; at 360 the facts fill the first screen before the queries; SecurityStamp shown #068, accents escaped #072; #211; re-scored 2026-10-29 at 1440 light, 360 light and dark | P03 |
 | Trace › HTTP | `#/traces/<id>/http` | 8 | 8 | at 360 the HTTP tab starts below six finding cards; was: heading skipped a level #195, pill faint #193 | P06 |
 | Trace › Messages | `#/traces/<id>/messages` | 8 | 8 | empty for Django (no queue), says none were sent or handled | P06 |
 | Trace › Logs | `#/traces/<id>/logs` | 8 | 8 | at 360 the Category column is cut at the right edge | P06 |
 | Trace › Errors | `#/traces/<id>/errors` | 8 | 8 | the stack trace's long temp paths wrap mid-word; was: stack box not keyboard reachable #194 | P06 |
-| Trace compare | `#/traces/<a>/compare/<b>` | 7 | 8 | at 360 the timeline axis labels overlap (0 ms90 ms179 ms); Numbers table fills the first screen; was: amber SQL labels faint #193 | P06 |
+| Trace compare | `#/traces/<a>/compare/<b>` | 7 → 9 | 8 → 9 | was: at 360 the timeline axis labels overlap (0 ms90 ms179 ms); Numbers table fills the first screen; amber SQL labels faint #193; axis reads 0 ms 16 ms 32 ms, Numbers a table #213; re-scored 2026-10-29 at 360 light and dark | P06 |
 | Error group | `#/errors/<group>` | 8 | 7 → 8 | at 360 three rows of buttons come before the numbers; was: Next.js's own telemetry call counted as an error #143, buttons ran off the screen #049; re-scored 2026-10-28 in light, true dark and 360 | P02 |
 | Service endpoint | `#/services/<svc>/endpoints/<ep>` | 8 | 8 | at 360 query text and the Calls table cut at the right edge | P06 |
 | Query shape | `#/database/queries/<sql>` | 8 | 8 | at 360 the SQL wraps to 7 lines before the numbers; the copy button is under the text, not beside it | P02 |
