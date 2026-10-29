@@ -23,6 +23,8 @@
 .wl-dep-label { display: flex; align-items: center; gap: 8px; height: 100%; font-size: 13.5px; color: var(--wl-fg); }
 .wl-dep-label svg { flex: none; color: var(--wl-fg-2); }
 .wl-dep-label .wl-dot { margin-left: auto; }
+.wl-dep-name { display: grid; min-width: 0; line-height: 1.25; }
+.wl-dep-name .wl-muted { font-size: 11px; }
 .wl-dep-edge path { stroke: var(--wl-line-strong); stroke-width: 1.5; }
 .wl-dep-edge.wl-failing path { stroke: var(--wl-red); }
 .wl-dep-label-box { pointer-events: none; }

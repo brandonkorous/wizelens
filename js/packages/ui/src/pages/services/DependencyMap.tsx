@@ -8,6 +8,18 @@ import { breakable } from "../../ui/breakable";
 
 const NODE_W = 190;
 const NODE_H = 46;
+
+/** A database node ("microsoft.sql_server · Shop.CatalogDb") leads with the database's own name, the system under it. */
+function NodeName({ name }: { name: string }) {
+  const [system, db] = name.split(" · ");
+  if (!db) return <span className="wl-truncate" title={name}>{name}</span>;
+  return (
+    <span className="wl-dep-name" title={name}>
+      <span className="wl-truncate">{db.slice(db.lastIndexOf(".") + 1)}</span>
+      <span className="wl-truncate wl-muted">{system}</span>
+    </span>
+  );
+}
 const MIN_GAP = 110;
 const ROW_GAP = 22;
 // Label width per character at 11px, rounded up; and the space between two stacked labels.
@@ -138,7 +150,7 @@ function Node({ p, selected }: { p: Placed; selected: boolean }) {
       <foreignObject x="10" y="0" width={NODE_W - 20} height={NODE_H}>
         <div className="wl-dep-label">
           <Icon size={16} aria-hidden={true} />
-          <span className="wl-truncate">{p.row.name}</span>
+          <NodeName name={p.row.name} />
           <i className={`wl-dot wl-tone-${statusTone(p.row.status)}`} />
         </div>
       </foreignObject>
