@@ -100,6 +100,18 @@ public class HubTests
     }
 
     [Fact]
+    public async Task Info_says_why_the_hub_takes_nothing()
+    {
+        await using var app = await StartAsync(new FakeHub(HttpStatusCode.Unauthorized));
+        await app.Client.GetAsync("/ping");
+        await Task.Delay(300);
+        await app.App.Services.GetRequiredService<HubExporter>().TickAsync(CancellationToken.None);
+        var send = JsonDocument.Parse(await app.Client.GetStringAsync("/_wizelens/api/info")).RootElement.GetProperty("hubSend");
+        Assert.Equal("failing", send.GetProperty("state").GetString());
+        Assert.Contains("refused the key (401)", send.GetProperty("reason").GetString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Info_shows_the_hub_and_project()
     {
         await using var app = await StartAsync(new FakeHub(HttpStatusCode.NoContent));

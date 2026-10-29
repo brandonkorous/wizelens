@@ -37,6 +37,30 @@ async function setRequired(ctx: Ctx): Promise<void> {
   sendJson(ctx.res, 200, { providerId: p.provider_id, required: body.required, signedOut });
 }
 
+interface PersonRow {
+  name: string;
+  email: string;
+  provider_id: string;
+  oidc: boolean;
+  signed_in: boolean;
+  checked_ms: number | null;
+  verdict: string | null;
+}
+
+/** Everyone who signs in through this organization's providers: signed in now, and the last check with the provider (OpenID Connect only). */
+async function people(ctx: Ctx): Promise<void> {
+  await requireOrg(ctx, ctx.params.org!, "manage");
+  const rows = await ctx.app.db.query<PersonRow>(
+    `SELECT u.name, u.email, a.provider_id, p.oidc_config IS NOT NULL AS oidc, c.checked_ms, c.verdict,
+       EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = a.user_id AND s.expires_at > now()) AS signed_in
+     FROM accounts a JOIN sso_providers p ON p.provider_id = a.provider_id JOIN users u ON u.id = a.user_id
+     LEFT JOIN sso_checks c ON c.account_id = a.id WHERE p.org_id = $1 ORDER BY lower(u.name), u.email`,
+    [ctx.params.org!],
+  );
+  const out = rows.map((r) => ({ name: r.name, email: r.email, providerId: r.provider_id, oidc: r.oidc, signedIn: r.signed_in, checkedMs: r.checked_ms, verdict: r.verdict }));
+  sendJson(ctx.res, 200, out);
+}
+
 export function ssoRoutes(r: Router<Ctx>): void {
-  r.on("GET", "api/orgs/:org/sso", list).on("PATCH", "api/orgs/:org/sso/:provider", setRequired);
+  r.on("GET", "api/orgs/:org/sso", list).on("GET", "api/orgs/:org/sso/people", people).on("PATCH", "api/orgs/:org/sso/:provider", setRequired);
 }

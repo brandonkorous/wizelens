@@ -1,4 +1,4 @@
-import type { Headline } from "@wizeworks/lens-core";
+import { errorText, type Headline } from "@wizeworks/lens-core";
 import type { DigestData } from "../notify/digest-data.js";
 import type { DigestPeriod } from "../repo/mail-prefs.js";
 import { type Block, type EmailContent, list, type Stat, stats } from "./content.js";
@@ -24,7 +24,7 @@ function stat(label: string, h: Headline, show: (v: number | null) => string, vs
 
 function lists(d: DigestData): Block[] {
   const out: Block[] = [];
-  if (d.errors.length) out.push(list("Top errors", d.errors.map((e) => ({ text: `${e.type}: ${e.message}`.slice(0, 140), meta: `${count(e.count)} times` }))));
+  if (d.errors.length) out.push(list("Top errors", d.errors.map((e) => ({ text: errorText(e).slice(0, 140), meta: `${count(e.count)} times` }))));
   if (d.slowest.length) out.push(list("Slowest endpoints (p95)", d.slowest.map((s) => ({ text: s.endpoint, meta: `${ms(s.p95Ms)} · ${count(s.count)} calls` }))));
   if (d.insights.length) out.push(list("Insights", d.insights.map((i) => ({ text: i.title, meta: `${count(i.occurrences)} requests` }))));
   return out;

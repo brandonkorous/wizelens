@@ -31,6 +31,7 @@ internal sealed class HubExporter : IHostedService, IDisposable
     private DateTimeOffset _lastSent = DateTimeOffset.MinValue;
     private DateTimeOffset _retryAt = DateTimeOffset.MinValue;
     private int _failures;
+    private string? _reason;
 
     public HubExporter(TraceStore store, MetricStore metrics, WizeLensOptions options, IHostEnvironment environment, ILogger<HubExporter> logger)
     {
@@ -48,6 +49,17 @@ internal sealed class HubExporter : IHostedService, IDisposable
     private void AddMetric(MetricPoint point) => _queue.Add(new HubItem("", null, null, null, point));
 
     public int Queued => _queue.Count;
+
+    /// <summary>How sending goes, for the dashboard: waiting for the first batch, fine, or failing and why.</summary>
+    public HubSendState SendState
+    {
+        get
+        {
+            long? last = _lastSent == DateTimeOffset.MinValue ? null : _lastSent.ToUnixTimeMilliseconds();
+            if (_reason is not null) return new HubSendState("failing", _reason, last);
+            return last is null ? new HubSendState("waiting") : new HubSendState("ok", null, last);
+        }
+    }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -99,20 +111,22 @@ internal sealed class HubExporter : IHostedService, IDisposable
         if (_queue.Count == 0 && now - _lastSent < Heartbeat) return;
         var items = _queue.Take(BatchSize);
         var batch = HubBatch.From(HubSenderInfo.Of(_options, _environment, _options.ServesDashboard ? _store.SelfEndpoint : null), items);
-        if (await PostAsync(batch, cancellationToken).ConfigureAwait(false)) Succeeded(now);
-        else Failed(items, now);
+        var status = await PostAsync(batch, cancellationToken).ConfigureAwait(false);
+        if (status is >= 200 and < 300) Succeeded(now);
+        else Failed(items, now, status);
     }
 
-    private async Task<bool> PostAsync(HubBatch batch, CancellationToken cancellationToken)
+    /// <summary>The hub's status code, or 0 when it could not be reached.</summary>
+    private async Task<int> PostAsync(HubBatch batch, CancellationToken cancellationToken)
     {
         try
         {
             using var response = await _client!.PostAsJsonAsync($"{_url}/_wizelens/api/ingest", batch, WizeLensJson.Options, cancellationToken).ConfigureAwait(false);
-            return response.IsSuccessStatusCode;
+            return (int)response.StatusCode;
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            return false;
+            return 0;
         }
     }
 
@@ -120,13 +134,15 @@ internal sealed class HubExporter : IHostedService, IDisposable
     {
         if (_failures > 0) _logger.LogInformation("WizeLens is connected to the hub at {Hub} again.", _url);
         _failures = 0;
+        _reason = null;
         _lastSent = now;
     }
 
-    private void Failed(List<HubItem> items, DateTimeOffset now)
+    private void Failed(List<HubItem> items, DateTimeOffset now, int status)
     {
         _queue.PutBack(items);
-        if (_failures++ == 0) _logger.LogWarning("WizeLens could not reach the hub at {Hub}. Traces stay in this app, and sending will retry.", _url);
+        _reason = HubSendState.ReasonOf(status, _url!, !string.IsNullOrEmpty(_options.HubToken));
+        if (_failures++ == 0) _logger.LogWarning("WizeLens: {Reason} Traces stay in this app, and sending will retry.", _reason);
         var backoff = TimeSpan.FromSeconds(Math.Pow(2, Math.Min(_failures, 5)));
         _retryAt = now + (backoff < MaxBackoff ? backoff : MaxBackoff);
     }

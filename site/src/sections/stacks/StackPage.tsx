@@ -60,6 +60,9 @@ function Hero({ stack, latest }: { stack: Stack; latest: string | null }) {
   );
 }
 
+// A non-breaking hyphen, so "better-sqlite3" or "opt-in" never splits across lines when a phone flows the list as text.
+const keepWhole = (item: string) => item.replace(/(\w)-(\w)/g, "$1‑$2");
+
 function Captures({ stack }: { stack: Stack }) {
   return (
     <section className="wl-section wl-paper">
@@ -72,7 +75,7 @@ function Captures({ stack }: { stack: Stack }) {
           {stack.captures.map((c, i) => (
             <motion.article key={c.title} className="wl-st-card" {...rise(i * 0.06)}>
               <h3 className="wl-h3">{c.title}</h3>
-              <ul>{c.items.map((it) => <li key={it}>{it}</li>)}</ul>
+              <ul>{c.items.map((it) => <li key={it}>{keepWhole(it)}</li>)}</ul>
             </motion.article>
           ))}
         </div>

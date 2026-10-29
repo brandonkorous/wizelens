@@ -59,13 +59,16 @@ const TABLE_COLUMNS: Column<TableRow>[] = [
   { key: "rows", header: "Rows Returned", num: true, sort: (t) => t.rows ?? -1, cell: (t) => (t.rows === null ? "–" : fmtShort(t.rows)) },
 ];
 
-/** Tables by queries. A row filters the query list by the table. */
+/** Tables by queries. A row filters the query list by the table. Rows Returned shows only when the driver reports it. */
 export function TableHotspotsPanel({ stats }: { stats: DatabaseModel }) {
   const pick = (t: TableRow) => setQuery({ table: t.table === stats.filter.table ? null : t.table, page: null });
+  const counted = stats.tables.some((t) => t.rows !== null);
   return (
     <Panel title={`Table Hotspots (${fmtCount(stats.tableCount)})`}>
-      <Table columns={TABLE_COLUMNS} rows={stats.tables} served={{ info: stats.tablePaging, noun: "tables" }} rowKey={(t) => t.table} selectedKey={stats.filter.table || null} onRowClick={pick} empty={<Empty>No table names found in the queries.</Empty>} />
-      <p className="wl-db-note">Rows returned come from the driver. Index use and rows scanned need query plans, which WizeLens does not run.</p>
+      <Table columns={counted ? TABLE_COLUMNS : TABLE_COLUMNS.filter((c) => c.key !== "rows")} rows={stats.tables} served={{ info: stats.tablePaging, noun: "tables" }} rowKey={(t) => t.table} selectedKey={stats.filter.table || null} onRowClick={pick} empty={<Empty>No table names found in the queries.</Empty>} />
+      <p className="wl-db-note">
+        {counted || stats.tables.length === 0 ? "Rows returned come from the driver." : "This database driver does not report rows returned (EF Core and SqlClient do not), so that column is hidden."} Index use and rows scanned need query plans, which WizeLens does not run.
+      </p>
     </Panel>
   );
 }

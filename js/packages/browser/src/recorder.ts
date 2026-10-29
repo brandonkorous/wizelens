@@ -4,6 +4,7 @@ import { type FetchContext, patchFetch } from "./fetch-patch.js";
 import { isCloudBrowserEndpoint } from "./cloud.js";
 import type { Recorder, RecorderOptions } from "./recorder-types.js";
 import { documentRequest, whenPainted } from "./document-request.js";
+import { type UnseenCall, watchCalls } from "./unseen-calls.js";
 import { createInstaller, createRequestStore, type RequestStore } from "./request-store.js";
 import { injectedRelease } from "./error-frames.js";
 import { createSender, type Sender, spanHome } from "./sender.js";
@@ -64,6 +65,16 @@ function showDocument(store: RequestStore, data: ServerData, delayMs: number): v
   whenPainted((renderMs) => store.patch(doc.id, { renderMs }));
 }
 
+// A traced call the patches did not see (made before they went on) joins the list from resource timing.
+function showUnseen(store: RequestStore, data: ServerData, cfg: Config): () => void {
+  return watchCalls(cfg.endpoint, cfg.base, cfg.captureXhr, ({ row, endpoint }: UnseenCall) => {
+    if (store.get().some((r) => r.traceId === row.traceId && !r.restored)) return;
+    if (endpoint && endpoint !== cfg.endpointUrl) data.noteEndpoint(row.traceId, endpoint);
+    store.upsert(row);
+    setTimeout(() => void data.loadServerStats(row.traceId), cfg.statsDelayMs);
+  });
+}
+
 // Send queued spans before the page goes away, so a refresh does not lose them.
 function flushOnHide(sender: Sender): () => void {
   if (typeof addEventListener !== "function") return () => {};
@@ -104,7 +115,7 @@ export function createRecorder(options: RecorderOptions = {}): Recorder {
       original = globalThis.fetch;
       globalThis.fetch = patchFetch(original, ctx);
       const timer = setInterval(() => void sender.flush(false), cfg.flushIntervalMs);
-      undo = [cfg.captureXhr ? patchXhr(ctx) : () => {}, () => clearInterval(timer), flushOnHide(sender), watchLeaving()];
+      undo = [cfg.captureXhr ? patchXhr(ctx) : () => {}, showUnseen(store, data, cfg), () => clearInterval(timer), flushOnHide(sender), watchLeaving()];
       capture.acquire();
       void data.restore();
     },

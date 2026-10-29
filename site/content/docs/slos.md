@@ -43,7 +43,7 @@ the window. At 14.4 for an hour, 2% of a 30-day budget is gone: page someone. At
 | Requests | Requests in the window |
 
 Each SLO has its own page: its goal, the good share now, its requests, the burn now, and a link to the service or endpoint
-it covers. Two charts show **Error Budget Left (0% once spent)** and **Good Requests** against the target over the window.
+it covers. Two charts show **Error Budget Used** (100% is all of it, and the line keeps rising past 100% when you go over) and **Good Requests** against the target over the window.
 **Edit** and **Delete** change it.
 
 ## Alert on burn rate

@@ -1,6 +1,8 @@
 import { useState } from "react";
-import type { ServiceInfo } from "@wizeworks/lens-core";
+import type { HubSendState, ServiceInfo } from "@wizeworks/lens-core";
+import { fmtAgo } from "../../format";
 import { hrefTo } from "../../routes";
+import { DotText } from "../../ui/Badges";
 import { Panel } from "../../ui/Panel";
 import { AddButton, SectionHead } from "../../ui/Sections";
 import { canManage } from "../organization/orgTypes";
@@ -83,12 +85,24 @@ function CloudSteps({ url, ctx }: { url: string; ctx: OrgCtx | null }) {
   );
 }
 
-/** In-app: say where this service also sends its data. */
-function SendsToHub({ hub }: { hub: string }) {
+// Whether the hub takes this service's data: a failing send says why, so a missing key is not silent.
+function SendStatus({ send }: { send: HubSendState }) {
+  if (send.state === "ok") return <p className="wl-settings-note"><DotText tone="success">Sending</DotText> <span className="wl-muted">· last batch {fmtAgo(send.lastSentMs ?? Date.now())}</span></p>;
+  if (send.state === "waiting") return <p className="wl-settings-note"><DotText tone="neutral">Waiting for the first batch</DotText></p>;
+  return (
+    <div className="wl-banner wl-banner-error" role="alert">
+      Nothing is getting there. {send.reason} Traces stay in this app, and sending retries on its own.
+    </div>
+  );
+}
+
+/** In-app: say where this service also sends its data, and whether it gets there. */
+function SendsToHub({ hub, send }: { hub: string; send?: HubSendState }) {
   return (
     <>
       <SectionHead title="Sends to" />
       <Panel>
+        {send && <SendStatus send={send} />}
         <p className="wl-settings-note">
           This service also sends its data to the hub or cloud at <code className="wl-mono">{hub}</code>.{" "}
           <a href={`${hub}/_wizelens/`} target="_blank" rel="noreferrer">
@@ -106,5 +120,5 @@ export function SetupSteps({ info, ctx }: { info: ServiceInfo | null; ctx: OrgCt
   const base = hereUrl();
   if (info?.mode === "hub") return <HubSteps hubUrl={base} />;
   if (info?.mode === "cloud") return <CloudSteps url={base} ctx={ctx} />;
-  return info?.hub ? <SendsToHub hub={info.hub} /> : null;
+  return info?.hub ? <SendsToHub hub={info.hub} send={info.hubSend} /> : null;
 }

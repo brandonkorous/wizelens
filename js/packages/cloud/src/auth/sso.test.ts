@@ -179,3 +179,21 @@ describe("a person their identity provider turned off", () => {
     expect([line?.actor, JSON.parse(line?.detail ?? "{}").sessions]).toEqual(["system", 1]);
   });
 });
+
+describe("People & access: each single sign-on person", () => {
+  it("shows whether they are signed in and what the last check with the provider said", async () => {
+    const { url, owner, orgId } = await withIdp({ sub: "u-7", email: "ana@acme.io", name: "Ana Núñez-O'Hara" });
+    await ssoSignIn(url, "ana@acme.io");
+    type Person = { email: string; signedIn: boolean; verdict: string | null; checkedMs: number | null };
+    const ana = async () => (await owner.call<Person[]>("GET", `api/orgs/${orgId}/sso/people`)).body.find((p) => p.email === "ana@acme.io");
+    expect(await ana()).toMatchObject({ signedIn: true, verdict: null, checkedMs: null });
+    await recheckSso(cloud.app);
+    expect(await ana()).toMatchObject({ signedIn: true, verdict: "ok", checkedMs: expect.any(Number) });
+    idp!.setMode("down");
+    await recheckSso(cloud.app);
+    expect(await ana()).toMatchObject({ signedIn: true, verdict: "unknown" });
+    idp!.setMode("disabled");
+    await recheckSso(cloud.app);
+    expect(await ana()).toMatchObject({ signedIn: false, verdict: "refused" });
+  });
+});

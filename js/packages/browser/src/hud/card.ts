@@ -33,12 +33,15 @@ function count(href: string | null, title: string, ...children: Child[]): HTMLEl
   return h("a", { class: "wl-count", href, target: "_blank", rel: "noreferrer", title: `${title}. Opens the dashboard in a new tab.` }, children);
 }
 
-function metric(id: string, label: string, value: number | null, valueClass: string, tip: Child[] | null, onClick: () => void): HTMLElement {
+// A value with no number: "Not traced" when no WizeLens server saw the page (a static site), else a dash while it loads.
+const noValue = (untraced: boolean) => (untraced ? h("span", { class: "wl-val wl-val-none" }, "Not traced") : h("span", { class: "wl-val" }, "—"));
+
+function metric(id: string, label: string, value: number | null, valueClass: string, tip: Child[] | null, onClick: () => void, untraced = false): HTMLElement {
   const tipId = `wl-tip-${id}`;
   const button = h(
     "button",
     { type: "button", class: "wl-metric", onClick, "aria-describedby": tip ? tipId : null },
-    h("span", { class: `wl-val ${value === null ? "" : valueClass}` }, fmtMs(value)),
+    value === null ? noValue(untraced) : h("span", { class: `wl-val ${valueClass}` }, fmtMs(value)),
     h("span", { class: "wl-lbl" }, label),
   );
   return h("div", { class: "wl-cell" }, button, tip && h("div", { class: "wl-tip", id: tipId, role: "tooltip" }, h("div", { class: "wl-tip-body" }, tip)));
@@ -69,12 +72,13 @@ function scopes(page: CardModel["page"]) {
 function cardMetrics({ req, view, link, page }: CardModel, a: CardActions): HTMLElement {
   const details = () => a.details();
   const scope = scopes(page);
+  const untraced = !!req && !req.profiled && !req.server;
   return h(
     "div",
     { class: "wl-metrics" },
     metric("total", "Total", view.totalMs, "", req && totalTip(view, link("timeline"), scope.total), details),
-    metric("server", "Server", view.serverMs, "", req && serverTip(req, view, link("http"), scope.sum), details),
-    metric("db", "Database", view.dbMs, "wl-v-db", req && dbTip(req, view, link("sql"), scope.sum), details),
+    metric("server", "Server", view.serverMs, "", req && serverTip(req, view, link("http"), scope.sum), details, untraced),
+    metric("db", "Database", view.dbMs, "wl-v-db", req && dbTip(req, view, link("sql"), scope.sum), details, untraced),
     metric("render", "Render", view.renderMs, "", req && renderTip(view, link("timeline")), details),
   );
 }

@@ -1,11 +1,11 @@
-import type { ErrorEvent } from "@wizeworks/lens-core";
+import { type ErrorEvent, errorText } from "@wizeworks/lens-core";
 import type { StackSource } from "../../data/sourcemaps";
 import { traceHref } from "../../routes";
 import { CopyButton, DotText, toneOfStatus } from "../../ui/Badges";
 import { Empty, KeyValues } from "../../ui/Panel";
 
 export function StackTrace({ event }: { event: StackSource }) {
-  const text = event.stack ?? `${event.type}: ${event.message}`;
+  const text = event.stack ?? errorText(event);
   const lines = text.split(/\r?\n/);
   return (
     <div className="wl-stack">

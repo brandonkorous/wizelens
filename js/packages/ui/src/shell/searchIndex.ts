@@ -1,4 +1,4 @@
-import { displayService, errorInfo, isErrorSpan, requestRows, type Trace } from "@wizeworks/lens-core";
+import { displayService, errorInfo, errorText, isErrorSpan, requestRows, type Trace } from "@wizeworks/lens-core";
 import { fmtMs } from "../format";
 import { hrefTo, type PageId, traceHref } from "../routes";
 
@@ -36,7 +36,7 @@ function errorHits(traces: readonly Trace[], q: string): SearchHit[] {
       const text = `${e.type ?? ""}: ${e.message}`;
       if (seen.has(text) || !has(text, q)) continue;
       seen.add(text);
-      out.push({ key: `e${text}`, kind: "error", title: e.type ? `${e.type}: ${e.message}` : e.message, detail: `${e.service} · ${t.rootName}`, href: traceHref(t.traceId, "errors") });
+      out.push({ key: `e${text}`, kind: "error", title: errorText(e), detail: `${e.service} · ${t.rootName}`, href: traceHref(t.traceId, "errors") });
       if (out.length >= LIMIT) return out;
     }
   }

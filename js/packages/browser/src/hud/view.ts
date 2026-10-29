@@ -43,7 +43,11 @@ function full(m: HudViewModel, a: HudActions): HTMLElement[] {
   return [cardEl];
 }
 
+// Next.js shows its dev "N" button at the bottom left: the HUD sits above it where they would meet.
+const nextBadge = () => typeof document !== "undefined" && typeof document.querySelector === "function" && !!document.querySelector("nextjs-portal");
+
 /** The whole HUD: the minimized aperture, or the card with the open panel above it. */
 export function hudView(m: HudViewModel, a: HudActions): HTMLElement {
-  return h("div", { class: m.settings.left ? "wl-hud wl-left" : "wl-hud", role: "complementary", "aria-label": "WizeLens" }, m.settings.minimized ? mini(m, a) : full(m, a));
+  const cls = `wl-hud${m.settings.left ? " wl-left" : ""}${nextBadge() ? " wl-lift" : ""}`;
+  return h("div", { class: cls, role: "complementary", "aria-label": "WizeLens" }, m.settings.minimized ? mini(m, a) : full(m, a));
 }

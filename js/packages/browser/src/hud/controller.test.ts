@@ -38,6 +38,18 @@ it("shows the page, with nothing counted yet", () => {
   expect(byClass(root, "wl-mini")).toHaveLength(0);
 });
 
+it("says Not traced for Server and Database on a page no WizeLens server saw, like a static site", () => {
+  hud.start();
+  expect(byClass(root, "wl-val").map((v) => v.textContent).slice(1, 3)).toEqual(["Not traced", "Not traced"]);
+});
+
+it("sits above the Next.js dev button when the page shows it", () => {
+  const doc = (globalThis as { document: object }).document;
+  vi.stubGlobal("document", { ...doc, querySelector: (s: string) => (s === "nextjs-portal" ? {} : null) });
+  hud.start();
+  expect(one(root, "wl-hud").getAttribute("class")).toBe("wl-hud wl-lift");
+});
+
 it("adds up the page's calls: server and database time, queries, fetches, and insights", () => {
   recorder.store.upsert(call("s1", "/api/orders", { server: serverStats({ insights: 2 }) }));
   recorder.store.upsert(call("s2", "/api/cart"));

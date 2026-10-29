@@ -32,3 +32,11 @@ JOIN users u ON lower(u.email) = lower(COALESCE(a.detail::jsonb ->> 'memberEmail
 WHERE a.action = 'member.remove' AND NOT EXISTS (SELECT 1 FROM members m WHERE m.org_id = a.org_id AND m.user_id = u.id)
 GROUP BY a.org_id, u.id;
 `;
+
+// The last check of each single sign-on account with its identity provider, so People & access can show it per person.
+export const SSO_CHECKS_MIGRATION = `
+CREATE TABLE sso_checks (
+  account_id TEXT NOT NULL PRIMARY KEY REFERENCES accounts (id) ON DELETE CASCADE,
+  checked_ms DOUBLE PRECISION NOT NULL, verdict TEXT NOT NULL
+);
+`;

@@ -24,7 +24,7 @@ const failed = (r: RecordedRequest) => !!r.error || (r.status ?? 0) >= 500;
 /** A call by the server's own name for it ("GET /api/boards/:id"), else its method and path, another origin's host last. */
 export function callName(r: RecordedRequest): string {
   if (r.server?.name) return r.server.name;
-  if (!/^https?:\/\//.test(r.path)) return `${r.method} ${r.path}`;
+  if (!/^https?:\/\//.test(r.path)) return `${r.method} ${r.path}`.trim();
   const u = new URL(r.path);
   return `${r.method} ${u.pathname}${u.search} · ${u.host}`;
 }

@@ -43,7 +43,9 @@ password account before, and never confirmed its email, is linked on their first
 With OpenID Connect, the cloud renews each person's single sign-on every 5 minutes. When the provider refuses (you turned
 the person off, or their provider session ended), all their WizeLens sessions and their connected AI apps in your
 organization end, and the audit log says so. A provider that does not answer signs nobody out. SAML has no renewal: use
-SCIM, or remove the person under **People & access → Members**.
+SCIM, or remove the person under **People & access → Members**. Under **People & access → Single sign-on**, the list of
+people who sign in with a provider shows each one's status: signed in and confirmed by the provider (with when), the
+provider did not answer, signed out by the provider, or not signed in.
 
 Under **People & access → User sync (SCIM)**, an admin makes a token and pastes it with the SCIM base URL
 (`<public-url>/_wizelens/api/auth/scim/v2`) into Okta, Entra ID, or another identity provider. People it creates join as

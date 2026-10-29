@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import { hostname } from "node:os";
-import { IN_APP_CAPABILITIES, PROJECT_ENV, type ServiceInfo } from "@wizeworks/lens-core";
+import { type HubSendState, IN_APP_CAPABILITIES, PROJECT_ENV, type ServiceInfo } from "@wizeworks/lens-core";
 import { hubUrlOf } from "./hub-connect.js";
 import type { TraceStore } from "./store.js";
 import type { WizeLensOptions } from "./types.js";
@@ -21,6 +21,8 @@ export interface InfoInputs {
   metrics?: boolean;
   /** True when the add-on resolves browser stacks with source maps. */
   sourceMaps?: boolean;
+  /** How sending to the hub goes, when one is set. */
+  hubSend?: () => HubSendState | undefined;
 }
 
 /** `api/info`: who this service is and how WizeLens is set up. */
@@ -42,6 +44,7 @@ export function buildInfo(i: InfoInputs): ServiceInfo {
     captureResponseBody: !!o.captureResponseBody,
     project: o.project ?? process.env[PROJECT_ENV] ?? undefined,
     hub: hubUrlOf(o) ?? undefined,
+    hubSend: i.hubSend?.(),
     sampling: i.store.sampling ?? undefined,
   };
 }

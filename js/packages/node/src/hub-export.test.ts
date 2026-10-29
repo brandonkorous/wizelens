@@ -102,3 +102,20 @@ describe("HubExporter warnings", () => {
     expect(await said(0, "wl_ik_x")).toContain("Could not reach the hub");
   });
 });
+
+describe("HubExporter send state", () => {
+  it("tells the dashboard how sending goes: waiting, failing and why, then fine", async () => {
+    let up = false;
+    fakeHub(() => up);
+    const clock = { now: 0 };
+    const e = exporter(clock);
+    expect(e.sendState).toEqual({ state: "waiting" });
+    e.add({ type: "span", span: span("1".repeat(16)) });
+    await e.tick();
+    expect(e.sendState).toEqual({ state: "failing", reason: "The hub at http://hub answered 503." });
+    up = true;
+    clock.now = 10_000;
+    await e.tick();
+    expect(e.sendState).toEqual({ state: "ok", lastSentMs: 10_000 });
+  });
+});
