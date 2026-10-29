@@ -10,6 +10,7 @@ import { useAsk } from "../../ui/Dialog";
 import { Check } from "../../ui/Field";
 import { Empty, Panel } from "../../ui/Panel";
 import { SectionHead } from "../../ui/Sections";
+import { CodeBox } from "../../ui/StackBox";
 import { type Column, Table } from "../../ui/Table";
 import { TagChip } from "../../ui/TagChips";
 import { TagForm } from "../../ui/TagForm";
@@ -60,7 +61,7 @@ function InCodeNote() {
   return (
     <Panel title="Add a tag">
       <p>This service keeps its tags in code. Add a rule to the <code>tags</code> option, then restart the service.</p>
-      <pre className="wl-tag-code">{`// Node\n${code.node}\n\n// .NET\n${code.dotnet}`}</pre>
+      <CodeBox text={`// Node\n${code.node}\n\n// .NET\n${code.dotnet}`} label="Tag rule code" className="wl-tag-code" />
     </Panel>
   );
 }
