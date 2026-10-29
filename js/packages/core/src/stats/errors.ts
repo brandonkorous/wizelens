@@ -53,15 +53,15 @@ const textAttr = (v: unknown): string | null => (typeof v === "string" && v ? v 
 
 function eventOf(trace: Trace, span: Span, row: RequestRow | null, critical: boolean, bot: boolean): ErrorEvent {
   const info = errorInfo(span);
-  const type = info.type ?? (span.statusMessage?.startsWith("HTTP") ? "HttpError" : "Error");
+  const ex = span.events.find((e) => e.name === "exception");
+  const type = info.type ?? (span.statusMessage?.startsWith("HTTP") || (!ex && httpStatusOf(info.message) !== null) ? "HttpError" : "Error");
   const service = spanServiceName(span);
   const browser = browserTypeOf(span) !== null;
   const route = span.attributes[ATTR_BROWSER_ROUTE];
-  const ex = span.events.find((e) => e.name === "exception");
   const frame = browser ? textAttr(ex?.attributes[ATTR_ERROR_FRAME]) : null;
   const endpoint = row?.endpoint ?? (typeof route === "string" ? route : trace.rootName);
   const thirdParty = browser && isThirdPartyError(span, info.stack);
-  const httpStatus = !ex && type === "HttpError" ? (httpStatusOf(span.statusMessage) ?? row?.status ?? null) : null;
+  const httpStatus = !ex && type === "HttpError" ? (httpStatusOf(info.message) ?? row?.status ?? null) : null;
   return {
     key: httpStatus !== null ? httpErrorKeyOf(service, httpStatus, endpoint) : errorKeyOf(service, type, info.message, frame),
     traceId: trace.traceId,

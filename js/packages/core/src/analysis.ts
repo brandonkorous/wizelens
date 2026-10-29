@@ -151,6 +151,12 @@ export interface ErrorInfo {
   stack: string | null;
 }
 
+/** "HTTP 500" for a failed span that names no reason but has a status, as ASP.NET marks a 5xx it did not throw for. */
+function httpReason(span: Span): string | null {
+  const status = Number(span.attributes["http.response.status_code"]);
+  return status >= 400 && status <= 599 ? `HTTP ${status}` : null;
+}
+
 export function errorInfo(span: Span): ErrorInfo {
   const ex = span.events.find((e) => e.name === "exception");
   const attr = (k: string) => (ex?.attributes[k] == null ? null : String(ex.attributes[k]));
@@ -158,7 +164,7 @@ export function errorInfo(span: Span): ErrorInfo {
     spanId: span.spanId,
     service: span.service,
     name: span.name,
-    message: attr("exception.message") ?? span.statusMessage ?? "error",
+    message: attr("exception.message") ?? (span.statusMessage || httpReason(span)) ?? "error",
     type: attr("exception.type"),
     stack: attr("exception.stacktrace"),
   };

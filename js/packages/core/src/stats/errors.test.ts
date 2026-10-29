@@ -33,6 +33,12 @@ describe("error stats", () => {
     const web = errorsByService(errorEvents(fetched), rows).find((s) => s.service === "Web App");
     expect(web).toMatchObject({ requests: 3, errorRate: 0 });
   });
+
+  it("names a failed 500 with no exception and no reason by its status, as ASP.NET leaves it", () => {
+    const t = makeRequest({ startMs: 4000, status: 500 });
+    Object.assign(t.spans[0]!, { status: "error", statusMessage: null });
+    expect(errorEvents([t])[0]).toMatchObject({ type: "HttpError", message: "HTTP 500", status: 500 });
+  });
 });
 
 describe("log stats", () => {
