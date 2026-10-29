@@ -68,7 +68,7 @@
 .wl-ck-box { display: flex; align-items: center; height: 44px; padding: 0 12px; border-radius: 10px; background: var(--wl-surface); border: 1px solid var(--wl-line-strong); }
 .wl-ck-text { font-size: 15px; }
 .wl-ck-caret { display: inline-block; width: 2px; height: 18px; margin-left: 1px; vertical-align: -3px; background: var(--wl-blue); animation: wl-blink 1s steps(2) infinite; }
-.wl-ck-box kbd { margin-left: auto; padding: 2px 6px; border-radius: 5px; border: 1px solid var(--wl-line-strong); font: 11px var(--wl-sans); color: var(--wl-muted); }
+.wl-ck-box kbd { margin-left: auto; padding: 2px 6px; border-radius: 5px; border: 1px solid var(--wl-line-strong); font: 12px var(--wl-sans); color: var(--wl-muted); }
 .wl-ck-list { display: grid; gap: 4px; min-height: 76px; }
 .wl-ck-item { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px; padding: 7px 10px; border-radius: 8px; background: var(--wl-surface); font-size: 13px; animation: wl-in 0.3s var(--wl-ease); }
 .wl-ck-item span { color: var(--wl-muted); }

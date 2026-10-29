@@ -22,7 +22,7 @@
 .wl-td-people { display: grid; border-radius: 14px; background: var(--wl-surface); border: 1px solid var(--wl-line); overflow: hidden; }
 .wl-td-person { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--wl-line); font-size: 14.5px; overflow: hidden; }
 .wl-td-person:last-child { border-bottom: 0; }
-.wl-td-person b { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: var(--wl-white); font-size: 11.5px; box-shadow: 0 0 0 1px var(--wl-line-strong); }
+.wl-td-person b { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: var(--wl-white); font-size: 12px; box-shadow: 0 0 0 1px var(--wl-line-strong); }
 .wl-td-person i { font-style: normal; font-size: 12.5px; padding: 3px 9px; border-radius: 999px; background: var(--wl-surface-2); color: var(--wl-fg-2); }
 .wl-td-fresh { background: var(--wl-ok-soft); }
 .wl-td-keys { display: grid; gap: 8px; }
@@ -191,7 +191,7 @@
 .wl-compare-row > span:first-child { font-weight: 600; color: var(--wl-fg); }
 .wl-compare-head { font-size: 17px; }
 .wl-compare-head b:last-child { color: var(--wl-accent-text); }
-.wl-compare-none { color: var(--wl-line-strong); }
+.wl-compare-none { color: var(--wl-muted); }
 
 .wl-cloud-self { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; align-items: start; }
 .wl-cloud-self .wl-h2 { margin-bottom: 24px; }

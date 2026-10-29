@@ -73,3 +73,7 @@
 @media (max-width: 900px) {
   .wl-legal-nav { position: static; display: flex; flex-wrap: wrap; padding: 24px 0 0; }
 }
+@media (max-width: 480px) {
+  .wl-legal-nav { flex-wrap: nowrap; overflow-x: auto; }
+  .wl-legal-nav a { flex: none; padding: 8px 7px; font-size: 14px; }
+}
