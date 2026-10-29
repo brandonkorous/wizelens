@@ -11,9 +11,10 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   instead of sending them all. Before, one burst could pass ClickHouse's limit of 1000 queries at a time
   (`TOO_MANY_SIMULTANEOUS_QUERIES`) and add to its memory use. Set `WIZELENS_CLOUD_CLICKHOUSE_CONCURRENCY` to change
   the number.
-- **Fixes from five persona runs** (a developer on kanNINJA's in-app dashboard, a database admin on the cloud, a
-  .NET developer on eShopOnWeb with SQL Server, a front-end developer with a static site on her phone, and a credit
-  union's admin running people, single sign-on and billing; `docs/personas/`). Each one was found on screen and
+- **Fixes from six persona runs** (a developer on kanNINJA's in-app dashboard, a database admin on the cloud, a
+  .NET developer on eShopOnWeb with SQL Server, a front-end developer with a static site on her phone, a credit
+  union's admin running people, single sign-on and billing, and an agency's platform lead with a Django shop, a Go
+  API and a host; `docs/personas/`). Each one was found on screen and
   re-proved there.
   - **Requests tell the truth about how they ended.** A redirect the browser followed shows its 307, not "Aborted".
     A WebSocket that closes when the visitor leaves (`@fastify/websocket`) shows as a 101 stream, and only the time
@@ -97,6 +98,26 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
     Total says it adds the render. A page load with no server of yours splits its time by the browser's own clock.
     The trace header says "HTTP calls out". Local Connect names the option behind each setting. Shared links carry the
     site's name and no sign-in links; times after midnight show the date.
+  - **Django, Go and hosts.** The Python docs' Django command starts the app. Django requests show their method and
+    path once ("GET /invoice/1"), and a 4xx log line stays inside its request. A Go service sends runtime metrics
+    (`go.memory.used` and others) every 30 seconds. Fullest Disk shows that disk's size and mount; a host's whole row
+    opens it; empty Hosts and Kubernetes each name the recipe that fills them.
+  - **Charts, uptime and status pages.** Chart line names show only what differs between lines, and wrap inside the
+    card. Uptime does not count checks that have not run as down, and the uptime runner is not listed as a service.
+    A status page says "was down for 4 min, from …". Security says "1 service".
+  - **Running the org.** Organization › Tags says tags belong to one project. The audit log names the person user
+    sync turned off or deleted. The app consent screen keeps your picks through the safety sign-in. Shared links name
+    what they show and who they are for. Switching project clears the other project's service filter. Devices lists
+    where you are signed in without a fresh sign-in; signing one out still asks for one.
+  - **Sign-in and account.** "Start free" opens sign-up. A cloud with no mail never says "a link is on its way", and
+    the second email-change link works. Sign-in errors use plain words; "Too many requests" says how long to wait.
+  - **Site and docs on a phone.** Docs pages and tables fit 360 px; code boxes and wide tables scroll by keyboard;
+    dark blue and red buttons are readable; Pricing's plans that do not fit stay readable; menus have distinct names.
+  - **Every screen readable, by eye and by keyboard.** Grey, red, green, amber, chart and tag text pass contrast in
+    both themes. Links inside sentences are underlined. Stack traces, code boxes and wide tables take a Tab stop when
+    they scroll; blank headers say what their column holds. The service map's boxes and arrows reach screen readers.
+    On a phone a table's buttons stay at its right edge, and a detail page's header buttons wrap. An address for a
+    tab the page does not have says so, not opens another tab silently.
 
 ### Added
 

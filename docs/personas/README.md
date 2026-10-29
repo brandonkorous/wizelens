@@ -2,12 +2,13 @@
 
 **Version:** 1.0
 **Author:** Brandon Korous
-**Last Updated:** 2026-10-27
+**Last Updated:** 2026-10-28
 
-Five real WizeLens users, each set up from nothing in a real app and operated
+Six real WizeLens users, each set up from nothing in a real app and operated
 until their job works or breaks: kanNINJA v2 (Next.js 15 web, Fastify 5 API,
 Drizzle on postgres.js) for P01, P02 and P05; Microsoft's eShopOnWeb (.NET 8,
-EF Core on SQL Server) for P03; a static Vite site for P04. The rules are in [CLAUDE.md](CLAUDE.md); the screen scores
+EF Core on SQL Server) for P03; a static Vite site for P04; a Django 5 shop, a Go
+API and a host collector for P06. The rules are in [CLAUDE.md](CLAUDE.md); the screen scores
 are in [rating.md](rating.md); the defects are in [issues/](issues/). What we
 learned about the product before writing a persona is in
 [discovery.md](discovery.md).
@@ -43,6 +44,7 @@ and half the cloud's screens do not exist in-app at all.
 | P03 | [Sid Ramaswamy-Kowalczyk](03-sid-eshop-dotnet-developer.md) | .NET developer | in-app dashboard served by the .NET SDK + HUD on Razor pages | done |
 | P04 | [Noor Haddad-Pellegrini](04-noor-static-site-phone.md) | front-end only, on a phone | WizeLens Cloud, browser script tag | done |
 | P05 | [Marisol Teixeira-Wójcik](05-marisol-credit-union-admin.md) | team admin | WizeLens Cloud: SSO, people, billing | done |
+| P06 | [Ifeoma Castellanos-Lindgren](06-ifeoma-agency-platform-lead.md) | agency platform lead | site, docs, every account and org screen, Python, Go, hosts | done |
 
 ## What each one is the only proof of
 
@@ -52,13 +54,14 @@ and half the cloud's screens do not exist in-app at all.
 | P03 | **The .NET spine on a framework he cannot change.** NuGet on .NET 8, EF Core on SQL Server, Razor pages with the HUD, a WebAssembly admin calling an API |
 | P04 | **The negative space.** No server at all: the script tag, a browser key, a person who does not read code, every screen on a phone with thumbs |
 | P05 | **The conditions.** Stripe test-mode billing, SSO-only sign-in from Keycloak, offboarding from one place, least access proved both ways, spend limits, an audit export |
+| P06 | **The breadth.** Every stack page, every docs page, the legal pages, the account and org pages nobody else opens, Django and Go, and a real host |
 | P02 | **The cloud and the edges.** Sign-up with 2FA, per-service keys, alerts by email, uptime, SLOs, least access, retention, a key revoked by mistake, and a neighbour org that must stay invisible |
 
 ## Run order
 
-`P01 → P02 → P03 → P04 → P05`
+`P01 → P02 → P03 → P04 → P05 → P06`
 
-Added 2026-10-27 to raise the product from 7.5 to 9 (46 of 177 screens scored after P02). P03 and P04 have the most different spines (another language; no server), so they go first; P05 needs a mature cloud and real billing, so it goes last.
+Added 2026-10-27 to raise the product from 7.5 to 9 (46 of 177 screens scored after P02). P03 and P04 have the most different spines (another language; no server), so they go first; P05 needs a mature cloud and real billing, so it goes last. P06 was added 2026-10-28 to open the 123 screens nobody had scored.
 
 P01 makes the traffic P02 watches: P02's cloud shows P01's board. P02 needs a
 mature app underneath it (real data, real errors), so it goes last.
@@ -80,10 +83,10 @@ screen is unrated; it is never assumed fine because a sibling scored well
 
 ## Coverage this roster deliberately does not have
 
-- **Python, Java and Go.** .NET is covered by P03 (the SDK builds here after the env fix in the repo notes).
-- **Vue, Angular and Svelte.** React through npm (P01) and the plain script tag (P04) are covered; the other frameworks are not.
+- **Java.** .NET is covered by P03, Python (Django) and Go by P06.
+- **Vue, Angular and Svelte** in a running app. React through npm (P01) and the plain script tag (P04) are covered; P06 read the other frameworks' pages and docs only.
 - **The hub** (`wizelens-hub`, self-hosted collector) and **ClickHouse scale mode**: the cloud here runs on PGlite.
-- **Hosts and Kubernetes** with real infra data: no infra collector runs.
+- **Kubernetes** with real data: every kubectl context here is production, so no cluster was used. P06 ran the host collector, so Hosts has real data.
 - **Real mail delivery.** Mail is read from the cloud's and kanNINJA's console logs, not from an inbox.
 - **SSO from a hosted provider** (Okta, Entra ID). P05 uses Keycloak locally.
 - **Load.** Two accounts is a correctness exercise, not a performance one.
