@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from "react";
 import { Plus, Upload } from "lucide-react";
 import { hrefTo, type PageId } from "../routes";
-import { useScrollHint } from "./useScrollHint";
+import { ScrollRow, useScrollRow } from "./ScrollRow";
 
 export interface Section {
   id: string;
@@ -15,19 +15,21 @@ export interface Section {
 /** A settings-style page: a list of sections on the left (a strip of tabs on small screens), one section shown at a time. Each is its own URL. */
 export function SectionLayout({ page, sections, active }: { page: PageId; sections: Section[]; active: string | undefined }) {
   const current = sections.find((s) => s.id === active) ?? sections[0];
-  const nav = useScrollHint<HTMLElement>(current?.id ?? "");
+  const nav = useScrollRow<HTMLElement>(current?.id ?? "");
   if (!current) return null;
   return (
     <div className="wl-sections">
-      <nav ref={nav} className="wl-sections-nav" aria-label="Sections">
-        {sections.map((s) => (
-          <a key={s.id} href={hrefTo(page, [s.id])} className={s === current ? "wl-active" : ""} aria-current={s === current ? "page" : undefined}>
-            <s.icon aria-hidden={true} />
-            <span>{s.label}</span>
-            {s.count !== undefined && <span className="wl-chip-count">{s.count}</span>}
-          </a>
-        ))}
-      </nav>
+      <ScrollRow row={nav} className="wl-sections-row">
+        <nav ref={nav.ref} className="wl-sections-nav" aria-label="Sections">
+          {sections.map((s) => (
+            <a key={s.id} href={hrefTo(page, [s.id])} className={s === current ? "wl-active" : ""} aria-current={s === current ? "page" : undefined}>
+              <s.icon aria-hidden={true} />
+              <span>{s.label}</span>
+              {s.count !== undefined && <span className="wl-chip-count">{s.count}</span>}
+            </a>
+          ))}
+        </nav>
+      </ScrollRow>
       <div className="wl-sections-body">
         {active && current.id !== active && <div className="wl-banner wl-banner-info" role="status">The section in this address is not on this dashboard, so this shows {current.label}.</div>}
         {current.render()}

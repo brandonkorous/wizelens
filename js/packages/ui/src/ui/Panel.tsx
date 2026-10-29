@@ -1,4 +1,4 @@
-import { useScrollHint } from "./useScrollHint";
+import { ScrollRow, useScrollRow } from "./ScrollRow";
 import type { ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 
@@ -71,14 +71,16 @@ export function KeyValues({ rows }: { rows: [ReactNode, ReactNode][] }) {
 }
 
 export function TabBar<T extends string>({ tabs, value, onChange }: { tabs: [T, string][]; value: T; onChange: (t: T) => void }) {
-  const bar = useScrollHint<HTMLDivElement>(value);
+  const bar = useScrollRow<HTMLDivElement>(value);
   return (
-    <div ref={bar} className="wl-tabbar" role="tablist">
-      {tabs.map(([key, label]) => (
-        <button key={key} type="button" role="tab" aria-selected={value === key} className={value === key ? "wl-active" : ""} onClick={() => onChange(key)}>
-          {label}
-        </button>
-      ))}
-    </div>
+    <ScrollRow row={bar} className="wl-tabbar-row">
+      <div ref={bar.ref} className="wl-tabbar" role="tablist">
+        {tabs.map(([key, label]) => (
+          <button key={key} type="button" role="tab" aria-selected={value === key} className={value === key ? "wl-active" : ""} onClick={() => onChange(key)}>
+            {label}
+          </button>
+        ))}
+      </div>
+    </ScrollRow>
   );
 }

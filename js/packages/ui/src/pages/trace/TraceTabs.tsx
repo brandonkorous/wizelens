@@ -1,4 +1,4 @@
-import { useScrollHint } from "../../ui/useScrollHint";
+import { ScrollRow, useScrollRow } from "../../ui/ScrollRow";
 import type { Finding, Trace, TraceView } from "@wizeworks/lens-core";
 import { HttpTab } from "./HttpTab";
 import { MessagesTab } from "./MessagesTab";
@@ -43,24 +43,26 @@ function TabBody(p: TraceTabsProps) {
 /** Timeline, SQL, HTTP, logs, and errors of one trace, with the span panel beside them. */
 export function TraceTabs(p: TraceTabsProps) {
   const span = p.trace.spans.find((s) => s.spanId === p.selected) ?? null;
-  const tabs = useScrollHint<HTMLElement>(p.tab);
+  const tabs = useScrollRow<HTMLElement>(p.tab);
   return (
     <section className="wl-panel wl-panel-flush">
-      <nav ref={tabs} className="wl-tabs" role="tablist">
-        {counts(p.trace).map(([key, label, count]) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={p.tab === key}
-            className={`wl-tab${p.tab === key ? " wl-active" : ""}${key === "errors" && count > 0 ? " wl-tab-error" : ""}`}
-            onClick={() => p.onTab(key)}
-          >
-            {label}
-            <span className="wl-tab-count">{count}</span>
-          </button>
-        ))}
-      </nav>
+      <ScrollRow row={tabs}>
+        <nav ref={tabs.ref} className="wl-tabs" role="tablist">
+          {counts(p.trace).map(([key, label, count]) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={p.tab === key}
+              className={`wl-tab${p.tab === key ? " wl-active" : ""}${key === "errors" && count > 0 ? " wl-tab-error" : ""}`}
+              onClick={() => p.onTab(key)}
+            >
+              {label}
+              <span className="wl-tab-count">{count}</span>
+            </button>
+          ))}
+        </nav>
+      </ScrollRow>
       <div className={`wl-split${span ? " wl-with-panel" : ""}`}>
         <div className="wl-split-main">
           <TabBody {...p} />
