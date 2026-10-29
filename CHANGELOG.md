@@ -56,6 +56,16 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - **Tab rows on a phone have arrow buttons.** When a row of tabs is wider than the screen (a trace's tabs, a panel's
   tabs, the settings sections), a left or right arrow button shows at the edge that hides more. A tap moves the row
   along; no fade hides the last tab.
+- **A dead invite link says what happened.** An invite that was used, expired or withdrawn now names the
+  organization, says which of the three it was, and names who to ask for a new one, instead of "not found".
+- **Counts read as words.** Whole counts show as numbers with separators, and a unit in braces is said in the
+  plural when the count is not one: "3 work items", "5 threads", "1 thread".
+- **Charts leave gaps empty.** A line chart with missing points no longer fills the gap under it, so a pause in
+  data looks like a pause.
+- **Long paths keep their end.** On Requests and the Overview a long path cuts in the middle and keeps its last
+  step, such as "/Identit… /Login?ReturnUrl=…". Database shows three lines of each query in its list.
+- **Phones show lists sooner.** Bottleneck names wrap in their bars instead of pushing the page wide, the Logs
+  save-search line is one short row, and labels, stack traces and small text are at least 12 px.
 - **Clearer small screens.** The trace timeline shows start, middle and end on a phone so labels do not overlap; a
   chart legend keeps each name on one line; the status page names a day when you tap its bar; a new uptime check
   says how much of 7 or 30 days it has measured; an alert's chart says why it starts on the rule's first check; the
