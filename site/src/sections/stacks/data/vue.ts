@@ -2,6 +2,7 @@ import type { Stack } from "../types";
 
 export const VUE: Stack = {
   slug: "vue",
+  release: true,
   name: "Vue",
   title: "WizeLens for Vue",
   seoTitle: "WizeLens for Vue: every fetch linked to its server trace",

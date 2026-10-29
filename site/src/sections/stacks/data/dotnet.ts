@@ -2,6 +2,7 @@ import type { Stack } from "../types";
 
 export const DOTNET: Stack = {
   slug: "dotnet",
+  release: true,
   name: ".NET",
   title: "WizeLens for ASP.NET Core",
   seoTitle: "WizeLens for ASP.NET Core: a modern Glimpse for .NET 8, 9 and 10",

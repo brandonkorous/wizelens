@@ -1,5 +1,6 @@
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbs, graph, software } from "@/lib/schema";
+import { latestVersion } from "@/lib/changelog";
 import { pageMeta } from "@/lib/seo";
 import { StackPage } from "./StackPage";
 import type { Stack } from "./types";
@@ -16,11 +17,12 @@ export const stackMetadata = (s: Stack) =>
   });
 
 // A stack page with its structured data.
-export function StackRoute({ stack }: { stack: Stack }) {
+export async function StackRoute({ stack }: { stack: Stack }) {
+  const latest = stack.release ? await latestVersion() : null;
   return (
     <>
       <JsonLd data={graph(software(stack.seoDescription), breadcrumbs([{ name: "WizeLens", path: "/" }, { name: stack.name, path: `/${stack.slug}/` }]))} />
-      <StackPage stack={stack} />
+      <StackPage stack={stack} latest={latest} />
     </>
   );
 }

@@ -2,6 +2,7 @@ import type { Stack } from "../types";
 
 export const NODE: Stack = {
   slug: "node",
+  release: true,
   name: "Node",
   title: "WizeLens for Node",
   seoTitle: "WizeLens for Node: tracing for Express, Fastify, Koa, and Hono",

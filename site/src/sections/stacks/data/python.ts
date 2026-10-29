@@ -7,7 +7,7 @@ export const PYTHON: Stack = {
   seoTitle: "WizeLens for Python: tracing for FastAPI, Flask, and Django",
   seoDescription: "opentelemetry-instrument with WizeLens defaults: FastAPI, Flask, and Django requests, SQL with its parameters, requests and httpx calls, and logs.",
   headline: ["Python requests,", "no code change."],
-  lede: "opentelemetry-instrument traces FastAPI, Flask, Django, SQLAlchemy, psycopg, requests, and httpx. The wizelens package plugs into it and adds SQL parameters, logs, and sampling that keeps errors. Until it is on PyPI, install it from GitHub. Requires Python 3.10 or newer.",
+  lede: "opentelemetry-instrument traces FastAPI, Flask, Django, SQLAlchemy, psycopg, requests, and httpx. The wizelens package plugs into it and adds SQL parameters, logs, and sampling that keeps errors.",
   facts: [
     { value: "0 code", label: "for FastAPI, Flask, and Django" },
     { value: "1 package", label: "an OpenTelemetry distro" },

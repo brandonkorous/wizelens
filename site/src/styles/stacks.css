@@ -1,12 +1,14 @@
 /* Stack pages: hero, code-to-trace demo, capture grid, highlights, and the next steps. */
 .wl-st-hero { padding: clamp(128px, 15vw, 176px) 0 56px; }
 .wl-st-title { max-width: 14ch; }
+.wl-st-release { margin: 12px 0 0; font-size: 15px; color: var(--wl-fg-2); }
+.wl-st-release a { color: var(--wl-accent-text); font-family: var(--wl-mono); }
 .wl-st-intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: end; margin-top: 36px; }
 .wl-st-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 64px 0 0; border-top: 1px solid var(--wl-line-strong); }
 .wl-st-facts > div { padding: 22px 24px 0 0; }
 .wl-st-facts > div + div { padding-left: 24px; border-left: 1px solid var(--wl-line); }
 .wl-st-facts dt { font-size: clamp(28px, 3.4vw, 40px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.1; }
-.wl-st-facts dd { margin: 6px 0 0; font-size: 15px; color: var(--wl-muted); }
+.wl-st-facts dd { margin: 6px 0 0; font-size: 15px; color: var(--wl-fg-2); }
 
 .wl-st-demo { padding: 24px 0 clamp(88px, 12vw, 140px); }
 .wl-ct { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); border-radius: var(--wl-radius); background: var(--wl-night); color: var(--wl-night-fg); overflow: hidden; box-shadow: var(--wl-shadow-pop); }
@@ -14,7 +16,8 @@
 .wl-ct-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 48px; padding: 0 12px 0 20px; border-bottom: 1px solid var(--wl-night-line); font: 13px var(--wl-mono); color: var(--wl-night-muted); }
 .wl-ct-bar span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wl-ct pre { margin: 0; padding: 22px 0; font-size: 13.5px; line-height: 1.85; overflow-x: auto; scrollbar-width: none; }
-.wl-ct-line { display: block; padding: 0 20px; white-space: pre; opacity: 0; border-left: 3px solid transparent; transition: opacity 0.25s, background 0.3s, border-color 0.3s; }
+/* Lines not typed yet show faint, so the box is never empty while the demo waits. */
+.wl-ct-line { display: block; padding: 0 20px; white-space: pre; opacity: 0.3; border-left: 3px solid transparent; transition: opacity 0.25s, background 0.3s, border-color 0.3s; }
 .wl-ct-typed { opacity: 1; }
 .wl-ct-now { background: rgba(37, 99, 235, 0.18); border-left-color: var(--wl-accent-text); }
 .wl-ct-trace { min-width: 0; }

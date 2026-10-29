@@ -33,13 +33,16 @@ function SetupButtons({ stack }: { stack: Stack }) {
   ));
 }
 
-function Hero({ stack }: { stack: Stack }) {
+function Hero({ stack, latest }: { stack: Stack; latest: string | null }) {
   return (
     <section className="wl-st-hero">
       <div className="wl-wrap">
         <Headline lines={[...stack.headline]} className="wl-display wl-st-title" />
         <div className="wl-st-intro wl-rise" style={riseDelay(0.35)}>
-          <p className="wl-lede">{stack.lede}</p>
+          <div>
+            <p className="wl-lede">{stack.lede}</p>
+            {latest && <p className="wl-st-release">Latest release: <a href="/changelog/">{latest}</a></p>}
+          </div>
           <div className="wl-hero-cta">
             <SetupButtons stack={stack} />
           </div>
@@ -133,10 +136,10 @@ function Next({ stack }: { stack: Stack }) {
   );
 }
 
-export function StackPage({ stack }: { stack: Stack }) {
+export function StackPage({ stack, latest = null }: { stack: Stack; latest?: string | null }) {
   return (
     <main>
-      <Hero stack={stack} />
+      <Hero stack={stack} latest={latest} />
       <section className="wl-st-demo">
         <div className="wl-wrap"><CodeToTrace stack={stack} /></div>
       </section>
