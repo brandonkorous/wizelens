@@ -25,16 +25,18 @@ export function fmtUsed(used: number | null, total: number | null): string {
   return total ? `${fmtBytes(used)} of ${fmtBytes(total)}` : fmtBytes(used);
 }
 
-/** A share as a small bar and a number; red past 90%, orange past 75%. */
-export function UsageBar({ share }: { share: number | null }) {
-  if (share === null) return <span className="wl-muted">{DASH}</span>;
+/** A share as a small bar and a number (the share, or `text` with the share in its title); red past 90%, orange past 75%. */
+export function UsageBar({ share, text, of = "" }: { share: number | null; text?: string; of?: string }) {
+  if (share === null) return <span className="wl-muted">{text ?? DASH}</span>;
   const tone = share >= 0.9 ? "wl-bad" : share >= 0.75 ? "wl-warn" : "";
+  const title = `${fmtShare(share)}${of ? ` of ${of}` : ""}`;
   return (
-    <span className={`wl-usage ${tone}`} title={fmtShare(share)}>
-      <span className="wl-usage-track" aria-hidden="true">
+    <span className={`wl-meter ${tone}`} title={title}>
+      <span className="wl-meter-track" aria-hidden="true">
         <span style={{ width: `${Math.min(100, Math.max(0, share * 100))}%` }} />
       </span>
-      <span className="wl-usage-num">{fmtShare(share)}</span>
+      <span className="wl-meter-num">{text ?? fmtShare(share)}</span>
+      {text && <span className="wl-sr-only">, {title}</span>}
     </span>
   );
 }

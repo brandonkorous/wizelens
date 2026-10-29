@@ -5,13 +5,13 @@
 .wl-infra-page .wl-page-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .wl-infra-page .wl-panel-head .wl-tabbar { margin: 0; }
 
-.wl-usage { display: inline-flex; align-items: center; gap: 8px; min-width: 120px; font-variant-numeric: tabular-nums; }
-.wl-usage-track { position: relative; flex: 1; min-width: 60px; max-width: 110px; height: 6px; border-radius: 999px; background: var(--wl-surface-3); overflow: hidden; }
-.wl-usage-track > span { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--wl-blue); }
-.wl-usage.wl-warn .wl-usage-track > span { background: var(--wl-orange); }
-.wl-usage.wl-bad .wl-usage-track > span { background: var(--wl-red); }
-.wl-usage.wl-bad .wl-usage-num { color: var(--wl-error); font-weight: 650; }
-.wl-usage-num { min-width: 44px; text-align: right; font-size: 13px; }
+.wl-meter { display: inline-flex; align-items: center; gap: 8px; min-width: 120px; font-variant-numeric: tabular-nums; }
+.wl-meter-track { position: relative; flex: 1; min-width: 60px; max-width: 110px; height: 6px; border-radius: 999px; background: var(--wl-surface-3); overflow: hidden; }
+.wl-meter-track > span { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--wl-blue); }
+.wl-meter.wl-warn .wl-meter-track > span { background: var(--wl-orange); }
+.wl-meter.wl-bad .wl-meter-track > span { background: var(--wl-red); }
+.wl-meter.wl-bad .wl-meter-num { color: var(--wl-error); font-weight: 650; }
+.wl-meter-num { min-width: 44px; text-align: right; font-size: 13px; }
 
 .wl-infra-chips { display: inline-flex; flex-wrap: wrap; gap: 6px; }
 .wl-infra-chip {
