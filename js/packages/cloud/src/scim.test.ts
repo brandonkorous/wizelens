@@ -33,6 +33,8 @@ describe("SCIM provisioning", () => {
     expect(made.status).toBe(201);
     const id = ((await made.json()) as { id: string }).id;
     expect(await members(owner, orgId)).toEqual(["ann@acme.io", "owner@acme.io"]);
+    const synced = (await owner.call<{ members: { email: string; synced: boolean }[] }>("GET", `api/orgs/${orgId}`)).body.members.map((m) => [m.email, m.synced]).sort();
+    expect(synced).toEqual([["ann@acme.io", true], ["owner@acme.io", false]]);
     const off = await scim(url, token, "PATCH", `Users/${id}`, { schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"], Operations: [{ op: "replace", path: "active", value: false }] });
     expect(off.status).toBe(200);
     expect(await members(owner, orgId)).toEqual(["owner@acme.io"]);

@@ -26,6 +26,8 @@ export interface Member {
   name: string;
   role: Role;
   sinceMs: number;
+  /** True when the organization's identity provider added this person by SCIM: it adds them back while they are active there. */
+  synced: boolean;
 }
 
 export interface PendingInvite {
@@ -61,8 +63,9 @@ export async function setRetention(q: Queryable, orgId: string, retentionDays: n
 
 export const listMembers = (q: Queryable, orgId: string): Promise<Member[]> =>
   q.query<Member>(
-    `SELECT m.id AS "memberId", u.id AS "userId", u.email, u.name, m.role, ${ms("m.created_at")} AS "sinceMs" FROM members m JOIN users u ON u.id = m.user_id
-     WHERE m.org_id = $1 ORDER BY u.name`,
+    `SELECT m.id AS "memberId", u.id AS "userId", u.email, u.name, m.role, ${ms("m.created_at")} AS "sinceMs",
+       EXISTS (SELECT 1 FROM scim_users s WHERE s.user_id = m.user_id AND s.provisioning_domain_id = m.org_id AND s.active) AS synced
+     FROM members m JOIN users u ON u.id = m.user_id WHERE m.org_id = $1 ORDER BY u.name`,
     [orgId],
   );
 

@@ -19,9 +19,11 @@ interface Ctx {
   confirm: ReturnType<typeof useAsk>["confirm"];
 }
 
+const SYNCED_REMOVE = (name: string) => `${name} loses access right away. Your identity provider added them, so it adds them back at its next sync while they are active there. To keep them out, turn them off or unassign them there.`;
+
 function actionOf({ orgId, me, manage, onlyOwner, run, confirm }: Ctx, m: Member) {
   const remove = async () =>
-    (await confirm({ title: `Remove ${m.name}?`, body: `${m.name} loses access to this organization and its data right away.`, confirmLabel: "Remove", danger: true })) &&
+    (await confirm({ title: `Remove ${m.name}?`, body: m.synced ? SYNCED_REMOVE(m.name) : `${m.name} loses access to this organization and its data right away.`, confirmLabel: "Remove", danger: true })) &&
     run(() => auth((c) => c.organization.removeMember({ memberIdOrEmail: m.memberId, organizationId: orgId })));
   const leave = async () =>
     (await confirm({ title: "Leave this organization?", body: "You lose access to its data. Someone must invite you again to come back.", confirmLabel: "Leave", danger: true })) &&
@@ -37,7 +39,7 @@ function columns(ctx: Ctx): Column<Member>[] {
       if (m.userId === ctx.me) await loadAccount();
     });
   return [
-    { key: "name", header: "Name", cell: (m) => <span className="wl-who"><strong>{m.name}{m.userId === ctx.me && <span className="wl-muted"> (you)</span>}</strong><small>{m.email}</small></span> },
+    { key: "name", header: "Name", cell: (m) => <span className="wl-who"><strong>{m.name}{m.userId === ctx.me && <span className="wl-muted"> (you)</span>}</strong><small>{m.email}</small>{m.synced && <small>From your identity provider (SCIM)</small>}</span> },
     { key: "role", header: "Role", cell: (m) => (ctx.manage ? <Select small label={`Role of ${m.name}`} value={m.role} options={ROLE_OPTIONS} onChange={(r) => change(m, r)} /> : ROLE_LABEL[m.role]) },
     { key: "since", header: "Member since", cell: (m) => fmtDate(m.sinceMs), className: "wl-nowrap" },
     { key: "x", header: "", cell: (m) => actionOf(ctx, m), className: "wl-cell-actions" },
