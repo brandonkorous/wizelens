@@ -55,11 +55,14 @@ a.wl-stat-link:hover { border-color: var(--wl-line-strong); box-shadow: var(--wl
 .wl-chart-note { margin: 10px 0 0; font-size: 14px; color: var(--wl-fg-2); }
 /* A line about the table above or below it: why a cell is empty, or what is left out. */
 .wl-table-note { margin: 0; padding: 10px 20px; border-bottom: 1px solid var(--wl-line); color: var(--wl-fg-2); font-size: 14px; }
+.wl-legend-more { display: none; }
 /* On a phone a long line name stays on one line; the chart's tip and the title show it whole. */
 @media (max-width: 560px) {
   .wl-chart-legend { justify-content: flex-start; gap: 4px 14px; font-size: 12px; }
   .wl-chart-legend > span { max-width: 100%; }
   .wl-chart-legend .wl-legend-text { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wl-legend-folded > span:nth-of-type(n + 5) { display: none; }
+  .wl-legend-more { display: inline; font-size: 13px; }
 }
 .wl-chart-tip { position: absolute; z-index: 5; pointer-events: none; min-width: 140px; padding: 8px 10px; background: var(--wl-surface); border: 1px solid var(--wl-line); border-radius: 8px; box-shadow: var(--wl-shadow-pop); font-size: 12px; }
 .wl-chart-tip div { display: flex; justify-content: space-between; gap: 12px; }

@@ -6,6 +6,7 @@ import { useReleases } from "../data/releases";
 import { areaPath, linePath, maxOf, niceMax, ticksOf } from "./chartMath";
 import { type ChartOutage, OutageBands } from "./OutageBands";
 import { releaseIndex, ReleaseMarks } from "./ReleaseMarks";
+import { ChartLegend } from "./ChartLegend";
 
 const spanOf = (starts: readonly number[]) => (starts.length > 1 ? starts[starts.length - 1]! - starts[0]! : 0);
 
@@ -221,14 +222,7 @@ export function TimeChart(props: TimeChartProps) {
         {hover !== null && <line x1={f.x(hover)} x2={f.x(hover)} y1={PAD.top} y2={f.base} stroke="var(--wl-line-strong)" />}
       </svg>
       {hover !== null && <Tip p={props} i={hover} left={Math.min(f.x(hover) + 12, width - 160)} releases={releases} />}
-      <div className="wl-chart-legend">
-        {series.map((s) => (
-          <span key={s.label} title={s.label}>
-            <i className={s.dashed ? "wl-legend-dashed" : undefined} style={{ background: s.dashed ? undefined : s.color, borderColor: s.color }} />
-            <span className="wl-legend-text">{s.label}</span>
-          </span>
-        ))}
-      </div>
+      <ChartLegend series={series} />
     </div>
   );
 }
