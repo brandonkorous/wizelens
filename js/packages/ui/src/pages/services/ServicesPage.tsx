@@ -36,6 +36,7 @@ function ServicesBody({ m }: { m: ServicesModel }) {
       <Cards m={m} />
       <div className={`wl-grid${selected ? " wl-grid-side" : ""}`}>
         <Panel title={`Services (${m.rows.length})`} flush>
+          <p className="wl-panel-note">Every service, database, and web app seen in traces in this range, with how it answered.</p>
           <ServiceTable rows={m.rows} selectedKey={selected?.row.key ?? null} />
         </Panel>
         {selected && <ServiceDetail detail={selected} window={m.meta.window} />}
