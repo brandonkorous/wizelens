@@ -31,10 +31,11 @@
 .wl-prose th { font-size: 13.5px; font-weight: 650; color: var(--wl-fg); border-bottom-color: var(--wl-line-strong); white-space: nowrap; }
 .wl-prose td code { white-space: nowrap; }
 .wl-prose tr:hover td { background: var(--wl-paper); }
-/* On a phone, code and headers in a table wrap so every column fits the screen. */
+/* On a phone, code and headers in a table wrap so every column fits the screen; no column gets narrower than a short word. */
 @media (max-width: 720px) {
-  .wl-prose th, .wl-prose td { padding: 8px 10px; }
-  .wl-prose th, .wl-prose td code { white-space: normal; overflow-wrap: anywhere; }
+  .wl-prose th, .wl-prose td { padding: 8px 10px; min-width: 7em; }
+  .wl-prose th { white-space: normal; overflow-wrap: break-word; }
+  .wl-prose td code { white-space: normal; overflow-wrap: anywhere; }
 }
 
 @media (hover: none) {
