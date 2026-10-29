@@ -52,7 +52,7 @@
 .wl-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 40; min-width: 240px; max-height: 70vh; overflow: auto; padding: 6px; background: var(--wl-surface); border: 1px solid var(--wl-line); border-radius: 12px; box-shadow: var(--wl-shadow-pop); }
 .wl-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 8px; background: none; text-align: left; cursor: pointer; color: var(--wl-fg); }
 .wl-menu-item:hover, .wl-menu-item.wl-active { background: var(--wl-surface-2); text-decoration: none; }
-.wl-menu-head { padding: 8px 10px 4px; font-size: 11px; font-weight: 650; color: var(--wl-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.wl-menu-head { padding: 8px 10px 4px; font-size: 12px; font-weight: 650; color: var(--wl-muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .wl-menu-note { padding: 8px 10px; color: var(--wl-muted); font-size: 12px; }
 .wl-range-custom { display: grid; gap: 8px; padding: 4px 10px 10px; font-size: 13px; }
 .wl-range-custom label { display: grid; gap: 4px; color: var(--wl-fg-2); }

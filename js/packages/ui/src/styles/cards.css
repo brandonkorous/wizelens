@@ -36,6 +36,8 @@
   .wl-table-cards tbody td.wl-cell-actions .wl-row-actions { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; gap: 8px 18px; white-space: normal; }
   .wl-table-cards tbody td.wl-hide-sm { display: none; }
   .wl-table-cards tbody td :is(.wl-wrap, .wl-truncate), .wl-table-cards tbody td > strong:only-child { min-width: 0; }
+  /* A dot and its name (service, status) may wrap in a card; on a desktop row it stays on one line. */
+  .wl-table-cards tbody td .wl-dot-text { min-width: 0; white-space: normal; }
   .wl-panel-flush .wl-table-cards tbody td { padding-left: 20px; padding-right: 20px; }
   .wl-panel-flush .wl-table-cards thead tr { padding: 8px 20px; }
   .wl-table-cards tbody tr.wl-row-detail td { display: block; padding: 4px 14px 14px; text-align: left; }
