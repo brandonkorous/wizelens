@@ -26,9 +26,11 @@
 .wl-status-bar.wl-picked { outline: 2px solid var(--wl-fg); outline-offset: 1px; }
 .wl-status-bars { touch-action: pan-y; cursor: pointer; }
 .wl-status-day { margin: 6px 0 0; font-size: 14px; font-weight: 600; }
+.wl-status-hint { display: none; margin: 0; }
 .wl-status-check-foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .wl-status-incidents { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
 @media (max-width: 640px) {
   .wl-status-check-foot span:first-child, .wl-status-check-foot span:last-child { display: none; }
   .wl-status-bars { gap: 2px; }
+  .wl-status-hint { display: block; }
 }
