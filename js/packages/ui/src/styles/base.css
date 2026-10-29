@@ -21,6 +21,10 @@ h3 { font-size: 12px; margin: 16px 0 6px; text-transform: uppercase; letter-spac
 .wl-text-warn { color: var(--wl-warn); }
 .wl-spacer { flex: 1; }
 .wl-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+/* MidPath: the head gives way first; the last step keeps up to most of the width. */
+.wl-mid { display: inline-flex; min-width: 0; max-width: 100%; white-space: nowrap; vertical-align: middle; }
+.wl-mid-head { min-width: 2ch; overflow: hidden; text-overflow: ellipsis; }
+.wl-mid-tail { flex: none; max-width: 75%; overflow: hidden; text-overflow: ellipsis; }
 .wl-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .wl-brand-blades { fill: var(--wl-blades); }
 .wl-brand-lens { color: var(--wl-lens); }

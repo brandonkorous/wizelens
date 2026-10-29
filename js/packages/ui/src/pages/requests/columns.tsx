@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { isFailed, type RequestItem, type Sort, type SortKey } from "@wizeworks/lens-core";
-import { fmtMs, fmtTime, shortPath } from "../../format";
+import { fmtMs, fmtTime } from "../../format";
+import { MidPath } from "../../ui/MidPath";
 import { CountBadge, DotText, toneOfStatus } from "../../ui/Badges";
 import type { Column } from "../../ui/Table";
 
@@ -22,7 +23,7 @@ export function requestColumns(sort: Sort, onSort: (k: SortKey) => void): Column
   const h = (label: string, k: SortKey) => <SortHeader label={label} k={k} sort={sort} onSort={onSort} />;
   return [
     { key: "time", header: h("Time", "time"), label: "Time", cell: (r) => fmtTime(r.startMs), className: "wl-nowrap" },
-    { key: "path", header: h("Path", "path"), label: "Path", cardTitle: true, cell: (r) => <span className="wl-rq-path wl-truncate" title={r.path}>{shortPath(r.path)}</span> },
+    { key: "path", header: h("Path", "path"), label: "Path", cardTitle: true, cell: (r) => <MidPath path={r.path} className="wl-rq-path" /> },
     { key: "method", header: h("Method", "method"), label: "Method", cell: (r) => r.method },
     { key: "status", header: h("Status", "status"), label: "Status", cell: (r) => <DotText tone={toneOfStatus(r.status)} colorText={(r.status ?? 0) >= 500 && !r.expected}>{r.aborted ? "Aborted" : (r.status ?? "…")}</DotText> },
     { key: "duration", header: h("Duration", "duration"), label: "Duration", cell: durationCell, className: "wl-nowrap" },

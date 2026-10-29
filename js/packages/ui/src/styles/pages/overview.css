@@ -3,7 +3,8 @@
 .wl-ov-top { grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); }
 .wl-ov-mid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
 .wl-ov-note { margin: 14px 0 0; color: var(--wl-muted); font-size: 12px; }
-.wl-ov-path { display: inline-block; max-width: 260px; vertical-align: middle; }
+.wl-ov-path, .wl-mid.wl-ov-path { max-width: 260px; vertical-align: middle; }
+.wl-ov-path.wl-truncate { display: inline-block; }
 
 .wl-ov-insights { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .wl-ov-insight { display: grid; grid-template-columns: 48px minmax(0, 1fr) 20px; align-items: start; gap: 14px; padding: 6px 18px; color: var(--wl-fg); border-left: 1px solid var(--wl-line); }

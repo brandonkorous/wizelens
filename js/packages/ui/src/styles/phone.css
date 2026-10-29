@@ -38,6 +38,7 @@
   .wl-bars.wl-compact { grid-template-columns: auto minmax(0, 1fr); }
   .wl-bar-row { row-gap: 4px; }
   .wl-bar-row > .wl-truncate { grid-column: 1 / -1; white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+  .wl-bar-row > .wl-truncate .wl-dot-text { white-space: normal; overflow-wrap: anywhere; }
 }
 /* A row of tabs that scrolls sideways shows an arrow button at each edge that hides more (ui/ScrollRow.tsx). */
 .wl-scroll-row { position: relative; min-width: 0; }

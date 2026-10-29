@@ -2,8 +2,9 @@
 .wl-db-page .wl-db-query { max-width: 420px; }
 .wl-db-queries .wl-table th:first-child, .wl-db-queries .wl-table td:first-child { padding-left: 20px; }
 .wl-db-queries .wl-table th:last-child, .wl-db-queries .wl-table td:last-child { padding-right: 20px; }
-.wl-db-page .wl-db-query span { display: block; }
-.wl-db-note { margin: 12px 0 0; font-size: 12px; color: var(--wl-muted); }
+/* Up to three lines of the query; the query page has all of it. */
+.wl-db-page .wl-db-query span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; white-space: normal; overflow-wrap: anywhere; }
+.wl-db-note { margin: 12px 0 0; font-size: 13px; color: var(--wl-fg-2); }
 
 .wl-insight-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
 .wl-insight-card { display: grid; grid-template-columns: 52px minmax(0, 1fr) 20px; gap: 14px; align-items: start; padding: 4px 18px; color: var(--wl-fg); border-left: 1px solid var(--wl-line); }
