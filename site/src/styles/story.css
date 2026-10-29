@@ -1,9 +1,10 @@
 /* The story page: hero, the pinned scene with its chapters, principles, and credits. */
-.wl-story-hero { padding: clamp(128px, 15vw, 176px) 0 clamp(48px, 6vw, 80px); }
+.wl-story-hero { padding: clamp(128px, 15vw, 176px) 0 clamp(32px, 4vw, 56px); }
 .wl-story-lede { margin-top: 32px; max-width: 34em; }
 
 .wl-story-track { position: relative; height: 480vh; }
-.wl-story-pin { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: center; padding-top: 68px; }
+/* The scene sits near the top, not centered, so its first chapter shows on the first screen under the hero. */
+.wl-story-pin { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: flex-start; padding-top: clamp(96px, 14vh, 160px); }
 .wl-story-grid { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: clamp(32px, 5vw, 72px); align-items: center; }
 .wl-story-text { position: relative; min-height: 360px; }
 .wl-story-ch { position: absolute; inset: 0; display: grid; gap: 24px; align-content: center; }
