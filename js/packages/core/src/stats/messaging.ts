@@ -20,6 +20,8 @@ export interface MessageRow {
   service: string;
   operation: string;
   queue: string;
+  /** What was sent, when the system names it: a RabbitMQ routing key such as OrderStartedIntegrationEvent. */
+  message: string | null;
   messageId: string | null;
   durationMs: number;
   startMs: number;
@@ -34,6 +36,7 @@ export function messageRows(spans: readonly Span[]): MessageRow[] {
       service: s.service,
       operation: str(s, ATTR_MESSAGING.operation) ?? (s.kind === "producer" ? "send" : "process"),
       queue: queueOf(s),
+      message: str(s, ATTR_MESSAGING.routingKey),
       messageId: str(s, ATTR_MESSAGING.messageId),
       durationMs: s.durationMs,
       startMs: s.startMs,

@@ -127,6 +127,7 @@ export const ATTR_MESSAGING = {
   operation: "messaging.operation.type",
   destination: "messaging.destination.name",
   messageId: "messaging.message.id",
+  routingKey: "messaging.rabbitmq.destination.routing_key",
   batchSize: "messaging.batch.message_count",
   bodySize: "messaging.message.body.size",
 } as const;
