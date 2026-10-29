@@ -71,6 +71,46 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   says how much of 7 or 30 days it has measured; an alert's chart says why it starts on the rule's first check; the
   HUD's call list shows full names on a phone; Rendering says how many views had no known device; and the sign-in pages have larger links, one a line, with a way back
   from every card.
+- **Phone cards show whole values.** A cut cell wraps inside its card, a trace's findings fold to two with "Show
+  all", its numbers come before its buttons, and a link to a trace tab opens with that tab in view. Card labels use
+  the text font, a sort row starts with "Sort by", and a list you can pick from has a "Select all" box.
+- **Long names break at their parts.** A stack trace wraps at folders and dots, an insight's endpoint at its
+  slashes, a setup line after `=` and `/`, an uptime check's URL at its slashes, and a pod's workload at its slash.
+  Docs tables do the same with settings and package names, so `otel.exporter.otlp.endpoint` breaks at its dots.
+- **Charts fit their numbers.** A line chart scales to its own top instead of at least 1, so a pod using 2 millicores
+  fills its chart, and a single point shows as a dot. Metric trend lines start at their first value. A host's CPU
+  chart keeps its 0 to 100% axis.
+- **Clearer values where data is missing.** An alert that has not run says "Not checked yet" or "No data to check";
+  a host with no network data says so instead of 0 B/s; a shared link with no note says "Not named"; and a failed
+  5xx request with no exception is named "HttpError: HTTP 503" instead of "Error: error".
+- **Times and days are named.** A trace shows the date under its start time, a status page bar names its UTC day
+  (and a phone says to tap a bar), and a new uptime check counts the time it has measured in minutes.
+- **On a phone a trace timeline row is its name over a full-width track,** so short spans still show as bars.
+- **Hosts and Kubernetes read better on a phone.** Host cards show Disk next to CPU and Memory, and a pod links to
+  the requests it served. Millicore axis ticks no longer repeat.
+- **The read-key intro shows its header as code** (`Authorization: Bearer <key>`), and setup snippets keep each
+  value whole.
+- **Tab rows keep the open tab in view** after counts, fonts, or tabs that a plan adds load in.
+- **Billing's daily chart is easier to read.** Each day is a slot you can tap to see its numbers, the first and last
+  dates sit under it, and a usage bar with a little use still shows a sliver and its share.
+- **Blazor's own downloads are not app calls.** The browser add-on no longer records Blazor's `_framework` downloads as
+  calls your app made.
+- **Each Services table says what it lists**, database boxes on the dependency map lead with the database name,
+  service chips stay on one line in desktop tables, and an empty Hydration Time card says no UI framework was seen.
+- **Delete account names the organizations that go with it.**
+- **Docs on a phone.** The docs search box drops its Ctrl K hint, the Errors page explains only the filters that need
+  it, an "On this page" button returns to the section list, and the auto-install page opens with a "Pick a way" table.
+- **The site's stack pages and story come up sooner.** A stack page's facts are one row each on a phone, so its code
+  demo starts near the top of the second screen, and the story's first chapter shows on the first screen at 1440.
+
+### Added
+
+- **Preferences follow your account.** Theme, default range, time zone and clock are saved to the account in the
+  cloud, so every browser you sign in on uses them (`GET api/me` and `PATCH api/me/prefs`).
+- **The Messages tab names each message.** A RabbitMQ message shows its routing key (such as
+  `OrderStartedIntegrationEvent`) beside its queue, service and message id.
+- **Members from your identity provider are marked.** A person SCIM added reads "From your identity provider
+  (SCIM)", and removing them warns that the provider adds them back at its next sync while they are active there.
 
 ## [0.3.0-alpha.14] — A steadier ClickHouse, and every screen checked
 
