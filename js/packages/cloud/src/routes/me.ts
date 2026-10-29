@@ -1,5 +1,5 @@
 import type { Ctx } from "../app.js";
-import { blockingOrgs, ownedOrgs } from "../auth/delete-user.js";
+import { blockingOrgs, ownedOrgs, soloOrgs } from "../auth/delete-user.js";
 import { sessionOf } from "../auth/principal.js";
 import { fail, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";
@@ -37,7 +37,7 @@ async function me(ctx: Ctx): Promise<void> {
   const base = { signedIn: !!s, needsSetup: (await userCount(ctx.app.db)) === 0, signup: ctx.app.config.signup, mail: ctx.app.mailer.live, sso: await ssoReady(ctx), billing: ctx.app.billing.on };
   if (!s) return sendJson(ctx.res, 200, base);
   const owned = await ownedOrgs(ctx.app.db, s.user.id);
-  sendJson(ctx.res, 200, { ...base, user: s.user, sessionId: s.sessionId, orgs: await orgsWithProjects(ctx, s.user.id), blockingOrgs: blockingOrgs(owned).map((o) => o.name) });
+  sendJson(ctx.res, 200, { ...base, user: s.user, sessionId: s.sessionId, orgs: await orgsWithProjects(ctx, s.user.id), blockingOrgs: blockingOrgs(owned).map((o) => o.name), soloOrgs: soloOrgs(owned).map((o) => o.name) });
 }
 
 /** Who sent an invite and for which email, so the sign-up form can show it. The id is the link's secret. */

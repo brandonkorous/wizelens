@@ -48,6 +48,7 @@ describe("leaving", () => {
     expect(blocked.status).toBe(400);
     expect(blocked.body.message).toMatch(/Make someone else an owner/);
     expect((await owner.call("POST", "api/auth/organization/remove-member", { memberIdOrEmail: "vic@acme.io", organizationId: orgId })).status).toBe(200);
+    expect((await owner.call<{ soloOrgs: string[] }>("GET", "api/me")).body.soloOrgs).toEqual(["Olive's team"]);
     expect((await owner.call("POST", "api/auth/delete-user", { password: PASSWORD })).status).toBe(200);
     expect(await cloud.app.db.query("SELECT 1 FROM orgs WHERE id = $1", [orgId])).toEqual([]);
     expect((await vic.call<Me>("GET", "api/me")).body.orgs).toEqual([]);

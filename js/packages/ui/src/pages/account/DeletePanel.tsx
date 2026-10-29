@@ -10,8 +10,10 @@ export function DeletePanel({ account }: { account: AccountState }) {
   const a = useAction();
   const { dialog, confirm } = useAsk();
   const blocking = account.blockingOrgs ?? [];
+  const solo = account.soloOrgs ?? [];
+  const goes = solo.length ? `${solo.join(", ")} ${solo.length === 1 ? "is" : "are"} deleted with your account, with all ${solo.length === 1 ? "its" : "their"} data.` : "No organization is deleted: you are not alone in any.";
   const remove = onForm(async (v, form) => {
-    if (!(await confirm({ title: "Delete your account?", body: "Your account and every organization where you are the only member are deleted, with all their data. This cannot be undone.", confirmLabel: "Delete my account", danger: true }))) return;
+    if (!(await confirm({ title: "Delete your account?", body: `Your account is deleted.${solo.length ? ` ${goes}` : ""} This cannot be undone.`, confirmLabel: "Delete my account", danger: true }))) return;
     void a.run(async () => {
       await auth((c) => c.deleteUser({ password: v.password! }));
       form.reset();
@@ -23,7 +25,7 @@ export function DeletePanel({ account }: { account: AccountState }) {
   return (
     <Panel className="wl-panel-danger">
       {dialog}
-      <p className="wl-muted">Organizations where you are the only member are deleted with your account, with all their data.</p>
+      <p>{goes}</p>
       {blocking.length > 0 ? (
         <ul className="wl-plain-list">
           {blocking.map((name) => (

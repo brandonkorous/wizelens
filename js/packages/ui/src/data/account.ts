@@ -53,6 +53,8 @@ export interface AccountState {
   orgs?: OrgWithProjects[];
   /** Organizations where this person is the last owner and others are members: they block deleting the account. */
   blockingOrgs?: string[];
+  /** Organizations this person is alone in: they are deleted with the account. */
+  soloOrgs?: string[];
 }
 
 const listeners = new Set<() => void>();
