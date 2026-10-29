@@ -46,15 +46,20 @@ function linkValueOf(page: PageId, key: string, q: URLSearchParams): string | un
   return name && q.has(name) ? q.get(name)! : undefined;
 }
 
+/** Elsewhere (Organization, People) a link may still name an organization or a project (an email's link): it shows that one. */
+function linkScope(org: string | null, project: string | null): void {
+  if (org && org !== readPref(SCOPE.org)) writePref(SCOPE.org, org);
+  if (project && project !== readPref(SCOPE.project)) writePref(SCOPE.project, project);
+}
+
 /** Keep the address bar and the stored choices together: a link's values win, and choices fill in what a link leaves out. */
 export function useViewInUrl(): void {
   const route = useRoute();
   const hash = `${route.page}?${route.query.toString()}`;
   useEffect(() => onViewWrite(pushChoice), []);
   useEffect(() => {
-    // Elsewhere a link may still name a project (a row under "All projects"): it shows that one.
     const project = route.query.get("project");
-    if (!VIEW_PAGES.has(route.page)) return void (project && project !== readPref(SCOPE.project) && writePref(SCOPE.project, project));
+    if (!VIEW_PAGES.has(route.page)) return void linkScope(route.query.get("org"), project);
     for (const key of VIEW_KEYS) {
       const fromLink = linkValueOf(route.page, key, route.query);
       if (fromLink !== undefined && fromLink !== (readPref(key) ?? "")) writePref(key, fromLink);

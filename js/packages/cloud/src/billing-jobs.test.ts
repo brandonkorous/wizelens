@@ -40,6 +40,8 @@ describe("usage mail", () => {
     await sendUsageNotices(cloud.app);
     await new Promise((r) => setTimeout(r, 200));
     expect(usage()).toEqual([expect.stringMatching(/used 80%/), expect.stringMatching(/used 100%/)]);
+    // The link opens this organization's billing, for a person in several.
+    expect(mail.sent.find((m) => m.kind === "billing")?.text).toContain(`#/organization/billing?org=${orgId}`);
   });
 });
 
