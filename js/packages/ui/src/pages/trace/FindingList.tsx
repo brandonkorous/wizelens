@@ -1,4 +1,5 @@
 import { type Finding, type FindingKind, insightsOf, isSecurityKind, OWASP_OF, SECURITY_LABELS, securityOf } from "@wizeworks/lens-core";
+import { useState } from "react";
 import { fmtMs } from "../../format";
 
 const LABELS: Record<FindingKind, string> = {
@@ -14,15 +15,27 @@ const LABELS: Record<FindingKind, string> = {
 
 const badgeClass = (kind: FindingKind) => (isSecurityKind(kind) ? "wl-fbadge-security" : `wl-fbadge-${kind.replace("+", "p")}`);
 
-function Row({ f, onSelect }: { f: Finding; onSelect: (f: Finding) => void }) {
+function Row({ f, extra, onSelect }: { f: Finding; extra: boolean; onSelect: (f: Finding) => void }) {
   const security = isSecurityKind(f.kind);
   return (
-    <button type="button" className={`wl-insight wl-insight-${f.severity}`} onClick={() => onSelect(f)}>
+    <button type="button" className={`wl-insight wl-insight-${f.severity}${extra ? " wl-insight-extra" : ""}`} onClick={() => onSelect(f)}>
       <span className={`wl-fbadge ${badgeClass(f.kind)}`}>{LABELS[f.kind]}</span>
       <span className="wl-insight-title">{f.title}</span>
       <code className="wl-insight-shape">{f.shape}</code>
       {security ? <span className="wl-owasp" title="OWASP Top 10:2025">{OWASP_OF[f.kind as keyof typeof OWASP_OF]}</span> : <span className="wl-insight-ms">{fmtMs(f.totalMs)}</span>}
     </button>
+  );
+}
+
+/** On a phone a list shows its first two findings and a button for the rest (trace.css). */
+function Rows({ list, onSelect }: { list: Finding[]; onSelect: (f: Finding) => void }) {
+  const [open, setOpen] = useState(false);
+  const fold = !open && list.length > 2;
+  return (
+    <>
+      {list.map((f, i) => <Row key={`${f.kind}-${i}`} f={f} extra={fold && i >= 2} onSelect={onSelect} />)}
+      {fold && <button type="button" className="wl-link-btn wl-insights-more" onClick={() => setOpen(true)}>Show all {list.length}</button>}
+    </>
   );
 }
 
@@ -41,13 +54,13 @@ export function FindingList({ findings, onSelect }: { findings: Finding[]; onSel
     <>
       {perf.length > 0 && (
         <section className="wl-insights" aria-label="Insights">
-          {perf.map((f, i) => <Row key={`${f.kind}-${i}`} f={f} onSelect={onSelect} />)}
+          <Rows list={perf} onSelect={onSelect} />
         </section>
       )}
       {security.length > 0 && (
         <section id="wl-security" className="wl-insights" aria-label="Security">
           <h2 className="wl-insights-head">Security risks</h2>
-          {security.map((f, i) => <Row key={`${f.kind}-${i}`} f={f} onSelect={onSelect} />)}
+          <Rows list={security} onSelect={onSelect} />
         </section>
       )}
     </>

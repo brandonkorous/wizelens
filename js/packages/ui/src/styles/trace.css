@@ -75,6 +75,9 @@
 
 /* Insights */
 .wl-insights { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+/* The Show all button and the folded findings exist only on a phone. */
+.wl-insights-more { display: none; align-self: flex-start; }
+@media (max-width: 560px) { .wl-insight.wl-insight-extra { display: none; } .wl-insights-more { display: inline; } }
 .wl-insights-clean { flex-direction: row; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px; background: var(--wl-surface); border: 1px solid var(--wl-line); color: var(--wl-muted); }
 .wl-insight-ok { color: var(--wl-ok); font-weight: 700; }
 .wl-insight {
