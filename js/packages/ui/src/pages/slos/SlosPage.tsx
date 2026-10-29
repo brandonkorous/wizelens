@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Target } from "lucide-react";
+import { ArrowDown, Plus, Target } from "lucide-react";
 import type { SloInput, SloReport } from "@wizeworks/lens-core";
 import { apiSend } from "../../data/api";
 import { useHost } from "../../data/host";
@@ -54,7 +54,11 @@ function SloList() {
   const add = api.canWrite && !adding && <button type="button" className="wl-btn wl-btn-primary" onClick={() => setAdding(true)}><Plus aria-hidden="true" /> New SLO</button>;
   return (
     <>
-      <PageHeader title="SLOs" subtitle="How much of your traffic must succeed, or be fast enough, and how much error budget is left.">{add}</PageHeader>
+      <PageHeader title="SLOs" subtitle="How much of your traffic must succeed, or be fast enough, and how much error budget is left.">
+        {/* Apdex targets are the second part of this page; this takes you there. */}
+        <button type="button" className="wl-btn" onClick={() => document.querySelector(".wl-apdex-panel")?.scrollIntoView({ behavior: "smooth", block: "start" })}><ArrowDown aria-hidden="true" /> Apdex targets</button>
+        {add}
+      </PageHeader>
       {error && <div className="wl-banner wl-banner-error">{error}</div>}
       {adding && target.field}
       {adding && <SloForm title="New SLO" initial={EMPTY_SLO} onSave={save} onCancel={() => setAdding(false)} />}
@@ -62,7 +66,7 @@ function SloList() {
         <Table paging={{ noun: "SLOs", key: "slos" }} columns={[COLUMNS[0]!, ...projectColumn<SloReport>(), ...COLUMNS.slice(1)]} rows={data?.slos ?? []} rowKey={(r) => r.slo.id} onRowClick={(r) => navigate(sloHref(r.slo.id, (r as InProject<typeof r>).projectId))} empty={<Empty title="No SLOs yet"><Target aria-hidden="true" /> Add one to track an error budget for a service or an endpoint.</Empty>} />
       </Panel>
       {data && api.apdexUrl && <ApdexTargets targets={data.apdex} url={api.apdexUrl} canWrite={api.canWrite} onSaved={reload} />}
-      {data && !api.apdexUrl && <Panel title="Apdex targets"><PickProject what="Apdex targets" /></Panel>}
+      {data && !api.apdexUrl && <Panel title="Apdex targets" className="wl-apdex-panel"><PickProject what="Apdex targets" /></Panel>}
     </>
   );
 }

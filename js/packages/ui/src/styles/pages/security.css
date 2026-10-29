@@ -14,5 +14,11 @@
 .wl-owasp-high { color: var(--wl-fg); border-color: var(--wl-error-soft); }
 .wl-owasp-high .wl-owasp-count { color: var(--wl-error); }
 @media (max-width: 1200px) { .wl-owasp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 640px) { .wl-owasp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* The quiet categories fold away on a phone; the button brings them back. */
+.wl-owasp-more { display: none; margin-top: 10px; }
+@media (max-width: 640px) {
+  .wl-owasp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wl-owasp-grid:not(.wl-owasp-all) .wl-owasp-none { display: none; }
+  .wl-owasp-more { display: inline-flex; }
+}
 .wl-scan-note { margin: 12px 0 0; }

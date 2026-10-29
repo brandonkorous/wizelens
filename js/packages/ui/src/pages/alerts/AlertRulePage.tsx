@@ -64,6 +64,9 @@ function Body({ d, api, reload }: { d: AlertRuleData; api: ReturnType<typeof use
   const unit = r.metric === "metric" ? undefined : r.metric === "slo" ? "×" : ALERT_METRICS[r.metric].unit;
   const fmt = (v: number) => fmtValue(r, v);
   const traces = tracesHref(r, w.from, w.to);
+  const first = d.values.reduce((m, v) => Math.min(m, v.timeMs), Infinity);
+  // Checks start when the rule was made; say so, or a mostly blank chart looks like lost data.
+  const late = first !== Infinity && first - w.from > (w.to - w.from) / 10;
   const stats: [string, ReactNode][] = [["Rule", ruleText(r)], ["Last value", fmtValue(r, r.lastValue)], ["Checked", r.lastEvalMs ? fmtDateTime(r.lastEvalMs) : "Not yet"], ["Sends to", r.channels.map(channelLabel).join(", ") || "Dashboard only"]];
   const actions = api.canWrite ? <RuleActions rule={r} url={api.url} onDone={(n) => (setNote(n ?? null), reload())} /> : undefined;
   return (
@@ -72,6 +75,8 @@ function Body({ d, api, reload }: { d: AlertRuleData; api: ReturnType<typeof use
       {note && <div className="wl-banner wl-banner-info">{note}</div>}
       <Panel title={`Value Against the Line (every check, ${windowLabel(r.windowMs)} windows)`} action={traces && <ViewAll href={traces} label={LINK_LABELS[r.metric] ?? "View the traces"} />}>
         <TimeChart starts={chart.starts} format={unit === undefined ? undefined : fmt} lines={[{ label: "Value", values: chart.values, color: "var(--wl-blue)" }, { label: "Threshold", values: chart.values.map(() => r.threshold), color: "var(--wl-red)", dashed: true }]} />
+        {late && <p className="wl-chart-note">The first check ran {fmtDateTime(first)}. The rule did not exist before that, so the line starts there.</p>}
+        {d.values.length === 0 && <p className="wl-chart-note">No checks in this range yet. The line starts at the rule's first check.</p>}
       </Panel>
       <Panel title="Notices and Changes" flush>
         <Table columns={eventColumns(false)} rows={d.events} served={{ info: eventPaging(query, d.eventCount), noun: "notices" }} rowKey={(e) => e.id} empty={<Empty>Nothing happened to this alert yet.</Empty>} />
