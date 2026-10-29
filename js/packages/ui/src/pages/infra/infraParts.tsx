@@ -110,12 +110,18 @@ export function ServicesPanel({ services, now, empty }: { services: InfraService
   );
 }
 
+// Each page names the recipe that fills it: host.yaml sends no Kubernetes metrics.
+const RECIPE: Record<string, string> = {
+  host: "Run the OpenTelemetry Collector with the WizeLens host recipe (deploy/collector/host.yaml) on each host, and point it at this hub or the cloud.",
+  Kubernetes: "Install the WizeLens collector chart (deploy/helm/wizelens-collector) in the cluster, and point it at this hub or the cloud.",
+};
+
 /** What to do when the host does not answer infrastructure pages, or no collector sends yet. */
 export function NoInfra({ supported, what }: { supported: boolean; what: string }) {
   return (
     <Panel>
       <Empty title={supported ? `No ${what} metrics yet` : `This dashboard does not keep ${what} metrics`}>
-        {supported ? "Run the OpenTelemetry Collector with the WizeLens recipe (deploy/helm/wizelens-collector or deploy/collector/host.yaml) and point it at this hub or the cloud." : "Send host and Kubernetes metrics to a WizeLens hub or the cloud with the OpenTelemetry Collector."}{" "}
+        {supported ? RECIPE[what] ?? RECIPE.host : "Send host and Kubernetes metrics to a WizeLens hub or the cloud with the OpenTelemetry Collector."}{" "}
         <a href="https://wizelens.com/docs/kubernetes" target="_blank" rel="noreferrer">How to set it up</a>
       </Empty>
     </Panel>
