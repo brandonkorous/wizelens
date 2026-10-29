@@ -21,6 +21,7 @@
   .wl-table-cards tbody tr:has(.wl-card-title) td:first-child:not(.wl-card-title)::before { display: block; }
   .wl-table-cards tbody td.wl-cell-pick { grid-column: 1; padding-right: 0; }
   .wl-table-cards tbody td.wl-cell-pick + td { grid-column: 2; }
+  .wl-table-cards tbody tr:has(.wl-card-title) td.wl-cell-pick + td:not(.wl-card-title) { padding-top: 3px; font-weight: 400; }
   /* A row that cannot be picked (your own) has no box; its title takes the whole line. */
   .wl-table-cards tbody td.wl-cell-pick:empty { display: none; }
   .wl-table-cards tbody td.wl-cell-pick:empty + td { grid-column: 1 / -1; }

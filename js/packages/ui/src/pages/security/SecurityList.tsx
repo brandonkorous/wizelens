@@ -15,6 +15,7 @@ function columns(now: number, compact: boolean, issues: Record<string, IssueInfo
     {
       key: "title",
       header: "Risk",
+      cardTitle: true,
       cell: (g) => (
         <div className="wl-insight-cell">
           <strong>
