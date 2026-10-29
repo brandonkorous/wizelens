@@ -1,5 +1,4 @@
-// Older semantic-convention names (what the Java, Python, and Go agents still send by default), mapped to the current ones.
-// Ingest copies each old name to its current one; a line name shows only the current one.
+// Old semantic-convention names (Java, Python and Go agents still send them) mapped to current ones; ingest copies each across.
 export const SEMCONV_ALIASES: Readonly<Record<string, string>> = {
   "http.method": "http.request.method",
   "http.status_code": "http.response.status_code",
