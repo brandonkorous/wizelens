@@ -21,6 +21,30 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
 - **The alert form's fields line up.** Metric, Condition, Over the last and Remind while firing had no label on
   screen, so they sat higher than the labeled fields beside them. Each now has its label, and the on switch reads
   "Rule is on" and lines up with the drop-down beside it. The SLO, dashboard panel and log rule forms got the same fix.
+- **Tables read as cards on a phone.** Under 560 px wide, every table row becomes a card: its name on top, then
+  each value beside its column's name, with the row's buttons wrapping under them. Nothing is cut at the right edge
+  or needs a sideways swipe. The docs' wide tables do the same.
+- **A phone shows the numbers first.** Stat cards are shorter, facts under a title go two to a line, a detail page's
+  buttons sit under its numbers, a long query or route title shows three lines with "Show all", and Security folds
+  away the OWASP categories with no risks. Security and Insights filters sit behind the one Filters button.
+- **Metrics always shows a chart.** The first metric opens when none is picked, metric names break at the dots only
+  where they must, and on a phone the chart sits above the list and a tap scrolls to it. The axis shows plain
+  numbers with the unit said once, the summary says when it adds up several lines, and units read as words
+  ("work item", not "{work_item}").
+- **Kubernetes counts match.** Pods that stopped reporting in the range are left out of the pod tables, with a box to
+  show them, so the table and the Pods card agree. A node's pod table drops the node column, and the CPU axis
+  reads in millicores when the values are small. Each service row links to its traces and logs.
+- **The site has a dark theme.** wizelens.com and its docs follow the device's light or dark setting, in the same
+  colors as the dashboard's dark theme. A long docs or legal page has an "On this page" list under its title on a
+  phone or tablet, and the changelog's version chips sit on one line with arrow buttons.
+- **Tab rows on a phone have arrow buttons.** When a row of tabs is wider than the screen (a trace's tabs, a panel's
+  tabs, the settings sections), a left or right arrow button shows at the edge that hides more. A tap moves the row
+  along; no fade hides the last tab.
+- **Clearer small screens.** The trace timeline shows start, middle and end on a phone so labels do not overlap; a
+  chart legend keeps each name on one line; the status page names a day when you tap its bar; a new uptime check
+  says how much of 7 or 30 days it has measured; an alert's chart says why it starts on the rule's first check; the
+  HUD's call list shows full names on a phone; Rendering says how many views had no known device; and the sign-in pages have larger links, one a line, with a way back
+  from every card.
 
 ## [0.3.0-alpha.14] — A steadier ClickHouse, and every screen checked
 
