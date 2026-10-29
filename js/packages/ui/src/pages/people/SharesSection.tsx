@@ -13,12 +13,23 @@ import { type Column, Table } from "../../ui/Table";
 interface Share {
   id: string;
   traceId: string;
+  /** A page link's page; empty for a trace link. */
+  page: string;
+  /** A trace link: the trace's request. A page link: the project it shows. */
+  title: string;
+  note: string;
   createdMs: number;
   expiresMs: number;
   views: number;
   /** Under All projects: the link's project and its label. */
   projectId?: string;
   project?: string;
+}
+
+/** What a link shows: the trace's request and its ID, or the page, as it was when the link was made. */
+function LinkCell({ s }: { s: Share }) {
+  if (s.page) return <span>{s.page[0]!.toUpperCase() + s.page.slice(1)} page, as it was</span>;
+  return <a href={traceHref(s.traceId)}>{s.title || "Trace"} <span className="wl-mono wl-muted">{shortId(s.traceId)}</span></a>;
 }
 
 /** Shared links that still work: of the selected project, or of every project of the organization under "All projects". */
@@ -31,17 +42,18 @@ export function SharesSection({ orgId, project }: { orgId: string; project: { id
   const del = (s: Share) => apiSend("DELETE", `./api/projects/${s.projectId ?? project?.id}/shares/${s.id}`);
   const revokeMany = async () => {
     const chosen = shares.filter((s) => picked.includes(s.id));
-    if (!(await confirm({ title: `Revoke ${chosen.length} ${chosen.length === 1 ? "link" : "links"}?`, body: "Anyone who has them can no longer open the traces.", confirmLabel: "Revoke", danger: true }))) return;
+    if (!(await confirm({ title: `Revoke ${chosen.length} ${chosen.length === 1 ? "link" : "links"}?`, body: "Anyone who has them can no longer open them.", confirmLabel: "Revoke", danger: true }))) return;
     const out = await eachOne(chosen, del);
     clear();
     reload();
-    setError(eachText(out, chosen.length, "Revoked", (s) => shortId(s.traceId)));
+    setError(eachText(out, chosen.length, "Revoked", (s) => s.note || s.title || shortId(s.traceId)));
   };
   const revoke = async (s: Share) =>
-    (await confirm({ title: "Revoke this link?", body: "Anyone who has it can no longer open the trace.", confirmLabel: "Revoke link", danger: true })) &&
+    (await confirm({ title: "Revoke this link?", body: "Anyone who has it can no longer open it.", confirmLabel: "Revoke link", danger: true })) &&
     void act(() => del(s), reload);
   const columns: Column<Share>[] = [
-    { key: "trace", header: "Trace", cell: (s) => <a className="wl-mono" href={traceHref(s.traceId)}>{shortId(s.traceId)}</a> },
+    { key: "link", header: "Link", cell: (s) => <LinkCell s={s} /> },
+    { key: "for", header: "For", cell: (s) => s.note || "–" },
     ...(project ? [] : [{ key: "project", header: "Project", cell: (s: Share) => s.project ?? "" }]),
     { key: "made", header: "Shared", cell: (s) => fmtAgo(s.createdMs), className: "wl-nowrap" },
     { key: "ends", header: "Works until", cell: (s) => fmtDate(s.expiresMs), className: "wl-nowrap" },
@@ -50,13 +62,13 @@ export function SharesSection({ orgId, project }: { orgId: string; project: { id
   ];
   return (
     <>
-      <SectionHead title="Shared links" description={`Read-only links to single traces of ${project?.name ?? "every project"}, for people without an account. Make one with Share on a trace.`} />
+      <SectionHead title="Shared links" description={`Read-only links to one trace, or to one page as it was, of ${project?.name ?? "every project"}, for people without an account. Make one with Share on a trace, or the link button at the top of a page.`} />
       <Panel flush>
         <SelectionBar count={picked.length} noun="link" onClear={clear}>
           <button type="button" className="wl-btn wl-btn-danger" onClick={() => void revokeMany()}>Revoke</button>
         </SelectionBar>
         {error && <div className="wl-banner wl-banner-error wl-panel-banner">{error}</div>}
-        <Table paging={{ noun: "links", key: "links" }} columns={columns} rows={shares} rowKey={(s) => s.id} select={select} empty={<Empty title="No shared links">Open a trace and use Share to make one.</Empty>} />
+        <Table paging={{ noun: "links", key: "links" }} columns={columns} rows={shares} rowKey={(s) => s.id} select={select} empty={<Empty title="No shared links">Open a trace and use Share, or use the link button at the top of a page.</Empty>} />
       </Panel>
       {dialog}
     </>

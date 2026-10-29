@@ -5,6 +5,7 @@ import { getScope } from "../../data/prefs";
 import { fmtDate } from "../../format";
 import { CopyButton } from "../../ui/Badges";
 import { Select } from "../../ui/Controls";
+import { Field } from "../../ui/Field";
 import { Menu } from "../../shell/Menu";
 import { isAllProjects } from "../../data/projectScope";
 
@@ -22,11 +23,12 @@ export function ShareButton({ traceId }: { traceId: string }) {
 
 function ShareMenu({ traceId }: { traceId: string }) {
   const [days, setDays] = useState("7");
+  const [note, setNote] = useState("");
   const [link, setLink] = useState<{ url: string; expiresMs: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const create = () => {
     setError(null);
-    apiSend<{ url: string; expiresMs: number }>("POST", `./api/projects/${getScope().project}/shares`, { traceId, days: Number(days) }).then(setLink, (e: unknown) =>
+    apiSend<{ url: string; expiresMs: number }>("POST", `./api/projects/${getScope().project}/shares`, { traceId, days: Number(days), note }).then(setLink, (e: unknown) =>
       setError(e instanceof Error ? e.message : String(e)),
     );
   };
@@ -41,6 +43,7 @@ function ShareMenu({ traceId }: { traceId: string }) {
         <div className="wl-share">
           <div className="wl-menu-head">Read-only link</div>
           <p className="wl-muted wl-small">Anyone with the link sees this trace, and nothing else. Secrets were removed when the trace was stored.</p>
+          <Field label="Who is it for?" hint={"A name, a client, or a ticket. Only your team sees it, in Shared links."} value={note} maxLength={120} onChange={(e) => setNote(e.target.value)} />
           <div className="wl-share-row">
             <Select small label="Link lasts" value={days} options={DAYS} onChange={setDays} />
             <button type="button" className="wl-btn wl-btn-primary" onClick={create}>

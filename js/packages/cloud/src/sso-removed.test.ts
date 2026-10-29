@@ -3,10 +3,11 @@ import { expect, it } from "vitest";
 import { openPglite } from "./db/db.js";
 import { migrate, splitStatements } from "./db/migrate.js";
 import { MIGRATIONS, MIGRATIONS_TABLE } from "./db/schema.js";
+import { SSO_REMOVED_MIGRATION } from "./db/schema-sso.js";
 import { seedOrg } from "./test/db.js";
 
 /** The migration that keeps removed people out of single sign-on's joining. */
-const REMOVED = MIGRATIONS.length;
+const REMOVED = MIGRATIONS.indexOf(SSO_REMOVED_MIGRATION) + 1;
 
 it("keeps out people the audit log shows removed, unless they are back in", async () => {
   const db = await openPglite();
@@ -29,7 +30,7 @@ it("keeps out people the audit log shows removed, unless they are back in", asyn
   await removed({ memberIdOrEmail: "m1", memberEmail: "Ngozi@kvcu.test" }, 1000);
   await removed({ memberIdOrEmail: "ngozi@kvcu.test" }, 2000);
   await removed({ memberIdOrEmail: "m2", memberEmail: "aidan@kvcu.test" }, 3000);
-  expect(await migrate(db)).toBe(1);
+  expect(await migrate(db)).toBe(MIGRATIONS.length - REMOVED + 1);
   expect(await db.query("SELECT user_id, removed_ms FROM sso_removed")).toEqual([{ user_id: gone, removed_ms: 2000 }]);
   await db.close();
 });
