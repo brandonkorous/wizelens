@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { W3CTraceContextPropagator } from "@opentelemetry/core";
-import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS, envFlag, type TagRule, tagsFromOptions } from "@wizeworks/lens-core";
+import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS, envFlag, type HubSendState, type TagRule, tagsFromOptions } from "@wizeworks/lens-core";
 import { createHandler } from "./api.js";
 import { createMiddleware } from "./capture.js";
 import { addCleanup, partsOf, registerParts, runCleanups } from "./adapters/registry.js";
@@ -83,10 +83,12 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const sqlite = () => !!persister?.active;
   const metrics = createMetricParts(options, redactKeys);
   const sourceMaps = localMapLoader(options.sourceMaps);
-  const info = () => buildInfo({ options, store, redactKeys, startedMs, sqlite, metrics: !!metrics, sourceMaps: !!sourceMaps });
+  let sendState: (() => HubSendState) | undefined;
+  const info = () => buildInfo({ options, store, redactKeys, startedMs, sqlite, metrics: !!metrics, sourceMaps: !!sourceMaps, hubSend: () => sendState?.() });
   const mcp = mcpSource(options, store, getTrace, metrics?.store ?? null, tags);
   const uiDir = resolveUiDir(options.uiDir);
   const hub = connectHub(options, store, info, dashboard ? selfEndpoints : null, metrics?.store ?? null);
+  sendState = hub && (() => hub.sendState);
   const enableMcp = dashboard && !!options.enableMcp;
   const hudBundle = dashboard ? resolveHudBundle() : null;
   const trustedRemotes = trustedOrigins(options.trustedRemotes);

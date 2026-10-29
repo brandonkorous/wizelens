@@ -183,7 +183,16 @@ interface ServiceInfo {
   analysis?: { slowQueryMs: number; nPlusOneThreshold: number };
   redactKeys?: string[];
   captureResponseBody?: boolean;
+  project?: string;
+  hub?: string;             // the hub or cloud this add-on also sends to
+  hubSend?: HubSendState;   // how sending to `hub` goes; absent on add-ons that do not report it
   sampling?: SamplingInfo;  // absent = every trace is kept
+}
+
+interface HubSendState {
+  state: "waiting" | "ok" | "failing"; // waiting = no batch sent yet
+  reason?: string | null;    // failing: why, and what to change ("The hub at … needs a key (401). Set WIZELENS_HUB_TOKEN …")
+  lastSentMs?: number | null; // when a batch last went through
 }
 
 interface SamplingInfo {

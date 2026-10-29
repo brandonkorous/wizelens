@@ -1,6 +1,6 @@
 import { context, ROOT_CONTEXT } from "@opentelemetry/api";
 import { suppressTracing } from "@opentelemetry/core";
-import type { HubLog, HubRemote, HubSender, IngestBatch, MetricPoint, Span } from "@wizeworks/lens-core";
+import type { HubLog, HubRemote, HubSendState, HubSender, IngestBatch, MetricPoint, Span } from "@wizeworks/lens-core";
 import type { MetricStore } from "./metrics/store.js";
 import type { StoreEvent, TraceStore } from "./store.js";
 
@@ -37,12 +37,20 @@ export class HubExporter {
   #failures = 0;
   #retryAtMs = 0;
   #warned = false;
+  #reason: string | null = null;
   dropped = 0;
 
   constructor(options: HubExporterOptions) {
     this.#o = options;
     this.url = options.url;
     this.#now = options.now ?? Date.now;
+  }
+
+  /** How sending goes, for the dashboard: waiting for the first batch, fine, or failing and why. */
+  get sendState(): HubSendState {
+    const lastSentMs = this.#lastSentMs || undefined;
+    if (this.#reason) return { state: "failing", reason: this.#reason, lastSentMs };
+    return lastSentMs ? { state: "ok", lastSentMs } : { state: "waiting" };
   }
 
   get queued(): number {
@@ -134,15 +142,17 @@ export class HubExporter {
     if (this.#failures > 0 && this.#warned) this.#o.warn?.(`[wizelens] Connected to the hub at ${this.url} again.`);
     this.#failures = 0;
     this.#warned = false;
+    this.#reason = null;
     this.#lastSentMs = this.#now();
   }
 
   #fail(status: number): void {
     this.#failures++;
+    this.#reason = this.#failText(status);
     this.#retryAtMs = this.#now() + Math.min(MAX_BACKOFF_MS, 1000 * 2 ** Math.min(this.#failures, 5));
     if (this.#warned) return;
     this.#warned = true;
-    this.#o.warn?.(`[wizelens] ${this.#failText(status)} Traces stay in this app, and sending will retry.`);
+    this.#o.warn?.(`[wizelens] ${this.#reason} Traces stay in this app, and sending will retry.`);
   }
 
   /** Why the hub took nothing: unreachable, the key, a limit, or another answer. */
