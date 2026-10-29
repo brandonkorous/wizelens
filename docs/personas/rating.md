@@ -8,7 +8,7 @@ Every screen in WizeLens, scored on **Design** and **Ease** as the personas open
 them. How and when to score is RULE #6 in [CLAUDE.md](CLAUDE.md); this file is
 where the numbers live.
 
-**Scored so far: 171 of 179 screens.** 2026-10-29, branch `feat/rating-nine`: average 8.93 (the lower axis per row), 167 rows at 9, 13 at 8, 0 at 7. (2026-10-28: the runner's "dark" set only the browser's scheme while the dashboard keeps its own saved theme, so dark checks before 09:30 that day may have been light; every screen re-scored that day was checked again in true dark.) Update that line as rows fill in —
+**Scored so far: 171 of 179 screens.** 2026-10-29, branch `feat/rating-nine`: average 8.94 (the lower axis per row), 169 rows at 9, 11 at 8, 0 at 7. (2026-10-28: the runner's "dark" set only the browser's scheme while the dashboard keeps its own saved theme, so dark checks before 09:30 that day may have been light; every screen re-scored that day was checked again in true dark.) Update that line as rows fill in —
 it is the denominator, and a rating file that does not show what it has not looked
 at is the same lie as an empty issue list.
 
@@ -232,8 +232,8 @@ Sign in, two-factor and invite were opened by P02 (acts 1, 7 and 9) in light at 
 
 | Screen | Key | Design | Ease | Gap to 10 | Persona |
 | --- | --- | --- | --- | --- | --- |
-| HUD card | `bottom corner of the app` | 8 | 7 → 8 | on a light page the card is dark and its panels light; Next.js' dev "N" button covers the SQL count bottom left; was: covered the last card #011; on eShop at 360 the card fits and shows no route name; P04 (static site, 360): Server and Database read "—" with nothing to explain why; was: on for every visitor of her site #103 (now `?wizelens-hud=on`) | P01, P03, P04 |
-| HUD details panel | `HUD › details` | 6 → 8 | 8 | on a phone the full call name is only in a hover title, which touch cannot open; was: method cut and axis labels overlapped at 360 #023; was: "Calls · 0" above the page row #079 | P01, P03 |
+| HUD card | `bottom corner of the app` | 8 → 9 | 8 → 9 | was: on a light page the card is dark and its panels light; Next.js' dev "N" button covers the SQL count bottom left; was: covered the last card #011; on eShop at 360 the card fits and shows no route name; P04 (static site, 360): Server and Database read "—" with nothing to explain why; was: on for every visitor of her site #103 (now `?wizelens-hud=on`); on a test bakery app (Express, auto install) the card counted 0 SQL and 0 Fetch while the page made 3 calls: calls made before the HUD started were lost; now they come from resource timing with their server stats (7 SQL, 3 Fetch); at 360 the card shows the route; a static page reads 'Not traced' under Server and Database; the HUD sits above the Next.js dev button where they would meet; gap to 10: on a light system the panels are light over a dark card; re-scored 2026-10-29 at 1440 and 360 dark, light by a variables preview | P01, P03, P04 |
+| HUD details panel | `HUD › details` | 8 → 9 | 8 → 9 | was: on a phone the full call name is only in a hover title, which touch cannot open; was: method cut and axis labels overlapped at 360 #023; was: "Calls · 0" above the page row #079; at 360 each call's full name wraps on its own line over a full-width time track, and calls made before the HUD started are listed with their SQL counts; gap to 10: a call's status and start offset are only in its hover title; re-scored 2026-10-29 at 1440 and 360 dark | P01, P03 |
 
 ### Site · wizelens.com — 19 screens
 
