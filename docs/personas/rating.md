@@ -8,7 +8,7 @@ Every screen in WizeLens, scored on **Design** and **Ease** as the personas open
 them. How and when to score is RULE #6 in [CLAUDE.md](CLAUDE.md); this file is
 where the numbers live.
 
-**Scored so far: 171 of 179 screens.** 2026-10-29, branch `feat/rating-nine`: average 8.91 (the lower axis per row), 164 rows at 9, 16 at 8, 0 at 7. (2026-10-28: the runner's "dark" set only the browser's scheme while the dashboard keeps its own saved theme, so dark checks before 09:30 that day may have been light; every screen re-scored that day was checked again in true dark.) Update that line as rows fill in —
+**Scored so far: 171 of 179 screens.** 2026-10-29, branch `feat/rating-nine`: average 8.92 (the lower axis per row), 165 rows at 9, 15 at 8, 0 at 7. (2026-10-28: the runner's "dark" set only the browser's scheme while the dashboard keeps its own saved theme, so dark checks before 09:30 that day may have been light; every screen re-scored that day was checked again in true dark.) Update that line as rows fill in —
 it is the denominator, and a rating file that does not show what it has not looked
 at is the same lie as an empty issue list.
 
@@ -287,7 +287,7 @@ Sign in, two-factor and invite were opened by P02 (acts 1, 7 and 9) in light at 
 | problems | `/docs/problems` | 8 → 9 | 8 → 9 | was: light only; re-scored 2026-10-29: dark and 360 by a scan of every site page (no sideways scroll, no text under 3.5:1 contrast) plus a look by eye | P06 |
 | production | `/docs/production` | 8 → 9 | 8 → 9 | was: light only; re-scored 2026-10-29: dark and 360 by a scan of every site page (no sideways scroll, no text under 3.5:1 contrast) plus a look by eye | P06 |
 | python | `/docs/python` | 8 → 9 | 8 → 9 | was: light only; the start command stopped a Django app #167; re-scored 2026-10-29: dark and 360 by a scan of every site page (no sideways scroll, no text under 3.5:1 contrast) plus a look by eye | P06 |
-| quick-start | `/docs/quick-start` | 8 → 9 | 8 | many links on one short page; was: light only; many links (66) on one short page; re-scored 2026-10-29: dark and 360 by a scan of every site page (no sideways scroll, no text under 3.5:1 contrast) plus a look by eye | P06 |
+| quick-start | `/docs/quick-start` | 8 → 9 | 8 → 9 | was: many links on one short page; was: light only; many links (66) on one short page; re-scored 2026-10-29: dark and 360 by a scan of every site page (no sideways scroll, no text under 3.5:1 contrast) plus a look by eye; counted again: the text holds 16 links (plus 8 heading anchors), each sending one stack to its page; the rest are the docs menu, folded behind Menu at 360, and the footer; four numbered steps with copyable code; re-scored 2026-10-29 at 360 dark | P06 |
 | react | `/docs/react` | 8 → 9 | 8 → 9 | was: light only; re-scored 2026-10-29: dark and 360 by a scan of every site page (no sideways scroll, no text under 3.5:1 contrast) plus a look by eye | P06 |
 | releases | `/docs/releases` | 8 → 9 | 8 → 9 | was: light only; re-scored 2026-10-29: dark and 360 by a scan of every site page (no sideways scroll, no text under 3.5:1 contrast) plus a look by eye | P06 |
 | sampling | `/docs/sampling` | 8 → 9 | 8 → 9 | was: light only; re-scored 2026-10-29: dark and 360 by a scan of every site page (no sideways scroll, no text under 3.5:1 contrast) plus a look by eye | P06 |
