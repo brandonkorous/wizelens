@@ -1,4 +1,5 @@
 import { type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes, useId } from "react";
+import { Dropdown } from "./Dropdown";
 
 /** A field is named by its label alone; its hint describes it, so a screen reader reads the name first. */
 function useFieldIds(hint: ReactNode) {
@@ -31,18 +32,12 @@ export function TextArea({ label, hint, ...area }: { label: string; hint?: React
 }
 
 /** A labeled drop-down for small forms, so it lines up with the fields beside it. */
-export function SelectField<T extends string>({ label, value, options, onChange, hint }: { label: string; value: T; options: [T, string][]; onChange: (v: T) => void; hint?: ReactNode }) {
+export function SelectField<T extends string>({ label, value, options, onChange, hint, autoFocus, disabled }: { label: string; value: T; options: [T, string][]; onChange: (v: T) => void; hint?: ReactNode; autoFocus?: boolean; disabled?: boolean }) {
   const ids = useFieldIds(hint);
   return (
     <label className="wl-field">
       <span id={ids.label}>{label}</span>
-      <select className="wl-select" aria-labelledby={ids.label} aria-describedby={ids.hint} value={value} onChange={(e) => onChange(e.target.value as T)}>
-        {options.map(([v, text]) => (
-          <option key={v} value={v}>
-            {text}
-          </option>
-        ))}
-      </select>
+      <Dropdown value={value} options={options} onChange={onChange} labelledBy={ids.label} describedBy={ids.hint} autoFocus={autoFocus} disabled={disabled} />
       {hint && <small id={ids.hint} className="wl-muted">{hint}</small>}
     </label>
   );

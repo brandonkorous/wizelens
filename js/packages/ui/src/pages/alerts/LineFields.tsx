@@ -1,6 +1,5 @@
 import { type AlertOp, type AlertRuleInput, isAnomalyMetric } from "@wizeworks/lens-core";
-import { Select } from "../../ui/Controls";
-import { Field } from "../../ui/Field";
+import { Field, SelectField } from "../../ui/Field";
 
 type Set = <K extends keyof AlertRuleInput>(k: K) => (v: AlertRuleInput[K]) => void;
 
@@ -25,9 +24,9 @@ export function LineFields({ r, set }: { r: AlertRuleInput; set: Set }) {
   const spreads = SENSITIVITY.some(([v]) => Number(v) === r.threshold) ? String(r.threshold) : "3";
   return (
     <>
-      <Select label="Condition" value={r.op} options={ops} onChange={(op) => (set("op")(op), op === "above_normal" && set("threshold")(3))} />
+      <SelectField label="Condition" value={r.op} options={ops} onChange={(op) => (set("op")(op), op === "above_normal" && set("threshold")(3))} />
       {r.op === "above_normal" ? (
-        <Select label="Sensitivity" value={spreads} options={SENSITIVITY} onChange={(v) => set("threshold")(Number(v))} />
+        <SelectField label="Sensitivity" value={spreads} options={SENSITIVITY} onChange={(v) => set("threshold")(Number(v))} />
       ) : (
         <Field label="Threshold" type="number" step="any" required value={r.threshold} onChange={(e) => set("threshold")(Number(e.target.value))} />
       )}

@@ -4,8 +4,7 @@ import { MAX_ALERT_CHANNELS } from "@wizeworks/lens-core";
 import { currentProject, useAccount } from "../../data/account";
 import { useHost } from "../../data/host";
 import { useApi } from "../../data/useApi";
-import { Select } from "../../ui/Controls";
-import { Check, Field, FormRow } from "../../ui/Field";
+import { Check, Field, FormRow, SelectField } from "../../ui/Field";
 import type { OrgData } from "../organization/orgTypes";
 import type { Channel } from "./alertTypes";
 
@@ -52,7 +51,7 @@ function ChannelRow({ channel, onChange, onRemove, autoFocus }: { channel: Chann
   return (
     <div className="wl-alert-channel">
       <FormRow>
-        <Select label="Send to" value={channel.kind} options={cloud ? ALL_KINDS : URL_KINDS} onChange={pick} autoFocus={autoFocus} />
+        <SelectField label="Send to" value={channel.kind} options={cloud ? ALL_KINDS : URL_KINDS} onChange={pick} autoFocus={autoFocus} />
         {"url" in channel && <Field label="URL" type="url" required value={channel.url} onChange={(e) => onChange({ ...channel, url: e.target.value })} placeholder={PLACEHOLDER[channel.kind]} />}
         {channel.kind === "pagerduty" && <Field label="Routing key" required value={channel.routingKey} onChange={(e) => onChange({ kind: "pagerduty", routingKey: e.target.value })} placeholder="The integration key of a PagerDuty service" />}
         <button type="button" className="wl-icon-btn wl-alert-channel-remove" aria-label="Remove this channel" onClick={onRemove}>

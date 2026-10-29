@@ -1,8 +1,7 @@
 import { METRIC_ALERT_STATS, type MetricAlertStat, type MetricsModel } from "@wizeworks/lens-core";
 import { getScope } from "../../data/prefs";
 import { useApi } from "../../data/useApi";
-import { Select } from "../../ui/Controls";
-import { Field, FormRow } from "../../ui/Field";
+import { Field, FormRow, SelectField } from "../../ui/Field";
 import type { RuleDraft } from "./AlertForm";
 import { projectQuery } from "../../data/projectScope";
 
@@ -18,7 +17,7 @@ export function MetricRuleFields({ r, set }: { r: RuleDraft; set: <K extends key
     <>
       <FormRow>
         <Field label="Metric name" required list={LIST_ID} value={r.metricName} onChange={(e) => set("metricName")(e.target.value)} placeholder="process.cpu.utilization" />
-        <Select label="Read" value={(r.metricStat || "avg") as MetricAlertStat} options={STATS} onChange={set("metricStat")} />
+        <SelectField label="Read" value={(r.metricStat || "avg") as MetricAlertStat} options={STATS} onChange={set("metricStat")} />
         <Field label="Service (optional)" value={r.metricService} onChange={(e) => set("metricService")(e.target.value)} placeholder="All" />
       </FormRow>
       <datalist id={LIST_ID}>

@@ -15,6 +15,12 @@ All notable changes to WizeLens. The format follows [Keep a Changelog](https://k
   show the amount (such as 140 MB), with the bar and its share of the limit beside it.
 - **Counts in unit "1" are numbers, not percents.** OpenTelemetry's unit "1" means any plain number, so page faults
   showed as "418,452,848,767%". Only a metric named as a share (utilization, ratio, fraction) shows as a percent now.
+- **Every drop-down is the same drop-down.** Form and filter drop-downs opened the system's own list, often dark
+  on a light page, while the top bar's menus used the dashboard's look. All of them now open one list in the
+  dashboard's colors in both themes, with the arrow keys, Home, End, typing a letter to jump, Enter and Escape.
+- **The alert form's fields line up.** Metric, Condition, Over the last and Remind while firing had no label on
+  screen, so they sat higher than the labeled fields beside them. Each now has its label, and the on switch reads
+  "Rule is on" and lines up with the drop-down beside it. The SLO, dashboard panel and log rule forms got the same fix.
 
 ## [0.3.0-alpha.14] — A steadier ClickHouse, and every screen checked
 

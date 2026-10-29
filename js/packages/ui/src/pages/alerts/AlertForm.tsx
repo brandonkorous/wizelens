@@ -1,7 +1,6 @@
 import { type FormEvent, type ReactNode, useState } from "react";
 import { ALERT_METRICS, type AlertMetric, type AlertRuleInput, isAnomalyMetric } from "@wizeworks/lens-core";
-import { Select } from "../../ui/Controls";
-import { Check, Field, FormRow } from "../../ui/Field";
+import { Check, Field, FormRow, SelectField } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
 import { useOnce } from "../../ui/useOnce";
 import { METRIC_HINTS, REMINDS, WINDOWS } from "./alertTypes";
@@ -72,16 +71,16 @@ export function AlertForm({ initial, title, lead, onSave, onCancel }: { initial:
           <Field label="Environment (optional)" value={r.env} onChange={(e) => set("env")(e.target.value)} placeholder="All" />
         </FormRow>
         <FormRow>
-          <Select label="Metric" value={r.metric} options={METRICS} onChange={(m) => (set("metric")(m), !isAnomalyMetric(m) && r.op === "above_normal" && set("op")(">"))} />
+          <SelectField label="Metric" value={r.metric} options={METRICS} onChange={(m) => (set("metric")(m), !isAnomalyMetric(m) && r.op === "above_normal" && set("op")(">"))} />
           <LineFields r={r} set={set} />
-          <Select label="Over the last" value={String(r.windowMs)} options={WINDOWS} onChange={(v) => set("windowMs")(Number(v))} />
+          <SelectField label="Over the last" value={String(r.windowMs)} options={WINDOWS} onChange={(v) => set("windowMs")(Number(v))} />
         </FormRow>
         {METRIC_HINTS[r.metric] && <p className="wl-muted wl-small">{METRIC_HINTS[r.metric]}</p>}
         {r.op === "above_normal" && <AboveNormalNote />}
         {r.metric === "metric" ? <MetricRuleFields r={r} set={set} /> : r.metric === "slo" ? <SloFields r={r} set={set} /> : r.metric === "log_count" ? <LogRuleFields search={r.logSearch ?? {}} onChange={set("logSearch")} /> : r.metric === "uptime_failing" ? null : <ScopeFields r={r} set={set} />}
         <FormRow>
-          <Select label="Remind while firing" value={String(r.remindMs)} options={REMINDS} onChange={(v) => set("remindMs")(Number(v))} />
-          <Check label="On" checked={r.enabled} onChange={(e) => set("enabled")(e.target.checked)} />
+          <SelectField label="Remind while firing" value={String(r.remindMs)} options={REMINDS} onChange={(v) => set("remindMs")(Number(v))} />
+          <Check label="Rule is on" checked={r.enabled} onChange={(e) => set("enabled")(e.target.checked)} />
         </FormRow>
         <ChannelFields channels={r.channels} onChange={set("channels")} />
         {error && <div className="wl-banner wl-banner-error">{error}</div>}

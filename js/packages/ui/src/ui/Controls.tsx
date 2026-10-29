@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { PAGE_SIZES } from "@wizeworks/lens-core";
 import { fmtCount } from "../format";
+import { Dropdown } from "./Dropdown";
 
 export function Select<T extends string>({ value, options, onChange, label, small = false, autoFocus }: {
   value: T;
@@ -10,15 +11,7 @@ export function Select<T extends string>({ value, options, onChange, label, smal
   small?: boolean;
   autoFocus?: boolean;
 }) {
-  return (
-    <select className={`wl-select${small ? " wl-small" : ""}`} value={value} aria-label={label} autoFocus={autoFocus} onChange={(e) => onChange(e.target.value as T)}>
-      {options.map(([v, text]) => (
-        <option key={v} value={v}>
-          {text}
-        </option>
-      ))}
-    </select>
-  );
+  return <Dropdown value={value} options={options} onChange={onChange} label={label} small={small} autoFocus={autoFocus} />;
 }
 
 export function SearchInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {

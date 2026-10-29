@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { browserZone, type DigestPeriod, type DigestRow, loadNotifications, type Notifications, type NotificationsPatch, saveNotifications, zones } from "../../data/notifications";
-import { Check } from "../../ui/Field";
+import { Check, SelectField } from "../../ui/Field";
 import { Panel } from "../../ui/Panel";
 import { type Column, Table } from "../../ui/Table";
 import { ActionNotes, useAction } from "./useAction";
@@ -25,18 +25,8 @@ function WhenRow({ n, busy, save }: { n: Notifications; busy: boolean; save: (p:
   const here = browserZone();
   return (
     <div className="wl-form-row wl-notify-when">
-      <label className="wl-field">
-        <span>Digests arrive at</span>
-        <select className="wl-select" value={n.digestHour} disabled={busy || !n.digests} onChange={(e) => save({ digestHour: Number(e.target.value) })}>
-          {HOURS.map((h) => <option key={h} value={h}>{hourText(h)}</option>)}
-        </select>
-      </label>
-      <label className="wl-field">
-        <span>Time zone</span>
-        <select className="wl-select" value={n.timeZone} disabled={busy} onChange={(e) => save({ timeZone: e.target.value })}>
-          {zones(n.timeZone).map((z) => <option key={z} value={z}>{z}</option>)}
-        </select>
-      </label>
+      <SelectField label="Digests arrive at" value={String(n.digestHour)} options={HOURS.map((h): [string, string] => [String(h), hourText(h)])} disabled={busy || !n.digests} onChange={(h) => save({ digestHour: Number(h) })} />
+      <SelectField label="Time zone" value={n.timeZone} options={zones(n.timeZone).map((z): [string, string] => [z, z])} disabled={busy} onChange={(z) => save({ timeZone: z })} />
       {here !== n.timeZone && <button type="button" className="wl-link-btn" disabled={busy} onClick={() => save({ timeZone: here })}>Use {here}</button>}
     </div>
   );
