@@ -4,6 +4,7 @@ import { haveIBeenPwned, organization, twoFactor } from "better-auth/plugins";
 import { inviteMail } from "../mail/templates.js";
 import { oauthPlugin } from "./oauth.js";
 import { grantPlugin } from "./oauth-grant.js";
+import { devicesPlugin } from "./devices.js";
 import { type AuthDeps, appLink } from "./deps.js";
 import { ac, authRoles } from "./roles.js";
 import { orgSchema, passkeySchema, twoFactorSchema } from "./schema-names.js";
@@ -58,6 +59,7 @@ export const authPlugins = (deps: AuthDeps): BetterAuthPlugin[] => [
   ssoPlugin(deps),
   oauthPlugin(deps),
   grantPlugin(deps.db),
+  devicesPlugin(),
   scimPlugin(deps),
   ...(deps.stripe ? [stripePlugin(deps, deps.stripe)] : []),
   ...(deps.checkPwned ? [haveIBeenPwned()] : []),

@@ -22,6 +22,9 @@ describe("sessions and passwords", () => {
     const laptop = await signIn(url, "owner@acme.io");
     const sessions = (await owner.call<{ token: string }[]>("GET", "api/auth/list-sessions")).body;
     expect(sessions).toHaveLength(2);
+    const devices = (await owner.call<Record<string, unknown>[]>("GET", "api/auth/wizelens/devices")).body;
+    expect(devices.map((d) => d.id).sort()).toEqual(sessions.map((s) => (s as unknown as { id: string }).id).sort());
+    expect(devices.some((d) => "token" in d)).toBe(false);
     const laptopToken = decodeURIComponent(laptop.cookies.get("wizelens.session_token")!).split(".")[0];
     expect((await owner.call("POST", "api/auth/revoke-session", { token: laptopToken })).status).toBe(200);
     expect((await laptop.call<Me>("GET", "api/me")).body.signedIn).toBe(false);
