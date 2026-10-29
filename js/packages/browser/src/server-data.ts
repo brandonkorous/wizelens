@@ -1,5 +1,5 @@
 import { type Trace, type TraceSummary, traceTiming } from "@wizeworks/lens-core";
-import type { ServerStats } from "./recorder-types.js";
+import type { RecordedRequest, ServerStats } from "./recorder-types.js";
 import type { RequestStore } from "./request-store.js";
 import { mergeRequests, serverStatsFromTrace, summaryToRequest } from "./requests.js";
 
@@ -84,7 +84,9 @@ export class ServerData {
     if (this.#stats.size > MAX_STATS) this.#stats.delete(this.#stats.keys().next().value!);
     const renderMs = traceTiming(trace).renderMs;
     const store = this.#o.store;
-    store.set(store.get().map((r) => (r.traceId === traceId ? { ...r, server, renderMs: r.renderMs ?? renderMs } : r)));
+    // A call seen only in resource timing has no method: the server's name for it ("GET /api/orders") gives it.
+    const method = (r: RecordedRequest) => r.method || (/^([A-Z]+) /.exec(server.name ?? "")?.[1] ?? "");
+    store.set(store.get().map((r) => (r.traceId === traceId ? { ...r, method: method(r), server, renderMs: r.renderMs ?? renderMs } : r)));
   }
 
   restore(): Promise<void> {
