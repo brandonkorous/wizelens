@@ -28,7 +28,10 @@ export function SectionLayout({ page, sections, active }: { page: PageId; sectio
           </a>
         ))}
       </nav>
-      <div className="wl-sections-body">{current.render()}</div>
+      <div className="wl-sections-body">
+        {active && current.id !== active && <div className="wl-banner wl-banner-info" role="status">The section in this address is not on this dashboard, so this shows {current.label}.</div>}
+        {current.render()}
+      </div>
     </div>
   );
 }
