@@ -8,7 +8,7 @@ Every screen in WizeLens, scored on **Design** and **Ease** as the personas open
 them. How and when to score is RULE #6 in [CLAUDE.md](CLAUDE.md); this file is
 where the numbers live.
 
-**Scored so far: 171 of 179 screens.** 2026-10-29, branch `feat/rating-nine`: average 8.73 (the lower axis per row), 132 rows at 9, 48 at 8, 0 at 7. (2026-10-28: the runner's "dark" set only the browser's scheme while the dashboard keeps its own saved theme, so dark checks before 09:30 that day may have been light; every screen re-scored that day was checked again in true dark.) Update that line as rows fill in —
+**Scored so far: 171 of 179 screens.** 2026-10-29, branch `feat/rating-nine`: average 8.74 (the lower axis per row), 133 rows at 9, 47 at 8, 0 at 7. (2026-10-28: the runner's "dark" set only the browser's scheme while the dashboard keeps its own saved theme, so dark checks before 09:30 that day may have been light; every screen re-scored that day was checked again in true dark.) Update that line as rows fill in —
 it is the denominator, and a rating file that does not show what it has not looked
 at is the same lie as an empty issue list.
 
@@ -188,7 +188,7 @@ P06 scored 20 of these on P03's eShop in four views (1440 and 360, light and dar
 | Trace › HTTP | `#/traces/<id>/http` | 8 → 9 | 8 → 9 | was: at 360 the HTTP tab starts below six finding cards; heading skipped a level #195, pill faint #193; findings fold to two per list on a phone with Show all, so the tabs move up (143 px on a two-finding trace); re-scored 2026-10-29 at 360 light and dark | P06 |
 | Trace › Messages | `#/traces/<id>/messages` | 8 | 8 | empty for Django (no queue), says none were sent or handled | P06 |
 | Trace › Logs | `#/traces/<id>/logs` | 8 → 9 | 8 → 9 | was: at 360 the Category column is cut at the right edge; Category is a line in each log card; re-scored 2026-10-29 by a 360 scan in light and dark of P03's data (no sideways scroll, no cut text, no capped card cells) and a look by eye | P06 |
-| Trace › Errors | `#/traces/<id>/errors` | 8 | 8 | the stack trace's long temp paths wrap mid-word; was: stack box not keyboard reachable #194 | P06 |
+| Trace › Errors | `#/traces/<id>/errors` | 8 → 9 | 8 → 9 | was: the stack trace's long temp paths wrap mid-word; was: stack box not keyboard reachable #194; a stack trace breaks after /, \, and dots, so paths wrap at folders and .NET names at their parts (seen on a .NET stack at 360 dark; Django paths use the same rule); re-scored 2026-10-29 | P06 |
 | Trace compare | `#/traces/<a>/compare/<b>` | 7 → 9 | 8 → 9 | was: at 360 the timeline axis labels overlap (0 ms90 ms179 ms); Numbers table fills the first screen; amber SQL labels faint #193; axis reads 0 ms 16 ms 32 ms, Numbers a table #213; re-scored 2026-10-29 at 360 light and dark | P06 |
 | Error group | `#/errors/<group>` | 8 → 9 | 8 → 9 | was: at 360 three rows of buttons come before the numbers; Next.js's own telemetry call counted as an error #143, buttons ran off the screen #049; re-scored 2026-10-28 in light, true dark and 360; service, type, first and last seen come before the buttons; re-scored 2026-10-29 at 360 light and dark | P02 |
 | Service endpoint | `#/services/<svc>/endpoints/<ep>` | 8 → 9 | 8 → 9 | was: at 360 query text and the Calls table cut at the right edge; query text and Calls wrap in cards; re-scored 2026-10-29 by a 360 scan in light and dark of P03's data (no sideways scroll, no cut text, no capped card cells) and a look by eye | P06 |
