@@ -161,7 +161,14 @@
 .wl-sql-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
 .wl-sql-meta .wl-fbadge { margin-left: 0; }
 .wl-sql { font-size: 12px; }
-.wl-sql-params { margin-top: 6px; color: var(--wl-muted); word-break: break-all; }
+.wl-sql-folded { max-height: calc(12px * 1.5 * 5 + 16px); overflow: hidden; mask-image: linear-gradient(#000 70%, transparent); }
+.wl-sql-more { margin-top: 4px; font-size: 13px; }
+/* Parameters wrap as name · column = value pairs; long values break anywhere. */
+.wl-sql-params { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 8px 0 0; font-size: 13px; }
+.wl-sql-params > div { display: flex; gap: 6px; min-width: 0; max-width: 100%; }
+.wl-sql-params dt { color: var(--wl-fg-2); white-space: nowrap; }
+.wl-sql-params dt span { color: var(--wl-muted); }
+.wl-sql-params dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 
 /* Logs and errors */
 .wl-lvl { display: inline-block; min-width: 44px; text-align: center; font-size: 10px; font-weight: 700; text-transform: uppercase; border-radius: 4px; padding: 0 4px; line-height: 17px; background: var(--wl-surface-2); color: var(--wl-muted); }

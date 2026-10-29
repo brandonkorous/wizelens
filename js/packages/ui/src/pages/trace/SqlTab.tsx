@@ -4,6 +4,7 @@ import { fmtMs } from "../../format";
 import { Empty } from "../../ui/Panel";
 import { badgesFor, FindingBadges, rowClass, ServiceChip, type TabProps } from "./tabParts";
 import { pressable } from "../../ui/pressable";
+import { SqlParams, SqlText } from "./SqlParts";
 
 export function SqlTab(props: TabProps) {
   const { trace, findings, onSelect } = props;
@@ -44,10 +45,8 @@ export function SqlTab(props: TabProps) {
               {s.attributes["db.response.returned_rows"] != null && <span className="wl-muted">{String(s.attributes["db.response.returned_rows"])} rows</span>}
               <strong>{fmtMs(s.durationMs)}</strong>
             </div>
-            <pre className="wl-code wl-sql">{queryText(s)}</pre>
-            {s.attributes["wizelens.db.parameters"] != null && (
-              <div className="wl-sql-params wl-mono wl-small">params: {String(s.attributes["wizelens.db.parameters"])}</div>
-            )}
+            <SqlText sql={queryText(s)} />
+            {s.attributes["wizelens.db.parameters"] != null && <SqlParams raw={String(s.attributes["wizelens.db.parameters"])} sql={queryText(s)} />}
           </li>
         ))}
       </ol>

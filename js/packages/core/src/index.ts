@@ -8,6 +8,7 @@ export * from "./sampling.js";
 export * from "./ids.js";
 export * from "./loose.js";
 export * from "./redact.js";
+export { paramColumns } from "./redact-sql-params.js";
 export * from "./redact-values.js";
 export * from "./packages.js";
 export * from "./settings.js";
