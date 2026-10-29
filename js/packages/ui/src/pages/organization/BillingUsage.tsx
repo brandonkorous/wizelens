@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { fmtGb, fmtUsd, type Usage } from "../../data/billing";
 import { fmtDate } from "../../format";
 import { Panel } from "../../ui/Panel";
@@ -12,10 +13,10 @@ export function UsageBar({ usage }: { usage: Usage }) {
     <div className="wl-usage">
       <div className="wl-usage-head">
         <strong>{fmtGb(usage.monthGb)}</strong>
-        <span className="wl-muted">of {fmtGb(included)} included this month</span>
+        <span className="wl-muted">of {fmtGb(included)} included this month ({pct < 1 && pct > 0 ? "under 1%" : `${Math.round(pct)}%`})</span>
       </div>
       <div className={`wl-usage-track ${tone}`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct)} aria-label="Data used this month">
-        <i style={{ width: `${pct}%` }} />
+        <i style={{ width: `${usage.monthGb > 0 ? Math.max(1.5, pct) : 0}%` }} />
       </div>
     </div>
   );
@@ -24,22 +25,33 @@ export function UsageBar({ usage }: { usage: Usage }) {
 /** "2026-10" as "October 2026". */
 const monthName = (month: string) => new Date(`${month}-01T00:00:00Z`).toLocaleDateString(undefined, { month: "long", year: "numeric", timeZone: "UTC" });
 
-/** Data per day this month, one slot for every day of the month. */
+/** "2026-10-28" as "Oct 28". */
+const shortDay = (key: string) => new Date(`${key}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+
+/** Data per day this month, one slot for every day of the month; a tap names a day, since a phone has no hover title. */
 function DayBars({ month, days }: { month: string; days: Usage["days"] }) {
+  const [picked, setPicked] = useState<string | null>(null);
   if (!days.length) return <p className="wl-muted wl-small">No data yet this month.</p>;
   const [y, m] = month.split("-").map(Number) as [number, number];
   const count = new Date(Date.UTC(y, m, 0)).getUTCDate();
   const byDay = new Map(days.map((d) => [d.day, d]));
   const max = Math.max(...days.map((d) => d.gb), 0.000001);
   return (
-    <div className="wl-usage-days" aria-label="Data per day">
-      {Array.from({ length: count }, (_, i) => {
-        const key = `${month}-${String(i + 1).padStart(2, "0")}`;
-        const d = byDay.get(key);
-        const title = d ? `${key}: ${fmtGb(d.gb)}, ${d.spans.toLocaleString()} spans, ${d.logs.toLocaleString()} logs, ${d.points.toLocaleString()} metric points` : `${key}: no data`;
-        return <span key={key} title={title}>{d && d.gb > 0 && <i style={{ height: `${Math.max(4, (d.gb / max) * 100)}%` }} />}</span>;
-      })}
-    </div>
+    <>
+      <div className="wl-usage-days" aria-label="Data per day">
+        {Array.from({ length: count }, (_, i) => {
+          const key = `${month}-${String(i + 1).padStart(2, "0")}`;
+          const d = byDay.get(key);
+          const title = d ? `${shortDay(key)}: ${fmtGb(d.gb)}, ${d.spans.toLocaleString()} spans, ${d.logs.toLocaleString()} logs, ${d.points.toLocaleString()} metric points` : `${shortDay(key)}: no data`;
+          return <span key={key} title={title} className={picked === title ? "wl-picked" : undefined} onClick={() => setPicked(title)}>{d && d.gb > 0 && <i style={{ height: `${Math.max(4, (d.gb / max) * 100)}%` }} />}</span>;
+        })}
+      </div>
+      <div className="wl-usage-axis wl-muted wl-small">
+        <span>{shortDay(`${month}-01`)}</span>
+        <span>{shortDay(`${month}-${count}`)}</span>
+      </div>
+      <p className={`wl-usage-day wl-small${picked ? "" : " wl-muted"}`} aria-live="polite">{picked ?? "Pick a day to see its data."}</p>
+    </>
   );
 }
 
