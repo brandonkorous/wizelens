@@ -68,6 +68,13 @@ async function signOut(app: CloudApp, row: Row): Promise<void> {
   await audit(app.db, row.org_id, "system", "sso.signed_out", { userId: row.user_id, providerId: row.provider_id, sessions: ended.length, connectedApps: grants.length }, now);
 }
 
+/** Keep the last check of one account, for its line in People & access. */
+const noteCheck = (app: CloudApp, accountId: string, verdict: Verdict["verdict"]) =>
+  app.db.query(
+    "INSERT INTO sso_checks (account_id, checked_ms, verdict) VALUES ($1, $2, $3) ON CONFLICT (account_id) DO UPDATE SET checked_ms = EXCLUDED.checked_ms, verdict = EXCLUDED.verdict",
+    [accountId, app.config.now(), verdict],
+  );
+
 /** Renew every OIDC sign-in that has a live session; sign out the people their provider refused. Returns how many were signed out. */
 export async function recheckSso(app: CloudApp): Promise<number> {
   const rows = await signedInViaOidc(app);
@@ -79,6 +86,7 @@ export async function recheckSso(app: CloudApp): Promise<number> {
     const result = await renew(app.config.fetch, app.config.ssoOrigins, cfg, await decryptOAuthToken(row.refresh_token, ctx));
     if (result.verdict === "refused") (await signOut(app, row), out++);
     else if (result.verdict === "ok" && result.refresh) await app.db.query("UPDATE accounts SET refresh_token = $1 WHERE id = $2", [await setTokenUtil(result.refresh, ctx), row.id]);
+    await noteCheck(app, row.id, result.verdict);
   }
   return out;
 }

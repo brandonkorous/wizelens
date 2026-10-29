@@ -13,7 +13,7 @@ import { SCIM_MIGRATION } from "./schema-scim.js";
 import { SEARCH_MIGRATION } from "./schema-search.js";
 import { SOURCEMAPS_MIGRATION } from "./schema-sourcemaps.js";
 import { SLOS_MIGRATION } from "./schema-slos.js";
-import { SSO_MIGRATION, SSO_REMOVED_MIGRATION, SSO_REQUIRED_MIGRATION } from "./schema-sso.js";
+import { SSO_CHECKS_MIGRATION, SSO_MIGRATION, SSO_REMOVED_MIGRATION, SSO_REQUIRED_MIGRATION } from "./schema-sso.js";
 import { UPTIME_MIGRATION } from "./schema-uptime.js";
 import { TAGS_MIGRATION } from "./schema-tags.js";
 import { TEAM_MIGRATION } from "./schema-team.js";
@@ -60,6 +60,7 @@ export const MIGRATIONS: readonly string[] = [
   SSO_REMOVED_MIGRATION,
   SHARE_NOTE_MIGRATION,
   UI_PREFS_MIGRATION,
+  SSO_CHECKS_MIGRATION,
 ];
 
 export const MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS wizelens_migrations (version INTEGER PRIMARY KEY, applied_ms DOUBLE PRECISION NOT NULL)`;

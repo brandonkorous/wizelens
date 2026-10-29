@@ -9,6 +9,7 @@ import { Empty, Panel } from "../../ui/Panel";
 import { SectionHead } from "../../ui/Sections";
 import { PlanPrompt, useFeature } from "../organization/PlanPrompt";
 import { SsoForm } from "./SsoForm";
+import { SsoPeople } from "./SsoPeople";
 import { RequireSso, useRequired } from "./SsoRequired";
 
 /** One provider as Better Auth lists it (secrets never come back). */
@@ -118,6 +119,7 @@ export function SsoSection({ orgId }: { orgId: string }) {
       {adding && <SsoForm orgId={orgId} reload={reload} onClose={() => setAdding(false)} />}
       {gate.allowed && list && list.length === 0 && <Panel><Empty title="No identity provider yet">Add Okta, Entra ID, Google Workspace, Auth0, Keycloak, or any SAML 2.0 provider.</Empty></Panel>}
       {list?.map((p) => <ProviderItem key={p.providerId} p={p} reload={reload} required={{ on: req.isRequired(p.providerId), reload: req.reload }} />)}
+      {gate.allowed && !!list?.length && <SsoPeople orgId={orgId} />}
     </>
   );
 }
