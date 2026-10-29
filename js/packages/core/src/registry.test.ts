@@ -15,6 +15,10 @@ const pod = (host: string, lastSeenMs: number, extra: Partial<HubService> = {}):
 });
 
 describe("groupServices", () => {
+  it("leaves out the uptime runner, which is not an app", () => {
+    expect(groupServices([pod("api-1a2b", NOW), pod("cloud", NOW, { service: "wizelens-uptime" })]).map((g) => g.service)).toEqual(["api"]);
+  });
+
   it("makes one group per service and environment, with hosts newest first", () => {
     const groups = groupServices([pod("api-1a2b", NOW - 60_000), pod("api-3c4d", NOW), pod("api-5e6f", NOW, { environment: "staging" })]);
     expect(groups.map((g) => [g.environment, g.instances.length, g.online])).toEqual([["prod", 2, 1], ["staging", 1, 1]]);

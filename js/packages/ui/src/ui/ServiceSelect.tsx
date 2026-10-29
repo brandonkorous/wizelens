@@ -1,17 +1,17 @@
 import { useMemo } from "react";
 import { X } from "lucide-react";
-import { displayService } from "@wizeworks/lens-core";
+import { displayService, UPTIME_SERVICE } from "@wizeworks/lens-core";
 import { useData } from "../data/hooks";
 import { useServiceScope } from "../data/prefs";
 import { parseRoute, setQuery } from "../routes";
 import { Select } from "./Controls";
 
-/** Service names the dashboard knows, as it shows them: from the hub or cloud registry, the loaded traces, and `more`. */
+/** Service names the dashboard knows, as it shows them: from the hub or cloud registry, the loaded traces, and `more`. Not the uptime runner: it is not an app. */
 export function useServiceNames(more: readonly string[] = []): string[] {
   const { registry, traces } = useData();
   const key = more.join("\n");
   return useMemo(() => {
-    const raw = [...(registry?.services ?? []).map((s) => s.service), ...traces.flatMap((t) => t.services)];
+    const raw = [...(registry?.services ?? []).map((s) => s.service), ...traces.flatMap((t) => t.services)].filter((s) => s !== UPTIME_SERVICE);
     return [...new Set([...raw.map(displayService), ...(key ? key.split("\n") : [])])].sort();
   }, [registry, traces, key]);
 }
