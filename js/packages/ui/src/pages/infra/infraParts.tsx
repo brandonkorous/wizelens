@@ -20,10 +20,13 @@ export function fmtCores(v: number | null | undefined): string {
   return `${v >= 10 ? v.toFixed(0) : v.toFixed(2)} cores`;
 }
 
+/** A size whose number and unit never part at a line end ("62.3 MB", not "62.3 / MB"). */
+const keep = (bytes: number) => fmtBytes(bytes).replace(" ", " ");
+
 /** "used of total" with the share, for memory and disks. */
 export function fmtUsed(used: number | null, total: number | null): string {
   if (used === null) return DASH;
-  return total ? `${fmtBytes(used)} of ${fmtBytes(total)}` : fmtBytes(used);
+  return total ? `${keep(used)} of ${keep(total)}` : keep(used);
 }
 
 /** A share as a small bar and a number (the share, or `text` with the share in its title); red past 90%, orange past 75%. */
