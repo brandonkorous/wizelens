@@ -43,8 +43,8 @@ export function SelectField<T extends string>({ label, value, options, onChange,
   );
 }
 
-/** A form row of fields and a button. Fields line up at the top, so a hint under one never pushes the others down. */
-export const FormRow = ({ children }: { children: ReactNode }) => <div className="wl-form-row">{children}</div>;
+/** A form row of fields and a button. Fields line up at the top, so a hint under one never pushes the others down. `half` keeps one field as wide as a field in a row of two. */
+export const FormRow = ({ children, half = false }: { children: ReactNode; half?: boolean }) => <div className={`wl-form-row${half ? " wl-form-row-half" : ""}`}>{children}</div>;
 
 /** A labeled check box. */
 export function Check({ label, ...input }: { label: string } & Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {

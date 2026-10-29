@@ -10,7 +10,7 @@ function placeOf(button: HTMLElement): CSSProperties {
   const above = r.top - EDGE;
   const up = below < 200 && above > below;
   const left = Math.max(EDGE, Math.min(r.left, window.innerWidth - Math.max(r.width, 180) - EDGE));
-  const room = Math.max(120, Math.min(360, up ? above : below) - 6);
+  const room = Math.max(120, Math.min(480, up ? above : below) - 6);
   return { position: "fixed", left, minWidth: r.width, maxWidth: window.innerWidth - left - EDGE, maxHeight: room, ...(up ? { bottom: window.innerHeight - r.top + 4 } : { top: r.bottom + 4 }) };
 }
 

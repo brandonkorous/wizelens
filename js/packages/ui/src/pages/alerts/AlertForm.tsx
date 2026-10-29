@@ -78,7 +78,7 @@ export function AlertForm({ initial, title, lead, onSave, onCancel }: { initial:
         {METRIC_HINTS[r.metric] && <p className="wl-muted wl-small">{METRIC_HINTS[r.metric]}</p>}
         {r.op === "above_normal" && <AboveNormalNote />}
         {r.metric === "metric" ? <MetricRuleFields r={r} set={set} /> : r.metric === "slo" ? <SloFields r={r} set={set} /> : r.metric === "log_count" ? <LogRuleFields search={r.logSearch ?? {}} onChange={set("logSearch")} /> : r.metric === "uptime_failing" ? null : <ScopeFields r={r} set={set} />}
-        <FormRow>
+        <FormRow half>
           <SelectField label="Remind while firing" value={String(r.remindMs)} options={REMINDS} onChange={(v) => set("remindMs")(Number(v))} />
           <Check label="Rule is on" checked={r.enabled} onChange={(e) => set("enabled")(e.target.checked)} />
         </FormRow>

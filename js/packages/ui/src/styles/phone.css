@@ -13,6 +13,8 @@
   .wl-filters:not(.wl-filters-open) > :is(.wl-select, .wl-check, .wl-btn:not(.wl-filters-toggle)) { display: none; }
   .wl-filters > :is(.wl-query, .wl-input) { order: -1; flex: 1 1 0; min-width: 0; }
   .wl-filters-open > .wl-select { flex: 1 1 calc(50% - 5px); min-width: 0; }
+  .wl-form-row-half > .wl-field { flex-basis: 100%; }
+  .wl-form-row > .wl-check { margin-top: 0; }
 }
 /* A row of tabs that scrolls sideways fades at the edge that hides more (ui/useScrollHint.ts). */
 [data-more="right"] { mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }

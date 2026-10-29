@@ -30,6 +30,7 @@
 .wl-form-row > .wl-btn, .wl-form-row > .wl-check { margin-top: 25px; }
 .wl-form-row > .wl-check { min-height: 40px; }
 .wl-form-row > .wl-field-narrow { flex: 0 1 180px; }
+.wl-form-row-half > .wl-field { flex: 0 1 calc(50% - 6px); min-width: 200px; }
 .wl-field .wl-select { width: 100%; }
 .wl-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 
