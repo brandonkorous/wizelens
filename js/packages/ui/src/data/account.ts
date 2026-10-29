@@ -74,6 +74,8 @@ function orgOf(s: AccountState): OrgWithProjects | undefined {
 
 // A link named a project this person cannot open, so another is shown; the shell says so until they close the note.
 let missedProject = false;
+// The project the opening address names; a project kept from an earlier sign-in (another person's) is not a link.
+const linkedProject = typeof location === "undefined" ? null : new URLSearchParams(location.hash.split("?")[1] ?? "").get("project");
 export const closeMissedProject = () => ((missedProject = false), emit());
 
 /** Keep the chosen project when it is still ours and in the shown organization; else all of its projects (one: that one). */
@@ -83,7 +85,7 @@ function pickProject(s: AccountState): void {
   if (getScope().org !== org.id) setOrgScope(org.id);
   const project = getScope().project;
   if (project === ALL_PROJECTS ? org.projects.length > 0 : org.projects.some((p) => p.id === project)) return;
-  if (project && project !== ALL_PROJECTS) missedProject = true;
+  if (project && project !== ALL_PROJECTS && project === linkedProject) missedProject = true;
   setProjectScope(org.projects.length === 1 ? org.projects[0]!.id : ALL_PROJECTS);
 }
 
