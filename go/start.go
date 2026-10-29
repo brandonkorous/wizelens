@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/propagation"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
@@ -21,6 +22,7 @@ type options struct {
 	serviceName  string
 	spanExporter sdktrace.SpanExporter
 	logExporter  sdklog.Exporter
+	metricReader sdkmetric.Reader
 	sync         bool
 	sampler      *TraceSampler
 }
@@ -61,14 +63,21 @@ func Start(ctx context.Context, opts ...Option) (func(context.Context) error, er
 	if err != nil {
 		return nil, err
 	}
+	mp, err := meterProvider(ctx, o, res)
+	if err != nil {
+		return nil, err
+	}
 	otel.SetTracerProvider(tp)
 	global.SetLoggerProvider(lp)
+	otel.SetMeterProvider(mp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 	setActive(o.settings)
 	if o.settings.ReportPackages {
 		go reportPackages(o.settings, res)
 	}
-	return func(ctx context.Context) error { return errors.Join(tp.Shutdown(ctx), lp.Shutdown(ctx)) }, nil
+	return func(ctx context.Context) error {
+		return errors.Join(tp.Shutdown(ctx), lp.Shutdown(ctx), mp.Shutdown(ctx))
+	}, nil
 }
 
 func buildResource(ctx context.Context, o options) (*resource.Resource, error) {
