@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import { Logo } from "@/components/brand/Logo";
 import { GitHubIcon, MenuIcon } from "@/components/ui/icons";
@@ -41,6 +41,8 @@ export function Nav() {
     setRaised(y > 8);
     setHidden(y > 400 && y > prev && !open);
   });
+  // Sticky bars under the top bar (the docs menu on a phone) move up while it is away.
+  useEffect(() => void document.documentElement.classList.toggle("wl-nav-away", hidden), [hidden]);
 
   return (
     <motion.header

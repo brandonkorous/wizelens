@@ -44,15 +44,20 @@
 .wl-jump ul { list-style: none; margin: 0; padding: 4px 8px 10px; border-top: 1px solid var(--wl-line); }
 .wl-jump a { display: flex; align-items: center; min-height: 44px; padding: 0 8px; border-radius: 8px; font-size: 15.5px; color: var(--wl-fg-2); }
 .wl-jump a:hover { background: var(--wl-surface-2); color: var(--wl-fg); }
+.wl-jump { scroll-margin-top: 150px; }
+.wl-jump-back { position: fixed; right: 16px; bottom: 16px; z-index: 30; display: none; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border: 1px solid var(--wl-line-strong); border-radius: 999px; background: var(--wl-surface); color: var(--wl-fg); font: inherit; font-size: 14px; font-weight: 600; box-shadow: 0 6px 20px rgb(0 0 0 / 0.18); cursor: pointer; }
 
 @media (max-width: 1240px) {
   .wl-docs-grid { grid-template-columns: 248px minmax(0, 1fr); gap: 40px; }
   .wl-toc { display: none; }
   .wl-jump { display: block; }
+  .wl-jump-back { display: inline-flex; }
 }
 @media (max-width: 900px) {
   .wl-docs-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .wl-docs-side { position: sticky; top: 68px; z-index: 20; height: auto; max-height: calc(100vh - 68px); overflow: visible; padding: 12px 0; margin: 0 calc(var(--wl-gutter) * -1); padding: 12px var(--wl-gutter); background: var(--wl-surface); border-bottom: 1px solid var(--wl-line); }
+  .wl-docs-side { transition: top 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+  .wl-nav-away .wl-docs-side { top: 0; }
   .wl-docs-side-top { grid-template-columns: minmax(0, 1fr) auto; margin: 0; }
   .wl-docs-menu { display: inline-flex; }
   .wl-docs-groups { display: none; max-height: calc(100vh - 150px); overflow-y: auto; padding-top: 16px; }
