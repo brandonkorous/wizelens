@@ -35,11 +35,17 @@ export function linePath(values: readonly (number | null)[], x: (i: number) => n
   return d;
 }
 
-/** Closed area under a line, for the soft fill. Gaps count as zero. */
+/** Closed areas under a line, for the soft fill: one per run of values, so a gap with no data stays empty, like the line. */
 export function areaPath(values: readonly (number | null)[], x: (i: number) => number, y: (v: number) => number, base: number): string {
-  if (values.length === 0) return "";
-  const pts = values.map((v, i) => `${x(i).toFixed(1)},${y(v ?? 0).toFixed(1)}`);
-  return `M${x(0).toFixed(1)},${base}L${pts.join("L")}L${x(values.length - 1).toFixed(1)},${base}Z`;
+  let d = "";
+  let run: number[] = [];
+  const close = () => {
+    if (run.length > 1) d += `M${x(run[0]!).toFixed(1)},${base}${run.map((i) => `L${x(i).toFixed(1)},${y(values[i]!).toFixed(1)}`).join("")}L${x(run[run.length - 1]!).toFixed(1)},${base}Z`;
+    run = [];
+  };
+  values.forEach((v, i) => (v === null ? close() : run.push(i)));
+  close();
+  return d;
 }
 
 export const maxOf = (lists: readonly (readonly (number | null)[])[]): number =>

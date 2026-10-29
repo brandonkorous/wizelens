@@ -40,8 +40,13 @@ export function fmtMetric(value: number | null | undefined, unit: string): strin
   if (unit === "ns") return seconds(value / 1e9);
   if (unit === "/s") return `${num(value)}/s`;
   const u = curly(unit);
-  return u ? `${num(value)} ${u}` : num(value);
+  const n = Number.isInteger(value) ? value.toLocaleString("en-US") : num(value);
+  const word = /^\{[^}]*\}(\/s)?$/.test(unit);
+  return u ? `${n} ${value === 1 || !word ? u : plural(u)}` : n;
 }
+
+/** "work item" → "work items", "request/s" → "requests/s"; a word that ends in s, or is not a word, stays. */
+const plural = (u: string) => u.replace(/^([a-z ]*[a-rt-z])(?=$|\/)/i, "$1s");
 
 /** The area a metric belongs to, from its name, for grouping the list. */
 export type MetricArea = "runtime" | "http" | "database" | "messaging" | "rpc" | "custom";
