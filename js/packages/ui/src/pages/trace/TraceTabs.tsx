@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { ScrollRow, useScrollRow } from "../../ui/ScrollRow";
 import type { Finding, Trace, TraceView } from "@wizeworks/lens-core";
 import { HttpTab } from "./HttpTab";
@@ -40,12 +41,29 @@ function TabBody(p: TraceTabsProps) {
   return <Waterfall trace={p.trace} selected={p.selected} highlight={p.highlight} onSelect={p.onSelect} />;
 }
 
+/** A link that names a tab (…/sql) opens on it: when the numbers fill the first screen (a phone), the tabs scroll up once. */
+function useOpenOnTab(tab: Tab) {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (tab === "timeline") return;
+    // After the page's own move to the top, which runs after this.
+    const frame = requestAnimationFrame(() => {
+      const top = ref.current?.getBoundingClientRect().top ?? 0;
+      const bar = document.querySelector(".wl-topbar")?.getBoundingClientRect().height ?? 0;
+      if (top > window.innerHeight) window.scrollBy({ top: top - bar - 8 });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return ref;
+}
+
 /** Timeline, SQL, HTTP, logs, and errors of one trace, with the span panel beside them. */
 export function TraceTabs(p: TraceTabsProps) {
   const span = p.trace.spans.find((s) => s.spanId === p.selected) ?? null;
   const tabs = useScrollRow<HTMLElement>(p.tab);
+  const ref = useOpenOnTab(p.tab);
   return (
-    <section className="wl-panel wl-panel-flush">
+    <section ref={ref} className="wl-panel wl-panel-flush">
       <ScrollRow row={tabs}>
         <nav ref={tabs.ref} className="wl-tabs" role="tablist">
           {counts(p.trace).map(([key, label, count]) => (
