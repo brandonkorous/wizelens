@@ -1,4 +1,4 @@
-import { type Attributes, INFRA_RESOURCE_KEYS, type MetricHistogram, type MetricKind, type MetricPoint, sanitizeMetricPoint } from "@wizeworks/lens-core";
+import { type Attributes, type HubSender, INFRA_RESOURCE_KEYS, INFRA_SERVICE, type MetricHistogram, type MetricKind, type MetricPoint, sanitizeMetricPoint } from "@wizeworks/lens-core";
 import type { HubWrite } from "../store.js";
 import { attributesOf, nanosToMs, type OtlpKeyValue, type OtlpResource, resourcePick, senderOf } from "./values.js";
 
@@ -111,12 +111,23 @@ export function pointsOf(m: OtlpMetric, service: string, redactKeys: readonly st
   });
 }
 
-/** One write per resource: each resource is one sender. */
+/** The collector's host and pod ride on each point, so its resources join by project and environment; an app's join only when the whole sender matches. */
+function joinOf(sender: HubSender): { key: string; sender: HubSender } {
+  if (sender.service !== INFRA_SERVICE) return { key: JSON.stringify(sender), sender };
+  const { host: _host, k8s: _k8s, ...shared } = sender;
+  return { key: JSON.stringify(shared), sender: shared };
+}
+
+/** One write per sender: a cluster export holds a resource per pod, and one save each is too slow for the exporter's timeout. */
 export function writesFromMetrics(list: readonly OtlpResourceMetrics[], redactKeys: readonly string[]): HubWrite[] {
-  return list.map((rm) => {
-    const sender = senderOf(rm.resource);
+  const out = new Map<string, HubWrite & { metrics: MetricPoint[] }>();
+  for (const rm of list) {
+    const { key, sender } = joinOf(senderOf(rm.resource));
     const resource = resourcePick(rm.resource, INFRA_RESOURCE_KEYS);
     const metrics = (rm.scopeMetrics ?? []).flatMap((sm) => (sm.metrics ?? []).flatMap((m) => pointsOf(m, sender.service, redactKeys, resource)));
-    return { sender, via: "otlp" as const, spans: [], logs: [], remotes: [], metrics };
-  });
+    const have = out.get(key);
+    if (have) for (const p of metrics) have.metrics.push(p);
+    else out.set(key, { sender, via: "otlp", spans: [], logs: [], remotes: [], metrics });
+  }
+  return [...out.values()];
 }

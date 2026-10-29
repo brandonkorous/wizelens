@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { MetricPoint, MetricsModel } from "@wizeworks/lens-core";
 import type { Hub } from "../hub.js";
 import { post, startHub } from "../test/helpers.js";
-import { fromExponential } from "./metrics.js";
+import { fromExponential, writesFromMetrics } from "./metrics.js";
 import { encodeMetrics } from "./proto.js";
 
 const NOW = 1_800_000_000_000;
@@ -94,5 +94,16 @@ describe("OTLP metrics over HTTP", () => {
     const m = await model(url, "range=15m");
     expect(m.catalog.map((c) => [c.name, c.services])).toEqual([["v8js.memory.heap.used", ["orders-api"]]]);
     expect(m.runtime[0]).toMatchObject({ service: "orders-api", stats: [expect.objectContaining({ key: "heap" })] });
+  });
+});
+
+describe("OTLP metric writes", () => {
+  it("joins a cluster export's pods into one write, each point keeping its pod", () => {
+    const pod = (name: string) => ({ attributes: [{ key: "k8s.pod.name", value: { stringValue: name } }, { key: "k8s.namespace.name", value: { stringValue: "shop" } }] });
+    const phase = [{ name: "k8s.pod.phase", gauge: { dataPoints: [{ timeUnixNano: nanos(1), asInt: "2" }] } }];
+    const list = ["orders-0", "orders-1", "cart-0"].map((n) => ({ resource: pod(n), scopeMetrics: [{ metrics: phase }] }));
+    const writes = writesFromMetrics([...list, { resource, scopeMetrics: [{ metrics: phase }] }], []);
+    expect(writes.map((w) => [w.sender.service, w.sender.k8s, w.metrics!.length])).toEqual([["infrastructure", undefined, 3], ["py-worker", undefined, 1]]);
+    expect(writes[0]!.metrics!.map((p) => p.attributes["k8s.pod.name"])).toEqual(["orders-0", "orders-1", "cart-0"]);
   });
 });

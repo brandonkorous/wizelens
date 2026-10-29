@@ -26,8 +26,14 @@ export interface Buckets {
 export const displayOf = (p: Pick<MetricPoint, "kind" | "monotonic">): MetricDisplay =>
   p.kind === "histogram" ? "percentiles" : p.kind === "sum" && p.monotonic ? "rate" : "value";
 
-/** The unit of what is drawn: a counter in "By" is drawn in "By/s". */
-export const displayUnitOf = (unit: string, display: MetricDisplay): string => (display === "rate" ? `${unit === "1" ? "" : unit}/s` : unit);
+/** OpenTelemetry's "1" is any plain number; only a named share (utilization, ratio, fraction) is a percent. */
+const RATIO_NAME = /utilization|ratio|fraction|percent/;
+
+/** The unit of what is drawn: a counter in "By" is drawn in "By/s", and a plain count in "1" (page faults) has none. */
+export function displayUnitOf(unit: string, display: MetricDisplay, name = ""): string {
+  const own = unit === "1" && name && !RATIO_NAME.test(name) ? "" : unit;
+  return display === "rate" ? `${own === "1" ? "" : own}/s` : own;
+}
 
 const sameBounds = (a: readonly number[], b: readonly number[]) => a.length === b.length && a.every((v, i) => v === b[i]);
 

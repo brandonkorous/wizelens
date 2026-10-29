@@ -85,6 +85,12 @@ describe("inputs and format", () => {
     expect([metricAreaOf("dotnet.gc.collections"), metricAreaOf("kestrel.active_connections"), metricAreaOf("orders.placed")]).toEqual(["runtime", "http", "custom"]);
   });
 
+  it("shows a plain count in unit 1 as a number and a named share as percent", () => {
+    const faults = point({ name: "k8s.pod.memory.page_faults", kind: "gauge", unit: "1", value: 4_184_528 });
+    const cpu = point({ name: "process.cpu.utilization", kind: "gauge", unit: "1", value: 0.25 });
+    expect(model([faults, cpu]).catalog.map((c) => [c.displayUnit, c.lastText])).toEqual([["1", "25.0%"], ["", "4,184,528"]]);
+  });
+
   it("filters by service and search", () => {
     const pts = [point({ name: "a.one", kind: "gauge", value: 1 }), point({ name: "b.two", kind: "gauge", value: 2, service: "web" })];
     expect(model(pts, { service: "web" }).catalog.map((c) => c.name)).toEqual(["b.two"]);

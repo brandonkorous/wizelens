@@ -17,8 +17,8 @@ export function Phase({ phase }: { phase: string }) {
 const NODE_COLUMNS = (now: number): Column<NodeRow>[] => [
   { key: "name", header: "Node", cell: (n) => <a href={nodeHref(n.name)}><strong>{n.name}</strong></a>, sort: (n) => n.name },
   { key: "ready", header: "Status", cell: (n) => (n.ready === null ? <span className="wl-muted">{DASH}</span> : <DotText tone={n.ready ? "success" : "danger"}>{n.ready ? "Ready" : "Not ready"}</DotText>), sort: (n) => (n.ready ? 0 : 1) },
-  { key: "cpu", header: "CPU", cell: (n) => (n.cpuAlloc ? <UsageBar share={share(n.cpu, n.cpuAlloc)} /> : fmtCores(n.cpu)), sort: (n) => n.cpu ?? -1 },
-  { key: "mem", header: "Memory", cell: (n) => (n.memAlloc ? <UsageBar share={share(n.memory, n.memAlloc)} /> : fmtBytes(n.memory)), sort: (n) => n.memory ?? -1 },
+  { key: "cpu", header: "CPU", cell: (n) => <UsageBar share={share(n.cpu, n.cpuAlloc)} text={fmtCores(n.cpu)} of="allocatable" />, sort: (n) => n.cpu ?? -1 },
+  { key: "mem", header: "Memory", cell: (n) => <UsageBar share={share(n.memory, n.memAlloc)} text={fmtBytes(n.memory)} of="allocatable" />, sort: (n) => n.memory ?? -1 },
   { key: "pods", header: "Pods", cell: (n) => fmtCount(n.pods), num: true, sort: (n) => n.pods },
   { key: "pending", header: "Pending", cell: (n) => count(n.pending, true), num: true, sort: (n) => n.pending, className: "wl-hide-sm" },
   { key: "restarts", header: "Restarts", cell: (n) => count(n.restartsNew, true), num: true, sort: (n) => n.restartsNew, className: "wl-hide-sm" },
@@ -56,7 +56,7 @@ const POD_COLUMNS: Column<PodRow>[] = [
   { key: "phase", header: "Phase", cell: (p) => <Phase phase={p.phase} />, sort: (p) => p.phase },
   { key: "node", header: "Node", cell: (p) => (p.node ? <a href={nodeHref(p.node)}>{p.node}</a> : <span className="wl-muted">{DASH}</span>), sort: (p) => p.node, className: "wl-hide-sm" },
   { key: "cpu", header: "CPU", cell: (p) => fmtCores(p.cpu), num: true, sort: (p) => p.cpu ?? -1 },
-  { key: "mem", header: "Memory", cell: (p) => (p.memLimit ? <UsageBar share={share(p.memory, p.memLimit)} /> : fmtBytes(p.memory)), sort: (p) => p.memory ?? -1 },
+  { key: "mem", header: "Memory", cell: (p) => <UsageBar share={share(p.memory, p.memLimit)} text={fmtBytes(p.memory)} of="the limit" />, sort: (p) => p.memory ?? -1 },
   { key: "restarts", header: "Restarts", cell: (p) => (p.restartsNew > 0 ? <strong className="wl-text-error">{`${fmtCount(p.restarts)} (+${fmtCount(p.restartsNew)})`}</strong> : fmtCount(p.restarts)), num: true, sort: (p) => p.restartsNew * 1e6 + p.restarts },
   { key: "oom", header: "OOM Killed", cell: (p) => count(p.oomKills, true), num: true, sort: (p) => p.oomKills, className: "wl-hide-sm" },
   {
