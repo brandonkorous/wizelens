@@ -4,6 +4,7 @@ import { navigate, setQuery } from "../../routes";
 import { Empty } from "../../ui/Panel";
 import { KIND_ICON, serviceHref, statusTone } from "./serviceParts";
 import { pressable } from "../../ui/pressable";
+import { breakable } from "../../ui/breakable";
 
 const NODE_W = 190;
 const NODE_H = 46;
@@ -36,9 +37,10 @@ function depths(rows: ServiceRow[], edges: ServiceEdge[]): Map<string, number> {
   return depth;
 }
 
-function edgeLabel(edge: ServiceEdge): string {
+/** "160 · p95 8.0 ms" on the map; the phone list says "160 calls". */
+function edgeLabel(edge: ServiceEdge, noun = ""): string {
   const rate = edge.calls ? (edge.errors / edge.calls) * 100 : 0;
-  return [fmtCount(edge.calls), edge.p95Ms != null ? `p95 ${fmtMs(edge.p95Ms)}` : fmtMs(edge.avgMs), ...(edge.errors ? [`${fmtPct(rate)} failed`] : [])].join(" · ");
+  return [fmtCount(edge.calls) + noun, edge.p95Ms != null ? `p95 ${fmtMs(edge.p95Ms)}` : fmtMs(edge.avgMs), ...(edge.errors ? [`${fmtPct(rate)} failed`] : [])].join(" · ");
 }
 
 /** Space between columns: wide enough for the longest label, so no label runs under a box. */
@@ -144,6 +146,20 @@ function Node({ p, selected }: { p: Placed; selected: boolean }) {
   );
 }
 
+/** On a phone the map is too wide to read, so the same calls show as a list: who calls whom, how often, how fast. */
+function CallList({ edges }: { edges: ServiceEdge[] }) {
+  return (
+    <ul className="wl-dep-list">
+      {edges.filter((e) => e.from !== e.to).map((e) => (
+        <li key={`${e.from}→${e.to}`} className={e.errors ? "wl-failing" : undefined}>
+          <a href={serviceHref(e.to)}>{breakable(e.from)} → {breakable(e.to)}</a>
+          <span>{edgeLabel(e, e.calls === 1 ? " call" : " calls")}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** The whole stack as boxes and arrows: callers on the left, what they call on the right. */
 export function DependencyMap({ rows, edges, selectedKey }: { rows: ServiceRow[]; edges: ServiceEdge[]; selectedKey: string | null }) {
   if (rows.length === 0) return <Empty>No calls recorded in this range.</Empty>;
@@ -165,6 +181,7 @@ export function DependencyMap({ rows, edges, selectedKey }: { rows: ServiceRow[]
           <Node key={p.row.key} p={p} selected={p.row.key === selectedKey} />
         ))}
       </svg>
+      <CallList edges={edges} />
     </div>
   );
 }

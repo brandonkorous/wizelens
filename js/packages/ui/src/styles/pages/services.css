@@ -6,6 +6,16 @@
 .wl-svc-edges li { display: flex; justify-content: space-between; gap: 10px; }
 
 .wl-dep-map { overflow-x: auto; padding: 4px 2px; }
+.wl-dep-list { display: none; list-style: none; margin: 0; padding: 0; }
+.wl-dep-list li { display: grid; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--wl-line); }
+.wl-dep-list li:last-child { border-bottom: 0; }
+.wl-dep-list a { color: var(--wl-fg); font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+.wl-dep-list span { color: var(--wl-fg-2); font-size: 14px; }
+.wl-dep-list .wl-failing span { color: var(--wl-error); }
+@media (max-width: 560px) {
+  .wl-dep-map > svg { display: none; }
+  .wl-dep-list { display: block; }
+}
 .wl-dep-node { cursor: pointer; }
 .wl-dep-node rect { fill: var(--wl-surface); stroke: var(--wl-line-strong); }
 .wl-dep-node:hover rect { stroke: var(--wl-accent); }

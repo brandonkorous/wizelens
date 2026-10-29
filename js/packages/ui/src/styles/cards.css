@@ -1,7 +1,7 @@
 /* A phone reads a table as cards: a row is a card, its first cell the title, every other cell its column's name and value. Nothing scrolls sideways. */
 @media (max-width: 560px) {
   .wl-table-wrap:has(> .wl-table-cards) { overflow-x: visible; }
-  .wl-table-cards, .wl-table-cards tbody { display: block; }
+  .wl-table-cards, .wl-table-cards :is(thead, tbody) { display: block; }
   .wl-table-cards thead tr { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 8px 14px; border-bottom: 1px solid var(--wl-line); }
   .wl-table-cards thead th { padding: 0; border: 0; font-size: 13px; }
   /* The head bar holds the sort buttons and the pick-all box; with neither it is not drawn. */
