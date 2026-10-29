@@ -14,6 +14,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from .env import apply_otel_defaults
 from .packages import report_packages
 from .processors import SamplingLogProcessor, SamplingSpanProcessor
+from .request_logs import with_request_span
 from .sampling import TraceSampler
 from .settings import Settings
 from .sql import capture_dbapi_parameters, capture_sqlalchemy_parameters
@@ -72,7 +73,7 @@ def _logs(settings: Settings, sampler: TraceSampler, resource: Resource, exporte
     set_logger_provider(provider)
     root = logging.getLogger()
     if not any(isinstance(h, LoggingHandler) for h in root.handlers):
-        handler = LoggingHandler(level=logging.NOTSET, logger_provider=provider)
+        handler = with_request_span(LoggingHandler)(level=logging.NOTSET, logger_provider=provider)
         root.addHandler(handler)
         _keep_handler(handler)
     return provider
