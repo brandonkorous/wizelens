@@ -34,7 +34,7 @@ export function spanDoc(s: Span, env?: string): SearchDoc {
   const path = pathOnly(url);
   return {
     kind: "spans",
-    text: lower([s.name, url, str(a, "db.query.text"), ...errorTexts(s)]),
+    text: lower([s.name, url, str(a, "db.query.text"), str(a, "wizelens.db.parameters"), ...errorTexts(s)]),
     fields: {
       service: s.service, env, trace: s.traceId, span: s.spanId, name: s.name, method: str(a, "http.request.method"), path, route: str(a, "http.route"),
       status: num(a["http.response.status_code"]), outcome: s.status, duration: s.durationMs, category: s.category, kind: s.kind,

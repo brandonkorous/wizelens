@@ -44,7 +44,7 @@ or **Enter** picks a suggestion. A search with a mistake is marked where it is w
 | `(a OR b) c` | Parentheses group parts |
 
 Free words read the path, endpoint, user, request id, client address, tags, and error text of a request; the root name,
-URL, services, and errors of a trace; the name, URL, SQL text, and error text of a span; and the message, category, and
+URL, services, and errors of a trace; the name, URL, SQL text, SQL parameter values, and error text of a span; and the message, category, and
 trace name of a log line.
 
 Put a backslash before a character to take it literally, or put it in quotes. An address such as `https://shop.test/cart`

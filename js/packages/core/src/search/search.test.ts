@@ -15,7 +15,7 @@ const hit = (q: string) => compileSearch(parseSearch(q));
 const pay = makeRequest({
   path: "/api/pay", route: "/api/pay", method: "POST", status: 502, attributes: { "enduser.id": "u-7", "tenant.id": 12 },
   error: { type: "TimeoutError", message: "bank did not answer" },
-  queries: [{ sql: "SELECT * FROM cards WHERE id = @p0", ms: 40 }],
+  queries: [{ sql: "SELECT * FROM cards WHERE id = @p0", ms: 40, params: '{"@p0":"card_8841"}' }],
   logs: [{ timeMs: 1, level: "warn", category: "Payments", message: "retrying the bank", attributes: { attempt: 2 } }],
 });
 
@@ -37,6 +37,7 @@ describe("search language", () => {
     const count = (q: string) => docs.filter(hit(q)).length;
     expect(count("status:502 method:POST route:/api/pay user:u-7 env:prod")).toBe(1);
     expect(count("category:db cards")).toBe(1);
+    expect(count("card_8841")).toBe(1);
     expect(count('"bank did not answer"')).toBe(1);
     expect(count("@tenant.id:>=10")).toBe(1);
     expect(count("error:true")).toBe(1);
