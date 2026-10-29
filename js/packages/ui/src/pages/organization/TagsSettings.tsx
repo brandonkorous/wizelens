@@ -44,7 +44,7 @@ function ruleColumns(editable: boolean, onEdit: (t: TagRule) => void, onDelete: 
     { key: "tag", header: "Tag", cell: (t) => <TagChip tag={t} /> },
     { key: "query", header: "Search", className: "wl-wrap", cell: (t) => <span className="wl-tag-query">{t.query}</span> },
     ...(editable
-      ? [{ key: "actions", header: "", cell: (t: TagRule) => (
+      ? [{ key: "actions", header: "", className: "wl-cell-actions", cell: (t: TagRule) => (
           <span className="wl-row-actions">
             <button type="button" className="wl-link-btn" onClick={() => onEdit(t)}>Edit</button>
             <button type="button" className="wl-link-btn wl-text-error" onClick={() => onDelete(t)}>Delete</button>

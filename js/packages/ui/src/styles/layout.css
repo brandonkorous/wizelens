@@ -74,6 +74,11 @@
 .wl-panel-flush .wl-table th:first-child, .wl-panel-flush .wl-table td:first-child { padding-left: 20px; }
 .wl-panel-flush .wl-table th:last-child, .wl-panel-flush .wl-table td:last-child { padding-right: 20px; }
 .wl-table .wl-cell-actions { text-align: right; white-space: nowrap; }
+/* On a phone a wide table scrolls; its buttons stay at the right edge, so Change access or Revoke is always in view. */
+@media (max-width: 720px) {
+  .wl-table :is(td, th).wl-cell-actions { position: sticky; right: 0; background: var(--wl-surface); box-shadow: -10px 0 10px -10px rgba(0, 0, 0, 0.35); }
+  .wl-table tr.wl-selected td.wl-cell-actions { background: var(--wl-selected); }
+}
 .wl-panel-banner { margin: 12px 20px 0; }
 .wl-panel-note { margin: 0 20px 14px; color: var(--wl-muted); font-size: 13px; }
 .wl-form-actions-split { justify-content: space-between; align-items: center; }

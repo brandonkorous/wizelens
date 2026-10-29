@@ -8,7 +8,7 @@ const count = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
 function KeyTable({ keys }: { keys: ImportedKey[] }) {
   const columns: Column<ImportedKey>[] = [
     { key: "project", header: "Project", cell: (k) => <strong>{k.projectName}</strong> },
-    { key: "new", header: "", cell: (k) => (k.newProject ? <Badge tone="success">New</Badge> : <Badge tone="neutral">Existing</Badge>) },
+    { key: "new", header: "", srHeader: "Project", cell: (k) => (k.newProject ? <Badge tone="success">New</Badge> : <Badge tone="neutral">Existing</Badge>) },
     { key: "kind", header: "Key", cell: (k) => `${k.keyName} (${k.kind === "browser" ? "browser" : "ingest"})` },
     { key: "token", header: "Secret", cell: (k) => <span className="wl-id"><span className="wl-mono">{k.prefix}…</span> <CopyButton text={k.token} label={`Copy the key for ${k.projectName}`} /></span> },
   ];
