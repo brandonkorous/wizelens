@@ -46,6 +46,23 @@ export default nextConfig;
 
 After you add or update the package, delete `.next` once.
 
+## Update WizeLens
+
+An app that already has WizeLens needs no change to its two files. To move to a new release:
+
+1. Read the [changelog](/changelog/) for the release, in case a setting changed.
+2. Stop `next dev`.
+3. Update the package, and the browser package if the app has one:
+
+   ```bash
+   npm install @wizeworks/lens-node@latest
+   npm install @wizeworks/lens-react@latest
+   ```
+
+4. Delete the `.next` folder. Next.js keeps a built copy of the old package there, and the old copy can make every
+   route answer 404.
+5. Start `next dev` again, and open a page. `npm ls @wizeworks/lens-node` shows the version the app now uses.
+
 ## What you get
 
 - The dashboard on the Next.js port at `/_wizelens`.

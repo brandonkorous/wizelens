@@ -3,24 +3,95 @@ title: Troubleshooting
 description: What to check when a request, query, log line, or service does not show up.
 ---
 
-| You see | Check |
+Find what you see, then do the steps in order. Stop at the first one that fixes it.
+
+## Nothing shows up
+
+### No requests at all
+
+1. Check that WizeLens is mounted before your routes (Express, Koa, Hono).
+2. Check that the app runs in development, or has `WIZELENS_ENABLED=true`.
+3. To read the dashboard in that app outside development, also set `WIZELENS_DASHBOARD=true`.
+
+### No HUD on a page your server renders
+
+1. Check that the add-on serves the dashboard: development, or `WIZELENS_DASHBOARD=true`.
+2. Check that `Hud` / `hud` and `WIZELENS_HUD` are not `false`.
+3. Check that the page is a full `200` `text/html` answer with a `</body>`. A page your app compresses itself is left
+   alone.
+4. Node: read the app's log. It says when `@wizeworks/lens-browser` is missing.
+
+See [The HUD](/docs/hud/).
+
+### No HUD in Vue, Angular, Svelte, or plain JS
+
+1. With `hud: "auto"` (the default), the HUD shows only when `{endpoint}/api/info` answers. Open that address.
+2. It must reach the server's dashboard, not your app's HTML fallback. Fix the endpoint or the proxy if it does not.
+3. Or pass `hud: true` to show it always.
+
+### Next.js routes all answer 404 after an update
+
+1. Stop `next dev`.
+2. Delete the `.next` folder.
+3. Start `next dev` again.
+
+See [Update WizeLens](/docs/nextjs/#update-wizelens).
+
+## Something is missing
+
+### Requests, but no queries
+
+1. Check that the database line runs before the first query.
+
+### Requests, but no logs
+
+1. Lines outside a request need `Logs.Outside` / `logs.outside` on. It is on by default.
+2. Check the level: a line must be at or above `Logs.MinLevel` / `logs.minLevel` (default `info`).
+3. Serilog and NLog apps need `WizeLens.Serilog` or `WizeLens.NLog`.
+4. Node loggers other than `console` and Fastify need their one line.
+
+### No browser timing
+
+1. Check that `import "@wizeworks/lens-react/install"` is the first import.
+2. Check that `/_wizelens` reaches your API.
+
+### A downstream service is missing
+
+1. Check that the downstream service runs WizeLens too.
+2. Check that the call goes through `HttpClient`, `fetch`, or gRPC.
+
+### A service is missing in the hub
+
+1. Check that `WIZELENS_HUB` is set where the service runs.
+2. Restart the service after you set it.
+3. Read the service's log. It says why the hub took nothing:
+   - it could not reach the hub;
+   - the hub needs a key, or refused one (`401`, `403`): set `WIZELENS_HUB_TOKEN` to a live `wl_ik_` key;
+   - the hub asked it to slow down (`429`).
+
+### Fewer requests than you sent
+
+1. Sampling is on. Open **Connect → This service** to see the rate.
+2. Change `WIZELENS_SAMPLE_RATE` to keep more.
+
+### Old data is gone after a restart
+
+1. Traces are kept for 24 hours or 2,000 traces.
+2. Change `MaxAge` / `maxAgeMs` and `MaxTraces` / `maxTraces` to keep more.
+
+## Working as designed
+
+These look like faults, but they are on purpose.
+
+| You see | Why |
 |---|---|
-| No requests at all | WizeLens is mounted first (Express, Koa, Hono), and the app runs in development or has `WIZELENS_ENABLED=true` (and `WIZELENS_DASHBOARD=true` to read it there). |
-| Requests but no queries | The database line runs before the first query. |
-| Requests but no logs | Lines outside a request need `Logs.Outside` / `logs.outside` on (the default) and a level at or above `Logs.MinLevel` / `logs.minLevel` (default info). Serilog and NLog apps need `WizeLens.Serilog` or `WizeLens.NLog`. Node loggers other than `console` and Fastify need their one line. |
-| No browser timing | `import "@wizeworks/lens-react/install"` is the first import, and `/_wizelens` reaches your API. |
-| No HUD on a page your server renders | The add-on serves the dashboard (development, or `WIZELENS_DASHBOARD=true`), `Hud` / `hud` and `WIZELENS_HUD` are not `false`, and the page is a full `200` `text/html` answer with a `</body>`. A page your app compresses itself is left alone. Node: the log says when `@wizeworks/lens-browser` is missing. See [The HUD](/docs/hud/). |
-| No HUD in Vue, Angular, Svelte, or plain JS | With `hud: "auto"` (the default) it shows only when `{endpoint}/api/info` answers. Open that address: it must reach the server's dashboard, not your app's HTML fallback. Or pass `hud: true`. |
-| A downstream service is missing | It runs WizeLens too, and the call goes through `HttpClient`, `fetch`, or gRPC. |
-| A service is missing in the hub | `WIZELENS_HUB` is set where the service runs, and the service was restarted. The service log says why the hub took nothing: it could not be reached, it needs a key or refused one (`401`, `403`: set `WIZELENS_HUB_TOKEN` to a live `wl_ik_` key), or it asked to slow down (`429`). |
-| An OpenTelemetry app shows "Idle" | Normal: OpenTelemetry apps send only when they have data. |
-| Next.js routes all 404 after an update | Stop `next dev`, delete `.next`, and start it again. |
-| Fewer requests than you sent | Sampling is on. See **Connect → This service** and `WIZELENS_SAMPLE_RATE`. |
-| Old data is gone after a restart | Traces are kept for 24 hours or 2,000 traces. Change `MaxAge` / `maxAgeMs` and `MaxTraces` / `maxTraces`. |
-| No CORS preflight requests | By design: `OPTIONS` preflights carry no `traceparent`, so they are not traced. |
-| A 404 or 400 does not count as an error | By design: a 4xx answer is not a failure. See [What counts as an error](/docs/dashboard/#what-counts-as-an-error). |
-| A 503 you send on purpose counts as an error | Send `X-WizeLens-Expected: 1` on it, or call `wizelens.expected()` (Node) or `WizeLensRequest.Expected()` (.NET). See [Answers you expect](/docs/dashboard/#answers-you-expect). |
-| No health check requests | By design: Kubernetes probes and Google and AWS health checks are not traced. Other requests to the same path are. |
+| An OpenTelemetry app shows "Idle" | OpenTelemetry apps send only when they have data. |
+| No CORS preflight requests | `OPTIONS` preflights carry no `traceparent`, so they are not traced. |
+| A 404 or 400 does not count as an error | A 4xx answer is not a failure. See [What counts as an error](/docs/dashboard/#what-counts-as-an-error). |
+| No health check requests | Kubernetes probes and Google and AWS health checks are not traced. Other requests to the same path are. |
+
+A `503` you send on purpose counts as an error. To mark it as expected, send `X-WizeLens-Expected: 1` on it, or call
+`wizelens.expected()` (Node) or `WizeLensRequest.Expected()` (.NET). See [Answers you expect](/docs/dashboard/#answers-you-expect).
 
 ## The SQLite file
 
