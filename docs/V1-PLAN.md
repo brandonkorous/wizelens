@@ -24,8 +24,8 @@ Java and Go stay 0.x and are called "preview". They follow every rename here, so
 |---|---|---|
 | 1 | Move to wizeworksllc; npm pre-releases publish under `next` | done |
 | 2 | A wire version, one error shape, and CONTRACT.md matches the code | done |
-| 3 | One send-to name: `endpoint` and `token` | |
-| 4 | Renames | |
+| 3 | One send-to name: `endpoint` and `token` | done |
+| 4 | Renames | done |
 | 5 | Hide what is not public | |
 | 6 | The same behavior in every SDK | |
 | 7 | Docs, wording, and the rename table | |
@@ -96,9 +96,11 @@ npm:
 Hub and cloud:
 - Cloud `--allow-private-webhooks` becomes `--allow-private-targets` (it also covers uptime checks).
 - `WIZELENS_CLOUD_CHECK_PWNED` becomes `WIZELENS_CLOUD_CHECK_PWNED_PASSWORDS`, like its flag.
-- Cloud `--retention-days 30` becomes `--retention 30d`, like the hub.
-- Wire: `sentAt` becomes `sentMs`; `oauth_query` becomes `oauthQuery`. (The OSV severity `warning` stays: every
-  finding's severity is `info`, `warning` or `error`.)
+- Wire: `sentAt` becomes `sentMs`.
+
+Kept after a closer look: the cloud's `--retention-days` (the cloud keeps whole days everywhere; the hub keeps any
+duration); `oauth_query` (Better Auth's own field on the same sign-in flow); the OSV severity `warning` (every
+finding's severity is `info`, `warning` or `error`). A blank `WIZELENS_KEEP_SLOW_MS` means unset in every SDK.
 
 ## 5. Hide what is not public
 
