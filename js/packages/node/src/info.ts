@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import { hostname } from "node:os";
-import { type HubSendState, IN_APP_CAPABILITIES, PROJECT_ENV, type ServiceInfo } from "@wizeworks/lens-core";
+import { type HubSendState, IN_APP_CAPABILITIES, PROJECT_ENV, PROTOCOL_VERSION, type ServiceInfo } from "@wizeworks/lens-core";
 import { hubUrlOf } from "./hub-connect.js";
 import type { TraceStore } from "./store.js";
 import type { WizeLensOptions } from "./types.js";
@@ -29,6 +29,7 @@ export interface InfoInputs {
 export function buildInfo(i: InfoInputs): ServiceInfo {
   const o = i.options;
   return {
+    protocol: PROTOCOL_VERSION,
     mode: "in-app",
     capabilities: [...IN_APP_CAPABILITIES, "search", "tags", ...(i.metrics ? (["metrics"] as const) : []), ...(i.sourceMaps ? (["sourcemaps"] as const) : [])],
     service: o.serviceName,

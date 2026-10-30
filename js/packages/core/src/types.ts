@@ -119,6 +119,8 @@ export interface HubSendState {
 }
 
 export interface ServiceInfo {
+  /** The wire contract version (PROTOCOL_VERSION). Absent means 1. */
+  protocol?: number;
   /** Absent on older add-ons; read it as "in-app". */
   mode?: HostMode;
   /** Absent on older add-ons; read it as IN_APP_CAPABILITIES. */
@@ -149,6 +151,8 @@ export interface ServiceInfo {
   sampling?: SamplingInfo;
 }
 
+/** The wire contract version. A breaking change is version 2, served at `api/v2/…`; version 1 stays where it is. */
+export const PROTOCOL_VERSION = 1;
 export const HEADER_TRACE = "X-WizeLens-Trace";
 export const HEADER_ENDPOINT = "X-WizeLens-Endpoint";
 export const HEADER_HOP = "X-WizeLens-Hop";

@@ -22,8 +22,8 @@ Java and Go stay 0.x and are called "preview". They follow every rename here, so
 
 | Phase | What | State |
 |---|---|---|
-| 1 | Move to wizeworksllc; npm pre-releases publish under `next` | |
-| 2 | A wire version, one error shape, and CONTRACT.md matches the code | |
+| 1 | Move to wizeworksllc; npm pre-releases publish under `next` | done |
+| 2 | A wire version, one error shape, and CONTRACT.md matches the code | done |
 | 3 | One send-to name: `endpoint` and `token` | |
 | 4 | Renames | |
 | 5 | Hide what is not public | |
@@ -53,7 +53,8 @@ By hand, by Brandon, before this merges (the order matters; deploys break betwee
 
 ## 2. A wire version
 
-- Every sender sends `X-WizeLens-Protocol: 1`; `api/info` answers `protocol: 1`. No header means 1.
+- `api/info` answers `protocol: 1` (`PROTOCOL_VERSION` in lens-core); no `protocol` means 1. The version lives in the
+  path, not a header: a browser header would cost every page a CORS preflight.
 - CONTRACT.md writes the rules down: receivers ignore fields and capabilities they do not know; a breaking change is
   protocol 2 at `api/v2/…`; errors are `{ error, code? }`.
 - CONTRACT.md matches the code: the `Capability` list (with `settings` and `packages`), the full `IngestBatch`
@@ -96,7 +97,8 @@ Hub and cloud:
 - Cloud `--allow-private-webhooks` becomes `--allow-private-targets` (it also covers uptime checks).
 - `WIZELENS_CLOUD_CHECK_PWNED` becomes `WIZELENS_CLOUD_CHECK_PWNED_PASSWORDS`, like its flag.
 - Cloud `--retention-days 30` becomes `--retention 30d`, like the hub.
-- Wire: `sentAt` becomes `sentMs`; `oauth_query` becomes `oauthQuery`; the OSV severity `warning` becomes `warn`.
+- Wire: `sentAt` becomes `sentMs`; `oauth_query` becomes `oauthQuery`. (The OSV severity `warning` stays: every
+  finding's severity is `info`, `warning` or `error`.)
 
 ## 5. Hide what is not public
 

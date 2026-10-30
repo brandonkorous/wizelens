@@ -12,6 +12,7 @@ internal static class ServiceInfo
     public static IResult Create(WizeLensOptions options, IHostEnvironment environment, TraceStorageService storage, HubExporter hubExporter) =>
         Results.Json(new
         {
+            protocol = 1,
             mode = "in-app",
             capabilities = options.MetricsOn ? new[] { "federation", "search", "tags", "metrics" } : new[] { "federation", "search", "tags" },
             service = options.ServiceName,
