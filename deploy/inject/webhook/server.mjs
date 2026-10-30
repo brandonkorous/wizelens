@@ -8,11 +8,11 @@ const env = process.env;
 const config = {
   image: env.WIZELENS_INJECT_IMAGE || "ghcr.io/wizeworksllc/wizelens-inject:latest",
   pullPolicy: env.WIZELENS_INJECT_PULL_POLICY,
-  hub: env.WIZELENS_INJECT_HUB,
+  endpoint: env.WIZELENS_INJECT_ENDPOINT,
   project: env.WIZELENS_INJECT_PROJECT,
   dashboard: env.WIZELENS_INJECT_DASHBOARD === "true",
-  hubTokenSecret: env.WIZELENS_INJECT_HUB_TOKEN_SECRET,
-  hubTokenKey: env.WIZELENS_INJECT_HUB_TOKEN_KEY,
+  tokenSecret: env.WIZELENS_INJECT_TOKEN_SECRET,
+  tokenKey: env.WIZELENS_INJECT_TOKEN_KEY,
 };
 const port = Number(env.PORT || 8443);
 const MAX_BODY = 4 * 1024 * 1024;

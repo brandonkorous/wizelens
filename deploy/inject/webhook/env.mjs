@@ -23,12 +23,12 @@ export function settings(pod, container, config, namespace) {
     { name: "WIZELENS_DASHBOARD", value: String(annotations["wizelens.dev/dashboard"] ?? config.dashboard ?? false) },
     { name: "OTEL_SERVICE_NAME", value: serviceName(pod, container) },
   ];
-  const hub = annotations["wizelens.dev/hub"] || config.hub;
-  if (hub) out.push({ name: "WIZELENS_HUB", value: hub });
+  const endpoint = annotations["wizelens.dev/endpoint"] || config.endpoint;
+  if (endpoint) out.push({ name: "WIZELENS_ENDPOINT", value: endpoint });
   const project = annotations["wizelens.dev/project"] || config.project || namespace;
   if (project) out.push({ name: "WIZELENS_PROJECT", value: project });
-  if (config.hubTokenSecret) {
-    out.push({ name: "WIZELENS_HUB_TOKEN", valueFrom: { secretKeyRef: { name: config.hubTokenSecret, key: config.hubTokenKey || "token", optional: true } } });
+  if (config.tokenSecret) {
+    out.push({ name: "WIZELENS_TOKEN", valueFrom: { secretKeyRef: { name: config.tokenSecret, key: config.tokenKey || "token", optional: true } } });
   }
   return out;
 }

@@ -188,7 +188,7 @@ jobs:
 
       - name: Lint and render the Helm charts
         run: |
-          helm lint deploy/inject/chart --set hub=http://wizelens-hub.wizelens:5960
+          helm lint deploy/inject/chart --set endpoint=http://wizelens-hub.wizelens:5960
           helm template wl deploy/inject/chart --namespace wizelens --set namespaceLabels.team=shop > /dev/null
           helm lint deploy/helm/wizelens-collector --set existingSecret.name=wizelens-ingest
           helm template wl deploy/helm/wizelens-collector --namespace monitoring --set existingSecret.name=wizelens-ingest > /dev/null
@@ -237,7 +237,7 @@ jobs:
           export POSTGRES_PASSWORD="ci-$(openssl rand -hex 12)"
           export WIZELENS_CLOUD_AUTH_SECRET="$(openssl rand -base64 32)"
           export WIZELENS_CLOUD_SETUP_TOKEN="ci-$(openssl rand -hex 12)"
-          export WIZELENS_CLOUD_CHECK_PWNED=0
+          export WIZELENS_CLOUD_CHECK_PWNED_PASSWORDS=0
           docker compose -p wlci -f deploy/docker-compose.cloud.yml up -d
           for i in $(seq 1 60); do curl -sf http://localhost:5970/healthz && break; sleep 2; done
           node scripts/cloud-smoke.mjs http://localhost:5970

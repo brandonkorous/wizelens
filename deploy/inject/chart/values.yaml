@@ -5,12 +5,12 @@ image:
   tag: ""
   pullPolicy: IfNotPresent
 
-# Where injected pods send their traces (WIZELENS_HUB), for example http://wizelens-hub.wizelens:5960.
-# A pod can override it with the annotation wizelens.dev/hub.
-hub: ""
+# Where injected pods send (WIZELENS_ENDPOINT): https://app.wizelens.com or a hub, for example http://wizelens-hub.wizelens:5960.
+# A pod can override it with the annotation wizelens.dev/endpoint.
+endpoint: ""
 
-# The hub token (WIZELENS_HUB_TOKEN), read from a Secret in each injected pod's namespace. Empty: no token.
-hubTokenSecret:
+# The token (WIZELENS_TOKEN): a cloud ingest key or the hub's token, read from a Secret in each injected pod's namespace. Empty name: no token.
+existingSecret:
   name: ""
   key: token
 

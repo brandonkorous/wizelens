@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { patchFor, review } from "./mutate.mjs";
 
-const config = { image: "ghcr.io/wizeworksllc/wizelens-inject:1.0.0", hub: "http://wizelens-hub.wizelens:5960" };
+const config = { image: "ghcr.io/wizeworksllc/wizelens-inject:1.0.0", endpoint: "http://wizelens-hub.wizelens:5960" };
 
 function pod(kind, container = {}, metadata = {}) {
   return {
@@ -39,30 +39,30 @@ test("a Node pod gets the copy step, the volume, NODE_OPTIONS, and the WizeLens 
     WIZELENS_ENABLED: "true",
     WIZELENS_DASHBOARD: "false",
     OTEL_SERVICE_NAME: "orders",
-    WIZELENS_HUB: config.hub,
+    WIZELENS_ENDPOINT: config.endpoint,
     WIZELENS_PROJECT: "shop",
   });
 });
 
 test("a .NET pod gets DOTNET_STARTUP_HOOKS joined to the one it sets, and keeps its own settings", () => {
   const container = { env: [{ name: "DOTNET_STARTUP_HOOKS", value: "/other/Hook.dll" }, { name: "OTEL_SERVICE_NAME", value: "billing" }] };
-  const source = pod("dotnet", container, { annotations: { "wizelens.dev/hub": "http://hub:5960", "wizelens.dev/dashboard": "true" } });
+  const source = pod("dotnet", container, { annotations: { "wizelens.dev/endpoint": "http://hub:5960", "wizelens.dev/dashboard": "true" } });
   const p = apply(source, patchFor(source, config, "shop"));
   const env = envOf(p);
   assert.equal(env.DOTNET_STARTUP_HOOKS, "/other/Hook.dll:/wizelens/dotnet/WizeLens.AutoInstrumentation.dll");
   assert.equal(env.OTEL_SERVICE_NAME, "billing");
-  assert.equal(env.WIZELENS_HUB, "http://hub:5960");
+  assert.equal(env.WIZELENS_ENDPOINT, "http://hub:5960");
   assert.equal(env.WIZELENS_DASHBOARD, "true");
   assert.equal(p.metadata.annotations["wizelens.dev/injected"], "dotnet");
 });
 
-test("only the named containers, and the hub token from a Secret", () => {
+test("only the named containers, and the token from a Secret", () => {
   const source = pod("node", {}, { annotations: { "wizelens.dev/container-names": "worker" } });
   source.spec.containers.push({ name: "worker", image: "orders:1", volumeMounts: [{ name: "data", mountPath: "/data" }] });
-  const p = apply(source, patchFor(source, { ...config, hubTokenSecret: "wizelens-hub" }, "shop"));
+  const p = apply(source, patchFor(source, { ...config, tokenSecret: "wizelens-hub" }, "shop"));
   assert.equal(p.spec.containers[0].env, undefined);
   assert.equal(p.spec.containers[1].volumeMounts.length, 2);
-  assert.deepEqual(envOf(p, 1).WIZELENS_HUB_TOKEN, { secretKeyRef: { name: "wizelens-hub", key: "token", optional: true } });
+  assert.deepEqual(envOf(p, 1).WIZELENS_TOKEN, { secretKeyRef: { name: "wizelens-hub", key: "token", optional: true } });
 });
 
 test("no patch for unlabeled, unknown, or already injected pods; a valueFrom hook is skipped", () => {

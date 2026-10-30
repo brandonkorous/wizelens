@@ -45,11 +45,11 @@ spec:
             - { name: TLS_KEY_FILE, value: /tls/tls.key }
             - { name: WIZELENS_INJECT_IMAGE, value: {{ include "wizelens-inject.image" . | quote }} }
             - { name: WIZELENS_INJECT_PULL_POLICY, value: {{ .Values.image.pullPolicy | quote }} }
-            - { name: WIZELENS_INJECT_HUB, value: {{ .Values.hub | quote }} }
+            - { name: WIZELENS_INJECT_ENDPOINT, value: {{ .Values.endpoint | quote }} }
             - { name: WIZELENS_INJECT_PROJECT, value: {{ .Values.project | quote }} }
             - { name: WIZELENS_INJECT_DASHBOARD, value: {{ .Values.dashboard | toString | quote }} }
-            - { name: WIZELENS_INJECT_HUB_TOKEN_SECRET, value: {{ .Values.hubTokenSecret.name | quote }} }
-            - { name: WIZELENS_INJECT_HUB_TOKEN_KEY, value: {{ .Values.hubTokenSecret.key | quote }} }
+            - { name: WIZELENS_INJECT_TOKEN_SECRET, value: {{ .Values.existingSecret.name | quote }} }
+            - { name: WIZELENS_INJECT_TOKEN_KEY, value: {{ .Values.existingSecret.key | quote }} }
           readinessProbe:
             httpGet: { path: /healthz, port: https, scheme: HTTPS }
           livenessProbe:
