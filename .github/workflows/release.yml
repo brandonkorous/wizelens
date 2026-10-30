@@ -101,11 +101,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push the hub and cloud images to ghcr.io/brandonkorous
+      - name: Build and push the hub and cloud images to ghcr.io/wizeworksllc
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           for NAME in hub cloud; do
-            IMAGE="ghcr.io/brandonkorous/wizelens-$NAME"
+            IMAGE="ghcr.io/wizeworksllc/wizelens-$NAME"
             docker build -f "js/packages/$NAME/Dockerfile" -t "$IMAGE:$VERSION" .
             docker push "$IMAGE:$VERSION"
             if [[ "$VERSION" != *-* ]]; then docker tag "$IMAGE:$VERSION" "$IMAGE:latest" && docker push "$IMAGE:latest"; fi
@@ -114,15 +114,15 @@ jobs:
       - name: Build and push the inject image (the Kubernetes webhook and the no-code hooks it copies into pods)
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          IMAGE="ghcr.io/brandonkorous/wizelens-inject"
+          IMAGE="ghcr.io/wizeworksllc/wizelens-inject"
           docker build -f deploy/inject/Dockerfile -t "$IMAGE:$VERSION" .
           docker push "$IMAGE:$VERSION"
           if [[ "$VERSION" != *-* ]]; then docker tag "$IMAGE:$VERSION" "$IMAGE:latest" && docker push "$IMAGE:latest"; fi
 
-      - name: Push the inject and collector Helm charts to oci://ghcr.io/brandonkorous/charts
+      - name: Push the inject and collector Helm charts to oci://ghcr.io/wizeworksllc/charts
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
           helm package deploy/inject/chart --destination artifacts/chart
           helm package deploy/helm/wizelens-collector --destination artifacts/chart
-          helm push artifacts/chart/wizelens-inject-*.tgz oci://ghcr.io/brandonkorous/charts
-          helm push artifacts/chart/wizelens-collector-*.tgz oci://ghcr.io/brandonkorous/charts
+          helm push artifacts/chart/wizelens-inject-*.tgz oci://ghcr.io/wizeworksllc/charts
+          helm push artifacts/chart/wizelens-collector-*.tgz oci://ghcr.io/wizeworksllc/charts

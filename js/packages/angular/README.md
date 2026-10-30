@@ -1,6 +1,6 @@
 # @wizeworks/lens-angular
 
-[WizeLens](https://github.com/brandonkorous/wizelens) for Angular apps, on top of [@wizeworks/lens-browser](https://github.com/brandonkorous/wizelens/tree/main/js/packages/browser): links every
+[WizeLens](https://github.com/wizeworksllc/wizelens) for Angular apps, on top of [@wizeworks/lens-browser](https://github.com/wizeworksllc/wizelens/tree/main/js/packages/browser): links every
 `HttpClient` call (and `fetch`) to its server trace, sends page views from the router, and reports the errors Angular catches.
 
 The package does not import `@angular/*`, so it works with any Angular version from 14 on and adds nothing but WizeLens to your bundle.
@@ -86,6 +86,6 @@ capture per page.
 ## HttpClient
 
 `HttpClient` uses `XMLHttpRequest` unless you call `withFetch()`. WizeLens traces both. Options are the
-[@wizeworks/lens-browser options](https://github.com/brandonkorous/wizelens/tree/main/js/packages/browser#options).
+[@wizeworks/lens-browser options](https://github.com/wizeworksllc/wizelens/tree/main/js/packages/browser#options).
 
 MIT licensed.

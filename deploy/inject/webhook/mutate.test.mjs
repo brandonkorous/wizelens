@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { patchFor, review } from "./mutate.mjs";
 
-const config = { image: "ghcr.io/brandonkorous/wizelens-inject:1.0.0", hub: "http://wizelens-hub.wizelens:5960" };
+const config = { image: "ghcr.io/wizeworksllc/wizelens-inject:1.0.0", hub: "http://wizelens-hub.wizelens:5960" };
 
 function pod(kind, container = {}, metadata = {}) {
   return {

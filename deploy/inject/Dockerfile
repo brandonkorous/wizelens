@@ -20,7 +20,7 @@ RUN dotnet publish -c Release -f net10.0 -o publish && rm -f publish/*.pdb
 FROM node:24-alpine
 LABEL org.opencontainers.image.title="WizeLens inject" \
       org.opencontainers.image.description="Adds WizeLens to Node and .NET pods labeled wizelens.dev/inject, with no code change." \
-      org.opencontainers.image.source="https://github.com/brandonkorous/wizelens" \
+      org.opencontainers.image.source="https://github.com/wizeworksllc/wizelens" \
       org.opencontainers.image.licenses="MIT"
 COPY --from=node /out/node /wizelens/node
 COPY --from=dotnet /src/dotnet/src/WizeLens.AutoInstrumentation/publish /wizelens/dotnet

@@ -6,7 +6,7 @@ version: 0.3.0-alpha.14
 appVersion: "0.137.0"
 home: https://wizelens.com/docs/kubernetes
 sources:
-  - https://github.com/brandonkorous/wizelens
+  - https://github.com/wizeworksllc/wizelens
 keywords: [opentelemetry, collector, kubernetes, wizelens, apm]
 maintainers:
   - name: WizeWorks LLC

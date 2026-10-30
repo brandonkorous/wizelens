@@ -163,7 +163,7 @@ finds downstream services by itself and shows one trace across all of them. The 
 The hub keeps the traces of every service in one place, also when a service is stopped. Start it:
 
 ```bash
-npx @wizeworks/lens-hub                       # or: docker run -p 5960:5960 -v wizelens:/data ghcr.io/brandonkorous/wizelens-hub
+npx @wizeworks/lens-hub                       # or: docker run -p 5960:5960 -v wizelens:/data ghcr.io/wizeworksllc/wizelens-hub
 ```
 
 Then point each service at it, and restart the service:

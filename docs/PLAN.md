@@ -49,7 +49,7 @@ Not in phase 3: billing and plans (later, by decision). Single sign-on (OIDC and
 | Part | What it does |
 |---|---|
 | HUD | Minimize to the WizeLens icon; the choice survives a refresh |
-| `@wizeworks/lens-hub` | The hub: `npx @wizeworks/lens-hub` or `ghcr.io/brandonkorous/wizelens-hub`. Dashboard, API, MCP, health check |
+| `@wizeworks/lens-hub` | The hub: `npx @wizeworks/lens-hub` or `ghcr.io/wizeworksllc/wizelens-hub`. Dashboard, API, MCP, health check |
 | Ingest | Add-ons send batches (`WIZELENS_HUB`); any OpenTelemetry app sends OTLP/HTTP (JSON or protobuf) |
 | Add-on senders | .NET and Node: batched, bounded queue, heartbeat, back-off, never traced, never blocks the app |
 | Registry | The hub knows every service: online, idle, or offline; project, environment, host, runtime |

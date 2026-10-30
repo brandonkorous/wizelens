@@ -29,7 +29,7 @@ span when you sample, and turns on SQL parameters.
 
 > **Build from the repository:** the first release of `com.wizelens:wizelens` is not on Maven Central yet, so the download
 > and the dependency below do not work until it is. Until then, build the jar from the repository:
-> `git clone https://github.com/brandonkorous/wizelens && mvn -f wizelens/java/pom.xml install -DskipTests`. That makes
+> `git clone https://github.com/wizeworksllc/wizelens && mvn -f wizelens/java/pom.xml install -DskipTests`. That makes
 > `wizelens/java/target/wizelens-0.1.0-alpha.1.jar` (use it as `wizelens.jar`) and puts the dependency in your local
 > Maven repository. The agent alone, above, works today.
 
@@ -118,7 +118,7 @@ The `X-WizeLens-Expected` response header is not read in Java apps, because the 
 
 ## A runnable sample
 
-[`samples/java-spring`](https://github.com/brandonkorous/wizelens/tree/main/samples/java-spring) is a Spring Boot service
+[`samples/java-spring`](https://github.com/wizeworksllc/wizelens/tree/main/samples/java-spring) is a Spring Boot service
 with an H2 database. `GET /orders` shows N+1 queries, a duplicate query, and N+1 HTTP calls to the Python sample;
 `GET /report` shows a slow query and a database wait; `GET /fail` shows an error with its log line.
 

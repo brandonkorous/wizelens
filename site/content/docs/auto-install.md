@@ -54,7 +54,7 @@ DOTNET_STARTUP_HOOKS=/opt/wizelens/dotnet/WizeLens.AutoInstrumentation.dll dotne
 
 The hook is a folder: `WizeLens.AutoInstrumentation.dll` with its dependencies next to it. Get it from the
 `wizelens-dotnet-auto-<version>.zip` file on each GitHub release, from `/wizelens/dotnet` in the
-`ghcr.io/brandonkorous/wizelens-inject` image, or build it with
+`ghcr.io/wizeworksllc/wizelens-inject` image, or build it with
 `dotnet publish dotnet/src/WizeLens.AutoInstrumentation -c Release -o /opt/wizelens/dotnet`.
 
 If the app references the `WizeLens.AutoInstrumentation` NuGet package (still no code), one variable is enough:
@@ -95,7 +95,7 @@ A mutating admission webhook adds the hook and the variables to every pod labele
 chart once:
 
 ```bash
-helm install wizelens-inject oci://ghcr.io/brandonkorous/charts/wizelens-inject \
+helm install wizelens-inject oci://ghcr.io/wizeworksllc/charts/wizelens-inject \
   --namespace wizelens --create-namespace \
   --set hub=http://wizelens-hub.wizelens:5960
 ```

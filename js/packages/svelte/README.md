@@ -1,7 +1,7 @@
 # @wizeworks/lens-svelte
 
-[WizeLens](https://github.com/brandonkorous/wizelens) for Svelte and SvelteKit apps, on top of
-[@wizeworks/lens-browser](https://github.com/brandonkorous/wizelens/tree/main/js/packages/browser): links every `fetch` and `XMLHttpRequest` to its server trace, and sends page views, Web Vitals,
+[WizeLens](https://github.com/wizeworksllc/wizelens) for Svelte and SvelteKit apps, on top of
+[@wizeworks/lens-browser](https://github.com/wizeworksllc/wizelens/tree/main/js/packages/browser): links every `fetch` and `XMLHttpRequest` to its server trace, and sends page views, Web Vitals,
 browser errors, and `console` lines.
 
 The package does not import `svelte` or `$app/*`; you pass SvelteKit's functions in.
@@ -74,6 +74,6 @@ initWizeLens({ endpoint: "/_wizelens", enabled: dev, hud: true, slowMs: 800 });
 When a .NET or Node add-on puts its HUD script into the pages it serves in development, the app's instance takes over from it: one HUD and one
 capture per page.
 
-Options are the [@wizeworks/lens-browser options](https://github.com/brandonkorous/wizelens/tree/main/js/packages/browser#options).
+Options are the [@wizeworks/lens-browser options](https://github.com/wizeworksllc/wizelens/tree/main/js/packages/browser#options).
 
 MIT licensed.

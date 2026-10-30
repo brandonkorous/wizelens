@@ -240,7 +240,7 @@ Traces survive restarts (hello, `dotnet watch`). Each app keeps a small SQLite f
 ### The local hub
 
 One place for every service, also when they are stopped. Start it with `npx @wizeworks/lens-hub` (or the Docker image
-`ghcr.io/brandonkorous/wizelens-hub`), then set `WIZELENS_HUB=http://localhost:5960` on each service. Apps in any other
+`ghcr.io/wizeworksllc/wizelens-hub`), then set `WIZELENS_HUB=http://localhost:5960` on each service. Apps in any other
 language send OpenTelemetry (OTLP/HTTP) to the same address.
 
 - **Everything in one dashboard**, kept for 7 days in one SQLite file, with the same pages as the in-app dashboard.

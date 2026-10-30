@@ -8,7 +8,7 @@ description: One place for the traces, logs, and metrics of every service on you
 ```bash
 npx @wizeworks/lens-hub
 # or
-docker run -p 5960:5960 -v wizelens:/data ghcr.io/brandonkorous/wizelens-hub
+docker run -p 5960:5960 -v wizelens:/data ghcr.io/wizeworksllc/wizelens-hub
 ```
 
 Open http://localhost:5960/_wizelens/.

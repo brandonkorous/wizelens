@@ -27,8 +27,8 @@
     </developer>
   </developers>
   <scm>
-    <url>https://github.com/brandonkorous/wizelens</url>
-    <connection>scm:git:https://github.com/brandonkorous/wizelens.git</connection>
+    <url>https://github.com/wizeworksllc/wizelens</url>
+    <connection>scm:git:https://github.com/wizeworksllc/wizelens.git</connection>
   </scm>
 
   <properties>

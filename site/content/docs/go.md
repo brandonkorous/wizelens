@@ -102,7 +102,7 @@ app.
 
 ## A runnable sample
 
-[`samples/go-net-http`](https://github.com/brandonkorous/wizelens/tree/main/samples/go-net-http) is a `net/http`
+[`samples/go-net-http`](https://github.com/wizeworksllc/wizelens/tree/main/samples/go-net-http) is a `net/http`
 service with SQLite. `GET /orders` shows N+1 queries, a duplicate query, and N+1 HTTP calls; `GET /report` shows a slow
 query and a database wait; `GET /fail` shows an error with its log line.
 

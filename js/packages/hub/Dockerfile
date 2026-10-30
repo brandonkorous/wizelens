@@ -9,7 +9,7 @@ RUN pnpm install --frozen-lockfile --filter "@wizeworks/lens-hub..." \
 
 FROM node:24-slim
 LABEL org.opencontainers.image.title="WizeLens hub" \
-      org.opencontainers.image.source="https://github.com/brandonkorous/wizelens" \
+      org.opencontainers.image.source="https://github.com/wizeworksllc/wizelens" \
       org.opencontainers.image.licenses="MIT"
 COPY --from=build /out /app
 RUN mkdir /data && chown node:node /data

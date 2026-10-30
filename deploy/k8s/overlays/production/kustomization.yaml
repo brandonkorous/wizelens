@@ -8,10 +8,10 @@ resources:
 # GHCR packages must be public: the cluster pulls without a pull secret.
 images:
   - name: wizelens/cloud
-    newName: ghcr.io/brandonkorous/wizelens-cloud
+    newName: ghcr.io/wizeworksllc/wizelens-cloud
     newTag: latest
   - name: wizelens/site
-    newName: ghcr.io/brandonkorous/wizelens-site
+    newName: ghcr.io/wizeworksllc/wizelens-site
     newTag: latest
 
 # Settings that are not secret. Secrets come from Key Vault as `cloud-env`.

@@ -38,7 +38,7 @@ A version with a pre-release part makes a GitHub pre-release.
 ### PyPI (trusted publishing)
 
 1. Sign in to pypi.org and open **Your account → Publishing → Add a new pending publisher**.
-2. PyPI project name `wizelens`, owner `brandonkorous`, repository `wizelens`, workflow `release-python.yml`,
+2. PyPI project name `wizelens`, owner `wizeworksllc`, repository `wizelens`, workflow `release-python.yml`,
    environment `pypi`.
 3. In GitHub, **Settings → Environments → New environment** named `pypi`. Optional: require a reviewer, and allow only
    tags matching `python/v*`.
@@ -68,7 +68,9 @@ build with no keys: `mvn -f java/pom.xml -P release verify -Dgpg.skip` (CI runs 
 
 ### Go
 
-Nothing to create. The module path is `github.com/brandonkorous/wizelens/go`, so the repository must stay at
-`github.com/brandonkorous/wizelens`; a tag `go/v0.1.0` is that module's `v0.1.0`. The workflow checks that `go.mod` is
+Nothing to create. The module path is `github.com/brandonkorous/wizelens/go`, the repository's address before it
+moved to `github.com/wizeworksllc/wizelens` on 2026-10-30. The path was kept on purpose: changing it is a new module
+for every user. It resolves through GitHub's redirect from the old address, so **never create a repository named
+`wizelens` under `brandonkorous`**: that ends the redirect and breaks every Go install. A tag `go/v0.1.0` is that module's `v0.1.0`. The workflow checks that `go.mod` is
 tidy and the tests pass, then asks proxy.golang.org to fetch the version, which also lists it on pkg.go.dev. A `v2` or
 later needs the module path to end in `/v2` first.
