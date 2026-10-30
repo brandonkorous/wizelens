@@ -83,3 +83,6 @@ site/public/docs/
 
 # Rendered email previews (pnpm --filter @wizeworks/lens-cloud email:preview)
 email-preview/
+
+# Go builds of the samples
+*.exe
