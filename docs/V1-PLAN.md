@@ -28,7 +28,7 @@ Java and Go stay 0.x and are called "preview". They follow every rename here, so
 | 4 | Renames | done |
 | 5 | Hide what is not public | done |
 | 6 | The same behavior in every SDK | done |
-| 7 | Docs, wording, and the rename table | |
+| 7 | Docs, wording, and the rename table | done |
 | 8 | `1.0.0-rc.1` | |
 | 9 | `1.0.0`, after a week with no breaks | |
 
