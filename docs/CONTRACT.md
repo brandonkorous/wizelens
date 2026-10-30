@@ -65,7 +65,7 @@ All `api/*` endpoints return JSON (camelCase) and send `Access-Control-Allow-Ori
 | `GET api/traces?limit=50&session={id}` | `TraceSummary[]`, newest first. With `session`, only traces that have a span whose `wizelens.browser.session` equals `{id}`. Loose batches (lines outside a request) are left out of summaries on every host; `full=true` includes them. |
 | `GET api/traces?full=true&limit=1000&since={ms}` | `Trace[]` from this service only (no federation), newest first. `limit` max 5000. With `since`, only traces whose last activity (`startMs + durationMs`) is at or after `{ms}`. The dashboard uses this for its charts and merges the results of every service it knows. |
 | `GET api/traces/{traceId}?federate=true` | `Trace` (404 if unknown and no remote has it) |
-| `POST api/client-spans` | Body `{ spans: Span[], logs?: (LogRecord & { traceId })[], sentAt?: number }`. Browser spans and browser log lines. Stored into their traces. At most 500 spans and 100 logs per call; log messages are cut at 4000 characters. 204. |
+| `POST api/client-spans` | Body `{ spans: Span[], logs?: (LogRecord & { traceId })[], sentMs?: number }`. Browser spans and browser log lines. Stored into their traces. At most 500 spans and 100 logs per call; log messages are cut at 4000 characters. 204. |
 | `GET api/tags` | `TagList` (see "Tags"): the built-ins and the rules of the `tags` option, `editable: false` |
 | `POST api/tags/match` | Body `{ kind, items: { traceId, owner, timeMs }[] }` (up to 200). `{ matches }`: tag names per row (see "Tags") |
 | `POST mcp` (+ GET for SSE if SDK needs) | MCP streamable HTTP. Only when MCP is enabled. 404 otherwise. |
@@ -291,8 +291,8 @@ answers `mode: "hub"` and `capabilities: ["federation", "environments", "registr
 | Read-only MCP endpoint | `Mcp` | `mcp` | false |
 | Capture response bodies | `CaptureResponseBody` | `captureResponseBody` | false |
 | Sampling rate (0..1) | `Sampling.Rate` | `sampling.rate` | 1, or `WIZELENS_SAMPLE_RATE` |
-| Keep traces with an error | `Sampling.KeepErrors` | `sampling.keepErrors` | true, or `WIZELENS_KEEP_ERRORS` (.NET) |
-| Keep traces with a slow server-side span (ms) | `Sampling.KeepSlowMs` | `sampling.keepSlowMs` | 1000 (null = off), or `WIZELENS_KEEP_SLOW_MS` (.NET) |
+| Keep traces with an error | `Sampling.KeepErrors` | `sampling.keepErrors` | true, or `WIZELENS_KEEP_ERRORS` |
+| Keep traces with a slow server-side span (ms) | `Sampling.KeepSlowMs` | `sampling.keepSlowMs` | 1000 (null = off), or `WIZELENS_KEEP_SLOW_MS` |
 | Keep log lines outside a request | `Logs.Outside` | `logs.outside` | true, or `WIZELENS_LOGS_OUTSIDE` |
 | Lowest level kept outside a request | `Logs.MinLevel` (`LogLevel`) | `logs.minLevel` | info, or `WIZELENS_LOGS_MIN_LEVEL` |
 | Share kept outside a request, below warn (0..1) | `Logs.Rate` | `logs.rate` | 1, or `WIZELENS_LOGS_SAMPLE_RATE` |
@@ -593,8 +593,8 @@ lines by `service␟level␟pattern␟origin` (`r` or `o`), with the newest line
 
 ## Clocks
 
-- The browser sends `sentAt` (its `Date.now()`) with each `POST api/client-spans`. When the server's clock differs by more
-  than 10 s, the add-on moves the posted span starts, event times, and log times by the difference. Without `sentAt`,
+- The browser sends `sentMs` (its `Date.now()`) with each `POST api/client-spans`. When the server's clock differs by more
+  than 10 s, the add-on moves the posted span starts, event times, and log times by the difference. Without `sentMs`,
   times are kept.
 - Building a trace, a span that starts before its parent in the same service starts with its parent. A server span that
   starts outside the call from another service that started it is moved inside that call. A server span with no parent counts as

@@ -64,8 +64,8 @@ async function sendTrace(d: ApiDeps, traceId: string, req: IncomingMessage, res:
 
 async function receiveClientSpans(d: ApiDeps, req: Req, res: ServerResponse): Promise<void> {
   try {
-    const body = (await readJson(req)) as { spans?: unknown; logs?: unknown; sentAt?: unknown } | undefined;
-    const shiftMs = browserClockOffset(body?.sentAt, Date.now());
+    const body = (await readJson(req)) as { spans?: unknown; logs?: unknown; sentMs?: unknown } | undefined;
+    const shiftMs = browserClockOffset(body?.sentMs, Date.now());
     const spans = Array.isArray(body?.spans) ? body.spans.slice(0, MAX_CLIENT_SPANS) : [];
     const origin = firstHeader(req.headers.origin);
     const agent = firstHeader(req.headers["user-agent"]);

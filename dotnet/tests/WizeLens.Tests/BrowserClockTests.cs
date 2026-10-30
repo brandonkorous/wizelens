@@ -20,7 +20,7 @@ public class BrowserClockTests
         var browserNow = ActivityMapper.ToUnixMs(DateTime.UtcNow) - Hours;
         var response = await app.Client.PostAsJsonAsync("/_wizelens/api/client-spans", new
         {
-            sentAt = browserNow,
+            sentMs = browserNow,
             spans = new[]
             {
                 new

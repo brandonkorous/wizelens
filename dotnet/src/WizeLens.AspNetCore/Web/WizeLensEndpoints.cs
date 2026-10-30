@@ -64,7 +64,7 @@ internal static partial class WizeLensEndpoints
             return Results.BadRequest();
         }
         var origin = context.Request.Headers.Origin.ToString();
-        var offset = BrowserClock.Offset(body?.SentAt, ActivityMapper.ToUnixMs(DateTime.UtcNow));
+        var offset = BrowserClock.Offset(body?.SentMs, ActivityMapper.ToUnixMs(DateTime.UtcNow));
         foreach (var span in (body?.Spans ?? []).Take(MaxClientSpans))
         {
             if (!Normalize(span, offset)) continue;

@@ -7,9 +7,9 @@ internal static class BrowserClock
     public const double ToleranceMs = 10_000;
 
     /// <summary>How far (ms) to move the browser's times: 0 when it sent no clock, or one close enough.</summary>
-    public static double Offset(double? sentAt, double receivedAt)
+    public static double Offset(double? sentMs, double receivedAt)
     {
-        if (sentAt is not { } sent || !double.IsFinite(sent) || sent <= 0) return 0;
+        if (sentMs is not { } sent || !double.IsFinite(sent) || sent <= 0) return 0;
         var offset = receivedAt - sent;
         return Math.Abs(offset) > ToleranceMs ? offset : 0;
     }

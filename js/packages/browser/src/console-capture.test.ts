@@ -27,6 +27,6 @@ describe("browser console capture", () => {
     const sender = createSender("http://localhost/_wizelens", () => fake);
     sender.log({ traceId: VIEW.traceId, spanId: null, timeMs: 1, level: "info", category: "console", message: "hi", service: "browser", attributes: {} });
     await sender.flush();
-    expect(bodies).toEqual([{ spans: [], logs: [expect.objectContaining({ message: "hi" })], sentAt: expect.any(Number) }]);
+    expect(bodies).toEqual([{ spans: [], logs: [expect.objectContaining({ message: "hi" })], sentMs: expect.any(Number) }]);
   });
 });

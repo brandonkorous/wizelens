@@ -107,7 +107,7 @@ internal sealed class ClientSpansRequest
     public List<Span> Spans { get; set; } = [];
     public List<ClientLog> Logs { get; set; } = [];
     /// <summary>The browser's clock when it sent this, in Unix ms. Null when the browser did not send it.</summary>
-    public double? SentAt { get; set; }
+    public double? SentMs { get; set; }
 }
 
 /// <summary>A browser log line posted with <see cref="ClientSpansRequest"/>.</summary>

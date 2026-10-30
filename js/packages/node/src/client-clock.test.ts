@@ -22,7 +22,7 @@ it("moves a browser's spans, events, and logs onto the server's clock", async ()
   const spanId = newSpanId();
   const browserNow = Date.now() - HOURS;
   await post({
-    sentAt: browserNow,
+    sentMs: browserNow,
     spans: [{ traceId, spanId, name: "react renders /pricing", category: "browser", startMs: browserNow - 2000, durationMs: 1500, events: [{ name: "click", timeMs: browserNow - 1000 }] }],
     logs: [{ traceId, spanId, level: "info", message: "hi", timeMs: browserNow - 500 }],
   });

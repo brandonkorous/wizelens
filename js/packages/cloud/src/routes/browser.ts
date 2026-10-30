@@ -62,7 +62,7 @@ const withApp = (attrs: Attributes, app: string): Attributes => (typeof attrs[AT
 
 /** Browser data only: every span is a browser span, every line a browser line. A public key cannot write server or database spans. */
 export function browserWrite(body: Record<string, unknown>, redactKeys: readonly string[], now: number, app: string, userAgent?: string): HubWrite {
-  const shiftMs = browserClockOffset(body.sentAt, now);
+  const shiftMs = browserClockOffset(body.sentMs, now);
   const list = (v: unknown) => (Array.isArray(v) ? v.slice(0, MAX_ITEMS) : []);
   const spans = list(body.spans)
     .map((raw) => sanitizeClientSpan(raw, redactKeys, shiftMs))
