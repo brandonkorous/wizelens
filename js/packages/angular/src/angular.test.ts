@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { WizeLens } from "@wizeworks/lens-browser";
-import { createWizeLensErrorHandler, isNavigationEnd, trackAngularRouter, unwrapAngularError } from "./index.js";
+import { createWizeLensErrorHandler, isNavigationEnd, trackAngularRouter, unwrapAngularError } from "./angular.js";
 
 function fakeLens(enabled = true): WizeLens {
   return { enabled, recorder: null, sessionId: "s", pageView: vi.fn(), captureError: vi.fn(), setUser: vi.fn(), flush: vi.fn(), shutdown: vi.fn() };

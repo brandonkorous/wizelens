@@ -2,7 +2,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { fileURLToPath } from "node:url";
-import type { HubLog, HubSender, IngestBatch, Span } from "@wizeworks/lens-core";
+import type { HubLog, HubSender, IngestBatch, Span } from "@wizeworks/lens-core/internal";
 
 /** The built auto entry. Tests run after `pnpm build`, like CI. */
 export const AUTO_ENTRY = new URL("../../dist/auto.js", import.meta.url).href;

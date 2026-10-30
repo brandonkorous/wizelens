@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { cleanSearchParams, logSearchText } from "@wizeworks/lens-core";
+import { cleanSearchParams, logSearchText } from "@wizeworks/lens-core/internal";
 import { apiSend } from "../../data/api";
 import { useHost } from "../../data/host";
 import { act, useApi } from "../../data/useApi";

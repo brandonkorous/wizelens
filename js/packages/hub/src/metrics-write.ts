@@ -21,7 +21,7 @@ import {
   metricTierValues,
   seriesKeyOf,
   TIERS,
-} from "@wizeworks/lens-core";
+} from "@wizeworks/lens-core/internal";
 
 // Metric rollups at ingest (docs/CONTRACT.md, "Hub storage"): points never change, so tiers are written with the raw points.
 const hashKey = (text: string) => createHash("sha1").update(text).digest("hex");

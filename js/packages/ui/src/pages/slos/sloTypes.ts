@@ -1,4 +1,4 @@
-import type { ApdexTargets, SloReport } from "@wizeworks/lens-core";
+import type { ApdexTargets, SloReport } from "@wizeworks/lens-core/internal";
 import { currentProject, useAccount } from "../../data/account";
 import { useHost } from "../../data/host";
 import { getScope } from "../../data/prefs";

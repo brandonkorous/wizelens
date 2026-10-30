@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Check, Copy } from "lucide-react";
-import type { Health, Impact } from "@wizeworks/lens-core";
+import type { Health, Impact } from "@wizeworks/lens-core/internal";
 
 export type Tone = "success" | "warning" | "orange" | "danger" | "info" | "neutral";
 

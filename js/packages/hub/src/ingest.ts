@@ -10,8 +10,8 @@ import {
   sanitizeMetricPoint,
   stampVersion,
   toAttributeValue,
-} from "@wizeworks/lens-core";
-import { sanitizeClientSpan } from "@wizeworks/lens-node/kit";
+} from "@wizeworks/lens-core/internal";
+import { sanitizeClientSpan } from "@wizeworks/lens-node/internal";
 import type { HubWrite } from "./store.js";
 
 const MAX_ITEMS = 5000;

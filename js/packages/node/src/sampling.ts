@@ -1,4 +1,4 @@
-import { isErrorStatus, keepByRate, type LogRecord, type SamplingInfo, type Span } from "@wizeworks/lens-core";
+import { isErrorStatus, keepByRate, type LogRecord, type SamplingInfo, type Span } from "@wizeworks/lens-core/internal";
 
 export interface SamplingOptions {
   /** Share of traces kept, 0 to 1. Default 1 (all), or the WIZELENS_SAMPLE_RATE variable. */

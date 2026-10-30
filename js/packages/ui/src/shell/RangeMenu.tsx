@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Calendar, Check, ChevronDown } from "lucide-react";
-import { TIME_RANGES } from "@wizeworks/lens-core";
+import { TIME_RANGES } from "@wizeworks/lens-core/internal";
 import { useHost, useRange } from "../data/host";
 import { type Period, parseWindow, setComparePref, setWindowPref, useComparePref, useWindowPref } from "../data/period";
 import { fmtDateTime, isUtc } from "../format";

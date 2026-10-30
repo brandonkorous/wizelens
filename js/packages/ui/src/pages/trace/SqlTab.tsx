@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { busyMs, queryText } from "@wizeworks/lens-core";
+import { busyMs, queryText } from "@wizeworks/lens-core/internal";
 import { fmtMs } from "../../format";
 import { Empty } from "../../ui/Panel";
 import { badgesFor, FindingBadges, rowClass, ServiceChip, type TabProps } from "./tabParts";

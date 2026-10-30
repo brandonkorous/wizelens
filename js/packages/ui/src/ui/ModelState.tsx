@@ -1,4 +1,4 @@
-import type { ModelMeta } from "@wizeworks/lens-core";
+import type { ModelMeta } from "@wizeworks/lens-core/internal";
 import { fmtCount } from "../format";
 
 /** Banners above a page: loading, a failed load, numbers based on part of the data, or stats running behind. */

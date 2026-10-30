@@ -1,4 +1,4 @@
-import { messageRows, type Trace } from "@wizeworks/lens-core";
+import { messageRows, type Trace } from "@wizeworks/lens-core/internal";
 import { fmtMs } from "../../format";
 import { usePagedRows } from "../../ui/PagedRows";
 import { Empty } from "../../ui/Panel";

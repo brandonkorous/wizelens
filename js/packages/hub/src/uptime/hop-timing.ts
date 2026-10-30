@@ -1,7 +1,7 @@
 // Phase times of one uptime request (DNS, connect, TLS, first byte), and which phase a failed one stalled in.
 import type { ClientRequest } from "node:http";
 import { isIP } from "node:net";
-import type { UptimeHop } from "@wizeworks/lens-core";
+import type { UptimeHop } from "@wizeworks/lens-core/internal";
 
 /** Time a request's phases from its socket events, in ms from when it was sent. The hop fills in as the request goes. */
 export function timeHop(req: ClientRequest, url: URL): UptimeHop {

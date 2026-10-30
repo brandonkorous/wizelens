@@ -1,4 +1,4 @@
-import { ENDPOINT_ENV, envSwitch, type HubSender, normalizeHubUrl, type ServiceInfo, TOKEN_ENV } from "@wizeworks/lens-core";
+import { ENDPOINT_ENV, envSwitch, type HubSender, normalizeHubUrl, type ServiceInfo, TOKEN_ENV } from "@wizeworks/lens-core/internal";
 import { HubExporter } from "./hub-export.js";
 import { reportPackages } from "./packages.js";
 import { releaseOf } from "./release.js";

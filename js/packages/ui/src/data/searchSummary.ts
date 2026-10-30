@@ -1,6 +1,6 @@
 // Counts per kind and a time histogram for the Search page, read through the same search the results use.
 import { useEffect, useState } from "react";
-import { checkSearch, encodeCursor, type SearchKind, searchSummary, type SearchSummary, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { checkSearch, encodeCursor, type SearchKind, searchSummary, type SearchSummary, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core/internal";
 import { runSearch } from "./search";
 
 /** The summary of a valid search; null while it loads, for an empty search, or when it fails. */

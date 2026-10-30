@@ -1,5 +1,5 @@
 // Saved views, searches, and dashboards per project, or for the whole organization. A person sees their own items and the shared ones.
-import type { SavedInput, SavedItem } from "@wizeworks/lens-core";
+import type { SavedInput, SavedItem } from "@wizeworks/lens-core/internal";
 import { newId } from "../auth/crypto.js";
 import type { Queryable } from "../db/db.js";
 

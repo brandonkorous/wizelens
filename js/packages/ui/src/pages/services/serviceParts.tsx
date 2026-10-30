@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import { Box, Cog, Database, Globe, Inbox, Monitor } from "lucide-react";
-import { isLocalAddress, type ServiceKind, type ServiceRow, type ServiceStatus, serviceDoc } from "@wizeworks/lens-core";
+import { isLocalAddress, type ServiceKind, type ServiceRow, type ServiceStatus, serviceDoc } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
 import { decodeParam, hrefTo, setQuery } from "../../routes";
 import { DotText, type Tone } from "../../ui/Badges";

@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import {
   groupMetricSeries, type MergedHistogram, mergeStoredHists, metricBatchWrites, metricHistOfColumns, type MetricPoint, METRIC_SERIES_COLUMNS,
   METRIC_TIER_COLUMNS, metricSeriesValues, metricStateOfColumns, type MetricTierWrite, metricTierValues, seriesKeyOf, TIERS,
-} from "@wizeworks/lens-core";
+} from "@wizeworks/lens-core/internal";
 import type { ChClient } from "./http.js";
 import { nextVer, rowOf } from "./util.js";
 

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { Trace } from "@wizeworks/lens-core";
+import type { Trace } from "@wizeworks/lens-core/internal";
 import { loadTrace } from "./sources";
 import { type DataSnapshot, DataStore } from "./store";
 

@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import { hostname } from "node:os";
-import { IN_APP_CAPABILITIES, PROJECT_ENV, PROTOCOL_VERSION, type SendState, type ServiceInfo } from "@wizeworks/lens-core";
+import { IN_APP_CAPABILITIES, PROJECT_ENV, PROTOCOL_VERSION, type SendState, type ServiceInfo } from "@wizeworks/lens-core/internal";
 import { endpointOf } from "./hub-connect.js";
 import type { TraceStore } from "./store.js";
 import type { WizeLensOptions } from "./types.js";

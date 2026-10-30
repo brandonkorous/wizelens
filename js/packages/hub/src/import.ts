@@ -1,5 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
-import type { HubLog, HubRemote, LogRecord, Span } from "@wizeworks/lens-core";
+import type { HubLog, HubRemote, LogRecord, Span } from "@wizeworks/lens-core/internal";
 import type { HubData } from "./data.js";
 
 const BATCH = 200;

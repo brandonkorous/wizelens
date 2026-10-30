@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Bell, BellRing, Lightbulb, ShieldAlert, TriangleAlert } from "lucide-react";
-import { errorInfo, insightsOf, isErrorSpan, isFailed, requestRows, securityOf, type Trace } from "@wizeworks/lens-core";
+import { errorInfo, insightsOf, isErrorSpan, isFailed, requestRows, securityOf, type Trace } from "@wizeworks/lens-core/internal";
 import { useHost } from "../data/host";
 import { useSeenPref } from "../data/prefs";
 import { useApi } from "../data/useApi";

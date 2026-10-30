@@ -1,5 +1,5 @@
 import { Monitor, Smartphone, Tablet } from "lucide-react";
-import { READY_GOOD_MS, READY_POOR_MS, type RouteDevice } from "@wizeworks/lens-core";
+import { READY_GOOD_MS, READY_POOR_MS, type RouteDevice } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtMs } from "../../format";
 import { Badge, type Tone } from "../../ui/Badges";
 import { Panel } from "../../ui/Panel";

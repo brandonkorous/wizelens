@@ -1,6 +1,6 @@
 // Issue states from the host (hub or cloud), and changes to them: resolve, ignore, reopen, assign.
 import { useSyncExternalStore } from "react";
-import { type IssueAction, type IssueKind, type IssueState, MAX_BULK } from "@wizeworks/lens-core";
+import { type IssueAction, type IssueKind, type IssueState, MAX_BULK } from "@wizeworks/lens-core/internal";
 import { apiSend } from "./api";
 import { inParts } from "./bulk";
 import { useHost } from "./host";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computePage, computePageSync, memoryExecutor, type Slo, sloBurnPage, sloContext, sloPage } from "@wizeworks/lens-core";
+import { computePage, computePageSync, memoryExecutor, type Slo, sloBurnPage, sloContext, sloPage } from "@wizeworks/lens-core/internal";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { hubExecutor } from "./scale-exec.js";
 import { clockStore, settleAll, writeTraces } from "./test/scale.js";

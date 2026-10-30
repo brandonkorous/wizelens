@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MAX_BULK } from "@wizeworks/lens-core";
+import { MAX_BULK } from "@wizeworks/lens-core/internal";
 import { apiSend } from "../../data/api";
 import { inParts, type PartsRun } from "../../data/bulk";
 import { type CsvColumns, downloadCsv, downloadText, toCsv } from "../../data/csv";

@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { type HostsModel, INFRA_SERVICE, infraDataOf, type KubeModel, type MetricPoint, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { type HostsModel, INFRA_SERVICE, infraDataOf, type KubeModel, type MetricPoint, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core/internal";
 import { INFRA_PARAM_SETS, infraModels, infraScenario } from "../../core/src/testing/infra-scenario.js";
 import { diffClose, METRIC_NOW } from "../../core/src/testing/metric-scenario.js";
 import { hostmetricsExports, kubeExport, podSpanExport } from "../../hub/src/test/collector.js";

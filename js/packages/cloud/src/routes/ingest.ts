@@ -1,12 +1,12 @@
 import type { IncomingMessage } from "node:http";
 import { Transform } from "node:stream";
-import { annotateErrorFrames, redactSignals } from "@wizeworks/lens-core";
+import { annotateErrorFrames, redactSignals } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { bearerOf, fail, sendJson } from "../http/http.js";
 import type { RateLimiter } from "../http/limiter.js";
 import { type ApiKey, type IngestScope, keyAllows, keyByToken } from "../repo/projects.js";
 import { writeService } from "../repo/trace-write.js";
-import { handleOtlp, type HubWrite, type OtlpSignal, parseIngest, parseJson, readBody } from "@wizeworks/lens-hub/kit";
+import { handleOtlp, type HubWrite, type OtlpSignal, parseIngest, parseJson, readBody } from "@wizeworks/lens-hub/internal";
 
 export type IngestKey = ApiKey & { orgId: string };
 

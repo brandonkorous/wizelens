@@ -1,5 +1,5 @@
 import { availableParallelism } from "node:os";
-import { DEFAULT_REDACT_KEYS, FACT_N_PLUS_ONE, FACT_SLOW_QUERY_MS } from "@wizeworks/lens-core";
+import { DEFAULT_REDACT_KEYS, FACT_N_PLUS_ONE, FACT_SLOW_QUERY_MS } from "@wizeworks/lens-core/internal";
 import { type BillingConfig, type BillingOptions, resolveBilling } from "./billing/options.js";
 import type { Mail } from "./mail/mailer.js";
 

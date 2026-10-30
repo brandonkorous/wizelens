@@ -1,6 +1,6 @@
 import { readFile, rm } from "node:fs/promises";
 import { gzipSync } from "node:zlib";
-import { SOURCEMAPS_PATH, type SourceMapEntry } from "@wizeworks/lens-core";
+import { SOURCEMAPS_PATH, type SourceMapEntry } from "@wizeworks/lens-core/internal";
 import { findSourceMaps } from "./find.js";
 import { resolveRelease, resolveTarget, type Target, type TargetOptions } from "./options.js";
 

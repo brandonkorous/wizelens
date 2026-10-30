@@ -1,5 +1,5 @@
 import { BellPlus, Search, Trash2 } from "lucide-react";
-import { LOG_SEARCH_PARAMS, logSearchText } from "@wizeworks/lens-core";
+import { LOG_SEARCH_PARAMS, logSearchText } from "@wizeworks/lens-core/internal";
 import { useHost } from "../../data/host";
 import { usePageModelOf } from "../../data/models";
 import { fmtCount } from "../../format";

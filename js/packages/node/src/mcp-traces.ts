@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { errorInfo, isErrorSpan, parseSearch } from "@wizeworks/lens-core";
+import { errorInfo, isErrorSpan, parseSearch } from "@wizeworks/lens-core/internal";
 import { z } from "zod";
 import { json, type McpDataSource, READ_ONLY, type Source } from "./mcp-shared.js";
 import { allOf, findAll, rangeArg } from "./mcp-store.js";

@@ -1,5 +1,5 @@
 import { parseArgs } from "node:util";
-import { DEFAULT_REDACT_KEYS, envSwitch } from "@wizeworks/lens-core";
+import { DEFAULT_REDACT_KEYS, envSwitch } from "@wizeworks/lens-core/internal";
 import type { HubOptions } from "./options.js";
 
 export const USAGE = `wizelens-hub: one place for the traces of every service.

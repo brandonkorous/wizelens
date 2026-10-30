@@ -1,5 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
-import { FACTS_VERSION } from "@wizeworks/lens-core";
+import { FACTS_VERSION } from "@wizeworks/lens-core/internal";
 import { moveSavedSearches } from "./schema-saved.js";
 import { upgradeFts } from "./schema-fts.js";
 import { HUB_SCHEMA, HUB_SCHEMA_VERSION } from "./schema.js";

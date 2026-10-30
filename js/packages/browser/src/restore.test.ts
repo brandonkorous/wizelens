@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it } from "vitest";
-import { parseTraceparent, type Trace, type TraceSummary } from "@wizeworks/lens-core";
+import { parseTraceparent, type Trace, type TraceSummary } from "@wizeworks/lens-core/internal";
 import { createRecorder } from "./recorder.js";
 import { mergeRequests, serverStatsFromTrace, summaryToRequest } from "./requests.js";
 import { stubPage, urlOf } from "./test-env.js";

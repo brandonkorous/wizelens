@@ -6,7 +6,7 @@ import Fastify from "fastify";
 import { Hono } from "hono";
 import Koa from "koa";
 import { afterAll, describe, expect, it } from "vitest";
-import { ATTR_ROUTED_MS, type Trace } from "@wizeworks/lens-core";
+import { ATTR_ROUTED_MS, type Trace } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "../wizelens.js";
 import type { WizeLens } from "../types.js";
 import { wizeLensFastify } from "./fastify.js";

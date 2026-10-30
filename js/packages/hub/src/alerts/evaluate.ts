@@ -24,7 +24,7 @@ import {
   sloBurnMessage,
   sloBurnPage,
   sloContext,
-} from "@wizeworks/lens-core";
+} from "@wizeworks/lens-core/internal";
 import { sloById } from "../slos.js";
 import { hubExecutor } from "../scale-exec.js";
 import type { HubStore } from "../store.js";

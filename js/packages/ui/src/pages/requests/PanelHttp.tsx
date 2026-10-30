@@ -1,4 +1,4 @@
-import type { RequestItem, Span } from "@wizeworks/lens-core";
+import type { RequestItem, Span } from "@wizeworks/lens-core/internal";
 import { fmtBytes } from "../../format";
 import { DotText, toneOfStatus } from "../../ui/Badges";
 import { Empty, KeyValues } from "../../ui/Panel";

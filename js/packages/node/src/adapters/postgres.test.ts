@@ -2,7 +2,7 @@ import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { sql as dsql } from "drizzle-orm";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "../wizelens.js";
 import { driverOf, instrumentDrizzle } from "./drizzle.js";
 import { instrumentPostgresJs, labelPostgresJs } from "./postgres.js";

@@ -1,4 +1,4 @@
-import { type MetricPoint, sanitizeMetricPoint, seriesKeyOf } from "@wizeworks/lens-core";
+import { type MetricPoint, sanitizeMetricPoint, seriesKeyOf } from "@wizeworks/lens-core/internal";
 
 export interface MetricStoreOptions {
   service: string;

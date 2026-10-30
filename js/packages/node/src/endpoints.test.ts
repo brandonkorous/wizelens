@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { formatTraceparent, newSpanId, newTraceId, type Trace, type TraceSummary } from "@wizeworks/lens-core";
+import { formatTraceparent, newSpanId, newTraceId, type Trace, type TraceSummary } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "./index.js";
 import { fakeSpan, getJson, type Running, settle, startApp, startRemote } from "./test/helpers.js";
 

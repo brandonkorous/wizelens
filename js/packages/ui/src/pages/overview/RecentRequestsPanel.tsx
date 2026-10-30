@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { RequestItem } from "@wizeworks/lens-core";
+import type { RequestItem } from "@wizeworks/lens-core/internal";
 import { fmtMs } from "../../format";
 import { MidPath } from "../../ui/MidPath";
 import { hrefTo, navigate } from "../../routes";

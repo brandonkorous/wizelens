@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BarChart3 } from "lucide-react";
-import type { ErrorsModel } from "@wizeworks/lens-core";
+import type { ErrorsModel } from "@wizeworks/lens-core/internal";
 import { compareSeriesLabel, fmtCount } from "../../format";
 import { setQuery } from "../../routes";
 import { BarList } from "../../ui/BarList";

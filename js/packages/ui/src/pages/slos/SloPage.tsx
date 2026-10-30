@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 import { BellPlus, Target } from "lucide-react";
-import type { SloInput, SloReport } from "@wizeworks/lens-core";
+import type { SloInput, SloReport } from "@wizeworks/lens-core/internal";
 import { apiSend } from "../../data/api";
 import { useHost } from "../../data/host";
 import { act, useApi } from "../../data/useApi";

@@ -1,6 +1,6 @@
 import { hostname } from "node:os";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { newTraceId, type ServiceInfo, type Trace, type TraceSummary } from "@wizeworks/lens-core";
+import { newTraceId, type ServiceInfo, type Trace, type TraceSummary } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "./index.js";
 import { fakeSpan, getJson, type Running, startApp } from "./test/helpers.js";
 

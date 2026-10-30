@@ -1,4 +1,4 @@
-import { activeTags, checkSearch, decodeCursor, expandTags, type SearchItems, type SearchKind, type SearchNode, type SearchQuery, searchMemory, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { activeTags, checkSearch, decodeCursor, expandTags, type SearchItems, type SearchKind, type SearchNode, type SearchQuery, searchMemory, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core/internal";
 import { z } from "zod";
 import { type McpDataSource, tagsOf } from "./mcp-shared.js";
 

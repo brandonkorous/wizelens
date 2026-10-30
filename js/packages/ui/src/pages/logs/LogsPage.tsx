@@ -11,7 +11,7 @@ import { Table } from "../../ui/Table";
 import { withTags } from "../../ui/TagChips";
 import { logRow, useRowTags } from "../../data/tagMatch";
 import { LOG_COLUMNS, LogDetail, LogFilters, LogVolumePanel } from "./LogParts";
-import type { LogsModel } from "@wizeworks/lens-core";
+import type { LogsModel } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { ModelState } from "../../ui/ModelState";
 import { LogMetricsPanel } from "./LogMetrics";

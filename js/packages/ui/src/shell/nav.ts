@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import { Activity, BellRing, Box, Boxes, Building2, Database, FileText, HeartPulse, House, LayoutDashboard, Lightbulb, List, Monitor, Plug, Search, Server, Settings, Share2, ShieldAlert, Siren, Target, TriangleAlert, UserRound, Users } from "lucide-react";
-import type { Capability } from "@wizeworks/lens-core";
+import type { Capability } from "@wizeworks/lens-core/internal";
 import type { PageId } from "../routes";
 
 export type NavGroupId = "start" | "investigate" | "infra" | "analyze" | "monitor" | "manage";

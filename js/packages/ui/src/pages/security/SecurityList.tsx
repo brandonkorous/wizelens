@@ -1,4 +1,4 @@
-import { type IssueInfo, type PageInfo, type SecurityGroup, SECURITY_LABELS } from "@wizeworks/lens-core";
+import { type IssueInfo, type PageInfo, type SecurityGroup, SECURITY_LABELS } from "@wizeworks/lens-core/internal";
 import { fmtAgo, fmtCount } from "../../format";
 import { setQuery } from "../../routes";
 import { Badge, ImpactBadge } from "../../ui/Badges";

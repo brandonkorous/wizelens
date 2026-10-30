@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Bottleneck, CriticalSpan, LayerKind } from "@wizeworks/lens-core";
+import type { Bottleneck, CriticalSpan, LayerKind } from "@wizeworks/lens-core/internal";
 import { fmtMs, fmtPct, serviceSlot } from "../../format";
 import { navigate, traceHref } from "../../routes";
 import { BarList } from "../../ui/BarList";

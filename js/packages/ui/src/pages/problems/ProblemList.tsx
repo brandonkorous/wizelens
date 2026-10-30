@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import type { Problem, ProblemsModel } from "@wizeworks/lens-core";
+import type { Problem, ProblemsModel } from "@wizeworks/lens-core/internal";
 import { fmtCount } from "../../format";
 import { Dot } from "../../ui/Badges";
 import { Empty, Panel } from "../../ui/Panel";

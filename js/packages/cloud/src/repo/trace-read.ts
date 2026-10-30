@@ -1,4 +1,4 @@
-import { buildTrace, HUB_ONLINE_MS, type HubSender, type HubService, type LogRecord, LOOSE_TRACE_PREFIX, type Span, type Trace } from "@wizeworks/lens-core";
+import { buildTrace, HUB_ONLINE_MS, type HubSender, type HubService, type LogRecord, LOOSE_TRACE_PREFIX, type Span, type Trace } from "@wizeworks/lens-core/internal";
 import type { Queryable } from "../db/db.js";
 
 import type { TenantScope, TraceQuery } from "../telemetry/store.js";

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { criticalPath, isErrorSpan, type Span, type Trace } from "@wizeworks/lens-core";
+import { criticalPath, isErrorSpan, type Span, type Trace } from "@wizeworks/lens-core/internal";
 import { SearchInput } from "../../ui/Controls";
 import { Check } from "../../ui/Field";
 

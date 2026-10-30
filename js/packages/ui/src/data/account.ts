@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { OrgRole } from "@wizeworks/lens-core";
+import type { OrgRole } from "@wizeworks/lens-core/internal";
 import { type AccountPrefs, seedAccountPrefs } from "./accountPrefs";
 import { apiFetch, apiSend, onRefused } from "./api";
 import type { AuthClient } from "./auth-client";

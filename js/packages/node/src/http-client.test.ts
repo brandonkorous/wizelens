@@ -1,6 +1,6 @@
 import { context } from "@opentelemetry/api";
 import { suppressTracing } from "@opentelemetry/core";
-import { HEADER_HOP } from "@wizeworks/lens-core";
+import { HEADER_HOP } from "@wizeworks/lens-core/internal";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { createWizeLens } from "./index.js";
 import { call, clientSpans, type Downstream, spansOf, startDownstream } from "./test/downstream.js";

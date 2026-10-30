@@ -2,7 +2,7 @@ import { subscribe, unsubscribe } from "node:diagnostics_channel";
 import type { ClientRequest, IncomingMessage } from "node:http";
 import { type Context, context, isSpanContextValid, type Span as OtelSpan, propagation, SpanKind, trace, type Tracer } from "@opentelemetry/api";
 import { isTracingSuppressed } from "@opentelemetry/core";
-import { HEADER_ENDPOINT, HEADER_HOP } from "@wizeworks/lens-core";
+import { HEADER_ENDPOINT, HEADER_HOP } from "@wizeworks/lens-core/internal";
 import { clientMethod, clientRequestAttributes, clientSpanName, isAbort, type OnRemote, setClientError, setClientStatus } from "./client-attributes.js";
 
 // Node publishes these for every ClientRequest: http.request, http.get, https.*, and new ClientRequest through any Agent.

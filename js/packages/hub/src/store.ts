@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { ATTR_BROWSER_SESSION, DEFAULT_REDACT_KEYS, FACT_N_PLUS_ONE, FACT_SLOW_QUERY_MS, type HubLog, INFRA_SERVICE, redactSignals, type HubRemote, type HubSender, logKey, type MetricPoint, seriesKeyOf, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_SESSION, DEFAULT_REDACT_KEYS, FACT_N_PLUS_ONE, FACT_SLOW_QUERY_MS, type HubLog, INFRA_SERVICE, redactSignals, type HubRemote, type HubSender, logKey, type MetricPoint, seriesKeyOf, type Span } from "@wizeworks/lens-core/internal";
 import { type HubStatements, prepareHubStatements } from "./schema.js";
 import { upgradeHubSchema } from "./schema-scale.js";
 import { pruneStats, type TraceStateRow } from "./settle.js";

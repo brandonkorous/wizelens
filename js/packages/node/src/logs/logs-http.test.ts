@@ -4,7 +4,7 @@ import { logs as logsApi } from "@opentelemetry/api-logs";
 import { LoggerProvider } from "@opentelemetry/sdk-logs";
 import Fastify from "fastify";
 import { afterAll, describe, expect, it } from "vitest";
-import { newSpanId, newTraceId } from "@wizeworks/lens-core";
+import { newSpanId, newTraceId } from "@wizeworks/lens-core/internal";
 import { wizeLensFastify } from "../frameworks/fastify.js";
 import { createWizeLens } from "../wizelens.js";
 import { wizeLensLogProcessor } from "./otel.js";

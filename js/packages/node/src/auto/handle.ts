@@ -1,6 +1,6 @@
 import { context, ProxyTracerProvider, trace, type Tracer, type TracerProvider } from "@opentelemetry/api";
 import { W3CTraceContextPropagator } from "@opentelemetry/core";
-import { DEFAULT_BASE_PATH } from "@wizeworks/lens-core";
+import { DEFAULT_BASE_PATH } from "@wizeworks/lens-core/internal";
 import { type AdapterParts, registerParts } from "../adapters/registry.js";
 import type { StartDbSpan } from "../db.js";
 import { disabledWizeLens } from "../disabled.js";

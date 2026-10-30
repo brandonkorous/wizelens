@@ -1,5 +1,5 @@
-import { type PageName, searchSql, SQLITE_DIALECT, suggestSql, type Trace } from "@wizeworks/lens-core";
-import type { McpDataSource, McpProject, McpProjects } from "@wizeworks/lens-node/kit";
+import { type PageName, searchSql, SQLITE_DIALECT, suggestSql, type Trace } from "@wizeworks/lens-core/internal";
+import type { McpDataSource, McpProject, McpProjects } from "@wizeworks/lens-node/internal";
 import { listEvents, listRules } from "./alerts/store.js";
 import type { HubData } from "./data.js";
 import { metricsPage } from "./metrics-read.js";

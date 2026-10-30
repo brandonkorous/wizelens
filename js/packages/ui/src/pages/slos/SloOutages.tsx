@@ -1,4 +1,4 @@
-import { incidentMs, outagesIn, type SloReport, type UptimeIncidentView, type UptimeList } from "@wizeworks/lens-core";
+import { incidentMs, outagesIn, type SloReport, type UptimeIncidentView, type UptimeList } from "@wizeworks/lens-core/internal";
 import { useHost } from "../../data/host";
 import { uptimeListUrl } from "../../data/uptime";
 import { useApi } from "../../data/useApi";

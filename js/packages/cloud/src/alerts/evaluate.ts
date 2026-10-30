@@ -19,8 +19,8 @@ import {
   sloBurnMessage,
   sloBurnPage,
   sloContext,
-} from "@wizeworks/lens-core";
-import { deliver, type Notice, type Outbox } from "@wizeworks/lens-hub/kit";
+} from "@wizeworks/lens-core/internal";
+import { deliver, type Notice, type Outbox } from "@wizeworks/lens-hub/internal";
 import type { CloudApp } from "../app.js";
 import { alertMail } from "../mail/templates.js";
 import { addEvent } from "../repo/alert-events.js";

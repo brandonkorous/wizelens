@@ -1,5 +1,5 @@
 import { UserRound } from "lucide-react";
-import { userDoc, type UserRow } from "@wizeworks/lens-core";
+import { userDoc, type UserRow } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { fmtAgo, fmtCount, fmtMs, fmtPct } from "../../format";
 import { decodeParam, navigate, userHref, useRoute } from "../../routes";

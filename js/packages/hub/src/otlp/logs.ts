@@ -1,4 +1,4 @@
-import { type HubLog, type LogLevel, looseTraceIdOf, redactAttributes, redactText } from "@wizeworks/lens-core";
+import { type HubLog, type LogLevel, looseTraceIdOf, redactAttributes, redactText } from "@wizeworks/lens-core/internal";
 import type { HubWrite } from "../store.js";
 import { attributesOf, hexId, nanosToMs, type OtlpAnyValue, type OtlpKeyValue, type OtlpResource, senderOf, valueOf } from "./values.js";
 

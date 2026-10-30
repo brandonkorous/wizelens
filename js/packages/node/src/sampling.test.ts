@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { LogRecord, Span } from "@wizeworks/lens-core";
+import type { LogRecord, Span } from "@wizeworks/lens-core/internal";
 import { samplingInfo, TraceSampler } from "./sampling.js";
 import { TraceStore } from "./store.js";
 import { fakeSpan } from "./test/helpers.js";

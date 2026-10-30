@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { expect, it } from "vitest";
-import { logSearchOf } from "@wizeworks/lens-core";
+import { logSearchOf } from "@wizeworks/lens-core/internal";
 import { listSaved } from "./saved.js";
 import { HUB_SCHEMA } from "./schema.js";
 import { upgradeHubSchema } from "./schema-scale.js";

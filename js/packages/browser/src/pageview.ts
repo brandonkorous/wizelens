@@ -1,4 +1,4 @@
-import { type Attributes, ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_REMOTE, ATTR_PAGE, ATTR_PAGE_PRERENDERED, newSpanId, newTraceId, pathShape, type Span } from "@wizeworks/lens-core";
+import { type Attributes, ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_REMOTE, ATTR_PAGE, ATTR_PAGE_PRERENDERED, newSpanId, newTraceId, pathShape, type Span } from "@wizeworks/lens-core/internal";
 import { browserSpan, round1, type ViewRef } from "./browser-span.js";
 import type { ImageInfo } from "./images.js";
 import { clsFromShifts, type NavPoints, type Shift } from "./vitals.js";

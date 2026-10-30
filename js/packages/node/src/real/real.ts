@@ -1,5 +1,5 @@
 // Tests against real servers and the real libraries: on with WIZELENS_TEST_REAL=1 (CI's "Real libraries" job starts the servers).
-import type { Span, Trace } from "@wizeworks/lens-core";
+import type { Span, Trace } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "../wizelens.js";
 import type { WizeLens } from "../types.js";
 import { startApp } from "../test/helpers.js";

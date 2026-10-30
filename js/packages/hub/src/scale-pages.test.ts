@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pageContext, runPage } from "@wizeworks/lens-core";
+import { pageContext, runPage } from "@wizeworks/lens-core/internal";
 import { ANOMALY_NOW, anomalyTraces } from "../../core/src/testing/anomaly-scenario.js";
 import { pageParity, problemsParity } from "../../core/src/testing/scale-pages.js";
 import { scenarioTraces } from "../../core/src/testing/scenario.js";

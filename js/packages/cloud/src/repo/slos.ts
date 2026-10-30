@@ -1,5 +1,5 @@
 // SLOs and Apdex targets per project.
-import type { ApdexTargets, Slo, SloInput } from "@wizeworks/lens-core";
+import type { ApdexTargets, Slo, SloInput } from "@wizeworks/lens-core/internal";
 import { newId } from "../auth/crypto.js";
 import type { Queryable } from "../db/db.js";
 

@@ -1,6 +1,6 @@
 import { context, ROOT_CONTEXT, trace } from "@opentelemetry/api";
 import { TraceState } from "@opentelemetry/core";
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { describe, expect, it } from "vitest";
 import { createWizeLens } from "../wizelens.js";
 import { instrumentSqs } from "./sqs.js";

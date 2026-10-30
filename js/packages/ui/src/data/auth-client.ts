@@ -3,7 +3,7 @@ import { ssoClient } from "@better-auth/sso/client";
 import { createAuthClient } from "better-auth/client";
 import { organizationClient, twoFactorClient } from "better-auth/client/plugins";
 import { createAccessControl } from "better-auth/plugins/access";
-import { ACCESS_STATEMENTS, ORG_ROLES, type OrgRole, ROLE_GRANTS } from "@wizeworks/lens-core";
+import { ACCESS_STATEMENTS, ORG_ROLES, type OrgRole, ROLE_GRANTS } from "@wizeworks/lens-core/internal";
 import { toTwoFactor } from "../routes";
 import { pendingOAuth } from "./oauth";
 

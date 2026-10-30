@@ -1,4 +1,4 @@
-import { ATTR_REACT_COMMITS, ATTR_REACT_COMPONENTS, newSpanId, type Span } from "@wizeworks/lens-core";
+import { ATTR_REACT_COMMITS, ATTR_REACT_COMPONENTS, newSpanId, type Span } from "@wizeworks/lens-core/internal";
 import {
   browserSpan,
   type CaptureOptions as BrowserCaptureOptions,
@@ -9,7 +9,7 @@ import {
   type RecorderOptions,
   startBrowserCapture as startCapture,
   type ViewRef,
-} from "@wizeworks/lens-browser";
+} from "@wizeworks/lens-browser/internal";
 import { topComponents } from "./fiber-stats.js";
 import { drainReactStats, firstCommitMs, installReactHook, waitForCommit } from "./react-hook.js";
 

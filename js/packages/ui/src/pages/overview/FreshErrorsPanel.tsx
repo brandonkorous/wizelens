@@ -1,4 +1,4 @@
-import type { OverviewModel } from "@wizeworks/lens-core";
+import type { OverviewModel } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtTime } from "../../format";
 import { errorHref, hrefTo, navigate } from "../../routes";
 import { Badge } from "../../ui/Badges";

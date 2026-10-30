@@ -3,7 +3,7 @@ import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
-import { ATTR_BROWSER_SESSION, type LogRecord, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_SESSION, type LogRecord, type Span } from "@wizeworks/lens-core/internal";
 import { prepareStatements, SCHEMA, SCHEMA_VERSION, type Statements } from "./persist-schema.js";
 import { hookProcessExit, parseArray } from "./persist-util.js";
 import type { StoredTrace, TraceStore } from "./store.js";

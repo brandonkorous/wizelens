@@ -1,7 +1,7 @@
 // Scale mode: telemetry in ClickHouse. Reads go through views with the Postgres names, so the shared SQL answers pages and searches.
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import type { ProjectSettings } from "@wizeworks/lens-core";
+import type { ProjectSettings } from "@wizeworks/lens-core/internal";
 import type { OrgOf, RetentionOf, TelemetryStore } from "../store.js";
 import { checkFactsVersionCh, clearProjectCh, stampOrgs, syncProjects } from "./admin.js";
 import { type ChClient, chClient } from "./http.js";

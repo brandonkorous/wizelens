@@ -1,4 +1,4 @@
-import type { Attributes, Timing, Trace, TraceView } from "@wizeworks/lens-core";
+import type { Attributes, Timing, Trace, TraceView } from "@wizeworks/lens-core/internal";
 import type { FrameworkHooks } from "./framework.js";
 
 export interface RecordedRequest {

@@ -1,5 +1,5 @@
 // ClickHouse rollup, histogram, and metric tiers: rows add up when they merge, and views read them merged with the Postgres names.
-import { IDS_MAX, LOOSE_TRACE_PREFIX, TIERS } from "@wizeworks/lens-core";
+import { IDS_MAX, LOOSE_TRACE_PREFIX, TIERS } from "@wizeworks/lens-core/internal";
 import { dayOf, EXPIRE, monthOf, secondsOf } from "./schema-raw.js";
 
 const sum = (c: string) => `${c} SimpleAggregateFunction(sum, Float64)`;

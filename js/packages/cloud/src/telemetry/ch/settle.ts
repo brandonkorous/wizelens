@@ -1,5 +1,5 @@
 // Settling on ClickHouse: the same facts and deltas as Postgres, written as inserts. One process settles, so no lock is needed.
-import { factOptionsOf, type ProjectSettings } from "@wizeworks/lens-core";
+import { factOptionsOf, type ProjectSettings } from "@wizeworks/lens-core/internal";
 import type { SettleOptions } from "../store.js";
 import type { Dirty, SettleQueue } from "./queue.js";
 import type { ProjectRunner } from "./settle-work.js";

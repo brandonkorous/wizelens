@@ -1,7 +1,7 @@
 // The packages an app can load at run time: its package.json dependencies and theirs, resolved as Node resolves them. Dev tools stay out.
 import { readFile, realpath } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import type { PackageRef } from "@wizeworks/lens-core";
+import type { PackageRef } from "@wizeworks/lens-core/internal";
 
 interface Manifest {
   name?: unknown;

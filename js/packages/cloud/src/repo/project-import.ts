@@ -1,5 +1,5 @@
 // Many projects at once, each with a new sending key: a name already in the organization gets a key, not a second project.
-import type { ImportKind } from "@wizeworks/lens-core";
+import type { ImportKind } from "@wizeworks/lens-core/internal";
 import { hashToken, newId, newToken, slugOf } from "../auth/crypto.js";
 import type { Queryable } from "../db/db.js";
 import { insertMany } from "./trace-write.js";

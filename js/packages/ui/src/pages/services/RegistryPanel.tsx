@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { groupServices, type ServiceGroup } from "@wizeworks/lens-core";
+import { groupServices, type ServiceGroup } from "@wizeworks/lens-core/internal";
 import { currentProject, useAccount } from "../../data/account";
 import { apiSend } from "../../data/api";
 import { useData } from "../../data/hooks";

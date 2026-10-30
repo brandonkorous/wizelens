@@ -1,4 +1,4 @@
-import { isTimeRange, type MetricsModel, metricsModelOf, type TimeRange, TIME_RANGES } from "@wizeworks/lens-core";
+import { isTimeRange, type MetricsModel, metricsModelOf, type TimeRange, TIME_RANGES } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { fail } from "../http/http.js";
 import type { TelemetryStore, TenantScope } from "../telemetry/store.js";

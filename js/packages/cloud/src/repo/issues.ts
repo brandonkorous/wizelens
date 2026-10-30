@@ -1,5 +1,5 @@
 // Issue states per project: error groups and insights a person resolved, ignored, or assigned.
-import type { IssueKind, IssueState } from "@wizeworks/lens-core";
+import type { IssueKind, IssueState } from "@wizeworks/lens-core/internal";
 import type { Queryable } from "../db/db.js";
 
 interface Row {

@@ -4,7 +4,7 @@ import mysql from "mysql2";
 import pg from "pg";
 import { context, trace } from "@opentelemetry/api";
 import { afterEach, describe, expect, it } from "vitest";
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { createDbSpans } from "../db.js";
 import { createWizeLens } from "../wizelens.js";
 import { instrumentBetterSqlite3, instrumentNodeSqlite } from "./sqlite.js";

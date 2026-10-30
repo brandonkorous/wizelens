@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react";
-import type { ProjectSettings as Settings } from "@wizeworks/lens-core";
+import type { ProjectSettings as Settings } from "@wizeworks/lens-core/internal";
 import { currentProject, useAccount } from "../../data/account";
 import { apiSend } from "../../data/api";
 import { firstProject, type SettingsReply, settingsBody, useSettingsProjects } from "../../data/projectSettings";

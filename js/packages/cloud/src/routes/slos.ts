@@ -1,4 +1,4 @@
-import { parseApdexTargets, parseSlo, type Slo, sloReport } from "@wizeworks/lens-core";
+import { parseApdexTargets, parseSlo, type Slo, sloReport } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { requireProject } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson } from "../http/http.js";

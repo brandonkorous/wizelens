@@ -1,5 +1,5 @@
 import { type ComponentType, lazy, Suspense, useEffect, useMemo } from "react";
-import { errorEvents, type Health, isFailed, requestRows } from "@wizeworks/lens-core";
+import { errorEvents, type Health, isFailed, requestRows } from "@wizeworks/lens-core/internal";
 import { TraceDetail } from "./pages/trace/TraceDetailPage";
 import { TraceCompare } from "./pages/trace/TraceCompare";
 import { AlertsPage } from "./pages/alerts/AlertsPage";

@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { fmtMetric, type MetricDetail, type MetricsModel, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { fmtMetric, type MetricDetail, type MetricsModel, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core/internal";
 import { z } from "zod";
 import { json, READ_ONLY, type Source } from "./mcp-shared.js";
 

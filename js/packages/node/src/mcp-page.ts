@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { AlertChannel, AlertRule, PageName } from "@wizeworks/lens-core";
+import type { AlertChannel, AlertRule, PageName } from "@wizeworks/lens-core/internal";
 import { z } from "zod";
 import { json, type McpAlerts, READ_ONLY, type Source } from "./mcp-shared.js";
 import { rangeArg } from "./mcp-store.js";

@@ -1,4 +1,4 @@
-import { METRIC_ALERT_STATS, type MetricAlertStat, type MetricsModel } from "@wizeworks/lens-core";
+import { METRIC_ALERT_STATS, type MetricAlertStat, type MetricsModel } from "@wizeworks/lens-core/internal";
 import { getScope } from "../../data/prefs";
 import { useApi } from "../../data/useApi";
 import { Field, FormRow, SelectField } from "../../ui/Field";

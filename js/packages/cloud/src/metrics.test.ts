@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterEach, describe, expect, it } from "vitest";
-import type { MetricsModel } from "@wizeworks/lens-core";
+import type { MetricsModel } from "@wizeworks/lens-core/internal";
 import { evaluateAll } from "./alerts/evaluate.js";
 import { pruneMetricsByRetention } from "./repo/trace-write.js";
 import type { Cloud } from "./server.js";

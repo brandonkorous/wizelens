@@ -2,8 +2,8 @@
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
-import { type ApdexTargets, parseApdexTargets, parseSlo, type Slo, sloReport } from "@wizeworks/lens-core";
-import { sendJson } from "@wizeworks/lens-node/kit";
+import { type ApdexTargets, parseApdexTargets, parseSlo, type Slo, sloReport } from "@wizeworks/lens-core/internal";
+import { sendJson } from "@wizeworks/lens-node/internal";
 import { parseJson, readBody } from "./body.js";
 import { hubExecutor } from "./scale-exec.js";
 import type { HubStore } from "./store.js";

@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
-import { answerResolve, checkUpload, type MapLoader, MAX_SOURCEMAP_BYTES, normalizeRelease, parseSourceMap, resolveTargetOf } from "@wizeworks/lens-core";
-import { localMapLoader, sendJson, type SourceMapOptions } from "@wizeworks/lens-node/kit";
+import { answerResolve, checkUpload, type MapLoader, MAX_SOURCEMAP_BYTES, normalizeRelease, parseSourceMap, resolveTargetOf } from "@wizeworks/lens-core/internal";
+import { localMapLoader, sendJson, type SourceMapOptions } from "@wizeworks/lens-node/internal";
 import { parseJson, readBody } from "./body.js";
 import { listSourceMaps, saveSourceMap, uploadedMapLoader } from "./sourcemaps.js";
 

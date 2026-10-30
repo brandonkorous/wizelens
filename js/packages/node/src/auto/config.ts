@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { envSwitch } from "@wizeworks/lens-core";
+import { envSwitch } from "@wizeworks/lens-core/internal";
 import { HUD_ENV } from "../mode.js";
 import type { WizeLensOptions } from "../types.js";
 

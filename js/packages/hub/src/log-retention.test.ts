@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
-import { buildTrace, isLooseTraceId, type Trace } from "@wizeworks/lens-core";
+import { buildTrace, isLooseTraceId, type Trace } from "@wizeworks/lens-core/internal";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { hubExecutor } from "./scale-exec.js";
 import { HubStore } from "./store.js";

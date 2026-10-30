@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { parseProjectImport } from "@wizeworks/lens-core";
+import { parseProjectImport } from "@wizeworks/lens-core/internal";
 import { loadAccount } from "../../data/account";
 import { useAsk } from "../../ui/Dialog";
 import { Modal } from "../../ui/Modal";

@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from "vitest";
-import { buildTrace, type Trace, windowOf } from "@wizeworks/lens-core";
+import { buildTrace, type Trace, windowOf } from "@wizeworks/lens-core/internal";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { searchParity } from "../../core/src/testing/search-parity.js";
 import { CH_LIMIT, CH_URL, type ChTest, chScope, chSettle, chTest, chWrite, testOrgOf } from "./test/ch.js";

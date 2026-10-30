@@ -1,5 +1,5 @@
 // The known-vulnerability check: package versions not checked for a day go to OSV, and new advisories are fetched once.
-import { advisorySeverity, packageKey, type PackageRef, type PackageRisk, type PackageScan } from "@wizeworks/lens-core";
+import { advisorySeverity, packageKey, type PackageRef, type PackageRisk, type PackageScan } from "@wizeworks/lens-core/internal";
 import { type Fetch, fetchAdvisory, OSV_BATCH, OSV_URL, queryBatch } from "./osv.js";
 import type { Advisory, PackageDb, ServicePackage } from "./store.js";
 

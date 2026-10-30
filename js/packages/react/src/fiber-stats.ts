@@ -1,4 +1,4 @@
-import type { ReactComponentStat } from "@wizeworks/lens-core";
+import type { ReactComponentStat } from "@wizeworks/lens-core/internal";
 
 /** The parts of a React fiber this file reads. React dev builds have them all. */
 export interface FiberLike {

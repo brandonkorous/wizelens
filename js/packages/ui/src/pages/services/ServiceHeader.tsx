@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { AlertOnThis } from "../../ui/AlertOnThis";
-import { groupServices, type ServiceGroup, type ServiceRow, serviceDoc, serviceScope } from "@wizeworks/lens-core";
+import { groupServices, type ServiceGroup, type ServiceRow, serviceDoc, serviceScope } from "@wizeworks/lens-core/internal";
 import { useData } from "../../data/hooks";
 import { useHost } from "../../data/host";
 import { useEnvScope, useProjectScope } from "../../data/prefs";
@@ -11,7 +11,7 @@ import { KIND_ICON, KIND_LABEL, StatusText } from "./serviceParts";
 import { useGroupTags } from "../../data/tagMatch";
 import { TagChips } from "../../ui/TagChips";
 import { TagThis } from "../../ui/TagThis";
-import { PROJECT_MARK } from "@wizeworks/lens-core";
+import { PROJECT_MARK } from "@wizeworks/lens-core/internal";
 
 const DETAIL_LABEL: Partial<Record<ServiceRow["kind"], string>> = { database: "System", external: "Host", queue: "Queue", web: "Source" };
 

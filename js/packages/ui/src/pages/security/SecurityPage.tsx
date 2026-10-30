@@ -1,5 +1,5 @@
 import { Globe, ShieldAlert, TriangleAlert } from "lucide-react";
-import { OWASP_CATEGORIES, percentChange, type SecurityModel } from "@wizeworks/lens-core";
+import { OWASP_CATEGORIES, percentChange, type SecurityModel } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { useServiceScope } from "../../data/prefs";
 import { fmtAgo, fmtCount } from "../../format";

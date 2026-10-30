@@ -1,5 +1,5 @@
 // The heavy part of a settle batch for one project: read its traces, build facts and deltas, and write them. Runs in a worker thread or in the main thread.
-import { compact, type FactOptions, factRows, FACT_TABLES, type FactTable, isLooseTraceId, mergeDeltas, type SettleDelta, settleDelta, storedOf, type Trace, traceFacts, withoutTop } from "@wizeworks/lens-core";
+import { compact, type FactOptions, factRows, FACT_TABLES, type FactTable, isLooseTraceId, mergeDeltas, type SettleDelta, settleDelta, storedOf, type Trace, traceFacts, withoutTop } from "@wizeworks/lens-core/internal";
 import type { ChClient } from "./http.js";
 import type { Dirty } from "./queue.js";
 import { tenantScope } from "../store.js";

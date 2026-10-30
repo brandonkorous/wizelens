@@ -1,4 +1,4 @@
-import { entryServerSpan, ATTR_REQUEST_BODY, ATTR_REQUEST_BODY_TRUNCATED, ATTR_RESPONSE_BODY, ATTR_RESPONSE_BODY_TRUNCATED, REQUEST_HEADER_PREFIX, RESPONSE_HEADER_PREFIX, type Span, type Trace } from "@wizeworks/lens-core";
+import { entryServerSpan, ATTR_REQUEST_BODY, ATTR_REQUEST_BODY_TRUNCATED, ATTR_RESPONSE_BODY, ATTR_RESPONSE_BODY_TRUNCATED, REQUEST_HEADER_PREFIX, RESPONSE_HEADER_PREFIX, type Span, type Trace } from "@wizeworks/lens-core/internal";
 
 /** The entry server span of a trace: the request the app received. */
 export function rootServer(trace: Trace | undefined): Span | undefined {

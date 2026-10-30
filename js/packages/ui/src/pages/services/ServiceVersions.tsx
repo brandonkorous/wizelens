@@ -1,4 +1,4 @@
-import type { ServicePageModel, VersionStat } from "@wizeworks/lens-core";
+import type { ServicePageModel, VersionStat } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtDateTime, fmtMs, fmtPct } from "../../format";
 import { hrefTo, navigate } from "../../routes";
 import { Badge } from "../../ui/Badges";

@@ -1,13 +1,13 @@
 import { StrictMode } from "react";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { register, registered, type RegisteredInstance } from "@wizeworks/lens-browser";
+import { register, registered, type RegisteredInstance } from "@wizeworks/lens-browser/internal";
 import { WizeLensProvider, type WizeLensProviderProps } from "./WizeLensProvider.js";
 import { huds, resetHuds, stubPage, stubServer } from "./test-hud.js";
 import { type TestRoot, testRoot } from "./test-root.js";
 
-vi.mock("@wizeworks/lens-browser", async (load) => ({
-  ...(await load<typeof import("@wizeworks/lens-browser")>()),
+vi.mock("@wizeworks/lens-browser/internal", async (load) => ({
+  ...(await load<typeof import("@wizeworks/lens-browser/internal")>()),
   mountHud: (await import("./test-hud.js")).fakeMountHud,
 }));
 

@@ -1,6 +1,6 @@
 import { ExternalLink } from "lucide-react";
 import { useMemo } from "react";
-import { endpointScope, type RequestItem, serviceScope, userScope } from "@wizeworks/lens-core";
+import { endpointScope, type RequestItem, serviceScope, userScope } from "@wizeworks/lens-core/internal";
 import { fmtMs } from "../../format";
 import { traceHref, userHref } from "../../routes";
 import { BarList, type BarItem } from "../../ui/BarList";

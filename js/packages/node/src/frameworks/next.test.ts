@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { AddressInfo } from "node:net";
 import { SpanKind, trace } from "@opentelemetry/api";
 import { afterAll, expect, it } from "vitest";
-import type { Trace } from "@wizeworks/lens-core";
+import type { Trace } from "@wizeworks/lens-core/internal";
 import { onRequestError, registerWizeLens } from "./next.js";
 
 const wl = registerWizeLens({ service: "web", storage: "memory", instrumentFetch: false });

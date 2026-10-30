@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import type { IngestBatch, MetricPoint, ServiceInfo } from "@wizeworks/lens-core";
+import type { IngestBatch, MetricPoint, ServiceInfo } from "@wizeworks/lens-core/internal";
 import { metricsOf } from "../adapters/registry.js";
 import { HubExporter } from "../hub-export.js";
 import { type Running, startApp } from "../test/helpers.js";

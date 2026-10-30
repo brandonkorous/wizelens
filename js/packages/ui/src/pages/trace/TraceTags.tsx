@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { endpointScope, serviceScope, type TagScope, type Trace } from "@wizeworks/lens-core";
+import { endpointScope, serviceScope, type TagScope, type Trace } from "@wizeworks/lens-core/internal";
 import { traceRow, useRowTags } from "../../data/tagMatch";
 import { TagChips } from "../../ui/TagChips";
 import { TagThis } from "../../ui/TagThis";

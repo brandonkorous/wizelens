@@ -1,5 +1,5 @@
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
-import { buildTrace, HUB_ONLINE_MS, LOOSE_TRACE_PREFIX, type HubSender, type HubService, type LogRecord, type Span, type Trace } from "@wizeworks/lens-core";
+import { buildTrace, HUB_ONLINE_MS, LOOSE_TRACE_PREFIX, type HubSender, type HubService, type LogRecord, type Span, type Trace } from "@wizeworks/lens-core/internal";
 
 export interface TraceQuery {
   /** Only traces that changed at or after this time (epoch ms, hub clock). */

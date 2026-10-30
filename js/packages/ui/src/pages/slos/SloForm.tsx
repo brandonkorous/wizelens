@@ -1,6 +1,6 @@
 import { type FormEvent, type ReactNode, useState } from "react";
 import { useOnce } from "../../ui/useOnce";
-import type { SloInput } from "@wizeworks/lens-core";
+import type { SloInput } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { Field, FormRow, SelectField } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";

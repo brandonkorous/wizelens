@@ -1,4 +1,4 @@
-import { type FactOptions, FACT_TABLES, FACTS_VERSION, factOptionsOf, LOG_KINDS_SQL, PG_DIALECT, settingsOf, settleStatements, type Statement, tierPruneStatements, type TraceState, type Trace } from "@wizeworks/lens-core";
+import { type FactOptions, FACT_TABLES, FACTS_VERSION, factOptionsOf, LOG_KINDS_SQL, PG_DIALECT, settingsOf, settleStatements, type Statement, tierPruneStatements, type TraceState, type Trace } from "@wizeworks/lens-core/internal";
 import type { Db, Queryable } from "./db/db.js";
 import { loadSettling } from "./repo/trace-read.js";
 import type { SettleOptions } from "./telemetry/store.js";

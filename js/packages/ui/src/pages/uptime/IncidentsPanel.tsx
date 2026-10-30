@@ -1,4 +1,4 @@
-import { incidentMs, type UptimeIncidentView } from "@wizeworks/lens-core";
+import { incidentMs, type UptimeIncidentView } from "@wizeworks/lens-core/internal";
 import { fmtDateTime } from "../../format";
 import { hrefTo } from "../../routes";
 import { Badge } from "../../ui/Badges";

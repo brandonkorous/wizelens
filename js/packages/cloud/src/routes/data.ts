@@ -1,4 +1,4 @@
-import { PROTOCOL_VERSION, type ServiceInfo } from "@wizeworks/lens-core";
+import { PROTOCOL_VERSION, type ServiceInfo } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { joinScope } from "../auth/join-scope.js";
 import { principalOf, type ProjectAccess, requireProject } from "../auth/principal.js";

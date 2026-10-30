@@ -1,5 +1,5 @@
 // Importing projects from a file: send the rows in parts, and save the new keys as CSV or JSON. The secrets stay in this browser.
-import { MAX_IMPORT_REQUEST, type ProjectImportRow } from "@wizeworks/lens-core";
+import { MAX_IMPORT_REQUEST, type ProjectImportRow } from "@wizeworks/lens-core/internal";
 import { apiSend } from "../../data/api";
 import { inParts } from "../../data/bulk";
 import { type CsvColumns, downloadCsv, downloadText, toCsv } from "../../data/csv";

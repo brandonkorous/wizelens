@@ -1,5 +1,5 @@
 // Lists across an organization ("All projects"), each row with its project; creating and changing stay on that project's routes.
-import { type IssueState, labelKey, sloReport, uptimeList } from "@wizeworks/lens-core";
+import { type IssueState, labelKey, sloReport, uptimeList } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { type OrgAccess, requireOrgRead } from "../auth/org-access.js";
 import { sendJson } from "../http/http.js";

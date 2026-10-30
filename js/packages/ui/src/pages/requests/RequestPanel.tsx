@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import type { RequestItem, Trace } from "@wizeworks/lens-core";
+import type { RequestItem, Trace } from "@wizeworks/lens-core/internal";
 import { fmtDate, fmtMs, fmtTime } from "../../format";
 import { setQuery } from "../../routes";
 import { Badge, toneOfStatus } from "../../ui/Badges";

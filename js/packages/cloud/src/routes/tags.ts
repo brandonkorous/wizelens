@@ -1,4 +1,4 @@
-import { activeTags, BUILT_IN_PREFIX, checkTagInput, matchTags, type SearchQuery, TAG_LIMITS, type TagRule, tagMatchRequestOf } from "@wizeworks/lens-core";
+import { activeTags, BUILT_IN_PREFIX, checkTagInput, matchTags, type SearchQuery, TAG_LIMITS, type TagRule, tagMatchRequestOf } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { type ProjectAccess, requireProject } from "../auth/principal.js";
 import { can } from "../auth/roles.js";

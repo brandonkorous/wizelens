@@ -1,4 +1,4 @@
-import { DASHBOARD_ENV, ENABLED_ENV, envSwitch } from "@wizeworks/lens-core";
+import { DASHBOARD_ENV, ENABLED_ENV, envSwitch } from "@wizeworks/lens-core/internal";
 import type { WizeLensOptions } from "./types.js";
 
 const production = (): boolean => process.env.NODE_ENV === "production";

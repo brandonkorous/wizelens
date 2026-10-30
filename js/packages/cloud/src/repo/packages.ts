@@ -1,6 +1,6 @@
 // The cloud's package store, in Postgres: each project's services and their packages, and OSV answers shared by all projects.
-import { type PackageEcosystem, packageKey, type PackageRef } from "@wizeworks/lens-core";
-import type { Advisory, PackageDb, ServicePackage } from "@wizeworks/lens-hub/kit";
+import { type PackageEcosystem, packageKey, type PackageRef } from "@wizeworks/lens-core/internal";
+import type { Advisory, PackageDb, ServicePackage } from "@wizeworks/lens-hub/internal";
 import type { Db } from "../db/db.js";
 
 interface Row {

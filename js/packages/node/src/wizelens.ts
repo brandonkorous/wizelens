@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { W3CTraceContextPropagator } from "@opentelemetry/core";
-import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS, envSwitch, type SendState, type TagRule, tagsFromOptions } from "@wizeworks/lens-core";
+import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS, envSwitch, type SendState, type TagRule, tagsFromOptions } from "@wizeworks/lens-core/internal";
 import { createHandler } from "./api.js";
 import { createMiddleware } from "./capture.js";
 import { addCleanup, partsOf, registerParts, runCleanups } from "./adapters/registry.js";

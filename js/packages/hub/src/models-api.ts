@@ -1,6 +1,6 @@
 import type { ServerResponse } from "node:http";
-import { alignNow, APDEX_PAGES, ISSUE_PAGES, isPageName, isTimeRange, type ModelOf, type PageName, pageContext, runPage, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
-import { sendJson } from "@wizeworks/lens-node/kit";
+import { alignNow, APDEX_PAGES, ISSUE_PAGES, isPageName, isTimeRange, type ModelOf, type PageName, pageContext, runPage, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core/internal";
+import { sendJson } from "@wizeworks/lens-node/internal";
 import type { ApiContext } from "./api.js";
 import type { HubData } from "./data.js";
 import { issueStates, issuesVersion } from "./issues.js";

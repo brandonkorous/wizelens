@@ -1,6 +1,6 @@
 import { PagesOnly } from "../../ui/PagesOnly";
 import { useState } from "react";
-import { filterFromQuery, requestOf, type RequestItem } from "@wizeworks/lens-core";
+import { filterFromQuery, requestOf, type RequestItem } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { useServiceScope } from "../../data/prefs";
 import { useRoute } from "../../routes";

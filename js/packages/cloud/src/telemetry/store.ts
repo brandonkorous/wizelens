@@ -1,6 +1,6 @@
 // Where the cloud keeps telemetry: spans, logs, metrics, and their stats. Accounts, keys, and settings always stay in Postgres.
-import type { Executor, FactOptions, MetricAlertData, MetricData, MetricSqlScope, SearchPage, SearchQuery, SqlScope, Suggestion, SuggestRequest, TimeRange, TimeWindow, Trace } from "@wizeworks/lens-core";
-import type { HubWrite } from "@wizeworks/lens-hub/kit";
+import type { Executor, FactOptions, MetricAlertData, MetricData, MetricSqlScope, SearchPage, SearchQuery, SqlScope, Suggestion, SuggestRequest, TimeRange, TimeWindow, Trace } from "@wizeworks/lens-core/internal";
+import type { HubWrite } from "@wizeworks/lens-hub/internal";
 
 declare const TENANT: unique symbol;
 

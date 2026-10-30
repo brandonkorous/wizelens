@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, it } from "vitest";
-import { logSearchOf } from "@wizeworks/lens-core";
+import { logSearchOf } from "@wizeworks/lens-core/internal";
 import { openPglite } from "./db/db.js";
 import { migrate, splitStatements } from "./db/migrate.js";
 import { MIGRATIONS, MIGRATIONS_TABLE } from "./db/schema.js";

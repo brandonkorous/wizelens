@@ -1,4 +1,4 @@
-import { type Executor, PG_DIALECT, type SqlRunner, sqlExecutor } from "@wizeworks/lens-core";
+import { type Executor, PG_DIALECT, type SqlRunner, sqlExecutor } from "@wizeworks/lens-core/internal";
 import type { Queryable } from "./db/db.js";
 import { getTrace } from "./repo/trace-read.js";
 import { type SettlingScope, sqlScope, type TenantScope, tenantScope } from "./telemetry/store.js";

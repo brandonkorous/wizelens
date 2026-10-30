@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { activeTags, itemOwner, matchKey, matchTags, type SearchPage, type SearchQuery, searchMemory, type TagMatches } from "@wizeworks/lens-core";
+import { activeTags, itemOwner, matchKey, matchTags, type SearchPage, type SearchQuery, searchMemory, type TagMatches } from "@wizeworks/lens-core/internal";
 import { json, type McpDataSource, READ_ONLY, type Source, tagsOf } from "./mcp-shared.js";
 
 // Tags for AI tools (docs/TAGS-PLAN.md): the project's tag rules, and which of them match a page of search results.

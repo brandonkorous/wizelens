@@ -1,5 +1,5 @@
 import type { DatabaseSync, SQLInputValue, StatementSync } from "node:sqlite";
-import { LOG_KINDS_SQL, logPruneStatements, pruneStatements, SQLITE_DIALECT, settleStatements, type Statement, tierByName, tierCutoff, tierPruneStatements, type TraceState } from "@wizeworks/lens-core";
+import { LOG_KINDS_SQL, logPruneStatements, pruneStatements, SQLITE_DIALECT, settleStatements, type Statement, tierByName, tierCutoff, tierPruneStatements, type TraceState } from "@wizeworks/lens-core/internal";
 import { loadTraces } from "./store-read.js";
 import { factsOf, keepMsOf, logKeepMsOf } from "./settings.js";
 import type { HubStore } from "./store.js";

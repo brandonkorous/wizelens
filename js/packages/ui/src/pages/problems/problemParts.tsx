@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import { Bug, Database, GitBranch, Rocket } from "lucide-react";
-import { ANOMALY_LABEL, type AnomalyMetric, causeText, type Problem, type SuspectedCause } from "@wizeworks/lens-core";
+import { ANOMALY_LABEL, type AnomalyMetric, causeText, type Problem, type SuspectedCause } from "@wizeworks/lens-core/internal";
 import { fmtAgo, fmtCount, fmtMs, fmtPct } from "../../format";
 import { hrefTo } from "../../routes";
 

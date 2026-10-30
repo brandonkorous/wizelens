@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { SecurityModel } from "@wizeworks/lens-core";
+import type { SecurityModel } from "@wizeworks/lens-core/internal";
 import type { Hub } from "../hub.js";
 import { post, startHub } from "../test/helpers.js";
 import { runPackageRound } from "./loop.js";

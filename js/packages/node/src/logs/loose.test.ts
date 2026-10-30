@@ -3,7 +3,7 @@ import bunyan from "bunyan";
 import pino from "pino";
 import winston from "winston";
 import { afterEach, describe, expect, it } from "vitest";
-import { isLooseTraceId, type LogRecord, LOOSE_WINDOW_MS } from "@wizeworks/lens-core";
+import { isLooseTraceId, type LogRecord, LOOSE_WINDOW_MS } from "@wizeworks/lens-core/internal";
 import { looseLogsOf, type LogOptions } from "../loose-logs.js";
 import { TraceStore } from "../store.js";
 import { EntryMap, LooseBatcher } from "../store-entries.js";

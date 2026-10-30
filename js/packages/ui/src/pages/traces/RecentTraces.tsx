@@ -1,6 +1,6 @@
 import { Fragment } from "react";
-import { requestOf, type TagRule, type Trace, type TraceListItem } from "@wizeworks/lens-core";
-export { tracePath } from "@wizeworks/lens-core";
+import { requestOf, type TagRule, type Trace, type TraceListItem } from "@wizeworks/lens-core/internal";
+export { tracePath } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtDateTime, fmtMs, fmtTime, shortId, shortPath } from "../../format";
 import { hrefTo, setQuery, useRoute } from "../../routes";
 import { Dot, toneOfHealth, type Tone } from "../../ui/Badges";

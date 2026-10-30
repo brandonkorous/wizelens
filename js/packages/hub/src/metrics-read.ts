@@ -1,6 +1,6 @@
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
 import { sqlScopeOf } from "./scale-exec.js";
-import { alignNow, isTimeRange, metricPageSteps, type MetricRows, type MetricsModel, metricsModelOf, runMetricSync, type TimeRange } from "@wizeworks/lens-core";
+import { alignNow, isTimeRange, metricPageSteps, type MetricRows, type MetricsModel, metricsModelOf, runMetricSync, type TimeRange } from "@wizeworks/lens-core/internal";
 
 export interface MetricScope {
   project?: string;

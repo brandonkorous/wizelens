@@ -1,6 +1,6 @@
 import { type ReactNode, useMemo, useState } from "react";
 import { BellRing } from "lucide-react";
-import { ALERT_METRICS, type AlertRule, TIME_RANGES } from "@wizeworks/lens-core";
+import { ALERT_METRICS, type AlertRule, TIME_RANGES } from "@wizeworks/lens-core/internal";
 import { useRange } from "../../data/host";
 import { parseWindow, useWindowPref } from "../../data/period";
 import { useApi } from "../../data/useApi";

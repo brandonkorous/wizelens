@@ -1,5 +1,5 @@
 import { Eye, Gauge, Monitor, Server, Zap } from "lucide-react";
-import { percentChange, type RoutePageModel, type TraceItem } from "@wizeworks/lens-core";
+import { percentChange, type RoutePageModel, type TraceItem } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { compareSeriesLabel, fmtCount, fmtMs, fmtTime } from "../../format";
 import { hrefTo, navigate, traceHref } from "../../routes";

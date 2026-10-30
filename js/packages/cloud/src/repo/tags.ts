@@ -1,4 +1,4 @@
-import { BUILT_IN_PREFIX, isBuiltInName, type TagColor, type TagInput, type TagRule, tagList } from "@wizeworks/lens-core";
+import { BUILT_IN_PREFIX, isBuiltInName, type TagColor, type TagInput, type TagRule, tagList } from "@wizeworks/lens-core/internal";
 import { newId } from "../auth/crypto.js";
 import type { Queryable } from "../db/db.js";
 

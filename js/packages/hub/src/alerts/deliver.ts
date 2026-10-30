@@ -1,5 +1,5 @@
 // Sends alert notices: webhooks, Slack, Microsoft Teams, Discord, PagerDuty, and (on the cloud) email.
-import type { AlertChannel, AlertNoticeState } from "@wizeworks/lens-core";
+import type { AlertChannel, AlertNoticeState } from "@wizeworks/lens-core/internal";
 import { checkTarget } from "./target.js";
 
 export interface Notice {

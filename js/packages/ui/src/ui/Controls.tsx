@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { PAGE_SIZES } from "@wizeworks/lens-core";
+import { PAGE_SIZES } from "@wizeworks/lens-core/internal";
 import { fmtCount } from "../format";
 import { Dropdown } from "./Dropdown";
 

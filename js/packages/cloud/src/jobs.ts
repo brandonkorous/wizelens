@@ -11,7 +11,7 @@ import { checkHealth } from "./notify/health.js";
 import { sendTeamNotices } from "./notify/team.js";
 import { pruneIncidents } from "./repo/uptime.js";
 import { runUptime } from "./uptime/run.js";
-import { checkPackages } from "@wizeworks/lens-hub/kit";
+import { checkPackages } from "@wizeworks/lens-hub/internal";
 import { pgPackages } from "./repo/packages.js";
 
 const HOUSEKEEPING_MS = 10 * 60_000;

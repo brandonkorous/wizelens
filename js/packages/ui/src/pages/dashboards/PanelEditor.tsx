@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { Plus, X } from "lucide-react";
-import { type DashChartType, type DashPanel, MAX_PANEL_METRICS } from "@wizeworks/lens-core";
+import { type DashChartType, type DashPanel, MAX_PANEL_METRICS } from "@wizeworks/lens-core/internal";
 import { useMetricDetails } from "../../data/metricDetails";
 import { useMetricsModel } from "../../data/metrics";
 import { Field, FormRow, SelectField } from "../../ui/Field";

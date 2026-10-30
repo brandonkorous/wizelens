@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { SendState, ServiceInfo } from "@wizeworks/lens-core";
+import type { SendState, ServiceInfo } from "@wizeworks/lens-core/internal";
 import { fmtAgo } from "../../format";
 import { hrefTo } from "../../routes";
 import { DotText } from "../../ui/Badges";

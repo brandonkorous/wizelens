@@ -1,4 +1,4 @@
-import { ATTR_BROWSER_SESSION, buildTrace, isLooseTraceId, type LogRecord, type SamplingInfo, type Span, type Trace, type TraceSummary, toSummary } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_SESSION, buildTrace, isLooseTraceId, type LogRecord, type SamplingInfo, type Span, type Trace, type TraceSummary, toSummary } from "@wizeworks/lens-core/internal";
 import type { Held, TraceSampler, Verdict } from "./sampling.js";
 import type { StoredTrace, TraceChanges } from "./store-types.js";
 

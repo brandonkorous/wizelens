@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { BROWSER_MAX_RANGE_MS, type Capability, type HostMode, IN_APP_CAPABILITIES, type ServiceInfo, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { BROWSER_MAX_RANGE_MS, type Capability, type HostMode, IN_APP_CAPABILITIES, type ServiceInfo, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core/internal";
 import { useData } from "./provider";
 import { useRangePref } from "./prefs";
 

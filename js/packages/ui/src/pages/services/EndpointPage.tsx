@@ -1,5 +1,5 @@
 import { Gauge, Timer, TriangleAlert, Waypoints } from "lucide-react";
-import { endpointDoc, type EndpointPageModel, type EndpointPart, endpointScope, type ErrorGroup, errorGroupDoc, errorText, isFailed, percentChange, type RequestItem, serviceScope } from "@wizeworks/lens-core";
+import { endpointDoc, type EndpointPageModel, type EndpointPart, endpointScope, type ErrorGroup, errorGroupDoc, errorText, isFailed, percentChange, type RequestItem, serviceScope } from "@wizeworks/lens-core/internal";
 import { traceRow, useGroupTags } from "../../data/tagMatch";
 import { TagChips } from "../../ui/TagChips";
 import { GroupTaggedTable, TaggedTable } from "../../ui/TaggedTable";

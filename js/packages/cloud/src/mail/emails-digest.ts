@@ -1,4 +1,4 @@
-import { errorText, type Headline } from "@wizeworks/lens-core";
+import { errorText, type Headline } from "@wizeworks/lens-core/internal";
 import type { DigestData } from "../notify/digest-data.js";
 import type { DigestPeriod } from "../repo/mail-prefs.js";
 import { type Block, type EmailContent, list, type Stat, stats } from "./content.js";

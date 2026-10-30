@@ -1,6 +1,6 @@
 import type { BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getSessionFromCtx, isAPIError } from "better-auth/api";
-import { isOrgRole } from "@wizeworks/lens-core";
+import { isOrgRole } from "@wizeworks/lens-core/internal";
 import { audit } from "../repo/audit.js";
 import { auditScim, billingGuard, rememberScimDelete } from "./billing-hooks.js";
 import type { AuthDeps } from "./deps.js";

@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { ATTR_ENDUSER, ATTR_USER_NAME, TAG_PREFIX } from "@wizeworks/lens-core";
+import { ATTR_ENDUSER, ATTR_USER_NAME, TAG_PREFIX } from "@wizeworks/lens-core/internal";
 import { requestSpan } from "./capture.js";
 import type { LogWriter } from "./logger.js";
 import { activeSpan, currentServerSpan, markExpected, recordOn } from "./spans.js";

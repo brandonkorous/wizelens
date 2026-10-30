@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { ATTR_BROWSER_APP, ATTR_BROWSER_TYPE } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_APP, ATTR_BROWSER_TYPE } from "@wizeworks/lens-core/internal";
 import { originAllowed, originOf, originsFor } from "./repo/key-origins.js";
 import { browserWrite } from "./routes/browser.js";
 import type { Cloud } from "./server.js";

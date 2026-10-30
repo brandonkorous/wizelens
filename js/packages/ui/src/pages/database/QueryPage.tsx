@@ -1,5 +1,5 @@
 import { Clock, Database, Gauge, TriangleAlert } from "lucide-react";
-import { endpointDoc, percentChange, serviceDoc, type QueryPageModel, type QueryUse, type TraceItem } from "@wizeworks/lens-core";
+import { endpointDoc, percentChange, serviceDoc, type QueryPageModel, type QueryUse, type TraceItem } from "@wizeworks/lens-core/internal";
 import { traceRow } from "../../data/tagMatch";
 import { GroupTaggedTable, TaggedTable } from "../../ui/TaggedTable";
 import { usePageModel } from "../../data/models";

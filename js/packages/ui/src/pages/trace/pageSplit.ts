@@ -1,4 +1,4 @@
-import { ATTR_PAGE, type Trace } from "@wizeworks/lens-core";
+import { ATTR_PAGE, type Trace } from "@wizeworks/lens-core/internal";
 import { fmtMs } from "../../format";
 
 /** One part of the split bar: color class, label, ms. */

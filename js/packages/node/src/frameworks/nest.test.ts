@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { afterAll, describe, expect, it } from "vitest";
-import type { Span, Trace } from "@wizeworks/lens-core";
+import type { Span, Trace } from "@wizeworks/lens-core/internal";
 import { FakeNestApp, type FakeRoute } from "../test/nest-fake.js";
 import type { WizeLens } from "../types.js";
 import { createWizeLens } from "../wizelens.js";

@@ -1,5 +1,5 @@
 import { gunzipSync, gzipSync } from "node:zlib";
-import { cachedLoader, type MapLoader, mapFileCandidates, MAX_SOURCEMAP_BYTES, parseSourceMap, SOURCEMAP_RELEASES_KEPT, type SourceMapEntry } from "@wizeworks/lens-core";
+import { cachedLoader, type MapLoader, mapFileCandidates, MAX_SOURCEMAP_BYTES, parseSourceMap, SOURCEMAP_RELEASES_KEPT, type SourceMapEntry } from "@wizeworks/lens-core/internal";
 import type { Queryable } from "../db/db.js";
 
 /** Save one map (replacing the same release and file), then drop the project's oldest releases past the kept count. */

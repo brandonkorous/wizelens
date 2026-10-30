@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { endpointNameOf, errorEvents, normalizeQuery, queryText, quoteText, type Span, spanServiceName, type SpanEvent, type Trace } from "@wizeworks/lens-core";
+import { endpointNameOf, errorEvents, normalizeQuery, queryText, quoteText, type Span, spanServiceName, type SpanEvent, type Trace } from "@wizeworks/lens-core/internal";
 import { fmtMs } from "../../format";
 import { endpointHref, errorHref, hrefTo, queryHref } from "../../routes";
 import { serviceHref } from "../services/serviceParts";

@@ -1,5 +1,5 @@
 import { type MouseEvent, useLayoutEffect, useRef, useState } from "react";
-import { paramColumns } from "@wizeworks/lens-core";
+import { paramColumns } from "@wizeworks/lens-core/internal";
 
 /** A query taller than this (about 9 lines) folds to its first 5 until opened. */
 const TALL = 180;

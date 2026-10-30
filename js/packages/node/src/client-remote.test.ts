@@ -1,5 +1,5 @@
 import { afterAll, expect, it } from "vitest";
-import { ATTR_BROWSER_REMOTE, newSpanId, newTraceId } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_REMOTE, newSpanId, newTraceId } from "@wizeworks/lens-core/internal";
 import { type Running, startApp } from "./test/helpers.js";
 import { trustedOrigins } from "./client-spans.js";
 import { createWizeLens } from "./wizelens.js";

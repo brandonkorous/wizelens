@@ -1,7 +1,7 @@
 import * as grpc from "@grpc/grpc-js";
 import { context, trace } from "@opentelemetry/api";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "../wizelens.js";
 import { instrumentGrpc } from "./index.js";
 

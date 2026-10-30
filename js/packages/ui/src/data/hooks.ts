@@ -10,7 +10,7 @@ import {
   type TimeWindow,
   type Trace,
   windowOf,
-} from "@wizeworks/lens-core";
+} from "@wizeworks/lens-core/internal";
 import { useRange } from "./host";
 import { useData } from "./provider";
 

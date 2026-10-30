@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { type MetricPoint, metricsModel, type MetricsModel, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { type MetricPoint, metricsModel, type MetricsModel, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core/internal";
 import { useRoute } from "../routes";
 import { apiFetch } from "./api";
 import { useHost, useRange } from "./host";

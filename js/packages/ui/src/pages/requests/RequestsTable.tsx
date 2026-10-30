@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Upload } from "lucide-react";
-import { isSortKey, type RequestsModel, type Sort, type SortKey } from "@wizeworks/lens-core";
+import { isSortKey, type RequestsModel, type Sort, type SortKey } from "@wizeworks/lens-core/internal";
 import { useHost, useRange } from "../../data/host";
 import { loadPageModel } from "../../data/models";
 import { fmtCount } from "../../format";

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { analyzeTrace, type Span } from "@wizeworks/lens-core";
+import { analyzeTrace, type Span } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "../wizelens.js";
 import { instrumentMongoDb } from "./mongodb.js";
 import { docShape } from "./mongodb-shape.js";

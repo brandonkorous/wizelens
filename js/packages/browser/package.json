@@ -31,6 +31,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./internal": {
+      "types": "./dist/internal.d.ts",
+      "import": "./dist/internal.js"
+    },
     "./script": {
       "types": "./dist/script.d.ts",
       "import": "./dist/wizelens.js"
@@ -51,7 +55,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@wizeworks/lens-core": "workspace:^"
+    "@wizeworks/lens-core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^7.0.2",

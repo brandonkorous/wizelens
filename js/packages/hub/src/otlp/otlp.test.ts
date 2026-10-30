@@ -1,6 +1,6 @@
 import { gzipSync } from "node:zlib";
 import { afterEach, describe, expect, it } from "vitest";
-import { isLooseTraceId } from "@wizeworks/lens-core";
+import { isLooseTraceId } from "@wizeworks/lens-core/internal";
 import type { Hub } from "../hub.js";
 import { startHub } from "../test/helpers.js";
 import { encodeTraces } from "./proto.js";

@@ -1,4 +1,4 @@
-import { endpointDoc, type EndpointStat, type ServiceEdge, type ServicePageModel, type ServiceRow } from "@wizeworks/lens-core";
+import { endpointDoc, type EndpointStat, type ServiceEdge, type ServicePageModel, type ServiceRow } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
 import { endpointHref, hrefTo, navigate, queryHref } from "../../routes";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";

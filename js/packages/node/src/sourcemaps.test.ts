@@ -4,7 +4,7 @@ import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { ATTR_ERROR_FRAME, newSpanId, newTraceId, type ResolvedFrame } from "@wizeworks/lens-core";
+import { ATTR_ERROR_FRAME, newSpanId, newTraceId, type ResolvedFrame } from "@wizeworks/lens-core/internal";
 import { CART_MAP, CART_MINIFIED, CART_STACK, CART_URL } from "../../core/src/testing/sourcemap.js";
 import { dirMapLoader } from "./sourcemaps.js";
 import { type Running, startApp } from "./test/helpers.js";

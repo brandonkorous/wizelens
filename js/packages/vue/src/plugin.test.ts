@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { WizeLens as Lens } from "@wizeworks/lens-browser";
-import { componentName, componentTrail, type VueAppLike, type VueErrorHandler, wizeLensKey, WizeLensPlugin } from "./index.js";
+import { componentName, componentTrail, type VueAppLike, type VueErrorHandler, wizeLensKey, WizeLensPlugin } from "./plugin.js";
 
 function fakeLens(enabled = true): Lens {
   return { enabled, recorder: null, sessionId: "s", pageView: vi.fn(), captureError: vi.fn(), setUser: vi.fn(), flush: vi.fn(), shutdown: vi.fn() };

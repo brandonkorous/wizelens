@@ -1,6 +1,6 @@
 import { createServer, type IncomingHttpHeaders, request, type RequestOptions } from "node:http";
 import type { AddressInfo } from "node:net";
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import type { WizeLens } from "../types.js";
 import { settle } from "./helpers.js";
 

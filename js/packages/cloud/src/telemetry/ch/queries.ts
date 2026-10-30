@@ -1,5 +1,5 @@
 // Small ClickHouse reads for the services page, project health, and digests.
-import type { TimeWindow } from "@wizeworks/lens-core";
+import type { TimeWindow } from "@wizeworks/lens-core/internal";
 import type { TenantScope } from "../store.js";
 import type { ChClient } from "./http.js";
 

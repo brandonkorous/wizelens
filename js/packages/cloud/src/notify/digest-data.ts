@@ -1,4 +1,4 @@
-import { alignNow, FACT_SLOW_QUERY_MS, type Headline, pageContext, runPage, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { alignNow, FACT_SLOW_QUERY_MS, type Headline, pageContext, runPage, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core/internal";
 import type { Queryable } from "../db/db.js";
 import type { DigestPeriod } from "../repo/mail-prefs.js";
 import { projectScope, type TelemetryStore } from "../telemetry/store.js";

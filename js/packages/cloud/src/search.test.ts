@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { PG_DIALECT, searchSql, suggestSql, windowOf } from "@wizeworks/lens-core";
+import { PG_DIALECT, searchSql, suggestSql, windowOf } from "@wizeworks/lens-core/internal";
 import { scenarioTraces, SCENARIO_NOW } from "../../core/src/testing/scenario.js";
 import { searchParity, suggestParity } from "../../core/src/testing/search-parity.js";
 import { tagParity } from "../../core/src/testing/tag-parity.js";

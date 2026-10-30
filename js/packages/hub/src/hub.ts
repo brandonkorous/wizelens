@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
-import { handleMcp, resolveUiDir, sendJson, serveUi, setCors } from "@wizeworks/lens-node/kit";
+import { handleMcp, resolveUiDir, sendJson, serveUi, setCors } from "@wizeworks/lens-node/internal";
 import { parseJson, readBody } from "./body.js";
 import { acceptTokenLink, deny, isAllowed } from "./auth.js";
 import { type ApiContext, handleApi } from "./api.js";

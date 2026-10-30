@@ -1,7 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { describe, expect, it } from "vitest";
-import { type AlertRule, searchMemory } from "@wizeworks/lens-core";
+import { type AlertRule, searchMemory } from "@wizeworks/lens-core/internal";
 import { scenarioTraces, SCENARIO_NOW } from "../../core/src/testing/scenario.js";
 import { createMcpServer } from "./mcp.js";
 import { memoryPages } from "./mcp-memory.js";

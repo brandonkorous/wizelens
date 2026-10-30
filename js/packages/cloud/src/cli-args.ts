@@ -1,5 +1,5 @@
 import { parseArgs } from "node:util";
-import { envSwitch } from "@wizeworks/lens-core";
+import { envSwitch } from "@wizeworks/lens-core/internal";
 import type { CloudOptions, SignupMode } from "./config.js";
 
 export const USAGE = `wizelens-cloud: the WizeLens service for many teams.

@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { TraceStore, SqlitePersister } from "@wizeworks/lens-node";
+import { SqlitePersister, TraceStore } from "@wizeworks/lens-node/internal";
 import { afterEach, expect, it } from "vitest";
 import { HubData } from "./data.js";
 import { importAddonFile } from "./import.js";

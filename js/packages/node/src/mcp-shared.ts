@@ -1,5 +1,5 @@
 import type { ZodTypeAny } from "zod";
-import { type AlertRule, type MetricsModel, type ModelOf, type PageName, type SearchPage, type SearchQuery, type Suggestion, type SuggestRequest, type TagRule, tagList, type TimeRange, type Trace } from "@wizeworks/lens-core";
+import { type AlertRule, type MetricsModel, type ModelOf, type PageName, type SearchPage, type SearchQuery, type Suggestion, type SuggestRequest, type TagRule, tagList, type TimeRange, type Trace } from "@wizeworks/lens-core/internal";
 
 /** The page models get_overview, list_problems, get_timeseries, and group_requests read. */
 export type OverviewPage = "overview" | "services" | "errors" | "problems" | "traffic";

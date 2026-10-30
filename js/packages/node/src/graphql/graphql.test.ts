@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { Span, Trace } from "@wizeworks/lens-core";
+import type { Span, Trace } from "@wizeworks/lens-core/internal";
 import type { Running } from "../test/helpers.js";
 import { type FakeGraphql, type FakeInstall, installFakeGraphql, postQuery, startGraphqlApp } from "../test/graphql-app.js";
 import type { WizeLens } from "../types.js";

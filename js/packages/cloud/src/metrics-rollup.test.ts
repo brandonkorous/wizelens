@@ -9,7 +9,7 @@ import {
   metricsModelOf,
   TIME_RANGES,
   type TimeRange,
-} from "@wizeworks/lens-core";
+} from "@wizeworks/lens-core/internal";
 import { diffClose, METRIC_NOW, metricScenario } from "../../core/src/testing/metric-scenario.js";
 import type { Db } from "./db/db.js";
 import { loadMetricAlertData } from "./repo/metric-read.js";

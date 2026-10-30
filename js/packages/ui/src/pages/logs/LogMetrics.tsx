@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from "react";
 import { useOnce } from "../../ui/useOnce";
 import { BellPlus, Save } from "lucide-react";
-import { cleanSearchParams, logSearchText } from "@wizeworks/lens-core";
+import { cleanSearchParams, logSearchText } from "@wizeworks/lens-core/internal";
 import { useHost } from "../../data/host";
 import { useLogCharts } from "../../data/logCharts";
 import { useRoute } from "../../routes";

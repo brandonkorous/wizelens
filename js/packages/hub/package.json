@@ -33,9 +33,9 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./kit": {
-      "types": "./dist/kit.d.ts",
-      "import": "./dist/kit.js"
+    "./internal": {
+      "types": "./dist/internal.d.ts",
+      "import": "./dist/internal.js"
     },
     "./package.json": "./package.json"
   },
@@ -51,8 +51,8 @@
     "start": "node dist/cli.js"
   },
   "dependencies": {
-    "@wizeworks/lens-core": "workspace:^",
-    "@wizeworks/lens-node": "workspace:^",
+    "@wizeworks/lens-core": "workspace:*",
+    "@wizeworks/lens-node": "workspace:*",
     "@wizeworks/lens-ui": "workspace:^",
     "protobufjs": "^7.6.6"
   },

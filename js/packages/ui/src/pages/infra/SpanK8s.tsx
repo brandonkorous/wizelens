@@ -1,5 +1,5 @@
 import { Box, Server } from "lucide-react";
-import type { Attributes } from "@wizeworks/lens-core";
+import type { Attributes } from "@wizeworks/lens-core/internal";
 import { useHost } from "../../data/host";
 import { nodeHref, podHref } from "./links";
 

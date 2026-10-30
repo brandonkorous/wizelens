@@ -1,6 +1,6 @@
 import { open, readdir } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
-import { mapUrlOf, normalizeMapFile } from "@wizeworks/lens-core";
+import { mapUrlOf, normalizeMapFile } from "@wizeworks/lens-core/internal";
 
 /** One map to upload: where it is on disk, and the served path of the script it belongs to. */
 export interface MapFile {

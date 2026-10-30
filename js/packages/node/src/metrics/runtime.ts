@@ -2,7 +2,7 @@ import { availableParallelism } from "node:os";
 import { type EventLoopUtilization, monitorEventLoopDelay, PerformanceObserver, performance } from "node:perf_hooks";
 import { getHeapStatistics } from "node:v8";
 import { context, ROOT_CONTEXT } from "@opentelemetry/api";
-import type { Attributes, MetricPoint } from "@wizeworks/lens-core";
+import type { Attributes, MetricPoint } from "@wizeworks/lens-core/internal";
 import { GcHistogram } from "./gc.js";
 
 export interface RuntimeCollectorOptions {

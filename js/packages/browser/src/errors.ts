@@ -1,4 +1,4 @@
-import { newSpanId, type Span } from "@wizeworks/lens-core";
+import { newSpanId, type Span } from "@wizeworks/lens-core/internal";
 import { browserSpan, type ViewRef } from "./browser-span.js";
 import { now } from "./session.js";
 

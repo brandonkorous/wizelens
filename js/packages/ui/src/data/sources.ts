@@ -1,4 +1,4 @@
-import { type HubService, mergeTraces, type ServiceInfo, type Trace } from "@wizeworks/lens-core";
+import { type HubService, mergeTraces, type ServiceInfo, type Trace } from "@wizeworks/lens-core/internal";
 import { ApiError, noteStatus } from "./api";
 import { getScope, type Scope } from "./prefs";
 import { projectQuery } from "./projectScope";

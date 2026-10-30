@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { METRIC_ALERT_STATS, type MetricAlertStat, metricAlertDataOf, metricAlertValueOf, metricDataOf, type MetricPoint, metricsModelOf, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { METRIC_ALERT_STATS, type MetricAlertStat, metricAlertDataOf, metricAlertValueOf, metricDataOf, type MetricPoint, metricsModelOf, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core/internal";
 import { diffClose, METRIC_NOW, metricScenario } from "../../core/src/testing/metric-scenario.js";
 import { projectMetrics } from "./routes/metrics.js";
 import { CH_LIMIT, CH_URL, type ChTest, chScope, chTest } from "./test/ch.js";

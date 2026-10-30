@@ -1,5 +1,5 @@
 import { useCallback, useSyncExternalStore } from "react";
-import { isTimeRange, type TimeRange } from "@wizeworks/lens-core";
+import { isTimeRange, type TimeRange } from "@wizeworks/lens-core/internal";
 
 export type Theme = "light" | "dark" | "system";
 

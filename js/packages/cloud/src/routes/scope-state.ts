@@ -1,6 +1,6 @@
 // What a page reads besides telemetry, for every project of a read: issue states, Apdex targets, and tags. With many projects, keys carry each project's label.
-import { type ApdexTargets, type IssueState, issueStatesOf, type IssueStates, labelKey, labelPart, packageKey, type PackageRisk, type PackageScan, type TagRule } from "@wizeworks/lens-core";
-import { packageRisks } from "@wizeworks/lens-hub/kit";
+import { type ApdexTargets, type IssueState, issueStatesOf, type IssueStates, labelKey, labelPart, packageKey, type PackageRisk, type PackageScan, type TagRule } from "@wizeworks/lens-core/internal";
+import { packageRisks } from "@wizeworks/lens-hub/internal";
 import { pgPackages } from "../repo/packages.js";
 import type { CloudApp } from "../app.js";
 import { listIssues } from "../repo/issues.js";

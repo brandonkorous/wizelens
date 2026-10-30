@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { checkSearch, TAG_COLORS, type TagColor, type TagInput, type TagScope, TIME_RANGES, usesTags } from "@wizeworks/lens-core";
+import { checkSearch, TAG_COLORS, type TagColor, type TagInput, type TagScope, TIME_RANGES, usesTags } from "@wizeworks/lens-core/internal";
 import { useHost, useRange } from "../data/host";
 import { runSearch } from "../data/search";
 import { Field, FormRow } from "./Field";

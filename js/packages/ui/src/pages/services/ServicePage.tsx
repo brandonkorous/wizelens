@@ -1,5 +1,5 @@
 import { ArrowLeft } from "lucide-react";
-import type { ServicePageModel, ServiceRow } from "@wizeworks/lens-core";
+import type { ServicePageModel, ServiceRow } from "@wizeworks/lens-core/internal";
 import { useData } from "../../data/hooks";
 import { usePageModel } from "../../data/models";
 import { hrefTo } from "../../routes";

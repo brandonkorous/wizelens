@@ -1,4 +1,4 @@
-import type { ComponentRow, PageInfo, RouteIssue, RouteRow } from "@wizeworks/lens-core";
+import type { ComponentRow, PageInfo, RouteIssue, RouteRow } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtMs } from "../../format";
 import { navigate, routeHref, traceHref } from "../../routes";
 import { CountBadge, DotText, ImpactBadge, type Tone } from "../../ui/Badges";

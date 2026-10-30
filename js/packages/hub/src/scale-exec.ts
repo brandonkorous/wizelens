@@ -1,5 +1,5 @@
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
-import { type Executor, SETTLE_BEHIND_MS, SQLITE_DIALECT, type SqlRunner, sqlExecutor, type SqlScope } from "@wizeworks/lens-core";
+import { type Executor, SETTLE_BEHIND_MS, SQLITE_DIALECT, type SqlRunner, sqlExecutor, type SqlScope } from "@wizeworks/lens-core/internal";
 import { settlingCount } from "./settle.js";
 import type { HubStore } from "./store.js";
 import { getStoredTrace } from "./store-read.js";

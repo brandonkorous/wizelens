@@ -1,5 +1,5 @@
 // ClickHouse test stores: each gets its own database, dropped afterwards. Set WIZELENS_TEST_CLICKHOUSE (http://user:pass@host:8123) to run them.
-import type { Trace } from "@wizeworks/lens-core";
+import type { Trace } from "@wizeworks/lens-core/internal";
 import { SCENARIO_NOW } from "../../../core/src/testing/scenario.js";
 import { chClient } from "../telemetry/ch/http.js";
 import { type ChStoreOptions, openClickHouse } from "../telemetry/ch/store.js";

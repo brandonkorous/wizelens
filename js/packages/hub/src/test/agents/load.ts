@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { analyzeTrace, buildTrace, DEFAULT_REDACT_KEYS, type Finding, type Span, type Trace } from "@wizeworks/lens-core";
+import { analyzeTrace, buildTrace, DEFAULT_REDACT_KEYS, type Finding, type Span, type Trace } from "@wizeworks/lens-core/internal";
 import type { OtlpResourceLogs } from "../../otlp/logs.js";
 import { type OtlpResourceSpans, writesFromSpans } from "../../otlp/spans.js";
 

@@ -1,7 +1,7 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterEach, expect, it } from "vitest";
-import type { StatusPageView, UptimeCheck, UptimeList, UptimeModel } from "@wizeworks/lens-core";
+import type { StatusPageView, UptimeCheck, UptimeList, UptimeModel } from "@wizeworks/lens-core/internal";
 import type { Cloud } from "../server.js";
 import { settleCloud } from "../settle.js";
 import { Client, invite, joinWithInvite, setupOwner, startCloud } from "../test/cloud.js";

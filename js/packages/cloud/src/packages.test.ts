@@ -1,6 +1,6 @@
 import { afterEach, expect, it } from "vitest";
-import { checkPackages } from "@wizeworks/lens-hub/kit";
-import type { SecurityModel } from "@wizeworks/lens-core";
+import { checkPackages } from "@wizeworks/lens-hub/internal";
+import type { SecurityModel } from "@wizeworks/lens-core/internal";
 import { pgPackages } from "./repo/packages.js";
 import type { Cloud } from "./server.js";
 import { setupOwner, startCloud } from "./test/cloud.js";

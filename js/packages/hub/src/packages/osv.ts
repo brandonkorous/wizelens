@@ -1,5 +1,5 @@
 // The OSV API (osv.dev): which advisories touch a package version, and what one says. Only package names and versions are sent.
-import type { PackageRef } from "@wizeworks/lens-core";
+import type { PackageRef } from "@wizeworks/lens-core/internal";
 import type { Advisory } from "./store.js";
 
 export const OSV_URL = "https://api.osv.dev";

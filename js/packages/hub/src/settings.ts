@@ -1,8 +1,8 @@
 // Project settings on the hub: `api/settings?project=`. Thresholds and extra redacted keys apply to new data; a shorter retention at the next prune.
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
-import { effectiveSettings, type FactOptions, factOptionsOf, parseSettings, type ProjectSettings, type SettingsDefaults, settingsOf } from "@wizeworks/lens-core";
-import { sendJson } from "@wizeworks/lens-node/kit";
+import { effectiveSettings, type FactOptions, factOptionsOf, parseSettings, type ProjectSettings, type SettingsDefaults, settingsOf } from "@wizeworks/lens-core/internal";
+import { sendJson } from "@wizeworks/lens-node/internal";
 import { parseJson, readBody } from "./body.js";
 
 const DAY_MS = 86_400_000;

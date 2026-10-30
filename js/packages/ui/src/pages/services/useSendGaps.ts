@@ -1,4 +1,4 @@
-import { rawService, type TimeWindow } from "@wizeworks/lens-core";
+import { rawService, type TimeWindow } from "@wizeworks/lens-core/internal";
 import { useHost } from "../../data/host";
 import { cloudResource, isAllProjects } from "../../data/projectScope";
 import { useApi } from "../../data/useApi";

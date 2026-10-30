@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { context } from "@opentelemetry/api";
-import { HEADER_ENDPOINT, HEADER_TRACE } from "@wizeworks/lens-core";
+import { HEADER_ENDPOINT, HEADER_TRACE } from "@wizeworks/lens-core/internal";
 import { captureOf } from "../adapters/registry.js";
 import { captureRequest, isOwnPath, isUntraced, pathOf, serveOwnPath, withoutTracing } from "../request-capture.js";
 import { watchRoute } from "../route-timing.js";

@@ -1,5 +1,5 @@
 // Trace reads on ClickHouse: lists from the bounds table, whole traces from the raw spans and logs.
-import { buildTrace, type LogRecord, LOOSE_TRACE_PREFIX, type Span, type Trace } from "@wizeworks/lens-core";
+import { buildTrace, type LogRecord, LOOSE_TRACE_PREFIX, type Span, type Trace } from "@wizeworks/lens-core/internal";
 import { type TenantScope, tenantScope, type TraceQuery } from "../store.js";
 import type { ChClient } from "./http.js";
 

@@ -1,6 +1,6 @@
 import { context, ROOT_CONTEXT } from "@opentelemetry/api";
 import { suppressTracing } from "@opentelemetry/core";
-import type { HubLog, HubRemote, HubSender, SendState, IngestBatch, MetricPoint, Span } from "@wizeworks/lens-core";
+import type { HubLog, HubRemote, HubSender, SendState, IngestBatch, MetricPoint, Span } from "@wizeworks/lens-core/internal";
 import type { MetricStore } from "./metrics/store.js";
 import type { StoreEvent, TraceStore } from "./store.js";
 

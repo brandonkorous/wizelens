@@ -1,4 +1,4 @@
-import { ATTR_BROWSER_REMOTE, entryServerSpan, type Trace } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_REMOTE, entryServerSpan, type Trace } from "@wizeworks/lens-core/internal";
 import { useHost } from "../../data/host";
 
 /** The WizeLens a browser call says answered it, when this trace has no server part: an API on another origin. */

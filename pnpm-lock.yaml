@@ -27,7 +27,7 @@ importers:
   js/packages/browser:
     dependencies:
       '@wizeworks/lens-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
     devDependencies:
       typescript:
@@ -43,7 +43,7 @@ importers:
   js/packages/cli:
     dependencies:
       '@wizeworks/lens-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
     devDependencies:
       '@types/node':
@@ -83,13 +83,13 @@ importers:
         specifier: 1.0.12
         version: 1.0.12(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@wizeworks/lens-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@wizeworks/lens-hub':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../hub
       '@wizeworks/lens-node':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../node
       '@wizeworks/lens-ui':
         specifier: workspace:^
@@ -156,10 +156,10 @@ importers:
   js/packages/hub:
     dependencies:
       '@wizeworks/lens-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@wizeworks/lens-node':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../node
       '@wizeworks/lens-ui':
         specifier: workspace:^
@@ -208,7 +208,7 @@ importers:
         specifier: workspace:^
         version: link:../browser
       '@wizeworks/lens-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@wizeworks/lens-ui':
         specifier: workspace:^
@@ -383,10 +383,10 @@ importers:
   js/packages/react:
     dependencies:
       '@wizeworks/lens-browser':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../browser
       '@wizeworks/lens-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
     devDependencies:
       '@types/react':

@@ -1,4 +1,4 @@
-import { displayService, isErrorSpan, isSecurityKind, spanServiceName, type Finding, type Span, type Trace } from "@wizeworks/lens-core";
+import { displayService, isErrorSpan, isSecurityKind, spanServiceName, type Finding, type Span, type Trace } from "@wizeworks/lens-core/internal";
 import { serviceSlot } from "../../format";
 
 /** What every span tab gets: the trace, its findings, and the selection. */

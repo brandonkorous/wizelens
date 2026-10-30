@@ -10,7 +10,7 @@ import { useSearchText } from "../../ui/useSearchText";
 import { PhasePanel, RouteChartPanel } from "./RenderCharts";
 import { ComponentTable, RouteTable } from "./RenderTables";
 import { DeviceTable } from "./DeviceTable";
-import type { RenderingModel } from "@wizeworks/lens-core";
+import type { RenderingModel } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { ModelState } from "../../ui/ModelState";
 import "../../styles/pages/rendering.css";

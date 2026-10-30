@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { VERSION_ATTR } from "@wizeworks/lens-core";
+import { VERSION_ATTR } from "@wizeworks/lens-core/internal";
 import { hudTag } from "./hud-bundle.js";
 import { releaseOf } from "./hub-connect.js";
 import { packageVersionAt, RELEASE_ENV, resetReleaseCache } from "./release.js";

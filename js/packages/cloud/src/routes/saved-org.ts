@@ -1,5 +1,5 @@
 // Saved items under "All projects": the list holds the organization's own and those of every project the caller may read; only the organization's own change here.
-import { parseSaved, type SavedItem } from "@wizeworks/lens-core";
+import { parseSaved, type SavedItem } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { requireOrgRead } from "../auth/org-access.js";
 import { requireOrg } from "../auth/principal.js";

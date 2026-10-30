@@ -1,5 +1,5 @@
 import { ExternalLink, X } from "lucide-react";
-import { endpointDoc, type EndpointStat, type ServiceDetailModel, type ServiceEdge, type ServiceRow, type TimeWindow } from "@wizeworks/lens-core";
+import { endpointDoc, type EndpointStat, type ServiceDetailModel, type ServiceEdge, type ServiceRow, type TimeWindow } from "@wizeworks/lens-core/internal";
 import { useGroupTags } from "../../data/tagMatch";
 import { TagChips } from "../../ui/TagChips";
 import { fmtCount, fmtMs, fmtPct } from "../../format";

@@ -1,5 +1,5 @@
 // ClickHouse upkeep: the facts version, clearing projects, retention changes, projects that no longer exist, and rows without their organization.
-import { FACTS_VERSION, LOG_KINDS_SQL, LOOSE_TRACE_PREFIX, TIERS } from "@wizeworks/lens-core";
+import { FACTS_VERSION, LOG_KINDS_SQL, LOOSE_TRACE_PREFIX, TIERS } from "@wizeworks/lens-core/internal";
 import type { OrgOf, RetentionOf } from "../store.js";
 import type { ChClient } from "./http.js";
 import type { SettleQueue } from "./queue.js";

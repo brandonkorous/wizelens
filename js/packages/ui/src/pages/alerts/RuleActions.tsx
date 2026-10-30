@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { isMuted, MUTED_FOREVER } from "@wizeworks/lens-core";
+import { isMuted, MUTED_FOREVER } from "@wizeworks/lens-core/internal";
 import { apiSend } from "../../data/api";
 import { fmtDateTime } from "../../format";
 import { Badge, DotText } from "../../ui/Badges";

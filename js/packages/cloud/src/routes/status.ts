@@ -1,4 +1,4 @@
-import { statusPageView } from "@wizeworks/lens-core";
+import { statusPageView } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { hashToken, newToken } from "../auth/crypto.js";
 import { requireProject } from "../auth/principal.js";

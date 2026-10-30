@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { annotateErrorFrames, answerResolve, HEADER_HOP, type MapLoader, type ServiceInfo, SOURCEMAPS_RESOLVE_PATH, type Span, type TagRule, type Trace, type TraceSummary } from "@wizeworks/lens-core";
+import { annotateErrorFrames, answerResolve, HEADER_HOP, type MapLoader, type ServiceInfo, SOURCEMAPS_RESOLVE_PATH, type Span, type TagRule, type Trace, type TraceSummary } from "@wizeworks/lens-core/internal";
 import { browserClockOffset, remoteOf, sanitizeClientLog, sanitizeClientSpan, withVisitorAgent } from "./client-spans.js";
 import { isHudScript, serveHudScript } from "./hud-bundle.js";
 import { firstHeader, readJson, sendJson, setCors } from "./http-util.js";

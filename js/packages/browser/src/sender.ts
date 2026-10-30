@@ -1,4 +1,4 @@
-import { ATTR_SERVICE_VERSION, type Span } from "@wizeworks/lens-core";
+import { ATTR_SERVICE_VERSION, type Span } from "@wizeworks/lens-core/internal";
 import { isCloudBrowserEndpoint } from "./cloud.js";
 import type { ClientLog } from "./console-capture.js";
 

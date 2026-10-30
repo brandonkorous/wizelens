@@ -1,5 +1,5 @@
 // Project settings in the cloud: `api/projects/:project/settings`. Anyone who can read the project sees them; admins change them.
-import { effectiveSettings, parseSettings } from "@wizeworks/lens-core";
+import { effectiveSettings, parseSettings } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { requireProject } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson } from "../http/http.js";

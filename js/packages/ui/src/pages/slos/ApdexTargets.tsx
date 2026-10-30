@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type ApdexTargets as Targets, DEFAULT_APDEX_MS } from "@wizeworks/lens-core";
+import { type ApdexTargets as Targets, DEFAULT_APDEX_MS } from "@wizeworks/lens-core/internal";
 import { apiSend } from "../../data/api";
 import { usePageModel } from "../../data/models";
 import { Field } from "../../ui/Field";

@@ -1,4 +1,4 @@
-import { type Attributes, type MetricPoint, toAttributeValue } from "@wizeworks/lens-core";
+import { type Attributes, type MetricPoint, toAttributeValue } from "@wizeworks/lens-core/internal";
 import { metricsOf } from "../adapters/registry.js";
 import type { WizeLens } from "../types.js";
 import { exponentialToExplicit, type ExponentialHistogram } from "./exponential.js";

@@ -1,5 +1,5 @@
 // Scoped reads on ClickHouse: each goes as the reader user for its scope's organization, so row policies hold it there too.
-import { alignNow, CH_DIALECT, infraSteps, metricAlertSteps, metricPageSteps, type MetricRows, runMetricAsync, searchSql, sqlExecutor, type SqlRunner } from "@wizeworks/lens-core";
+import { alignNow, CH_DIALECT, infraSteps, metricAlertSteps, metricPageSteps, type MetricRows, runMetricAsync, searchSql, sqlExecutor, type SqlRunner } from "@wizeworks/lens-core/internal";
 import { metricScope, sqlScope, type TelemetryStore, type TenantScope } from "../store.js";
 import type { ChClient } from "./http.js";
 import { activeHours, counts, slowestEndpoints, traceEnvs } from "./queries.js";

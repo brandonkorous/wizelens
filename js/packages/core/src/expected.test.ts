@@ -12,7 +12,7 @@ import {
   serviceFacts,
   spanDoc,
   type Span,
-} from "./index.js";
+} from "./internal.js";
 import { requestDoc } from "./search/docs.js";
 import { requestItemOf } from "./scale/facts-lists.js";
 import { makeSpan } from "./testing/fixtures.js";

@@ -1,4 +1,4 @@
-import { ATTR_DB_FINGERPRINT } from "@wizeworks/lens-core";
+import { ATTR_DB_FINGERPRINT } from "@wizeworks/lens-core/internal";
 import type { DbCallInfo } from "../types.js";
 import { clip, fingerprint, isIdLike, serverAttributes } from "./nosql.js";
 

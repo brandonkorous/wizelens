@@ -1,4 +1,4 @@
-import { formatTraceparent } from "@wizeworks/lens-core";
+import { formatTraceparent } from "@wizeworks/lens-core/internal";
 import { failureOf, isPrefetch } from "./fetch-failure.js";
 import { type Answer, type FetchContext, finishCall, isWizeLensCall, startCall } from "./request-span.js";
 import { now } from "./session.js";

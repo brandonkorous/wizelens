@@ -11,7 +11,7 @@ import {
   type SpanEvent,
   type SpanKind as ContractKind,
   toAttributeValue,
-} from "@wizeworks/lens-core";
+} from "@wizeworks/lens-core/internal";
 
 const SPAN_KINDS: readonly ContractKind[] = ["server", "client", "internal", "producer", "consumer"];
 const CATEGORIES: readonly SpanCategory[] = ["http.server", "http.client", "db", "messaging", "browser", "internal"];

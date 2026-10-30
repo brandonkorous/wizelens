@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { windowOf } from "@wizeworks/lens-core";
+import { windowOf } from "@wizeworks/lens-core/internal";
 import { pageParity } from "../../core/src/testing/scale-pages.js";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { searchParity, suggestParity } from "../../core/src/testing/search-parity.js";

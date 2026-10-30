@@ -1,4 +1,4 @@
-import { activeTags, alignNow, APDEX_PAGES, hostsModelOf, INFRA_PARAMS, ISSUE_PAGES, isPageName, isStructuredSearch, isTimeRange, kubeModelOf, LIST_SEARCH_KIND, type ModelOf, type PageName, pageContext, runPage, type SearchQuery, searchTraceIds, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange, type TimeWindow } from "@wizeworks/lens-core";
+import { activeTags, alignNow, APDEX_PAGES, hostsModelOf, INFRA_PARAMS, ISSUE_PAGES, isPageName, isStructuredSearch, isTimeRange, kubeModelOf, LIST_SEARCH_KIND, type ModelOf, type PageName, pageContext, runPage, type SearchQuery, searchTraceIds, SETTLE_BEHIND_MS, TIME_RANGES, type TimeRange, type TimeWindow } from "@wizeworks/lens-core/internal";
 import type { CloudApp, Ctx } from "../app.js";
 import { fail, sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";

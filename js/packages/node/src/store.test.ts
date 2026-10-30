@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { newTraceId } from "@wizeworks/lens-core";
-import { TraceStore } from "./index.js";
+import { newTraceId } from "@wizeworks/lens-core/internal";
+import { TraceStore } from "./internal.js";
 import { fakeSpan } from "./test/helpers.js";
 
 describe("TraceStore", () => {

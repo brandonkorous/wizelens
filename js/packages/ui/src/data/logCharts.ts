@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { logSearchHref, logSearchOf, type SavedItem } from "@wizeworks/lens-core";
+import { logSearchHref, logSearchOf, type SavedItem } from "@wizeworks/lens-core/internal";
 import { changeSaved, useSavedApi, useSavedItems } from "./saved";
 
 /** A saved log search drawn as a chart on the Logs page. */

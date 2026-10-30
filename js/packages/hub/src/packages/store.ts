@@ -1,5 +1,5 @@
 // Where hosts keep the packages each service runs and the OSV answers about them. The hub keeps them in SQLite, the cloud in Postgres.
-import type { PackageRef } from "@wizeworks/lens-core";
+import type { PackageRef } from "@wizeworks/lens-core/internal";
 
 /** One package a service of a project runs. */
 export interface ServicePackage extends PackageRef {

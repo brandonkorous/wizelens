@@ -1,4 +1,4 @@
-import { DEFAULT_LOOSE_LOGS, envSwitch, type LogLevel, type LooseLogOptions } from "@wizeworks/lens-core";
+import { DEFAULT_LOOSE_LOGS, envSwitch, type LogLevel, type LooseLogOptions } from "@wizeworks/lens-core/internal";
 
 /** Log lines written outside a request (startup, background jobs, timers). */
 export interface LogOptions {

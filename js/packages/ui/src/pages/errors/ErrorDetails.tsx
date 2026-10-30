@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, Database, ExternalLink, Monitor, Server } from "lucide-react";
-import { endpointScope, type ErrorGroup, errorGroupDoc, errorGroupLabel, errorScope, errorText, isDevServer, isNoise, type IssueInfo, serviceScope } from "@wizeworks/lens-core";
+import { endpointScope, type ErrorGroup, errorGroupDoc, errorGroupLabel, errorScope, errorText, isDevServer, isNoise, type IssueInfo, serviceScope } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtDateTime } from "../../format";
 import { errorHref, hrefTo, setQuery } from "../../routes";
 import { Badge } from "../../ui/Badges";

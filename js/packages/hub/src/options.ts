@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { DEFAULT_REDACT_KEYS, FACT_N_PLUS_ONE, FACT_SLOW_QUERY_MS, HUB_DEFAULT_PORT } from "@wizeworks/lens-core";
-import type { SourceMapOptions } from "@wizeworks/lens-node/kit";
+import { DEFAULT_REDACT_KEYS, FACT_N_PLUS_ONE, FACT_SLOW_QUERY_MS, HUB_DEFAULT_PORT } from "@wizeworks/lens-core/internal";
+import type { SourceMapOptions } from "@wizeworks/lens-node/internal";
 import { OSV_URL } from "./packages/osv.js";
 
 export interface HubOptions {

@@ -1,5 +1,5 @@
 import { Clock, Layers, Lightbulb, TriangleAlert } from "lucide-react";
-import type { RequestHeadlines } from "@wizeworks/lens-core";
+import type { RequestHeadlines } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
 import { StatCard } from "../../ui/StatCard";
 

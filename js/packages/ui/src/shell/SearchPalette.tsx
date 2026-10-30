@@ -1,7 +1,7 @@
 import { type KeyboardEvent, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Activity, BellRing, Bookmark, Box, Database, FileSearch, FileText, Lightbulb, List, Search, Share2, ShieldAlert, Target, TriangleAlert } from "lucide-react";
-import type { Trace } from "@wizeworks/lens-core";
+import type { Trace } from "@wizeworks/lens-core/internal";
 import { useHost, useRange } from "../data/host";
 import { navigate } from "../routes";
 import { usePaletteMore } from "./paletteMore";

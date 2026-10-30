@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { ServiceInfo } from "@wizeworks/lens-core";
+import type { ServiceInfo } from "@wizeworks/lens-core/internal";
 import type { Source } from "../../data/sources";
 import { fmtCount, fmtDateTime, fmtMs } from "../../format";
 import { Badge, CopyButton, DotText } from "../../ui/Badges";

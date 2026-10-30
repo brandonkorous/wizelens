@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { WizeLens } from "@wizeworks/lens-browser";
-import { createHandleError, handleErrorWithWizeLens, pageViewOnNavigate, routerPath, trackNavigation, trackSvelteKitNavigation } from "./index.js";
+import { routerPath, trackNavigation } from "./navigation.js";
+import { createHandleError, handleErrorWithWizeLens, pageViewOnNavigate, trackSvelteKitNavigation } from "./sveltekit.js";
 
 function fakeLens(enabled = true): WizeLens {
   return { enabled, recorder: null, sessionId: "s", pageView: vi.fn(), captureError: vi.fn(), setUser: vi.fn(), flush: vi.fn(), shutdown: vi.fn() };

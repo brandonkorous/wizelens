@@ -1,5 +1,5 @@
-import { type AlertChannel, MUTED_FOREVER, PAGE_SIZES, pageParams, parseAlertRule } from "@wizeworks/lens-core";
-import { checkTarget } from "@wizeworks/lens-hub/kit";
+import { type AlertChannel, MUTED_FOREVER, PAGE_SIZES, pageParams, parseAlertRule } from "@wizeworks/lens-core/internal";
+import { checkTarget } from "@wizeworks/lens-hub/internal";
 import { notify } from "../alerts/evaluate.js";
 import type { Ctx } from "../app.js";
 import { requireProject } from "../auth/principal.js";

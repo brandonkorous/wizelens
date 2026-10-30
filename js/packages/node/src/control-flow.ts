@@ -1,7 +1,7 @@
 // Errors frameworks throw on purpose (not found, redirects, a 4xx answer): control flow, not exceptions. The rule lives in core.
-import { isClientApiError, isNextControlFlow } from "@wizeworks/lens-core";
+import { isClientApiError, isNextControlFlow } from "@wizeworks/lens-core/internal";
 
-export { dropControlFlow, isClientApiError, isNextControlFlow } from "@wizeworks/lens-core";
+export { dropControlFlow, isClientApiError, isNextControlFlow } from "@wizeworks/lens-core/internal";
 
 /** A thrown value that is control flow: a Next.js signal, or a Better Auth 4xx. */
 export function isControlFlowError(err: unknown): boolean {

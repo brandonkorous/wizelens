@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { createRecorder as createBrowserRecorder, newPageView } from "@wizeworks/lens-browser";
+import { createRecorder as createBrowserRecorder, newPageView } from "@wizeworks/lens-browser/internal";
 import { createReactRecorder as createRecorder, reactFramework, reactStatsSpan } from "./react-capture.js";
 import { drainReactStats, handleCommit } from "./react-hook.js";
 

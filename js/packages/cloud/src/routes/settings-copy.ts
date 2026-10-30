@@ -1,5 +1,5 @@
 // One project's settings copied to many: thresholds and hidden keys, and if asked, how long traces and logs are kept.
-import type { ProjectSettings } from "@wizeworks/lens-core";
+import type { ProjectSettings } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { requireProject } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson } from "../http/http.js";

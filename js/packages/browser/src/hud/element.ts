@@ -1,4 +1,4 @@
-import { DEFAULT_SLOW_MS } from "@wizeworks/lens-core";
+import { DEFAULT_SLOW_MS } from "@wizeworks/lens-core/internal";
 import type { Recorder } from "../recorder-types.js";
 import { HudController } from "./controller.js";
 import { HUD_CSS } from "./style.js";

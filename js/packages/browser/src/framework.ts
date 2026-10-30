@@ -1,4 +1,4 @@
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import type { ViewRef } from "./browser-span.js";
 
 /** What a UI framework adds to browser capture: render stats, hydration time, and the wait for a route change to render. */

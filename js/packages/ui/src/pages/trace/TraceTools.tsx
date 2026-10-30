@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Download, GitCompare } from "lucide-react";
-import type { Trace } from "@wizeworks/lens-core";
+import type { Trace } from "@wizeworks/lens-core/internal";
 import { useData } from "../../data/hooks";
 import { fmtMs, fmtTime, shortId } from "../../format";
 import { hrefTo, navigate } from "../../routes";

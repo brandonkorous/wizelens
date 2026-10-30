@@ -1,5 +1,5 @@
 // Small mode: telemetry in the same Postgres (or PGlite) as accounts. The default, and what self-hosters and tests run.
-import { PG_DIALECT, searchSql, suggestSql, type TimeWindow } from "@wizeworks/lens-core";
+import { PG_DIALECT, searchSql, suggestSql, type TimeWindow } from "@wizeworks/lens-core/internal";
 import type { Db, Queryable } from "../db/db.js";
 import { ensureTrigram } from "../db/trigram.js";
 import { loadInfraData, loadMetricAlertData, loadMetricData } from "../repo/metric-read.js";

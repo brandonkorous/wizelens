@@ -1,4 +1,4 @@
-import { analyzeTrace, type Finding, type Trace } from "@wizeworks/lens-core";
+import { analyzeTrace, type Finding, type Trace } from "@wizeworks/lens-core/internal";
 import { pageLoadRequest } from "../document-request.js";
 import { createPageMonitor, EMPTY_PAGE_STATS, type PageStats } from "../page.js";
 import { afterNextPaint } from "../paint.js";

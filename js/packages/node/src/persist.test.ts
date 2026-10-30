@@ -3,8 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
-import { type LogRecord, newTraceId, type Span } from "@wizeworks/lens-core";
-import { SqlitePersister, TraceStore } from "./index.js";
+import { type LogRecord, newTraceId, type Span } from "@wizeworks/lens-core/internal";
+import { SqlitePersister, TraceStore } from "./internal.js";
 import { fakeSpan } from "./test/helpers.js";
 
 function span(traceId: string, startMs: number, attributes: Span["attributes"] = {}): Span {

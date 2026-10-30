@@ -1,6 +1,6 @@
 // Ctrl+K hits from the search API: a few requests and log lines for the typed text, from all the host keeps.
 import { useEffect, useState } from "react";
-import { checkSearch, type LogRow, type RequestItem, type TimeRange } from "@wizeworks/lens-core";
+import { checkSearch, type LogRow, type RequestItem, type TimeRange } from "@wizeworks/lens-core/internal";
 import { runSearch } from "../data/search";
 import { fmtMs } from "../format";
 import { hrefTo, traceHref } from "../routes";

@@ -1,4 +1,4 @@
-import type { Trace } from "@wizeworks/lens-core";
+import type { Trace } from "@wizeworks/lens-core/internal";
 import type { Queryable } from "../db/db.js";
 import { type TenantScope, tenantScope } from "../telemetry/store.js";
 import { getTrace } from "./trace-read.js";

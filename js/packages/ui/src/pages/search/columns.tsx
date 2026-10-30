@@ -1,4 +1,4 @@
-import { itemOwner, type LogRow, type RequestItem, type SearchItems, type SearchKind, type SpanItem, type TagMatchItem, type TraceItem } from "@wizeworks/lens-core";
+import { itemOwner, type LogRow, type RequestItem, type SearchItems, type SearchKind, type SpanItem, type TagMatchItem, type TraceItem } from "@wizeworks/lens-core/internal";
 import { fmtDateTime, fmtMs } from "../../format";
 import { hrefTo, traceHref } from "../../routes";
 import { Badge, toneOfHealth, toneOfStatus } from "../../ui/Badges";

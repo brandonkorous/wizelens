@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from "react";
 import { useOnce } from "../../ui/useOnce";
 import { LayoutDashboard, Plus } from "lucide-react";
-import type { SavedItem } from "@wizeworks/lens-core";
+import type { SavedItem } from "@wizeworks/lens-core/internal";
 import { useHost } from "../../data/host";
 import { changeSaved, useSavedApi, useSavedItems } from "../../data/saved";
 import { fmtAgo } from "../../format";

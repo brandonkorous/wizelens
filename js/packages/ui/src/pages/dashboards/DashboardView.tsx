@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, LayoutDashboard, Plus } from "lucide-react";
-import type { DashPanel, SavedItem } from "@wizeworks/lens-core";
+import type { DashPanel, SavedItem } from "@wizeworks/lens-core/internal";
 import { useAccount } from "../../data/account";
 import { changeSaved, useSavedApi } from "../../data/saved";
 import { useApi } from "../../data/useApi";

@@ -5,7 +5,7 @@ import log4js from "log4js";
 import pino from "pino";
 import winston from "winston";
 import { afterEach, describe, expect, it } from "vitest";
-import type { LogRecord } from "@wizeworks/lens-core";
+import type { LogRecord } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "../wizelens.js";
 import type { WizeLens } from "../types.js";
 import { instrumentBunyan } from "./bunyan.js";

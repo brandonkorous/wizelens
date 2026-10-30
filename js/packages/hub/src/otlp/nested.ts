@@ -1,4 +1,4 @@
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { DB_PARAMS } from "./db-params.js";
 
 const text = (s: Span) => s.attributes["db.query.text"];

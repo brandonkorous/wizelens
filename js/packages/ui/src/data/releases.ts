@@ -1,6 +1,6 @@
 // Release markers for charts: the versions the open page's model says first sent data in its window.
 import { useSyncExternalStore } from "react";
-import type { Release } from "@wizeworks/lens-core";
+import type { Release } from "@wizeworks/lens-core/internal";
 import { useServiceScope } from "./prefs";
 
 const listeners = new Set<() => void>();

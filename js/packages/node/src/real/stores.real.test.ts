@@ -3,7 +3,7 @@ import IoRedis from "ioredis";
 import { MongoClient } from "mongodb";
 import * as redis from "redis";
 import { afterAll, describe, expect, it } from "vitest";
-import { analyzeTrace } from "@wizeworks/lens-core";
+import { analyzeTrace } from "@wizeworks/lens-core/internal";
 import { instrumentElasticsearch } from "../adapters/elasticsearch.js";
 import { instrumentIoRedis } from "../adapters/ioredis.js";
 import { instrumentMongoDb } from "../adapters/mongodb.js";

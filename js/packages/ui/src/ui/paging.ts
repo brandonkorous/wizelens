@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { PAGE_SIZES, type PageInfo } from "@wizeworks/lens-core";
+import { PAGE_SIZES, type PageInfo } from "@wizeworks/lens-core/internal";
 import { setQuery, useRoute } from "../routes";
 
 /** A table paged in the browser: what one row is, and where its page lives. */

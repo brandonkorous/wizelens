@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Bell, Plus } from "lucide-react";
-import type { UptimeCheckView } from "@wizeworks/lens-core";
+import type { UptimeCheckView } from "@wizeworks/lens-core/internal";
 import { useHost } from "../../data/host";
 import { usePageModel } from "../../data/models";
 import { type UptimeApi, useUptime } from "../../data/uptime";

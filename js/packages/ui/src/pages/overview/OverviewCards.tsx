@@ -1,5 +1,5 @@
 import { Clock, Database, Layers, Lightbulb, TriangleAlert } from "lucide-react";
-import type { OverviewModel } from "@wizeworks/lens-core";
+import type { OverviewModel } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
 import { hrefTo } from "../../routes";
 import { ApdexCard } from "../../ui/ApdexCard";

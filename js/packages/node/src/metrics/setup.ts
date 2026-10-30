@@ -1,4 +1,4 @@
-import { metricsModel, type TimeRange } from "@wizeworks/lens-core";
+import { metricsModel, type TimeRange } from "@wizeworks/lens-core/internal";
 import type { McpDataSource } from "../mcp-shared.js";
 import type { WizeLensOptions } from "../types.js";
 import { RuntimeCollector } from "./runtime.js";

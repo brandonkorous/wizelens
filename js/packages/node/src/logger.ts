@@ -1,4 +1,4 @@
-import { DEFAULT_LOOSE_LOGS, keepLooseLine, type LogLevel, type LooseLogOptions, redactAttributes, redactText, toAttributeValue } from "@wizeworks/lens-core";
+import { DEFAULT_LOOSE_LOGS, keepLooseLine, type LogLevel, type LooseLogOptions, redactAttributes, redactText, toAttributeValue } from "@wizeworks/lens-core/internal";
 import { activeSpan } from "./spans.js";
 import type { TraceStore } from "./store.js";
 import type { LogFn, WizeLensLogger } from "./types.js";

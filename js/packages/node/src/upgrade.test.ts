@@ -2,7 +2,7 @@ import { createServer, request, ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import express from "express";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { Trace } from "@wizeworks/lens-core";
+import type { Trace } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "./index.js";
 import { getJson } from "./test/helpers.js";
 

@@ -1,5 +1,5 @@
 // What one settle batch writes to ClickHouse: fact rows, tombstones for rows a trace no longer has, and rollup deltas.
-import { FACT_COLUMNS, FACT_TABLES, type FactTable, IDS_MAX, isLooseTraceId, LOG_KINDS, NONE_HIGH, NONE_LOW, type RollupKind, type SettleDelta, TIERS } from "@wizeworks/lens-core";
+import { FACT_COLUMNS, FACT_TABLES, type FactTable, IDS_MAX, isLooseTraceId, LOG_KINDS, NONE_HIGH, NONE_LOW, type RollupKind, type SettleDelta, TIERS } from "@wizeworks/lens-core/internal";
 import { FACT_KEYS } from "./schema-facts.js";
 import type { ChClient } from "./http.js";
 import { type Keep, logKeepOf, rowOf } from "./util.js";

@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { parseTraceparent, type Span } from "@wizeworks/lens-core";
+import { parseTraceparent, type Span } from "@wizeworks/lens-core/internal";
 
 // Vitest runs in Node: these stubs give the recorder a page origin and a sessionStorage.
 export const storage = new Map<string, string>();

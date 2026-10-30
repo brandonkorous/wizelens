@@ -1,4 +1,4 @@
-import type { Release } from "@wizeworks/lens-core";
+import type { Release } from "@wizeworks/lens-core/internal";
 import { fmtDateTime } from "../format";
 
 /** Markers drawn with labels; more than this and only the lines show. */

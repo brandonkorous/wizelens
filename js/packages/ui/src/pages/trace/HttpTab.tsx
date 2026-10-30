@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { fmtMs } from "../../format";
 import { usePagedRows } from "../../ui/PagedRows";
 import { Empty } from "../../ui/Panel";

@@ -1,4 +1,4 @@
-import type { RequestItem } from "@wizeworks/lens-core";
+import type { RequestItem } from "@wizeworks/lens-core/internal";
 import { type CsvColumns, downloadCsv as save, isoTime, round2, toCsv as csvOf } from "../../data/csv";
 
 const COLUMNS: CsvColumns<RequestItem> = [

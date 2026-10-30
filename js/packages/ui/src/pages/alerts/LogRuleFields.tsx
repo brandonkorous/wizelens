@@ -1,4 +1,4 @@
-import { cleanSearchParams, logSearchText } from "@wizeworks/lens-core";
+import { cleanSearchParams, logSearchText } from "@wizeworks/lens-core/internal";
 import { Field, FormRow, SelectField } from "../../ui/Field";
 
 const LEVELS: [string, string][] = [["", "Any level"], ["debug", "Debug and up"], ["info", "Info and up"], ["warn", "Warnings and up"], ["error", "Errors and up"], ["critical", "Critical only"]];

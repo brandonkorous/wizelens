@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { ENDPOINT_ENV, HUB_DEFAULT_PORT, PROJECT_ENV, TOKEN_ENV } from "@wizeworks/lens-core";
+import { ENDPOINT_ENV, HUB_DEFAULT_PORT, PROJECT_ENV, TOKEN_ENV } from "@wizeworks/lens-core/internal";
 
 /** Where maps go and who sends them. Everything has an environment variable, so CI needs no flags. */
 export interface TargetOptions {

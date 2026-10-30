@@ -1,4 +1,4 @@
-import type { LogPatternRow } from "@wizeworks/lens-core";
+import type { LogPatternRow } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { fmtCount } from "../../format";
 import { setQuery, useRoute } from "../../routes";

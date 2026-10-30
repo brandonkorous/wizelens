@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { type Anomaly, causeText, type Problem, type ProblemsModel, type TimeRange } from "@wizeworks/lens-core";
+import { type Anomaly, causeText, type Problem, type ProblemsModel, type TimeRange } from "@wizeworks/lens-core/internal";
 import { z } from "zod";
 import { json, type McpDataSource, type McpProject, READ_ONLY, type Source } from "./mcp-shared.js";
 

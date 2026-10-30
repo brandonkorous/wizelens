@@ -1,5 +1,5 @@
 import { formatWithOptions } from "node:util";
-import type { LogLevel } from "@wizeworks/lens-core";
+import type { LogLevel } from "@wizeworks/lens-core/internal";
 
 /** Pino and bunyan numbers: 10 trace, 20 debug, 30 info, 40 warn, 50 error, 60 fatal. */
 export function levelFromNumber(n: number): LogLevel {

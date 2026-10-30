@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isListedTrace } from "@wizeworks/lens-core";
+import { isListedTrace } from "@wizeworks/lens-core/internal";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { pruneByRetention } from "./repo/trace-write.js";
 import { cloudSettling } from "./scale-exec.js";

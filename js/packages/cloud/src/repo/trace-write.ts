@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { ATTR_BROWSER_SESSION, INFRA_SERVICE, logKey, LOOSE_TRACE_PREFIX, PG_DIALECT, pruneStatements, seriesKeyOf, type Span } from "@wizeworks/lens-core";
-import type { HubWrite } from "@wizeworks/lens-hub/kit";
+import { ATTR_BROWSER_SESSION, INFRA_SERVICE, logKey, LOOSE_TRACE_PREFIX, PG_DIALECT, pruneStatements, seriesKeyOf, type Span } from "@wizeworks/lens-core/internal";
+import type { HubWrite } from "@wizeworks/lens-hub/internal";
 import type { Db, Queryable } from "../db/db.js";
 import { runStatements, stateOf, type TraceStateRow } from "../settle.js";
 import { LOG_DAYS_SQL } from "./log-retention.js";

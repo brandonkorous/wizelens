@@ -1,4 +1,4 @@
-import { DEFAULT_SLOW_MS, type Health, healthOf, timingSegments } from "@wizeworks/lens-core";
+import { DEFAULT_SLOW_MS, type Health, healthOf, timingSegments } from "@wizeworks/lens-core/internal";
 import type { RecordedRequest } from "./recorder-types.js";
 import { now } from "./session.js";
 

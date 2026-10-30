@@ -1,7 +1,7 @@
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
-import { UPTIME_SERVICE, uptimeTelemetry } from "@wizeworks/lens-core";
-import { type HubWrite, isPrivateAddress, runCheck } from "@wizeworks/lens-hub/kit";
+import { UPTIME_SERVICE, uptimeTelemetry } from "@wizeworks/lens-core/internal";
+import { type HubWrite, isPrivateAddress, runCheck } from "@wizeworks/lens-hub/internal";
 import type { CloudApp } from "../app.js";
 import { writeService } from "../repo/trace-write.js";
 import { claimDue, type CloudCheck, saveRun } from "../repo/uptime.js";

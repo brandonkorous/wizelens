@@ -1,4 +1,4 @@
-import type { InsightGroup } from "@wizeworks/lens-core";
+import type { InsightGroup } from "@wizeworks/lens-core/internal";
 
 export interface Advice {
   why: string;

@@ -1,4 +1,4 @@
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type AutoApp, eventually, type FakeHub, fakeHub, runApp } from "../test/auto-run.js";
 

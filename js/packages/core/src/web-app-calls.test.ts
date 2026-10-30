@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ATTR_BROWSER_CANCELLED, ATTR_BROWSER_PREFETCH, buildTrace, serviceFacts, serviceRows, type Span } from "./index.js";
+import { ATTR_BROWSER_CANCELLED, ATTR_BROWSER_PREFETCH, buildTrace, serviceFacts, serviceRows, type Span } from "./internal.js";
 import { makeSpan } from "./testing/fixtures.js";
 
 const fetchSpan = (durationMs: number, attributes: Span["attributes"] = {}): Span => makeSpan({ category: "browser", service: "browser", durationMs, attributes });

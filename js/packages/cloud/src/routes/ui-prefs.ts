@@ -1,4 +1,4 @@
-import { isTimeRange } from "@wizeworks/lens-core";
+import { isTimeRange } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { requireUser } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson } from "../http/http.js";

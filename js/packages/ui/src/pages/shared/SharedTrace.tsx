@@ -1,5 +1,5 @@
 import { type MouseEvent, useEffect, useState } from "react";
-import { mergeTraces, type Trace } from "@wizeworks/lens-core";
+import { mergeTraces, type Trace } from "@wizeworks/lens-core/internal";
 import { apiFetch } from "../../data/api";
 import { fmtDate, fmtDateTime } from "../../format";
 import { Logo } from "../../shell/Logo";

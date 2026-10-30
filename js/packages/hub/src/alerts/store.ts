@@ -1,7 +1,7 @@
 // Alert rules on the hub: one JSON row per rule, its events, and every evaluated value (for the rule's chart).
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import type { AlertRule, AlertRuleInput } from "@wizeworks/lens-core";
+import type { AlertRule, AlertRuleInput } from "@wizeworks/lens-core/internal";
 
 export interface HubAlertEvent {
   id: string;

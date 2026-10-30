@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { REDACTED } from "@wizeworks/lens-core";
+import { REDACTED } from "@wizeworks/lens-core/internal";
 import { scenarioTraces, SCENARIO_NOW } from "../../core/src/testing/scenario.js";
 import { optionsFromArgs } from "./cli-args.js";
 import type { Hub } from "./hub.js";

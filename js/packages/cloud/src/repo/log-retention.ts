@@ -1,4 +1,4 @@
-import { logPruneStatements, PG_DIALECT } from "@wizeworks/lens-core";
+import { logPruneStatements, PG_DIALECT } from "@wizeworks/lens-core/internal";
 import type { Queryable } from "../db/db.js";
 import { runStatements } from "../settle.js";
 import { KEEP_DAYS } from "./settings.js";

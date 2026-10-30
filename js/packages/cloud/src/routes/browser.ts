@@ -1,7 +1,7 @@
 // Browser keys: a page with no WizeLens server (a static site) sends here. The key is public: browser data only, from its sites only.
-import { ATTR_BROWSER_APP, annotateErrorFrames, type Attributes, type HubLog, type Span } from "@wizeworks/lens-core";
-import { type HubWrite, MAX_BODY, parseJson, readBody } from "@wizeworks/lens-hub/kit";
-import { browserClockOffset, sanitizeClientLog, sanitizeClientSpan, withVisitorAgent } from "@wizeworks/lens-node/kit";
+import { ATTR_BROWSER_APP, annotateErrorFrames, type Attributes, type HubLog, type Span } from "@wizeworks/lens-core/internal";
+import { type HubWrite, MAX_BODY, parseJson, readBody } from "@wizeworks/lens-hub/internal";
+import { browserClockOffset, sanitizeClientLog, sanitizeClientSpan, withVisitorAgent } from "@wizeworks/lens-node/internal";
 import type { Ctx } from "../app.js";
 import { clientIp } from "../auth/bridge.js";
 import { fail } from "../http/http.js";

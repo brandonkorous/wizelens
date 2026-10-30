@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GONE, type NodeRow, type PodRow, type WorkloadRow } from "@wizeworks/lens-core";
+import { GONE, type NodeRow, type PodRow, type WorkloadRow } from "@wizeworks/lens-core/internal";
 import { fmtAgo, fmtCount } from "../../format";
 import { Badge, DotText, type Tone } from "../../ui/Badges";
 import { Check } from "../../ui/Field";

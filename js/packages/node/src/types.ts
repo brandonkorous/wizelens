@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Tracer } from "@opentelemetry/api";
-import type { TagOptions, Trace } from "@wizeworks/lens-core";
+import type { TagOptions, Trace } from "@wizeworks/lens-core/internal";
 import type { LogOptions } from "./loose-logs.js";
 import type { SamplingOptions } from "./sampling.js";
 import type { SourceMapOptions } from "./sourcemaps.js";

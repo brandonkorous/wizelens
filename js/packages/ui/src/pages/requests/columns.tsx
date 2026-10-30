@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { isFailed, type RequestItem, type Sort, type SortKey } from "@wizeworks/lens-core";
+import { isFailed, type RequestItem, type Sort, type SortKey } from "@wizeworks/lens-core/internal";
 import { fmtMs, fmtTime } from "../../format";
 import { MidPath } from "../../ui/MidPath";
 import { CountBadge, DotText, toneOfStatus } from "../../ui/Badges";

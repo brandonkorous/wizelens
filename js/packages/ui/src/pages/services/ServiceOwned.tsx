@@ -1,5 +1,5 @@
 // Panels only your own services (APIs and workers) have: errors, slow requests, logs, and runtime metrics.
-import { type ErrorGroup, errorGroupDoc, errorText, isFailed, type LogRow, type RequestItem, type ServicePageModel } from "@wizeworks/lens-core";
+import { type ErrorGroup, errorGroupDoc, errorText, isFailed, type LogRow, type RequestItem, type ServicePageModel } from "@wizeworks/lens-core/internal";
 import { useData } from "../../data/hooks";
 import { useMetricsModel } from "../../data/metrics";
 import { fmtAgo, fmtCount, fmtMs } from "../../format";

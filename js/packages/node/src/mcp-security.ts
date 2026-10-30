@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { findSecurity, OWASP_OF, type SecurityGroup, securityKeyOf, securityRequest, securityShapeOf, type TimeRange, type Trace } from "@wizeworks/lens-core";
+import { findSecurity, OWASP_OF, type SecurityGroup, securityKeyOf, securityRequest, securityShapeOf, type TimeRange, type Trace } from "@wizeworks/lens-core/internal";
 import { z } from "zod";
 import { json, type McpDataSource, READ_ONLY, type Source } from "./mcp-shared.js";
 import { rangeArg, windowOf } from "./mcp-store.js";

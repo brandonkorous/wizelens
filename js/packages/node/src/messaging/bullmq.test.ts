@@ -1,5 +1,5 @@
 import { context, trace } from "@opentelemetry/api";
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { describe, expect, it } from "vitest";
 import { createWizeLens } from "../wizelens.js";
 import { instrumentBullMq } from "./bullmq.js";

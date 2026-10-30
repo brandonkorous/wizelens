@@ -1,4 +1,4 @@
-import type { LogRecord, Span } from "@wizeworks/lens-core";
+import type { LogRecord, Span } from "@wizeworks/lens-core/internal";
 
 /** Changes to one trace since the last drain. Used by the persister. */
 export interface TraceChanges {

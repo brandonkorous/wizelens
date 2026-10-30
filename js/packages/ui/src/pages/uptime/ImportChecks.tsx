@@ -1,5 +1,5 @@
 import { type ReactNode, useMemo, useState } from "react";
-import { type CheckImportRow, parseCheckImport, UPTIME_LIMITS } from "@wizeworks/lens-core";
+import { type CheckImportRow, parseCheckImport, UPTIME_LIMITS } from "@wizeworks/lens-core/internal";
 import { eachOne, eachText } from "../../data/bulk";
 import { LIST_FILES, textOfFile } from "../../data/fileText";
 import type { UptimeApi } from "../../data/uptime";

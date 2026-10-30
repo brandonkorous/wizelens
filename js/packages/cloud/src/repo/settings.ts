@@ -1,4 +1,4 @@
-import { type FactOptions, factOptionsOf, type ProjectSettings, type SettingsDefaults, settingsOf } from "@wizeworks/lens-core";
+import { type FactOptions, factOptionsOf, type ProjectSettings, type SettingsDefaults, settingsOf } from "@wizeworks/lens-core/internal";
 import type { CloudConfig } from "../config.js";
 import type { Queryable } from "../db/db.js";
 

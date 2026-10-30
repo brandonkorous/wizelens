@@ -10,7 +10,7 @@ import { checksHref, decodeParam, hrefTo, useRoute } from "../../routes";
 import { useData } from "../../data/hooks";
 import { TableHotspotsPanel, TopQueriesPanel } from "./DbTables";
 import { InsightCards } from "./InsightCards";
-import type { DatabaseModel } from "@wizeworks/lens-core";
+import type { DatabaseModel } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { ModelState } from "../../ui/ModelState";
 import "../../styles/pages/database.css";

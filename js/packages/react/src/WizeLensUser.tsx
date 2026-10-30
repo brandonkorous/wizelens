@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { setBrowserUser } from "@wizeworks/lens-browser";
+import { setBrowserUser } from "@wizeworks/lens-browser/internal";
 
 export interface WizeLensUserProps {
   /** The signed-in user's id, sent as `enduser.id`. Null or empty clears it. */

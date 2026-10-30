@@ -1,4 +1,4 @@
-import { fmtMetric, type HistogramStat, type MetricDetail } from "@wizeworks/lens-core";
+import { fmtMetric, type HistogramStat, type MetricDetail } from "@wizeworks/lens-core/internal";
 import { setQuery } from "../../routes";
 import { AlertOnThis } from "../../ui/AlertOnThis";
 import { Select } from "../../ui/Controls";

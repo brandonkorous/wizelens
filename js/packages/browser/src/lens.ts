@@ -1,4 +1,4 @@
-import type { Attributes } from "@wizeworks/lens-core";
+import type { Attributes } from "@wizeworks/lens-core/internal";
 import { setBrowserApp, setBrowserRelease, setBrowserUser } from "./browser-span.js";
 import { mountHud } from "./hud/element.js";
 import { hudChoice } from "./read-probe.js";

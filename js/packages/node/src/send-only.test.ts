@@ -1,7 +1,7 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { newSpanId, newTraceId } from "@wizeworks/lens-core";
+import { newSpanId, newTraceId } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "./index.js";
 import { isEnabled, servesDashboard } from "./mode.js";
 import { type Running, settle, startApp } from "./test/helpers.js";

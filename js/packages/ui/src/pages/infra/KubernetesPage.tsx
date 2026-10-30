@@ -1,5 +1,5 @@
 import { Boxes, Clock, RotateCcw, Server, Skull } from "lucide-react";
-import type { KubeModel } from "@wizeworks/lens-core";
+import type { KubeModel } from "@wizeworks/lens-core/internal";
 import { useData } from "../../data/hooks";
 import { useInfraModel } from "../../data/infra";
 import { fmtCount } from "../../format";

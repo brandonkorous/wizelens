@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, Box, Monitor } from "lucide-react";
-import { type ErrorGroup, errorGroupDoc, errorGroupLabel, type ErrorsModel, errorText, type IssueInfo, isErrorFiltered, isNoise, isWebAppName, percentChange, type ServiceErrorRow } from "@wizeworks/lens-core";
+import { type ErrorGroup, errorGroupDoc, errorGroupLabel, type ErrorsModel, errorText, type IssueInfo, isErrorFiltered, isNoise, isWebAppName, percentChange, type ServiceErrorRow } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtPct, fmtTime } from "../../format";
 import { setQuery } from "../../routes";
 import { DotText } from "../../ui/Badges";

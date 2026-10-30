@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { type DashPanel, fmtMetric, type MetricDetail } from "@wizeworks/lens-core";
+import { type DashPanel, fmtMetric, type MetricDetail } from "@wizeworks/lens-core/internal";
 import { useMetricDetails } from "../../data/metricDetails";
 import { Empty, Panel } from "../../ui/Panel";
 import { Sparkline } from "../../ui/Sparkline";

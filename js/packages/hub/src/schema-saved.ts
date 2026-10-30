@@ -1,5 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
-import { logSearchHref, type SavedItem } from "@wizeworks/lens-core";
+import { logSearchHref, type SavedItem } from "@wizeworks/lens-core/internal";
 
 // Hub schema 5: log searches from the old saved_searches table become saved searches charted on the Logs page; the table goes.
 interface OldRow {

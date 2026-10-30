@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { analyzeTrace, type Finding, healthOf, insightsOf, type Trace, type TraceView, traceTiming } from "@wizeworks/lens-core";
+import { analyzeTrace, type Finding, healthOf, insightsOf, type Trace, type TraceView, traceTiming } from "@wizeworks/lens-core/internal";
 import { useData } from "../../data/hooks";
 import { useHost } from "../../data/host";
 import { hrefTo } from "../../routes";

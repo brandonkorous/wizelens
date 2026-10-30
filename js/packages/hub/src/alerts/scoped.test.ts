@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ALERT_METRICS, alertContext, type AlertMetric, alertPage, alertScopeProblem, computePage, computePageSync, memoryExecutor } from "@wizeworks/lens-core";
+import { ALERT_METRICS, alertContext, type AlertMetric, alertPage, alertScopeProblem, computePage, computePageSync, memoryExecutor } from "@wizeworks/lens-core/internal";
 import { SCENARIO_NOW, scenarioTraces } from "../../../core/src/testing/scenario.js";
 import { hubExecutor } from "../scale-exec.js";
 import { clockStore, settleAll, writeTraces } from "../test/scale.js";

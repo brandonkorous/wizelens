@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { hudChoice, type RecordedRequest, type Recorder, setBrowserApp, setBrowserRelease, setBrowserUser } from "@wizeworks/lens-browser";
+import { hudChoice, type RecordedRequest, type Recorder, setBrowserApp, setBrowserRelease, setBrowserUser } from "@wizeworks/lens-browser/internal";
 import { Hud } from "./Hud.js";
 import { claimPage } from "./page-instance.js";
 import { createReactRecorder } from "./react-capture.js";

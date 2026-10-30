@@ -1,4 +1,4 @@
-import { ATTR_DB_FINGERPRINT } from "@wizeworks/lens-core";
+import { ATTR_DB_FINGERPRINT } from "@wizeworks/lens-core/internal";
 import { type DbSpan, runTraced, type StartDbSpan } from "../db.js";
 import type { DbCallInfo, WizeLens } from "../types.js";
 import { batchSizeOf, MONGO_CURSORS, MONGO_METHODS, mongoRows } from "./mongodb-shape.js";

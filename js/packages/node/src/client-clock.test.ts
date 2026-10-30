@@ -1,5 +1,5 @@
 import { afterAll, expect, it } from "vitest";
-import { newSpanId, newTraceId } from "@wizeworks/lens-core";
+import { newSpanId, newTraceId } from "@wizeworks/lens-core/internal";
 import { browserClockOffset } from "./client-spans.js";
 import { type Running, startApp } from "./test/helpers.js";
 import { createWizeLens } from "./wizelens.js";

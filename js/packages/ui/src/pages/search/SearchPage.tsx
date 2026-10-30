@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Upload } from "lucide-react";
-import { checkSearch, type SearchItems, SEARCH_KINDS, type SearchKind, type SearchSummary, searchScope, usesTags } from "@wizeworks/lens-core";
+import { checkSearch, type SearchItems, SEARCH_KINDS, type SearchKind, type SearchSummary, searchScope, usesTags } from "@wizeworks/lens-core/internal";
 import { downloadCsv, objectsToCsv } from "../../data/csv";
 import { useSavedItems } from "../../data/saved";
 import { useSearchSummary } from "../../data/searchSummary";

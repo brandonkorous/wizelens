@@ -1,5 +1,5 @@
 // What each list page exports as CSV: its rows and columns, from the page model loaded with up to 5000 rows.
-import type { ErrorGroup, InsightGroup, LogRow, ModelOf, QueryRow, SecurityGroup, TraceListItem } from "@wizeworks/lens-core";
+import type { ErrorGroup, InsightGroup, LogRow, ModelOf, QueryRow, SecurityGroup, TraceListItem } from "@wizeworks/lens-core/internal";
 import { type CsvColumns, isoTime, round2, toCsv } from "./csv";
 
 const ERRORS: CsvColumns<ErrorGroup> = [

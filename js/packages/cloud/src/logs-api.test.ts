@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterEach, expect, it } from "vitest";
-import { isLooseTraceId, type LogRecord, newLooseTraceId, type SavedItem } from "@wizeworks/lens-core";
+import { isLooseTraceId, type LogRecord, newLooseTraceId, type SavedItem } from "@wizeworks/lens-core/internal";
 import { evaluateAll } from "./alerts/evaluate.js";
 import type { Cloud } from "./server.js";
 import { settleCloud } from "./settle.js";

@@ -1,4 +1,4 @@
-import type { Attributes } from "@wizeworks/lens-core";
+import type { Attributes } from "@wizeworks/lens-core/internal";
 import { pageMapLoader, sendError } from "./error-frames.js";
 import { watchConsole } from "./console-capture.js";
 import { errorSpan, toCapturedError, watchErrors } from "./errors.js";

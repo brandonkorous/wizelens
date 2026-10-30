@@ -1,7 +1,7 @@
 import { hostname } from "node:os";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { annotateErrorFrames, HEADER_HOP, PACKAGES_PATH, PROTOCOL_VERSION, type ServiceInfo, SOURCEMAPS_PATH, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core";
-import { firstHeader, sendJson, VERSION as NODE_VERSION } from "@wizeworks/lens-node/kit";
+import { annotateErrorFrames, HEADER_HOP, PACKAGES_PATH, PROTOCOL_VERSION, type ServiceInfo, SOURCEMAPS_PATH, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core/internal";
+import { firstHeader, sendJson, VERSION as NODE_VERSION } from "@wizeworks/lens-node/internal";
 import { parseJson, readBody } from "./body.js";
 import { handleAlerts } from "./alerts/api.js";
 import type { HubAlertDeps } from "./alerts/evaluate.js";
