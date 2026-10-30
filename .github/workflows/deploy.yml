@@ -19,7 +19,7 @@ concurrency:
 
 env:
   SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
-  REGISTRY: ghcr.io/brandonkorous
+  REGISTRY: ghcr.io/wizeworksllc
 
 jobs:
   images:

@@ -9,11 +9,11 @@ Go has no agent: services use the OpenTelemetry SDK and the contrib instrumentat
 in a few lines and adds what they leave out. Requires Go 1.26 or newer.
 
 ```bash
-go get github.com/brandonkorous/wizelens/go
+go get github.com/wizeworksllc/wizelens/go
 ```
 
 ```go
-import wizelens "github.com/brandonkorous/wizelens/go"
+import wizelens "github.com/wizeworksllc/wizelens/go"
 
 shutdown, err := wizelens.Start(ctx, wizelens.WithServiceName("inventory"))
 defer shutdown(context.Background())
@@ -102,7 +102,7 @@ app.
 
 ## A runnable sample
 
-[`samples/go-net-http`](https://github.com/brandonkorous/wizelens/tree/main/samples/go-net-http) is a `net/http`
+[`samples/go-net-http`](https://github.com/wizeworksllc/wizelens/tree/main/samples/go-net-http) is a `net/http`
 service with SQLite. `GET /orders` shows N+1 queries, a duplicate query, and N+1 HTTP calls; `GET /report` shows a slow
 query and a database wait; `GET /fail` shows an error with its log line.
 

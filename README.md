@@ -153,7 +153,7 @@ errors and slow traces. They send to a hub or the cloud (`WIZELENS_HUB`).
 ```bash
 java -javaagent:opentelemetry-javaagent.jar -Dotel.javaagent.extensions=wizelens.jar -jar app.jar   # Java
 pip install wizelens && opentelemetry-instrument uvicorn app:app                                     # Python
-go get github.com/brandonkorous/wizelens/go    # wizelens.Start, Handler, OpenDB, Transport, Logger  # Go
+go get github.com/wizeworksllc/wizelens/go    # wizelens.Start, Handler, OpenDB, Transport, Logger  # Go
 ```
 
 Guides: [Java](https://wizelens.com/docs/java/), [Python](https://wizelens.com/docs/python/), [Go](https://wizelens.com/docs/go/).
@@ -240,7 +240,7 @@ Traces survive restarts (hello, `dotnet watch`). Each app keeps a small SQLite f
 ### The local hub
 
 One place for every service, also when they are stopped. Start it with `npx @wizeworks/lens-hub` (or the Docker image
-`ghcr.io/brandonkorous/wizelens-hub`), then set `WIZELENS_HUB=http://localhost:5960` on each service. Apps in any other
+`ghcr.io/wizeworksllc/wizelens-hub`), then set `WIZELENS_HUB=http://localhost:5960` on each service. Apps in any other
 language send OpenTelemetry (OTLP/HTTP) to the same address.
 
 - **Everything in one dashboard**, kept for 7 days in one SQLite file, with the same pages as the in-app dashboard.
@@ -458,7 +458,7 @@ To try the hub, start it first with `pnpm dev:hub` (http://localhost:5960/_wizel
 | `@wizeworks/lens-cli` | npm | Source map upload (`lens-cli`) and Vite, webpack, and Next.js plugins |
 | `com.wizelens:wizelens` | Maven | Java: the OpenTelemetry agent extension and a servlet body filter (`java/`) |
 | `wizelens` | PyPI | Python: distro for `opentelemetry-instrument`, body middleware, SQL parameters (`python/`) |
-| `github.com/brandonkorous/wizelens/go` | Go module | Go: SDK setup, `net/http`, `database/sql`, `slog` (`go/`) |
+| `github.com/wizeworksllc/wizelens/go` | Go module | Go: SDK setup, `net/http`, `database/sql`, `slog` (`go/`) |
 
 <a id="roadmap"></a>
 

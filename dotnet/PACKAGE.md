@@ -17,6 +17,6 @@ app.UseWizeLens();
 - **Insights:** N+1 queries and HTTP calls, duplicate and slow queries, errors.
 - **AI access:** an opt-in, read-only, redacted MCP endpoint.
 
-On in Development only. Full docs: https://github.com/brandonkorous/wizelens
+On in Development only. Full docs: https://github.com/wizeworksllc/wizelens
 
 MIT licensed.

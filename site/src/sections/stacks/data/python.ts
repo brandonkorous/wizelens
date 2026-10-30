@@ -16,7 +16,7 @@ export const PYTHON: Stack = {
   file: "terminal",
   code: [
     "# until it is on PyPI, from GitHub",
-    'pip install "wizelens @ git+https://github.com/brandonkorous/wizelens#subdirectory=python"',
+    'pip install "wizelens @ git+https://github.com/wizeworksllc/wizelens#subdirectory=python"',
     "opentelemetry-bootstrap -a install   # instrumentations for your libraries",
     "",
     "export OTEL_SERVICE_NAME=orders-api",

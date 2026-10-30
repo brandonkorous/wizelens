@@ -46,7 +46,7 @@ function llmsTxt() {
     return `- [${meta.title}](${URL_BASE}/docs/${d.slug || "index"}.md): ${meta.description}`;
   }).join("\n")}`).join("\n\n");
   const pages = PAGES.map(([n, p, d]) => `- [${n}](${URL_BASE}${p}): ${d}`).join("\n");
-  return `# WizeLens\n\n> ${SUMMARY}\n\n${docs}\n\n## Pages\n\n${pages}\n\n## Optional\n\n- [Everything in one file](${URL_BASE}/llms-full.txt): every docs page and the FAQ as Markdown.\n- [Source code](https://github.com/brandonkorous/wizelens): MIT licensed.\n`;
+  return `# WizeLens\n\n> ${SUMMARY}\n\n${docs}\n\n## Pages\n\n${pages}\n\n## Optional\n\n- [Everything in one file](${URL_BASE}/llms-full.txt): every docs page and the FAQ as Markdown.\n- [Source code](https://github.com/wizeworksllc/wizelens): MIT licensed.\n`;
 }
 
 function llmsFull() {

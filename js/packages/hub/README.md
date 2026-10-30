@@ -1,12 +1,12 @@
 # @wizeworks/lens-hub
 
-The local hub of [WizeLens](https://github.com/brandonkorous/wizelens): one place for the traces and metrics of every service on your
+The local hub of [WizeLens](https://github.com/wizeworksllc/wizelens): one place for the traces and metrics of every service on your
 machine or team network, with the full dashboard, OTLP intake (traces, logs, and metrics), and a read-only MCP endpoint.
 
 ```bash
 npx @wizeworks/lens-hub
 # or
-docker run -p 5960:5960 -v wizelens:/data ghcr.io/brandonkorous/wizelens-hub
+docker run -p 5960:5960 -v wizelens:/data ghcr.io/wizeworksllc/wizelens-hub
 ```
 
 Open http://localhost:5960/_wizelens/. Then point your services at it and restart them:
@@ -58,4 +58,4 @@ const hub = createHub({ port: 5960, storagePath: "./hub.db" });
 console.log(await hub.listen());
 ```
 
-The wire format is in [CONTRACT.md](https://github.com/brandonkorous/wizelens/blob/main/docs/CONTRACT.md#local-hub-v06-phase-2). MIT licensed.
+The wire format is in [CONTRACT.md](https://github.com/wizeworksllc/wizelens/blob/main/docs/CONTRACT.md#local-hub-v06-phase-2). MIT licensed.

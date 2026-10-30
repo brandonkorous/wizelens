@@ -13,7 +13,7 @@ import (
 	"os/signal"
 	"sync"
 
-	wizelens "github.com/brandonkorous/wizelens/go"
+	wizelens "github.com/wizeworksllc/wizelens/go"
 )
 
 var log *slog.Logger

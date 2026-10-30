@@ -10,7 +10,7 @@ It traces FastAPI, Flask, Django, SQLAlchemy, psycopg, sqlite3, requests, httpx,
 Requires Python 3.10 or newer.
 
 > **Install from GitHub:** the first release of `wizelens` is not on PyPI yet. Until it is, install it from GitHub:
-> `pip install "wizelens @ git+https://github.com/brandonkorous/wizelens#subdirectory=python"`. The commands below then
+> `pip install "wizelens @ git+https://github.com/wizeworksllc/wizelens#subdirectory=python"`. The commands below then
 > work as written.
 
 ```bash
@@ -111,7 +111,7 @@ app.
 
 ## A runnable sample
 
-[`samples/python-fastapi`](https://github.com/brandonkorous/wizelens/tree/main/samples/python-fastapi) is a FastAPI
+[`samples/python-fastapi`](https://github.com/wizeworksllc/wizelens/tree/main/samples/python-fastapi) is a FastAPI
 service with SQLite. `GET /orders` shows N+1 queries, a duplicate query, and N+1 HTTP calls to the Go sample;
 `GET /report` shows a slow query and a database wait; `GET /fail` shows an error with its log line.
 

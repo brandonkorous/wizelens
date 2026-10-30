@@ -1,6 +1,6 @@
 # @wizeworks/lens-node
 
-The Node add-on of [WizeLens](https://github.com/brandonkorous/wizelens): one trace per request with every database call, outgoing call, message, log, and error, and a dashboard at `/_wizelens`.
+The Node add-on of [WizeLens](https://github.com/wizeworksllc/wizelens): one trace per request with every database call, outgoing call, message, log, and error, and a dashboard at `/_wizelens`.
 
 ```ts
 import express from "express";
@@ -82,6 +82,6 @@ const provider = new MeterProvider({ readers: [new PeriodicExportingMetricReader
 Metrics are kept in memory for 1 hour (`metricsMaxAgeMs`), at most 50,000 points and 1,000 series. With a hub set, they are sent
 to the hub as well. `metricsIntervalMs` changes the sample rate; `captureMetrics: false` turns metrics off.
 
-On by default in development only. See the [getting-started guide](https://github.com/brandonkorous/wizelens/blob/main/docs/GETTING-STARTED.md) and the full option list in the [README](https://github.com/brandonkorous/wizelens#configuration).
+On by default in development only. See the [getting-started guide](https://github.com/wizeworksllc/wizelens/blob/main/docs/GETTING-STARTED.md) and the full option list in the [README](https://github.com/wizeworksllc/wizelens#configuration).
 
 MIT licensed.

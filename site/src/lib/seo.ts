@@ -4,7 +4,7 @@ export const SITE = {
   url: "https://wizelens.com",
   name: "WizeLens",
   company: "WizeWorks LLC",
-  repo: "https://github.com/brandonkorous/wizelens",
+  repo: "https://github.com/wizeworksllc/wizelens",
   tagline: "See what matters.",
 };
 

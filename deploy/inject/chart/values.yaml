@@ -1,6 +1,6 @@
 # The webhook image. The same image holds the files copied into each injected pod.
 image:
-  repository: ghcr.io/brandonkorous/wizelens-inject
+  repository: ghcr.io/wizeworksllc/wizelens-inject
   # Default: the chart's appVersion.
   tag: ""
   pullPolicy: IfNotPresent

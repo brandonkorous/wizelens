@@ -1,6 +1,6 @@
 # @wizeworks/lens-cloud
 
-The cloud service of [WizeLens](https://github.com/brandonkorous/wizelens): the full dashboard for many teams, with accounts,
+The cloud service of [WizeLens](https://github.com/wizeworksllc/wizelens): the full dashboard for many teams, with accounts,
 projects, 30 days of history computed on the server, alerts, share links, and AI access through read keys.
 
 ```bash
@@ -117,4 +117,4 @@ const cloud = await createCloud({
 console.log(await cloud.listen());
 ```
 
-The API, roles, keys, and storage are in [CONTRACT.md](https://github.com/brandonkorous/wizelens/blob/main/docs/CONTRACT.md#cloud-v07-phase-3). MIT licensed.
+The API, roles, keys, and storage are in [CONTRACT.md](https://github.com/wizeworksllc/wizelens/blob/main/docs/CONTRACT.md#cloud-v07-phase-3). MIT licensed.

@@ -1,11 +1,11 @@
 # @wizeworks/lens-browser
 
-Browser side of [WizeLens](https://github.com/brandonkorous/wizelens) for any web page, with no framework: links every `fetch` and
+Browser side of [WizeLens](https://github.com/wizeworksllc/wizelens) for any web page, with no framework: links every `fetch` and
 `XMLHttpRequest` call to its server trace, and sends page views, Web Vitals, browser errors, and `console` lines to the WizeLens add-on
 on your API. It also shows the in-page HUD.
 
-Using a framework? [Vue](https://github.com/brandonkorous/wizelens/tree/main/js/packages/vue), [Angular](https://github.com/brandonkorous/wizelens/tree/main/js/packages/angular), and [Svelte](https://github.com/brandonkorous/wizelens/tree/main/js/packages/svelte) have small packages on top of this one, and
-[React](https://github.com/brandonkorous/wizelens/tree/main/js/packages/react) adds render stats. All of them show the same HUD.
+Using a framework? [Vue](https://github.com/wizeworksllc/wizelens/tree/main/js/packages/vue), [Angular](https://github.com/wizeworksllc/wizelens/tree/main/js/packages/angular), and [Svelte](https://github.com/wizeworksllc/wizelens/tree/main/js/packages/svelte) have small packages on top of this one, and
+[React](https://github.com/wizeworksllc/wizelens/tree/main/js/packages/react) adds render stats. All of them show the same HUD.
 
 ## Install
 

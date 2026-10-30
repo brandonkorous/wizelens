@@ -11,11 +11,11 @@
         <Company>WizeWorks LLC</Company>
         <Copyright>Copyright (c) 2026 WizeWorks LLC</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageProjectUrl>https://github.com/brandonkorous/wizelens</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/brandonkorous/wizelens.git</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/wizeworksllc/wizelens</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/wizeworksllc/wizelens.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
-        <PackageReleaseNotes>https://github.com/brandonkorous/wizelens/blob/main/CHANGELOG.md</PackageReleaseNotes>
+        <PackageReleaseNotes>https://github.com/wizeworksllc/wizelens/blob/main/CHANGELOG.md</PackageReleaseNotes>
         <PackageTags>wizelens;glimpse;opentelemetry;tracing;diagnostics;aspnetcore;mcp</PackageTags>
         <Version>0.3.0-alpha.14</Version>
     </PropertyGroup>

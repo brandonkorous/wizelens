@@ -100,4 +100,4 @@ working in memory. It never breaks your app.
 
 ## Still stuck
 
-Open an issue on [GitHub](https://github.com/brandonkorous/wizelens/issues) with your stack, versions, and what you expected to see.
+Open an issue on [GitHub](https://github.com/wizeworksllc/wizelens/issues) with your stack, versions, and what you expected to see.

@@ -125,7 +125,7 @@ java -javaagent:opentelemetry-javaagent.jar -jar app.jar`,
     label: "Python",
     file: "terminal",
     note: "FastAPI, Flask, or Django, with no code change. The wizelens package installs from GitHub.",
-    code: `pip install "wizelens @ git+https://github.com/brandonkorous/wizelens#subdirectory=python"
+    code: `pip install "wizelens @ git+https://github.com/wizeworksllc/wizelens#subdirectory=python"
 opentelemetry-bootstrap -a install
 
 OTEL_SERVICE_NAME=orders-api opentelemetry-instrument uvicorn app:app`,

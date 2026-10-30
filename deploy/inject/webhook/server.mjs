@@ -6,7 +6,7 @@ import { review } from "./mutate.mjs";
 
 const env = process.env;
 const config = {
-  image: env.WIZELENS_INJECT_IMAGE || "ghcr.io/brandonkorous/wizelens-inject:latest",
+  image: env.WIZELENS_INJECT_IMAGE || "ghcr.io/wizeworksllc/wizelens-inject:latest",
   pullPolicy: env.WIZELENS_INJECT_PULL_POLICY,
   hub: env.WIZELENS_INJECT_HUB,
   project: env.WIZELENS_INJECT_PROJECT,

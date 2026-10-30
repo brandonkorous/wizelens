@@ -1,7 +1,7 @@
 # @wizeworks/lens-vue
 
-[WizeLens](https://github.com/brandonkorous/wizelens) for Vue 3 apps: a plugin on top of
-[@wizeworks/lens-browser](https://github.com/brandonkorous/wizelens/tree/main/js/packages/browser) that links every `fetch` and `XMLHttpRequest` to its server trace, sends page views from
+[WizeLens](https://github.com/wizeworksllc/wizelens) for Vue 3 apps: a plugin on top of
+[@wizeworks/lens-browser](https://github.com/wizeworksllc/wizelens/tree/main/js/packages/browser) that links every `fetch` and `XMLHttpRequest` to its server trace, sends page views from
 vue-router, and reports the errors Vue catches with the component that threw them.
 
 ## Install
@@ -36,7 +36,7 @@ Vue 3 and vue-router 4. The package does not import `vue`, so it adds nothing to
 
 ## Options
 
-All [@wizeworks/lens-browser options](https://github.com/brandonkorous/wizelens/tree/main/js/packages/browser#options), plus:
+All [@wizeworks/lens-browser options](https://github.com/wizeworksllc/wizelens/tree/main/js/packages/browser#options), plus:
 
 | Option | Description |
 |---|---|
