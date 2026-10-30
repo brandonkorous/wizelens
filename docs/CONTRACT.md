@@ -247,7 +247,7 @@ application properties). A consumer reads it: the `process` span joins the produ
 | Kafka | `WizeLens.Kafka` package (Confluent.Kafka) | `instrumentKafkaJs(wizelens, kafka)` |
 | Azure Service Bus | automatic (Azure.Messaging.ServiceBus) | `instrumentServiceBus(wizelens, client)` |
 | MassTransit | automatic | — |
-| Fastify / Koa / Hono | — | `wizelensFastify(wizelens)`, `wizelensKoa(wizelens)`, `wizelensHono(wizelens)` |
+| Fastify / Koa / Hono | — | `wizeLensFastify(wizelens)`, `wizeLensKoa(wizelens)`, `wizeLensHono(wizelens)` |
 
 ## Host modes and capabilities
 
@@ -349,7 +349,7 @@ same points in `IngestBatch.metrics`.
 
 - **Node** collects `process.cpu.utilization`, `process.cpu.time`, `process.memory.usage`, `v8js.memory.heap.used` and `.limit`,
   `nodejs.eventloop.utilization`, `nodejs.eventloop.delay.p50` / `.p99` / `.max`, and `v8js.gc.duration`. App metrics come in
-  through `wizelensMetricExporter(wizelens)` in an OpenTelemetry `PeriodicExportingMetricReader`.
+  through `wizeLensMetricExporter(wizelens)` in an OpenTelemetry `PeriodicExportingMetricReader`.
 - **.NET** listens to every `Meter` with a `MeterListener`: the .NET runtime (`dotnet.*`), ASP.NET Core
   (`http.server.request.duration`, `kestrel.*`), `HttpClient`, and the app's own meters. Counters are sent as cumulative totals,
   histograms as delta per interval, with the instrument's advised bucket bounds.
@@ -1302,7 +1302,7 @@ kept as an event (`fired`, `resolved`, `remind`, `test`, `ack`, `mute`, `unmute`
 The message says what happened: `Requests is 79 (above 5)` when fired, `(no longer above 5)` when resolved, `(still above 5)` for a
 reminder, and `(alerts when above 5)` for a test notice. `PATCH` changes only the fields it sends.
 Webhook URLs must be https and may not resolve to private, loopback, or link-local addresses, unless the cloud runs with
-`--allow-private-webhooks` (self-hosting on a private network). The hub allows them by default (it runs on your own network).
+`--allow-private-targets` (self-hosting on a private network). The hub allows them by default (it runs on your own network).
 
 **Above normal** (`op: "above_normal"`) works on `error_rate`, `p95_ms`, and `requests`. The threshold is the sensitivity: how
 many spreads above normal (2 high, 3 medium, the default, 4 low; 1 to 10 allowed). The rule judges every Services row and every
@@ -1419,7 +1419,7 @@ contain; not with HEAD), `intervalMin` (1 to 60), `timeoutMs` (1 to 60 s), `env`
   `[redacted]` back keeps the stored value. The cloud stores headers encrypted with the auth secret (`v<version>:<ciphertext>`).
 - **Private addresses**: cloud checks may not reach loopback, private, link-local, carrier-grade NAT, multicast, or reserved
   addresses, checked when a check is saved and again at every connection (also after redirects and DNS changes), unless the cloud
-  runs with `--allow-private-webhooks`. Hubs may reach any address their machine can; `--no-uptime` turns checks off.
+  runs with `--allow-private-targets`. Hubs may reach any address their machine can; `--no-uptime` turns checks off.
 - **Status pages** (cloud, `statusPages`): off by default. Turning one on makes a `wl_st_` token (only its hash is kept); a new link
   stops the old one. `#/status/<token>` shows the title, each enabled check's name and state, uptime for 24 h, 7 days, and 30 days,
   one bar per UTC day for 30 days, and incident times of the last 30 days: never URLs, headers, or error text.

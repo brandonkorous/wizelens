@@ -7,7 +7,7 @@ import { RuntimeCollector } from "./runtime.js";
 import { MetricStore } from "./store.js";
 import { createWizeLens } from "../wizelens.js";
 import { metricsOf } from "../adapters/registry.js";
-import { wizelensMetricExporter } from "./otel.js";
+import { wizeLensMetricExporter } from "./otel.js";
 
 describe("runtime collector", () => {
   it("samples CPU, memory, heap, and event loop with sane values", async () => {
@@ -74,8 +74,8 @@ describe("metric store", () => {
 
 describe("OpenTelemetry metric exporter", () => {
   it("keeps counters, up-down counters, histograms, gauges, and exponential histograms", async () => {
-    const wl = createWizeLens({ serviceName: "otel-api", storage: "memory", instrumentFetch: false, metricsIntervalMs: 60_000 });
-    const reader = new PeriodicExportingMetricReader({ exporter: wizelensMetricExporter(wl), exportIntervalMillis: 60_000 });
+    const wl = createWizeLens({ service: "otel-api", storage: "memory", instrumentFetch: false, metricsIntervalMs: 60_000 });
+    const reader = new PeriodicExportingMetricReader({ exporter: wizeLensMetricExporter(wl), exportIntervalMillis: 60_000 });
     const views = [{ instrumentName: "exp.duration", aggregation: { type: AggregationType.EXPONENTIAL_HISTOGRAM } }];
     const provider = new MeterProvider({ readers: [reader], views });
     const meter = provider.getMeter("shop");

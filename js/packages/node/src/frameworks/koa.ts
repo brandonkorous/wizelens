@@ -27,8 +27,8 @@ export function keepHeaders(err: unknown, res: ServerResponse): void {
   e.headers = { ...e.headers, ...kept };
 }
 
-/** Koa middleware: `app.use(wizelensKoa(wizelens))`. Use it first. Reads the route from @koa/router. */
-export function wizelensKoa(wizelens: WizeLens) {
+/** Koa middleware: `app.use(wizeLensKoa(wizelens))`. Use it first. Reads the route from @koa/router. */
+export function wizeLensKoa(wizelens: WizeLens) {
   return async function wizelensKoaMiddleware(ctx: KoaContextLike, next: KoaNext): Promise<void> {
     const d = captureOf(wizelens);
     if (!d) return void (await next());

@@ -8,7 +8,7 @@ import type { TraceStore } from "./store.js";
 
 export interface WizeLensOptions {
   /** Service name shown in the dashboard, e.g. "orders-api". */
-  serviceName: string;
+  service: string;
   /** Base path for the dashboard and API. Default "/_wizelens". */
   basePath?: string;
   /** Turn WizeLens on. Default: the WIZELENS_ENABLED variable, else on unless NODE_ENV is "production". */
@@ -26,7 +26,7 @@ export interface WizeLensOptions {
   /** Max trace age in ms (memory and file). Default 24 h. */
   maxAgeMs?: number;
   /** Expose the read-only MCP endpoint at `{basePath}/mcp`. Default false. */
-  enableMcp?: boolean;
+  mcp?: boolean;
   /** Key fragments to redact. Default: the contract list. */
   redactKeys?: string[];
   /** Override the `X-WizeLens-Endpoint` value (useful behind proxies). */
@@ -41,7 +41,7 @@ export interface WizeLensOptions {
   traceQueriesOutsideRequests?: boolean;
   /** Copy `console.log`, `warn`, `error`, `info`, `debug`, and `trace` calls into WizeLens (into their request trace, or outside one as loose lines). Default true. */
   captureConsole?: boolean;
-  /** Keep runtime metrics (CPU, memory, heap, event loop, GC) and app metrics from `wizelensMetricExporter`. Default true. */
+  /** Keep runtime metrics (CPU, memory, heap, event loop, GC) and app metrics from `wizeLensMetricExporter`. Default true. */
   captureMetrics?: boolean;
   /** How often runtime metrics are sampled, in ms. Default 10000. */
   metricsIntervalMs?: number;
@@ -65,10 +65,10 @@ export interface WizeLensOptions {
   project?: string;
   /** The app's version, kept on every span as `service.version` for release markers, version compares, and Problems. Default: WIZELENS_RELEASE, OTEL_SERVICE_VERSION, a commit variable (SOURCE_VERSION, GIT_SHA, GIT_COMMIT, VERCEL_GIT_COMMIT_SHA, RENDER_GIT_COMMIT), npm_package_version, then the app's package.json. */
   release?: string;
-  /** Also send everything to this local hub, for example "http://localhost:5960". Default: the WIZELENS_HUB variable. */
-  hub?: string;
-  /** Access token for the hub. Default: the WIZELENS_HUB_TOKEN variable. */
-  hubToken?: string;
+  /** Also send everything to this hub or the cloud, for example "http://localhost:5960". Default: the WIZELENS_ENDPOINT variable. */
+  endpoint?: string;
+  /** The hub token or the cloud ingest key. Default: the WIZELENS_TOKEN variable. */
+  token?: string;
   /** Other WizeLens services on another origin that browser calls go to, like "https://localhost:5099" for an API on its own port: their part of a call joins its trace here. Default: the comma-separated WIZELENS_TRUSTED_REMOTES variable. */
   trustedRemotes?: string[];
   /** Keep only part of the traces, for busy services. Default: all, or the WIZELENS_SAMPLE_RATE variable. */
@@ -127,7 +127,7 @@ export type Req = IncomingMessage & { originalUrl?: string; body?: unknown; rout
 
 export interface WizeLens {
   readonly enabled: boolean;
-  readonly serviceName: string;
+  readonly service: string;
   readonly basePath: string;
   readonly store: TraceStore;
   /** The SQLite file in use, or null when traces are kept in memory only. */

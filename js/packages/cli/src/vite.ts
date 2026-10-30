@@ -23,7 +23,7 @@ interface PluginContext {
 }
 
 /** A Vite plugin: hidden source maps in builds, the release in the page, and the maps uploaded after `vite build`. */
-export function wizelensSourceMaps(o: PluginOptions = {}) {
+export function wizeLensSourceMaps(o: PluginOptions = {}) {
   let release: string | null = null;
   let outDir = "dist";
   let skip = false;
@@ -58,4 +58,4 @@ export function wizelensSourceMaps(o: PluginOptions = {}) {
   };
 }
 
-export default wizelensSourceMaps;
+export default wizeLensSourceMaps;

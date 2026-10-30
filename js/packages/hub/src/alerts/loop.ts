@@ -6,7 +6,7 @@ import { pruneAlertValues } from "./store.js";
 
 /** What the hub's alerts need: its file, how to send, and its address (known once it listens). */
 export function hubAlertDeps(store: HubStore, o: ResolvedHubOptions, base: { url: string }): HubAlertDeps {
-  return { store, outbox: { http: o.fetch, allowPrivate: o.allowPrivateWebhooks, pagerDutyUrl: o.pagerDutyUrl }, baseUrl: () => base.url };
+  return { store, outbox: { http: o.fetch, allowPrivate: o.allowPrivateTargets, pagerDutyUrl: o.pagerDutyUrl }, baseUrl: () => base.url };
 }
 
 /** Start the loop; returns a function that stops it. */

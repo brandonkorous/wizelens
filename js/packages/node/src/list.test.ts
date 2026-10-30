@@ -4,7 +4,7 @@ import { newTraceId, type ServiceInfo, type Trace, type TraceSummary } from "@wi
 import { createWizeLens } from "./index.js";
 import { fakeSpan, getJson, type Running, startApp } from "./test/helpers.js";
 
-const wizelens = createWizeLens({ serviceName: "list-api", enabled: true, storage: "memory", instrumentFetch: false, slowQueryMs: 250 });
+const wizelens = createWizeLens({ service: "list-api", enabled: true, storage: "memory", instrumentFetch: false, slowQueryMs: 250 });
 let app: Running;
 const now = Date.now();
 const ids = [newTraceId(), newTraceId(), newTraceId()];

@@ -41,11 +41,11 @@ it("renders only its children on the server: no HUD and no registration", () => 
   expect(registered()).toBeNull();
 });
 
-it("mounts the HUD by default, registers as the page's app instance, and reads traces back", async () => {
+it("mounts the HUD by default once api/info answers, registers as the page's app instance, and reads traces back", async () => {
   await show({ slowMs: 700 });
+  await settle();
   expect([...huds.live]).toMatchObject([{ slowMs: 700 }]);
   expect(registered()?.source).toBe("app");
-  await settle();
   expect(urls.filter((u) => u.includes("/api/traces?session="))).toHaveLength(1);
 });
 
@@ -66,7 +66,7 @@ it("does nothing at all with enabled={false}", async () => {
 it("leaves one HUD and one registration after StrictMode's double mount, and none after unmount", async () => {
   await root.render(
     <StrictMode>
-      <WizeLensProvider {...QUIET} />
+      <WizeLensProvider {...QUIET} hud />
     </StrictMode>,
   );
   expect(huds.mounts).toHaveLength(2);

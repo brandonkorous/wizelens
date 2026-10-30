@@ -6,7 +6,7 @@ import { createWizeLens } from "../wizelens.js";
 import { instrumentGrpc } from "./index.js";
 
 const ENDPOINT = "http://grpc-api.test/_wizelens";
-const wl = createWizeLens({ serviceName: "grpc-api", storage: "memory", instrumentFetch: false, publicEndpoint: ENDPOINT });
+const wl = createWizeLens({ service: "grpc-api", storage: "memory", instrumentFetch: false, publicEndpoint: ENDPOINT });
 const json = { serialize: (v: unknown) => Buffer.from(JSON.stringify(v)), deserialize: (b: Buffer) => JSON.parse(b.toString()) as unknown };
 const method = (name: string, responseStream = false) => ({
   path: `/shop.v1.Items/${name}`,

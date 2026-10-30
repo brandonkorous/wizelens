@@ -20,7 +20,7 @@ export { now } from "./session.js";
 export { defineHud, HUD_TAG, mountHud, WizeLensHudElement } from "./hud/element.js";
 export type { HudOptions } from "./hud/element.js";
 export { startWizeLens } from "./lens.js";
-export { probeReadApi } from "./read-probe.js";
+export { hudChoice, probeReadApi } from "./read-probe.js";
 export { endpointUrlOf } from "./recorder.js";
 export { CLOUD_URL, cloudEndpoint, isCloudBrowserEndpoint } from "./cloud.js";
 export { register, registered, REGISTRY_KEY, unregister } from "./registry.js";

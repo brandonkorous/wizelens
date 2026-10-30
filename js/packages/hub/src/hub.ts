@@ -40,7 +40,7 @@ async function routeBase(c: Ctx, sub: string, req: IncomingMessage, res: ServerR
   const method = req.method ?? "GET";
   if (sub.startsWith("api/")) return handleApi(c, sub, req, res, url);
   if (sub === "mcp") {
-    if (!c.o.enableMcp) return sendJson(res, 404, { error: "MCP is off. Start the hub with --mcp." });
+    if (!c.o.mcp) return sendJson(res, 404, { error: "MCP is off. Start the hub with --mcp." });
     const body = method === "POST" ? parseJson(await readBody(req)) : undefined;
     return handleMcp(hubMcpSource(c.data, c.o.name, c.version, c.o.audit), req, res, body);
   }
@@ -68,7 +68,7 @@ async function route(c: Ctx, req: IncomingMessage, res: ServerResponse): Promise
 /** Create the local hub: one place for the traces of every service, with the dashboard, the API, OTLP, and MCP. */
 export function createHub(options: HubOptions = {}): Hub {
   const o = resolveHubOptions(options);
-  const store = new HubStore({ path: o.storagePath === "memory" ? ":memory:" : o.storagePath, maxTraces: o.maxTraces, maxAgeMs: o.maxAgeMs, logMaxAgeMs: o.logMaxAgeMs, maxMetricPoints: o.maxMetricPoints, slowQueryMs: o.slowQueryMs, nPlusOneThreshold: o.nPlusOneThreshold, redactKeys: o.redactKeys, now: o.now });
+  const store = new HubStore({ path: o.storagePath === "memory" ? ":memory:" : o.storagePath, maxTraces: o.maxTraces, maxAgeMs: o.maxAgeMs, logsMaxAgeMs: o.logsMaxAgeMs, maxMetricPoints: o.maxMetricPoints, slowQueryMs: o.slowQueryMs, nPlusOneThreshold: o.nPlusOneThreshold, redactKeys: o.redactKeys, now: o.now });
   const data = new HubData(store);
   const base = { url: `http://localhost:${o.port}` };
   const alerts = hubAlertDeps(store, o, base);

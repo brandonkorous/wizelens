@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { WizeLens as Lens } from "@wizeworks/lens-browser";
-import { componentName, componentTrail, type VueAppLike, type VueErrorHandler, WIZELENS_KEY, WizeLens } from "./index.js";
+import { componentName, componentTrail, type VueAppLike, type VueErrorHandler, wizeLensKey, WizeLensPlugin } from "./index.js";
 
 function fakeLens(enabled = true): Lens {
   return { enabled, recorder: null, sessionId: "s", pageView: vi.fn(), captureError: vi.fn(), setUser: vi.fn(), flush: vi.fn(), shutdown: vi.fn() };
@@ -38,7 +38,7 @@ it("sends errors Vue catches with the component that threw, and keeps the app's 
   const { app } = fakeApp();
   const own = vi.fn();
   app.config.errorHandler = own;
-  WizeLens.install(app, { lens });
+  WizeLensPlugin.install(app, { lens });
   const err = new Error("boom");
   app.config.errorHandler!(err, cart, "setup function");
   expect(lens.captureError).toHaveBeenCalledWith(err, { "vue.component": "CartPage", "vue.component.trail": "App > CartPage", "vue.info": "setup function" });
@@ -48,7 +48,7 @@ it("sends errors Vue catches with the component that threw, and keeps the app's 
 
 it("logs the error like Vue does when the app had no handler", () => {
   const { app } = fakeApp();
-  WizeLens.install(app, { lens: fakeLens() });
+  WizeLensPlugin.install(app, { lens: fakeLens() });
   app.config.errorHandler!("bad", null, "render function");
   expect(console.error).toHaveBeenCalledWith("bad");
 });
@@ -57,8 +57,8 @@ it("records finished router navigations as page views, and undoes it all on unmo
   const lens = fakeLens();
   const router = fakeRouter();
   const { app, provided, unmount } = fakeApp();
-  WizeLens.install(app, { lens, router });
-  expect(provided.get(WIZELENS_KEY)).toBe(lens);
+  WizeLensPlugin.install(app, { lens, router });
+  expect(provided.get(wizeLensKey)).toBe(lens);
   expect(app.config.globalProperties.$wizelens).toBe(lens);
   router.guards[0]!({ fullPath: "/orders/7?tab=1" }, {});
   router.guards[0]!({ fullPath: "/blocked" }, {}, new Error("aborted"));
@@ -72,15 +72,15 @@ it("records finished router navigations as page views, and undoes it all on unmo
 it("hooks nothing when WizeLens is off", () => {
   const router = fakeRouter();
   const { app } = fakeApp();
-  WizeLens.install(app, { lens: fakeLens(false), router });
+  WizeLensPlugin.install(app, { lens: fakeLens(false), router });
   expect(app.config.errorHandler).toBeUndefined();
   expect(router.guards).toHaveLength(0);
 });
 
 it("starts a disabled instance outside a browser", () => {
   const { app, provided } = fakeApp();
-  WizeLens.install(app, { endpoint: "/_wizelens" });
-  expect((provided.get(WIZELENS_KEY) as Lens).enabled).toBe(false);
+  WizeLensPlugin.install(app, { endpoint: "/_wizelens" });
+  expect((provided.get(wizeLensKey) as Lens).enabled).toBe(false);
 });
 
 it("names components by name, SFC name, or file", () => {

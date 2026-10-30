@@ -85,7 +85,7 @@ Error rate is 1.1% (no longer above 2%)
 ```
 
 The hub can send to local and private addresses. The cloud sends only to https addresses on the public internet, unless it
-runs with `--allow-private-webhooks`.
+runs with `--allow-private-targets`.
 
 ## The Alerts page
 

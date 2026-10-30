@@ -20,7 +20,7 @@ const request = (i: number, method: string, route: string, status: number, durat
 /** A hub with billing traffic: three GET /orders (one fails) and one slow POST /pay. */
 async function withTraffic(): Promise<string> {
   let url: string;
-  ({ hub, url } = await startHub({ enableMcp: true }));
+  ({ hub, url } = await startHub({ mcp: true }));
   const spans = [request(0, "GET", "/orders", 200, 10), request(1, "GET", "/orders", 500, 20), request(2, "GET", "/orders", 200, 30), request(3, "POST", "/pay", 200, 900)];
   await post(`${url}/_wizelens/api/ingest`, { sender: { service: "billing" }, spans });
   settleHub(hub.data.store);

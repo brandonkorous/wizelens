@@ -29,7 +29,7 @@ export interface CloudOptions extends BillingOptions {
   /** How often alert rules run, in ms. Default 60000. */
   alertIntervalMs?: number;
   /** Let alert webhooks and uptime checks call private and local addresses (webhooks: also plain http). For self-hosting on a private network. Default false. */
-  allowPrivateWebhooks?: boolean;
+  allowPrivateTargets?: boolean;
   /** PagerDuty's Events API URL; tests point it at a local server. */
   pagerDutyUrl?: string;
   /** Check the packages services report against OSV (only names and versions are sent). Default true. */
@@ -117,7 +117,7 @@ export function resolveConfig(o: CloudOptions = {}): CloudConfig {
     retentionDays: o.retentionDays ?? 30,
     ingestPerMinute: o.ingestPerMinute ?? 1200,
     alertIntervalMs: o.alertIntervalMs ?? 60_000,
-    allowPrivateWebhooks: o.allowPrivateWebhooks ?? false,
+    allowPrivateTargets: o.allowPrivateTargets ?? false,
     pagerDutyUrl: o.pagerDutyUrl,
     smtpUrl: o.smtpUrl,
     resendApiKey: o.resendApiKey,

@@ -12,7 +12,7 @@ const require = createRequire(import.meta.url);
 
 export interface PersisterOptions {
   path: string;
-  serviceName: string;
+  service: string;
   /** Flush interval in ms. Default 500. */
   intervalMs?: number;
   /** Called once when the file cannot be used. WizeLens then keeps working in memory. */
@@ -60,7 +60,7 @@ export class SqlitePersister {
       db.exec(SCHEMA);
       const setMeta = db.prepare("INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
       setMeta.run("schema", SCHEMA_VERSION);
-      setMeta.run("service", this.#options.serviceName);
+      setMeta.run("service", this.#options.service);
       this.#stmts = prepareStatements(db);
       this.#prune();
       this.#store.load(this.#loadRecent());

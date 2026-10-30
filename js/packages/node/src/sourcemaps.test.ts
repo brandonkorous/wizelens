@@ -20,7 +20,7 @@ const dev = createServer((_req, res) => res.end(`${CART_MINIFIED}\n//# sourceMap
 await new Promise<void>((r) => dev.listen(0, "127.0.0.1", r));
 const devUrl = `http://127.0.0.1:${(dev.address() as AddressInfo).port}/src/cart.ts`;
 
-const wl = createWizeLens({ serviceName: "web", storage: "memory", instrumentFetch: false, sourceMaps: { dirs: [dist] } });
+const wl = createWizeLens({ service: "web", storage: "memory", instrumentFetch: false, sourceMaps: { dirs: [dist] } });
 const app: Running = await startApp(wl, () => {});
 afterAll(async () => (await app.close(), dev.close()));
 

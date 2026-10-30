@@ -62,11 +62,11 @@ npm install @wizeworks/lens-vue
 
 ```ts
 // main.ts
-import { WizeLens } from "@wizeworks/lens-vue";
+import { WizeLensPlugin } from "@wizeworks/lens-vue";
 
 createApp(App)
   .use(router)
-  .use(WizeLens, { endpoint: "/_wizelens", router, enabled: import.meta.env.DEV })
+  .use(WizeLensPlugin, { endpoint: "/_wizelens", router, enabled: import.meta.env.DEV })
   .mount("#app");
 ```
 

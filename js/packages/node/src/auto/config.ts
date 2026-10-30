@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { envFlag } from "@wizeworks/lens-core";
+import { envSwitch } from "@wizeworks/lens-core";
 import { HUD_ENV } from "../mode.js";
 import type { WizeLensOptions } from "../types.js";
 
@@ -48,8 +48,8 @@ export function autoServiceName(env: Env = process.env, cwd = process.cwd(), mai
 
 /** The auto install's options: the service name and WIZELENS_HUD. Everything else comes from the variables createWizeLens already reads. */
 export function autoOptions(env: Env = process.env): WizeLensOptions {
-  const hud = envFlag(env[HUD_ENV]);
-  return { serviceName: autoServiceName(env), ...(hud === undefined ? {} : { hud }) };
+  const hud = envSwitch(env, HUD_ENV);
+  return { service: autoServiceName(env), ...(hud === undefined ? {} : { hud }) };
 }
 
 /** True when `name` is listed in WIZELENS_AUTO_SKIP. */

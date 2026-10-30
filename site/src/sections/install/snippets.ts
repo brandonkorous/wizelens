@@ -75,7 +75,7 @@ export const onRequestError: Instrumentation.onRequestError = async (...args) =>
 
 createApp(App)
   .use(router)
-  .use(WizeLens, { endpoint: "/_wizelens", router })
+  .use(WizeLensPlugin, { endpoint: "/_wizelens", router })
   .mount("#app");`,
   },
   {

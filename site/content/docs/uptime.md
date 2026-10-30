@@ -53,7 +53,7 @@ Every run is also a request of the `wizelens-uptime` service, written like the r
 - **The hub** runs checks from your machine, so it can reach local and private addresses too. Start it with
   `--no-uptime` to turn checks off.
 - **The cloud** runs checks from its own servers. Checks may not point at private or local addresses, the same rule as
-  alert webhooks; self-hosted clouds on a private network can allow them with `--allow-private-webhooks`. Members and above
+  alert webhooks; self-hosted clouds on a private network can allow them with `--allow-private-targets`. Members and above
   add, change, and delete checks, and every change is in the audit log. Header values are stored encrypted, and secret
   ones show as `[redacted]`.
 

@@ -109,10 +109,10 @@ export type Capability =
 /** What an in-app add-on offers today. Also the default when a host does not say. */
 export const IN_APP_CAPABILITIES: readonly Capability[] = ["federation"];
 
-/** Sending to a hub: "waiting" before the first batch, "ok" once one went through, "failing" with why the last one did not. */
-export interface HubSendState {
+/** Sending to a hub or the cloud: "waiting" before the first batch, "ok" once one went through, "failing" with why the last one did not. */
+export interface SendState {
   state: "waiting" | "ok" | "failing";
-  /** Why the hub took nothing, and what to change: "The hub needs a key (401). Set WIZELENS_HUB_TOKEN…". */
+  /** Why the hub took nothing, and what to change: "The hub needs a key (401). Set WIZELENS_TOKEN…". */
   reason?: string;
   /** When a batch last went through (epoch ms). */
   lastSentMs?: number;
@@ -143,10 +143,10 @@ export interface ServiceInfo {
   captureResponseBody?: boolean;
   /** The project this service belongs to, when one is set. */
   project?: string;
-  /** The hub this add-on sends to (its base URL), when one is set. */
-  hub?: string;
-  /** How sending to `hub` goes. Absent on add-ons that do not report it. */
-  hubSend?: HubSendState;
+  /** The hub or cloud this add-on sends to (its base URL), when one is set. */
+  sendTo?: string;
+  /** How sending to `sendTo` goes. Absent on add-ons that do not report it. */
+  send?: SendState;
   /** Absent when the add-on keeps every trace. */
   sampling?: SamplingInfo;
 }

@@ -1,4 +1,4 @@
-import { HUB_ENV, HUB_TOKEN_ENV, type HubSender, normalizeHubUrl, type ServiceInfo } from "@wizeworks/lens-core";
+import { ENDPOINT_ENV, envSwitch, type HubSender, normalizeHubUrl, type ServiceInfo, TOKEN_ENV } from "@wizeworks/lens-core";
 import { HubExporter } from "./hub-export.js";
 import { reportPackages } from "./packages.js";
 import { releaseOf } from "./release.js";
@@ -8,8 +8,8 @@ import type { WizeLensOptions } from "./types.js";
 
 export { releaseOf } from "./release.js";
 
-/** The hub URL from options, or from WIZELENS_HUB. Null when no hub is set. */
-export const hubUrlOf = (o: WizeLensOptions): string | null => normalizeHubUrl(o.hub ?? process.env[HUB_ENV]);
+/** Where to send, from options or WIZELENS_ENDPOINT. Null when nothing is set. */
+export const endpointOf = (o: WizeLensOptions): string | null => normalizeHubUrl(o.endpoint ?? process.env[ENDPOINT_ENV]);
 
 /** Start sending to the hub, when one is set. Null endpoints mean send-only: the hub gets no address to read from. */
 export function connectHub(
@@ -19,17 +19,17 @@ export function connectHub(
   selfEndpoints: ReadonlySet<string> | null,
   metrics: MetricStore | null = null,
 ): HubExporter | undefined {
-  const url = hubUrlOf(o);
+  const url = endpointOf(o);
   if (!url) return undefined;
   const sender = (): HubSender => {
     const i = info();
     const endpoint = selfEndpoints ? (o.publicEndpoint ?? selfEndpoints.values().next().value) : undefined;
     return { service: i.service, project: i.project, version: i.version, release: releaseOf(o), runtime: i.runtime, environment: i.environment, host: i.host, endpoint, startedMs: i.startedMs };
   };
-  const exporter = new HubExporter({ url, token: o.hubToken ?? process.env[HUB_TOKEN_ENV], sender, warn: (m) => console.warn(m) });
+  const exporter = new HubExporter({ url, token: o.token ?? process.env[TOKEN_ENV], sender, warn: (m) => console.warn(m) });
   exporter.attach(store);
   if (metrics) exporter.attachMetrics(metrics);
   exporter.start();
-  if (o.reportPackages !== false && process.env.WIZELENS_PACKAGES !== "false") reportPackages(url, o.hubToken ?? process.env[HUB_TOKEN_ENV], sender);
+  if (o.reportPackages !== false && envSwitch(process.env, "WIZELENS_PACKAGES") !== false) reportPackages(url, o.token ?? process.env[TOKEN_ENV], sender);
   return exporter;
 }

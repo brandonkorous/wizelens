@@ -6,7 +6,7 @@ import type { Trace } from "@wizeworks/lens-core";
 import { createWizeLens } from "./index.js";
 import { getJson } from "./test/helpers.js";
 
-const wizelens = createWizeLens({ serviceName: "live-api", enabled: true, storage: "memory", instrumentFetch: false });
+const wizelens = createWizeLens({ service: "live-api", enabled: true, storage: "memory", instrumentFetch: false });
 const server = createServer();
 let base = "";
 

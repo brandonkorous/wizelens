@@ -5,7 +5,7 @@ import { createWizeLens } from "./index.js";
 import { type Running, startApp } from "./test/helpers.js";
 
 const audit: string[] = [];
-const wizelens = createWizeLens({ serviceName: "mcp-api", enabled: true, enableMcp: true, storage: "memory", audit: (l) => audit.push(l) });
+const wizelens = createWizeLens({ service: "mcp-api", enabled: true, mcp: true, storage: "memory", audit: (l) => audit.push(l) });
 const headers = { "Content-Type": "application/json", Accept: "application/json, text/event-stream" };
 let app: Running;
 
@@ -80,7 +80,7 @@ describe("MCP calls", () => {
   });
 
   it("is off unless enabled", async () => {
-    const off = createWizeLens({ serviceName: "no-mcp", enabled: true, storage: "memory" });
+    const off = createWizeLens({ service: "no-mcp", enabled: true, storage: "memory" });
     const other = await startApp(off, () => {});
     expect((await fetch(`${other.base}/_wizelens/mcp`, { method: "POST", headers, body: "{}" })).status).toBe(404);
     await off.shutdown();

@@ -46,7 +46,7 @@ export function hubInfo(c: ApiContext): ServiceInfo {
     service: c.o.name,
     version: c.version,
     runtime: `node ${process.version} · lens-node ${NODE_VERSION}`,
-    mcp: c.o.enableMcp,
+    mcp: c.o.mcp,
     host: hostname(),
     startedMs: c.startedMs,
     storage: { kind: "sqlite", maxTraces: c.o.maxTraces, maxAgeMs: c.o.maxAgeMs },

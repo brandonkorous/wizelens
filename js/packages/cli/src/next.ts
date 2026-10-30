@@ -45,7 +45,7 @@ function withWebpackUpload(config: NextConfigLike, o: PluginOptions): WebpackFn 
 }
 
 /** Wrap a Next.js config: browser source maps on, the release in the bundle, and the maps uploaded after `next build`. */
-export function withWizeLens<T extends NextConfigLike>(config: T, o: PluginOptions = {}): T {
+export function withWizeLensSourceMaps<T extends NextConfigLike>(config: T, o: PluginOptions = {}): T {
   const release = pluginRelease(o, process.cwd());
   const extra = uploadExtra(config);
   const prev = config.compiler?.runAfterProductionCompile;
@@ -64,4 +64,4 @@ export function withWizeLens<T extends NextConfigLike>(config: T, o: PluginOptio
   return next as T;
 }
 
-export default withWizeLens;
+export default withWizeLensSourceMaps;

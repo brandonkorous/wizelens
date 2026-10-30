@@ -3,7 +3,7 @@ import { analyzeTrace, type Span } from "@wizeworks/lens-core";
 import { createWizeLens } from "../wizelens.js";
 import { esOperation, esPathShape, instrumentElasticsearch } from "./elasticsearch.js";
 
-const wizelens = createWizeLens({ serviceName: "elastic", storage: "memory", traceQueriesOutsideRequests: true });
+const wizelens = createWizeLens({ service: "elastic", storage: "memory", traceQueriesOutsideRequests: true });
 const dbSpans = (): Span[] => wizelens.store.all().flatMap((t) => t.spans.filter((s) => s.category === "db")).sort((a, b) => a.startMs - b.startMs);
 afterEach(() => wizelens.store.clear());
 

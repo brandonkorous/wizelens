@@ -16,7 +16,7 @@ it("copies an add-on's trace file into the hub", () => {
   dirs.push(dir);
   const path = join(dir, "traces.db");
   const store = new TraceStore({ now: () => 1_000_100 });
-  const persister = new SqlitePersister(store, { path, serviceName: "orders-api", now: () => 1_000_100 });
+  const persister = new SqlitePersister(store, { path, service: "orders-api", now: () => 1_000_100 });
   expect(persister.open()).toBe(true);
   store.addSpan(span(T1, "1".repeat(16)));
   store.addRemote(T1, "http://other/_wizelens");

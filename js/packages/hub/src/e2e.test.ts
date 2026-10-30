@@ -9,7 +9,7 @@ afterEach(() => hub?.close());
 it("a Node add-on with `hub` set sends its spans and logs to the hub", async () => {
   let url: string;
   ({ hub, url } = await startHub());
-  const wl = createWizeLens({ serviceName: "orders-api", storage: "memory", instrumentFetch: false, hub: url, project: "shop" });
+  const wl = createWizeLens({ service: "orders-api", storage: "memory", instrumentFetch: false, endpoint: url, project: "shop" });
   const span = wl.tracer.startSpan("work");
   const traceId = span.spanContext().traceId;
   wl.store.addLog(traceId, { timeMs: Date.now(), level: "info", category: "app", message: "hello", service: "orders-api", spanId: null, attributes: {} });

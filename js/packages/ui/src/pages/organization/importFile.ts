@@ -26,7 +26,7 @@ export interface ImportRun {
 }
 
 /** Where each kind of secret goes, for the file. */
-const SET_AS: Record<ImportedKey["kind"], string> = { ingest: "WIZELENS_HUB_TOKEN", browser: "page code (public)" };
+const SET_AS: Record<ImportedKey["kind"], string> = { ingest: "WIZELENS_TOKEN", browser: "page code (public)" };
 
 const KEY_COLUMNS: CsvColumns<ImportedKey> = [
   ["project", (k) => k.projectName],

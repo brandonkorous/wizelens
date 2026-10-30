@@ -25,7 +25,7 @@ async function site(): Promise<{ url: string; state: { down: boolean } }> {
 it("runs checks as jobs, keeps incidents, encrypts headers, and writes results as spans", async () => {
   const clock = { now: Date.UTC(2026, 9, 19, 12) };
   let url: string;
-  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateWebhooks: true, jobs: false }));
+  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateTargets: true, jobs: false }));
   const { owner, orgId, projectId } = await setupOwner(cloud, url);
   const { url: siteUrl, state } = await site();
   const base = `api/projects/${projectId}/uptime`;
@@ -65,7 +65,7 @@ it("lets members change checks, not viewers, and refuses private addresses", asy
 it("serves a public status page by an unguessable link, without URLs or errors", async () => {
   const clock = { now: Date.UTC(2026, 9, 19, 12) };
   let url: string;
-  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateWebhooks: true, jobs: false }));
+  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateTargets: true, jobs: false }));
   const { owner, projectId } = await setupOwner(cloud, url);
   const { url: siteUrl } = await site();
   await owner.call("POST", `api/projects/${projectId}/uptime`, { name: "Website", url: siteUrl });

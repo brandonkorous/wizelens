@@ -32,9 +32,9 @@ reports. Add the plugin for your bundler:
 
 ```ts
 // vite.config.ts
-import { wizelensSourceMaps } from "@wizeworks/lens-cli/vite";
+import { wizeLensSourceMaps } from "@wizeworks/lens-cli/vite";
 
-export default defineConfig({ plugins: [react(), wizelensSourceMaps()] });
+export default defineConfig({ plugins: [react(), wizeLensSourceMaps()] });
 ```
 
 ```js
@@ -46,9 +46,9 @@ export default { plugins: [new WizeLensSourceMapsPlugin()] };
 
 ```js
 // next.config.mjs
-import { withWizeLens } from "@wizeworks/lens-cli/next";
+import { withWizeLensSourceMaps } from "@wizeworks/lens-cli/next";
 
-export default withWizeLens({ reactStrictMode: true });
+export default withWizeLensSourceMaps({ reactStrictMode: true });
 ```
 
 Each plugin turns on hidden source maps (the files ship without a link to their map), puts the release in the page, and

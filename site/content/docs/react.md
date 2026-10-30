@@ -96,4 +96,4 @@ also the ones that go to an API in another project. It clears the user when it u
 
 ## Hooks
 
-`useWizeLens()` and `useWizeLensRequests()` give your own components the same data the HUD reads.
+`useWizeLensRecorder()` and `useWizeLensRequests()` give your own components the same data the HUD reads.

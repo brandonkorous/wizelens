@@ -67,7 +67,7 @@ initWizeLens({ endpoint: "/_wizelens", hud: true, slowMs: 800 });
 ```
 
 ```ts
-app.use(WizeLens, { endpoint: "/_wizelens", router, hud: false }); // Vue
+app.use(WizeLensPlugin, { endpoint: "/_wizelens", router, hud: false }); // Vue
 ```
 
 `readServer` follows `hud` unless you set it. See [Vue, Angular, Svelte, and plain JS](/docs/browser/).

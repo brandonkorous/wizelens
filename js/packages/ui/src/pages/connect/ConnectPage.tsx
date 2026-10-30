@@ -19,7 +19,7 @@ const SUBTITLE: Record<string, string> = {
 
 function sectionsOf(info: ReturnType<typeof useData>["info"], ctx: OrgCtx | null): Section[] {
   const mode = info?.mode;
-  const steps = mode === "hub" || mode === "cloud" || !!info?.hub;
+  const steps = mode === "hub" || mode === "cloud" || !!info?.sendTo;
   const list: (Section | false)[] = [
     steps && { id: "setup", label: mode === "in-app" ? "Sends to" : "Setup steps", icon: ListChecks, render: () => <SetupSteps info={info} ctx={ctx} /> },
     { id: "server", label: serverText(mode).label, icon: Server, render: () => <ServerSetup /> },

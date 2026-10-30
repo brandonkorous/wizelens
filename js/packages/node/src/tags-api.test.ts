@@ -4,7 +4,7 @@ import { createWizeLens } from "./index.js";
 import { fakeSpan, getJson, type Running, startApp } from "./test/helpers.js";
 
 const wizelens = createWizeLens({
-  serviceName: "tags-api", enabled: true, storage: "memory", instrumentFetch: false, enableMcp: true, audit: () => {},
+  service: "tags-api", enabled: true, storage: "memory", instrumentFetch: false, mcp: true, audit: () => {},
   tags: { rules: [{ name: "Slow", query: "duration:>100ms", color: "red" }, { name: "pay", query: "path:/api/pay" }], disableBuiltIns: ["bot"] },
 });
 let app: Running;
@@ -48,8 +48,8 @@ describe("in-app tags", () => {
   });
 
   it("refuses a bad rule at startup", () => {
-    expect(() => createWizeLens({ serviceName: "x", enabled: true, storage: "memory", tags: { rules: [{ name: "x", query: "status:abc" }] } })).toThrow(/status/);
-    expect(() => createWizeLens({ serviceName: "x", enabled: true, storage: "memory", tags: { disableBuiltIns: ["nope"] } })).toThrow(/nope/);
+    expect(() => createWizeLens({ service: "x", enabled: true, storage: "memory", tags: { rules: [{ name: "x", query: "status:abc" }] } })).toThrow(/status/);
+    expect(() => createWizeLens({ service: "x", enabled: true, storage: "memory", tags: { disableBuiltIns: ["nope"] } })).toThrow(/nope/);
   });
 
   it("gives AI tools list_tags, tag: in search, and the tags on each result", async () => {

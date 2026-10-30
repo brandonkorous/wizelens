@@ -9,9 +9,9 @@ import { DAY, parity, RETENTION_MS, settleAll, writeTraces } from "./test/scale.
 const traces = scenarioTraces();
 const count = (db: DatabaseSync, sql: string, ...args: number[]) => (db.prepare(sql).get(...args) as { n: number }).n;
 
-function storeWith(maxAgeMs: number, logMaxAgeMs: number) {
+function storeWith(maxAgeMs: number, logsMaxAgeMs: number) {
   const clock = { now: SCENARIO_NOW };
-  const store = new HubStore({ path: ":memory:", now: () => clock.now, maxAgeMs, logMaxAgeMs });
+  const store = new HubStore({ path: ":memory:", now: () => clock.now, maxAgeMs, logsMaxAgeMs });
   writeTraces(store, traces);
   settleAll(store, clock);
   store.prune();

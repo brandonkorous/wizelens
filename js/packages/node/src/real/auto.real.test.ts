@@ -13,7 +13,7 @@ afterEach(async () => {
 describe.skipIf(!REAL)("the auto install on real clients", { timeout: 60_000 }, () => {
   it("traces ioredis, node-redis, MongoDB, Elasticsearch, BullMQ, and SQS in an ES module app with no WizeLens code", async () => {
     const env = { WIZELENS_TEST_REDIS: REAL_URLS.redis, WIZELENS_TEST_MONGO: REAL_URLS.mongo, WIZELENS_TEST_ELASTIC: REAL_URLS.elastic, WIZELENS_TEST_SQS: REAL_URLS.sqs };
-    app = await runApp("stores.mjs", { WIZELENS_HUB: hub.url, OTEL_SERVICE_NAME: "auto-stores", ...env });
+    app = await runApp("stores.mjs", { WIZELENS_ENDPOINT: hub.url, OTEL_SERVICE_NAME: "auto-stores", ...env });
     expect((await app.get("/stores")).status).toBe(200);
     const request = () => hub.spans.find((s) => s.kind === "server" && s.name === "GET /stores");
     const adapters = () => new Set(hub.spans.filter((s) => s.traceId === request()?.traceId).map((s) => String(s.attributes["wizelens.db.adapter"] ?? s.attributes["messaging.system"] ?? "")));

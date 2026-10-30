@@ -8,7 +8,7 @@ import { isServedFile } from "./served-file.js";
 import { getJson, type Running, settle, startApp } from "./test/helpers.js";
 
 const root = mkdtempSync(join(tmpdir(), "wl-static-"));
-const make = (traceStaticFiles?: boolean) => createWizeLens({ serviceName: "shop-web", enabled: true, storage: "memory", instrumentFetch: false, traceStaticFiles });
+const make = (traceStaticFiles?: boolean) => createWizeLens({ service: "shop-web", enabled: true, storage: "memory", instrumentFetch: false, traceStaticFiles });
 const routes = (a: Parameters<Parameters<typeof startApp>[1]>[0]) => {
   a.use(express.static(root));
   a.get("/catalog", (_req, res) => res.json({ products: 12 }));

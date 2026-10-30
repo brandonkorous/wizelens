@@ -39,7 +39,7 @@ export function registerWizeLens(options: WizeLensNextOptions): WizeLens {
 }
 
 /** The instance `registerWizeLens` started in this process, if any. */
-export const nextWizeLens = (): WizeLens | undefined => (globalThis as Holder)[INSTANCE];
+export const currentWizeLens = (): WizeLens | undefined => (globalThis as Holder)[INSTANCE];
 
 /** What Next.js passes to `onRequestError`. Only the fields WizeLens reads. */
 export interface NextRequestInfo {
@@ -62,7 +62,7 @@ function alreadyRecorded(wizelens: WizeLens, traceId: string, message: string): 
 
 /** Next.js `onRequestError` hook: puts a server error on the request span and in the logs. Re-export it from instrumentation.ts. */
 export function onRequestError(err: unknown, request: NextRequestInfo, ctx: NextErrorContext): void {
-  const wizelens = nextWizeLens();
+  const wizelens = currentWizeLens();
   if (!wizelens?.enabled || isControlFlowError(err)) return;
   const message = messageOf(err);
   const span = currentServerSpan();

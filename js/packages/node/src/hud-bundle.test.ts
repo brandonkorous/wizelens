@@ -15,7 +15,7 @@ vi.mock("./hud-bundle.js", async (importOriginal) => {
 
 afterAll(closeServers);
 
-const options = (o: Partial<WizeLensOptions>): WizeLensOptions => ({ serviceName: "hud-serve", enabled: true, storage: "memory", instrumentFetch: false, captureConsole: false, ...o });
+const options = (o: Partial<WizeLensOptions>): WizeLensOptions => ({ service: "hud-serve", enabled: true, storage: "memory", instrumentFetch: false, captureConsole: false, ...o });
 
 describe("serving the script", () => {
   it("serves wizelens.js and its map, fresh, with the map comment renamed", async () => {
@@ -59,10 +59,10 @@ describe("the bundle file", () => {
 describe("the hud option", () => {
   it("is on by default, and the option wins over WIZELENS_HUD", () => {
     vi.stubEnv("WIZELENS_HUD", "");
-    expect(hudOn({ serviceName: "s" })).toBe(true);
+    expect(hudOn({ service: "s" })).toBe(true);
     vi.stubEnv("WIZELENS_HUD", "0");
-    expect(hudOn({ serviceName: "s" })).toBe(false);
-    expect(hudOn({ serviceName: "s", hud: true })).toBe(true);
+    expect(hudOn({ service: "s" })).toBe(false);
+    expect(hudOn({ service: "s", hud: true })).toBe(true);
     vi.unstubAllEnvs();
   });
 

@@ -69,8 +69,8 @@ function addOwnRoutes(app: FastifyLike, d: CaptureDeps): void {
   });
 }
 
-/** A Fastify plugin: `await app.register(wizelensFastify(wizelens))`. Register it before your routes. */
-export function wizelensFastify(wizelens: WizeLens) {
+/** A Fastify plugin: `await app.register(wizeLensFastify(wizelens))`. Register it before your routes. */
+export function wizeLensFastify(wizelens: WizeLens) {
   const plugin = (app: unknown, _opts: unknown, done: Done): void => {
     const d = captureOf(wizelens);
     if (d) {

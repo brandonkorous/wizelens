@@ -69,8 +69,8 @@ export function pointsFromSdk(rm: SdkResourceMetrics): MetricPoint[] {
   return (rm.scopeMetrics ?? []).flatMap((sm) => (sm.metrics ?? []).flatMap((m) => (m.dataPoints ?? []).flatMap((d) => pointOf(m, d) ?? [])));
 }
 
-/** An OpenTelemetry exporter for app metrics: `new PeriodicExportingMetricReader({ exporter: wizelensMetricExporter(wizelens) })`. */
-export function wizelensMetricExporter(wizelens: WizeLens) {
+/** An OpenTelemetry exporter for app metrics: `new PeriodicExportingMetricReader({ exporter: wizeLensMetricExporter(wizelens) })`. */
+export function wizeLensMetricExporter(wizelens: WizeLens) {
   return {
     export(metrics: SdkResourceMetrics, resultCallback: (result: { code: number; error?: Error }) => void): void {
       try {

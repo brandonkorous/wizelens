@@ -16,7 +16,7 @@ const PAGE = "<!doctype html><html><head><title>Orders</title></head><body><h1>O
 const TAG = tagOf("hud-api");
 const WITH_TAG = PAGE.replace("</body>", `${TAG}</body>`);
 const make = (o: Partial<WizeLensOptions> = {}) =>
-  createWizeLens({ serviceName: "hud-api", enabled: true, dashboard: true, storage: "memory", instrumentFetch: false, captureConsole: false, ...o });
+  createWizeLens({ service: "hud-api", enabled: true, dashboard: true, storage: "memory", instrumentFetch: false, captureConsole: false, ...o });
 const html = (res: ServerResponse) => res.setHeader("Content-Type", "text/html; charset=utf-8");
 
 async function page(app: (res: ServerResponse) => void, o: Partial<WizeLensOptions> = {}, init?: RequestInit, path = "/") {

@@ -2,7 +2,7 @@ import { afterAll, expect, it } from "vitest";
 import { startApp, type Running } from "./test/helpers.js";
 import { createWizeLens } from "./wizelens.js";
 
-const wl = createWizeLens({ serviceName: "api", storage: "memory", instrumentFetch: false, sampling: { rate: 0, keepSlowMs: 200 } });
+const wl = createWizeLens({ service: "api", storage: "memory", instrumentFetch: false, sampling: { rate: 0, keepSlowMs: 200 } });
 const app: Running = await startApp(wl, (a) => {
   a.get("/ok", (_req, res) => {
     wl.logger.info("fine");

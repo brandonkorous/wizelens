@@ -20,7 +20,7 @@ export async function checkUrlProblem(url: string, allowPrivate: boolean): Promi
 
 /** Run one check now: keep its result, and write it as a wizelens-uptime trace through the normal write path. */
 export async function runCloudCheck(app: CloudApp, c: CloudCheck): Promise<void> {
-  const r = await runCheck(c, { allowPrivate: app.config.allowPrivateWebhooks, now: app.config.now });
+  const r = await runCheck(c, { allowPrivate: app.config.allowPrivateTargets, now: app.config.now });
   await saveRun(app.db, c, r);
   const sender = { service: UPTIME_SERVICE, environment: c.env || undefined, runtime: `wizelens-cloud ${app.version}` };
   const w: HubWrite = { sender, via: "uptime", ...uptimeTelemetry(c, r), remotes: [] };

@@ -38,15 +38,15 @@ export const looseTraceIdOf = (source: string, timeMs: number): string => `${LOO
 export interface LooseLogOptions {
   outside: boolean;
   minLevel: LogLevel;
-  sampleRate: number;
+  rate: number;
 }
 
-export const DEFAULT_LOOSE_LOGS: LooseLogOptions = { outside: true, minLevel: "info", sampleRate: 1 };
+export const DEFAULT_LOOSE_LOGS: LooseLogOptions = { outside: true, minLevel: "info", rate: 1 };
 
 const RANKS: Record<LogLevel, number> = { trace: 0, debug: 1, info: 2, warn: 3, error: 4, critical: 5 };
 
 /** True when a line outside a request is kept: on, at or above the floor, and (below warn) inside the sample. */
 export function keepLooseLine(o: LooseLogOptions, level: LogLevel, random: () => number = Math.random): boolean {
   if (!o.outside || RANKS[level] < RANKS[o.minLevel]) return false;
-  return RANKS[level] >= RANKS.warn || o.sampleRate >= 1 || random() < Math.max(0, o.sampleRate);
+  return RANKS[level] >= RANKS.warn || o.rate >= 1 || random() < Math.max(0, o.rate);
 }

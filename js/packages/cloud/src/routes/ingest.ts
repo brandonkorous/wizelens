@@ -10,7 +10,7 @@ import { handleOtlp, type HubWrite, type OtlpSignal, parseIngest, parseJson, rea
 
 export type IngestKey = ApiKey & { orgId: string };
 
-/** The ingest key of the call. Add-ons send it as WIZELENS_HUB_TOKEN; OTLP apps as a bearer header. */
+/** The ingest key of the call. Add-ons send it from WIZELENS_TOKEN, OTLP apps as a bearer header. */
 async function ingestKey(ctx: Ctx, limiter: RateLimiter): Promise<IngestKey> {
   const token = bearerOf(ctx.req);
   if (!token?.startsWith("wl_ik_")) return fail(401, "Send an ingest key: Authorization: Bearer wl_ik_...");

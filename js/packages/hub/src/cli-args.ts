@@ -1,5 +1,5 @@
 import { parseArgs } from "node:util";
-import { DEFAULT_REDACT_KEYS, HUB_TOKEN_ENV } from "@wizeworks/lens-core";
+import { DEFAULT_REDACT_KEYS, envSwitch } from "@wizeworks/lens-core";
 import type { HubOptions } from "./options.js";
 
 export const USAGE = `wizelens-hub: one place for the traces of every service.
@@ -28,7 +28,7 @@ Usage: wizelens-hub [options]
                       an N+1. Default 5.                       (WIZELENS_HUB_N_PLUS_ONE)
   --redact-keys <a,b> Hide values of keys that contain these,
                       on top of the built-in list.             (WIZELENS_HUB_REDACT_KEYS)
-  --mcp               Turn on the read-only MCP endpoint.      (WIZELENS_HUB_MCP=1)
+  --mcp               Turn on the read-only MCP endpoint.      (WIZELENS_HUB_MCP=true)
   --no-uptime         Do not run uptime checks.                (WIZELENS_HUB_UPTIME=0)
   --no-osv            Do not check packages against OSV.       (WIZELENS_HUB_OSV=0)
   --import <file>     Copy an add-on's .wizelens/traces.db into
@@ -87,17 +87,17 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CliOpti
     port: int(a.port ?? env.WIZELENS_HUB_PORT),
     host: a.host ?? env.WIZELENS_HUB_HOST,
     storagePath: a.data ?? env.WIZELENS_HUB_DATA,
-    token: a.token ?? env[HUB_TOKEN_ENV],
+    token: a.token ?? env.WIZELENS_HUB_TOKEN,
     maxAgeMs: parseDuration(a.retention ?? env.WIZELENS_HUB_RETENTION),
-    logMaxAgeMs: parseDuration(a["log-retention"] ?? env.WIZELENS_HUB_LOG_RETENTION),
+    logsMaxAgeMs: parseDuration(a["log-retention"] ?? env.WIZELENS_HUB_LOG_RETENTION),
     maxTraces: int(a["max-traces"] ?? env.WIZELENS_HUB_MAX_TRACES),
     maxMetricPoints: int(a["max-metric-points"] ?? env.WIZELENS_HUB_MAX_METRIC_POINTS),
     slowQueryMs: int(a["slow-query-ms"] ?? env.WIZELENS_HUB_SLOW_QUERY_MS),
     nPlusOneThreshold: int(a["n-plus-one"] ?? env.WIZELENS_HUB_N_PLUS_ONE),
     redactKeys: keyList(a["redact-keys"] ?? env.WIZELENS_HUB_REDACT_KEYS),
-    enableMcp: a.mcp ?? env.WIZELENS_HUB_MCP === "1",
-    uptime: !(a["no-uptime"] ?? env.WIZELENS_HUB_UPTIME === "0"),
-    osv: !(a["no-osv"] ?? env.WIZELENS_HUB_OSV === "0"),
+    mcp: a.mcp ?? envSwitch(env, "WIZELENS_HUB_MCP") ?? false,
+    uptime: !a["no-uptime"] && (envSwitch(env, "WIZELENS_HUB_UPTIME") ?? true),
+    osv: !a["no-osv"] && (envSwitch(env, "WIZELENS_HUB_OSV") ?? true),
     imports: a.import ?? [],
     sourceMaps: { dirs: a.sourcemaps ?? (env.WIZELENS_HUB_SOURCEMAPS ?? "").split(",").map((d) => d.trim()).filter(Boolean) },
   };

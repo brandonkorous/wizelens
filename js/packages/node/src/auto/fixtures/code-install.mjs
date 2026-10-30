@@ -3,7 +3,7 @@ import { DatabaseSync } from "node:sqlite";
 import { createWizeLens } from "@wizeworks/lens-node";
 import express from "express";
 
-const wizelens = createWizeLens({ serviceName: "code-app", storage: "memory", dashboard: false });
+const wizelens = createWizeLens({ service: "code-app", storage: "memory", dashboard: false });
 const db = new DatabaseSync(":memory:");
 db.exec("CREATE TABLE notes (id INTEGER PRIMARY KEY, body TEXT)");
 

@@ -12,7 +12,7 @@ docker run -p 5960:5960 -v wizelens:/data ghcr.io/wizeworksllc/wizelens-hub
 Open http://localhost:5960/_wizelens/. Then point your services at it and restart them:
 
 ```bash
-WIZELENS_HUB=http://localhost:5960                  # WizeLens add-ons (.NET and Node)
+WIZELENS_ENDPOINT=http://localhost:5960                  # WizeLens add-ons (.NET and Node)
 WIZELENS_PROJECT=my-shop                            # optional: group services by project
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960   # any OpenTelemetry app
 ```
@@ -31,7 +31,7 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960   # any OpenTelemetry app
 | `--mcp` | `WIZELENS_HUB_MCP=1` | off |
 | `--import <file>` | | Copy an add-on's `.wizelens/traces.db` in at start |
 
-To share the hub with a team, run it with `--host 0.0.0.0 --token <text>`. Services send `WIZELENS_HUB_TOKEN`; OTLP apps send
+To share the hub with a team, run it with `--host 0.0.0.0 --token <text>`. Services send it as `WIZELENS_TOKEN`; OTLP apps send
 `OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <text>`; in a browser, open `/_wizelens/?token=<text>` once.
 
 ## Stats

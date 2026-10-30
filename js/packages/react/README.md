@@ -32,7 +32,7 @@ The HUD is the same `<wizelens-hud>` element that every WizeLens browser package
 your CSS cannot reach it, and it keeps its settings in `localStorage` (`wizelens.hud.*`). It is added to the page after the provider
 mounts, so server-rendered HTML has no HUD and hydration matches, and the render stats leave its work out.
 
-The provider renders it for you. For a recorder you made yourself with `createRecorder`, render `<Hud recorder={recorder} slowMs={800} />`:
+The provider renders it for you. For a recorder you made yourself with `createReactRecorder`, render `<Hud recorder={recorder} slowMs={800} />`:
 it renders nothing and mounts the element for that recorder while it is mounted.
 
 When a .NET or Node add-on puts its HUD script into the pages it serves in development, the provider takes over from it: one HUD and

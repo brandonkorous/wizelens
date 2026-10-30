@@ -3,7 +3,7 @@ import type { Span } from "@wizeworks/lens-core";
 import { createWizeLens } from "../wizelens.js";
 import { instrumentRedis } from "./redis.js";
 
-const wizelens = createWizeLens({ serviceName: "node-redis", storage: "memory", traceQueriesOutsideRequests: true });
+const wizelens = createWizeLens({ service: "node-redis", storage: "memory", traceQueriesOutsideRequests: true });
 const dbSpans = (): Span[] => wizelens.store.all().flatMap((t) => t.spans.filter((s) => s.category === "db")).sort((a, b) => a.startMs - b.startMs);
 afterEach(() => wizelens.store.clear());
 

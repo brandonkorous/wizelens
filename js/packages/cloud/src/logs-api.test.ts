@@ -32,7 +32,7 @@ const line = (timeMs: number, level: LogRecord["level"], message: string): LogRe
 
 async function setup(clock: { now: number }) {
   let url: string;
-  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
+  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateTargets: true, alertIntervalMs: 3_600_000 }));
   const { owner, orgId, projectId } = await setupOwner(cloud, url);
   const key = (await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", projectIds: [projectId] })).body.token;
   const ingest = (body: unknown) => fetch(`${url}/_wizelens/api/ingest`, { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: JSON.stringify(body) });

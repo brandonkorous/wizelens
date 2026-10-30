@@ -5,8 +5,8 @@ import { createWizeLens } from "./index.js";
 import { call, clientSpans, type Downstream, spansOf, startDownstream } from "./test/downstream.js";
 import { type Running, startApp } from "./test/helpers.js";
 
-const wl = createWizeLens({ serviceName: "libs-out", storage: "memory", captureConsole: false, captureMetrics: false });
-const off = createWizeLens({ serviceName: "no-http", storage: "memory", captureConsole: false, captureMetrics: false, instrumentHttp: false });
+const wl = createWizeLens({ service: "libs-out", storage: "memory", captureConsole: false, captureMetrics: false });
+const off = createWizeLens({ service: "no-http", storage: "memory", captureConsole: false, captureMetrics: false, instrumentHttp: false });
 let app: Running;
 let offApp: Running;
 let down: Downstream;

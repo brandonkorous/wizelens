@@ -33,7 +33,7 @@ async function main(): Promise<void> {
     [
       `WizeLens Cloud ${CLOUD_VERSION}`,
       `  Dashboard   ${url}/_wizelens/`,
-      `  Add-ons     WIZELENS_HUB=${url}  WIZELENS_HUB_TOKEN=<ingest key>`,
+      `  Add-ons     WIZELENS_ENDPOINT=${url}  WIZELENS_TOKEN=<ingest key>`,
       `  OTLP/HTTP   OTEL_EXPORTER_OTLP_ENDPOINT=${url}  (header Authorization=Bearer <ingest key>)`,
       `  Database    ${db}`,
       `  Telemetry   ${cloud.app.telemetry.kind === "clickhouse" ? "ClickHouse" : "the database above"}`,

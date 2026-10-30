@@ -20,7 +20,7 @@ export interface HubStoreOptions {
   /** Most metric points kept. Default 2,000,000. */
   maxMetricPoints?: number;
   /** Oldest log line kept, in ms. Default: `maxAgeMs`. Lines outside a request go at this age; lines in a request go with their trace when that is sooner. */
-  logMaxAgeMs?: number;
+  logsMaxAgeMs?: number;
   /** Thresholds and redacted keys for projects that set none. */
   slowQueryMs?: number;
   nPlusOneThreshold?: number;
@@ -52,7 +52,7 @@ export class HubStore {
   readonly maxTraces: number;
   readonly maxAgeMs: number;
   readonly maxMetricPoints: number;
-  readonly logMaxAgeMs: number;
+  readonly logsMaxAgeMs: number;
   readonly slowQueryMs: number;
   readonly nPlusOneThreshold: number;
   readonly redactKeys: readonly string[];
@@ -67,7 +67,7 @@ export class HubStore {
     this.maxTraces = Math.max(1, o.maxTraces ?? 50_000);
     this.maxAgeMs = Math.max(60_000, o.maxAgeMs ?? 7 * DAY_MS);
     this.maxMetricPoints = Math.max(1, o.maxMetricPoints ?? 2_000_000);
-    this.logMaxAgeMs = Math.max(60_000, o.logMaxAgeMs ?? this.maxAgeMs);
+    this.logsMaxAgeMs = Math.max(60_000, o.logsMaxAgeMs ?? this.maxAgeMs);
     this.slowQueryMs = o.slowQueryMs ?? FACT_SLOW_QUERY_MS;
     this.nPlusOneThreshold = o.nPlusOneThreshold ?? FACT_N_PLUS_ONE;
     this.redactKeys = o.redactKeys ?? DEFAULT_REDACT_KEYS;
@@ -133,7 +133,7 @@ export class HubStore {
   /** Drop traces past the age or count limit, log lines past the log age, and services not seen for as long. Returns traces dropped. */
   prune(): number {
     const cutoff = this.now() - this.maxAgeMs;
-    const logCutoff = this.now() - this.logMaxAgeMs;
+    const logCutoff = this.now() - this.logsMaxAgeMs;
     const shorter = shorterKeeps(this);
     const doomed = this.#doomed(cutoff, logCutoff, shorter);
     this.db.exec("BEGIN");

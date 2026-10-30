@@ -18,7 +18,7 @@ afterEach(() => {
 function startSample(hubUrl: string): Promise<string> {
   app = spawn(process.execPath, ["--disable-warning=ExperimentalWarning", "--import", AUTO, "src/server.mjs"], {
     cwd: SAMPLE,
-    env: { ...process.env, NODE_ENV: "development", WIZELENS_HUB: hubUrl, WIZELENS_DASHBOARD: "false", PORT: "0" },
+    env: { ...process.env, NODE_ENV: "development", WIZELENS_ENDPOINT: hubUrl, WIZELENS_DASHBOARD: "false", PORT: "0" },
   });
   let output = "";
   return new Promise((resolve, reject) => {

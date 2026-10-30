@@ -6,7 +6,7 @@ import { createWizeLens } from "./wizelens.js";
 
 // A crawler's clock put its page view 4.6 hours before the server request, so the request read as 4.6 hours long.
 
-const wl = createWizeLens({ serviceName: "web", storage: "memory", instrumentFetch: false });
+const wl = createWizeLens({ service: "web", storage: "memory", instrumentFetch: false });
 const app: Running = await startApp(wl, () => {});
 afterAll(() => app.close());
 

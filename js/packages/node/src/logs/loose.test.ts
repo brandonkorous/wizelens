@@ -17,7 +17,7 @@ const open: WizeLens[] = [];
 afterEach(async () => void (await Promise.all(open.splice(0).map((w) => w.shutdown()))));
 
 const make = (logs?: LogOptions, captureConsole = false) => {
-  const wl = createWizeLens({ serviceName: "jobs-api", storage: "memory", instrumentFetch: false, captureConsole, logs });
+  const wl = createWizeLens({ service: "jobs-api", storage: "memory", instrumentFetch: false, captureConsole, logs });
   open.push(wl);
   return wl;
 };
@@ -56,7 +56,7 @@ describe("lines outside a request", () => {
     floor.logger.info("dropped");
     floor.logger.warn("kept");
     expect(looseLines(floor).map((l) => l.message)).toEqual(["kept"]);
-    const sampled = make({ sampleRate: 0, minLevel: "debug" });
+    const sampled = make({ rate: 0, minLevel: "debug" });
     sampled.logger.debug("dropped");
     sampled.logger.error("kept");
     expect(looseLines(sampled).map((l) => l.message)).toEqual(["kept"]);
@@ -66,9 +66,9 @@ describe("lines outside a request", () => {
   });
 
   it("read their options from the variables", () => {
-    expect(looseLogsOf({}, { WIZELENS_LOGS_OUTSIDE: "off", WIZELENS_LOGS_MIN_LEVEL: "Warning", WIZELENS_LOGS_SAMPLE_RATE: "0.25" })).toEqual({ outside: false, minLevel: "warn", sampleRate: 0.25 });
-    expect(looseLogsOf({ minLevel: "debug" }, { WIZELENS_LOGS_MIN_LEVEL: "error" })).toEqual({ outside: true, minLevel: "debug", sampleRate: 1 });
-    expect(looseLogsOf({}, { WIZELENS_LOGS_SAMPLE_RATE: "nope" }).sampleRate).toBe(1);
+    expect(looseLogsOf({}, { WIZELENS_LOGS_OUTSIDE: "off", WIZELENS_LOGS_MIN_LEVEL: "Warning", WIZELENS_LOGS_SAMPLE_RATE: "0.25" })).toEqual({ outside: false, minLevel: "warn", rate: 0.25 });
+    expect(looseLogsOf({ minLevel: "debug" }, { WIZELENS_LOGS_MIN_LEVEL: "error" })).toEqual({ outside: true, minLevel: "debug", rate: 1 });
+    expect(looseLogsOf({}, { WIZELENS_LOGS_SAMPLE_RATE: "nope" }).rate).toBe(1);
   });
 });
 

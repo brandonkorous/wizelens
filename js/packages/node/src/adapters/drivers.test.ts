@@ -11,7 +11,7 @@ import { instrumentBetterSqlite3, instrumentNodeSqlite } from "./sqlite.js";
 import { instrumentMysql2 } from "./mysql2.js";
 import { instrumentPg } from "./pg.js";
 
-const wizelens = createWizeLens({ serviceName: "drivers", storage: "memory", traceQueriesOutsideRequests: true });
+const wizelens = createWizeLens({ service: "drivers", storage: "memory", traceQueriesOutsideRequests: true });
 const dbSpans = (): Span[] => wizelens.store.all().flatMap((t) => t.spans.filter((s) => s.category === "db")).sort((a, b) => a.startMs - b.startMs);
 afterEach(() => wizelens.store.clear());
 

@@ -51,9 +51,9 @@ export function keepMsOf(h: Pick<HubSettingsHost, "db" | "maxAgeMs">, project: s
 }
 
 /** How long a project's log lines stay: the hub's log age, or the project's own retention when shorter. */
-export function logKeepMsOf(h: Pick<HubSettingsHost, "db"> & { logMaxAgeMs: number }, project: string): number {
+export function logKeepMsOf(h: Pick<HubSettingsHost, "db"> & { logsMaxAgeMs: number }, project: string): number {
   const days = projectSettings(h.db, project).retentionDays;
-  return days ? Math.min(days * DAY_MS, h.logMaxAgeMs) : h.logMaxAgeMs;
+  return days ? Math.min(days * DAY_MS, h.logsMaxAgeMs) : h.logsMaxAgeMs;
 }
 
 /** The thresholds a project's traces settle with. */

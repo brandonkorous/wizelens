@@ -26,7 +26,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "lens-cli": "./dist/cli.js"
+    "wizelens": "./dist/cli.js"
   },
   "exports": {
     ".": {

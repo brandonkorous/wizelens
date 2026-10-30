@@ -4,7 +4,7 @@ export async function register() {
   // The runtime check must wrap the import, so the Edge build leaves the package out.
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { registerWizeLens } = await import("@wizeworks/lens-node/next");
-    registerWizeLens({ serviceName: "next-web" });
+    registerWizeLens({ service: "next-web" });
   }
 }
 

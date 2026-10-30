@@ -7,10 +7,10 @@ const QUIET = { capturePages: false, captureConsole: false, resolveFrames: false
 let vue: Vue;
 let page: StubbedPage;
 
-function install(options: Parameters<Vue["WizeLens"]["install"]>[1]): Lens {
+function install(options: Parameters<Vue["WizeLensPlugin"]["install"]>[1]): Lens {
   const provided = new Map<symbol, unknown>();
-  vue.WizeLens.install({ config: {}, provide: (key, value) => provided.set(key, value) }, options);
-  return provided.get(vue.WIZELENS_KEY) as Lens;
+  vue.WizeLensPlugin.install({ config: {}, provide: (key, value) => provided.set(key, value) }, options);
+  return provided.get(vue.wizeLensKey) as Lens;
 }
 
 const settle = () => new Promise((r) => setTimeout(r, 5));
@@ -26,7 +26,7 @@ afterEach(async () => {
   clearPage();
 });
 
-it("shows the HUD with app.use(WizeLens, { hud: true, slowMs }), and reads traces back", async () => {
+it("shows the HUD with app.use(WizeLensPlugin, { hud: true, slowMs }), and reads traces back", async () => {
   install({ ...QUIET, hud: true, slowMs: 900 });
   expect(page.huds.map((h) => h.slowMs)).toEqual([900]);
   await settle();

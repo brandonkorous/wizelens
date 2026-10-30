@@ -6,7 +6,7 @@ import { type Running, startApp } from "../test/helpers.js";
 import { createWizeLens } from "../wizelens.js";
 import { MetricStore } from "./store.js";
 
-const wl = createWizeLens({ serviceName: "metrics-api", storage: "memory", instrumentFetch: false, enableMcp: true, audit: () => {} });
+const wl = createWizeLens({ service: "metrics-api", storage: "memory", instrumentFetch: false, mcp: true, audit: () => {} });
 const headers = { "Content-Type": "application/json", Accept: "application/json, text/event-stream" };
 let app: Running;
 const now = Date.now();
@@ -49,10 +49,10 @@ describe("metrics API", () => {
   });
 
   it("is off with captureMetrics: false and on a disabled instance", async () => {
-    const off = createWizeLens({ serviceName: "off", storage: "memory", instrumentFetch: false, captureMetrics: false });
+    const off = createWizeLens({ service: "off", storage: "memory", instrumentFetch: false, captureMetrics: false });
     expect(metricsOf(off)).toBeNull();
     await off.shutdown();
-    expect(metricsOf(createWizeLens({ serviceName: "x", enabled: false }))).toBeNull();
+    expect(metricsOf(createWizeLens({ service: "x", enabled: false }))).toBeNull();
   });
 });
 

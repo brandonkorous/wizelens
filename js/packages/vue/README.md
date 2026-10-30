@@ -13,13 +13,13 @@ npm install @wizeworks/lens-vue
 ```ts
 // main.ts
 import { createApp } from "vue";
-import { WizeLens } from "@wizeworks/lens-vue";
+import { WizeLensPlugin } from "@wizeworks/lens-vue";
 import App from "./App.vue";
 import { router } from "./router";
 
 createApp(App)
   .use(router)
-  .use(WizeLens, { endpoint: "/_wizelens", router, enabled: import.meta.env.DEV })
+  .use(WizeLensPlugin, { endpoint: "/_wizelens", router, enabled: import.meta.env.DEV })
   .mount("#app");
 ```
 
@@ -56,7 +56,7 @@ The same HUD as every WizeLens browser package: the last request, its server tra
 - `false` shows nothing and reads nothing back.
 
 ```ts
-app.use(WizeLens, { endpoint: "/_wizelens", router, hud: true, slowMs: 800 });
+app.use(WizeLensPlugin, { endpoint: "/_wizelens", router, hud: true, slowMs: 800 });
 ```
 
 When a .NET or Node add-on puts its HUD script into the pages it serves in development, the plugin takes over from it: one HUD and one
@@ -66,9 +66,9 @@ capture per page.
 
 ```ts
 import { inject } from "vue";
-import { WIZELENS_KEY, type WizeLensInstance } from "@wizeworks/lens-vue";
+import { wizeLensKey, type WizeLens } from "@wizeworks/lens-vue";
 
-const lens = inject(WIZELENS_KEY) as WizeLensInstance;
+const lens = inject(wizeLensKey) as WizeLens;
 lens.setUser(user.id);
 ```
 

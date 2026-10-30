@@ -7,7 +7,7 @@ import express from "express";
 import pg from "pg";
 import { createWizeLens, instrumentPg } from "@wizeworks/lens-node";
 
-const wizelens = createWizeLens({ serviceName: "orders-api" });
+const wizelens = createWizeLens({ service: "orders-api" });
 instrumentPg(wizelens, pg);
 
 const app = express();
@@ -16,7 +16,7 @@ app.use(wizelens.middleware);      // first
 app.use(wizelens.errorMiddleware); // last
 ```
 
-- **Frameworks:** Express (`wizelens.middleware`), Fastify (`wizelensFastify`), Koa (`wizelensKoa`), Hono (`wizelensHono`), or plain `node:http` (`wizelens.handler`).
+- **Frameworks:** Express (`wizelens.middleware`), Fastify (`wizeLensFastify`), Koa (`wizeLensKoa`), Hono (`wizeLensHono`), or plain `node:http` (`wizelens.handler`).
 - **Databases:** `instrumentPg`, `instrumentPostgresJs`, `instrumentMysql2`, `instrumentBetterSqlite3`, `instrumentNodeSqlite`, `prismaExtension`, `instrumentTypeOrm`, `instrumentDrizzle`, or `wizelens.traceDb` for anything else.
 - **gRPC and messaging:** `instrumentGrpc`, `instrumentAmqplib`, `instrumentKafkaJs`, `instrumentServiceBus`.
 - **Outgoing `fetch`** is traced automatically. Tag requests with `wizelens.tag(key, value)` and name the user with `wizelens.setUser(id)`.
@@ -49,14 +49,14 @@ Log lines written during a request go into its trace. Lines written outside a re
 | Logger | How |
 |---|---|
 | `console.*` | Automatic. Turn it off with `captureConsole: false`. |
-| Fastify (`request.log`, `app.log`) | Automatic with `wizelensFastify`. |
+| Fastify (`request.log`, `app.log`) | Automatic with `wizeLensFastify`. |
 | pino (also NestJS with `nestjs-pino`) | `instrumentPino(wizelens, logger)`. Covers every logger from the same pino copy. |
 | winston | `instrumentWinston(wizelens, logger)`. Child loggers are covered. |
 | bunyan | `instrumentBunyan(wizelens, logger)`. Call it before you make child loggers. |
 | consola | `instrumentConsola(wizelens, consola)` |
 | log4js | Add an appender: `appenders: { wizelens: { type: log4jsAppender(wizelens) } }`, and list it in your categories. |
 | NestJS built-in logger | `NestFactory.create(AppModule, { logger: nestLogger(wizelens, new ConsoleLogger()) })` |
-| OpenTelemetry logs | `new LoggerProvider({ processors: [wizelensLogProcessor(wizelens)] })` |
+| OpenTelemetry logs | `new LoggerProvider({ processors: [wizeLensLogProcessor(wizelens)] })` |
 | Anything else | `wizelens.logger.info("message", { key: "value" })` |
 
 Your loggers still write where they wrote before. WizeLens only copies the lines. Fields become log attributes, sensitive names are
@@ -74,9 +74,9 @@ To keep your own OpenTelemetry metrics too, add the WizeLens exporter to your me
 
 ```ts
 import { MeterProvider, PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
-import { wizelensMetricExporter } from "@wizeworks/lens-node";
+import { wizeLensMetricExporter } from "@wizeworks/lens-node";
 
-const provider = new MeterProvider({ readers: [new PeriodicExportingMetricReader({ exporter: wizelensMetricExporter(wizelens) })] });
+const provider = new MeterProvider({ readers: [new PeriodicExportingMetricReader({ exporter: wizeLensMetricExporter(wizelens) })] });
 ```
 
 Metrics are kept in memory for 1 hour (`metricsMaxAgeMs`), at most 50,000 points and 1,000 series. With a hub set, they are sent

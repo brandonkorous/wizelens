@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { createWizeLens } from "../wizelens.js";
 import { instrumentBullMq } from "./bullmq.js";
 
-const wl = createWizeLens({ serviceName: "bullmq", storage: "memory", instrumentFetch: false });
+const wl = createWizeLens({ service: "bullmq", storage: "memory", instrumentFetch: false });
 const TRACED = Symbol.for("wizeworks.wizelens.traced");
 const isTraced = (fn: unknown) => !!(fn as Record<symbol, unknown>)[TRACED];
 const settle = (ms = 20) => new Promise((r) => setTimeout(r, ms));
@@ -80,7 +80,7 @@ describe("bullmq", () => {
     expect(instrumentBullMq(wl, bullmq)).toBe(true);
     expect([Queue.prototype.add, Queue.prototype.addBulk, Worker.prototype.callProcessJob, FlowProducer.prototype.add].every(isTraced)).toBe(true);
     expect(instrumentBullMq(wl, {})).toBe(false);
-    expect(instrumentBullMq(createWizeLens({ serviceName: "off", enabled: false }), { Queue: class {} })).toBe(false);
+    expect(instrumentBullMq(createWizeLens({ service: "off", enabled: false }), { Queue: class {} })).toBe(false);
   });
 
   it("joins Queue.add and the worker in one trace, without the queue wait stretching the request", async () => {

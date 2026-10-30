@@ -45,10 +45,10 @@ describe("lines outside a request", () => {
   });
 
   it("are kept by the level floor and the sample rate; warnings always", () => {
-    const o = { outside: true, minLevel: "info" as const, sampleRate: 0 };
+    const o = { outside: true, minLevel: "info" as const, rate: 0 };
     expect([keepLooseLine(o, "debug"), keepLooseLine(o, "info"), keepLooseLine(o, "warn"), keepLooseLine({ ...o, outside: false }, "error")]).toEqual([false, false, true, false]);
-    expect(keepLooseLine({ ...o, sampleRate: 0.5 }, "info", () => 0.4)).toBe(true);
-    expect(keepLooseLine({ ...o, sampleRate: 0.5 }, "info", () => 0.6)).toBe(false);
+    expect(keepLooseLine({ ...o, rate: 0.5 }, "info", () => 0.4)).toBe(true);
+    expect(keepLooseLine({ ...o, rate: 0.5 }, "info", () => 0.6)).toBe(false);
   });
 
   it("are log lines, never a trace or a request", () => {

@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { W3CTraceContextPropagator } from "@opentelemetry/core";
-import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS, envFlag, type HubSendState, type TagRule, tagsFromOptions } from "@wizeworks/lens-core";
+import { DEFAULT_BASE_PATH, DEFAULT_REDACT_KEYS, envSwitch, type SendState, type TagRule, tagsFromOptions } from "@wizeworks/lens-core";
 import { createHandler } from "./api.js";
 import { createMiddleware } from "./capture.js";
 import { addCleanup, partsOf, registerParts, runCleanups } from "./adapters/registry.js";
@@ -39,7 +39,7 @@ function openPersister(store: TraceStore, options: WizeLensOptions, dashboard: b
   if ((options.storage ?? (dashboard ? "sqlite" : "memory")) !== "sqlite") return undefined;
   const persister = new SqlitePersister(store, {
     path: options.storagePath ?? join(process.cwd(), ".wizelens", "traces.db"),
-    serviceName: options.serviceName,
+    service: options.service,
   });
   if (!persister.open()) return undefined;
   persister.start();
@@ -49,7 +49,7 @@ function openPersister(store: TraceStore, options: WizeLensOptions, dashboard: b
 function mcpSource(options: WizeLensOptions, store: TraceStore, getTrace: McpDataSource["get"], metrics: MetricStore | null, tags: readonly TagRule[]): McpDataSource {
   const thresholds = { slowQueryMs: options.slowQueryMs ?? DEFAULT_SLOW_QUERY_MS, nPlusOneThreshold: options.nPlusOneThreshold ?? DEFAULT_N_PLUS_ONE };
   return {
-    service: options.serviceName,
+    service: options.service,
     version: VERSION,
     ...thresholds,
     all: () => store.all(),
@@ -64,7 +64,7 @@ function mcpSource(options: WizeLensOptions, store: TraceStore, getTrace: McpDat
 
 function buildParts(options: WizeLensOptions, basePath: string) {
   installGlobals();
-  const service = options.serviceName;
+  const service = options.service;
   const tags = tagsFromOptions(options.tags);
   const redactKeys = options.redactKeys ?? DEFAULT_REDACT_KEYS;
   const sampling = samplingInfo(options.sampling);
@@ -83,16 +83,16 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   const sqlite = () => !!persister?.active;
   const metrics = createMetricParts(options, redactKeys);
   const sourceMaps = localMapLoader(options.sourceMaps);
-  let sendState: (() => HubSendState) | undefined;
-  const info = () => buildInfo({ options, store, redactKeys, startedMs, sqlite, metrics: !!metrics, sourceMaps: !!sourceMaps, hubSend: () => sendState?.() });
+  let sendState: (() => SendState) | undefined;
+  const info = () => buildInfo({ options, store, redactKeys, startedMs, sqlite, metrics: !!metrics, sourceMaps: !!sourceMaps, send: () => sendState?.() });
   const mcp = mcpSource(options, store, getTrace, metrics?.store ?? null, tags);
   const uiDir = resolveUiDir(options.uiDir);
   const hub = connectHub(options, store, info, dashboard ? selfEndpoints : null, metrics?.store ?? null);
   sendState = hub && (() => hub.sendState);
-  const enableMcp = dashboard && !!options.enableMcp;
+  const mcpOn = dashboard && !!options.mcp;
   const hudBundle = dashboard ? resolveHudBundle() : null;
   const trustedRemotes = trustedOrigins(options.trustedRemotes);
-  const deps = { basePath, store, redactKeys, uiDir, enableMcp, mcp, info, getTrace, selfEndpoints, trustedRemotes, dashboard, sourceMaps, tags, hudBundle };
+  const deps = { basePath, store, redactKeys, uiDir, mcpOn, mcp, info, getTrace, selfEndpoints, trustedRemotes, dashboard, sourceMaps, tags, hudBundle };
   const handler = createHandler({ ...deps, metrics: metrics?.store ?? null });
   const capture = {
     tracer: tracing.tracer,
@@ -101,7 +101,7 @@ function buildParts(options: WizeLensOptions, basePath: string) {
     selfEndpoints,
     w3c: new W3CTraceContextPropagator(),
     captureResponseBody: !!options.captureResponseBody,
-    traceStaticFiles: options.traceStaticFiles ?? envFlag(process.env.WIZELENS_STATIC_FILES) ?? false,
+    traceStaticFiles: options.traceStaticFiles ?? envSwitch(process.env, "WIZELENS_STATIC_FILES") ?? false,
     handler,
     hudTag: hudTagFor(dashboard && hudOn(options), hudBundle, basePath, undefined, { service: `${service} (browser)`, release: releaseOf(options) }),
   };
@@ -123,7 +123,7 @@ export function buildWizeLens(options: WizeLensOptions): WizeLens {
   const startDbSpan = createDbSpans(p.tracing.tracer, p.redactKeys, !!options.traceQueriesOutsideRequests);
   const wizelens: WizeLens = {
     enabled: true,
-    serviceName: p.service,
+    service: p.service,
     basePath,
     store: p.store,
     get storagePath() {

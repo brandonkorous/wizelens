@@ -58,9 +58,9 @@ Add it to your framework:
 | Framework | Code |
 |---|---|
 | Express | `app.use(wizelens.middleware)` first, `app.use(wizelens.errorMiddleware)` last |
-| Fastify | `await app.register(wizelensFastify(wizelens))` |
-| Koa | `app.use(wizelensKoa(wizelens))` first |
-| Hono (Node) | `app.use(wizelensHono(wizelens))` first |
+| Fastify | `await app.register(wizeLensFastify(wizelens))` |
+| Koa | `app.use(wizeLensKoa(wizelens))` first |
+| Hono (Node) | `app.use(wizeLensHono(wizelens))` first |
 | Plain `node:http` | `if (await wizelens.handler(req, res)) return;` for the dashboard, and `traceDb()` for queries |
 | Next.js | `instrumentation.ts`, see below |
 
@@ -124,10 +124,10 @@ Logs: `console.*` and Fastify's `request.log` are copied into the trace by thems
 | consola | `instrumentConsola(wizelens, consola)` |
 | log4js | `appenders: { wizelens: { type: log4jsAppender(wizelens) } }` |
 | NestJS | `NestFactory.create(AppModule, { logger: nestLogger(wizelens, new ConsoleLogger()) })` |
-| OpenTelemetry logs | `new LoggerProvider({ processors: [wizelensLogProcessor(wizelens)] })` |
+| OpenTelemetry logs | `new LoggerProvider({ processors: [wizeLensLogProcessor(wizelens)] })` |
 
 Metrics: CPU, memory, heap, event loop, and GC are collected by themselves (the **Metrics** page). For your own OpenTelemetry
-metrics, add `new PeriodicExportingMetricReader({ exporter: wizelensMetricExporter(wizelens) })` to your `MeterProvider`.
+metrics, add `new PeriodicExportingMetricReader({ exporter: wizeLensMetricExporter(wizelens) })` to your `MeterProvider`.
 
 Outgoing `fetch` calls are traced automatically. Open `http://localhost:<port>/_wizelens`.
 

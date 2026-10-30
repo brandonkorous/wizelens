@@ -105,7 +105,7 @@ Props on `WizeLensProvider`.
 ## Browser
 
 Options for `initWizeLens({ ... })` from `@wizeworks/lens-browser`, `@wizeworks/lens-angular`, and
-`@wizeworks/lens-svelte`, and for `app.use(WizeLens, { ... })` from `@wizeworks/lens-vue`.
+`@wizeworks/lens-svelte`, and for `app.use(WizeLensPlugin, { ... })` from `@wizeworks/lens-vue`.
 
 | Option | Default | Description |
 |---|---|---|

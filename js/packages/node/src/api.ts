@@ -19,7 +19,7 @@ export interface ApiDeps {
   store: TraceStore;
   redactKeys: readonly string[];
   uiDir: string | null;
-  enableMcp: boolean;
+  mcpOn: boolean;
   mcp: McpDataSource;
   info: () => ServiceInfo;
   getTrace: (traceId: string, federate: boolean, hop: number) => Promise<Trace | undefined>;
@@ -112,7 +112,7 @@ async function handleApi(d: ApiDeps, sub: string, method: string, req: Req, res:
 }
 
 async function handleMcpRoute(d: ApiDeps, req: Req, res: ServerResponse, method: string): Promise<void> {
-  if (!d.enableMcp) return sendJson(res, 404, { error: "MCP is disabled. Set enableMcp: true." });
+  if (!d.mcpOn) return sendJson(res, 404, { error: "MCP is off. Set mcp: true." });
   const body = method === "POST" ? await readJson(req) : undefined;
   await handleMcp(d.mcp, req, res, body);
 }

@@ -3,7 +3,7 @@ import { formatTraceparent, newSpanId, newTraceId, type Trace, type TraceSummary
 import { createWizeLens } from "./index.js";
 import { fakeSpan, getJson, type Running, settle, startApp, startRemote } from "./test/helpers.js";
 
-const wizelens = createWizeLens({ serviceName: "test-api", enabled: true, enableMcp: true, storage: "memory", audit: () => {} });
+const wizelens = createWizeLens({ service: "test-api", enabled: true, mcp: true, storage: "memory", audit: () => {} });
 let app: Running;
 let remote: Running;
 
@@ -101,7 +101,7 @@ describe("WizeLens endpoints", () => {
   it("accepts browser spans", acceptsBrowserSpans);
   it("serves info, 404s, CORS, and the UI", servesTheRest);
   it("does nothing when disabled", () => {
-    const off = createWizeLens({ serviceName: "off", enabled: false });
+    const off = createWizeLens({ service: "off", enabled: false });
     expect(off.enabled).toBe(false);
     expect(off.traceDb({ system: "x" }, "SELECT 1", [], () => 5)).toBe(5);
     off.tag("a", "b");

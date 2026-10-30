@@ -33,11 +33,11 @@ import "@wizeworks/lens-react/install";
     label: "@wizeworks/lens-vue",
     intro: "Add the WizeLens Vue plugin to your app:",
     code: `// main.ts
-import { WizeLens } from "@wizeworks/lens-vue";
+import { WizeLensPlugin } from "@wizeworks/lens-vue";
 
 createApp(App)
   .use(router)
-  .use(WizeLens, { endpoint: "/_wizelens", router })
+  .use(WizeLensPlugin, { endpoint: "/_wizelens", router })
   .mount("#app");`,
     note: "Then load a few pages. Route changes and component errors are sent too.",
   },

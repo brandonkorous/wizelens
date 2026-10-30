@@ -81,13 +81,13 @@ registerWizeLens({ serviceName: "web", ignore: (p) => nextIgnore(p) || p === "/h
 
 ## Tags, users, and expected answers
 
-`registerWizeLens` returns the instance. Anywhere else in server code, `nextWizeLens()` from `@wizeworks/lens-node/next`
+`registerWizeLens` returns the instance. Anywhere else in server code, `currentWizeLens()` from `@wizeworks/lens-node/next`
 gives you the same one:
 
 ```ts
-import { nextWizeLens } from "@wizeworks/lens-node/next";
+import { currentWizeLens } from "@wizeworks/lens-node/next";
 
-const wizelens = nextWizeLens();
+const wizelens = currentWizeLens();
 wizelens?.setUser(session.user.id, { name: session.user.name });
 wizelens?.tag("plan", "pro");
 wizelens?.expected(); // a 503 you send on purpose is not a failure
@@ -134,14 +134,14 @@ Because the page's own server runs WizeLens, the page load joins the server's tr
 
 ## Source maps
 
-For production browser stacks, wrap the config with `withWizeLens` from `@wizeworks/lens-cli/next` and keep
+For production browser stacks, wrap the config with `withWizeLensSourceMaps` from `@wizeworks/lens-cli/next` and keep
 `serverExternalPackages` inside it. It turns on browser source maps, puts the release in the bundle, and uploads the maps
 after `next build`:
 
 ```js
-import { withWizeLens } from "@wizeworks/lens-cli/next";
+import { withWizeLensSourceMaps } from "@wizeworks/lens-cli/next";
 
-export default withWizeLens({
+export default withWizeLensSourceMaps({
   serverExternalPackages: ["@wizeworks/lens-node"],
 });
 ```

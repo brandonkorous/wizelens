@@ -103,7 +103,7 @@ import { instrumentPg } from "@wizeworks/lens-node";
 instrumentPg(wizelens, pg);
 ```
 
-Outgoing `fetch` calls and routing time are traced automatically. Not on Express? Use `wizelensFastify(wizelens)`, `wizelensKoa(wizelens)`, or `wizelensHono(wizelens)` instead of the middleware. On Next.js, call `registerWizeLens()` from `@wizeworks/lens-node/next` in `instrumentation.ts` (see [Getting started](docs/GETTING-STARTED.md#2-node)).
+Outgoing `fetch` calls and routing time are traced automatically. Not on Express? Use `wizeLensFastify(wizelens)`, `wizeLensKoa(wizelens)`, or `wizeLensHono(wizelens)` instead of the middleware. On Next.js, call `registerWizeLens()` from `@wizeworks/lens-node/next` in `instrumentation.ts` (see [Getting started](docs/GETTING-STARTED.md#2-node)).
 
 | Library | One line |
 |---|---|
@@ -223,7 +223,7 @@ Open any trace for the full detail: timeline, SQL, HTTP, logs, and errors. Searc
 | Database (ORM) | ✅ EF Core | ✅ Prisma, TypeORM, Drizzle |
 | Logs | ✅ `ILogger`, Serilog (`WizeLens.Serilog`), NLog (`WizeLens.NLog`) | ✅ `console`, Fastify / pino, winston, bunyan, log4js, consola, NestJS, OpenTelemetry logs, `wizelens.logger` |
 | Exceptions | ✅ | ✅ |
-| Metrics | ✅ every `Meter`: .NET runtime, ASP.NET Core, `HttpClient`, your own | ✅ CPU, memory, heap, event loop, GC, and OpenTelemetry metrics (`wizelensMetricExporter`) |
+| Metrics | ✅ every `Meter`: .NET runtime, ASP.NET Core, `HttpClient`, your own | ✅ CPU, memory, heap, event loop, GC, and OpenTelemetry metrics (`wizeLensMetricExporter`) |
 | Databases with no code change | ✅ Npgsql, MySqlConnector, Microsoft.Data.SqlClient | |
 | Redis, MongoDB, Elasticsearch | ✅ `WizeLens.Redis` (StackExchange.Redis), `WizeLens.MongoDB` (MongoDB.Driver), `WizeLens.Elasticsearch` (Elastic.Clients.Elasticsearch 8+) | |
 | gRPC | ✅ Grpc.AspNetCore, Grpc.Net.Client | ✅ `instrumentGrpc` (`@grpc/grpc-js`) |
@@ -417,7 +417,7 @@ Tag a request and name its user from your handlers: `wizelens.tag("cache", "hit"
 | `slowMs` | `500` | The HUD shows requests at or over this many ms as "warning" (orange). |
 | `capturePages` | `true` | Send page views, React render stats, and browser errors. |
 
-Hooks: `useWizeLens()` and `useWizeLensRequests()`.
+Hooks: `useWizeLensRecorder()` and `useWizeLensRequests()`.
 
 ## 🧪 Run the sample
 

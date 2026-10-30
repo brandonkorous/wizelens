@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { HUB_DEFAULT_PORT, HUB_ENV, HUB_TOKEN_ENV, PROJECT_ENV } from "@wizeworks/lens-core";
+import { ENDPOINT_ENV, HUB_DEFAULT_PORT, PROJECT_ENV, TOKEN_ENV } from "@wizeworks/lens-core";
 
 /** Where maps go and who sends them. Everything has an environment variable, so CI needs no flags. */
 export interface TargetOptions {
-  /** The hub or cloud address, for example "https://app.wizelens.com". Default: WIZELENS_URL, WIZELENS_HUB, then the local hub. */
-  url?: string;
-  /** The cloud ingest key (wl_ik_...) or the hub token. Default: WIZELENS_TOKEN, then WIZELENS_HUB_TOKEN. */
+  /** The hub or cloud address, for example "https://app.wizelens.com". Default: WIZELENS_ENDPOINT, then the local hub. */
+  endpoint?: string;
+  /** The cloud ingest key (wl_ik_...) or the hub token. Default: WIZELENS_TOKEN. */
   token?: string;
   /** Hub only: the project the maps belong to. Default: WIZELENS_PROJECT. The cloud takes the project from the key. */
   project?: string;
@@ -26,8 +26,8 @@ export function baseOf(url: string): string {
 }
 
 export function resolveTarget(o: TargetOptions, env: NodeJS.ProcessEnv = process.env): Target {
-  const url = o.url ?? env.WIZELENS_URL ?? env[HUB_ENV] ?? `http://localhost:${HUB_DEFAULT_PORT}`;
-  return { base: baseOf(url), token: o.token ?? env.WIZELENS_TOKEN ?? env[HUB_TOKEN_ENV] ?? undefined, project: o.project ?? env[PROJECT_ENV] ?? undefined };
+  const url = o.endpoint ?? env[ENDPOINT_ENV] ?? `http://localhost:${HUB_DEFAULT_PORT}`;
+  return { base: baseOf(url), token: o.token ?? env[TOKEN_ENV] ?? undefined, project: o.project ?? env[PROJECT_ENV] ?? undefined };
 }
 
 function packageVersion(dir: string): string | null {
