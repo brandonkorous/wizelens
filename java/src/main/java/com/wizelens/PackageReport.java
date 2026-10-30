@@ -19,7 +19,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 
-/** The Maven packages on the class path (also inside a Spring Boot or WAR jar), sent to the hub once at start. */
+/** The Maven packages on the class path (also inside a Spring Boot or WAR jar), sent to the endpoint once at start. */
 public final class PackageReport {
   private PackageReport() {}
 
@@ -108,7 +108,7 @@ public final class PackageReport {
 
   private static boolean post(WizeLensSettings s, byte[] body) {
     try {
-      HttpURLConnection c = (HttpURLConnection) URI.create(s.hub() + "/_wizelens/api/packages").toURL().openConnection();
+      HttpURLConnection c = (HttpURLConnection) URI.create(s.endpoint() + "/_wizelens/api/packages").toURL().openConnection();
       c.setRequestMethod("POST");
       c.setDoOutput(true);
       c.setConnectTimeout(5000);
@@ -125,10 +125,9 @@ public final class PackageReport {
     }
   }
 
-  /** Send the report from a daemon thread, retrying a few times while the hub cannot be reached. Runs once per process. */
+  /** Send the report from a daemon thread, retrying a few times while the endpoint cannot be reached. Runs once per process. */
   public static void start(WizeLensSettings s, Resource resource) {
-    String off = System.getProperty("wizelens.packages", System.getenv("WIZELENS_PACKAGES"));
-    if ("false".equalsIgnoreCase(off) || !STARTED.compareAndSet(false, true)) return;
+    if (!s.reportPackages() || !STARTED.compareAndSet(false, true)) return;
     Thread t = new Thread(() -> {
       byte[] body = body(s, resource, list(System.getProperty("java.class.path", ""))).getBytes(StandardCharsets.UTF_8);
       for (int i = 0; i < RETRIES && !post(s, body); i++) {

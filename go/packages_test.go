@@ -40,7 +40,7 @@ func TestReportPackagesPostsWithTheToken(t *testing.T) {
 	}))
 	defer srv.Close()
 	s := SettingsFrom(func(k string) string {
-		return map[string]string{"WIZELENS_HUB": srv.URL, "WIZELENS_HUB_TOKEN": "t0k", "WIZELENS_PROJECT": "shop"}[k]
+		return map[string]string{"WIZELENS_ENDPOINT": srv.URL, "WIZELENS_TOKEN": "t0k", "WIZELENS_PROJECT": "shop"}[k]
 	})
 	reportPackages(s, resource.NewSchemaless(attribute.String("service.name", "orders")))
 	c := <-calls

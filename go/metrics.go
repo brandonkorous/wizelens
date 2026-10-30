@@ -22,7 +22,7 @@ func meterProvider(ctx context.Context, o options, res *resource.Resource) (*sdk
 	if reader == nil && !o.sync {
 		var mopts []otlpmetrichttp.Option
 		if unset("OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT") {
-			mopts = append(mopts, otlpmetrichttp.WithEndpointURL(o.settings.Hub+"/v1/metrics"))
+			mopts = append(mopts, otlpmetrichttp.WithEndpointURL(o.settings.Endpoint+"/v1/metrics"))
 		}
 		if o.settings.Token != "" && unset("OTEL_EXPORTER_OTLP_HEADERS", "OTEL_EXPORTER_OTLP_METRICS_HEADERS") {
 			mopts = append(mopts, otlpmetrichttp.WithHeaders(map[string]string{"Authorization": "Bearer " + o.settings.Token}))

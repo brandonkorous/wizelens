@@ -36,7 +36,7 @@ func start(t *testing.T, env map[string]string) (*tracetest.InMemoryExporter, *m
 	t.Helper()
 	spans, logs := tracetest.NewInMemoryExporter(), &memLogs{}
 	s := SettingsFrom(func(k string) string { return env[k] })
-	stop, err := Start(context.Background(), WithServiceName("test"), WithSettings(s), WithExporters(spans, logs))
+	stop, err := Start(context.Background(), WithService("test"), WithSettings(s), WithExporters(spans, logs))
 	if err != nil {
 		t.Fatal(err)
 	}

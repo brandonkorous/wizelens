@@ -14,7 +14,7 @@ import (
 func TestStartSendsRequestTimesAndRuntimeMetrics(t *testing.T) {
 	reader := sdkmetric.NewManualReader()
 	s := SettingsFrom(func(string) string { return "" })
-	stop, err := Start(context.Background(), WithServiceName("clinic-api"), WithSettings(s), WithExporters(tracetest.NewInMemoryExporter(), nil), WithMetricReader(reader))
+	stop, err := Start(context.Background(), WithService("clinic-api"), WithSettings(s), WithExporters(tracetest.NewInMemoryExporter(), nil), WithMetricReader(reader))
 	if err != nil {
 		t.Fatal(err)
 	}

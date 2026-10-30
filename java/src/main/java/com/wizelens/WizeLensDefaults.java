@@ -21,7 +21,7 @@ public final class WizeLensDefaults {
       p.put("otel.sdk.disabled", "true");
       return p;
     }
-    p.put("otel.exporter.otlp.endpoint", s.hub());
+    p.put("otel.exporter.otlp.endpoint", s.endpoint());
     p.put("otel.exporter.otlp.protocol", "http/protobuf");
     if (s.token() != null) p.put("otel.exporter.otlp.headers", "Authorization=Bearer " + s.token());
     // WizeLens samples at the end of each trace, so the head sampler keeps everything.

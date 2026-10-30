@@ -83,12 +83,12 @@ func TestATraceWhoseRootNeverEndsIsDroppedLater(t *testing.T) {
 
 func TestSettings(t *testing.T) {
 	d := SettingsFrom(func(string) string { return "" })
-	if !d.Enabled || d.Hub != "http://localhost:5960" || d.SampleRate != 1 || *d.KeepSlowMs != 1000 || d.CaptureBody || !d.CaptureSQLParameters {
+	if !d.Enabled || d.Endpoint != "http://localhost:5960" || d.SampleRate != 1 || *d.KeepSlowMs != 1000 || d.CaptureBody || !d.CaptureSQLParameters {
 		t.Fatalf("defaults: %+v", d)
 	}
-	env := map[string]string{"WIZELENS_HUB": "https://app.wizelens.com/", "WIZELENS_SAMPLE_RATE": "0.25", "WIZELENS_KEEP_SLOW_MS": "off", "WIZELENS_REDACT_KEYS": "ssn"}
+	env := map[string]string{"WIZELENS_ENDPOINT": "https://app.wizelens.com/", "WIZELENS_SAMPLE_RATE": "0.25", "WIZELENS_KEEP_SLOW_MS": "off", "WIZELENS_REDACT_KEYS": "ssn"}
 	s := SettingsFrom(func(k string) string { return env[k] })
-	if s.Hub != "https://app.wizelens.com" || s.SampleRate != 0.25 || s.KeepSlowMs != nil || !s.IsSensitive("customer_SSN") {
+	if s.Endpoint != "https://app.wizelens.com" || s.SampleRate != 0.25 || s.KeepSlowMs != nil || !s.IsSensitive("customer_SSN") {
 		t.Fatalf("read: %+v", s)
 	}
 	if SettingsFrom(func(k string) string { return map[string]string{"WIZELENS_SAMPLE_RATE": "lots"}[k] }).SampleRate != 1 {

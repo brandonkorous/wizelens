@@ -114,14 +114,14 @@ def _metrics(resource: Resource) -> Any:
     return provider
 
 
-def configure(settings: Optional[Settings] = None, service_name: Optional[str] = None, span_exporter: Any = None, log_exporter: Any = None) -> Optional[WizeLens]:
+def configure(settings: Optional[Settings] = None, service: Optional[str] = None, span_exporter: Any = None, log_exporter: Any = None) -> Optional[WizeLens]:
     """Set up OpenTelemetry for WizeLens. `opentelemetry-instrument` calls this for you; call it yourself without it."""
     s = settings or Settings.from_env()
     if not s.enabled:
         return None
     apply_otel_defaults(s)
-    if service_name:
-        os.environ.setdefault("OTEL_SERVICE_NAME", service_name)
+    if service:
+        os.environ.setdefault("OTEL_SERVICE_NAME", service)
     resource = Resource.create()
     sampler = TraceSampler(s.sample_rate)
     providers: List[Any] = []

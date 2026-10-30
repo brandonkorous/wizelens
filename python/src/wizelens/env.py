@@ -20,7 +20,7 @@ def _sanitize_fields(settings: Settings) -> str:
 def otel_defaults(settings: Settings) -> Dict[str, str]:
     """The OTEL_* values WizeLens sets. A value you set yourself always wins."""
     out = {
-        "OTEL_EXPORTER_OTLP_ENDPOINT": settings.hub,
+        "OTEL_EXPORTER_OTLP_ENDPOINT": settings.endpoint,
         "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
         "OTEL_TRACES_EXPORTER": "otlp",
         "OTEL_METRICS_EXPORTER": "otlp",

@@ -25,8 +25,8 @@ def test_opentelemetry_instrument_finds_wizelens():
 
 def test_the_distro_sets_defaults(monkeypatch):
     monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
-    monkeypatch.setenv("WIZELENS_HUB", "http://hub:5960")
-    monkeypatch.setenv("WIZELENS_HUB_TOKEN", "abc")
+    monkeypatch.setenv("WIZELENS_ENDPOINT", "http://hub:5960")
+    monkeypatch.setenv("WIZELENS_TOKEN", "abc")
     monkeypatch.delenv("OTEL_EXPORTER_OTLP_HEADERS", raising=False)
     WizeLensDistro().configure()
 

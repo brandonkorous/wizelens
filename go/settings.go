@@ -1,10 +1,12 @@
 package wizelens
 
 import (
+	"log"
 	"math"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // DefaultRedactKeys are key fragments whose values are replaced with "[redacted]".
@@ -19,7 +21,7 @@ const BodyLimit = 16 * 1024
 // Settings is what WizeLens turns on. Every field has a WIZELENS_* environment variable.
 type Settings struct {
 	Enabled              bool
-	Hub                  string
+	Endpoint             string
 	Token                string
 	Project              string
 	SampleRate           float64
@@ -45,22 +47,22 @@ func SettingsFrom(env func(string) string) Settings {
 			redact = append(redact, strings.ToLower(k))
 		}
 	}
-	hub := strings.TrimRight(env("WIZELENS_HUB"), "/")
-	if hub == "" {
-		hub = "http://localhost:5960"
+	endpoint := strings.TrimRight(env("WIZELENS_ENDPOINT"), "/")
+	if endpoint == "" {
+		endpoint = "http://localhost:5960"
 	}
 	return Settings{
-		Enabled:              flag(env("WIZELENS_ENABLED"), true),
-		Hub:                  hub,
-		Token:                env("WIZELENS_HUB_TOKEN"),
+		Enabled:              envFlag(env, "WIZELENS_ENABLED", true),
+		Endpoint:             endpoint,
+		Token:                env("WIZELENS_TOKEN"),
 		Project:              env("WIZELENS_PROJECT"),
 		SampleRate:           rate(env("WIZELENS_SAMPLE_RATE")),
-		KeepErrors:           flag(env("WIZELENS_KEEP_ERRORS"), true),
+		KeepErrors:           envFlag(env, "WIZELENS_KEEP_ERRORS", true),
 		KeepSlowMs:           slow(env("WIZELENS_KEEP_SLOW_MS")),
-		CaptureBody:          flag(env("WIZELENS_CAPTURE_BODY"), false),
-		CaptureSQLParameters: flag(env("WIZELENS_CAPTURE_SQL_PARAMETERS"), true),
-		CaptureHeaders:       flag(env("WIZELENS_CAPTURE_HEADERS"), true),
-		ReportPackages:       flag(env("WIZELENS_PACKAGES"), true),
+		CaptureBody:          envFlag(env, "WIZELENS_CAPTURE_BODY", false),
+		CaptureSQLParameters: envFlag(env, "WIZELENS_CAPTURE_SQL_PARAMETERS", true),
+		CaptureHeaders:       envFlag(env, "WIZELENS_CAPTURE_HEADERS", true),
+		ReportPackages:       envFlag(env, "WIZELENS_PACKAGES", true),
 		RedactKeys:           redact,
 	}
 }
@@ -76,12 +78,23 @@ func (s Settings) IsSensitive(key string) bool {
 	return false
 }
 
-func flag(v string, fallback bool) bool {
-	v = strings.ToLower(strings.TrimSpace(v))
-	if v == "" {
+var warnedFlags sync.Map
+
+// envFlag reads an on/off variable: true/1/on/yes or false/0/off/no, any case. Anything else warns once and keeps the fallback.
+func envFlag(env func(string) string, name string, fallback bool) bool {
+	raw := env(name)
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "":
 		return fallback
+	case "true", "1", "on", "yes":
+		return true
+	case "false", "0", "off", "no":
+		return false
 	}
-	return v == "1" || v == "true" || v == "yes" || v == "on"
+	if _, seen := warnedFlags.LoadOrStore(name, true); !seen {
+		log.Printf("wizelens: %s=%q is not true/false/1/0/on/off/yes/no; using %t", name, raw, fallback)
+	}
+	return fallback
 }
 
 func rate(v string) float64 {

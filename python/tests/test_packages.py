@@ -36,7 +36,7 @@ def test_posts_the_report_with_the_token():
 
     server = HTTPServer(("127.0.0.1", 0), Handler)
     threading.Thread(target=server.handle_request, daemon=True).start()
-    s = Settings.from_env({"WIZELENS_HUB": f"http://127.0.0.1:{server.server_port}", "WIZELENS_HUB_TOKEN": "t0k"})
+    s = Settings.from_env({"WIZELENS_ENDPOINT": f"http://127.0.0.1:{server.server_port}", "WIZELENS_TOKEN": "t0k"})
     report_packages(s, {"service.name": "orders"}).join(10)
     server.server_close()
     assert got["path"] == "/_wizelens/api/packages" and got["auth"] == "Bearer t0k"
