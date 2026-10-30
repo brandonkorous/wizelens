@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { isListedTrace } from "@wizeworks/lens-core";
+import { isListedTrace } from "@wizeworks/lens-core/internal";
 import { pageParity } from "../../core/src/testing/scale-pages.js";
 import { scenarioTraces } from "../../core/src/testing/scenario.js";
 import { cloudExecutor, cloudSettling } from "./scale-exec.js";

@@ -17,7 +17,7 @@ export const REACT: Stack = {
   file: "instrumentation.ts · providers.tsx",
   code: [
     "// instrumentation.ts",
-    'registerWizeLens({ serviceName: "web" });',
+    'registerWizeLens({ service: "web" });',
     "",
     '// app/providers.tsx ("use client")',
     'import "@wizeworks/lens-react/install";',

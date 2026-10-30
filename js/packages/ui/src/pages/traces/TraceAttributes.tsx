@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { entryServerSpan, findRootSpan, type ServiceInfo, type Trace, traceDurationOf } from "@wizeworks/lens-core";
+import { entryServerSpan, findRootSpan, type ServiceInfo, type Trace, traceDurationOf } from "@wizeworks/lens-core/internal";
 import type { Source } from "../../data/sources";
 import { fmtMs, fmtTime, fmtDate } from "../../format";
 import { CopyButton, DotText } from "../../ui/Badges";

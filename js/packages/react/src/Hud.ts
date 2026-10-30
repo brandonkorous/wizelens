@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { mountHud, type Recorder } from "@wizeworks/lens-browser";
+import { mountHud, type Recorder } from "@wizeworks/lens-browser/internal";
 
 export interface HudProps {
   recorder: Recorder;

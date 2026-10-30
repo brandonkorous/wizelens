@@ -56,7 +56,7 @@ func packageSender(s Settings, res *resource.Resource) map[string]string {
 }
 
 func postPackages(s Settings, body []byte) bool {
-	req, err := http.NewRequest(http.MethodPost, s.Hub+"/_wizelens/api/packages", bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, s.Endpoint+"/_wizelens/api/packages", bytes.NewReader(body))
 	if err != nil {
 		return true
 	}
@@ -72,7 +72,7 @@ func postPackages(s Settings, body []byte) bool {
 	return res.StatusCode < 500 && res.StatusCode != http.StatusTooManyRequests
 }
 
-// reportPackages sends the build's modules once, retrying a few times while the hub cannot be reached.
+// reportPackages sends the build's modules once, retrying a few times while the endpoint cannot be reached.
 func reportPackages(s Settings, res *resource.Resource) {
 	info, _ := debug.ReadBuildInfo()
 	body, err := json.Marshal(map[string]any{"sender": packageSender(s, res), "packages": ListPackages(info)})

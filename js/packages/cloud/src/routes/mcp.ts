@@ -1,6 +1,6 @@
-import type { Trace } from "@wizeworks/lens-core";
-import { parseJson, readBody } from "@wizeworks/lens-hub/kit";
-import { handleMcp, type McpDataSource, type McpProjects } from "@wizeworks/lens-node/kit";
+import type { Trace } from "@wizeworks/lens-core/internal";
+import { parseJson, readBody } from "@wizeworks/lens-hub/internal";
+import { handleMcp, type McpDataSource, type McpProjects } from "@wizeworks/lens-node/internal";
 import type { Ctx } from "../app.js";
 import { joinScope } from "../auth/join-scope.js";
 import { projectScope } from "../telemetry/store.js";

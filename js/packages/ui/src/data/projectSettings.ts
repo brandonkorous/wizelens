@@ -1,5 +1,5 @@
 // Project settings: where the host keeps them (the cloud by project id, the hub by `?project=`), and who may change them.
-import type { ProjectSettings, SettingsDefaults } from "@wizeworks/lens-core";
+import type { ProjectSettings, SettingsDefaults } from "@wizeworks/lens-core/internal";
 import { currentProject, useAccount } from "./account";
 import { useData } from "./hooks";
 import { useHost } from "./host";

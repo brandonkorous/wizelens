@@ -1,7 +1,7 @@
 // Ingest into ClickHouse: raw spans, logs, trace bounds, the update log, and metric points. Server-side async inserts batch the small writes.
 import { createHash } from "node:crypto";
-import { ATTR_BROWSER_SESSION, isLooseTraceId, logKey, seriesKeyOf, type Span } from "@wizeworks/lens-core";
-import type { HubWrite } from "@wizeworks/lens-hub/kit";
+import { ATTR_BROWSER_SESSION, isLooseTraceId, logKey, seriesKeyOf, type Span } from "@wizeworks/lens-core/internal";
+import type { HubWrite } from "@wizeworks/lens-hub/internal";
 import type { ChClient } from "./http.js";
 import type { SettleQueue } from "./queue.js";
 import { type Keep, logKeepOf, nextVer } from "./util.js";

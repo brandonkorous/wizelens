@@ -2,7 +2,7 @@
 // keeps every trace with an error or a slow span, logs with their trace, and the detail the contrib instrumentation
 // leaves out: SQL parameters, request and response bodies, and request headers.
 //
-//	shutdown, err := wizelens.Start(ctx, wizelens.WithServiceName("inventory"))
+//	shutdown, err := wizelens.Start(ctx, wizelens.WithService("inventory"))
 //	defer shutdown(context.Background())
 //
 //	db, err := wizelens.OpenDB("sqlite", "file:app.db", "sqlite")

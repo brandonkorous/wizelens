@@ -1,6 +1,6 @@
 import { context, ROOT_CONTEXT } from "@opentelemetry/api";
 import { suppressTracing } from "@opentelemetry/core";
-import type { HubLog, HubRemote, HubSendState, HubSender, IngestBatch, MetricPoint, Span } from "@wizeworks/lens-core";
+import type { HubLog, HubRemote, HubSender, SendState, IngestBatch, MetricPoint, Span } from "@wizeworks/lens-core/internal";
 import type { MetricStore } from "./metrics/store.js";
 import type { StoreEvent, TraceStore } from "./store.js";
 
@@ -47,7 +47,7 @@ export class HubExporter {
   }
 
   /** How sending goes, for the dashboard: waiting for the first batch, fine, or failing and why. */
-  get sendState(): HubSendState {
+  get sendState(): SendState {
     const lastSentMs = this.#lastSentMs || undefined;
     if (this.#reason) return { state: "failing", reason: this.#reason, lastSentMs };
     return lastSentMs ? { state: "ok", lastSentMs } : { state: "waiting" };
@@ -160,8 +160,8 @@ export class HubExporter {
     if (status === 0) return `Could not reach the hub at ${this.url}.`;
     if (status === 401 || status === 403) {
       return this.#o.token
-        ? `The hub at ${this.url} refused the key (${status}). Check WIZELENS_HUB_TOKEN: it must be a live ingest key (wl_ik_).`
-        : `The hub at ${this.url} needs a key (${status}). Set WIZELENS_HUB_TOKEN to an ingest key (wl_ik_).`;
+        ? `The hub at ${this.url} refused the key (${status}). Check WIZELENS_TOKEN: it must be a live ingest key (wl_ik_).`
+        : `The hub at ${this.url} needs a key (${status}). Set WIZELENS_TOKEN to an ingest key (wl_ik_).`;
     }
     if (status === 429) return `The hub at ${this.url} asked to slow down (429): a limit of the key or the plan.`;
     return `The hub at ${this.url} answered ${status}.`;

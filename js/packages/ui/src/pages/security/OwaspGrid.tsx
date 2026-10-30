@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { SecurityCategory } from "@wizeworks/lens-core";
+import type { SecurityCategory } from "@wizeworks/lens-core/internal";
 import { fmtCount } from "../../format";
 import { setQuery } from "../../routes";
 import { Panel } from "../../ui/Panel";

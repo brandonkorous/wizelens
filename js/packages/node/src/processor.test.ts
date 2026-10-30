@@ -1,7 +1,7 @@
 import { SpanKind } from "@opentelemetry/api";
 import type { ReadableSpan } from "@opentelemetry/sdk-trace-base";
 import { describe, expect, it } from "vitest";
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { StoreSpanProcessor, toContractSpan } from "./processor.js";
 import type { TraceStore } from "./store.js";
 

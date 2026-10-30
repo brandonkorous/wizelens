@@ -10,7 +10,7 @@ internal static class RedisSpan
 {
     public const string AdapterName = "stackexchange.redis";
 
-    /// <param name="commandAndKey">"SET user:42" from <see cref="RedisMessage"/>; null shows the command alone.</param>
+    /// <summary>Ends the span with the commands it ran; <paramref name="commandAndKey"/> is "SET user:42", or null for the command alone.</summary>
     public static void Complete(Activity activity, IReadOnlyList<IProfiledCommand> commands, string? commandAndKey)
     {
         var first = commands[0];

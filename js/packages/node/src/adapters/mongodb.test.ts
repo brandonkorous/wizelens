@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { analyzeTrace, type Span } from "@wizeworks/lens-core";
+import { analyzeTrace, type Span } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "../wizelens.js";
 import { instrumentMongoDb } from "./mongodb.js";
 import { docShape } from "./mongodb-shape.js";
 
-const wizelens = createWizeLens({ serviceName: "mongodb", storage: "memory", traceQueriesOutsideRequests: true });
+const wizelens = createWizeLens({ service: "mongodb", storage: "memory", traceQueriesOutsideRequests: true });
 const dbSpans = (): Span[] => wizelens.store.all().flatMap((t) => t.spans.filter((s) => s.category === "db")).sort((a, b) => a.startMs - b.startMs);
 afterEach(() => wizelens.store.clear());
 

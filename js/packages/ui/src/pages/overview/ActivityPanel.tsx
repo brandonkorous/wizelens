@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { OverviewModel } from "@wizeworks/lens-core";
+import type { OverviewModel } from "@wizeworks/lens-core/internal";
 import { compareSeriesLabel, fmtCount, fmtMs } from "../../format";
 import { Select } from "../../ui/Controls";
 import { Empty, Panel } from "../../ui/Panel";

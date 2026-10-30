@@ -1,5 +1,5 @@
 // Moving to scale mode: copy every project's spans, logs, and metric points from Postgres into another store (ClickHouse).
-import type { LogRecord, MetricPoint, Span } from "@wizeworks/lens-core";
+import type { LogRecord, MetricPoint, Span } from "@wizeworks/lens-core/internal";
 import type { Db } from "../db/db.js";
 import { type TelemetryStore, tenantScope } from "./store.js";
 

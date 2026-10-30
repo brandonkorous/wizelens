@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseSearch, type SearchQuery, searchMemory, type Trace } from "@wizeworks/lens-core";
+import { parseSearch, type SearchQuery, searchMemory, type Trace } from "@wizeworks/lens-core/internal";
 import { scenarioTraces, SCENARIO_NOW } from "../../core/src/testing/scenario.js";
 import { DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS } from "./info.js";
 import type { McpDataSource } from "./mcp-shared.js";

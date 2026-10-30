@@ -15,11 +15,11 @@ async function main(): Promise<void> {
   const lines = [
     `WizeLens hub ${HUB_VERSION}`,
     `  Dashboard   ${url}/_wizelens/`,
-    `  Add-ons     WIZELENS_HUB=${url}`,
+    `  Add-ons     WIZELENS_ENDPOINT=${url}`,
     `  OTLP/HTTP   OTEL_EXPORTER_OTLP_ENDPOINT=${url}`,
     `  Data        ${options.storagePath ?? DEFAULT_STORAGE_PATH}`,
   ];
-  if (options.enableMcp) lines.push(`  MCP         ${url}/_wizelens/mcp`);
+  if (options.mcp) lines.push(`  MCP         ${url}/_wizelens/mcp`);
   console.info(lines.join("\n"));
   const stop = () => void hub.close().then(() => process.exit(0));
   process.once("SIGINT", stop);

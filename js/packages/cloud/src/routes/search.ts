@@ -1,4 +1,4 @@
-import { activeTags, expandQuery, searchRequestOf, SETTLE_BEHIND_MS, suggestRequestOf, suggestTags } from "@wizeworks/lens-core";
+import { activeTags, expandQuery, searchRequestOf, SETTLE_BEHIND_MS, suggestRequestOf, suggestTags } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { sendJson } from "../http/http.js";
 import type { Router } from "../http/router.js";

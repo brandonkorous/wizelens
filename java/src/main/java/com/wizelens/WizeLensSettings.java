@@ -8,7 +8,7 @@ import java.util.function.Function;
 /** What WizeLens turns on, read from WIZELENS_* environment variables (or wizelens.* system properties). */
 public record WizeLensSettings(
     boolean enabled,
-    String hub,
+    String endpoint,
     String token,
     String project,
     double sampleRate,
@@ -16,6 +16,7 @@ public record WizeLensSettings(
     Double keepSlowMs,
     boolean captureBody,
     boolean captureSqlParameters,
+    boolean reportPackages,
     List<String> redactKeys) {
 
   /** Key fragments whose values are replaced with "[redacted]". */
@@ -39,17 +40,18 @@ public record WizeLensSettings(
     if (extra != null) {
       for (String k : extra.split(",")) if (!k.isBlank()) redact.add(k.trim().toLowerCase(Locale.ROOT));
     }
-    String hub = blank(env.apply("WIZELENS_HUB")) ? "http://localhost:5960" : env.apply("WIZELENS_HUB").replaceAll("/+$", "");
+    String endpoint = blank(env.apply("WIZELENS_ENDPOINT")) ? "http://localhost:5960" : env.apply("WIZELENS_ENDPOINT").replaceAll("/+$", "");
     return new WizeLensSettings(
-        flag(env.apply("WIZELENS_ENABLED"), true),
-        hub,
-        blank(env.apply("WIZELENS_HUB_TOKEN")) ? null : env.apply("WIZELENS_HUB_TOKEN"),
+        EnvFlag.read(env, "WIZELENS_ENABLED", true),
+        endpoint,
+        blank(env.apply("WIZELENS_TOKEN")) ? null : env.apply("WIZELENS_TOKEN"),
         blank(env.apply("WIZELENS_PROJECT")) ? null : env.apply("WIZELENS_PROJECT"),
         rate(env.apply("WIZELENS_SAMPLE_RATE")),
-        flag(env.apply("WIZELENS_KEEP_ERRORS"), true),
+        EnvFlag.read(env, "WIZELENS_KEEP_ERRORS", true),
         slow(env.apply("WIZELENS_KEEP_SLOW_MS")),
-        flag(env.apply("WIZELENS_CAPTURE_BODY"), false),
-        flag(env.apply("WIZELENS_CAPTURE_SQL_PARAMETERS"), true),
+        EnvFlag.read(env, "WIZELENS_CAPTURE_BODY", false),
+        EnvFlag.read(env, "WIZELENS_CAPTURE_SQL_PARAMETERS", true),
+        EnvFlag.read(env, "WIZELENS_PACKAGES", true),
         List.copyOf(redact));
   }
 
@@ -61,11 +63,6 @@ public record WizeLensSettings(
 
   private static boolean blank(String v) {
     return v == null || v.isBlank();
-  }
-
-  private static boolean flag(String v, boolean fallback) {
-    if (blank(v)) return fallback;
-    return List.of("1", "true", "yes", "on").contains(v.trim().toLowerCase(Locale.ROOT));
   }
 
   private static double rate(String v) {

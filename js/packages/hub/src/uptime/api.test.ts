@@ -1,7 +1,7 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterEach, expect, it } from "vitest";
-import type { UptimeCheck, UptimeList, UptimeModel } from "@wizeworks/lens-core";
+import type { UptimeCheck, UptimeList, UptimeModel } from "@wizeworks/lens-core/internal";
 import type { Hub } from "../hub.js";
 import { settleQuietly } from "../settle.js";
 import { startHub } from "../test/helpers.js";

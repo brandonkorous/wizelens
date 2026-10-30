@@ -1,4 +1,4 @@
-import { parseSaved, type SavedItem } from "@wizeworks/lens-core";
+import { parseSaved, type SavedItem } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { type ProjectAccess, requireProject } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson } from "../http/http.js";

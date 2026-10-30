@@ -1,6 +1,6 @@
 name: Release Go
 
-# Push a tag like go/v0.1.0 to release the Go module github.com/brandonkorous/wizelens/go. A Go module is published by its
+# Push a tag like go/v0.1.0 to release the Go module github.com/wizeworksllc/wizelens/go. A Go module is published by its
 # tag alone; this checks the tagged code and asks the Go module proxy (and so pkg.go.dev) to fetch it. No credentials.
 on:
   push:
@@ -43,7 +43,7 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#go/}"
           for i in 1 2 3 4 5; do
-            GOPROXY=https://proxy.golang.org GOFLAGS=-mod=mod go list -m "github.com/brandonkorous/wizelens/go@$VERSION" && exit 0
+            GOPROXY=https://proxy.golang.org GOFLAGS=-mod=mod go list -m "github.com/wizeworksllc/wizelens/go@$VERSION" && exit 0
             sleep 20
           done
           echo "The proxy did not return $VERSION yet; it will on the first go get." && exit 1

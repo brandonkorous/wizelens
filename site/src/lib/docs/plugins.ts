@@ -6,7 +6,7 @@ import type { VFile } from "vfile";
 export type Heading = { id: string; text: string; depth: 2 | 3 };
 export type Section = { id: string; title: string; text: string };
 
-const REPO_BLOB = "https://github.com/brandonkorous/wizelens/blob/main/";
+const REPO_BLOB = "https://github.com/wizeworksllc/wizelens/blob/main/";
 
 // Links inside the repo's Markdown point at files; on the site they point at pages.
 const FILE_PAGES: Record<string, string> = {

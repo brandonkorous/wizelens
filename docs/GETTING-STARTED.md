@@ -50,7 +50,7 @@ npm install @wizeworks/lens-node
 ```ts
 import { createWizeLens } from "@wizeworks/lens-node";
 
-const wizelens = createWizeLens({ serviceName: "orders-api" });
+const wizelens = createWizeLens({ service: "orders-api" });
 ```
 
 Add it to your framework:
@@ -58,9 +58,9 @@ Add it to your framework:
 | Framework | Code |
 |---|---|
 | Express | `app.use(wizelens.middleware)` first, `app.use(wizelens.errorMiddleware)` last |
-| Fastify | `await app.register(wizelensFastify(wizelens))` |
-| Koa | `app.use(wizelensKoa(wizelens))` first |
-| Hono (Node) | `app.use(wizelensHono(wizelens))` first |
+| Fastify | `await app.register(wizeLensFastify(wizelens))` |
+| Koa | `app.use(wizeLensKoa(wizelens))` first |
+| Hono (Node) | `app.use(wizeLensHono(wizelens))` first |
 | Plain `node:http` | `if (await wizelens.handler(req, res)) return;` for the dashboard, and `traceDb()` for queries |
 | Next.js | `instrumentation.ts`, see below |
 
@@ -74,7 +74,7 @@ export async function register() {
   // The runtime check must wrap the import, so the Edge build leaves the package out.
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { registerWizeLens } = await import("@wizeworks/lens-node/next");
-    registerWizeLens({ serviceName: "web" });
+    registerWizeLens({ service: "web" });
   }
 }
 
@@ -124,10 +124,10 @@ Logs: `console.*` and Fastify's `request.log` are copied into the trace by thems
 | consola | `instrumentConsola(wizelens, consola)` |
 | log4js | `appenders: { wizelens: { type: log4jsAppender(wizelens) } }` |
 | NestJS | `NestFactory.create(AppModule, { logger: nestLogger(wizelens, new ConsoleLogger()) })` |
-| OpenTelemetry logs | `new LoggerProvider({ processors: [wizelensLogProcessor(wizelens)] })` |
+| OpenTelemetry logs | `new LoggerProvider({ processors: [wizeLensLogProcessor(wizelens)] })` |
 
 Metrics: CPU, memory, heap, event loop, and GC are collected by themselves (the **Metrics** page). For your own OpenTelemetry
-metrics, add `new PeriodicExportingMetricReader({ exporter: wizelensMetricExporter(wizelens) })` to your `MeterProvider`.
+metrics, add `new PeriodicExportingMetricReader({ exporter: wizeLensMetricExporter(wizelens) })` to your `MeterProvider`.
 
 Outgoing `fetch` calls are traced automatically. Open `http://localhost:<port>/_wizelens`.
 
@@ -163,13 +163,13 @@ finds downstream services by itself and shows one trace across all of them. The 
 The hub keeps the traces of every service in one place, also when a service is stopped. Start it:
 
 ```bash
-npx @wizeworks/lens-hub                       # or: docker run -p 5960:5960 -v wizelens:/data ghcr.io/brandonkorous/wizelens-hub
+npx @wizeworks/lens-hub                       # or: docker run -p 5960:5960 -v wizelens:/data ghcr.io/wizeworksllc/wizelens-hub
 ```
 
 Then point each service at it, and restart the service:
 
 ```bash
-WIZELENS_HUB=http://localhost:5960            # .NET and Node add-ons
+WIZELENS_ENDPOINT=http://localhost:5960       # .NET and Node add-ons
 WIZELENS_PROJECT=my-shop                      # optional: groups services when one hub holds several projects
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960   # any other OpenTelemetry app (Python, Go, Java, ...)
 ```
@@ -177,7 +177,7 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960   # any other OpenTelemetry ap
 Open http://localhost:5960/_wizelens/. The top-bar menu filters by project and environment and shows which services are online.
 The hub takes traces, logs, and metrics, so the **Metrics** page keeps 7 days of CPU, memory, and request times for every service.
 Each service keeps its own dashboard too. To share one hub with your team, run it with `--host 0.0.0.0 --token <text>`,
-set `WIZELENS_HUB_TOKEN` on each service, and open `/_wizelens/?token=<text>` once in the browser. `wizelens-hub --help` lists every option.
+set `WIZELENS_TOKEN` on each service, and open `/_wizelens/?token=<text>` once in the browser. `wizelens-hub --help` lists every option.
 
 ## 6. For a team: WizeLens Cloud (optional)
 
@@ -192,8 +192,8 @@ Open the public URL and create the first account: you own the first organization
 (send them the link), add projects, and make an **ingest key** per app. Then set on each app, and restart it:
 
 ```bash
-WIZELENS_HUB=https://wizelens.example.com
-WIZELENS_HUB_TOKEN=wl_ik_...                   # the ingest key
+WIZELENS_ENDPOINT=https://wizelens.example.com
+WIZELENS_TOKEN=wl_ik_...                       # the ingest key
 ```
 
 OpenTelemetry apps use `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer wl_ik_...`.
@@ -206,8 +206,8 @@ In production, turn WizeLens on and point it at your cloud or hub. Nothing else 
 
 ```bash
 WIZELENS_ENABLED=true
-WIZELENS_HUB=https://app.wizelens.com
-WIZELENS_HUB_TOKEN=wl_ik_...                   # one ingest key per service
+WIZELENS_ENDPOINT=https://app.wizelens.com
+WIZELENS_TOKEN=wl_ik_...                       # one ingest key per service
 WIZELENS_SAMPLE_RATE=0.25                      # optional, see 8
 ```
 
@@ -236,7 +236,7 @@ all get only the kept traces. The **Settings** page shows the rate, so read coun
 
 ## 9. AI access (optional)
 
-Turn on the read-only MCP endpoint per service (`EnableMcp = true` / `enableMcp: true`), then point your MCP client at
+Turn on the read-only MCP endpoint per service (`Mcp = true` / `mcp: true`), then point your MCP client at
 `http://localhost:<port>/_wizelens/mcp`. Secrets are redacted before anything is stored. On the hub, start it with `--mcp`:
 one endpoint (`http://localhost:5960/_wizelens/mcp`) then covers every service. On WizeLens Cloud, add
 `https://mcp.wizelens.com` to Claude or another MCP client: it opens the WizeLens sign-in, and you pick the projects it may
@@ -262,7 +262,7 @@ stops an app from sending). Details: `docs/SECURITY-PLAN.md` and the "Security a
 | Requests but no logs | Only lines written during a request are kept. Serilog and NLog apps need `WizeLens.Serilog` / `WizeLens.NLog`; Node loggers other than `console` and Fastify need the line from step 2. |
 | No browser timing | `import "@wizeworks/lens-react/install"` is the first import, and `/_wizelens` reaches your API. |
 | A downstream service is missing | It runs WizeLens too, and the call goes through `HttpClient` / `fetch` / gRPC. |
-| A service is missing in the hub | `WIZELENS_HUB` is set where the service runs, and the service was restarted. The service log says when it cannot reach the hub. |
+| A service is missing in the hub | `WIZELENS_ENDPOINT` is set where the service runs, and the service was restarted. The service log says when it cannot reach the hub. |
 | An OTLP app shows "Idle" | Normal: OTLP apps send only when they have data. |
 | Next.js routes all 404 after an update | Stop `next dev`, delete `.next`, and start it again. |
 | Fewer requests than you sent | Sampling is on: see the **Settings** page and `WIZELENS_SAMPLE_RATE`. |

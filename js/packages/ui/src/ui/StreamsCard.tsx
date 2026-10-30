@@ -1,5 +1,5 @@
 import { Radio } from "lucide-react";
-import type { StreamStats } from "@wizeworks/lens-core";
+import type { StreamStats } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtMs } from "../format";
 import { StatCard } from "./StatCard";
 

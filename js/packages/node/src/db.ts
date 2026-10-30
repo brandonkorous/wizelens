@@ -1,5 +1,5 @@
 import { type Attributes as OtelAttributes, type Context, context, createContextKey, ROOT_CONTEXT, SpanKind, trace, type Tracer } from "@opentelemetry/api";
-import { redactParams, sqlVerb } from "@wizeworks/lens-core";
+import { redactParams, sqlVerb } from "@wizeworks/lens-core/internal";
 import { CATEGORY_ATTR } from "./processor.js";
 import { recordOn } from "./spans.js";
 import type { DbCallInfo } from "./types.js";

@@ -1,4 +1,4 @@
-import type { UptimeCheck, UptimeCheckInput, UptimeList } from "@wizeworks/lens-core";
+import type { UptimeCheck, UptimeCheckInput, UptimeList } from "@wizeworks/lens-core/internal";
 import { currentProject, useAccount } from "./account";
 import { apiSend } from "./api";
 import { useHost } from "./host";

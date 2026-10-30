@@ -29,8 +29,8 @@ describe("options and arguments", () => {
   it("finds the target and the release from flags, then the environment", () => {
     expect(baseOf("https://cloud.test/")).toBe("https://cloud.test/_wizelens");
     expect(baseOf("http://h:5960/_wizelens")).toBe("http://h:5960/_wizelens");
-    expect(resolveTarget({}, { WIZELENS_HUB: "http://hub:1", WIZELENS_HUB_TOKEN: "t" })).toEqual({ base: "http://hub:1/_wizelens", token: "t", project: undefined });
-    expect(resolveTarget({ url: "https://c.test", token: "wl_ik_1" }, { WIZELENS_TOKEN: "x" }).token).toBe("wl_ik_1");
+    expect(resolveTarget({}, { WIZELENS_ENDPOINT: "http://hub:1", WIZELENS_TOKEN: "t" })).toEqual({ base: "http://hub:1/_wizelens", token: "t", project: undefined });
+    expect(resolveTarget({ endpoint: "https://c.test", token: "wl_ik_1" }, { WIZELENS_TOKEN: "x" }).token).toBe("wl_ik_1");
     expect(resolveRelease(undefined, "/nowhere", { WIZELENS_RELEASE: "9" })).toBe("9");
     expect(resolveRelease(undefined, buildFolder(), {})).toBe("4.5.6");
   });
@@ -63,15 +63,15 @@ describe("upload", () => {
   it("uploads to a real hub, lists, and deletes maps when asked", async () => {
     const dir = buildFolder();
     const log: string[] = [];
-    const result = await uploadSourceMaps({ dir, release: "4.5.6", url: hubUrl, token: "hub-token", project: "shop", deleteAfterUpload: true, log: (l) => log.push(l) });
+    const result = await uploadSourceMaps({ dir, release: "4.5.6", endpoint: hubUrl, token: "hub-token", project: "shop", deleteAfterUpload: true, log: (l) => log.push(l) });
     expect(result).toMatchObject({ release: "4.5.6", files: ["assets/index-abc.js", "assets/vendor.mjs"] });
     expect(log[0]).toContain("Uploaded 2 source maps for release 4.5.6");
     expect(existsSync(join(dir, "assets", "index-abc.js.map"))).toBe(false);
-    const listed = await listUploadedMaps({ url: hubUrl, token: "hub-token", project: "shop", release: "4.5.6" });
+    const listed = await listUploadedMaps({ endpoint: hubUrl, token: "hub-token", project: "shop", release: "4.5.6" });
     expect(listed.map((m) => m.file).sort()).toEqual(["assets/index-abc.js", "assets/vendor.mjs"]);
   });
 
   it("stops with the server's answer when it refuses", async () => {
-    await expect(uploadSourceMaps({ dir: buildFolder(), url: hubUrl, token: "wrong", log: () => {} })).rejects.toThrow(/401/);
+    await expect(uploadSourceMaps({ dir: buildFolder(), endpoint: hubUrl, token: "wrong", log: () => {} })).rejects.toThrow(/401/);
   });
 });

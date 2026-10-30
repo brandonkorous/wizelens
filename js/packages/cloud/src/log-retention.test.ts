@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildTrace, isLooseTraceId, type Trace } from "@wizeworks/lens-core";
+import { buildTrace, isLooseTraceId, type Trace } from "@wizeworks/lens-core/internal";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { pruneLogsByRetention } from "./repo/log-retention.js";
 import { pruneByRetention } from "./repo/trace-write.js";

@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace WizeLens.Search;
 
-public static partial class SearchFormat
+internal static partial class SearchFormat
 {
     [GeneratedRegex(@"[\t\n\v\f\r \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff""\\():*]|^[-<>]|^(OR|AND|NOT)\z|\.\.")]
     private static partial Regex Special();

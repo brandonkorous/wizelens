@@ -1,5 +1,5 @@
 import type { Attributes, Context, Span as OtelSpan, Tracer } from "@opentelemetry/api";
-import { ATTR_MESSAGING } from "@wizeworks/lens-core";
+import { ATTR_MESSAGING } from "@wizeworks/lens-core/internal";
 import { captureOf, patchMethod } from "../adapters/registry.js";
 import type { WizeLens } from "../types.js";
 import { injectInto, OPERATION_NAME, runInSpan, startConsumer, startProducer, tap } from "./shared.js";

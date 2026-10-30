@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { parseCheckInput, sameCheckProblem, shownHeaders, UPTIME_LIMITS, type UptimeCheck, uptimeList } from "@wizeworks/lens-core";
-import { sendJson } from "@wizeworks/lens-node/kit";
+import { parseCheckInput, sameCheckProblem, shownHeaders, UPTIME_LIMITS, type UptimeCheck, uptimeList } from "@wizeworks/lens-core/internal";
+import { sendJson } from "@wizeworks/lens-node/internal";
 import type { ApiContext } from "../api.js";
 import { parseJson, readBody } from "../body.js";
 import { runHubCheck } from "./schedule.js";

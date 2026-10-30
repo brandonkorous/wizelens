@@ -15,7 +15,7 @@ namespace WizeLens.Tests;
 public class LogLibraryTests
 {
     private readonly TraceStore _store = new(100);
-    private readonly WizeLensOptions _options = new() { ServiceName = "svc", IsEnabled = true };
+    private readonly WizeLensOptions _options = new() { Service = "svc", IsEnabled = true };
 
     private bool Destination(out TraceStore store, out WizeLensOptions options)
     {

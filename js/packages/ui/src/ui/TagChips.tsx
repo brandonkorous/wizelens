@@ -1,4 +1,4 @@
-import type { TagRule } from "@wizeworks/lens-core";
+import type { TagRule } from "@wizeworks/lens-core/internal";
 import { hrefTo } from "../routes";
 import type { Column } from "./Table";
 import "../styles/tags.css";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { VERSION_ATTR } from "@wizeworks/lens-core";
+import { VERSION_ATTR } from "@wizeworks/lens-core/internal";
 import { parseIngest } from "./ingest.js";
 import { writesFromSpans } from "./otlp/spans.js";
 import { span, T1 } from "./test/helpers.js";

@@ -1,4 +1,4 @@
-import type { InsightsModel } from "@wizeworks/lens-core";
+import type { InsightsModel } from "@wizeworks/lens-core/internal";
 import { afterEach, describe, expect, it } from "vitest";
 import type { Hub } from "../hub.js";
 import { findingsOf, forProtobuf, loadFixture, rebased, traceOf, tracesOf } from "../test/agents/load.js";

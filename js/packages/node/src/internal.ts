@@ -1,4 +1,4 @@
-// Building blocks for the WizeLens hub (@wizeworks/lens-hub). Not a stable public API.
+// For WizeLens's own packages (the hub and the cloud) only: not a public API, and not covered by semver.
 export { handleMcp } from "./mcp.js";
 export type { McpDataSource, McpProject, McpProjects, OverviewPage } from "./mcp.js";
 export { browserClockOffset, sanitizeClientLog, sanitizeClientSpan, withVisitorAgent } from "./client-spans.js";
@@ -14,3 +14,10 @@ export type { ExponentialHistogram } from "./metrics/exponential.js";
 export { DEFAULT_N_PLUS_ONE, DEFAULT_SLOW_QUERY_MS, VERSION } from "./info.js";
 export { dirMapLoader, localMapLoader } from "./sourcemaps.js";
 export type { SourceMapOptions } from "./sourcemaps.js";
+export { TraceStore } from "./store.js";
+export type { StoredTrace, TraceChanges, TraceStoreOptions } from "./store.js";
+export { SqlitePersister } from "./persist.js";
+export type { PersisterOptions } from "./persist.js";
+export { StoreSpanProcessor, toContractSpan } from "./processor.js";
+export { MetricStore } from "./metrics/store.js";
+export type { MetricStoreOptions } from "./metrics/store.js";

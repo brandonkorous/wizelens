@@ -1,4 +1,4 @@
-import type { Trace, TraceView } from "@wizeworks/lens-core";
+import type { Trace, TraceView } from "@wizeworks/lens-core/internal";
 import { dashboardOf } from "../cloud.js";
 import type { RequestView } from "../hud-model.js";
 import type { RecordedRequest, Recorder } from "../recorder-types.js";

@@ -20,7 +20,7 @@ import {
   toSummary,
   traceTiming,
   type Span,
-} from "./index.js";
+} from "./internal.js";
 
 let clock = 1_000;
 function span(partial: Partial<Span> & Pick<Span, "category">): Span {

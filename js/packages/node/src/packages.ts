@@ -3,7 +3,7 @@ import { context, ROOT_CONTEXT } from "@opentelemetry/api";
 import { suppressTracing } from "@opentelemetry/core";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { type HubSender, MAX_PACKAGES, PACKAGES_PATH, type PackageRef } from "@wizeworks/lens-core";
+import { type HubSender, MAX_PACKAGES, PACKAGES_PATH, type PackageRef } from "@wizeworks/lens-core/internal";
 import { runtimePackages } from "./packages-graph.js";
 
 const MAX_DEPTH = 4;

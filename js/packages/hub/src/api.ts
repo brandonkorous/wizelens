@@ -1,7 +1,7 @@
 import { hostname } from "node:os";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { annotateErrorFrames, HEADER_HOP, PACKAGES_PATH, type ServiceInfo, SOURCEMAPS_PATH, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core";
-import { firstHeader, sendJson, VERSION as NODE_VERSION } from "@wizeworks/lens-node/kit";
+import { annotateErrorFrames, HEADER_HOP, PACKAGES_PATH, PROTOCOL_VERSION, type ServiceInfo, SOURCEMAPS_PATH, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core/internal";
+import { firstHeader, sendJson, VERSION as NODE_VERSION } from "@wizeworks/lens-node/internal";
 import { parseJson, readBody } from "./body.js";
 import { handleAlerts } from "./alerts/api.js";
 import type { HubAlertDeps } from "./alerts/evaluate.js";
@@ -40,12 +40,13 @@ const num = (p: URLSearchParams, k: string) => (p.has(k) && Number.isFinite(Numb
 
 export function hubInfo(c: ApiContext): ServiceInfo {
   return {
+    protocol: PROTOCOL_VERSION,
     mode: "hub",
     capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats", "search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "saved", "tags", "settings", ...(c.o.uptime ? (["uptime"] as const) : []), ...(c.o.osv ? (["packages"] as const) : [])],
     service: c.o.name,
     version: c.version,
     runtime: `node ${process.version} · lens-node ${NODE_VERSION}`,
-    mcp: c.o.enableMcp,
+    mcp: c.o.mcp,
     host: hostname(),
     startedMs: c.startedMs,
     storage: { kind: "sqlite", maxTraces: c.o.maxTraces, maxAgeMs: c.o.maxAgeMs },

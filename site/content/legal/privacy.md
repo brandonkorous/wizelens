@@ -25,7 +25,7 @@ app.wizelens.com.
   own hub, or in your own cloud database. They are never sent to WizeWorks.
 - **No telemetry.** The software does not send usage data, crash reports, or anything else to us. Emails from a WizeLens Cloud
   load the WizeLens mark from wizelens.com.
-- **You decide where data goes.** Data leaves an app only for the hub or the cloud you point it at with `WIZELENS_HUB`. The
+- **You decide where data goes.** Data leaves an app only for the hub or the cloud you point it at with `WIZELENS_ENDPOINT`. The
   Java, Python, and Go SDKs send to a hub on the same machine (`localhost:5960`) until you set it.
 - **Package checks.** The hub and the cloud check the names and versions of your packages with OSV (osv.dev). Nothing else is
   sent. `--no-osv` on the hub or cloud, or `WIZELENS_PACKAGES=false` in an app, turns it off.

@@ -1,4 +1,4 @@
-import { MAX_BULK } from "@wizeworks/lens-core";
+import { MAX_BULK } from "@wizeworks/lens-core/internal";
 import { fail } from "./http.js";
 
 /** A checked list of ids from a body field: text, no repeats, 1 to MAX_BULK. */

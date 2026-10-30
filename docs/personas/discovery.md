@@ -42,7 +42,7 @@ Hosts / Kubernetes with infra data, non-Node add-ons.
 | kanNINJA web | 3000 | `pnpm dev:frontend` (kanNINJA worktree) | yes — Claude's worktree |
 | kanNINJA API | 3001 | `pnpm dev:backend` (kanNINJA worktree) | yes — Claude's worktree |
 | kanNINJA DB | 5433 | `pglite-server --db=<scratchpad>/kanninja-db --port=5433 --max-connections=1` | yes |
-| WizeLens Cloud | 5970 | `node js/packages/cloud/dist/cli.js --database pglite:<scratchpad>/cloud-db --signup open --allow-private-webhooks --public-url http://localhost:5970` | yes |
+| WizeLens Cloud | 5970 | `node js/packages/cloud/dist/cli.js --database pglite:<scratchpad>/cloud-db --signup open --allow-private-targets --public-url http://localhost:5970` | yes |
 
 kanNINJA runs on the local WizeLens build (tarballs packed from this worktree,
 wired by `pnpm.overrides` in the kanNINJA worktree only). It needed a fake

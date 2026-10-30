@@ -1,4 +1,4 @@
-import { newTraceId, SESSION_STORAGE_KEY } from "@wizeworks/lens-core";
+import { newTraceId, SESSION_STORAGE_KEY } from "@wizeworks/lens-core/internal";
 
 /** Epoch ms with sub-ms precision. */
 export const now = () => performance.timeOrigin + performance.now();

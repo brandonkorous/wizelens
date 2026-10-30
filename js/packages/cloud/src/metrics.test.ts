@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterEach, describe, expect, it } from "vitest";
-import type { MetricsModel } from "@wizeworks/lens-core";
+import type { MetricsModel } from "@wizeworks/lens-core/internal";
 import { evaluateAll } from "./alerts/evaluate.js";
 import { pruneMetricsByRetention } from "./repo/trace-write.js";
 import type { Cloud } from "./server.js";
@@ -22,7 +22,7 @@ const otlp = (metrics: unknown[]) => ({ resourceMetrics: [{ resource, scopeMetri
 
 async function withKeys(clock = { now: NOW }) {
   let url: string;
-  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
+  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateTargets: true, alertIntervalMs: 3_600_000 }));
   const { owner, orgId, projectId } = await setupOwner(cloud, url);
   const key = async (kind: string) => (await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind, name: kind, projectIds: [projectId] })).body.token;
   const ingest = await key("ingest");

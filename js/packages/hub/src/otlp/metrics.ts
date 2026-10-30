@@ -1,4 +1,4 @@
-import { type Attributes, type HubSender, INFRA_RESOURCE_KEYS, INFRA_SERVICE, type MetricHistogram, type MetricKind, type MetricPoint, sanitizeMetricPoint } from "@wizeworks/lens-core";
+import { type Attributes, type HubSender, INFRA_RESOURCE_KEYS, INFRA_SERVICE, type MetricHistogram, type MetricKind, type MetricPoint, sanitizeMetricPoint } from "@wizeworks/lens-core/internal";
 import type { HubWrite } from "../store.js";
 import { attributesOf, nanosToMs, type OtlpKeyValue, type OtlpResource, resourcePick, senderOf } from "./values.js";
 

@@ -2,8 +2,8 @@
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
-import { parseSaved, type SavedItem } from "@wizeworks/lens-core";
-import { sendJson } from "@wizeworks/lens-node/kit";
+import { parseSaved, type SavedItem } from "@wizeworks/lens-core/internal";
+import { sendJson } from "@wizeworks/lens-node/internal";
 import { parseJson, readBody } from "./body.js";
 
 // Items saved before log searches could be charts have no `chart`.

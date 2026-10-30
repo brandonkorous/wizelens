@@ -5,7 +5,7 @@ import { ListQueryBar } from "../../ui/ListQueryBar";
 import { Check } from "../../ui/Field";
 import { FilterChips } from "../../ui/FilterChips";
 import { ServiceSelect } from "../../ui/ServiceSelect";
-import { DURATION_OPTIONS, FILTER_KEYS, type RequestFilter, STATUS_OPTIONS } from "@wizeworks/lens-core";
+import { DURATION_OPTIONS, FILTER_KEYS, type RequestFilter, STATUS_OPTIONS } from "@wizeworks/lens-core/internal";
 
 export interface RequestFiltersProps {
   filter: RequestFilter;

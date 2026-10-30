@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
-import { parseSearch, SQLITE_DIALECT, searchSql, windowOf } from "@wizeworks/lens-core";
+import { parseSearch, SQLITE_DIALECT, searchSql, windowOf } from "@wizeworks/lens-core/internal";
 import { scenarioTraces, SCENARIO_NOW } from "../../core/src/testing/scenario.js";
 import { sqliteRunner } from "./scale-exec.js";
 import { upgradeHubSchema } from "./schema-scale.js";

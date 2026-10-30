@@ -1,4 +1,4 @@
-import { DEFAULT_REDACT_KEYS } from "@wizeworks/lens-core";
+import { DEFAULT_REDACT_KEYS } from "@wizeworks/lens-core/internal";
 import { describe, expect, it } from "vitest";
 import { foldDbParams, pythonToJson } from "./db-params.js";
 import { hideNestedDb } from "./nested.js";

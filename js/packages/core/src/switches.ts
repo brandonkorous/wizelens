@@ -13,3 +13,16 @@ export function envFlag(value: string | undefined): boolean | undefined {
   if (ON.has(v)) return true;
   return OFF.has(v) ? false : undefined;
 }
+
+const warned = new Set<string>();
+
+/** Reads the on/off variable `name`. Undefined when unset; a word it does not know warns once and counts as unset. */
+export function envSwitch(env: Readonly<Record<string, string | undefined>>, name: string): boolean | undefined {
+  const value = env[name];
+  const on = envFlag(value);
+  if (on === undefined && value?.trim() && !warned.has(name)) {
+    warned.add(name);
+    console.warn(`[wizelens] ${name}=${value} is not on or off (true/false, 1/0, on/off, yes/no), so the default is used.`);
+  }
+  return on;
+}

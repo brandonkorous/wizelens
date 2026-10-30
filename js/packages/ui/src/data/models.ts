@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { type ActiveTag, activeTags, isStructuredSearch, LIST_SEARCH_KIND, memorySearchIds, memoryExecutor, type ModelOf, pageContext, type PageName, type Release, runPageSync, type SyncExecutor, type TimeRange, type Trace } from "@wizeworks/lens-core";
+import { type ActiveTag, activeTags, isStructuredSearch, LIST_SEARCH_KIND, memorySearchIds, memoryExecutor, type ModelOf, pageContext, type PageName, type Release, runPageSync, type SyncExecutor, type TimeRange, type Trace } from "@wizeworks/lens-core/internal";
 import { CLIENT_PAGING, useRoute } from "../routes";
 import { useChangeTick } from "./changes";
 import { useIssueTick } from "./issues";

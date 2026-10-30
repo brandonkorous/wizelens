@@ -1,6 +1,6 @@
 // Ctrl+K hits beyond requests and logs: error groups, queries, insights, metrics, alerts, SLOs, and saved items.
 import { useEffect, useState } from "react";
-import { errorText, type MetricsModel, type SavedItem, type SloReport, type TimeRange } from "@wizeworks/lens-core";
+import { errorText, type MetricsModel, type SavedItem, type SloReport, type TimeRange } from "@wizeworks/lens-core/internal";
 import { apiFetch } from "../data/api";
 import { useHost } from "../data/host";
 import { loadPageModel } from "../data/models";

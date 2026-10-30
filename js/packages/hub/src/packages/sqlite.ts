@@ -1,6 +1,6 @@
 // The hub's package store, in its SQLite file.
 import type { DatabaseSync } from "node:sqlite";
-import { type PackageEcosystem, packageKey, type PackageRef } from "@wizeworks/lens-core";
+import { type PackageEcosystem, packageKey, type PackageRef } from "@wizeworks/lens-core/internal";
 import type { Advisory, PackageDb, ServicePackage } from "./store.js";
 
 interface Row {

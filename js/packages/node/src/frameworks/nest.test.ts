@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { afterAll, describe, expect, it } from "vitest";
-import type { Span, Trace } from "@wizeworks/lens-core";
+import type { Span, Trace } from "@wizeworks/lens-core/internal";
 import { FakeNestApp, type FakeRoute } from "../test/nest-fake.js";
 import type { WizeLens } from "../types.js";
 import { createWizeLens } from "../wizelens.js";
@@ -33,7 +33,7 @@ const ROUTES: FakeRoute[] = [
 const closers: (() => Promise<unknown>)[] = [];
 afterAll(async () => void (await Promise.all(closers.map((c) => c()))));
 
-const make = () => createWizeLens({ serviceName: "nest-api", storage: "memory", instrumentFetch: false });
+const make = () => createWizeLens({ service: "nest-api", storage: "memory", instrumentFetch: false });
 
 async function start(platform: "express" | "fastify", routerRoutes = true): Promise<{ wl: WizeLens; app: FakeNestApp; base: string }> {
   const wl = make();
@@ -102,7 +102,7 @@ describe("instrumentNest", () => {
     const { wl, app } = await start("express");
     expect(instrumentNest(wl, app)).toBe(true);
     expect((app as unknown as { interceptors: unknown[] }).interceptors).toHaveLength(1);
-    expect(instrumentNest(createWizeLens({ serviceName: "off", enabled: false }), new FakeNestApp("express", []))).toBe(false);
+    expect(instrumentNest(createWizeLens({ service: "off", enabled: false }), new FakeNestApp("express", []))).toBe(false);
     expect(instrumentNest(wl, {})).toBe(false);
   });
 });

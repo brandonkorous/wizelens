@@ -5,7 +5,7 @@ using WizeLens.Storage;
 namespace WizeLens.Analysis;
 
 /// <summary>Injection (A05), headers and CORS (A02), and cookies (A04); the same as core/src/security/sql.ts, headers.ts, cookies.ts.</summary>
-public static partial class SecurityRules
+internal static partial class SecurityRules
 {
     private static readonly HashSet<string> NoSql = ["redis", "valkey", "mongodb", "elasticsearch", "opensearch", "memcached", "dynamodb"];
 

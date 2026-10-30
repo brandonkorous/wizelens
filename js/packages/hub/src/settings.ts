@@ -1,8 +1,8 @@
 // Project settings on the hub: `api/settings?project=`. Thresholds and extra redacted keys apply to new data; a shorter retention at the next prune.
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
-import { effectiveSettings, type FactOptions, factOptionsOf, parseSettings, type ProjectSettings, type SettingsDefaults, settingsOf } from "@wizeworks/lens-core";
-import { sendJson } from "@wizeworks/lens-node/kit";
+import { effectiveSettings, type FactOptions, factOptionsOf, parseSettings, type ProjectSettings, type SettingsDefaults, settingsOf } from "@wizeworks/lens-core/internal";
+import { sendJson } from "@wizeworks/lens-node/internal";
 import { parseJson, readBody } from "./body.js";
 
 const DAY_MS = 86_400_000;
@@ -51,9 +51,9 @@ export function keepMsOf(h: Pick<HubSettingsHost, "db" | "maxAgeMs">, project: s
 }
 
 /** How long a project's log lines stay: the hub's log age, or the project's own retention when shorter. */
-export function logKeepMsOf(h: Pick<HubSettingsHost, "db"> & { logMaxAgeMs: number }, project: string): number {
+export function logKeepMsOf(h: Pick<HubSettingsHost, "db"> & { logsMaxAgeMs: number }, project: string): number {
   const days = projectSettings(h.db, project).retentionDays;
-  return days ? Math.min(days * DAY_MS, h.logMaxAgeMs) : h.logMaxAgeMs;
+  return days ? Math.min(days * DAY_MS, h.logsMaxAgeMs) : h.logsMaxAgeMs;
 }
 
 /** The thresholds a project's traces settle with. */

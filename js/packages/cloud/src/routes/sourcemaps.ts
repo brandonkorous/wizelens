@@ -1,5 +1,5 @@
-import { answerResolve, checkUpload, MAX_SOURCEMAP_BYTES, normalizeRelease, parseSourceMap, resolveTargetOf, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core";
-import { readBody } from "@wizeworks/lens-hub/kit";
+import { answerResolve, checkUpload, MAX_SOURCEMAP_BYTES, normalizeRelease, parseSourceMap, resolveTargetOf, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core/internal";
+import { readBody } from "@wizeworks/lens-hub/internal";
 import type { Ctx } from "../app.js";
 import { joinScope } from "../auth/join-scope.js";
 import { tenantScope } from "../telemetry/store.js";

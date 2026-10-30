@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type HubService, isOldInstance, type ServiceGroup } from "@wizeworks/lens-core";
+import { type HubService, isOldInstance, type ServiceGroup } from "@wizeworks/lens-core/internal";
 import { presenceOf } from "../../data/sources";
 import { fmtAgo, fmtCount } from "../../format";
 import { DotText } from "../../ui/Badges";

@@ -35,7 +35,7 @@ internal sealed class TestApp : IAsyncDisposable
         services?.Invoke(builder.Services);
         builder.Services.AddWizeLens(o =>
         {
-            o.ServiceName = "test-api";
+            o.Service = "test-api";
             o.Storage = WizeLensStorage.Memory;
             configure?.Invoke(o);
         });

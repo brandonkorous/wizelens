@@ -9,8 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddWizeLens(o =>
 {
-    o.ServiceName = "gateway-api";
-    o.EnableMcp = true;
+    o.Service = "gateway-api";
+    o.Mcp = true;
 });
 
 var connectionString = builder.Configuration.GetConnectionString("Gateway") ?? "Data Source=gateway.db";

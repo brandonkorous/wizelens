@@ -13,7 +13,7 @@ import {
   type Span,
   type SpanEvent,
   VERSION_ATTR,
-} from "@wizeworks/lens-core";
+} from "@wizeworks/lens-core/internal";
 
 
 /** The web app's version, put on every browser span as `service.version`. */

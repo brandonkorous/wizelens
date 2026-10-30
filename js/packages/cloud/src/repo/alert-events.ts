@@ -1,5 +1,5 @@
 // What happened to alert rules: notices sent, people's mutes and acknowledgements, and every evaluated value.
-import type { AlertRule } from "@wizeworks/lens-core";
+import type { AlertRule } from "@wizeworks/lens-core/internal";
 import { newId } from "../auth/crypto.js";
 import type { Queryable } from "../db/db.js";
 

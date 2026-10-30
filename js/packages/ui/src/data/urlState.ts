@@ -1,6 +1,6 @@
 // The view choices (range, custom window, compare, environment, project, service) in the address bar, so a link shows the same view.
 import { useEffect } from "react";
-import { isTimeRange } from "@wizeworks/lens-core";
+import { isTimeRange } from "@wizeworks/lens-core/internal";
 import { type PageId, parseRoute, setQuery, useRoute } from "../routes";
 import { PERIOD_KEYS, parseWindow, windowText } from "./period";
 import { KEYS, onViewWrite, readPref, SCOPE, writePref } from "./prefs";

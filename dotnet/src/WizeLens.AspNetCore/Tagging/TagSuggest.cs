@@ -4,7 +4,7 @@ using WizeLens.Search;
 
 namespace WizeLens.Tagging;
 
-public static class TagSuggest
+internal static class TagSuggest
 {
     /// <summary>Values for <c>tag:</c> from the enabled tags; null for any other field, which the host answers from its data.</summary>
     public static List<Suggestion>? Suggest(SuggestRequest r, IEnumerable<TagView> tags)

@@ -1,18 +1,14 @@
-import type { Attributes } from "@wizeworks/lens-core";
+import type { Attributes } from "@wizeworks/lens-core/internal";
 import { setBrowserApp, setBrowserRelease, setBrowserUser } from "./browser-span.js";
 import { mountHud } from "./hud/element.js";
-import { ownHudChoice } from "./hud-switch.js";
-import { isCloudBrowserEndpoint } from "./cloud.js";
-import { probeReadApi } from "./read-probe.js";
-import { createRecorder, endpointUrlOf } from "./recorder.js";
+import { hudChoice } from "./read-probe.js";
+import { createRecorder } from "./recorder.js";
 import type { Recorder, RecorderOptions } from "./recorder-types.js";
 import { type InstanceSource, register, registered, type RegisteredInstance, unregister } from "./registry.js";
 
 export interface WizeLensOptions extends RecorderOptions {
   /** Turn capture on. Default true. Pass e.g. `import.meta.env.DEV`; off returns an instance that does nothing. */
   enabled?: boolean;
-  /** The web app's version, kept on browser spans for release markers and so stacks find the right source maps. Default: what the build plugin set. */
-  release?: string;
   /** The web app's name, so each app has its own Services row ("shop (browser)") in place of one "Web App". Sent as `wizelens.browser.app`. */
   service?: string;
   /** The signed-in user, sent as `enduser.id` on every browser span. Change it later with `setUser`. */
@@ -75,16 +71,13 @@ function startHud(recorder: Recorder, show: boolean | Promise<boolean>, slowMs: 
 }
 
 function start(options: WizeLensOptions, source: InstanceSource): { lens: WizeLens; entry: RegisteredInstance } {
-  const { enabled: _on, release, service, user, userName, hud = "auto", slowMs, ...rest } = options;
-  setBrowserRelease(release ?? rest.version);
+  const { enabled: _on, service, user, userName, hud = "auto", slowMs, ...rest } = options;
+  setBrowserRelease(rest.release);
   setBrowserApp(service);
   setBrowserUser(user, userName);
   // Asked before install, so the probe is not traced. No HUD reads nothing back: send-only servers work as they are.
-  const endpointUrl = endpointUrlOf(rest.endpoint);
-  // This browser's own `?wizelens-hud=` choice first; a cloud browser key only sends, so the recorder reads nothing back there.
-  const auto = () => ownHudChoice() ?? (!isCloudBrowserEndpoint(endpointUrl) && probeReadApi(endpointUrl, globalThis.fetch));
-  const showHud = hud === "auto" ? auto() : hud;
-  const recorder = createRecorder({ ...rest, readServer: rest.readServer ?? showHud, version: release ?? rest.version });
+  const showHud = hudChoice(rest.endpoint, hud);
+  const recorder = createRecorder({ ...rest, readServer: rest.readServer ?? showHud });
   const uninstall = recorder.install();
   const stopHud = startHud(recorder, showHud, slowMs);
   const lens: WizeLens = {

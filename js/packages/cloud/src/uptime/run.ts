@@ -1,7 +1,7 @@
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
-import { UPTIME_SERVICE, uptimeTelemetry } from "@wizeworks/lens-core";
-import { type HubWrite, isPrivateAddress, runCheck } from "@wizeworks/lens-hub/kit";
+import { UPTIME_SERVICE, uptimeTelemetry } from "@wizeworks/lens-core/internal";
+import { type HubWrite, isPrivateAddress, runCheck } from "@wizeworks/lens-hub/internal";
 import type { CloudApp } from "../app.js";
 import { writeService } from "../repo/trace-write.js";
 import { claimDue, type CloudCheck, saveRun } from "../repo/uptime.js";
@@ -20,7 +20,7 @@ export async function checkUrlProblem(url: string, allowPrivate: boolean): Promi
 
 /** Run one check now: keep its result, and write it as a wizelens-uptime trace through the normal write path. */
 export async function runCloudCheck(app: CloudApp, c: CloudCheck): Promise<void> {
-  const r = await runCheck(c, { allowPrivate: app.config.allowPrivateWebhooks, now: app.config.now });
+  const r = await runCheck(c, { allowPrivate: app.config.allowPrivateTargets, now: app.config.now });
   await saveRun(app.db, c, r);
   const sender = { service: UPTIME_SERVICE, environment: c.env || undefined, runtime: `wizelens-cloud ${app.version}` };
   const w: HubWrite = { sender, via: "uptime", ...uptimeTelemetry(c, r), remotes: [] };

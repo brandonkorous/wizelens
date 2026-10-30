@@ -10,7 +10,7 @@ using WizeLens.Web;
 namespace WizeLens.Data;
 
 /// <summary>Shared helpers that turn a <see cref="DbCommand"/> into a db span. Used by every DB adapter.</summary>
-public static partial class DbActivity
+internal static partial class DbActivity
 {
     /// <summary>Starts a db activity for <paramref name="command"/>, or returns null when nobody listens.</summary>
     public static Activity? Start(DbCommand command, string adapter)

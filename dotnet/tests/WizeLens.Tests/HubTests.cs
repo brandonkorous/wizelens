@@ -31,11 +31,11 @@ public class HubTests
         a => a.MapGet("/ping", () => "pong"),
         o =>
         {
-            o.HubUrl = "hub.test:5960/_wizelens/";
-            o.HubToken = "s3cret";
+            o.Endpoint = "hub.test:5960/_wizelens/";
+            o.Token = "s3cret";
             o.Project = "shop";
             o.Release = "4.2.0";
-            o.HubHandler = hub;
+            o.SendHandler = hub;
         });
 
     private static async Task<List<JsonElement>> SpansAsync(FakeHub hub, HubExporter exporter)
@@ -106,7 +106,7 @@ public class HubTests
         await app.Client.GetAsync("/ping");
         await Task.Delay(300);
         await app.App.Services.GetRequiredService<HubExporter>().TickAsync(CancellationToken.None);
-        var send = JsonDocument.Parse(await app.Client.GetStringAsync("/_wizelens/api/info")).RootElement.GetProperty("hubSend");
+        var send = JsonDocument.Parse(await app.Client.GetStringAsync("/_wizelens/api/info")).RootElement.GetProperty("send");
         Assert.Equal("failing", send.GetProperty("state").GetString());
         Assert.Contains("refused the key (401)", send.GetProperty("reason").GetString(), StringComparison.Ordinal);
     }
@@ -116,7 +116,7 @@ public class HubTests
     {
         await using var app = await StartAsync(new FakeHub(HttpStatusCode.NoContent));
         var info = JsonDocument.Parse(await app.Client.GetStringAsync("/_wizelens/api/info")).RootElement;
-        Assert.Equal("http://hub.test:5960", info.GetProperty("hub").GetString());
+        Assert.Equal("http://hub.test:5960", info.GetProperty("sendTo").GetString());
         Assert.Equal("shop", info.GetProperty("project").GetString());
     }
 }

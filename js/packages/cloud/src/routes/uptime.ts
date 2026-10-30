@@ -1,4 +1,4 @@
-import { parseCheckInput, sameCheckProblem, shownHeaders, UPTIME_LIMITS, type UptimeCheck, type UptimeCheckInput, uptimeList } from "@wizeworks/lens-core";
+import { parseCheckInput, sameCheckProblem, shownHeaders, UPTIME_LIMITS, type UptimeCheck, type UptimeCheckInput, uptimeList } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { type ProjectAccess, requireProject } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson } from "../http/http.js";
@@ -15,7 +15,7 @@ const urlOf = (url: string) => url.split("?")[0]!;
 async function inputOf(ctx: Ctx, projectId: string, current?: UptimeCheck): Promise<UptimeCheckInput> {
   const parsed = parseCheckInput(await readJsonBody(ctx.req), current);
   if (!parsed.ok) return fail(400, parsed.error);
-  const problem = await checkUrlProblem(parsed.input.url, ctx.app.config.allowPrivateWebhooks);
+  const problem = await checkUrlProblem(parsed.input.url, ctx.app.config.allowPrivateTargets);
   if (problem) fail(400, `${parsed.input.url}: ${problem}`);
   const twin = sameCheckProblem(await listChecks(ctx.app.db, ctx.app.secrets, projectId), parsed.input, current?.id);
   if (twin) fail(409, twin);

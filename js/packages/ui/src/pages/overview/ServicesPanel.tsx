@@ -1,5 +1,5 @@
 import { Box, Cog, Database, Globe, Inbox, Monitor } from "lucide-react";
-import { type ServiceKind, type ServiceRow, type ServiceStatus, serviceDoc, type TimeRange } from "@wizeworks/lens-core";
+import { type ServiceKind, type ServiceRow, type ServiceStatus, serviceDoc, type TimeRange } from "@wizeworks/lens-core/internal";
 import { useGroupTags } from "../../data/tagMatch";
 import { withTags } from "../../ui/TagChips";
 import { fmtCount, fmtMs } from "../../format";

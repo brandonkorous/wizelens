@@ -4,14 +4,14 @@
   "description": "WizeLens dashboard UI. Static build served by the WizeLens add-ons.",
   "license": "MIT",
   "author": "WizeWorks LLC",
-  "homepage": "https://github.com/brandonkorous/wizelens#readme",
+  "homepage": "https://github.com/wizeworksllc/wizelens#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/brandonkorous/wizelens.git",
+    "url": "git+https://github.com/wizeworksllc/wizelens.git",
     "directory": "js/packages/ui"
   },
   "bugs": {
-    "url": "https://github.com/brandonkorous/wizelens/issues"
+    "url": "https://github.com/wizeworksllc/wizelens/issues"
   },
   "keywords": [
     "wizelens",

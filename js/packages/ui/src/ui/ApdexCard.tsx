@@ -1,5 +1,5 @@
 import { Smile } from "lucide-react";
-import { type Apdex, apdexRating } from "@wizeworks/lens-core";
+import { type Apdex, apdexRating } from "@wizeworks/lens-core/internal";
 import { useHost } from "../data/host";
 import { hrefTo } from "../routes";
 import { StatCard } from "./StatCard";

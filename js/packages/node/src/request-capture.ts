@@ -16,7 +16,7 @@ import {
   isStreamContentType,
   RESPONSE_HEADER_PREFIX,
   serverTimingValue,
-} from "@wizeworks/lens-core";
+} from "@wizeworks/lens-core/internal";
 import { type ResponseTap, tapResponse } from "./body-capture.js";
 import { isServedFile, markServedFile } from "./served-file.js";
 import { keepExposeHeaders } from "./expose-headers.js";

@@ -6,7 +6,7 @@ version: 0.3.0-alpha.14
 appVersion: "0.3.0-alpha.14"
 home: https://wizelens.com/docs/auto-install
 sources:
-  - https://github.com/brandonkorous/wizelens
+  - https://github.com/wizeworksllc/wizelens
 keywords:
   - wizelens
   - apm

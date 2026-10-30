@@ -1,4 +1,4 @@
-import { rawService } from "@wizeworks/lens-core";
+import { rawService } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { Field, FormRow } from "../../ui/Field";
 import type { RuleDraft } from "./AlertForm";

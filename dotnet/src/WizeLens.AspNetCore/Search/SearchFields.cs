@@ -2,12 +2,12 @@
 namespace WizeLens.Search;
 
 /// <summary>How a known field reads its value.</summary>
-public enum FieldType { Text, Id, Status, Duration, Level, Bool }
+internal enum FieldType { Text, Id, Status, Duration, Level, Bool }
 
 /// <summary>One known field: its type, one line of help, and the kinds that have it.</summary>
-public sealed record FieldSpec(FieldType Type, string Help, IReadOnlyList<string> Kinds);
+internal sealed record FieldSpec(FieldType Type, string Help, IReadOnlyList<string> Kinds);
 
-public static class SearchFields
+internal static class SearchFields
 {
     private static readonly IReadOnlyList<string> AllKinds = SearchKinds.All;
     private static readonly string[] NotLogs = [SearchKinds.Requests, SearchKinds.Traces, SearchKinds.Spans];

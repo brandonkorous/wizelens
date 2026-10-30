@@ -28,7 +28,7 @@ export const SCOPES: Record<Kind, [string, string][]> = {
 
 /** Where each kind of secret goes. */
 const WHERE: Record<Kind, string> = {
-  ingest: "Set it as WIZELENS_HUB_TOKEN on the app.",
+  ingest: "Set it as WIZELENS_TOKEN on the app.",
   read: "Send it as Authorization: Bearer <key> to /_wizelens/mcp.",
   browser: "It is public: it is safe in a page. Put this tag in every page, before </body>:",
 };

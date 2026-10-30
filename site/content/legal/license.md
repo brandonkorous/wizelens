@@ -19,6 +19,6 @@ The license does not give you the right to use the WizeLens names or logo as you
 | `@wizeworks/lens-cloud` | npm, Docker |
 | `com.wizelens:wizelens` | Java |
 | `wizelens` | Python |
-| `github.com/brandonkorous/wizelens/go` | Go |
+| `github.com/wizeworksllc/wizelens/go` | Go |
 
 ## The license text

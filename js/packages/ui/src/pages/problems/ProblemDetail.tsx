@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import type { Anomaly, Problem, ProblemsModel } from "@wizeworks/lens-core";
+import type { Anomaly, Problem, ProblemsModel } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtDateTime } from "../../format";
 import { hrefTo } from "../../routes";
 import { Dot } from "../../ui/Badges";

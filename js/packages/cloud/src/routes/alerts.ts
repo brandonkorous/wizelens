@@ -1,5 +1,5 @@
-import { type AlertChannel, MUTED_FOREVER, PAGE_SIZES, pageParams, parseAlertRule } from "@wizeworks/lens-core";
-import { checkTarget } from "@wizeworks/lens-hub/kit";
+import { type AlertChannel, MUTED_FOREVER, PAGE_SIZES, pageParams, parseAlertRule } from "@wizeworks/lens-core/internal";
+import { checkTarget } from "@wizeworks/lens-hub/internal";
 import { notify } from "../alerts/evaluate.js";
 import type { Ctx } from "../app.js";
 import { requireProject } from "../auth/principal.js";
@@ -32,7 +32,7 @@ async function ruleInput(ctx: Ctx, orgId: string, projectId: string, current?: o
 
 /** Check a rule for one project: webhooks, SLOs, and email addresses. A 400 says what is wrong. */
 export async function checkRule(ctx: Ctx, orgId: string, projectId: string, b: Record<string, unknown>): Promise<RuleInput> {
-  const allowPrivate = ctx.app.config.allowPrivateWebhooks;
+  const allowPrivate = ctx.app.config.allowPrivateTargets;
   const checkSlo = async (id: string) => ((await sloById(ctx.app.db, projectId, id)) ? null : "That SLO is not in this project.");
   const r = await parseAlertRule(b, { checkUrl: (url) => checkTarget(url, allowPrivate), checkSlo, email: (to) => emailChannel(ctx, orgId, to) });
   return typeof r === "string" ? fail(400, r) : r;

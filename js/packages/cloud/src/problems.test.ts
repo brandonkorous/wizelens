@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from "vitest";
-import { pageContext, runPage, type Trace } from "@wizeworks/lens-core";
+import { pageContext, runPage, type Trace } from "@wizeworks/lens-core/internal";
 import { ANOMALY_NOW, anomalyTraces } from "../../core/src/testing/anomaly-scenario.js";
 import { problemsParity } from "../../core/src/testing/scale-pages.js";
 import { CH_LIMIT, CH_URL, type ChTest, chTest } from "./test/ch.js";

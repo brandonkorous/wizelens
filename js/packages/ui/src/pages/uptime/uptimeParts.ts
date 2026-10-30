@@ -1,4 +1,4 @@
-import type { UptimeCheck, UptimeCheckStats, UptimeModel } from "@wizeworks/lens-core";
+import type { UptimeCheck, UptimeCheckStats, UptimeModel } from "@wizeworks/lens-core/internal";
 import type { Tone } from "../../ui/Badges";
 import type { AskOptions } from "../../ui/Dialog";
 

@@ -1,4 +1,4 @@
-import { ATTR_SERVICE_VERSION, type Span } from "@wizeworks/lens-core";
+import { ATTR_SERVICE_VERSION, type Span } from "@wizeworks/lens-core/internal";
 import { isCloudBrowserEndpoint } from "./cloud.js";
 import type { ClientLog } from "./console-capture.js";
 
@@ -53,8 +53,8 @@ async function post(send: typeof fetch, endpoint: string, { spans, logs }: Batch
     await send(`${endpoint}/api/client-spans`, {
       method: "POST",
       headers: { "Content-Type": isCloudBrowserEndpoint(endpoint) ? "text/plain;charset=UTF-8" : "application/json" },
-      // `sentAt` lets the server move these times onto its own clock when this browser's clock is wrong.
-      body: JSON.stringify(logs.length > 0 ? { spans, logs, sentAt: Date.now() } : { spans, sentAt: Date.now() }),
+      // `sentMs` lets the server move these times onto its own clock when this browser's clock is wrong.
+      body: JSON.stringify(logs.length > 0 ? { spans, logs, sentMs: Date.now() } : { spans, sentMs: Date.now() }),
       keepalive: true,
     });
   } catch {

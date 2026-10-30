@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import { BUILT_IN_PREFIX, isBuiltInName, type TagColor, type TagInput, type TagRule, tagList } from "@wizeworks/lens-core";
+import { BUILT_IN_PREFIX, isBuiltInName, type TagColor, type TagInput, type TagRule, tagList } from "@wizeworks/lens-core/internal";
 
 // Tag rules on the hub (docs/TAGS-PLAN.md): one set for the whole hub, kept in its SQLite file, apart from the telemetry.
 

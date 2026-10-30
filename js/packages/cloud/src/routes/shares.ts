@@ -1,4 +1,4 @@
-import { isPageName, isTimeRange } from "@wizeworks/lens-core";
+import { isPageName, isTimeRange } from "@wizeworks/lens-core/internal";
 import { hashToken, newId, newToken } from "../auth/crypto.js";
 import type { Ctx } from "../app.js";
 import { makerScope } from "../auth/join-scope.js";

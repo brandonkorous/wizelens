@@ -1,5 +1,5 @@
 // Alerts across many projects: one rule made in each picked project, and mute, unmute, on, off, or delete for many rules.
-import { MUTED_FOREVER } from "@wizeworks/lens-core";
+import { MUTED_FOREVER } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { requireOrg, requireProject } from "../auth/principal.js";
 import { fail, readJsonBody, sendJson } from "../http/http.js";

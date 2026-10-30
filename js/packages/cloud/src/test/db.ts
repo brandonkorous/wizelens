@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { type Db, openPglite } from "../db/db.js";
 import { migrate } from "../db/migrate.js";
 

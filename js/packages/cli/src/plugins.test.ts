@@ -4,8 +4,8 @@ import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { withWizeLens } from "./next.js";
-import { wizelensSourceMaps } from "./vite.js";
+import { withWizeLensSourceMaps } from "./next.js";
+import { wizeLensSourceMaps } from "./vite.js";
 import { WizeLensSourceMapsPlugin } from "./webpack.js";
 
 // A stand-in hub that records each upload's query.
@@ -28,7 +28,7 @@ function folder(sub = "assets"): string {
 describe("vite plugin", () => {
   it("turns on hidden maps, puts the release in the page, and uploads after the client build", async () => {
     const root = folder();
-    const plugin = wizelensSourceMaps({ url, release: "1.0.0", log: () => {} });
+    const plugin = wizeLensSourceMaps({ endpoint: url, release: "1.0.0", log: () => {} });
     expect(plugin.config({ root }, { command: "build" })).toMatchObject({ build: { sourcemap: "hidden" }, define: { "globalThis.__WIZELENS_RELEASE__": '"1.0.0"' } });
     expect(plugin.config({ root, build: { sourcemap: true } }, { command: "build" }).build).toEqual({ sourcemap: true });
     plugin.configResolved({ root, command: "build", build: { outDir: "." } });
@@ -43,7 +43,7 @@ describe("vite plugin", () => {
   it("deletes the maps it turned on once they are uploaded, and keeps maps the site asked for", async () => {
     for (const [build, kept] of [[undefined, false], [{ sourcemap: true }, true]] as const) {
       const root = folder();
-      const plugin = wizelensSourceMaps({ url, release: "1.0.1", log: () => {} });
+      const plugin = wizeLensSourceMaps({ endpoint: url, release: "1.0.1", log: () => {} });
       plugin.config({ root, build }, { command: "build" });
       plugin.configResolved({ root, command: "build", build: { outDir: "." } });
       await plugin.closeBundle.call({ environment: { name: "client" } });
@@ -54,11 +54,11 @@ describe("vite plugin", () => {
   it("warns instead of failing the build, unless asked", async () => {
     const root = folder();
     const warnings: string[] = [];
-    const plugin = wizelensSourceMaps({ url: "http://127.0.0.1:1", release: "1", log: (l) => warnings.push(l) });
+    const plugin = wizeLensSourceMaps({ endpoint: "http://127.0.0.1:1", release: "1", log: (l) => warnings.push(l) });
     plugin.configResolved({ root, command: "build", build: { outDir: "." } });
     await plugin.closeBundle.call(undefined);
     expect(warnings[0]).toContain("were not uploaded");
-    const strict = wizelensSourceMaps({ url: "http://127.0.0.1:1", release: "1", failOnError: true, log: () => {} });
+    const strict = wizeLensSourceMaps({ endpoint: "http://127.0.0.1:1", release: "1", failOnError: true, log: () => {} });
     strict.configResolved({ root, command: "build", build: { outDir: "." } });
     await expect(strict.closeBundle.call(undefined)).rejects.toThrow(/not uploaded/);
   });
@@ -75,7 +75,7 @@ describe("webpack plugin", () => {
       webpack: { DefinePlugin: class { constructor(d: Record<string, string>) { defined.push(d); } apply() {} } },
       hooks: { afterEmit: { tapPromise: (_n: string, fn: typeof emit) => void (emit = fn) } },
     };
-    new WizeLensSourceMapsPlugin({ url, release: "2.0.0", log: () => {} }).apply(compiler);
+    new WizeLensSourceMapsPlugin({ endpoint: url, release: "2.0.0", log: () => {} }).apply(compiler);
     expect(compiler.options.devtool).toBe("hidden-source-map");
     expect(defined[0]).toMatchObject({ "globalThis.__WIZELENS_RELEASE__": '"2.0.0"' });
     seen.length = 0;
@@ -87,7 +87,7 @@ describe("webpack plugin", () => {
 describe("next wrapper", () => {
   it("turns on browser maps, sets the release, and uploads below _next/static after the build", async () => {
     const project = folder(join(".next", "static", "chunks"));
-    const config = withWizeLens({ reactStrictMode: true }, { url, release: "3.0.0", log: () => {} });
+    const config = withWizeLensSourceMaps({ reactStrictMode: true }, { endpoint: url, release: "3.0.0", log: () => {} });
     expect(config).toMatchObject({ reactStrictMode: true, productionBrowserSourceMaps: true, env: { NEXT_PUBLIC_WIZELENS_RELEASE: "3.0.0" } });
     seen.length = 0;
     await config.compiler!.runAfterProductionCompile!({ distDir: ".next", projectDir: project });

@@ -9,13 +9,13 @@ Go has no agent: services use the OpenTelemetry SDK and the contrib instrumentat
 in a few lines and adds what they leave out. Requires Go 1.26 or newer.
 
 ```bash
-go get github.com/brandonkorous/wizelens/go
+go get github.com/wizeworksllc/wizelens/go
 ```
 
 ```go
-import wizelens "github.com/brandonkorous/wizelens/go"
+import wizelens "github.com/wizeworksllc/wizelens/go"
 
-shutdown, err := wizelens.Start(ctx, wizelens.WithServiceName("inventory"))
+shutdown, err := wizelens.Start(ctx, wizelens.WithService("inventory"))
 defer shutdown(context.Background())
 
 db, err := wizelens.OpenDB("pgx", dsn, "postgresql")              // queries, with their parameters
@@ -26,7 +26,7 @@ http.ListenAndServe(":8080", wizelens.Handler(mux, "inventory")) // server spans
 
 | Call | What it is |
 |---|---|
-| `Start` | Tracer, logger, and meter providers with OTLP over HTTP to `WIZELENS_HUB`, W3C trace context, and sampling that keeps every trace with an error or a slow span. Metrics go every 30 seconds: request and query times from the calls below, and Go runtime memory, goroutines, and GC goal |
+| `Start` | Tracer, logger, and meter providers with OTLP over HTTP to `WIZELENS_ENDPOINT`, W3C trace context, and sampling that keeps every trace with an error or a slow span. Metrics go every 30 seconds: request and query times from the calls below, and Go runtime memory, goroutines, and GC goal |
 | `OpenDB`, `DBOptions` | [otelsql](https://github.com/XSAM/otelsql) with one span per query, named by its first word, plus `wizelens.db.parameters` |
 | `Handler`, `Capture` | [otelhttp](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp) plus request and response headers and, with `WIZELENS_CAPTURE_BODY=true`, request and response bodies |
 | `Transport` | otelhttp's client transport |
@@ -38,7 +38,7 @@ http.ListenAndServe(":8080", wizelens.Handler(mux, "inventory")) // server spans
 
 | Option | What it does |
 |---|---|
-| `WithServiceName("inventory")` | The service name when `OTEL_SERVICE_NAME` is not set |
+| `WithService("inventory")` | The service name when `OTEL_SERVICE_NAME` is not set |
 | `WithSettings(s)` | Use these settings instead of the `WIZELENS_*` variables. Start from `wizelens.SettingsFromEnv()` and change fields |
 | `WithExporters(spans, logs)` | Send spans and logs to these exporters instead of OTLP, for tests or another backend. Either may be `nil` |
 | `WithMetricReader(r)` | Read metrics with this reader (such as `sdkmetric.NewManualReader()`) instead of sending them by OTLP |
@@ -46,7 +46,7 @@ http.ListenAndServe(":8080", wizelens.Handler(mux, "inventory")) // server spans
 ```go
 s := wizelens.SettingsFromEnv()
 s.SampleRate = 0.25
-shutdown, err := wizelens.Start(ctx, wizelens.WithServiceName("inventory"), wizelens.WithSettings(s))
+shutdown, err := wizelens.Start(ctx, wizelens.WithService("inventory"), wizelens.WithSettings(s))
 ```
 
 ## Answers you expect
@@ -83,8 +83,8 @@ own `otelsql.Open` call.
 
 | Variable | Default | What it does |
 |---|---|---|
-| `WIZELENS_HUB` | `http://localhost:5960` | Hub or cloud address |
-| `WIZELENS_HUB_TOKEN` | none | Hub token or cloud ingest key |
+| `WIZELENS_ENDPOINT` | `http://localhost:5960` | Hub or cloud address |
+| `WIZELENS_TOKEN` | none | Hub token or cloud ingest key |
 | `WIZELENS_PROJECT` | none | Project on a shared hub |
 | `WIZELENS_SAMPLE_RATE` | `1` | Share of traces kept. See [Sampling](/docs/sampling/) |
 | `WIZELENS_KEEP_SLOW_MS` | `1000` | Keep traces with a span this slow at any rate (`off` for none) |
@@ -102,7 +102,7 @@ app.
 
 ## A runnable sample
 
-[`samples/go-net-http`](https://github.com/brandonkorous/wizelens/tree/main/samples/go-net-http) is a `net/http`
+[`samples/go-net-http`](https://github.com/wizeworksllc/wizelens/tree/main/samples/go-net-http) is a `net/http`
 service with SQLite. `GET /orders` shows N+1 queries, a duplicate query, and N+1 HTTP calls; `GET /report` shows a slow
 query and a database wait; `GET /fail` shows an error with its log line.
 

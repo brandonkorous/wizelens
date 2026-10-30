@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Sample Next.js app for WizeLens: the Node add-on, the React provider, and source maps uploaded by withWizeLens at build time.",
+  "description": "Sample Next.js app for WizeLens: the Node add-on, the React provider, and source maps uploaded by withWizeLensSourceMaps at build time.",
   "scripts": {
     "dev": "next dev --port 5180",
     "build": "next build",

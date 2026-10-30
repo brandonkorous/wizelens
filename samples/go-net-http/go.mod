@@ -1,9 +1,9 @@
-module github.com/brandonkorous/wizelens/samples/go-net-http
+module github.com/wizeworksllc/wizelens/samples/go-net-http
 
 go 1.26.3
 
 require (
-	github.com/brandonkorous/wizelens/go v0.0.0
+	github.com/wizeworksllc/wizelens/go v0.0.0
 	modernc.org/sqlite v1.60.1
 )
 
@@ -48,4 +48,4 @@ require (
 	modernc.org/memory v1.12.1 // indirect
 )
 
-replace github.com/brandonkorous/wizelens/go => ../../go
+replace github.com/wizeworksllc/wizelens/go => ../../go

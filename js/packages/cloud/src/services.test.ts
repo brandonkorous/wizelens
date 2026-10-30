@@ -1,4 +1,4 @@
-import type { HubSender } from "@wizeworks/lens-core";
+import type { HubSender } from "@wizeworks/lens-core/internal";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "./db/db.js";
 import { createProject } from "./repo/projects.js";

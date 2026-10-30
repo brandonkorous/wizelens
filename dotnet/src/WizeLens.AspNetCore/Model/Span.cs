@@ -1,7 +1,7 @@
 namespace WizeLens.Model;
 
 /// <summary>Values for <see cref="Span.Kind"/>.</summary>
-public static class SpanKinds
+internal static class SpanKinds
 {
     public const string Server = "server";
     public const string Client = "client";
@@ -11,7 +11,7 @@ public static class SpanKinds
 }
 
 /// <summary>Values for <see cref="Span.Status"/>.</summary>
-public static class SpanStatuses
+internal static class SpanStatuses
 {
     public const string Unset = "unset";
     public const string Ok = "ok";
@@ -19,7 +19,7 @@ public static class SpanStatuses
 }
 
 /// <summary>Values for <see cref="Span.Category"/>.</summary>
-public static class SpanCategories
+internal static class SpanCategories
 {
     public const string HttpServer = "http.server";
     public const string HttpClient = "http.client";
@@ -29,8 +29,8 @@ public static class SpanCategories
     public const string Internal = "internal";
 }
 
-/// <summary>One timed operation. OTel-shaped. See docs/CONTRACT.md.</summary>
-public sealed class Span
+/// <summary>One timed operation, shaped like an OpenTelemetry span.</summary>
+internal sealed class Span
 {
     public string TraceId { get; set; } = "";
     public string SpanId { get; set; } = "";
@@ -50,14 +50,14 @@ public sealed class Span
     public string? Attr(string key) => Attributes.TryGetValue(key, out var value) ? AttributeValue.AsString(value) : null;
 }
 
-public sealed class SpanEvent
+internal sealed class SpanEvent
 {
     public string Name { get; set; } = "";
     public double TimeMs { get; set; }
     public Dictionary<string, object?> Attributes { get; set; } = [];
 }
 
-public sealed class LogRecord
+internal sealed class LogRecord
 {
     public double TimeMs { get; set; }
     public string Level { get; set; } = "info";
@@ -68,7 +68,7 @@ public sealed class LogRecord
     public Dictionary<string, object?> Attributes { get; set; } = [];
 }
 
-public class TraceSummary
+internal class TraceSummary
 {
     public string TraceId { get; set; } = "";
     public string RootName { get; set; } = "";
@@ -86,7 +86,7 @@ public class TraceSummary
     public int? RootStatusCode { get; set; }
 }
 
-public sealed class Trace : TraceSummary
+internal sealed class Trace : TraceSummary
 {
     public List<Span> Spans { get; set; } = [];
     public List<LogRecord> Logs { get; set; } = [];
@@ -102,16 +102,16 @@ public sealed class Trace : TraceSummary
 }
 
 /// <summary>The JSON body of <c>POST api/client-spans</c>.</summary>
-public sealed class ClientSpansRequest
+internal sealed class ClientSpansRequest
 {
     public List<Span> Spans { get; set; } = [];
     public List<ClientLog> Logs { get; set; } = [];
-    /// <summary>The browser's clock when it sent this, in Unix ms. Null from an older browser package.</summary>
-    public double? SentAt { get; set; }
+    /// <summary>The browser's clock when it sent this, in Unix ms. Null when the browser did not send it.</summary>
+    public double? SentMs { get; set; }
 }
 
 /// <summary>A browser log line posted with <see cref="ClientSpansRequest"/>.</summary>
-public sealed class ClientLog
+internal sealed class ClientLog
 {
     public string? TraceId { get; set; }
     public string? SpanId { get; set; }

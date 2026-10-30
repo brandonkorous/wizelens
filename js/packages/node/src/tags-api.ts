@@ -1,5 +1,5 @@
 import type { ServerResponse } from "node:http";
-import { activeTags, matchTags, searchMemory, TAG_LIMITS, tagMatchRequestOf, type TagRule } from "@wizeworks/lens-core";
+import { activeTags, matchTags, searchMemory, TAG_LIMITS, tagMatchRequestOf, type TagRule } from "@wizeworks/lens-core/internal";
 import { readJson, sendJson } from "./http-util.js";
 import type { TraceStore } from "./store.js";
 import type { Req } from "./types.js";

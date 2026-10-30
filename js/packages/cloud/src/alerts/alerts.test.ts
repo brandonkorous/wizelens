@@ -4,7 +4,7 @@ import { afterEach, expect, it } from "vitest";
 import type { Cloud } from "../server.js";
 import { setupOwner, startCloud } from "../test/cloud.js";
 import { span } from "../test/db.js";
-import { checkTarget } from "@wizeworks/lens-hub/kit";
+import { checkTarget } from "@wizeworks/lens-hub/internal";
 import { evaluateAll } from "./evaluate.js";
 import { settleCloud } from "../settle.js";
 import { writeChunked } from "../test/scale.js";
@@ -34,7 +34,7 @@ async function receiver(): Promise<{ url: string; bodies: unknown[] }> {
 it("fires once when the error rate breaks the rule, then resolves", async () => {
   const clock = { now: 1_800_000_000_000 };
   let url: string;
-  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
+  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateTargets: true, alertIntervalMs: 3_600_000 }));
   const hook = await receiver();
   const { owner, orgId, projectId } = await setupOwner(cloud, url);
   const key = (await owner.call<{ token: string }>("POST", `api/orgs/${orgId}/keys`, { kind: "ingest", projectIds: [projectId] })).body.token;
@@ -60,7 +60,7 @@ it("fires once when the error rate breaks the rule, then resolves", async () => 
 it("an above normal rule fires on a spike, names what broke, and links its problem", async () => {
   const clock = { now: ANOMALY_NOW };
   let url: string;
-  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
+  ({ cloud, url } = await startCloud({ now: () => clock.now, allowPrivateTargets: true, alertIntervalMs: 3_600_000 }));
   const hook = await receiver();
   const { owner, projectId } = await setupOwner(cloud, url);
   const rule = { name: "Checkout p95", metric: "p95_ms", op: "above_normal", threshold: 3, windowMs: 900_000, channels: [{ kind: "webhook", url: hook.url }] };
@@ -89,7 +89,7 @@ it("refuses webhooks into private networks unless allowed", async () => {
 
 it("changes only the fields a PATCH sends", async () => {
   let url: string;
-  ({ cloud, url } = await startCloud({ allowPrivateWebhooks: true, alertIntervalMs: 3_600_000 }));
+  ({ cloud, url } = await startCloud({ allowPrivateTargets: true, alertIntervalMs: 3_600_000 }));
   const { owner, projectId } = await setupOwner(cloud, url);
   const rule = { name: "Traffic", metric: "requests", op: ">", threshold: 5, windowMs: 900_000, channels: [{ kind: "webhook", url: "http://127.0.0.1:1/hook" }] };
   const made = await owner.call<{ id: string }>("POST", `api/projects/${projectId}/alerts`, rule);

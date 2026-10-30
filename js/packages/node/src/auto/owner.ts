@@ -1,5 +1,5 @@
 import { type AdapterParts, partsOf } from "../adapters/registry.js";
-import { hubUrlOf } from "../hub-connect.js";
+import { endpointOf } from "../hub-connect.js";
 import type { WizeLens, WizeLensOptions } from "../types.js";
 import { buildWizeLens } from "../wizelens.js";
 
@@ -25,8 +25,8 @@ function startAuto(o: WizeLensOptions): Owner | null {
   const wizelens = buildWizeLens(o);
   const parts = partsOf(wizelens);
   if (!parts) return null;
-  const hub = hubUrlOf(o);
-  log(`Auto install on for ${o.serviceName}${hub ? `, sending to ${hub}` : ""}.`);
+  const hub = endpointOf(o);
+  log(`Auto install on for ${o.service}${hub ? `, sending to ${hub}` : ""}.`);
   return { wizelens, parts, auto: true };
 }
 
@@ -50,7 +50,7 @@ export function handOver(wizelens: WizeLens, parts: AdapterParts | null): void {
   options = null;
   const stopped = auto;
   auto = null;
-  log(`${wizelens.serviceName} installs WizeLens in code, so the auto install steps aside.`);
+  log(`${wizelens.service} installs WizeLens in code, so the auto install steps aside.`);
   if (stopped) void stopped.wizelens.shutdown();
 }
 

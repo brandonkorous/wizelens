@@ -32,7 +32,7 @@ internal sealed record HubSenderInfo(
     string Service, string? Project, string Version, string? Release, string Runtime, string Environment, string Host, string? Endpoint, double StartedMs)
 {
     public static HubSenderInfo Of(WizeLensOptions options, string environment, string? endpoint) => new(
-        options.ServiceName ?? "app",
+        options.Service ?? "app",
         string.IsNullOrWhiteSpace(options.Project) ? null : options.Project,
         typeof(HubSenderInfo).Assembly.GetName().Version?.ToString(3) ?? "0.0.0",
         options.Release,

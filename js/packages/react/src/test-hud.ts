@@ -24,8 +24,10 @@ export function resetHuds(): void {
 export function stubServer(): string[] {
   const urls: string[] = [];
   vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
-    urls.push(String(input instanceof Request ? input.url : input));
-    return new Response("[]", { status: 200, headers: { "content-type": "application/json" } });
+    const url = String(input instanceof Request ? input.url : input);
+    urls.push(url);
+    // api/info answers an object, so the HUD's "auto" finds the read API.
+    return new Response(url.endsWith("/api/info") ? "{}" : "[]", { status: 200, headers: { "content-type": "application/json" } });
   });
   return urls;
 }

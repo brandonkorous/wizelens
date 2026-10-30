@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { Span, Trace } from "@wizeworks/lens-core";
+import type { Span, Trace } from "@wizeworks/lens-core/internal";
 import { createWizeLens, type WizeLens } from "./index.js";
 import { getJson, type Running, settle, startApp } from "./test/helpers.js";
 
-const bodyOn = createWizeLens({ serviceName: "capture-api", enabled: true, storage: "memory", instrumentFetch: false, captureResponseBody: true });
-const bodyOff = createWizeLens({ serviceName: "plain-api", enabled: true, storage: "memory", instrumentFetch: false });
+const bodyOn = createWizeLens({ service: "capture-api", enabled: true, storage: "memory", instrumentFetch: false, captureResponseBody: true });
+const bodyOff = createWizeLens({ service: "plain-api", enabled: true, storage: "memory", instrumentFetch: false });
 let on: Running;
 let off: Running;
 

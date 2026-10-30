@@ -1,5 +1,5 @@
 import type { ServerResponse } from "node:http";
-import { HEADER_ENDPOINT, HEADER_EXPECTED, HEADER_TRACE } from "@wizeworks/lens-core";
+import { HEADER_ENDPOINT, HEADER_EXPECTED, HEADER_TRACE } from "@wizeworks/lens-core/internal";
 
 const EXPOSE = "access-control-expose-headers";
 const OURS = [HEADER_TRACE, HEADER_ENDPOINT, HEADER_EXPECTED];

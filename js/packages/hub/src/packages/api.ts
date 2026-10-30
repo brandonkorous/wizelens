@@ -1,7 +1,7 @@
 // `POST api/packages`: the packages a service runs, from an SDK at start (docs/CONTRACT.md "Packages").
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { parsePackagesReport } from "@wizeworks/lens-core";
-import { sendJson } from "@wizeworks/lens-node/kit";
+import { parsePackagesReport } from "@wizeworks/lens-core/internal";
+import { sendJson } from "@wizeworks/lens-node/internal";
 import { parseJson, readBody } from "../body.js";
 import type { PackageDb } from "./store.js";
 

@@ -5,12 +5,12 @@ using WizeLens.Search;
 namespace WizeLens.Tagging;
 
 /// <summary>A tag as <c>api/tags</c> lists it. Built-ins have ids like <c>builtin:stream</c>.</summary>
-public sealed record TagView(string Id, string Name, string Color, string Query, bool BuiltIn, bool Enabled);
+internal sealed record TagView(string Id, string Name, string Color, string Query, bool BuiltIn, bool Enabled);
 
 /// <summary>A rule ready to run: its name and parsed search.</summary>
-public sealed record ActiveTag(string Name, SearchNode Node);
+internal sealed record ActiveTag(string Name, SearchNode Node);
 
-public static partial class TagRules
+internal static partial class TagRules
 {
     public static readonly IReadOnlyList<string> Colors = ["blue", "green", "amber", "orange", "red", "violet", "slate"];
 

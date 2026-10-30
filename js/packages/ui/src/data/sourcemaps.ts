@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { cachedLoader, type ErrorEvent, fetchMapLoader, type ResolvedFrame, resolveStack, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core";
+import { cachedLoader, type ErrorEvent, fetchMapLoader, type ResolvedFrame, resolveStack, SOURCEMAPS_RESOLVE_PATH } from "@wizeworks/lens-core/internal";
 import { apiSend } from "./api";
 import { useHost } from "./host";
 import { getScope } from "./prefs";

@@ -13,7 +13,7 @@ import (
 	"os/signal"
 	"sync"
 
-	wizelens "github.com/brandonkorous/wizelens/go"
+	wizelens "github.com/wizeworksllc/wizelens/go"
 )
 
 var log *slog.Logger
@@ -21,8 +21,8 @@ var log *slog.Logger
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
-	// 1. OpenTelemetry for WizeLens: OTLP to WIZELENS_HUB (default http://localhost:5960), sampling, logs.
-	shutdown, err := wizelens.Start(ctx, wizelens.WithServiceName("inventory-go"))
+	// 1. OpenTelemetry for WizeLens: OTLP to WIZELENS_ENDPOINT (default http://localhost:5960), sampling, logs.
+	shutdown, err := wizelens.Start(ctx, wizelens.WithService("inventory-go"))
 	if err != nil {
 		panic(err)
 	}

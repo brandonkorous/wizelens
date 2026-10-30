@@ -1,6 +1,6 @@
 // Saved views, searches, and dashboards: where the host keeps them, and one list every part of the page shares.
 import { useSyncExternalStore } from "react";
-import type { SavedInput, SavedItem } from "@wizeworks/lens-core";
+import type { SavedInput, SavedItem } from "@wizeworks/lens-core/internal";
 import { currentProject, useAccount } from "./account";
 import { apiSend } from "./api";
 import { useHost } from "./host";

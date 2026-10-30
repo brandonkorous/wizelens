@@ -1,4 +1,5 @@
 import { parseArgs } from "node:util";
+import { envSwitch } from "@wizeworks/lens-core/internal";
 import type { CloudOptions, SignupMode } from "./config.js";
 
 export const USAGE = `wizelens-cloud: the WizeLens service for many teams.
@@ -6,6 +7,7 @@ export const USAGE = `wizelens-cloud: the WizeLens service for many teams.
 Usage: wizelens-cloud [options]
        wizelens-cloud plan set <org> <plan> [--gb <n>] [--retention-days <n>]
        wizelens-cloud stripe-setup --stripe-secret-key <key>
+       wizelens-cloud copy-telemetry --database <url> --clickhouse <url> [--force]
 
   --database <url>          postgres://..., pglite:<folder>, or memory.
                             Default pglite:./.wizelens-cloud.          (DATABASE_URL)
@@ -26,9 +28,9 @@ Usage: wizelens-cloud [options]
                             100. Projects can set their own.
   --n-plus-one <n>          Similar calls in a request that make an     (WIZELENS_CLOUD_N_PLUS_ONE)
                             N+1. Default 5.
-  --allow-private-webhooks  Let alert webhooks and uptime checks reach (WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1)
+  --allow-private-targets   Let alert webhooks and uptime checks reach (WIZELENS_CLOUD_ALLOW_PRIVATE_TARGETS=true)
                             private addresses.
-  --no-osv                  Do not check reported packages against    (WIZELENS_CLOUD_OSV=0)
+  --no-osv                  Do not check reported packages against    (WIZELENS_CLOUD_OSV=false)
                             OSV.
   --auth-secret <text>      Signs sessions, encrypts 2FA secrets. 32+   (WIZELENS_CLOUD_AUTH_SECRET)
                             characters; "2:new,1:old" rotates.
@@ -42,11 +44,11 @@ Usage: wizelens-cloud [options]
                             or smtps://...:465. Needs --public-url.
   --mail-from <address>     Sender, e.g. "WizeLens <a@b.com>".          (WIZELENS_CLOUD_MAIL_FROM)
   --mail-reply-to <address> Where replies go, e.g. "hello@b.com".       (WIZELENS_CLOUD_MAIL_REPLY_TO)
-  --trust-proxy             Read the client address from the last       (WIZELENS_CLOUD_TRUST_PROXY=1)
+  --trust-proxy             Read the client address from the last       (WIZELENS_CLOUD_TRUST_PROXY=true)
                             X-Forwarded-For entry (your own proxy only).
   --setup-token <text>      The first account's token. Default: random, (WIZELENS_CLOUD_SETUP_TOKEN)
                             printed at start while no account exists.
-  --check-pwned-passwords   Refuse breached passwords. Default on with  (WIZELENS_CLOUD_CHECK_PWNED=1|0)
+  --check-pwned-passwords   Refuse breached passwords. Default on with  (WIZELENS_CLOUD_CHECK_PWNED_PASSWORDS)
   --no-check-pwned-passwords Postgres, off with PGlite.
   --sso-origins <list>      Identity provider origins for OIDC single   (WIZELENS_CLOUD_SSO_ORIGINS)
                             sign-on, comma separated, for example
@@ -67,7 +69,6 @@ const int = (v: string | undefined) => (v && /^\d+$/.test(v) ? Number(v) : undef
 const signupOf = (v: string | undefined): SignupMode | undefined => (v === "open" || v === "invite" ? v : undefined);
 const text = (...v: (string | undefined)[]) => v.find((x) => x !== undefined && x !== "");
 const list = (v: string | undefined) => v?.split(",").map((s) => s.trim()).filter(Boolean);
-const flag = (v: string | undefined) => (v === "1" || v === "true" ? true : v === "0" || v === "false" ? false : undefined);
 
 const OPTIONS = {
   database: { type: "string" },
@@ -82,7 +83,7 @@ const OPTIONS = {
   "ingest-per-minute": { type: "string" },
   "slow-query-ms": { type: "string" },
   "n-plus-one": { type: "string" },
-  "allow-private-webhooks": { type: "boolean" },
+  "allow-private-targets": { type: "boolean" },
   "no-osv": { type: "boolean" },
   "auth-secret": { type: "string" },
   "smtp-url": { type: "string" },
@@ -103,7 +104,7 @@ const OPTIONS = {
 } as const;
 
 const pwnedOf = (a: { "check-pwned-passwords"?: boolean; "no-check-pwned-passwords"?: boolean }, env: NodeJS.ProcessEnv) =>
-  a["no-check-pwned-passwords"] ? false : (a["check-pwned-passwords"] ?? flag(env.WIZELENS_CLOUD_CHECK_PWNED));
+  a["no-check-pwned-passwords"] ? false : (a["check-pwned-passwords"] ?? envSwitch(env, "WIZELENS_CLOUD_CHECK_PWNED_PASSWORDS"));
 
 /** Options from the command line, then from the environment. */
 export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CloudOptions | "help" {
@@ -122,15 +123,15 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv): CloudOp
     ingestPerMinute: int(a["ingest-per-minute"] ?? env.WIZELENS_CLOUD_INGEST_PER_MINUTE),
     slowQueryMs: int(a["slow-query-ms"] ?? env.WIZELENS_CLOUD_SLOW_QUERY_MS),
     nPlusOneThreshold: int(a["n-plus-one"] ?? env.WIZELENS_CLOUD_N_PLUS_ONE),
-    allowPrivateWebhooks: a["allow-private-webhooks"] ?? env.WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS === "1",
-    osv: !(a["no-osv"] ?? env.WIZELENS_CLOUD_OSV === "0"),
+    allowPrivateTargets: a["allow-private-targets"] ?? envSwitch(env, "WIZELENS_CLOUD_ALLOW_PRIVATE_TARGETS") ?? false,
+    osv: !a["no-osv"] && (envSwitch(env, "WIZELENS_CLOUD_OSV") ?? true),
     authSecret: text(a["auth-secret"], env.WIZELENS_CLOUD_AUTH_SECRET),
     smtpUrl: text(a["smtp-url"], env.WIZELENS_CLOUD_SMTP_URL),
     resendApiKey: text(a["resend-api-key"], env.WIZELENS_CLOUD_RESEND_API_KEY),
     resendWebhookSecret: text(a["resend-webhook-secret"], env.WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET),
     mailFrom: text(a["mail-from"], env.WIZELENS_CLOUD_MAIL_FROM),
     mailReplyTo: text(a["mail-reply-to"], env.WIZELENS_CLOUD_MAIL_REPLY_TO),
-    trustProxy: a["trust-proxy"] ?? env.WIZELENS_CLOUD_TRUST_PROXY === "1",
+    trustProxy: a["trust-proxy"] ?? envSwitch(env, "WIZELENS_CLOUD_TRUST_PROXY") ?? false,
     setupToken: text(a["setup-token"], env.WIZELENS_CLOUD_SETUP_TOKEN),
     checkPwnedPasswords: pwnedOf(a, env),
     ssoOrigins: list(text(a["sso-origins"], env.WIZELENS_CLOUD_SSO_ORIGINS)),

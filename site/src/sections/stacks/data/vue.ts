@@ -19,7 +19,7 @@ export const VUE: Stack = {
     "// main.ts",
     "createApp(App)",
     "  .use(router)",
-    '  .use(WizeLens, { endpoint: "/_wizelens", router })',
+    '  .use(WizeLensPlugin, { endpoint: "/_wizelens", router })',
     '  .mount("#app");',
     "",
     "// server.ts (Node)",
@@ -41,7 +41,7 @@ export const VUE: Stack = {
     { title: "Errors and source maps", items: ["Errors Vue catches, with the component", "Its trail: App > Cart > PriceLine", "Uncaught errors and rejections", "Minified stacks mapped to your source", "Dev servers' maps read on their own"] },
     { title: "Logs", items: ["Browser console lines, 500 per page", "Server logs in the same trace"] },
     { title: "The HUD", items: ["Total, server, database, render", "On when your server's read API answers", "One click to the full trace"] },
-    { title: "In components", items: ["inject(WIZELENS_KEY)", "this.$wizelens in the Options API", "setUser(id, { name }) for the Users page"] },
+    { title: "In components", items: ["inject(wizeLensKey)", "this.$wizelens in the Options API", "setUser(id, { name }) for the Users page"] },
   ],
   highlightsTitle: "Built on Vue's own hooks.",
   highlights: [

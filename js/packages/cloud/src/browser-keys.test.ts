@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { ATTR_BROWSER_APP, ATTR_BROWSER_TYPE } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_APP, ATTR_BROWSER_TYPE } from "@wizeworks/lens-core/internal";
 import { originAllowed, originOf, originsFor } from "./repo/key-origins.js";
 import { browserWrite } from "./routes/browser.js";
 import type { Cloud } from "./server.js";
@@ -58,7 +58,7 @@ describe("the browser intake", () => {
     expect(made.token.startsWith("wl_bk_")).toBe(true);
     expect(made.origins).toEqual([SHOP]);
     const forged = span(T1, "2".repeat(16), { startMs: Date.now() - 59_000, service: "orders-api", category: "db", kind: "server" });
-    const res = await post({ spans: [pageView(), forged], sentAt: Date.now() });
+    const res = await post({ spans: [pageView(), forged], sentMs: Date.now() });
     expect(res.status).toBe(204);
     expect(res.headers.get("access-control-allow-origin")).toBe(SHOP);
     const trace = await owner.call<{ spans: { service: string; category: string; kind: string }[] }>("GET", `api/traces/${T1}?project=${projectId}`);

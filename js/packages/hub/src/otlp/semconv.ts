@@ -1,4 +1,4 @@
-import { type AttributeValue, type Attributes, SEMCONV_ALIASES } from "@wizeworks/lens-core";
+import { type AttributeValue, type Attributes, SEMCONV_ALIASES } from "@wizeworks/lens-core/internal";
 
 /** Copy older names to the current ones when the current one is missing. First alias wins. */
 export function applyAliases(out: Attributes): Attributes {

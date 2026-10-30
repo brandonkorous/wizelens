@@ -1,5 +1,5 @@
 // Every link target in one place, so a move to a new host is one edit.
-const REPO = "https://github.com/brandonkorous/wizelens";
+const REPO = "https://github.com/wizeworksllc/wizelens";
 
 export const LINKS = {
   repo: REPO,

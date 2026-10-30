@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyzeTrace, ATTR_BROWSER_ROUTE, ATTR_BROWSER_TYPE, ATTR_PAGE, buildTrace, requestRows } from "./index.js";
+import { analyzeTrace, ATTR_BROWSER_ROUTE, ATTR_BROWSER_TYPE, ATTR_PAGE, buildTrace, requestRows } from "./internal.js";
 import { insightHits } from "./stats/insights.js";
 import { makeSpan } from "./testing/fixtures.js";
 

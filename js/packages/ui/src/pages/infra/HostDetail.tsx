@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Cpu, HardDrive, MemoryStick, Network, Server } from "lucide-react";
-import type { FileSystemRow, HostDetail as Detail } from "@wizeworks/lens-core";
+import type { FileSystemRow, HostDetail as Detail } from "@wizeworks/lens-core/internal";
 import { useData } from "../../data/hooks";
 import { useInfraModel } from "../../data/infra";
 import { fmtAgo } from "../../format";

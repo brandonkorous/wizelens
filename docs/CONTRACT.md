@@ -1,10 +1,22 @@
-# WizeLens — Wire Contract (v0)
+# WizeLens — Wire Contract (protocol 1)
 
 Every add-on (.NET, Node, browser) MUST follow this. The UI depends only on this contract.
 
 ## Base path
 
 `/_wizelens` (configurable). All paths below are relative to it.
+
+## Versioning
+
+This is protocol 1. `api/info` answers `protocol: 1`; no `protocol` means 1.
+
+- A receiver ignores fields, capabilities, and enum values it does not know. A sender may add new optional fields in
+  protocol 1, so an old receiver keeps working.
+- A change that breaks protocol 1 (a field removed, renamed, or given a new meaning) is protocol 2, served at
+  `api/v2/…`. Protocol 1 stays at `api/…` as long as SDKs that speak it are supported.
+- An error answer is `{ error: string, code?: string }`: `error` is a sentence for a person, `code` a fixed name a
+  program can test (`PLAN_REQUIRED`). The cloud's `api/auth/*` is Better Auth and answers its own `{ message, code }`
+  (`SSO_REQUIRED`).
 
 ## HTTP headers
 
@@ -53,7 +65,7 @@ All `api/*` endpoints return JSON (camelCase) and send `Access-Control-Allow-Ori
 | `GET api/traces?limit=50&session={id}` | `TraceSummary[]`, newest first. With `session`, only traces that have a span whose `wizelens.browser.session` equals `{id}`. Loose batches (lines outside a request) are left out of summaries on every host; `full=true` includes them. |
 | `GET api/traces?full=true&limit=1000&since={ms}` | `Trace[]` from this service only (no federation), newest first. `limit` max 5000. With `since`, only traces whose last activity (`startMs + durationMs`) is at or after `{ms}`. The dashboard uses this for its charts and merges the results of every service it knows. |
 | `GET api/traces/{traceId}?federate=true` | `Trace` (404 if unknown and no remote has it) |
-| `POST api/client-spans` | Body `{ spans: Span[], logs?: (LogRecord & { traceId })[], sentAt?: number }`. Browser spans and browser log lines. Stored into their traces. At most 500 spans and 100 logs per call; log messages are cut at 4000 characters. 204. |
+| `POST api/client-spans` | Body `{ spans: Span[], logs?: (LogRecord & { traceId })[], sentMs?: number }`. Browser spans and browser log lines. Stored into their traces. At most 500 spans and 100 logs per call; log messages are cut at 4000 characters. 204. |
 | `GET api/tags` | `TagList` (see "Tags"): the built-ins and the rules of the `tags` option, `editable: false` |
 | `POST api/tags/match` | Body `{ kind, items: { traceId, owner, timeMs }[] }` (up to 200). `{ matches }`: tag names per row (see "Tags") |
 | `POST mcp` (+ GET for SSE if SDK needs) | MCP streamable HTTP. Only when MCP is enabled. 404 otherwise. |
@@ -167,9 +179,10 @@ type HostMode = "in-app" | "hub" | "cloud";
 type Capability =
   | "federation" | "environments" | "registry" | "accounts" | "alerts" | "sharing"
   | "serverStats" | "metrics" | "serverMetrics" | "changes" | "search" | "issues"
-  | "infra" | "uptime" | "statusPages" | "sourcemaps" | "slos" | "saved" | "tags";
+  | "infra" | "uptime" | "statusPages" | "packages" | "sourcemaps" | "slos" | "saved" | "tags" | "settings";
 
 interface ServiceInfo {
+  protocol?: number;        // absent = 1
   mode?: HostMode;          // absent = "in-app"
   capabilities?: Capability[]; // absent = ["federation"]
   service: string;
@@ -179,19 +192,19 @@ interface ServiceInfo {
   environment?: string;     // ASPNETCORE_ENVIRONMENT / NODE_ENV, e.g. "Development"
   host?: string;            // machine name
   startedMs?: number;
-  storage?: { kind: "sqlite" | "memory"; maxTraces: number; maxAgeMs: number };
+  storage?: { kind: "sqlite" | "memory" | "postgres"; maxTraces?: number; maxAgeMs: number }; // no maxTraces = no count limit
   analysis?: { slowQueryMs: number; nPlusOneThreshold: number };
   redactKeys?: string[];
   captureResponseBody?: boolean;
   project?: string;
-  hub?: string;             // the hub or cloud this add-on also sends to
-  hubSend?: HubSendState;   // how sending to `hub` goes; absent on add-ons that do not report it
+  sendTo?: string;          // the hub or cloud this add-on also sends to
+  send?: SendState;         // how sending to `sendTo` goes; absent on add-ons that do not report it
   sampling?: SamplingInfo;  // absent = every trace is kept
 }
 
-interface HubSendState {
+interface SendState {
   state: "waiting" | "ok" | "failing"; // waiting = no batch sent yet
-  reason?: string | null;    // failing: why, and what to change ("The hub at … needs a key (401). Set WIZELENS_HUB_TOKEN …")
+  reason?: string | null;    // failing: why, and what to change ("The hub at … needs a key (401). Set WIZELENS_TOKEN …")
   lastSentMs?: number | null; // when a batch last went through
 }
 
@@ -220,7 +233,7 @@ interface SamplingInfo {
 | browser react | In the page view's trace. `wizelens.react.commits`, `wizelens.react.components` = JSON `{ name, renders, actualMs, selfMs, wasted, context }[]` since the last report |
 | browser error | In the page view's trace. Status `error`, one `exception` event (`exception.type`, `.message`, `.stacktrace`) |
 
-## Trace context in messages (v0.5)
+## Trace context in messages
 
 A producer writes `traceparent` into the message headers (RabbitMQ headers, Kafka headers, Service Bus
 application properties). A consumer reads it: the `process` span joins the producer's trace as a child of the
@@ -234,9 +247,9 @@ application properties). A consumer reads it: the `process` span joins the produ
 | Kafka | `WizeLens.Kafka` package (Confluent.Kafka) | `instrumentKafkaJs(wizelens, kafka)` |
 | Azure Service Bus | automatic (Azure.Messaging.ServiceBus) | `instrumentServiceBus(wizelens, client)` |
 | MassTransit | automatic | — |
-| Fastify / Koa / Hono | — | `wizelensFastify(wizelens)`, `wizelensKoa(wizelens)`, `wizelensHono(wizelens)` |
+| Fastify / Koa / Hono | — | `wizeLensFastify(wizelens)`, `wizeLensKoa(wizelens)`, `wizeLensHono(wizelens)` |
 
-## Host modes and capabilities (v0.4)
+## Host modes and capabilities
 
 The same dashboard and HUD run in every mode. They read `mode` and `capabilities` from `api/info` and show or hide
 features by capability, never by the mode name. The badge in the top bar shows the mode, the service, and how long data is kept.
@@ -263,29 +276,33 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 | `issues` | The host keeps issue states: error groups and insights can be resolved, ignored, and (cloud) assigned. See "Issue states" below | | ✅ | ✅ |
 | `uptime` | The host runs uptime checks (`api/uptime` on the hub, `api/projects/{p}/uptime` in the cloud) and serves the `uptime` page model; the Uptime page appears. See "Uptime checks" | | ✅ (unless `--no-uptime`) | ✅ |
 | `statusPages` | A project can turn on a public status page (`api/status/{token}`) | | | ✅ |
+| `packages` | The host checks the packages services report against OSV (see "Packages"); the Security page lists known-vulnerable ones | | ✅ (unless `--no-osv`) | ✅ (unless `--no-osv`) |
+| `settings` | The host keeps settings per project (thresholds, extra redacted keys, retention) at `api/settings`; Settings shows them | | ✅ | ✅ |
 
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search", "tags"]`, plus `metrics` when metrics are on and `sourcemaps` (Node) unless `sourceMaps: false`. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "saved", "tags", "settings", "uptime"]` (`uptime` only while checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "saved", "tags", "settings", "uptime", "packages"]` (`uptime` only while checks are on, `packages` only while OSV checks are on). Add-ons also report `project` and `sendTo` (the hub or cloud they send to) when set.
 
-## Add-on options (v0.3)
+## Add-on options
 
 | Option | .NET | Node | Default |
 |---|---|---|---|
+| Service name | `Service` | `service` | .NET: `OTEL_SERVICE_NAME`, else the application name; Node: required |
+| Read-only MCP endpoint | `Mcp` | `mcp` | false |
 | Capture response bodies | `CaptureResponseBody` | `captureResponseBody` | false |
 | Sampling rate (0..1) | `Sampling.Rate` | `sampling.rate` | 1, or `WIZELENS_SAMPLE_RATE` |
-| Keep traces with an error | `Sampling.KeepErrors` | `sampling.keepErrors` | true |
-| Keep traces with a slow server-side span (ms) | `Sampling.KeepSlowMs` | `sampling.keepSlowMs` | 1000 (null = off) |
+| Keep traces with an error | `Sampling.KeepErrors` | `sampling.keepErrors` | true, or `WIZELENS_KEEP_ERRORS` |
+| Keep traces with a slow server-side span (ms) | `Sampling.KeepSlowMs` | `sampling.keepSlowMs` | 1000 (null = off), or `WIZELENS_KEEP_SLOW_MS` |
 | Keep log lines outside a request | `Logs.Outside` | `logs.outside` | true, or `WIZELENS_LOGS_OUTSIDE` |
 | Lowest level kept outside a request | `Logs.MinLevel` (`LogLevel`) | `logs.minLevel` | info, or `WIZELENS_LOGS_MIN_LEVEL` |
-| Share kept outside a request, below warn (0..1) | `Logs.SampleRate` | `logs.sampleRate` | 1, or `WIZELENS_LOGS_SAMPLE_RATE` |
+| Share kept outside a request, below warn (0..1) | `Logs.Rate` | `logs.rate` | 1, or `WIZELENS_LOGS_SAMPLE_RATE` |
 | Tag the current request | `WizeLensRequest.Tag(key, value?)` | `wizelens.tag(key, value?)` | — |
 | Tag rules (see "Tags") | `Tags.Rules.Add(new(name, query, color))` | `tags.rules: [{ name, query, color? }]` | none; a bad rule throws at startup |
 | Turn off built-in tags | `Tags.DisableBuiltIns.Add("bot")` | `tags.disableBuiltIns: ["bot"]` | all on |
 | Set the current user | automatic from `HttpContext.User` | `wizelens.setUser(id, { name })` | — |
 | The app's version (`service.version` on every span) | `Release` | `release` (React: `release` prop) | `WIZELENS_RELEASE`, else the entry assembly's informational version (.NET) or `npm_package_version` (Node) |
 
-## Metrics (v0.8)
+## Metrics
 
 WizeLens keeps OpenTelemetry metrics next to traces. A point (`MetricPoint`, `@wizeworks/lens-core`):
 
@@ -334,7 +351,7 @@ same points in `IngestBatch.metrics`.
 
 - **Node** collects `process.cpu.utilization`, `process.cpu.time`, `process.memory.usage`, `v8js.memory.heap.used` and `.limit`,
   `nodejs.eventloop.utilization`, `nodejs.eventloop.delay.p50` / `.p99` / `.max`, and `v8js.gc.duration`. App metrics come in
-  through `wizelensMetricExporter(wizelens)` in an OpenTelemetry `PeriodicExportingMetricReader`.
+  through `wizeLensMetricExporter(wizelens)` in an OpenTelemetry `PeriodicExportingMetricReader`.
 - **.NET** listens to every `Meter` with a `MeterListener`: the .NET runtime (`dotnet.*`), ASP.NET Core
   (`http.server.request.duration`, `kestrel.*`), `HttpClient`, and the app's own meters. Counters are sent as cumulative totals,
   histograms as delta per interval, with the instrument's advised bucket bounds.
@@ -347,7 +364,7 @@ same points in `IngestBatch.metrics`.
 
 MCP: `list_metrics` (`range?`, `service?`, `q?`) and `get_metric` (`name`, `range?`, `service?`, `group?`, `stat?`), read-only.
 
-## Hosts and Kubernetes (phase 18)
+## Hosts and Kubernetes
 
 There is no WizeLens agent. The OpenTelemetry Collector (contrib) sends host and cluster metrics over OTLP; the recipe is
 `deploy/helm/wizelens-collector` (a DaemonSet with `kubeletstats`, `hostmetrics`, and an OTLP receiver; a one-replica
@@ -420,8 +437,8 @@ time. Answers 204, or 400 with what is wrong. A failed send retries up to 5 time
 
 Hubs keep them in SQLite (`service_packages`), the cloud in Postgres (migration `PACKAGES_MIGRATION`).
 
-**The check.** Hosts with the `packages` capability (hub unless `--no-osv` / `WIZELENS_HUB_OSV=0`, cloud unless
-`--no-osv` / `WIZELENS_CLOUD_OSV=0`) send OSV (`POST https://api.osv.dev/v1/querybatch`, up to 1000 package versions
+**The check.** Hosts with the `packages` capability (hub unless `--no-osv` / `WIZELENS_HUB_OSV=false`, cloud unless
+`--no-osv` / `WIZELENS_CLOUD_OSV=false`) send OSV (`POST https://api.osv.dev/v1/querybatch`, up to 1000 package versions
 a round) every package version not checked for a day, every 5 minutes, and fetch each new advisory once
 (`GET /v1/vulns/{id}`, up to 200 a round). Only ecosystems, names, and versions leave the host. The cache is shared by
 every project (`package_checks`, `advisories`). OSV `database_specific.severity` maps CRITICAL and HIGH to `error`,
@@ -540,11 +557,11 @@ file, and the hub sends alike.
 The Node add-on does not keep Fastify's own per-request pino lines ("incoming request" and "request completed" at info or
 below): the server span already holds the method, path, status, and time. Lines the app writes with `request.log` are kept.
 
-## Logs outside a request (v0.10)
+## Logs outside a request
 
 A log line written while no span is current (startup, background jobs, timers) is kept as a **loose** line when the add-on's
 options allow it: `Logs.Outside` / `logs.outside` is on, its level is at or above `Logs.MinLevel` / `logs.minLevel`, and,
-below `warn`, a random draw falls inside `Logs.SampleRate` / `logs.sampleRate` (warn and up are always kept). Trace sampling
+below `warn`, a random draw falls inside `Logs.Rate` / `logs.rate` (warn and up are always kept). Trace sampling
 never applies to loose lines. Categories that start with `wizelens` (and `[wizelens]` console notices) are never kept.
 
 - Loose lines go into a **loose batch**: a trace with no spans whose id is 16 zeros plus 16 random hex digits
@@ -576,15 +593,15 @@ lines by `service␟level␟pattern␟origin` (`r` or `o`), with the newest line
 
 ## Clocks
 
-- The browser sends `sentAt` (its `Date.now()`) with each `POST api/client-spans`. When the server's clock differs by more
-  than 10 s, the add-on moves the posted span starts, event times, and log times by the difference. Without `sentAt`,
+- The browser sends `sentMs` (its `Date.now()`) with each `POST api/client-spans`. When the server's clock differs by more
+  than 10 s, the add-on moves the posted span starts, event times, and log times by the difference. Without `sentMs`,
   times are kept.
 - Building a trace, a span that starts before its parent in the same service starts with its parent. A server span that
   starts outside the call from another service that started it is moved inside that call. A server span with no parent counts as
   started by the one browser call in another service whose `url.full` path is its `url.path`: a cross-origin fetch sends no
   `traceparent` and joins the server's trace from `X-WizeLens-Trace`. Only the clock uses this; the parent links stay as sent.
 
-## MCP tools (read-only, phase 1)
+## MCP tools (read-only)
 
 Server name `wizelens`. Disabled by default. Every call is written to the app log as an audit line.
 
@@ -695,7 +712,7 @@ Apdex scores requests against a target time per service (`GET` and `PUT api/apde
 slower or failed requests frustrated; the score is (satisfied + tolerating / 2) / all. The Overview model returns `apdex` for the
 services that run your code, each against its own target, and the Service page returns the service's.
 
-## Search (v0.9)
+## Search
 
 The Requests, Traces, and Logs page models read `q` in the search language too. Free words keep the old text filter; a
 search with fields, attributes, `NOT`, or `OR` makes the host run it (up to 1000 trace ids; `searchIds` on the page context) and
@@ -724,7 +741,7 @@ docs/search-vectors.json (the TS and .NET suites both run them). Hosts with the 
   per present attribute value (lowercased, cut at 512 characters, plus its number). Both come from the same document
   builders as the memory search, so all hosts return the same results.
 
-## Source maps (v0.10)
+## Source maps
 
 Browser stacks from a production build are minified. Every host maps them back to the original source; the raw stack is
 always kept as sent (`exception.stacktrace`).
@@ -740,7 +757,7 @@ the body is not a v3 source map or `release`/`file` is missing. The same release
 keeps its newest 20 releases; older ones are dropped on upload. `GET api/sourcemaps[?release=]` answers
 `{ maps: { release, file, bytes, uploadedMs }[] }`, newest first. The cloud authorizes both with an ingest key
 (`Authorization: Bearer wl_ik_...`) and stores into the key's project; the hub takes its token (when set) and an optional
-`project` (default `""`, which every project also reads). `@wizeworks/lens-cli` (`lens-cli sourcemaps upload <dir>`) and its
+`project` (default `""`, which every project also reads). `@wizeworks/lens-cli` (`wizelens sourcemaps upload <dir>`) and its
 Vite, webpack, and Next.js plugins send every `*.js.map` below a build folder this way, each keyed by the script whose
 `sourceMappingURL` names it (Turbopack names maps apart from their scripts), else by the map's own name without `.map`.
 
@@ -784,7 +801,7 @@ interface ResolvedFrame {
 
 Stack lines in Chrome, Edge, and Node (`at fn (url:line:col)`), Firefox, and Safari (`fn@url:line:col`) formats are read;
 native and `eval` frames are skipped. Index maps (`sections`) and `sourceRoot` are supported.
-## Tags (v0.10)
+## Tags
 
 A tag is a rule: a name, a color, and a search (docs/TAGS-PLAN.md). Hosts keep rules in settings, never in telemetry, and
 check them each time data is shown, so a tag covers old and new data alike and outlives what it matched.
@@ -807,7 +824,7 @@ check them each time data is shown, so a tag covers old and new data alike and o
   row: `service`, `method`, `route`, `path` (endpoints); `service` (services); `service`, `error`, and free words on the type and
   message (error groups). The dashboard checks these itself with the same compiler.
 
-## Storage (v0.2)
+## Storage
 
 Every add-on keeps a hot in-memory store (the read path) and, optionally, a SQLite file behind it.
 
@@ -855,7 +872,7 @@ CREATE INDEX IF NOT EXISTS ix_spans_cat_dur ON spans(category, duration_ms);
 
 Summaries are always computed from spans, never stored. Deleting a trace deletes its spans and logs.
 
-## Local hub (v0.6, phase 2)
+## Local hub
 
 One process (`@wizeworks/lens-hub`, command `wizelens-hub`, default port **5960**) that every service sends to.
 It serves the same dashboard at `/_wizelens/`, the same read API, OTLP/HTTP, and MCP.
@@ -864,8 +881,8 @@ It serves the same dashboard at `/_wizelens/`, the same read API, OTLP/HTTP, and
 
 | Option | .NET | Node | Environment variable |
 |---|---|---|---|
-| Hub URL | `HubUrl` | `hub` | `WIZELENS_HUB` (for example `http://localhost:5960`) |
-| Hub token | `HubToken` | `hubToken` | `WIZELENS_HUB_TOKEN` |
+| Where to send | `Endpoint` | `endpoint` | `WIZELENS_ENDPOINT` (for example `http://localhost:5960`) |
+| Token (hub token or ingest key) | `Token` | `token` | `WIZELENS_TOKEN` |
 | Project | `Project` | `project` | `WIZELENS_PROJECT` |
 | Trusted remotes | `TrustedRemotes` | `trustedRemotes` | `WIZELENS_TRUSTED_REMOTES` (comma-separated, for example `https://localhost:5099`) |
 | On or off | `Enabled` | `enabled` | `WIZELENS_ENABLED` (`true`/`1`/`on`/`yes`, `false`/`0`/`off`/`no`) |
@@ -887,13 +904,23 @@ up to 30 seconds, and logs one warning. The calls to the hub are never traced.
 ```ts
 // POST {hub}/_wizelens/api/ingest   →  204, or 400 without sender.service
 interface IngestBatch {
-  sender: { service: string; project?: string; version?: string; runtime?: string; environment?: string;
-            host?: string; endpoint?: string; startedMs?: number };   // endpoint = the add-on's own /_wizelens URL
+  sender: {
+    service: string; project?: string;
+    version?: string;                              // the WizeLens add-on's version (OTLP senders: the app's)
+    release?: string;                              // the app's version, `service.version` on its spans
+    runtime?: string; environment?: string; host?: string;
+    k8s?: { cluster?: string; namespace?: string; pod?: string; node?: string };
+    endpoint?: string;                             // the add-on's own /_wizelens URL
+    startedMs?: number;
+  };
   spans?: Span[];                                  // checked and redacted again by the hub
-  logs?: { traceId: string; log: LogRecord }[];
+  logs?: { traceId: string; log: LogRecord }[];    // messages are cut at 10,000 characters
   remotes?: { traceId: string; endpoint: string }[];
+  metrics?: MetricPoint[];                         // their `service` is replaced by the sender's
 }
 ```
+
+The hub keeps at most 5,000 items of each kind from one batch.
 
 ### Hub endpoints
 
@@ -904,6 +931,7 @@ interface IngestBatch {
 | GET | `/_wizelens/api/traces/{id}` | With `federate=true`, also reads services that do not send to the hub |
 | GET | `/_wizelens/api/services` | `{ services: HubService[], environments, projects, traces, spans }` |
 | POST | `/_wizelens/api/ingest` | `IngestBatch`. Browser errors get `wizelens.error.frame` first (see "Source maps") |
+| POST | `/_wizelens/api/packages` | `PackagesReport` (see "Packages"). 204 |
 | POST / GET | `/_wizelens/api/sourcemaps` | Upload one map, or list them; `project` is optional (`""`). See "Source maps" |
 | POST | `/_wizelens/api/sourcemaps/resolve` | `{ stack, release, traceId?, spanId? }` → `{ frames }`; the maps of the trace's project, else `?project=` |
 | POST | `/v1/traces`, `/v1/logs`, `/v1/metrics` | OTLP/HTTP, JSON or protobuf, optional gzip. Also under `/_wizelens/v1/...` |
@@ -958,7 +986,7 @@ Trace `remotes` that point at a service which sends to the hub are hidden, so th
 ### Access
 
 The hub listens on `127.0.0.1` by default. For a team network, start it with `--host 0.0.0.0 --token <text>`.
-With a token, every call needs `Authorization: Bearer <token>` (add-ons: `WIZELENS_HUB_TOKEN`; OTLP:
+With a token, every call needs `Authorization: Bearer <token>` (add-ons: `WIZELENS_TOKEN`; OTLP:
 `OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <token>`). In a browser, open `/_wizelens/?token=<token>` once:
 the hub keeps it in an HttpOnly cookie and removes it from the address.
 
@@ -1005,11 +1033,12 @@ Schema version 4 adds `uptime_checks` (one row per check: its settings, `project
 and `next_ms`) and `uptime_incidents` (`check_id`, `start_ms`, `end_ms` or null while open, `reason`). Results themselves are
 traces. Incidents that ended more than 90 days ago are dropped.
 
-## Cloud (v0.7, phase 3)
+## Cloud
 
 `@wizeworks/lens-cloud` (command `wizelens-cloud`, default port **5970**) is the hosted service. It serves the same dashboard,
 answers `mode: "cloud"` with `capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats",
-"metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "slos", "saved", "tags", "settings"]`,
+"metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "slos", "saved", "tags", "settings", "packages"]`
+(`packages` only while OSV checks are on),
 and keeps data in Postgres (`DATABASE_URL=postgres://...`). PGlite (`pglite:<folder>` or `memory`) runs the same SQL in-process,
 for tests and trials.
 
@@ -1084,7 +1113,7 @@ retention, and the audit log.
 - **Leaving**: an account cannot be deleted while it is the last owner of an organization with other members. Organizations it is
   alone in are deleted with their data. An owner deletes an organization with `DELETE api/orgs/{org}` and the password.
 - **Keys** (only their SHA-256 hash is stored; the prefix tells what they are):
-  - `wl_ik_…` **ingest key**: one project. Add-ons send it as `WIZELENS_HUB_TOKEN`; OTLP apps as `Authorization: Bearer …`.
+  - `wl_ik_…` **ingest key**: one project. Add-ons send it as `WIZELENS_TOKEN`; OTLP apps as `Authorization: Bearer …`.
     The project comes from the key, never from the sender. At most 1200 calls per key per minute (429 above).
   - `wl_rk_…` **read key**: one or more projects, read-only. For scripts, CI, and agents with no person to sign in.
 - **Connected apps (OAuth 2.1 for MCP clients)**, Better Auth's OAuth provider plugin (`@better-auth/oauth-provider`, pinned
@@ -1146,7 +1175,7 @@ retention, and the audit log.
 | POST | `api/tags/match?project=&env=` | Viewer or read key; see "Tags" |
 | GET | `api/shared/{token}` | Anyone with the link: `{ trace, expiresMs }`, or for a page link `{ page, title, params, model, createdMs, expiresMs }` |
 | GET / POST / GET, PATCH, DELETE | `api/projects/{p}/saved[/{id}]` | Read: viewer (own and shared items); add: member; change: the owner; delete: the owner or an admin |
-| POST | `api/ingest`, `/v1/traces`, `/v1/logs`, `/v1/metrics` | Ingest key |
+| POST | `api/ingest`, `api/packages`, `/v1/traces`, `/v1/logs`, `/v1/metrics` | Ingest key |
 | OPTIONS / POST | `b/{browser key}/api/client-spans` | Browser key (`wl_bk_`) in the path, from a page whose `Origin` is one of the key's sites; CORS answers that site only. Body as the add-on's `api/client-spans` (any content type, so pages post plain text and skip the CORS check). Every span is stored as a browser span (`service` and `category` "browser", never `server` kind) and every line as a browser line. At most 500 of each per call; capped per key and per visitor address. 204 |
 | PATCH | `api/orgs/{org}/keys/{id}` | Admin. `{ origins }`: a browser key's sites, changed in place (audited `key.origins`) |
 | POST / GET | `api/sourcemaps?release=&file=` | Ingest key: upload one map to the key's project, or list them (see "Source maps") |
@@ -1275,7 +1304,7 @@ kept as an event (`fired`, `resolved`, `remind`, `test`, `ack`, `mute`, `unmute`
 The message says what happened: `Requests is 79 (above 5)` when fired, `(no longer above 5)` when resolved, `(still above 5)` for a
 reminder, and `(alerts when above 5)` for a test notice. `PATCH` changes only the fields it sends.
 Webhook URLs must be https and may not resolve to private, loopback, or link-local addresses, unless the cloud runs with
-`--allow-private-webhooks` (self-hosting on a private network). The hub allows them by default (it runs on your own network).
+`--allow-private-targets` (self-hosting on a private network). The hub allows them by default (it runs on your own network).
 
 **Above normal** (`op: "above_normal"`) works on `error_rate`, `p95_ms`, and `requests`. The threshold is the sensitivity: how
 many spreads above normal (2 high, 3 medium, the default, 4 low; 1 to 10 allowed). The rule judges every Services row and every
@@ -1392,7 +1421,7 @@ contain; not with HEAD), `intervalMin` (1 to 60), `timeoutMs` (1 to 60 s), `env`
   `[redacted]` back keeps the stored value. The cloud stores headers encrypted with the auth secret (`v<version>:<ciphertext>`).
 - **Private addresses**: cloud checks may not reach loopback, private, link-local, carrier-grade NAT, multicast, or reserved
   addresses, checked when a check is saved and again at every connection (also after redirects and DNS changes), unless the cloud
-  runs with `--allow-private-webhooks`. Hubs may reach any address their machine can; `--no-uptime` turns checks off.
+  runs with `--allow-private-targets`. Hubs may reach any address their machine can; `--no-uptime` turns checks off.
 - **Status pages** (cloud, `statusPages`): off by default. Turning one on makes a `wl_st_` token (only its hash is kept); a new link
   stops the old one. `#/status/<token>` shows the title, each enabled check's name and state, uptime for 24 h, 7 days, and 30 days,
   one bar per UTC day for 30 days, and incident times of the last 30 days: never URLs, headers, or error text.

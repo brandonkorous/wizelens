@@ -3,12 +3,12 @@ import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { Hud } from "./Hud.js";
 import { collectCommit, type ComponentStats, type FiberLike } from "./fiber-stats.js";
-import { createRecorder } from "./react-capture.js";
+import { createReactRecorder as createRecorder } from "./react-capture.js";
 import { huds, resetHuds, stubPage } from "./test-hud.js";
 import { testRoot } from "./test-root.js";
 
-vi.mock("@wizeworks/lens-browser", async (load) => ({
-  ...(await load<typeof import("@wizeworks/lens-browser")>()),
+vi.mock("@wizeworks/lens-browser/internal", async (load) => ({
+  ...(await load<typeof import("@wizeworks/lens-browser/internal")>()),
   mountHud: (await import("./test-hud.js")).fakeMountHud,
 }));
 

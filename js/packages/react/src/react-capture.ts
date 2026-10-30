@@ -1,4 +1,4 @@
-import { ATTR_REACT_COMMITS, ATTR_REACT_COMPONENTS, newSpanId, type Span } from "@wizeworks/lens-core";
+import { ATTR_REACT_COMMITS, ATTR_REACT_COMPONENTS, newSpanId, type Span } from "@wizeworks/lens-core/internal";
 import {
   browserSpan,
   type CaptureOptions as BrowserCaptureOptions,
@@ -9,11 +9,11 @@ import {
   type RecorderOptions,
   startBrowserCapture as startCapture,
   type ViewRef,
-} from "@wizeworks/lens-browser";
+} from "@wizeworks/lens-browser/internal";
 import { topComponents } from "./fiber-stats.js";
 import { drainReactStats, firstCommitMs, installReactHook, waitForCommit } from "./react-hook.js";
 
-export interface CaptureOptions extends BrowserCaptureOptions {
+export interface ReactCaptureOptions extends BrowserCaptureOptions {
   /** How often React render stats are sent. Default 5000 ms. */
   reactIntervalMs?: number;
 }
@@ -49,11 +49,11 @@ export function reactFramework(statsIntervalMs = 5000): FrameworkHooks {
 }
 
 /** Capture page views, React renders, and browser errors. Returns a stop function. */
-export function startBrowserCapture(o: CaptureOptions): () => void {
+export function startReactCapture(o: ReactCaptureOptions): () => void {
   return startCapture({ ...o, framework: o.framework ?? reactFramework(o.reactIntervalMs) });
 }
 
 /** A recorder with React render capture. XHR calls are left alone, as before; pass `captureXhr: true` to trace them. */
-export function createRecorder(options: RecorderOptions = {}): Recorder {
+export function createReactRecorder(options: RecorderOptions = {}): Recorder {
   return createBrowserRecorder({ framework: reactFramework(), captureXhr: false, ...options });
 }

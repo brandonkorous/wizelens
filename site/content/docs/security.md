@@ -68,7 +68,7 @@ The hub and the cloud check them against [OSV](https://osv.dev) every few minute
 version with advisories, its CVEs, and the version that fixes it. Only package names and versions leave your machine.
 
 Turn it off in an app with `WIZELENS_PACKAGES=false` (`reportPackages: false` in Node, `ReportPackages = false` in .NET),
-on the hub with `--no-osv` (`WIZELENS_HUB_OSV=0`), or on your own cloud with `--no-osv` (`WIZELENS_CLOUD_OSV=0`).
+on the hub with `--no-osv` (`WIZELENS_HUB_OSV=false`), or on your own cloud with `--no-osv` (`WIZELENS_CLOUD_OSV=false`).
 
 ## Alerts
 

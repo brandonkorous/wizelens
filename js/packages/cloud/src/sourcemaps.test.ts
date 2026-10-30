@@ -1,6 +1,6 @@
 import { gzipSync } from "node:zlib";
 import { afterEach, expect, it } from "vitest";
-import { type ResolvedFrame, SOURCEMAP_RELEASES_KEPT } from "@wizeworks/lens-core";
+import { type ResolvedFrame, SOURCEMAP_RELEASES_KEPT } from "@wizeworks/lens-core/internal";
 import { CART_FILE, CART_MAP, CART_STACK } from "../../core/src/testing/sourcemap.js";
 import type { Cloud } from "./server.js";
 import { settleCloud } from "./settle.js";

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ArrowDown, Plus, Target } from "lucide-react";
-import type { SloInput, SloReport } from "@wizeworks/lens-core";
+import type { SloInput, SloReport } from "@wizeworks/lens-core/internal";
 import { apiSend } from "../../data/api";
 import { useHost } from "../../data/host";
 import { act, useApi } from "../../data/useApi";

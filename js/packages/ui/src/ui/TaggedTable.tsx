@@ -1,4 +1,4 @@
-import type { GroupKind, SearchDoc, SearchKind, TagMatchItem } from "@wizeworks/lens-core";
+import type { GroupKind, SearchDoc, SearchKind, TagMatchItem } from "@wizeworks/lens-core/internal";
 import { useGroupTags, useRowTags } from "../data/tagMatch";
 import { Table, type TableProps } from "./Table";
 import { withTags } from "./TagChips";

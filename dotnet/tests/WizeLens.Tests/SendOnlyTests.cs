@@ -31,9 +31,9 @@ public class SendOnlyTests
         TestApp.StartAsync(a => a.MapGet("/ping", () => "pong"), o =>
         {
             o.Dashboard = false;
-            o.EnableMcp = true;
-            o.HubUrl = hub is null ? null : "http://hub.test:5960";
-            o.HubHandler = hub;
+            o.Mcp = true;
+            o.Endpoint = hub is null ? null : "http://hub.test:5960";
+            o.SendHandler = hub;
         });
 
     [Fact]
@@ -107,7 +107,7 @@ public class SendOnlyTests
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Production" });
         builder.WebHost.UseTestServer();
         builder.Logging.ClearProviders().AddProvider(new LineLogger(lines));
-        builder.Services.AddWizeLens(o => o.HubUrl = "http://localhost:5970");
+        builder.Services.AddWizeLens(o => o.Endpoint = "http://localhost:5970");
         await using var app = builder.Build();
         app.UseWizeLens();
         await app.StartAsync();
@@ -138,7 +138,7 @@ public class SendOnlyTests
         Environment.SetEnvironmentVariable(name, value);
         try
         {
-            Assert.Equal(expected, WizeLensOptions.EnvFlag(name));
+            Assert.Equal(expected, WizeLensEnv.Flag(name));
         }
         finally
         {

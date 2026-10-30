@@ -1,4 +1,4 @@
-module github.com/brandonkorous/wizelens/go
+module github.com/wizeworksllc/wizelens/go
 
 go 1.26.0
 

@@ -1,5 +1,5 @@
 // The search term under the caret, and how to put a suggestion in its place.
-import { quoteText } from "@wizeworks/lens-core";
+import { quoteText } from "@wizeworks/lens-core/internal";
 
 export interface TokenAt {
   start: number;

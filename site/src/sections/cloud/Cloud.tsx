@@ -59,7 +59,7 @@ function SelfHost() {
           <ol>
             <li><b>Start it</b> with POSTGRES_PASSWORD, WIZELENS_CLOUD_AUTH_SECRET, and WIZELENS_CLOUD_PUBLIC_URL set.</li>
             <li><b>Open the setup link</b> in the log to make the first account, then invite your team.</li>
-            <li><b>Make an ingest key</b> per app and set WIZELENS_HUB and WIZELENS_HUB_TOKEN.</li>
+            <li><b>Make an ingest key</b> per app and set WIZELENS_ENDPOINT and WIZELENS_TOKEN.</li>
           </ol>
           <ul className="wl-cloud-safe">{SAFE.map((s) => <li key={s}>{s}</li>)}</ul>
           <div className="wl-hero-cta">

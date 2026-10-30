@@ -1,6 +1,6 @@
 import { PagesOnly } from "../../ui/PagesOnly";
 import { Box, Database, Gauge, TriangleAlert } from "lucide-react";
-import { percentChange, type ServicesModel } from "@wizeworks/lens-core";
+import { percentChange, type ServicesModel } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { useRoute } from "../../routes";
 import { fmtCount, fmtPct } from "../../format";

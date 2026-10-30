@@ -4,7 +4,7 @@ import { createWizeLens } from "../wizelens.js";
 import { instrumentAmqplib } from "./amqplib.js";
 import { instrumentServiceBus } from "./servicebus.js";
 
-const wl = createWizeLens({ serviceName: "pull", storage: "memory", instrumentFetch: false });
+const wl = createWizeLens({ service: "pull", storage: "memory", instrumentFetch: false });
 const settle = () => new Promise((r) => setTimeout(r, 20));
 
 /** A traceparent header from a producer span, as a sender would write it. */

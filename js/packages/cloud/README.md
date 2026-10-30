@@ -1,6 +1,6 @@
 # @wizeworks/lens-cloud
 
-The cloud service of [WizeLens](https://github.com/brandonkorous/wizelens): the full dashboard for many teams, with accounts,
+The cloud service of [WizeLens](https://github.com/wizeworksllc/wizelens): the full dashboard for many teams, with accounts,
 projects, 30 days of history computed on the server, alerts, share links, and AI access through read keys.
 
 ```bash
@@ -15,8 +15,8 @@ The cloud prints a one-time setup link while it has no account. Open it and crea
 Connect, Setup steps, then on each app:
 
 ```bash
-WIZELENS_HUB=http://localhost:5970
-WIZELENS_HUB_TOKEN=wl_ik_...
+WIZELENS_ENDPOINT=http://localhost:5970
+WIZELENS_TOKEN=wl_ik_...
 ```
 
 ## Options
@@ -29,16 +29,16 @@ WIZELENS_HUB_TOKEN=wl_ik_...
 | `--public-url <url>` | `WIZELENS_CLOUD_PUBLIC_URL` | the request's own address |
 | `--signup <invite\|open>` | `WIZELENS_CLOUD_SIGNUP` | `invite` |
 | `--retention-days <n>` | `WIZELENS_CLOUD_RETENTION_DAYS` | `30` |
-| `--allow-private-webhooks` | `WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS=1` | off |
+| `--allow-private-targets` | `WIZELENS_CLOUD_ALLOW_PRIVATE_TARGETS=true` | off |
 | `--auth-secret <text>` | `WIZELENS_CLOUD_AUTH_SECRET` | required with Postgres (32+ random characters; `2:new,1:old` rotates) |
 | `--resend-api-key <key>` | `WIZELENS_CLOUD_RESEND_API_KEY` | none: mail through the [Resend](https://resend.com) API (`re_…`) |
 | `--resend-webhook-secret <s>` | `WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET` | none: the `whsec_…` secret of the Resend webhook (see below) |
 | `--smtp-url <url>` | `WIZELENS_CLOUD_SMTP_URL` | none: or mail over SMTP (`smtp://user:pass@host:587` or `smtps://…:465`) |
 | `--mail-from <address>` | `WIZELENS_CLOUD_MAIL_FROM` | `WizeLens <no-reply@<public host>>` |
 | `--mail-reply-to <address>` | `WIZELENS_CLOUD_MAIL_REPLY_TO` | none: replies go to the sender |
-| `--trust-proxy` | `WIZELENS_CLOUD_TRUST_PROXY=1` | off (client address from the last `X-Forwarded-For` entry) |
+| `--trust-proxy` | `WIZELENS_CLOUD_TRUST_PROXY=true` | off (client address from the last `X-Forwarded-For` entry) |
 | `--setup-token <text>` | `WIZELENS_CLOUD_SETUP_TOKEN` | random, printed at start while no account exists |
-| `--[no-]check-pwned-passwords` | `WIZELENS_CLOUD_CHECK_PWNED=1\|0` | on with Postgres, off with PGlite |
+| `--[no-]check-pwned-passwords` | `WIZELENS_CLOUD_CHECK_PWNED_PASSWORDS=true\|false` | on with Postgres, off with PGlite |
 | `--sso-origins <list>` | `WIZELENS_CLOUD_SSO_ORIGINS` | none: identity provider origins for OIDC single sign-on, comma separated (`https://acme.okta.com`) |
 | `--stripe-secret-key <key>` | `WIZELENS_CLOUD_STRIPE_SECRET_KEY` | none: billing off, every organization unlimited. With it: plans, limits, and the Billing page |
 | `--stripe-webhook-secret <s>` | `WIZELENS_CLOUD_STRIPE_WEBHOOK_SECRET` | none; required with a Stripe key (webhook: `<public-url>/_wizelens/api/auth/stripe/webhook`) |
@@ -117,4 +117,4 @@ const cloud = await createCloud({
 console.log(await cloud.listen());
 ```
 
-The API, roles, keys, and storage are in [CONTRACT.md](https://github.com/brandonkorous/wizelens/blob/main/docs/CONTRACT.md#cloud-v07-phase-3). MIT licensed.
+The API, roles, keys, and storage are in [CONTRACT.md](https://github.com/wizeworksllc/wizelens/blob/main/docs/CONTRACT.md#cloud-v07-phase-3). MIT licensed.

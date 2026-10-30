@@ -1,10 +1,10 @@
-import { ALERT_METRICS, type AlertChannel, type AlertRule, logSearchText, METRIC_ALERT_STATS, PAGE_SIZES, type PageInfo, pageParams } from "@wizeworks/lens-core";
+import { ALERT_METRICS, type AlertChannel, type AlertRule, logSearchText, METRIC_ALERT_STATS, PAGE_SIZES, type PageInfo, pageParams } from "@wizeworks/lens-core/internal";
 import { currentProject, useAccount } from "../../data/account";
 import { useHost } from "../../data/host";
 import { getScope } from "../../data/prefs";
 import { cloudResource, type InProject } from "../../data/projectScope";
 
-export type { AlertChannel as Channel, AlertRule } from "@wizeworks/lens-core";
+export type { AlertChannel as Channel, AlertRule } from "@wizeworks/lens-core/internal";
 
 export interface AlertEvent {
   id: string;

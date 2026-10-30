@@ -2,15 +2,15 @@
 namespace WizeLens.Search;
 
 /// <summary>One character of a term; <c>Lit</c> when it was quoted or escaped.</summary>
-public readonly record struct Ch(char C, bool Lit);
+internal readonly record struct Ch(char C, bool Lit);
 
 /// <summary>A token: "(", ")", "OR", "AND", "NOT", or "term" (with its characters and a leading <c>-</c>).</summary>
-public sealed record SearchToken(string Type, int Start, int End, IReadOnlyList<Ch> Chars, bool Neg = false)
+internal sealed record SearchToken(string Type, int Start, int End, IReadOnlyList<Ch> Chars, bool Neg = false)
 {
     public const string Term = "term";
 }
 
-public static class SearchLexer
+internal static class SearchLexer
 {
     private static readonly HashSet<string> Keywords = new(StringComparer.Ordinal) { "OR", "AND", "NOT" };
 

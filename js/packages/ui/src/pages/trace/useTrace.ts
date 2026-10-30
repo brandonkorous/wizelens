@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Trace } from "@wizeworks/lens-core";
+import type { Trace } from "@wizeworks/lens-core/internal";
 import { useData } from "../../data/hooks";
 import { provider } from "../../data/provider";
 

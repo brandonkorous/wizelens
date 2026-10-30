@@ -29,14 +29,14 @@ span when you sample, and turns on SQL parameters.
 
 > **Build from the repository:** the first release of `com.wizelens:wizelens` is not on Maven Central yet, so the download
 > and the dependency below do not work until it is. Until then, build the jar from the repository:
-> `git clone https://github.com/brandonkorous/wizelens && mvn -f wizelens/java/pom.xml install -DskipTests`. That makes
+> `git clone https://github.com/wizeworksllc/wizelens && mvn -f wizelens/java/pom.xml install -DskipTests`. That makes
 > `wizelens/java/target/wizelens-0.1.0-alpha.1.jar` (use it as `wizelens.jar`) and puts the dependency in your local
 > Maven repository. The agent alone, above, works today.
 
 ```bash
 curl -L -o wizelens.jar https://repo1.maven.org/maven2/com/wizelens/wizelens/0.1.0-alpha.1/wizelens-0.1.0-alpha.1.jar
 
-WIZELENS_HUB=http://localhost:5960 \
+WIZELENS_ENDPOINT=http://localhost:5960 \
 java -javaagent:opentelemetry-javaagent.jar -Dotel.javaagent.extensions=wizelens.jar \
      -Dotel.service.name=orders-api -jar app.jar
 ```
@@ -45,9 +45,9 @@ What it sets (anything you set yourself with `-D` or `OTEL_*` wins):
 
 | Setting | Value |
 |---|---|
-| `otel.exporter.otlp.endpoint` | `WIZELENS_HUB`, else `http://localhost:5960` |
+| `otel.exporter.otlp.endpoint` | `WIZELENS_ENDPOINT`, else `http://localhost:5960` |
 | `otel.exporter.otlp.protocol` | `http/protobuf` |
-| `otel.exporter.otlp.headers` | `Authorization=Bearer <WIZELENS_HUB_TOKEN>` |
+| `otel.exporter.otlp.headers` | `Authorization=Bearer <WIZELENS_TOKEN>` |
 | `otel.traces.sampler` | `parentbased_always_on`: WizeLens samples at the end of the trace instead |
 | `otel.instrumentation.jdbc.experimental.capture-query-parameters` | `true` (off with `WIZELENS_CAPTURE_SQL_PARAMETERS=false`) |
 | `otel.instrumentation.http.server.capture-request-headers` | Common headers; `authorization` and `cookie` arrive redacted |
@@ -83,8 +83,8 @@ and Response tabs.
 
 | Variable | Default | What it does |
 |---|---|---|
-| `WIZELENS_HUB` | `http://localhost:5960` | Hub or cloud address |
-| `WIZELENS_HUB_TOKEN` | none | Hub token or cloud ingest key |
+| `WIZELENS_ENDPOINT` | `http://localhost:5960` | Hub or cloud address |
+| `WIZELENS_TOKEN` | none | Hub token or cloud ingest key |
 | `WIZELENS_PROJECT` | none | Project on a shared hub |
 | `WIZELENS_SAMPLE_RATE` | `1` | Share of traces kept. See [Sampling](/docs/sampling/) |
 | `WIZELENS_KEEP_SLOW_MS` | `1000` | Keep traces with a span this slow at any rate (`off` for none) |
@@ -118,7 +118,7 @@ The `X-WizeLens-Expected` response header is not read in Java apps, because the 
 
 ## A runnable sample
 
-[`samples/java-spring`](https://github.com/brandonkorous/wizelens/tree/main/samples/java-spring) is a Spring Boot service
+[`samples/java-spring`](https://github.com/wizeworksllc/wizelens/tree/main/samples/java-spring) is a Spring Boot service
 with an H2 database. `GET /orders` shows N+1 queries, a duplicate query, and N+1 HTTP calls to the Python sample;
 `GET /report` shows a slow query and a database wait; `GET /fail` shows an error with its log line.
 

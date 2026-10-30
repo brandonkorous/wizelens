@@ -39,7 +39,7 @@ The in-app dashboard keeps tags in code:
 
 | Where | Code |
 |---|---|
-| Node | `createWizeLens({ serviceName: "shop", tags: { rules: [{ name: "checkout", query: "route:/checkout*", color: "green" }], disableBuiltIns: ["bot"] } })` |
+| Node | `createWizeLens({ service: "shop", tags: { rules: [{ name: "checkout", query: "route:/checkout*", color: "green" }], disableBuiltIns: ["bot"] } })` |
 | .NET | `AddWizeLens(o => { o.Tags.Rules.Add(new("checkout", "route:/checkout*", "green")); o.Tags.DisableBuiltIns.Add("bot"); })` |
 
 A tag with a bad search stops the app at startup with the reason, so a typo never goes unnoticed. **Tag this** in the

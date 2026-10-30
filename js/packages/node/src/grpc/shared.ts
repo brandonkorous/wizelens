@@ -1,6 +1,6 @@
 import { type Attributes, type Span as OtelSpan, SpanStatusCode } from "@opentelemetry/api";
 import { W3CTraceContextPropagator } from "@opentelemetry/core";
-import { ATTR_RPC } from "@wizeworks/lens-core";
+import { ATTR_RPC } from "@wizeworks/lens-core/internal";
 import { CATEGORY_ATTR } from "../processor.js";
 
 // gRPC shapes shared by the client and server patches, so the add-on has no dependency on @grpc/grpc-js.

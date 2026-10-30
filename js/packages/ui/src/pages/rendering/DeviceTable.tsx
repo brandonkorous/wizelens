@@ -1,4 +1,4 @@
-import { DEVICES, type Device, type DeviceCell, type DeviceRow, type DeviceTable as Devices } from "@wizeworks/lens-core";
+import { DEVICES, type Device, type DeviceCell, type DeviceRow, type DeviceTable as Devices } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtMs } from "../../format";
 import { navigate, routeHref } from "../../routes";
 import { Empty, Panel } from "../../ui/Panel";

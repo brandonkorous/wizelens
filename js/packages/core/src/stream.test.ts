@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ATTR_REQUEST_ABORTED, ATTR_STREAM, ATTR_STREAM_FIRST_BYTE_MS, buildTrace, isStreamSpan, requestRows, runPageSync, serviceRows, type Span, type Trace } from "./index.js";
+import { ATTR_REQUEST_ABORTED, ATTR_STREAM, ATTR_STREAM_FIRST_BYTE_MS, buildTrace, isStreamSpan, requestRows, runPageSync, serviceRows, type Span, type Trace } from "./internal.js";
 import { memoryExecutor } from "./scale/memory.js";
 import { pageContext } from "./scale/run.js";
 import { makeSpan } from "./testing/fixtures.js";

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { slicePage } from "@wizeworks/lens-core";
+import { slicePage } from "@wizeworks/lens-core/internal";
 import { Pager } from "./Controls";
 import { type TablePaging, useTablePaging } from "./paging";
 

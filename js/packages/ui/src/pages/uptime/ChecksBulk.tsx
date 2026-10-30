@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from "react";
-import type { UptimeCheckView } from "@wizeworks/lens-core";
+import type { UptimeCheckView } from "@wizeworks/lens-core/internal";
 import { eachOne, eachText } from "../../data/bulk";
 import type { UptimeApi } from "../../data/uptime";
 import { useAsk } from "../../ui/Dialog";

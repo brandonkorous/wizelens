@@ -3,7 +3,7 @@ using WizeLens.Search;
 
 namespace WizeLens.Tagging;
 
-public static class TagExpand
+internal static class TagExpand
 {
     /// <summary>The prefix of tags the app sets on a span: <c>wizelens.tag.key</c>.</summary>
     public const string TagPrefix = "wizelens.tag.";

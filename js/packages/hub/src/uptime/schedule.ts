@@ -1,4 +1,4 @@
-import { UPTIME_SERVICE, uptimeTelemetry } from "@wizeworks/lens-core";
+import { UPTIME_SERVICE, uptimeTelemetry } from "@wizeworks/lens-core/internal";
 import type { HubData } from "../data.js";
 import type { HubWrite } from "../store.js";
 import { type RunOptions, runCheck } from "./run.js";

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { X } from "lucide-react";
-import { displayService, UPTIME_SERVICE } from "@wizeworks/lens-core";
+import { displayService, UPTIME_SERVICE } from "@wizeworks/lens-core/internal";
 import { useData } from "../data/hooks";
 import { useServiceScope } from "../data/prefs";
 import { parseRoute, setQuery } from "../routes";

@@ -1,13 +1,13 @@
 import { type IncomingMessage, request as httpRequest } from "node:http";
 import { request as httpsRequest } from "node:https";
 import type { TLSSocket } from "node:tls";
-import { parseExpectStatus, statusMatches, type UptimeCheckInput, type UptimeHop, type UptimeResult } from "@wizeworks/lens-core";
+import { parseExpectStatus, statusMatches, type UptimeCheckInput, type UptimeHop, type UptimeResult } from "@wizeworks/lens-core/internal";
 import { isCertError, probeCertEnd } from "./cert.js";
 import { stallText, timeHop } from "./hop-timing.js";
 import { checkLiteral, guardedLookup } from "./guard.js";
 
 export interface RunOptions {
-  /** Let checks reach private and local addresses (hubs: yes; the cloud: only when self-hosted with --allow-private-webhooks). */
+  /** Let checks reach private and local addresses (hubs: yes; the cloud: only when self-hosted with --allow-private-targets). */
   allowPrivate: boolean;
   now?: () => number;
   /** Extra trusted certificates, for tests. */

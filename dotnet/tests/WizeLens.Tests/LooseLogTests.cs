@@ -15,7 +15,7 @@ namespace WizeLens.Tests;
 public class LooseLogTests
 {
     private readonly TraceStore _store = new(100);
-    private readonly WizeLensOptions _options = new() { ServiceName = "svc", IsEnabled = true };
+    private readonly WizeLensOptions _options = new() { Service = "svc", IsEnabled = true };
 
     private void Write(LogLevel level, string message, string category = "Jobs") =>
         LogCapture.WriteLoose(_store, _options, new LogEntry(level, category, message), null);
@@ -46,7 +46,7 @@ public class LooseLogTests
     [Fact]
     public void Sample_rate_zero_drops_info_but_keeps_warnings()
     {
-        _options.Logs.SampleRate = 0;
+        _options.Logs.Rate = 0;
         for (var i = 0; i < 20; i++) Write(LogLevel.Information, "info");
         Write(LogLevel.Warning, "warn");
         Assert.Equal(["warn"], Loose().Select(l => l.Message));

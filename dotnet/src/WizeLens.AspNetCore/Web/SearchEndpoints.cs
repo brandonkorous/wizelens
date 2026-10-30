@@ -9,7 +9,7 @@ using WizeLens.Tagging;
 
 namespace WizeLens.Web;
 
-/// <summary>The in-app search API (docs/SEARCH-PLAN.md), over this service's own traces in memory. Env is the app's environment.</summary>
+/// <summary>The in-app search API, over this service's own traces in memory. Env is the app's environment.</summary>
 internal static class SearchEndpoints
 {
     public static void Map(RouteGroupBuilder group)

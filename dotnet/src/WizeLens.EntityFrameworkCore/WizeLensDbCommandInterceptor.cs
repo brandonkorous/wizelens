@@ -7,7 +7,7 @@ using WizeLens.Data;
 namespace WizeLens.EntityFrameworkCore;
 
 /// <summary>Records EF Core commands as db spans (adapter "efcore"); on a <see cref="ProfiledDbConnection"/> it only relabels.</summary>
-public sealed class WizeLensDbCommandInterceptor : DbCommandInterceptor
+internal sealed class WizeLensDbCommandInterceptor : DbCommandInterceptor
 {
     public const string AdapterName = "efcore";
 

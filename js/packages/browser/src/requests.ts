@@ -1,4 +1,4 @@
-import { analyzeTrace, entryServerSpan, insightsOf, type Trace, type TraceSummary, traceTiming } from "@wizeworks/lens-core";
+import { analyzeTrace, entryServerSpan, insightsOf, type Trace, type TraceSummary, traceTiming } from "@wizeworks/lens-core/internal";
 import type { RecordedRequest, ServerStats } from "./recorder-types.js";
 
 export function pathOf(url: string, base: string): string {

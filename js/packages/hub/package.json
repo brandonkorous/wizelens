@@ -4,14 +4,14 @@
   "description": "The WizeLens local hub: one place for the traces of every service on your machine or network, with the full dashboard and MCP.",
   "license": "MIT",
   "author": "WizeWorks LLC",
-  "homepage": "https://github.com/brandonkorous/wizelens#readme",
+  "homepage": "https://github.com/wizeworksllc/wizelens#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/brandonkorous/wizelens.git",
+    "url": "git+https://github.com/wizeworksllc/wizelens.git",
     "directory": "js/packages/hub"
   },
   "bugs": {
-    "url": "https://github.com/brandonkorous/wizelens/issues"
+    "url": "https://github.com/wizeworksllc/wizelens/issues"
   },
   "keywords": [
     "wizelens",
@@ -33,9 +33,9 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./kit": {
-      "types": "./dist/kit.d.ts",
-      "import": "./dist/kit.js"
+    "./internal": {
+      "types": "./dist/internal.d.ts",
+      "import": "./dist/internal.js"
     },
     "./package.json": "./package.json"
   },
@@ -51,8 +51,8 @@
     "start": "node dist/cli.js"
   },
   "dependencies": {
-    "@wizeworks/lens-core": "workspace:^",
-    "@wizeworks/lens-node": "workspace:^",
+    "@wizeworks/lens-core": "workspace:*",
+    "@wizeworks/lens-node": "workspace:*",
     "@wizeworks/lens-ui": "workspace:^",
     "protobufjs": "^7.6.6"
   },

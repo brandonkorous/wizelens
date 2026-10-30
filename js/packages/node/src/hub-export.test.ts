@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { IngestBatch, Span } from "@wizeworks/lens-core";
+import type { IngestBatch, Span } from "@wizeworks/lens-core/internal";
 import { HubExporter } from "./hub-export.js";
 
 const span = (spanId: string) => ({ traceId: "a".repeat(32), spanId, attributes: {} }) as unknown as Span;

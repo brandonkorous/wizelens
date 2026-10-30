@@ -1,6 +1,6 @@
 import { render } from "@react-email/components";
 import { createElement } from "react";
-import type { Notice } from "@wizeworks/lens-hub/kit";
+import type { Notice } from "@wizeworks/lens-hub/internal";
 import type { EmailContent } from "./content.js";
 import * as emails from "./emails.js";
 import { EmailLayout } from "./layout.js";

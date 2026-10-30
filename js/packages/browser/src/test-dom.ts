@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { type Span } from "@wizeworks/lens-core";
+import { type Span } from "@wizeworks/lens-core/internal";
 import { type Call, echoServer, stubPage } from "./test-env.js";
 
 // A small page for Node: window events, history that moves `location`, and a document. Enough for page capture to run.

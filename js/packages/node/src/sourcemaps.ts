@@ -12,7 +12,7 @@ import {
   MAX_SOURCEMAP_BYTES,
   parseSourceMap,
   type SourceMap,
-} from "@wizeworks/lens-core";
+} from "@wizeworks/lens-core/internal";
 
 /** Where an add-on or the hub reads source maps from, with no upload. */
 export interface SourceMapOptions {

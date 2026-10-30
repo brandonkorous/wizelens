@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { TIME_RANGES, type TimeRange } from "@wizeworks/lens-core/internal";
 import { type OrgWithProjects, useAccount } from "../../data/account";
 import { kept } from "../../data/accountPrefs";
 import { useHost, useRange } from "../../data/host";

@@ -6,7 +6,7 @@ import (
 	"database/sql/driver"
 	"time"
 
-	wizelens "github.com/brandonkorous/wizelens/go"
+	wizelens "github.com/wizeworksllc/wizelens/go"
 	"modernc.org/sqlite"
 )
 

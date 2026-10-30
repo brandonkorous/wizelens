@@ -1,4 +1,4 @@
-import { isLooseTraceId, type LogRecord, newLooseTraceId, LOOSE_WINDOW_MS, type Span } from "@wizeworks/lens-core";
+import { isLooseTraceId, type LogRecord, newLooseTraceId, LOOSE_WINDOW_MS, type Span } from "@wizeworks/lens-core/internal";
 
 export interface Entry {
   traceId: string;

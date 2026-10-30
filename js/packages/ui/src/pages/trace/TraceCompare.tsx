@@ -1,5 +1,5 @@
 import { GitCompare } from "lucide-react";
-import { browserTypeOf, selfTimes, type Trace, traceTiming } from "@wizeworks/lens-core";
+import { browserTypeOf, selfTimes, type Trace, traceTiming } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtMs, shortId } from "../../format";
 import { traceHref } from "../../routes";
 import { DetailHead } from "../../ui/DetailHead";

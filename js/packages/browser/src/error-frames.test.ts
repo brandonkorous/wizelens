@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { ATTR_ERROR_FRAME, ATTR_SERVICE_VERSION, type Span } from "@wizeworks/lens-core";
+import { ATTR_ERROR_FRAME, ATTR_SERVICE_VERSION, type Span } from "@wizeworks/lens-core/internal";
 import { CART_STACK, cartLoader } from "../../core/src/testing/sourcemap.js";
 import { errorSpan } from "./errors.js";
 import { injectedRelease, sendError } from "./error-frames.js";

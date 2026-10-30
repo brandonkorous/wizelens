@@ -5,7 +5,7 @@ import log4js from "log4js";
 import pino from "pino";
 import winston from "winston";
 import { afterEach, describe, expect, it } from "vitest";
-import type { LogRecord } from "@wizeworks/lens-core";
+import type { LogRecord } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "../wizelens.js";
 import type { WizeLens } from "../types.js";
 import { instrumentBunyan } from "./bunyan.js";
@@ -19,7 +19,7 @@ const open: WizeLens[] = [];
 afterEach(async () => void (await Promise.all(open.splice(0).map((w) => w.shutdown()))));
 
 const make = (captureConsole = false) => {
-  const wl = createWizeLens({ serviceName: "logs-api", storage: "memory", instrumentFetch: false, captureConsole });
+  const wl = createWizeLens({ service: "logs-api", storage: "memory", instrumentFetch: false, captureConsole });
   open.push(wl);
   return wl;
 };

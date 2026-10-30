@@ -1,6 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
-import { fmtMetric, type InfraService } from "@wizeworks/lens-core";
+import { fmtMetric, type InfraService } from "@wizeworks/lens-core/internal";
 import { fmtAgo } from "../../format";
 import { hrefTo } from "../../routes";
 import { DotText } from "../../ui/Badges";

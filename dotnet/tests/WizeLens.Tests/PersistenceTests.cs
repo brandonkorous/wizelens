@@ -194,7 +194,7 @@ public sealed class PersistenceTests : IDisposable
     {
         IsEnabled = true,
         ServesDashboard = true,
-        ServiceName = "test",
+        Service = "test",
         StoragePath = DbPath,
     };
 

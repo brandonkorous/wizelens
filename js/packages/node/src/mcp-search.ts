@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { activeTags, checkSearch, decodeCursor, expandQuery, SEARCH_KINDS, searchMemory, suggestMemory, suggestTags } from "@wizeworks/lens-core";
+import { activeTags, checkSearch, decodeCursor, expandQuery, SEARCH_KINDS, searchMemory, suggestMemory, suggestTags } from "@wizeworks/lens-core/internal";
 import { z } from "zod";
 import { json, READ_ONLY, type Source, tagsOf } from "./mcp-shared.js";
 import { withPageTags } from "./mcp-tags.js";

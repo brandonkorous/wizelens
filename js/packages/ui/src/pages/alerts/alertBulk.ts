@@ -1,5 +1,5 @@
 // Alerts in bulk: one rule made in many projects (cloud), and mute, unmute, on, off, or delete for many rules (cloud in one call per part, the hub one by one).
-import { MAX_BULK } from "@wizeworks/lens-core";
+import { MAX_BULK } from "@wizeworks/lens-core/internal";
 import { apiSend } from "../../data/api";
 import { inParts, type PartsRun } from "../../data/bulk";
 import type { AlertRule } from "./alertTypes";

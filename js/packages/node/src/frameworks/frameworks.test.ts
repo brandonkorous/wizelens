@@ -6,14 +6,14 @@ import Fastify from "fastify";
 import { Hono } from "hono";
 import Koa from "koa";
 import { afterAll, describe, expect, it } from "vitest";
-import { ATTR_ROUTED_MS, type Trace } from "@wizeworks/lens-core";
+import { ATTR_ROUTED_MS, type Trace } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "../wizelens.js";
 import type { WizeLens } from "../types.js";
-import { wizelensFastify } from "./fastify.js";
-import { wizelensHono } from "./hono.js";
-import { wizelensKoa } from "./koa.js";
+import { wizeLensFastify } from "./fastify.js";
+import { wizeLensHono } from "./hono.js";
+import { wizeLensKoa } from "./koa.js";
 
-const make = (name: string) => createWizeLens({ serviceName: name, storage: "memory", instrumentFetch: false, captureResponseBody: true });
+const make = (name: string) => createWizeLens({ service: name, storage: "memory", instrumentFetch: false, captureResponseBody: true });
 const lookup = (wl: WizeLens) => wl.traceDb({ system: "sqlite" }, "SELECT * FROM items WHERE id = ?", [7], () => [{ id: 7 }]);
 const closers: (() => Promise<unknown>)[] = [];
 afterAll(async () => void (await Promise.all(closers.map((c) => c()))));
@@ -50,7 +50,7 @@ describe("fastify", () => {
   it("captures requests and serves the dashboard", async () => {
     const wl = make("fastify-api");
     const app = Fastify();
-    await app.register(wizelensFastify(wl));
+    await app.register(wizeLensFastify(wl));
     app.get("/items/:id", async () => lookup(wl));
     app.get("/boom", async () => {
       throw new Error("boom");
@@ -71,7 +71,7 @@ describe("fastify", () => {
   it("does not fail a 503 the app marked as expected, by header or by call", async () => {
     const wl = make("fastify-expected");
     const app = Fastify();
-    await app.register(wizelensFastify(wl));
+    await app.register(wizeLensFastify(wl));
     app.get("/paused", async (_req, reply) => reply.header("X-WizeLens-Expected", "1").code(503).send("come back later"));
     app.get("/maintenance", async (_req, reply) => {
       wl.expected();
@@ -104,7 +104,7 @@ describe("koa", () => {
       throw new Error("boom");
     });
     app.silent = true;
-    app.use(wizelensKoa(wl));
+    app.use(wizeLensKoa(wl));
     app.use(router.routes());
     const server = app.listen(0, "127.0.0.1");
     await new Promise((r) => server.once("listening", r));
@@ -117,7 +117,7 @@ describe("hono", () => {
   it("captures requests and serves the dashboard", async () => {
     const wl = make("hono-api");
     const app = new Hono();
-    app.use(wizelensHono(wl));
+    app.use(wizeLensHono(wl));
     app.get("/items/:id", (c) => c.json(lookup(wl)));
     app.get("/boom", () => {
       throw new Error("boom");

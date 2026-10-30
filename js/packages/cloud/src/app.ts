@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { MapLoader } from "@wizeworks/lens-core";
+import type { MapLoader } from "@wizeworks/lens-core/internal";
 import type { WizeAuth } from "./auth/auth.js";
 import type { AuthSecret } from "./auth/secret.js";
 import type { Billing } from "./billing/service.js";

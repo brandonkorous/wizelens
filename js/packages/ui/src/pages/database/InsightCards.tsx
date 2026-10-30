@@ -1,5 +1,5 @@
 import { ChevronRight, Database, Globe, Monitor, TriangleAlert } from "lucide-react";
-import type { InsightGroup } from "@wizeworks/lens-core";
+import type { InsightGroup } from "@wizeworks/lens-core/internal";
 import { hrefTo } from "../../routes";
 import { ImpactBadge } from "../../ui/Badges";
 import { Empty, Panel, ViewAll } from "../../ui/Panel";

@@ -1,4 +1,4 @@
-import { type Executor, memoryExecutor, pageContext, type TimeRange, type Trace } from "@wizeworks/lens-core";
+import { type Executor, memoryExecutor, pageContext, type TimeRange, type Trace } from "@wizeworks/lens-core/internal";
 import { compareResults } from "../../../core/src/testing/scale-compare.js";
 import { parityNeeds } from "../../../core/src/testing/scale-needs.js";
 import { SCENARIO_NOW } from "../../../core/src/testing/scenario.js";

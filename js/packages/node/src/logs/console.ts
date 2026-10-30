@@ -1,4 +1,4 @@
-import type { LogLevel } from "@wizeworks/lens-core";
+import type { LogLevel } from "@wizeworks/lens-core/internal";
 import { isQuiet, type LogSink } from "../logger.js";
 import { errorAttributes, firstError, formatArgs } from "./levels.js";
 

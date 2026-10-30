@@ -1,5 +1,5 @@
 import { type CSSProperties, type KeyboardEvent, useMemo, useState } from "react";
-import { isErrorSpan, selfTimes, type Span, type SpanCategory, type Trace } from "@wizeworks/lens-core";
+import { isErrorSpan, selfTimes, type Span, type SpanCategory, type Trace } from "@wizeworks/lens-core/internal";
 import { fmtMs, serviceSlot } from "../../format";
 import { Empty } from "../../ui/Panel";
 import { useSpanFilter, WaterfallBar } from "./WaterfallBar";

@@ -30,8 +30,8 @@ test = ["pytest>=8", "starlette>=0.40", "httpx>=0.27", "flask>=3", "sqlalchemy>=
 
 [project.urls]
 Homepage = "https://wizelens.com/docs/python/"
-Source = "https://github.com/brandonkorous/wizelens/tree/main/python"
-Issues = "https://github.com/brandonkorous/wizelens/issues"
+Source = "https://github.com/wizeworksllc/wizelens/tree/main/python"
+Issues = "https://github.com/wizeworksllc/wizelens/issues"
 
 [project.entry-points.opentelemetry_distro]
 wizelens = "wizelens.distro:WizeLensDistro"

@@ -1,5 +1,5 @@
 import { Database } from "lucide-react";
-import type { DatabaseModel, QueryRow, TableRow } from "@wizeworks/lens-core";
+import type { DatabaseModel, QueryRow, TableRow } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtMs, fmtShort } from "../../format";
 import { hrefTo, navigate, queryHref, setQuery } from "../../routes";
 import { Pager } from "../../ui/Controls";

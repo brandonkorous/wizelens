@@ -1,4 +1,4 @@
-import type { Notice } from "@wizeworks/lens-hub/kit";
+import type { Notice } from "@wizeworks/lens-hub/internal";
 import { clockIn } from "./clock.js";
 import { type EmailContent, facts, note, text } from "./content.js";
 

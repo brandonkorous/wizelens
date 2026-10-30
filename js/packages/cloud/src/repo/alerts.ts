@@ -1,8 +1,8 @@
-import type { AlertRule, AlertRuleInput } from "@wizeworks/lens-core";
+import type { AlertRule, AlertRuleInput } from "@wizeworks/lens-core/internal";
 import { newId } from "../auth/crypto.js";
 import type { Queryable } from "../db/db.js";
 
-export type { AlertChannel as Channel, AlertRule } from "@wizeworks/lens-core";
+export type { AlertChannel as Channel, AlertRule } from "@wizeworks/lens-core/internal";
 export type RuleInput = AlertRuleInput;
 
 const RULE_COLUMNS = `id, project_id AS "projectId", name, metric, metric_name AS "metricName", metric_stat AS "metricStat",

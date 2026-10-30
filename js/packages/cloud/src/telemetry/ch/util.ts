@@ -1,5 +1,5 @@
 // Shared bits of the ClickHouse store: row versions, retention lookups, and row objects from column lists.
-import { isLooseTraceId } from "@wizeworks/lens-core";
+import { isLooseTraceId } from "@wizeworks/lens-core/internal";
 import type { OrgOf, RetentionOf } from "../store.js";
 
 const DAY_MS = 86_400_000;

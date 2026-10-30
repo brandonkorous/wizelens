@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import type { Trace } from "@wizeworks/lens-core";
+import type { Trace } from "@wizeworks/lens-core/internal";
 import { resetStoredMemory } from "./hud/storage.js";
 import type { RecordedRequest, Recorder, ServerStats } from "./recorder-types.js";
 import { createRequestStore, type RequestStore } from "./request-store.js";

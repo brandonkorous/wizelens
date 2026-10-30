@@ -1,5 +1,5 @@
 import { Clock, Lightbulb, TriangleAlert } from "lucide-react";
-import { type InsightsModel, percentChange } from "@wizeworks/lens-core";
+import { type InsightsModel, percentChange } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { fmtCount, fmtMs } from "../../format";
 import { useServiceScope } from "../../data/prefs";

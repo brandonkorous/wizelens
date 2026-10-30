@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { OverviewModel } from "@wizeworks/lens-core";
+import type { OverviewModel } from "@wizeworks/lens-core/internal";
 import { fmtMs } from "../../format";
 import { BarList, type BarItem } from "../../ui/BarList";
 import { Select } from "../../ui/Controls";

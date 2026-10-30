@@ -1,5 +1,5 @@
 import { Clock, Gauge, Timer, TriangleAlert } from "lucide-react";
-import { percentChange, type ServiceKind, type ServicePageModel, type ServiceRow } from "@wizeworks/lens-core";
+import { percentChange, type ServiceKind, type ServicePageModel, type ServiceRow } from "@wizeworks/lens-core/internal";
 import { compareSeriesLabel, fmtCount, fmtMs, fmtPct } from "../../format";
 import { Panel } from "../../ui/Panel";
 import { ApdexCard } from "../../ui/ApdexCard";

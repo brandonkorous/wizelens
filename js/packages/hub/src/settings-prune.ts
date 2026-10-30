@@ -1,6 +1,6 @@
 // Pruning for projects that keep data for less time than the hub: their traces go with the rest, their other rows here.
 import type { DatabaseSync } from "node:sqlite";
-import { tierByName, tierCutoff } from "@wizeworks/lens-core";
+import { tierByName, tierCutoff } from "@wizeworks/lens-core/internal";
 import { allSettings, keepMsOf } from "./settings.js";
 
 /** Projects that keep data for less time than the hub, with how long. */

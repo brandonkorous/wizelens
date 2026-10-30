@@ -1,5 +1,5 @@
 import type { DatabaseSync, SQLInputValue, StatementSync } from "node:sqlite";
-import { LOG_KINDS_SQL, logPruneStatements, pruneStatements, SQLITE_DIALECT, settleStatements, type Statement, tierByName, tierCutoff, tierPruneStatements, type TraceState } from "@wizeworks/lens-core";
+import { LOG_KINDS_SQL, logPruneStatements, pruneStatements, SQLITE_DIALECT, settleStatements, type Statement, tierByName, tierCutoff, tierPruneStatements, type TraceState } from "@wizeworks/lens-core/internal";
 import { loadTraces } from "./store-read.js";
 import { factsOf, keepMsOf, logKeepMsOf } from "./settings.js";
 import type { HubStore } from "./store.js";
@@ -104,7 +104,7 @@ export function pruneStats(store: HubStore, doomed: readonly TraceStateRow[]): v
   runStatements(store.db, tierPruneStatements(now, true));
   const cutoff = tierCutoff(tierByName("1h"), now, store.maxAgeMs);
   for (const t of ["rollup_1h", "hist_1h"]) store.db.prepare(`DELETE FROM ${t} WHERE bucket_ms <= ? AND kind NOT IN (${LOG_KINDS_SQL})`).run(cutoff);
-  runStatements(store.db, logPruneStatements(SQLITE_DIALECT, null, now, store.logMaxAgeMs));
+  runStatements(store.db, logPruneStatements(SQLITE_DIALECT, null, now, store.logsMaxAgeMs));
   if (doomed.length) store.settleGen++;
 }
 

@@ -2,12 +2,12 @@
 namespace WizeLens.Search;
 
 /// <summary>A search query, or the error to send back (400) with its span when the search did not parse.</summary>
-public sealed record SearchRequest(bool Ok, SearchQuery? Query, string? Error = null, int? Start = null, int? End = null);
+internal sealed record SearchRequest(bool Ok, SearchQuery? Query, string? Error = null, int? Start = null, int? End = null);
 
 /// <summary>A suggest request, or the error to send back (400).</summary>
-public sealed record SuggestRequestResult(bool Ok, SuggestRequest? Request, string? Error = null);
+internal sealed record SuggestRequestResult(bool Ok, SuggestRequest? Request, string? Error = null);
 
-public static class SearchRequests
+internal static class SearchRequests
 {
     /// <summary>The time ranges a search can ask for, in ms.</summary>
     public static readonly IReadOnlyList<(string Name, double Ms)> TimeRanges =

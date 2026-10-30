@@ -23,8 +23,8 @@ export function honoRoute(c: HonoContextLike): string | undefined {
   return routes.filter((r) => r.method !== "ALL").pop()?.path;
 }
 
-/** Hono middleware for @hono/node-server: `app.use(wizelensHono(wizelens))`. Use it first. */
-export function wizelensHono(wizelens: WizeLens) {
+/** Hono middleware for @hono/node-server: `app.use(wizeLensHono(wizelens))`. Use it first. */
+export function wizeLensHono(wizelens: WizeLens) {
   return async function wizelensHonoMiddleware(context_: unknown, next: HonoNext): Promise<Response | void> {
     const c = context_ as HonoContextLike;
     const d = captureOf(wizelens);

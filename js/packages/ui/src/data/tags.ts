@@ -1,6 +1,6 @@
 // The project's tags in the dashboard (docs/TAGS-PLAN.md): one shared list, fetched once per project, and changes to it.
 import { useEffect, useSyncExternalStore } from "react";
-import { activeTags, type ActiveTag, TAG_LIMITS, type TagInput, type TagList, type TagRule } from "@wizeworks/lens-core";
+import { activeTags, type ActiveTag, TAG_LIMITS, type TagInput, type TagList, type TagRule } from "@wizeworks/lens-core/internal";
 import { apiFetch, apiSend } from "./api";
 import { useHost } from "./host";
 import { getScope, onPrefChange } from "./prefs";

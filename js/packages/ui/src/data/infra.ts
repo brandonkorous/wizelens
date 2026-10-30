@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { HostsModel, KubeModel } from "@wizeworks/lens-core";
+import type { HostsModel, KubeModel } from "@wizeworks/lens-core/internal";
 import { apiFetch } from "./api";
 import { useHost, useRange } from "./host";
 import { getScope } from "./prefs";

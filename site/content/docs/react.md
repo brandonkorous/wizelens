@@ -53,7 +53,7 @@ Calls answered by another WizeLens server on the page's origin work the same way
 |---|---|---|
 | `endpoint` | `/_wizelens` | WizeLens base path or URL on your API. |
 | `enabled` | `true` | Pass `import.meta.env.DEV` (or similar). |
-| `hud` | `true` | Show the in-page HUD. `false` also stops reading traces back, for a send-only server. |
+| `hud` | `"auto"` | The in-page HUD. `"auto"` shows it when `{endpoint}/api/info` answers. `true` shows it; `false` hides it and also stops reading traces back, for a send-only server. |
 | `propagateTo` | same origin | Which requests get a `traceparent` header. |
 | `release` | from the build plugin | The web app's version, kept on browser spans for release markers and version compares, and so stacks find the right [source maps](/docs/source-maps/). |
 | `slowMs` | `500` | Requests at or over this many ms show as "warning" (orange). |
@@ -96,4 +96,4 @@ also the ones that go to an API in another project. It clears the user when it u
 
 ## Hooks
 
-`useWizeLens()` and `useWizeLensRequests()` give your own components the same data the HUD reads.
+`useWizeLensRecorder()` and `useWizeLensRequests()` give your own components the same data the HUD reads.

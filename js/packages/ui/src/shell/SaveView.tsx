@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useOnce } from "../ui/useOnce";
 import { Star } from "lucide-react";
-import { logSearchOf } from "@wizeworks/lens-core";
+import { logSearchOf } from "@wizeworks/lens-core/internal";
 import { changeSaved, useSavedApi } from "../data/saved";
 import { useRoute } from "../routes";
 import { Check, Field } from "../ui/Field";

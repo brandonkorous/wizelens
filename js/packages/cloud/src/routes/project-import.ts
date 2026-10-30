@@ -1,5 +1,5 @@
 // Onboarding at scale: many projects in one request, each with a new sending key whose secret is answered once.
-import { checkProjectList, type ImportProblem, MAX_IMPORT_REQUEST } from "@wizeworks/lens-core";
+import { checkProjectList, type ImportProblem, MAX_IMPORT_REQUEST } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { requireOrg } from "../auth/principal.js";
 import { fail, HttpError, readJsonBody, sendJson } from "../http/http.js";

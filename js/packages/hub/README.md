@@ -1,18 +1,18 @@
 # @wizeworks/lens-hub
 
-The local hub of [WizeLens](https://github.com/brandonkorous/wizelens): one place for the traces and metrics of every service on your
+The local hub of [WizeLens](https://github.com/wizeworksllc/wizelens): one place for the traces and metrics of every service on your
 machine or team network, with the full dashboard, OTLP intake (traces, logs, and metrics), and a read-only MCP endpoint.
 
 ```bash
 npx @wizeworks/lens-hub
 # or
-docker run -p 5960:5960 -v wizelens:/data ghcr.io/brandonkorous/wizelens-hub
+docker run -p 5960:5960 -v wizelens:/data ghcr.io/wizeworksllc/wizelens-hub
 ```
 
 Open http://localhost:5960/_wizelens/. Then point your services at it and restart them:
 
 ```bash
-WIZELENS_HUB=http://localhost:5960                  # WizeLens add-ons (.NET and Node)
+WIZELENS_ENDPOINT=http://localhost:5960                  # WizeLens add-ons (.NET and Node)
 WIZELENS_PROJECT=my-shop                            # optional: group services by project
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960   # any OpenTelemetry app
 ```
@@ -28,10 +28,10 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960   # any OpenTelemetry app
 | `--retention <time>` | `WIZELENS_HUB_RETENTION` | `7d` |
 | `--max-traces <n>` | `WIZELENS_HUB_MAX_TRACES` | `50000` |
 | `--max-metric-points <n>` | `WIZELENS_HUB_MAX_METRIC_POINTS` | `2000000` raw points (they are also kept for `--retention`; rollups are not capped) |
-| `--mcp` | `WIZELENS_HUB_MCP=1` | off |
+| `--mcp` | `WIZELENS_HUB_MCP=true` | off |
 | `--import <file>` | | Copy an add-on's `.wizelens/traces.db` in at start |
 
-To share the hub with a team, run it with `--host 0.0.0.0 --token <text>`. Services send `WIZELENS_HUB_TOKEN`; OTLP apps send
+To share the hub with a team, run it with `--host 0.0.0.0 --token <text>`. Services send it as `WIZELENS_TOKEN`; OTLP apps send
 `OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <text>`; in a browser, open `/_wizelens/?token=<text>` once.
 
 ## Stats
@@ -58,4 +58,4 @@ const hub = createHub({ port: 5960, storagePath: "./hub.db" });
 console.log(await hub.listen());
 ```
 
-The wire format is in [CONTRACT.md](https://github.com/brandonkorous/wizelens/blob/main/docs/CONTRACT.md#local-hub-v06-phase-2). MIT licensed.
+The wire format is in [CONTRACT.md](https://github.com/wizeworksllc/wizelens/blob/main/docs/CONTRACT.md#local-hub-v06-phase-2). MIT licensed.

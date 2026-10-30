@@ -11,7 +11,7 @@ import {
   type SpanEvent,
   type SpanKind as ContractKind,
   toAttributeValue,
-} from "@wizeworks/lens-core";
+} from "@wizeworks/lens-core/internal";
 
 const SPAN_KINDS: readonly ContractKind[] = ["server", "client", "internal", "producer", "consumer"];
 const CATEGORIES: readonly SpanCategory[] = ["http.server", "http.client", "db", "messaging", "browser", "internal"];
@@ -25,8 +25,8 @@ const text = (v: unknown, fallback: string, max: number) => (typeof v === "strin
 const CLOCK_TOLERANCE_MS = 10_000;
 
 /** How far (ms) to move a browser's times onto this server's clock: 0 when it sent no clock, or one close enough. */
-export function browserClockOffset(sentAt: unknown, receivedAt: number): number {
-  const sent = Number(sentAt);
+export function browserClockOffset(sentMs: unknown, receivedAt: number): number {
+  const sent = Number(sentMs);
   if (!Number.isFinite(sent) || sent <= 0) return 0;
   const offset = receivedAt - sent;
   return Math.abs(offset) > CLOCK_TOLERANCE_MS ? offset : 0;

@@ -1,10 +1,9 @@
 export { listUploadedMaps, uploadSourceMaps } from "./upload.js";
-export { fileKeyOf, findSourceMaps } from "./find.js";
+export { findSourceMaps } from "./find.js";
 export type { MapFile } from "./find.js";
 export type { UploadOptions, UploadResult } from "./upload.js";
-export { baseOf, resolveRelease, resolveTarget } from "./options.js";
-export type { Target, TargetOptions } from "./options.js";
+export type { TargetOptions } from "./options.js";
 export type { PluginOptions } from "./plugin.js";
-export { wizelensSourceMaps } from "./vite.js";
+export { wizeLensSourceMaps } from "./vite.js";
 export { WizeLensSourceMapsPlugin } from "./webpack.js";
-export { withWizeLens } from "./next.js";
+export { withWizeLensSourceMaps } from "./next.js";

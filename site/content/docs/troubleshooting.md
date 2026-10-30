@@ -62,11 +62,11 @@ See [Update WizeLens](/docs/nextjs/#update-wizelens).
 
 ### A service is missing in the hub
 
-1. Check that `WIZELENS_HUB` is set where the service runs.
+1. Check that `WIZELENS_ENDPOINT` is set where the service runs.
 2. Restart the service after you set it.
 3. Read the service's log. It says why the hub took nothing:
    - it could not reach the hub;
-   - the hub needs a key, or refused one (`401`, `403`): set `WIZELENS_HUB_TOKEN` to a live `wl_ik_` key;
+   - the hub needs a key, or refused one (`401`, `403`): set `WIZELENS_TOKEN` to a live `wl_ik_` key;
    - the hub asked it to slow down (`429`).
 
 ### Fewer requests than you sent
@@ -100,4 +100,4 @@ working in memory. It never breaks your app.
 
 ## Still stuck
 
-Open an issue on [GitHub](https://github.com/brandonkorous/wizelens/issues) with your stack, versions, and what you expected to see.
+Open an issue on [GitHub](https://github.com/wizeworksllc/wizelens/issues) with your stack, versions, and what you expected to see.

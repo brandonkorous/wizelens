@@ -5,13 +5,13 @@ using WizeLens.Search;
 namespace WizeLens.Analysis;
 
 /// <summary>A request row without its findings. Path keeps the query; endpoint is "METHOD route".</summary>
-public sealed record RequestItem(
+internal sealed record RequestItem(
     string TraceId, double StartMs, string Method, string Path, string Endpoint, double? Status, bool Expected, bool Aborted,
     double DurationMs, double? ServerMs, double DbMs, int DbCount, int FetchCount, double FetchMs, double? RenderMs, double? NetworkMs,
     string Service, List<string> Services, int Errors, int Insights, string Health,
     string? UserAgent, string? ClientAddress, string? User, string? RequestId, List<string> Tags);
 
-public static class RequestItems
+internal static class RequestItems
 {
     private const string TagPrefix = "wizelens.tag.";
 

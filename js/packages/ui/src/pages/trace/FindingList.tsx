@@ -1,4 +1,4 @@
-import { type Finding, type FindingKind, insightsOf, isSecurityKind, OWASP_OF, SECURITY_LABELS, securityOf } from "@wizeworks/lens-core";
+import { type Finding, type FindingKind, insightsOf, isSecurityKind, OWASP_OF, SECURITY_LABELS, securityOf } from "@wizeworks/lens-core/internal";
 import { useState } from "react";
 import { fmtMs } from "../../format";
 

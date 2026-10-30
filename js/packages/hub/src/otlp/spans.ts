@@ -1,4 +1,4 @@
-import { type Attributes, isDbCall, redactAttributes, redactText, SPAN_RESOURCE_KEYS, type Span, stampVersion, type SpanCategory, type SpanKind } from "@wizeworks/lens-core";
+import { type Attributes, isDbCall, redactAttributes, redactText, SPAN_RESOURCE_KEYS, type Span, stampVersion, type SpanCategory, type SpanKind } from "@wizeworks/lens-core/internal";
 import type { HubWrite } from "../store.js";
 import { foldDbParams } from "./db-params.js";
 import { hideNestedDb } from "./nested.js";

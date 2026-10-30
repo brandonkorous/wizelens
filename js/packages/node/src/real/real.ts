@@ -1,5 +1,5 @@
 // Tests against real servers and the real libraries: on with WIZELENS_TEST_REAL=1 (CI's "Real libraries" job starts the servers).
-import type { Span, Trace } from "@wizeworks/lens-core";
+import type { Span, Trace } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "../wizelens.js";
 import type { WizeLens } from "../types.js";
 import { startApp } from "../test/helpers.js";
@@ -14,7 +14,7 @@ export const REAL_URLS = {
 };
 
 /** A fresh in-memory instance for one test file. */
-export const realLens = (name: string): WizeLens => createWizeLens({ serviceName: name, storage: "memory", enabled: true });
+export const realLens = (name: string): WizeLens => createWizeLens({ service: name, storage: "memory", enabled: true });
 
 /** A name no other run uses, for keys, collections, indexes, and queues. */
 export const unique = (prefix: string): string => `${prefix}${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;

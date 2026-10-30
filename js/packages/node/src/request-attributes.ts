@@ -1,6 +1,6 @@
 import type { IncomingHttpHeaders, IncomingMessage, OutgoingHttpHeaders } from "node:http";
 import type { Attributes as OtelAttributes } from "@opentelemetry/api";
-import { redactSetCookie, REQUEST_HEADER_PREFIX } from "@wizeworks/lens-core";
+import { redactSetCookie, REQUEST_HEADER_PREFIX } from "@wizeworks/lens-core/internal";
 import { firstHeader } from "./http-util.js";
 import { CATEGORY_ATTR } from "./processor.js";
 

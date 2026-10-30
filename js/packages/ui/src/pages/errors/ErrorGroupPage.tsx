@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Bell, Boxes, Bug, Users } from "lucide-react";
-import { countBy, type ErrorGroup, errorGroupDoc, errorGroupLabel, type ErrorPageModel, errorText, isNoise, percentChange, type RequestItem } from "@wizeworks/lens-core";
+import { countBy, type ErrorGroup, errorGroupDoc, errorGroupLabel, type ErrorPageModel, errorText, isNoise, percentChange, type RequestItem } from "@wizeworks/lens-core/internal";
 import { traceRow, useGroupTags } from "../../data/tagMatch";
 import { TagChips } from "../../ui/TagChips";
 import { TaggedTable } from "../../ui/TaggedTable";

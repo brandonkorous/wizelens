@@ -1,4 +1,4 @@
-import { type AttributeValue, type Attributes, type HubSender, INFRA_SERVICE } from "@wizeworks/lens-core";
+import { type AttributeValue, type Attributes, type HubSender, INFRA_SERVICE } from "@wizeworks/lens-core/internal";
 import { applyAliases, headerKey, headerValue, isHeaderKey } from "./semconv.js";
 
 /** OTLP shapes after JSON parse or protobuf decode. Ids are hex, 64-bit numbers are strings or numbers. */

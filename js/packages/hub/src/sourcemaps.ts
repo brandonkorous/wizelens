@@ -8,7 +8,7 @@ import {
   parseSourceMap,
   SOURCEMAP_RELEASES_KEPT,
   type SourceMapEntry,
-} from "@wizeworks/lens-core";
+} from "@wizeworks/lens-core/internal";
 
 // Uploaded source maps, per project ("" without one), release, and generated file. Maps are kept gzipped.
 export const SOURCEMAPS_SCHEMA = `

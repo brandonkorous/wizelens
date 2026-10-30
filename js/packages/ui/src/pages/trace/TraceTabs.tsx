@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { ScrollRow, useScrollRow } from "../../ui/ScrollRow";
-import type { Finding, Trace, TraceView } from "@wizeworks/lens-core";
+import type { Finding, Trace, TraceView } from "@wizeworks/lens-core/internal";
 import { HttpTab } from "./HttpTab";
 import { MessagesTab } from "./MessagesTab";
 import { ErrorsTab, LogsTab } from "./LogsErrorsTabs";

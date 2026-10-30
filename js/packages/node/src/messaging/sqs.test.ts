@@ -1,12 +1,12 @@
 import { context, ROOT_CONTEXT, trace } from "@opentelemetry/api";
 import { TraceState } from "@opentelemetry/core";
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { describe, expect, it } from "vitest";
 import { createWizeLens } from "../wizelens.js";
 import { instrumentSqs } from "./sqs.js";
 import { processSqsMessage, type SqsAttributes, type SqsMessage } from "./sqs-message.js";
 
-const wl = createWizeLens({ serviceName: "sqs", storage: "memory", instrumentFetch: false });
+const wl = createWizeLens({ service: "sqs", storage: "memory", instrumentFetch: false });
 const TRACED = Symbol.for("wizeworks.wizelens.traced");
 const settle = () => new Promise((r) => setTimeout(r, 20));
 const query = () => wl.traceDb({ system: "sqlite" }, "INSERT INTO audit VALUES (1)", undefined, () => []);

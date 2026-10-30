@@ -17,8 +17,8 @@ interface OtelLogRecord {
 
 const timeOf = (hr: [number, number] | undefined) => (hr ? hr[0] * 1000 + hr[1] / 1e6 : undefined);
 
-/** An OpenTelemetry log processor: `new LoggerProvider({ processors: [wizelensLogProcessor(wizelens)] })`. */
-export function wizelensLogProcessor(wizelens: WizeLens) {
+/** An OpenTelemetry log processor: `new LoggerProvider({ processors: [wizeLensLogProcessor(wizelens)] })`. */
+export function wizeLensLogProcessor(wizelens: WizeLens) {
   return {
     onEmit(record: OtelLogRecord, ctx?: Context): void {
       const sink = logSinkOf(wizelens);

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { parseTraceparent } from "@wizeworks/lens-core";
+import { parseTraceparent } from "@wizeworks/lens-core/internal";
 import { setBrowserUser } from "./browser-span.js";
 import { OWN_CALL } from "./fetch-patch.js";
 import { asWizeLens, currentWizeLens, initWizeLens } from "./lens.js";

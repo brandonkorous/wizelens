@@ -5,7 +5,7 @@ using WizeLens.Model;
 
 namespace WizeLens.Search;
 
-public static partial class SearchDocs
+internal static partial class SearchDocs
 {
     [GeneratedRegex(@"^[a-z][a-z0-9+.-]*://", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex UrlScheme();

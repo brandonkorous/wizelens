@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 
 namespace WizeLens.Search;
 
-public static class SearchJson
+internal static class SearchJson
 {
     /// <summary>A tree as a JSON node; null (match everything) is JSON null.</summary>
     public static JsonNode? ToJson(SearchNode? n) => n switch

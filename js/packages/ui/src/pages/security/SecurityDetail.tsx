@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
-import { type IssueInfo, OWASP_CATEGORIES, type SecurityGroup, SECURITY_LABELS, type UsersAffected } from "@wizeworks/lens-core";
+import { type IssueInfo, OWASP_CATEGORIES, type SecurityGroup, SECURITY_LABELS, type UsersAffected } from "@wizeworks/lens-core/internal";
 import { fmtAgo, fmtCount } from "../../format";
 import { hrefTo, setQuery, traceHref, userHref } from "../../routes";
 import { Badge, CopyButton, ImpactBadge } from "../../ui/Badges";

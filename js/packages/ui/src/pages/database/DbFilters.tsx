@@ -1,6 +1,6 @@
 import { FilterPanel } from "../../ui/FilterPanel";
 import { RotateCcw } from "lucide-react";
-import { type DatabaseModel, OPERATIONS } from "@wizeworks/lens-core";
+import { type DatabaseModel, OPERATIONS } from "@wizeworks/lens-core/internal";
 import { setQuery } from "../../routes";
 import { SearchInput, Select } from "../../ui/Controls";
 import { ServiceSelect } from "../../ui/ServiceSelect";

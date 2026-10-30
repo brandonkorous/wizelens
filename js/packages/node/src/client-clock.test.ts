@@ -1,12 +1,12 @@
 import { afterAll, expect, it } from "vitest";
-import { newSpanId, newTraceId } from "@wizeworks/lens-core";
+import { newSpanId, newTraceId } from "@wizeworks/lens-core/internal";
 import { browserClockOffset } from "./client-spans.js";
 import { type Running, startApp } from "./test/helpers.js";
 import { createWizeLens } from "./wizelens.js";
 
 // A crawler's clock put its page view 4.6 hours before the server request, so the request read as 4.6 hours long.
 
-const wl = createWizeLens({ serviceName: "web", storage: "memory", instrumentFetch: false });
+const wl = createWizeLens({ service: "web", storage: "memory", instrumentFetch: false });
 const app: Running = await startApp(wl, () => {});
 afterAll(() => app.close());
 
@@ -22,7 +22,7 @@ it("moves a browser's spans, events, and logs onto the server's clock", async ()
   const spanId = newSpanId();
   const browserNow = Date.now() - HOURS;
   await post({
-    sentAt: browserNow,
+    sentMs: browserNow,
     spans: [{ traceId, spanId, name: "react renders /pricing", category: "browser", startMs: browserNow - 2000, durationMs: 1500, events: [{ name: "click", timeMs: browserNow - 1000 }] }],
     logs: [{ traceId, spanId, level: "info", message: "hi", timeMs: browserNow - 500 }],
   });

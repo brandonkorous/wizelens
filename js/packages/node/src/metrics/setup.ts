@@ -1,4 +1,4 @@
-import { metricsModel, type TimeRange } from "@wizeworks/lens-core";
+import { metricsModel, type TimeRange } from "@wizeworks/lens-core/internal";
 import type { McpDataSource } from "../mcp-shared.js";
 import type { WizeLensOptions } from "../types.js";
 import { RuntimeCollector } from "./runtime.js";
@@ -12,7 +12,7 @@ export interface MetricParts {
 /** The metric store and runtime collector, or null when `captureMetrics` is false. Call `start` on the collector. */
 export function createMetricParts(o: WizeLensOptions, redactKeys: readonly string[]): MetricParts | null {
   if (o.captureMetrics === false) return null;
-  const store = new MetricStore({ service: o.serviceName, redactKeys, maxAgeMs: o.metricsMaxAgeMs });
+  const store = new MetricStore({ service: o.service, redactKeys, maxAgeMs: o.metricsMaxAgeMs });
   const collector = new RuntimeCollector({ intervalMs: o.metricsIntervalMs, add: (points) => void store.add(points) });
   return { store, collector };
 }

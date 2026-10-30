@@ -8,7 +8,7 @@ description: One place for the traces, logs, and metrics of every service on you
 ```bash
 npx @wizeworks/lens-hub
 # or
-docker run -p 5960:5960 -v wizelens:/data ghcr.io/brandonkorous/wizelens-hub
+docker run -p 5960:5960 -v wizelens:/data ghcr.io/wizeworksllc/wizelens-hub
 ```
 
 Open http://localhost:5960/_wizelens/.
@@ -18,7 +18,7 @@ Open http://localhost:5960/_wizelens/.
 Set these where each service runs, then restart it:
 
 ```bash
-WIZELENS_HUB=http://localhost:5960                  # .NET and Node add-ons
+WIZELENS_ENDPOINT=http://localhost:5960             # .NET and Node add-ons
 WIZELENS_PROJECT=my-shop                            # optional: groups services by project
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960   # any other OpenTelemetry app: see Java, Python, and Go
 ```
@@ -49,7 +49,7 @@ An OpenTelemetry app shows as "Idle" between sends. That is normal: it only send
 
 Run it with `--host 0.0.0.0 --token <text>`. Then:
 
-- Add-ons send `WIZELENS_HUB_TOKEN=<text>`.
+- Add-ons send `WIZELENS_TOKEN=<text>`.
 - OpenTelemetry apps send `OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <text>`.
 - In a browser, open `/_wizelens/?token=<text>` once.
 
@@ -68,9 +68,9 @@ Run it with `--host 0.0.0.0 --token <text>`. Then:
 | `--slow-query-ms <n>` | `WIZELENS_HUB_SLOW_QUERY_MS` | `100`: a database call this slow is slow |
 | `--n-plus-one <n>` | `WIZELENS_HUB_N_PLUS_ONE` | `5` similar calls in a request make an N+1 |
 | `--redact-keys <a,b>` | `WIZELENS_HUB_REDACT_KEYS` | none: hide keys that contain these, on top of the built-in list |
-| `--mcp` | `WIZELENS_HUB_MCP=1` | off |
-| `--no-uptime` | `WIZELENS_HUB_UPTIME=0` | checks on |
-| `--no-osv` | `WIZELENS_HUB_OSV=0` | packages checked against OSV |
+| `--mcp` | `WIZELENS_HUB_MCP=true` | off |
+| `--no-uptime` | `WIZELENS_HUB_UPTIME=false` | checks on |
+| `--no-osv` | `WIZELENS_HUB_OSV=false` | packages checked against OSV |
 | `--import <file>` | | Copy an add-on's `.wizelens/traces.db` in at start |
 | `--sourcemaps <dir>` | `WIZELENS_HUB_SOURCEMAPS=a,b` | Read browser [source maps](/docs/source-maps/) from a build folder. Can repeat |
 

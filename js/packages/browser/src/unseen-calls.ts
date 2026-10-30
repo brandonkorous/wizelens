@@ -1,4 +1,4 @@
-import { TIMING_ENDPOINT, TIMING_TRACE } from "@wizeworks/lens-core";
+import { TIMING_ENDPOINT, TIMING_TRACE } from "@wizeworks/lens-core/internal";
 import type { RecordedRequest } from "./recorder-types.js";
 import { pathOf } from "./requests.js";
 import { observe } from "./vitals.js";

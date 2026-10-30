@@ -8,7 +8,7 @@ export interface VueComponentLike {
 
 export type VueErrorHandler = (err: unknown, instance: VueComponentLike | null, info: string) => void;
 
-/** The parts of a Vue 3 app this package uses. `app.use(WizeLens, options)` passes it. */
+/** The parts of a Vue 3 app this package uses. `app.use(WizeLensPlugin, options)` passes it. */
 export interface VueAppLike {
   config: { errorHandler?: VueErrorHandler | null; globalProperties?: Record<string, unknown> };
   provide?(key: symbol, value: unknown): unknown;
@@ -31,8 +31,8 @@ export interface WizeLensVueOptions extends WizeLensOptions {
   lens?: Lens;
 }
 
-/** `inject(WIZELENS_KEY)` gives components the running instance. */
-export const WIZELENS_KEY: unique symbol = Symbol.for("wizelens");
+/** `inject(wizeLensKey)` gives components the running instance. */
+export const wizeLensKey: unique symbol = Symbol.for("wizelens");
 
 // Parents beyond this many are left out: the nearest ones name the place well enough.
 const MAX_TRAIL = 8;
@@ -73,12 +73,12 @@ export function trackVueRouter(router: VueRouterLike, lens: Lens): () => void {
   });
 }
 
-/** Install with `app.use(WizeLens, options)`. Starts WizeLens and its HUD (or uses `options.lens`), hooks errors, and tracks the router. */
-export const WizeLens = {
+/** Install with `app.use(WizeLensPlugin, options)`. Starts WizeLens and its HUD (or uses `options.lens`), hooks errors, and tracks the router. */
+export const WizeLensPlugin = {
   install(app: VueAppLike, options: WizeLensVueOptions = {}): void {
     const { router, lens: given, ...rest } = options;
     const lens = given ?? asWizeLens(rest);
-    app.provide?.(WIZELENS_KEY, lens);
+    app.provide?.(wizeLensKey, lens);
     if (app.config.globalProperties) app.config.globalProperties.$wizelens = lens;
     if (!lens.enabled) return;
     const undo = [hookVueErrors(app, lens), router ? trackVueRouter(router, lens) : () => {}];

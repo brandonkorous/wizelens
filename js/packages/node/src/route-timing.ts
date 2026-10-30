@@ -1,5 +1,5 @@
 import type { Span as OtelSpan } from "@opentelemetry/api";
-import { ATTR_ROUTED_MS } from "@wizeworks/lens-core";
+import { ATTR_ROUTED_MS } from "@wizeworks/lens-core/internal";
 
 /** Record `wizelens.server.routed_ms` when the router sets `target[property]`: the moment the matched route starts. */
 export function watchRoute(target: object, property: string, span: OtelSpan, startedAt: number): void {

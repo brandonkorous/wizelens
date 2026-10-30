@@ -1,10 +1,10 @@
 import { afterAll, expect, it } from "vitest";
-import { ATTR_BROWSER_REMOTE, newSpanId, newTraceId } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_REMOTE, newSpanId, newTraceId } from "@wizeworks/lens-core/internal";
 import { type Running, startApp } from "./test/helpers.js";
 import { trustedOrigins } from "./client-spans.js";
 import { createWizeLens } from "./wizelens.js";
 
-const wl = createWizeLens({ serviceName: "api", storage: "memory", instrumentFetch: false });
+const wl = createWizeLens({ service: "api", storage: "memory", instrumentFetch: false });
 const app: Running = await startApp(wl, () => {});
 afterAll(() => app.close());
 
@@ -37,7 +37,7 @@ it("does not list this service as a remote of its own trace", async () => {
 });
 
 it("federates to an API on another origin when the developer trusts it", async () => {
-  const trusting = createWizeLens({ serviceName: "web", storage: "memory", instrumentFetch: false, trustedRemotes: ["https://localhost:5099/"] });
+  const trusting = createWizeLens({ service: "web", storage: "memory", instrumentFetch: false, trustedRemotes: ["https://localhost:5099/"] });
   const web = await startApp(trusting, () => {});
   try {
     const span = (traceId: string) => ({ traceId, spanId: newSpanId(), name: "fetch PUT /api/items", category: "browser", startMs: Date.now(), attributes: { [ATTR_BROWSER_REMOTE]: "https://localhost:5099/_wizelens" } });

@@ -1,4 +1,4 @@
-import type { LogLevel } from "@wizeworks/lens-core";
+import type { LogLevel } from "@wizeworks/lens-core/internal";
 import { logSinkOf } from "../adapters/registry.js";
 import type { WizeLens } from "../types.js";
 import { errorAttributes, formatArgs } from "./levels.js";

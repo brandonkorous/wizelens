@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SQLITE_DIALECT, searchSql, suggestSql, windowOf } from "@wizeworks/lens-core";
+import { SQLITE_DIALECT, searchSql, suggestSql, windowOf } from "@wizeworks/lens-core/internal";
 import { scenarioTraces, SCENARIO_NOW } from "../../core/src/testing/scenario.js";
 import { searchHits, searchParity, SEARCH_PARITY_QUERIES, suggestParity } from "../../core/src/testing/search-parity.js";
 import { tagParity } from "../../core/src/testing/tag-parity.js";

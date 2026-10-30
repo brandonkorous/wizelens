@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { annotateErrorFrames, answerResolve, HEADER_HOP, type MapLoader, type ServiceInfo, SOURCEMAPS_RESOLVE_PATH, type Span, type TagRule, type Trace, type TraceSummary } from "@wizeworks/lens-core";
+import { annotateErrorFrames, answerResolve, HEADER_HOP, type MapLoader, type ServiceInfo, SOURCEMAPS_RESOLVE_PATH, type Span, type TagRule, type Trace, type TraceSummary } from "@wizeworks/lens-core/internal";
 import { browserClockOffset, remoteOf, sanitizeClientLog, sanitizeClientSpan, withVisitorAgent } from "./client-spans.js";
 import { isHudScript, serveHudScript } from "./hud-bundle.js";
 import { firstHeader, readJson, sendJson, setCors } from "./http-util.js";
@@ -19,7 +19,7 @@ export interface ApiDeps {
   store: TraceStore;
   redactKeys: readonly string[];
   uiDir: string | null;
-  enableMcp: boolean;
+  mcpOn: boolean;
   mcp: McpDataSource;
   info: () => ServiceInfo;
   getTrace: (traceId: string, federate: boolean, hop: number) => Promise<Trace | undefined>;
@@ -64,8 +64,8 @@ async function sendTrace(d: ApiDeps, traceId: string, req: IncomingMessage, res:
 
 async function receiveClientSpans(d: ApiDeps, req: Req, res: ServerResponse): Promise<void> {
   try {
-    const body = (await readJson(req)) as { spans?: unknown; logs?: unknown; sentAt?: unknown } | undefined;
-    const shiftMs = browserClockOffset(body?.sentAt, Date.now());
+    const body = (await readJson(req)) as { spans?: unknown; logs?: unknown; sentMs?: unknown } | undefined;
+    const shiftMs = browserClockOffset(body?.sentMs, Date.now());
     const spans = Array.isArray(body?.spans) ? body.spans.slice(0, MAX_CLIENT_SPANS) : [];
     const origin = firstHeader(req.headers.origin);
     const agent = firstHeader(req.headers["user-agent"]);
@@ -112,7 +112,7 @@ async function handleApi(d: ApiDeps, sub: string, method: string, req: Req, res:
 }
 
 async function handleMcpRoute(d: ApiDeps, req: Req, res: ServerResponse, method: string): Promise<void> {
-  if (!d.enableMcp) return sendJson(res, 404, { error: "MCP is disabled. Set enableMcp: true." });
+  if (!d.mcpOn) return sendJson(res, 404, { error: "MCP is off. Set mcp: true." });
   const body = method === "POST" ? await readJson(req) : undefined;
   await handleMcp(d.mcp, req, res, body);
 }

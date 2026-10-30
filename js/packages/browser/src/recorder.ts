@@ -40,7 +40,7 @@ function resolveOptions(options: RecorderOptions) {
     captureXhr: options.captureXhr ?? true,
     // A browser key only sends: the cloud reads nothing back to a page.
     readServer: isCloudBrowserEndpoint(endpointUrl) ? false : (options.readServer ?? true),
-    version: options.version ?? injectedRelease(),
+    version: options.release ?? injectedRelease(),
     resolveFrames: options.resolveFrames ?? true,
     framework: options.framework,
     sessionId: getSessionId(),

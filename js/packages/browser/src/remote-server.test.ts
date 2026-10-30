@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { ATTR_BROWSER_REMOTE, parseTraceparent, type Trace } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_REMOTE, parseTraceparent, type Trace } from "@wizeworks/lens-core/internal";
 import { loadView } from "./pageview-tracker.js";
 import { createRecorder } from "./recorder.js";
 import { type Call, postedSpans, span, stubPage, urlOf } from "./test-env.js";

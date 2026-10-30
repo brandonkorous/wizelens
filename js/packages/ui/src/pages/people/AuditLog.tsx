@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Download } from "lucide-react";
-import { PAGE_SIZES, type PageInfo, pageParams } from "@wizeworks/lens-core";
+import { PAGE_SIZES, type PageInfo, pageParams } from "@wizeworks/lens-core/internal";
 import { useApi } from "../../data/useApi";
 import { fmtAgo, fmtDateTime } from "../../format";
 import { setQuery, useRoute } from "../../routes";

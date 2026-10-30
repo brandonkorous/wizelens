@@ -1,4 +1,4 @@
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type AutoApp, eventually, type FakeHub, fakeHub, runApp } from "../test/auto-run.js";
 
@@ -15,7 +15,7 @@ afterEach(async () => {
 });
 
 const start = async (fixture: string, service: string, env: Record<string, string> = {}) =>
-  (app = await runApp(fixture, { WIZELENS_HUB: hub.url, OTEL_SERVICE_NAME: service, ...env }));
+  (app = await runApp(fixture, { WIZELENS_ENDPOINT: hub.url, OTEL_SERVICE_NAME: service, ...env }));
 
 const server = (name: string) => () => hub.spans.find((s) => s.kind === "server" && s.name === name);
 const childrenOf = (parent: Span) => hub.spans.filter((s) => s.parentSpanId === parent.spanId);

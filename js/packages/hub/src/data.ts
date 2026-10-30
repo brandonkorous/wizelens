@@ -1,5 +1,5 @@
-import { MAX_FEDERATION_HOPS, mergeTraces, type Trace, type TraceSummary, toSummary } from "@wizeworks/lens-core";
-import { fetchRemote } from "@wizeworks/lens-node/kit";
+import { MAX_FEDERATION_HOPS, mergeTraces, type Trace, type TraceSummary, toSummary } from "@wizeworks/lens-core/internal";
+import { fetchRemote } from "@wizeworks/lens-node/internal";
 import { findTraceIds, getStoredTrace, listServices, loadTraces, type TraceQuery } from "./store-read.js";
 import type { HubStore, HubWrite } from "./store.js";
 

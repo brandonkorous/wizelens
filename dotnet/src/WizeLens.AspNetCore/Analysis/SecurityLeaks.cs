@@ -5,7 +5,7 @@ using WizeLens.Storage;
 namespace WizeLens.Analysis;
 
 /// <summary>Secrets that reached logs, span data, or a response (A09); the same as core/src/security/leaks.ts.</summary>
-public static partial class SecurityLeaks
+internal static partial class SecurityLeaks
 {
     public static readonly IReadOnlyDictionary<string, string> Labels = new Dictionary<string, string>
     {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type ProjectImport, type ProjectImportRow } from "@wizeworks/lens-core";
+import { type ProjectImport, type ProjectImportRow } from "@wizeworks/lens-core/internal";
 import { Badge } from "../../ui/Badges";
 import { FileDrop } from "../../ui/FileDrop";
 import { FormRow, SelectField, TextArea } from "../../ui/Field";

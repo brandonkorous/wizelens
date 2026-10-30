@@ -1,8 +1,8 @@
-import { causeText } from "@wizeworks/lens-core";
+import { causeText } from "@wizeworks/lens-core/internal";
 import type { CloudApp } from "../app.js";
 import type { AlertRule } from "../repo/alerts.js";
 import { projectPage } from "../routes/models.js";
-import type { NoticeProblem } from "@wizeworks/lens-hub/kit";
+import type { NoticeProblem } from "@wizeworks/lens-hub/internal";
 
 /** Notices look for problems in the last 24 hours, and their links open that range, so the id matches. */
 const PROBLEM_RANGE = "24h";

@@ -1,6 +1,6 @@
 import { FilterPanel } from "../../ui/FilterPanel";
 import { RotateCcw } from "lucide-react";
-import { isLooseTraceId, type LogLevel, LOG_LEVELS, type LogRow, type LogsModel, VOLUME_GROUPS } from "@wizeworks/lens-core";
+import { isLooseTraceId, type LogLevel, LOG_LEVELS, type LogRow, type LogsModel, VOLUME_GROUPS } from "@wizeworks/lens-core/internal";
 import { fmtTime } from "../../format";
 import { hrefTo, setQuery, traceHref } from "../../routes";
 import { Badge, type Tone } from "../../ui/Badges";

@@ -4,14 +4,14 @@
   "description": "WizeLens for Angular apps: an ErrorHandler and a router tracker that link browser calls to server traces and send page views and errors.",
   "license": "MIT",
   "author": "WizeWorks LLC",
-  "homepage": "https://github.com/brandonkorous/wizelens#readme",
+  "homepage": "https://github.com/wizeworksllc/wizelens#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/brandonkorous/wizelens.git",
+    "url": "git+https://github.com/wizeworksllc/wizelens.git",
     "directory": "js/packages/angular"
   },
   "bugs": {
-    "url": "https://github.com/brandonkorous/wizelens/issues"
+    "url": "https://github.com/wizeworksllc/wizelens/issues"
   },
   "keywords": [
     "wizelens",

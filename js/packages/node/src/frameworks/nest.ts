@@ -3,7 +3,7 @@ import { captureOf } from "../adapters/registry.js";
 import { pathOf, requestSpan } from "../request-capture.js";
 import { setFallbackRoute } from "../request-naming.js";
 import type { Req, WizeLens } from "../types.js";
-import { wizelensFastify } from "./fastify.js";
+import { wizeLensFastify } from "./fastify.js";
 import { hookExceptionFilters, rawRequest, recordNestError, tapErrors } from "./nest-errors.js";
 import { type NestConfigHolder, type NestContextLike, nestRoute, versionsOf } from "./nest-route.js";
 
@@ -78,7 +78,7 @@ export function addNestHooks(app: unknown): boolean {
 function addCapture(wizelens: WizeLens, app: NestAppLike): void {
   const platform = app.getHttpAdapter?.()?.getType?.();
   if (platform === "express") app.use?.(wizelens.middleware);
-  else if (platform === "fastify") void app.register?.(wizelensFastify(wizelens));
+  else if (platform === "fastify") void app.register?.(wizeLensFastify(wizelens));
 }
 
 /** Trace a NestJS app on Express or Fastify: call `instrumentNest(wizelens, app)` right after `NestFactory.create`, before `app.listen()`. */

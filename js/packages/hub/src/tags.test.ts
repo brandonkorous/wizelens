@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { TagList, TagRule } from "@wizeworks/lens-core";
+import type { TagList, TagRule } from "@wizeworks/lens-core/internal";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import type { Hub } from "./hub.js";
 import { post, startHub } from "./test/helpers.js";

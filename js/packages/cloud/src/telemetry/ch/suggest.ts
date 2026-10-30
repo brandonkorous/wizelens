@@ -1,5 +1,5 @@
 // Autocomplete on ClickHouse: attribute keys and values from the hourly attribute counts (schema-attrs.ts); other fields as the shared SQL does.
-import { fieldSuggestions, fixedSuggestions, type SqlSource, type Suggestion, type SuggestRequest, suggestSql, topCounts } from "@wizeworks/lens-core";
+import { fieldSuggestions, fixedSuggestions, type SqlSource, type Suggestion, type SuggestRequest, suggestSql, topCounts } from "@wizeworks/lens-core/internal";
 import type { TenantScope } from "../store.js";
 import type { ChClient } from "./http.js";
 

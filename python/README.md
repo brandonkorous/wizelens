@@ -15,8 +15,8 @@ database spans.
 
 | Variable | Default | What it does |
 |---|---|---|
-| `WIZELENS_HUB` | `http://localhost:5960` | Hub or cloud address |
-| `WIZELENS_HUB_TOKEN` | none | Hub token or cloud ingest key |
+| `WIZELENS_ENDPOINT` | `http://localhost:5960` | Where to send: the hub or the cloud |
+| `WIZELENS_TOKEN` | none | Hub token or cloud ingest key |
 | `WIZELENS_PROJECT` | none | Project name on a shared hub |
 | `WIZELENS_SAMPLE_RATE` | `1` | Share of traces kept, 0 to 1 |
 | `WIZELENS_KEEP_SLOW_MS` | `1000` | Keep traces with a span this slow (`off` for none) |

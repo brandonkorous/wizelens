@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Upload } from "lucide-react";
-import type { ModelOf } from "@wizeworks/lens-core";
+import type { ModelOf } from "@wizeworks/lens-core/internal";
 import { downloadCsv } from "../data/csv";
 import { EXPORTS, type ExportPage } from "../data/exports";
 import { useHost, useRange } from "../data/host";

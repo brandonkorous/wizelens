@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { DEFAULT_REDACT_KEYS, FACT_N_PLUS_ONE, FACT_SLOW_QUERY_MS, HUB_DEFAULT_PORT } from "@wizeworks/lens-core";
-import type { SourceMapOptions } from "@wizeworks/lens-node/kit";
+import { DEFAULT_REDACT_KEYS, FACT_N_PLUS_ONE, FACT_SLOW_QUERY_MS, HUB_DEFAULT_PORT } from "@wizeworks/lens-core/internal";
+import type { SourceMapOptions } from "@wizeworks/lens-node/internal";
 import { OSV_URL } from "./packages/osv.js";
 
 export interface HubOptions {
@@ -18,7 +18,7 @@ export interface HubOptions {
   /** Oldest trace (and metric point) kept, in ms. Default 7 days. */
   maxAgeMs?: number;
   /** Oldest log line kept, in ms. Default: `maxAgeMs`. Lines in a request go with their trace when that is sooner. */
-  logMaxAgeMs?: number;
+  logsMaxAgeMs?: number;
   /** Most metric points kept. Default 2,000,000. */
   maxMetricPoints?: number;
   /** Run uptime checks (they can reach any address this machine can). Default true. */
@@ -28,7 +28,7 @@ export interface HubOptions {
   /** The OSV API; tests point it at a local server. Default https://api.osv.dev. */
   osvUrl?: string;
   /** Expose the read-only MCP endpoint at `/_wizelens/mcp`. Default false. */
-  enableMcp?: boolean;
+  mcp?: boolean;
   /** Key fragments to redact. Default: the contract list. Projects can add their own in settings. */
   redactKeys?: string[];
   /** A database call this slow or slower counts as slow, in ms. Default 100. Projects can set their own. */
@@ -47,7 +47,7 @@ export interface HubOptions {
   /** How often alert rules run, in ms. Default 60000. */
   alertIntervalMs?: number;
   /** Let alert webhooks call plain http and private or local addresses. Default true: the hub runs on your own network. */
-  allowPrivateWebhooks?: boolean;
+  allowPrivateTargets?: boolean;
   /** How alert notices are sent; tests replace it. Default the global fetch. */
   fetch?: typeof fetch;
   /** PagerDuty's Events API URL; tests point it at a local server. */
@@ -73,9 +73,9 @@ export function resolveHubOptions(o: HubOptions = {}): ResolvedHubOptions {
     token: o.token || undefined,
     maxTraces: o.maxTraces ?? 50_000,
     maxAgeMs: o.maxAgeMs ?? 7 * 24 * 60 * 60_000,
-    logMaxAgeMs: o.logMaxAgeMs ?? o.maxAgeMs ?? 7 * 24 * 60 * 60_000,
+    logsMaxAgeMs: o.logsMaxAgeMs ?? o.maxAgeMs ?? 7 * 24 * 60 * 60_000,
     maxMetricPoints: o.maxMetricPoints ?? 2_000_000,
-    enableMcp: o.enableMcp ?? false,
+    mcp: o.mcp ?? false,
     uptime: o.uptime ?? true,
     osv: o.osv ?? true,
     osvUrl: o.osvUrl ?? OSV_URL,
@@ -88,7 +88,7 @@ export function resolveHubOptions(o: HubOptions = {}): ResolvedHubOptions {
     sourceMaps: o.sourceMaps,
     now: o.now ?? Date.now,
     alertIntervalMs: o.alertIntervalMs ?? 60_000,
-    allowPrivateWebhooks: o.allowPrivateWebhooks ?? true,
+    allowPrivateTargets: o.allowPrivateTargets ?? true,
     fetch: o.fetch ?? ((...a) => fetch(...a)),
     pagerDutyUrl: o.pagerDutyUrl,
   };

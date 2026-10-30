@@ -19,7 +19,7 @@ import {
   metricTierValues,
   seriesKeyOf,
   TIERS,
-} from "@wizeworks/lens-core";
+} from "@wizeworks/lens-core/internal";
 import type { Queryable } from "../db/db.js";
 import { KEEP_DAYS } from "./settings.js";
 

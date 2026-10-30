@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { MetricPoint, MetricsModel } from "@wizeworks/lens-core";
+import type { MetricPoint, MetricsModel } from "@wizeworks/lens-core/internal";
 import type { Hub } from "../hub.js";
 import { post, startHub } from "../test/helpers.js";
 import { fromExponential, writesFromMetrics } from "./metrics.js";

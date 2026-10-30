@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { Span, Trace } from "@wizeworks/lens-core";
+import type { Span, Trace } from "@wizeworks/lens-core/internal";
 import type { Running } from "../test/helpers.js";
 import { type FakeGraphql, type FakeInstall, installFakeGraphql, postQuery, startGraphqlApp } from "../test/graphql-app.js";
 import type { WizeLens } from "../types.js";
@@ -7,7 +7,7 @@ import { createWizeLens } from "../wizelens.js";
 import { instrumentGraphql } from "./index.js";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const make = () => createWizeLens({ serviceName: "graphql-api", storage: "memory", instrumentFetch: false });
+const make = () => createWizeLens({ service: "graphql-api", storage: "memory", instrumentFetch: false });
 const resolvers = {
   orders: () => [{ id: 1 }],
   fast: () => "fast",
@@ -130,7 +130,7 @@ describe("instrumentGraphql with every resolver", () => {
   });
 
   it("does nothing when WizeLens is off", () => {
-    const off = createWizeLens({ serviceName: "off", enabled: false });
+    const off = createWizeLens({ service: "off", enabled: false });
     const unused = installFakeGraphql();
     expect(instrumentGraphql(off, unused.graphql)).toBe(false);
     unused.remove();

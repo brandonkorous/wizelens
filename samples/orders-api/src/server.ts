@@ -8,8 +8,8 @@ const PORT = Number(process.env.PORT ?? 5200);
 
 // 1. Create WizeLens. It is on unless NODE_ENV=production.
 const wizelens = createWizeLens({
-  serviceName: "orders-api",
-  enableMcp: true, // AI agents can read traces at /_wizelens/mcp (read-only)
+  service: "orders-api",
+  mcp: true, // AI agents can read traces at /_wizelens/mcp (read-only)
   // Traces survive restarts. The file lives next to this sample (gitignored). WIZELENS_STORAGE_PATH moves it.
   storagePath: process.env.WIZELENS_STORAGE_PATH ?? join(import.meta.dirname, "..", ".wizelens", "traces.db"),
   logToConsole: true,

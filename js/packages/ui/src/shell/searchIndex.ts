@@ -1,4 +1,4 @@
-import { displayService, errorInfo, errorText, isErrorSpan, requestRows, type Trace } from "@wizeworks/lens-core";
+import { displayService, errorInfo, errorText, isErrorSpan, requestRows, type Trace } from "@wizeworks/lens-core/internal";
 import { fmtMs } from "../format";
 import { hrefTo, type PageId, traceHref } from "../routes";
 

@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import { Activity, Box, Siren, TriangleAlert } from "lucide-react";
-import type { ProblemsModel, Sensitivity } from "@wizeworks/lens-core";
+import type { ProblemsModel, Sensitivity } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { fmtCount } from "../../format";
 import { setQuery, useRoute } from "../../routes";

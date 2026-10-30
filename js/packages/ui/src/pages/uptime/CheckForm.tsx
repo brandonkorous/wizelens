@@ -1,6 +1,6 @@
 import { type FormEvent, type ReactNode, useState } from "react";
 import { useOnce } from "../../ui/useOnce";
-import { DEFAULT_EXPECT_STATUS, UPTIME_METHODS, type UptimeCheckInput, type UptimeMethod } from "@wizeworks/lens-core";
+import { DEFAULT_EXPECT_STATUS, UPTIME_METHODS, type UptimeCheckInput, type UptimeMethod } from "@wizeworks/lens-core/internal";
 import { Check, Field, FormRow, SelectField, TextArea } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
 

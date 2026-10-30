@@ -15,12 +15,12 @@ describe("hub command line", () => {
       port: 6000,
       storagePath: "memory",
       token: "t",
-      enableMcp: true,
+      mcp: true,
       maxAgeMs: 172_800_000,
       maxMetricPoints: 900,
     });
-    expect(optionsFromArgs(["--log-retention", "3d"], { WIZELENS_HUB_LOG_RETENTION: "1d" })).toMatchObject({ logMaxAgeMs: 259_200_000 });
-    expect(optionsFromArgs([], { WIZELENS_HUB_LOG_RETENTION: "1d" })).toMatchObject({ logMaxAgeMs: 86_400_000 });
+    expect(optionsFromArgs(["--log-retention", "3d"], { WIZELENS_HUB_LOG_RETENTION: "1d" })).toMatchObject({ logsMaxAgeMs: 259_200_000 });
+    expect(optionsFromArgs([], { WIZELENS_HUB_LOG_RETENTION: "1d" })).toMatchObject({ logsMaxAgeMs: 86_400_000 });
     expect(optionsFromArgs(["--help"], {})).toBe("help");
   });
 });

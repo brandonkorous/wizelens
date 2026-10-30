@@ -2,10 +2,10 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { AddressInfo } from "node:net";
 import { SpanKind, trace } from "@opentelemetry/api";
 import { afterAll, expect, it } from "vitest";
-import type { Trace } from "@wizeworks/lens-core";
+import type { Trace } from "@wizeworks/lens-core/internal";
 import { onRequestError, registerWizeLens } from "./next.js";
 
-const wl = registerWizeLens({ serviceName: "web", storage: "memory", instrumentFetch: false });
+const wl = registerWizeLens({ service: "web", storage: "memory", instrumentFetch: false });
 let appCalls = 0;
 
 /** What Next.js does per request: a handleRequest span inside the platform span, which gets the route. */
@@ -107,5 +107,5 @@ it("does not record a Next.js not-found signal as an error", async () => {
 });
 
 it("starts one instance per process", () => {
-  expect(registerWizeLens({ serviceName: "other" })).toBe(wl);
+  expect(registerWizeLens({ service: "other" })).toBe(wl);
 });

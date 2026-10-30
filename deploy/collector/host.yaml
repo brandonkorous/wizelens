@@ -1,9 +1,9 @@
 # OpenTelemetry Collector (contrib) config for one host (a VM or a Docker host): CPU, memory, disks, and network for the
 # WizeLens Hosts page, plus OTLP from apps on the host. Set WIZELENS_ENDPOINT (https://app.wizelens.com or your hub's URL)
-# and WIZELENS_INGEST_KEY (a cloud ingest key, or the hub's token; empty for a hub without one).
+# and WIZELENS_TOKEN (a cloud ingest key, or the hub's token; empty for a hub without one).
 #
 #   docker run -d --name wizelens-collector -v /:/hostfs:ro -v $PWD/host.yaml:/etc/otelcol-contrib/config.yaml \
-#     -e WIZELENS_ENDPOINT=https://app.wizelens.com -e WIZELENS_INGEST_KEY=wl_ik_... -e HOST_ROOT=/hostfs \
+#     -e WIZELENS_ENDPOINT=https://app.wizelens.com -e WIZELENS_TOKEN=wl_ik_... -e HOST_ROOT=/hostfs \
 #     -e OTEL_RESOURCE_ATTRIBUTES=host.name=$(hostname) \
 #     -p 4317:4317 -p 4318:4318 otel/opentelemetry-collector-contrib:0.137.0
 receivers:
@@ -52,7 +52,7 @@ exporters:
     endpoint: ${env:WIZELENS_ENDPOINT}
     compression: gzip
     headers:
-      Authorization: "Bearer ${env:WIZELENS_INGEST_KEY}"
+      Authorization: "Bearer ${env:WIZELENS_TOKEN}"
 
 service:
   pipelines:

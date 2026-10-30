@@ -9,7 +9,7 @@ import { instrumentNodeSqlite } from "./sqlite.js";
 describe("WizeLens storage", () => {
   it("is never traced, even when node:sqlite is instrumented", async () => {
     const storagePath = join(mkdtempSync(join(tmpdir(), "wizelens-self-")), "traces.db");
-    const wizelens = createWizeLens({ serviceName: "self", storagePath, traceQueriesOutsideRequests: true });
+    const wizelens = createWizeLens({ service: "self", storagePath, traceQueriesOutsideRequests: true });
     const db = new DatabaseSync(":memory:");
     instrumentNodeSqlite(wizelens, db);
     db.prepare("SELECT 1").get();

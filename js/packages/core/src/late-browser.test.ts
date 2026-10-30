@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_TYPE, ATTR_PAGE, buildTrace, requestRows, type Span, traceTiming } from "./index.js";
+import { ATTR_BROWSER_NAVIGATION, ATTR_BROWSER_TYPE, ATTR_PAGE, buildTrace, requestRows, type Span, traceTiming } from "./internal.js";
 import { makeSpan } from "./testing/fixtures.js";
 
 const T = "5".repeat(32);

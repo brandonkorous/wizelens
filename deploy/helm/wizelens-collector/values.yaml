@@ -2,13 +2,13 @@
 # The collector adds /v1/metrics, /v1/traces, and /v1/logs.
 endpoint: https://app.wizelens.com
 
-# A cloud ingest key (wl_ik_...), or the hub's token. Leave empty for a hub without a token.
-ingestKey: ""
+# The token (WIZELENS_TOKEN): a cloud ingest key (wl_ik_...), or the hub's token. Leave empty for a hub without a token.
+token: ""
 
-# Read the key from a Secret you made yourself instead (kubectl create secret generic wizelens-ingest --from-literal=ingest-key=wl_ik_...).
+# Read the token from a Secret you made yourself instead (kubectl create secret generic wizelens --from-literal=token=wl_ik_...).
 existingSecret:
   name: ""
-  key: ingest-key
+  key: token
 
 # Shown as k8s.cluster.name on every node, pod, and workload. Set it when one project holds more than one cluster.
 clusterName: ""

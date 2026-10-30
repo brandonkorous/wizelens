@@ -4,12 +4,12 @@ import { logs as logsApi } from "@opentelemetry/api-logs";
 import { LoggerProvider } from "@opentelemetry/sdk-logs";
 import Fastify from "fastify";
 import { afterAll, describe, expect, it } from "vitest";
-import { newSpanId, newTraceId } from "@wizeworks/lens-core";
-import { wizelensFastify } from "../frameworks/fastify.js";
+import { newSpanId, newTraceId } from "@wizeworks/lens-core/internal";
+import { wizeLensFastify } from "../frameworks/fastify.js";
 import { createWizeLens } from "../wizelens.js";
-import { wizelensLogProcessor } from "./otel.js";
+import { wizeLensLogProcessor } from "./otel.js";
 
-const wl = createWizeLens({ serviceName: "fastify-logs", storage: "memory", instrumentFetch: false });
+const wl = createWizeLens({ service: "fastify-logs", storage: "memory", instrumentFetch: false });
 const app = Fastify({ logger: { level: "info", stream: new Writable({ write: (_c, _e, cb) => cb() }) } });
 afterAll(async () => {
   await app.close();
@@ -18,7 +18,7 @@ afterAll(async () => {
 
 const base = async () => {
   if (!app.server.listening) {
-    await app.register(wizelensFastify(wl));
+    await app.register(wizeLensFastify(wl));
     app.get("/orders", async (request) => {
       request.log.info({ count: 2 }, "listing orders");
       app.log.warn("slow cache");
@@ -57,7 +57,7 @@ describe("Fastify logs", () => {
 
 describe("OpenTelemetry logs", () => {
   it("copies records inside a span and skips bridged pino records", () => {
-    const provider = new LoggerProvider({ processors: [wizelensLogProcessor(wl)] });
+    const provider = new LoggerProvider({ processors: [wizeLensLogProcessor(wl)] });
     logsApi.setGlobalLoggerProvider(provider);
     let traceId = "";
     wl.tracer.startActiveSpan("job", (span) => {

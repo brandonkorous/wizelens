@@ -3,13 +3,13 @@ import amqplib from "amqplib";
 import * as kafkajs from "kafkajs";
 import { context, trace } from "@opentelemetry/api";
 import { describe, expect, it } from "vitest";
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "../wizelens.js";
 import { instrumentAmqplib } from "./amqplib.js";
 import { instrumentKafkaJs } from "./kafkajs.js";
 import { instrumentServiceBus } from "./servicebus.js";
 
-const wl = createWizeLens({ serviceName: "messaging", storage: "memory", instrumentFetch: false });
+const wl = createWizeLens({ service: "messaging", storage: "memory", instrumentFetch: false });
 const TRACED = Symbol.for("wizeworks.wizelens.traced");
 const isTraced = (fn: unknown) => !!(fn as Record<symbol, unknown>)[TRACED];
 

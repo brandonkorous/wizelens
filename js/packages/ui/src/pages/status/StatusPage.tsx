@@ -1,5 +1,5 @@
 import { type PointerEvent, useEffect, useState } from "react";
-import { STATUS_DAYS, type StatusCheckView, type StatusPageView } from "@wizeworks/lens-core";
+import { STATUS_DAYS, type StatusCheckView, type StatusPageView } from "@wizeworks/lens-core/internal";
 import { apiFetch } from "../../data/api";
 import { fmtDateTime } from "../../format";
 import { Logo } from "../../shell/Logo";

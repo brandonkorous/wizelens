@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type MetricPoint, metricDataOf, metricsModelOf, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { type MetricPoint, metricDataOf, metricsModelOf, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core/internal";
 import { diffClose, METRIC_NOW, metricScenario } from "../../core/src/testing/metric-scenario.js";
 import { metricsPage } from "./metrics-read.js";
 import { HubStore } from "./store.js";

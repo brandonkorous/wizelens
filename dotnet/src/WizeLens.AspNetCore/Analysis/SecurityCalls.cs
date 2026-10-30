@@ -4,7 +4,7 @@ using WizeLens.Model;
 namespace WizeLens.Analysis;
 
 /// <summary>Secrets in URLs and plain HTTP (A04), and SSRF (A01); the same as core/src/security/calls.ts.</summary>
-public static partial class SecurityCalls
+internal static partial class SecurityCalls
 {
     private const string SecretTitle = "A secret is sent in the URL";
 

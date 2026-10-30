@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import type { ResolvedFrame, SourceContext } from "@wizeworks/lens-core";
+import type { ResolvedFrame, SourceContext } from "@wizeworks/lens-core/internal";
 import { type ResolvedStack, type StackSource, useResolvedStack } from "../../data/sourcemaps";
 import { CopyButton } from "../../ui/Badges";
 import { StackTrace } from "./ErrorDetailTabs";
@@ -56,7 +56,7 @@ function MapHint() {
   return (
     <p className="wl-map-hint">
       This line is in your built, minified code. A source map turns it back into your own file and line. Add the WizeLens
-      plugin to your build (for Vite: <code className="wl-mono">wizelensSourceMaps()</code> in vite.config.ts), and each
+      plugin to your build (for Vite: <code className="wl-mono">wizeLensSourceMaps()</code> in vite.config.ts), and each
       build sends its maps.{" "}
       <a href={MAPS_DOCS} target="_blank" rel="noreferrer">
         Source maps, step by step

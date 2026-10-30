@@ -19,7 +19,7 @@ import (
 
 type options struct {
 	settings     Settings
-	serviceName  string
+	service      string
 	spanExporter sdktrace.SpanExporter
 	logExporter  sdklog.Exporter
 	metricReader sdkmetric.Reader
@@ -30,8 +30,8 @@ type options struct {
 // Option changes what Start sets up.
 type Option func(*options)
 
-// WithServiceName names the service when OTEL_SERVICE_NAME is not set.
-func WithServiceName(name string) Option { return func(o *options) { o.serviceName = name } }
+// WithService names the service when OTEL_SERVICE_NAME is not set.
+func WithService(name string) Option { return func(o *options) { o.service = name } }
 
 // WithSettings replaces the settings read from the environment.
 func WithSettings(s Settings) Option { return func(o *options) { o.settings = s } }
@@ -82,8 +82,8 @@ func Start(ctx context.Context, opts ...Option) (func(context.Context) error, er
 
 func buildResource(ctx context.Context, o options) (*resource.Resource, error) {
 	var base []attribute.KeyValue
-	if o.serviceName != "" {
-		base = append(base, attribute.String("service.name", o.serviceName))
+	if o.service != "" {
+		base = append(base, attribute.String("service.name", o.service))
 	}
 	if o.settings.Project != "" {
 		base = append(base, attribute.String("wizelens.project", o.settings.Project))
@@ -109,7 +109,7 @@ func tracerProvider(ctx context.Context, o options, res *resource.Resource) (*sd
 	if exp == nil {
 		var hopts []otlptracehttp.Option
 		if unset("OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") {
-			hopts = append(hopts, otlptracehttp.WithEndpointURL(o.settings.Hub+"/v1/traces"))
+			hopts = append(hopts, otlptracehttp.WithEndpointURL(o.settings.Endpoint+"/v1/traces"))
 		}
 		if o.settings.Token != "" && unset("OTEL_EXPORTER_OTLP_HEADERS", "OTEL_EXPORTER_OTLP_TRACES_HEADERS") {
 			hopts = append(hopts, otlptracehttp.WithHeaders(map[string]string{"Authorization": "Bearer " + o.settings.Token}))
@@ -133,7 +133,7 @@ func loggerProvider(ctx context.Context, o options, res *resource.Resource) (*sd
 	if exp == nil && !o.sync {
 		var lopts []otlploghttp.Option
 		if unset("OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT") {
-			lopts = append(lopts, otlploghttp.WithEndpointURL(o.settings.Hub+"/v1/logs"))
+			lopts = append(lopts, otlploghttp.WithEndpointURL(o.settings.Endpoint+"/v1/logs"))
 		}
 		if o.settings.Token != "" && unset("OTEL_EXPORTER_OTLP_HEADERS", "OTEL_EXPORTER_OTLP_LOGS_HEADERS") {
 			lopts = append(lopts, otlploghttp.WithHeaders(map[string]string{"Authorization": "Bearer " + o.settings.Token}))

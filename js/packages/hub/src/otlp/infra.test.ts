@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { HostsModel, KubeModel } from "@wizeworks/lens-core";
+import type { HostsModel, KubeModel } from "@wizeworks/lens-core/internal";
 import type { Hub } from "../hub.js";
 import { hostmetricsExports, kubeExport, podSpanExport } from "../test/collector.js";
 import { post, startHub } from "../test/helpers.js";

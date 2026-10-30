@@ -1,7 +1,7 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { newSpanId, newTraceId } from "@wizeworks/lens-core";
+import { newSpanId, newTraceId } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "./index.js";
 import { isEnabled, servesDashboard } from "./mode.js";
 import { type Running, settle, startApp } from "./test/helpers.js";
@@ -23,7 +23,7 @@ beforeAll(async () => {
   });
   await new Promise<void>((r) => hub.listen(0, "127.0.0.1", r));
   hubUrl = `http://127.0.0.1:${(hub.address() as AddressInfo).port}`;
-  wl = createWizeLens({ serviceName: "send-only", enabled: true, dashboard: false, enableMcp: true, hub: hubUrl, captureConsole: false, audit: () => {} });
+  wl = createWizeLens({ service: "send-only", enabled: true, dashboard: false, mcp: true, endpoint: hubUrl, captureConsole: false, audit: () => {} });
   app = await startApp(wl, (a) => a.get("/hello", (_req, res) => res.json({ ok: true })));
 });
 
@@ -69,21 +69,21 @@ describe("mode defaults", () => {
 
   it("is on with the dashboard outside production", () => {
     vi.stubEnv("NODE_ENV", "development");
-    expect([isEnabled({ serviceName: "x" }), servesDashboard({ serviceName: "x" })]).toEqual([true, true]);
+    expect([isEnabled({ service: "x" }), servesDashboard({ service: "x" })]).toEqual([true, true]);
   });
 
   it("is off, and send-only when turned on, in production", () => {
     vi.stubEnv("NODE_ENV", "production");
-    expect([isEnabled({ serviceName: "x" }), servesDashboard({ serviceName: "x", enabled: true })]).toEqual([false, false]);
+    expect([isEnabled({ service: "x" }), servesDashboard({ service: "x", enabled: true })]).toEqual([false, false]);
   });
 
   it("says so when production keeps it off while a hub is set", () => {
     vi.stubEnv("NODE_ENV", "production");
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    expect(createWizeLens({ serviceName: "x", hub: "http://localhost:5970" }).enabled).toBe(false);
+    expect(createWizeLens({ service: "x", endpoint: "http://localhost:5970" }).enabled).toBe(false);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Set WIZELENS_ENABLED=true"));
     warn.mockClear();
-    createWizeLens({ serviceName: "x", hub: "http://localhost:5970", enabled: false });
+    createWizeLens({ service: "x", endpoint: "http://localhost:5970", enabled: false });
     expect(warn).not.toHaveBeenCalled();
     warn.mockRestore();
   });
@@ -92,9 +92,9 @@ describe("mode defaults", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("WIZELENS_ENABLED", "true");
     vi.stubEnv("WIZELENS_DASHBOARD", "yes");
-    expect([isEnabled({ serviceName: "x" }), servesDashboard({ serviceName: "x" })]).toEqual([true, true]);
-    expect([isEnabled({ serviceName: "x", enabled: false }), servesDashboard({ serviceName: "x", dashboard: false })]).toEqual([false, false]);
+    expect([isEnabled({ service: "x" }), servesDashboard({ service: "x" })]).toEqual([true, true]);
+    expect([isEnabled({ service: "x", enabled: false }), servesDashboard({ service: "x", dashboard: false })]).toEqual([false, false]);
     vi.stubEnv("WIZELENS_ENABLED", "maybe");
-    expect(isEnabled({ serviceName: "x" })).toBe(false);
+    expect(isEnabled({ service: "x" })).toBe(false);
   });
 });

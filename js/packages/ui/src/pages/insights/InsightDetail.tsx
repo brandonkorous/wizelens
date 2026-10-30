@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
-import type { InsightGroup, IssueInfo, UsersAffected } from "@wizeworks/lens-core";
+import type { InsightGroup, IssueInfo, UsersAffected } from "@wizeworks/lens-core/internal";
 import { fmtAgo, fmtCount, fmtMs } from "../../format";
 import { hrefTo, setQuery, traceHref, userHref } from "../../routes";
 import { Badge, CopyButton, ImpactBadge } from "../../ui/Badges";

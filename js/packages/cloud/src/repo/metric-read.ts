@@ -10,7 +10,7 @@ import {
   runMetricAsync,
   type TimeRange,
   type TimeWindow,
-} from "@wizeworks/lens-core";
+} from "@wizeworks/lens-core/internal";
 import type { Queryable } from "../db/db.js";
 import { metricScope, type MetricQuery } from "../telemetry/store.js";
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Tag } from "lucide-react";
-import type { TagInput, TagScope } from "@wizeworks/lens-core";
+import type { TagInput, TagScope } from "@wizeworks/lens-core/internal";
 import { act } from "../data/useApi";
 import { useHost } from "../data/host";
 import { createTag, useTags } from "../data/tags";

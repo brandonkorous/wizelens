@@ -11,7 +11,7 @@ import {
   redactText,
   toAttributeValue,
   VERSION_ATTR,
-} from "@wizeworks/lens-core";
+} from "@wizeworks/lens-core/internal";
 import type { TraceStore } from "./store.js";
 import { dropControlFlow } from "./control-flow.js";
 import { isServedFileSpan } from "./served-file.js";

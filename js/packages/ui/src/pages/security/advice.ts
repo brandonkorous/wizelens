@@ -1,4 +1,4 @@
-import type { SecurityKind } from "@wizeworks/lens-core";
+import type { SecurityKind } from "@wizeworks/lens-core/internal";
 import type { Advice } from "../insights/advice";
 
 export const SECURITY_ADVICE: Record<SecurityKind, Advice> = {

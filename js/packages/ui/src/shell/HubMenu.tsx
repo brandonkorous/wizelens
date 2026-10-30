@@ -1,5 +1,5 @@
 import { Check, ChevronDown, Layers, Plus } from "lucide-react";
-import { displayService, groupServices, type ServiceGroup } from "@wizeworks/lens-core";
+import { displayService, groupServices, type ServiceGroup } from "@wizeworks/lens-core/internal";
 import { type OrgWithProjects, pickOrg } from "../data/account";
 import { setProjectScope, useEnvScope, useProjectScope, useServiceScope } from "../data/prefs";
 import { ALL_PROJECTS } from "../data/projectScope";

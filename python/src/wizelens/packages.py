@@ -1,4 +1,4 @@
-"""The PyPI packages this process runs, sent to the hub once at start for the known-vulnerability check."""
+"""The PyPI packages this process runs, sent to the endpoint once at start for the known-vulnerability check."""
 
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ def _post(settings: Settings, body: bytes) -> bool:
     headers = {"Content-Type": "application/json"}
     if settings.token:
         headers["Authorization"] = f"Bearer {settings.token}"
-    req = urllib.request.Request(f"{settings.hub}/_wizelens/api/packages", data=body, headers=headers, method="POST")
+    req = urllib.request.Request(f"{settings.endpoint}/_wizelens/api/packages", data=body, headers=headers, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=10):
             return True
@@ -56,7 +56,7 @@ def _post(settings: Settings, body: bytes) -> bool:
 
 
 def report_packages(settings: Settings, resource: Mapping[str, Any]) -> threading.Thread:
-    """Send the list from a background thread, retrying a few times while the hub cannot be reached. Never raises."""
+    """Send the list from a background thread, retrying a few times while the endpoint cannot be reached. Never raises."""
 
     def run() -> None:
         try:

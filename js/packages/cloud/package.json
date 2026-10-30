@@ -4,14 +4,14 @@
   "description": "The WizeLens cloud service: many organizations, accounts and teams, server-side stats, alerts, sharing, and scoped AI access, on Postgres.",
   "license": "MIT",
   "author": "WizeWorks LLC",
-  "homepage": "https://github.com/brandonkorous/wizelens#readme",
+  "homepage": "https://github.com/wizeworksllc/wizelens#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/brandonkorous/wizelens.git",
+    "url": "git+https://github.com/wizeworksllc/wizelens.git",
     "directory": "js/packages/cloud"
   },
   "bugs": {
-    "url": "https://github.com/brandonkorous/wizelens/issues"
+    "url": "https://github.com/wizeworksllc/wizelens/issues"
   },
   "keywords": [
     "wizelens",
@@ -55,9 +55,9 @@
     "@better-auth/stripe": "1.7.10",
     "@electric-sql/pglite": "^0.5.10",
     "@react-email/components": "1.0.12",
-    "@wizeworks/lens-core": "workspace:^",
-    "@wizeworks/lens-hub": "workspace:^",
-    "@wizeworks/lens-node": "workspace:^",
+    "@wizeworks/lens-core": "workspace:*",
+    "@wizeworks/lens-hub": "workspace:*",
+    "@wizeworks/lens-node": "workspace:*",
     "@wizeworks/lens-ui": "workspace:^",
     "better-auth": "1.7.10",
     "kysely": "^0.29.6",

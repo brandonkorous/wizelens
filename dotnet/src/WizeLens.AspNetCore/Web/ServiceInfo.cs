@@ -12,12 +12,13 @@ internal static class ServiceInfo
     public static IResult Create(WizeLensOptions options, IHostEnvironment environment, TraceStorageService storage, HubExporter hubExporter) =>
         Results.Json(new
         {
+            protocol = 1,
             mode = "in-app",
             capabilities = options.MetricsOn ? new[] { "federation", "search", "tags", "metrics" } : new[] { "federation", "search", "tags" },
-            service = options.ServiceName,
+            service = options.Service,
             version = typeof(ServiceInfo).Assembly.GetName().Version?.ToString(3) ?? "0.0.0",
             runtime = RuntimeInformation.FrameworkDescription,
-            mcp = options.EnableMcp,
+            mcp = options.Mcp,
             environment = environment.EnvironmentName,
             host = Environment.MachineName,
             startedMs = options.StartedMs,
@@ -31,8 +32,8 @@ internal static class ServiceInfo
             redactKeys = options.RedactKeys,
             captureResponseBody = options.CaptureResponseBody,
             project = string.IsNullOrWhiteSpace(options.Project) ? null : options.Project,
-            hub = options.NormalizedHubUrl,
-            hubSend = options.NormalizedHubUrl is null ? null : hubExporter.SendState,
+            sendTo = options.NormalizedEndpoint,
+            send = options.NormalizedEndpoint is null ? null : hubExporter.SendState,
             sampling = options.Sampling.IsOn
                 ? new { rate = options.Sampling.ClampedRate, keepErrors = options.Sampling.KeepErrors, keepSlowMs = options.Sampling.KeepSlowMs }
                 : null,

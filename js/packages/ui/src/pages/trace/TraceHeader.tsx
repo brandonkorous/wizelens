@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ArrowLeft, RefreshCw } from "lucide-react";
-import { type Health, type Timing, timingSegments, type Trace } from "@wizeworks/lens-core";
+import { type Health, type Timing, timingSegments, type Trace } from "@wizeworks/lens-core/internal";
 import { fmtClock, fmtDate, fmtMs } from "../../format";
 import { CopyButton } from "../../ui/Badges";
 import { type Part, pageParts } from "./pageSplit";

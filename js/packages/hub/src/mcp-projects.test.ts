@@ -10,7 +10,7 @@ const headers = { Accept: "application/json, text/event-stream" };
 
 it("MCP on a hub with several projects: list_projects, a project on each tool, pages, and alerts", async () => {
   let url: string;
-  ({ hub, url } = await startHub({ enableMcp: true }));
+  ({ hub, url } = await startHub({ mcp: true }));
   const now = Date.now();
   await post(`${url}/_wizelens/api/ingest`, { sender: { service: "api", project: "shop" }, spans: [span(T1, "1".repeat(16), { startMs: now - 60_000, attributes: { "http.request.method": "GET", "url.path": "/orders", "enduser.id": "u-1" } })] });
   await post(`${url}/_wizelens/api/ingest`, { sender: { service: "api", project: "blog" }, spans: [span(T2, "2".repeat(16), { startMs: now - 60_000 })] });

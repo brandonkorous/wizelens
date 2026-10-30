@@ -86,7 +86,7 @@ joins the trace of the request that sent it.
 
 Every `ILogger` line written during a request goes into its trace. Lines written outside a request (startup, hosted
 services, timers) are kept too, as "Outside a request": `Logs.Outside` (on), `Logs.MinLevel` (Information), and
-`Logs.SampleRate` (1) control how many. See [Configuration](/docs/configuration/#aspnet-core) and [Logs](/docs/logs/).
+`Logs.Rate` (1) control how many. See [Configuration](/docs/configuration/#aspnet-core) and [Logs](/docs/logs/).
 
 Serilog and NLog need one package:
 
@@ -134,8 +134,8 @@ Pass options to `AddWizeLens(o => { ... })`. The full list is on [Configuration]
 ```csharp
 builder.Services.AddWizeLens(o =>
 {
-    o.ServiceName = "gateway-api";
+    o.Service = "gateway-api";
     o.SlowQueryMs = 50;
-    o.EnableMcp = true;
+    o.Mcp = true;
 });
 ```

@@ -1,8 +1,8 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { type RecordedRequest, type Recorder, setBrowserApp, setBrowserRelease, setBrowserUser } from "@wizeworks/lens-browser";
+import { hudChoice, type RecordedRequest, type Recorder, setBrowserApp, setBrowserRelease, setBrowserUser } from "@wizeworks/lens-browser/internal";
 import { Hud } from "./Hud.js";
 import { claimPage } from "./page-instance.js";
-import { createRecorder } from "./react-capture.js";
+import { createReactRecorder } from "./react-capture.js";
 
 const WizeLensContext = createContext<Recorder | null>(null);
 
@@ -11,8 +11,8 @@ export interface WizeLensProviderProps {
   endpoint?: string;
   /** Turn profiling on. Default true. Pass e.g. `import.meta.env.DEV`. */
   enabled?: boolean;
-  /** Show the in-page HUD (the shared `<wizelens-hud>` element). Default true. Off also stops reading traces back, so it works with a send-only server. */
-  hud?: boolean;
+  /** The in-page HUD (the shared `<wizelens-hud>` element). "auto" (default) shows it when `{endpoint}/api/info` answers. Off also stops reading traces back, so it works with a send-only server. */
+  hud?: boolean | "auto";
   /** Which requests get a `traceparent` header. Default: same origin only. */
   propagateTo?: (url: URL) => boolean;
   /** The HUD shows requests at or over this many ms as "warning". Default 500. */
@@ -37,7 +37,7 @@ export interface WizeLensProviderProps {
 export function WizeLensProvider({
   endpoint = "/_wizelens",
   enabled = true,
-  hud = true,
+  hud = "auto",
   propagateTo,
   slowMs,
   capturePages = true,
@@ -49,11 +49,13 @@ export function WizeLensProvider({
   userName,
   children,
 }: WizeLensProviderProps) {
+  const choice = useMemo(() => (enabled ? hudChoice(endpoint, hud) : false), [enabled, endpoint, hud]);
   const recorder = useMemo(
-    () => (enabled ? createRecorder({ endpoint, propagateTo, capturePages, captureConsole, readServer: hud, version: release, resolveFrames }) : null),
+    () => (enabled ? createReactRecorder({ endpoint, propagateTo, capturePages, captureConsole, readServer: choice, release, resolveFrames }) : null),
     // propagateTo is read once on purpose; pass a stable function.
-    [endpoint, enabled, capturePages, captureConsole, hud, release, resolveFrames],
+    [endpoint, enabled, capturePages, captureConsole, choice, release, resolveFrames],
   );
+  const showHud = useResolved(choice);
 
   // Before install, so the first page load already carries the release.
   useEffect(() => setBrowserRelease(release), [release]);
@@ -66,7 +68,7 @@ export function WizeLensProvider({
   return (
     <WizeLensContext.Provider value={recorder}>
       {children}
-      {recorder && hud && stopped !== recorder && <Hud recorder={recorder} slowMs={slowMs} />}
+      {recorder && showHud && stopped !== recorder && <Hud recorder={recorder} slowMs={slowMs} />}
     </WizeLensContext.Provider>
   );
 }
@@ -84,7 +86,18 @@ export function useWizeLensRequests(): readonly RecordedRequest[] {
   );
 }
 
+/** A yes or no that may still be on its way; false until it arrives. */
+function useResolved(value: boolean | Promise<boolean>): boolean {
+  const [now, setNow] = useState(false);
+  useEffect(() => {
+    let live = true;
+    void Promise.resolve(value).then((v) => live && setNow(v));
+    return () => void (live = false);
+  }, [value]);
+  return now;
+}
+
 /** The active recorder, or null when WizeLens is off. */
-export function useWizeLens(): Recorder | null {
+export function useWizeLensRecorder(): Recorder | null {
   return useContext(WizeLensContext);
 }

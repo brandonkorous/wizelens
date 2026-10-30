@@ -1,8 +1,8 @@
 WizeLens collector is sending to {{ .Values.endpoint }}.
-{{- if and (not .Values.ingestKey) (not .Values.existingSecret.name) }}
+{{- if and (not .Values.token) (not .Values.existingSecret.name) }}
 
-No ingest key is set. That is fine for a hub without a token; WizeLens Cloud needs one:
-  helm upgrade {{ .Release.Name }} <chart> --reuse-values --set ingestKey=wl_ik_...
+No token is set. That is fine for a hub without a token; WizeLens Cloud needs an ingest key:
+  helm upgrade {{ .Release.Name }} <chart> --reuse-values --set token=wl_ik_...
 {{- end }}
 
 Hosts and Kubernetes appear in WizeLens within a minute or two.

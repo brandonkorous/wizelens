@@ -1,4 +1,4 @@
-import type { Attributes, Timing, Trace, TraceView } from "@wizeworks/lens-core";
+import type { Attributes, Timing, Trace, TraceView } from "@wizeworks/lens-core/internal";
 import type { FrameworkHooks } from "./framework.js";
 
 export interface RecordedRequest {
@@ -65,8 +65,8 @@ export interface RecorderOptions {
   captureConsole?: boolean;
   /** Read traces back from the server, for the HUD. Default true. Off sends only, for a server with its dashboard off. A promise decides later; reads wait for it. */
   readServer?: boolean | Promise<boolean>;
-  /** Your app's version (release), sent as service.version so stacks find the right source maps. Default: what the build plugin set. */
-  version?: string;
+  /** The web app's version, sent as service.version for release markers and so stacks find the right source maps. Default: what the build plugin set. */
+  release?: string;
   /** Read this page's source maps (dev servers serve them) so browser errors group by source. Default true. */
   resolveFrames?: boolean;
   /** Trace `XMLHttpRequest` calls too (Angular's HttpClient, axios). Default true; the React package leaves it off. */

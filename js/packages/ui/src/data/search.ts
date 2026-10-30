@@ -1,6 +1,6 @@
 // Search from the dashboard: the host's `api/search` when it has one, else the traces the browser holds.
 import { useEffect, useState } from "react";
-import { activeTags, checkSearch, decodeCursor, expandTags, type SearchKind, type SearchPage, searchMemory, type Suggestion, suggestMemory, suggestTags, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { activeTags, checkSearch, decodeCursor, expandTags, type SearchKind, type SearchPage, searchMemory, type Suggestion, suggestMemory, suggestTags, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core/internal";
 import { apiFetch, ApiError } from "./api";
 import { getScope } from "./prefs";
 import { provider } from "./provider";

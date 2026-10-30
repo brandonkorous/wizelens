@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MAX_BULK } from "@wizeworks/lens-core";
+import { MAX_BULK } from "@wizeworks/lens-core/internal";
 import { apiSend } from "../../data/api";
 import { inParts } from "../../data/bulk";
 import { useAsk } from "../../ui/Dialog";

@@ -1,6 +1,6 @@
 import { type Attributes, type Context, context, createContextKey, ROOT_CONTEXT, type Span as OtelSpan, SpanKind, trace, type Tracer } from "@opentelemetry/api";
 import { W3CTraceContextPropagator } from "@opentelemetry/core";
-import { ATTR_MESSAGING, type MessagingOperation } from "@wizeworks/lens-core";
+import { ATTR_MESSAGING, type MessagingOperation } from "@wizeworks/lens-core/internal";
 import { isThenable } from "../db.js";
 import { CATEGORY_ATTR } from "../processor.js";
 import { recordOn, SERVER_SPAN } from "../spans.js";

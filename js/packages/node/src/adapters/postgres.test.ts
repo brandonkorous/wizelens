@@ -2,12 +2,12 @@ import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { sql as dsql } from "drizzle-orm";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "../wizelens.js";
 import { driverOf, instrumentDrizzle } from "./drizzle.js";
 import { instrumentPostgresJs, labelPostgresJs } from "./postgres.js";
 
-const wizelens = createWizeLens({ serviceName: "postgres-js", storage: "memory", traceQueriesOutsideRequests: true });
+const wizelens = createWizeLens({ service: "postgres-js", storage: "memory", traceQueriesOutsideRequests: true });
 const dbSpans = (): Span[] => wizelens.store.all().flatMap((t) => t.spans.filter((s) => s.category === "db")).sort((a, b) => a.startMs - b.startMs);
 afterEach(() => wizelens.store.clear());
 

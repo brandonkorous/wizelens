@@ -9,14 +9,14 @@ The .NET and Node add-ons are off in production until you turn them on. Set thes
 
 ```bash
 WIZELENS_ENABLED=true
-WIZELENS_HUB=https://app.wizelens.com
-WIZELENS_HUB_TOKEN=wl_ik_...                   # one ingest key per service
+WIZELENS_ENDPOINT=https://app.wizelens.com
+WIZELENS_TOKEN=wl_ik_...                       # one ingest key per service
 WIZELENS_SAMPLE_RATE=0.25                      # optional, see Sampling
 ```
 
 No code change is needed. `Enabled = true` (.NET) or `enabled: true` (Node) does the same as `WIZELENS_ENABLED`.
 
-The Java, Python, and Go SDKs are on wherever they run, and they only send. Set `WIZELENS_HUB` and `WIZELENS_HUB_TOKEN` as
+The Java, Python, and Go SDKs are on wherever they run, and they only send. Set `WIZELENS_ENDPOINT` and `WIZELENS_TOKEN` as
 above; `WIZELENS_ENABLED=false` stops them. The browser package is on unless you pass `enabled: false`.
 
 ## Send-only

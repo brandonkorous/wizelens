@@ -1,6 +1,6 @@
 import { Fragment, type MouseEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { type PageInfo, slicePage } from "@wizeworks/lens-core";
+import { type PageInfo, slicePage } from "@wizeworks/lens-core/internal";
 import { setQuery } from "../routes";
 import { Pager } from "./Controls";
 import { sortQuery, type TablePaging, urlPaging, useTablePaging } from "./paging";

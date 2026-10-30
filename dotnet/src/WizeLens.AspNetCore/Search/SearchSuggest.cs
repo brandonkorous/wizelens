@@ -5,15 +5,15 @@ using WizeLens.Model;
 namespace WizeLens.Search;
 
 /// <summary>What to insert: "service", "@user.id", or a value; with help for a field, or how often a value was seen.</summary>
-public sealed record Suggestion(
+internal sealed record Suggestion(
     string Value,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Help = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Count = null);
 
 /// <summary>Field null asks for field names and attribute keys; else for values of that field. Env is what memory documents carry (in-app: the app's own).</summary>
-public sealed record SuggestRequest(string? Field, string Prefix, SearchWindow Window, int Limit, string? Env = null);
+internal sealed record SuggestRequest(string? Field, string Prefix, SearchWindow Window, int Limit, string? Env = null);
 
-public static class SearchSuggest
+internal static class SearchSuggest
 {
     /// <summary>Values every host knows without reading data.</summary>
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> FixedValues = new Dictionary<string, IReadOnlyList<string>>

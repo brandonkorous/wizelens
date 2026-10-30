@@ -1,4 +1,4 @@
-import type { ServiceEdge, ServiceRow } from "@wizeworks/lens-core";
+import type { ServiceEdge, ServiceRow } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtMs, fmtPct } from "../../format";
 import { navigate, setQuery } from "../../routes";
 import { Empty } from "../../ui/Panel";

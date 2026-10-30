@@ -1,4 +1,4 @@
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import type { FrameworkHooks } from "./framework.js";
 import { imageStats, watchImages } from "./images.js";
 import { afterNextPaint } from "./paint.js";

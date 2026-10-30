@@ -1,5 +1,5 @@
 import { type FormEvent, type ReactNode, useState } from "react";
-import { ALERT_METRICS, type AlertMetric, type AlertRuleInput, isAnomalyMetric } from "@wizeworks/lens-core";
+import { ALERT_METRICS, type AlertMetric, type AlertRuleInput, isAnomalyMetric } from "@wizeworks/lens-core/internal";
 import { Check, Field, FormRow, SelectField } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
 import { useOnce } from "../../ui/useOnce";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildTrace, isErrorSpan, isFailed, requestRows, serviceFacts, spanDoc, type Span } from "./index.js";
+import { buildTrace, isErrorSpan, isFailed, requestRows, serviceFacts, spanDoc, type Span } from "./internal.js";
 import { makeSpan } from "./testing/fixtures.js";
 
 const exception = { name: "exception", timeMs: 1, attributes: { "exception.message": "Builder page not found" } };

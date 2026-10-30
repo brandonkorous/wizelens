@@ -1,4 +1,4 @@
-import { fmtMetric, type MetricArea, type MetricInfo, type MetricsModel } from "@wizeworks/lens-core";
+import { fmtMetric, type MetricArea, type MetricInfo, type MetricsModel } from "@wizeworks/lens-core/internal";
 import { useServiceScope } from "../../data/prefs";
 import { setQuery } from "../../routes";
 import { SearchInput, Select } from "../../ui/Controls";

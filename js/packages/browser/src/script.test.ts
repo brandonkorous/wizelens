@@ -1,5 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { newPageView, pathOf } from "./pageview.js";
+import { registered } from "./registry.js";
 import { scriptOptions } from "./script.js";
 import { stubDom, stubServer } from "./test-dom.js";
 
@@ -59,13 +60,13 @@ it("starts an injected tag after the page's load event, and gives way to a runni
   mod.startFromTag({ endpoint: "/_wizelens", hud: false, source: "inject" });
   expect(mod.currentWizeLens()).toBeNull();
   dispatchEvent(new Event("load"));
-  expect(mod.registered()?.source).toBe("inject");
+  expect(registered()?.source).toBe("inject");
   await mod.currentWizeLens()?.shutdown();
   vi.stubGlobal("document", { ...document, readyState: "complete" });
   const app = mod.initWizeLens({ hud: false });
   mod.startFromTag({ endpoint: "/_wizelens", hud: false, source: "inject" });
   expect(mod.currentWizeLens()).toBe(app);
-  expect(mod.registered()?.source).toBe("app");
+  expect(registered()?.source).toBe("app");
   await app.shutdown();
   delete (globalThis as { __wizelensLoadView?: unknown }).__wizelensLoadView;
 });

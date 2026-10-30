@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from "vitest";
-import { pageContext, runPage, type Trace, windowOf } from "@wizeworks/lens-core";
+import { pageContext, runPage, type Trace, windowOf } from "@wizeworks/lens-core/internal";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { createProject } from "./repo/projects.js";
 import { pgReader, pgTelemetry } from "./telemetry/pg-store.js";

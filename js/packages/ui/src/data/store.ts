@@ -1,4 +1,4 @@
-import { mergeTraces, type ServiceInfo, type Trace } from "@wizeworks/lens-core";
+import { mergeTraces, type ServiceInfo, type Trace } from "@wizeworks/lens-core/internal";
 import { getScope, onPrefChange, type Scope } from "./prefs";
 import { type HubRegistry, loadInfo, loadRegistry, loadTraces, newSource, normalizeEndpoint, selfEndpoint, type Source } from "./sources";
 

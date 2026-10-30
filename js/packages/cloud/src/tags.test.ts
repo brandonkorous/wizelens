@@ -1,5 +1,5 @@
 import { afterEach, expect, it } from "vitest";
-import type { TagList, TagRule } from "@wizeworks/lens-core";
+import type { TagList, TagRule } from "@wizeworks/lens-core/internal";
 import type { Cloud } from "./server.js";
 import { CH_LIMIT, CH_URL } from "./test/ch.js";
 import { Client, invite, joinWithInvite, setupOwner, startCloud } from "./test/cloud.js";

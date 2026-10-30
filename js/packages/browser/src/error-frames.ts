@@ -1,4 +1,4 @@
-import { annotateErrorFrames, cachedLoader, fetchMapLoader, type MapLoader, type Span } from "@wizeworks/lens-core";
+import { annotateErrorFrames, cachedLoader, fetchMapLoader, type MapLoader, type Span } from "@wizeworks/lens-core/internal";
 import { OWN_CALL } from "./fetch-patch.js";
 import type { Sender } from "./sender.js";
 

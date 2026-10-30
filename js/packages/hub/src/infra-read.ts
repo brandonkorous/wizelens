@@ -1,5 +1,5 @@
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
-import { alignNow, type HostsModel, hostsModelOf, INFRA_PARAMS, infraSteps, type KubeModel, kubeModelOf, type MetricData, type MetricRows, runMetricSync, type TimeRange } from "@wizeworks/lens-core";
+import { alignNow, type HostsModel, hostsModelOf, INFRA_PARAMS, infraSteps, type KubeModel, kubeModelOf, type MetricData, type MetricRows, runMetricSync, type TimeRange } from "@wizeworks/lens-core/internal";
 import { type MetricScope, rangeOf } from "./metrics-read.js";
 import { sqlScopeOf } from "./scale-exec.js";
 import { listServices } from "./store-read.js";

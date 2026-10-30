@@ -1,5 +1,5 @@
 // The provider's place in lens-browser's one-instance-per-page registry.
-import { type Recorder, register, registered, type RegisteredInstance, unregister } from "@wizeworks/lens-browser";
+import { type Recorder, register, registered, type RegisteredInstance, unregister } from "@wizeworks/lens-browser/internal";
 
 /** Install `recorder` as the page's app instance: an injected one stops first, and an app instance already registered keeps its place. Returns the uninstall. */
 export function claimPage(recorder: Recorder, onStop: () => void): () => void {

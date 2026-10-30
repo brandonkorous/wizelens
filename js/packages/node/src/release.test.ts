@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { VERSION_ATTR } from "@wizeworks/lens-core";
+import { VERSION_ATTR } from "@wizeworks/lens-core/internal";
 import { hudTag } from "./hud-bundle.js";
 import { releaseOf } from "./hub-connect.js";
 import { packageVersionAt, RELEASE_ENV, resetReleaseCache } from "./release.js";
@@ -36,12 +36,12 @@ describe("release", () => {
   it("comes from the option, then WIZELENS_RELEASE, then OTEL_SERVICE_VERSION, then npm_package_version", () => {
     clearEnv();
     vi.stubEnv("npm_package_version", "1.0.0");
-    expect(releaseOf({ serviceName: "api" })).toBe("1.0.0");
+    expect(releaseOf({ service: "api" })).toBe("1.0.0");
     vi.stubEnv("OTEL_SERVICE_VERSION", "1.5.0");
-    expect(releaseOf({ serviceName: "api" })).toBe("1.5.0");
+    expect(releaseOf({ service: "api" })).toBe("1.5.0");
     vi.stubEnv("WIZELENS_RELEASE", "2.0.0");
-    expect(releaseOf({ serviceName: "api" })).toBe("2.0.0");
-    expect(releaseOf({ serviceName: "api", release: "3.0.0" })).toBe("3.0.0");
+    expect(releaseOf({ service: "api" })).toBe("2.0.0");
+    expect(releaseOf({ service: "api", release: "3.0.0" })).toBe("3.0.0");
   });
 
   it("reads the commit a host sets when nothing else names a release", () => {

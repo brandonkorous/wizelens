@@ -1,4 +1,4 @@
-import type { InsightGroup, IssueInfo, PageInfo } from "@wizeworks/lens-core";
+import type { InsightGroup, IssueInfo, PageInfo } from "@wizeworks/lens-core/internal";
 import { fmtAgo, fmtCount, fmtMs } from "../../format";
 import { setQuery } from "../../routes";
 import { ImpactBadge } from "../../ui/Badges";

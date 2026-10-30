@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
-import { changeOf, lastRunOf, nextRunMs, UPTIME_KEEP_MS, type UptimeCheck, type UptimeCheckInput, type UptimeIncident, type UptimeResult } from "@wizeworks/lens-core";
+import { changeOf, lastRunOf, nextRunMs, UPTIME_KEEP_MS, type UptimeCheck, type UptimeCheckInput, type UptimeIncident, type UptimeResult } from "@wizeworks/lens-core/internal";
 
 // Uptime checks and incidents in the hub file (docs/CONTRACT.md, "Hub storage"). Results themselves are traces.
 export const HUB_UPTIME_SCHEMA = `

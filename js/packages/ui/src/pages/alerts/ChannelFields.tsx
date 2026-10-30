@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
-import { MAX_ALERT_CHANNELS } from "@wizeworks/lens-core";
+import { MAX_ALERT_CHANNELS } from "@wizeworks/lens-core/internal";
 import { currentProject, useAccount } from "../../data/account";
 import { useHost } from "../../data/host";
 import { useApi } from "../../data/useApi";

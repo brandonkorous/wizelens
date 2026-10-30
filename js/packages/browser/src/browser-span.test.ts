@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { ATTR_BROWSER_APP, VERSION_ATTR } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_APP, VERSION_ATTR } from "@wizeworks/lens-core/internal";
 import { browserSpan, isBotBrowser, setBrowserApp, setBrowserRelease } from "./browser-span.js";
 import { scriptOptions } from "./script.js";
 

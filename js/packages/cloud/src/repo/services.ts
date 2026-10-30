@@ -1,4 +1,4 @@
-import { HUB_ONLINE_MS } from "@wizeworks/lens-core";
+import { HUB_ONLINE_MS } from "@wizeworks/lens-core/internal";
 import type { Queryable } from "../db/db.js";
 import { KEEP_DAYS } from "./settings.js";
 

@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from "vitest";
-import type { Trace } from "@wizeworks/lens-core";
+import type { Trace } from "@wizeworks/lens-core/internal";
 import { SCENARIO_NOW, scenarioTraces } from "../../core/src/testing/scenario.js";
 import { chClient } from "./telemetry/ch/http.js";
 import { CH_LIMIT, CH_URL, type ChTest, chSettle, chTest, chWrite } from "./test/ch.js";

@@ -1,6 +1,6 @@
 // Several metrics at once, for a dashboard chart: each one's detail with the same filter and split.
 import { useEffect, useMemo, useState } from "react";
-import { type MetricDetail, type MetricPoint, metricsModel, type MetricsModel, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core";
+import { type MetricDetail, type MetricPoint, metricsModel, type MetricsModel, TIME_RANGES, type TimeRange } from "@wizeworks/lens-core/internal";
 import { apiFetch } from "./api";
 import { useHost, useRange } from "./host";
 import { usePeriodParams } from "./models";

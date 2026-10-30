@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Clock, Gauge, Timer, TriangleAlert, UserRound } from "lucide-react";
-import { errorGroupDoc, type RequestItem, type UserModel, userDoc, userScope } from "@wizeworks/lens-core";
+import { errorGroupDoc, type RequestItem, type UserModel, userDoc, userScope } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { traceRow, useGroupTags } from "../../data/tagMatch";
 import { fmtCount, fmtMs, fmtPct, fmtTime } from "../../format";

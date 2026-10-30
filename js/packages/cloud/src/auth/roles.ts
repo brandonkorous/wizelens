@@ -1,4 +1,4 @@
-import { ACCESS_STATEMENTS, type AccessGrant, isOrgRole, ORG_ROLES, type OrgRole, ROLE_GRANTS, ROLE_RANK, roleAllows } from "@wizeworks/lens-core";
+import { ACCESS_STATEMENTS, type AccessGrant, isOrgRole, ORG_ROLES, type OrgRole, ROLE_GRANTS, ROLE_RANK, roleAllows } from "@wizeworks/lens-core/internal";
 import { createAccessControl } from "better-auth/plugins/access";
 
 /** Roles in an organization, from most to least power. */

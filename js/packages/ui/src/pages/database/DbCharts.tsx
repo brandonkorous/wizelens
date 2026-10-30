@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { DatabaseModel } from "@wizeworks/lens-core";
+import type { DatabaseModel } from "@wizeworks/lens-core/internal";
 import { fmtMs } from "../../format";
 import { setQuery } from "../../routes";
 import { BarList } from "../../ui/BarList";

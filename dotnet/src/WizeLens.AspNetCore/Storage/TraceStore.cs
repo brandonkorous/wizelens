@@ -4,7 +4,7 @@ using WizeLens.Model;
 namespace WizeLens.Storage;
 
 /// <summary>Thread-safe in-memory trace store (the read path); drops the oldest first and tracks changes for SQLite.</summary>
-public sealed partial class TraceStore
+internal sealed partial class TraceStore
 {
     public const string SessionAttribute = "wizelens.browser.session";
 

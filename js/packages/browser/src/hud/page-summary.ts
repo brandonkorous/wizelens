@@ -1,4 +1,4 @@
-import { type Health, healthOf, timingSegments } from "@wizeworks/lens-core";
+import { type Health, healthOf, timingSegments } from "@wizeworks/lens-core/internal";
 import { endOf, type RequestView, requestView } from "../hud-model.js";
 import type { RecordedRequest, ServerStats } from "../recorder-types.js";
 import { callKey, type HudPage } from "./page-log.js";

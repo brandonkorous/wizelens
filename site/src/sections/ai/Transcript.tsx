@@ -57,7 +57,7 @@ export function Transcript() {
   return (
     <div className="wl-tr" ref={box}>
       <div className="wl-tr-config">
-        <code>builder.Services.AddWizeLens(o =&gt; o.EnableMcp = <b className={on ? "wl-tr-true" : "wl-tr-false"}>{on ? "true" : "false"}</b>);</code>
+        <code>builder.Services.AddWizeLens(o =&gt; o.Mcp = <b className={on ? "wl-tr-true" : "wl-tr-false"}>{on ? "true" : "false"}</b>);</code>
         <span className={`wl-switch${on ? " wl-switch-on" : ""}`} aria-hidden><i /></span>
       </div>
       <div className="wl-tr-body">

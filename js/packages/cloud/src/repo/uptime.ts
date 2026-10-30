@@ -1,4 +1,4 @@
-import { changeOf, lastRunOf, nextRunMs, UPTIME_KEEP_MS, type UptimeCheck, type UptimeCheckInput, type UptimeIncident, type UptimeResult } from "@wizeworks/lens-core";
+import { changeOf, lastRunOf, nextRunMs, UPTIME_KEEP_MS, type UptimeCheck, type UptimeCheckInput, type UptimeIncident, type UptimeResult } from "@wizeworks/lens-core/internal";
 import { newId } from "../auth/crypto.js";
 import type { AuthSecret } from "../auth/secret.js";
 import type { Queryable } from "../db/db.js";

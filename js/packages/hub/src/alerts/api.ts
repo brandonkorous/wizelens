@@ -1,7 +1,7 @@
 // `api/alerts?project=`: the hub's alert rules. Rules, a rule's history, test, mute, and acknowledge. The hub sends no email.
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { type AlertRule, MUTED_FOREVER, PAGE_SIZES, pageParams, parseAlertRule } from "@wizeworks/lens-core";
-import { sendJson } from "@wizeworks/lens-node/kit";
+import { type AlertRule, MUTED_FOREVER, PAGE_SIZES, pageParams, parseAlertRule } from "@wizeworks/lens-core/internal";
+import { sendJson } from "@wizeworks/lens-node/internal";
 import { parseJson, readBody } from "../body.js";
 import { sloById } from "../slos.js";
 import { checkTarget } from "./target.js";

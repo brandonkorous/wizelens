@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { ATTR_ROUTED_MS, type Trace } from "@wizeworks/lens-core";
+import { ATTR_ROUTED_MS, type Trace } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "./index.js";
 import { getJson, type Running, settle, startApp } from "./test/helpers.js";
 
-const wizelens = createWizeLens({ serviceName: "route-api", enabled: true, storage: "memory", instrumentFetch: false });
+const wizelens = createWizeLens({ service: "route-api", enabled: true, storage: "memory", instrumentFetch: false });
 let app: Running;
 
 beforeAll(async () => {

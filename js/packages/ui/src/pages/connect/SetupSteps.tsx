@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { HubSendState, ServiceInfo } from "@wizeworks/lens-core";
+import type { SendState, ServiceInfo } from "@wizeworks/lens-core/internal";
 import { fmtAgo } from "../../format";
 import { hrefTo } from "../../routes";
 import { DotText } from "../../ui/Badges";
@@ -37,7 +37,7 @@ function HubSteps({ hubUrl }: { hubUrl: string }) {
     <>
       <SectionHead title="Setup steps" description="Send a service's data to this hub. The service keeps its own dashboard too." />
       <Panel title="1. Set these on the service">
-        <Snippet label="WizeLens add-on (.NET or Node)" text={`WIZELENS_HUB=${hubUrl}`} />
+        <Snippet label="WizeLens add-on (.NET or Node)" text={`WIZELENS_ENDPOINT=${hubUrl}`} />
         <Snippet label="Group it in a project (optional)" text="WIZELENS_PROJECT=my-project" />
         <ReleaseSnippet />
         <EnvSnippet />
@@ -73,8 +73,8 @@ function CloudSteps({ url, ctx }: { url: string; ctx: OrgCtx | null }) {
       <SectionHead title="Setup steps" description="Send a service's data to WizeLens Cloud: make a key, set it on the service, and restart it." />
       <KeyStep ctx={ctx} />
       <Panel title="2. Set these on the service">
-        <Snippet label="WizeLens add-on (.NET or Node)" text={`WIZELENS_HUB=${url}`} />
-        <Snippet label="Its ingest key" text="WIZELENS_HUB_TOKEN=wl_ik_..." />
+        <Snippet label="WizeLens add-on (.NET or Node)" text={`WIZELENS_ENDPOINT=${url}`} />
+        <Snippet label="Its ingest key" text="WIZELENS_TOKEN=wl_ik_..." />
         <ReleaseSnippet />
         <EnvSnippet />
         <Snippet label="Any OpenTelemetry app (OTLP/HTTP)" text={`OTEL_EXPORTER_OTLP_ENDPOINT=${url}`} />
@@ -86,7 +86,7 @@ function CloudSteps({ url, ctx }: { url: string; ctx: OrgCtx | null }) {
 }
 
 // Whether the hub takes this service's data: a failing send says why, so a missing key is not silent.
-function SendStatus({ send }: { send: HubSendState }) {
+function SendStatus({ send }: { send: SendState }) {
   if (send.state === "ok") return <p className="wl-settings-note"><DotText tone="success">Sending</DotText> <span className="wl-muted">· last batch {fmtAgo(send.lastSentMs ?? Date.now())}</span></p>;
   if (send.state === "waiting") return <p className="wl-settings-note"><DotText tone="neutral">Waiting for the first batch</DotText></p>;
   return (
@@ -97,15 +97,15 @@ function SendStatus({ send }: { send: HubSendState }) {
 }
 
 /** In-app: say where this service also sends its data, and whether it gets there. */
-function SendsToHub({ hub, send }: { hub: string; send?: HubSendState }) {
+function SendsTo({ to, send }: { to: string; send?: SendState }) {
   return (
     <>
       <SectionHead title="Sends to" />
       <Panel>
         {send && <SendStatus send={send} />}
         <p className="wl-settings-note">
-          This service also sends its data to the hub or cloud at <code className="wl-mono">{hub}</code>.{" "}
-          <a href={`${hub}/_wizelens/`} target="_blank" rel="noreferrer">
+          This service also sends its data to the hub or cloud at <code className="wl-mono">{to}</code>.{" "}
+          <a href={`${to}/_wizelens/`} target="_blank" rel="noreferrer">
             Open that dashboard
           </a>{" "}
           to see every service in one place.
@@ -120,5 +120,5 @@ export function SetupSteps({ info, ctx }: { info: ServiceInfo | null; ctx: OrgCt
   const base = hereUrl();
   if (info?.mode === "hub") return <HubSteps hubUrl={base} />;
   if (info?.mode === "cloud") return <CloudSteps url={base} ctx={ctx} />;
-  return info?.hub ? <SendsToHub hub={info.hub} send={info.hubSend} /> : null;
+  return info?.sendTo ? <SendsTo to={info.sendTo} send={info.send} /> : null;
 }

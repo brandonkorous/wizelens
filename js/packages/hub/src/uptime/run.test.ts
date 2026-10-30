@@ -2,7 +2,7 @@ import { createServer, type RequestListener, type Server } from "node:http";
 import { createServer as createTlsServer } from "node:https";
 import type { AddressInfo } from "node:net";
 import { afterEach, describe, expect, it } from "vitest";
-import { parseCheckInput, type UptimeCheckInput } from "@wizeworks/lens-core";
+import { parseCheckInput, type UptimeCheckInput } from "@wizeworks/lens-core/internal";
 import { TEST_CERT, TEST_CERT_END, TEST_KEY } from "../test/tls.js";
 import { isPrivateAddress } from "./guard.js";
 import { runCheck } from "./run.js";

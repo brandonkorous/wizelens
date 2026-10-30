@@ -63,7 +63,7 @@ internal sealed class WizeLensActivityListener(TraceStore store, WizeLensOptions
 
         try
         {
-            var service = options.ServiceName ?? "app";
+            var service = options.Service ?? "app";
             var span = GrpcClientCalls.Complete(activity, service);
             if (span is not null && options.Release is { } release) span.Attributes.TryAdd("service.version", release);
             // A local root has no parent in this process (none, or one from another service).

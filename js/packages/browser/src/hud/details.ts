@@ -1,4 +1,4 @@
-import { type Finding, type FindingKind, insightsOf, SECURITY_LABELS, securityOf, type TraceView } from "@wizeworks/lens-core";
+import { type Finding, type FindingKind, insightsOf, SECURITY_LABELS, securityOf, type TraceView } from "@wizeworks/lens-core/internal";
 import { fmtMs, plural, type RequestView, share } from "../hud-model.js";
 import type { PageStats } from "../page.js";
 import { type Child, h } from "./dom.js";

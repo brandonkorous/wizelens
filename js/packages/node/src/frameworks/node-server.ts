@@ -1,7 +1,7 @@
 import { type IncomingMessage, Server as HttpServer, type ServerResponse } from "node:http";
 import { Server as HttpsServer } from "node:https";
 import { context, type Span as OtelSpan } from "@opentelemetry/api";
-import { pathShape } from "@wizeworks/lens-core";
+import { pathShape } from "@wizeworks/lens-core/internal";
 import { patchMethod } from "../adapters/registry.js";
 import { type CaptureDeps, captureRequest, isOwnPath, isUntraced, pathOf, requestSpan, serveOwnPath, withoutTracing } from "../request-capture.js";
 

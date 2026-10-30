@@ -1,4 +1,4 @@
-import type { LogLevel, LogRecord } from "@wizeworks/lens-core";
+import type { LogLevel, LogRecord } from "@wizeworks/lens-core/internal";
 import { browserAppAttrs, type ViewRef } from "./browser-span.js";
 import { now } from "./session.js";
 

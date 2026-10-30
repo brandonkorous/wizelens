@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 import { ArrowLeft, Clock, HeartPulse } from "lucide-react";
-import type { UptimeCheckInput, UptimeCheckView, UptimeModel } from "@wizeworks/lens-core";
+import type { UptimeCheckInput, UptimeCheckView, UptimeModel } from "@wizeworks/lens-core/internal";
 import { fmtAgo, fmtCount, fmtDate, fmtMs } from "../../format";
 import { usePageModel } from "../../data/models";
 import { useUptime } from "../../data/uptime";

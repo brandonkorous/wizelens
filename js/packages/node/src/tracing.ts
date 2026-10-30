@@ -5,7 +5,7 @@ import { W3CTraceContextPropagator } from "@opentelemetry/core";
 import { UndiciInstrumentation } from "@opentelemetry/instrumentation-undici";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { AlwaysOnSampler, BasicTracerProvider } from "@opentelemetry/sdk-trace-base";
-import { HEADER_ENDPOINT, HEADER_HOP } from "@wizeworks/lens-core";
+import { HEADER_ENDPOINT, HEADER_HOP } from "@wizeworks/lens-core/internal";
 import { type OnRemote, remoteNoter } from "./client-attributes.js";
 import { instrumentHttp } from "./http-client.js";
 import { hasRequestHeader, responseHeader } from "./http-util.js";

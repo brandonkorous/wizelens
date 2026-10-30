@@ -4,13 +4,13 @@ using WizeLens.Model;
 
 namespace WizeLens.Analysis;
 
-public sealed record SecurityFinding(string Kind, string Severity, string Title, string Shape, int Count, double TotalMs, IReadOnlyList<string> SpanIds)
+internal sealed record SecurityFinding(string Kind, string Severity, string Title, string Shape, int Count, double TotalMs, IReadOnlyList<string> SpanIds)
 {
     public static SecurityFinding Of(string kind, string severity, string title, string shape, Span span) => new(kind, severity, title, shape, 1, span.DurationMs, [span.SpanId]);
 }
 
 /// <summary>The request a trace answers, as the security rules read it; the same as core/src/security/request.ts.</summary>
-public sealed partial class SecurityRequest
+internal sealed partial class SecurityRequest
 {
     public required Span Span { get; init; }
     public required string Method { get; init; }

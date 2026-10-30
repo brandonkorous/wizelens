@@ -1,5 +1,5 @@
 import { Box, Cpu, MemoryStick, Server } from "lucide-react";
-import type { HostRow, HostsModel } from "@wizeworks/lens-core";
+import type { HostRow, HostsModel } from "@wizeworks/lens-core/internal";
 import { useData } from "../../data/hooks";
 import { useInfraModel } from "../../data/infra";
 import { fmtAgo, fmtCount } from "../../format";

@@ -1,6 +1,6 @@
 // MCP over every project a reader has, read together (the cloud's "All projects"): one scope, services shown as "service · project".
-import type { Trace } from "@wizeworks/lens-core";
-import type { McpDataSource } from "@wizeworks/lens-node/kit";
+import type { Trace } from "@wizeworks/lens-core/internal";
+import type { McpDataSource } from "@wizeworks/lens-node/internal";
 import type { Ctx } from "../app.js";
 import { listEvents } from "../repo/alert-events.js";
 import { listRules } from "../repo/alerts.js";

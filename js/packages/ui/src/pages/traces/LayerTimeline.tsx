@@ -1,6 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 import { Box, Cog, Database, ExternalLink, Globe, Inbox, Monitor, Paintbrush, Share2 } from "lucide-react";
-import { ATTR_REACT_COMPONENTS, type LayerKind, type Trace, type TraceLayer, traceDurationOf, traceLayers } from "@wizeworks/lens-core";
+import { ATTR_REACT_COMPONENTS, type LayerKind, type Trace, type TraceLayer, traceDurationOf, traceLayers } from "@wizeworks/lens-core/internal";
 import { fmtDateTime, fmtMs } from "../../format";
 import { hrefTo, traceHref } from "../../routes";
 import { Badge, CopyButton, Dot, toneOfStatus } from "../../ui/Badges";

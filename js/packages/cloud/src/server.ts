@@ -1,9 +1,9 @@
 import { createRequire } from "node:module";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
-import { PACKAGES_PATH, SOURCEMAPS_PATH } from "@wizeworks/lens-core";
-import { otlpSignalOf } from "@wizeworks/lens-hub/kit";
-import { resolveUiDir, serveUi } from "@wizeworks/lens-node/kit";
+import { PACKAGES_PATH, SOURCEMAPS_PATH } from "@wizeworks/lens-core/internal";
+import { otlpSignalOf } from "@wizeworks/lens-hub/internal";
+import { resolveUiDir, serveUi } from "@wizeworks/lens-node/internal";
 import type { CloudApp, Ctx } from "./app.js";
 import type { WizeAuth } from "./auth/auth.js";
 import { authHandler } from "./auth/bridge.js";

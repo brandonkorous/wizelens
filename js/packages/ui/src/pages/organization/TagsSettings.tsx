@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import type { TagInput, TagRule } from "@wizeworks/lens-core";
+import type { TagInput, TagRule } from "@wizeworks/lens-core/internal";
 import { currentProject, useAccount } from "../../data/account";
 import { useHost } from "../../data/host";
 import { isAllProjects } from "../../data/projectScope";

@@ -1,5 +1,5 @@
 import { constants, type PerformanceEntry } from "node:perf_hooks";
-import type { MetricPoint } from "@wizeworks/lens-core";
+import type { MetricPoint } from "@wizeworks/lens-core/internal";
 
 /** OTel advice for `v8js.gc.duration`, in seconds. */
 export const GC_BOUNDS = [0.01, 0.1, 1, 10];

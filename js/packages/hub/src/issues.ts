@@ -1,8 +1,8 @@
 // Issue states on the hub: error groups and insights resolved or ignored, per project ("" for all).
 import type { DatabaseSync } from "node:sqlite";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { applyIssueChange, type IssueKind, type IssueState, issueStatesOf, type IssueStates, parseIssueChanges } from "@wizeworks/lens-core";
-import { sendJson } from "@wizeworks/lens-node/kit";
+import { applyIssueChange, type IssueKind, type IssueState, issueStatesOf, type IssueStates, parseIssueChanges } from "@wizeworks/lens-core/internal";
+import { sendJson } from "@wizeworks/lens-node/internal";
 import { parseJson, readBody } from "./body.js";
 
 interface Row {

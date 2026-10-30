@@ -1,7 +1,7 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import express, { type Express } from "express";
-import { newSpanId, type Span } from "@wizeworks/lens-core";
+import { newSpanId, type Span } from "@wizeworks/lens-core/internal";
 import type { WizeLens } from "../types.js";
 
 export interface Running {

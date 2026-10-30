@@ -1,12 +1,12 @@
 import { context } from "@opentelemetry/api";
 import { suppressTracing } from "@opentelemetry/core";
-import { HEADER_HOP } from "@wizeworks/lens-core";
+import { HEADER_HOP } from "@wizeworks/lens-core/internal";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { createWizeLens } from "./index.js";
 import { call, clientSpans, type Downstream, spansOf, startDownstream } from "./test/downstream.js";
 import { type Running, startApp } from "./test/helpers.js";
 
-const wl = createWizeLens({ serviceName: "http-out", storage: "memory", captureConsole: false, captureMetrics: false });
+const wl = createWizeLens({ service: "http-out", storage: "memory", captureConsole: false, captureMetrics: false });
 let app: Running;
 let down: Downstream;
 

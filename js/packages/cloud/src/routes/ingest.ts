@@ -1,16 +1,16 @@
 import type { IncomingMessage } from "node:http";
 import { Transform } from "node:stream";
-import { annotateErrorFrames, redactSignals } from "@wizeworks/lens-core";
+import { annotateErrorFrames, redactSignals } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { bearerOf, fail, sendJson } from "../http/http.js";
 import type { RateLimiter } from "../http/limiter.js";
 import { type ApiKey, type IngestScope, keyAllows, keyByToken } from "../repo/projects.js";
 import { writeService } from "../repo/trace-write.js";
-import { handleOtlp, type HubWrite, type OtlpSignal, parseIngest, parseJson, readBody } from "@wizeworks/lens-hub/kit";
+import { handleOtlp, type HubWrite, type OtlpSignal, parseIngest, parseJson, readBody } from "@wizeworks/lens-hub/internal";
 
 export type IngestKey = ApiKey & { orgId: string };
 
-/** The ingest key of the call. Add-ons send it as WIZELENS_HUB_TOKEN; OTLP apps as a bearer header. */
+/** The ingest key of the call. Add-ons send it from WIZELENS_TOKEN, OTLP apps as a bearer header. */
 async function ingestKey(ctx: Ctx, limiter: RateLimiter): Promise<IngestKey> {
   const token = bearerOf(ctx.req);
   if (!token?.startsWith("wl_ik_")) return fail(401, "Send an ingest key: Authorization: Bearer wl_ik_...");

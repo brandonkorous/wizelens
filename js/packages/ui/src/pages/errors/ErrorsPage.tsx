@@ -8,7 +8,7 @@ import { ErrorDetailsPanel } from "./ErrorDetails";
 import { ErrorFilters } from "./ErrorFilters";
 import { ErrorGroupPage } from "./ErrorGroupPage";
 import { ErrorsByServicePanel, RecentExceptionsPanel } from "./ErrorTables";
-import type { ErrorsModel } from "@wizeworks/lens-core";
+import type { ErrorsModel } from "@wizeworks/lens-core/internal";
 import { usePageModel } from "../../data/models";
 import { ModelState } from "../../ui/ModelState";
 import "../../styles/pages/errors.css";

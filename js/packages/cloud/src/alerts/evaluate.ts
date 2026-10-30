@@ -19,8 +19,8 @@ import {
   sloBurnMessage,
   sloBurnPage,
   sloContext,
-} from "@wizeworks/lens-core";
-import { deliver, type Notice, type Outbox } from "@wizeworks/lens-hub/kit";
+} from "@wizeworks/lens-core/internal";
+import { deliver, type Notice, type Outbox } from "@wizeworks/lens-hub/internal";
 import type { CloudApp } from "../app.js";
 import { alertMail } from "../mail/templates.js";
 import { addEvent } from "../repo/alert-events.js";
@@ -101,7 +101,7 @@ async function outboxOf(app: CloudApp, projectId: string): Promise<Outbox> {
     const note = app.mailer.live ? `sent to ${ok.length}` : "mail is not set up (see the cloud log)";
     return `email: ${note}${ok.length < to.length ? `, ${to.length - ok.length} no longer members` : ""}`;
   };
-  return { http: app.config.fetch, allowPrivate: app.config.allowPrivateWebhooks, email, pagerDutyUrl: app.config.pagerDutyUrl };
+  return { http: app.config.fetch, allowPrivate: app.config.allowPrivateTargets, email, pagerDutyUrl: app.config.pagerDutyUrl };
 }
 
 /** Send a notice and keep it as an event, with the problem it names. */

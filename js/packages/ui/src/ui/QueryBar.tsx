@@ -1,6 +1,6 @@
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
-import { checkSearch, type Suggestion, type TimeRange } from "@wizeworks/lens-core";
+import { checkSearch, type Suggestion, type TimeRange } from "@wizeworks/lens-core/internal";
 import { fetchSuggest } from "../data/search";
 import { applySuggestion, type TokenAt, tokenAt } from "./queryToken";
 import "../styles/query.css";

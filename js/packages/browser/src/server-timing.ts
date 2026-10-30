@@ -1,4 +1,4 @@
-import { TIMING_ENDPOINT, TIMING_START, TIMING_TRACE } from "@wizeworks/lens-core";
+import { TIMING_ENDPOINT, TIMING_START, TIMING_TRACE } from "@wizeworks/lens-core/internal";
 
 /** The server trace of this page's document, from its Server-Timing header. */
 export interface DocumentTrace {

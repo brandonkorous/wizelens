@@ -1,6 +1,6 @@
 // Which tags each row on screen has: the host checks rows of requests, traces, spans, and logs; group rows are checked here.
 import { useEffect, useMemo, useState } from "react";
-import { type GroupKind, groupTags, type LogRow, logOwner, matchKey, type SearchDoc, type SearchKind, TAG_LIMITS, type TagMatches, type TagMatchItem, type TagRule } from "@wizeworks/lens-core";
+import { type GroupKind, groupTags, type LogRow, logOwner, matchKey, type SearchDoc, type SearchKind, TAG_LIMITS, type TagMatches, type TagMatchItem, type TagRule } from "@wizeworks/lens-core/internal";
 import { apiSend } from "./api";
 import { getScope } from "./prefs";
 import { tagScopeQuery, useTags } from "./tags";

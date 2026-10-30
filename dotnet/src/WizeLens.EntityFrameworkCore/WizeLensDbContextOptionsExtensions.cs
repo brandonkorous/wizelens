@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace WizeLens.EntityFrameworkCore;
 
+/// <summary>Adds WizeLens to an EF Core context.</summary>
 public static class WizeLensDbContextOptionsExtensions
 {
     /// <summary>Records every EF Core command in WizeLens: <c>options.UseSqlite(cs).UseWizeLens()</c>.</summary>

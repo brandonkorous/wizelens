@@ -1,5 +1,5 @@
 import { Clock, Layers, Lightbulb, TriangleAlert } from "lucide-react";
-import { percentChange, type TracesModel } from "@wizeworks/lens-core";
+import { percentChange, type TracesModel } from "@wizeworks/lens-core/internal";
 import { useData } from "../../data/hooks";
 import { usePageModel } from "../../data/models";
 import { fmtCount } from "../../format";

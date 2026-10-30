@@ -1,6 +1,6 @@
 import { context, ROOT_CONTEXT } from "@opentelemetry/api";
 import { suppressTracing } from "@opentelemetry/core";
-import { HEADER_HOP, MAX_FEDERATION_HOPS, mergeTraces, type Trace } from "@wizeworks/lens-core";
+import { HEADER_HOP, MAX_FEDERATION_HOPS, mergeTraces, type Trace } from "@wizeworks/lens-core/internal";
 import type { TraceStore } from "./store.js";
 
 const TIMEOUT_MS = 2000;

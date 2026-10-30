@@ -1,6 +1,6 @@
 import type { ServerResponse } from "node:http";
-import { activeTags, expandQuery, searchRequestOf, searchSql, SQLITE_DIALECT, suggestRequestOf, suggestSql, suggestTags } from "@wizeworks/lens-core";
-import { sendJson } from "@wizeworks/lens-node/kit";
+import { activeTags, expandQuery, searchRequestOf, searchSql, SQLITE_DIALECT, suggestRequestOf, suggestSql, suggestTags } from "@wizeworks/lens-core/internal";
+import { sendJson } from "@wizeworks/lens-node/internal";
 import type { ApiContext } from "./api.js";
 import { hubSettling, sqliteRunner, sqlScopeOf } from "./scale-exec.js";
 import { hubTags } from "./tags.js";

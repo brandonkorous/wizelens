@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import type { Cloud } from "./server.js";
 import { Client, invite, joinWithInvite, type Me, setupOwner, startCloud } from "./test/cloud.js";
 import { span, T1, T2 } from "./test/db.js";

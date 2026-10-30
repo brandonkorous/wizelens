@@ -1,5 +1,5 @@
 import { context, createContextKey, type Span as OtelSpan, SpanStatusCode, trace } from "@opentelemetry/api";
-import { ATTR_EXPECTED } from "@wizeworks/lens-core";
+import { ATTR_EXPECTED } from "@wizeworks/lens-core/internal";
 
 /** Context key that holds the server span of the current request. */
 export const SERVER_SPAN = createContextKey("wizeworks.wizelens.server-span");

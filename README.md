@@ -90,7 +90,7 @@ var rows = await db.QueryAsync<Order>("SELECT * FROM Orders WHERE CustomerId = @
 import express from "express";
 import { createWizeLens } from "@wizeworks/lens-node";
 
-const wizelens = createWizeLens({ serviceName: "orders-api" });
+const wizelens = createWizeLens({ service: "orders-api" });
 const app = express();
 
 app.use(wizelens.middleware);            // traces requests + serves /_wizelens
@@ -103,7 +103,7 @@ import { instrumentPg } from "@wizeworks/lens-node";
 instrumentPg(wizelens, pg);
 ```
 
-Outgoing `fetch` calls and routing time are traced automatically. Not on Express? Use `wizelensFastify(wizelens)`, `wizelensKoa(wizelens)`, or `wizelensHono(wizelens)` instead of the middleware. On Next.js, call `registerWizeLens()` from `@wizeworks/lens-node/next` in `instrumentation.ts` (see [Getting started](docs/GETTING-STARTED.md#2-node)).
+Outgoing `fetch` calls and routing time are traced automatically. Not on Express? Use `wizeLensFastify(wizelens)`, `wizeLensKoa(wizelens)`, or `wizeLensHono(wizelens)` instead of the middleware. On Next.js, call `registerWizeLens()` from `@wizeworks/lens-node/next` in `instrumentation.ts` (see [Getting started](docs/GETTING-STARTED.md#2-node)).
 
 | Library | One line |
 |---|---|
@@ -148,12 +148,12 @@ The `install` import lets WizeLens time React renders per component and measure 
 ### Java, Python, and Go
 
 Start from the OpenTelemetry agents; the WizeLens SDKs add SQL parameters, request bodies, logs, and sampling that keeps
-errors and slow traces. They send to a hub or the cloud (`WIZELENS_HUB`).
+errors and slow traces. They send to a hub or the cloud (`WIZELENS_ENDPOINT`).
 
 ```bash
 java -javaagent:opentelemetry-javaagent.jar -Dotel.javaagent.extensions=wizelens.jar -jar app.jar   # Java
 pip install wizelens && opentelemetry-instrument uvicorn app:app                                     # Python
-go get github.com/brandonkorous/wizelens/go    # wizelens.Start, Handler, OpenDB, Transport, Logger  # Go
+go get github.com/wizeworksllc/wizelens/go    # wizelens.Start, Handler, OpenDB, Transport, Logger  # Go
 ```
 
 Guides: [Java](https://wizelens.com/docs/java/), [Python](https://wizelens.com/docs/python/), [Go](https://wizelens.com/docs/go/).
@@ -223,7 +223,7 @@ Open any trace for the full detail: timeline, SQL, HTTP, logs, and errors. Searc
 | Database (ORM) | ✅ EF Core | ✅ Prisma, TypeORM, Drizzle |
 | Logs | ✅ `ILogger`, Serilog (`WizeLens.Serilog`), NLog (`WizeLens.NLog`) | ✅ `console`, Fastify / pino, winston, bunyan, log4js, consola, NestJS, OpenTelemetry logs, `wizelens.logger` |
 | Exceptions | ✅ | ✅ |
-| Metrics | ✅ every `Meter`: .NET runtime, ASP.NET Core, `HttpClient`, your own | ✅ CPU, memory, heap, event loop, GC, and OpenTelemetry metrics (`wizelensMetricExporter`) |
+| Metrics | ✅ every `Meter`: .NET runtime, ASP.NET Core, `HttpClient`, your own | ✅ CPU, memory, heap, event loop, GC, and OpenTelemetry metrics (`wizeLensMetricExporter`) |
 | Databases with no code change | ✅ Npgsql, MySqlConnector, Microsoft.Data.SqlClient | |
 | Redis, MongoDB, Elasticsearch | ✅ `WizeLens.Redis` (StackExchange.Redis), `WizeLens.MongoDB` (MongoDB.Driver), `WizeLens.Elasticsearch` (Elastic.Clients.Elasticsearch 8+) | |
 | gRPC | ✅ Grpc.AspNetCore, Grpc.Net.Client | ✅ `instrumentGrpc` (`@grpc/grpc-js`) |
@@ -240,7 +240,7 @@ Traces survive restarts (hello, `dotnet watch`). Each app keeps a small SQLite f
 ### The local hub
 
 One place for every service, also when they are stopped. Start it with `npx @wizeworks/lens-hub` (or the Docker image
-`ghcr.io/brandonkorous/wizelens-hub`), then set `WIZELENS_HUB=http://localhost:5960` on each service. Apps in any other
+`ghcr.io/wizeworksllc/wizelens-hub`), then set `WIZELENS_ENDPOINT=http://localhost:5960` on each service. Apps in any other
 language send OpenTelemetry (OTLP/HTTP) to the same address.
 
 - **Everything in one dashboard**, kept for 7 days in one SQLite file, with the same pages as the in-app dashboard.
@@ -310,11 +310,11 @@ WizeLens has no AI of its own. Instead, your AI tools can *read* what WizeLens s
 Turn it on per service:
 
 ```csharp
-builder.Services.AddWizeLens(o => o.EnableMcp = true);
+builder.Services.AddWizeLens(o => o.Mcp = true);
 ```
 
 ```ts
-createWizeLens({ serviceName: "orders-api", enableMcp: true });
+createWizeLens({ service: "orders-api", mcp: true });
 ```
 
 Then point any MCP client at the streamable HTTP endpoint:
@@ -354,22 +354,22 @@ Guardrails:
 | `Dashboard` | `WIZELENS_DASHBOARD`, else Development only | Serve the dashboard, read API, and MCP. `false` is send-only: capture and send to the hub or cloud, no reads. |
 | `Hud` | `true` (or `WIZELENS_HUD`) | While the dashboard is served, put the in-page HUD on the app's HTML pages (Razor Pages, MVC views, static `.html`): a script tag from `{BasePath}/wizelens.js` before the last `</body>` of each `200` `text/html` answer. Works with `UseResponseCompression` before or after `UseWizeLens` (after: page loads come back uncompressed). Fragments and answers the app compresses itself are left alone. `false` turns it off. |
 | `BasePath` | `/_wizelens` | Where the dashboard and API live. |
-| `ServiceName` | app name | Name shown for this service. |
+| `Service` | `OTEL_SERVICE_NAME`, else the app name | Name shown for this service. |
 | `Storage` | `Sqlite`, or `Memory` when send-only | `Sqlite` (survives restarts) or `Memory`. |
 | `StoragePath` | `.wizelens/traces.db` | SQLite file, relative to the content root. |
 | `MaxTraces` | `2000` | Traces kept in memory and on disk. |
 | `MaxAge` | `24h` | Traces older than this are dropped. |
-| `EnableMcp` | `false` | Expose the read-only MCP endpoint at `{BasePath}/mcp`. |
-| `RedactKeys` | see above | Key fragments whose values are redacted. |
+| `Mcp` | `false` | Expose the read-only MCP endpoint at `{BasePath}/mcp`. |
+| `RedactKeys` | see above | Key fragments whose values are redacted. `WIZELENS_REDACT_KEYS` adds more. |
 | `NPlusOneThreshold` | `5` | Repeats in one trace that count as N+1. |
 | `SlowQueryMs` | `100` | Queries at or above this are slow. |
 | `CaptureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
-| `HubUrl` / `HubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a local hub. |
+| `Endpoint` / `Token` | `WIZELENS_ENDPOINT` / `WIZELENS_TOKEN` | Also send everything to a hub or the cloud. |
 | `TrustedRemotes` | `WIZELENS_TRUSTED_REMOTES` (comma-separated) | APIs on another origin that the browser calls, like `https://localhost:5099`: their part of a call joins its trace here. |
 | `Project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
 | `Sampling.Rate` | `WIZELENS_SAMPLE_RATE`, else `1` | Share of traces kept (0 to 1). Traces with an error or a slow span are kept at any rate. |
-| `Logs.Outside` / `Logs.MinLevel` / `Logs.SampleRate` | `true` / `Information` / `1` (or `WIZELENS_LOGS_OUTSIDE`, `WIZELENS_LOGS_MIN_LEVEL`, `WIZELENS_LOGS_SAMPLE_RATE`) | Log lines written outside a request (startup, jobs, timers): on or off, the lowest level, and the share below `Warning` kept. |
-| `Sampling.KeepErrors` / `Sampling.KeepSlowMs` | `true` / `1000` | What a sampled-out trace needs to be kept anyway (`null` turns the slow rule off). |
+| `Logs.Outside` / `Logs.MinLevel` / `Logs.Rate` | `true` / `Information` / `1` (or `WIZELENS_LOGS_OUTSIDE`, `WIZELENS_LOGS_MIN_LEVEL`, `WIZELENS_LOGS_SAMPLE_RATE`) | Log lines written outside a request (startup, jobs, timers): on or off, the lowest level, and the share below `Warning` kept. |
+| `Sampling.KeepErrors` / `Sampling.KeepSlowMs` | `true` / `1000` (or `WIZELENS_KEEP_ERRORS`, `WIZELENS_KEEP_SLOW_MS`) | What a sampled-out trace needs to be kept anyway (`null` turns the slow rule off). |
 | `Tags.Rules` / `Tags.DisableBuiltIns` | none / none | Tag rules for the dashboard, such as `new("checkout", "route:/checkout*", "green")`, and built-in tags to turn off. A bad rule throws at start. See Tags. |
 
 Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The user comes from `HttpContext.User`.
@@ -378,7 +378,7 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 
 | Option | Default | Description |
 |---|---|---|
-| `serviceName` | *(required)* | Name shown for this service. |
+| `service` | *(required)* | Name shown for this service. |
 | `enabled` | `WIZELENS_ENABLED`, else on unless `NODE_ENV=production` | Turn WizeLens on or off. |
 | `dashboard` | `WIZELENS_DASHBOARD`, else on unless `NODE_ENV=production` | Serve the dashboard, read API, and MCP. `false` is send-only: capture and send to the hub or cloud, no reads. |
 | `hud` | `true` (or `WIZELENS_HUD`) | While the dashboard is served, put the in-page HUD on the app's HTML pages (any framework, static `.html` too): a script tag from `{basePath}/wizelens.js` before the last `</body>` of each `200` `text/html` answer to a `GET`. Page navigations reach the app without `Accept-Encoding`, so a compressing layer answers them in plain HTML; other answers stay compressed. Fragments are left alone. |
@@ -386,7 +386,7 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 | `storage` | `"sqlite"`, or `"memory"` when send-only | `"sqlite"` or `"memory"`. |
 | `storagePath` | `{cwd}/.wizelens/traces.db` | SQLite file. |
 | `maxTraces` / `maxAgeMs` | `2000` / 24 h | Retention. |
-| `enableMcp` | `false` | Expose the read-only MCP endpoint. |
+| `mcp` | `false` | Expose the read-only MCP endpoint. |
 | `redactKeys` | see above | Key fragments whose values are redacted. |
 | `tags` | none | `{ rules: [{ name, query, color? }], disableBuiltIns: ["bot"] }`: tag rules for the dashboard, and built-in tags to turn off. A bad rule throws at start. See Tags. |
 | `instrumentFetch` | `true` | Trace outgoing `fetch` / undici calls. |
@@ -396,11 +396,11 @@ Tag a request from anywhere in it: `WizeLensRequest.Tag("cache", "hit")`. The us
 | `audit` | `console.info` | Where MCP audit lines go. |
 | `slowQueryMs` / `nPlusOneThreshold` | `100` / `5` | Analysis thresholds. |
 | `captureResponseBody` | `false` | Keep the first 16 KB of text and JSON responses. |
-| `hub` / `hubToken` | `WIZELENS_HUB` / `WIZELENS_HUB_TOKEN` | Also send everything to a local hub. |
+| `endpoint` / `token` | `WIZELENS_ENDPOINT` / `WIZELENS_TOKEN` | Also send everything to a hub or the cloud. |
 | `trustedRemotes` | `WIZELENS_TRUSTED_REMOTES` (comma-separated) | APIs on another origin that the browser calls, like `https://localhost:5099`: their part of a call joins its trace here. |
 | `project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
 | `sampling` | `{ rate: WIZELENS_SAMPLE_RATE ?? 1, keepErrors: true, keepSlowMs: 1000 }` | Keep a share of traces, plus every trace with an error or a slow server-side span. |
-| `logs` | `{ outside: true, minLevel: "info", sampleRate: 1 }` (or the `WIZELENS_LOGS_*` variables) | Log lines written outside a request: on or off, the lowest level, and the share below `"warn"` kept. |
+| `logs` | `{ outside: true, minLevel: "info", rate: 1 }` (or the `WIZELENS_LOGS_*` variables) | Log lines written outside a request: on or off, the lowest level, and the share below `"warn"` kept. |
 
 Next.js: `registerWizeLens(options)` takes the same options plus `ignore(path)`, and `onRequestError` records server errors.
 
@@ -412,12 +412,12 @@ Tag a request and name its user from your handlers: `wizelens.tag("cache", "hit"
 |---|---|---|
 | `endpoint` | `/_wizelens` | WizeLens base path or URL on your API. |
 | `enabled` | `true` | Pass `import.meta.env.DEV` (or similar). |
-| `hud` | `true` | Show the in-page HUD. `false` also stops reading traces back, for a send-only server. |
+| `hud` | `"auto"` | The in-page HUD. `"auto"` shows it when `{endpoint}/api/info` answers. `true` shows it; `false` hides it and also stops reading traces back, for a send-only server. |
 | `propagateTo` | same origin | Which requests get a `traceparent` header. |
 | `slowMs` | `500` | The HUD shows requests at or over this many ms as "warning" (orange). |
 | `capturePages` | `true` | Send page views, React render stats, and browser errors. |
 
-Hooks: `useWizeLens()` and `useWizeLensRequests()`.
+Hooks: `useWizeLensRecorder()` and `useWizeLensRequests()`.
 
 ## 🧪 Run the sample
 
@@ -437,7 +437,7 @@ Open http://localhost:5173, click the buttons, then open http://localhost:5173/_
 open http://localhost:5100/ (.NET) or http://localhost:5200/ (Node): the add-on puts the HUD on it, with no browser package.
 
 To try the hub, start it first with `pnpm dev:hub` (http://localhost:5960/_wizelens/), then start the other three with
-`WIZELENS_HUB=http://localhost:5960` set.
+`WIZELENS_ENDPOINT=http://localhost:5960` set.
 
 > The .NET add-on embeds the dashboard at build time. After `pnpm build`, rebuild the .NET app to pick up UI changes.
 
@@ -455,10 +455,10 @@ To try the hub, start it first with `pnpm dev:hub` (http://localhost:5960/_wizel
 | `@wizeworks/lens-ui` | npm | The dashboard (served by both add-ons and the hub) |
 | `@wizeworks/lens-hub` | npm, Docker | The local hub (`wizelens-hub`) |
 | `@wizeworks/lens-cloud` | npm, Docker | The cloud service (`wizelens-cloud`) |
-| `@wizeworks/lens-cli` | npm | Source map upload (`lens-cli`) and Vite, webpack, and Next.js plugins |
+| `@wizeworks/lens-cli` | npm | Source map upload (`wizelens` command) and Vite, webpack, and Next.js plugins |
 | `com.wizelens:wizelens` | Maven | Java: the OpenTelemetry agent extension and a servlet body filter (`java/`) |
 | `wizelens` | PyPI | Python: distro for `opentelemetry-instrument`, body middleware, SQL parameters (`python/`) |
-| `github.com/brandonkorous/wizelens/go` | Go module | Go: SDK setup, `net/http`, `database/sql`, `slog` (`go/`) |
+| `github.com/wizeworksllc/wizelens/go` | Go module | Go: SDK setup, `net/http`, `database/sql`, `slog` (`go/`) |
 
 <a id="roadmap"></a>
 

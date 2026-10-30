@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterAll, describe, expect, it } from "vitest";
-import { isListedTrace, isLooseTraceId, logKey, type Trace } from "@wizeworks/lens-core";
+import { isListedTrace, isLooseTraceId, logKey, type Trace } from "@wizeworks/lens-core/internal";
 import { scenarioTraces } from "../../core/src/testing/scenario.js";
 import { hubExecutor, hubSettling } from "./scale-exec.js";
 import { clockStore, parity, settleAll, writeTraces } from "./test/scale.js";

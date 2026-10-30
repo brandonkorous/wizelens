@@ -1,6 +1,6 @@
 import { context, ProxyTracerProvider, trace, type Tracer, type TracerProvider } from "@opentelemetry/api";
 import { W3CTraceContextPropagator } from "@opentelemetry/core";
-import { DEFAULT_BASE_PATH } from "@wizeworks/lens-core";
+import { DEFAULT_BASE_PATH } from "@wizeworks/lens-core/internal";
 import { type AdapterParts, registerParts } from "../adapters/registry.js";
 import type { StartDbSpan } from "../db.js";
 import { disabledWizeLens } from "../disabled.js";
@@ -54,7 +54,7 @@ const logs: LogSink = (entry) => {
 const parts: AdapterParts = { dbSpans, capture, logs, metrics: null, provider };
 
 // A stand-in until an owner starts: it never says WizeLens is off.
-const disabled = disabledWizeLens({ serviceName: "auto" }, DEFAULT_BASE_PATH, true);
+const disabled = disabledWizeLens({ service: "auto" }, DEFAULT_BASE_PATH, true);
 
 /** The instance the auto hooks hand to the adapters. Every read goes to the current owner. */
 export const autoHandle: WizeLens = new Proxy(disabled, {

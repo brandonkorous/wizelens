@@ -32,11 +32,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{- define "wlc.secretName" -}}
-{{- default (printf "%s-ingest" (include "wlc.fullname" .)) .Values.existingSecret.name -}}
+{{- default (printf "%s-token" (include "wlc.fullname" .)) .Values.existingSecret.name -}}
 {{- end -}}
 
 {{- define "wlc.secretKey" -}}
-{{- if .Values.existingSecret.name -}}{{ .Values.existingSecret.key }}{{- else -}}ingest-key{{- end -}}
+{{- if .Values.existingSecret.name -}}{{ .Values.existingSecret.key }}{{- else -}}token{{- end -}}
 {{- end -}}
 
 {{/* Processors both collectors share: memory limit (a fixed size: cgroup detection fails with the host's / mounted), batching, and the cluster, environment, and project on everything. Called with (dict "root" $ "mib" <limit>). */}}
@@ -64,13 +64,13 @@ resource/wizelens:
     {{- end }}
 {{- end -}}
 
-{{/* Where both collectors send: OTLP/HTTP to the hub or the cloud, with the ingest key (or hub token) as a bearer token. */}}
+{{/* Where both collectors send: OTLP/HTTP to the hub or the cloud, with the token (a cloud ingest key or the hub token) as a bearer token. */}}
 {{- define "wlc.exporters" -}}
 otlphttp/wizelens:
   endpoint: "${env:WIZELENS_ENDPOINT}"
   compression: gzip
   headers:
-    Authorization: "Bearer ${env:WIZELENS_INGEST_KEY}"
+    Authorization: "Bearer ${env:WIZELENS_TOKEN}"
   retry_on_failure:
     enabled: true
     max_elapsed_time: 300s
@@ -107,7 +107,7 @@ pod_association:
   valueFrom: { fieldRef: { fieldPath: status.hostIP } }
 - name: WIZELENS_ENDPOINT
   value: {{ .Values.endpoint | trimSuffix "/" | quote }}
-- name: WIZELENS_INGEST_KEY
+- name: WIZELENS_TOKEN
   valueFrom:
     secretKeyRef:
       name: {{ include "wlc.secretName" . }}

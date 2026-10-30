@@ -1,4 +1,4 @@
-import type { ServiceInfo } from "@wizeworks/lens-core";
+import { PROTOCOL_VERSION, type ServiceInfo } from "@wizeworks/lens-core/internal";
 import type { Ctx } from "../app.js";
 import { joinScope } from "../auth/join-scope.js";
 import { principalOf, type ProjectAccess, requireProject } from "../auth/principal.js";
@@ -36,6 +36,7 @@ async function projectInfo(ctx: Ctx): Promise<{ maxAgeMs: number; analysis: { sl
 async function info(ctx: Ctx): Promise<void> {
   const project = await projectInfo(ctx);
   const value: ServiceInfo = {
+    protocol: PROTOCOL_VERSION,
     mode: "cloud",
     capabilities: ["environments", "registry", "accounts", "alerts", "sharing", "serverStats", "metrics", "serverMetrics", "search", "changes", "issues", "infra", "uptime", "statusPages", "sourcemaps", "slos", "saved", "tags", "settings", ...(ctx.app.config.osv ? (["packages"] as const) : [])],
     service: "WizeLens Cloud",

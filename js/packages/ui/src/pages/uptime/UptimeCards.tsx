@@ -1,5 +1,5 @@
 import { CircleCheck, Clock, HeartPulse, TriangleAlert } from "lucide-react";
-import { percentChange, tlsDaysLeft, tlsWarns, type UptimeCheckView, type UptimeModel } from "@wizeworks/lens-core";
+import { percentChange, tlsDaysLeft, tlsWarns, type UptimeCheckView, type UptimeModel } from "@wizeworks/lens-core/internal";
 import { fmtCount, fmtMs } from "../../format";
 import { StatCard } from "../../ui/StatCard";
 import { fmtUptime } from "./uptimeParts";

@@ -1,4 +1,4 @@
-import { ATTR_BROWSER_CANCELLED, ATTR_BROWSER_PREFETCH, ATTR_BROWSER_REMOTE, ATTR_BROWSER_RENDER_MS, ATTR_EXPECTED, HEADER_ENDPOINT, HEADER_EXPECTED, HEADER_TRACE, newSpanId, newTraceId, type Span } from "@wizeworks/lens-core";
+import { ATTR_BROWSER_CANCELLED, ATTR_BROWSER_PREFETCH, ATTR_BROWSER_REMOTE, ATTR_BROWSER_RENDER_MS, ATTR_EXPECTED, HEADER_ENDPOINT, HEADER_EXPECTED, HEADER_TRACE, newSpanId, newTraceId, type Span } from "@wizeworks/lens-core/internal";
 import { browserSpan, currentRoute } from "./browser-span.js";
 import type { CallFailure } from "./fetch-failure.js";
 import { afterNextPaint } from "./paint.js";

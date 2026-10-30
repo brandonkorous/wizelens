@@ -1,7 +1,7 @@
 # @wizeworks/lens-vue
 
-[WizeLens](https://github.com/brandonkorous/wizelens) for Vue 3 apps: a plugin on top of
-[@wizeworks/lens-browser](https://github.com/brandonkorous/wizelens/tree/main/js/packages/browser) that links every `fetch` and `XMLHttpRequest` to its server trace, sends page views from
+[WizeLens](https://github.com/wizeworksllc/wizelens) for Vue 3 apps: a plugin on top of
+[@wizeworks/lens-browser](https://github.com/wizeworksllc/wizelens/tree/main/js/packages/browser) that links every `fetch` and `XMLHttpRequest` to its server trace, sends page views from
 vue-router, and reports the errors Vue catches with the component that threw them.
 
 ## Install
@@ -13,13 +13,13 @@ npm install @wizeworks/lens-vue
 ```ts
 // main.ts
 import { createApp } from "vue";
-import { WizeLens } from "@wizeworks/lens-vue";
+import { WizeLensPlugin } from "@wizeworks/lens-vue";
 import App from "./App.vue";
 import { router } from "./router";
 
 createApp(App)
   .use(router)
-  .use(WizeLens, { endpoint: "/_wizelens", router, enabled: import.meta.env.DEV })
+  .use(WizeLensPlugin, { endpoint: "/_wizelens", router, enabled: import.meta.env.DEV })
   .mount("#app");
 ```
 
@@ -36,7 +36,7 @@ Vue 3 and vue-router 4. The package does not import `vue`, so it adds nothing to
 
 ## Options
 
-All [@wizeworks/lens-browser options](https://github.com/brandonkorous/wizelens/tree/main/js/packages/browser#options), plus:
+All [@wizeworks/lens-browser options](https://github.com/wizeworksllc/wizelens/tree/main/js/packages/browser#options), plus:
 
 | Option | Description |
 |---|---|
@@ -56,7 +56,7 @@ The same HUD as every WizeLens browser package: the last request, its server tra
 - `false` shows nothing and reads nothing back.
 
 ```ts
-app.use(WizeLens, { endpoint: "/_wizelens", router, hud: true, slowMs: 800 });
+app.use(WizeLensPlugin, { endpoint: "/_wizelens", router, hud: true, slowMs: 800 });
 ```
 
 When a .NET or Node add-on puts its HUD script into the pages it serves in development, the plugin takes over from it: one HUD and one
@@ -66,9 +66,9 @@ capture per page.
 
 ```ts
 import { inject } from "vue";
-import { WIZELENS_KEY, type WizeLensInstance } from "@wizeworks/lens-vue";
+import { wizeLensKey, type WizeLens } from "@wizeworks/lens-vue";
 
-const lens = inject(WIZELENS_KEY) as WizeLensInstance;
+const lens = inject(wizeLensKey) as WizeLens;
 lens.setUser(user.id);
 ```
 

@@ -3,8 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
-import { type LogRecord, newTraceId, type Span } from "@wizeworks/lens-core";
-import { SqlitePersister, TraceStore } from "./index.js";
+import { type LogRecord, newTraceId, type Span } from "@wizeworks/lens-core/internal";
+import { SqlitePersister, TraceStore } from "./internal.js";
 import { fakeSpan } from "./test/helpers.js";
 
 function span(traceId: string, startMs: number, attributes: Span["attributes"] = {}): Span {
@@ -33,7 +33,7 @@ afterEach(() => {
 });
 
 function open(path: string, store: TraceStore, now?: () => number): SqlitePersister {
-  const p = new SqlitePersister(store, { path, serviceName: "svc", now, warn: (m) => { throw new Error(m); } });
+  const p = new SqlitePersister(store, { path, service: "svc", now, warn: (m) => { throw new Error(m); } });
   expect(p.open()).toBe(true);
   return p;
 }
@@ -100,7 +100,7 @@ function fallsBack(): void {
   const warnings: string[] = [];
   const dir = mkdtempSync(join(tmpdir(), "wizelens-"));
   dirs.push(dir);
-  const p = new SqlitePersister(new TraceStore(), { path: dir, serviceName: "svc", warn: (m) => warnings.push(m) });
+  const p = new SqlitePersister(new TraceStore(), { path: dir, service: "svc", warn: (m) => warnings.push(m) });
   expect(p.open()).toBe(false);
   expect(p.active).toBe(false);
   p.flush();

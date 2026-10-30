@@ -9,8 +9,8 @@ a Helm chart for Kubernetes, and one config file for a plain host.
 
 ## Kubernetes
 
-The chart is `oci://ghcr.io/brandonkorous/charts/wizelens-collector`, published with each release (source:
-[`deploy/helm/wizelens-collector`](https://github.com/brandonkorous/wizelens/tree/main/deploy/helm/wizelens-collector)).
+The chart is `oci://ghcr.io/wizeworksllc/charts/wizelens-collector`, published with each release (source:
+[`deploy/helm/wizelens-collector`](https://github.com/wizeworksllc/wizelens/tree/main/deploy/helm/wizelens-collector)).
 It runs two collectors:
 
 | Collector | Runs as | Reads |
@@ -21,21 +21,21 @@ It runs two collectors:
 Both add pod, namespace, node, and workload names (`k8sattributes`), and send to one endpoint.
 
 ```bash
-helm install wizelens-collector oci://ghcr.io/brandonkorous/charts/wizelens-collector \
+helm install wizelens-collector oci://ghcr.io/wizeworksllc/charts/wizelens-collector \
   --namespace wizelens --create-namespace \
   --set endpoint=https://app.wizelens.com \
-  --set ingestKey=wl_ik_... \
+  --set token=wl_ik_... \
   --set clusterName=prod
 ```
 
-For a hub, set `endpoint` to its address (for example `http://wizelens-hub.wizelens:5960`) and `ingestKey` to the hub's
+For a hub, set `endpoint` to its address (for example `http://wizelens-hub.wizelens:5960`) and `token` to the hub's
 `--token`, or leave it empty when the hub has none.
 
 | Value | What it does |
 | --- | --- |
 | `endpoint` | Where to send. The collector adds `/v1/metrics`, `/v1/traces`, and `/v1/logs`. |
-| `ingestKey` | A cloud ingest key, or the hub's token. |
-| `existingSecret.name`, `existingSecret.key` | Read the key from a Secret you made instead. The key defaults to `ingest-key`. |
+| `token` | A cloud ingest key, or the hub's token. |
+| `existingSecret.name`, `existingSecret.key` | Read the token from a Secret you made instead. The key defaults to `token`. |
 | `clusterName` | Shown as the cluster on every node, pod, and workload. Set it when one project has several clusters. |
 | `environment` | `deployment.environment.name` for everything the collectors send, for the environment menu. |
 | `project` | `wizelens.project`, for a hub that holds several projects. The cloud takes the project from the key. |
@@ -66,12 +66,12 @@ Kubernetes their host name is the pod's name.
 
 ## A plain host
 
-[`deploy/collector/host.yaml`](https://github.com/brandonkorous/wizelens/blob/main/deploy/collector/host.yaml) reads
+[`deploy/collector/host.yaml`](https://github.com/wizeworksllc/wizelens/blob/main/deploy/collector/host.yaml) reads
 one machine and takes OTLP from apps on it. With Docker:
 
 ```bash
 docker run -d --name wizelens-collector -v /:/hostfs:ro -v $PWD/host.yaml:/etc/otelcol-contrib/config.yaml \
-  -e WIZELENS_ENDPOINT=https://app.wizelens.com -e WIZELENS_INGEST_KEY=wl_ik_... \
+  -e WIZELENS_ENDPOINT=https://app.wizelens.com -e WIZELENS_TOKEN=wl_ik_... \
   -e HOST_ROOT=/hostfs -e OTEL_RESOURCE_ATTRIBUTES=host.name=$(hostname) \
   -p 4317:4317 -p 4318:4318 otel/opentelemetry-collector-contrib:0.137.0
 ```

@@ -1,4 +1,4 @@
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import type { Mail } from "../mail/mailer.js";
 import type { Cloud } from "../server.js";
 import { Client, invite, type Me, type mailbox, PASSWORD } from "./cloud.js";

@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { findNPlusOneDb, findNPlusOneHttp, parseSearch, queryText, type TimeRange, type Trace } from "@wizeworks/lens-core";
+import { findNPlusOneDb, findNPlusOneHttp, parseSearch, queryText, type TimeRange, type Trace } from "@wizeworks/lens-core/internal";
 import { z } from "zod";
 import { json, type McpDataSource, READ_ONLY, type Source } from "./mcp-shared.js";
 import { findAll, rangeArg } from "./mcp-store.js";

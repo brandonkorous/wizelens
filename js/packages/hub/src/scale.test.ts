@@ -18,7 +18,7 @@ describe("hub stats tables", () => {
     expect(store.settleGen).toBe(1);
     expect(await parity(hubExecutor(store), traces)).toEqual([]);
     expect(await parity(hubExecutor(store, { project: "shop", env: "prod" }), traces, ["24h"])).toEqual([]);
-    const other = await hubExecutor(store, { project: "admin" }).run([{ type: "groups", id: "g", kind: "req", window: "cur" }], (await import("@wizeworks/lens-core")).pageContext("30d", clock.now, {}));
+    const other = await hubExecutor(store, { project: "admin" }).run([{ type: "groups", id: "g", kind: "req", window: "cur" }], (await import("@wizeworks/lens-core/internal")).pageContext("30d", clock.now, {}));
     expect(other.groups.g!.rows).toEqual([]);
     console.log(`hub settle of ${traces.length} traces: ${settleMs.toFixed(0)} ms`);
   });

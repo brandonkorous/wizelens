@@ -1,5 +1,5 @@
 import { type MouseEvent, type RefObject, useEffect, useRef, useState } from "react";
-import type { Release } from "@wizeworks/lens-core";
+import type { Release } from "@wizeworks/lens-core/internal";
 import { fmtBucket, fmtTick } from "../format";
 import { setWindowPref } from "../data/period";
 import { useReleases } from "../data/releases";

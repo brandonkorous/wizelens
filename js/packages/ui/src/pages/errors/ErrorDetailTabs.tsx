@@ -1,4 +1,4 @@
-import { type ErrorEvent, errorText } from "@wizeworks/lens-core";
+import { type ErrorEvent, errorText } from "@wizeworks/lens-core/internal";
 import type { StackSource } from "../../data/sourcemaps";
 import { traceHref } from "../../routes";
 import { CopyButton, DotText, toneOfStatus } from "../../ui/Badges";

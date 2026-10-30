@@ -16,7 +16,7 @@ const rpc = (url: string, id: number, method: string, params: unknown) => post(`
 it("MCP reads traces from every service in the hub", async () => {
   let url: string;
   const audit: string[] = [];
-  ({ hub, url } = await startHub({ enableMcp: true, audit: (l) => audit.push(l) }));
+  ({ hub, url } = await startHub({ mcp: true, audit: (l) => audit.push(l) }));
   const failed = span(T1, "1".repeat(16), { status: "error", statusMessage: "kaboom", service: "billing", startMs: Date.now() - 1000 });
   await post(`${url}/_wizelens/api/ingest`, { sender: { service: "billing" }, spans: [failed] });
   const res = await rpc(url, 1, "tools/call", { name: "list_traces", arguments: {} });
@@ -28,7 +28,7 @@ it("MCP reads traces from every service in the hub", async () => {
 it("MCP lists and reads metrics", async () => {
   let url: string;
   const audit: string[] = [];
-  ({ hub, url } = await startHub({ enableMcp: true, audit: (l) => audit.push(l) }));
+  ({ hub, url } = await startHub({ mcp: true, audit: (l) => audit.push(l) }));
   const point = { name: "process.memory.usage", kind: "gauge", unit: "By", value: 2048, timeMs: Date.now() - 30_000 };
   await post(`${url}/_wizelens/api/ingest`, { sender: { service: "billing" }, metrics: [point] });
   const text = async (id: number, name: string, args: unknown) =>
@@ -40,7 +40,7 @@ it("MCP lists and reads metrics", async () => {
 
 it("an agent connects: initialize, the GET stream, tools/list, and a call", async () => {
   let url: string;
-  ({ hub, url } = await startHub({ enableMcp: true }));
+  ({ hub, url } = await startHub({ mcp: true }));
   await post(`${url}/_wizelens/api/ingest`, { sender: { service: "billing" }, spans: [span(T1, "1".repeat(16), { service: "billing", startMs: Date.now() - 1000 })] });
   const client = new Client({ name: "test-agent", version: "1.0.0" });
   await client.connect(new StreamableHTTPClientTransport(new URL(`${url}/_wizelens/mcp`)));
@@ -52,7 +52,7 @@ it("an agent connects: initialize, the GET stream, tools/list, and a call", asyn
 
 it("get_overview reports every service: health, traffic, and the top errors", async () => {
   let url: string;
-  ({ hub, url } = await startHub({ enableMcp: true }));
+  ({ hub, url } = await startHub({ mcp: true }));
   const attrs = { "http.request.method": "GET", "url.path": "/pay", "http.response.status_code": 500 };
   const failed = span(T1, "1".repeat(16), { status: "error", statusMessage: "card declined", service: "billing", startMs: Date.now() - 60_000, attributes: attrs });
   await post(`${url}/_wizelens/api/ingest`, { sender: { service: "billing" }, spans: [failed] });
@@ -68,7 +68,7 @@ it("get_overview reports every service: health, traffic, and the top errors", as
 it("list_problems names the spike after a release, with its suspected cause", async () => {
   let url: string;
   const clock = { now: ANOMALY_NOW };
-  ({ hub, url } = await startHub({ enableMcp: true, now: () => clock.now, maxAgeMs: RETENTION_MS }));
+  ({ hub, url } = await startHub({ mcp: true, now: () => clock.now, maxAgeMs: RETENTION_MS }));
   writeTraces(hub.data.store, anomalyTraces());
   settleAll(hub.data.store, clock);
   const res = (await (await rpc(url, 1, "tools/call", { name: "list_problems", arguments: { range: "1h" } })).json()) as { result: { content: { text: string }[] } };

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { ServiceInfo } from "@wizeworks/lens-core";
+import type { ServiceInfo } from "@wizeworks/lens-core/internal";
 import type { Source } from "../../data/sources";
 import { fmtCount, fmtDateTime, fmtMs } from "../../format";
 import { Badge, CopyButton, DotText } from "../../ui/Badges";
@@ -23,7 +23,7 @@ function statusOf(s: Source): ReactNode {
 
 interface Switches { hub?: string; dotnet: string; node: string; docs: string }
 
-const MCP: Switches = { hub: "--mcp", dotnet: "o.EnableMcp = true", node: "enableMcp: true", docs: "https://wizelens.com/docs/ai-access/#on-your-own-machine" };
+const MCP: Switches = { hub: "--mcp", dotnet: "o.Mcp = true", node: "mcp: true", docs: "https://wizelens.com/docs/ai-access/#on-your-own-machine" };
 const BODIES: Switches = { dotnet: "o.CaptureResponseBody = true", node: "captureResponseBody: true", docs: "https://wizelens.com/docs/configuration/" };
 
 /** "Off", with the option that turns it on for this kind of service, as the docs write it, and a link to them. */

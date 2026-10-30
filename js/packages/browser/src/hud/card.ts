@@ -1,4 +1,4 @@
-import type { TraceView } from "@wizeworks/lens-core";
+import type { TraceView } from "@wizeworks/lens-core/internal";
 import { fmtMs, plural, type RequestView } from "../hud-model.js";
 import type { RecordedRequest } from "../recorder-types.js";
 import { type Child, h } from "./dom.js";

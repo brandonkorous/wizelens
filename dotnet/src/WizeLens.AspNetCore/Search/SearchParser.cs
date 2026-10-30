@@ -1,7 +1,7 @@
 // Parses a search into a tree: OR binds loosest, then AND (also implied by a space), then NOT and `-`.
 namespace WizeLens.Search;
 
-public static class SearchParser
+internal static class SearchParser
 {
     /// <summary>The tree of a search, or null when it matches everything. Throws a <see cref="SearchError"/> with a position.</summary>
     public static SearchNode? Parse(string src)

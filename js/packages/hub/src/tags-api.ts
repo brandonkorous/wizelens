@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { activeTags, BUILT_IN_PREFIX, checkTagInput, matchTags, searchSql, SQLITE_DIALECT, TAG_LIMITS, tagMatchRequestOf } from "@wizeworks/lens-core";
-import { sendJson } from "@wizeworks/lens-node/kit";
+import { activeTags, BUILT_IN_PREFIX, checkTagInput, matchTags, searchSql, SQLITE_DIALECT, TAG_LIMITS, tagMatchRequestOf } from "@wizeworks/lens-core/internal";
+import { sendJson } from "@wizeworks/lens-node/internal";
 import type { ApiContext } from "./api.js";
 import { parseJson, readBody } from "./body.js";
 import { sqliteRunner, sqlScopeOf } from "./scale-exec.js";

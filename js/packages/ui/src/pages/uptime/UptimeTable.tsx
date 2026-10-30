@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { tlsDaysLeft, TLS_WARN_DAYS, type UptimeCheckView, type UptimeModel } from "@wizeworks/lens-core";
+import { tlsDaysLeft, TLS_WARN_DAYS, type UptimeCheckView, type UptimeModel } from "@wizeworks/lens-core/internal";
 import { fmtAgo, fmtMs } from "../../format";
 import { hrefTo } from "../../routes";
 import { Badge, DotText, type Tone } from "../../ui/Badges";

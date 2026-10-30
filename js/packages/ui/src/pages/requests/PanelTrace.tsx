@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import { browserTypeOf, isErrorSpan, type Span, type Trace } from "@wizeworks/lens-core";
+import { browserTypeOf, isErrorSpan, type Span, type Trace } from "@wizeworks/lens-core/internal";
 import { fmtMs } from "../../format";
 import { traceHref } from "../../routes";
 import { Empty } from "../../ui/Panel";

@@ -68,8 +68,8 @@ public class MetricsAppTests
         var hub = new FakeHub();
         await using var app = await StartAsync(o =>
         {
-            o.HubUrl = "http://hub.test:5960";
-            o.HubHandler = hub;
+            o.Endpoint = "http://hub.test:5960";
+            o.SendHandler = hub;
         });
         var name = RecordAndCollect(app);
         var exporter = app.App.Services.GetRequiredService<HubExporter>();

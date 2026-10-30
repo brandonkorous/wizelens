@@ -1,4 +1,4 @@
-import type { Headline } from "@wizeworks/lens-core";
+import type { Headline } from "@wizeworks/lens-core/internal";
 import type { DigestData } from "../notify/digest-data.js";
 import type { EmailContent } from "./content.js";
 import * as emails from "./emails.js";

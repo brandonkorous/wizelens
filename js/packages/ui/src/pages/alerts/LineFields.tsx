@@ -1,4 +1,4 @@
-import { type AlertOp, type AlertRuleInput, isAnomalyMetric } from "@wizeworks/lens-core";
+import { type AlertOp, type AlertRuleInput, isAnomalyMetric } from "@wizeworks/lens-core/internal";
 import { Field, SelectField } from "../../ui/Field";
 
 type Set = <K extends keyof AlertRuleInput>(k: K) => (v: AlertRuleInput[K]) => void;

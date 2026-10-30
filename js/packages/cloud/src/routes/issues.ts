@@ -1,4 +1,4 @@
-import { applyIssueChange, type IssueChange, type IssueState, parseIssueChanges, unlabelKey } from "@wizeworks/lens-core";
+import { applyIssueChange, type IssueChange, type IssueState, parseIssueChanges, unlabelKey } from "@wizeworks/lens-core/internal";
 import { requireOrgRead } from "../auth/org-access.js";
 import type { Ctx } from "../app.js";
 import { requireProject } from "../auth/principal.js";

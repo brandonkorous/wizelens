@@ -1,5 +1,5 @@
 // The period and time display choices: a custom from–to window, what numbers compare with, the time zone, and the clock.
-import type { Compare } from "@wizeworks/lens-core";
+import type { Compare } from "@wizeworks/lens-core/internal";
 import { readPref, usePref, writePref } from "./prefs";
 
 export const PERIOD_KEYS = { window: "wizelens.ui.window", compare: "wizelens.ui.compare", tz: "wizelens.ui.tz", clock: "wizelens.ui.clock" } as const;

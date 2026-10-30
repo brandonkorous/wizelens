@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { IssueInfo, IssueKind } from "@wizeworks/lens-core";
+import type { IssueInfo, IssueKind } from "@wizeworks/lens-core/internal";
 import { currentProject, useAccount } from "../data/account";
 import { changeIssue, useIssueMembers } from "../data/issues";
 import { useHost } from "../data/host";

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { type InviteRole, type InviteRow, parseInviteList } from "@wizeworks/lens-core";
+import { type InviteRole, type InviteRow, parseInviteList } from "@wizeworks/lens-core/internal";
 import { auth } from "../../data/account";
 import { eachOne, eachText } from "../../data/bulk";
 import { downloadCsv, toCsv } from "../../data/csv";

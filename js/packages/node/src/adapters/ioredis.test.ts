@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { analyzeTrace, type Span } from "@wizeworks/lens-core";
+import { analyzeTrace, type Span } from "@wizeworks/lens-core/internal";
 import { createWizeLens } from "../wizelens.js";
 import { instrumentIoRedis } from "./ioredis.js";
 import { commandText, keyShape } from "./redis-shape.js";
 
-const wizelens = createWizeLens({ serviceName: "ioredis", storage: "memory", traceQueriesOutsideRequests: true });
+const wizelens = createWizeLens({ service: "ioredis", storage: "memory", traceQueriesOutsideRequests: true });
 const dbSpans = (): Span[] => wizelens.store.all().flatMap((t) => t.spans.filter((s) => s.category === "db")).sort((a, b) => a.startMs - b.startMs);
 afterEach(() => wizelens.store.clear());
 

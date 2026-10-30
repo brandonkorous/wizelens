@@ -1,4 +1,4 @@
-import type { Span } from "@wizeworks/lens-core";
+import type { Span } from "@wizeworks/lens-core/internal";
 import { createHub, type Hub } from "../hub.js";
 import type { HubOptions } from "../options.js";
 

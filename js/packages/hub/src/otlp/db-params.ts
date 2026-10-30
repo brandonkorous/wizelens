@@ -1,4 +1,4 @@
-import { type Attributes, REDACTED, redactParams } from "@wizeworks/lens-core";
+import { type Attributes, REDACTED, redactParams } from "@wizeworks/lens-core/internal";
 
 const PARAM_PREFIX = "db.query.parameter.";
 const PYTHON_PARAMS = "db.statement.parameters";

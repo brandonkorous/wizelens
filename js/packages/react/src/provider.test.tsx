@@ -1,13 +1,13 @@
 import { StrictMode } from "react";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { register, registered, type RegisteredInstance } from "@wizeworks/lens-browser";
+import { register, registered, type RegisteredInstance } from "@wizeworks/lens-browser/internal";
 import { WizeLensProvider, type WizeLensProviderProps } from "./WizeLensProvider.js";
 import { huds, resetHuds, stubPage, stubServer } from "./test-hud.js";
 import { type TestRoot, testRoot } from "./test-root.js";
 
-vi.mock("@wizeworks/lens-browser", async (load) => ({
-  ...(await load<typeof import("@wizeworks/lens-browser")>()),
+vi.mock("@wizeworks/lens-browser/internal", async (load) => ({
+  ...(await load<typeof import("@wizeworks/lens-browser/internal")>()),
   mountHud: (await import("./test-hud.js")).fakeMountHud,
 }));
 
@@ -41,11 +41,11 @@ it("renders only its children on the server: no HUD and no registration", () => 
   expect(registered()).toBeNull();
 });
 
-it("mounts the HUD by default, registers as the page's app instance, and reads traces back", async () => {
+it("mounts the HUD by default once api/info answers, registers as the page's app instance, and reads traces back", async () => {
   await show({ slowMs: 700 });
+  await settle();
   expect([...huds.live]).toMatchObject([{ slowMs: 700 }]);
   expect(registered()?.source).toBe("app");
-  await settle();
   expect(urls.filter((u) => u.includes("/api/traces?session="))).toHaveLength(1);
 });
 
@@ -66,7 +66,7 @@ it("does nothing at all with enabled={false}", async () => {
 it("leaves one HUD and one registration after StrictMode's double mount, and none after unmount", async () => {
   await root.render(
     <StrictMode>
-      <WizeLensProvider {...QUIET} />
+      <WizeLensProvider {...QUIET} hud />
     </StrictMode>,
   );
   expect(huds.mounts).toHaveLength(2);

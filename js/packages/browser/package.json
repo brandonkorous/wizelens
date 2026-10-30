@@ -4,14 +4,14 @@
   "description": "WizeLens for any web page: links browser fetch and XHR calls to server traces, and sends page views, Web Vitals, errors, and console lines. No framework needed.",
   "license": "MIT",
   "author": "WizeWorks LLC",
-  "homepage": "https://github.com/brandonkorous/wizelens#readme",
+  "homepage": "https://github.com/wizeworksllc/wizelens#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/brandonkorous/wizelens.git",
+    "url": "git+https://github.com/wizeworksllc/wizelens.git",
     "directory": "js/packages/browser"
   },
   "bugs": {
-    "url": "https://github.com/brandonkorous/wizelens/issues"
+    "url": "https://github.com/wizeworksllc/wizelens/issues"
   },
   "keywords": [
     "wizelens",
@@ -30,6 +30,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./internal": {
+      "types": "./dist/internal.d.ts",
+      "import": "./dist/internal.js"
     },
     "./script": {
       "types": "./dist/script.d.ts",
@@ -51,7 +55,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@wizeworks/lens-core": "workspace:^"
+    "@wizeworks/lens-core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^7.0.2",

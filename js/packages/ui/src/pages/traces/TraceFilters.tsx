@@ -1,6 +1,6 @@
 import { FilterPanel } from "../../ui/FilterPanel";
 import { RotateCcw } from "lucide-react";
-import { DURATION_OPTIONS, type TraceFilter } from "@wizeworks/lens-core";
+import { DURATION_OPTIONS, type TraceFilter } from "@wizeworks/lens-core/internal";
 import { setQuery } from "../../routes";
 import { Select } from "../../ui/Controls";
 import { ServiceSelect } from "../../ui/ServiceSelect";
