@@ -36,6 +36,8 @@ internal sealed class TraceSampler(WizeLensSampling settings, Func<long>? now = 
 
     public WizeLensSampling Settings { get; } = settings;
 
+    /// <summary>Decides whether the span's trace is kept.</summary>
+    /// <param name="span">The span that just ended.</param>
     /// <param name="root">The span starts this service's part of the trace (no parent, or a parent in another process).</param>
     public SampleVerdict Span(Span span, bool root)
     {

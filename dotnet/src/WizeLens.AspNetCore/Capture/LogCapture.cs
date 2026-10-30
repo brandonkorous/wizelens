@@ -86,7 +86,7 @@ internal static class LogCapture
             Level = MapLevel(entry.Level),
             Category = entry.Category,
             Message = entry.Message,
-            Service = options.ServiceName ?? "app",
+            Service = options.Service ?? "app",
             SpanId = spanId,
         };
         foreach (var (key, value) in attributes ?? []) record.Attributes[key] = value;

@@ -63,7 +63,8 @@ public class HudScriptTests
         Environment.SetEnvironmentVariable("WIZELENS_HUD", value);
         try
         {
-            Assert.Equal(expected, new WizeLensOptions().Hud);
+            Assert.True(new WizeLensOptions().Hud);
+            Assert.Equal(expected, EnvironmentTests.Resolve().Hud);
         }
         finally
         {

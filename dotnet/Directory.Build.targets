@@ -1,0 +1,12 @@
+<Project>
+    <!-- The adapters use WizeLens.AspNetCore internals, so their packages need that exact version: [x.y.z], not x.y.z or later. -->
+    <Target Name="PinWizeLensCoreVersion" AfterTargets="_GetProjectReferenceVersions">
+        <ItemGroup>
+            <_WizeLensPinned Include="@(_ProjectReferencesWithVersions)" Condition="'%(Filename)' == 'WizeLens.AspNetCore'">
+                <ProjectVersion>[%(_ProjectReferencesWithVersions.ProjectVersion)]</ProjectVersion>
+            </_WizeLensPinned>
+            <_ProjectReferencesWithVersions Remove="@(_WizeLensPinned)" />
+            <_ProjectReferencesWithVersions Include="@(_WizeLensPinned)" />
+        </ItemGroup>
+    </Target>
+</Project>

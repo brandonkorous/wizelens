@@ -5,7 +5,7 @@ using WizeLens.Model;
 namespace WizeLens.Storage;
 
 /// <summary>Trace ids of loose batches: the log lines one service wrote outside a request.</summary>
-public static class TraceIds
+internal static class TraceIds
 {
     /// <summary>Every loose batch id starts with 16 zeros; random trace ids almost never do.</summary>
     public const string LoosePrefix = "0000000000000000";
@@ -18,7 +18,7 @@ public static class TraceIds
 }
 
 /// <summary>Loose batches: lines outside a request, grouped per 5 minutes, with their own cap so they never push out requests.</summary>
-public sealed partial class TraceStore
+internal sealed partial class TraceStore
 {
     /// <summary>A loose batch holds the lines of one 5-minute window.</summary>
     public const double LooseWindowMs = 300_000;

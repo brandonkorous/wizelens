@@ -3,7 +3,7 @@ using WizeLens.Model;
 namespace WizeLens.Storage;
 
 /// <summary>The sampling gate in front of the store: spans, logs, and remotes pass only when their trace is kept.</summary>
-public sealed partial class TraceStore
+internal sealed partial class TraceStore
 {
     internal TraceStore(int maxTraces, WizeLensSampling sampling)
         : this(maxTraces) => Sampler = sampling.IsOn ? new TraceSampler(sampling) : null;
@@ -11,6 +11,8 @@ public sealed partial class TraceStore
     /// <summary>Decides which traces are kept. Null: all.</summary>
     internal TraceSampler? Sampler { get; }
 
+    /// <summary>Adds a span to its trace, through the sampler when one is set.</summary>
+    /// <param name="span">The span to add.</param>
     /// <param name="root">The span starts this service's part of the trace. Default: it has no parent.</param>
     public void AddSpan(Span span, bool? root = null)
     {

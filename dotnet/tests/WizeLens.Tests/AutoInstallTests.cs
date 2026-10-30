@@ -117,7 +117,7 @@ public class AutoInstallTests
     public async Task The_code_install_wins_when_the_app_adds_WizeLens_too()
     {
         await using var app = await StartAsync(
-            b => b.Services.AddWizeLens(o => { o.ServiceName = "code-api"; o.Storage = WizeLensStorage.Memory; }),
+            b => b.Services.AddWizeLens(o => { o.Service = "code-api"; o.Storage = WizeLensStorage.Memory; }),
             a => a.UseWizeLens());
         var response = await app.GetTestClient().GetAsync("/hello/grace");
         var trace = await TraceAsync(app, response);

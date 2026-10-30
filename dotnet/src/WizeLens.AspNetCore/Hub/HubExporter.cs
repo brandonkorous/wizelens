@@ -40,7 +40,7 @@ internal sealed class HubExporter : IHostedService, IDisposable
         _options = options;
         _environment = environment.EnvironmentName;
         _logger = logger;
-        _url = options.IsEnabled ? options.NormalizedHubUrl : null;
+        _url = options.IsEnabled ? options.NormalizedEndpoint : null;
         if (_url is null) return;
         _store.Changed += _queue.Add;
         _metrics.Changed += AddMetric;
@@ -64,11 +64,11 @@ internal sealed class HubExporter : IHostedService, IDisposable
     public Task StartAsync(CancellationToken cancellationToken)
     {
         if (_url is null) return Task.CompletedTask;
-        _client = new HttpClient(_options.HubHandler ?? new SocketsHttpHandler(), disposeHandler: _options.HubHandler is null)
+        _client = new HttpClient(_options.SendHandler ?? new SocketsHttpHandler(), disposeHandler: _options.SendHandler is null)
         {
             Timeout = TimeSpan.FromSeconds(5),
         };
-        if (!string.IsNullOrEmpty(_options.HubToken)) _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.HubToken);
+        if (!string.IsNullOrEmpty(_options.Token)) _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.Token);
         _stopping = new CancellationTokenSource();
         _loop = Task.Run(() => LoopAsync(_stopping.Token), CancellationToken.None);
         if (_options.ReportPackages) _ = Task.Run(() => PackageReport.SendAsync(_client, _url, HubSenderInfo.Of(_options, _environment, null), _stopping.Token), CancellationToken.None);
@@ -141,7 +141,7 @@ internal sealed class HubExporter : IHostedService, IDisposable
     private void Failed(List<HubItem> items, DateTimeOffset now, int status)
     {
         _queue.PutBack(items);
-        _reason = HubSendState.ReasonOf(status, _url!, !string.IsNullOrEmpty(_options.HubToken));
+        _reason = HubSendState.ReasonOf(status, _url!, !string.IsNullOrEmpty(_options.Token));
         if (_failures++ == 0) _logger.LogWarning("WizeLens: {Reason} Traces stay in this app, and sending will retry.", _reason);
         var backoff = TimeSpan.FromSeconds(Math.Pow(2, Math.Min(_failures, 5)));
         _retryAt = now + (backoff < MaxBackoff ? backoff : MaxBackoff);

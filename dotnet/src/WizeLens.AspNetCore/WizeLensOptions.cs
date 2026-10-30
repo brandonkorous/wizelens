@@ -11,8 +11,12 @@ public enum WizeLensStorage
 }
 
 /// <summary>Settings for WizeLens add-on.</summary>
-public sealed class WizeLensOptions
+public sealed partial class WizeLensOptions
 {
+    private bool? _hud;
+    private bool? _traceStaticFiles;
+    private bool? _reportPackages;
+
     /// <summary>Default keys whose values are replaced with "[redacted]".</summary>
     public static readonly IReadOnlyList<string> DefaultRedactKeys =
     [
@@ -26,13 +30,13 @@ public sealed class WizeLensOptions
     public bool? Dashboard { get; set; }
 
     /// <summary>Puts the in-page HUD on the app's HTML pages while the dashboard is served. On by default; WIZELENS_HUD=false turns it off.</summary>
-    public bool Hud { get; set; } = EnvFlag("WIZELENS_HUD") ?? true;
+    public bool Hud { get => _hud ?? true; set => _hud = value; }
 
     /// <summary>Where the dashboard and API live. Default <c>/_wizelens</c>.</summary>
     public string BasePath { get; set; } = "/_wizelens";
 
-    /// <summary>Name shown for spans from this app. Default: the application name.</summary>
-    public string? ServiceName { get; set; }
+    /// <summary>Name shown for spans from this app. Default: the OTEL_SERVICE_NAME variable, else the application name.</summary>
+    public string? Service { get; set; }
 
     /// <summary>How many traces to keep (in memory and on disk). The oldest trace is dropped first. Default 2000.</summary>
     public int MaxTraces { get; set; } = 2000;
@@ -47,9 +51,9 @@ public sealed class WizeLensOptions
     public string? StoragePath { get; set; }
 
     /// <summary>Exposes a read-only MCP endpoint at <c>{BasePath}/mcp</c> for AI agents. Off by default.</summary>
-    public bool EnableMcp { get; set; }
+    public bool Mcp { get; set; }
 
-    /// <summary>Attribute, header and parameter names (case-insensitive substrings) to redact.</summary>
+    /// <summary>Attribute, header and parameter names (case-insensitive substrings) to redact. The comma-separated WIZELENS_REDACT_KEYS variable adds more.</summary>
     public List<string> RedactKeys { get; set; } = [.. DefaultRedactKeys];
 
     /// <summary>How many repeats of one query or HTTP call in a trace count as N+1.</summary>
@@ -59,30 +63,30 @@ public sealed class WizeLensOptions
     public double SlowQueryMs { get; set; } = 100;
 
     /// <summary>Traces files served as they are (images, fonts, scripts) that succeed. Off by default; WIZELENS_STATIC_FILES=true turns it on.</summary>
-    public bool TraceStaticFiles { get; set; } = EnvFlag("WIZELENS_STATIC_FILES") ?? false;
+    public bool TraceStaticFiles { get => _traceStaticFiles ?? false; set => _traceStaticFiles = value; }
 
     /// <summary>Keeps the first 16 KB of text and JSON response bodies on the request span. Off by default.</summary>
     public bool CaptureResponseBody { get; set; }
 
-    /// <summary>Sends the hub the app's NuGet packages once at start, for the known-vulnerability check. On by default; WIZELENS_PACKAGES=false turns it off.</summary>
-    public bool ReportPackages { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_PACKAGES") != "false";
+    /// <summary>Sends the endpoint the app's NuGet packages once at start, for the known-vulnerability check. On by default; WIZELENS_PACKAGES=false turns it off.</summary>
+    public bool ReportPackages { get => _reportPackages ?? true; set => _reportPackages = value; }
 
-    /// <summary>Also sends everything to this local hub, for example <c>http://localhost:5960</c>. Default: the WIZELENS_HUB variable.</summary>
-    public string? HubUrl { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_HUB");
+    /// <summary>Also sends everything here: a hub such as <c>http://localhost:5960</c>, or the cloud. Default: the WIZELENS_ENDPOINT variable.</summary>
+    public string? Endpoint { get; set; }
 
-    /// <summary>Access token for the hub. Default: the WIZELENS_HUB_TOKEN variable.</summary>
-    public string? HubToken { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_HUB_TOKEN");
+    /// <summary>Access token (ingest key) for the endpoint. Default: the WIZELENS_TOKEN variable.</summary>
+    public string? Token { get; set; }
 
     /// <summary>Other WizeLens services on another origin that browser calls go to, like <c>https://localhost:5099</c> for an API on its own port: their part of a call joins its trace here. Default: the comma-separated WIZELENS_TRUSTED_REMOTES variable.</summary>
-    public List<string> TrustedRemotes { get; set; } = [.. (Environment.GetEnvironmentVariable("WIZELENS_TRUSTED_REMOTES") ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
+    public List<string> TrustedRemotes { get; set; } = [];
 
     /// <summary>The project this service belongs to, so a shared hub can group it. Default: the WIZELENS_PROJECT variable.</summary>
-    public string? Project { get; set; } = Environment.GetEnvironmentVariable("WIZELENS_PROJECT");
+    public string? Project { get; set; }
 
     /// <summary>The app's version, kept on every span as <c>service.version</c> for release markers, version compares, and Problems. Default: the WIZELENS_RELEASE variable, else OTEL_SERVICE_VERSION, else the entry assembly's informational version.</summary>
-    public string? Release { get; set; } = NonEmptyEnv("WIZELENS_RELEASE") ?? NonEmptyEnv("OTEL_SERVICE_VERSION");
+    public string? Release { get; set; }
 
-    /// <summary>Keeps only part of the traces, for busy services. Default: all, or the WIZELENS_SAMPLE_RATE variable.</summary>
+    /// <summary>Keeps only part of the traces, for busy services. Default: all, or the WIZELENS_SAMPLE_RATE, WIZELENS_KEEP_ERRORS and WIZELENS_KEEP_SLOW_MS variables.</summary>
     public WizeLensSampling Sampling { get; set; } = new();
 
     /// <summary>Keeps log lines written outside a request too, with a level floor and sampling. On by default.</summary>
@@ -97,7 +101,7 @@ public sealed class WizeLensOptions
     /// <summary>Metric points older than this are dropped from memory. Default 1 hour.</summary>
     public TimeSpan MetricsMaxAge { get; set; } = TimeSpan.FromHours(1);
 
-    /// <summary>Tag rules kept in code, and built-in tags to turn off (docs/TAGS-PLAN.md). A bad rule throws in AddWizeLens.</summary>
+    /// <summary>Tag rules kept in code, and built-in tags (stream, probe, bot) to turn off. A bad rule throws in AddWizeLens.</summary>
     public WizeLensTags Tags { get; set; } = new();
 
     /// <summary>The built-ins and the rules from <see cref="Tags"/>, checked; set by AddWizeLens.</summary>
@@ -128,32 +132,21 @@ public sealed class WizeLensOptions
         return clean.Length > 50 ? clean[..50] : clean;
     }
 
-    /// <summary>Reads an on/off variable ("true", "1", "on", "yes" or "false", "0", "off", "no"). Null when unset or unknown.</summary>
-    internal static bool? EnvFlag(string name) => Environment.GetEnvironmentVariable(name)?.Trim().ToLowerInvariant() switch
-    {
-        "true" or "1" or "on" or "yes" => true,
-        "false" or "0" or "off" or "no" => false,
-        _ => null,
-    };
-
-    /// <summary>A variable's trimmed value, or null when it is unset or blank.</summary>
-    internal static string? NonEmptyEnv(string name) => Environment.GetEnvironmentVariable(name) is { } v && !string.IsNullOrWhiteSpace(v) ? v.Trim() : null;
-
     /// <summary>True when WizeLens is on and collects metrics.</summary>
     internal bool MetricsOn => IsEnabled && CaptureMetrics;
 
     /// <summary>Most time series kept; new ones past this are dropped.</summary>
     internal int MaxMetricSeries { get; set; } = Metrics.MetricCollector.DefaultMaxSeries;
 
-    /// <summary>For tests: the HTTP handler the hub sender uses.</summary>
-    internal HttpMessageHandler? HubHandler { get; set; }
+    /// <summary>For tests: the HTTP handler the sender uses.</summary>
+    internal HttpMessageHandler? SendHandler { get; set; }
 
-    /// <summary>The hub base URL without a trailing slash or "/_wizelens", or null when none is set.</summary>
-    internal string? NormalizedHubUrl
+    /// <summary>The endpoint base URL without a trailing slash or "/_wizelens", or null when none is set.</summary>
+    internal string? NormalizedEndpoint
     {
         get
         {
-            var v = HubUrl?.Trim().TrimEnd('/');
+            var v = Endpoint?.Trim().TrimEnd('/');
             if (string.IsNullOrEmpty(v)) return null;
             if (v.EndsWith("/_wizelens", StringComparison.OrdinalIgnoreCase)) v = v[..^"/_wizelens".Length];
             return v.Contains("://", StringComparison.Ordinal) ? v : "http://" + v;

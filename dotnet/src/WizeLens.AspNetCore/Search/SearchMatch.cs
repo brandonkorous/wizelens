@@ -5,13 +5,13 @@ using WizeLens.Model;
 namespace WizeLens.Search;
 
 /// <summary>One thing a search can find. Fields hold strings, numbers, bools, null, or string lists; <c>outcome</c> is the span status.</summary>
-public sealed record SearchDoc(
+internal sealed record SearchDoc(
     string Kind,
     IReadOnlyList<string> Text,
     IReadOnlyDictionary<string, object?> Fields,
     IReadOnlyList<IReadOnlyDictionary<string, object?>> Attrs);
 
-public static class SearchMatch
+internal static class SearchMatch
 {
     /// <summary>A case-insensitive regex for wildcard pieces.</summary>
     public static Regex PatternRegex(IEnumerable<string?> pieces) =>

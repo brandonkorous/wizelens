@@ -11,7 +11,7 @@ using WizeLens.Storage;
 
 namespace WizeLens.Web;
 
-/// <summary>Maps the dashboard UI and the JSON API from docs/CONTRACT.md.</summary>
+/// <summary>Maps the dashboard UI and the JSON API.</summary>
 internal static partial class WizeLensEndpoints
 {
     private const int MaxClientSpans = 500;
@@ -34,7 +34,7 @@ internal static partial class WizeLensEndpoints
         if (options.MetricsOn) group.MapGet("api/metrics/points", (MetricStore metrics, double? since) => Results.Json(new { points = metrics.Since(since) }, WizeLensJson.Options));
         HudScript.MapRoutes(group);
         MapUi(group);
-        if (options.EnableMcp) endpoints.MapMcp(options.NormalizedBasePath + "/mcp");
+        if (options.Mcp) endpoints.MapMcp(options.NormalizedBasePath + "/mcp");
     }
 
     private static IResult ListTraces(TraceStore store, int? limit, string? session, bool? full, double? since)

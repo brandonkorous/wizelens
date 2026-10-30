@@ -31,7 +31,7 @@ internal sealed class TraceStorageService : IHostedService, IDisposable
         {
             try
             {
-                _sqlite = SqliteTraceStorage.Open(path, options.ServiceName ?? "app");
+                _sqlite = SqliteTraceStorage.Open(path, options.Service ?? "app");
                 _sqlite.Prune(options.MaxTraces, CutoffMs());
                 foreach (var trace in _sqlite.Load(options.MaxTraces)) _store.Hydrate(trace);
             }

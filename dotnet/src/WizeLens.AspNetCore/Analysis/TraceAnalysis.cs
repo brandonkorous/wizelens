@@ -3,16 +3,16 @@ using WizeLens.Model;
 
 namespace WizeLens.Analysis;
 
-public sealed record DuplicateQuery(string TraceId, string Query, string Parameters, int Count, double TotalMs, string Service);
+internal sealed record DuplicateQuery(string TraceId, string Query, string Parameters, int Count, double TotalMs, string Service);
 
-public sealed record NPlusOne(string TraceId, string Kind, string Shape, int Count, double TotalMs);
+internal sealed record NPlusOne(string TraceId, string Kind, string Shape, int Count, double TotalMs);
 
-public sealed record SlowQuery(string TraceId, string SpanId, double DurationMs, string Query, string Service);
+internal sealed record SlowQuery(string TraceId, string SpanId, double DurationMs, string Query, string Service);
 
-public sealed record ErrorInfo(string TraceId, string SpanId, string Service, string Name, string? Message, string? Type, string? Stack);
+internal sealed record ErrorInfo(string TraceId, string SpanId, string Service, string Name, string? Message, string? Type, string? Stack);
 
-/// <summary>Analysis rules from docs/CONTRACT.md. The JS side implements the same rules.</summary>
-public static partial class TraceAnalysis
+/// <summary>Analysis rules for N+1, duplicate and slow queries, and errors. Every WizeLens SDK runs the same rules.</summary>
+internal static partial class TraceAnalysis
 {
     /// <summary>≥ 2 db spans with identical query text AND identical parameters.</summary>
     public static IReadOnlyList<DuplicateQuery> DuplicateQueries(Trace trace) =>

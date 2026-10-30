@@ -7,6 +7,7 @@ namespace WizeLens.Data;
 /// <summary>Wraps any ADO.NET connection (raw or Dapper) so every command is a db span: <c>new ProfiledDbConnection(conn)</c>.</summary>
 public sealed class ProfiledDbConnection(DbConnection inner) : DbConnection
 {
+    /// <summary>The wrapped connection.</summary>
     public DbConnection InnerConnection { get; } = inner ?? throw new ArgumentNullException(nameof(inner));
 
     [AllowNull]
@@ -45,16 +46,17 @@ public sealed class ProfiledDbCommand : DbCommand
 {
     private DbConnection? _connection;
 
-    public ProfiledDbCommand(DbCommand inner, DbConnection? connection)
+    internal ProfiledDbCommand(DbCommand inner, DbConnection? connection)
     {
         InnerCommand = inner;
         _connection = connection;
     }
 
+    /// <summary>The wrapped command.</summary>
     public DbCommand InnerCommand { get; }
 
     /// <summary>The <c>wizelens.db.adapter</c> value; an ORM (EF Core) sets it so a command is recorded once.</summary>
-    public string Adapter { get; set; } = "ado.net";
+    public string Adapter { get; internal set; } = "ado.net";
 
     [AllowNull]
     public override string CommandText

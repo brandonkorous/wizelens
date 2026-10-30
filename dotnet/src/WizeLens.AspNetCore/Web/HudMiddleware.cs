@@ -7,7 +7,7 @@ using Microsoft.Net.Http.Headers;
 
 namespace WizeLens.Web;
 
-/// <summary>Puts the HUD script tag (docs/HUD-PLAN.md) before the last <c>&lt;/body&gt;</c> of the app's HTML pages; everything else passes through.</summary>
+/// <summary>Puts the HUD script tag before the last <c>&lt;/body&gt;</c> of the app's HTML pages; everything else passes through.</summary>
 internal sealed class HudMiddleware(RequestDelegate next, WizeLensOptions options)
 {
     public async Task InvokeAsync(HttpContext context)

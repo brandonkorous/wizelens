@@ -14,9 +14,7 @@ internal static class WizeLensAutoInstall
     public static bool AddServices(IServiceCollection services)
     {
         if (WizeLensInstall.Find(services) is not null) return false;
-        var name = Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME");
-        var options = new WizeLensOptions { ServiceName = string.IsNullOrWhiteSpace(name) ? null : name.Trim() };
-        WizeLensExtensions.AddWizeLensCore(services, options, auto: true);
+        WizeLensExtensions.AddWizeLensCore(services, new WizeLensOptions(), auto: true);
         services.AddSingleton<IStartupFilter, AutoStartupFilter>();
         return true;
     }
@@ -47,8 +45,8 @@ internal sealed class AutoStartupFilter(WizeLensInstall install, WizeLensOptions
     private void Report()
     {
         if (!install.Auto)
-            logger.LogInformation("{Service} adds WizeLens in code, so the auto install steps aside.", options.ServiceName);
+            logger.LogInformation("{Service} adds WizeLens in code, so the auto install steps aside.", options.Service);
         else if (options.IsEnabled)
-            logger.LogInformation("WizeLens auto install on for {Service}{Hub}.", options.ServiceName, options.NormalizedHubUrl is { } hub ? $", sending to {hub}" : "");
+            logger.LogInformation("WizeLens auto install on for {Service}{Endpoint}.", options.Service, options.NormalizedEndpoint is { } endpoint ? $", sending to {endpoint}" : "");
     }
 }

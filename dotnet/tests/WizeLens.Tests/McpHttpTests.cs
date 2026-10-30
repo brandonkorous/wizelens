@@ -12,7 +12,7 @@ public class McpHttpTests
     [Fact]
     public async Task Agent_connects_lists_tools_and_calls_one()
     {
-        await using var app = await TestApp.StartAsync(a => a.MapGet("/boom", (HttpContext _) => throw new InvalidOperationException("kaboom")), o => o.EnableMcp = true);
+        await using var app = await TestApp.StartAsync(a => a.MapGet("/boom", (HttpContext _) => throw new InvalidOperationException("kaboom")), o => o.Mcp = true);
         await app.Client.GetAsync("/boom");
         var options = new HttpClientTransportOptions { Endpoint = new Uri(app.Client.BaseAddress!, "/_wizelens/mcp"), TransportMode = HttpTransportMode.StreamableHttp };
         await using var client = await McpClient.CreateAsync(new HttpClientTransport(options, app.Client, ownsHttpClient: false));
@@ -26,7 +26,7 @@ public class McpHttpTests
     [Fact]
     public async Task List_traces_takes_a_search_and_a_range()
     {
-        await using var app = await TestApp.StartAsync(a => a.MapGet("/orders", () => "ok"), o => o.EnableMcp = true);
+        await using var app = await TestApp.StartAsync(a => a.MapGet("/orders", () => "ok"), o => o.Mcp = true);
         await app.Client.GetAsync("/orders");
         var options = new HttpClientTransportOptions { Endpoint = new Uri(app.Client.BaseAddress!, "/_wizelens/mcp"), TransportMode = HttpTransportMode.StreamableHttp };
         await using var client = await McpClient.CreateAsync(new HttpClientTransport(options, app.Client, ownsHttpClient: false));
@@ -45,7 +45,7 @@ public class McpHttpTests
         {
             a.MapGet("/.env", () => "SECRET=1");
             a.MapGet("/api/admin/stats", () => Results.Json(new { users = 3 }));
-        }, o => o.EnableMcp = true);
+        }, o => o.Mcp = true);
         await app.Client.GetAsync("/.env");
         await app.Client.GetAsync("/api/admin/stats");
         var options = new HttpClientTransportOptions { Endpoint = new Uri(app.Client.BaseAddress!, "/_wizelens/mcp"), TransportMode = HttpTransportMode.StreamableHttp };

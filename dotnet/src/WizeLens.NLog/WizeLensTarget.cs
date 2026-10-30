@@ -29,7 +29,7 @@ public sealed class WizeLensTarget : TargetWithLayout
 
     /// <summary>The request's trace and span, read where the event is logged; set by WizeLens.</summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public Layout ActivityContext { get; set; }
+    public Layout ActivityContext { get; internal set; }
 
     protected override void InitializeTarget()
     {

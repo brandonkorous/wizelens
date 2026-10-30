@@ -26,7 +26,7 @@ internal sealed class MetricsService(MetricStore store, WizeLensOptions options)
         // A .NET 9 app runs this .NET 8 build, and .NET 9 publishes System.Runtime itself.
         if (Environment.Version.Major < 9) _runtime = RuntimeMeter.Create();
 #endif
-        _collector = new MetricCollector(store, options.ServiceName ?? "app", options.MaxMetricSeries);
+        _collector = new MetricCollector(store, options.Service ?? "app", options.MaxMetricSeries);
         _collector.Start();
         _stopping = new CancellationTokenSource();
         _loop = Task.Run(() => LoopAsync(_stopping.Token), CancellationToken.None);

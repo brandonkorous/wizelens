@@ -5,7 +5,7 @@ using WizeLens.Web;
 
 namespace WizeLens.Storage;
 
-/// <summary>Writes traces to SQLite (schema: docs/CONTRACT.md); not thread-safe, one flush loop calls it.</summary>
+/// <summary>Writes traces to SQLite; not thread-safe, one flush loop calls it.</summary>
 internal sealed class SqliteTraceStorage : IDisposable
 {
     public const int SchemaVersion = 1;

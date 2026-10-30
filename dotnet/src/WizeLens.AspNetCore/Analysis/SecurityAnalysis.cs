@@ -2,8 +2,8 @@ using WizeLens.Model;
 
 namespace WizeLens.Analysis;
 
-/// <summary>Security rules over one trace (docs/CONTRACT.md "Security analysis"). The JS side implements the same rules.</summary>
-public static class SecurityAnalysis
+/// <summary>Security rules over one trace. Every WizeLens SDK runs the same rules.</summary>
+internal static class SecurityAnalysis
 {
     /// <summary>The OWASP Top 10:2025 category of each kind.</summary>
     public static readonly IReadOnlyDictionary<string, string> Owasp = new Dictionary<string, string>

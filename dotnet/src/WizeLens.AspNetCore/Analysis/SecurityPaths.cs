@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 namespace WizeLens.Analysis;
 
 /// <summary>Open sensitive paths (A02), open admin routes (A01), and stack traces in answers (A10); the same as core/src/security/paths.ts.</summary>
-public static partial class SecurityPaths
+internal static partial class SecurityPaths
 {
     private const string HeaderPrefix = "http.request.header.";
 

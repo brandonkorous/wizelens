@@ -3,12 +3,12 @@ using WizeLens.Model;
 
 namespace WizeLens.Storage;
 
-/// <summary>Replaces secret values with "[redacted]" before anything is stored; keeps the evidence docs/CONTRACT.md "Redaction" names.</summary>
+/// <summary>Replaces secret values with "[redacted]" before anything is stored; keeps what the security rules need, such as cookie names and flags.</summary>
 internal sealed partial class Redactor(IEnumerable<string> keys)
 {
     public const string Redacted = "[redacted]";
 
-    /// <summary>The default keys, for rules that judge a key by them (docs/CONTRACT.md "Security analysis").</summary>
+    /// <summary>The default keys, for security rules that judge a key by them.</summary>
     public static readonly Redactor Defaults = new(WizeLensOptions.DefaultRedactKeys);
 
     private readonly string[] _keys = [.. keys.Where(k => !string.IsNullOrWhiteSpace(k)).Select(k => k.ToLowerInvariant())];

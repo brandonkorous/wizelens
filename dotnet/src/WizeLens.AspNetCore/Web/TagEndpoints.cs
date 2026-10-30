@@ -8,7 +8,7 @@ using WizeLens.Tagging;
 
 namespace WizeLens.Web;
 
-/// <summary>The in-app tags API (docs/TAGS-PLAN.md): the rules from the Tags option, read-only, and which of them match a page of rows.</summary>
+/// <summary>The in-app tags API: the rules from the Tags option, read-only, and which of them match a page of rows.</summary>
 internal static class TagEndpoints
 {
     public static void Map(RouteGroupBuilder group)

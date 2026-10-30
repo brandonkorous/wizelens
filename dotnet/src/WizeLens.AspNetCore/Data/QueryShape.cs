@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 namespace WizeLens.Data;
 
 /// <summary>Query shapes for stores without SQL parameters (Redis keys, Elasticsearch paths): ids become <c>?</c>, values are never kept.</summary>
-public static partial class QueryShape
+internal static partial class QueryShape
 {
     /// <summary>The placeholder that replaces an id or a value.</summary>
     public const string Placeholder = "?";

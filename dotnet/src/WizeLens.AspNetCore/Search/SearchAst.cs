@@ -2,7 +2,7 @@
 namespace WizeLens.Search;
 
 /// <summary>What a search finds.</summary>
-public static class SearchKinds
+internal static class SearchKinds
 {
     public const string Requests = "requests";
     public const string Traces = "traces";
@@ -12,7 +12,7 @@ public static class SearchKinds
 }
 
 /// <summary>Comparisons. Ranges become two of them; negation is a <see cref="NotNode"/>.</summary>
-public static class SearchCmp
+internal static class SearchCmp
 {
     public const string Eq = "=";
     public const string Gt = ">";
@@ -22,52 +22,52 @@ public static class SearchCmp
 }
 
 /// <summary>A field or attribute value.</summary>
-public abstract record SearchValue;
+internal abstract record SearchValue;
 
-public sealed record StringValue(string Value) : SearchValue;
+internal sealed record StringValue(string Value) : SearchValue;
 
 /// <summary>Wildcard pieces: literal text, or null for "any text".</summary>
-public sealed record PatternValue(IReadOnlyList<string?> Pieces) : SearchValue;
+internal sealed record PatternValue(IReadOnlyList<string?> Pieces) : SearchValue;
 
-public sealed record NumberValue(double Value) : SearchValue;
+internal sealed record NumberValue(double Value) : SearchValue;
 
-public sealed record BoolValue(bool Value) : SearchValue;
+internal sealed record BoolValue(bool Value) : SearchValue;
 
-public sealed record LevelValue(string Value) : SearchValue;
+internal sealed record LevelValue(string Value) : SearchValue;
 
 /// <summary>An HTTP status class: 5 for 5xx.</summary>
-public sealed record StatusClassValue(int Value) : SearchValue;
+internal sealed record StatusClassValue(int Value) : SearchValue;
 
 /// <summary>A span status: ok, error, or unset.</summary>
-public sealed record SpanStatusValue(string Value) : SearchValue;
+internal sealed record SpanStatusValue(string Value) : SearchValue;
 
 /// <summary>The value is there (a lone <c>*</c>).</summary>
-public sealed record ExistsValue : SearchValue;
+internal sealed record ExistsValue : SearchValue;
 
 /// <summary>A node of the search tree.</summary>
-public abstract record SearchNode;
+internal abstract record SearchNode;
 
-public sealed record AndNode(IReadOnlyList<SearchNode> Items) : SearchNode;
+internal sealed record AndNode(IReadOnlyList<SearchNode> Items) : SearchNode;
 
-public sealed record OrNode(IReadOnlyList<SearchNode> Items) : SearchNode;
+internal sealed record OrNode(IReadOnlyList<SearchNode> Items) : SearchNode;
 
-public sealed record NotNode(SearchNode Item) : SearchNode;
+internal sealed record NotNode(SearchNode Item) : SearchNode;
 
-public sealed record TextNode(string Value) : SearchNode;
+internal sealed record TextNode(string Value) : SearchNode;
 
-public sealed record FieldNode(string Field, string Cmp, SearchValue Value) : SearchNode;
+internal sealed record FieldNode(string Field, string Cmp, SearchValue Value) : SearchNode;
 
-public sealed record AttrNode(string Key, string Cmp, SearchValue Value) : SearchNode;
+internal sealed record AttrNode(string Key, string Cmp, SearchValue Value) : SearchNode;
 
 /// <summary>A parse error, with the character span it covers.</summary>
-public sealed class SearchError(string message, int start, int end) : Exception(message)
+internal sealed class SearchError(string message, int start, int end) : Exception(message)
 {
     public int Start { get; } = start;
     public int End { get; } = end;
 }
 
 /// <summary>Limits that keep one query cheap to run.</summary>
-public static class SearchLimits
+internal static class SearchLimits
 {
     public const int Chars = 2000;
     public const int Terms = 64;

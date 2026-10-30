@@ -7,7 +7,7 @@ namespace WizeLens.Search;
 /// <summary>A value that failed its field's type; the parser adds the position.</summary>
 internal sealed class ValueError(string message) : Exception(message);
 
-public static partial class SearchValues
+internal static partial class SearchValues
 {
     [GeneratedRegex(@"^((?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(?:e[+-]?[0-9]+)?)(us|µs|ms|s|m|h)?\z", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex Duration();

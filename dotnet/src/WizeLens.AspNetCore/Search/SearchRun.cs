@@ -6,18 +6,18 @@ using WizeLens.Model;
 namespace WizeLens.Search;
 
 /// <summary>Where the last page stopped: newest first, then trace id, then owner (span id or log index).</summary>
-public sealed record SearchCursor(double TimeMs, string TraceId, string Owner);
+internal sealed record SearchCursor(double TimeMs, string TraceId, string Owner);
 
 /// <summary>A time window in epoch ms: From is in it, To is not.</summary>
-public sealed record SearchWindow(double From, double To);
+internal sealed record SearchWindow(double From, double To);
 
 /// <summary>TraceIds, when set, limits the search to those traces: tag matching (Tagging/TagMatch.cs) checks one page of rows.</summary>
-public sealed record SearchQuery(string Kind, SearchNode? Node, SearchWindow Window, int Limit, SearchCursor? Cursor = null, string? Env = null, IReadOnlyList<string>? TraceIds = null);
+internal sealed record SearchQuery(string Kind, SearchNode? Node, SearchWindow Window, int Limit, SearchCursor? Cursor = null, string? Env = null, IReadOnlyList<string>? TraceIds = null);
 
 /// <summary>One page of results; pass Next back as the cursor for the next page (null on the last page).</summary>
-public sealed record SearchPage(string Kind, IReadOnlyList<object> Items, string? Next);
+internal sealed record SearchPage(string Kind, IReadOnlyList<object> Items, string? Next);
 
-public static class SearchRun
+internal static class SearchRun
 {
     /// <summary>Most results one page may ask for.</summary>
     public const int PageMax = 200;

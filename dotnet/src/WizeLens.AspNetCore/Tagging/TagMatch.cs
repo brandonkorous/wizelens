@@ -7,9 +7,9 @@ using WizeLens.Search;
 namespace WizeLens.Tagging;
 
 /// <summary>One row to check: its trace, its part (span id, log index, or "" for a request or trace), and when it happened.</summary>
-public sealed record TagMatchItem(string TraceId, string Owner, double TimeMs);
+internal sealed record TagMatchItem(string TraceId, string Owner, double TimeMs);
 
-public static partial class TagMatch
+internal static partial class TagMatch
 {
     public const int MaxItems = 200;
 

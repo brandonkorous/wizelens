@@ -18,6 +18,9 @@
         <PackageReleaseNotes>https://github.com/wizeworksllc/wizelens/blob/main/CHANGELOG.md</PackageReleaseNotes>
         <PackageTags>wizelens;glimpse;opentelemetry;tracing;diagnostics;aspnetcore;mcp</PackageTags>
         <Version>0.3.0-alpha.14</Version>
+        <!-- XML docs ship in every package; members without docs (CS1591) do not warn. -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);CS1591</NoWarn>
     </PropertyGroup>
     <!-- .NET 8 builds take the 8.0 line of the Microsoft packages; .NET 9 apps use the .NET 8 build. -->
     <PropertyGroup>

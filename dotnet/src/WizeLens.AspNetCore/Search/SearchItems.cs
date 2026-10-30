@@ -5,19 +5,19 @@ using WizeLens.Model;
 namespace WizeLens.Search;
 
 /// <summary>A span as a search result.</summary>
-public sealed record SpanItem(
+internal sealed record SpanItem(
     string TraceId, string SpanId, double StartMs, double DurationMs, string Service, string Name, string Kind, string Category,
     string Status, string? Method, string? Path, string? Route, double? HttpStatus, string? User);
 
 /// <summary>A log line as a search result, with the trace it was written in; Key is <c>traceId:index</c>.</summary>
-public sealed record LogItem(
+internal sealed record LogItem(
     string Key, string TraceId, string TraceName, string? SpanId, double TimeMs, string Level, string Service, string Category,
     string Message, Dictionary<string, object?> Attributes);
 
 /// <summary>One document of a trace: when it happened, which part it is (span id, log index, or ""), and the result row.</summary>
-public sealed record DocEntry(string Kind, double TimeMs, string Owner, SearchDoc Doc, Func<object> Item);
+internal sealed record DocEntry(string Kind, double TimeMs, string Owner, SearchDoc Doc, Func<object> Item);
 
-public static class SearchItems
+internal static class SearchItems
 {
     private static string? TextOf(object? v) => v as string;
 

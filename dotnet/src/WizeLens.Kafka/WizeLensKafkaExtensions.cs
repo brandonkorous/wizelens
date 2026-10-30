@@ -5,7 +5,7 @@ using Confluent.Kafka;
 namespace WizeLens.Kafka;
 
 /// <summary>Traces Confluent.Kafka produce and process calls; the trace travels in the message's traceparent header.</summary>
-public static class WizeLensKafka
+public static class WizeLensKafkaExtensions
 {
     /// <summary>Activity source name; WizeLens.AspNetCore listens to every WizeLens.* source.</summary>
     public const string SourceName = "WizeLens.Kafka";
@@ -13,7 +13,7 @@ public static class WizeLensKafka
     internal const string TraceParentHeader = "traceparent";
     internal const string TraceStateHeader = "tracestate";
 
-    private static readonly ActivitySource Source = new(SourceName, typeof(WizeLensKafka).Assembly.GetName().Version?.ToString());
+    private static readonly ActivitySource Source = new(SourceName, typeof(WizeLensKafkaExtensions).Assembly.GetName().Version?.ToString());
 
     /// <summary>Produces <paramref name="message"/> in a producer span and writes the trace context into its headers.</summary>
     public static async Task<DeliveryResult<TKey, TValue>> ProduceTracedAsync<TKey, TValue>(
