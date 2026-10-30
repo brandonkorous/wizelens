@@ -11,9 +11,7 @@ internal sealed partial class TraceStore
     /// <summary>Decides which traces are kept. Null: all.</summary>
     internal TraceSampler? Sampler { get; }
 
-    /// <summary>Adds a span to its trace, through the sampler when one is set.</summary>
-    /// <param name="span">The span to add.</param>
-    /// <param name="root">The span starts this service's part of the trace. Default: it has no parent.</param>
+    /// <summary>Adds a span to its trace, through the sampler when one is set; <paramref name="root"/> defaults to "it has no parent".</summary>
     public void AddSpan(Span span, bool? root = null)
     {
         if (Gate(span.TraceId, Sampler?.Span(span, root ?? span.ParentSpanId is null))) PutSpan(span);

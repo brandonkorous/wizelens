@@ -27,8 +27,7 @@ internal sealed class RedisProfiler
     private readonly object _timerLock = new();
     private Timer? _timer;
 
-    /// <param name="finish">Reads a session's finished commands (FinishProfiling); tests pass fakes for it and for the command text.</param>
-    /// <param name="text">Reads a command's text; tests pass a fake.</param>
+    // Tests pass fakes for the finished-command reader and the command text.
     internal RedisProfiler(Func<ProfilingSession, IReadOnlyList<IProfiledCommand>>? finish = null, Func<IProfiledCommand, string?>? text = null)
     {
         _finish = finish ?? (session => [.. session.FinishProfiling()]);
