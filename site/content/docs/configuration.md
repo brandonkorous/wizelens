@@ -57,7 +57,7 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | `storagePath` | `{cwd}/.wizelens/traces.db` | SQLite file. |
 | `maxTraces` / `maxAgeMs` | `2000` / 24 h | How much is kept. |
 | `mcp` | `false` | Expose the read-only MCP endpoint. |
-| `redactKeys` | see [Redaction](#redaction) | Key fragments whose values are redacted. |
+| `redactKeys` | see [Redaction](#redaction) | Key fragments whose values are redacted. `WIZELENS_REDACT_KEYS` adds more. |
 | `tags` | none | `{ rules: [{ name, query, color? }], disableBuiltIns: ["bot"] }`: tag rules for the dashboard, and built-in tags to turn off. A bad rule throws at start. See [Tags](/docs/tags/). |
 | `instrumentFetch` | `true` | Trace outgoing `fetch` and undici calls. |
 | `instrumentHttp` | `true` | Trace outgoing `node:http` and `node:https` calls (axios, got, node-fetch v2, AWS SDK). |
@@ -75,7 +75,7 @@ Pass options to `createWizeLens({ ... })`, or to `registerWizeLens({ ... })` on 
 | `trustedRemotes` | `WIZELENS_TRUSTED_REMOTES` (comma-separated) | APIs on another origin that the browser calls, like `https://localhost:5099`: their part of a call joins its trace here. |
 | `project` | `WIZELENS_PROJECT` | Groups this service with others on a shared hub. |
 | `release` | `WIZELENS_RELEASE`, else `OTEL_SERVICE_VERSION`, else `npm_package_version` | The app's version, kept on every span (`service.version`) for release markers, version compares, and [Problems](/docs/problems/). |
-| `sampling` | `{ rate: WIZELENS_SAMPLE_RATE ?? 1, keepErrors: true, keepSlowMs: 1000 }` | See [Sampling](/docs/sampling/). |
+| `sampling` | `{ rate: WIZELENS_SAMPLE_RATE ?? 1, keepErrors: WIZELENS_KEEP_ERRORS ?? true, keepSlowMs: WIZELENS_KEEP_SLOW_MS ?? 1000 }` | See [Sampling](/docs/sampling/). |
 | `sourceMaps` | dev servers on `localhost` | `{ dirs, origins, fetch }`: where browser stacks find their maps; `false` turns it off. See [Source maps](/docs/source-maps/). |
 | `logs` | `{ outside: true, minLevel: "info", rate: 1 }`, or the `WIZELENS_LOGS_*` variables | Log lines written outside a request. See [Logs](/docs/logs/). |
 | `captureMetrics` | `true` | Sample the runtime every `metricsIntervalMs`. |
@@ -169,11 +169,11 @@ See [Source maps](/docs/source-maps/).
 | `WIZELENS_LOGS_MIN_LEVEL` | .NET, Node | Lowest level kept outside a request: `trace`, `debug`, `info`, `warn`, `error`, `critical`. |
 | `WIZELENS_LOGS_SAMPLE_RATE` | .NET, Node | Share of lines outside a request below warn that are kept, 0 to 1. |
 | `WIZELENS_SAMPLE_RATE` | .NET, Node, Java, Python, Go | Sampling rate, 0 to 1. |
-| `WIZELENS_KEEP_SLOW_MS`, `WIZELENS_KEEP_ERRORS` | .NET, Java, Python, Go | What sampling always keeps. |
+| `WIZELENS_KEEP_SLOW_MS`, `WIZELENS_KEEP_ERRORS` | .NET, Node, Java, Python, Go | What sampling always keeps. |
 | `WIZELENS_CAPTURE_BODY`, `WIZELENS_CAPTURE_SQL_PARAMETERS` | Java, Python, Go | Request and response bodies; SQL parameters. |
 | `WIZELENS_CAPTURE_HEADERS` | Go | Request and response headers. Default `true`. |
 | `WIZELENS_CAPTURE_LOGS` | Python | `logging` lines. Default `true`. |
-| `WIZELENS_REDACT_KEYS` | .NET, Java, Python, Go | More key fragments to redact. |
+| `WIZELENS_REDACT_KEYS` | .NET, Node, Java, Python, Go | More key fragments to redact. |
 | `WIZELENS_AUTO_SKIP` | Node auto install | Hooks to leave off, comma-separated. See [Install with no code change](/docs/auto-install/#settings). |
 
 An on/off variable takes `true` or `false`, `1` or `0`, `on` or `off`, or `yes` or `no`. Anything else logs a warning and
@@ -192,5 +192,5 @@ database parameter names, and headers.
 - JWTs, AWS, Stripe, GitHub, Slack, and Google keys, private keys, and card numbers found inside any value or log line
   become a typed marker, such as `[redacted:jwt]` or `[redacted:card]`.
 
-`RedactKeys` (.NET) and `redactKeys` (Node) replace the list, so include the defaults you want to keep. .NET, Java, Python,
-and Go add to it with `WIZELENS_REDACT_KEYS`. Hub and cloud projects add more keys under Thresholds and hidden keys.
+`RedactKeys` (.NET) and `redactKeys` (Node) replace the list, so include the defaults you want to keep. Every SDK adds
+to it with `WIZELENS_REDACT_KEYS`. Hub and cloud projects add more keys under Thresholds and hidden keys.

@@ -7,6 +7,7 @@ import { addCleanup, partsOf, registerParts, runCleanups } from "./adapters/regi
 import { noteCodeInstall } from "./auto/state.js";
 import { createDbSpans, createTraceDb } from "./db.js";
 import { disabledWizeLens } from "./disabled.js";
+import { envRedactKeys } from "./env-defaults.js";
 import { createGetTrace } from "./federation.js";
 import { connectHub, releaseOf } from "./hub-connect.js";
 import { hudTagFor, resolveHudBundle } from "./hud-bundle.js";
@@ -66,7 +67,7 @@ function buildParts(options: WizeLensOptions, basePath: string) {
   installGlobals();
   const service = options.service;
   const tags = tagsFromOptions(options.tags);
-  const redactKeys = options.redactKeys ?? DEFAULT_REDACT_KEYS;
+  const redactKeys = [...(options.redactKeys ?? DEFAULT_REDACT_KEYS), ...envRedactKeys(process.env)];
   const sampling = samplingInfo(options.sampling);
   const sampler = sampling ? new TraceSampler(sampling) : undefined;
   const store = new TraceStore({ maxTraces: options.maxTraces ?? 2000, maxAgeMs: options.maxAgeMs, sampler });

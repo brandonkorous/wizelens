@@ -17,10 +17,18 @@ function sampledStore(now = () => 0) {
 
 describe("samplingInfo", () => {
   it("is null at the full rate and reads the variable", () => {
-    expect(samplingInfo(undefined, undefined)).toBeNull();
-    expect(samplingInfo({ rate: 1 }, undefined)).toBeNull();
-    expect(samplingInfo(undefined, "0.2")).toEqual({ rate: 0.2, keepErrors: true, keepSlowMs: 1000 });
-    expect(samplingInfo({ rate: 0.1, keepErrors: false, keepSlowMs: null }, "0.9")).toEqual({ rate: 0.1, keepErrors: false, keepSlowMs: null });
+    expect(samplingInfo(undefined, {})).toBeNull();
+    expect(samplingInfo({ rate: 1 }, {})).toBeNull();
+    expect(samplingInfo(undefined, { WIZELENS_SAMPLE_RATE: "0.2" })).toEqual({ rate: 0.2, keepErrors: true, keepSlowMs: 1000 });
+    expect(samplingInfo({ rate: 0.1, keepErrors: false, keepSlowMs: null }, { WIZELENS_SAMPLE_RATE: "0.9" })).toEqual({ rate: 0.1, keepErrors: false, keepSlowMs: null });
+  });
+
+  it("reads WIZELENS_KEEP_ERRORS and WIZELENS_KEEP_SLOW_MS when the options leave them out", () => {
+    const env = { WIZELENS_SAMPLE_RATE: "0.5", WIZELENS_KEEP_ERRORS: "off", WIZELENS_KEEP_SLOW_MS: "250" };
+    expect(samplingInfo(undefined, env)).toEqual({ rate: 0.5, keepErrors: false, keepSlowMs: 250 });
+    expect(samplingInfo({ keepErrors: true, keepSlowMs: 2000 }, env)).toEqual({ rate: 0.5, keepErrors: true, keepSlowMs: 2000 });
+    expect(samplingInfo(undefined, { WIZELENS_SAMPLE_RATE: "0.5", WIZELENS_KEEP_SLOW_MS: "none" })?.keepSlowMs).toBeNull();
+    expect(samplingInfo(undefined, { WIZELENS_SAMPLE_RATE: "0.5", WIZELENS_KEEP_SLOW_MS: " " })?.keepSlowMs).toBe(1000);
   });
 });
 

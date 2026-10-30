@@ -26,8 +26,8 @@ Java and Go stay 0.x and are called "preview". They follow every rename here, so
 | 2 | A wire version, one error shape, and CONTRACT.md matches the code | done |
 | 3 | One send-to name: `endpoint` and `token` | done |
 | 4 | Renames | done |
-| 5 | Hide what is not public | |
-| 6 | The same behavior in every SDK | |
+| 5 | Hide what is not public | done |
+| 6 | The same behavior in every SDK | done |
 | 7 | Docs, wording, and the rename table | |
 | 8 | `1.0.0-rc.1` | |
 | 9 | `1.0.0`, after a week with no breaks | |
@@ -96,7 +96,7 @@ npm:
 Hub and cloud:
 - Cloud `--allow-private-webhooks` becomes `--allow-private-targets` (it also covers uptime checks).
 - `WIZELENS_CLOUD_CHECK_PWNED` becomes `WIZELENS_CLOUD_CHECK_PWNED_PASSWORDS`, like its flag.
-- Wire: `sentAt` becomes `sentMs`.
+- Wire: `sentAt` becomes `sentMs` (every other wire time already ends in `Ms`).
 
 Kept after a closer look: the cloud's `--retention-days` (the cloud keeps whole days everywhere; the hub keeps any
 duration); `oauth_query` (Better Auth's own field on the same sign-in flow); the OSV severity `warning` (every

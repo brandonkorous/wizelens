@@ -1,11 +1,12 @@
-import { isErrorStatus, keepByRate, type LogRecord, type SamplingInfo, type Span } from "@wizeworks/lens-core/internal";
+import { envSwitch, isErrorStatus, keepByRate, type LogRecord, type SamplingInfo, type Span } from "@wizeworks/lens-core/internal";
+import { envKeepSlowMs } from "./env-defaults.js";
 
 export interface SamplingOptions {
   /** Share of traces kept, 0 to 1. Default 1 (all), or the WIZELENS_SAMPLE_RATE variable. */
   rate?: number;
-  /** Keep traces with an error at any rate. Default true. */
+  /** Keep traces with an error at any rate. Default true, or the WIZELENS_KEEP_ERRORS variable. */
   keepErrors?: boolean;
-  /** Keep traces with a server-side span at least this slow (ms) at any rate. Null turns it off. Default 1000. */
+  /** Keep traces with a server-side span at least this slow (ms) at any rate. Null turns it off. Default 1000, or the WIZELENS_KEEP_SLOW_MS variable (off turns it off). */
   keepSlowMs?: number | null;
 }
 
@@ -30,11 +31,14 @@ const MAX_PENDING = 2000;
 const HOLD_MS = 60_000;
 
 /** The sampling settings, or null when every trace is kept. */
-export function samplingInfo(o: SamplingOptions | undefined, env = process.env.WIZELENS_SAMPLE_RATE): SamplingInfo | null {
-  const raw = o?.rate ?? (env ? Number(env) : 1);
+export function samplingInfo(o: SamplingOptions | undefined, env: Readonly<Record<string, string | undefined>> = process.env): SamplingInfo | null {
+  const raw = o?.rate ?? (env.WIZELENS_SAMPLE_RATE ? Number(env.WIZELENS_SAMPLE_RATE) : 1);
   const rate = Number.isFinite(raw) ? Math.min(1, Math.max(0, raw)) : 1;
   if (rate >= 1) return null;
-  return { rate, keepErrors: o?.keepErrors ?? true, keepSlowMs: o?.keepSlowMs === undefined ? 1000 : o.keepSlowMs };
+  const keepErrors = o?.keepErrors ?? envSwitch(env, "WIZELENS_KEEP_ERRORS") ?? true;
+  const fromEnv = o?.keepSlowMs === undefined ? envKeepSlowMs(env) : o.keepSlowMs;
+  const keepSlowMs = fromEnv === undefined ? 1000 : fromEnv;
+  return { rate, keepErrors, keepSlowMs };
 }
 
 /** Decides, per trace, what the store keeps. A trace outside the rate waits until its local root span ends, then stays only when it had an error or a slow span. */
