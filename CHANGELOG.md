@@ -2,7 +2,76 @@
 
 All notable changes to WizeLens. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [Unreleased] — The 1.0 names
+
+### Changed
+
+These names freeze at 1.0, so each one is fixed now. The old names are removed, not kept beside the new ones. Find the
+old name in your code or config, and put the new one in its place.
+
+- **One send-to setting.** A service sends to a hub or to the cloud, so "hub" was the wrong word.
+
+  | Where | Old | New |
+  |---|---|---|
+  | Env, every SDK and the CLI | `WIZELENS_HUB`, `WIZELENS_HUB_TOKEN`, `WIZELENS_URL` | `WIZELENS_ENDPOINT`, `WIZELENS_TOKEN` |
+  | Node options | `hub`, `hubToken` | `endpoint`, `token` |
+  | .NET options | `HubUrl`, `HubToken` | `Endpoint`, `Token` |
+  | Python, Java, Go settings | `hub` / `hub()` / `Hub` | `endpoint` / `endpoint()` / `Endpoint` |
+  | CLI flag | `--url` | `--endpoint` |
+  | Inject chart | `hub`, `hubTokenSecret` | `endpoint`, `existingSecret: { name, key: token }` |
+  | Inject annotation | `wizelens.dev/hub` | `wizelens.dev/endpoint` |
+  | Inject webhook env | `WIZELENS_INJECT_HUB`, `WIZELENS_INJECT_HUB_TOKEN_*` | `WIZELENS_INJECT_ENDPOINT`, `WIZELENS_INJECT_TOKEN_SECRET`, `WIZELENS_INJECT_TOKEN_KEY` |
+  | Collector chart | `ingestKey`, `existingSecret.key: ingest-key` | `token`, `existingSecret.key: token` |
+
+  The hub's own `WIZELENS_HUB_*` settings, such as `WIZELENS_HUB_TOKEN` for `--token`, keep their names: they set up
+  the hub, not a sender.
+
+- **Other renames.**
+
+  | Package | Old | New |
+  |---|---|---|
+  | lens-node, .NET, Python, Go | `serviceName`, `ServiceName`, `service_name=`, `WithServiceName` | `service`, `Service`, `service=`, `WithService` |
+  | lens-node, .NET | `enableMcp`, `EnableMcp` | `mcp`, `Mcp` |
+  | lens-node, .NET | `logs.sampleRate`, `Logs.SampleRate` | `logs.rate`, `Logs.Rate` |
+  | lens-hub | `logMaxAgeMs` | `logsMaxAgeMs` |
+  | lens-node | `wizelensFastify`, `wizelensKoa`, `wizelensHono`, `wizelensLogProcessor`, `wizelensMetricExporter` | `wizeLensFastify`, `wizeLensKoa`, `wizeLensHono`, `wizeLensLogProcessor`, `wizeLensMetricExporter` |
+  | lens-node/next | `nextWizeLens` | `currentWizeLens` |
+  | lens-cli | the `lens-cli` command | `wizelens` |
+  | lens-cli | `wizelensSourceMaps`, `withWizeLens` (Next.js) | `wizeLensSourceMaps`, `withWizeLensSourceMaps` |
+  | lens-vue | the plugin `WizeLens`, `WIZELENS_KEY` | `WizeLensPlugin`, `wizeLensKey` |
+  | lens-react | `useWizeLens()` | `useWizeLensRecorder()` |
+  | lens-react | `createRecorder`, `startBrowserCapture`, `CaptureOptions` | `createReactRecorder`, `startReactCapture`, `ReactCaptureOptions` |
+  | lens-browser | the `version` option | `release` (it did the same) |
+  | lens-core | `HubSendState`; `api/info` fields `hub`, `hubSend` | `SendState`; `sendTo`, `send` |
+  | .NET | `WizeLensKafka` | `WizeLensKafkaExtensions` |
+  | Cloud | `--allow-private-webhooks`, `WIZELENS_CLOUD_ALLOW_PRIVATE_WEBHOOKS` | `--allow-private-targets`, `WIZELENS_CLOUD_ALLOW_PRIVATE_TARGETS` (it covers uptime checks too) |
+  | Cloud | `WIZELENS_CLOUD_CHECK_PWNED` | `WIZELENS_CLOUD_CHECK_PWNED_PASSWORDS` |
+  | Wire, `POST api/client-spans` | `sentAt` | `sentMs` |
+
+- **Each package exports only its public API.** The helpers other WizeLens packages share moved to an `/internal`
+  path (`@wizeworks/lens-core/internal`, `@wizeworks/lens-node/internal`, `@wizeworks/lens-hub/internal`,
+  `@wizeworks/lens-browser/internal`). `/internal` is not covered by semver. `@wizeworks/lens-node/kit` and
+  `@wizeworks/lens-hub/kit` are now `/internal`. lens-node no longer exports `TraceStore`, `SqlitePersister`,
+  `MetricStore`, `StoreSpanProcessor`, `toContractSpan` or the core types; import types from `@wizeworks/lens-core`.
+  WizeLens packages now depend on the exact same version of each other.
+- **.NET hides its storage and analysis types.** About 85 types in `WizeLens.AspNetCore` (`Model`, `Storage`,
+  `Search`, `Analysis`, `Tagging`) are now internal, with `ProfiledDbCommand`'s constructor, `WizeLensSampling.KeepByRate`,
+  `WizeLensRequest.TagPrefix` and `WizeLensDbCommandInterceptor`. The adapter packages depend on the exact
+  `WizeLens.AspNetCore` version. The packages now ship XML docs.
+- **lens-react's HUD is "auto" by default**, like lens-browser: it shows when the endpoint answers and stays hidden
+  otherwise. `hud={true}` and `hud={false}` still force it.
+- **Every on/off variable reads the same words.** `true`, `1`, `on` and `yes` turn it on; `false`, `0`, `off` and `no`
+  turn it off. Any other word logs one warning and keeps the default, in every SDK, the hub and the cloud.
+- **Every SDK reads the same env vars.** Node now reads `WIZELENS_KEEP_ERRORS`, `WIZELENS_KEEP_SLOW_MS` and
+  `WIZELENS_REDACT_KEYS`. .NET now reads those three and `OTEL_SERVICE_NAME`, when `AddWizeLens` runs. A blank
+  `WIZELENS_KEEP_SLOW_MS` means "not set" everywhere, so the default of 1000 ms applies.
+- **The wire has a version.** `api/info` answers `protocol: 1`. A later breaking change goes to `api/v2/…`, and
+  receivers ignore fields they do not know. See [CONTRACT.md](docs/CONTRACT.md#versioning).
+- **WizeLens moved to [github.com/wizeworksllc/wizelens](https://github.com/wizeworksllc/wizelens).** Images are at
+  `ghcr.io/wizeworksllc/*`, charts at `oci://ghcr.io/wizeworksllc/charts`, and the Go module is
+  `github.com/wizeworksllc/wizelens/go`. The old GitHub URLs redirect.
+- **npm pre-releases use the `next` tag**, so `npm install` gets the last full release.
+- **The cloud's usage text lists `copy-telemetry`.**
 
 ### Fixed
 
