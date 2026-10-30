@@ -33,7 +33,7 @@ Monetization (open core): the add-on is MIT. Cloud and team features are paid. D
 | `@wizeworks/lens-cloud` | The hosted service: the same dashboard, API, OTLP, and MCP, for many organizations at once |
 | Storage | Postgres (any managed Postgres). PGlite (Postgres in-process) for tests and a one-command trial |
 | Accounts and teams | Email and password sign-in, organizations, roles (owner, admin, member, viewer), invite links |
-| Projects and keys | Projects inside an organization; ingest keys per project (add-ons use them as `WIZELENS_HUB_TOKEN`) |
+| Projects and keys | Projects inside an organization; ingest keys per project (add-ons use them as `WIZELENS_TOKEN`) |
 | Server-side stats | The server computes every page's numbers (`serverStats`), so ranges reach 7 and 30 days |
 | Alerts | Rules on error rate, latency, request count, and new errors; webhook and Slack; the bell lists them |
 | Sharing | Read-only trace links that expire and can be revoked |
@@ -50,7 +50,7 @@ Not in phase 3: billing and plans (later, by decision). Single sign-on (OIDC and
 |---|---|
 | HUD | Minimize to the WizeLens icon; the choice survives a refresh |
 | `@wizeworks/lens-hub` | The hub: `npx @wizeworks/lens-hub` or `ghcr.io/wizeworksllc/wizelens-hub`. Dashboard, API, MCP, health check |
-| Ingest | Add-ons send batches (`WIZELENS_HUB`); any OpenTelemetry app sends OTLP/HTTP (JSON or protobuf) |
+| Ingest | Add-ons send batches (`WIZELENS_ENDPOINT`); any OpenTelemetry app sends OTLP/HTTP (JSON or protobuf) |
 | Add-on senders | .NET and Node: batched, bounded queue, heartbeat, back-off, never traced, never blocks the app |
 | Registry | The hub knows every service: online, idle, or offline; project, environment, host, runtime |
 | Projects and environments | `WIZELENS_PROJECT` (OTLP: `service.namespace`) groups services; the dashboard filters by project and environment |

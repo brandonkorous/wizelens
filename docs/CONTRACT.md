@@ -197,14 +197,14 @@ interface ServiceInfo {
   redactKeys?: string[];
   captureResponseBody?: boolean;
   project?: string;
-  hub?: string;             // the hub or cloud this add-on also sends to
-  hubSend?: HubSendState;   // how sending to `hub` goes; absent on add-ons that do not report it
+  sendTo?: string;          // the hub or cloud this add-on also sends to
+  send?: SendState;         // how sending to `sendTo` goes; absent on add-ons that do not report it
   sampling?: SamplingInfo;  // absent = every trace is kept
 }
 
-interface HubSendState {
+interface SendState {
   state: "waiting" | "ok" | "failing"; // waiting = no batch sent yet
-  reason?: string | null;    // failing: why, and what to change ("The hub at … needs a key (401). Set WIZELENS_HUB_TOKEN …")
+  reason?: string | null;    // failing: why, and what to change ("The hub at … needs a key (401). Set WIZELENS_TOKEN …")
   lastSentMs?: number | null; // when a batch last went through
 }
 
@@ -281,19 +281,21 @@ Time ranges longer than `storage.maxAgeMs` are hidden.
 
 Add-ons answer `mode: "in-app"` and `capabilities: ["federation", "search", "tags"]`, plus `metrics` when metrics are on and `sourcemaps` (Node) unless `sourceMaps: false`. The hub
 answers `mode: "hub"` and `capabilities: ["federation", "environments", "registry", "metrics", "serverMetrics", "serverStats",
-"search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "saved", "tags", "settings", "uptime", "packages"]` (`uptime` only while checks are on, `packages` only while OSV checks are on). Add-ons also report `project` and `hub` (the hub they send to) when set.
+"search", "changes", "issues", "alerts", "slos", "infra", "sourcemaps", "saved", "tags", "settings", "uptime", "packages"]` (`uptime` only while checks are on, `packages` only while OSV checks are on). Add-ons also report `project` and `sendTo` (the hub or cloud they send to) when set.
 
 ## Add-on options
 
 | Option | .NET | Node | Default |
 |---|---|---|---|
+| Service name | `Service` | `service` | .NET: `OTEL_SERVICE_NAME`, else the application name; Node: required |
+| Read-only MCP endpoint | `Mcp` | `mcp` | false |
 | Capture response bodies | `CaptureResponseBody` | `captureResponseBody` | false |
 | Sampling rate (0..1) | `Sampling.Rate` | `sampling.rate` | 1, or `WIZELENS_SAMPLE_RATE` |
-| Keep traces with an error | `Sampling.KeepErrors` | `sampling.keepErrors` | true |
-| Keep traces with a slow server-side span (ms) | `Sampling.KeepSlowMs` | `sampling.keepSlowMs` | 1000 (null = off) |
+| Keep traces with an error | `Sampling.KeepErrors` | `sampling.keepErrors` | true, or `WIZELENS_KEEP_ERRORS` (.NET) |
+| Keep traces with a slow server-side span (ms) | `Sampling.KeepSlowMs` | `sampling.keepSlowMs` | 1000 (null = off), or `WIZELENS_KEEP_SLOW_MS` (.NET) |
 | Keep log lines outside a request | `Logs.Outside` | `logs.outside` | true, or `WIZELENS_LOGS_OUTSIDE` |
 | Lowest level kept outside a request | `Logs.MinLevel` (`LogLevel`) | `logs.minLevel` | info, or `WIZELENS_LOGS_MIN_LEVEL` |
-| Share kept outside a request, below warn (0..1) | `Logs.SampleRate` | `logs.sampleRate` | 1, or `WIZELENS_LOGS_SAMPLE_RATE` |
+| Share kept outside a request, below warn (0..1) | `Logs.Rate` | `logs.rate` | 1, or `WIZELENS_LOGS_SAMPLE_RATE` |
 | Tag the current request | `WizeLensRequest.Tag(key, value?)` | `wizelens.tag(key, value?)` | — |
 | Tag rules (see "Tags") | `Tags.Rules.Add(new(name, query, color))` | `tags.rules: [{ name, query, color? }]` | none; a bad rule throws at startup |
 | Turn off built-in tags | `Tags.DisableBuiltIns.Add("bot")` | `tags.disableBuiltIns: ["bot"]` | all on |
@@ -435,8 +437,8 @@ time. Answers 204, or 400 with what is wrong. A failed send retries up to 5 time
 
 Hubs keep them in SQLite (`service_packages`), the cloud in Postgres (migration `PACKAGES_MIGRATION`).
 
-**The check.** Hosts with the `packages` capability (hub unless `--no-osv` / `WIZELENS_HUB_OSV=0`, cloud unless
-`--no-osv` / `WIZELENS_CLOUD_OSV=0`) send OSV (`POST https://api.osv.dev/v1/querybatch`, up to 1000 package versions
+**The check.** Hosts with the `packages` capability (hub unless `--no-osv` / `WIZELENS_HUB_OSV=false`, cloud unless
+`--no-osv` / `WIZELENS_CLOUD_OSV=false`) send OSV (`POST https://api.osv.dev/v1/querybatch`, up to 1000 package versions
 a round) every package version not checked for a day, every 5 minutes, and fetch each new advisory once
 (`GET /v1/vulns/{id}`, up to 200 a round). Only ecosystems, names, and versions leave the host. The cache is shared by
 every project (`package_checks`, `advisories`). OSV `database_specific.severity` maps CRITICAL and HIGH to `error`,
@@ -559,7 +561,7 @@ below): the server span already holds the method, path, status, and time. Lines 
 
 A log line written while no span is current (startup, background jobs, timers) is kept as a **loose** line when the add-on's
 options allow it: `Logs.Outside` / `logs.outside` is on, its level is at or above `Logs.MinLevel` / `logs.minLevel`, and,
-below `warn`, a random draw falls inside `Logs.SampleRate` / `logs.sampleRate` (warn and up are always kept). Trace sampling
+below `warn`, a random draw falls inside `Logs.Rate` / `logs.rate` (warn and up are always kept). Trace sampling
 never applies to loose lines. Categories that start with `wizelens` (and `[wizelens]` console notices) are never kept.
 
 - Loose lines go into a **loose batch**: a trace with no spans whose id is 16 zeros plus 16 random hex digits
@@ -755,7 +757,7 @@ the body is not a v3 source map or `release`/`file` is missing. The same release
 keeps its newest 20 releases; older ones are dropped on upload. `GET api/sourcemaps[?release=]` answers
 `{ maps: { release, file, bytes, uploadedMs }[] }`, newest first. The cloud authorizes both with an ingest key
 (`Authorization: Bearer wl_ik_...`) and stores into the key's project; the hub takes its token (when set) and an optional
-`project` (default `""`, which every project also reads). `@wizeworks/lens-cli` (`lens-cli sourcemaps upload <dir>`) and its
+`project` (default `""`, which every project also reads). `@wizeworks/lens-cli` (`wizelens sourcemaps upload <dir>`) and its
 Vite, webpack, and Next.js plugins send every `*.js.map` below a build folder this way, each keyed by the script whose
 `sourceMappingURL` names it (Turbopack names maps apart from their scripts), else by the map's own name without `.map`.
 
@@ -879,8 +881,8 @@ It serves the same dashboard at `/_wizelens/`, the same read API, OTLP/HTTP, and
 
 | Option | .NET | Node | Environment variable |
 |---|---|---|---|
-| Hub URL | `HubUrl` | `hub` | `WIZELENS_HUB` (for example `http://localhost:5960`) |
-| Hub token | `HubToken` | `hubToken` | `WIZELENS_HUB_TOKEN` |
+| Where to send | `Endpoint` | `endpoint` | `WIZELENS_ENDPOINT` (for example `http://localhost:5960`) |
+| Token (hub token or ingest key) | `Token` | `token` | `WIZELENS_TOKEN` |
 | Project | `Project` | `project` | `WIZELENS_PROJECT` |
 | Trusted remotes | `TrustedRemotes` | `trustedRemotes` | `WIZELENS_TRUSTED_REMOTES` (comma-separated, for example `https://localhost:5099`) |
 | On or off | `Enabled` | `enabled` | `WIZELENS_ENABLED` (`true`/`1`/`on`/`yes`, `false`/`0`/`off`/`no`) |
@@ -984,7 +986,7 @@ Trace `remotes` that point at a service which sends to the hub are hidden, so th
 ### Access
 
 The hub listens on `127.0.0.1` by default. For a team network, start it with `--host 0.0.0.0 --token <text>`.
-With a token, every call needs `Authorization: Bearer <token>` (add-ons: `WIZELENS_HUB_TOKEN`; OTLP:
+With a token, every call needs `Authorization: Bearer <token>` (add-ons: `WIZELENS_TOKEN`; OTLP:
 `OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <token>`). In a browser, open `/_wizelens/?token=<token>` once:
 the hub keeps it in an HttpOnly cookie and removes it from the address.
 
@@ -1111,7 +1113,7 @@ retention, and the audit log.
 - **Leaving**: an account cannot be deleted while it is the last owner of an organization with other members. Organizations it is
   alone in are deleted with their data. An owner deletes an organization with `DELETE api/orgs/{org}` and the password.
 - **Keys** (only their SHA-256 hash is stored; the prefix tells what they are):
-  - `wl_ik_…` **ingest key**: one project. Add-ons send it as `WIZELENS_HUB_TOKEN`; OTLP apps as `Authorization: Bearer …`.
+  - `wl_ik_…` **ingest key**: one project. Add-ons send it as `WIZELENS_TOKEN`; OTLP apps as `Authorization: Bearer …`.
     The project comes from the key, never from the sender. At most 1200 calls per key per minute (429 above).
   - `wl_rk_…` **read key**: one or more projects, read-only. For scripts, CI, and agents with no person to sign in.
 - **Connected apps (OAuth 2.1 for MCP clients)**, Better Auth's OAuth provider plugin (`@better-auth/oauth-provider`, pinned

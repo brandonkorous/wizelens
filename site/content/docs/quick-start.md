@@ -37,7 +37,7 @@ npm install @wizeworks/lens-node
 import express from "express";
 import { createWizeLens } from "@wizeworks/lens-node";
 
-const wizelens = createWizeLens({ serviceName: "orders-api" });
+const wizelens = createWizeLens({ service: "orders-api" });
 const app = express();
 
 app.use(wizelens.middleware);        // first

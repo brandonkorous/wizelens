@@ -15,7 +15,7 @@ export const GO: Stack = {
   ],
   file: "main.go",
   code: [
-    'shutdown, err := wizelens.Start(ctx, wizelens.WithServiceName("inventory"))',
+    'shutdown, err := wizelens.Start(ctx, wizelens.WithService("inventory"))',
     "defer shutdown(context.Background())",
     "",
     'db, err := wizelens.OpenDB("pgx", dsn, "postgresql")',

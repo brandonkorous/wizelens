@@ -46,7 +46,7 @@ export const PYTHON: Stack = {
     { title: "One line for bodies.", body: "Add the middleware for your framework and set WIZELENS_CAPTURE_BODY=true. Text and JSON bodies are kept, up to 16 KB each.", code: "app.add_middleware(WizeLensMiddleware)" },
     { title: "A 5xx you meant is not a failure.", body: "A paused site's 503 is on purpose. Set wizelens.expected on the server span, or send the header X-WizeLens-Expected: 1. Error rates leave it out, and the sampler does not keep a trace for it alone.", code: 'span.set_attribute("wizelens.expected", True)' },
     { title: "Name the user.", body: "Set enduser.id on the server span, and user.full_name for a display name. The Users page counts each user's requests and shows the name.", code: 'span.set_attribute("enduser.id", user.id)' },
-    { title: "No opentelemetry-instrument? One call.", body: "Call configure before your app imports its libraries, then instrument them yourself.", code: 'wizelens.configure(service_name="orders-api")' },
+    { title: "No opentelemetry-instrument? One call.", body: "Call configure before your app imports its libraries, then instrument them yourself.", code: 'wizelens.configure(service="orders-api")' },
   ],
   docs: [
     { label: "Python setup", href: "/docs/python/" },

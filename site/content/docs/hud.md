@@ -52,7 +52,7 @@ This happens only while the HUD is on. With it off, `Accept-Encoding` is left al
 
 ## In your web app
 
-**React.** `WizeLensProvider` shows the HUD. Its `hud` prop is `true` by default. See [React](/docs/react/).
+**React.** `WizeLensProvider` shows the HUD. Its `hud` prop takes the same values, and is `"auto"` by default. See [React](/docs/react/).
 
 **Vue, Angular, Svelte, and plain JS.** The `hud` option:
 
@@ -144,7 +144,7 @@ the same path does not.
 
 | Where | How |
 |---|---|
-| Pages a Node app renders | `createWizeLens({ serviceName: "web", hud: false })` |
+| Pages a Node app renders | `createWizeLens({ service: "web", hud: false })` |
 | Pages a .NET app renders | `builder.Services.AddWizeLens(o => o.Hud = false)` |
 | Either add-on, no code | `WIZELENS_HUD=false` |
 | React | `<WizeLensProvider hud={false}>` |

@@ -28,7 +28,7 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5960   # any OpenTelemetry app
 | `--retention <time>` | `WIZELENS_HUB_RETENTION` | `7d` |
 | `--max-traces <n>` | `WIZELENS_HUB_MAX_TRACES` | `50000` |
 | `--max-metric-points <n>` | `WIZELENS_HUB_MAX_METRIC_POINTS` | `2000000` raw points (they are also kept for `--retention`; rollups are not capped) |
-| `--mcp` | `WIZELENS_HUB_MCP=1` | off |
+| `--mcp` | `WIZELENS_HUB_MCP=true` | off |
 | `--import <file>` | | Copy an add-on's `.wizelens/traces.db` in at start |
 
 To share the hub with a team, run it with `--host 0.0.0.0 --token <text>`. Services send it as `WIZELENS_TOKEN`; OTLP apps send

@@ -74,11 +74,11 @@ as they are. People still sign in at the public URL.
 Turn MCP on per service:
 
 ```csharp
-builder.Services.AddWizeLens(o => o.EnableMcp = true);
+builder.Services.AddWizeLens(o => o.Mcp = true);
 ```
 
 ```ts
-createWizeLens({ serviceName: "orders-api", enableMcp: true });
+createWizeLens({ service: "orders-api", mcp: true });
 ```
 
 Then point any MCP client at the service:

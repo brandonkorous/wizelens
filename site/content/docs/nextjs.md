@@ -22,7 +22,7 @@ export async function register() {
   // The runtime check must wrap the import, so the Edge build leaves the package out.
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { registerWizeLens } = await import("@wizeworks/lens-node/next");
-    registerWizeLens({ serviceName: "web" });
+    registerWizeLens({ service: "web" });
   }
 }
 
@@ -76,7 +76,7 @@ An app that already has WizeLens needs no change to its two files. To move to a 
 ```ts
 // inside register(), in the nodejs branch
 const { registerWizeLens, nextIgnore } = await import("@wizeworks/lens-node/next");
-registerWizeLens({ serviceName: "web", ignore: (p) => nextIgnore(p) || p === "/health" });
+registerWizeLens({ service: "web", ignore: (p) => nextIgnore(p) || p === "/health" });
 ```
 
 ## Tags, users, and expected answers

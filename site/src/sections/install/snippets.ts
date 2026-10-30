@@ -25,7 +25,7 @@ app.UseWizeLens();`,
 import pg from "pg";
 import { createWizeLens, instrumentPg } from "@wizeworks/lens-node";
 
-const wizelens = createWizeLens({ serviceName: "orders-api" });
+const wizelens = createWizeLens({ service: "orders-api" });
 instrumentPg(wizelens, pg);
 
 const app = express();
@@ -55,7 +55,7 @@ root.render(
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { registerWizeLens } = await import("@wizeworks/lens-node/next");
-    registerWizeLens({ serviceName: "web" });
+    registerWizeLens({ service: "web" });
   }
 }
 
@@ -71,7 +71,7 @@ export const onRequestError: Instrumentation.onRequestError = async (...args) =>
     label: "Vue",
     file: "main.ts",
     note: "One plugin. Route changes are page views, and component errors name the component.",
-    code: `import { WizeLens } from "@wizeworks/lens-vue";
+    code: `import { WizeLensPlugin } from "@wizeworks/lens-vue";
 
 createApp(App)
   .use(router)
@@ -135,7 +135,7 @@ OTEL_SERVICE_NAME=orders-api opentelemetry-instrument uvicorn app:app`,
     label: "Go",
     file: "main.go",
     note: "One module: net/http, database/sql with parameters, outgoing calls, and slog.",
-    code: `shutdown, err := wizelens.Start(ctx, wizelens.WithServiceName("inventory"))
+    code: `shutdown, err := wizelens.Start(ctx, wizelens.WithService("inventory"))
 defer shutdown(context.Background())
 
 db, err := wizelens.OpenDB("pgx", dsn, "postgresql")
@@ -164,6 +164,6 @@ wizelens.dev/inject: node`,
 npx @wizeworks/lens-hub
 
 # point each service at it
-WIZELENS_HUB=http://localhost:5960`,
+WIZELENS_ENDPOINT=http://localhost:5960`,
   },
 ];

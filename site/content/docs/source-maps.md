@@ -20,7 +20,7 @@ npx @wizeworks/lens-hub --sourcemaps ./dist
 ```
 
 ```ts
-createWizeLens({ serviceName: "web-api", sourceMaps: { dirs: ["../web/dist"] } });
+createWizeLens({ service: "web-api", sourceMaps: { dirs: ["../web/dist"] } });
 ```
 
 The ASP.NET Core add-on does not read maps itself: its dashboard reads the maps your site or dev server serves.
@@ -63,12 +63,14 @@ npx @wizeworks/lens-cli sourcemaps upload ./dist --release 1.4.0
 npx @wizeworks/lens-cli sourcemaps list --release 1.4.0
 ```
 
+With `@wizeworks/lens-cli` installed in the project, the command is `wizelens`: `wizelens sourcemaps upload ./dist`.
+
 ## Where the maps go
 
 | Setting | Flag | Variable | Default |
 |---|---|---|---|
-| Hub or cloud | `--url` | `WIZELENS_URL`, then `WIZELENS_HUB` | `http://localhost:5960` |
-| Key | `--token` | `WIZELENS_TOKEN`, then `WIZELENS_HUB_TOKEN` | none |
+| Hub or cloud | `--endpoint` | `WIZELENS_ENDPOINT` | `http://localhost:5960` |
+| Key | `--token` | `WIZELENS_TOKEN` | none |
 | Release | `--release` | `WIZELENS_RELEASE` | the version npm runs the script with (`npm_package_version`), then your `package.json` version |
 | Project (hub) | `--project` | `WIZELENS_PROJECT` | none |
 | Path prefix | `--url-prefix` | | none |
@@ -80,7 +82,7 @@ project. The cloud keeps the newest 20 releases of each project.
 A stack is read with the maps of the project the error was sent to, whatever project you look from: on the hub under **All
 projects** too, and on the cloud when a browser error from your web project shows on an API project's trace page.
 
-The plugins take the same settings as options (`url`, `token`, `release`, `project`, `urlPrefix`, `deleteAfterUpload`), plus
+The plugins take the same settings as options (`endpoint`, `token`, `release`, `project`, `urlPrefix`, `deleteAfterUpload`), plus
 `upload: false` to skip the upload and `failOnError: true` to fail the build when it does not work (by default it warns).
 
 ## The release

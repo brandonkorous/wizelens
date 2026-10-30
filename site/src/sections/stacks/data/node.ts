@@ -16,7 +16,7 @@ export const NODE: Stack = {
   ],
   file: "server.ts",
   code: [
-    'const wizelens = createWizeLens({ serviceName: "orders-api" });',
+    'const wizelens = createWizeLens({ service: "orders-api" });',
     "instrumentPg(wizelens, pg);",
     "instrumentPino(wizelens, logger);",
     "instrumentAmqplib(wizelens, amqplib);",

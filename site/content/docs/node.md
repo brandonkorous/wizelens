@@ -12,7 +12,7 @@ npm install @wizeworks/lens-node
 ```ts
 import { createWizeLens } from "@wizeworks/lens-node";
 
-const wizelens = createWizeLens({ serviceName: "orders-api" });
+const wizelens = createWizeLens({ service: "orders-api" });
 ```
 
 WizeLens needs Node 22.13 or newer (24 is best). No access to the code? `node --import @wizeworks/lens-node/auto` does
@@ -127,7 +127,7 @@ a Lambda SQS record. Other commands show as outgoing HTTP calls. The auto instal
 ## Logs
 
 Lines written during a request go into its trace. Lines written outside one (startup, jobs, timers) are kept too, as
-"Outside a request". The `logs` option (`{ outside, minLevel, sampleRate }`) or the `WIZELENS_LOGS_*` variables control how
+"Outside a request". The `logs` option (`{ outside, minLevel, rate }`) or the `WIZELENS_LOGS_*` variables control how
 many: on, `info` and up, and all of them by default. See [Logs](/docs/logs/). Your loggers still write where they wrote
 before; WizeLens only copies the lines.
 

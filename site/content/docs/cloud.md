@@ -43,8 +43,8 @@ people (send them the link); under **Organization**, add projects; and under **C
 app. Then set on each app, and restart it:
 
 ```bash
-WIZELENS_HUB=https://wizelens.example.com
-WIZELENS_HUB_TOKEN=wl_ik_...                   # the ingest key
+WIZELENS_ENDPOINT=https://wizelens.example.com
+WIZELENS_TOKEN=wl_ik_...                       # the ingest key
 ```
 
 In production, also set `WIZELENS_ENABLED=true`. The app then sends only and serves nothing: see [Production](/docs/production/).
@@ -131,17 +131,17 @@ apps**; admins see everyone's under **People & access → Connected apps**. See 
 | `--slow-query-ms <n>` | `WIZELENS_CLOUD_SLOW_QUERY_MS` | `100`: a database call this slow is slow |
 | `--n-plus-one <n>` | `WIZELENS_CLOUD_N_PLUS_ONE` | `5` similar calls in a request make an N+1 |
 | `--settle-workers <n>` | `WIZELENS_CLOUD_SETTLE_WORKERS` | Scale mode: threads that index new traces. `0` uses the main thread. Default: CPUs − 1, at most 4 |
-| `--allow-private-targets` | `WIZELENS_CLOUD_ALLOW_PRIVATE_TARGETS=1` | off (alert webhooks and uptime checks may not reach private addresses) |
-| `--no-osv` | `WIZELENS_CLOUD_OSV=0` | packages checked against OSV |
+| `--allow-private-targets` | `WIZELENS_CLOUD_ALLOW_PRIVATE_TARGETS=true` | off (alert webhooks and uptime checks may not reach private addresses) |
+| `--no-osv` | `WIZELENS_CLOUD_OSV=false` | packages checked against OSV |
 | `--auth-secret <text>` | `WIZELENS_CLOUD_AUTH_SECRET` | required with Postgres: 32+ characters that sign sessions and encrypt two-step secrets. `2:new,1:old` rotates it |
 | `--resend-api-key <key>` | `WIZELENS_CLOUD_RESEND_API_KEY` | none: mail through Resend (`re_…`). Needs `--public-url` |
 | `--resend-webhook-secret <s>` | `WIZELENS_CLOUD_RESEND_WEBHOOK_SECRET` | none: the Resend webhook's `whsec_` secret, so bounces and complaints stop later mail. The webhook goes to `<public-url>/_wizelens/api/mail/resend` |
 | `--smtp-url <url>` | `WIZELENS_CLOUD_SMTP_URL` | none: mail over SMTP, `smtp://user:pass@host:587` or `smtps://…:465`. Needs `--public-url` |
 | `--mail-from <address>` | `WIZELENS_CLOUD_MAIL_FROM` | the sender, such as `WizeLens <a@b.com>` |
 | `--mail-reply-to <address>` | `WIZELENS_CLOUD_MAIL_REPLY_TO` | none: where replies go |
-| `--trust-proxy` | `WIZELENS_CLOUD_TRUST_PROXY=1` | off: read the client address from the last `X-Forwarded-For` entry (your own proxy only) |
+| `--trust-proxy` | `WIZELENS_CLOUD_TRUST_PROXY=true` | off: read the client address from the last `X-Forwarded-For` entry (your own proxy only) |
 | `--setup-token <text>` | `WIZELENS_CLOUD_SETUP_TOKEN` | random: the first account's token, printed at start while no account exists |
-| `--check-pwned-passwords`, `--no-check-pwned-passwords` | `WIZELENS_CLOUD_CHECK_PWNED_PASSWORDS=1\|0` | on with Postgres, off with PGlite: refuse breached passwords |
+| `--check-pwned-passwords`, `--no-check-pwned-passwords` | `WIZELENS_CLOUD_CHECK_PWNED_PASSWORDS=true\|false` | on with Postgres, off with PGlite: refuse breached passwords |
 | `--sso-origins <list>` | `WIZELENS_CLOUD_SSO_ORIGINS` | none: OIDC provider origins, comma separated, such as `https://acme.okta.com`. SAML needs none |
 | `--dns-servers <list>` | `WIZELENS_CLOUD_DNS_SERVERS` | the system's: DNS servers for the single sign-on domain proof, such as `10.0.0.2` or `127.0.0.1:5354`, when the domain is on private DNS |
 | `--stripe-secret-key <key>` | `WIZELENS_CLOUD_STRIPE_SECRET_KEY` | none: billing is off and every organization is unlimited. With it (`sk_…` or `rk_…`), plans and limits apply and new organizations start on Free |

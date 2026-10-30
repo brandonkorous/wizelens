@@ -92,7 +92,7 @@ it away. `defineHud()` defines the element without adding one.
 
 ## One instance per page
 
-Each running instance registers on the page (`registered()` reads it), whichever copy of this package started it. The .NET and Node
+Each running instance registers on the page, whichever copy of this package started it. The .NET and Node
 add-ons put a script tag with `data-source="inject"` into the HTML pages they serve in development, so server-rendered pages get the
 HUD with no code. That script does nothing when the app already started WizeLens, and an app that starts later stops it and takes
 over, so a page never has two HUDs or traces a call twice.

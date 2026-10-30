@@ -16,7 +16,7 @@ import { WizeLensProvider } from "@wizeworks/lens-react";
 |---|---|---|
 | `endpoint` | `/_wizelens` | WizeLens base path or URL on your API. |
 | `enabled` | `true` | Pass `import.meta.env.DEV` (or similar). |
-| `hud` | `true` | Show the in-page HUD. Off also stops reading traces back, so it works with a send-only server. |
+| `hud` | `"auto"` | The in-page HUD. `"auto"` shows it when `{endpoint}/api/info` answers. `true` shows it; `false` hides it and also stops reading traces back, so it works with a send-only server. |
 | `propagateTo` | same origin | Which requests get a `traceparent` header. |
 | `release` | from the build plugin | The web app's version, kept on browser spans for release markers and version compares, and so stacks find the right source maps. |
 | `slowMs` | `500` | Requests at or over this many ms show as "warning". |

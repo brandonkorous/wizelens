@@ -16,16 +16,16 @@ a request are always kept with their trace.
 |---|---|---|---|---|
 | Keep lines outside a request | `Logs.Outside` | `logs.outside` | `WIZELENS_LOGS_OUTSIDE` | on |
 | Lowest level kept | `Logs.MinLevel` | `logs.minLevel` | `WIZELENS_LOGS_MIN_LEVEL` | `Information` / `"info"` |
-| Share kept below warn (0 to 1) | `Logs.SampleRate` | `logs.sampleRate` | `WIZELENS_LOGS_SAMPLE_RATE` | `1` |
+| Share kept below warn (0 to 1) | `Logs.Rate` | `logs.rate` | `WIZELENS_LOGS_SAMPLE_RATE` | `1` |
 
 Warnings and up are always kept, whatever the sample rate. Trace sampling does not apply to these lines.
 
 ```ts
-createWizeLens({ serviceName: "orders-api", logs: { minLevel: "warn", sampleRate: 0.2 } });
+createWizeLens({ service: "orders-api", logs: { minLevel: "warn", rate: 0.2 } });
 ```
 
 ```csharp
-builder.Services.AddWizeLens(o => { o.Logs.MinLevel = LogLevel.Warning; o.Logs.SampleRate = 0.2; });
+builder.Services.AddWizeLens(o => { o.Logs.MinLevel = LogLevel.Warning; o.Logs.Rate = 0.2; });
 ```
 
 Every logger WizeLens reads does this: `ILogger`, Serilog, and NLog on .NET; `console`, pino, winston, bunyan, log4js,

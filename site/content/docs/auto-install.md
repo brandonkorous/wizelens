@@ -75,7 +75,7 @@ The same variables as the code install, plus the standard OpenTelemetry service 
 | `WIZELENS_ENABLED` | On or off. Default: on in development, off in production |
 | `WIZELENS_DASHBOARD` | Serve `/_wizelens` in the app. Default: on in development, off in production (send-only) |
 | `WIZELENS_HUD` | `false` takes [the HUD](/docs/hud/) off the app's HTML pages. Default: on while `/_wizelens` is served |
-| `WIZELENS_HUB`, `WIZELENS_HUB_TOKEN` | Where to send, see [the hub](/docs/hub/) and [the cloud](/docs/cloud/) |
+| `WIZELENS_ENDPOINT`, `WIZELENS_TOKEN` | Where to send, see [the hub](/docs/hub/) and [the cloud](/docs/cloud/) |
 | `WIZELENS_PROJECT` | The project on a shared hub |
 | `WIZELENS_SAMPLE_RATE` | Share of traces kept, see [Sampling](/docs/sampling/) |
 | `WIZELENS_RELEASE` | The app's version on every span, for release markers and Problems |
@@ -97,7 +97,7 @@ chart once:
 ```bash
 helm install wizelens-inject oci://ghcr.io/wizeworksllc/charts/wizelens-inject \
   --namespace wizelens --create-namespace \
-  --set hub=http://wizelens-hub.wizelens:5960
+  --set endpoint=http://wizelens-hub.wizelens:5960
 ```
 
 Then label a pod template and restart it:
@@ -117,12 +117,12 @@ above. A variable the container sets itself is kept. The pod's annotations chang
 | Annotation | What |
 |---|---|
 | `wizelens.dev/service` | Service name. Default: the `app.kubernetes.io/name` or `app` label, else the container name |
-| `wizelens.dev/hub` | Hub for this pod |
+| `wizelens.dev/endpoint` | Where this pod sends: a hub or the cloud |
 | `wizelens.dev/project` | Project. Default: the chart's `project`, else the namespace |
 | `wizelens.dev/dashboard` | `"true"` serves `/_wizelens` in the pod |
 | `wizelens.dev/container-names` | Only these containers, for example `api,worker` |
 
-Chart values: `hub`, `hubTokenSecret.name` and `.key` (a Secret in each app namespace, read as `WIZELENS_HUB_TOKEN`),
+Chart values: `endpoint`, `existingSecret.name` and `.key` (default `token`; a Secret in each app namespace, read as `WIZELENS_TOKEN`),
 `project`, `dashboard`, `namespaceLabels` (limit to labeled namespaces), and `failurePolicy` (default `Ignore`: a webhook
 that is down never blocks a deploy). Injected pods carry `wizelens.dev/injected`. The chart makes its own TLS certificate.
 
@@ -138,13 +138,13 @@ so nothing is counted twice. .NET: `AddWizeLens()` takes over the registration w
 The samples have no WizeLens code. With a hub running (`pnpm dev:hub`):
 
 ```bash
-cd samples/auto-node && WIZELENS_HUB=http://localhost:5960 pnpm start:auto
+cd samples/auto-node && WIZELENS_ENDPOINT=http://localhost:5960 pnpm start:auto
 ```
 
 ```bash
 dotnet build dotnet/WizeLens.slnx -c Release
 DOTNET_STARTUP_HOOKS=$PWD/dotnet/src/WizeLens.AutoInstrumentation/bin/Release/net10.0/WizeLens.AutoInstrumentation.dll \
-  WIZELENS_HUB=http://localhost:5960 dotnet samples/auto-dotnet/bin/Release/net10.0/AutoDotnet.dll
+  WIZELENS_ENDPOINT=http://localhost:5960 dotnet samples/auto-dotnet/bin/Release/net10.0/AutoDotnet.dll
 ```
 
 Open `http://localhost:5960/_wizelens` and call `/api/products/1/related` on either: an N+1 shows up in its trace.
